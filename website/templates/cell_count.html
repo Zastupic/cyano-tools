@@ -85,13 +85,10 @@ To count the cells in your microscopy image, please follow the instructions belo
     <p>Pixel size: {{ pixel_size_nm }} nm 
     / Depth of the chamber: {{ depth_nm }} nm 
     / Minimal cell size: {{ minimal_expected_size }} µm</p>
+    <a href="{{ url_for('static', filename='uploads/'+user_id+'/'+img_for_download) }}" download>
+        <button type="button" class="btn btn-primary">Download image with counted cells</button>
+    </a>
     <br>
-
-    <form method="POST">
-
-        </div>
-    </form>
-
     <br>
     <div class="imgbox">
         <figcaption>Identified cells (combined high and low sensitivity threshold)</figcaption> 

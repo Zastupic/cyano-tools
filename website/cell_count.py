@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect
 from PIL import Image as im
-import os, time, cv2
+import os, cv2
 from werkzeug.utils import secure_filename
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from flask_login import current_user
@@ -77,18 +77,6 @@ def count_cells():
                         
                         cell_count = cell_count + manually_identified_cells 
 
-                        # saving grayscale image  
-                        img_grey_to_show = im.fromarray(img_grey)
-                        img_grey_to_show.save(os.path.join(upload_folder, f'grey_{filename}'))
-
-                        # saving thresholded image  
-                        img_th_to_show = im.fromarray(img_th)
-                        img_th_to_show.save(os.path.join(upload_folder, f'thresholded_{filename}'))
-
-                        # saving counted image  
-                        img_counted = im.fromarray(img_for_counted_cells)
-                        img_counted.save(os.path.join(upload_folder, f'counted_{filename}'))
-
                         ### 4. Calculate cell number per ml sample ###
                         y_pixels, x_pixels, channels = img_for_counted_cells.shape
 
@@ -106,12 +94,40 @@ def count_cells():
                         if img_volume_ul > 1e-6:
                             # Calculate number of cells per ml
                             cells_per_ml = round((cell_count)*(1/img_volume_ul)/1e6, 3)
+
+                            # saving grayscale image  
+                            img_grey_to_show = im.fromarray(img_grey)
+                            img_grey_to_show.save(os.path.join(upload_folder, f'grey_{filename}'))
+
+                            # saving thresholded image  
+                            img_th_to_show = im.fromarray(img_th)
+                            img_th_to_show.save(os.path.join(upload_folder, f'thresholded_{filename}'))
+
+                            # saving counted image  
+                            img_counted = im.fromarray(img_for_counted_cells)
+                            img_counted.save(os.path.join(upload_folder, f'counted_{filename}'))
+
+                            testing_function()
+
+                            # Mark the cell concentration to the image
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Additionally identified cells (manual correction): '+str(manually_identified_cells), (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Image resolution: '+str(x_pixels)+' x '+str(y_pixels), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Image area: '+str(img_area_mm2)+' mm^2', (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Volume of the imaged area: '+str(img_volume_nl)+' nL', (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Pixel size: '+str(pixel_size_nm)+' nm', (10, 350), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = im.fromarray(img_for_download)
+                            img_for_download.save(os.path.join(upload_folder, f'counted_cells_{filename}'))
+
                             return render_template("cell_count.html", 
                                                user_id = user_id,
                                                image_for_cell_counting = f'original_{filename}', 
                                                img_grey_to_show = f'grey_{filename}',
                                                img_th_to_show = f'thresholded_{filename}',
                                                img_counted = f'counted_{filename}',
+                                               img_for_download = f'counted_cells_{filename}',
                                                cell_count = cell_count,
                                                cells_per_ml = cells_per_ml,
                                                x_pixels = x_pixels,
@@ -137,7 +153,9 @@ def count_cells():
         return redirect("/login")
     
 
-        
+def testing_function(): 
+    print('download image function is running!')     
+
     
 
 

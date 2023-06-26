@@ -22,6 +22,7 @@ def create_app():
     from .views import views
     from .auth import auth
     from .cell_count import cell_counting
+    from .pixel_profiles import pixel_profiles
     from .clear_uploads import clear_uploads
     from .models import User
       
@@ -29,6 +30,7 @@ def create_app():
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(cell_counting, url_prefix='/')
     app.register_blueprint(clear_uploads, url_prefix='/')
+    app.register_blueprint(pixel_profiles, url_prefix='/')
 
     #### DATABASE ####
     with app.app_context(): # creating the database
