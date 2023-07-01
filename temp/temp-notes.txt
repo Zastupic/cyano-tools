@@ -128,3 +128,11 @@ if time.time()-modified_time > 300: #time in seconds
 
 print(time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
 time.ctime(last_modified)
+
+=====================================================
+=====================================================
+
+<div class="imgbox">
+    <a href="{{ url_for('cell_counting.count_cells') }}">
+    <img src="{{ url_for('static', filename='images/cell_count.jpeg') }}" width = "200" class="left-fit" alt="Cell counting"></a>
+</div>

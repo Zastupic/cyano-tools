@@ -5,12 +5,13 @@
 {% endblock %}
 
 {% block content %}
-<h1> Cell counting</h1>
+<h1> Cell counting </h1>
 <br>
 <p>Welcome to the cell counting app! 
 <br>
-To count the cells in your microscopy image, please follow the instructions below:</p>
+To count cells in your microscopy image, please follow the instructions below:</p>
 <ol>
+    <li>Select threshold filter</li>
     <li>Enter pixel size</li>
     <li>Enter depth of the microscopy chamber</li>
     <li>Enter minimal cell diameter</li>
@@ -21,11 +22,21 @@ To count the cells in your microscopy image, please follow the instructions belo
     <li>Optional: If some cells have been missed, a correction can be made by entering the number of missed cells into the respective form and repeating the count.
     <i>(Also a negative number can be entered)</i>
 </ol> 
-<br>
-<br>
+<br> <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_counting.count_cells') }}">
+<label for="threshold_filter"><p class="font-weight-bold">{{ '1. Select threshold filter' }}</p></label>
+<select name="threshold_filter" class="form-select" aria-label="threshold_filter">
+    <option selected="Triangle + Binary">Triangle + Binary</option>
+    <option value="Binary + Otsu">Binary + Otsu</option>
+    <option value="To zero + Triangle">To zero + Triangle</option>
+    <option value="Binary">Binary</option>
+    <option value="To zero">To zero</option>
+    <option value="Triangle">Triangle</option>
+    <option value="Otsu">Otsu</option>
+</select>
+    <br>
     <div class="form-group">
-    <label for="pixel_size"><p class="font-weight-bold">{{ '1. Enter pixel size (nm)' }}</p></label>
+    <label for="pixel_size"><p class="font-weight-bold">{{ '2. Enter pixel size (nm)' }}</p></label>
     <input  
         type="number"
         id="pixel_size" 
@@ -35,7 +46,7 @@ To count the cells in your microscopy image, please follow the instructions belo
     />
     <br>
     <div class="form-group">
-    <label for="chamber_depth"><p class="font-weight-bold">{{ '2. Enter depth of the microscopy chamber (nm)' }}</p></label>
+    <label for="chamber_depth"><p class="font-weight-bold">{{ '3. Enter depth of the microscopy chamber (nm)' }}</p></label>
     <input  
         type="number"
         class="form-control"
@@ -45,7 +56,7 @@ To count the cells in your microscopy image, please follow the instructions belo
     />
     <br>
     <div class="form-group">
-    <label for="minimal_size"><p class="font-weight-bold">{{ '3. Enter minimal cell diameter (µm)' }}</p></label>
+    <label for="minimal_size"><p class="font-weight-bold">{{ '4. Enter minimal cell diameter (µm)' }}</p></label>
     <br>
     <input  
         type="number"
@@ -56,7 +67,7 @@ To count the cells in your microscopy image, please follow the instructions belo
     />
     <br>
     <div class="form-group">
-    <label for="manually_identified_cells"><p class="font-weight-bold">{{ '4. Enter number of missed cells (optional, for repeated counting)' }}</p></label>
+    <label for="manually_identified_cells"><p class="font-weight-bold">{{ '5. Enter number of missed cells (optional, for repeated counting)' }}</p></label>
     <input  
         type="number"
         class="form-control"
@@ -66,7 +77,7 @@ To count the cells in your microscopy image, please follow the instructions belo
     />
     </div>
     <br>
-    <label class="form-label" for="customFile"><p class="font-weight-bold">5. Upload your image</p></label>
+    <label class="form-label" for="customFile"><p class="font-weight-bold">6. Upload your image</p></label>
     <input class="form-control" type="file" name="image">
     <br>
     <button type="submit" class="btn btn-primary">Upload image and count the cells</button>
@@ -91,13 +102,13 @@ To count the cells in your microscopy image, please follow the instructions belo
     <br>
     <br>
     <div class="imgbox">
-        <figcaption>Identified cells (combined high and low sensitivity threshold)</figcaption> 
+        <figcaption>Identified cells (combined <i>To zero</i> and <i>Triangle</i> thresholds)</figcaption> 
         <img src="{{ url_for('static', filename='uploads/'+user_id+'/'+img_counted) }}" class="center-fit">
     </div>
 
     <br>
     <div class="imgbox">
-        <figcaption>Thresholded image (high sensitivity)</figcaption>
+        <figcaption>Thresholded image</figcaption>
         <img src="{{ url_for('static', filename='uploads/'+user_id+'/'+img_th_to_show) }}" class="center-fit">
     </div>
 

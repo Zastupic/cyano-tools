@@ -15,7 +15,7 @@ def delete_images():
         for i in files:
             file = (os.path.join(directory, i).replace("\\","/"))
             last_modified = os.path.getctime(file)
-            time_difference = (current_time - last_modified)/60
+            time_difference = (current_time - last_modified)/60/60
             if time_difference > 10: # files older than 10 min
                 print('The file '+str(file)+' is '+str(int(time_difference*60))+' min old and will be deleted.')
                 os.remove(file)

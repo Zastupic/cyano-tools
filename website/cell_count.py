@@ -47,8 +47,26 @@ def count_cells():
 
                         img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # Converting image to gray 
 
-                        ### Apply threshold for cells identification ###
+                        # Get threshold selection from select box on webpage
+                        threshold = (request.form.get('threshold_filter'))
                         img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TRIANGLE + cv2.THRESH_BINARY)
+                        if threshold == 'Triangle + Binary':
+                            img_th
+                        elif threshold == 'To zero + Triangle':
+                            img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TOZERO + cv2.THRESH_TRIANGLE)
+                        elif threshold == 'Binary + Otsu':
+                            img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                        elif threshold == 'Binary':
+                            img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_BINARY)
+                        elif threshold == 'To zero':
+                            img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TOZERO)
+                        elif threshold == 'Triangle':
+                            img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TRIANGLE)
+                        elif threshold == 'Otsu':
+                            img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_OTSU)
+                        print('Threshold: '+threshold)
+
+                        # Apply another threshold for showing the counted cells on saved image
                         img_for_counted_cells = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TOZERO + cv2.THRESH_TRIANGLE)[1]
                         img_for_counted_cells = cv2.cvtColor(img_for_counted_cells, cv2.COLOR_GRAY2BGR)
 
@@ -118,6 +136,7 @@ def count_cells():
                             img_for_download = cv2.putText(img_for_counted_cells, 'Volume of the imaged area: '+str(img_volume_nl)+' nL', (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                             img_for_download = cv2.putText(img_for_counted_cells, 'Pixel size: '+str(pixel_size_nm)+' nm', (10, 350), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                             img_for_download = cv2.putText(img_for_counted_cells, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Threshold: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                             img_for_download = im.fromarray(img_for_download)
                             img_for_download.save(os.path.join(upload_folder, f'counted_cells_{filename}'))
 
@@ -154,7 +173,7 @@ def count_cells():
     
 
 def testing_function(): 
-    print('download image function is running!')     
+    print('testing function is running!')     
 
     
 

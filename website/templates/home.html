@@ -6,6 +6,10 @@
 
 {% block content %}
     <h1> Welcome! </h1>
-    <p>To count cells on your image, please proceed to <a href="{{ url_for('cell_counting.count_cells') }}">cell counting site</a></p>
-    <p>To obtain pixel profiles of cells on your image, please proceed to <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}">pixel profiles site</a></p>
+    <p>To <b>count cells</b> on your image, please proceed to <a href="{{ url_for('cell_counting.count_cells') }}">this site</a></p>
+    <p>To <b>fit your decay</b> in your data file, please proceed to <a href="{{ url_for('fitting_decay.get_decay_fit') }}">this site</a></p>
+    <p>To obtain <b>pixel profiles</b> of cells on your image, please proceed to <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}">this site</a></p>
+
+    <footer id="footer">Contact: <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a></footer>
 {% endblock %}
+
