@@ -1,6 +1,5 @@
-from flask import Blueprint, render_template, request, flash, redirect, after_this_request
+from flask import Blueprint, render_template, request, flash, redirect
 from PIL import Image as im
-from numpy import asarray
 import os, cv2, base64, io
 from werkzeug.utils import secure_filename
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
@@ -33,7 +32,7 @@ def count_cells():
                     
                     if image_extension in ALLOWED_EXTENSIONS:
                         user_id = current_user.get_id()
-                        upload_folder = os.path.join(UPLOAD_FOLDER)
+                        upload_folder = UPLOAD_FOLDER
                         
                         if os.path.isdir(upload_folder) == False:
                             os.mkdir(upload_folder)
