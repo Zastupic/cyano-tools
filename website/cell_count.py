@@ -33,7 +33,7 @@ def count_cells():
                     
                     if image_extension in ALLOWED_EXTENSIONS:
                         user_id = current_user.get_id()
-                        upload_folder = os.path.join(UPLOAD_FOLDER, user_id)
+                        upload_folder = os.path.join(UPLOAD_FOLDER)
                         
                         if os.path.isdir(upload_folder) == False:
                             os.mkdir(upload_folder)
