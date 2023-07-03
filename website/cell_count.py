@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, after_this_request
 from PIL import Image as im
-import os, cv2
+from numpy import asarray
+import os, cv2, base64, io
 from werkzeug.utils import secure_filename
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from flask_login import current_user
@@ -27,25 +28,27 @@ def count_cells():
                 ### Load image for cell counting ###
                 if 'image' in request.files:
                     image = (request.files['image'])
+                    image_name = str.lower(os.path.splitext(image.filename)[0])
                     image_extension = str.lower(os.path.splitext(image.filename)[1])
-
+                    
                     if image_extension in ALLOWED_EXTENSIONS:
                         user_id = current_user.get_id()
                         upload_folder = os.path.join(UPLOAD_FOLDER, user_id)
-
+                        
                         if os.path.isdir(upload_folder) == False:
                             os.mkdir(upload_folder)
 
                         filename = secure_filename(image.filename)
+
                         # saving original image
                         image.save(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
                         
                         # Noise reduction before application of threshold 
                         filename2 = f'original_{filename}'
-                        img = cv2.imread(f'{upload_folder}/{filename2}')
-                        img = cv2.blur(img, (3,3))
+                        img_orig = cv2.imread(f'{upload_folder}/{filename2}')
+                        img_blur = cv2.blur(img_orig, (3,3))
 
-                        img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # Converting image to gray 
+                        img_grey = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY) # Converting image to gray 
 
                         # Get threshold selection from select box on webpage
                         threshold = (request.form.get('threshold_filter'))
@@ -94,7 +97,12 @@ def count_cells():
                                     rough_coordinates_autmated_counting.append(coords)          
                         
                         cell_count = cell_count + manually_identified_cells 
-
+                        
+                        # preapring images for showing on the webiste  
+                        img_original = im.fromarray(img_orig)
+                        img_th_to_show = im.fromarray(img_th)
+                        img_counted = im.fromarray(img_for_counted_cells)
+                        
                         ### 4. Calculate cell number per ml sample ###
                         y_pixels, x_pixels, channels = img_for_counted_cells.shape
 
@@ -113,14 +121,6 @@ def count_cells():
                             # Calculate number of cells per ml
                             cells_per_ml = round((cell_count)*(1/img_volume_ul)/1e6, 3)
 
-                            # saving thresholded image  
-                            img_th_to_show = im.fromarray(img_th)
-                            img_th_to_show.save(os.path.join(upload_folder, f'thresholded_{filename}'))
-
-                            # saving counted image  
-                            img_counted = im.fromarray(img_for_counted_cells)
-                            img_counted.save(os.path.join(upload_folder, f'counted_{filename}'))
-
                             # Mark the cell concentration to the image
                             img_for_download = cv2.putText(img_for_counted_cells, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                             img_for_download = cv2.putText(img_for_counted_cells, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
@@ -130,17 +130,44 @@ def count_cells():
                             img_for_download = cv2.putText(img_for_counted_cells, 'Volume of the imaged area: '+str(img_volume_nl)+' nL', (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                             img_for_download = cv2.putText(img_for_counted_cells, 'Pixel size: '+str(pixel_size_nm)+' nm', (10, 350), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                             img_for_download = cv2.putText(img_for_counted_cells, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Threshold: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                            img_for_download = cv2.putText(img_for_counted_cells, 'Threshold used: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                             img_for_download = im.fromarray(img_for_download)
-                            img_for_download.save(os.path.join(upload_folder, f'counted_cells_{filename}'))
+                            #img_for_download.save(os.path.join(upload_folder, f'counted_cells_{filename}'))
+
+                            #saving images to memory
+                            memory_for_original_image = io.BytesIO()
+                            memory_for_threshold_image = io.BytesIO()
+                            memory_for_counted_image = io.BytesIO()
+                            memory_for_image_to_download = io.BytesIO()
+                            
+                            img_original.save(memory_for_original_image, "JPEG")
+                            img_orig_encoded_in_memory = base64.b64encode(memory_for_original_image.getvalue())
+                            img_orig_decoded_from_memory = img_orig_encoded_in_memory.decode('utf-8')
+
+                            img_counted.save(memory_for_counted_image, "JPEG")
+                            img_counted_encoded_in_memory = base64.b64encode(memory_for_counted_image.getvalue())
+                            img_counted_decoded_from_memory = img_counted_encoded_in_memory.decode('utf-8')
+
+                            img_th_to_show.save(memory_for_threshold_image, "JPEG")
+                            img_th_encoded_in_memory = base64.b64encode(memory_for_threshold_image.getvalue())
+                            img_th_decoded_from_memory = img_th_encoded_in_memory.decode('utf-8')
+
+                            img_for_download.save(memory_for_image_to_download, "JPEG")
+                            img_for_download_encoded_in_memory = base64.b64encode(memory_for_image_to_download.getvalue())
+                            img_for_download_decoded_from_memory = img_for_download_encoded_in_memory.decode('utf-8')
+
+                            # deleting original image
+                            os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
+
+                            print(cells_per_ml)
 
                             return render_template("cell_count.html", 
                                                user_id = user_id,
-                                               image_for_cell_counting = f'original_{filename}', 
-                                               img_grey_to_show = f'grey_{filename}',
-                                               img_th_to_show = f'thresholded_{filename}',
-                                               img_counted = f'counted_{filename}',
-                                               img_for_download = f'counted_cells_{filename}',
+                                               img_orig_decoded_from_memory = img_orig_decoded_from_memory, 
+                                               img_th_decoded_from_memory = img_th_decoded_from_memory,
+                                               img_counted_decoded_from_memory = img_counted_decoded_from_memory,
+                                               img_for_download_decoded_from_memory = img_for_download_decoded_from_memory,
+                                               img_for_download = f'{image_name}_counted{image_extension}',
                                                cell_count = cell_count,
                                                cells_per_ml = cells_per_ml,
                                                x_pixels = x_pixels,
@@ -160,20 +187,10 @@ def count_cells():
                         return render_template("cell_count.html")
                     else:
                         flash('Please select an image file.', category='error')
-        return render_template("cell_count.html"), os.remove(os.path.join(upload_folder, f'counted_{filename}').replace("\\","/"))
+        return render_template("cell_count.html")
     else:
         flash('Please login', category='error')
         return redirect("/login")
-    
-
-def delete_images(): 
-    if current_user.is_authenticated:
-        user_id = current_user.get_id()
-        upload_folder = os.path.join(UPLOAD_FOLDER, user_id)
-        image = (request.files['image'])
-        filename = secure_filename(image.filename)
-        os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
-        print('testing function is running!') 
 
 
 

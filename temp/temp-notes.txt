@@ -136,3 +136,11 @@ time.ctime(last_modified)
     <a href="{{ url_for('cell_counting.count_cells') }}">
     <img src="{{ url_for('static', filename='images/cell_count.jpeg') }}" width = "200" class="left-fit" alt="Cell counting"></a>
 </div>
+
+=====================================================
+=====================================================
+
+src="{{ url_for('static', filename='uploads/'+user_id+'/'+img_counted) }}"
+src="{{ url_for('static', filename='uploads/'+user_id+'/'+img_th_to_show) }}" 
+src="{{ url_for('static', filename='uploads/'+user_id+'/'+img_for_download) }}"
+src="{{ url_for('static', filename='uploads/'+user_id+'/'+image_for_cell_counting) }}"

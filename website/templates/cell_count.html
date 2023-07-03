@@ -85,7 +85,7 @@ To count cells in your microscopy image, please follow the instructions below:</
 
                 
 <br>
-    {% if image_for_cell_counting %}
+    {% if img_orig_decoded_from_memory %}
     <br>
     <h2>Cell count: {{ cells_per_ml }} x 10<sup>6</sup> cells mL<sup>-1</sup> </h2>
     <p>Identified cells (by the cell-counting script): {{ cell_count }}</p>
@@ -96,26 +96,26 @@ To count cells in your microscopy image, please follow the instructions below:</
     <p>Pixel size: {{ pixel_size_nm }} nm 
     / Depth of the chamber: {{ depth_nm }} nm 
     / Minimal cell size: {{ minimal_expected_size }} µm</p>
-    <a href="{{ url_for('static', filename='uploads/'+user_id+'/'+img_for_download) }}" download>
+    <a href="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" download="{{ img_for_download }}">
         <button type="button" class="btn btn-primary">Download image with counted cells</button>
     </a>
     <br>
     <br>
     <div class="imgbox">
         <figcaption>Identified cells (for visualization, <i>To zero</i> and <i>Triangle</i> thresholds are combined)</figcaption> 
-        <img src="{{ url_for('static', filename='uploads/'+user_id+'/'+img_counted) }}" class="center-fit">
+        <img id="Identified cells", src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit">
     </div>
 
     <br>
     <div class="imgbox">
         <figcaption>Thresholded image</figcaption>
-        <img src="{{ url_for('static', filename='uploads/'+user_id+'/'+img_th_to_show) }}" class="center-fit">
+        <img src="data:image/jpeg;base64,{{ img_th_decoded_from_memory }}" class="center-fit">
     </div>
 
     <br>
     <div class="imgbox">
         <figcaption>Original image</figcaption>
-        <img src="{{ url_for('static', filename='uploads/'+user_id+'/'+image_for_cell_counting) }}" class="center-fit">
+        <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit">
     </div> 
 
     {% endif %}
