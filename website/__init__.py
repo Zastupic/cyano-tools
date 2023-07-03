@@ -22,14 +22,14 @@ def create_app():
     from .views import views
     from .auth import auth
     from .cell_count import cell_counting
-    from .fitting_decay import fitting_decay
+    from .cell_count_filament import cell_count_filament
     from .pixel_profiles import pixel_profiles
     from .models import User
       
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(cell_counting, url_prefix='/')
-    app.register_blueprint(fitting_decay, url_prefix='/')
+    app.register_blueprint(cell_count_filament, url_prefix='/')
     app.register_blueprint(pixel_profiles, url_prefix='/')
 
     #### DATABASE ####

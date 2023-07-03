@@ -6,9 +6,24 @@
 
 {% block content %}
     <h1> Welcome! </h1>
-    <p>To <b>count cells</b> on your image, please proceed to <a href="{{ url_for('cell_counting.count_cells') }}">this site</a></p>
-    <p>To <b>fit decay rate</b> in your data file, please proceed to <a href="{{ url_for('fitting_decay.get_decay_fit') }}">this site</a></p>
-    <p>To obtain <b>pixel profiles</b> of cells on your image, please proceed to <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}">this site</a></p>
+    <p>Please select a tool from the below options:</p>
+    <div class="container">
+            <div class="gallery">
+                <a href="{{ url_for('cell_counting.count_cells') }}" class="gallery__img gallery__item--1">
+                    <p>Cell counting - round cells</p>
+                    <img src="static/images/cells_6803.jpg" alt="Cell counting - round cells" class="gallery__img">
+                </a>
+                <a href="{{ url_for('cell_count_filament.count_filament_cells') }}" class="gallery__img gallery__item--2">
+                    <p>Cell counting - filament strains</p>
+                    <img src="static/images/cells_nostoc.jpeg" alt="Cell counting - filament strains" class="gallery__img">
+                </a>
+                <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}" class="gallery__img gallery__item--3">
+                    <p>Obtaining pixel profiles</p>
+                    <img src="static/images/pixel_profiles.jpg" alt="Pixel profiles" class="gallery__img">
+                </a>
+            </div>
+    </div>
+
     <footer id="footer">Copyright © <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a></footer>
 {% endblock %}
 
