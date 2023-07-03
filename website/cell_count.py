@@ -179,7 +179,8 @@ def count_cells():
                                                pixel_size_nm = pixel_size_nm,
                                                depth_nm = depth_nm,
                                                minimal_expected_size = minimal_expected_size,
-                                               manually_identified_cells = manually_identified_cells
+                                               manually_identified_cells = manually_identified_cells,
+                                               threshold = threshold,
                                                )
                         else:
                             cells_per_ml = '0.00'

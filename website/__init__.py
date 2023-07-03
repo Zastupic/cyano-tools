@@ -24,14 +24,12 @@ def create_app():
     from .cell_count import cell_counting
     from .fitting_decay import fitting_decay
     from .pixel_profiles import pixel_profiles
-    from .clear_uploads import clear_uploads
     from .models import User
       
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(cell_counting, url_prefix='/')
     app.register_blueprint(fitting_decay, url_prefix='/')
-    app.register_blueprint(clear_uploads, url_prefix='/')
     app.register_blueprint(pixel_profiles, url_prefix='/')
 
     #### DATABASE ####
