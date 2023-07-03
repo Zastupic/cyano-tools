@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect
+from flask import Blueprint, render_template, request, flash, redirect, after_this_request
 from PIL import Image as im
 import os, cv2
 from werkzeug.utils import secure_filename
@@ -113,10 +113,6 @@ def count_cells():
                             # Calculate number of cells per ml
                             cells_per_ml = round((cell_count)*(1/img_volume_ul)/1e6, 3)
 
-                            # saving grayscale image  
-                            img_grey_to_show = im.fromarray(img_grey)
-                            img_grey_to_show.save(os.path.join(upload_folder, f'grey_{filename}'))
-
                             # saving thresholded image  
                             img_th_to_show = im.fromarray(img_th)
                             img_th_to_show.save(os.path.join(upload_folder, f'thresholded_{filename}'))
@@ -124,8 +120,6 @@ def count_cells():
                             # saving counted image  
                             img_counted = im.fromarray(img_for_counted_cells)
                             img_counted.save(os.path.join(upload_folder, f'counted_{filename}'))
-
-                            testing_function()
 
                             # Mark the cell concentration to the image
                             img_for_download = cv2.putText(img_for_counted_cells, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
@@ -166,14 +160,24 @@ def count_cells():
                         return render_template("cell_count.html")
                     else:
                         flash('Please select an image file.', category='error')
-        return render_template("cell_count.html")
+        return render_template("cell_count.html"), os.remove(os.path.join(upload_folder, f'counted_{filename}').replace("\\","/"))
     else:
         flash('Please login', category='error')
         return redirect("/login")
     
 
-def testing_function(): 
-    print('testing function is running!')     
+def delete_images(): 
+    if current_user.is_authenticated:
+        user_id = current_user.get_id()
+        upload_folder = os.path.join(UPLOAD_FOLDER, user_id)
+        image = (request.files['image'])
+        filename = secure_filename(image.filename)
+        os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
+        print('testing function is running!') 
+
+
+
+        
 
     
 
