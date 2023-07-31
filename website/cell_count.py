@@ -13,14 +13,10 @@ def count_cells():
         if request.method == "POST":               
             if request.form.get('pixel_size') == '':
                 flash('Please enter pixel size', category='error')
-            elif request.form.get('chamber_depth') == '':
-                flash('Please enter depth of the counting chamber', category='error')
-            elif request.form.get('minimal_size') == '':
-                flash('Please enter minimal cell size', category='error')
             else:
                 pixel_size_nm = int(request.form.get('pixel_size'))
-                depth_nm = int(request.form.get('chamber_depth'))
-                minimal_expected_size = int(request.form.get('minimal_size')) # Get smallest cell size (in um)
+                depth_nm = int(request.form["chamber_depth_range"])
+                minimal_expected_size = float(request.form["minimal_diameter_range"]) # Get smallest cell size (in um)
                 manually_identified_cells = int(request.form.get('manually_identified_cells'))
                 minimum_area = 3.141592653*((minimal_expected_size * 1000 / pixel_size_nm)/2)**2 # Defines area of the smallest cell (in pixels)
 

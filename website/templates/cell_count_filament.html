@@ -5,13 +5,152 @@
 {% endblock %}
 
 {% block content %}
-<h1>Cell counting: filament strains</h1>
+<h1>Cell counting - filamentous strains</h1>
 <br>
-<p>Welcome to the app for counting cells of filamentous strains! 
+<p>Welcome to the app for counting cells of filamentous strains!
+<br>Please follow the instructions below:</p>
+<ol>
+    <li>Select threshold filter</li>
+    <li>Enter pixel size</li>
+    <li>Enter depth of the microscopy chamber</li>
+    <li>Enter minimal cell diameter</li>
+    <li>Enter additional parameters as necessary for splitting filaments into individual cells</li>
+    <li>Select image</li>
+    <li>Identify and count individual cells within filaments</li>
+    <li>Read the result and download the counted image</li>
+    <br>
+    <li>Optional: If some cells have been missed, a correction can be made by entering the number of missed cells into the respective form and repeating the count.
+    <i>(Also a negative number can be entered)</i>
+</ol> 
+<br> <br>
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count_filament.count_filament_cells') }}">
+    <label for="threshold_filter"><p class="font-weight-bold">{{ '1. Select threshold filter' }}</p></label>
+    <select name="threshold_filter" class="form-select" aria-label="threshold_filter">
+        <option selected="Triangle + Binary">Triangle + Binary</option>
+        <option value="Binary + Otsu">Binary + Otsu</option>
+        <option value="To zero + Triangle">To zero + Triangle</option>
+        <option value="Binary">Binary</option>
+        <option value="To zero">To zero</option>
+        <option value="Triangle">Triangle</option>
+        <option value="Otsu">Otsu</option>
+    </select>
+        <br>
+        <div class="form-group">
+        <label for="pixel_size"><p class="font-weight-bold">{{ '2. Enter pixel size (nm)' }}</p></label>
+        <input  
+            type="number"
+            id="pixel_size" 
+            class="form-control"
+            name="pixel_size"
+            value=""
+    />
+    <br>
+    <div class="form-group">
+    <p class="font-weight-bold">{{ '3. Adjust additional parameters' }}</p>
+    <br>
+    <div class="container">
+        <div class="gallery_sliders_filaments">
+            <div class="slidecontainer">
+                <input type="range" 
+                    min="10" max="1000" 
+                    value="120" 
+                    class="slider" 
+                    id="chamber_depth_range"/>
+            </div>
+            <p>Depth of the counting chamber (nm): <span id="chamber_depth"></span></p>
+            <div class="slidecontainer">
+                <input type="range" 
+                min="0.5" max="30.0" 
+                value="1.0"
+                step="0.1"  
+                class="slider" 
+                id="minimal_diameter_range"/>
+            </div>
+            <p>Minimal expected cell diameter (µm): <span id="minimal_diameter"></span></p>
+            <div class="slidecontainer">
+                <input type="range" 
+                min="1" max="20" 
+                value="4" 
+                class="slider" 
+                id="iterations_range"/>
+            </div>
+            <p>Number of iterations: <span id="number_of_iterations"></span></p>
+            <div class="slidecontainer">
+                <input type="range" 
+                min="0.1" max="2.0" 
+                value="1.4" 
+                step="0.1" 
+                class="slider" 
+                id="factor_1_multiplication_range"/>
+            </div>
+            <p>Multiplication factor: <span id="factor_1_multiplication"></span></p>
+            <div class="slidecontainer">
+            <input type="range" 
+                min="1" max="100" 
+                value="28" 
+                class="slider" 
+                id="factor_2_distance_range"/>
+            </div>
+            <p>Distance factor: <span id="factor_2_distance"></span></p>  
+        </div>
+    </div>
+    <br>
+    <div class="form-group">
+    <label for="manually_identified_cells"><p class="font-weight-bold">{{ '4. Enter number of missed cells (optional, for repeated counting)' }}</p></label>
+    <input  
+        type="number"
+        class="form-control"
+        id="manually_identified_cells" 
+        name="manually_identified_cells"
+        value="0"
+    />
+    </div>
+    <br>
+    <label class="form-label" for="customFile"><p class="font-weight-bold">5. Select your image</p></label>
+    <input class="form-control" type="file" name="image">
+    <br>
+    <button type="submit" class="btn btn-primary">Split the filaments and count individual cells</button>
+    <br>
+    </div>
+</form>
+
 <br>
-<p>This site is under construction
+{% if img_orig_decoded_from_memory %}
+    <br>
+    <h2>Cell count: {{ cells_per_ml }} x 10<sup>6</sup> cells mL<sup>-1</sup> </h2>
+    <p>Identified cells (by the cell-counting script): {{ cell_count }}</p>
+    <p>Additionally identified cells (manual correction): {{ manually_identified_cells }}</p>
+    <p>Image resolution: {{ x_pixels }} x {{ y_pixels }} pixels </p>
+    <p>Image area: {{ img_area_mm2 }} mm<sup>2</sup> ({{ x_um }} x {{ y_um }} µm)</p>
+    <p>Volume of the imaged area: {{ img_volume_nl }} nL</p>
+    <p>Pixel size: {{ pixel_size_nm }} nm 
+    / Depth of the chamber: {{ depth_nm }} nm 
+    / Minimal cell size: {{ minimal_expected_size }} µm</p>
+    <a href="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" download="{{ img_for_download }}">
+        <button type="button" class="btn btn-primary">Download image with counted cells</button>
+    </a>
+    <br>
+    <br>
+    <div class="imgbox">
+        <figcaption>Identified cells (for visualization, <i>To zero</i> and <i>Triangle</i> thresholds are combined)</figcaption> 
+        <img id="Identified cells", src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit">
+    </div>
+
+    <br>
+    <div class="imgbox">
+        <figcaption>Thresholded image (<i>{{ threshold }}</i> threshold selected)</figcaption>
+        <img src="data:image/jpeg;base64,{{ img_th_decoded_from_memory }}" class="center-fit">
+    </div>
+
+    <br>
+    <div class="imgbox">
+        <figcaption>Original image</figcaption>
+        <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit">
+    </div> 
+
+{% endif %}
 <br>
-<div class="imgbox">
-    <img src="{{ url_for('static', filename='images/under_construction.jpg') }}" width = "200" class="left-fit">
-</div>
+
+<script src="{{url_for('static', filename='cell_count_filament.js')}}"></script>
+
 {% endblock %}

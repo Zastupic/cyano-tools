@@ -42,29 +42,36 @@ To count cells in your fluorescence microscopy image please follow the instructi
         id="pixel_size" 
         class="form-control"
         name="pixel_size"
-        value=""
-    />
+        value=""/>
     <br>
-    <div class="form-group">
-    <label for="chamber_depth"><p class="font-weight-bold">{{ '3. Enter depth of the microscopy chamber (nm)' }}</p></label>
-    <input  
-        type="number"
-        class="form-control"
-        id="chamber_depth"
-        name="chamber_depth"
-        value="120"
-    />
-    <br>
-    <div class="form-group">
-    <label for="minimal_size"><p class="font-weight-bold">{{ '4. Enter minimal cell diameter (µm)' }}</p></label>
-    <br>
-    <input  
-        type="number"
-        class="form-control"
-        id="minimal_size"
-        name="minimal_size"
-        value="1"
-    />
+    <p class="font-weight-bold">{{ '3. Adjust additional parameters' }}</p>
+    <div class="container">
+        <div class="gallery_sliders_cell_count">
+            <span STYLE="font-size:9.5pt">10</span>
+            <div class="slidecontainer">
+                <input type="range" 
+                    min="10" max="1000" 
+                    value="120" 
+                    class="slider" 
+                    name="chamber_depth_range"
+                    id="chamber_depth_range"/>
+            </div>
+            <span STYLE="font-size:9.5pt">1000</span>
+            <p>Depth of the counting chamber (nm): <span id="chamber_depth"></span></p>
+            <span STYLE="font-size:9.5pt">0.5</span>
+            <div class="slidecontainer">
+                <input type="range" 
+                min="0.5" max="30.0" 
+                value="1.0"
+                step="0.1"  
+                class="slider" 
+                name="minimal_diameter_range"
+                id="minimal_diameter_range"/>
+            </div>
+            <span STYLE="font-size:9.5pt">30</span>
+            <p>Minimal expected cell diameter (µm): <span id="minimal_diameter"></span></p>
+        </div>
+    </div>
     <br>
     <div class="form-group">
     <label for="manually_identified_cells"><p class="font-weight-bold">{{ '5. Enter number of missed cells (optional, for repeated counting)' }}</p></label>
@@ -85,7 +92,7 @@ To count cells in your fluorescence microscopy image please follow the instructi
 
                 
 <br>
-    {% if img_orig_decoded_from_memory %}
+{% if img_orig_decoded_from_memory %}
     <br>
     <h2>Cell count: {{ cells_per_ml }} x 10<sup>6</sup> cells mL<sup>-1</sup> </h2>
     <p>Identified cells (by the cell-counting script): {{ cell_count }}</p>
@@ -118,7 +125,9 @@ To count cells in your fluorescence microscopy image please follow the instructi
         <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit">
     </div> 
 
-    {% endif %}
+{% endif %}
 <br>
+
+<script src="{{url_for('static', filename='cell_count.js')}}"></script>
 
 {% endblock %}
