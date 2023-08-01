@@ -14,4 +14,15 @@
 <div class="imgbox">
     <img src="{{ url_for('static', filename='images/under_construction.jpg') }}" width = "200" class="left-fit">
 </div>
+
+    <div class="imgbox">
+        <div class="insideWrapper">
+            <img src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}"  class="coveredImage">
+            <canvas id="myCanvas" class="coveringCanvas" style="border:1px solid grey" ></canvas>
+        </div>
+    </div>
+
+
+
+
 {% endblock %}
