@@ -8,26 +8,30 @@
 <h1>Cell counting - filamentous strains</h1>
 <br>
 <p>Welcome to the app for counting cells of filamentous strains!
-<br>Please follow the instructions below:</p>
+<br>To identify and count individual cells within filaments on your picture, please follow the instructions below:</p>
 <ol>
     <li>Select threshold filter</li>
     <li>Enter pixel size</li>
-    <li>Enter depth of the microscopy chamber</li>
-    <li>Enter minimal cell diameter</li>
-    <li>Enter additional parameters as necessary for splitting filaments into individual cells</li>
+    <li>Enter additional parameters:</li>
+    <ul>
+        <li>Depth of the microscopy chamber</li>
+        <li>Minimal cell diameter</li>
+        <li>Number of iterations</li>
+        <li>Multiplication factor (articial, needed to determine whether a newly identified cell lies within already identified cell)</li>
+        <li>Distance factor (artificial, sets disatnce of centers between two cells within a filament) </li>
+    </ul>
     <li>Select image</li>
     <li>Identify and count individual cells within filaments</li>
     <li>Read the result and download the counted image</li>
     <br>
-    <li>Optional: If some cells have been missed, a correction can be made by entering the number of missed cells into the respective form and repeating the count.
-    <i>(Also a negative number can be entered)</i>
+    <li>Optional: If some cells have been missed, a correction can be made by identifying the missing cells by clicking the mouse on the counted image.</li>
 </ol> 
 <br> <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count_filament.count_filament_cells') }}">
     <label for="threshold_filter"><p class="font-weight-bold">{{ '1. Select threshold filter' }}</p></label>
     <select name="threshold_filter" class="form-select" aria-label="threshold_filter">
-        <option selected="Triangle + Binary">Triangle + Binary</option>
-        <option value="Binary + Otsu">Binary + Otsu</option>
+        <option selected="Binary + Otsu">Binary + Otsu</option>
+        <option value="Triangle + Binary">Triangle + Binary</option>
         <option value="To zero + Triangle">To zero + Triangle</option>
         <option value="Binary">Binary</option>
         <option value="To zero">To zero</option>
@@ -50,47 +54,66 @@
     <br>
     <div class="container">
         <div class="gallery_sliders_filaments">
+            <span STYLE="font-size:9.5pt">10</span>
             <div class="slidecontainer">
                 <input type="range" 
                     min="10" max="1000" 
                     value="120" 
                     class="slider" 
+                    name = "chamber_depth_range"
                     id="chamber_depth_range"/>
             </div>
+            <span STYLE="font-size:9.5pt">1000</span>
             <p>Depth of the counting chamber (nm): <span id="chamber_depth"></span></p>
+
+            <span STYLE="font-size:9.5pt">0.5</span>
             <div class="slidecontainer">
                 <input type="range" 
                 min="0.5" max="30.0" 
                 value="1.0"
                 step="0.1"  
                 class="slider" 
+                name="minimal_diameter_range"
                 id="minimal_diameter_range"/>
             </div>
+            <span STYLE="font-size:9.5pt">30</span>
             <p>Minimal expected cell diameter (µm): <span id="minimal_diameter"></span></p>
+
+            <span STYLE="font-size:9.5pt">1</span>
             <div class="slidecontainer">
                 <input type="range" 
                 min="1" max="20" 
                 value="4" 
                 class="slider" 
+                name="iterations_range"
                 id="iterations_range"/>
             </div>
+            <span STYLE="font-size:9.5pt">20</span>
             <p>Number of iterations: <span id="number_of_iterations"></span></p>
+
+            <span STYLE="font-size:9.5pt">0.1</span>
             <div class="slidecontainer">
                 <input type="range" 
                 min="0.1" max="2.0" 
                 value="1.4" 
                 step="0.1" 
                 class="slider" 
+                name="factor_1_multiplication_range"
                 id="factor_1_multiplication_range"/>
             </div>
+            <span STYLE="font-size:9.5pt">2.0</span>
             <p>Multiplication factor: <span id="factor_1_multiplication"></span></p>
+
+            <span STYLE="font-size:9.5pt">1</span>            
             <div class="slidecontainer">
             <input type="range" 
                 min="1" max="100" 
                 value="28" 
                 class="slider" 
+                name="factor_2_distance_range"
                 id="factor_2_distance_range"/>
             </div>
+            <span STYLE="font-size:9.5pt">100</span>
             <p>Distance factor: <span id="factor_2_distance"></span></p>  
         </div>
     </div>
@@ -106,7 +129,7 @@
     />
     </div>
     <br>
-    <label class="form-label" for="customFile"><p class="font-weight-bold">5. Select your image</p></label>
+    <label class="form-label" for="customFile"><p class="font-weight-bold">5. Select image (up to 1800 x 1800 px)</p></label>
     <input class="form-control" type="file" name="image">
     <br>
     <button type="submit" class="btn btn-primary">Split the filaments and count individual cells</button>
@@ -132,16 +155,10 @@
     <br>
     <br>
     <div class="imgbox">
-        <figcaption>Identified cells (for visualization, <i>To zero</i> and <i>Triangle</i> thresholds are combined)</figcaption> 
-        <img id="Identified cells", src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit">
+        <figcaption>Identified cells (for visualization, <i>To zero</i> and <i>Triangle</i> thresholds are combined). To manually count missed cells, start clicking on the image below.</figcaption>
+        <p><b>Missed cells: <span id="identified_cells"></span></b></p>
+        <img id="Identified_cells", src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" alt="Identified cells">
     </div>
-
-    <br>
-    <div class="imgbox">
-        <figcaption>Thresholded image (<i>{{ threshold }}</i> threshold selected)</figcaption>
-        <img src="data:image/jpeg;base64,{{ img_th_decoded_from_memory }}" class="center-fit">
-    </div>
-
     <br>
     <div class="imgbox">
         <figcaption>Original image</figcaption>
@@ -151,6 +168,6 @@
 {% endif %}
 <br>
 
-<script src="{{url_for('static', filename='cell_count_filament.js')}}"></script>
+<script src="{{url_for('static', filename='js_cell_count_filament.js')}}"></script>
 
 {% endblock %}

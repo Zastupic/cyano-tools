@@ -20,7 +20,9 @@ def count_cells():
                 manually_identified_cells = int(request.form.get('manually_identified_cells'))
                 minimum_area = 3.141592653*((minimal_expected_size * 1000 / pixel_size_nm)/2)**2 # Defines area of the smallest cell (in pixels)
 
+                ####################################
                 ### Load image for cell counting ###
+                ####################################
                 if 'image' in request.files:
                     image = (request.files['image'])
                     image_name = str.lower(os.path.splitext(image.filename)[0])
@@ -71,7 +73,9 @@ def count_cells():
                         # Select ararys from the applied threshold fof further processing 
                         img_th = img_th[1]
 
+                        ############################
                         ### Mark counted objects ###
+                        ############################
                         contours_th = cv2.findContours(img_th, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[0] 
                         cell_count = 0
                         rough_coordinates_autmated_counting = []
@@ -98,7 +102,9 @@ def count_cells():
                         img_th_to_show = im.fromarray(img_th)
                         img_counted = im.fromarray(img_for_counted_cells)
                         
+                        ##############################################
                         ### 4. Calculate cell number per ml sample ###
+                        ##############################################
                         y_pixels, x_pixels, channels = img_for_counted_cells.shape
 
                         # Calculate image area
@@ -188,8 +194,8 @@ def count_cells():
         flash('Please login', category='error')
         return redirect("/login")
 
-
-
+def additional_cells_marking():
+    return render_template("cell_count.html")
         
 
     
