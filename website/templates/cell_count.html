@@ -26,73 +26,78 @@ To count cells on your fluorescence microscopy image, please follow the instruct
 </ol> 
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_counting.count_cells') }}">
-<label for="threshold_filter"><p class="font-weight-bold">{{ '1. Select threshold filter' }}</p></label>
-<select name="threshold_filter" class="form-select" aria-label="threshold_filter">
-    <option selected="Triangle + Binary">Triangle + Binary</option>
-    <option value="Binary + Otsu">Binary + Otsu</option>
-    <option value="To zero + Triangle">To zero + Triangle</option>
-    <option value="Binary">Binary</option>
-    <option value="To zero">To zero</option>
-    <option value="Triangle">Triangle</option>
-    <option value="Otsu">Otsu</option>
-</select>
-    <br>
-    <div class="form-group">
-    <label for="pixel_size"><p class="font-weight-bold">{{ '2. Enter pixel size (nm)' }}</p></label>
-    <input  
-        type="number"
-        id="pixel_size" 
-        class="form-control"
-        name="pixel_size"
-        value=""/>
-    <br>
-    <p class="font-weight-bold">{{ '3. Adjust additional parameters' }}</p>
-    <div class="container">
-        <div class="gallery_sliders_cell_count">
-            <span STYLE="font-size:9.5pt">10</span>
-            <div class="slidecontainer">
-                <input type="range" 
-                    min="10" max="1000" 
-                    value="120" 
+    <label for="threshold_filter"><p class="font-weight-bold">{{ '1. Select threshold filter' }}</p></label>
+    <select name="threshold_filter" class="form-select" aria-label="threshold_filter">
+        <option selected="Triangle + Binary">Triangle + Binary</option>
+        <option value="Binary + Otsu">Binary + Otsu</option>
+        <option value="To zero + Triangle">To zero + Triangle</option>
+        <option value="Binary">Binary</option>
+        <option value="To zero">To zero</option>
+        <option value="Triangle">Triangle</option>
+        <option value="Otsu">Otsu</option>
+    </select>
+        <br>
+        <div class="form-group">
+        <label for="pixel_size"><p class="font-weight-bold">{{ '2. Enter pixel size (nm)' }}</p></label>
+        <input  
+            type="number"
+            id="pixel_size" 
+            class="form-control"
+            name="pixel_size"
+            value=""/>
+        <br>
+        <p class="font-weight-bold">{{ '3. Adjust additional parameters' }}</p>
+        <div class="container">
+            <div class="gallery_sliders_cell_count">
+                <span STYLE="font-size:9.5pt">10</span>
+                <div class="slidecontainer">
+                    <input type="range" 
+                        min="10" max="1000" 
+                        value="120" 
+                        class="slider" 
+                        name="chamber_depth_range"
+                        id="chamber_depth_range"/>
+                </div>
+                <span STYLE="font-size:9.5pt">1000</span>
+                <p>Depth of the counting chamber (nm): <span id="chamber_depth"></span></p>
+
+                <span STYLE="font-size:9.5pt">0.5</span>
+                <div class="slidecontainer">
+                    <input type="range" 
+                    min="0.5" max="30.0" 
+                    value="1.0"
+                    step="0.1"  
                     class="slider" 
-                    name="chamber_depth_range"
-                    id="chamber_depth_range"/>
-            </div>
-            <span STYLE="font-size:9.5pt">1000</span>
-            <p>Depth of the counting chamber (nm): <span id="chamber_depth"></span></p>
+                    name="minimal_diameter_range"
+                    id="minimal_diameter_range"/>
+                </div>
+                <span STYLE="font-size:9.5pt">30</span>
+                <p>Minimal expected cell diameter (µm): <span id="minimal_diameter"></span></p>
 
-            <span STYLE="font-size:9.5pt">0.5</span>
-            <div class="slidecontainer">
-                <input type="range" 
-                min="0.5" max="30.0" 
-                value="1.0"
-                step="0.1"  
-                class="slider" 
-                name="minimal_diameter_range"
-                id="minimal_diameter_range"/>
             </div>
-            <span STYLE="font-size:9.5pt">30</span>
-            <p>Minimal expected cell diameter (µm): <span id="minimal_diameter"></span></p>
-
         </div>
-    </div>
-    <br>
-    <div class="form-group">
-    <label for="manually_identified_cells"><p class="font-weight-bold">{{ '4. Enter number of missed cells (optional, for repeated counting)' }}</p></label>
-    <input  
-        type="number"
-        class="form-control"
-        id="manually_identified_cells" 
-        name="manually_identified_cells"
-        value="0"
-    />
-    </div>
-    <br>
-    <label class="form-label" for="customFile"><p class="font-weight-bold">5. Select your image</p></label>
-    <input class="form-control" type="file" name="image">
-    <br>
-    <button type="submit" class="btn btn-primary">Count the cells</button>
+        <br>
+        <div class="form-group">
+        <label for="manually_identified_cells"><p class="font-weight-bold">{{ '4. Enter number of missed cells (optional, for repeated counting)' }}</p></label>
+        <input  
+            type="number"
+            class="form-control"
+            id="manually_identified_cells" 
+            name="manually_identified_cells"
+            value="0"
+        />
+        </div>
+        <br>
+        <label class="form-label" for="customFile"><p class="font-weight-bold">5. Select your image</p></label>
+        <input class="form-control" type="file" name="image">
+        <br>
+        <button type="submit" class="btn btn-primary">Count the cells</button>
+        <a href="{{url_for('static', filename='images/cells_6803_example.jpeg')}}" download="example_image">
+            <button type="button" class="btn btn-light">Download an example image</button>
+        </a>
 </form>
+
+
 
                 
 <br>
