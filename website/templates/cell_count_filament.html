@@ -15,7 +15,7 @@
     <li>Enter additional parameters:</li>
     <ul>
         <li>Depth of the microscopy chamber</li>
-        <li>Minimal cell diameter</li>
+        <li>Minimal cell diameter (smaller objects will be ingnored)</li>
         <li>Number of iterations</li>
         <li>Multiplication factor (articial, needed to determine whether a newly identified cell lies within already identified cell)</li>
         <li>Distance factor (artificial, sets disatnce of centers between two cells within a filament) </li>
@@ -133,7 +133,7 @@
     <input class="form-control" type="file" name="image">
     <br>
     <button type="submit" class="btn btn-primary">Split the filaments and count individual cells</button>
-    <a href="{{url_for('static', filename='images/cells_nostoc_example.jpg')}}" download="example_image">
+    <a href="{{url_for('static', filename='images/cells_filamentous_example.jpg')}}" download="example_image">
         <button type="button" class="btn btn-light">Download an example image</button>
     </a>
     <br>
@@ -157,10 +157,37 @@
     </a>
     <br>
     <br>
+    <br>
+    <p class="font-weight-bold">{{ 'Select expected cell size (in pixels, can be changed dynamically)' }}</p>
+    <div class="container">
+        <div class="gallery_sliders_pixel_profile">
+            <span STYLE="font-size:9.5pt">1</span>
+            <div class="slidecontainer">
+                <input type="range" 
+                min="1" max="250" 
+                value="10"
+                step="1"  
+                class="slider" 
+                name="expected_cell_size_range"
+                id="expected_cell_size_px_range"/>
+            </div>
+            <span STYLE="font-size:9.5pt">250</span>
+            <p>Selected cell diameter (px): <span id="expected_cell_size_px"></span></p>
+        </div>
+    </div>
     <div class="imgbox">
         <figcaption>Identified cells (for visualization, <i>To zero</i> and <i>Triangle</i> thresholds are combined). To manually count missed cells, start clicking on the image below.</figcaption>
         <p><b>Missed cells: <span id="identified_cells"></span></b></p>
+        <div class="imgbox" id="imgbox">
+            <div class="insideWrapper">
+                <img src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" id="Identified_cells" alt="Identified cells">
+                <canvas class="coveringCanvas" id="canvas_mouse_clicking">
+                </canvas>
+            </div>
+        </div>
+        <!-- 
         <img id="Identified_cells", src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" alt="Identified cells">
+        -->
     </div>
     <br>
     <div class="imgbox">

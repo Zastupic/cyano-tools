@@ -9,8 +9,8 @@
     <form method="POST">
         <h3 allign="center">Welcome to the cell counting app! </h3>
         <br>
-        <p>To proceed, please login</p>
-        <p>If you are a new visitor, please <a href="{{ url_for('auth.sign_up') }}">create an account</a></p>
+        <p>For the best user experience, it is recommended to use Chrome or Edge browser.</p>
+        <p>To proceed, please login. If you are a new visitor, please <a href="{{ url_for('auth.sign_up') }}">create an account</a></p>
         <br>
         <div class="form-group">
             <label for="email">Email address</label>
@@ -34,7 +34,5 @@
         <br />
         <button type="submit" class="btn btn-primary">Login</button>
     </form>
-
-    <footer id="footer">Contact: <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a></footer>
 {% endblock %}
 

@@ -29,7 +29,7 @@ def count_cells():
                     image_extension = str.lower(os.path.splitext(image.filename)[1])
                     
                     if image_extension in ALLOWED_EXTENSIONS:
-                        user_id = current_user.get_id()
+                        #user_id = current_user.get_id()
                         upload_folder = UPLOAD_FOLDER
                         
                         if os.path.isdir(upload_folder) == False:
@@ -160,29 +160,27 @@ def count_cells():
                             # deleting original image
                             os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
 
-                            print(cells_per_ml)
-
                             return render_template("cell_count.html", 
-                                               user_id = user_id,
-                                               img_orig_decoded_from_memory = img_orig_decoded_from_memory, 
-                                               img_th_decoded_from_memory = img_th_decoded_from_memory,
-                                               img_counted_decoded_from_memory = img_counted_decoded_from_memory,
-                                               img_for_download_decoded_from_memory = img_for_download_decoded_from_memory,
-                                               img_for_download = f'{image_name}_counted{image_extension}',
-                                               cell_count = cell_count,
-                                               cells_per_ml = cells_per_ml,
-                                               x_pixels = x_pixels,
-                                               y_pixels = y_pixels,
-                                               img_area_mm2 = img_area_mm2,
-                                               img_volume_nl = img_volume_nl,
-                                               x_um = x_um,
-                                               y_um = y_um,
-                                               pixel_size_nm = pixel_size_nm,
-                                               depth_nm = depth_nm,
-                                               minimal_expected_size = minimal_expected_size,
-                                               manually_identified_cells = manually_identified_cells,
-                                               threshold = threshold,
-                                               )
+                                #user_id = user_id,
+                                img_orig_decoded_from_memory = img_orig_decoded_from_memory, 
+                                img_th_decoded_from_memory = img_th_decoded_from_memory,
+                                img_counted_decoded_from_memory = img_counted_decoded_from_memory,
+                                img_for_download_decoded_from_memory = img_for_download_decoded_from_memory,
+                                img_for_download = f'{image_name}_counted{image_extension}',
+                                cell_count = cell_count,
+                                cells_per_ml = cells_per_ml,
+                                x_pixels = x_pixels,
+                                y_pixels = y_pixels,
+                                img_area_mm2 = img_area_mm2,
+                                img_volume_nl = img_volume_nl,
+                                x_um = x_um,
+                                y_um = y_um,
+                                pixel_size_nm = pixel_size_nm,
+                                depth_nm = depth_nm,
+                                minimal_expected_size = minimal_expected_size,
+                                manually_identified_cells = manually_identified_cells,
+                                threshold = threshold,
+                                )
                         else:
                             cells_per_ml = '0.00'
                             flash('Pixel size is too low', category='error')

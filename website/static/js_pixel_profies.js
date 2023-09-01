@@ -1,41 +1,75 @@
+// SLIDERS //
+if (document.getElementById("expected_cell_size_range") != null){
 
-// MOUSE CLICKING //
-img = document.getElementById("Identified_cells");
+  var slider_1 = document.getElementById("expected_cell_size_range");
+  var output_1 = document.getElementById("expected_cell_size");
 
-img.x = img.getBoundingClientRect().left;
-img.y = img.getBoundingClientRect().top;
-
-coordinates = []; // Create empty array
-
-//img_size_y = img.height;
-//img_size_x = img.width;
-//
-//canvas = document.getElementById("myCanvas");
-//canvas.width = img_size_x;
-//canvas.height = img_size_y;
-//ctx = canvas.getContext("2d");
-//ctx.drawImage(img, 0, 0, img_size_x, img_size_y);
-
-function click(e) {
-  img_size_y = img.height;
-  img_size_x = img.width;
-  x_coord = e.clientX - img.x;
-  y_coord = e.clientY - img.y;
-  identified_cells = coordinates.length + 1;
-
-  document.getElementById("identified_cells").innerHTML = identified_cells;
-  document.getElementById("output").innerHTML = 
-    "Missed cells coordinates: X: " + x_coord + ", Y: " + y_coord + 
-    " (image size: " + img_size_x + " x " + img_size_y + " px)";
-  coordinates.push({x_coord, y_coord, img_size_x, img_size_y}); // Append data to array
-  //console.log(coordinates)
-
-  //canvas = document.getElementById("myCanvas");
-  //canvas.width = img_size_x;
-  //canvas.height = img_size_y;
-  //ctx = canvas.getContext("2d");
-  //ctx.drawImage(img, 0, 0, img_size_x, img_size_y);
+  output_1.innerHTML = slider_1.value;
+  slider_1.oninput = function() {
+    output_1.innerHTML = this.value;
+  }
 }
 
-img.addEventListener("click", click);
+// MOUSE CLICKING - COORDINATES//
+const canvas = document.getElementById("canvas_mouse_clicking");
+const img = document.getElementById("img_orig_decoded_from_memory");
+
+let img_size_y = img.height;
+let img_size_x = img.width;
+
+coordinates = [];
+
+function getMousePosition(canvas, event) {
+  let rect = canvas.getBoundingClientRect();
+
+  canvas.height = rect.height;
+  canvas.width = rect.width;
+
+  let canvas_size_y = canvas.height;
+  let canvas_size_x = canvas.width;
+
+  const context = canvas.getContext("2d");
+
+  let x = (event.clientX - rect.left).toFixed(0); //.toFixed(0) = zero digits
+  let y = (event.clientY - rect.top).toFixed(0);
+
+  console.log(x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y);
+  coordinates.push({x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y});
+ 
+  // DRAWING A CIRCLE//
+  var circle_size = slider_1.value;
+
+  context.beginPath();
+  context.arc(x, y, circle_size, 0, 2*Math.PI, false);  
+  context.lineWidth = 1;
+  context.strokeStyle = '#FF0000';
+  context.stroke();
+
+  // DRAWING ALL CIRCLES//
+  for (let i = 0; i < coordinates.length; i++){ 
+    context.beginPath();
+    context.arc(coordinates[i].x, coordinates[i].y, circle_size, 0, 2*Math.PI, false);  
+    context.lineWidth = 1;
+    context.strokeStyle = '#FF0000';
+    context.stroke();
+  }
+
+  //document.getElementById("box_width").innerHTML = ("Resolution of displayed image is " + canvas_size_x + " x " + canvas_size_y + " pixels.");
+
+  // SENDING COORDINATES TO FLASK
+  const coordinates_for_flask = JSON.stringify(coordinates); // Stringify converts a JavaScript object or value to a JSON string
+  $.ajax({
+      url:"/pixel_profiles/coordinates",
+      type:"POST",
+      contentType: "application/json",
+      data: JSON.stringify(coordinates_for_flask)});
+}
+
+// defince mouse click event
+canvas.addEventListener("mousedown", function(e){
+  getMousePosition(canvas, e);
+  });
+
+
+
 
