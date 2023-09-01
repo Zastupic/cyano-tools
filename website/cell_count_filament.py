@@ -26,6 +26,7 @@ def count_filament_cells():
                 factor_multiplying = float(request.form["factor_1_multiplication_range"]) 
                 factor_distance_centers = int(request.form["factor_2_distance_range"]) 
                 number_of_iterations = int(request.form["iterations_range"])
+                
                 ####################################
                 ### Load image for cell counting ###
                 ####################################
@@ -35,7 +36,7 @@ def count_filament_cells():
                     image_extension = str.lower(os.path.splitext(image.filename)[1])
                 
                     if image_extension in ALLOWED_EXTENSIONS:
-                        user_id = current_user.get_id()
+                        #user_id = current_user.get_id()
                         upload_folder = UPLOAD_FOLDER
                         
                         if os.path.isdir(upload_folder) == False:
@@ -52,6 +53,7 @@ def count_filament_cells():
                         if y_pixels_img_orig*x_pixels_img_orig < 3.25e6:  
                             img_blur = cv2.blur(img_orig, (3,3)) # Noise reduction before application of threshold 
                             img_grey = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY) # Converting image to gray 
+                            
                             # Get threshold selection from select box on webpage
                             threshold = (request.form.get('threshold_filter'))
                             img_th = img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
@@ -70,6 +72,7 @@ def count_filament_cells():
                             elif threshold == 'Otsu':
                                 img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_OTSU)[1]
                             print('Threshold: '+threshold)
+                            
                             # Preparing images for further processing
                             img_for_counted_cells = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TOZERO + cv2.THRESH_TRIANGLE)[1]
                             img_for_counted_cells = cv2.cvtColor(img_for_counted_cells, cv2.COLOR_GRAY2BGR)
@@ -77,6 +80,7 @@ def count_filament_cells():
                             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)) # Define kernel for contour finding
                             img_noise_reduced = cv2.morphologyEx(img_th,cv2.MORPH_OPEN,kernel, iterations = 3) # noise removal (erosion followed by dilation)
                             img_background = cv2.dilate(img_noise_reduced,kernel,iterations=2) # Finding background area: dilate = make cell areas thicker (opposite of erosion)
+                            
                             #########################################################################################################
                             # iteration 1: reference contours (basic, most objects identified but individual cells not separated well)
                             #########################################################################################################
@@ -93,6 +97,7 @@ def count_filament_cells():
                             _, thresh = cv2.threshold(img_watershed, 150, 255, cv2.THRESH_TRIANGLE+cv2.THRESH_BINARY_INV) # threshold watershed    
                             contours_watershed_th_reference = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE) # find contours of watershed
                             contours_watershed_last = contours_watershed_th_reference # asigning value to temporal parameter
+                            
                             ###############################################################################################################################################################
                             # iterations 2-n: identification of individual cells in filaments (step-wise increase of scaling_factor_threshold) - all enclosing circles on top of each other
                             ###############################################################################################################################################################
@@ -106,6 +111,7 @@ def count_filament_cells():
                                 circles_to_be_deleted_old = []
                                 circles_to_be_deleted_actual = []
                                 circles_to_be_deleted_actual_temp = []
+                                
                                 # defining step for the iterations
                                 scaling_factor_threshold = scaling_factor_threshold+0.1
                                 img_distance_transformed = cv2.distanceTransform(img_noise_reduced,cv2.DIST_L2,scaling_factor_distance_transform) # Finding foreground area
@@ -121,20 +127,24 @@ def count_filament_cells():
                                 contours_watershed_th = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE) # find contours of watershed
                                 contours_watershed_th_sorted = sorted(contours_watershed_th[0], key=cv2.contourArea) # sort contours 
                                 contours_watershed_th_sorted = contours_watershed_th_sorted[:-1] # remove last contour that takes the whole image as a contour
+                                
                                 # extact list of contours from contours tuple 
                                 contours_watershed_th_temp = list(contours_watershed_th)
                                 contours_watershed_th_temp[0] = contours_watershed_th_sorted
                                 contours_watershed_th = tuple(contours_watershed_th_temp)
                                 img_for_counted_cells = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TOZERO + cv2.THRESH_TRIANGLE)[1]
                                 img_for_counted_cells = cv2.cvtColor(img_for_counted_cells, cv2.COLOR_GRAY2BGR)
+                                
                                 for i in range(len(contours_watershed_th[0])):
                                     contour = contours_watershed_th[0][i]
                                     ((x, y), r) = cv2.minEnclosingCircle(contour)
+                                    
                                     if r > min_diameter_px:
                                         x_coord_actual_circle = int(x)
                                         y_coord_actual_circle = int(y)
                                         radius_actual_circle = int(r)
                                         circles_all_actual.append(int(i))
+                                        
                                         for a in range(len(contours_watershed_last[0])):
                                             contour = contours_watershed_last[0][a]
                                             ((c, d), e) = cv2.minEnclosingCircle(contour)
@@ -143,15 +153,19 @@ def count_filament_cells():
                                             radius_circle_last = int(e)
                                             circles_all_old.append(int(a))
                                             distance_centers = np.sqrt((x_coord_actual_circle - x_coord_circle_last)**2 + (y_coord_actual_circle - y_coord_circle_last)**2)
-                                                # if the new circle lies within the old circle (slightly increased) 
+                                            
+                                            # if the new circle lies within the old circle (slightly increased) 
                                             if factor_multiplying * radius_circle_last > (distance_centers + radius_actual_circle):
                                                 circles_to_be_deleted_old.append(int(a))
                                                 circles_to_remain_actual_temp.append(int(i))
+                                            
                                             elif factor_multiplying * radius_actual_circle >= (distance_centers + radius_circle_last) and distance_centers < radius_circle_last:
                                                 circles_to_be_deleted_actual.append(int(i))
                                                 circles_to_remain_old_temp.append(int(a))
+                                            
                                             elif distance_centers < factor_distance_centers:
                                                 circles_to_be_deleted_old.append(int(i))
+                                
                                 # keep only a single copy of each value
                                 circles_to_be_deleted_old = [*set(circles_to_be_deleted_old)]
                                 circles_to_be_deleted_actual = [*set(circles_to_be_deleted_actual)]
@@ -161,6 +175,7 @@ def count_filament_cells():
                                 circles_to_remain_actual_temp = [*set(circles_to_remain_actual_temp)]
                                 circles_all_old = [*set(circles_all_old)]
                                 circles_all_actual = [*set(circles_all_actual)]
+                                
                                 # subtract circles to be deleted
                                 circles_to_remain_old = [x for x in circles_all_old if x not in circles_to_be_deleted_old]
                                 circles_to_remain_old = circles_to_remain_old + circles_to_remain_old_temp
@@ -174,6 +189,7 @@ def count_filament_cells():
                                 for i in range(len(circles_to_remain_actual)):
                                     contours_watershed_temp[0].append(contours_watershed_th[0][i]) 
                                 contours_watershed_last = contours_watershed_temp
+
                             #############################################
                             # drawing and marking of all identified cells
                             #############################################         
@@ -184,30 +200,36 @@ def count_filament_cells():
                                 x_coord_actual_circle = int(x)
                                 y_coord_actual_circle = int(y)
                                 radius_actual_circle = int(r)    
-                                cv2.putText(img_for_counted_cells_copy, str(i),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                                cv2.putText(img_for_counted_cells_copy, str(i+1),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                                 cv2.circle(img_for_counted_cells_copy,(int(x),int(y)), int(r), (255,255,0),2)
                             print("Length of contours: "+str(len(contours_watershed_last[0])))
+                            
                             # preapring images for showing on the webiste  
                             img_original = im.fromarray(img_orig)
                             img_th_to_show = im.fromarray(img_th)
                             img_counted = im.fromarray(img_for_counted_cells_copy)
+
                             ##############################################
                             ### 4. Calculate cell number per ml sample ###
                             ##############################################
                             y_pixels, x_pixels, channels = img_for_counted_cells_copy.shape
+                            
                             # Calculate image area
                             x_nm = x_pixels * pixel_size_nm
                             x_um = int(x_nm / 1e3)
                             y_nm = y_pixels * pixel_size_nm
                             y_um = int(y_nm / 1e3)
                             img_area_mm2 = round((x_um * y_um) / 1e6, 2)
+                           
                             # Calculate volume of sample
                             img_volume_ul = img_area_mm2 * (depth_nm / 1e6)
                             img_volume_nl = round(img_volume_ul * 1e3, 2)    
                             cell_count = len(contours_watershed_last[0]) + manually_identified_cells 
                             if img_volume_ul > 1e-6:
+                                
                                 # Calculate number of cells per ml
                                 cells_per_ml = round((cell_count)*(1/img_volume_ul)/1e6, 3)
+                                
                                 # Mark the cell concentration to the image
                                 img_for_download = cv2.putText(img_for_counted_cells_copy, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                                 img_for_download = cv2.putText(img_for_counted_cells_copy, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
@@ -219,11 +241,13 @@ def count_filament_cells():
                                 img_for_download = cv2.putText(img_for_counted_cells_copy, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                                 img_for_download = cv2.putText(img_for_counted_cells_copy, 'Threshold used: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
                                 img_for_download = im.fromarray(img_for_download)
+                                
                                 #saving images to memory
                                 memory_for_original_image = io.BytesIO()
                                 memory_for_threshold_image = io.BytesIO()
                                 memory_for_counted_image = io.BytesIO()
                                 memory_for_image_to_download = io.BytesIO()
+
                                 img_original.save(memory_for_original_image, "JPEG")
                                 img_orig_encoded_in_memory = base64.b64encode(memory_for_original_image.getvalue())
                                 img_orig_decoded_from_memory = img_orig_encoded_in_memory.decode('utf-8')
@@ -236,11 +260,13 @@ def count_filament_cells():
                                 img_for_download.save(memory_for_image_to_download, "JPEG")
                                 img_for_download_encoded_in_memory = base64.b64encode(memory_for_image_to_download.getvalue())
                                 img_for_download_decoded_from_memory = img_for_download_encoded_in_memory.decode('utf-8')
+                                
                                 # deleting original image
                                 os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
                                 print(cells_per_ml)
+                                
                                 return render_template("cell_count_filament.html", 
-                                                   user_id = user_id,
+                                                   #user_id = user_id,
                                                    img_orig_decoded_from_memory = img_orig_decoded_from_memory, 
                                                    img_th_decoded_from_memory = img_th_decoded_from_memory,
                                                    img_counted_decoded_from_memory = img_counted_decoded_from_memory,
