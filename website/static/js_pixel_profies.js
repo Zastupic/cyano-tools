@@ -5,8 +5,11 @@ if (document.getElementById("expected_cell_size_range") != null){
   var output_1 = document.getElementById("expected_cell_size");
 
   output_1.innerHTML = slider_1.value;
+  radius = 50
+
   slider_1.oninput = function() {
     output_1.innerHTML = this.value;
+    radius = this.value;
   }
 }
 
@@ -33,8 +36,8 @@ function getMousePosition(canvas, event) {
   let x = (event.clientX - rect.left).toFixed(0); //.toFixed(0) = zero digits
   let y = (event.clientY - rect.top).toFixed(0);
 
-  console.log(x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y);
-  coordinates.push({x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y});
+  console.log(x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y, radius);
+  coordinates.push({x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y, radius});
  
   // DRAWING A CIRCLE//
   var circle_size = slider_1.value;
@@ -58,6 +61,7 @@ function getMousePosition(canvas, event) {
 
   // SENDING COORDINATES TO FLASK
   const coordinates_for_flask = JSON.stringify(coordinates); // Stringify converts a JavaScript object or value to a JSON string
+  
   $.ajax({
       url:"/pixel_profiles/coordinates",
       type:"POST",

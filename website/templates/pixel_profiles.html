@@ -30,9 +30,16 @@ To count cells on your fluorescence microscopy image, please follow the instruct
 <br>
 
 {% if img_orig_decoded_from_memory %}
+    <p class="font-weight-bold">{{ '2. Select cells' }}</p>
+    <p> To select cells for pixel profile analysis, simply start clicking on the image below. 
+    For the best performance, it is recommended to adjust the size of the selection circles 
+    to cover the entire area of each cell while covering a only minimal area of neighboring cells. 
+    In case of no cells are detected, please repeat the selection.
+    The circles size can be adjusted using the slider below the image.</p>
     <br>
-    <p class="font-weight-bold">{{ '2. Select expected cell size (in pixels, dynamically)' }}</p>
-    <div class="container">
+    <p class="font-weight-bold">{{ '3. Adjust size of selection circles' }}</p>
+    <p>Here you can change size of the circles for cells selection. </p>
+        <div class="container">
         <div class="gallery_sliders_pixel_profile">
             <span STYLE="font-size:9.5pt">1</span>
             <div class="slidecontainer">
@@ -48,8 +55,6 @@ To count cells on your fluorescence microscopy image, please follow the instruct
             <p>Selected cell diameter (px): <span id="expected_cell_size"></span></p>
         </div>
     </div>
-    <br>
-    <p class="font-weight-bold">{{ '3. Select the cells' }}</p>
     <div class="imgbox" id="imgbox">
             <div class="insideWrapper">
                 <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit" id="img_orig_decoded_from_memory">
@@ -57,31 +62,36 @@ To count cells on your fluorescence microscopy image, please follow the instruct
                 </canvas>
             </div>
     </div>
-    <!-- 
-    <p>Resolution of original image is {{ x_pixels }} x {{ y_pixels }} pixels. <a id="box_width"></a> </p>
-    -->
     <br>
-    <label class="form-label" for="customFile"><p class="font-weight-bold">4. Confirm cells selection</p></label>
-    <p>In case the cells need to be selected again, simply repeat the selection process.</p>
+    <label class="form-label" for="customFile"><p class="font-weight-bold">4. Confirm selection of the cells and analyze the pixel profiles</p></label>
+    <br>
     <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}">
-        <button onClick="window.location.reload(true); return false;" type="submit" class="btn btn-primary">Confirm selection</button>
+        <button onClick="window.location.reload(true); return false;" type="submit" class="btn btn-primary">Confirm selection and start analysis</button>
     </a>
     <br>
     <br>
-    <label class="form-label" for="customFile"><p class="font-weight-bold">5. Analyze the pixel profiles</p></label>
     <br>
-    <button type="submit" class="btn btn-primary">Analyze profiles </button>
-    <br>
-
-    <div class="imgbox">
-        <img src="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" class="center-fit">
+    <label class="form-label" for="customFile"><p class="font-weight-bold">5. Visually confirm the results</p></label>
+    <p>In case the cells have not been marked according to your selection, make a new selection and adjust size of the selecting circles. </p>
+    <div class="insideWrapper">
+        <img src="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" class="center-fit" width="45%" >
+        <img src='data:image/jpeg;base64,{{ plot_decoded_from_memory }}' class="center-fit" width="49%" >
     </div>
+    <div class="insideWrapper">
+        
+    </div>
+
+    <br>
+    <label class="form-label" for="customFile"><p class="font-weight-bold">6. Download the pixel profile as .xlsx file</p></label>
+    <br>
+    <a href="{{ url_for('static', filename=xlsx_file_path)}}">
+        <button type=" download" class="btn btn-primary">Download the results</button>
+    </a>
+
 {% endif %}
 
 
 <script src="{{url_for('static', filename='js_pixel_profies.js')}}"></script>
-
-
 
 
 {% endblock %}
