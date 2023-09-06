@@ -152,7 +152,7 @@
     <p>Pixel size: {{ pixel_size_nm }} nm 
     / Depth of the chamber: {{ depth_nm }} nm 
     / Minimal cell size: {{ minimal_expected_size }} µm</p>
-    <a href="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" download="{{ img_for_download }}">
+    <a href="data:image/jpeg;base64 ,{{ img_for_download_decoded_from_memory }}" download="{{ img_for_download }}">
         <button type="button" class="btn btn-primary">Download image with counted cells</button>
     </a>
     <br>
@@ -185,9 +185,6 @@
                 </canvas>
             </div>
         </div>
-        <!-- 
-        <img id="Identified_cells", src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" alt="Identified cells">
-        -->
     </div>
     <br>
     <div class="imgbox">
