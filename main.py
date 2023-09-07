@@ -10,8 +10,3 @@ if __name__ == '__main__':
     # debug=true:   every change we make will re-run the server
     # good for development, not good for production
     app.run(debug=True)
-
-@app.after_request()
-def after_request():
-    print('After request running!')
-    return after_request

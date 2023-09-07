@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, session, redirect, url_for, json
+from flask import Blueprint, render_template, request, flash, session, redirect, json
 from PIL import Image as im
 import os, cv2, base64, io, math, time, openpyxl    
 import pandas as pd
@@ -48,16 +48,16 @@ def get_pixel_profiles():
                     Pixel_profiles_df = []
                     Final_profiles = []
                     Pixel_profiles_df3 = pd.DataFrame()
-                    xlsx_file_path = ''
+                    xlsx_file_path = str('')
                     coordinates_all_from_session = ''
+                    plt.scatter([], [])
+                    plt.savefig(f'{upload_folder}/{image_name}_plot.jpeg')
 
                     #####################################################
                     ### GETTING COORDINATES FROM JS (through session) ###
                     #####################################################                 
                     if 'coordinates_all_in_session' in session:    
-                        coordinates_all_from_session = session.get('coordinates_all_in_session', None)
-                        
-                        plt.scatter([], []) 
+                        coordinates_all_from_session = session.get('coordinates_all_in_session', None)          
 
                         #convert coordinates to list
                         coordinates = list(coordinates_all_from_session)
@@ -132,9 +132,9 @@ def get_pixel_profiles():
                                 for pt in circle[0, :]:
                                     a, b, r = pt[0], pt[1], pt[2]
                                     # Draw the circumference of the circle.
-                                    cv2.circle(img_orig_copy, (a, b), r, (0, 255, 0), 2)
+                                    #cv2.circle(img_orig_copy, (a, b), r, (0, 255, 0), 2)
                                     # Draw a small circle (of radius 1) to show the center.
-                                    cv2.circle(img_orig_copy, (a, b), 1, (0, 0, 255), 3)
+                                    #cv2.circle(img_orig_copy, (a, b), 1, (0, 0, 255), 3)
 
                                 #########################################################################################################
                                 ### 5. Read the intensity of pixels from cell center to edge throughout 360°, with defined angle step ###
@@ -172,7 +172,7 @@ def get_pixel_profiles():
                                     # Coordinates for pixel profile
                                     start = (detected_cell_center[1], detected_cell_center[0])
                                     end = (incremented_cell_edge_shifted_by_angle[1], incremented_cell_edge_shifted_by_angle[0])
-                                    profile = profile_line(img_orig_copy, start, end, linewidth=1, order=1)
+                                    profile = profile_line(img_orig, start, end, linewidth=1, order=1)
                                     # Draw a line to mark where the pixel intensity was measured
                                     cv2.line(img_orig_copy, detected_cell_center, incremented_cell_edge_shifted_by_angle, (255, 0, 0), 1)
                                     # Mark the angle
@@ -183,9 +183,11 @@ def get_pixel_profiles():
                                         Pixel_profiles.append(intensities)
                                     # increase angle by defined step
                                     angle = angle+defined_angle_step
-
+                                
                                 # Draw number of the analyzed cell  
                                 cv2.putText(img_orig_copy, str(cell_number), (a, b), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (245, 235, 15), 2)
+                                # Draw the circumference of the circle.
+                                cv2.circle(img_orig_copy, (a, b), detected_cell_radius, (0, 255, 0), 2)
 
                                 # Store the pixel intensitiy results for all cells  
                                 Final_profiles.append(Pixel_profiles)
@@ -224,35 +226,25 @@ def get_pixel_profiles():
                             
                             plt.scatter(
                                 Pixel_profiles_df3.iloc[:, ((i+1)*4-2)], # x-axis data
-                                Pixel_profiles_df3.iloc[:, ((i+1)*4-1)], #y-axis data
+                                Pixel_profiles_df3.iloc[:, ((i+1)*4-1)], # y-axis data
+                                s=20,
+                                facecolors='none',
+                                edgecolors = (round(np.random.uniform(0,1),2),round(np.random.uniform(0,1),2),round(np.random.uniform(0,1),2))
                                 )
                         
                         # Saving the result into excel
                         Pixel_profiles_df3.to_excel(f'{upload_folder}/{image_name}_pixel_profiles.xlsx')
                         xlsx_file_path = f'uploads/{image_name}_pixel_profiles.xlsx'
                         #os.remove(os.path.join(f'{upload_folder}{user_id}_Pixel_profiles.xlsx'))  
+                        print("xlsx_file_path: "+ str(xlsx_file_path))
 
                     ###################################################
                     ### Preparing images for showing on the webiste ###
                     ###################################################
-                    # Preparing the final plot
-                    #if not Pixel_profiles_df3.empty:
-                    #    for i in range(len(Pixel_profiles_df.columns)):
-                    #        plt.scatter(Pixel_profiles_df3.iloc[:, (i*4-2)], # x-axis data
-                    #                    Pixel_profiles_df3.iloc[:, (i*4-1)], #y-axis data
-                    #                    label = str("Cell " + str(i+1)) # Name of data series
-                    #                    )
-                    #        plt.legend() 
-
-                    #for i in range(len(Pixel_profiles.columns)):
-                    #else:
-                    if  Pixel_profiles_df3.empty:
-                        plt.scatter([], []) 
-
                     plt.title("Pixel profiles (each color represents individual cell)") 
                     plt.xlabel("Distance from cell center (px)")
-                    plt.ylabel("Pixel intensity (r.u.)")     
-                    plt.savefig(f'{upload_folder}/{image_name}_plot.jpeg') 
+                    plt.ylabel("Pixel intensity (r.u.)")   
+                    #plt.savefig(f'{upload_folder}/{image_name}_plot.jpeg') 
                     
                     # preapring images  
                     img_original = im.fromarray(img_orig)
@@ -261,7 +253,7 @@ def get_pixel_profiles():
                     #preparing memory
                     memory_for_original_image = io.BytesIO()
                     memory_for_image_to_download = io.BytesIO()
-                    memory_for_plot = io.BytesIO()
+                    memory_for_final_plot = io.BytesIO()
 
                     #saving images to memory
                     img_original.save(memory_for_original_image, "JPEG")
@@ -272,27 +264,32 @@ def get_pixel_profiles():
                     img_for_download_encoded_in_memory = base64.b64encode(memory_for_image_to_download.getvalue())
                     img_for_download_decoded_from_memory = img_for_download_encoded_in_memory.decode('utf-8')
 
-                    plt.savefig(memory_for_plot, format='JPEG')
-                    plot_encoded_in_memory = base64.b64encode(memory_for_plot.getvalue())
-                    plot_decoded_from_memory = plot_encoded_in_memory.decode('ascii')
-                    
+                    plt.savefig(memory_for_final_plot, format='JPEG')
+                    fina_plot_encoded_in_memory = base64.b64encode(memory_for_final_plot.getvalue())
+                    final_plot_decoded_from_memory = fina_plot_encoded_in_memory.decode('ascii')
+
                     ################################################
                     # Deleting files + temporary files from server #
                     ################################################
                     # Clear session
-                    session.pop('coordinates_all_in_session', default=None)
-                    
+                    session.pop('coordinates_all_in_session', None)
+
                     # deleting uploaded images
                     os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
                     os.remove(os.path.join(f'{upload_folder}/{image_name}_plot.jpeg').replace("\\","/"))
                     
-                    #Deleting excel files older than 1 hour
+                    # Clearing the plot
+                    plt.clf()
+                    plt.cla()
+                    plt.close()
+
+                    #Deleting excel files older than 10 min
                     # list all excel files
                     list_of_files_in_upload_folder = os.listdir(upload_folder)
                     # get the current time
                     current_time = time.time()
-                    # get number of seconds in a day
-                    seconds_in_hour = 600
+                    # get number of seconds to reset
+                    seconds = 300
                     # scan for old files
                     for i in list_of_files_in_upload_folder:
                         # get the location of each file
@@ -300,8 +297,12 @@ def get_pixel_profiles():
                         # get time when the file was modified
                         file_time = os.stat(file_location).st_mtime
                         # if a file is modified before N days then delete it
-                        if(file_time < current_time - seconds_in_hour):
+                        if(file_time < current_time - seconds):
                             os.remove(os.path.join(upload_folder, str(i)).replace("\\","/"))
+                    
+                    ######################
+                    # Returning template #
+                    ######################
 
                     return render_template("pixel_profiles.html", 
                         user_id = user_id,
@@ -312,7 +313,7 @@ def get_pixel_profiles():
                         x_pixels = x_pixels,
                         y_pixels = y_pixels,
                         coordinates_all_from_session = coordinates_all_from_session, 
-                        plot_decoded_from_memory = plot_decoded_from_memory
+                        final_plot_decoded_from_memory = final_plot_decoded_from_memory,
                         )
                 else:
                     flash('Please select an image file.', category='error')

@@ -184,6 +184,7 @@ def count_filament_cells():
                                 contours_watershed_temp = list(contours_watershed_th)
                                 contours_watershed_temp[0] = []
                                 contours_watershed_temp = tuple(contours_watershed_temp)
+
                                 for i in range(len(circles_to_remain_old)):
                                     contours_watershed_temp[0].append(contours_watershed_last[0][circles_to_remain_old[i]]) 
                                 for i in range(len(circles_to_remain_actual)):
@@ -200,9 +201,8 @@ def count_filament_cells():
                                 x_coord_actual_circle = int(x)
                                 y_coord_actual_circle = int(y)
                                 radius_actual_circle = int(r)    
-                                cv2.putText(img_for_counted_cells_copy, str(i+1),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                                cv2.circle(img_for_counted_cells_copy,(int(x),int(y)), int(r), (255,255,0),2)
-                            print("Length of contours: "+str(len(contours_watershed_last[0])))
+                                cv2.putText(img_for_counted_cells_copy, str(i+1),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
+                                cv2.circle(img_for_counted_cells_copy,(int(x),int(y)), int(r), (255,255,0),1)
                             
                             # preapring images for showing on the webiste  
                             img_original = im.fromarray(img_orig)
@@ -231,15 +231,15 @@ def count_filament_cells():
                                 cells_per_ml = round((cell_count)*(1/img_volume_ul)/1e6, 3)
                                 
                                 # Mark the cell concentration to the image
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Additionally identified cells (manual correction): '+str(manually_identified_cells), (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Image resolution: '+str(x_pixels)+' x '+str(y_pixels), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Image area: '+str(img_area_mm2)+' mm^2', (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Volume of the imaged area: '+str(img_volume_nl)+' nL', (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Pixel size: '+str(pixel_size_nm)+' nm', (10, 350), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Threshold used: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Additionally identified cells (manual correction): '+str(manually_identified_cells), (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Image resolution: '+str(x_pixels)+' x '+str(y_pixels), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Image area: '+str(img_area_mm2)+' mm^2', (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Volume of the imaged area: '+str(img_volume_nl)+' nL', (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Pixel size: '+str(pixel_size_nm)+' nm', (10, 350), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Threshold used: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
                                 img_for_download = im.fromarray(img_for_download)
                                 
                                 #saving images to memory
