@@ -28,7 +28,17 @@
 </ol> 
 <br> <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count_filament.count_filament_cells') }}">
-    <label for="threshold_filter"><p class="font-weight-bold">{{ '1. Select threshold filter' }}</p></label>
+    <div class="form-group">
+    <label for="pixel_size"><p class="font-weight-bold">{{ '1. Enter pixel size (nm)' }}</p></label>
+    <input  
+       type="number"
+       id="pixel_size" 
+       class="form-control"
+       name="pixel_size"
+       value=""
+    />
+    <br>
+    <label for="threshold_filter"><p class="font-weight-bold">{{ '2. Select threshold filter' }}</p></label>
     <select name="threshold_filter" class="form-select" aria-label="threshold_filter">
         <option selected="Binary + Otsu">Binary + Otsu</option>
         <option value="Triangle + Binary">Triangle + Binary</option>
@@ -39,16 +49,6 @@
         <option value="Otsu">Otsu</option>
     </select>
         <br>
-        <div class="form-group">
-        <label for="pixel_size"><p class="font-weight-bold">{{ '2. Enter pixel size (nm)' }}</p></label>
-        <input  
-            type="number"
-            id="pixel_size" 
-            class="form-control"
-            name="pixel_size"
-            value=""
-    />
-    <br>
     <div class="form-group">
     <p class="font-weight-bold">{{ '3. Adjust additional parameters' }}</p>
     <br>
@@ -194,10 +194,15 @@
 
 {% endif %}
 <br>
-
-<script src="{{url_for('static', filename='js_cell_count_filament.js')}}"></script>
+<br>
+<br>
+<br>
+<br>
 <footer id="footer_relative">
     <br>Copyright © 
     <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
 </footer>
+
+<script src="{{url_for('static', filename='js_cell_count_filament.js')}}"></script>
+
 {% endblock %}

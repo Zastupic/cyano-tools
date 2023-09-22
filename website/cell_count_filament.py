@@ -50,7 +50,7 @@ def count_filament_cells():
                         filename2 = f'original_{filename}'
                         img_orig = cv2.imread(f'{upload_folder}/{filename2}')
                         y_pixels_img_orig, x_pixels_img_orig, channels = img_orig.shape
-                        if y_pixels_img_orig*x_pixels_img_orig < 3.25e6:  
+                        if y_pixels_img_orig*x_pixels_img_orig < 15e6:  
                             img_blur = cv2.blur(img_orig, (3,3)) # Noise reduction before application of threshold 
                             img_grey = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY) # Converting image to gray 
                             
@@ -71,7 +71,6 @@ def count_filament_cells():
                                 img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TRIANGLE)[1]
                             elif threshold == 'Otsu':
                                 img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_OTSU)[1]
-                            print('Threshold: '+threshold)
                             
                             # Preparing images for further processing
                             img_for_counted_cells = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TOZERO + cv2.THRESH_TRIANGLE)[1]
@@ -201,8 +200,8 @@ def count_filament_cells():
                                 x_coord_actual_circle = int(x)
                                 y_coord_actual_circle = int(y)
                                 radius_actual_circle = int(r)    
-                                cv2.putText(img_for_counted_cells_copy, str(i+1),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
-                                cv2.circle(img_for_counted_cells_copy,(int(x),int(y)), int(r), (255,255,0),1)
+                                cv2.putText(img_for_counted_cells_copy, str(i+1),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                                cv2.circle(img_for_counted_cells_copy,(int(x),int(y)), int(r), (255,255,0),2)
                             
                             # preapring images for showing on the webiste  
                             img_original = im.fromarray(img_orig)
@@ -263,7 +262,6 @@ def count_filament_cells():
                                 
                                 # deleting original image
                                 os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
-                                print(cells_per_ml)
                                 
                                 return render_template("cell_count_filament.html", 
                                                    #user_id = user_id,
@@ -290,7 +288,7 @@ def count_filament_cells():
                                 cells_per_ml = '0.00'
                                 flash('Pixel size is too low', category='error')
                         else:
-                            flash(f"Please upload image of resolution smaller than 1800 x 1800 px. Your image resolution is {y_pixels_img_orig} x {x_pixels_img_orig} px", category='error')        
+                            flash(f"Please upload image of smaller resolution. Your image resolution is {y_pixels_img_orig} x {x_pixels_img_orig} px", category='error')        
                         return render_template("cell_count_filament.html")
                     else:
                         flash('Please select an image file.', category='error')

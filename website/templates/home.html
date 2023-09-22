@@ -5,30 +5,70 @@
 {% endblock %}
 
 {% block content %}
-    <h1> Welcome! </h1>
-    <p>Please select a tool from the below options:</p>
-    <div class="container">
-            <div class="gallery">
-                <a href="{{ url_for('cell_counting.count_cells') }}" class="gallery__img gallery__item--1">
-                    <p>Cell counting - round cells</p>
-                    <img src="static/images/cell_counting_counted.jpg" alt="Cell counting - round cells" class="gallery__img">
-                </a>
-                <a href="{{ url_for('cell_count_filament.count_filament_cells') }}" class="gallery__img gallery__item--2">
-                    <p>Cell counting - filaments</p>
-                    <img src="static/images/cells_filamentous_counted.jpg" alt="Cell counting - filament strains" class="gallery__img">
-                </a>
-                <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}" class="gallery__img gallery__item--3">
-                    <p>Cellular pixel profiles</p>
-                    <img src="static/images/pixel_profiles_analzyed.jpg" alt="Pixel profiles" class="gallery__img">
-                </a>
-                <a class="gallery__img gallery__item--4">
-                    <p> </p>
-                    <img src="static/images/white_background.jpg" class="gallery__img">
-                    <p> <br> </p>                 
-                </a>
-            </div>
+<h1> Welcome! </h1>
+<h5>Please select a tool from the options below: </h5>
+
+<br>
+<div class="container">
+    <div class="gallery">
+        <a href="{{ url_for('cell_size.analyze_cell_size') }}" class="gallery__img gallery__item--1">
+            <p>Cell size - round cells</p>
+            <img src="static/images/cell_size_analzyed.jpg" alt="Pixel profiles" class="gallery__img">
+        </a>
+        <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}" class="gallery__img gallery__item--2">
+            <p>Cell size - filaments</p>
+            <img src="static/images/cell_size_filaments_under_construction.jpg" alt="Pixel profiles" class="gallery__img">
+        </a>
+        <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}" class="gallery__img gallery__item--3">
+            <p>Pigment profiles - round cells</p>
+            <img src="static/images/pigment_profiles_analzyed.jpg" alt="Pigment profiles" class="gallery__img">
+        </a>
     </div>
-<footer id="footer_absolute">
+</div>
+<div class="container">
+    <div class="gallery">
+        <a href="{{ url_for('cell_count.count_cells') }}" class="gallery__img gallery__item--1">
+            <p>Cell counting - round cells</p>
+            <img src="static/images/cell_counting_counted.jpg" alt="Cell counting - round cells" class="gallery__img">
+        </a>
+        <a href="{{ url_for('cell_count_filament.count_filament_cells') }}" class="gallery__img gallery__item--2">
+            <p>Cell counting - filaments</p>
+            <img src="static/images/cells_filamentous_counted.jpg" alt="Cell counting - filament strains" class="gallery__img">
+        <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}" class="gallery__img gallery__item--3">
+            <p>Excitation-emission spectra</p>
+            <img src="static/images/Ex_em_spectra_under_construction.jpg" alt="Slow" class="gallery__img">
+        </a>
+    </div>
+</div>
+<div class="container">
+    <div class="gallery">
+        <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}" class="gallery__img gallery__item--1">
+            <p>OJIP curves</p>
+            <img src="static/images/OJIP_under_construction.jpg" alt="OJIP" class="gallery__img">
+        </a>
+        <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}" class="gallery__img gallery__item--2">
+            <p>Slow kinetics</p>
+            <img src="static/images/Slow_kin_under_construction.jpg" alt="Slow" class="gallery__img">
+        </a>
+        <a href="{{ url_for('P700_kin_data_analysis.analyze_P700_kin_data') }}" class="gallery__img gallery__item--3">
+            <p>PSI kinetics</p>
+            <img src="static/images/P700_under_construction.jpg" alt="Slow" class="gallery__img">
+        </a>
+        </div>
+</div>
+
+<br>
+<p>The tools are designed for data acquired by 
+    <b>fluorescence microscopy</b> (<a href="{{ url_for('cell_count.count_cells') }}">cell counting</a>), 
+    <b>confocal microscopy</b> (<a href="{{ url_for('cell_size.analyze_cell_size') }}">cell size</a>, 
+        <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}">pigment profiles</a>), 
+    <b>PAM fluorometry</b> (<a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">OJIP curves</a>, 
+        <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">slow kinetics</a>, 
+        <a href="{{ url_for('P700_kin_data_analysis.analyze_P700_kin_data') }}">P700 re-reduction kinetics</a>) and 
+    <b>fluorescence spectroscopy</b> <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">(excitation-emission spectra matrix</a>)</p>
+<br>
+
+<footer id="footer_relative">
     <br>Copyright © 
     <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
 </footer>

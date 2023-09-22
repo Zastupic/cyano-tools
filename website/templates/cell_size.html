@@ -1,25 +1,37 @@
 {% extends "base.html" %} 
 
 {% block title %} 
-    Pigment profiles
+    Cell size analysis
 {% endblock %}
 
 {% block content %}
-<h1> Pigment profiles</h1>
+<h1> Cell size analysis </h1>
 <br>
-<p>Welcome to the app for obtaining cellular pigment profiles! 
+<p>Welcome to the app for analyzing cell size! 
 <br>
 <p>To analyze pigment profiles of cells on the fluorescence microscopy image, please follow the instructions below:</p>
 <ol>
     <li>Select your image</li>
-    <li>Select cells on your image for the pigment profile analysis</li>
-        <ul>Select expected cell size</ul>
+    <li>Enter pixel size</li>
+    <li>Select cells on your image for the cell size analysis</li>
         <ul>Select the cells</ul>
-    <li>Confirm selection and analyze intensity of pixels across the cellular profile (with fixed angle of 15°)</li>
+    <li>Confirm selection and analyze size of the selected cells</li>
 </ol> 
-<form method="POST" enctype="multipart/form-data" action="{{ url_for('pixel_profiles.get_pixel_profiles') }}">
-    <label class="form-label" for="customFile"><p class="font-weight-bold">1. Select your image</p></label>
-    <input class="form-control" type="file" name="image">
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_size.analyze_cell_size') }}">
+    <div class="form-group">
+        <p><b>1. Enter pixel size (nm)</b></p>
+        <input  
+            type="number"
+            id="pixel_size" 
+            class="form-control"
+            name="pixel_size"
+            value=""/>
+        <br>
+        <p><b>2. Select your image</b></p>
+        <input 
+            class="form-control" 
+            type="file" name="image">
+    </div>
     <br>
     <button type="submit" class="btn btn-primary">Upload image and select individual cells</button>
     <a href="{{url_for('static', filename='images/pigment_profiles_example.jpg')}}" download="example_image">
@@ -28,15 +40,15 @@
 </form>
 <br>
 
-{% if img_orig_decoded_from_memory %}
-    <a><b>2. Select cells</b></a>
-    <p> To select cells for pixel profile analysis, simply start clicking on the image below. 
+{% if img_orig_decoded_from_memory %} 
+    <a><b>3. Select cells</b></a>
+    <p> To select cells for cell size analysis, simply start clicking on the image below. 
     For the best performance, it is recommended to adjust the size of the selection circles 
-    to cover the entire area of each cell while covering a only minimal area of neighboring cells. 
+    to cover the entire area of each cell and surrounding. 
     In case of no cells are detected, please repeat the selection.
     The circles size can be adjusted using the slider below the image.</p>
-
-    <a><b>3. Adjust size of selection circles</b></a>
+    <br>
+    <a><b>4. Adjust size of selection circles</b></a>
     <p>Here you can change size of the circles for cells selection. </p>
         <div class="container">
         <div class="gallery_sliders_pixel_profile">
@@ -54,6 +66,9 @@
             <p>Selected cell diameter (px): <span id="expected_cell_size"></span></p>
         </div>
     </div>
+
+    <p>Pixel size: <b>{{ pixel_size_nm }} nm</b> (there is no need to enter the pixel size again for the analysis of the same image).
+
     <div class="imgbox" id="imgbox">
             <div class="insideWrapper">
                 <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit" id="img_orig_decoded_from_memory">
@@ -62,31 +77,29 @@
             </div>
     </div>
     <br>
-    <a><b>4. Confirm selection of the cells and analyze the pixel profiles</b></a>
+    <a><b>5. Confirm selection of the cells and analyze the pixel profiles</b></a>
     <p>In case some pixel profiles are ploted from your last analysis, simply refresh the page.</p>
     <br>
-    <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}">
+    <a href="{{ url_for('cell_size.analyze_cell_size') }}">
         <button onClick="window.location.reload(true); return false;" type="submit" class="btn btn-primary">Confirm selection and start analysis</button>
     </a>
     <br>
     <br>
     <br>
-    <a><b>5. Visually confirm the results</b></a>
+    <a><b>6. Visually confirm the results</b></a>
     <p>In case the cells have not been marked according to your selection, make a new selection and adjust size of the selecting circles. </p>
     <div class="insideWrapper">
         <img src="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" class="center-fit" width="45%" >
         <img src='data:image/jpeg;base64,{{ final_plot_decoded_from_memory }}' class="center-fit" width="49%" >
     </div>
-    <div class="insideWrapper">
-        
-    </div>
 
     <br>
-    <p><b>6. Download the pixel profile as .xlsx file</b></p>
+    <p><b>7. Download the cell size results as .xlsx file</b></p>
     <a href="{{ url_for('static', filename=xlsx_file_path)}}">
         <button type=" download" class="btn btn-primary">Download the results</button>
     </a>
 {% endif %}
+
 <br>
 <br>
 <br>
@@ -97,6 +110,6 @@
     <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
 </footer>
 
-<script src="{{url_for('static', filename='js_pixel_profies.js')}}"></script>
+<script src="{{url_for('static', filename='js_cell_size.js')}}"></script>
 
 {% endblock %}

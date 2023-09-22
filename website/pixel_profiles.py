@@ -10,7 +10,6 @@ from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from flask_login import current_user
 
 pixel_profiles = Blueprint('pixel_profiles', __name__)
-coordinate_1_1 = None
 
 @pixel_profiles.route('/pixel_profiles', methods=['GET', 'POST'])
 def get_pixel_profiles():
@@ -26,7 +25,6 @@ def get_pixel_profiles():
                 image_extension = str.lower(os.path.splitext(image.filename)[1])
                 
                 if image_extension in ALLOWED_EXTENSIONS:
-                    user_id = current_user.get_id()
                     upload_folder = UPLOAD_FOLDER
                     
                     if os.path.isdir(upload_folder) == False:
@@ -187,7 +185,7 @@ def get_pixel_profiles():
                                 # Draw number of the analyzed cell  
                                 cv2.putText(img_orig_copy, str(cell_number), (a, b), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (245, 235, 15), 2)
                                 # Draw the circumference of the circle.
-                                cv2.circle(img_orig_copy, (a, b), detected_cell_radius, (0, 255, 0), 2)
+                                cv2.circle(img_orig_copy, (a, b), detected_cell_radius, (0, 255, 0), 1)
 
                                 # Store the pixel intensitiy results for all cells  
                                 Final_profiles.append(Pixel_profiles)
@@ -235,7 +233,6 @@ def get_pixel_profiles():
                         # Saving the result into excel
                         Pixel_profiles_df3.to_excel(f'{upload_folder}/{image_name}_pixel_profiles.xlsx')
                         xlsx_file_path = f'uploads/{image_name}_pixel_profiles.xlsx'
-                        #os.remove(os.path.join(f'{upload_folder}{user_id}_Pixel_profiles.xlsx'))  
                         print("xlsx_file_path: "+ str(xlsx_file_path))
 
                     ###################################################
@@ -305,7 +302,6 @@ def get_pixel_profiles():
                     ######################
 
                     return render_template("pixel_profiles.html", 
-                        user_id = user_id,
                         image_name = image_name,
                         xlsx_file_path = xlsx_file_path,
                         img_orig_decoded_from_memory = img_orig_decoded_from_memory,

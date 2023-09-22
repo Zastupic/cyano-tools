@@ -5,9 +5,9 @@ from werkzeug.utils import secure_filename
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from flask_login import current_user
 
-cell_counting = Blueprint('cell_counting', __name__)
+cell_count = Blueprint('cell_count', __name__)
 
-@cell_counting.route('/cell_count', methods=['GET', 'POST'])
+@cell_count.route('/cell_count', methods=['GET', 'POST'])
 def count_cells():
     if current_user.is_authenticated:
         if request.method == "POST":               
@@ -19,6 +19,9 @@ def count_cells():
                 minimal_expected_size = float(request.form["minimal_diameter_range"]) # Get smallest cell size (in um)
                 manually_identified_cells = int(request.form.get('manually_identified_cells'))
                 minimum_area = 3.141592653*((minimal_expected_size * 1000 / pixel_size_nm)/2)**2 # Defines area of the smallest cell (in pixels)
+
+                print('Pxiel size: '+str(pixel_size_nm))
+                print('Missed cells: '+str(manually_identified_cells))
 
                 ####################################
                 ### Load image for cell counting ###
@@ -90,7 +93,7 @@ def count_cells():
                                     y_coord = int(y+h/2)
                                     width = int(w/2)
                                     cell_count = cell_count + 1
-                                    cv2.circle(img_for_counted_cells,(x_coord, y_coord), width,(0,255,0),2)
+                                    cv2.circle(img_for_counted_cells,(x_coord, y_coord), width,(0,255,0), 1)
                                     cv2.putText(img_for_counted_cells, str(cell_count), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
                                     coords = tuple([cell_count,x_coord,y_coord])
                                     rough_coordinates_autmated_counting.append(coords)          

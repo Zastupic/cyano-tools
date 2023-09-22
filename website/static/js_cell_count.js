@@ -1,5 +1,4 @@
 // SLIDERS //
-
 var slider_1 = document.getElementById("chamber_depth_range");
 var slider_2 = document.getElementById("minimal_diameter_range");
 var slider_3 = document.getElementById("expected_cell_size_px_range");
@@ -69,31 +68,12 @@ function getMousePosition(canvas, event) {
 
 }
 
-// defince mouse click event
+// define mouse click event
 canvas.addEventListener("mousedown", function(e){
   getMousePosition(canvas, e);
   });
 
-// MOUSE CLICKING //
-//img = document.getElementById("Identified_cells");
-//
-//img.x = img.getBoundingClientRect().left;
-//img.y = img.getBoundingClientRect().top;
-//
-//coordinates = []; // Create empty array
-//
-//function click(e) {
-//  img_size_y = img.height;
-//  img_size_x = img.width;
-//  x_coord = e.clientX - img.x;
-//  y_coord = e.clientY - img.y;
-//  identified_cells = coordinates.length + 1;
-//
-//  document.getElementById("identified_cells").innerHTML = identified_cells;
-//  coordinates.push({x_coord, y_coord, img_size_x, img_size_y}); // Append data to array
-//}
-//
-//img.addEventListener("click", click);
+
 
 
 
