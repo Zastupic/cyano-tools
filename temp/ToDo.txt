@@ -1,18 +1,6 @@
 ToDo:
-- store images in folder based on id of the user in the database
-- add index page with:
-    - link to login
-    - link to sign-up
-- flash the error message for image select right after the image selection
-- sign up with google
-- sign up: characters limit + used characters (left) (e.g. 50/50)
-- dark theme?
-
-
-
-Similar pages:
-https://www.indeed.com/career-advice/career-development/how-to-write-a-letter-of-recommendation-with-examples
-
-Course on GIT:
-https://github.com/techwithtim/Flask-Web-App-Tutorial/blob/main/website/templates/base.html
+- averages and SDs of pixel profiles for each cell + for all cells
+- save only one excel file
+- the final excel file should have pixel profiles from each channel in a separate list, and cell size also in a separate list
+- upload multiple images - individual channels
 

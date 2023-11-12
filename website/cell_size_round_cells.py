@@ -1,28 +1,27 @@
 from flask import Blueprint, render_template, request, flash, redirect, session, json
 from PIL import Image as im
-import os, cv2, base64, io, math, time
+import os, cv2, base64, io, time
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 from werkzeug.utils import secure_filename
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from flask_login import current_user
 
-cell_size = Blueprint('cell_size', __name__)
+cell_size_round_cells = Blueprint('cell_size_round_cells', __name__)
 
-@cell_size.route('/cell_size', methods=['GET', 'POST'])
+@cell_size_round_cells.route('/cell_size_round_cells', methods=['GET', 'POST'])
 def analyze_cell_size():
     if current_user.is_authenticated:
         if request.method == "POST":               
             if request.form.get('pixel_size') == '':
                 flash('Please enter pixel size', category='error')
             else:
-                pixel_size_nm = int(request.form.get('pixel_size'))
+                pixel_size_nm = float(request.form.get('pixel_size'))
 
-                ####################################
-                ### Load image for cell counting ###
-                ####################################
+                ##################
+                ### Load image ###
+                ##################
                 if 'image' in request.files:
                     image = (request.files['image'])
                     image_name = str.lower(os.path.splitext(image.filename)[0])
@@ -83,7 +82,8 @@ def analyze_cell_size():
 
                                 coords = tuple([(i+1),x_coordinate_for_original_picture,y_coordinate_for_original_picture])
                                 rough_coordinates.append(coords)
-
+                            
+                            print('=== Up to here OK ===')
                             #############################################################
                             ### Creating mask(s) on an image based on cells selection ###
                             #############################################################
@@ -156,23 +156,22 @@ def analyze_cell_size():
                             ####################################
 
                             # Making a dataframe with all results from all cells, as a tranformation of the original list
-                            Pixel_profiles_df = pd.DataFrame(cell_sizes_final)
+                            cell_sizes_final_df = pd.DataFrame(cell_sizes_final)
 
                             # calculating histogram to get the y-axis range
-                            counts, bin_edges = np.histogram(Pixel_profiles_df[Pixel_profiles_df.columns[-1]])
+                            counts, bin_edges = np.histogram(cell_sizes_final_df[cell_sizes_final_df.columns[-1]])
 
-                            Pixel_profiles_df.rename(columns = {list(Pixel_profiles_df)[0]:'Cell number'}, inplace=True)
-                            Pixel_profiles_df.rename(columns = {list(Pixel_profiles_df)[1]:'Cell diameter (μm)'}, inplace=True)
+                            cell_sizes_final_df.rename(columns = {list(cell_sizes_final_df)[0]:'Cell number'}, inplace=True)
+                            cell_sizes_final_df.rename(columns = {list(cell_sizes_final_df)[1]:'Cell diameter (μm)'}, inplace=True)
                             # plotting histogram
                             plt.hist(
-                                Pixel_profiles_df[Pixel_profiles_df.columns[-1]]
+                                cell_sizes_final_df[cell_sizes_final_df.columns[-1]]
                                 )
                             
                             # Saving the result into excel
-                            Pixel_profiles_df = pd.DataFrame(Pixel_profiles_df)
-                            Pixel_profiles_df.to_excel(f'{upload_folder}/{image_name}_cell_sizes.xlsx')
+                            cell_sizes_final_df = pd.DataFrame(cell_sizes_final_df)
+                            cell_sizes_final_df.to_excel(f'{upload_folder}/{image_name}_cell_sizes.xlsx')
                             xlsx_file_path = f'uploads/{image_name}_cell_sizes.xlsx'
-                            print("xlsx_file_path: "+ str(xlsx_file_path))
 
                         ###################################################
                         ### Preparing images for showing on the webiste ###
@@ -242,7 +241,7 @@ def analyze_cell_size():
                         # Returning template #
                         ######################
 
-                        return render_template("cell_size.html", 
+                        return render_template("cell_size_round_cells.html", 
                             image_name = image_name,
                             xlsx_file_path = xlsx_file_path,
                             img_orig_decoded_from_memory = img_orig_decoded_from_memory,
@@ -253,17 +252,15 @@ def analyze_cell_size():
                             coordinates_all_from_session = coordinates_all_from_session, 
                             final_plot_decoded_from_memory = final_plot_decoded_from_memory,
                             )
-
-
                     else:
                         flash('Please select an image file.', category='error')
-        return render_template("cell_size.html")
+        return render_template("cell_size_round_cells.html")
     else:
         flash('Please login', category='error')
         return redirect("/login")
 
 # GETTING COORDINATES FROM JS
-@cell_size.route('/cell_size/coordinates', methods=['POST'])
+@cell_size_round_cells.route('/cell_size/coordinates', methods=['POST'])
 def coordinates_from_js():
     coordinates_from_js = request.get_json() # reading the cordinates from JS
     session['coordinates_all_in_session'] = json.loads(coordinates_from_js) #converting the json output to a python dictionary
@@ -271,6 +268,6 @@ def coordinates_from_js():
     if 'coordinates_all_in_session' in session:
         coordinates_all_in_session = session['coordinates_all_in_session']
         
-    return render_template("cell_size.html", 
+    return render_template("cell_size_round_cells.html", 
                            coordinates_all_in_session = coordinates_all_in_session
                            ) 

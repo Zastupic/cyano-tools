@@ -1,0 +1,142 @@
+{% extends "base.html" %} 
+
+{% block title %} 
+    Pigment profiles - filamentous strains
+{% endblock %}
+
+{% block content %}
+<h1> Pigment profiles - filamentous strains</h1>
+<br>
+<p>Welcome to the app for obtaining cellular pigment profiles! 
+<br>
+<p>To analyze pigment profiles of cells on the fluorescence microscopy image, please follow the instructions below:</p>
+<ol>
+    <li>Enter width of the profile line</li>
+    <li>Select and upload your image</li>
+    <li>Mark diameters of cells on your image for analysis</li>
+    <li>Confirm selection and analyze size of the selected cells</li>
+</ol> 
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}">
+    <label for="pixel_size"><p><b>1. Enter width of the profile line (in pixels)</b></p></label>
+        <input  
+            type="number"
+            id="line_width" 
+            class="form-control"
+            name="line_width"
+            value="2"
+            step="1"
+            min="1" 
+            max="100" 
+        />
+    <br>
+    <label class="form-label"><p class="font-weight-bold">2. Select images (up to 4 files)</p></label>
+        <input 
+            class="form-control" 
+            type="file" 
+            name="image"
+            id="image" 
+            multiple="" 
+            /> <!-- accept="image/jpg, image/jpeg, image/png, image/tif, image/tiff, image/bmp, image/gif" -->
+    <br>
+    <button type="submit" class="btn btn-primary">Upload images and select individual cells</button>
+    <a href="{{url_for('static', filename='images/cells_filamentous_example.jpg')}}" download="example_image">
+        <button type="button" class="btn btn-outline-primary">Download an example image</button>
+    </a>
+</form>
+<br>
+
+{% if img_orig_decoded_from_memory %} 
+    <a><b>3. Select cells</b></a>
+    <p> To select cells for size and pigment profile analysis, start drawing lines on the image below by mouse dragging. 
+        <br> Selected line width: <b>{{ line_width }} px</b></p>
+    <div class="imgbox" id="imgbox">
+        <div class="insideWrapper">
+            <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit" id="img_orig_decoded_from_memory">
+            <canvas class="coveringCanvas" id="canvas_mouse_clicking">
+            </canvas>
+        </div>
+    </div>
+    <br>
+    <a><b>5. Confirm selection of the cells and analyze the pixel profiles</b></a>
+    <p>In case some pixel profiles are ploted from your last analysis, simply refresh the page.</p>
+    <br>
+    <a href="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}">
+        <button onClick="window.location.reload(true); return false;" type="submit" class="btn btn-primary">Confirm selection and start analysis</button>
+    </a>
+    <button id="clear_selection" class="btn btn-outline-primary">Clear selection</button>
+    <br>
+    <br>
+    <br>
+    <a><b>6. Visually confirm the results</b> (click on the images below to enlarge)</a>
+    <p>In case the cells have not been marked according to your selection, make a new selection and adjust size of the selecting circles. </p>
+    <a><i>{{ image_name_1 }}</i></a>
+    <div class="gallery">
+        <div  class="gallery__img__tall gallery__item--1">
+            <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_1 }}" class="gallery__img__tall"/>            
+        </div>
+        <div  class="gallery__img__tall gallery__item--2">
+            <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_1 }}" class="gallery__img__tall"/>            
+        </div>
+    </div>
+
+
+    {% if img_final_2 %}
+        <br> 
+        <a><i>{{ image_name_2 }}</i></a>
+        <div class="gallery">
+            <div  class="gallery__img__tall gallery__item--1">
+                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_2 }}" class="gallery__img__tall"/>            
+            </div>
+            <div  class="gallery__img__tall gallery__item--2">
+                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_2 }}" class="gallery__img__tall"/>            
+            </div>
+        </div>
+    {% endif %}
+
+    {% if img_final_3 %} 
+        <br>
+        <a><i>{{ image_name_3 }}</i></a>
+        <div class="gallery">
+            <div  class="gallery__img__tall gallery__item--1">
+                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_3 }}" class="gallery__img__tall"/>            
+            </div>
+            <div  class="gallery__img__tall gallery__item--2">
+                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_3 }}" class="gallery__img__tall"/>            
+            </div>
+        </div>
+    {% endif %}
+        
+    {% if img_final_4 %} 
+        <br>
+        <a><i>{{ image_name_4 }}</i></a>
+        <div class="gallery">
+            <div  class="gallery__img__tall gallery__item--1">
+                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_4 }}" class="gallery__img__tall"/>            
+            </div>
+            <div  class="gallery__img__tall gallery__item--2">
+                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_4 }}" class="gallery__img__tall"/>            
+            </div>
+        </div>
+    {% endif %}
+
+    <br>
+    <br>
+    <p><b>7. Download the cell size results as .xlsx file</b></p>
+    <a href="{{ url_for('static', filename=xlsx_file_path)}}">
+        <button type=" download" class="btn btn-primary">Download the results</button>
+    </a>
+{% endif %}
+
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
+
+<footer id="footer_relative">
+    <br>Copyright © 
+    <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
+</footer>
+
+<script src="{{url_for('static', filename='js_pixel_profies_filaments.js')}}"></script>
+
+
+{% endblock %}

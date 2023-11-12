@@ -1,15 +1,94 @@
 {% extends "base.html" %} 
 
 {% block title %} 
-    Cell size analysis - filaments
+    Cell size - filamentous strains
 {% endblock %}
 
 {% block content %}
 <h1> Cell size analysis - filamentous strains </h1>
 <br>
-<p>Welcome to the app for analzing cell size of filamentous strains! 
+<p>Welcome to the app for analyzing cell size! 
 <br>
-<p>This site is under construction</p>
-<img src="static/images/under_construction.jpg" class="center-fit" width="20%">
+<p>To analyze pigment profiles of cells on the fluorescence microscopy image, please follow the instructions below:</p>
+<ol>
+    <li>Enter pixel size</li>
+    <li>Select and upload your image</li>
+    <li>Mark diameters of cells on your image for analysis</li>
+    <li>Confirm selection and analyze size of the selected cells</li>
+</ol> 
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}">
+    <div class="form-group">
+        <p><b>1. Enter pixel size (nm)</b></p>
+        <input  
+            type="number"
+            id="pixel_size" 
+            class="form-control"
+            name="pixel_size"
+            step="0.01"
+            value=""/>
+        <br>
+        <p><b>2. Select image</b></p>
+        <input 
+            class="form-control" 
+            type="file" 
+            name="image"
+            id="image" 
+            > <!-- accept="image/jpg, image/jpeg, image/png, image/tif, image/tiff, image/bmp, image/gif" -->
+    </div>
+    <br>
+    <button type="submit" class="btn btn-primary">Upload images and select individual cells</button>
+    <a href="{{url_for('static', filename='images/cell_size_filaments_example.jpg')}}" download="example_image">
+        <button type="button" class="btn btn-outline-primary">Download an example image</button>
+    </a>
+</form>
+<br>
+
+{% if img_orig_decoded_from_memory %} 
+    <a><b>3. Select cells</b></a>
+    <p> To select cells for size and pigment profile analysis, start drawing lines on the image below by mouse dragging. 
+    <p>Specified pixel size: <b>{{ pixel_size_nm }} nm</b>
+
+    <div class="imgbox" id="imgbox">
+        <div class="insideWrapper">
+            <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit" id="img_orig_decoded_from_memory">
+            <canvas class="coveringCanvas" id="canvas_mouse_clicking">
+            </canvas>
+        </div>
+    </div>
+    <br>
+    <a><b>5. Confirm selection of the cells and analyze the pixel profiles</b></a>
+    <p>In case some pixel profiles are ploted from your last analysis, simply refresh the page.</p>
+    <br>
+    <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">
+        <button onClick="window.location.reload(true); return false;" type="submit" class="btn btn-primary">Confirm selection and start analysis</button>
+    </a>
+    <br>
+    <br>
+    <br>
+    <a><b>6. Visually confirm the results</b> (click on the images below to enlarge)</a>
+    <div class="insideWrapper">
+        <img data-enlargeable style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" class="center-fit" width="45%" >
+        <img data-enlargeable style="cursor: zoom-in" src='data:image/jpeg;base64,{{ final_plot_decoded_from_memory }}' class="center-fit" width="49%" >
+    </div> 
+
+    <br>
+    <br>
+    <p><b>7. Download the cell size results as .xlsx file</b></p>
+    <a href="{{ url_for('static', filename=xlsx_file_path)}}">
+        <button type=" download" class="btn btn-primary">Download the results</button>
+    </a>
+{% endif %}
+
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
+
+<footer id="footer_relative">
+    <br>Copyright © 
+    <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
+</footer>
+
+<script src="{{url_for('static', filename='js_cell_size_filament.js')}}"></script>
+
 
 {% endblock %}

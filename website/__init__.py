@@ -23,25 +23,27 @@ def create_app():
     from .auth import auth
     from .cell_count import cell_count
     from .cell_count_filament import cell_count_filament
-    from .pixel_profiles import pixel_profiles
+    from .pixel_profiles_round_cells import pixel_profiles_round_cells
+    from .pixel_profiles_filament import pixel_profiles_filament
     from .models import User
     from .OJIP_data_analysis import OJIP_data_analysis
     from .slow_kin_data_analysis import slow_kin_data_analysis
     from .P700_kin_data_analysis import P700_kin_data_analysis
     from .ex_em_spectra_analysis import ex_em_spectra_analysis
-    from .cell_size import cell_size
+    from .cell_size_round_cells import cell_size_round_cells
     from .cell_size_filament import cell_size_filament
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(cell_count, url_prefix='/')
     app.register_blueprint(cell_count_filament, url_prefix='/')
-    app.register_blueprint(pixel_profiles, url_prefix='/')
+    app.register_blueprint(pixel_profiles_round_cells, url_prefix='/')
+    app.register_blueprint(pixel_profiles_filament, url_prefix='/')
     app.register_blueprint(OJIP_data_analysis, url_prefix='/')
     app.register_blueprint(slow_kin_data_analysis, url_prefix='/')
     app.register_blueprint(P700_kin_data_analysis, url_prefix='/')
     app.register_blueprint(ex_em_spectra_analysis, url_prefix='/')
-    app.register_blueprint(cell_size, url_prefix='/')
+    app.register_blueprint(cell_size_round_cells, url_prefix='/')
     app.register_blueprint(cell_size_filament, url_prefix='/')
 
     #### DATABASE ####

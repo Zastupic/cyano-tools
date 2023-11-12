@@ -9,9 +9,9 @@ from werkzeug.utils import secure_filename
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from flask_login import current_user
 
-pixel_profiles = Blueprint('pixel_profiles', __name__)
+pixel_profiles_round_cells = Blueprint('pixel_profiles_round_cells', __name__)
 
-@pixel_profiles.route('/pixel_profiles', methods=['GET', 'POST'])
+@pixel_profiles_round_cells.route('/pixel_profiles_round_cells', methods=['GET', 'POST'])
 def get_pixel_profiles():
     if current_user.is_authenticated:
         if request.method == "POST":               
@@ -129,10 +129,6 @@ def get_pixel_profiles():
                                 circle = np.uint16(np.around(circle))
                                 for pt in circle[0, :]:
                                     a, b, r = pt[0], pt[1], pt[2]
-                                    # Draw the circumference of the circle.
-                                    #cv2.circle(img_orig_copy, (a, b), r, (0, 255, 0), 2)
-                                    # Draw a small circle (of radius 1) to show the center.
-                                    #cv2.circle(img_orig_copy, (a, b), 1, (0, 0, 255), 3)
 
                                 #########################################################################################################
                                 ### 5. Read the intensity of pixels from cell center to edge throughout 360°, with defined angle step ###
@@ -175,13 +171,14 @@ def get_pixel_profiles():
                                     cv2.line(img_orig_copy, detected_cell_center, incremented_cell_edge_shifted_by_angle, (255, 0, 0), 1)
                                     # Mark the angle
                                     cv2.putText(img_orig_copy, str(angle), (incremented_cell_edge_shifted_by_angle[0], incremented_cell_edge_shifted_by_angle[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (245, 235, 15), 1)
+
                                     # Store the pixel intensity results for a single cell to a list
                                     for i in range(profile.shape[0]):
                                         intensities = tuple([cell_number,angle,i+1,profile[i][0]]) 
                                         Pixel_profiles.append(intensities)
                                     # increase angle by defined step
                                     angle = angle+defined_angle_step
-                                
+
                                 # Draw number of the analyzed cell  
                                 cv2.putText(img_orig_copy, str(cell_number), (a, b), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (245, 235, 15), 2)
                                 # Draw the circumference of the circle.
@@ -189,7 +186,7 @@ def get_pixel_profiles():
 
                                 # Store the pixel intensitiy results for all cells  
                                 Final_profiles.append(Pixel_profiles)
-
+                        
                         ####################################
                         ### Save pixel profiles to excel ###
                         ####################################
@@ -198,7 +195,7 @@ def get_pixel_profiles():
                         Pixel_profiles_df = pd.DataFrame(Final_profiles)
                         Pixel_profiles_df = Pixel_profiles_df.T
                         column_index = 0
-                        
+
                         # Spliting the dataframe to individual columns
                         for i in range(len(Pixel_profiles_df.columns)):
                             # Define temporary data frame and fill it with data for i-th cell
@@ -262,8 +259,8 @@ def get_pixel_profiles():
                     img_for_download_decoded_from_memory = img_for_download_encoded_in_memory.decode('utf-8')
 
                     plt.savefig(memory_for_final_plot, format='JPEG')
-                    fina_plot_encoded_in_memory = base64.b64encode(memory_for_final_plot.getvalue())
-                    final_plot_decoded_from_memory = fina_plot_encoded_in_memory.decode('ascii')
+                    final_plot_encoded_in_memory = base64.b64encode(memory_for_final_plot.getvalue())
+                    final_plot_decoded_from_memory = final_plot_encoded_in_memory.decode('ascii')
 
                     ################################################
                     # Deleting files + temporary files from server #
@@ -301,7 +298,7 @@ def get_pixel_profiles():
                     # Returning template #
                     ######################
 
-                    return render_template("pixel_profiles.html", 
+                    return render_template("pixel_profiles_round_cells.html", 
                         image_name = image_name,
                         xlsx_file_path = xlsx_file_path,
                         img_orig_decoded_from_memory = img_orig_decoded_from_memory,
@@ -313,13 +310,13 @@ def get_pixel_profiles():
                         )
                 else:
                     flash('Please select an image file.', category='error')
-        return render_template("pixel_profiles.html")
+        return render_template("pixel_profiles_round_cells.html")
     else:
         flash('Please login', category='error')
         return redirect("/login")
 
 # GETTING COORDINATES FROM JS
-@pixel_profiles.route('/pixel_profiles/coordinates', methods=['POST'])
+@pixel_profiles_round_cells.route('/pixel_profiles/coordinates', methods=['POST'])
 def coordinates_from_js():
     coordinates_from_js = request.get_json() # reading the cordinates from JS
     session['coordinates_all_in_session'] = json.loads(coordinates_from_js) #converting the json output to a python dictionary
@@ -327,6 +324,6 @@ def coordinates_from_js():
     if 'coordinates_all_in_session' in session:
         coordinates_all_in_session = session['coordinates_all_in_session']
         
-    return render_template("pixel_profiles.html", 
+    return render_template("pixel_profiles_round_cells.html", 
                            coordinates_all_in_session = coordinates_all_in_session
                            ) 

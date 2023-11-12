@@ -1,28 +1,45 @@
 {% extends "base.html" %}
 
-{% block title %} 
-    Home 
+{% block title %}
+    DoAB-cyano tools
 {% endblock %}
 
 {% block content %}
-<h1> Welcome! </h1>
-<h5>Please select a tool from the options below: </h5>
-
+<br>
+<h3> Welcome!</h3>
+<p>Please select a tool for your method: 
+    <a href="#Confocal microscopy"><u>Confocal microscopy</u>, </a>
+    <a href="#Fluorescence microscopy"><u>Fluorescence microscopy</u>, </a>
+    <a href="#Fluorescence spectroscopy"><u>Fluorescence spectroscopy</u>, </a>   
+    <a href="#PAM fluorometry"><u>PAM fluorometry</u></a> 
+</p>
+<br>
+<h5> <a id="Confocal microscopy"></a> <u>Confocal microscopy</u> </h5>
+<div class="container">
+    <div class="gallery">
+        <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}" class="gallery__img gallery__item--1">
+            <p>Cell size - round cells</p>
+            <img src="static/images/cell_size_analzyed.jpg" alt="Cell size - round cells" class="gallery__img">
+        </a>
+        <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}" class="gallery__img gallery__item--2">
+            <p>Pigment profiles - round cells</p>
+            <img src="static/images/pigment_profiles_analzyed.jpg" alt="Pigment profiles" class="gallery__img">
+        </a>    
+        <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}" class="gallery__img gallery__item--3">
+            <p>Cell size - filaments</p>
+            <img src="static/images/cell_size_filaments_analyzed_2.JPG" alt="Cell size - filaments" class="gallery__img">
+        </a>
+        <a href="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}" class="gallery__img gallery__item--4">
+            <p>Pigment profiles - filaments</p>
+            <img src="static/images/pigment_profiles_filaments_analyzed.jpg" alt="Pigment profiles - filaments" class="gallery__img">
+        </a>
+    </div>
+</div>
 <br>
 <div class="container">
     <div class="gallery">
-        <a href="{{ url_for('cell_size.analyze_cell_size') }}" class="gallery__img gallery__item--1">
-            <p>Cell size - round cells</p>
-            <img src="static/images/cell_size_analzyed.jpg" alt="Pixel profiles" class="gallery__img">
-        </a>
-        <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}" class="gallery__img gallery__item--2">
-            <p>Cell size - filaments</p>
-            <img src="static/images/cell_size_filaments_under_construction.jpg" alt="Pixel profiles" class="gallery__img">
-        </a>
-        <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}" class="gallery__img gallery__item--3">
-            <p>Pigment profiles - round cells</p>
-            <img src="static/images/pigment_profiles_analzyed.jpg" alt="Pigment profiles" class="gallery__img">
-        </a>
+        <h5 class="gallery__img gallery__item--1"> <a id="Fluorescence microscopy"></a> <u>Fluorescence microscopy</u> </h5>
+        <h5 class="gallery__img gallery__item--3"> <a id="Fluorescence spectroscopy"></a><u>Fluorescence spectroscopy</u> </h5>
     </div>
 </div>
 <div class="container">
@@ -34,12 +51,15 @@
         <a href="{{ url_for('cell_count_filament.count_filament_cells') }}" class="gallery__img gallery__item--2">
             <p>Cell counting - filaments</p>
             <img src="static/images/cells_filamentous_counted.jpg" alt="Cell counting - filament strains" class="gallery__img">
+        </a>
         <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}" class="gallery__img gallery__item--3">
             <p>Excitation-emission spectra</p>
             <img src="static/images/Ex_em_spectra_under_construction.jpg" alt="Slow" class="gallery__img">
         </a>
     </div>
 </div>
+<br>
+<h5> <a id="PAM fluorometry"></a> <u>PAM fluorometry</u> </h5>
 <div class="container">
     <div class="gallery">
         <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}" class="gallery__img gallery__item--1">
@@ -57,19 +77,10 @@
         </div>
 </div>
 
-<br>
-<p>The tools are designed for data acquired by 
-    <b>fluorescence microscopy</b> (<a href="{{ url_for('cell_count.count_cells') }}">cell counting</a>), 
-    <b>confocal microscopy</b> (<a href="{{ url_for('cell_size.analyze_cell_size') }}">cell size</a>, 
-        <a href="{{ url_for('pixel_profiles.get_pixel_profiles') }}">pigment profiles</a>), 
-    <b>PAM fluorometry</b> (<a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">OJIP curves</a>, 
-        <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">slow kinetics</a>, 
-        <a href="{{ url_for('P700_kin_data_analysis.analyze_P700_kin_data') }}">P700 re-reduction kinetics</a>) and 
-    <b>fluorescence spectroscopy</b> <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">(excitation-emission spectra matrix</a>)</p>
-<br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
 
 <footer id="footer_relative">
-    <br>Copyright © 
+    <br>Copyright ©
     <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
 </footer>
 {% endblock %}

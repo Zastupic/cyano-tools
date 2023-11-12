@@ -1,11 +1,11 @@
 {% extends "base.html" %} 
 
 {% block title %} 
-    Cell counting
+    Cell counting - round cells
 {% endblock %}
 
 {% block content %}
-<h1> Cell counting </h1>
+<h1> Cell counting - round cells</h1>
 <br>
 <p>Welcome to the cell counting app! 
 <br>
@@ -20,7 +20,7 @@ To count cells on your fluorescence microscopy image, please follow the instruct
     </ul>
     <li>Select image</li>
     <li>Count the cells</li>
-    <li>Read the result and download the counted image</li>
+    <li>Read the result</li>
     <br>
     <li>Optional: If some cells have been missed, a correction can be made by identifying the missing cells by clicking the mouse on the counted image.</li>
 </ol> 
@@ -33,7 +33,8 @@ To count cells on your fluorescence microscopy image, please follow the instruct
             id="pixel_size" 
             class="form-control"
             name="pixel_size"
-            value=""/>
+            value=""
+            step="0.01"/>
     <br>
     <label for="threshold_filter"><p class="font-weight-bold">{{ '2. Select threshold filter' }}</p></label>
     <select name="threshold_filter" class="form-select" aria-label="threshold_filter">
@@ -93,7 +94,7 @@ To count cells on your fluorescence microscopy image, please follow the instruct
         <br>
         <button type="submit" class="btn btn-primary">Count the cells</button>
         <a href="{{url_for('static', filename='images/cell_counting_example.jpeg')}}" download="example_image">
-            <button type="button" class="btn btn-light">Download an example image</button>
+            <button type="button" class="btn btn-outline-primary">Download an example image</button>
         </a>
 </form>
 
@@ -116,7 +117,7 @@ To count cells on your fluorescence microscopy image, please follow the instruct
     <br>
     <br>
     <br>
-    <p class="font-weight-bold">{{ 'Select expected cell size (in pixels, can be changed dynamically)' }}</p>
+    <p><b>Select size of the marking circle (in pixels, can be changed dynamically)</b></p>
     <div class="container">
         <div class="gallery_sliders_pixel_profile">
             <span STYLE="font-size:9.5pt">1</span>
@@ -130,12 +131,12 @@ To count cells on your fluorescence microscopy image, please follow the instruct
                 id="expected_cell_size_px_range"/>
             </div>
             <span STYLE="font-size:9.5pt">250</span>
-            <p>Selected cell diameter (px): <span id="expected_cell_size_px"></span></p>
+            <p>Diameter of marking circle (px): <span id="expected_cell_size_px"></span></p>
         </div>
     </div>
     <div class="imgbox">
-        <figcaption>Identified cells (for visualization, <i>To zero</i> and <i>Triangle</i> thresholds are combined). To manually count missed cells, start clicking on the image below.</figcaption>
-        <p><b>Missed cells: <span id="identified_cells"></span></b></p>
+        <figcaption>Identified cells (for visualization, <i>To zero</i> and <i>Triangle</i> thresholds are combined). To manually identify missed cells, start clicking on the image below.</figcaption>
+        <p><b>Missed cells as identified manually: <span id="identified_cells"></span></b></p>
         <div class="imgbox" id="imgbox">
             <div class="insideWrapper">
                 <img src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" id="Identified_cells" alt="Identified cells">
@@ -145,14 +146,22 @@ To count cells on your fluorescence microscopy image, please follow the instruct
         </div>
     </div>
     <br>
-    <div class="imgbox">
-        <figcaption>Thresholded image (<i>{{ threshold }}</i> threshold selected)</figcaption>
-        <img src="data:image/jpeg;base64,{{ img_th_decoded_from_memory }}" class="center-fit">
+    <b>Click to enlarge:</b>
+    <div class="container">
+        <div class="gallery">
+            <a>Counted cells</a>
+            <a>Thresholded image (<i>{{ threshold }}</i>)</a>
+            <a>Original image</a>
+        </div>
     </div>
-    <br>
-    <div class="imgbox">
-        <figcaption>Original image</figcaption>
-        <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit">
+    <div class="container">
+        <div class="gallery">
+            <img data-enlargeable style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="gallery__img gallery__item--1">
+            <img data-enlargeable style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_th_decoded_from_memory }}" class="gallery__img gallery__item--2">
+            <img data-enlargeable style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="gallery__img gallery__item--3">
+        </div>
+    </div>
+    <br>    
     </div> 
 
 {% endif %}
@@ -166,6 +175,6 @@ To count cells on your fluorescence microscopy image, please follow the instruct
     <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
 </footer>
 
-<script src="{{url_for('static', filename='js_cell_count.js')}}"></script>
+<script src="{{url_for('static', filename='js_cell_count_round_cells.js')}}"></script>
 
 {% endblock %}

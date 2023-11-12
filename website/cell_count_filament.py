@@ -15,7 +15,7 @@ def count_filament_cells():
             if request.form.get('pixel_size') == '':
                 flash('Please enter pixel size', category='error')
             else:
-                pixel_size_nm = int(request.form.get('pixel_size'))
+                pixel_size_nm = float(request.form.get('pixel_size'))
                 depth_nm = int(request.form["chamber_depth_range"])
                 minimal_expected_size = float(request.form["minimal_diameter_range"]) # Get smallest cell size (in um)
                 manually_identified_cells = int(request.form.get('manually_identified_cells'))

@@ -1,48 +1,21 @@
 // SLIDERS //
+if (document.getElementById("expected_cell_size_range") != null){
 
-var slider_1 = document.getElementById("chamber_depth_range");
-var slider_2 = document.getElementById("minimal_diameter_range");
-var slider_3 = document.getElementById("iterations_range");
-var slider_4 = document.getElementById("factor_1_multiplication_range");
-var slider_5 = document.getElementById("factor_2_distance_range");
-var slider_6 = document.getElementById("expected_cell_size_px_range");
-
-var output_1 = document.getElementById("chamber_depth");
-var output_2 = document.getElementById("minimal_diameter");
-var output_3 = document.getElementById("number_of_iterations");
-var output_4 = document.getElementById("factor_1_multiplication");
-var output_5 = document.getElementById("factor_2_distance");
-var output_6 = document.getElementById("expected_cell_size_px");
-
-output_1.innerHTML = slider_1.value;
-output_2.innerHTML = slider_2.value;
-output_3.innerHTML = slider_3.value;
-output_4.innerHTML = slider_4.value;
-output_5.innerHTML = slider_5.value;
-output_6.innerHTML = slider_6.value;
-
-slider_1.oninput = function() {
-  output_1.innerHTML = this.value;
-}
-slider_2.oninput = function() {
-    output_2.innerHTML = this.value;
-  }
-slider_3.oninput = function() {
-  output_3.innerHTML = this.value;
-}
-slider_4.oninput = function() {
-  output_4.innerHTML = this.value;
-}
-slider_5.oninput = function() {
-  output_5.innerHTML = this.value;
-}
-slider_6.oninput = function() {
-  output_6.innerHTML = this.value;
+    var slider_1 = document.getElementById("expected_cell_size_range");
+    var output_1 = document.getElementById("expected_cell_size");
+  
+    output_1.innerHTML = slider_1.value;
+    radius = 50
+  
+    slider_1.oninput = function() {
+      output_1.innerHTML = this.value;
+      radius = this.value;
+    }
 }
 
 // MOUSE CLICKING - COORDINATES//
 const canvas = document.getElementById("canvas_mouse_clicking");
-const img = document.getElementById("Identified_cells");
+const img = document.getElementById("img_orig_decoded_from_memory");
 
 let img_size_y = img.height;
 let img_size_x = img.width;
@@ -55,23 +28,24 @@ function getMousePosition(canvas, event) {
   canvas.height = rect.height;
   canvas.width = rect.width;
 
+  let canvas_size_y = canvas.height;
+  let canvas_size_x = canvas.width;
+
   const context = canvas.getContext("2d");
 
   let x = (event.clientX - rect.left).toFixed(0); //.toFixed(0) = zero digits
   let y = (event.clientY - rect.top).toFixed(0);
 
-  coordinates.push({x, y});
-
-  identified_cells = coordinates.length;
-//
+  console.log(x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y, radius);
+  coordinates.push({x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y, radius});
  
   // DRAWING A CIRCLE//
-  var circle_size = slider_6.value;
+  var circle_size = slider_1.value;
 
   context.beginPath();
   context.arc(x, y, circle_size, 0, 2*Math.PI, false);  
   context.lineWidth = 1;
-  context.strokeStyle = '#FF9900';
+  context.strokeStyle = '#FF0000';
   context.stroke();
 
   // DRAWING ALL CIRCLES//
@@ -79,19 +53,26 @@ function getMousePosition(canvas, event) {
     context.beginPath();
     context.arc(coordinates[i].x, coordinates[i].y, circle_size, 0, 2*Math.PI, false);  
     context.lineWidth = 1;
-    context.strokeStyle = '#FF9900';
+    context.strokeStyle = '#FF0000';
     context.stroke();
   }
 
-  document.getElementById("identified_cells").innerHTML = identified_cells;
+  //document.getElementById("box_width").innerHTML = ("Resolution of displayed image is " + canvas_size_x + " x " + canvas_size_y + " pixels.");
 
+  // SENDING COORDINATES TO FLASK
+const coordinates_for_flask = JSON.stringify(coordinates); // Stringify converts a JavaScript object or value to a JSON string
+
+$.ajax({
+    url:"/cell_size/coordinates",
+    type:"POST",
+    contentType: "application/json",
+    data: JSON.stringify(coordinates_for_flask)});
 }
 
 // define mouse click event
 canvas.addEventListener("mousedown", function(e){
   getMousePosition(canvas, e);
-  });
-
+});
 
 //-----------------------------//
 //--- IMAGES ON FULL SCREEN ---//

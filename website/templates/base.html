@@ -61,29 +61,30 @@
             {% if current_user.is_authenticated %}
                 <li class="nav-item"> <a class="nav-link" id="home" href="/"> Home </a> </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Cell count </a>
+                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Confocal microscopy </a>
+                    <ul class="dropdown-menu">
+                        <a class="dropdown-item" id="cell_size_round_cells" href="/cell_size_round_cells"> Cell size - round cells </a>
+                        <a class="dropdown-item" id="cell_size_filament" href="/cell_size_filament"> Cell size - filaments </a>
+                        <a class="dropdown-item" id="pixel_profiles_round_cells" href="/pixel_profiles_round_cells"> Pigment profiles - round cells </a>
+                        <a class="dropdown-item" id="pixel_profiles_filament" href="/pixel_profiles_filament"> Pigment profiles - filaments </a>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Fluorescence microscopy </a>
                     <ul class="dropdown-menu">
                         <a class="dropdown-item" id="cell_count" href="/cell_count"> Cell counting - round cells </a></li>
                         <a class="dropdown-item" id="cell_count_filament" href="/cell_count_filament"> Cell counting - filaments </a>
                     </ul>
                 </li>
+                <a class="nav-item nav-link" id="ex_em_spectra_analysis" href="/ex_em_spectra_analysis"> Fluorescence spectroscopy </a>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Cell size </a>
-                    <ul class="dropdown-menu">
-                        <a class="dropdown-item" id="cell_size" href="/cell_size"> Cell size - round cells </a>
-                        <a class="dropdown-item" id="cell_size_filament" href="/cell_size_filament"> Cell size - filaments </a>
-                    </ul>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> PAM data analysis </a>
+                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> PAM fluorometry </a>
                     <ul class="dropdown-menu">
                         <a class="dropdown-item" id="OJIP_analysis" href="/OJIP_data_analysis"> OJIP curves </a>
                         <a class="dropdown-item" id="slow_kin_data_analysis" href="/slow_kin_data_analysis"> Slow kinetics </a>
                         <a class="dropdown-item" id="P700_kin_data_analysis" href="/P700_kin_data_analysis"> P700 re-reduction kinetics </a>
                     </ul>
                 </li>
-                <a class="nav-item nav-link" id="cell_count" href="/pixel_profiles"> Pigment profiles </a>
-                <a class="nav-item nav-link" id="ex_em_spectra_analysis" href="/ex_em_spectra_analysis"> Ex-em spectra </a>
                 <a class="nav-item nav-link" id="logout" href="/logout"> Logout </a>          
             {% else %}
                 <a class="nav-item nav-link" id="login" href="/login"> Login </a>
