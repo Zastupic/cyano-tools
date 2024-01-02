@@ -17,11 +17,8 @@ def count_cells():
                 pixel_size_nm = float(request.form.get('pixel_size'))
                 depth_nm = int(request.form["chamber_depth_range"])
                 minimal_expected_size = float(request.form["minimal_diameter_range"]) # Get smallest cell size (in um)
-                manually_identified_cells = int(request.form.get('manually_identified_cells'))
+#                manually_identified_cells = int(request.form.get('manually_identified_cells'))
                 minimum_area = 3.141592653*((minimal_expected_size * 1000 / pixel_size_nm)/2)**2 # Defines area of the smallest cell (in pixels)
-
-                print('Pxiel size: '+str(pixel_size_nm))
-                print('Missed cells: '+str(manually_identified_cells))
 
                 ####################################
                 ### Load image for cell counting ###
@@ -98,7 +95,7 @@ def count_cells():
                                     coords = tuple([cell_count,x_coord,y_coord])
                                     rough_coordinates_autmated_counting.append(coords)          
                         
-                        cell_count = cell_count + manually_identified_cells 
+#                        cell_count = cell_count + manually_identified_cells 
                         
                         # preapring images for showing on the webiste  
                         img_original = im.fromarray(img_orig)
@@ -115,34 +112,34 @@ def count_cells():
                         x_um = int(x_nm / 1e3)
                         y_nm = y_pixels * pixel_size_nm
                         y_um = int(y_nm / 1e3)
-                        img_area_mm2 = round((x_um * y_um) / 1e6, 2)
+                        img_area_mm2 = round((x_um / 1e3 * y_um / 1e3), 3)
 
                         # Calculate volume of sample
-                        img_volume_ul = img_area_mm2 * (depth_nm / 1e6)
-                        img_volume_nl = round(img_volume_ul * 1e3, 2)
+                        img_volume_ul = x_pixels * pixel_size_nm * y_pixels * pixel_size_nm * (depth_nm) / 1e18
+                        img_volume_nl = round(img_volume_ul * 1e3, 3)
 
                         if img_volume_ul > 1e-6:
                             # Calculate number of cells per ml
-                            cells_per_ml = round((cell_count)*(1/img_volume_ul)/1e6, 3)
+                            cells_per_ml = round((cell_count)/(img_volume_ul)/1e3, 1)
 
                             # Mark the cell concentration to the image
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Additionally identified cells (manual correction): '+str(manually_identified_cells), (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Image resolution: '+str(x_pixels)+' x '+str(y_pixels), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Image area: '+str(img_area_mm2)+' mm^2', (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Volume of the imaged area: '+str(img_volume_nl)+' nL', (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Pixel size: '+str(pixel_size_nm)+' nm', (10, 350), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = cv2.putText(img_for_counted_cells, 'Threshold used: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
-                            img_for_download = im.fromarray(img_for_download)
-                            #img_for_download.save(os.path.join(upload_folder, f'counted_cells_{filename}'))
+#                            img_for_download = cv2.putText(img_for_counted_cells, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+#                            img_for_download = cv2.putText(img_for_counted_cells, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+#                            img_for_download = cv2.putText(img_for_counted_cells, 'Additionally identified cells (manual correction): '+str(manually_identified_cells), (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+#                            img_for_download = cv2.putText(img_for_counted_cells, 'Image resolution: '+str(x_pixels)+' x '+str(y_pixels), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+#                            img_for_download = cv2.putText(img_for_counted_cells, 'Image area: '+str(img_area_mm2)+' mm^2', (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+#                            img_for_download = cv2.putText(img_for_counted_cells, 'Volume of the imaged area: '+str(img_volume_nl)+' nL', (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+#                            img_for_download = cv2.putText(img_for_counted_cells, 'Pixel size: '+str(pixel_size_nm)+' nm', (10, 350), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+#                            img_for_download = cv2.putText(img_for_counted_cells, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+#                            img_for_download = cv2.putText(img_for_counted_cells, 'Threshold used: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
+#                            img_for_download = im.fromarray(img_for_download)
+#                            img_for_download.save(os.path.join(upload_folder, f'counted_cells_{filename}'))
 
                             #saving images to memory
                             memory_for_original_image = io.BytesIO()
                             memory_for_threshold_image = io.BytesIO()
                             memory_for_counted_image = io.BytesIO()
-                            memory_for_image_to_download = io.BytesIO()
+#                            memory_for_image_to_download = io.BytesIO()
                             
                             img_original.save(memory_for_original_image, "JPEG")
                             img_orig_encoded_in_memory = base64.b64encode(memory_for_original_image.getvalue())
@@ -156,9 +153,9 @@ def count_cells():
                             img_th_encoded_in_memory = base64.b64encode(memory_for_threshold_image.getvalue())
                             img_th_decoded_from_memory = img_th_encoded_in_memory.decode('utf-8')
 
-                            img_for_download.save(memory_for_image_to_download, "JPEG")
-                            img_for_download_encoded_in_memory = base64.b64encode(memory_for_image_to_download.getvalue())
-                            img_for_download_decoded_from_memory = img_for_download_encoded_in_memory.decode('utf-8')
+#                            img_for_download.save(memory_for_image_to_download, "JPEG")
+#                            img_for_download_encoded_in_memory = base64.b64encode(memory_for_image_to_download.getvalue())
+#                            img_for_download_decoded_from_memory = img_for_download_encoded_in_memory.decode('utf-8')
 
                             # deleting original image
                             os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
@@ -168,7 +165,7 @@ def count_cells():
                                 img_orig_decoded_from_memory = img_orig_decoded_from_memory, 
                                 img_th_decoded_from_memory = img_th_decoded_from_memory,
                                 img_counted_decoded_from_memory = img_counted_decoded_from_memory,
-                                img_for_download_decoded_from_memory = img_for_download_decoded_from_memory,
+#                                img_for_download_decoded_from_memory = img_for_download_decoded_from_memory,
                                 img_for_download = f'{image_name}_counted{image_extension}',
                                 cell_count = cell_count,
                                 cells_per_ml = cells_per_ml,
@@ -181,8 +178,8 @@ def count_cells():
                                 pixel_size_nm = pixel_size_nm,
                                 depth_nm = depth_nm,
                                 minimal_expected_size = minimal_expected_size,
-                                manually_identified_cells = manually_identified_cells,
-                                threshold = threshold,
+#                               manually_identified_cells = manually_identified_cells,
+                                threshold = threshold
                                 )
                         else:
                             cells_per_ml = '0.00'

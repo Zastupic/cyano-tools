@@ -208,20 +208,20 @@ def analyze_cell_size_filament():
                     os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
                     os.remove(os.path.join(f'{upload_folder}/{image_name}_plot.jpeg').replace("\\","/"))
 
-                    #Deleting excel files older than 10 min
-                    # list all excel files
+                    # Deleting files older than 20 min
+                    # list all files
                     list_of_files_in_upload_folder = os.listdir(upload_folder)
-                    # get the current time
+                    # get current time
                     current_time = time.time()
                     # get number of seconds to reset
-                    seconds = 300
+                    seconds = 1200
                     # scan for old files
                     for i in list_of_files_in_upload_folder:
                         # get the location of each file
                         file_location = os.path.join(upload_folder, str(i)).replace("\\","/")
                         # get time when the file was modified
                         file_time = os.stat(file_location).st_mtime
-                        # if a file is modified before N days then delete it
+                        # if a file is modified before 20 min then delete it
                         if(file_time < current_time - seconds):
                             os.remove(os.path.join(upload_folder, str(i)).replace("\\","/"))
 

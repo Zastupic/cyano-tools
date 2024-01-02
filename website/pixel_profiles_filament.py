@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, session, json
 from PIL import Image as im
-import os, cv2, base64, io, time, math
+import os, cv2, base64, io, time
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,7 +21,7 @@ def get_pixel_profiles():
             ##################
             # check if image is an image
             if "image" in request.files:
-                # get line width from user
+                # get list of files
                 files = request.files.getlist("image")
                 # check if at least one image was uploaded
                 if secure_filename(files[0].filename) == '':
@@ -30,6 +30,7 @@ def get_pixel_profiles():
                     # define golbal variables
                     image_name_1 = image_name_2 = image_name_3 = image_name_4 = ''
                     pixel_profiles_1 = pixel_profiles_2 = pixel_profiles_3 = pixel_profiles_4 = pd.DataFrame()
+                    pixel_profiles_dif_1_2 = pixel_profiles_dif_1_3 = pixel_profiles_dif_1_4 = pixel_profiles_dif_2_3 = pixel_profiles_dif_2_4 = pixel_profiles_dif_3_4 = pd.DataFrame()
                     img_final_1 = img_final_2 = img_final_3 = img_final_4 = img_orig_1 = ()
                     scatter_plot_1 = scatter_plot_2 = scatter_plot_3 = scatter_plot_4 = ()
 
@@ -161,13 +162,13 @@ def get_pixel_profiles():
                                         # Draw cell number 
                                         cv2.putText(img_orig_copy, str(cell_number), (int(x_rough_start), int(y_rough_start)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,0), 1)
 
-                                    #############################################
-                                    ### Preparing results for plots and excel ###
-                                    #############################################
+                                    ###########################################################################################
+                                    ### Saving profile lines to dataframe - for plots, excel and calculation of differences ###
+                                    ###########################################################################################
                                     # Preparing dataframe with pixel profiles                            
                                     for i in range(len(Final_profiles)):
                                         # read profile of each cell 
-                                        Pixel_profiles_df = pd.DataFrame(Final_profiles[i], columns = [str(str(image_name_without_extension)+': cell no.'),'Pixel number','Intensity profile '+str(i+1)])
+                                        Pixel_profiles_df = pd.DataFrame(Final_profiles[i], columns = [str(str(image_name_without_extension)+': cell no.'),'Pixel number','Intensity_profile_{0}'.format(i+1)])
                                         # read profiles for plot
                                         plt.scatter(
                                             Pixel_profiles_df.iloc[:, 1], # x-axis data: 1st column
@@ -176,7 +177,7 @@ def get_pixel_profiles():
                                             facecolors='none',
                                             edgecolors = (round(np.random.uniform(0,1),2),round(np.random.uniform(0,1),2),round(np.random.uniform(0,1),2))
                                             )
-                                        
+                                        # remove first column - pixel number
                                         Pixel_profiles_df = Pixel_profiles_df.drop(Pixel_profiles_df.columns[[0, 1]], axis=1)
                                         # append each profile to final data frame
                                         Pixel_profiles_df_final = pd.concat([Pixel_profiles_df_final, Pixel_profiles_df], axis=1)
@@ -223,6 +224,7 @@ def get_pixel_profiles():
                                 img_original.save(memory_for_original_image, "JPEG")
                                 img_orig_encoded_in_memory = base64.b64encode(memory_for_original_image.getvalue())
                                 img_orig_decoded_from_memory = img_orig_encoded_in_memory.decode('utf-8')
+                                
                                 # save original image for HTML
                                 if image_number == 1:
                                     dictionary_arrays_all_results['img_orig_1'] = img_orig_decoded_from_memory
@@ -240,7 +242,51 @@ def get_pixel_profiles():
 
                             else:
                                 flash('Please select an image file.', category='error')  
-       
+                        
+                        ###############################################################################
+                        ### Calculating differences between pigment profiles in individual channels ###
+                        ###############################################################################
+                        # asssign pixel profiles from individual channels to data frames
+                        pixel_profiles_1 = pd.DataFrame.from_dict(dictionary_arrays_all_results['pixel_profiles_1'])
+                        pixel_profiles_2 = pd.DataFrame.from_dict(dictionary_arrays_all_results['pixel_profiles_2'])
+                        pixel_profiles_3 = pd.DataFrame.from_dict(dictionary_arrays_all_results['pixel_profiles_3'])
+                        pixel_profiles_4 = pd.DataFrame.from_dict(dictionary_arrays_all_results['pixel_profiles_4'])
+
+                        # check if some cells were selected
+                        if not pixel_profiles_1.empty:
+                            # calculate differences
+                            for i in range(len(Final_profiles)):
+                                # get intensity n-th cell
+                                pixel_profiles_1_temp = pd.to_numeric(pixel_profiles_1.iloc[:, i], errors='coerce')
+                                if not pixel_profiles_2.empty:
+                                    pixel_profiles_2_temp = pd.to_numeric(pixel_profiles_2.iloc[:, i], errors='coerce')
+                                    if not pixel_profiles_3.empty:
+                                        pixel_profiles_3_temp = pd.to_numeric(pixel_profiles_3.iloc[:, i], errors='coerce')
+                                        if not pixel_profiles_4.empty:
+                                             pixel_profiles_4_temp = pd.to_numeric(pixel_profiles_4.iloc[:, i], errors='coerce')
+
+                                # calculate differences between profiles
+                                if not pixel_profiles_2.empty:
+                                    pixel_profiles_dif_1_2_temp = pixel_profiles_1_temp.sub(pixel_profiles_2_temp)
+                                    if not pixel_profiles_3.empty:
+                                        pixel_profiles_dif_1_3_temp = pixel_profiles_1_temp.sub(pixel_profiles_3_temp)
+                                        pixel_profiles_dif_2_3_temp = pixel_profiles_2_temp.sub(pixel_profiles_3_temp)
+                                        if not pixel_profiles_4.empty:
+                                            pixel_profiles_dif_1_4_temp = pixel_profiles_1_temp.sub(pixel_profiles_4_temp)
+                                            pixel_profiles_dif_2_4_temp = pixel_profiles_2_temp.sub(pixel_profiles_4_temp)
+                                            pixel_profiles_dif_3_4_temp = pixel_profiles_3_temp.sub(pixel_profiles_4_temp)
+
+                                # save differences to data frames
+                                if not pixel_profiles_2.empty:
+                                    pixel_profiles_dif_1_2 = pd.concat([pixel_profiles_dif_1_2, pixel_profiles_dif_1_2_temp], axis=1)
+                                    if not pixel_profiles_3.empty:
+                                        pixel_profiles_dif_1_3 = pd.concat([pixel_profiles_dif_1_3, pixel_profiles_dif_1_3_temp], axis=1)
+                                        pixel_profiles_dif_2_3 = pd.concat([pixel_profiles_dif_2_3, pixel_profiles_dif_2_3_temp], axis=1)
+                                        if not pixel_profiles_4.empty:
+                                            pixel_profiles_dif_1_4 = pd.concat([pixel_profiles_dif_1_4, pixel_profiles_dif_1_4_temp], axis=1)
+                                            pixel_profiles_dif_2_4 = pd.concat([pixel_profiles_dif_2_4, pixel_profiles_dif_2_4_temp], axis=1)
+                                            pixel_profiles_dif_3_4 = pd.concat([pixel_profiles_dif_3_4, pixel_profiles_dif_3_4_temp], axis=1)
+                                
                         #######################################################
                         ### Saving the result into specific sheets in excel ###
                         #######################################################
@@ -249,7 +295,14 @@ def get_pixel_profiles():
                         dictionary_arrays_all_results['pixel_profiles_2'].to_excel(writer, sheet_name = 'Pixel_profiles_2')
                         dictionary_arrays_all_results['pixel_profiles_3'].to_excel(writer, sheet_name = 'Pixel_profiles_3')
                         dictionary_arrays_all_results['pixel_profiles_4'].to_excel(writer, sheet_name = 'Pixel_profiles_4')
+                        pixel_profiles_dif_1_2.to_excel(writer, sheet_name = 'Delta_profiles_1-2')
+                        pixel_profiles_dif_1_3.to_excel(writer, sheet_name = 'Delta_profiles_1-3')
+                        pixel_profiles_dif_1_4.to_excel(writer, sheet_name = 'Delta_profiles_1-4')
+                        pixel_profiles_dif_2_3.to_excel(writer, sheet_name = 'Delta_profiles_2-3')
+                        pixel_profiles_dif_2_4.to_excel(writer, sheet_name = 'Delta_profiles_2-4')
+                        pixel_profiles_dif_3_4.to_excel(writer, sheet_name = 'Delta_profiles_3-4')
                         writer.close()
+
                         xlsx_file_path = f'uploads/{image_name_without_extension}_results.xlsx'
 
                         ################################################
@@ -260,20 +313,20 @@ def get_pixel_profiles():
                         # deleting uploaded images
                         os.remove(os.path.join(upload_folder, f'original_{image_name_full}').replace("\\","/"))
                         os.remove(os.path.join(f'{upload_folder}/{image_name_without_extension}_plot.jpeg').replace("\\","/"))
-                        #Deleting excel files older than 10 min
-                        # list all excel files
+                        # Deleting files older than 20 min
+                        # List all files
                         list_of_files_in_upload_folder = os.listdir(upload_folder)
-                        # get the current time
+                        # get current time
                         current_time = time.time()
                         # get number of seconds to reset
-                        seconds = 300
+                        seconds = 1200
                         # scan for old files
                         for i in list_of_files_in_upload_folder:
                             # get the location of each file
                             file_location = os.path.join(upload_folder, str(i)).replace("\\","/")
                             # get time when the file was modified
                             file_time = os.stat(file_location).st_mtime
-                            # if a file is modified before N days then delete it
+                            # if a file is modified before 20 min then delete it
                             if(file_time < current_time - seconds):
                                 os.remove(os.path.join(upload_folder, str(i)).replace("\\","/"))
                         ######################

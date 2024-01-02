@@ -18,7 +18,7 @@ def count_filament_cells():
                 pixel_size_nm = float(request.form.get('pixel_size'))
                 depth_nm = int(request.form["chamber_depth_range"])
                 minimal_expected_size = float(request.form["minimal_diameter_range"]) # Get smallest cell size (in um)
-                manually_identified_cells = int(request.form.get('manually_identified_cells'))
+#                manually_identified_cells = int(request.form.get('manually_identified_cells'))
                 minimum_area = 3.141592653*((minimal_expected_size * 1000 / pixel_size_nm)/2)**2 # Defines area of the smallest cell (in pixels)
                 min_diameter_px = minimal_expected_size / (pixel_size_nm/1000)
                 scaling_factor_distance_transform = 5
@@ -200,8 +200,8 @@ def count_filament_cells():
                                 x_coord_actual_circle = int(x)
                                 y_coord_actual_circle = int(y)
                                 radius_actual_circle = int(r)    
-                                cv2.putText(img_for_counted_cells_copy, str(i+1),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                                cv2.circle(img_for_counted_cells_copy,(int(x),int(y)), int(r), (255,255,0),2)
+                                cv2.putText(img_for_counted_cells_copy, str(i+1),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
+                                cv2.circle(img_for_counted_cells_copy,(int(x),int(y)), int(r), (255,255,0),1)
                             
                             # preapring images for showing on the webiste  
                             img_original = im.fromarray(img_orig)
@@ -218,28 +218,29 @@ def count_filament_cells():
                             x_um = int(x_nm / 1e3)
                             y_nm = y_pixels * pixel_size_nm
                             y_um = int(y_nm / 1e3)
-                            img_area_mm2 = round((x_um * y_um) / 1e6, 2)
+                            img_area_um2 = (x_um * y_um)
                            
                             # Calculate volume of sample
-                            img_volume_ul = img_area_mm2 * (depth_nm / 1e6)
-                            img_volume_nl = round(img_volume_ul * 1e3, 2)    
-                            cell_count = len(contours_watershed_last[0]) + manually_identified_cells 
-                            if img_volume_ul > 1e-6:
+                            img_volume_um3 = img_area_um2 * (depth_nm / 1e3) 
+                            img_volume_nl = img_volume_um3 / 1e6 # 1nL = 1 x 10^6 um^3 
+                            img_volume_ml = img_volume_nl / 1e6 
+                            cell_count = len(contours_watershed_last[0]) 
+                            if img_volume_um3 > 1e-6:
                                 
                                 # Calculate number of cells per ml
-                                cells_per_ml = round((cell_count)*(1/img_volume_ul)/1e6, 3)
+                                million_cells_per_ml = round(cell_count/img_volume_ml * 1e-6, 3)
                                 
                                 # Mark the cell concentration to the image
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Additionally identified cells (manual correction): '+str(manually_identified_cells), (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Image resolution: '+str(x_pixels)+' x '+str(y_pixels), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Image area: '+str(img_area_mm2)+' mm^2', (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Volume of the imaged area: '+str(img_volume_nl)+' nL', (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Pixel size: '+str(pixel_size_nm)+' nm', (10, 350), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
-                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Threshold used: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
-                                img_for_download = im.fromarray(img_for_download)
+#                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+#                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+#                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Additionally identified cells (manual correction): '+str(manually_identified_cells), (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+#                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Image resolution: '+str(x_pixels)+' x '+str(y_pixels), (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+#                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Image area: '+str(img_area_mm2)+' mm^2', (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+#                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Volume of the imaged area: '+str(img_volume_nl)+' nL', (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+#                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Pixel size: '+str(pixel_size_nm)+' nm', (10, 350), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+#                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Depth of the chamber: '+str(depth_nm)+' nm', (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+#                                img_for_download = cv2.putText(img_for_counted_cells_copy, 'Threshold used: '+str(threshold), (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
+#                                img_for_download = im.fromarray(img_for_download)
                                 
                                 #saving images to memory
                                 memory_for_original_image = io.BytesIO()
@@ -256,7 +257,7 @@ def count_filament_cells():
                                 img_th_to_show.save(memory_for_threshold_image, "JPEG")
                                 img_th_encoded_in_memory = base64.b64encode(memory_for_threshold_image.getvalue())
                                 img_th_decoded_from_memory = img_th_encoded_in_memory.decode('utf-8')
-                                img_for_download.save(memory_for_image_to_download, "JPEG")
+#                                img_for_download.save(memory_for_image_to_download, "JPEG")
                                 img_for_download_encoded_in_memory = base64.b64encode(memory_for_image_to_download.getvalue())
                                 img_for_download_decoded_from_memory = img_for_download_encoded_in_memory.decode('utf-8')
                                 
@@ -271,21 +272,22 @@ def count_filament_cells():
                                                    img_for_download_decoded_from_memory = img_for_download_decoded_from_memory,
                                                    img_for_download = f'{image_name}_counted{image_extension}',
                                                    cell_count = cell_count,
-                                                   cells_per_ml = cells_per_ml,
+                                                   million_cells_per_ml = million_cells_per_ml,
                                                    x_pixels = x_pixels,
                                                    y_pixels = y_pixels,
-                                                   img_area_mm2 = img_area_mm2,
+                                                   img_area_um2 = img_area_um2,
                                                    img_volume_nl = img_volume_nl,
+                                                   img_volume_ml = img_volume_ml,
                                                    x_um = x_um,
                                                    y_um = y_um,
                                                    pixel_size_nm = pixel_size_nm,
                                                    depth_nm = depth_nm,
                                                    minimal_expected_size = minimal_expected_size,
-                                                   manually_identified_cells = manually_identified_cells,
+#                                                   manually_identified_cells = manually_identified_cells,
                                                    threshold = threshold,
                                                    )
                             else:
-                                cells_per_ml = '0.00'
+                                million_cells_per_ml = '0.00'
                                 flash('Pixel size is too low', category='error')
                         else:
                             flash(f"Please upload image of smaller resolution. Your image resolution is {y_pixels_img_orig} x {x_pixels_img_orig} px", category='error')        

@@ -21,7 +21,23 @@ slider_2.oninput = function() {
     output_3.innerHTML = this.value;
   }
 
-// MOUSE CLICKING - COORDINATES//
+// GET VARAIBLES FROM FLASK //
+var cell_conc_autom = cell_conc_autom;
+var volume_imaged_area = volume_imaged_area;
+var image_area = image_area;
+var chamber_depth = chamber_depth;
+var cells_counted_autom = cells_counted_autom;
+var pixels_x = pixels_x;
+var pixels_y = pixels_y;
+var size_of_pixel = size_of_pixel;
+// Get original cell concentration, without manual correction
+var cell_conc_corrected = cell_conc_autom;
+document.getElementById("cell_conc_corrected").innerHTML = cell_conc_corrected;
+
+// Calculate cell concentration
+var image_volume_recalculated_nL = pixels_x * size_of_pixel * pixels_y * size_of_pixel * chamber_depth / 1e15
+
+// MOUSE CLICKING - COORDINATES //
 const canvas = document.getElementById("canvas_mouse_clicking");
 const img = document.getElementById("Identified_cells");
 
@@ -32,6 +48,7 @@ coordinates = [];
 
 function getMousePosition(canvas, event) {
   let rect = canvas.getBoundingClientRect();
+  // var cell_conc_recalculated = (cells_counted_autom / image_volume_recalculated_nL).toFixed(3)
 
   canvas.height = rect.height;
   canvas.width = rect.width;
@@ -43,9 +60,26 @@ function getMousePosition(canvas, event) {
 
   coordinates.push({x, y});
 
-  identified_cells = coordinates.length;
-//
- 
+  var identified_cells = coordinates.length;
+  var cell_conc_corrected = ((cells_counted_autom + identified_cells) / image_volume_recalculated_nL).toFixed(1)
+
+/*
+  console.log(
+    " Manually identified cells: " + identified_cells, 
+    "\n Image resolution-x: " + pixels_x + " pixels",  
+    "\n Image resolution-y: " + pixels_y + " pixels",
+    "\n Pixel size: " + size_of_pixel + " nm",
+    "\n Imaged area: " + image_area + " mm^2", 
+    "\n Depth of cultivation chamber: " + chamber_depth + " nm",
+    "\n Volume of imaged area - from flask: " + volume_imaged_area + " nL",
+    "\n Volume of imaged area - recalculated: " + image_volume_recalculated_nL + " nL",
+    "\n Identified cells: " + cells_counted_autom, 
+    "\n Cell concentration - from flask: " + cell_conc_autom + " x 10^6 cells/mL", 
+    "\n Cell concentration - recalculated: " + cell_conc_recalculated + " x 10^6 cells/mL",
+    "\n Cell concentration - corrected: " + cell_conc_corrected + " x 10^6 cells/mL"
+    ) 
+*/
+
   // DRAWING A CIRCLE//
   var circle_size = slider_3.value;
 
@@ -65,6 +99,7 @@ function getMousePosition(canvas, event) {
   }
 
   document.getElementById("identified_cells").innerHTML = identified_cells;
+  document.getElementById("cell_conc_corrected").innerHTML = cell_conc_corrected;
 
 }
 
