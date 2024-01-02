@@ -94,10 +94,10 @@ html {
   grid-row-end: 1;
 }
 .gallery__item--4 {
-  grid-column-start: 1;
-  grid-column-end: 1;
-  grid-row-start: 2;
-  grid-row-end: 2;
+  grid-column-start: 4;
+  grid-column-end: 4;
+  grid-row-start: 1;
+  grid-row-end: 1;
 }
 
 .gallery_4 {

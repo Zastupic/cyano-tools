@@ -9,8 +9,9 @@
     <form method="POST">
         <h3 allign="center">Welcome to DoAB cyano tools! </h3>
         <br>
-        <a>This site offers tools for analyzing data acquaried by methods routinely used in laboratories working with cyanobacteria, algae, plants or bacteria. The site is developed at <b>Department of Adaptive Biotechnologies (DoAB)</b> of 
-            <a href="https://www.czechglobe.cz/en/" target="_blank">Global Change Research Institute of the Czech Academy of Sciences (CzechGlobe)</a>.
+        <a>This site offers tools for analyzing data acquaried by methods routinely used in laboratories working with cyanobacteria, algae, plants or bacteria. 
+            The site is developed at <b>Department of Adaptive Biotechnologies (DoAB)</b> of Global Change Research Institute of the Czech Academy of Sciences 
+            <a href="https://www.czechglobe.cz/en/" target="_blank">(CzechGlobe)</a>.
         </a>        
         <br> <br>
         <div class="container">
@@ -48,31 +49,31 @@
             </div>
         </div>
         <br>
-        <p>The tools enable data analysis for the following methods:</p>
+        <u>The tools enable data processing for the following methods:</u>
         <ul>
             <li>Fluorescence microscopy</li>
             <ul>
-                <li>Cell counting - single cells</li>
+                <li>Cell counting - round cells</li>
                 <li>Cell counting - filamentous strains</li>
             </ul>
-            <li>Fluorometry</li>
+            <li>PAM Fluorometry</li>
             <ul>
                 <li>Analysis of fast fluorescence transients (OJIP)</li>
             </ul>
             <li>Fluorescence spectroscopy</li>
             <ul>
-                <li>Analysis of 3D excitation-emission fluorescence spectra</li>
+                <li>Analysis of 3D excitation-emission fluorescence maps</li>
             </ul>
             <li>Confocal microscopy</li>
             <ul>
-                <li>Pigment profiles of single round cells</li>
-                <li>Pigment profiles of filamentous strains</li>
-                <li>Cell size of round cells</li>
-                <li>Cell size of filamentous strains</li>
+                <li>Pigment profiles - round cells</li>
+                <li>Pigment profiles - filamentous strains</li>
+                <li>Cell size - round cells</li>
+                <li>Cell size - filamentous strains</li>
             </ul>
         </ul>
         <br>
-        <p>To proceed, please login. If you are a new visitor, please <a href="{{ url_for('auth.sign_up') }}">create an account</a></p>
+        <p><u>To proceed, please login. If you are a new visitor, please <a href="{{ url_for('auth.sign_up') }}">create an account</a></u></p>
 
         <div class="form-group">
             <label for="email">Email address</label>
@@ -96,8 +97,14 @@
         <br>
         <button type="submit" class="btn btn-primary">Login</button>
     </form>
+    <br><br><br>
+    <u>Addtional tools developed at DoAB:</u>
+    <ul>
+        <li><a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank">Online tool for advanced analysis of PBR experimental data</a></li>
+        <li><a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">Online tool for calculating dissolved carbon system properties in seawater</a></li>
+        <li><a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank">Set of control scripts for Photon Systems Instruments (PSI) bioreactor SW client</a></li>
+    </ul>
 
-<br><br><br><br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br><br><br><br><br><br>
 
