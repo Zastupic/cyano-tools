@@ -9,8 +9,7 @@
     <form method="POST">
         <h3 allign="center">Welcome to DoAB cyano tools! </h3>
         <br>
-        <a>This site offers tools for analyzing data acquaried by several methods routinely used in laboratories working with cyanobacteria, algae, plants or bacteria,
-             such as fluorescence microscopy, confocal microscopy, fluorometry or fluorescence spectroscopy. The site is developed at <b>Department of Adaptive Biotechnologies (DoAB)</b> of 
+        <a>This site offers tools for analyzing data acquaried by methods routinely used in laboratories working with cyanobacteria, algae, plants or bacteria. The site is developed at <b>Department of Adaptive Biotechnologies (DoAB)</b> of 
             <a href="https://www.czechglobe.cz/en/" target="_blank">Global Change Research Institute of the Czech Academy of Sciences (CzechGlobe)</a>.
         </a>        
         <br> <br>
@@ -46,10 +45,32 @@
                 <a href="https://twitter.com/CzechGlobe_DoAB" target="_blank">
                     <img src="static/images/drasov_3.jpg" alt="Team at DoAB" class="gallery__img gallery__item--4">
                 </a>
-
-                
             </div>
         </div>
+        <br>
+        <p>The tools enable data analysis for the following methods:</p>
+        <ul>
+            <li>Fluorescence microscopy</li>
+            <ul>
+                <li>Cell counting - single cells</li>
+                <li>Cell counting - filamentous strains</li>
+            </ul>
+            <li>Fluorometry</li>
+            <ul>
+                <li>Analysis of fast fluorescence transients (OJIP)</li>
+            </ul>
+            <li>Fluorescence spectroscopy</li>
+            <ul>
+                <li>Analysis of 3D excitation-emission fluorescence spectra</li>
+            </ul>
+            <li>Confocal microscopy</li>
+            <ul>
+                <li>Pigment profiles of single round cells</li>
+                <li>Pigment profiles of filamentous strains</li>
+                <li>Cell size of round cells</li>
+                <li>Cell size of filamentous strains</li>
+            </ul>
+        </ul>
         <br>
         <p>To proceed, please login. If you are a new visitor, please <a href="{{ url_for('auth.sign_up') }}">create an account</a></p>
 
