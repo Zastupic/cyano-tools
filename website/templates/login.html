@@ -7,11 +7,52 @@
 {% block content %}
     <br>
     <form method="POST">
-        <h3 allign="center">Welcome to the cell counting app! </h3>
+        <h3 allign="center">Welcome to DoAB cyano tools! </h3>
         <br>
-        <p>For the best user experience, it is recommended to use Chrome or Edge browser.</p>
+        <a>This site offers tools for analyzing data acquaried by several methods routinely used in laboratories working with cyanobacteria, algae, plants or bacteria,
+             such as fluorescence microscopy, confocal microscopy, fluorometry or fluorescence spectroscopy. The site is developed at <b>Department of Adaptive Biotechnologies (DoAB)</b> of 
+            <a href="https://www.czechglobe.cz/en/" target="_blank">Global Change Research Institute of the Czech Academy of Sciences (CzechGlobe)</a>.
+        </a>        
+        <br> <br>
+        <div class="container">
+            <div class="gallery_4">
+                <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">
+                    <p><i>DoAB home page</i></p>
+                </a>
+                <a href="http://www.pracovistedrasov.pano3d.eu/" target="_blank">
+                    <p><i>DoAB research infrastructure</i></p>
+                </a>
+                <a href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank">
+                    <p><i>DoAB results and publications</i></p>
+                </a>
+                <a href="https://twitter.com/CzechGlobe_DoAB" target="_blank">
+                    <p><i>DoAB social media channel</i></p>
+                </a>                
+            </div>
+        </div>
+        <div class="container">
+            <div class="gallery_4">
+                <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">
+                    <img src="static/images/drasov_1.jpg" alt="Bioreactors" class="gallery__img gallery__item--1">
+                </a>
+                <a href="http://www.pracovistedrasov.pano3d.eu/" target="_blank">
+                    <img src="http://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png" 
+                    srcset="https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png 400w, 
+                    https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final-300x191.png 300w" class="gallery__img gallery__item--2">
+                </a>
+                <a href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank">
+                    <img src="static/images/drasov_4.jpg" alt="Publications" class="gallery__img gallery__item--3">
+                </a>
+                <a href="https://twitter.com/CzechGlobe_DoAB" target="_blank">
+                    <img src="static/images/drasov_3.jpg" alt="Team at DoAB" class="gallery__img gallery__item--4">
+                </a>
+
+                
+            </div>
+        </div>
+        <br>
         <p>To proceed, please login. If you are a new visitor, please <a href="{{ url_for('auth.sign_up') }}">create an account</a></p>
-        <br>
+
         <div class="form-group">
             <label for="email">Email address</label>
             <input  
@@ -39,7 +80,7 @@
 <br><br><br><br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br><br><br><br><br><br>
 
-<footer id="footer_absolute">
+<footer id="footer_relative">
     <br>Copyright © 
     <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
 </footer>
