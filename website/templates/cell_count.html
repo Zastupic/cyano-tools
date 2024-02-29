@@ -1,28 +1,37 @@
 {% extends "base.html" %} 
 
 {% block title %} 
-    Cell counting - single cells
+    Cell counting
 {% endblock %}
 
 {% block content %}
-<h1> Cell counting - single cells</h1>
+<h1>Cell counting</h1>
 <br>
-<p>Welcome to the cell counting app! 
+<p>Welcome to the cell counting app! This tool identifies and counts cells 
+in an image obtained by a fluorescence microscope where either a hemocytometer (such as a Bürker chamber) 
+or a disposable counting slide of known depth has been used. Any combination of a fluorescence microscope and hemocytometer or cell counting slide 
+    is suitable for this application.</p>
+<a>Below is shown a full workflow, on the examples of Nexcellom 
+    <a href="https://www.nexcelom.com/nexcelom-products/cellometer-disposable-counting-chambers/" target="_blank">cell counting slides</a> and Zeiss
+    <a href="https://www.zeiss.com/microscopy/en/products/light-microscopes/widefield-microscopes/axio-imager-2-for-life-science-research.html" target="_blank">fluorescence microscope</a>:</a>
 <br>
-To count cells on your fluorescence microscopy image, please follow the instructions below:</p>
+<div class="container">
+    <img src="static/images/worflow_cell_counting.jpg" alt="Cell counting workflow" class="gallery__img">
+</div>
+<br>
+<p><u>How to use this tool:</u></p>
 <ol>
     <li>Enter pixel size</li>
     <li>Select threshold filter</li>
     <li>Enter additional parameters:</li>
     <ul>
-        <li>Minimal cell diameter (smaller objects will be ingnored)</li>
+        <li>Minimal cell diameter (smaller objects will not be considered for counting)</li>
         <li>Depth of the microscopy chamber</li>
     </ul>
     <li>Select image</li>
-    <li>Count the cells</li>
+    <li>Perform cell identification and counting</li>
     <li>Read the result</li>
-    <br>
-    <li>Optional: If some cells have been missed, a correction can be made by clicking the missing cells on the counted image.</li>
+    <li>If some cells have been missed, a correction can be made by mouse clicking on the counted image.</li>
 </ol> 
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count.count_cells') }}">
@@ -97,7 +106,6 @@ To count cells on your fluorescence microscopy image, please follow the instruct
             <button type="button" class="btn btn-outline-primary">Download an example image</button>
         </a>
 </form>
-
                 
 <br>
 {% if img_orig_decoded_from_memory %}
@@ -178,11 +186,13 @@ To count cells on your fluorescence microscopy image, please follow the instruct
     <br>    
     </div> 
 
+{% else %}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
+
 {% endif %}
 
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br>
 
 <footer id="footer_relative">
     <br>Copyright © 

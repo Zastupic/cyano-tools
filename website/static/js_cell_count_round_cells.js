@@ -63,23 +63,6 @@ function getMousePosition(canvas, event) {
   var identified_cells = coordinates.length;
   var cell_conc_corrected = ((cells_counted_autom + identified_cells) / image_volume_recalculated_nL).toFixed(1)
 
-/*
-  console.log(
-    " Manually identified cells: " + identified_cells, 
-    "\n Image resolution-x: " + pixels_x + " pixels",  
-    "\n Image resolution-y: " + pixels_y + " pixels",
-    "\n Pixel size: " + size_of_pixel + " nm",
-    "\n Imaged area: " + image_area + " mm^2", 
-    "\n Depth of cultivation chamber: " + chamber_depth + " nm",
-    "\n Volume of imaged area - from flask: " + volume_imaged_area + " nL",
-    "\n Volume of imaged area - recalculated: " + image_volume_recalculated_nL + " nL",
-    "\n Identified cells: " + cells_counted_autom, 
-    "\n Cell concentration - from flask: " + cell_conc_autom + " x 10^6 cells/mL", 
-    "\n Cell concentration - recalculated: " + cell_conc_recalculated + " x 10^6 cells/mL",
-    "\n Cell concentration - corrected: " + cell_conc_corrected + " x 10^6 cells/mL"
-    ) 
-*/
-
   // DRAWING A CIRCLE//
   var circle_size = slider_3.value;
 

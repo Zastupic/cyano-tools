@@ -32,6 +32,8 @@ def create_app():
     from .ex_em_spectra_analysis import ex_em_spectra_analysis
     from .cell_size_round_cells import cell_size_round_cells
     from .cell_size_filament import cell_size_filament
+    from .settings import settings 
+    from .light_curves_analysis import light_curves_analysis 
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
@@ -44,7 +46,9 @@ def create_app():
     app.register_blueprint(P700_kin_data_analysis, url_prefix='/')
     app.register_blueprint(ex_em_spectra_analysis, url_prefix='/')
     app.register_blueprint(cell_size_round_cells, url_prefix='/')
-    app.register_blueprint(cell_size_filament, url_prefix='/')
+    app.register_blueprint(cell_size_filament, url_prefix='/') 
+    app.register_blueprint(settings, url_prefix='/') 
+    app.register_blueprint(light_curves_analysis, url_prefix='/') 
 
     #### DATABASE ####
     with app.app_context(): # creating the database
@@ -52,7 +56,7 @@ def create_app():
 
     #### LOGIN MANAGAER ####
     login_manager = LoginManager()
-    login_manager.login_view = 'auth.login' # where flask will redirect user when not logged in
+    login_manager.login_view = 'auth.login' # type: ignore # where flask will redirect user when not logged in
     login_manager.init_app(app)
     login_manager.login_message = ''
 
@@ -68,5 +72,5 @@ def create_app():
 
 def create_database(app):
     if not path.exists('website/' + DB_NAME):
-        db.create_all(app=app)
+        db.create_all(app) #WORKING VERSION: db.create_all(app=app)
         print('Created Database!')

@@ -7,8 +7,19 @@
 {% block content %}
 <h1>Cell counting - filamentous strains</h1>
 <br>
-<p>Welcome to the app for counting cells of filamentous strains!
-<br>To identify and count individual cells within filaments on your picture, please follow the instructions below:</p>
+<p>Welcome to the cell counting app! This tool splits filaments and identifies and counts individual cells 
+in an image obtained by a fluorescence microscope where either a hemocytometer (such as a Bürker chamber) 
+or a disposable counting slide of known depth has been used. Any combination of a fluorescence microscope and hemocytometer or cell counting slide 
+    is suitable for this application.</p>
+<a>Below is shown a full workflow, on the examples of Nexcellom 
+    <a href="https://www.nexcelom.com/nexcelom-products/cellometer-disposable-counting-chambers/" target="_blank">cell counting slides</a> and Zeiss
+    <a href="https://www.zeiss.com/microscopy/en/products/light-microscopes/widefield-microscopes/axio-imager-2-for-life-science-research.html" target="_blank">fluorescence microscope</a>:</a>
+<br><br>
+<div class="container">
+    <img src="static/images/worflow_cell_counting_filaments.jpg" alt="Cell counting workflow" class="gallery__img">
+</div>
+<br>
+<p><u>How to use this tool:</u></p>
 <ol>
     <li>Enter pixel size</li>
     <li>Select threshold filter</li>
@@ -204,11 +215,12 @@
         </div>
     </div>
 
-{% endif %}
+{% else %}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
 
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
+{% endif %}
+<br><br><br><br><br><br><br>
 
 <footer id="footer_relative">
     <br>Copyright © 

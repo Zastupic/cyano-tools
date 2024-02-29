@@ -87,12 +87,15 @@
     <a href="{{ url_for('static', filename=xlsx_file_path)}}">
         <button type=" download" class="btn btn-primary">Download the results</button>
     </a>
-{% endif %}
 
+{% else %}
 <br><br><br><br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br><br><br><br><br><br>
+
+{% endif %}
+<br><br><br><br><br><br><br>
 
 <footer id="footer_relative">
     <br>Copyright © 

@@ -70,10 +70,16 @@ html {
   grid-row-gap: 2px;
   grid-column-gap: 2px;
 }
+.gallery__img:hover {
+  height: 96%;
+}
 .gallery__img__tall {
-  width: 100%;
+  width: 95%;
+  height: 90%;
   object-fit: cover;
   display: block; 
+  grid-row-gap: 2px;
+  grid-column-gap: 2px;
 }
 .gallery__item--1 {
   grid-column-start: 1;
@@ -184,6 +190,8 @@ img {
 table {
   border-collapse: collapse;
   width: 100%;
+  tr:nth-child(odd){background-color:#fff; }
+  tr:nth-child(even){background-color:#f7f7f7; }
 }
 td, th {
   border: none;
@@ -191,4 +199,38 @@ td, th {
   padding: 0px;
   margin:0px;
   font-size:80%;
+}
+#form {
+  width: 100%;
+  float: left;
+}
+#form_short {
+  width: 50%;
+  float: left;
+  clear: both;
+}
+.text_below_form {
+  width: 100%;
+  float: left;
+  padding-top: 2em;
+  clear: both;
+}
+.column { /* Create two equal columns that floats next to each other */
+  float: left;
+  width: 50%;
+  padding: 10px;
+}
+#grey_rectangle{
+  width:385px;
+  height:320px;
+  border-radius: 25px;
+  background:rgb(229, 229, 234);
+  padding: 20px; 
+}
+#white_rectangle{
+  width:650px;
+  height:580px;
+  border-radius: 25px;
+  background:rgb(121, 103, 103);
+  padding: 20px; 
 }

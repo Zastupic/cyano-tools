@@ -30,3 +30,13 @@ $('img[data-enlargeable]').addClass('img-enlargeable').click(function() {
     });
   });
 
+//---------------//
+//--- SLIDERS ---//
+//---------------//
+var slider_1 = document.getElementById("ETR_max_multiplication_factor_range");
+var output_1 = document.getElementById("ETR_max_multiplication_factor");
+
+output_1.innerHTML = slider_1.value;
+slider_1.oninput = function() {
+  output_1.innerHTML = this.value;
+}

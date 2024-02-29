@@ -7,14 +7,16 @@ from flask_login import login_user, login_required, logout_user, current_user
 auth = Blueprint('auth', __name__)
 
 @auth.route('/')
+#@login_required
 def index():
     return render_template("index.html")
 
 @auth.route('/login', methods=['GET', 'POST']) # GET: initiated by typing the http address, POST:initiated by hitting a button
 def login():
     if request.method == 'POST':
+        next = request.args.get('next')
         email = request.form.get('email')
-        password = request.form.get('password')
+        password = str(request.form.get('password'))
 
         user = User.query.filter_by(email=email).first() # find user with email in database
 
@@ -30,19 +32,21 @@ def login():
     return render_template("login.html", user=current_user)
 
 @auth.route('/logout')
-@login_required 
+# this function secures that we can't access the logout page unless the user is logged in
+@login_required
 def logout():
     logout_user()
+#    return redirect(url_for('views.home'))
     return redirect (url_for('auth.login'))
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
     if request.method == 'POST':
-        email = request.form.get('email')
-        name = request.form.get('name')
-        institution = request.form.get('institution')
-        password1 = request.form.get('password1')
-        password2 = request.form.get('password2')
+        email = str(request.form.get('email'))
+        name = str(request.form.get('name'))
+        institution = str(request.form.get('institution'))
+        password1 = str(request.form.get('password1'))
+        password2 = str(request.form.get('password2'))
 
         user = User.query.filter_by(email=email).first()
         if user:

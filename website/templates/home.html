@@ -6,37 +6,41 @@
 
 {% block content %}
 <br>
-<h3> Welcome!</h3>
-<p>Please select a tool for your method.</p>
+<h3 allign="center">Welcome to Cyano Tools! </h3>
 <br>
+<a>This site offers tools for analyzing data acquaried by methods routinely used in laboratories working with cyanobacteria, algae, plants or bacteria. 
+    The site is developed at <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">Department of Adaptive Biotechnologies (DoAB)</a> of Global Change Research Institute of the Czech Academy of Sciences 
+    <a href="https://www.czechglobe.cz/en/" target="_blank">(CzechGlobe)</a>. 
+<br>
+To begin, pease select a tool from the options below: 
+</a>  
+<br><br>
 <div class="container">
     <div class="gallery_4">
-        <h5 class="gallery__img gallery__item--1"> <a id="Fluorescence microscopy"></a> <u>Fluorescence microscopy</u> </h5>
-        <h5 class="gallery__img gallery__item--3"><a id="PAM fluorometry"></a> <u>PAM fluorometry</u> </h5>
-        <h5 class="gallery__img gallery__item--4"><a id="Fluorescence spectroscopy"></a> <u>Fluorescence spectroscopy</u> </h5>
+        <h5 class="gallery__img gallery__item--1"><a id="PAM fluorometry"></a> <u>PAM fluorometry</u> </h5>
+        <h5 class="gallery__img gallery__item--3"> <a id="Fluorescence microscopy"></a> <u>Fluorescence microscopy</u> </h5>
     </div>
 </div>
 <div class="container">
     <div class="gallery_4">
-        <a href="{{ url_for('cell_count.count_cells') }}" class="gallery__img gallery__item--1">
-            <p>Cell counting - round cells</p>
-            <img src="static/images/cell_counting_counted.jpg" alt="Cell counting - round cells" class="gallery__img">
+        <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}" class="gallery__img gallery__item--1">
+            <i>OJIP fluorescence curves</i>
+            <img src="static/images/OJIP_curves_example.jpg" alt="OJIP" class="gallery__img__tall">
         </a>
-        <a href="{{ url_for('cell_count_filament.count_filament_cells') }}" class="gallery__img gallery__item--2">
-            <p>Cell counting - filaments</p>
-            <img src="static/images/cells_filamentous_counted.jpg" alt="Cell counting - filament strains" class="gallery__img">
+        <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}" class="gallery__img gallery__item--2">
+            <i>Rapid Light Curves (P-I curves)</i>
+            <img src="static/images/light_curves.jpg" alt="Slow" class="gallery__img__tall gallery__item">
         </a>
-        <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}" class="gallery__img gallery__item--3">
-            <p>OJIP fluorescence curves</p>
-            <img src="static/images/OJIP_curves_example.jpg" alt="OJIP" class="gallery__img">
+        <a href="{{ url_for('cell_count.count_cells') }}" class="gallery__img gallery__item--3">
+            <i>Cell counting - round cells</i>
+            <img src="static/images/cell_counting_counted.jpg" alt="Cell counting - round cells" class="gallery__img__tall">
         </a>
-        <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}" class="gallery__img gallery__item--4">
-            <p>Excitation-emission spectra</p>
-            <img src="static/images/Ex_em_spectra_under_construction.jpg" alt="Slow" class="gallery__img gallery__item">
+        <a href="{{ url_for('cell_count_filament.count_filament_cells') }}" class="gallery__img gallery__item--4">
+            <i>Cell counting - filaments</i>
+            <img src="static/images/cells_filamentous_counted.jpg" alt="Cell counting - filament strains" class="gallery__img__tall">
         </a>
     </div>
 </div>
-<br> 
 <br>
 <div class="container">
     <div class="gallery_4">
@@ -46,29 +50,115 @@
 <div class="container">
     <div class="gallery_4">
         <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}" class="gallery__img gallery__item--1">
-            <p>Pigment profiles - round cells</p>
-            <img src="static/images/pigment_profiles_analzyed.jpg" alt="Pigment profiles" class="gallery__img">
+            <i>Pigment profiles - round cells</i>
+            <img src="static/images/pigment_profiles_analzyed.jpg" alt="Pigment profiles" class="gallery__img__tall">
         </a> 
         <a href="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}" class="gallery__img gallery__item--2">
-            <p>Pigment profiles - filaments</p>
-            <img src="static/images/pigment_profiles_filaments_analyzed.jpg" alt="Pigment profiles - filaments" class="gallery__img">
+            <i>Pigment profiles - filaments</i>
+            <img src="static/images/pigment_profiles_filaments_analyzed.jpg" alt="Pigment profiles - filaments" class="gallery__img__tall">
         </a>
         <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}" class="gallery__img gallery__item--3">
-            <p>Cell size - round cells</p>
-            <img src="static/images/cell_size_analzyed.jpg" alt="Cell size - round cells" class="gallery__img">
+            <i>Cell size - round cells</i>
+            <img src="static/images/cell_size_analzyed.jpg" alt="Cell size - round cells" class="gallery__img__tall">
         </a>
         <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}" class="gallery__img gallery__item--4">
-            <p>Cell size - filamentous strains</p>
-            <img src="static/images/cell_size_filaments_analyzed_2.JPG" alt="Cell size - filaments" class="gallery__img">
+            <i>Cell size - filamentous strains</i>
+            <img src="static/images/cell_size_filaments_analyzed_2.JPG" alt="Cell size - filaments" class="gallery__img__tall">
+        </a>
+    </div>
+</div>
+<br>
+<div class="container">
+    <div class="gallery_4">
+        <h5 class="gallery__img gallery__item--1"><a id="Fluorescence spectroscopy"></a> <u>Fluorescence spectroscopy</u> </h5>
+    </div>
+</div>
+<div class="container">
+    <div class="gallery_4">
+        <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}" class="gallery__img gallery__item--1">
+            <i>Excitation-emission spectra</i>
+            <img src="static/images/Ex_em_spectra_under_construction.jpg" alt="Slow" class="gallery__img__tall gallery__item">
+        </a>
+    </div>
+</div>
+<br><br>
+<h5><u>Other tools developed at DoAB:</u></h5>
+<div class="container">
+    <div class="gallery_4">
+        <a href="https://www.optimalga.com/" target="_blank" class="gallery__img gallery__item--1">
+            <i>Optimalga</i>
+            <img src="static/images/optimalga_logo2.png" alt="Optimalga" class="gallery__img__tall">
+        </a>
+        <a href="https://www.e-cyanobacterium.org/" target="_blank" class="gallery__img gallery__item--2">
+            <i>E-cyanobacterium</i>
+            <img src="static/images/ecyanobacterium2.png" alt="E-cyanobacterium" class="gallery__img__tall">
+        </a>
+    </div>
+</div>
+<br>
+<div class="container">
+    <div class="gallery_4">
+        <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" class="gallery__img gallery__item--1">
+            <i>Online tool for advanced analysis of PBR experimental data</i>
+            <img src="static/images/PBRtool2.png" alt="PBR data analysis" class="gallery__img__tall">
+        </a>
+        <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" class="gallery__img gallery__item--2">
+            <i>Online tool for calculating DIC properties in seawater</i>
+            <img src="static/images/seacarb.png" alt="Sea Carb" class="gallery__img__tall">
+        </a>
+        <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" class="gallery__img gallery__item--3">
+            <i>Set of control scripts for PSI photobioreactor SW client</i>
+            <img src="static/images/PBRscripts1.jpg" alt="PBR scripts" class="gallery__img__tall">
+        </a>
+    </div>
+</div>
+<br><br><br><br>
+<!-- <h5><u>DoAB information:</u></h5> -->
+<div class="container">
+    <div class="gallery_4">
+        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">
+            <i>DoAB home page</i>
+        </a>
+        <a href="http://www.pracovistedrasov.pano3d.eu/" target="_blank">
+            <i>DoAB research infrastructure</i>
+        </a>
+        <a href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank">
+            <i>DoAB results and publications</i>
+        </a>
+        <a href="https://twitter.com/CzechGlobe_DoAB" target="_blank">
+            <i>DoAB social media channel</i>
+        </a>                
+    </div>
+</div>
+<div class="container">
+    <div class="gallery_4">
+        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">
+            <img src="static/images/drasov_1.jpg" alt="Bioreactors" class="gallery__img gallery__item--1">
+        </a>
+        <a href="http://www.pracovistedrasov.pano3d.eu/" target="_blank">
+            <img src="http://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png" 
+            srcset="https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png 400w, 
+            https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final-300x191.png 300w" class="gallery__img gallery__item--2">
+        </a>
+        <a href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank">
+            <img src="static/images/drasov_4.jpg" alt="Publications" class="gallery__img gallery__item--3">
+        </a>
+        <a href="https://twitter.com/CzechGlobe_DoAB" target="_blank">
+            <img src="static/images/drasov_3.jpg" alt="Team at DoAB" class="gallery__img gallery__item--4">
         </a>
     </div>
 </div>
 
+<!-- 
+{% if current_user.is_authenticated %}
+{% else %}
+    <br><br><br>
+    <p>If you wish to receive news on the latest tools, <a href="/sign_up"> sign up</a>.
+    <br>To change your user settings or to unsubscribe from the email list, <a href="/login">login</a>.</p>
+{% endif %}
+-->
 
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br>
 
 <footer id="footer_relative">
     <br>Copyright ©

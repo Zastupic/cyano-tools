@@ -1,39 +1,231 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
-{% block title %} 
+{% block title %}
     OJIP analysis
 {% endblock %}
 
 {% block content %}
 <h1> Analysis of fast fluorescence transients (OJIP) </h1>
 <br>
-<p>Welcome to the app for OJIP files analysis! 
+
+<div class="container">
+    <img src="static/images/OJIP_curves_example_orig.jpg" alt="OJIP example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
+</div>
 <br>
-To analyze your OJIP files, please follow the instructions below:</p>
+<p>Welcome to the application analyzing OJIP curves! Fast fluorescence transients (so-called OJIP curves) provide a rapid and highly sensitive method for evaluating the efficiency 
+    of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. Analysis of the OJIP curves allows to determine bottlenecks in the e<sup>-</sup>
+    transport on the site of charge separation at photosystem II (PSII), plastoquinon (PQ) pool, or at the site of photosystem I (PSI). Parameters describing the e<sup>-</sup> 
+    transport eficiency (mostly qualitatively), are summarized in the table below.
+<br><br>
+    This tool visualizes and analyzes OJIP curves obtained by PAM fluorometry measurements. It allows to read up to 50 OJIP curves and plots four graphs: i) raw data, 
+ii) all curves shifted to zero, iii) all curves shifted to maximal fluorescence (F<sub>P</sub> or F<sub>M</sub>) and iv) double-normalized curves where all values are between 0 and 1.
+Besides curves normalization and plotting, physiological parameters describing the efficiency of light capture by photosystem II and
+various aspects of e<sup>-</sup> transport between photosystem II and photosystem I are calculated and plotted (for references, see <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" target="_blank">Stirbet et al., 2018</a>
+and <a href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" target="_blank">Tsimilli-Michael 2020)</a></b></i>.
+After processing, all curves and parameters are stored in a summary .xlsx file that is available for download.<p>
+<table style="width:95%">
+    <colgroup>
+        <col style="width:1%">
+        <col style="width:5%">
+        <col style="width:12%">
+    </colgroup>  
+    <tr>
+        <td><u>Parameter</u></td>
+        <td><u>Formula</u></td>
+        <td><u>Meaning</u></td>
+    </tr>
+    <tr>
+        <td>F<sub>in</sub>, F<sub>max</sub></td>
+        <td></td>
+        <td>Initial and maximal fluorescence intensity, respectively</td>
+    </tr>
+    <tr>
+        <td>F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub></td>
+        <td></td>
+        <td>Fluorescence intensity at 300 μs, 2 ms and 30 ms of the fluorescence transient, respectively</td>
+    </tr>
+    <tr>
+        <td>A<sub>0-J</sub></td>
+        <td>F<sub>J</sub> - F<sub>in</sub></td>
+        <td>Amplitude of fluorescence intensity between F<sub>in</sub> and F<sub>J</sub></td>
+    </tr>
+    <tr>
+        <td>A<sub>J-I</sub></td>
+        <td>F<sub>I</sub> - F<sub>J</sub></td>
+        <td>Amplitude of fluorescence intensity between F<sub>J</sub> and F<sub>I</sub></td>
+    </tr>
+    <tr>
+        <td>A<sub>I-P</sub></td>
+        <td>F<sub>P</sub> - F<sub>I</sub></td>
+        <td>Amplitude of fluorescence intensity between F<sub>I</sub> and F<sub>max</sub></td>
+    </tr>
+    <tr>
+        <td>V<sub>J</sub>,V<sub>I</sub></td>
+        <td>V<sub>t</sub> = (F<sub>t</sub> – F<sub>in</sub>) / (F<sub>max</sub> – F<sub>in</sub>)</td>
+        <td>Relative variable fluorescence at time (t) of J and I points (2 ms and 30 ms), respectively</td>
+    </tr>
+    <tr>
+        <td>M<sub>0</sub>
+        <td>4(F<sub>0.3 ms</sub> - F<sub>0.05 ms</sub>) / (F<sub>max</sub> – F<sub>in</sub>)</td>
+        <td>Initial slope (in ms<sup>–1</sup>) of the O-J fluorescence rise</td>
+    </tr>
+    <tr>
+        <td>ψE<sub>0</sub></td>
+        <td>1 - V<sub>J</sub></td>
+        <td>Efficiency with which a PSII trapped electron is transferred from Q<sub>A</sub><sup>-</sup> to PQ</td>
+    </tr>
+        <tr>
+        <td>ψR<sub>0</sub></td>
+        <td>1 - V<sub>I</sub></td>
+        <td>Efficiency with which a PSII trapped electron is transferred to final PSI acceptors</td>
+    </tr>
+    </tr>
+        <tr>
+        <td>δR<sub>0</sub></td>
+        <td>ψR<sub>0</sub> / ψE<sub>0</sub></td>
+        <td>Efficiency with which an electron from PQH<sub>2</sub> is transferred to final PSI acceptors</td>
+    </tr>
+    <tr>
+        <td>φP<sub>0</sub></td>
+        <td>(F<sub>max</sub> - F<sub>in</sub>) / F<sub>max</sub></td>
+        <td>Maximum quantum yield of primary PSII photochemistry</td>
+    </tr>
+    <tr>
+        <td>φE<sub>0</sub></td>
+        <td>φP<sub>0</sub> x ψE<sub>0</sub></td>
+        <td>Quantum yield of electron transport from Q<sub>A</sub><sup>-</sup> to PQ</td>
+    </tr>
+    <tr>
+        <td>φR<sub>0</sub></td>
+        <td>φP<sub>0</sub> x ψR<sub>0</sub></td>
+        <td>Quantum yield of electron transport from Q<sub>A</sub><sup>-</sup> to final PSI acceptors</td>
+    </tr>
+    <tr>
+        <td>ABS/RC</td>
+        <td>(M<sub>0</sub> / V<sub>J</sub>) / φP<sub>0</sub></td>
+        <td>Apparent antenna size of an active PSII</td>
+    </tr>
+    <tr>
+        <td>TR<sub>0</sub>/RC</td>
+        <td>M<sub>0</sub> / V<sub>J</sub></td>
+        <td>Maximum trapped exciton flux per active PSII</td>
+    </tr>
+    <tr>
+        <td>ET<sub>0</sub>/RC</td>
+        <td>(M<sub>0</sub> / V<sub>J</sub>) x ψE<sub>0</sub></td>
+        <td>The flux of electrons transferred from Q<sub>A</sub><sup>-</sup> to PQ per active PSII</td>
+    </tr>
+    <tr>
+        <td>RE<sub>0</sub>/RC</td>
+        <td>(M<sub>0</sub> / V<sub>J</sub>) x ψR<sub>0</sub></td>
+        <td>The flux of electrons transferred from Q<sub>A</sub><sup>-</sup> to final PSI acceptors per active PSII</td>
+    </tr>
+    <tr>
+        <td>DI<sub>0</sub>/RC</td>
+        <td>ABS/RC -  TR<sub>0</sub>/RC</td>
+        <td>The flux of energy dissipated in processes other than trapping per active PSII</td>
+    </tr>
+    <tr>
+        <td>Area<sub>0-J</sub></td>
+        <td>Complementary area above F<sub>0</sub>-F<sub>J</sub></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Area<sub>J-I</sub></td>
+        <td>Complementary area above F<sub>J</sub>-F<sub>I</sub></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Area<sub>I-P</sub></td>
+        <td>Complementary area above F<sub>I</sub>-F<sub>P</sub></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Area</td>
+        <td>Complementary area above the entire OJIP curve</td>
+        <td>Qualitative indicator related to the redox state of PQ pool</td>
+    </tr>
+    <tr>
+        <td>S<sub>m</sub></td>
+        <td>Area / (F<sub>max</sub> – F<sub>in</sub>)</td>
+        <td>Proportional to the number of e<sup>-</sup> acceptors of the PSET</td>
+    </tr>
+    <tr>
+        <td>N</td>
+        <td>S<sub>m</sub> x M<sub>0</sub> x (1 / V<sub>J</sub>)</td>
+        <td>Turn-over number QA</td>
+    </tr>
+</table>
+<br>
+<b style="font-size:70%"><i>References:</i></b>
+<br>
+<p style="line-height: 0.9">
+    <i style="font-size:70%">Tsimilli-Michael, M. (2020):
+        Photosynthetica, 58(SPECIAL ISSUE), 275-292. DOI:
+        <a href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" target="_blank">10.32615/ps.2019.150</a></i>
+        <br>
+    <i style="font-size:70%">Stirbet, A., Lazár, D., Kromdijk, J., & Govindjee, (2018):
+    Photosynthetica, 56(SPECIAL ISSUE), 86-104. DOI:
+    <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" target="_blank">10.1007/s11099-018-0770-3</a></i>
+    <br>
+    <i style="font-size:70%">Strasser R. J., Srivastava A., Tsimilli-Michael, M. (2000):
+        Probing photosynthesis : mechanism, regulation & adaptation, 445-483. ISBN:
+        <a href="https://www.taylorfrancis.com/books/mono/10.1201/9781482268010/probing-photosynthesis-prasanna-mohanty-mohammad-yunus-uday-pathre" target="_blank">9780748408214</a></i>
+    <br>
+</p>
+<br>
+Accepted file formats include .CSV and .txt files, as obtained by <i>MULTI-COLOR-PAM / DUAL-PAM</i> 
+or <i>AquaPen / FluorPen</i> fluorometers, respecitvely:
+<br>
+<div class="container">
+    <div class="gallery_4">
+        <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__img gallery__item--1">
+            <i>MULTI-COLOR-PAM</i>
+            <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__img gallery__item--1">
+        </a>
+        <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__img gallery__item--2">
+            <i>DUAL-PAM</i>
+            <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__img gallery__item--2">
+        </a>
+        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__img gallery__item--3">
+            <i>AquaPen</i>
+            <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__img gallery__item--3">
+        </a>
+        <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__img gallery__item--4">
+            <i>FluorPen</i>
+            <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__img gallery__item--4">
+        </a>
+    </div>
+</div>
+<br>
+<u>How to use this tool:</u>
+<br><br>
 <ol>
-    <li>Select your fluorometer</li>
-    <li>Upload OJIP files exported from your fluorometer (up to 50 files)</li> 
-    <li>View OJIP curves and calculated parameters</li>
-    <li>Download the processed result as .xlsx file</li>
-</ol> 
+    <li>Select your fluorometer (MULTI-COLOR-PAM / DUAL-PAM or AquaPen / PlantPen)</li>
+    <li>Upload OJIP files (up to 50 files)</li>
+    <li>Review OJIP curves and calculated parameters</li>
+    <li>Download the processed results in a summary .xlsx file</li>
+</ol>
+<br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">
     <div class="form-group">
         <label for="fluorometer"><p class="font-weight-bold">{{ '1. Select fluorometer' }}</p></label>
-            <select name="fluorometer" class="form-select" aria-label="fluorometer">
-                <option selected="MULTI-COLOR-PAM">MULTI-COLOR-PAM (Heinz Walz GmbH)</option>
+            <select name="fluorometer" class="form-select" aria-label="fluorometer" style="width:100%">
+                <option selected="MULTI-COLOR-PAM">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
                 <option value="Aquapen">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
-            </select>   
-        <br> 
+            </select>
+        </div>
+        <br>
         <p style="font-size:80%"><i><b>Imporant notice:</b>
             <br>All files are required to have identical number of measured points (identical length).
         </i></p>
         <p><i style="font-size:80%">
-            Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process. 
-            For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files. 
-            This will also allow to export reduced data for further processing. Reduces OJIP curves will contain about two thousand data points 
-            (data between F<sub>0</sub> and F<sub>I</sub> are unabridged). 
-            <br>If you wish to work with raw data, uncheck the box below. 
-            <br>For AquaPen / PlantPen, data reduction is not necessary. 
+            Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
+            For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
+            This will also allow to export reduced data for further processing. Reduced OJIP curves will contain about two thousand data points
+            (data between F<sub>0</sub> and F<sub>I</sub> are unabridged).
+            <br>If you wish to work with raw data, uncheck the box below.
+            <br>For AquaPen / PlantPen, data reduction is not necessary.
         </i></p>
         <div class="form-check">
             <label>
@@ -41,121 +233,31 @@ To analyze your OJIP files, please follow the instructions below:</p>
                 Reduce MULTI-COLOR PAM data size
             </label>
         </div>
-        <br> 
+        <br>
         <label class="form-label"><p class="font-weight-bold">2. Select your files</p></label>
-        <input 
-            class="form-control" 
-            type="file" 
+        <input
+            class="form-control"
+            type="file"
             name="OJIP_files"
-            id="OJIP_file" 
-            multiple="" 
+            id="OJIP_file"
+            multiple=""
             accept=".csv, .CSV, .txt, .ASCII"
-            /> 
-        <br> <br> 
+            style="width:100%"
+            />
+        <br> <br>
         <button type="submit" class="btn btn-primary">Upload and analyze OJIP files</button>
         <a href="{{url_for('static', filename='files/OJIP_example_files.zip')}}" download="OJIP_example_files">
-            <button type="button" class="btn btn-outline-primary">Download example OJIP files</button>  
+            <button type="button" class="btn btn-outline-primary">Download example OJIP files</button>
         </a>
 </form>
 
 {% if OJIP_plot_from_memory %}
     <br> <br> <br>
     <h6><b>OJIP curves: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_plot_from_memory }}"/>            
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_plot_from_memory }}"/>
     <br> <br>
     <h6><b>Calculated parameters: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_parameters_from_memory }}"/>  
-    <br> <br> 
-    <b><i style="font-size:80%">List of parameters (for references, see <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" target="_blank">Stirbet et al., 2018</a>
-     and <a href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" target="_blank">Tsimilli-Michael 2020)</a></b></i>:
-    <table>
-        <tr>
-            <td><u>Parameters</u></td>
-            <td><u>Formula</u></td>
-            <td><u>Meaning</u></td>
-        </tr>
-        <tr>
-            <td>F<sub>0</sub>, F<sub>P</sub></td>
-            <td></td>
-            <td>Minimal and peak fluorescence values, respectively</td>
-        </tr>
-        <tr>
-            <td>F<sub>K</sub>,F<sub>J</sub>, F<sub>I</sub></td>
-            <td></td>
-            <td>Fluorescence values measured at 300 μs, 2 ms and 30 ms, respectively</td>
-        </tr>
-        <tr>
-            <td>V<sub>J</sub>,V<sub>I</sub></td>
-            <td>V<sub>t</sub> = (F<sub>t</sub> – F<sub>0</sub>) / (F<sub>P</sub> – F<sub>0</sub>)</td>
-            <td>Relative variable fluorescence at time (t) of J and I points, respectively</td>
-        </tr>
-        <tr>
-            <td>M<sub>0</sub>
-            <td>4(F<sub>0.3 ms</sub> - F<sub>0.05 ms</sub>) / (F<sub>P</sub> – F<sub>0</sub>)</td>
-            <td>Initial slope (in ms<sup>–1</sup>) of the O-J fluorescence rise</td>
-        </tr>
-        <tr>
-            <td>ψE<sub>0</sub></td>
-            <td>1 - V<sub>J</sub></td>
-            <td>Efficiency with which a PSII trapped electron is transferred from Q<sub>A</sub><sup>-</sup> to PQ</td>
-        </tr>
-            <tr>
-            <td>ψR<sub>0</sub></td>
-            <td>1 - V<sub>I</sub></td>
-            <td>Efficiency with which a PSII trapped electron is transferred to final PSI acceptors</td>
-        </tr>
-        </tr>
-            <tr>
-            <td>δR<sub>0</sub></td>
-            <td>ψE<sub>0</sub> / ψR<sub>0</sub></td>
-            <td>Efficiency with which an electron from PQH<sub>2</sub> is transferred to final PSI acceptors</td>
-        </tr>
-        <tr>
-            <td>φP<sub>0</sub></td>
-            <td>(F<sub>P</sub> - F<sub>0</sub>) / F<sub>P</sub></td>
-            <td>Maximum quantum yield of primary PSII photochemistry</td>
-        </tr>
-        <tr>
-            <td>φE<sub>0</sub></td>
-            <td>φP<sub>0</sub> x ψE<sub>0</sub></td>
-            <td>Quantum yield of electron transport from Q<sub>A</sub><sup>-</sup> to PQ</td>
-        </tr>
-        <tr>
-            <td>φR<sub>0</sub></td>
-            <td>φP<sub>0</sub> x ψR<sub>0</sub></td>
-            <td>Quantum yield of electron transport from Q<sub>A</sub><sup>-</sup> to final PSI acceptors</td>
-        </tr>
-        <tr>
-            <td>ABS/RC</td>
-            <td>(M<sub>0</sub> / V<sub>J</sub>) / φP<sub>0</sub></td>
-            <td>Apparent antenna size of an active PSII</td>
-        </tr>
-        <tr>
-            <td>TR<sub>0</sub>/RC</td>
-            <td>M<sub>0</sub> / V<sub>J</sub></td>
-            <td>Maximum trapped exciton flux per active PSII</td>
-        </tr>
-        <tr>
-            <td>ET<sub>0</sub>/RC</td>
-            <td>M<sub>0</sub> / ψE<sub>0</sub></td>
-            <td>The flux of electrons transferred from Q<sub>A</sub><sup>-</sup> to PQ per active PSII</td>
-        </tr>
-        <tr>
-            <td>RE<sub>0</sub>/RC</td>
-            <td>M<sub>0</sub> / ψR<sub>0</sub></td>
-            <td>The flux of electrons transferred from Q<sub>A</sub><sup>-</sup> to final PSI acceptors per active PSII</td>
-        </tr>
-        <tr>
-            <td>DI<sub>0</sub>/RC</td>
-            <td>ABS/RC -  TR<sub>0</sub>/RC</td>
-            <td>The flux of energy dissipated in processes other than trapping per active PSII</td>
-        </tr>
-        <tr>
-            <td>J-I slope</td>
-            <td>(F<sub>I</sub> - F<sub>J</sub>) / 28</td>
-            <td>Slope (in ms<sup>–1</sup>) of the J-I fluorescence rise</td>
-        </tr>
-    </table>
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_parameters_from_memory }}"/>
     <br> <br>
     <form>
         <h6><b>Download results:</b></h6>
@@ -163,31 +265,21 @@ To analyze your OJIP files, please follow the instructions below:</p>
             <li>Raw OJIP curves</li>
             <li>Normalized OJIP curves</li>
             <li>Calcualted parameters</li>
-        </ol> 
+        </ol>
         <a href="{{ url_for('static', filename=xlsx_file_path)}}">
             <button type="button" class="btn btn-primary">Download the summary .xlsx file</button>
         </a>
     </form>
-    <br><br>
-    <b style="font-size:80%">References: </b>
-    <br>
-    <a style="font-size:80%">Stirbet, A., Lazár, D., Kromdijk, J., & Govindjee, (2018). 
-    Chlorophyll a fluorescence induction: Can just a one-second measurement be used to quantify abiotic stress responses? 
-    Photosynthetica, 56(SPECIAL ISSUE), 86-104. doi: <a style="font-size:80%"href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" target="_blank">10.1007/s11099-018-0770-3</a></a>
-    <br>
-    <a style="font-size:80%">TSIMILLI-MICHAEL, M. (2020). Special issue in honour of Prof. Reto J. Strasser 
-    – Revisiting JIP-test: An educative review on concepts, assumptions, approximations, definitions and terminology. 
-    Photosynthetica, 58(SPECIAL ISSUE), 275-292. doi: <a style="font-size:80%" href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" target="_blank">10.32615/ps.2019.150</a></a>
 
+{% else %}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
 
 {% endif %}
-
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br>
 
 <footer id="footer_relative">
-    <br>Copyright © 
+    <br>Copyright ©
     <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
 </footer>
 
