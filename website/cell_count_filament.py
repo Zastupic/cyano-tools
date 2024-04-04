@@ -16,7 +16,7 @@ def count_filament_cells():
             flash('Please enter pixel size', category='error')
         else:
             pixel_size_nm = float(str(request.form.get('pixel_size')))
-            depth_nm = int(request.form["chamber_depth_range"])
+            depth_um = int(str(request.form.get("chamber_depth_range")))
             minimal_expected_size = float(request.form["minimal_diameter_range"]) # Get smallest cell size (in um)
 #                  manually_identified_cells = int(request.form.get('manually_identified_cells'))
             minimum_area = 3.141592653*((minimal_expected_size * 1000 / pixel_size_nm)/2)**2 # Defines area of the smallest cell (in pixels)
@@ -191,18 +191,16 @@ def count_filament_cells():
                         y_pixels, x_pixels, channels = img_for_counted_cells_copy.shape
                         # Calculate image area
                         x_nm = x_pixels * pixel_size_nm
-                        x_um = int(x_nm / 1e3)
                         y_nm = y_pixels * pixel_size_nm
-                        y_um = int(y_nm / 1e3)
-                        img_area_um2 = (x_um * y_um)
+                        img_area_mm2 = round(((x_nm / 1e6) * (y_nm / 1e6)), 3)
                         # Calculate volume of sample
-                        img_volume_um3 = img_area_um2 * (depth_nm / 1e3) 
-                        img_volume_nl = img_volume_um3 / 1e6 # 1nL = 1 x 10^6 um^3 
+                        img_volume_nl = round((x_nm * y_nm * (depth_um * 1000) / 1e15), 3) # 1 nanoliter = 1 × 10^15 cubic nanometer 
                         img_volume_ml = img_volume_nl / 1e6 
                         cell_count = len(contours_watershed_last[0]) 
-                        if img_volume_um3 > 1e-6:
+                        if img_volume_nl > 1:
                             # Calculate number of cells per ml
-                            million_cells_per_ml = round(cell_count/img_volume_ml * 1e-6, 3)
+                            cells_per_ml = cell_count / img_volume_ml
+                            million_cells_per_mL = round(cells_per_ml / 1e6, 3)
                             # Mark the cell concentration to the image
 #                                  img_for_download = cv2.putText(img_for_counted_cells_copy, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
 #                                  img_for_download = cv2.putText(img_for_counted_cells_copy, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 2)
@@ -234,27 +232,28 @@ def count_filament_cells():
                             # deleting original image
                             os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
                             return render_template("cell_count_filament.html", 
-                                               #user_id = user_id,
-                                               img_orig_decoded_from_memory = img_orig_decoded_from_memory, 
-                                               img_th_decoded_from_memory = img_th_decoded_from_memory,
-                                               img_counted_decoded_from_memory = img_counted_decoded_from_memory,
-                                               img_for_download_decoded_from_memory = img_for_download_decoded_from_memory,
-                                               img_for_download = f'{image_name}_counted{image_extension}',
-                                               cell_count = cell_count,
-                                               million_cells_per_ml = million_cells_per_ml,
-                                               x_pixels = x_pixels,
-                                               y_pixels = y_pixels,
-                                               img_area_um2 = img_area_um2,
-                                               img_volume_nl = img_volume_nl,
-                                               img_volume_ml = img_volume_ml,
-                                               x_um = x_um,
-                                               y_um = y_um,
-                                               pixel_size_nm = pixel_size_nm,
-                                               depth_nm = depth_nm,
-                                               minimal_expected_size = minimal_expected_size,
-#                                                     manually_identified_cells = manually_identified_cells,
-                                               threshold = threshold,
-                                               )
+                                #user_id = user_id,
+                                img_orig_decoded_from_memory = img_orig_decoded_from_memory, 
+                                img_th_decoded_from_memory = img_th_decoded_from_memory,
+                                img_counted_decoded_from_memory = img_counted_decoded_from_memory,
+                                img_for_download_decoded_from_memory = img_for_download_decoded_from_memory,
+                                img_for_download = f'{image_name}_counted{image_extension}',
+                                cell_count = cell_count,
+                                cells_per_ml = cells_per_ml,
+                                million_cells_per_mL = million_cells_per_mL,
+                                x_pixels = x_pixels,
+                                y_pixels = y_pixels,
+                                img_area_mm2 = img_area_mm2,
+                                img_volume_nl = img_volume_nl,
+                                img_volume_ml = img_volume_ml,
+                                x_um = int(x_nm / 1e3),
+                                y_um = int(y_nm / 1e3),
+                                pixel_size_nm = pixel_size_nm,
+                                depth_um = depth_um,
+                                minimal_expected_size = minimal_expected_size,
+#                                                 manually_identified_cells = manually_identified_cells,
+                                threshold = threshold,
+                                )
                         else:
                             million_cells_per_ml = '0.00'
                             flash('Pixel size is too low', category='error')

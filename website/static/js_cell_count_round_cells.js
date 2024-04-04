@@ -1,4 +1,6 @@
+//----------/
 // SLIDERS //
+//---------//
 var slider_1 = document.getElementById("chamber_depth_range");
 var slider_2 = document.getElementById("minimal_diameter_range");
 var slider_3 = document.getElementById("expected_cell_size_px_range");
@@ -8,34 +10,37 @@ var output_2 = document.getElementById("minimal_diameter");
 var output_3 = document.getElementById("expected_cell_size_px");
 
 output_1.innerHTML = slider_1.value;
-output_2.innerHTML = slider_2.value;
-output_3.innerHTML = slider_3.value;
-
 slider_1.oninput = function() {
   output_1.innerHTML = this.value;
 }
+output_2.innerHTML = slider_2.value;
 slider_2.oninput = function() {
-    output_2.innerHTML = this.value;
-  }
-  slider_3.oninput = function() {
-    output_3.innerHTML = this.value;
-  }
+  output_2.innerHTML = this.value;
+}
+output_3.innerHTML = slider_3.value;
+slider_3.oninput = function() {
+  output_3.innerHTML = this.value;
+}
+//---------------------------------//
+// CELL COUNTING + CIRCLES DRAWING //
+//---------------------------------//
 
-// GET VARAIBLES FROM FLASK //
-var cell_conc_autom = cell_conc_autom;
+// GET VARAIBLES FROM HTML = from flask//
+var cell_conc_autom_million_cells_per_ml = cell_conc_autom_million_cells_per_ml;
 var volume_imaged_area = volume_imaged_area;
 var image_area = image_area;
-var chamber_depth = chamber_depth;
+var chamber_depth_um = chamber_depth_um;
 var cells_counted_autom = cells_counted_autom;
 var pixels_x = pixels_x;
 var pixels_y = pixels_y;
 var size_of_pixel = size_of_pixel;
+
 // Get original cell concentration, without manual correction
-var cell_conc_corrected = cell_conc_autom;
-document.getElementById("cell_conc_corrected").innerHTML = cell_conc_corrected;
+var cell_conc_corrected = cell_conc_autom_million_cells_per_ml;
+document.getElementById("cell_conc_corrected").innerHTML = cell_conc_corrected.toFixed(3);
 
 // Calculate cell concentration
-var image_volume_recalculated_nL = pixels_x * size_of_pixel * pixels_y * size_of_pixel * chamber_depth / 1e15
+// var image_volume_recalculated_nL = pixels_x * size_of_pixel * pixels_y * size_of_pixel * chamber_depth_um * 1000 / 1e15
 
 // MOUSE CLICKING - COORDINATES //
 const canvas = document.getElementById("canvas_mouse_clicking");
@@ -48,7 +53,7 @@ coordinates = [];
 
 function getMousePosition(canvas, event) {
   let rect = canvas.getBoundingClientRect();
-  // var cell_conc_recalculated = (cells_counted_autom / image_volume_recalculated_nL).toFixed(3)
+  //var cell_conc_recalculated = (cells_counted_autom / image_volume_recalculated_nL).toFixed(3)
 
   canvas.height = rect.height;
   canvas.width = rect.width;
@@ -60,8 +65,8 @@ function getMousePosition(canvas, event) {
 
   coordinates.push({x, y});
 
-  var identified_cells = coordinates.length;
-  var cell_conc_corrected = ((cells_counted_autom + identified_cells) / image_volume_recalculated_nL).toFixed(1)
+  identified_cells = coordinates.length;
+  var cell_conc_corrected = ((cells_counted_autom + identified_cells) / volume_imaged_area / 1e6).toFixed(3)
 
   // DRAWING A CIRCLE//
   var circle_size = slider_3.value;
@@ -71,6 +76,20 @@ function getMousePosition(canvas, event) {
   context.lineWidth = 1;
   context.strokeStyle = '#FF9900';
   context.stroke();
+
+  /** console.log(
+    " Manually identified cells: " + identified_cells, 
+    "\n Image resolution-x: " + pixels_x + " pixels",  
+    "\n Image resolution-y: " + pixels_y + " pixels",
+    "\n Pixel size: " + size_of_pixel + " nm",
+    "\n Imaged area: " + image_area + " mm^2", 
+    "\n Depth of cultivation chamber: " + chamber_depth_um + " um",
+    "\n Volume of imaged area - from flask: " + volume_imaged_area + " mL",
+    "\n Identified cells: " + cells_counted_autom, 
+    "\n Cell concentration - from flask: " + cell_conc_autom_million_cells_per_ml + " x 10^6 cells/mL", 
+    "\n Cell concentration - corrected: " + cell_conc_corrected + " x 10^6 cells/mL"
+  ) 
+    **/
 
   // DRAWING ALL CIRCLES//
   for (let i = 0; i < coordinates.length; i++){ 

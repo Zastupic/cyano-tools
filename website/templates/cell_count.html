@@ -36,7 +36,7 @@ or a disposable counting slide of known depth has been used. Any combination of 
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count.count_cells') }}">
     <div class="form-group">
-    <label for="pixel_size"><p class="font-weight-bold">{{ '1. Enter pixel size (nm)' }}</p></label>
+    <label for="pixel_size"><p><b>1. Enter pixel size (nm)</b></p></label>
     <input  
             type="number"
             id="pixel_size" 
@@ -69,7 +69,7 @@ or a disposable counting slide of known depth has been used. Any combination of 
                         id="chamber_depth_range"/>
             </div>
             <span STYLE="font-size:9.5pt">1000</span>
-            <p>Depth of the counting chamber (nm): <span id="chamber_depth"></span></p>
+            <p>Depth of the counting chamber (µm): <span id="chamber_depth"></span></p>
 
             <span STYLE="font-size:9.5pt">0.5</span>
             <div class="slidecontainer">
@@ -110,10 +110,10 @@ or a disposable counting slide of known depth has been used. Any combination of 
 <br>
 {% if img_orig_decoded_from_memory %}
     <script> 
-        var cell_conc_autom = {{ cells_per_ml }};
-        var volume_imaged_area = {{ img_volume_nl }};
+        var cell_conc_autom_million_cells_per_ml = {{ million_cells_per_mL }};
+        var volume_imaged_area = {{ img_volume_ml }};
         var image_area = {{ img_area_mm2 }};
-        var chamber_depth = {{ depth_nm }};
+        var chamber_depth_um = {{ depth_um }};
         var cells_counted_autom = {{ cell_count }};
         var pixels_x = {{ x_pixels }};
         var pixels_y = {{ y_pixels }};
@@ -152,14 +152,14 @@ or a disposable counting slide of known depth has been used. Any combination of 
         </div>
     </div>
     <br> 
-    <p>Cell count without manual correction: {{ cells_per_ml }}  x 10<sup>6</sup> cells mL<sup>-1</sup></p>
-    <p>Identified cells (by the cell-counting script): {{ cell_count }}</p>
+    <p>Cell count without manual correction: {{ million_cells_per_mL }}  x 10<sup>6</sup> cells mL<sup>-1</sup></p>
+    <p>Identified cells: {{ cell_count }}</p>
     <p>Additionally identified cells (manual correction): <span id="identified_cells"></span></p>
     <p>Image resolution: {{ x_pixels }} x {{ y_pixels }} pixels </p>
     <p>Image area: {{ img_area_mm2 }} mm<sup>2</sup> ({{ x_um }} x {{ y_um }} µm)</p>
     <p>Volume of the imaged area: {{ img_volume_nl }} nL</p>
     <p>Pixel size: {{ pixel_size_nm }} nm 
-    / Depth of the chamber: {{ depth_nm }} nm 
+    / Depth of the chamber: {{ depth_um }} µm 
     / Minimal cell size: {{ minimal_expected_size }} µm</p>
         <!-- <a href="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" download="{{ img_for_download }}">
             <button type="button" class="btn btn-primary">Download image with counted cells</button>

@@ -15,9 +15,8 @@ def count_cells():
             flash('Please enter pixel size', category='error')
         else:
             pixel_size_nm = float(str(request.form.get('pixel_size')))
-            depth_nm = int(request.form["chamber_depth_range"])
+            depth_um = (int(request.form["chamber_depth_range"]))
             minimal_expected_size = float(request.form["minimal_diameter_range"]) # Get smallest cell size (in um)
-#                  manually_identified_cells = int(request.form.get('manually_identified_cells'))
             minimum_area = 3.141592653*((minimal_expected_size * 1000 / pixel_size_nm)/2)**2 # Defines area of the smallest cell (in pixels)
             ####################################
             ### Load image for cell counting ###
@@ -80,7 +79,6 @@ def count_cells():
                                 cv2.putText(img_for_counted_cells, str(cell_count), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
                                 coords = tuple([cell_count,x_coord,y_coord])
                                 rough_coordinates_autmated_counting.append(coords)          
-#                          cell_count = cell_count + manually_identified_cells 
                     # preapring images for showing on the webiste  
                     img_original = im.fromarray(img_orig)
                     img_th_to_show = im.fromarray(img_th)
@@ -91,16 +89,15 @@ def count_cells():
                     y_pixels, x_pixels, channels = img_for_counted_cells.shape
                     # Calculate image area
                     x_nm = x_pixels * pixel_size_nm
-                    x_um = int(x_nm / 1e3)
                     y_nm = y_pixels * pixel_size_nm
-                    y_um = int(y_nm / 1e3)
-                    img_area_mm2 = round((x_um / 1e3 * y_um / 1e3), 3)
+                    img_area_mm2 = round(((x_nm / 1e6) * (y_nm / 1e6)), 3)
                     # Calculate volume of sample
-                    img_volume_ul = x_pixels * pixel_size_nm * y_pixels * pixel_size_nm * (depth_nm) / 1e18
-                    img_volume_nl = round(img_volume_ul * 1e3, 3)
-                    if img_volume_ul > 1e-6:
+                    img_volume_nl = round((x_nm * y_nm * (depth_um * 1000) / 1e15), 3) # 1 nanoliter = 1 × 10^15 cubic nanometer
+                    img_volume_ml = img_volume_nl / 1e6
+                    if img_volume_nl > 1:
                         # Calculate number of cells per ml
-                        cells_per_ml = round((cell_count)/(img_volume_ul)/1e3, 1)
+                        cells_per_ml = cell_count / img_volume_ml
+                        million_cells_per_mL = round(cells_per_ml / 1e6, 3)
                         # Mark the cell concentration to the image
 #                              img_for_download = cv2.putText(img_for_counted_cells, 'Cell count: '+str(cells_per_ml)+'x10^6 cells/mL', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
 #                              img_for_download = cv2.putText(img_for_counted_cells, 'Identified cells: '+str(cell_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 162, 0), 4)
@@ -141,14 +138,16 @@ def count_cells():
                             img_for_download = f'{image_name}_counted{image_extension}',
                             cell_count = cell_count,
                             cells_per_ml = cells_per_ml,
+                            million_cells_per_mL = million_cells_per_mL,
                             x_pixels = x_pixels,
                             y_pixels = y_pixels,
                             img_area_mm2 = img_area_mm2,
                             img_volume_nl = img_volume_nl,
-                            x_um = x_um,
-                            y_um = y_um,
+                            img_volume_ml = img_volume_ml,
+                            x_um = int(x_nm / 1000),
+                            y_um = int(y_nm / 1000),
                             pixel_size_nm = pixel_size_nm,
-                            depth_nm = depth_nm,
+                            depth_um = depth_um,
                             minimal_expected_size = minimal_expected_size,
 #                                 manually_identified_cells = manually_identified_cells,
                             threshold = threshold

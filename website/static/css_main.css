@@ -105,10 +105,28 @@ html {
   grid-row-start: 1;
   grid-row-end: 1;
 }
+.gallery__item--5 {
+  grid-column-start: 5;
+  grid-column-end: 5;
+  grid-row-start: 1;
+  grid-row-end: 1;
+}
+.gallery__item--6 {
+  grid-column-start: 6;
+  grid-column-end: 6;
+  grid-row-start: 1;
+  grid-row-end: 1;
+}
 
 .gallery_4 {
   display: grid;
   grid-template-columns: repeat(4, 2fr);
+  grid-template-rows: repeat(1, 2fr);
+  grid-gap: 1.1rem; 
+}
+.gallery_6 {
+  display: grid;
+  grid-template-columns: repeat(6, 2fr);
   grid-template-rows: repeat(1, 2fr);
   grid-gap: 1.1rem; 
 }

@@ -6,33 +6,358 @@
 
 {% block content %}
 <h1>Analysis of 3D excitation-emission fluorescence maps</h1>
+<div class="container">    
+    <img src="static/images/77K_spectra_example.png" alt="77K spectra example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
+</div>
 <br>
-<p>Welcome to the app for analyzing excitation-emission spectra! </p>
-
-<!--The tools are developed for data analysis of Jasco spectrofluorometers
+<p>Welcome to the app for analyzing excitation-emission spectra!</p> 
+<table style="width:95%">
+    <colgroup>
+        <col style="width:4%">
+        <col style="width:3%">
+        <col style="width:12%">
+    </colgroup>  
+    <tr>
+        <td colspan="3"><i>Peaks considered for the analysis</i></td>
+    </tr>
+    <tr>
+        <td><u>Parameter</u></td>
+        <td><u>Excitation wavelength (nm)</u></td>
+        <td><u>Emission wavelength (nm)</u></td>
+    </tr>
+    <tr>
+        <td>PBS-free<sub>peak</sub></td>
+        <td>360</td>
+        <td>661</td>
+    </tr>
+    <tr>
+        <td>PBS-PSII<sub>peak</sub> + Chl-PSII<sub>tail</sub></td>
+        <td>360</td>
+        <td>685</td>
+    </tr>
+    <tr>
+        <td>PBS-PSI<sub>peak</sub> + Chl-PSI<sub>tail</td>
+        <td>360</td>
+        <td>720</td>
+    </tr>
+    <tr>
+        <td>PBS-free<sub>tail</sub></td>
+        <td>440</td>
+        <td>661</td>
+    </tr>
+    <tr>
+        <td>Chl-PSII<sub>peak</sub> + PBS-PSII<sub>tail</sub></td>
+        <td>440</td>
+        <td>685</td>
+    </tr>
+    <tr>
+        <td>Chl-PSI<sub>peak</sub> + PBS-PSI<sub>tail</sub></td>
+        <td>440</td>
+        <td>720</td>
+    </tr>
+    <tr>
+        <td colspan="3">&nbsp</td>
+    </tr>
+    <tr>
+        <td colspan="3"><i>Calculating PBS-PSI, PBS-PSI, PBS-free, Chl-PSII and Chl-PSI from the fluorescence signal</i></td>
+    </tr>
+    <tr>
+        <td><u>Parameter</u></td>
+        <td colspan="2"><u>Equation</u></td>
+    </tr>
+    <tr>
+        <td>PBS-free</td>
+        <td colspan="2">Ex<sub>360</sub>Em<sub>661</sub> / PBS-total</td>
+    </tr>
+    <tr>
+        <td>PBS-PSII</td>
+        <td colspan="2">(0.937 x Ex<sub>360</sub>Em<sub>685</sub> - 0.695 x Ex<sub>440</sub>Em<sub>685</sub>) / PBS-total</td>
+    </tr>
+    <tr>
+        <td>PBS-PSI</td>
+        <td colspan="2">(0.937 x Ex<sub>360</sub>Em<sub>720</sub> - 0.695 x Ex<sub>440</sub>Em<sub>720</sub>) / PBS-total</td>
+    </tr>
+    <tr>
+        <td>PBS-total</td>
+        <td colspan="2">PBS-free + PBS-PSII + PBS-PSI</td>
+    </tr>
+    <tr>
+        <td>Chl-PSII</td>
+        <td colspan="2">(1.063 x Ex<sub>440</sub>Em<sub>685</sub> - 0.0696 x Ex<sub>360</sub>Em<sub>685</sub>) / Chl-total</td>
+    </tr>
+    <tr>
+        <td>Chl-PSI</td>
+        <td colspan="2">(0.937 x Ex<sub>440</sub>Em<sub>726</sub> - 0.695 x Ex<sub>360</sub>Em<sub>726</sub>) / Chl-total</td>
+    </tr>
+    <tr>
+        <td>Chl-total</td>
+        <td colspan="2">Chl-PSII + Chl-PSI</td>
+    </tr>
+    <tr>
+        <td>PSII / PSI</td>
+        <td colspan="2">Chl-PSII / Chl-PSI</td>
+    </tr>
+</table>
+<br>
+<p>This tool is developed for data analysis obtained by Jasco spectrofluorometers.
 <div class="container">
     <div class="gallery_4">
         <a href="https://jascoinc.com/products/spectroscopy/fluorometer/spectrofluorometer-models/" target="_blank" class="gallery__img gallery__item--1">
-            <img src="static/images/jasco.png" alt="jasco" class="gallery__img gallery__item--1">
             <p>Jasco fluorescence spectrometers</p>
+            <img src="static/images/jasco.png" alt="jasco" class="gallery__img gallery__item--1">
         </a>
     </div>
 </div>
-
+</p>
 <br>
-<br>-->
-<p>This site is under construction</p>
-<img src="static/images/under_construction.jpg" class="center-fit" width="20%">
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
+    <div class="container">
+        <div class="form-group">    
+            <p><b>1. Select spectrofluorometer</b><p>
+            <select name="spectrofluorometer" class="form-select" aria-label="spectrofluorometer">
+                <option selected="FP-8050">FP-8050 Series Spectrofluorometers (Jasco Inc.)</option>
+            </select>
+        </div>
+        <br>
+        <p><b>2. Select <i>excitation</i> wavelengths</b></p>
+        <div class="gallery_6">
+            <div class="gallery__img gallery__item--1">
+                <div class="form-inline">
+                    <div class="input-group">
+                        <!-- <input class="form-check-input" type="checkbox" name="checkbox_ex_1" id="checkbox_ex_1" value="checked" checked> -->
+                        <input             
+                            type="number"
+                            id="ex_1" 
+                            name="ex_1"
+                            class="form-control"
+                            value="370"
+                            step="1"
+                            style="font-weight:bold"
+                            onkeypress="return isNumberKey(event)">
+                        <span class="input-group-label">
+                            <label>&nbsp nm</label>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--2">
+                <div class='form-inline'>
+                    <div class="input-group">
+                        <input             
+                            type="number"
+                            id="ex_2" 
+                            name="ex_2"
+                            class="form-control"
+                            value="440"
+                            step="1"
+                            style="font-weight:bold"
+                            onkeypress="return isNumberKey(event)">
+                        <span class="input-group-label">
+                            <label>&nbsp nm</label>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--3">
+                <div class='form-inline'>
+                    <div class="input-group">
+                        <input             
+                            type="number"
+                            id="ex_3" 
+                            name="ex_3"
+                            class="form-control"
+                            value="570"
+                            step="1"
+                            style="font-weight:bold"
+                            onkeypress="return isNumberKey(event)">
+                        <span class="input-group-label">
+                            <label>&nbsp nm</label>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--4">
+                <div class='form-inline input-group'>
+                    <input             
+                        type="number"
+                        id="ex_4" 
+                        name="ex_4"
+                        class="form-control"
+                        value="620"
+                        step="1"
+                        style="font-weight:bold"
+                        onkeypress="return isNumberKey(event)">
+                    <span class="input-group-label">
+                        <label>&nbsp nm</label>
+                    </span>
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--5">
+                <div class='form-inline input-group'>
+                    <input             
+                        type="number"
+                        id="ex_5" 
+                        name="ex_5"
+                        class="form-control"
+                        value=""
+                        step="1"
+                        style="font-weight:bold"
+                        onkeypress="return isNumberKey(event)">
+                    <span class="input-group-label">
+                        <label>&nbsp nm</label>
+                    </span>
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--6">
+                <div class='form-inline input-group'>
+                    <input             
+                        type="number"
+                        id="ex_6" 
+                        name="ex_6"
+                        class="form-control"
+                        value=""
+                        step="1"
+                        style="font-weight:bold"
+                        onkeypress="return isNumberKey(event)">
+                    <span class="input-group-label">
+                        <label>&nbsp nm</label>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <br>
+        <p><b>3. Select <i>emission</i> wavelengths</b></p>
+        <div class="gallery_6">
+        <div class="gallery__img gallery__item--1">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="em_1" 
+                    name="em_1"
+                    class="form-control"
+                    value="662"
+                    step="1"
+                    style="font-weight:bold"
+                    onkeypress="return isNumberKey(event)">
+                <span class="input-group-label">
+                    <label>&nbsp nm</label>
+                </span>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="em_2" 
+                    name="em_2"
+                    class="form-control"
+                    value="689"
+                    step="1"
+                    style="font-weight:bold"
+                    onkeypress="return isNumberKey(event)">
+                <span class="input-group-label">
+                    <label>&nbsp nm</label>
+                </span>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="em_3" 
+                    name="em_3"
+                    class="form-control"
+                    value="724"
+                    step="1"
+                    style="font-weight:bold"
+                    onkeypress="return isNumberKey(event)">
+                <span class="input-group-label">
+                    <label>&nbsp nm</label>
+                </span>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--4">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="em_4" 
+                    name="em_4"
+                    class="form-control"
+                    value=""
+                    step="1"
+                    style="font-weight:bold"
+                    onkeypress="return isNumberKey(event)">
+                <span class="input-group-label">
+                    <label>&nbsp nm</label>
+                </span>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--5">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="em_5" 
+                    name="em_5"
+                    class="form-control"
+                    value=""
+                    step="1"
+                    style="font-weight:bold"
+                    onkeypress="return isNumberKey(event)">
+                <span class="input-group-label">
+                    <label>&nbsp nm</label>
+                </span>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--6">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="em_6" 
+                    name="em_6"
+                    class="form-control"
+                    value=""
+                    step="1"
+                    style="font-weight:bold"
+                    onkeypress="return isNumberKey(event)">
+                <span class="input-group-label">
+                    <label>&nbsp nm</label>
+                </span>
+            </div>
+        </div>
+    </div>
+    <br>
+    <p><b>4. Select files</b></p>
+    <input
+        class="form-control"
+        type="file"
+        name="77K_files"
+        id="77K_file"
+        multiple=""
+        accept=".csv, .CSV, .xlsx, .XLSX"
+        style="width:100%"
+        />
+    <br> <br>
+    <button type="submit" class="btn btn-primary">Upload and analyze Ex-Em spectra files</button>
+    <a href="{{url_for('static', filename='files/77K_spectra_example_files.zip')}}" download="77K_spectra_example_files">
+        <button type="button" class="btn btn-outline-primary">Download example Ex-Em spectra files</button>
+    </a>
+</form>
 
+{% if OJIP_plot_from_memory %}
+
+{% else %}
 <br><br><br><br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
+
+{% endif %}
+<br><br><br><br><br><br><br>
 
 <footer id="footer_relative">
     <br>Copyright ©
     <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
 </footer>
+
+<script src="{{url_for('static', filename='js_OJIP.js')}}"></script>
+
+
 {% endblock %}

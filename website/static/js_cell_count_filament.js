@@ -1,4 +1,6 @@
+//---------//
 // SLIDERS //
+//---------//
 
 var slider_1 = document.getElementById("chamber_depth_range");
 var slider_2 = document.getElementById("minimal_diameter_range");
@@ -15,46 +17,50 @@ var output_5 = document.getElementById("factor_2_distance");
 var output_6 = document.getElementById("expected_cell_size_px");
 
 output_1.innerHTML = slider_1.value;
-output_2.innerHTML = slider_2.value;
-output_3.innerHTML = slider_3.value;
-output_4.innerHTML = slider_4.value;
-output_5.innerHTML = slider_5.value;
-output_6.innerHTML = slider_6.value;
-
 slider_1.oninput = function() {
   output_1.innerHTML = this.value;
 }
+output_2.innerHTML = slider_2.value;
 slider_2.oninput = function() {
-    output_2.innerHTML = this.value;
-  }
+  output_2.innerHTML = this.value;
+}
+output_3.innerHTML = slider_3.value;
 slider_3.oninput = function() {
   output_3.innerHTML = this.value;
 }
+output_4.innerHTML = slider_4.value;
 slider_4.oninput = function() {
   output_4.innerHTML = this.value;
 }
+output_5.innerHTML = slider_5.value;
 slider_5.oninput = function() {
   output_5.innerHTML = this.value;
 }
+output_6.innerHTML = slider_6.value;
 slider_6.oninput = function() {
   output_6.innerHTML = this.value;
 }
 
-// GET VARAIBLES FROM FLASK //
-var cell_conc_autom = cell_conc_autom_million_cells_per_ml;
+//---------------------------------//
+// CELL COUNTING + CIRCLES DRAWING //
+//---------------------------------//
+
+// Get parameters from HTML = from flask
+var cell_conc_autom_million_cells_per_ml = cell_conc_autom_million_cells_per_ml;
 var volume_imaged_area = volume_imaged_area;
 var image_area = image_area;
-var chamber_depth = chamber_depth;
+var chamber_depth_um = chamber_depth_um;
 var cells_counted_autom = cells_counted_autom;
 var pixels_x = pixels_x;
 var pixels_y = pixels_y;
 var size_of_pixel = size_of_pixel;
+
 // Get original cell concentration, without manual correction
-var cell_conc_corrected = cell_conc_autom;
-document.getElementById("cell_conc_corrected").innerHTML = cell_conc_corrected.toFixed(1);
+var cell_conc_corrected = cell_conc_autom_million_cells_per_ml;
+document.getElementById("cell_conc_corrected").innerHTML = cell_conc_corrected.toFixed(3);
 
 // Calculate cell concentration
-var image_volume_recalculated_nL = pixels_x * size_of_pixel * pixels_y * size_of_pixel * chamber_depth / 1e15
+// var image_volume_recalculated_nL = pixels_x * size_of_pixel * pixels_y * size_of_pixel * chamber_depth / 1e15
 
 // MOUSE CLICKING - COORDINATES//
 const canvas = document.getElementById("canvas_mouse_clicking");
@@ -80,7 +86,7 @@ function getMousePosition(canvas, event) {
   coordinates.push({x, y});
 
   identified_cells = coordinates.length;
-  var cell_conc_corrected = ((cells_counted_autom + identified_cells) / image_volume_recalculated_nL).toFixed(1)
+  var cell_conc_corrected = ((cells_counted_autom + identified_cells) / volume_imaged_area / 1e6).toFixed(3)
 
 /*  console.log(
     " Manually identified cells: " + identified_cells, 

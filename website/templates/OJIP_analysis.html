@@ -35,6 +35,9 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <td><u>Meaning</u></td>
     </tr>
     <tr>
+        <td colspan="3"><i>Technical fluorescence parameters</i></td>
+    </tr>
+    <tr>
         <td>F<sub>in</sub>, F<sub>max</sub></td>
         <td></td>
         <td>Initial and maximal fluorescence intensity, respectively</td>
@@ -70,6 +73,37 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <td>Initial slope (in ms<sup>–1</sup>) of the O-J fluorescence rise</td>
     </tr>
     <tr>
+        <td>Area<sub>0-J</sub></td>
+        <td>Complementary area above F<sub>0</sub>-F<sub>J</sub></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Area<sub>J-I</sub></td>
+        <td>Complementary area above F<sub>J</sub>-F<sub>I</sub></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Area<sub>I-P</sub></td>
+        <td>Complementary area above F<sub>I</sub>-F<sub>P</sub></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Area</td>
+        <td>Complementary area above the entire OJIP curve</td>
+        <td>Qualitative indicator related to the redox state of PQ pool</td>
+    </tr>
+    <tr>
+        <td>S<sub>m</sub></td>
+        <td>Area / (F<sub>max</sub> – F<sub>in</sub>)</td>
+        <td>Proportional to the number of e<sup>-</sup> acceptors of the PSET</td>
+    </tr>
+    <tr>
+        <td colspan="3"><i>&nbsp</i></td>
+    </tr>
+    <tr>
+        <td colspan="3"><i>Efficiencies and quantum yields</i></td>
+    </tr>
+    <tr>
         <td>ψE<sub>0</sub></td>
         <td>1 - V<sub>J</sub></td>
         <td>Efficiency with which a PSII trapped electron is transferred from Q<sub>A</sub><sup>-</sup> to PQ</td>
@@ -101,6 +135,12 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <td>Quantum yield of electron transport from Q<sub>A</sub><sup>-</sup> to final PSI acceptors</td>
     </tr>
     <tr>
+        <td colspan="3"><i>&nbsp</i></td>
+    </tr>
+    <tr>
+        <td colspan="3"><i>Specific energy fluxes (per active PSII)</i></td>
+    </tr>
+    <tr>
         <td>ABS/RC</td>
         <td>(M<sub>0</sub> / V<sub>J</sub>) / φP<sub>0</sub></td>
         <td>Apparent antenna size of an active PSII</td>
@@ -126,34 +166,9 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <td>The flux of energy dissipated in processes other than trapping per active PSII</td>
     </tr>
     <tr>
-        <td>Area<sub>0-J</sub></td>
-        <td>Complementary area above F<sub>0</sub>-F<sub>J</sub></td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>Area<sub>J-I</sub></td>
-        <td>Complementary area above F<sub>J</sub>-F<sub>I</sub></td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>Area<sub>I-P</sub></td>
-        <td>Complementary area above F<sub>I</sub>-F<sub>P</sub></td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>Area</td>
-        <td>Complementary area above the entire OJIP curve</td>
-        <td>Qualitative indicator related to the redox state of PQ pool</td>
-    </tr>
-    <tr>
-        <td>S<sub>m</sub></td>
-        <td>Area / (F<sub>max</sub> – F<sub>in</sub>)</td>
-        <td>Proportional to the number of e<sup>-</sup> acceptors of the PSET</td>
-    </tr>
-    <tr>
         <td>N</td>
         <td>S<sub>m</sub> x M<sub>0</sub> x (1 / V<sub>J</sub>)</td>
-        <td>Turn-over number QA</td>
+        <td>Turn-over number Q<sub>A</sub></td>
     </tr>
 </table>
 <br>
@@ -168,6 +183,10 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
     Photosynthetica, 56(SPECIAL ISSUE), 86-104. DOI:
     <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" target="_blank">10.1007/s11099-018-0770-3</a></i>
     <br>
+    <i style="font-size:70%">Sturbet, A. & Govindjee (2011):
+        Journal of Photochemistry and Photobiology B: Biology, 104,  236–257. DOI:
+        <a href="https://www.sciencedirect.com/science/article/pii/S1011134410002812" target="_blank">0.1016/j.jphotobiol.2010.12.010</a></i>
+        <br>
     <i style="font-size:70%">Strasser R. J., Srivastava A., Tsimilli-Michael, M. (2000):
         Probing photosynthesis : mechanism, regulation & adaptation, 445-483. ISBN:
         <a href="https://www.taylorfrancis.com/books/mono/10.1201/9781482268010/probing-photosynthesis-prasanna-mohanty-mohammad-yunus-uday-pathre" target="_blank">9780748408214</a></i>
@@ -214,41 +233,42 @@ or <i>AquaPen / FluorPen</i> fluorometers, respecitvely:
                 <option selected="MULTI-COLOR-PAM">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
                 <option value="Aquapen">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
             </select>
-        </div>
-        <br>
-        <p style="font-size:80%"><i><b>Imporant notice:</b>
-            <br>All files are required to have identical number of measured points (identical length).
-        </i></p>
-        <p><i style="font-size:80%">
-            Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
-            For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
-            This will also allow to export reduced data for further processing. Reduced OJIP curves will contain about two thousand data points
-            (data between F<sub>0</sub> and F<sub>I</sub> are unabridged).
-            <br>If you wish to work with raw data, uncheck the box below.
-            <br>For AquaPen / PlantPen, data reduction is not necessary.
-        </i></p>
-        <div class="form-check">
-            <label>
-                <input class="form-check-input" type="checkbox" name="checkbox_reduce_file_size" value="checked" checked>
-                Reduce MULTI-COLOR PAM data size
-            </label>
-        </div>
-        <br>
-        <label class="form-label"><p class="font-weight-bold">2. Select your files</p></label>
-        <input
-            class="form-control"
-            type="file"
-            name="OJIP_files"
-            id="OJIP_file"
-            multiple=""
-            accept=".csv, .CSV, .txt, .ASCII"
-            style="width:100%"
-            />
-        <br> <br>
-        <button type="submit" class="btn btn-primary">Upload and analyze OJIP files</button>
-        <a href="{{url_for('static', filename='files/OJIP_example_files.zip')}}" download="OJIP_example_files">
-            <button type="button" class="btn btn-outline-primary">Download example OJIP files</button>
-        </a>
+    </div>
+    <br>
+    <p style="font-size:80%"><i><b>Imporant notice:</b>
+        <br>All files are required to have identical number of measured points (identical length).
+    </i></p>
+    <p><i style="font-size:80%">
+        Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
+        For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
+        This will also allow to export reduced data for further processing. Reduced OJIP curves will contain about two thousand data points
+        (data between F<sub>0</sub> and F<sub>I</sub> are unabridged).
+        <br>If you wish to work with raw data, uncheck the box below.
+        <br>For AquaPen / PlantPen, data reduction is not necessary.
+        </i>
+    </p>
+    <div class="form-check">
+        <label>
+            <input class="form-check-input" type="checkbox" name="checkbox_reduce_file_size" value="checked" checked>
+            Reduce MULTI-COLOR PAM data size
+        </label>
+    </div>
+    <br>
+    <label class="form-label"><p class="font-weight-bold">2. Select your files</p></label>
+    <input
+        class="form-control"
+        type="file"
+        name="OJIP_files"
+        id="OJIP_file"
+        multiple=""
+        accept=".csv, .CSV, .txt, .ASCII"
+        style="width:100%"
+        />
+    <br> <br>
+    <button type="submit" class="btn btn-primary">Upload and analyze OJIP files</button>
+    <a href="{{url_for('static', filename='files/OJIP_example_files.zip')}}" download="OJIP_example_files">
+        <button type="button" class="btn btn-outline-primary">Download example OJIP files</button>
+    </a>
 </form>
 
 {% if OJIP_plot_from_memory %}
