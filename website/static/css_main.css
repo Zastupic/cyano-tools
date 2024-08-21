@@ -86,6 +86,7 @@ html {
   grid-column-end: 1;
   grid-row-start: 1;
   grid-row-end: 1;
+  
 }
 .gallery__item--2 {
   grid-column-start: 2;
@@ -129,6 +130,12 @@ html {
   grid-template-columns: repeat(6, 2fr);
   grid-template-rows: repeat(1, 2fr);
   grid-gap: 1.1rem; 
+}
+.gallery_6_OJIP {
+  display: grid;
+  grid-template-columns: 30px 150px 30px 150px 30px 150px;
+  grid-template-rows: repeat(1, 2fr);
+  grid-gap: 5px 
 }
 
 .gallery_4__item--4 {
@@ -252,3 +259,6 @@ td, th {
   background:rgb(121, 103, 103);
   padding: 20px; 
 }
+
+
+

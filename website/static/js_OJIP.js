@@ -30,17 +30,6 @@ $('img[data-enlargeable]').addClass('img-enlargeable').click(function() {
     });
   });
 
-//---------------//
-//--- SLIDERS ---//
-//---------------//
-var slider_1 = document.getElementById("ETR_max_multiplication_factor_range");
-var output_1 = document.getElementById("ETR_max_multiplication_factor");
-
-output_1.innerHTML = slider_1.value;
-slider_1.oninput = function() {
-  output_1.innerHTML = this.value;
-}
-
 //-----------------------------------------------//
 //--- ACCEPT ONLY NUMBERS WITHIN FORM-CONTROL ---//
 //-----------------------------------------------//
@@ -50,3 +39,22 @@ function isNumberKey(evt) {
     return false;
   return true;
 }
+
+//------------------------------------//
+//--- RELOAD PAGE ON LAST POSITION ---//
+//------------------------------------//
+function refreshPageAtPosition () {
+  sessionStorage.setItem("scroll", window.scrollY);
+}
+window.onload = function () {
+  sessionStorage.setItem("scroll", window.scrollY);
+  }
+
+//--------------------//
+//--- Loading image ---//
+//--------------------//
+const showImageButton = document.getElementById("show-image-button");
+const myImage = document.getElementById("my-image"); 
+showImageButton.addEventListener("click", () => { 
+   myImage.style.display = "block"; 
+});

@@ -5,26 +5,36 @@
         <meta name="veiwport" content="width=device-width, initial-scale=1"/>
         
         <!--Bootstrap-->
-        <link
-        rel="stylesheet" 
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
-        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" 
-        crossorigin="anonymous">
+        <link rel="stylesheet" 
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+            integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" 
+            crossorigin="anonymous">
 
         <!--Bootstrap-->
-        <link 
-        rel="stylesheet" 
+        <link rel="stylesheet" 
         href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
-        <link
-        rel="stylesheet"
-        href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
-        crossorigin="anonymous"/>
+        <!-- CSS only -->
+        <link rel="stylesheet" 
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/css/bootstrap.min.css" 
+            integrity="sha384-uWxY/CJNBR+1zjPWmfnSnVxwRheevXITnMqoEIeG1LJrdI0GlVs/9cVSyPYXdcSF" 
+            crossorigin="anonymous">
         
+        <link rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+            crossorigin="anonymous"/>
+                
         <!--Animate CSS-->
-        <link 
-        rel="stylesheet" 
+        <link rel="stylesheet" 
         href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+
+        <link rel="stylesheet" 
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <!-- JavaScript Bundle with Popper -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/js/bootstrap.bundle.min.js" 
+        integrity="sha384-kQtW33rZJAHjgefvhyyzcGF3C5TFyBQBA13V1RKPf4uH+bwyzQxZ6CmMZHmNBEfJ" 
+        crossorigin="anonymous"></script>
 
         <!--jQuery-->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
@@ -34,6 +44,8 @@
 
         <!--Bootstrap 4 Js-->
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
 
         <link rel="stylesheet" type="text/css" href="static/css_main.css" />
         <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -45,37 +57,61 @@
     </head>
 
     <body>
-         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#main_nav">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="main_nav">
+            <div class="navbar-collapse collapse" id="navbar">
                 <ul class="navbar-nav">
-                    <li class="nav-item"> <a class="nav-link" id="home" href="/"> Cyano tools </a> </li>
+                    <li class="nav-item"> <a class="nav-link" href="/"> Cyano tools </a> </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> PAM fluorometry </a>
                         <ul class="dropdown-menu">
-                            <a class="dropdown-item" id="OJIP_analysis" href="/OJIP_data_analysis"> OJIP curves </a>
-                            <a class="dropdown-item" id="light_curves_analysis" href="/light_curves_analysis"> Light curves (P-I curves) </a>
+                            <a class="dropdown-item" href="/OJIP_data_analysis"> OJIP curves </a>
+                            <a class="dropdown-item" href="/light_curves_analysis"> Light curves (P-I curves) </a>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Fluorescence microscopy </a>
                         <ul class="dropdown-menu">
-                            <a class="dropdown-item" id="cell_count" href="/cell_count"> Cell counting </a></li>
-                            <a class="dropdown-item" id="cell_count_filament" href="/cell_count_filament"> Cell counting - filaments </a>
+                            <a class="dropdown-item" href="/cell_count"> Cell counting </a>
+                            <a class="dropdown-item" href="/cell_count_filament"> Cell counting - filaments </a>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Confocal microscopy </a>
                         <ul class="dropdown-menu">
-                            <a class="dropdown-item" id="pixel_profiles_round_cells" href="/pixel_profiles_round_cells"> Pigment profiles - round cells </a>
-                            <a class="dropdown-item" id="pixel_profiles_filament" href="/pixel_profiles_filament"> Pigment profiles - filaments </a>
-                            <a class="dropdown-item" id="cell_size_round_cells" href="/cell_size_round_cells"> Cell size - round cells </a>
-                            <a class="dropdown-item" id="cell_size_filament" href="/cell_size_filament"> Cell size - filaments </a>
+                            <a class="dropdown-item" href="/pixel_profiles_round_cells"> Pigment profiles - round cells </a>
+                            <a class="dropdown-item" href="/pixel_profiles_filament"> Pigment profiles - filaments </a>
+                            <a class="dropdown-item" href="/cell_size_round_cells"> Cell size - round cells </a>
+                            <a class="dropdown-item" href="/cell_size_filament"> Cell size - filaments </a>
                         </ul>
                     </li>
-                    <a class="nav-item nav-link" id="ex_em_spectra_analysis" href="/ex_em_spectra_analysis"> Fluorescence spectroscopy </a>
+                    <a class="nav-item nav-link" href="/ex_em_spectra_analysis"> Fluorescence spectroscopy </a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Photobioreactors </a>
+                        <ul class="dropdown-menu">
+                            <a class="dropdown-item" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank"> PBR data analysis </a>
+                            <a class="dropdown-item" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank"> PBR control scripts </a>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Models </a>
+                        <ul class="dropdown-menu">
+                            <a class="dropdown-item" href="https://www.e-cyanobacterium.org/" target="_blank"> E-cyanobacterium </a>
+                            <a class="dropdown-item" href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank"> Seawater carbonate system </a>
+                        </ul>
+                    </li>
+                    <a class="nav-item nav-link" href="https://www.optimalga.com/" target="_blank"> Optimalga </a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> DoAB </a>
+                        <ul class="dropdown-menu">
+                            <a class="dropdown-item" href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank"> DoAB home page </a>
+                            <a class="dropdown-item" href="http://www.pracovistedrasov.pano3d.eu/" target="_blank"> DoAB research infrastructure </a>
+                            <a class="dropdown-item" href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank"> DoAB results and publications </a>
+                            <a class="dropdown-item" href="https://twitter.com/CzechGlobe_DoAB" target="_blank"> DoAB social media channel </a>
+                        </ul>   
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -83,28 +119,26 @@
             {% if messages %}
                 {% for category, message in messages %}
                     {% if category == 'error'%}
-                       <div class="alert alert-danger alert-dismissable fade show" role="alert">
+                        <div class="alert alert-danger alert-dismissable fade show" role="alert">
                             {{ message }}
-                           <button type="button" class="close" data-dismiss="alert">
+                            <button type="button" class="close" data-dismiss="alert">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                     {% else %}
-                   <div class="alert alert-success alert-dismissable fade show" role="alert">
-                       {{ message }}
-                        <button type="button" class="close" data-dismiss="alert">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
+                        <div class="alert alert-success alert-dismissable fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                     {% endif %}
                 {% endfor%}
             {% endif %}
         {% endwith%}
-
         <div class="container">
         {% block content %}
         {% endblock %}
-        </div>
 
         <!--jquery: both necessary-->
         <script
@@ -115,17 +149,24 @@
         <script data-require="jquery@*" 
             data-semver="3.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0/jquery.js">
         </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
         <!--Ajax-->
         <script
             src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
             integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
             crossorigin="anonymous"
-        ></script>   
+        ></script>  
+        
         <!--MathJax-->
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
         <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         
+        <!--Socket.io-->
+        <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" 
+            integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" 
+            crossorigin="anonymous">
+        </script>
         
         <!-- Google tag (gtag.js) -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S"></script>
@@ -133,11 +174,8 @@
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-        
           gtag('config', 'G-V1B3ZCRT9S');
         </script>
-
         <script scr="{{url_for('static', filename='js_index.js')}}"></script>
-
     </body>
 </html>

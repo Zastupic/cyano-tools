@@ -179,7 +179,7 @@ def count_filament_cells():
                             x_coord_actual_circle = int(x)
                             y_coord_actual_circle = int(y)
                             radius_actual_circle = int(r)    
-                            cv2.putText(img_for_counted_cells_copy, str(i+1),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
+                            cv2.putText(img_for_counted_cells_copy, str(i+1),(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),  1)
                             cv2.circle(img_for_counted_cells_copy,(int(x),int(y)), int(r), (255,255,0),1)
                         # preapring images for showing on the webiste  
                         img_original = im.fromarray(img_orig)

@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, request, flash, redirect
-import os, base64, io, time
+from flask import Blueprint, render_template, request, flash
+import os, base64, io, time, openpyxl
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import rcParams
+from openpyxl.drawing.image import Image
 from scipy.optimize import curve_fit
 from scipy import stats
 from . import UPLOAD_FOLDER
@@ -151,7 +151,7 @@ def analyze_light_curves():
                                 ### PLOT RAW DATA ###
                                 #####################  
                                 # Select color map, according to number of lines (files)
-                                colors = plt.cm.nipy_spectral(np.linspace(0, 1, max_number_of_files+1)) # type: ignore
+                                colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number+1)) # type: ignore
                                 # Initialise the subplot function using number of rows and columns 
                                 fig = plt.figure(figsize=(20,12))
                                 fig.tight_layout() # Shrink to fit the canvas together with legend  
@@ -167,7 +167,7 @@ def analyze_light_curves():
                                                 Summary_file.iloc[:, i], # y-axis data
                                                 linewidth=2,
                                                 label = Summary_file.columns[i], #legend
-                                                color=colors[i]
+                                                color=colors[i-1]
                                                 )
                                 # Decorate plot
                                 fig_0.set_title("Raw fluorescence signal") 
@@ -269,9 +269,9 @@ def analyze_light_curves():
                                     ### Plot curves ###
                                     ###################                          
                                     # Initialise the subplot function using number of rows and columns 
-                                    fig = plt.figure(figsize=(19,15))
+                                    fig = plt.figure(figsize=(19,12))
                                     fig.tight_layout() # Shrink to fit the canvas together with legend  
-                                    fig.subplots_adjust(hspace=0.3) # add horizontal space to read the x-axis and titles well
+                                    fig.subplots_adjust(hspace=0.4) # add horizontal space to read the x-axis and titles well
                                     plt.rcParams['mathtext.default'] = 'regular' # Prevent subscripts in axes titles in italics
                                     ########## Sub-plot light curves - raw data ##########
                                     fig_1 = fig.add_subplot(3, 4, 1) # https://stackoverflow.com/questions/3584805/what-does-the-argument-mean-in-fig-add-subplot111
@@ -283,7 +283,7 @@ def analyze_light_curves():
                                                     Summary_file.iloc[:, 0], # x-axis data: 1st column
                                                     Summary_file.iloc[:, i], # y-axis data
                                                     linewidth=2,
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                     # Decorate fig 1
                                     fig_1.set_title("Raw fluorescence signal") 
@@ -305,10 +305,10 @@ def analyze_light_curves():
                                                 fig_2.scatter(
                                                     FTALL.iloc[:, 0], # x-axis data: 1st column
                                                     FTALL.iloc[:, i], # y-axis data
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                     # Decorate fig
-                                    fig_2.set_title("Steady-state fluorescence, Ft") 
+                                    fig_2.set_title("Steady-state fluorescence, F$_{t}$") 
                                     fig_2.grid() # use: which='both' for minor grid
                                     fig_2.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)') 
                                     ########## Sub-plot FM ##########
@@ -322,10 +322,10 @@ def analyze_light_curves():
                                                     FMALL.iloc[:, i], # y-axis data
                                                     label = FMALL.columns[i], # Column names for legend
                                                     linewidth=1,
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                     # Decorate fig 1
-                                    fig_3.set_title("Maximum fluorescence, Fm'") 
+                                    fig_3.set_title("Maximum fluorescence, F$_{m}$'") 
                                     fig_3.grid() # use: which='both' for minor grid
                                     fig_3.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)')
                                     fig_3.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02)) 
@@ -335,7 +335,7 @@ def analyze_light_curves():
                                                 fig_3.scatter(
                                                     FMALL.iloc[:, 0], # x-axis data: 1st column
                                                     FMALL.iloc[:, i], # y-axis data
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                     ########## Sub-plot QY ##########
                                     fig_4 = fig.add_subplot(3, 4, 9) 
@@ -347,12 +347,12 @@ def analyze_light_curves():
                                                     QYALL.iloc[:, 0], # x-axis data: 1st column
                                                     QYALL.iloc[:, i], # y-axis data
                                                     linewidth=1,
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                                 fig_4.scatter(
                                                     QYALL.iloc[:, 0], # x-axis data: 1st column
                                                     QYALL.iloc[:, i], # y-axis data
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                     # Decorate fig
                                     fig_4.set_title("Quantum Yield, Qy") 
@@ -368,14 +368,14 @@ def analyze_light_curves():
                                                 fig_5.scatter(
                                                     ETRALL.iloc[:, 0], # x-axis data: 1st column
                                                     ETRALL.iloc[:, i], # y-axis data
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                                 fig_5.plot(
                                                     FITALL.iloc[:,0], # x-axis data
                                                     FITALL.iloc[:,i], # y-axis data
                                                     linestyle='dashdot',
                                                     linewidth=2,
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     ) 
                                     # Decorate fig  
                                     fig_5.set_title("Electron Transport Rate, rETR \n + Curve fit for parameters calculation") 
@@ -392,12 +392,12 @@ def analyze_light_curves():
                                                     QP.iloc[:, 0], # x-axis data: 1st column
                                                     QP.iloc[:, i], # y-axis data
                                                     linewidth=1,
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                                 fig_7.plot(
                                                     QP.iloc[:, 0], # x-axis data: 1st column
                                                     QP.iloc[:, i], # y-axis data
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                     # Decorate fig
                                     fig_7.set_title("qP") 
@@ -414,12 +414,12 @@ def analyze_light_curves():
                                                     NPQALLFMM.iloc[:, 0], # x-axis data: 1st column
                                                     NPQALLFMM.iloc[:, i], # y-axis data
                                                     linewidth=1,
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                                 fig_6.plot(
                                                     NPQALLFMM.iloc[:, 0], # x-axis data: 1st column
                                                     NPQALLFMM.iloc[:, i], # y-axis data
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                     # Decorate fig
                                     fig_6.set_title("Non-photochemical quneching, NPQ ") 
@@ -435,12 +435,12 @@ def analyze_light_curves():
                                                     QN.iloc[:, 0], # x-axis data: 1st column
                                                     QN.iloc[:, i], # y-axis data
                                                     linewidth=1,
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                                 fig_8.plot(
                                                     QN.iloc[:, 0], # x-axis data: 1st column
                                                     QN.iloc[:, i], # y-axis data
-                                                    color=colors[i]
+                                                    color=colors[i-1]
                                                     )
                                     # Decorate fig
                                     fig_8.set_title("Non-photochemical quneching, qN ") 
@@ -464,12 +464,12 @@ def analyze_light_curves():
                                     # Sub-plot ALPHA 
                                     fig_1 = fig.add_subplot(3, 4, 1)                  
                                     ALPHA.plot.bar(xticks=[], color=colors)
-                                    fig_1.set_title("Alpha")
+                                    fig_1.set_title("α")
                                     fig_1.set_ylabel('e$^{-}$ µmol photons$^{-1}$') 
                                     # Sub-plot BETA 
                                     fig_2 = fig.add_subplot(3, 4, 2)                  
                                     BETA.plot.bar(xticks=[], color=colors)
-                                    fig_2.set_title("Beta")
+                                    fig_2.set_title("β")
                                     # Sub-plot ETRm MAX
                                     fig_3 = fig.add_subplot(3, 4, 3)    
                                     ETRmax_list = pd.DataFrame([ETRMAX])# FM to df, needed for legend
@@ -485,21 +485,21 @@ def analyze_light_curves():
                                     fig_3.margins(x=0.5**len(ETRmax_list.columns)) # space between the axes and the first and last bar
                                     fig_3.set_xticks([]) # no X-axis values
                                     fig_3.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02)) # legend    
-                                    fig_3.set_title("ETR max")
+                                    fig_3.set_title("ETR$_{max}$")
                                     fig_3.set_ylabel('e$^{-}$ m$^{-2}$ s$^{-1}$')  
                                     # Sub-plot 
                                     fig_4 = fig.add_subplot(3, 4, 5)                  
                                     IK.plot.bar(xticks=[], color=colors)
-                                    fig_4.set_title("Ik")
+                                    fig_4.set_title("I$_{k}$")
                                     fig_4.set_ylabel('µmol photons m$^{-2}$ s$^{-1}$') 
                                     # Sub-plot 
                                     fig_5 = fig.add_subplot(3, 4, 6)                  
                                     IB.plot.bar(xticks=[], color=colors)
-                                    fig_5.set_title("Ib")
+                                    fig_5.set_title("I$_{b}$")
                                     # Sub-plot 
                                     fig_6 = fig.add_subplot(3, 4, 7)                  
                                     ETRMPOT.plot.bar(xticks=[], color=colors)
-                                    fig_6.set_title("ETRmpot")
+                                    fig_6.set_title("ETR$_{mPot}$")
                                     fig_6.set_ylabel('e$^{-}$ m$^{-2}$ s$^{-1}$') 
                                     # saving scatter plot to memory
                                     memory_for_parameters = io.BytesIO()
@@ -538,6 +538,19 @@ def analyze_light_curves():
                                     FITALL.to_excel(writer, sheet_name = 'ETR_fit', index=False)
                                     param_all.to_excel(writer, sheet_name = 'Parameters', index=True)
                                     writer.close()
+                                    # Save images
+                                    wb = openpyxl.load_workbook(f'{upload_folder}/{file_name_without_extension}_results.xlsx')
+                                    wb.create_sheet(title='Images')
+                                    wb.move_sheet('Images', -(len(wb.sheetnames)-1))
+                                    ws = wb['Images']
+                                    img_data_raw = Image(memory_for_plot)
+                                    img_parameters = Image(memory_for_parameters)
+                                    img_data_raw.anchor = 'A1'
+                                    img_parameters.anchor = 'A65'
+                                    ws.add_image(img_parameters)
+                                    ws.add_image(img_data_raw)
+                                    wb.save(f'{upload_folder}/{file_name_without_extension}_results.xlsx')                                       
+
                                     xlsx_file_path = f'uploads/{file_name_without_extension}_results.xlsx'
 
                                     ######################################

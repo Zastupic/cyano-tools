@@ -7,99 +7,185 @@
 {% block content %}
 <h1>Analysis of 3D excitation-emission fluorescence maps</h1>
 <div class="container">    
-    <img src="static/images/77K_spectra_example.png" alt="77K spectra example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
+    <img src="static/images/Ex_em_spectra_example.jpg" alt="77K spectra example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
 </div>
 <br>
 <p>Welcome to the app for analyzing excitation-emission spectra!</p> 
 <table style="width:95%">
     <colgroup>
-        <col style="width:4%">
-        <col style="width:3%">
+        <col style="width:18%">
+        <col style="width:9%">
+        <col style="width:9%">
         <col style="width:12%">
+        <col style="width:18%">
     </colgroup>  
     <tr>
-        <td colspan="3"><i>Peaks considered for the analysis</i></td>
+        <td><i><u>Peaks considered for the analysis</u></i></td>
+        <td><i><u>Strains with Chl only</u></i></td>
+        <td><i><u>Strains with Chl+PC</u></i></td>
+        <td><i><u>Strains with Chl+PE</u></i></td>
+        <td><i><u>Strains with Chl+PE+PC</u></i></td>
     </tr>
     <tr>
-        <td><u>Parameter</u></td>
-        <td><u>Excitation wavelength (nm)</u></td>
-        <td><u>Emission wavelength (nm)</u></td>
+        <td>Ex: Chlorophyll / Em: PSII</td>
+        <td>Ex440/Em689</td>
+        <td>Ex440/Em689</td>
+        <td>Ex440/Em689</td>
+        <td>Ex440/Em689</td>
     </tr>
     <tr>
-        <td>PBS-free<sub>peak</sub></td>
-        <td>360</td>
-        <td>661</td>
+        <td>Ex: Chlorophyll / Em: PSI</td>
+        <td>Ex440/Em724</td>
+        <td>Ex440/Em724</td>
+        <td>Ex440/Em724</td>
+        <td>Ex440/Em724</td>
     </tr>
     <tr>
-        <td>PBS-PSII<sub>peak</sub> + Chl-PSII<sub>tail</sub></td>
-        <td>360</td>
-        <td>685</td>
+        <td>Ex: Phycoerythrin / Em: Phycoerythrin</td>
+        <td></td>
+        <td></td>
+        <td>Ex560/Em580</td>
+        <td>Ex560/Em580</td>
     </tr>
     <tr>
-        <td>PBS-PSI<sub>peak</sub> + Chl-PSI<sub>tail</td>
-        <td>360</td>
-        <td>720</td>
+        <td>Ex: Phycoerythrin / Em: (Allo)Phycocyanin</td>
+        <td></td>
+        <td></td>
+        <td>Ex560/Em662</td>
+        <td>Ex560/Em662</td>
     </tr>
     <tr>
-        <td>PBS-free<sub>tail</sub></td>
-        <td>440</td>
-        <td>661</td>
+        <td>Ex: Phycoerythrin / Em: PSII</td>
+        <td></td>
+        <td></td>
+        <td>Ex560/Em689</td>
+        <td>Ex560/Em689</td>
     </tr>
     <tr>
-        <td>Chl-PSII<sub>peak</sub> + PBS-PSII<sub>tail</sub></td>
-        <td>440</td>
-        <td>685</td>
+        <td>Ex: Phycoerythrin / Em: PSI</td>
+        <td></td>
+        <td></td>
+        <td>Ex560/Em724</td>
+        <td>Ex560/Em724</td>
     </tr>
     <tr>
-        <td>Chl-PSI<sub>peak</sub> + PBS-PSI<sub>tail</sub></td>
-        <td>440</td>
-        <td>720</td>
+        <td>Ex: Phycocyanin / Em: (Allo)Phycocyanin</td>
+        <td></td>
+        <td>Ex620/Em662</td>
+        <td></td>
+        <td>Ex620/Em662</td>
     </tr>
     <tr>
-        <td colspan="3">&nbsp</td>
+        <td>Ex: Phycocyanin / Em: PSII</td>
+        <td></td>
+        <td>Ex620/Em689</td>
+        <td></td>
+        <td>Ex620/Em689</td>
     </tr>
     <tr>
-        <td colspan="3"><i>Calculating PBS-PSI, PBS-PSI, PBS-free, Chl-PSII and Chl-PSI from the fluorescence signal</i></td>
+        <td>Ex: Phycocyanin / Em: PSI</td>
+        <td></td>
+        <td>Ex620/Em724</td>
+        <td></td>
+        <td>Ex620/Em724</td>
     </tr>
     <tr>
-        <td><u>Parameter</u></td>
-        <td colspan="2"><u>Equation</u></td>
+        <td colspan="5">&nbsp</td>
     </tr>
     <tr>
-        <td>PBS-free</td>
-        <td colspan="2">Ex<sub>360</sub>Em<sub>661</sub> / PBS-total</td>
+        <td colspan="5"><i><u>Derived parameters</u></i></td>
     </tr>
     <tr>
-        <td>PBS-PSII</td>
-        <td colspan="2">(0.937 x Ex<sub>360</sub>Em<sub>685</sub> - 0.695 x Ex<sub>440</sub>Em<sub>685</sub>) / PBS-total</td>
+        <td>Chl-PSII: Chlorophyll at PSII</td>
+        <td>Ex440/Em689</td>
+        <td>Ex440/Em689</td>
+        <td>Ex440/Em689</td>
+        <td>Ex440/Em689</td>
     </tr>
     <tr>
-        <td>PBS-PSI</td>
-        <td colspan="2">(0.937 x Ex<sub>360</sub>Em<sub>720</sub> - 0.695 x Ex<sub>440</sub>Em<sub>720</sub>) / PBS-total</td>
+        <td>Chl-PSI: Chlorophyll at PSI</td>
+        <td>Ex440/Em724</td>
+        <td>Ex440/Em724</td>
+        <td>Ex440/Em724</td>
+        <td>Ex440/Em724</td>
     </tr>
     <tr>
-        <td>PBS-total</td>
-        <td colspan="2">PBS-free + PBS-PSII + PBS-PSI</td>
+        <td>PBS-free: Phycobilisomes uncoupled</td>
+        <td></td>
+        <td>Ex620/Em662</td>
+        <td>Ex560/Em580 + Ex560/Em662</td>
+        <td>Ex560/Em580 + Ex560/Em662 + Ex620/Em662</td>
     </tr>
     <tr>
-        <td>Chl-PSII</td>
-        <td colspan="2">(1.063 x Ex<sub>440</sub>Em<sub>685</sub> - 0.0696 x Ex<sub>360</sub>Em<sub>685</sub>) / Chl-total</td>
+        <td>PBS-PSII: Phycobilisomes coupled to PSII</td>
+        <td></td>
+        <td>Ex620/Em689</td>
+        <td>Ex560/Em689</td>
+        <td>Ex560/Em689 + Ex620/Em689</td>
     </tr>
     <tr>
-        <td>Chl-PSI</td>
-        <td colspan="2">(0.937 x Ex<sub>440</sub>Em<sub>726</sub> - 0.695 x Ex<sub>360</sub>Em<sub>726</sub>) / Chl-total</td>
+        <td>PBS-PSI: Phycobilisomes coupled to PSI</td>
+        <td></td>
+        <td>Ex620/Em724</td>
+        <td>Ex560/Em724</td>
+        <td>Ex560/Em724 + Ex620/Em724</td>
     </tr>
     <tr>
-        <td>Chl-total</td>
-        <td colspan="2">Chl-PSII + Chl-PSI</td>
+        <td colspan="5">&nbsp</td>
     </tr>
     <tr>
-        <td>PSII / PSI</td>
-        <td colspan="2">Chl-PSII / Chl-PSI</td>
+        <td colspan="5"><i><u>Normalized parameters</u></i></td>
+    </tr>
+    <tr>
+        <td>Chl-PSII normalized</td>
+        <td>Chl-PSII/Chl-tot</td>
+        <td>Chl-PSII/Chl-tot</td>
+        <td>Chl-PSII/Chl-tot</td>
+        <td>Chl-PSII/Chl-tot</td>
+    </tr>
+    <tr>
+        <td>Chl-PSI normalized</td>
+        <td>Chl-PSI/Chl-tot</td>
+        <td>Chl-PSI/Chl-tot</td>
+        <td>Chl-PSI/Chl-tot</td>
+        <td>Chl-PSI/Chl-tot</td>
+    </tr>
+    <tr>
+        <td>Phycobilisomes uncoupled normalized</td>
+        <td></td>
+        <td>PBS-free/PBS-tot</td>
+        <td>PBS-free/PBS-tot</td>
+        <td>PBS-free/PBS-tot</td>
+    </tr>
+    <tr>
+        <td>Phycobilisomes coupled to PSII normalized</td>
+        <td></td>
+        <td>PBS-PSII/PBS-tot</td>
+        <td>PBS-PSII/PBS-tot</td>
+        <td>PBS-PSII/PBS-tot</td>
+    </tr>
+    <tr>
+        <td>Phycobilisomes coupled to PSI normalized</td>
+        <td></td>
+        <td>PBS-PSI/PBS-tot</td>
+        <td>PBS-PSI/PBS-tot</td>
+        <td>PBS-PSI/PBS-tot</td>
+    </tr>
+    <tr>
+        <td colspan="5">&nbsp</td>
+    </tr>
+    <tr>
+        <td colspan="5"><i><u>Parameters for normalization</u></i></td>
+    </tr>
+    <tr>
+        <td colspan="5">PBS-tot: Phycobilisomes free + Phycobilisomes at PSII + Phycobilisomes at PSI</td>
+    </tr>
+    <tr>
+        <td colspan="5">Chl-tot: Chlorophyll at PSII + Chlorophyll at PSI</td>
     </tr>
 </table>
 <br>
-<p>This tool is developed for data analysis obtained by Jasco spectrofluorometers.
+<p>This tool is developed for data analysis obtained by the following spectrofluorometers:
 <div class="container">
     <div class="gallery_4">
         <a href="https://jascoinc.com/products/spectroscopy/fluorometer/spectrofluorometer-models/" target="_blank" class="gallery__img gallery__item--1">
@@ -110,7 +196,18 @@
 </div>
 </p>
 <br>
-<form method="POST" enctype="multipart/form-data" action="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
+<u>How to use this tool:</u>
+<br>
+<ol>
+    <li>Select your spectrofluorometer</li>
+    <li>Select type of pigmentation in your strain</li>
+    <li>Select excitation and emission wavelengths to be analzyed</li>
+    <li>Upload and analyze spectra files (up to 50 files)</li>
+    <li>Review the results</li>
+    <li>Download the processed results in a summary .xlsx file</li>
+</ol>
+<br>
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra', _anchor='results') }}">
     <div class="container">
         <div class="form-group">    
             <p><b>1. Select spectrofluorometer</b><p>
@@ -119,24 +216,35 @@
             </select>
         </div>
         <br>
-        <p><b>2. Select <i>excitation</i> wavelengths</b></p>
+        <p><b>2. Select pigmentation type of your strain</b></p>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="checkbox_pigmentation" id="checkbox_chl_only" value="checkbox_chl_only" checked>
+            <label class="form-check-label" for="checkbox_pigmentation"> &nbspStrain with <i>chlorophyll</i> only</label>
+            <br>
+            <input class="form-check-input" type="radio" name="checkbox_pigmentation" id="checkbox_chl_PC" value="checkbox_chl_PC">
+            <label class="form-check-label" for="checkbox_pigmentation"></label>&nbspStrain with <i>chlorophyll</i> and <i>phycocyanin</i></label>
+            <br>
+            <input class="form-check-input" type="radio" name="checkbox_pigmentation" id="checkbox_chl_PE" value="checkbox_chl_PE">
+            <label class="form-check-label" for="checkbox_pigmentation"></label>&nbspStrain with <i>chlorophyll</i> and <i>phycoerythrin</i></label>
+            <br>
+            <input class="form-check-input" type="radio" name="checkbox_pigmentation" id="checkbox_chl_PC_PE" value="checkbox_chl_PC_PE">
+            <label class="form-check-label" for="checkbox_pigmentation"></label>&nbspStrain with <i>chlorophyll</i> and <i>phycocyanin</i> and <i>phycoerythrin</i></label>
+        </div>
+        <br>    
+        <p><b>3. Select <i>excitation</i> wavelengths to plot and analyze</b></p>
         <div class="gallery_6">
             <div class="gallery__img gallery__item--1">
                 <div class="form-inline">
                     <div class="input-group">
-                        <!-- <input class="form-check-input" type="checkbox" name="checkbox_ex_1" id="checkbox_ex_1" value="checked" checked> -->
                         <input             
                             type="number"
                             id="ex_1" 
                             name="ex_1"
                             class="form-control"
-                            value="370"
+                            value="360"
                             step="1"
-                            style="font-weight:bold"
                             onkeypress="return isNumberKey(event)">
-                        <span class="input-group-label">
-                            <label>&nbsp nm</label>
-                        </span>
+                        &nbsp nm
                     </div>
                 </div>
             </div>
@@ -150,11 +258,8 @@
                             class="form-control"
                             value="440"
                             step="1"
-                            style="font-weight:bold"
                             onkeypress="return isNumberKey(event)">
-                        <span class="input-group-label">
-                            <label>&nbsp nm</label>
-                        </span>
+                        &nbsp nm
                     </div>
                 </div>
             </div>
@@ -166,12 +271,11 @@
                             id="ex_3" 
                             name="ex_3"
                             class="form-control"
-                            value="570"
+                            value="560"
                             step="1"
-                            style="font-weight:bold"
                             onkeypress="return isNumberKey(event)">
                         <span class="input-group-label">
-                            <label>&nbsp nm</label>
+                        &nbsp nm
                         </span>
                     </div>
                 </div>
@@ -185,11 +289,8 @@
                         class="form-control"
                         value="620"
                         step="1"
-                        style="font-weight:bold"
                         onkeypress="return isNumberKey(event)">
-                    <span class="input-group-label">
-                        <label>&nbsp nm</label>
-                    </span>
+                    &nbsp nm
                 </div>
             </div>
             <div class="gallery__img gallery__item--5">
@@ -201,11 +302,8 @@
                         class="form-control"
                         value=""
                         step="1"
-                        style="font-weight:bold"
                         onkeypress="return isNumberKey(event)">
-                    <span class="input-group-label">
-                        <label>&nbsp nm</label>
-                    </span>
+                    &nbsp nm
                 </div>
             </div>
             <div class="gallery__img gallery__item--6">
@@ -217,133 +315,182 @@
                         class="form-control"
                         value=""
                         step="1"
-                        style="font-weight:bold"
                         onkeypress="return isNumberKey(event)">
-                    <span class="input-group-label">
-                        <label>&nbsp nm</label>
-                    </span>
+                    &nbsp nm
                 </div>
             </div>
         </div>
         <br>
-        <p><b>3. Select <i>emission</i> wavelengths</b></p>
+        <p><b>4. Select <i>emission</i> wavelengths to plot and analyze</b></p>
         <div class="gallery_6">
-        <div class="gallery__img gallery__item--1">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="em_1" 
-                    name="em_1"
-                    class="form-control"
-                    value="662"
-                    step="1"
-                    style="font-weight:bold"
-                    onkeypress="return isNumberKey(event)">
-                <span class="input-group-label">
-                    <label>&nbsp nm</label>
-                </span>
+            <div class="gallery__img gallery__item--1">
+                <div class='form-inline input-group'>
+                    <input             
+                        type="number"
+                        id="em_1" 
+                        name="em_1"
+                        class="form-control"
+                        value="662"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp nm
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--2">
+                <div class='form-inline input-group'>
+                    <input             
+                        type="number"
+                        id="em_2" 
+                        name="em_2"
+                        class="form-control"
+                        value="689"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp nm
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--3">
+                <div class='form-inline input-group'>
+                    <input             
+                        type="number"
+                        id="em_3" 
+                        name="em_3"
+                        class="form-control"
+                        value="724"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp nm
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--4">
+                <div class='form-inline input-group'>
+                    <input             
+                        type="number"
+                        id="em_4" 
+                        name="em_4"
+                        class="form-control"
+                        value=""
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp nm
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--5">
+                <div class='form-inline input-group'>
+                    <input             
+                        type="number"
+                        id="em_5" 
+                        name="em_5"
+                        class="form-control"
+                        value=""
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp nm
+                </div>
+            </div>
+            <div class="gallery__img gallery__item--6">
+                <div class='form-inline input-group'>
+                    <input             
+                        type="number"
+                        id="em_6" 
+                        name="em_6"
+                        class="form-control"
+                        value=""
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp nm
+                </div>
             </div>
         </div>
-        <div class="gallery__img gallery__item--2">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="em_2" 
-                    name="em_2"
-                    class="form-control"
-                    value="689"
-                    step="1"
-                    style="font-weight:bold"
-                    onkeypress="return isNumberKey(event)">
-                <span class="input-group-label">
-                    <label>&nbsp nm</label>
-                </span>
+        <br>
+        <p><b>5. Select the <i>excitation</i> wavelength to normalize the <i>excitation</i> spectra</b><p>
+        <div class="gallery_6">
+            <div class="gallery__img gallery__item--1">
+                <div class="form-inline">
+                    <div class="input-group">
+                        <input             
+                            type="number"
+                            id="ex_for_norm" 
+                            name="ex_for_norm"
+                            class="form-control"
+                            value="620"
+                            step="1"
+                            onkeypress="return isNumberKey(event)">
+                        &nbsp nm
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="gallery__img gallery__item--3">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="em_3" 
-                    name="em_3"
-                    class="form-control"
-                    value="724"
-                    step="1"
-                    style="font-weight:bold"
-                    onkeypress="return isNumberKey(event)">
-                <span class="input-group-label">
-                    <label>&nbsp nm</label>
-                </span>
+        <br>
+        <p><b>6. Select the <i>emission</i> wavelength to normalize the <i>emission</i> spectra</b><p>
+            <div class="gallery_6">
+                <div class="gallery__img gallery__item--1">
+                    <div class="form-inline">
+                        <div class="input-group">
+                            <input             
+                                type="number"
+                                id="em_for_norm" 
+                                name="em_for_norm"
+                                class="form-control"
+                                value="724"
+                                step="1"
+                                onkeypress="return isNumberKey(event)">
+                            &nbsp nm
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="gallery__img gallery__item--4">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="em_4" 
-                    name="em_4"
-                    class="form-control"
-                    value=""
-                    step="1"
-                    style="font-weight:bold"
-                    onkeypress="return isNumberKey(event)">
-                <span class="input-group-label">
-                    <label>&nbsp nm</label>
-                </span>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--5">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="em_5" 
-                    name="em_5"
-                    class="form-control"
-                    value=""
-                    step="1"
-                    style="font-weight:bold"
-                    onkeypress="return isNumberKey(event)">
-                <span class="input-group-label">
-                    <label>&nbsp nm</label>
-                </span>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--6">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="em_6" 
-                    name="em_6"
-                    class="form-control"
-                    value=""
-                    step="1"
-                    style="font-weight:bold"
-                    onkeypress="return isNumberKey(event)">
-                <span class="input-group-label">
-                    <label>&nbsp nm</label>
-                </span>
-            </div>
+        <br>
+        <p><b>7. Select files</b></p>
+        <input
+            class="form-control"
+            type="file"
+            name="77K_files"
+            id="77K_file"
+            multiple=""
+            accept=".csv, .CSV, .xlsx, .XLSX"
+            style="width:100%"
+            />
+        <br> <br>
+        <button id="show-image-button" type="submit" class="btn btn-primary">Upload and analyze Ex-Em spectra files</button>
+        <a href="{{url_for('static', filename='files/77K_spectra_example_files.zip')}}" download="77K_spectra_example_files">
+            <button type="button" class="btn btn-outline-primary" >Download example Ex-Em spectra files</button>
+        </a>
         </div>
     </div>
-    <br>
-    <p><b>4. Select files</b></p>
-    <input
-        class="form-control"
-        type="file"
-        name="77K_files"
-        id="77K_file"
-        multiple=""
-        accept=".csv, .CSV, .xlsx, .XLSX"
-        style="width:100%"
-        />
-    <br> <br>
-    <button type="submit" class="btn btn-primary">Upload and analyze Ex-Em spectra files</button>
-    <a href="{{url_for('static', filename='files/77K_spectra_example_files.zip')}}" download="77K_spectra_example_files">
-        <button type="button" class="btn btn-outline-primary">Download example Ex-Em spectra files</button>
-    </a>
 </form>
+<br>
+<div class="container">
+    <img id="my-image" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
+</div>
 
-{% if OJIP_plot_from_memory %}
+{% if spectra_plot_from_memory %}
+    <section id="results"></section>
+    <div class="container">
+        <br> <br>
+        <h6><b>Excitations and emission spectra - raw data: </b></h6>
+        <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ spectra_plot_from_memory }}"/>
+        <br><br>
+        <h6><b>Excitations and emission spectra - normalized: </b></h6>
+        <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ normalized_spectra_plot_from_memory }}"/>
+        <br><br>
+        <h6><b>Photosystems and phycobilisomes: </b></h6>
+        <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ bar_plot_from_memory }}"/>
+        <br><br> 
+        <form>
+            <h6><b>Download results:</b></h6>
+            <ol>
+                <li>Plots (as shown above)</li>
+                <li>Raw excitation and emission spectra</li>
+                <li>Normalized excitation and emission spectra</li>
+                <li>Calcualted parameters</li>
+            </ol>
+            <a href="{{ url_for('static', filename=xlsx_file_path)}}">
+                <button type="button" class="btn btn-primary">Download the summary .xlsx file</button>
+            </a>
+        </form>  
+    </div> 
+
 
 {% else %}
 <br><br><br><br><br><br><br><br><br><br><br><br>
@@ -351,11 +498,13 @@
 
 {% endif %}
 <br><br><br><br><br><br><br>
-
-<footer id="footer_relative">
-    <br>Copyright ©
-    <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-</footer>
+<div class="container">
+    <footer id="footer_relative">
+        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
+        <br> @email 
+        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
+    </footer>
+</div>
 
 <script src="{{url_for('static', filename='js_OJIP.js')}}"></script>
 

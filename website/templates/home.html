@@ -70,14 +70,14 @@ To begin, pease select a tool from the options below:
 <br>
 <div class="container">
     <div class="gallery_4">
-        <h5 class="gallery__img gallery__item--1"><a id="Fluorescence spectroscopy"></a> <u>Fluorescence spectroscopy</u> </h5>
+        <h5 class="gallery__img gallery__item--1"><u>Fluorescence spectroscopy</u> </h5>
     </div>
 </div>
 <div class="container">
     <div class="gallery_4">
         <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}" class="gallery__img gallery__item--1">
             <i>Excitation-emission spectra</i>
-            <img src="static/images/77K_spectra_example.jpg" alt="Slow" class="gallery__img__tall gallery__item">
+            <img src="static/images/Ex_em_spectra_example_2.jpg" alt="Slow" class="gallery__img__tall gallery__item">
         </a>
     </div>
 </div>
@@ -102,18 +102,17 @@ To begin, pease select a tool from the options below:
             <i>Online tool for advanced analysis of PBR experimental data</i>
             <img src="static/images/PBRtool2.png" alt="PBR data analysis" class="gallery__img__tall">
         </a>
-        <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" class="gallery__img gallery__item--2">
-            <i>Online tool for calculating DIC properties in seawater</i>
-            <img src="static/images/seacarb.png" alt="Sea Carb" class="gallery__img__tall">
-        </a>
-        <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" class="gallery__img gallery__item--3">
+        <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" class="gallery__img gallery__item--2">
             <i>Set of control scripts for PSI photobioreactor SW client</i>
             <img src="static/images/PBRscripts1.jpg" alt="PBR scripts" class="gallery__img__tall">
+        </a>
+        <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" class="gallery__img gallery__item--3">
+            <i>Online tool for calculating DIC properties in seawater</i>
+            <img src="static/images/seacarb.png" alt="Sea Carb" class="gallery__img__tall">
         </a>
     </div>
 </div>
 <br><br><br><br>
-<!-- <h5><u>DoAB information:</u></h5> -->
 <div class="container">
     <div class="gallery_4">
         <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">
@@ -160,9 +159,12 @@ To begin, pease select a tool from the options below:
 
 <br><br><br><br><br><br>
 
-<footer id="footer_relative">
-    <br>Copyright ©
-    <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-</footer>
+<div class="container">
+    <footer id="footer_relative">
+        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
+        <br> @email 
+        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
+    </footer>
+</div>
 {% endblock %}
 

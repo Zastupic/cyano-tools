@@ -35,7 +35,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <td><u>Meaning</u></td>
     </tr>
     <tr>
-        <td colspan="3"><i>Technical fluorescence parameters</i></td>
+        <td colspan="3"><i>Technical parameters</i></td>
     </tr>
     <tr>
         <td>F<sub>in</sub>, F<sub>max</sub></td>
@@ -45,7 +45,10 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
     <tr>
         <td>F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub></td>
         <td></td>
-        <td>Fluorescence intensity at 300 μs, 2 ms and 30 ms of the fluorescence transient, respectively</td>
+        <td>Fluorescence intensity at 300 μs, 2 ms and 30 ms of the fluorescence transient, respectively. 
+            <br> Alternatively, F<sub>J</sub> and F<sub>I</sub> can be derived form the second derivation of the OJIP curve, 
+            <br> or selected manually when deviating from the default timing (see below).
+        </td>
     </tr>
     <tr>
         <td>A<sub>0-J</sub></td>
@@ -191,60 +194,62 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         Probing photosynthesis : mechanism, regulation & adaptation, 445-483. ISBN:
         <a href="https://www.taylorfrancis.com/books/mono/10.1201/9781482268010/probing-photosynthesis-prasanna-mohanty-mohammad-yunus-uday-pathre" target="_blank">9780748408214</a></i>
     <br>
+    <i style="font-size:70%">Akinyemi O. O., Čepl J., Keski-Saari S., Tomášková I., Stejskal J., Kontunen-Soppela S. & Keinänen M. (2023):
+        Photosynthesis Research , 133–146. DOI:
+        <a href="https://link.springer.com/article/10.1007/s11120-023-01050-w" target="_blank">10.1007/s11120-023-01050-w</a></i>
+    <br>
 </p>
-<br>
-Accepted file formats include .CSV and .txt files, as obtained by <i>MULTI-COLOR-PAM / DUAL-PAM</i> 
-or <i>AquaPen / FluorPen</i> fluorometers, respecitvely:
-<br>
-<div class="container">
-    <div class="gallery_4">
-        <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__img gallery__item--1">
-            <i>MULTI-COLOR-PAM</i>
-            <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__img gallery__item--1">
-        </a>
-        <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__img gallery__item--2">
-            <i>DUAL-PAM</i>
-            <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__img gallery__item--2">
-        </a>
-        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__img gallery__item--3">
-            <i>AquaPen</i>
-            <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__img gallery__item--3">
-        </a>
-        <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__img gallery__item--4">
-            <i>FluorPen</i>
-            <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__img gallery__item--4">
-        </a>
-    </div>
-</div>
 <br>
 <u>How to use this tool:</u>
 <br><br>
 <ol>
     <li>Select your fluorometer (MULTI-COLOR-PAM / DUAL-PAM or AquaPen / PlantPen)</li>
-    <li>Upload OJIP files (up to 50 files)</li>
+    <li>Confirm or update timing of F<sub>J</sub> and F<sub>I</sub></li>
+    <li>Upload and analyze OJIP files (up to 50 files)</li>
     <li>Review OJIP curves and calculated parameters</li>
     <li>Download the processed results in a summary .xlsx file</li>
 </ol>
 <br>
-<form method="POST" enctype="multipart/form-data" action="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves', _anchor='results') }}">
+    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by MULTI-COLOR-PAM / DUAL-PAM 
+    or AquaPen / FluorPen fluorometers, respecitvely:</i>
+    <div class="container">
+        <div class="gallery_6">
+            <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__img gallery__item--1">
+                <i style="font-size:80%">MULTI-COLOR-PAM</i>
+                <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__img gallery__item--1">
+            </a>
+            <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__img gallery__item--2">
+                <i style="font-size:80%">DUAL-PAM</i>
+                <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__img gallery__item--2">
+            </a>
+            <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__img gallery__item--3">
+                <i style="font-size:80%">AquaPen</i>
+                <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__img gallery__item--3">
+            </a>
+            <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__img gallery__item--4">
+                <i style="font-size:80%">FluorPen</i>
+                <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__img gallery__item--4">
+            </a>
+        </div>
+    </div>
+    </p>
     <div class="form-group">
-        <label for="fluorometer"><p class="font-weight-bold">{{ '1. Select fluorometer' }}</p></label>
+        <label for="fluorometer"><p><b>1. Select fluorometer</b></p></label>
             <select name="fluorometer" class="form-select" aria-label="fluorometer" style="width:100%">
                 <option selected="MULTI-COLOR-PAM">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
                 <option value="Aquapen">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
             </select>
     </div>
-    <br>
     <p style="font-size:80%"><i><b>Imporant notice:</b>
         <br>All files are required to have identical number of measured points (identical length).
     </i></p>
-    <p><i style="font-size:80%">
+    <p style="line-height: 0.9"><i style="font-size:80%">
         Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
         For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
         This will also allow to export reduced data for further processing. Reduced OJIP curves will contain about two thousand data points
         (data between F<sub>0</sub> and F<sub>I</sub> are unabridged).
-        <br>If you wish to work with raw data, uncheck the box below.
-        <br>For AquaPen / PlantPen, data reduction is not necessary.
+        <br>If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen, data reduction is not necessary.
         </i>
     </p>
     <div class="form-check">
@@ -254,7 +259,254 @@ or <i>AquaPen / FluorPen</i> fluorometers, respecitvely:
         </label>
     </div>
     <br>
-    <label class="form-label"><p class="font-weight-bold">2. Select your files</p></label>
+    <p><b>2. Select timing of F<sub>J</sub> and F<sub>I</sub> inflection points </b></p>
+    <div class="gallery_6_OJIP">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp F<sub>J</sub>:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="FJ_time" 
+                        name="FJ_time"
+                        class="form-control"
+                        max = "20"
+                        min = "0"
+                        value="2"
+                        step="0.1"
+                        onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>ms</a>
+        </div>
+    </div>
+    <p style="margin:10px;"></p>
+    <div class="gallery_6_OJIP">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp F<sub>I</sub>:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input
+                        type="number"
+                        id="FI_time" 
+                        name="FI_time"
+                        class="form-control"
+                        value="30"
+                        max = "500"
+                        min = "10"
+                        step="0.1"
+                        onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>ms</a>
+        </div>
+    </div>
+    <p><a style="line-height:3px;"></a></p>
+    <p style="line-height: 0.9"><i style="font-size:80%">The selected values are used for the calculation of parameters summarized in the table above. 
+            However, the script also allows for the identification of exact F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> timing. Once identified, the F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> 
+            time points are ploted for visualization, to lead exact selection F<sub>J</sub> and F<sub>I</sub> timings for the caluculation of parameters summarized in the table above. 
+            For identification of F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> timing, following boundaries are used:</i>
+        <table style="width:95%">
+            <colgroup>
+                <col style="width:1%">
+                <col style="width:20%">
+                <col style="width:5%">
+            </colgroup>  
+            <tr>
+                <td colspan="3"><u><i>Time ranges used for the identification of F<sub>J</sub>, F<sub>I</sub> and F<sub>P:</i></u></td>
+            </tr>
+            <tr>
+                <td><i>F<sub>J</sub></i></td>
+                <td><i>0.1 - 10 ms</i></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><i>F<sub>I</sub></i></td>
+                <td><i>10 - 100 ms</i></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><i>F<sub>P</sub></i></td>
+                <td><i>100 - 1000 ms</i></td>
+                <td></td>
+            </tr>
+        </table>
+    </p>
+    <br>
+<!--    <b>3. Select range for identification of F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> times, based on OJIP derivation</b> (used for visualization only)
+    <p style="line-height: 0.9"><i style="font-size:80%">Note that all parameters (summarized in the table above) are calculatted from F<sub>J</sub> and F<sub>I</sub> points as specified in step 2.
+        The time ranges specified here are used only for visualization of F<sub>J</sub> and F<sub>I</sub> and F<sub>P</sub> timing, based on second derivation of OJIP fluorescence rise 
+        (according to <a href="https://link.springer.com/article/10.1007/s11120-023-01050-w" target="_blank">Akinyemi et al., 2023</a>).</i></p>
+    <div class="gallery_6_OJIP">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp F<sub>J</sub>:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="FJ_time_min" 
+                        name="FJ_time_min"
+                        class="form-control"
+                        max = "1"
+                        min = "0.1"
+                        value="0.1"
+                        step="0.1"
+                        onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a style="text-align:right">&nbsp - &nbsp</a>
+        </div>
+        <div class="gallery__img gallery__item--4">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input
+                        type="number"
+                        id="FJ_time_max" 
+                        name="FJ_time_max"
+                        class="form-control"
+                        value="10"
+                        max = "20"
+                        min = "1"
+                        step="0.1"
+                        onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--5">
+            <a>ms</a>
+        </div>
+    </div>
+    <p style="margin:10px;"></p>
+    <div class="gallery_6_OJIP">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp F<sub>I</sub>:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="FI_time_min" 
+                        name="FI_time_min"
+                        class="form-control"
+                        max = "50"
+                        min = "10"
+                        value="10"
+                        step="0.1"
+                        onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a style="text-align:right">&nbsp - &nbsp</a>
+        </div>
+        <div class="gallery__img gallery__item--4">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input
+                        type="number"
+                        id="FI_time_max" 
+                        name="FI_time_max"
+                        class="form-control"
+                        value="100"
+                        max = "100"
+                        min = "10"
+                        step="0.1"
+                        onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--5">
+            <a>ms</a>
+        </div>
+    </div>
+    <p style="margin:10px;"></p>
+    <div class="gallery_6_OJIP">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp F<sub>P</sub>:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="FP_time_min" 
+                        name="FP_time_min"
+                        class="form-control"
+                        value="100"
+                        min = "50"
+                        max = "500"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a style="text-align:right">&nbsp - &nbsp</a>
+        </div>
+        <div class="gallery__img gallery__item--4">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input
+                        type="number"
+                        id="FP_time_max" 
+                        name="FP_time_max"
+                        class="form-control"
+                        value="1000"
+                        max = "2000"
+                        min = "500"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--5">
+            <a>ms</a>
+        </div>
+    </div>
+    <br> -->
+    <b>3. Select additional parameters for 1<sup>st</sup> and 2<sup>nd</sup> OJIP derivation</b>
+    <p style="line-height: 0.9"><i style="font-size:80%">The parameter <b>k<sub>r</sub></b> is related to the fitting, interpolation and reconstruction of the OJIP curves, 
+        as necessary for the estimation of the 1<sup>st</sup> and 2<sup>nd</sup> derivatives of the fluorescence signal. 
+        The parameter <b>k<sub>r</sub></b> defines reduction of the number of <a href = "https://en.wikipedia.org/wiki/Spline_(mathematics)">knots</a> within
+        <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.UnivariateSpline.html" target="_blank"> UnivariateSpline</a> function.
+        The knots are identified automatically, however, their number is typically overestimated and without reduction, 
+        the OJIP curve reconstruction can correspond poorly to the measured data.</i></p>    
+    <div class="gallery_6_OJIP">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp <i>k<sub>r</sub></i>:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="knots_reduction_factor" 
+                        name="knots_reduction_factor"
+                        class="form-control"
+                        max = "50"
+                        min = "0"
+                        value="10"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>   
+    <label class="form-label"><p class="font-weight-bold">4. Select files</p></label>
     <input
         class="form-control"
         type="file"
@@ -264,32 +516,49 @@ or <i>AquaPen / FluorPen</i> fluorometers, respecitvely:
         accept=".csv, .CSV, .txt, .ASCII"
         style="width:100%"
         />
-    <br> <br>
-    <button type="submit" class="btn btn-primary">Upload and analyze OJIP files</button>
+    <br>
+    <label class="form-label"><p class="font-weight-bold">5. Analyze OJIP files</p></label>
+    <br>
+    <button id="show-image-button" type="submit" class="btn btn-primary" >Upload and analyze OJIP files </button>   
     <a href="{{url_for('static', filename='files/OJIP_example_files.zip')}}" download="OJIP_example_files">
         <button type="button" class="btn btn-outline-primary">Download example OJIP files</button>
     </a>
+</div>
 </form>
+<br>
+<div class="container">
+<img id="my-image" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
+</div>
 
 {% if OJIP_plot_from_memory %}
-    <br> <br> <br>
-    <h6><b>OJIP curves: </b></h6>
+    <section id="results"></section>    
+    <br> <br>
+    <div class="container">
+    <b>Plotted OJIP curves</b><a style="font-size:80%">
+        including 1<sup>st</sup> and 2<sup>nd</sup> derivations and identifed F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> times</a>
+    <br>
     <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_plot_from_memory }}"/>
     <br> <br>
-    <h6><b>Calculated parameters: </b></h6>
+    <b>Calculated parameters </b>
+    <br>
     <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_parameters_from_memory }}"/>
     <br> <br>
     <form>
-        <h6><b>Download results:</b></h6>
+        <b>Download results</b><a style="font-size:80%"> in a summary .xlsx file</a>
+        <p style="line-height: 0.9"></p>    
         <ol>
+            <li>Plots (as shown above)</li>
             <li>Raw OJIP curves</li>
             <li>Normalized OJIP curves</li>
+            <li>Reconstructed OJIP curves, including residuals</li>
+            <li>1<sup>st</sup> and 2<sup>nd</sup> derivatives</li>
             <li>Calcualted parameters</li>
         </ol>
         <a href="{{ url_for('static', filename=xlsx_file_path)}}">
             <button type="button" class="btn btn-primary">Download the summary .xlsx file</button>
         </a>
     </form>
+</div>
 
 {% else %}
 <br><br><br><br><br><br><br><br><br><br><br><br>
@@ -298,12 +567,14 @@ or <i>AquaPen / FluorPen</i> fluorometers, respecitvely:
 {% endif %}
 <br><br><br><br><br><br><br>
 
-<footer id="footer_relative">
-    <br>Copyright ©
-    <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-</footer>
+<div class="container">
+    <footer id="footer_relative">
+        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
+        <br> @email 
+        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
+    </footer>
+</div>
 
 <script src="{{url_for('static', filename='js_OJIP.js')}}"></script>
-
 
 {% endblock %}
