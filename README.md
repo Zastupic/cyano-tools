@@ -1,8 +1,8 @@
 # Cyano-tools
 
-## Tools to analyze fluorescence, microscopy and spectroscopy data, as obtained in wet-lab measurements for algae, cyanobacteria and eventually for plants 
+## Tools to analyze fluorescence, microscopy and spectroscopy data, as obtained by wet-lab measurements for algae, cyanobacteria and plants 
 
-### The tools, available online (https://tools-py.e-cyanobacterium.org/), are designed to process data for the following methods:
+### The tools, available online (https://tools-py.e-cyanobacterium.org/), are designed to process the following data:
 - ***Fluorometry***
   - ***OJIP curves***
     - Shifting (to F<sub>0</sub>' and F<sub>P</sub>) and normalizing (between F<sub>0</sub>' and F<sub>P</sub>) the measured curves
@@ -47,7 +47,8 @@
       - Automated determination of pixels intensity across the selected cells cross-secions, including plotting
       - Exporting all results and plots to **.xlsx** file
 - ***Spectrofluorometry***
-  - Ratio of PSII/PSI, antenna attachment to PSII or PSI
+      - Manual selection of the cells and cells cross-section on a microscopy image
+      - Ratio of PSII/PSI, antenna attachment to PSII or PSI
 
 ### The tools accept data files from the following devices:
 - Fluorometers
