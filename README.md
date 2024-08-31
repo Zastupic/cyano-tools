@@ -5,12 +5,22 @@
 ### The tools, available online (https://tools-py.e-cyanobacterium.org/), are designed to process data for the following methods:
 - Fluorometry
   - OJIP curves
-    - Normalizing and plotting the measured curves, identification of F<sub>J</sub> and F<sub>I</sub> timing based on second derivation of the fluorescence signal, selection of F<sub>J</sub> and F<sub>I</sub> timing, calculating parameters based on F<sub>J</sub> and F<sub>I</sub>, exporting all results and plots to **.xlsx** file
+    - Normalizing and plotting the measured curves
+    - Iidentification of F<sub>J</sub> and F<sub>I</sub> timing based on second derivation of the fluorescence signal
+    - Eventual manual correction of F<sub>J</sub> and F<sub>I</sub> timing
+    - Calculation of relevant parameters, including those based on F<sub>J</sub> and F<sub>I</sub>,
+    - Exporting all results and plots to **.xlsx** file
   - Rapid light curves
-    - Plotting the measured curves, fitting the measured curves by the equation of Platt et al., 1980, calculating parameters, exporting all results and plots to **.xlsx** file
+    - Plotting the measured curves
+    - Fitting the measured curves by the equation of Platt et al., 1980
+    - Calculation of relevant parameters
+    - Exporting all results and plots to **.xlsx** file
 - Microscopy
   - Cell counting
-    - identification of the cells on a fluorescence microscopy image, automated counting of the cells, eventual manual correction, exporting results and plots to **.xlsx** file
+    - Identification of the cells on a fluorescence microscopy image
+    - Automated counting of the cells
+    - Eventual manual correction
+    - Exporting all results and plots to **.xlsx** file
   - Cell size estimation
   - Pixel profiles
 - Spectrofluorometry
