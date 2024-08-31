@@ -71,15 +71,15 @@
     - .csv
 
 ### The tools are based on python ***Flask*** framework, and are hosted at https://www.pythonanywhere.com/. The files related to individual tools are located in the folder ***Website*** within main folder (***Flask_server***). The folder ***Website*** contains the following sub-folders and files:
-- folder **static**
-  - folder **images**
-  - folder **files**
-  - folder **uploads**
-  - files:
-    - the main **.css** file
-    - all **.js** files
-- folder **templates**
-  - all **.html** files
-- files:
-  - all **.py** files
+- Folder **static**
+  - Folder **images**
+  - Folder **files**
+  - Folder **uploads**
+  - Files:
+    - The main **.css** file
+    - All **.js** files
+- Folder **templates**
+  - All **.html** files
+- Files:
+  - All **.py** files
 
