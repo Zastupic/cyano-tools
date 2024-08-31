@@ -19,6 +19,9 @@
   - normalizing and plotting the measured curves, identification of F<sub>J</sub> and F<sub>I</sub> timing based on second derivation of the fluorescence signal, selection of F<sub>J</sub> and F<sub>I</sub> timing, calculating parameters based on F<sub>J</sub> and F<sub>I</sub>, exporting all results and plots to **.xlsx** file
 - Rapid light curves
   - plotting the measured curves, fitting the measured curves by the equation of Platt et al., 1980, calculating parameters, exporting all results and plots to **.xlsx** file
+- Cell counting
+  - identification of the cells on a fluorescence microscopy image, automated counting of the cells, eventual manual correction, exporting results and plots to **.xlsx** file
+
 
 ### The tools accept data files from the following devices:
 - Fluorometers
