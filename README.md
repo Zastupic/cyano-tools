@@ -1,4 +1,4 @@
 # **tools-py.e-cyanobacterium**
 
-tools to analyze data from wet-lab measurement of algae and cyanobacteria fluorescence, microscopy and spectroscopy
+## Tools to analyze data from fluorescence, microscopy and spectroscopy, as obtained in wet-lab measurement studying algae and cyanobacteria 
 
