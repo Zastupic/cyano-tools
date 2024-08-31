@@ -1,5 +1,6 @@
-# Cyano tools - (tools-py.e-cyanobacterium)
+# Cyano-tools
 
-## Tools to analyze fluorescence, microscopy and spectroscopy data, as obtained in wet-labs studying algae, cyanobacteria and eventually also plants 
+## Tools to analyze fluorescence, microscopy and spectroscopy data, as obtained in wet-lab measurements for algae, cyanobacteria and eventually also plants 
 
-### The tools are 
+### The tools are available as an online tool (https://tools-py.e-cyanobacterium.org/), ready to process data from the following devices:
+
