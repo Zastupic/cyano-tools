@@ -17,7 +17,7 @@
     - Calculation of relevant parameters
     - Exporting all results and plots to **.xlsx** file
 - ***Microscopy***
-  - ***Cell counting***
+  - ***Cell counting*** _(fluorescence microscopy, confocal microscopy)_
     - ***Round cells***
       - Automated identification of the cells on a fluorescence microscopy image
       - Automated counting of the cells
@@ -28,7 +28,7 @@
       - Automated splitting the filaments to individual cells, and counting the individual cells
       - Eventual manual correction
       - Exporting all results and plots to **.xlsx** file
-  - ***Cell size estimation***
+  - ***Cell size estimation*** _(confocal microscopy)_
     - ***Round cells***
       - Manual selection of the cells on a fluorescence microscopy image
       - Automated determination of size of the selected cells, including plotting
