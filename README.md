@@ -3,8 +3,8 @@
 ## Tools to analyze fluorescence, microscopy and spectroscopy data, as obtained in wet-lab measurements for algae, cyanobacteria and eventually for plants 
 
 ### The tools, available online (https://tools-py.e-cyanobacterium.org/), are designed to process data for the following methods:
-- Fluorometry
-  - OJIP curves
+- ***Fluorometry***
+  - ***OJIP curves***
     - Normalizing and plotting the measured curves
     - Iidentification of F<sub>J</sub> and F<sub>I</sub> timing based on second derivation of the fluorescence signal
     - Eventual manual correction of F<sub>J</sub> and F<sub>I</sub> timing
@@ -15,15 +15,24 @@
     - Fitting the measured curves by the equation of Platt et al., 1980
     - Calculation of relevant parameters
     - Exporting all results and plots to **.xlsx** file
-- Microscopy
-  - Cell counting
-    - Identification of the cells on a fluorescence microscopy image
-    - Automated counting of the cells
-    - Eventual manual correction
-    - Exporting all results and plots to **.xlsx** file
-  - Cell size estimation
+- ***Microscopy***
+  - ***Cell counting***
+    - ***Round cells***
+      - Automated identification of the cells on a fluorescence microscopy image
+      - Automated counting of the cells
+      - Eventual manual correction
+      - Exporting all results and plots to **.xlsx** file
+    - ***Filamentous strains***
+      - Automated identification of filaments on a fluorescence microscopy image
+      - Automated splitting the filaments to individual cells, and counting the individual cells
+      - Eventual manual correction
+      - Exporting all results and plots to **.xlsx** file
+  - ***Cell size estimation***
+    - ***Round cells***
+      - Automated identification of the cells on a fluorescence microscopy image
+      - 
   - Pixel profiles
-- Spectrofluorometry
+- ***Spectrofluorometry***
   - Ratio of PSII/PSI, antenna attachment to PSII or PSI
 
 ### The tools accept data files from the following devices:
