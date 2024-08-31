@@ -27,10 +27,10 @@
   - folder **files**
   - folder **uploads**
   - files:
-    - .css file
-    - all .js files
+    - the main **.css** file
+    - all **.js** files
 - folder **templates**
-  - all .html files
+  - all **.html** files
 - files:
-  - all .py files
+  - all **.py** files
 
