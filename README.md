@@ -72,9 +72,7 @@
 
 ### The tools are based on python ***Flask*** framework, and are hosted at https://www.pythonanywhere.com/. The files related to individual tools are located in the folder ***Website*** within main folder (***Flask_server***). The folder ***Website*** contains the following sub-folders and files:
 - Folder **static**
-  - Folder **images**
-  - Folder **files**
-  - Folder **uploads**
+  - Folders **images**, **files** and **uploads**
   - Files:
     - The main **.css** file
     - All **.js** files
