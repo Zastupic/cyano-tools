@@ -5,7 +5,8 @@
 ### The tools, available online (https://tools-py.e-cyanobacterium.org/), are designed to process data for the following methods:
 - ***Fluorometry***
   - ***OJIP curves***
-    - Normalizing and plotting the measured curves
+    - Shifting (to F<sub>0</sub>' and F<sub>P</sub>) and normalizing (between F<sub>0</sub>' and F<sub>P</sub>) the measured curves
+    - Plotting the measured curves
     - Iidentification of F<sub>J</sub> and F<sub>I</sub> timing based on second derivation of the fluorescence signal
     - Eventual manual correction of F<sub>J</sub> and F<sub>I</sub> timing
     - Calculation of relevant parameters, including those based on F<sub>J</sub> and F<sub>I</sub>,
@@ -32,7 +33,19 @@
       - Manual selection of the cells on a fluorescence microscopy image
       - Automated determination of size of the selected cells, including plotting
       - Exporting all results and plots to **.xlsx** file
-  - Pixel profiles
+    - ***Filamentous strains***
+      - Manual selection of the cells on a microscopy image
+      - Manual determination of size of the selected cells, including plotting
+      - Exporting all results and plots to **.xlsx** file
+  - ***Pixel profiles***
+    - ***Round cells***
+      - Manual selection of the cells on a fluorescence microscopy image
+      - Automated determination of pixels intensity across the cell profile  (with fixed angle of 15°), including plotting
+      - Exporting all results and plots to **.xlsx** file
+    - ***Filamentous strains***
+      - Manual selection of the cells and cells cross-section on a microscopy image
+      - Automated determination of pixels intensity across the selected cells cross-secions, including plotting
+      - Exporting all results and plots to **.xlsx** file
 - ***Spectrofluorometry***
   - Ratio of PSII/PSI, antenna attachment to PSII or PSI
 
