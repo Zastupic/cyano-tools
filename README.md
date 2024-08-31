@@ -15,9 +15,9 @@
 
 ### The tools accept data files from the following devices:
 - Fluorometers
-  - Walz Multi-Color PAM / Dual PAM (.csv)
-  - PSI AquaPen / FluorPen (.txt)
-- Confocal and fluorescence microscopes: .png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif
+  - Multi-Color PAM / Dual PAM, Walz (.csv)
+  - AquaPen / FluorPen, Photon System Instruments (.txt)
+- Confocal and fluorescence microscopes (.png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif)
 - Spectrofluorometers
-  - Jasco FP series (https://jascoinc.com/products/spectroscopy/fluorometer/spectrofluorometer-models/) (.csv)
+  - FP series, Jasco (.csv)
 
