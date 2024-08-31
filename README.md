@@ -14,11 +14,11 @@
   - Ratio of PSII/PSI, antenna attachment to PSII or PSI
 
 
-### The toolsallow the user for the following analyses:
+### The tools allow for the following analyses:
 - OJIP curves
-  - normalizing and plotting the measured curves, identification of F<sub>J</sub> and F<sub>I</sub> timing based on second derivation of the fluorescence signal, selection of F<sub>J</sub> and F<sub>I</sub> timing, calculating parameters based on F<sub>J</sub> and F<sub>I</sub>, exporting all results to **.xlsx** file
+  - normalizing and plotting the measured curves, identification of F<sub>J</sub> and F<sub>I</sub> timing based on second derivation of the fluorescence signal, selection of F<sub>J</sub> and F<sub>I</sub> timing, calculating parameters based on F<sub>J</sub> and F<sub>I</sub>, exporting all results and plots to **.xlsx** file
 - Rapid light curves
-  -   
+  - plotting the measured curves, fitting the measured curves by the equation of Platt et al., 1980, calculating parameters, exporting all results and plots to **.xlsx** file
 
 ### The tools accept data files from the following devices:
 - Fluorometers
