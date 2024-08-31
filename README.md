@@ -59,14 +59,18 @@
   - Exporting all results and plots to **.xlsx** file
 
 ### The tools accept data files from the following devices:
-- Fluorometers
-  - Multi-Color PAM / Dual PAM, Walz (.csv)
-  - AquaPen / FluorPen, Photon System Instruments (.txt)
-- Confocal and fluorescence microscopes (.png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif)
-- Spectrofluorometers
-  - FP series, Jasco (.csv)
+- ***Fluorometers***
+  - **Multi-Color PAM / Dual PAM**, Walz
+    - .csv
+  - **AquaPen / FluorPen**, Photon System Instruments
+    - .txt
+- ***Confocal and fluorescence microscopes***
+  - .png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif
+- ***Spectrofluorometers***
+  - **FP series**, Jasco
+    - .csv
 
-### The tools are based on python Flask, and are hosted at https://www.pythonanywhere.com/. The files related to individual tools are stored in the folder **Website** within main folder (Flask_server). The folder **Website** contains the following sub-folders and files:
+### The tools are based on python Flask framework, and are hosted at https://www.pythonanywhere.com/. The files related to individual tools are located in the folder ***Website*** within main folder (***Flask_server***). The folder ***Website*** contains the following sub-folders and files:
 - folder **static**
   - folder **images**
   - folder **files**
