@@ -30,6 +30,7 @@
     - .css file
     - all .js files
 - folder **templates**
+  - all .html files
 - files:
-  -   
+  - all .py files
 
