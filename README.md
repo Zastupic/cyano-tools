@@ -21,7 +21,7 @@
 - Spectrofluorometers
   - FP series, Jasco (.csv)
 
-#### The tools are based on python Flask, and are hosted at https://www.pythonanywhere.com/. The files related to individual tools are stored within the folder ** website** within main folder (Flask_server). The folder ** Website ** contains the following sub-folders:
-- main folder (flask server)
-  - 
-  - 
+### The tools are based on python Flask, and are hosted at https://www.pythonanywhere.com/. The files related to individual tools are stored in the folder **Website** within main folder (Flask_server). The folder **Website** contains the following sub-folders:
+- folder **static**
+- folder **templates**
+
