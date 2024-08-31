@@ -10,7 +10,7 @@
     - Eventual manual correction of F<sub>J</sub> and F<sub>I</sub> timing
     - Calculation of relevant parameters, including those based on F<sub>J</sub> and F<sub>I</sub>,
     - Exporting all results and plots to **.xlsx** file
-  - Rapid light curves
+  - ***Rapid light curves***
     - Plotting the measured curves
     - Fitting the measured curves by the equation of Platt et al., 1980
     - Calculation of relevant parameters
@@ -29,8 +29,9 @@
       - Exporting all results and plots to **.xlsx** file
   - ***Cell size estimation***
     - ***Round cells***
-      - Automated identification of the cells on a fluorescence microscopy image
-      - 
+      - Manual selection of the cells on a fluorescence microscopy image
+      - Automated determination of size of the selected cells, including plotting
+      - Exporting all results and plots to **.xlsx** file
   - Pixel profiles
 - ***Spectrofluorometry***
   - Ratio of PSII/PSI, antenna attachment to PSII or PSI
