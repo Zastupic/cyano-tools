@@ -6,10 +6,10 @@
 - ***Fluorometry***
   - ***OJIP curves***
     - Shifting (to F<sub>0</sub>' and F<sub>P</sub>) and normalizing (between F<sub>0</sub>' and F<sub>P</sub>) the measured curves
-    - Plotting the measured curves
-    - Iidentification of F<sub>J</sub> and F<sub>I</sub> timing based on second derivation of the fluorescence signal
+    - Iidentification of F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> timing based on second derivation of the fluorescence signal
     - Eventual manual correction of F<sub>J</sub> and F<sub>I</sub> timing
     - Calculation of relevant parameters, including those based on F<sub>J</sub> and F<sub>I</sub>,
+    - Plotting the measured, shifted and normalized OJIP curves, derivations and the calculated parameters
     - Exporting all results and plots to **.xlsx** file
   - ***Rapid light curves***
     - Plotting the measured curves
@@ -47,8 +47,16 @@
       - Automated determination of pixels intensity across the selected cells cross-secions, including plotting
       - Exporting all results and plots to **.xlsx** file
 - ***Spectrofluorometry***
-      - Manual selection of the cells and cells cross-section on a microscopy image
-      - Ratio of PSII/PSI, antenna attachment to PSII or PSI
+  - Selection of type of organism
+    -  Strain with _chlorophyll_ only
+    -  Strain with _chlorophyll_ and _phycocyanin_
+    -  Strain with _chlorophyll_ and _phycoerythrin_
+    -  Strain with _chlorophyll_ and _phycocyanin_ and _phycoerythrin_
+  - Selection of excitation and emission wavelengths of interest within the measured fluorescence excitation-emission matrix
+  - Selection of excitation and emission wavelengths for normalization
+  - Calculation of parameters related to ratio of PSII/PSI, antenna attachment to PSII or PSI
+  - Plotting the spectra and calculated parameters
+  - Exporting all results and plots to **.xlsx** file
 
 ### The tools accept data files from the following devices:
 - Fluorometers
