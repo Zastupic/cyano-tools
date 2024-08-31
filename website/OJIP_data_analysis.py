@@ -99,7 +99,7 @@ def analyze_OJIP_curves():
                             # Check if each file is of allowed type
                             if file_extension in ALLOWED_EXTENSIONS_MULTI_COLOR_PAM:
                                 # read csv file directly, without uploading to server
-                                OJIP_file_MULTI_COLOR_PAM = pd.read_csv(files[(file_number)], sep=';', engine='python') # type: ignore
+                                OJIP_file_MULTI_COLOR_PAM = pd.read_csv(files[(file_number)], sep=';', engine='python')  # type: ignore
                                 # Merge all data in the final dataframe
                                 if file_number == 0:
                                     # initiate final dataframe
@@ -350,11 +350,6 @@ def analyze_OJIP_curves():
                         for i in range(len(Summary_file.columns)):
                             # do not plot time axis
                             if i > 0:
-
-###########  Why Fm = 0  ??????
-###########         print(str(Summary_file.iloc[:,0]))
-###########         print(str(Summary_file.iloc[:,1]))
-                                
                                 Fm = 0 
                                 # identify time of P-peak: 
                                 if (F100MS[i-1]) < (F50MS[i-1]):
@@ -402,6 +397,14 @@ def analyze_OJIP_curves():
                         AREAOP = pd.Series(Area_above_curve_temp_O_P.squeeze()) # squeeze: converts DF to SERIES
                         SM = AREAOP / FVFM
                         N = SM * M0 * (1 / VJ)
+
+
+                        print("==== FVFM ===: \n" + str(FVFM))
+                        print("==== AREAOP ===: \n" + str(AREAOP))
+                        print("==== SM ===: \n" + str(SM))
+                        print("==== N ===: \n" + str(N))
+
+
                         ########################
                         ### Plot OJIP curves ###
                         ########################                            
@@ -428,7 +431,6 @@ def analyze_OJIP_curves():
                         subplot.grid(which='both', color='lightgray') 
                         subplot.set_xlabel(x_axis_unit) 
                         subplot.set_ylabel(y_axis_unit) 
-                        
                         ########## Sub-plot ##########
                         subplot = fig.add_subplot(4,4,2)
                         subplot.set_title("OJIP curves: shifted to zero") 
@@ -549,7 +551,6 @@ def analyze_OJIP_curves():
                                     label = Differences_2_DF.columns[i],
                                     color=colors[i-1] # linestyle='dashed', # alpha=0.5,  # linewidth=0.7 
                                     )
-                        subplot_second_derivative = subplot
                         subplot.set_title("2$^{nd}$ derivative + F$_{I}$ timing")
                         subplot.set_xscale("log")
                         subplot.set_xlim(xmin=xmin_for_plot)
