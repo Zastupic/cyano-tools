@@ -13,6 +13,13 @@
 - Spectrofluorometry
   - Ratio of PSII/PSI, antenna attachment to PSII or PSI
 
+
+### The toolsallow the user for the following analyses:
+- OJIP curves
+  - normalizing and plotting the measured curves, selection of FJ and FI timing, calculating parameters based on FJ and FI, expoeritng all results to **.xlsx** file
+- Rapid light curves
+  -   
+
 ### The tools accept data files from the following devices:
 - Fluorometers
   - Multi-Color PAM / Dual PAM, Walz (.csv)
