@@ -27,9 +27,9 @@
   - folder **files**
   - folder **uploads**
   - files:
-  -   .css file
-  -   all .js files
+    - .css file
+    - all .js files
 - folder **templates**
 - files:
--   
+  -   
 
