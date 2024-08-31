@@ -16,7 +16,7 @@
 
 ### The toolsallow the user for the following analyses:
 - OJIP curves
-  - normalizing and plotting the measured curves, selection of FJ and FI timing, calculating parameters based on F<sub>J</sub>  and F<sub>I</sub>, expoeritng all results to **.xlsx** file
+  - normalizing and plotting the measured curves, identification of F<sub>J</sub> and F<sub>I</sub> timing based on second derivation of the fluorescence signal, selection of F<sub>J</sub> and F<sub>I</sub> timing, calculating parameters based on F<sub>J</sub> and F<sub>I</sub>, exporting all results to **.xlsx** file
 - Rapid light curves
   -   
 
