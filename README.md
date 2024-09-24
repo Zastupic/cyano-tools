@@ -1,6 +1,6 @@
 # Cyano-tools
 
-## Computational tools for the analysis of fluorescence, microscopic and spectroscopic data, as obtained in wet laboratories working with algae, cyanobacteria and plants
+## Computational tools for the analysis of fluorescence, microscopic and spectroscopic data, as obtained in laboratories working with algae, cyanobacteria and plants
 
 ### The tools, available online (https://tools-py.e-cyanobacterium.org/), are designed to perform the following analyses:
 - ***Fluorometry***
