@@ -2,7 +2,7 @@
 
 ## Computational tools for the analysis of fluorescence, microscopic and spectroscopic data, as obtained in wet laboratories working with algae, cyanobacteria and plants
 
-### The tools, available online (https://tools-py.e-cyanobacterium.org/), are designed to analyze the following data:
+### The tools, available online (https://tools-py.e-cyanobacterium.org/), are designed to perform the following analyses:
 - ***Fluorometry***
   - ***OJIP curves***
     - Shifting (to F<sub>0</sub>' and F<sub>P</sub>) and normalizing (between F<sub>0</sub>' and F<sub>P</sub>) the measured curves
