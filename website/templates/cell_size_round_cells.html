@@ -28,10 +28,16 @@
             step="0.01"/>
         <br>
         <p><b>2. Select your image</b></p>
-        <input 
-            class="form-control" 
-            type="file" 
-            name="image">
+        <div class="custom-file">
+            <input 
+                type="file" 
+                class="custom-file-input" 
+                name="image"
+                id="image"
+                style="width:100%"
+                accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif">
+            <label class="custom-file-label" id="show-image-button" for="customFile">Select files</label>
+        </div>
     </div>
     <br>
     <button type="submit" class="btn btn-primary">Upload image and select individual cells</button>
@@ -107,15 +113,6 @@
     
 {% endif %}
 <br><br><br><br><br><br><br>
-    
-
-<div class="container">
-    <footer id="footer_relative">
-        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
-        <br> @email 
-        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-    </footer>
-</div>
 
 <script src="{{url_for('static', filename='js_cell_size_round_cells.js')}}"></script>
 

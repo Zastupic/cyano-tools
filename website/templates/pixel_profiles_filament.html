@@ -29,21 +29,26 @@
             max="100" 
         />
     <br>
-    <label class="form-label"><p class="font-weight-bold">2. Select images (up to 4 files)</p></label>
+    <p class="font-weight-bold">2. Select images (up to 4 files)</p>
+    <div class="custom-file">
         <input 
-            class="form-control" 
             type="file" 
+            class="custom-file-input" 
             name="image"
-            id="image" 
-            multiple="" 
-            /> <!-- accept="image/jpg, image/jpeg, image/png, image/tif, image/tiff, image/bmp, image/gif" -->
-    <br>
-    <button type="submit" class="btn btn-primary">Upload images and select individual cells</button>
-    <a href="{{url_for('static', filename='images/cells_filamentous_example.jpg')}}" download="example_image">
+            id="image"
+            style="width:100%"
+            multiple=""
+            accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif">
+        <label class="custom-file-label" for="customFile">Select files</label>
+    </div>
+    <br><br>
+    <button id="show-image-button" type="submit" class="btn btn-primary">Upload images and select individual cells</button>
+    <a href="{{url_for('static', filename='files/cells_filamentous_example.rar')}}" download="example_image">
         <button type="button" class="btn btn-outline-primary">Download an example image</button>
     </a>
 </form>
 <br>
+
 
 {% if img_orig_decoded_from_memory %} 
     <a><b>3. Select cells</b></a>
@@ -172,15 +177,6 @@
 
 {% endif %}
 <br><br><br><br><br><br><br>
-
-
-<div class="container">
-    <footer id="footer_relative">
-        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
-        <br> @email 
-        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-    </footer>
-</div>
 
 <script src="{{url_for('static', filename='js_pixel_profies_filaments.js')}}"></script>
 

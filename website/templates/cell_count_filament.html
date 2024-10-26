@@ -50,16 +50,18 @@ or a disposable counting slide of known depth has been used. Any combination of 
        step="0.01"
     />
     <br>
-    <label for="threshold_filter"><p><b>2. Select threshold filter</b></p></label>
-    <select name="threshold_filter" class="form-select" aria-label="threshold_filter">
-        <option selected="Binary + Otsu">Binary + Otsu</option>
-        <option value="Triangle + Binary">Triangle + Binary</option>
-        <option value="To zero + Triangle">To zero + Triangle</option>
-        <option value="Binary">Binary</option>
-        <option value="To zero">To zero</option>
-        <option value="Triangle">Triangle</option>
-        <option value="Otsu">Otsu</option>
-    </select>
+    <p><b>2. Select threshold filter</b></p>
+    <div class="form-group">
+        <select name="threshold_filter" class="form-control" style="width:100%">
+            <option selected="Binary + Otsu">Binary + Otsu</option>
+            <option value="Triangle + Binary">Triangle + Binary</option>
+            <option value="To zero + Triangle">To zero + Triangle</option>
+            <option value="Binary">Binary</option>
+            <option value="To zero">To zero</option>
+            <option value="Triangle">Triangle</option>
+            <option value="Otsu">Otsu</option>
+        </select>
+    </div>
     <br>
     <div class="form-group">
     <p><b>3. Adjust additional parameters</b></p>
@@ -128,19 +130,33 @@ or a disposable counting slide of known depth has been used. Any combination of 
             <p>Distance factor: <span id="factor_2_distance"></span></p>  
         </div>
     </div>
-    <label class="form-label" for="customFile"><p><b>4. Select image </b>
+    <p><b>4. Select image </b>
     <br>Recommended image resolution is around to 2000 x 2000 px. In case your image is too high resolution, 
     please use any available tool for image splitting, for instance <a href="https://imagestool.com/split-images" target="_blank">imagestool</a> or <a href="https://pinetools.com/split-image" target="_blank">pinetools</a>. </p></label>
-    <input class="form-control" type="file" name="image">
+    <div class="custom-file">
+        <input 
+            type="file" 
+            class="custom-file-input" 
+            name="selected_images"
+            id="selected_image"
+            style="width:100%"
+            multiple=""
+            accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif">
+        <label class="custom-file-label" for="customFile">Select files</label>
+    </div>
     <br>
     <br>
-    <button type="submit" class="btn btn-primary">Split the filaments and count individual cells</button>
+    <button id="show-image-button" type="submit" class="btn btn-primary">Split the filaments and count individual cells</button>
     <a href="{{url_for('static', filename='images/cells_filamentous_example.jpg')}}" download="example_image">
         <button type="button" class="btn btn-outline-primary">Download an example image</button>
     </a>
     <br>
     </div>
 </form>
+<br>
+<div class="container">
+    <img id="loadingimage" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
+</div>
 
 <br>
 {% if img_orig_decoded_from_memory %}
@@ -223,13 +239,6 @@ or a disposable counting slide of known depth has been used. Any combination of 
 
 <br><br><br><br><br><br><br>
 
-<div class="container">
-    <footer id="footer_relative">
-        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
-        <br> @email 
-        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-    </footer>
-</div>
 <script src="{{url_for('static', filename='js_cell_count_filament.js')}}"></script>
 
 {% endblock %}

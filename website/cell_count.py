@@ -21,8 +21,8 @@ def count_cells():
             ####################################
             ### Load image for cell counting ###
             ####################################
-            if 'image' in request.files:
-                image = (request.files['image'])
+            if 'selected_images' in request.files:
+                image = (request.files['selected_images'])
                 image_name = str.lower(os.path.splitext(str(image.filename))[0])
                 image_extension = str.lower(os.path.splitext(str(image.filename))[1])
                 if image_extension in ALLOWED_EXTENSIONS:

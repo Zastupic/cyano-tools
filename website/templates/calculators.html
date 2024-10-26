@@ -1,0 +1,392 @@
+{% extends "base.html" %} 
+
+{% block title %} 
+    Calculators
+{% endblock %}
+
+{% block content %}
+<h1> Calculators </h1>
+<br><br>
+<h4 id="CO2_conc"> 1. CO<sub>2</sub> concentration in air+CO<sub>2</sub> mixture</h4>
+<p>In many laboratories as well as in the industrial setups, 
+    CO<sub>2</sub> and air require mixing to secure increased CO<sub>2</sub> levels.
+    For a precise control of specific CO<sub>2</sub> concentration in air, Gas Mixing Systems or Gas Controllers can be used,
+    for instance those manufactured by <a href="https://other-devices.psi.cz/products/gas-mixing-system-gms-150/" target="_blank">PSI</a>, 
+    <a href="https://qubitsystems.com/products/gas-analysis-and-environment/gas-mixing-and-flow/gas-mixing/g400-gas-mixing-system/" target="_blank">Qubit</a> 
+    or <a href="https://www.google.cz/search?q=co2+controller&sca_esv=31504b4340b63b2d&hl=cs&sxsrf=ADLYWILVc_VJ0VcbfzwTRDtzXWUc9XpC_g%3A1727971871707&source=hp&ei=H8L-ZsydKOe2i-gPiuSjiQk&iflsig=AL9hbdgAAAAAZv7QLzhLZYY2Z8EPMeI9MWVdFxWmUSQL&oq=CO2&gs_lp=Egdnd3Mtd2l6IgNDTzIqAggAMgoQIxiABBgnGIoFMgQQIxgnMhAQABiABBixAxhDGIMBGIoFMgUQABiABDIFEAAYgAQyChAAGIAEGEMYigUyBRAAGIAEMgoQABiABBhDGIoFMgUQABiABDIFEAAYgARInitQAFjjH3ABeACQAQCYAagBoAH-CaoBAzAuObgBA8gBAPgBAvgBAZgCB6AC2gaoAgrCAggQABiABBiiBMICCBAAGIAEGMsBwgILEAAYgAQYsQMYgwHCAgUQLhiABMICCxAuGIAEGMcBGK8BwgIHEAAYgAQYCsICBxAjGCcY6gLCAhEQLhiABBixAxjRAxiDARjHAcICCBAAGIAEGLEDwgIMECMYgAQYExgnGIoFwgIOEC4YgAQYsQMY0QMYxwGYAw6SBwMxLjagB8NC&sclient=gws-wiz" target="_blank">
+        other companies</a>. Here, we provide a simple tool for the calculation of CO<sub>2</sub> concentration in a gas mixture, as set by a Gas Mixing System, according to the following equation:
+</p>
+<p>
+    $$
+    \begin{multline}
+    \shoveleft CO_{2}\ concentration\ in\ air + CO_{2}\ mixture = \frac{Flow\ rate\ CO_{2} + Flow\ rate\ air * CO_{2}\ concentration\ in\ air}{Flow\ rate\ CO_{2} + Flow\ rate\ air}
+    \end{multline}
+    $$
+</p>
+<br>    
+<!-- 
+<h5> 1.1 Calculating CO<sub>2</sub> concentration in a user-defined gas mixture </h5>
+<br>
+-->
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp Flow rate of CO<sub>2</sub>:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="flow_rate_CO2" 
+                min = "0"
+                step="0.1"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>mL min<sup>-1</sup></a>
+    </div>
+</div>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp Flow rate of air:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                    class="form-control"    
+                    type="number"
+                    id="flow_rate_air" 
+                    min = "1"
+                    step="1"
+                    onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>mL min<sup>-1</sup></a>
+    </div>
+</div>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp CO<sub>2</sub> in air:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="CO2_in_air_ppm_1" 
+                min = "1"
+                step="1"
+                value="500"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>ppm</a>
+    </div>
+</div>
+<br>
+<button id="calculateCO2_button" type="button" class="btn btn-primary" onclick="calculateCO2();"> Calculate</button>
+<button type="button" class="btn btn-info"><a>CO<sub>2</sub> concentration in the air + CO<sub>2</sub> mixture: <span id="CO2_conc_ppm_for_span"></span></button>
+
+<!--
+<br><br><br>
+<h5> 1.2 Calculating Gas Controller settings for a target CO<sub>2</sub> concentration</h5>
+<br>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp Required CO<sub>2</sub> level:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type=number
+                id="Required_CO2_level" 
+                min = "0"
+                step="1"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>ppm</a>
+    </div>
+</div>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp Total flow rate:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type=number
+                id="Required_flow_rate" 
+                min = "0"
+                step="1"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>mL min<sup>-1</sup></a>
+    </div>
+</div>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp CO<sub>2</sub> in air:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="CO2_in_air_ppm_2" 
+                min = "1"
+                step="1"
+                value="500"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>ppm</a>
+    </div>
+</div>
+<br>
+<button id="calculate_GMS_settings" type="button" class="btn btn-primary" onclick="calculateGMSSettings();"> Calculate</button>
+<button type="button" class="btn btn-info"><a>Gas Controller settings: CO<sub>2</sub>: 
+    <span id="GMS_settings_for_span"></span></button>
+-->
+<br><br><br><br>
+
+<h4 id="dO2_conc"> 2. Equilibrium concentration of dissolved oxygen (dO<sub>2</sub>) and carbon dioxide (dCO<sub>2</sub>) in water</h4>
+<br>
+<h5> 2.1 Equilibrium concentration of dO<sub>2</sub> in water</h5>
+<p>The concentration of dissoled oxygen in water, in equilibrium with atmosphere, can be calcualted based on the values of temperature, salinity, 
+    O<sub>2</sub> concentration in the atmosphere and the atmospheric pressure, according to the following equation:
+    $$
+    \begin{multline}
+    \shoveleft dO_{2}\ [mL\ L^{-1}]= \frac{(p - p_{w})}{p} *e^{({A_{1} + A_{2}*\frac{100}{T}} + A3*ln(\frac{T}{100}) + A4*\frac{T}{100} + S*(B1 + B2*\frac{T}{100} + B3*(\frac{T}{100})^{2}))} * \frac{C}{20.9},
+    \end{multline}
+    $$
+    where <i>p</i> represents atmospheric pressure [kPa], <i>pw</i> represents partial pressure of the water vapor [kPa], <i>T</i> represents temperature [K], 
+    <i>S</i> represents salinity [g kg<sup>-1</sup>], <i>C</i> represents O<sub>2</sub> concentration in air [%] and <i>A1 - A4</i> and <i>B1 - B4</i> represent 
+    <a href="http://corrosion-doctors.org/Seawater/Oxygen.htm" target="blank">constants</a>.
+</p>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp Temperature:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="temperature" 
+                min = "0"
+                step="0.1"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>° C</a>
+    </div>
+</div>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp Salinity:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="salinity" 
+                min = "0"
+                step="0.1"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>g kg<sup>-1</sup> (‰)</a>
+    </div>
+</div>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp O<sub>2</sub> in air:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="O2_concentration_in_air" 
+                min = "0"
+                step="0.1"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>%</a>
+    </div>
+</div>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp Atm. pressure:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="atmospheric_pressure" 
+                min = "0"
+                step="0.1"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <a>atm</a>
+    </div>
+</div>
+<br>
+<button id="calculate_dO2" type="button" class="btn btn-primary" onclick="calculate_dO2();"> Calculate</button>
+<button type="button" class="btn btn-info"><a>dO<sub>2</sub> in water: 
+    <span id="dO2_for_span"></span></a>
+</button>
+<br><br><br>
+
+<h5 id="dCO2_conc"> 2.2 Equilibrium concentration of dCO<sub>2</sub> in water</h5>
+<p>For the calcualtion of dissolved CO<sub>2</sub> in water, please use the 
+    <a type="button" class="btn btn-primary" href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">Seawater Carbonate System calculator</a>
+</p>
+
+<br><br>
+<h4 id="growth_rate"> 3. Specific growth rate </h4>
+<p>In microbiology, the most typical cell division is a (mitotic) binary division, where each cell divides 
+    into two daughter cells. These daugther cells divide again into four cells, 
+    the four cells divie again into eight cells etc. Time required for the cell division is known as 
+    a <b>doubling time</b> (unit: time), and the rate of cell division is known as 
+    a <b>specific growth rate</b> (unit: time<sup>-1</sup>). 
+    Here, we provide a tool for a simple calcualtion of doubling time from specific growth rate, and vise versa. 
+    Theoretical background on the calculation of both values can be studied for instance on 
+    <a href="https://en.wikipedia.org/wiki/Doubling_time" target="blank">Wikipedia</a>. In short, the relationship can be defined
+    as following:
+    <br>
+    <p>
+        $$
+        \begin{multline}
+        \shoveleft Specific\ growth\ rate = \frac{ln(2)}{Doubling\ time}
+        \end{multline}
+        $$
+    </p>
+</p>
+<br>
+<h5> 3.1 Calculating specific growth rate from the doubling time</h5>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp Doubling time:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="Doubling_time" 
+                min = "0"
+                step="0.01"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <div class="form-group">
+            <select id="time_unit_from_dropdown" class="form-control"  style="width:100%">
+                <option selected="Day">Days</option>
+                <option value="Hour">Hours</option>
+                <option value="Minute">Minutes</option>
+            </select>
+        </div>
+    </div>
+</div>
+<br>
+<button id="calculateGrowthRate" type="button" class="btn btn-primary" onclick="calculateGrowthRate();"> Calculate</button>
+<button type="button" class="btn btn-info"><a>Specific growth rate: 
+    <span id="growth_rate_for_span"></span></a>
+</button>
+
+<br><br><br>
+<h5> 2.2 Calculating doubling time from the specific growth rate</h5>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp Specific growth rate:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="growth_rate_from_dropdown" 
+                min = "0"
+                step="0.01"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <div class="form-group">            
+            <select id="per_time_unit_from_dropdown" class="form-control"  style="width:100%">
+                <option selected="Day" value="Days"><a>Day<span>&#8315;</span>&sup1</a></option>
+                <option value="Hours"><a>Hour<span>&#8315;</span>&sup1</a></option>
+                <option value="Minutes"><a>Minute<span>&#8315;</span>&sup1</a></option>
+            </select>
+        </div>
+    </div>
+</div>
+<br>
+<button id="calculate_growth_rate" type="button" class="btn btn-primary" onclick="calculateDoublingTime();"> Calculate</button>
+<button type="button" class="btn btn-info"><a>Doubling time: 
+    <span id="doubling_time_for_span"></span></span></a>
+</button>
+<br><br>
+<p style="line-height: 0.9"><i style="font-size:80%">
+    Please note that the specific growth rate can be calculated from differences in the culture density 
+    (expressed as cell number, cell weight, or culture optical density), 
+    as measured during <a href="https://en.wikipedia.org/wiki/Bacterial_growth", target="blank"> exponential culture growth</a> 
+    according to the following equation:
+    $$
+    \begin{multline}
+    \shoveleft Specific\ growth\ rate = \frac{ln(cell\ density\ at\ time\ 2) - ln(cell\ density\ at\ time\ 1)}{time\ 2 - time\ 1}
+    \end{multline}
+    $$
+</i></p>
+
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
+
+<script src="{{url_for('static', filename='js_calculators.js')}}"></script>
+
+{% endblock %}

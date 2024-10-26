@@ -17,6 +17,11 @@ def create_app():
     app.config['SECRET_KEY'] = 'TotallySecretKey' 
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}' 
     
+    # Konfigurace session cookies
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'    # Použijte 'None' pro třetí strany, 'Strict' pro silné omezení
+    app.config['SESSION_COOKIE_SECURE'] = True       # Pouze pro HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True     # Zabrání přístupu JavaScriptem
+
     db.init_app(app)
 
     from .views import views
@@ -34,6 +39,7 @@ def create_app():
     from .cell_size_filament import cell_size_filament
     from .settings import settings 
     from .light_curves_analysis import light_curves_analysis 
+    from .calculators import calculators
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
@@ -49,6 +55,7 @@ def create_app():
     app.register_blueprint(cell_size_filament, url_prefix='/') 
     app.register_blueprint(settings, url_prefix='/') 
     app.register_blueprint(light_curves_analysis, url_prefix='/') 
+    app.register_blueprint(calculators, url_prefix='/') 
 
     #### DATABASE ####
     with app.app_context(): # creating the database

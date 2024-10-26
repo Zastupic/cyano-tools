@@ -1,3 +1,13 @@
+//--------------------------------------------// 
+//--- Fill file names to the selection box ---//
+//--------------------------------------------// 
+document.getElementById('selected_image').addEventListener('change', function() {
+  let fileName = Array.from(this.files)
+      .map(file => file.name)
+      .join(', ');
+  this.nextElementSibling.innerText = fileName || 'Select files';
+});
+
 //----------/
 // SLIDERS //
 //---------//
@@ -21,6 +31,7 @@ output_3.innerHTML = slider_3.value;
 slider_3.oninput = function() {
   output_3.innerHTML = this.value;
 }
+
 //---------------------------------//
 // CELL COUNTING + CIRCLES DRAWING //
 //---------------------------------//
@@ -76,20 +87,6 @@ function getMousePosition(canvas, event) {
   context.lineWidth = 1;
   context.strokeStyle = '#FF9900';
   context.stroke();
-
-  /** console.log(
-    " Manually identified cells: " + identified_cells, 
-    "\n Image resolution-x: " + pixels_x + " pixels",  
-    "\n Image resolution-y: " + pixels_y + " pixels",
-    "\n Pixel size: " + size_of_pixel + " nm",
-    "\n Imaged area: " + image_area + " mm^2", 
-    "\n Depth of cultivation chamber: " + chamber_depth_um + " um",
-    "\n Volume of imaged area - from flask: " + volume_imaged_area + " mL",
-    "\n Identified cells: " + cells_counted_autom, 
-    "\n Cell concentration - from flask: " + cell_conc_autom_million_cells_per_ml + " x 10^6 cells/mL", 
-    "\n Cell concentration - corrected: " + cell_conc_corrected + " x 10^6 cells/mL"
-  ) 
-    **/
 
   // DRAWING ALL CIRCLES//
   for (let i = 0; i < coordinates.length; i++){ 

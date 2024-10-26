@@ -211,7 +211,7 @@
     <div class="container">
         <div class="form-group">    
             <p><b>1. Select spectrofluorometer</b><p>
-            <select name="spectrofluorometer" class="form-select" aria-label="spectrofluorometer">
+            <select name="spectrofluorometer" class="form-control"  aria-label="spectrofluorometer">
                 <option selected="FP-8050">FP-8050 Series Spectrofluorometers (Jasco Inc.)</option>
             </select>
         </div>
@@ -442,15 +442,17 @@
             </div>
         <br>
         <p><b>7. Select files</b></p>
-        <input
-            class="form-control"
-            type="file"
-            name="77K_files"
-            id="77K_file"
-            multiple=""
-            accept=".csv, .CSV, .xlsx, .XLSX"
-            style="width:100%"
-            />
+        <div class="custom-file">
+            <input 
+                type="file" 
+                class="custom-file-input" 
+                name="77K_files"
+                id="77K_file"
+                multiple=""
+                style="width:100%"
+                accept=".csv, .CSV, .xlsx, .XLSX">
+            <label class="custom-file-label" for="customFile">Select files</label>
+        </div>
         <br> <br>
         <button id="show-image-button" type="submit" class="btn btn-primary">Upload and analyze Ex-Em spectra files</button>
         <a href="{{url_for('static', filename='files/77K_spectra_example_files.zip')}}" download="77K_spectra_example_files">
@@ -461,7 +463,7 @@
 </form>
 <br>
 <div class="container">
-    <img id="my-image" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
+    <img id="loadingimage" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
 </div>
 
 {% if spectra_plot_from_memory %}
@@ -498,15 +500,8 @@
 
 {% endif %}
 <br><br><br><br><br><br><br>
-<div class="container">
-    <footer id="footer_relative">
-        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
-        <br> @email 
-        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-    </footer>
-</div>
 
-<script src="{{url_for('static', filename='js_OJIP.js')}}"></script>
+<script src="{{url_for('static', filename='js_ex_em_spectra_analysis.js')}}"></script>
 
 
 {% endblock %}

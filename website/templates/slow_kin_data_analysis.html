@@ -7,21 +7,251 @@
 {% block content %}
 <h1> Slow kinetics data analysis </h1>
 <br>
-<p>Welcome to the app for analzing fluorescence slow kinetics data! 
+<p>Welcome to the application analyzing slow fluorescence transients! These fluorescence transients, so-called Kautsky kinetics, or NPQ protocols, provide a sensitive method 
+    for evaluating the efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. 
+<br><br>
+
+<table style="width:95%">
+    <colgroup>
+        <col style="width:1%">
+        <col style="width:7%">
+        <col style="width:15%">
+    </colgroup>   
+    <tr>
+        <td><u>Parameter</u></td>
+        <td><u>Formula</u></td>
+        <td><u>Meaning</u></td>
+    </tr>
+    <tr>
+        <td colspan="3"><i>Technical parameters</i></td>
+    </tr>
+    <tr>
+        <td>F<sub>0</sub></td>
+        <td></td>
+        <td>Minimum fluorescence intensity in dark-adapted state</td>
+    </tr>
+    <tr>
+        <td>F<sub>m</sub></td>
+        <td></td>
+        <td>Maximum fluorescence intensity in dark-adapted state, measured during the first saturation flash after dark adaptation</td>
+    </tr>
+    <tr>
+        <td>F<sub>t</sub></td>
+        <td></td>
+        <td>Steady-state fluorescence intensity during the course of slow kinetics measurement</td>
+    </tr>
+    <tr>
+        <td>F<sub>p</sub></td>
+        <td></td>
+        <td>Steady-state fluorescence intensity in the peak of fast Kautsky induction</td>
+    </tr>
+    <tr>
+        <td>PAR</td>
+        <td></td>
+        <td>Photosynthetically active radiation (units: µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup>)</td>
+    </tr>
+    <tr>
+        <td colspan="3"><i>&nbsp</i></td>
+    </tr>
+    <tr>
+        <td colspan="3"><i>Efficiencies, quantum yields and quenching</i></td>
+    </tr>
+    <tr>
+        <td>F<sub>v</sub> / F<sub>m</sub></td>
+        <td>(F<sub>m/sub> - F<sub>0</sub>) / F<sub>m</sub></td>
+        <td>Maximum quantum yield of primary PSII photochemistry, measured in dark-adapted state</td>
+    </tr>
+    <tr>
+        <td>Q<sub>y</sub></td>
+        <td>(F<sub>m</sub>' - F<sub>t</sub>) / F<sub>m</sub>'</td>
+        <td>Effective quantum yield of PSII during the course of slow kinetics measurement</td>
+    </tr>
+    <tr>
+        <td>rETR</td>
+        <td>Q<sub>y</sub> * PAR</td>
+        <td>Relative electron transport rate during the course of slow kinetics measurement</td>
+    </tr>
+    <tr>
+        <td>NPQ</td>
+        <td>(F<sub>m</sub> - F<sub>m</sub>') / F<sub>m</sub>'</td>
+        <td>Non-photochemical quenching during the course of slow kinetics measurement</td>
+    </tr>
+    <tr>
+        <td>qN</td>
+        <td>(F<sub>m</sub> - F<sub>m</sub>') / F<sub>m</sub></td>
+        <td>Coefficient of non-photochemical quenching </td>
+    </tr>
+    <tr>
+        <td>qP</td>
+        <td>(F<sub>m</sub>' - F<sub>t</sub>) / (F<sub>m</sub>' - F<sub>0</sub>)</td>
+        <td>Coefficient of photochemical quenching, an estimate of open PSII reaction centers</td>
+    </tr>
+    <tr>
+        <td>R<sub>Fd</sub></td>
+        <td>(F<sub>m</sub> - F<sub>t in light-acclimated state</sub>) / (F<sub>t in light-acclimated state</sub> - F<sub>0</sub>)</td>
+        <td>Variable fluorescence intensity decrease ratio, so-called <i>vitality index</i></td>
+    </tr>
+
+</table>
 <br>
-<p>This site is under construction</p>
-<img src="static/images/under_construction.jpg" class="center-fit" width="20%">
 
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
+<b style="font-size:70%"><i>References:</i></b>
+<p style="line-height: 0.9">
+    <i style="font-size:70%">Ruban, A. V. (2016):
+        Plant Physiology, 170(4):1903–1916. DOI:
+        <a href="https://academic.oup.com/plphys/article/170/4/1903/6114162" target="_blank">10.1104/pp.15.01935</a>
+    </i>
+    <br>
+    <i style="font-size:70%">Lichtenthaler, H. K. et al., (2005):
+        Photosynthetica, 43(3):379-393. DOI:
+        <a href="https://ps.ueb.cas.cz/artkey/phs-200503-0009_how-to-correctly-determine-the-different-chlorophyll-fluorescence-parameters-and-the-chlorophyll-fluorescence-d.php" target="_blank">10.1007/s11099-005-0062-6</a>
+    </i>
+    <br>
+    <i style="font-size:70%">Oxborough, K, Baker, N. R. (1997):
+        Photosynthesis Research, 54:135–142. DOI:
+        <a href="https://link.springer.com/article/10.1023/A:1005936823310" target="_blank">10.1023/A:1005936823310</a>
+    </i>
+</p>
 
+<br>
+<u>How to use this tool:</u>
+<br><br>
+<ol>
+    <li>Select your fluorometer</li>
+    <li>Upload and analyze slow kinetic files (up to 50 files)</li>
+    <li>Review the results</li>
+    <li>Download the results in a summary .xlsx file</li>
+</ol>
+<br>
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data', _anchor='results') }}">
+    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include <!--.CSV and -->.txt files, as obtained by <!--MULTI-COLOR-PAM / DUAL-PAM 
+    or --> AquaPen / FluorPen fluorometers <!--, respecitvely-->:</i>
+    <div class="container">
+        <div class="gallery_6">
+            <!--
+            <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__img gallery__item--1">
+                <i style="font-size:80%">MULTI-COLOR-PAM</i>
+                <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__img gallery__item--1">
+            </a>
+            <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__img gallery__item--2">
+                <i style="font-size:80%">DUAL-PAM</i>
+                <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__img gallery__item--2">
+            </a>
+            -->
+            <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__img gallery__item--1">
+                <i style="font-size:80%">AquaPen</i>
+                <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__img gallery__item--1">
+            </a>
+            <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__img gallery__item--2">
+                <i style="font-size:80%">FluorPen</i>
+                <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__img gallery__item--2">
+            </a>
+        </div>
+    </div>
+    </p>
+    <div class="form-group">
+        <label for="fluorometer" ><p><b>1. Select fluorometer</b></p></label>
+            <select name="fluorometer" class="form-control"  aria-label="fluorometer" style="width:100%">
+                <option selected="AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
+                <!-- <option value="MULTI-COLOR-PAM">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option> -->
+            </select>
+    </div>
+    <!--
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
+        For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
+        This will also allow to export reduced data to the summary .xlsx file for further processing. 
+        If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen, data reduction is not necessary.
+        </i>
+    </p>
+    -->
+    <br>
+    <label class="form-label"><p class="font-weight-bold">2. For AquaPen/FluorPen, select type of the
+        <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank"> NPQ protocol</a>:</p></label>
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ1" value="checkbox_NPQ1">
+        <label class="form-check-label" for="checkbox_NPQ_Aquapen">
+            <i> &nbspNPQ protocol 1: <font size="2">Duration: <b>144 s</b>; <b>1</b> pulse in dark; </b><b>5</b> pulses at light (interval: <b>12 s</b>); <b>3</b> pulses in dark (interval: <b>26 s</b>) </i></font>
+        </label>
+        <br>
+        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ2" value="checkbox_NPQ2">
+        <label class="form-check-label" for="checkbox_NPQ_Aquapen">
+            <i> &nbspNPQ protocol 2: <font size="2">Duration: <b>590 s</b>; <b>1</b> pulse in dark; </b><b>10</b> pulses at light (interval: <b>20 s</b>); <b>7</b> pulses in dark (interval: <b>60 s</b>) </i></font>
+        </label>
+        <br>
+        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ3" value="checkbox_NPQ3" checked>
+        <label class="form-check-label" for="checkbox_NPQ_Aquapen">
+            <i> &nbspNPQ protocol 3: <font size="2">Duration: <b>260 s</b>; <b>1</b> pulse in dark; </b><b>10</b> pulses at light (interval: <b>21 s</b>); <b>2</b> pulses in dark (interval: <b>21 s</b>) </i></font>
+        </label>
+    </div>
+    <br>
+    <!--
+    <label class="form-label"><p class="font-weight-bold">3. For MULTI-COLOR PAM / DUAL-PAM files, specify type of analyzed files: </p></label>
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="checkbox_NPQ_MCPAM" id="checkbox_NPQ_MCPAM_raw_data" value="checkbox_NPQ_MCPAM_raw_data" checked>
+        <label class="form-check-label" for="checkbox_NPQ_MCPAM">
+            <i> &nbspRaw MULTI-COLOR PAM / DUAL-PAM data files</i>
+        </label>
+        <br>
+        <input class="form-check-input" type="radio" name="checkbox_NPQ_MCPAM" id="checkbox_NPQ_MCPAM_parameters" value="checkbox_NPQ_MCPAM_parameters" checked>
+        <label class="form-check-label" for="checkbox_NPQ_MCPAM">
+            <i> &nbspFiles with derived parameters </i>
+        </label>
+    </div>
+    <br>
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
+        For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
+        This will also allow to export reduced data to the summary .xlsx file for further processing. Reduced OJIP curves will contain about two thousand data points
+        (data between F<sub>0</sub> and F<sub>I</sub> are unabridged).
+        <br>If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen, data reduction is not necessary.
+        </i>
+    </p>
+    <div class="form-check">
+        <label>
+            <input class="form-check-input" type="checkbox" name="checkbox_reduce_file_size" value="checked" checked>
+            Reduce size of raw MULTI-COLOR PAM / DUAL-PAM data
+        </label>
+    </div>
+    <br>   
+    -->
+    <p class="font-weight-bold">3. Select files</p>
+    <div class="custom-file">
+        <input 
+            type="file" 
+            class="custom-file-input" 
+            type="file"
+            name="NPQ_files"
+            id="NPQ_files"
+            multiple=""
+            accept=".csv, .CSV, .txt, .ASCII"
+            style="width:100%">
+        <label class="custom-file-label" for="customFile">Select files</label>
+    </div>
+    <br><br>
+    <label class="form-label"><p class="font-weight-bold">4. Analyze slow kinetic files</p></label>
+    <br>
+    <button id="show-image-button" type="submit" class="btn btn-primary" >Upload and analyze slow kinetic files </button>   
+    <a href="{{url_for('static', filename='files/NPQ_example_files_AquaPen.zip')}}" download="NPQ_example_files_AquaPen">
+        <button type="button" class="btn btn-outline-primary">Download example slow kinetic files</button>
+    </a>
+</form>
+<br>
 <div class="container">
-    <footer id="footer_relative">
-        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
-        <br> @email 
-        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-    </footer>
+    <img id="loadingimage" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
 </div>
+
+
+{% if OJIP_plot_from_memory %}
+    <section id="results"></section>    
+
+{% else %}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br>
+
+{% endif %}
+<br><br><br><br><br><br><br>
+
+<script src="{{url_for('static', filename='js_slow_kin_analysis.js')}}"></script>
 
 {% endblock %}

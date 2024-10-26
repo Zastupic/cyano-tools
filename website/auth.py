@@ -24,7 +24,7 @@ def login():
             if check_password_hash(user.password, password): # compare the hashed password with password of user
                 flash('Logged in successfully!', category='success')
                 login_user(user, remember=True) # keeps the user logged in
-                return redirect(url_for('views.home'))
+                return redirect(url_for('views.home')) # type: ignore
             else:
                 flash('Incorrect password, try again', category='error')
         else:

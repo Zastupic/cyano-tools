@@ -46,17 +46,20 @@ or a disposable counting slide of known depth has been used. Any combination of 
             step="0.01"/>
     <br>
     <label for="threshold_filter"><p class="font-weight-bold">{{ '2. Select threshold filter' }}</p></label>
-    <select name="threshold_filter" class="form-select" aria-label="threshold_filter">
-        <option selected="Triangle + Binary">Triangle + Binary</option>
-        <option value="Binary + Otsu">Binary + Otsu</option>
-        <option value="To zero + Triangle">To zero + Triangle</option>
-        <option value="Binary">Binary</option>
-        <option value="To zero">To zero</option>
-        <option value="Triangle">Triangle</option>
-        <option value="Otsu">Otsu</option>
-    </select>
     <br>
-    <p class="font-weight-bold">{{ '3. Adjust additional parameters' }}</p>
+    <div class="form-group">
+        <select name="threshold_filter" class="form-control" style="width:100%">
+            <option selected="Triangle + Binary">Triangle + Binary</option>
+            <option value="Binary + Otsu">Binary + Otsu</option>
+            <option value="To zero + Triangle">To zero + Triangle</option>
+            <option value="Binary">Binary</option>
+            <option value="To zero">To zero</option>
+            <option value="Triangle">Triangle</option>
+            <option value="Otsu">Otsu</option>
+        </select>
+    </div>
+    <br>
+    <p class="font-weight-bold">3. Adjust additional parameters</p>
     <div class="container">
         <div class="gallery_sliders_cell_count">
             <span STYLE="font-size:9.5pt">10</span>
@@ -87,20 +90,18 @@ or a disposable counting slide of known depth has been used. Any combination of 
             </div>
         </div>
         <br>
-            <!-- <div class="form-group">
-                    <label for="manually_identified_cells"><p class="font-weight-bold">{{ '4. Enter number of missed cells (optional, for repeated counting)' }}</p></label>
-                    <input  
-                         type="number"
-                         class="form-control"
-                         id="manually_identified_cells" 
-                         name="manually_identified_cells"
-                         value="0"
-                     /> 
-                </div>
-                <br> -->
-        <label class="form-label" for="customFile"><p class="font-weight-bold">5. Select your image</p></label>
-        <input class="form-control" type="file" name="image">
-        <br>
+        <p class="font-weight-bold">5. Select your image</p>
+        <div class="custom-file">
+            <input 
+                type="file" 
+                class="custom-file-input" 
+                name="selected_images"
+                id="selected_image"
+                style="width:100%"
+                accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif">
+            <label class="custom-file-label" id="show-image-button" for="customFile">Select files</label>
+        </div>
+        <br><br>
         <button type="submit" class="btn btn-primary">Count the cells</button>
         <a href="{{url_for('static', filename='images/cell_counting_example.jpeg')}}" download="example_image">
             <button type="button" class="btn btn-outline-primary">Download an example image</button>
@@ -194,13 +195,6 @@ or a disposable counting slide of known depth has been used. Any combination of 
 
 <br><br><br><br><br><br><br>
 
-<div class="container">
-    <footer id="footer_relative">
-        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
-        <br> @email 
-        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-    </footer>
-</div>
 <script src="{{url_for('static', filename='js_cell_count_round_cells.js')}}"></script>
 
 {% endblock %}

@@ -1,7 +1,16 @@
+//--------------------------------------------// 
+//--- Fill file names to the selection box ---//
+//--------------------------------------------// 
+document.getElementById('selected_image').addEventListener('change', function() {
+  let fileName = Array.from(this.files)
+      .map(file => file.name)
+      .join(', ');
+  this.nextElementSibling.innerText = fileName || 'Select files';
+});
+
 //---------//
 // SLIDERS //
 //---------//
-
 var slider_1 = document.getElementById("chamber_depth_range");
 var slider_2 = document.getElementById("minimal_diameter_range");
 var slider_3 = document.getElementById("iterations_range");
@@ -44,7 +53,6 @@ slider_6.oninput = function() {
 //---------------------------------//
 // CELL COUNTING + CIRCLES DRAWING //
 //---------------------------------//
-
 // Get parameters from HTML = from flask
 var cell_conc_autom_million_cells_per_ml = cell_conc_autom_million_cells_per_ml;
 var volume_imaged_area = volume_imaged_area;
@@ -87,24 +95,6 @@ function getMousePosition(canvas, event) {
 
   identified_cells = coordinates.length;
   var cell_conc_corrected = ((cells_counted_autom + identified_cells) / volume_imaged_area / 1e6).toFixed(3)
-
-/*  console.log(
-    " Manually identified cells: " + identified_cells, 
-    "\n Image resolution-x: " + pixels_x + " pixels",  
-    "\n Image resolution-y: " + pixels_y + " pixels",
-    "\n Pixel size: " + size_of_pixel + " nm",
-    "\n Imaged area: " + image_area + " um^2", 
-    "\n Imaged area: " + image_area * 1e-6 + " mm^2",
-    "\n Depth of cultivation chamber: " + chamber_depth + " nm",
-    "\n Volume of imaged area - from flask: " + volume_imaged_area + " nL",
-    "\n Volume of imaged area - recalculated: " + image_volume_recalculated_nL + " nL",
-    "\n Identified cells: " + cells_counted_autom, 
-    "\n Cell concentration - from flask: " + cell_conc_autom + " x 10^6 cells/mL", 
-    "\n Cell concentration - recalculated: " + cell_conc_recalculated + " x 10^6 cells/mL",
-    "\n Cell concentration - corrected: " + cell_conc_corrected + " x 10^6 cells/mL"
-  ) 
-
-*/
  
   // DRAWING A CIRCLE//
   var circle_size = slider_6.value;
@@ -165,4 +155,13 @@ $('img[data-enlargeable]').addClass('img-enlargeable').click(function() {
       removeModal();
     }
   });
+});
+
+//--------------------//
+//--- Loading image ---//
+//--------------------//
+const showImageButton = document.getElementById("show-image-button");
+const myImage = document.getElementById("loadingimage"); 
+showImageButton.addEventListener("click", () => { 
+   myImage.style.display = "block"; 
 });

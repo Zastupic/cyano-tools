@@ -1,3 +1,13 @@
+//--------------------------------------------// 
+//--- Fill file names to the selection box ---//
+//--------------------------------------------// 
+document.getElementById('image').addEventListener('change', function() {
+  let fileName = Array.from(this.files)
+      .map(file => file.name)
+      .join(', ');
+  this.nextElementSibling.innerText = fileName || 'Select files';
+});
+
 //---------------------------------------------//
 //--- DRAWING LINES BY MOUSE CLICK IN CANVAS---//
 //---------------------------------------------//
@@ -52,7 +62,7 @@ function handleMouseDown(e) {
 }
 
 //------------------//
-//--- MOUSE MOVe ---//
+//--- MOUSE MOVE ---//
 //------------------//
 function handleMouseMove(e){
     // let the browser know we will handle this event

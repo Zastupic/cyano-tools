@@ -18,9 +18,18 @@
     <li>Confirm selection and analyze intensity of pixels across the cellular profile (with fixed angle of 15°)</li>
 </ol> 
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">
-    <label class="form-label" for="customFile"><p class="font-weight-bold">Select your image</p></label>
-    <input class="form-control" type="file" name="image">
-    <br>
+    <p class="font-weight-bold">Select your image</p>
+    <div class="custom-file">
+        <input 
+            type="file" 
+            class="custom-file-input" 
+            name="image"
+            id="image"
+            style="width:100%"
+            accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif">
+        <label class="custom-file-label" for="customFile">Select files</label>
+    </div>
+    <br><br>
     <button type="submit" class="btn btn-primary">Upload image and select individual cells</button>
     <a href="{{url_for('static', filename='images/round_cells_example.jpg')}}" download="example_image">
         <button type="button" class="btn btn-outline-primary">Download an example image</button>
@@ -96,14 +105,6 @@
 
 {% endif %}
 <br><br><br><br><br><br><br>
-
-<div class="container">
-    <footer id="footer_relative">
-        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
-        <br> @email 
-        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-    </footer>
-</div>
 
 <script src="{{url_for('static', filename='js_pixel_profies_round_cells.js')}}"></script>
 

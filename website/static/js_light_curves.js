@@ -1,12 +1,12 @@
 //--------------------------------------------// 
 //--- Fill file names to the selection box ---//
 //--------------------------------------------// 
-document.getElementById('OJIP_file').addEventListener('change', function() {
-  let fileName = Array.from(this.files)
-      .map(file => file.name)
-      .join(', ');
-  this.nextElementSibling.innerText = fileName || 'Select files';
-});
+  document.getElementById('light_curve_files').addEventListener('change', function() {
+    let fileName = Array.from(this.files)
+        .map(file => file.name)
+        .join(', ');
+    this.nextElementSibling.innerText = fileName || 'Select files';
+  });
 
 //-----------------------------//
 //--- IMAGES ON FULL SCREEN ---//
@@ -44,22 +44,22 @@ $('img[data-enlargeable]').addClass('img-enlargeable').click(function() {
 //--- ACCEPT ONLY NUMBERS, COMMA AND DOT AS INPUT FOR FORM-CONTROL ---//
 //--------------------------------------------------------------------//
 function isNumberKey(evt) {
-  var charCode = (evt.which) ? evt.which : evt.keyCode
-  if ((charCode < 48 || charCode > 57) && charCode != 44 && charCode != 46)
-    return false;
-  return true;
-}
-
+    var charCode = (evt.which) ? evt.which : evt.keyCode
+    if ((charCode < 48 || charCode > 57) && charCode != 44 && charCode != 46)
+      return false;
+    return true;
+  }
+  
 //------------------------------------//
 //--- RELOAD PAGE ON LAST POSITION ---//
 //------------------------------------//
 function refreshPageAtPosition () {
-  sessionStorage.setItem("scroll", window.scrollY);
-}
-window.onload = function () {
-  sessionStorage.setItem("scroll", window.scrollY);
+    sessionStorage.setItem("scroll", window.scrollY);
   }
-
+  window.onload = function () {
+    sessionStorage.setItem("scroll", window.scrollY);
+    }
+  
 //--------------------//
 //--- Loading image ---//
 //--------------------//

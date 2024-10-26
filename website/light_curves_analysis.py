@@ -33,9 +33,9 @@ def analyze_light_curves():
         ### Load files ###
         ##################
         # check if some file is selected
-        if 'files' in request.files:
+        if 'light_curve_files' in request.files:
             # get list of files
-            files = request.files.getlist("files")
+            files = request.files.getlist("light_curve_files")
             # check if at least one file is selected
             if secure_filename(files[0].filename) == '': # type: ignore
                 flash('Please select one or more files to analyze.', category='error') 
@@ -358,7 +358,7 @@ def analyze_light_curves():
                                     fig_4.set_title("Quantum Yield, Qy") 
                                     fig_4.grid() # use: which='both' for minor grid
                                     fig_4.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)') 
-                                    fig_4.set_ylabel('Q$_{Y}$ (r.u.)') 
+                                    fig_4.set_ylabel('r.u.') 
                                     ########## Sub-plot ETR ##########
                                     fig_5 = fig.add_subplot(3, 4, 10) 
                                     # Read ETR throughout the datafrmae for the plot
@@ -381,7 +381,7 @@ def analyze_light_curves():
                                     fig_5.set_title("Electron Transport Rate, rETR \n + Curve fit for parameters calculation") 
                                     fig_5.grid() # use: which='both' for minor grid
                                     fig_5.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)') 
-                                    fig_5.set_ylabel('rETR (e$^{-}$ m$^{-2}$ s$^{-1}$)') 
+                                    fig_5.set_ylabel('µmol e$^{-}$ m$^{-2}$ s$^{-1}$') 
                                     ########## Sub-plot qP ##########
                                     fig_7 = fig.add_subplot(3, 4, 5) 
                                     # Read NPQ throughout the datafrmae for the plot
@@ -465,7 +465,7 @@ def analyze_light_curves():
                                     fig_1 = fig.add_subplot(3, 4, 1)                  
                                     ALPHA.plot.bar(xticks=[], color=colors)
                                     fig_1.set_title("α")
-                                    fig_1.set_ylabel('e$^{-}$ µmol photons$^{-1}$') 
+                                    fig_1.set_ylabel('e$^{-}$ photons$^{-1}$') 
                                     # Sub-plot BETA 
                                     fig_2 = fig.add_subplot(3, 4, 2)                  
                                     BETA.plot.bar(xticks=[], color=colors)
@@ -486,7 +486,7 @@ def analyze_light_curves():
                                     fig_3.set_xticks([]) # no X-axis values
                                     fig_3.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02)) # legend    
                                     fig_3.set_title("ETR$_{max}$")
-                                    fig_3.set_ylabel('e$^{-}$ m$^{-2}$ s$^{-1}$')  
+                                    fig_3.set_ylabel('µmol e$^{-}$ m$^{-2}$ s$^{-1}$')  
                                     # Sub-plot 
                                     fig_4 = fig.add_subplot(3, 4, 5)                  
                                     IK.plot.bar(xticks=[], color=colors)
@@ -500,7 +500,7 @@ def analyze_light_curves():
                                     fig_6 = fig.add_subplot(3, 4, 7)                  
                                     ETRMPOT.plot.bar(xticks=[], color=colors)
                                     fig_6.set_title("ETR$_{mPot}$")
-                                    fig_6.set_ylabel('e$^{-}$ m$^{-2}$ s$^{-1}$') 
+                                    fig_6.set_ylabel('µmol e$^{-}$ m$^{-2}$ s$^{-1}$') 
                                     # saving scatter plot to memory
                                     memory_for_parameters = io.BytesIO()
                                     plt.savefig(memory_for_parameters, bbox_inches='tight', format='JPEG')
@@ -527,16 +527,16 @@ def analyze_light_curves():
                                     param_all.columns = ['Aplha', 'Beta', 'Ik', 'Ib', 'ETR max', 'ETRmPot'] 
                                     # write all parameters to excel
                                     writer = pd.ExcelWriter(f'{upload_folder}/{file_name_without_extension}_results.xlsx', engine='openpyxl')
-                                    Summary_file.to_excel(writer, sheet_name = 'Raw fluorescence data', index=False)
+                                    param_all.to_excel(writer, sheet_name = 'Parameters', index=True)
+                                    ETRALL.to_excel(writer, sheet_name = 'ETR', index=False)
+                                    FITALL.to_excel(writer, sheet_name = 'ETR_fit', index=False)
                                     FTALL.to_excel(writer, sheet_name = 'Ft', index=False)
                                     FMALL.to_excel(writer, sheet_name = 'Fm', index=False)
                                     QP.to_excel(writer, sheet_name = 'qP', index=False)
                                     QN.to_excel(writer, sheet_name = 'qN', index=False)
                                     NPQALLFMM.to_excel(writer, sheet_name = 'NPQ', index=False)
                                     QYALL.to_excel(writer, sheet_name = 'Qy', index=False)
-                                    ETRALL.to_excel(writer, sheet_name = 'ETR', index=False)
-                                    FITALL.to_excel(writer, sheet_name = 'ETR_fit', index=False)
-                                    param_all.to_excel(writer, sheet_name = 'Parameters', index=True)
+                                    Summary_file.to_excel(writer, sheet_name = 'Raw fluorescence data', index=False)
                                     writer.close()
                                     # Save images
                                     wb = openpyxl.load_workbook(f'{upload_folder}/{file_name_without_extension}_results.xlsx')
@@ -572,7 +572,7 @@ def analyze_light_curves():
                                         if(file_time < current_time - seconds):
                                             os.remove(os.path.join(upload_folder, str(i)).replace("\\","/")) 
                             else:
-                                flash('Please use .txt files with exported parameters', category='error')  
+                                flash('There seems to be a problem with the uploaded data. Please revise the uploaded files.', category='error')  
                     else:
                         flash('Please select correct file types for analysis (.txt files for AquaPen / FluorPen).', category='error')    
                 else:

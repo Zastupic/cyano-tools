@@ -13,9 +13,11 @@
 </div>
 <br>
 <p>Welcome to the application for analyzing rapid light curves (Photosynthesis-Irradiance, P-I curves)! Rapid light curves provide 
-    a detailed information on the saturation level of photosynthetic electron transport, as well as on the overall performance of electron transport rate 
-    and both photochemical and non-photochemical quenching in plants, algae, cyanobacteria or photosynthetic bacteria. 
-<br>
+    a detailed information on the ability of the studied organism to cope with increasing light intensity, 
+    on the overall performance and saturation level of photosynthetic electron transport rate 
+    as well as on the efficiency of both photochemical and non-photochemical quenching. 
+    The rapid light curves can be measured for all photosyntheetically active organisms, i.e. for plants, algae, cyanobacteria or photosynthetic bacteria. 
+<br><br>
 This tool visualizes and analyzes rapid ligth curves curves, as obtained by PAM fluorometry measurements. The tool reads up to 50 rapid light curve files and plots 
     several graphs: raw fluorescence signal and parameters <i>Ft</i>, <i>Fm</i>, <i>qP</i>, <i>qN</i>, <i>NPQ</i>, <i>Qy</i> and <i>ETR</i> (see the summary table below).
     <br>
@@ -34,13 +36,15 @@ This tool visualizes and analyzes rapid ligth curves curves, as obtained by PAM 
 </p>
 <table style="width:95%">
     <colgroup>
-        <col style="width:3%">
-        <col style="width:5%">
+        <col style="width:2%">
+        <col style="width:4%">
+        <col style="width:2%">
         <col style="width:12%">
     </colgroup>  
     <tr>
         <td><u>Parameter</u></td>
         <td><u>Formula</u></td>
+        <td><u>Unit</u></td>
         <td><u>Meaning</u></td>
     </tr>
     <tr>
@@ -49,84 +53,100 @@ This tool visualizes and analyzes rapid ligth curves curves, as obtained by PAM 
     <tr>
         <td>PAR</td>
         <td></td>
+        <td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
         <td>Photosynthetically active radiation</td>
     </tr>
     <tr>
         <td>F<sub>t</sub>, F<sub>m</sub>'</td>
         <td></td>
+        <td>a.u. <a style="font-size:70%">(arbitrary units)</a></td>
         <td>Steady-state and maximum fluorescence intensity under each tested PAR level, respectively</td>
     </tr>
     <tr>
         <td>F<sub>max</sub></td>
         <td></td>
+        <td>a.u. <a style="font-size:70%">(arbitrary units)</a></td>
         <td>Maximum fluorescence intensity through all tested PAR levels</td>
     </tr>
     <tr>
-        <td colspan="3"><i>&nbsp</i></td>
+        <td colspan="4"><i>&nbsp</i></td>
     </tr>
     <tr>
-        <td colspan="3"><i>Efficiencies, quantum yields and quenching</i></td>
+        <td colspan="4"><i>Efficiencies, quantum yields and quenching</i></td>
     </tr>
     <tr>
         <td>Q<sub>y</sub></td>
         <td>(F<sub>m</sub>' - F<sub>t</sub>) / F<sub>m</sub>'</td>
+        <td>r.u. <a style="font-size:70%">(relative units)</a></td>
         <td>Effective quantum yield of electron transport through PSII</td>
     </tr>
     <tr>
         <td>rETR</td>
         <td>Q<sub>y</sub> * PAR</td>
-        <td>Relative electron transport rate</td>
+        <td>µmol<sub>electrons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
+        <td>Relative electron transport rate; assuming that
+            <a href="https://aquation.com.au/wp-content/uploads/2017/08/How-to-Analyse-a-Rapid-Light-Curve.pdf" target="blank">
+                the value of photons absorptance by PSII is unknown</a></td>
     </tr>
     <tr>
         <td>qP</td>
         <td>(F<sub>m</sub>' - F<sub>t</sub>) / (F<sub>m</sub>' - F<sub>0</sub>)</td>
+        <td>r.u. <a style="font-size:70%">(relative units)</a></td>
         <td>Coefficient of photochemical quenching (flow of the captured light energy into photochemical reactions)</td>
     </tr>
     <tr>
         <td>qN</td>
         <td>(F<sub>max</sub> - F<sub>m</sub>') / (F<sub>max</sub> - F<sub>0</sub>)</td>
+        <td>r.u. <a style="font-size:70%">(relative units)</a></td>
         <td>Coefficient of non-photochemical quenching (flow of the captured light energy into heat)</td>
     </tr>
     <tr>
         <td>NPQ</td>
         <td>(F<sub>max</sub> - F<sub>m</sub>') / F<sub>m</sub>'</td>
+        <td>r.u. <a style="font-size:70%">(relative units)</a></td>
         <td>Non-photochemical quenching (flow of the captured light energy into heat)</td>
     </tr>
         <tr>
-        <td colspan="3"><i>&nbsp</i></td>
+        <td colspan="4"><i>&nbsp</i></td>
     </tr>
     <tr>
-        <td colspan="3"><i>Parameters based on the light curves fitting</i></td>
-    </tr>
-    <tr>
-        <td>ETR<sub>mPot</sub></td>
-        <td></td>
-        <td>Potential maximum ETR without photoinhibition considered</td>
+        <td colspan="4"><i>Parameters based on the light curves fitting</i></td>
     </tr>
     <tr>
         <td>α</td>
         <td></td>
+        <td>electrons photons<sup>-1</sup></td>
         <td>Initial slope of the light curve, related to quantum efficiency of photosynthesis</td>
     </tr>
     <tr>
         <td>β</td>
         <td></td>
+        <td>electrons photons<sup>-1</sup></td>
         <td>Slope of the light curve under the highest intensities, related to photoinhibition</td>
+    </tr>
+    <tr>
+        <td>ETR<sub>mPot</sub></td>
+        <td></td>
+        <td>µmol<sub>electrons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
+        <td>Potential maximum ETR without photoinhibition considered</td>
     </tr>
     <tr>
         <td>ETR<sub>max</sub></td>
         <td>ETR [α / (α + β)] [β / (α + β)]<sup>(β/α)</sup></td>
+        <td>µmol<sub>electrons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
         <td>Maximum electron transport rate</td>
     </tr>
     <tr>
         <td>I<sub>k</sub></td>
         <td>ETR<sub>max</sub> / α</td>
-        <td>Minimum saturating irradiance of ETR<sub>max</sub></td>
+        <td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
+        <td>Irradiance required to saturate ETR<sub>max</sub></td>
     </tr>
     <tr>
         <td>I<sub>b</sub></td>
         <td>ETR<sub>max</sub> / β</td>
-        <td>Photoinhibition index, irradiance required to photoinhibit ETR<sub>mPot</sub></td>
+        <td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
+        <td>Irradiance required to photoinhibit ETR<sub>mPot</sub>, also known as photoinhibition index</td>
     </tr>
 </table>
 <br>
@@ -176,7 +196,7 @@ Accepted file formats include .txt files, as obtained by <i>AquaPen / FluorPen</
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('light_curves_analysis.analyze_light_curves', _anchor='results') }}">
     <div class="form-group">
         <label for="fluorometer"><p class="font-weight-bold">{{ '1. Select fluorometer' }}</p></label>
-            <select name="fluorometer" class="form-select" aria-label="fluorometer" style="width:100%">
+            <select name="fluorometer" class="form-control"  aria-label="fluorometer" style="width:100%">
                 <option selected="Aquapen">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
             </select>
     </div>
@@ -214,16 +234,19 @@ Accepted file formats include .txt files, as obtained by <i>AquaPen / FluorPen</
         <span STYLE="font-size:9.5pt">100</span>
         <a>ETR<sub>max factor</sub>: <b><span id="ETR_max_multiplication_factor"></span></b>. The factor defines upper <i>ETR<sub>mPot</sub></i> limit as: <i>ETR<sub>mPot</sub> = ETR<sub>max measured</sub> * ETR<sub>max factor</sub></i></a>
     </div>
-    <label class="form-label"><b>4. Select files</b></label>
-    <input
-        class="form-control"
-        type="file"
-        name="files"
-        id="files"
-        multiple=""
-        accept=".csv, .CSV, .txt, .ASCII"
-        style="width:100%"
-        />
+    <p class="font-weight-bold">4. Select files</p>
+    <div class="custom-file">
+        <input 
+            type="file" 
+            class="custom-file-input" 
+            type="file"
+            name="light_curve_files"
+            id="light_curve_files"
+            multiple=""
+            accept=".csv, .CSV, .txt, .ASCII"
+            style="width:100%">
+        <label class="custom-file-label" for="customFile">Select files</label>
+    </div>
     <br> <br>
     <button id="show-image-button" type="submit" class="btn btn-primary">Upload and analyze light curves</button>
     <a href="{{url_for('static', filename='files/Light_curve_3_example_files.zip')}}" download="Light_curve_3_example_files">
@@ -232,7 +255,7 @@ Accepted file formats include .txt files, as obtained by <i>AquaPen / FluorPen</
 </form>
 <br>
 <div class="container">
-    <img id="my-image" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
+    <img id="loadingimage" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
 </div>
 
 {% if plot_from_memory %}
@@ -278,14 +301,6 @@ Accepted file formats include .txt files, as obtained by <i>AquaPen / FluorPen</
 {% endif %}
 <br><br><br><br><br><br><br>
 
-<div class="container">
-    <footer id="footer_relative">
-        <br> @author CzechGlobe - Department of Adaptive Biotechnologies
-        <br> @email 
-        <a href="mailto:zavrel.t@czechglobe.cz">zavrel.t@czechglobe.cz</a>
-    </footer>
-</div>
-
-<script src="{{url_for('static', filename='js_OJIP.js')}}"></script>
+<script src="{{url_for('static', filename='js_light_curves.js')}}"></script>
 
 {% endblock %}
