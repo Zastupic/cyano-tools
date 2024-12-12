@@ -101,18 +101,30 @@ document.getElementById('corrected_OD_720_AquaPen_for_span').innerHTML = "<b>...
 // Calculate doubling time
 function correct_OD_720_PBRFMT150() { 
   var OD_720_measured_PBR = parseFloat(document.getElementById("OD_720_measured_PBR").value);
-  var corrected_OD_720_PBRFMT150_for_span = 0.23 * Math.exp(1.83 * OD_720_measured_PBR);
+  if (OD_720_measured_PBR > 0.4) {
+    var corrected_OD_720_PBRFMT150_for_span = 0.23 * Math.exp(1.83 * OD_720_measured_PBR);
+  } else {
+    var corrected_OD_720_PBRFMT150_for_span = OD_720_measured_PBR;
+  }
   document.getElementById('corrected_OD_720_PBRFMT150_for_span').innerHTML = "<b>"+corrected_OD_720_PBRFMT150_for_span.toFixed(3)+"</b>";
 }
 function correct_OD_720_MC1000(){
   var OD_720_measured_MC1000 = parseFloat(document.getElementById("OD_720_measured_MC1000").value);
-  var corrected_OD_720_MC1000_for_span = 0.029 + 0.143 * Math.exp(2.497 * OD_720_measured_MC1000);
+  if (OD_720_measured_MC1000 > 0.4) {
+    var corrected_OD_720_MC1000_for_span = 0.029 + 0.143 * Math.exp(2.497 * OD_720_measured_MC1000);
+  } else {
+    var corrected_OD_720_MC1000_for_span = OD_720_measured_MC1000;
+  }
   document.getElementById('corrected_OD_720_MC1000_for_span').innerHTML = "<b>"+corrected_OD_720_MC1000_for_span.toFixed(3)+"</b>";
-
 }
 function correct_OD_720_AquaPen(){
   var OD_720_measured_AquaPen = parseFloat(document.getElementById("OD_720_measured_AquaPen").value);
-  var corrected_OD_720_AquaPen_for_span = 0.247 * Math.exp(1.677 * OD_720_measured_AquaPen);
+  if (OD_720_measured_AquaPen > 0.4) {
+    var corrected_OD_720_AquaPen_for_span = 0.247 * Math.exp(1.677 * OD_720_measured_AquaPen);
+  } else {
+    var corrected_OD_720_AquaPen_for_span = OD_720_measured_AquaPen;
+  }
+  
   document.getElementById('corrected_OD_720_AquaPen_for_span').innerHTML = "<b>"+corrected_OD_720_AquaPen_for_span.toFixed(3)+"</b>";
 }
 
