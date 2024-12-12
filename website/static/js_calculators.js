@@ -70,7 +70,7 @@ function calculateGrowthRate() {
 
   var growth_rate_for_span = Math.LN2 / Doubling_time;
 
-  document.getElementById('growth_rate_for_span').innerHTML = "<b>"+growth_rate_for_span.toFixed(4)+" "+per_time_unit_for_span+"<sup>-1</sup></b>";
+  document.getElementById('growth_rate_for_span').innerHTML = "<b>"+growth_rate_for_span.toFixed(3)+" "+per_time_unit_for_span+"<sup>-1</sup></b>";
 }
 
 //--------------------------------//
@@ -87,5 +87,42 @@ function calculateDoublingTime() {
 
   var doubling_time_for_span = Math.LN2 / growth_rate_from_dropdown;
 
-  document.getElementById('doubling_time_for_span').innerHTML = "<b>"+doubling_time_for_span.toFixed(1)+" "+time_unit_for_span;
+  document.getElementById('doubling_time_for_span').innerHTML = "<b>"+doubling_time_for_span.toFixed(3)+" "+time_unit_for_span;
 }
+
+//------------------------//
+//--- OD720 CORRECTION ---//
+//------------------------//
+// set default values 
+document.getElementById('corrected_OD_720_PBRFMT150_for_span').innerHTML = "<b>...</b>";
+document.getElementById('corrected_OD_720_MC1000_for_span').innerHTML = "<b>...</b>";
+document.getElementById('corrected_OD_720_AquaPen_for_span').innerHTML = "<b>...</b>";
+
+// Calculate doubling time
+function correct_OD_720_PBRFMT150() { 
+  var OD_720_measured_PBR = parseFloat(document.getElementById("OD_720_measured_PBR").value);
+  var corrected_OD_720_PBRFMT150_for_span = 0.23 * Math.exp(1.83 * OD_720_measured_PBR);
+  document.getElementById('corrected_OD_720_PBRFMT150_for_span').innerHTML = "<b>"+corrected_OD_720_PBRFMT150_for_span.toFixed(3)+"</b>";
+}
+function correct_OD_720_MC1000(){
+  var OD_720_measured_MC1000 = parseFloat(document.getElementById("OD_720_measured_MC1000").value);
+  var corrected_OD_720_MC1000_for_span = 0.029 + 0.143 * Math.exp(2.497 * OD_720_measured_MC1000);
+  document.getElementById('corrected_OD_720_MC1000_for_span').innerHTML = "<b>"+corrected_OD_720_MC1000_for_span.toFixed(3)+"</b>";
+
+}
+function correct_OD_720_AquaPen(){
+  var OD_720_measured_AquaPen = parseFloat(document.getElementById("OD_720_measured_AquaPen").value);
+  var corrected_OD_720_AquaPen_for_span = 0.247 * Math.exp(1.677 * OD_720_measured_AquaPen);
+  document.getElementById('corrected_OD_720_AquaPen_for_span').innerHTML = "<b>"+corrected_OD_720_AquaPen_for_span.toFixed(3)+"</b>";
+}
+
+
+
+
+
+/* add:
+- OD recalculation:
+  - OD720 in photobioreactors
+  - OD720 in Multi-Cultivators
+  - OD720 in AquaPen
+*/

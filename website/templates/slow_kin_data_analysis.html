@@ -14,84 +14,114 @@
 <table style="width:100%">
     <colgroup>
         <col style="width:1%">
-        <col style="width:8%">
+        <col style="width:5%">
+        <col style="width:6%">
         <col style="width:18%">
     </colgroup>   
     <tr>
         <td><u>Parameter</u></td>
         <td><u>Formula</u></td>
+        <td><u>Alternative formula</u></td>
         <td><u>Meaning</u></td>
     </tr>
     <tr>
-        <td colspan="3"><i>Technical parameters</i></td>
+        <td colspan="4"><i>Technical parameters</i></td>
     </tr>
     <tr>
         <td>F<sub>0</sub></td>
+        <td></td>
         <td></td>
         <td>Minimum fluorescence intensity in dark-adapted state</td>
     </tr>
     <tr>
         <td>F<sub>m</sub></td>
         <td></td>
+        <td></td>
         <td>Maximum fluorescence intensity in dark-adapted state, measured during the first saturation flash after dark adaptation</td>
+    </tr>
+        <td>F<sub>m</sub>'</td>
+        <td></td>
+        <td></td>
+        <td>Maximum fluorescence intensities during the course of slow kinetics measurement</td>
+    </tr>
+    <tr>
+        <td>F<sub>m</sub>'<sub> (max)</sub></td>
+        <td></td>
+        <td></td>
+        <td>Maximum fluorescence intensity throughout the course of slow kinetics measurement</td>
     </tr>
     <tr>
         <td>F<sub>t</sub></td>
         <td></td>
-        <td>Steady-state fluorescence intensity during the course of slow kinetics measurement</td>
+        <td></td>
+        <td>Steady-state fluorescence intensities during the course of slow kinetics measurement</td>
+    </tr>
+    <tr>
+        <td>F<sub>t (L)</sub></td>
+        <td></td>
+        <td></td>
+        <td>Steady-state fluorescence intensities in the light-acclimated state</td>
     </tr>
     <tr>
         <td>F<sub>p</sub></td>
+        <td></td>
         <td></td>
         <td>Steady-state fluorescence intensity in the peak of fast Kautsky induction</td>
     </tr>
     <tr>
         <td>PAR</td>
         <td></td>
+        <td></td>
         <td>Photosynthetically active radiation (units: µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup>)</td>
     </tr>
     <tr>
-        <td colspan="3"><i>&nbsp</i></td>
+        <td>F<sub>v</sub></td>
+        <td>F<sub>m</sub> - F<sub>0</sub>, F<sub>m</sub>' - F<sub>t</td>
+        <td></td>
+        <td>Variable fluorescence intensities during the course of slow kinetics measurement</td>
     </tr>
     <tr>
-        <td colspan="3"><i>Efficiencies, quantum yields and quenching</i></td>
+        <td colspan="4"><i>&nbsp</i></td>
+    </tr>
+    <tr>
+        <td colspan="4"><i>Efficiencies, quantum yields and quenching</i></td>
     </tr>
     <tr>
         <td>F<sub>v</sub> / F<sub>m</sub></td>
         <td>(F<sub>m</sub> - F<sub>0</sub>) / F<sub>m</sub></td>
+        <td></td>
         <td>Maximum quantum yield of primary PSII photochemistry, measured in dark-adapted state</td>
     </tr>
     <tr>
         <td>Q<sub>y</sub></td>
         <td>(F<sub>m</sub>' - F<sub>t</sub>) / F<sub>m</sub>'</td>
+        <td></td>
         <td>Effective quantum yield of PSII during the course of slow kinetics measurement</td>
     </tr>
     <tr>
         <td>rETR</td>
         <td>Q<sub>y</sub> * PAR</td>
+        <td></td>
         <td>Relative electron transport rate during the course of slow kinetics measurement</td>
     </tr>
     <tr>
         <td>NPQ</td>
         <td>(F<sub>m</sub> - F<sub>m</sub>') / F<sub>m</sub>'</td>
+        <td>(F<sub>m</sub>'<sub> (max)</sub> - F<sub>m</sub>') / F<sub>m</sub>'</td>
         <td>Non-photochemical quenching during the course of slow kinetics measurement</td>
     </tr>
     <tr>
         <td>qN</td>
         <td>(F<sub>m</sub> - F<sub>m</sub>') / F<sub>m</sub></td>
+        <td>(F<sub>m</sub>'<sub> (max)</sub> - F<sub>m</sub>') / F<sub>m</sub>'<sub> (max)</sub></td>
         <td>Coefficient of non-photochemical quenching </td>
     </tr>
     <tr>
         <td>qP</td>
         <td>(F<sub>m</sub>' - F<sub>t</sub>) / (F<sub>m</sub>' - F<sub>0</sub>)</td>
+        <td></td>
         <td>Coefficient of photochemical quenching, an estimate of open PSII reaction centers</td>
     </tr>
-    <tr>
-        <td>R<sub>Fd</sub></td>
-        <td>(F<sub>m</sub> - F<sub>t; light-acclimated state</sub>) / (F<sub>t; light-acclimated state</sub> - F<sub>0</sub>)</td>
-        <td>Variable fluorescence intensity decrease ratio, so-called <i>vitality index</i></td>
-    </tr>
-
 </table>
 <br>
 
@@ -124,11 +154,10 @@
 </ol>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data', _anchor='results') }}">
-    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include <!--.CSV and -->.txt files, as obtained by <!--MULTI-COLOR-PAM / DUAL-PAM 
-    or --> AquaPen / FluorPen fluorometers <!--, respecitvely-->:</i>
+    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by MULTI-COLOR-PAM / DUAL-PAM 
+    or AquaPen / FluorPen fluorometers, respecitvely:</i>
     <div class="container">
         <div class="gallery_6">
-            <!--
             <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__img gallery__item--1">
                 <i style="font-size:80%">MULTI-COLOR-PAM</i>
                 <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__img gallery__item--1">
@@ -137,12 +166,11 @@
                 <i style="font-size:80%">DUAL-PAM</i>
                 <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__img gallery__item--2">
             </a>
-            -->
-            <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__img gallery__item--1">
+            <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__img gallery__item--3">
                 <i style="font-size:80%">AquaPen</i>
                 <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__img gallery__item--1">
             </a>
-            <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__img gallery__item--2">
+            <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__img gallery__item--4">
                 <i style="font-size:80%">FluorPen</i>
                 <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__img gallery__item--2">
             </a>
@@ -152,21 +180,12 @@
     <div class="form-group">
         <label for="fluorometer" ><p><b>1. Select fluorometer</b></p></label>
             <select name="fluorometer" class="form-control"  aria-label="fluorometer" style="width:100%">
-                <option selected="AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
-                <!-- <option value="MULTI-COLOR-PAM">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option> -->
+                <option selected="MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
+                <option value="AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
             </select>
     </div>
-    <!--
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
-        For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
-        This will also allow to export reduced data to the summary .xlsx file for further processing. 
-        If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen, data reduction is not necessary.
-        </i>
-    </p>
-    -->
     <br>
-    <label class="form-label"><p class="font-weight-bold">2. For AquaPen/FluorPen, select type of the
+    <label class="form-label"><p class="font-weight-bold">2a. For AquaPen/FluorPen, select type of the
         <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank"> NPQ protocol</a>:</p></label>
     <div class="form-check">
         <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ1" value="checkbox_NPQ1" checked>
@@ -184,43 +203,233 @@
             <i> &nbspNPQ protocol 3: <font size="2">Duration: <b>260 s</b>; <b>1</b> pulse in dark; </b><b>10</b> pulses at light (interval: <b>21 s</b>); <b>2</b> pulses in dark (interval: <b>21 s</b>) </i></font>
         </label>
     </div>
-    <br>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        Please note that it is possible to process only a single NPQ protocol file type each time.
-        </i>
-    </p>
-    <br>
-    <!--
-    <label class="form-label"><p class="font-weight-bold">3. For MULTI-COLOR PAM / DUAL-PAM files, specify type of analyzed files: </p></label>
+    <label class="form-label"><p class="font-weight-bold">2b. For MULTI-COLOR PAM, select type of the analyzed file:</p></label>
     <div class="form-check">
-        <input class="form-check-input" type="radio" name="checkbox_NPQ_MCPAM" id="checkbox_NPQ_MCPAM_raw_data" value="checkbox_NPQ_MCPAM_raw_data" checked>
-        <label class="form-check-label" for="checkbox_NPQ_MCPAM">
-            <i> &nbspRaw MULTI-COLOR PAM / DUAL-PAM data files</i>
+        <input class="form-check-input" type="radio" name="checkbox_NPQ_MC_PAM" id="checkbox_file_parameters" value="checkbox_file_parameters" checked>
+        <label class="form-check-label" for="checkbox_NPQ_MC_PAM">
+            <i> &nbspFile with calculated parameters <font size="2">(.csv file with F<sub>t</sub> and F<sub>m</sub>' values, and derived parameters)</i></font>
         </label>
         <br>
-        <input class="form-check-input" type="radio" name="checkbox_NPQ_MCPAM" id="checkbox_NPQ_MCPAM_parameters" value="checkbox_NPQ_MCPAM_parameters" checked>
-        <label class="form-check-label" for="checkbox_NPQ_MCPAM">
-            <i> &nbspFiles with derived parameters </i>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="checkbox_NPQ_MC_PAM" id="checkbox_file_raw_data" value="checkbox_file_raw_data">
+        <label class="form-check-label" for="checkbox_NPQ_MC_PAM">
+            <i> &nbspRaw data file <font size="2">(.csv file with time and raw fluorescence values only)</i></font>
         </label>
+        <br>
     </div>
     <br>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
-        For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
-        This will also allow to export reduced data to the summary .xlsx file for further processing. Reduced OJIP curves will contain about two thousand data points
-        (data between F<sub>0</sub> and F<sub>I</sub> are unabridged).
-        <br>If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen, data reduction is not necessary.
-        </i>
-    </p>
     <div class="form-check">
         <label>
             <input class="form-check-input" type="checkbox" name="checkbox_reduce_file_size" value="checked" checked>
-            Reduce size of raw MULTI-COLOR PAM / DUAL-PAM data
+        Reduce size of MULTI-COLOR PAM raw data files
         </label>
     </div>
-    <br>   
-    -->
-    <p class="font-weight-bold">3. Select files</p>
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
+        For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
+        This will also allow to export reduced data to the summary .xlsx file for further processing. Reduced files will contain about 10000 data points.
+        <br>If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen, data reduction is not necessary.
+        <br>Please note that it is only possible to work with one file type at a time, although up to 50 files can be processed within a single analysis. 
+        The AquaPen/FluorPen files have identical length, due to defined NPQ protocols by the manufacturer. 
+        For the MULTI-COLOR PAM files, it is recommended to process only files measured by identical protocols, as defined by the user/experimenter.
+        </i>
+    </p>
+    <table style="width:80%">
+        <colgroup>
+            <col style="width:1%">
+            <col style="width:20%">
+            <col style="width:5%">
+        </colgroup>  
+        <tr>
+            <td colspan="3"><u><i>For the MULTI-COLOR PAM files with parameters, following timing is considered for F<sub>0</sub> and F<sub>m</sub></td>
+        </tr>
+        <tr>
+            <td><i>F<sub>0</sub></i></td>
+            <td><i>0 s (the first measured F<sub>t</sub> point)</i></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><i>F<sub>m</sub></i></td>
+            <td><i>0 s (the first measured F<sub>m</sub> point)</i></td>
+            <td></td>
+        </tr>
+    </table>
+    <br>
+    <p><b>3. For the MULTI-COLOR PAM files, select time points to fit F<sub>m</sub>' kinetics</b>
+    <br><p style="line-height: 0.9"><i style="font-size:80%">
+        The F<sub>m</sub>' data can be interpolated by exponential function, in order to estimate rate of state transition. 
+        Protocols in AquaPen or PlantPen are pre-defined, and timing of dark and actinic light periods is fixed.
+        On the other hand, protocols in Multi-Color PAM or Dual PAM are user-defined, and timing of dark and actinic light periods is variable.
+        <br>Below, timing of individual periods within the slow kinetic protocol from Multi-Color PAM or Dual PAM can be specified, 
+        in order to evaluate state transitions rate also in protocols with variable timing.</i></p>
+    <i>3a. Initial time points</i>
+    <div class="gallery_6">
+        <div class="gallery__img gallery__item--1">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="time_init_1" 
+                        name="time_init_1"
+                        class="form-control"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp s
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class='form-inline'>
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="time_init_2" 
+                        name="time_init_2"
+                        class="form-control"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp s
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <div class='form-inline'>
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="time_init_3" 
+                        name="time_init_3"
+                        class="form-control"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    <span class="input-group-label">
+                    &nbsp s
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--4">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="time_init_4" 
+                    name="time_init_4"
+                    class="form-control"
+                    step="1"
+                    onkeypress="return isNumberKey(event)">
+                &nbsp s
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--5">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="time_init_5" 
+                    name="time_init_5"
+                    class="form-control"
+                    step="1"
+                    onkeypress="return isNumberKey(event)">
+                &nbsp s
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--6">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="time_init_6" 
+                    name="time_init_6"
+                    class="form-control"
+                    step="1"
+                    onkeypress="return isNumberKey(event)">
+                &nbsp s
+            </div>
+        </div>
+    </div>
+    <br><i>3b. End time points</i></p>
+    <div class="gallery_6">
+        <div class="gallery__img gallery__item--1">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="time_end_1" 
+                        name="time_end_1"
+                        class="form-control"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp s
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class='form-inline'>
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="time_end_2" 
+                        name="time_end_2"
+                        class="form-control"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    &nbsp s
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <div class='form-inline'>
+                <div class="input-group">
+                    <input             
+                        type="number"
+                        id="time_end_3" 
+                        name="time_end_3"
+                        class="form-control"
+                        step="1"
+                        onkeypress="return isNumberKey(event)">
+                    <span class="input-group-label">
+                    &nbsp s
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--4">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="time_end_4" 
+                    name="time_end_4"
+                    class="form-control"
+                    step="1"
+                    onkeypress="return isNumberKey(event)">
+                &nbsp s
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--5">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="time_end_5" 
+                    name="time_end_5"
+                    class="form-control"
+                    step="1"
+                    onkeypress="return isNumberKey(event)">
+                &nbsp s
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--6">
+            <div class='form-inline input-group'>
+                <input             
+                    type="number"
+                    id="time_end_6" 
+                    name="time_end_6"
+                    class="form-control"
+                    step="1"
+                    onkeypress="return isNumberKey(event)">
+                &nbsp s
+            </div>
+        </div>
+    </div>
+    <p><b>4. Select files</b></p>
     <div class="custom-file">
         <input 
             type="file" 
@@ -234,7 +443,7 @@
         <label class="custom-file-label" for="customFile">Select files</label>
     </div>
     <br><br>
-    <label class="form-label"><p class="font-weight-bold">4. Analyze slow kinetic files</p></label>
+    <p><b>5. Analyze slow kinetic files</b></p>
     <br>
     <button id="show-image-button" type="submit" class="btn btn-primary" >Upload and analyze slow kinetic files </button>   
     <a href="{{url_for('static', filename='files/NPQ_example_files_AquaPen.zip')}}" download="NPQ_example_files_AquaPen">
@@ -246,26 +455,38 @@
     <img id="loadingimage" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
 </div>
 
-
 {% if plot_from_memory %}
     <section id="results"></section>   
     <br> <br>
     <h6><b>Measured data: </b></h6>
     <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ plot_from_memory }}"/>
     <br> <br>
-
     <form>
-        <h6><b>Download results:</b></h6>
-        <ol>
-            <li>Plots (as shown above)</li>
-            <li>Raw fluorescence signals</li>
-            <li>Technical parameters (F<sub>t</sub>, F<sub>m</sub>') </li>
-            <li>Calculated parameters (qP, NPQ, Q<sub>y</sub>, ETR)</li>
-        </ol>
+        {% if plots_MC_PAM_raw_data %}
+            <h6><b>Download results - Multi-Color PAM / Dual PAM, raw data:</b></h6>
+            <ul>
+                <li>Plots (as shown above)</li>
+                <li>Raw fluorescence signals</li>
+            </ul>
+        {% elif plots_MC_PAM_parameters %}
+            <h6><b>Download results - Multi-Color PAM / Dual PAM, parameters:</b></h6>
+            <ul>
+                <li>Plots (as shown above)</li>
+                <li>Calculated parameters</li>
+            </ul>
+        {% elif plots_AquaPen %}
+            <h6><b>Download results - AquaPen / PlantPen:</b></h6>
+            <u>AquaPen / PlantPen</u>
+            <ul>
+                <li>Plots (as shown above)</li>
+                <li>Raw fluorescence signals</li>
+                <li>Calculated parameters</li>
+            </ul>
+        </ul>
+        {% endif %}
         <a href="{{ url_for('static', filename=xlsx_file_path)}}">
             <button type="button" class="btn btn-primary">Download the summary .xlsx file</button>
         </a>
-
     </form>
 
 {% else %}

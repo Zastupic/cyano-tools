@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template
-from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 
 calculators = Blueprint('calculators', __name__)
 

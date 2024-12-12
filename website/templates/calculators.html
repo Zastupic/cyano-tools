@@ -16,13 +16,13 @@
     or <a href="https://www.google.cz/search?q=co2+controller&sca_esv=31504b4340b63b2d&hl=cs&sxsrf=ADLYWILVc_VJ0VcbfzwTRDtzXWUc9XpC_g%3A1727971871707&source=hp&ei=H8L-ZsydKOe2i-gPiuSjiQk&iflsig=AL9hbdgAAAAAZv7QLzhLZYY2Z8EPMeI9MWVdFxWmUSQL&oq=CO2&gs_lp=Egdnd3Mtd2l6IgNDTzIqAggAMgoQIxiABBgnGIoFMgQQIxgnMhAQABiABBixAxhDGIMBGIoFMgUQABiABDIFEAAYgAQyChAAGIAEGEMYigUyBRAAGIAEMgoQABiABBhDGIoFMgUQABiABDIFEAAYgARInitQAFjjH3ABeACQAQCYAagBoAH-CaoBAzAuObgBA8gBAPgBAvgBAZgCB6AC2gaoAgrCAggQABiABBiiBMICCBAAGIAEGMsBwgILEAAYgAQYsQMYgwHCAgUQLhiABMICCxAuGIAEGMcBGK8BwgIHEAAYgAQYCsICBxAjGCcY6gLCAhEQLhiABBixAxjRAxiDARjHAcICCBAAGIAEGLEDwgIMECMYgAQYExgnGIoFwgIOEC4YgAQYsQMY0QMYxwGYAw6SBwMxLjagB8NC&sclient=gws-wiz" target="_blank">
         other companies</a>. Here, we provide a simple tool for the calculation of CO<sub>2</sub> concentration in a gas mixture, as set by a Gas Mixing System, according to the following equation:
 </p>
-<p>
+<p style="line-height: 0.9"><i style="font-size:80%">
     $$
     \begin{multline}
     \shoveleft CO_{2}\ concentration\ in\ air + CO_{2}\ mixture = \frac{Flow\ rate\ CO_{2} + Flow\ rate\ air * CO_{2}\ concentration\ in\ air}{Flow\ rate\ CO_{2} + Flow\ rate\ air}
     \end{multline}
     $$
-</p>
+</i></p>
 <br>    
 <!-- 
 <h5> 1.1 Calculating CO<sub>2</sub> concentration in a user-defined gas mixture </h5>
@@ -176,11 +176,13 @@
 <h5> 2.1 Equilibrium concentration of dO<sub>2</sub> in water</h5>
 <p>The concentration of dissoled oxygen in water, in equilibrium with atmosphere, can be calcualted based on the values of temperature, salinity, 
     O<sub>2</sub> concentration in the atmosphere and the atmospheric pressure, according to the following equation:
-    $$
-    \begin{multline}
-    \shoveleft dO_{2}\ [mL\ L^{-1}]= \frac{(p - p_{w})}{p} *e^{({A_{1} + A_{2}*\frac{100}{T}} + A3*ln(\frac{T}{100}) + A4*\frac{T}{100} + S*(B1 + B2*\frac{T}{100} + B3*(\frac{T}{100})^{2}))} * \frac{C}{20.9},
-    \end{multline}
-    $$
+    <a style="line-height: 0.9"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft dO_{2}\ [mL\ L^{-1}]= \frac{(p - p_{w})}{p} *e^{({A_{1} + A_{2}*\frac{100}{T}} + A3*ln(\frac{T}{100}) + A4*\frac{T}{100} + S*(B1 + B2*\frac{T}{100} + B3*(\frac{T}{100})^{2}))} * \frac{C}{20.9},
+        \end{multline}
+        $$
+    </i></a>
     where <i>p</i> represents atmospheric pressure [kPa], <i>pw</i> represents partial pressure of the water vapor [kPa], <i>T</i> represents temperature [K], 
     <i>S</i> represents salinity [g kg<sup>-1</sup>], <i>C</i> represents O<sub>2</sub> concentration in air [%] and <i>A1 - A4</i> and <i>B1 - B4</i> represent 
     <a href="http://corrosion-doctors.org/Seawater/Oxygen.htm" target="blank">constants</a>.
@@ -229,7 +231,7 @@
 </div>
 <div class="gallery_6">
     <div class="gallery__img gallery__item--1">
-        <a>&nbsp O<sub>2</sub> in air:</a>
+        <a>&nbsp O<sub>2</sub>&nbspin&nbspair:</a>
     </div>
     <div class="gallery__img gallery__item--2">
         <div class="form-inline">
@@ -250,7 +252,7 @@
 </div>
 <div class="gallery_6">
     <div class="gallery__img gallery__item--1">
-        <a>&nbsp Atm. pressure:</a>
+        <a>&nbsp Atm.&nbsppressure:</a>
     </div>
     <div class="gallery__img gallery__item--2">
         <div class="form-inline">
@@ -278,7 +280,7 @@
 
 <h5 id="dCO2_conc"> 2.2 Equilibrium concentration of dCO<sub>2</sub> in water</h5>
 <p>For the calcualtion of dissolved CO<sub>2</sub> in water, please use the 
-    <a type="button" class="btn btn-primary" href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">Seawater Carbonate System calculator</a>
+    <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">Seawater Carbonate System calculator</a>
 </p>
 
 <br><br>
@@ -293,16 +295,27 @@
     <a href="https://en.wikipedia.org/wiki/Doubling_time" target="blank">Wikipedia</a>. In short, the relationship can be defined
     as following:
     <br>
-    <p>
+    <p style="line-height: 0.9"><i style="font-size:80%">
         $$
         \begin{multline}
         \shoveleft Specific\ growth\ rate = \frac{ln(2)}{Doubling\ time}
         \end{multline}
         $$
-    </p>
+    </i></p>
 </p>
+<p style="line-height: 0.9"><i style="font-size:80%">
+    Please note that the specific growth rate can be calculated from differences in the culture density 
+    (expressed as cell number, cell weight, or culture optical density), 
+    as measured during <a href="https://en.wikipedia.org/wiki/Bacterial_growth", target="blank"> exponential culture growth</a> 
+    according to the following equation:
+    $$
+    \begin{multline}
+    \shoveleft Specific\ growth\ rate = \frac{ln(cell\ density\ at\ time\ 2) - ln(cell\ density\ at\ time\ 1)}{time\ 2 - time\ 1}
+    \end{multline}
+    $$
+</i></p>
 <br>
-<h5> 3.1 Calculating specific growth rate from the doubling time</h5>
+<h5> 3.1 Calculating specific growth rate (μ) from the doubling time (DT)</h5>
 <div class="gallery_6">
     <div class="gallery__img gallery__item--1">
         <a>&nbsp Doubling time:</a>
@@ -329,15 +342,18 @@
             </select>
         </div>
     </div>
+    <div class="gallery__img gallery__item--4">
+        <button id="calculateGrowthRate" type="button" class="btn btn-primary" onclick="calculateGrowthRate();"> Calculate μ</button>
+    </div>
+    <div class="gallery__img gallery__item--5">
+        <button type="button" class="btn btn-info"><a>μ: 
+            <span id="growth_rate_for_span"></span></a>
+        </button>
+    </div>
 </div>
-<br>
-<button id="calculateGrowthRate" type="button" class="btn btn-primary" onclick="calculateGrowthRate();"> Calculate</button>
-<button type="button" class="btn btn-info"><a>Specific growth rate: 
-    <span id="growth_rate_for_span"></span></a>
-</button>
 
-<br><br><br>
-<h5> 2.2 Calculating doubling time from the specific growth rate</h5>
+<br>
+<h5> 3.2 Calculating doubling time (DT) from specific growth rate (μ)</h5>
 <div class="gallery_6">
     <div class="gallery__img gallery__item--1">
         <a>&nbsp Specific growth rate:</a>
@@ -364,24 +380,136 @@
             </select>
         </div>
     </div>
+    <div class="gallery__img gallery__item--4">
+        <button id="calculate_growth_rate" type="button" class="btn btn-primary" onclick="calculateDoublingTime();"> Calculate DT</button>
+    </div>
+    <div class="gallery__img gallery__item--5-6">
+        <button type="button" class="btn btn-info"><a>DT: 
+            <span id="doubling_time_for_span"></span></span></a>
+        </button>
+    </div>
+</div>
+<br><br><br><br>
+
+<h4 id="OD720_correction"> 4. Correction of optical density measured at 720 nm (OD<sub>720</sub>)</h4>
+<p>The values of optical density (OD), mesured in the liquid cultures of high cell densites, require correction due to non-linear scattering of the measuring light caused by
+    increasing concentration of cells in the culture suspension. The OD correction is specific for each instrument. However, for the instruments listed below, 
+    it applies <b>for OD<sub>720</sub> > 0.4</b> (below this value, OD sensors measure linearly). Please note that for optical densites only slightly above OD<sub>720</sub> > 0.4, 
+    the corrected OD may not exactly match the expected value, due to the use of an exponential correction model with discrete initial conditions.
+    To correct OD<sub>720</sub> across the entire linear and nonlinear range of OD sensors, a polynomial correction would be required.
+</p>
+<p> 4.1 OD<sub>720</sub> correction for the photobioreactor <a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank">PBR FMT-150</a>, based on the following equation<sup>1</sup>:
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft OD_{720}\ corrected = 0.23\ e^{1.83\ OD_{720}\ measured}
+        \end{multline}
+        $$
+    </i></p>
+
+</p>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp OD<sub>720</sub> measured:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="OD_720_measured_PBR" 
+                min = "0"
+                step="0.01"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <button id="correct_OD_720_PBRFMT150" type="button" class="btn btn-primary" onclick="correct_OD_720_PBRFMT150();"> Correct OD<sub>720</sub></button>
+    </div>
+    <div>
+        <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected: 
+            <span id="corrected_OD_720_PBRFMT150_for_span"></span></span></a>
+        </button>
+    </div>
 </div>
 <br>
-<button id="calculate_growth_rate" type="button" class="btn btn-primary" onclick="calculateDoublingTime();"> Calculate</button>
-<button type="button" class="btn btn-info"><a>Doubling time: 
-    <span id="doubling_time_for_span"></span></span></a>
-</button>
-<br><br>
-<p style="line-height: 0.9"><i style="font-size:80%">
-    Please note that the specific growth rate can be calculated from differences in the culture density 
-    (expressed as cell number, cell weight, or culture optical density), 
-    as measured during <a href="https://en.wikipedia.org/wiki/Bacterial_growth", target="blank"> exponential culture growth</a> 
-    according to the following equation:
-    $$
-    \begin{multline}
-    \shoveleft Specific\ growth\ rate = \frac{ln(cell\ density\ at\ time\ 2) - ln(cell\ density\ at\ time\ 1)}{time\ 2 - time\ 1}
-    \end{multline}
-    $$
-</i></p>
+<p> 4.2 OD<sub>720</sub> correction for the Multi-Cultivator <a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank">MC-1000-OD</a>, based on the following equation<sup>2</sup>: 
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft OD_{720}\ corrected = 0.029 + 0.143\ e^{2.497\ OD_{720}\ measured}
+        \end{multline}
+        $$
+    </i></p>
+</p>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp OD<sub>720</sub> measured:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="OD_720_measured_MC1000" 
+                min = "0"
+                step="0.01"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <button id="correct_OD_720_MC1000" type="button" class="btn btn-primary" onclick="correct_OD_720_MC1000();"> Correct OD<sub>720</sub></button>
+    </div>
+    <div>
+        <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected: 
+            <span id="corrected_OD_720_MC1000_for_span"></span></span></a>
+        </button>
+    </div>
+</div>
+<br>
+<p> 4.3 OD<sub>720</sub> correction for <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank">AquaPen</a>, based on the following equation: 
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft OD_{720}\ corrected = 0.247\ e^{1.677\ OD_{720}\ measured}
+        \end{multline}
+        $$
+    </i></p>
+</p>
+<div class="gallery_6">
+    <div class="gallery__img gallery__item--1">
+        <a>&nbsp OD<sub>720</sub> measured:</a>
+    </div>
+    <div class="gallery__img gallery__item--2">
+        <div class="form-inline">
+            <div class="input-group">
+                <input
+                class="form-control"    
+                type="number"
+                id="OD_720_measured_AquaPen" 
+                min = "0"
+                step="0.01"
+                onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+    </div>
+    <div class="gallery__img gallery__item--3">
+        <button id="correct_OD_720_AquaPen" type="button" class="btn btn-primary" onclick="correct_OD_720_AquaPen();"> Correct OD<sub>720</sub></button>
+    </div>
+    <div>
+        <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected: 
+            <span id="corrected_OD_720_AquaPen_for_span"></span></span></a>
+        </button>
+    </div>
+</div>
+<p style="font-size:80%"><i><b>References:</b>
+    <br><sup>1</sup>Zavřel et al., (2021): Algal Research, 56: 1-15, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926421001478?dgcid=coauthor", target="blank">10.1016/j.algal.2021.102328</i></a>
+    <br><sup>2</sup>Sukačová et al., (2023): Algal Research, 71: 1-10, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926423000887", target="blank">10.1016/j.algal.2023.103055</a>
+</p>
 
 <br><br><br><br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br><br><br><br><br><br>
