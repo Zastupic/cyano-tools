@@ -3,7 +3,6 @@ import os, base64, io, time, openpyxl
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline
 from scipy.ndimage import gaussian_filter1d         
 from openpyxl.drawing.image import Image
@@ -405,26 +404,16 @@ def analyze_OJIP_curves():
                             SM = AREAOP / FVFM
                             N = SM * M0 * (1 / VJ)
 
+
 #### CALCULATING TIME ####
                             calculation_time = time.time() 
                             print("===calculation_time: "+str(calculation_time - current_time))
-
-
 
                             ########################
                             ### Plot OJIP curves ###
                             ########################                            
                             # Select color map, according to number of lines (files)
                             colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number+1)) # type: ignore
-                            # Initialize figure and subplots
-                            fig, axes = plt.subplots(4, 4, figsize=(17, 11))
-                            fig.tight_layout()
-                            fig.subplots_adjust(hspace=0.6, wspace=0.3)
-                            plt.rcParams['mathtext.default'] = 'regular'
-                        
-                            # Shared x-axis and y-axis limits settings
-                            xscale = "log"
-                            grid_color = 'lightgray'
                             # Initialise the subplot function using number of rows and columns 
                             fig = plt.figure(figsize=(17,11))
                             fig.tight_layout() # Shrink to fit the canvas together with legend    
@@ -787,6 +776,36 @@ def analyze_OJIP_curves():
                             #######################
                             ### Export to excel ###
                             #######################
+#                            # Prepare DF with parameters more efficiently by concatenating all columns at once
+#                            OJIP_param_all = pd.concat([
+#                                OJIP_param_all, F0, FK, FJ, FI, FM, OJ, JI, IP, VJ, VI, M0, PSIE0, PSIR0, DELTAR0, 
+#                                FVFM, PHIE0, PHIR0, ABSRC, TR0RC, ET0RC, RE0RC, DI0RC, AREAOJ, AREAJI, AREAIP, AREAOP, 
+#                                SM, N, FJ_TIMES_IDENTIFIED, FI_TIMES_IDENTIFIED, FP_TIMES_IDENTIFIED
+#                            ], axis=1)
+#
+#                            # Name columns once after concatenation
+#                            OJIP_param_all.columns = [
+#                                'Fin', 'FK', 'FJ', 'FI', 'Fmax', 'Amplitude(0-J)', 'Amplitude(J-I)', 'Amplitude(I-P)', 
+#                                'VJ', 'VI', 'M0', 'ψE0', 'ψR0', 'δR0', 'ψP0 (Fv/Fm)', 'φE0', 'φR0', 'ABS/RC', 'TR0/RC', 
+#                                'ET0/RC', 'RE0/RC', 'DI0/RC', 'Complementary area O-J', 'Complementary area J-I', 
+#                                'Complementary area I-P', 'Complementary area (O-P)', 'Normalized complementary area Sm', 
+#                                'N (turn-over number QA)', 'FJ time identified', 'FI time identified', 'FP time identified'
+#                            ]
+#
+#                            # Write all parameters to Excel
+#                            output_path = f'{upload_folder}/{file_name_without_extension}_results.xlsx'
+#                            with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+#                                OJIP_param_all.to_excel(writer, sheet_name='Parameters', index=True)
+#                                Summary_file.to_excel(writer, sheet_name='OJIP_raw', index=False)
+#                                OJIP_shifted_to_zero.to_excel(writer, sheet_name='OJIP_to_zero', index=False)
+#                                OJIP_shifted_to_max.to_excel(writer, sheet_name='OJIP_to_max', index=False)
+#                                OJIP_double_normalized.to_excel(writer, sheet_name='OJIP_norm', index=False)
+#                                Differences_1_DF.to_excel(writer, sheet_name='1st_derivatives', index=False)
+#                                Differences_2_DF.to_excel(writer, sheet_name='2nd_derivatives', index=False)
+#                                Raw_curves_reconstructed_DF.to_excel(writer, sheet_name='OJIP_reconstructed', index=False)
+#                                Residuals_DF.to_excel(writer, sheet_name='Residuals', index=False)
+
+
                             # prepare DF with parameters
                             OJIP_param_all = pd.concat([OJIP_param_all, F0], axis = 1)
                             OJIP_param_all = pd.concat([OJIP_param_all, FK], axis = 1)       

@@ -11,11 +11,11 @@
     for evaluating the efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. 
 <br><br>
 
-<table style="width:95%">
+<table style="width:100%">
     <colgroup>
         <col style="width:1%">
-        <col style="width:7%">
-        <col style="width:15%">
+        <col style="width:8%">
+        <col style="width:18%">
     </colgroup>   
     <tr>
         <td><u>Parameter</u></td>
@@ -58,7 +58,7 @@
     </tr>
     <tr>
         <td>F<sub>v</sub> / F<sub>m</sub></td>
-        <td>(F<sub>m/sub> - F<sub>0</sub>) / F<sub>m</sub></td>
+        <td>(F<sub>m</sub> - F<sub>0</sub>) / F<sub>m</sub></td>
         <td>Maximum quantum yield of primary PSII photochemistry, measured in dark-adapted state</td>
     </tr>
     <tr>
@@ -88,7 +88,7 @@
     </tr>
     <tr>
         <td>R<sub>Fd</sub></td>
-        <td>(F<sub>m</sub> - F<sub>t in light-acclimated state</sub>) / (F<sub>t in light-acclimated state</sub> - F<sub>0</sub>)</td>
+        <td>(F<sub>m</sub> - F<sub>t; light-acclimated state</sub>) / (F<sub>t; light-acclimated state</sub> - F<sub>0</sub>)</td>
         <td>Variable fluorescence intensity decrease ratio, so-called <i>vitality index</i></td>
     </tr>
 
@@ -169,7 +169,7 @@
     <label class="form-label"><p class="font-weight-bold">2. For AquaPen/FluorPen, select type of the
         <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank"> NPQ protocol</a>:</p></label>
     <div class="form-check">
-        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ1" value="checkbox_NPQ1">
+        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ1" value="checkbox_NPQ1" checked>
         <label class="form-check-label" for="checkbox_NPQ_Aquapen">
             <i> &nbspNPQ protocol 1: <font size="2">Duration: <b>144 s</b>; <b>1</b> pulse in dark; </b><b>5</b> pulses at light (interval: <b>12 s</b>); <b>3</b> pulses in dark (interval: <b>26 s</b>) </i></font>
         </label>
@@ -179,11 +179,16 @@
             <i> &nbspNPQ protocol 2: <font size="2">Duration: <b>590 s</b>; <b>1</b> pulse in dark; </b><b>10</b> pulses at light (interval: <b>20 s</b>); <b>7</b> pulses in dark (interval: <b>60 s</b>) </i></font>
         </label>
         <br>
-        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ3" value="checkbox_NPQ3" checked>
+        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ3" value="checkbox_NPQ3">
         <label class="form-check-label" for="checkbox_NPQ_Aquapen">
             <i> &nbspNPQ protocol 3: <font size="2">Duration: <b>260 s</b>; <b>1</b> pulse in dark; </b><b>10</b> pulses at light (interval: <b>21 s</b>); <b>2</b> pulses in dark (interval: <b>21 s</b>) </i></font>
         </label>
     </div>
+    <br>
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        Please note that it is possible to process only a single NPQ protocol file type each time.
+        </i>
+    </p>
     <br>
     <!--
     <label class="form-label"><p class="font-weight-bold">3. For MULTI-COLOR PAM / DUAL-PAM files, specify type of analyzed files: </p></label>
@@ -242,8 +247,26 @@
 </div>
 
 
-{% if OJIP_plot_from_memory %}
-    <section id="results"></section>    
+{% if plot_from_memory %}
+    <section id="results"></section>   
+    <br> <br>
+    <h6><b>Measured data: </b></h6>
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ plot_from_memory }}"/>
+    <br> <br>
+
+    <form>
+        <h6><b>Download results:</b></h6>
+        <ol>
+            <li>Plots (as shown above)</li>
+            <li>Raw fluorescence signals</li>
+            <li>Technical parameters (F<sub>t</sub>, F<sub>m</sub>') </li>
+            <li>Calculated parameters (qP, NPQ, Q<sub>y</sub>, ETR)</li>
+        </ol>
+        <a href="{{ url_for('static', filename=xlsx_file_path)}}">
+            <button type="button" class="btn btn-primary">Download the summary .xlsx file</button>
+        </a>
+
+    </form>
 
 {% else %}
 <br><br><br><br><br><br><br><br><br><br><br><br>

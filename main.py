@@ -7,6 +7,5 @@ app = create_app()
 # without this line, importing the "main.py" file from another file would run the server
 if __name__ == '__main__':
     # app.run: this command runs the serer
-    # debug=true:   every change we make will re-run the server
-    # good for development, not good for production
+    # debug=true: every change we make will re-run the server - good for development, not good for production
     app.run(debug=True)

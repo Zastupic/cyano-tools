@@ -1,6 +1,5 @@
-from flask import Blueprint, render_template, request, flash, redirect
+from flask import Blueprint, render_template
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
-from flask_login import current_user
 
 calculators = Blueprint('calculators', __name__)
 
