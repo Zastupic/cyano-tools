@@ -9,7 +9,7 @@
 <br>
 
 <div class="container">
-    <img src="static/images/OJIP_curves_example_orig.jpg" alt="OJIP example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
+    <img data-enlargeable src="static/images/OJIP_curves_example_orig.jpg" alt="OJIP example" class="gallery__img" width="50%" style="cursor: zoom-in; width: 25%">
 </div>
 <br>
 <p>Welcome to the application analyzing OJIP curves! Fast fluorescence transients (so-called OJIP curves) provide a rapid and highly sensitive method for evaluating the efficiency 
@@ -181,7 +181,6 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
 </table>
 <br>
 <b style="font-size:70%"><i>References:</i></b>
-<br>
 <p style="line-height: 0.9">
     <i style="font-size:70%">Tsimilli-Michael, M. (2020):
         Photosynthetica, 58(SPECIAL ISSUE), 275-292. DOI:
@@ -191,7 +190,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
     Photosynthetica, 56(SPECIAL ISSUE), 86-104. DOI:
     <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" target="_blank">10.1007/s11099-018-0770-3</a></i>
     <br>
-    <i style="font-size:70%">Sturbet, A. & Govindjee (2011):
+    <i style="font-size:70%">Stirbet, A. & Govindjee (2011):
         Journal of Photochemistry and Photobiology B: Biology, 104,  236–257. DOI:
         <a href="https://www.sciencedirect.com/science/article/pii/S1011134410002812" target="_blank">0.1016/j.jphotobiol.2010.12.010</a></i>
         <br>
@@ -218,25 +217,23 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves', _anchor='results') }}">
     <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by MULTI-COLOR-PAM / DUAL-PAM 
     or AquaPen / FluorPen fluorometers, respecitvely:</i>
-    <div class="container">
-        <div class="gallery_6">
-            <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__img gallery__item--1">
-                <i style="font-size:80%">MULTI-COLOR-PAM</i>
-                <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__img gallery__item--1">
-            </a>
-            <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__img gallery__item--2">
-                <i style="font-size:80%">DUAL-PAM</i>
-                <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__img gallery__item--2">
-            </a>
-            <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__img gallery__item--3">
-                <i style="font-size:80%">AquaPen</i>
-                <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__img gallery__item--3">
-            </a>
-            <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__img gallery__item--4">
-                <i style="font-size:80%">FluorPen</i>
-                <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__img gallery__item--4">
-            </a>
-        </div>
+    <div class="gallery_6_img">
+        <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">
+            <i style="font-size:80%">MULTI-COLOR-PAM</i>
+            <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__item--1">
+        </a>
+        <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">
+            <i style="font-size:80%">DUAL-PAM</i>
+            <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__item--2">
+        </a>
+        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">
+            <i style="font-size:80%">AquaPen</i>
+            <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__item--3">
+        </a>
+        <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">
+            <i style="font-size:80%">FluorPen</i>
+            <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__item--4">
+        </a>
     </div>
     </p>
     <div class="form-group">
@@ -257,10 +254,10 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <br>If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen, data reduction is not necessary.
         </i>
     </p>
-        <div class="form-check">
-            <label>
-                <input class="form-check-input" type="checkbox" name="checkbox_reduce_file_size" value="checked" checked>
-            Reduce MULTI-COLOR PAM data size
+    <div class="form-check">
+        <label>
+            <input class="form-check-input" type="checkbox" name="checkbox_reduce_file_size" value="checked" checked>
+        Reduce MULTI-COLOR PAM data size
         </label>
     </div>
     <br>

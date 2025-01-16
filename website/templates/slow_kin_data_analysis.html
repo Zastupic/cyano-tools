@@ -1,12 +1,29 @@
 {% extends "base.html" %} 
 
 {% block title %} 
-    Slow kinetics data analysis
+    Slow fluorescence kinetics analysis
 {% endblock %}
 
 {% block content %}
-<h1> Slow kinetics data analysis </h1>
+<h1> Analysis of slow (Kautsky) fluorescence kinetics data </h1>
 <br>
+<div class="container">
+    <div class="images-side-by-side">
+        <img src="static/images/NPQ_protocol_examples.jpg" alt="NPQ protocol example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
+        <img data-enlargeable src="static/images/NPQ_protocol_example_state_transitions.jpg" alt="NPQ protocol example 2" class="gallery__img" width="50%" style="cursor: zoom-in; width: 25%">
+    </div>
+</div>
+<p style="font-size:70%">
+    <i>
+        <b>Example protocols modified from:</b>
+        <br>
+        Roháček, K. et al., (2008):  Plant cell compartments: selected topics: 41-104. ISBN: 
+        <a href="https://faculty.ksu.edu.sa/sites/default/files/CHLOROPHYLL%20FLOURESCENCE.PDF" target="_blank">978-81-308-0104-9</a>
+         <br>
+         Zavřel, T. et al. (2024): Plant and Cell Physiology, 65(8): 1285–1297. DOI: 
+         <a href="https://academic.oup.com/pcp/article/65/8/1285/7697223" target="_blank">10.1093/pcp/pcae062</a>
+    </i>
+</p>
 <p>Welcome to the application analyzing slow fluorescence transients! These fluorescence transients, so-called Kautsky kinetics, or NPQ protocols, provide a sensitive method 
     for evaluating the efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. 
 <br><br>
@@ -31,42 +48,72 @@
         <td>F<sub>0</sub></td>
         <td></td>
         <td></td>
-        <td>Minimum fluorescence intensity in dark-adapted state</td>
+        <td>Minimum fluorescence yield in dark-acclimted state</td>
+    </tr>
+        <tr>
+        <td>F<sub>0</sub>'</td>
+        <td>F<sub>0</sub> / (F<sub>v</sub> / F<sub>m</sub> + F<sub>0</sub> / F<sub>m</sub>')</td>
+        <td></td>
+        <td>Minimum fluorescence yield in light-acclimted state (measured in dark, right after the light period)</td>
     </tr>
     <tr>
         <td>F<sub>m</sub></td>
         <td></td>
         <td></td>
-        <td>Maximum fluorescence intensity in dark-adapted state, measured during the first saturation flash after dark adaptation</td>
+        <td>Maximum fluorescence yield in dark-acclimted state, measured during the first saturation flash after dark adaptation</td>
     </tr>
         <td>F<sub>m</sub>'</td>
         <td></td>
         <td></td>
-        <td>Maximum fluorescence intensities during the course of slow kinetics measurement</td>
+        <td>Maximum fluorescence yields during the course of slow kinetics measurement</td>
     </tr>
     <tr>
         <td>F<sub>m</sub>'<sub> (max)</sub></td>
         <td></td>
         <td></td>
-        <td>Maximum fluorescence intensity throughout the course of slow kinetics measurement</td>
+        <td>Maximum fluorescence yield throughout the course of slow kinetics measurement</td>
+    </tr>
+    <tr>
+        <td>F<sub>m</sub>'<sub>D1</sub></td>
+        <td></td>
+        <td></td>
+        <td>Maximum fluorescence yield measured within 1 min after turning of actinic light</td>
+    </tr>
+    <tr>
+        <td>F<sub>m</sub>'<sub>D5</sub></td>
+        <td></td>
+        <td></td>
+        <td>Maximum fluorescence yield measured within 5 min after turning of actinic light</td>
+    </tr>
+    <tr>
+        <td>F<sub>m</sub>'<sub>D20</sub></td>
+        <td></td>
+        <td></td>
+        <td>Maximum fluorescence yield measured within 5 min after turning of actinic light</td>
     </tr>
     <tr>
         <td>F<sub>t</sub></td>
         <td></td>
         <td></td>
-        <td>Steady-state fluorescence intensities during the course of slow kinetics measurement</td>
+        <td>Fluorescence yields during the course of slow kinetics measurement</td>
     </tr>
     <tr>
-        <td>F<sub>t (L)</sub></td>
+        <td>F<sub>s</sub></td>
         <td></td>
         <td></td>
-        <td>Steady-state fluorescence intensities in the light-acclimated state</td>
+        <td>Steady-state fluorescence yield in the light-acclimated state. Also denominated <i>F<sub>s</sub></i></td>
     </tr>
     <tr>
         <td>F<sub>p</sub></td>
         <td></td>
         <td></td>
-        <td>Steady-state fluorescence intensity in the peak of fast Kautsky induction</td>
+        <td>Maximum fluorescence yield measured when actinic radiation is switched on</td>
+    </tr>
+    <tr>
+        <td>F<sub>d</sub></td>
+        <td>F<sub>p</sub> - F<sub>s</sub></td>
+        <td></td>
+        <td>Fluorescence decrease from F<sub>p</sub> to F<sub>s</sub></td>
     </tr>
     <tr>
         <td>PAR</td>
@@ -76,9 +123,15 @@
     </tr>
     <tr>
         <td>F<sub>v</sub></td>
-        <td>F<sub>m</sub> - F<sub>0</sub>, F<sub>m</sub>' - F<sub>t</td>
+        <td>F<sub>m</sub> - F<sub>0</sub></td>
         <td></td>
-        <td>Variable fluorescence intensities during the course of slow kinetics measurement</td>
+        <td>Variable fluorescence yield in dark-acclimated state with all PSII centers open</td>
+    </tr>
+     <tr>
+        <td>F<sub>v</sub>'</td>
+        <td>F<sub>m</sub>' - F<sub>t</td>
+        <td></td>
+        <td>Variable fluorescence yields during the course of slow kinetics measurement</td>
     </tr>
     <tr>
         <td colspan="4"><i>&nbsp</i></td>
@@ -87,16 +140,24 @@
         <td colspan="4"><i>Efficiencies, quantum yields and quenching</i></td>
     </tr>
     <tr>
-        <td>F<sub>v</sub> / F<sub>m</sub></td>
+        <td>F<sub>v</sub> / F<sub>m</sub> (φ<sub>P0</sub>)</td>
         <td>(F<sub>m</sub> - F<sub>0</sub>) / F<sub>m</sub></td>
         <td></td>
-        <td>Maximum quantum yield of primary PSII photochemistry, measured in dark-adapted state</td>
+        <td>Maximum quantum yield of primary PSII photochemistry, measured in dark-acclimated state</td>
+    </tr>
+    <tr>
+        <td>φ<sub>N0</sub></td>
+        <td>F<sub>0</sub> / F<sub>m</sub></td>
+        <td></td>
+        <td>Basal yield of non-photochemical processes in PSII, measured in dark-acclimated state</td>
     </tr>
     <tr>
         <td>Q<sub>y</sub></td>
         <td>(F<sub>m</sub>' - F<sub>t</sub>) / F<sub>m</sub>'</td>
         <td></td>
-        <td>Effective quantum yield of PSII during the course of slow kinetics measurement</td>
+        <td>Effective quantum yield of PSII during the course of slow kinetics measurement. 
+            Also denominated <i>φ<sub>P</sub></i> or <i>φ<sub>PSII</sub> (PSII operating efficiency)</i>
+        </td>
     </tr>
     <tr>
         <td>rETR</td>
@@ -111,34 +172,74 @@
         <td>Non-photochemical quenching during the course of slow kinetics measurement</td>
     </tr>
     <tr>
-        <td>qN</td>
+        <td>q<sub>CN</sub></td>
         <td>(F<sub>m</sub> - F<sub>m</sub>') / F<sub>m</sub></td>
         <td>(F<sub>m</sub>'<sub> (max)</sub> - F<sub>m</sub>') / F<sub>m</sub>'<sub> (max)</sub></td>
-        <td>Coefficient of non-photochemical quenching </td>
+        <td>complete non-photochemical quenching.
+           Also denominated <i>q<sub>N</sub> (coefficient of non-photochemical quenching)</i>
+        </td>
     </tr>
     <tr>
-        <td>qP</td>
-        <td>(F<sub>m</sub>' - F<sub>t</sub>) / (F<sub>m</sub>' - F<sub>0</sub>)</td>
+        <td>q<sub>E</sub></td>
+        <td>(F<sub>m</sub>'<sub>D1</sub> - F<sub>m</sub>'<sub>D5</sub>) / F<sub>v</sub></td>
         <td></td>
-        <td>Coefficient of photochemical quenching, an estimate of open PSII reaction centers</td>
+        <td>Fast (1–5 min) relaxing component of non-photochemical quenching</td>
+    </tr>
+        <tr>
+        <td>q<sub>T</sub></td>
+        <td>(F<sub>m</sub>'<sub>D5</sub> - F<sub>m</sub>'<sub>D20</sub>) / F<sub>v</sub></td>
+        <td></td>
+        <td>Intermediate (10-20 min) relaxing component of non-photochemical quenching</td>
+    </tr>
+    <tr>
+        <td>q<sub>I</sub></td>
+        <td>F<sub>m</sub>'<sub>D20</sub> / F<sub>v</sub></td>
+        <td></td>
+        <td>Very slow (> 20 min) relaxing component of non-photochemical quenching</td>
+    </tr>
+    <tr>
+        <td>q<sub>P</sub></td>
+        <td>(F<sub>m</sub>' - F<sub>t</sub>) / (F<sub>m</sub>' - F<sub>0</sub>')</td>
+        <td></td>
+        <td>Coefficient of photochemical quenching, an estimate of open PSII reaction centers. Also called <i>PSII efficiency factor</i></td>
+    </tr>
+    <tr>
+        <td>R<sub>fd</sub></td>
+        <td>F<sub>d</sub> / F<sub>s</sub></td>
+        <td></td>
+        <td>Variable chlorophyll fluorescence decrease ratio</td>
+    </tr>
+    <tr>
+        <td colspan="4"><i>&nbsp</i></td>
+    </tr>
+    <tr>
+        <td colspan="4"><i>State transition rate (in cyanobacteria)</i></td>
+    </tr>
+        <tr>
+        <td>τ<sub>F<sub>m</sub>' growth</sub></td>
+        <td></td>
+        <td></td>
+        <td>Time contant of exponential F<sub>m</sub>' growth or decay of during State 2 -> 1 or State 1 -> 2 transition</td>
     </tr>
 </table>
-<br>
 
-<b style="font-size:70%"><i>References:</i></b>
-<p style="line-height: 0.9">
-    <i style="font-size:70%">Ruban, A. V. (2016):
-        Plant Physiology, 170(4):1903–1916. DOI:
+<p style="font-size:70%">
+    <i>
+        <b>References:</b>
+        <br>
+        Ruban, A. V. (2016): Plant Physiology, 170(4):1903–1916. DOI:
         <a href="https://academic.oup.com/plphys/article/170/4/1903/6114162" target="_blank">10.1104/pp.15.01935</a>
-    </i>
-    <br>
-    <i style="font-size:70%">Lichtenthaler, H. K. et al., (2005):
-        Photosynthetica, 43(3):379-393. DOI:
+        <br>
+        Baker, N. R. (2008): The Annual Review of Plant Biology: 89-113. DOI:
+        <a href="https://www.annualreviews.org/content/journals/10.1146/annurev.arplant.59.032607.092759" target="_blank">10.1146/annurev.arplant.59.032607.092759</a>
+        <br>
+        Lichtenthaler, H. K. et al., (2005): Photosynthetica, 43(3):379-393. DOI:
         <a href="https://ps.ueb.cas.cz/artkey/phs-200503-0009_how-to-correctly-determine-the-different-chlorophyll-fluorescence-parameters-and-the-chlorophyll-fluorescence-d.php" target="_blank">10.1007/s11099-005-0062-6</a>
-    </i>
-    <br>
-    <i style="font-size:70%">Oxborough, K, Baker, N. R. (1997):
-        Photosynthesis Research, 54:135–142. DOI:
+        <br>
+        Roháček, K. (2002): Photosynthetica, 40:13-29. DOI: 
+        <a href="https://link.springer.com/article/10.1023/A:1020125719386" target="_blank">10.1023/A:1020125719386</a>
+        <br>
+        Oxborough, K., Baker, N. R. (1997): Photosynthesis Research, 54:135–142. DOI:
         <a href="https://link.springer.com/article/10.1023/A:1005936823310" target="_blank">10.1023/A:1005936823310</a>
     </i>
 </p>
@@ -156,25 +257,23 @@
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data', _anchor='results') }}">
     <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by MULTI-COLOR-PAM / DUAL-PAM 
     or AquaPen / FluorPen fluorometers, respecitvely:</i>
-    <div class="container">
-        <div class="gallery_6">
-            <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__img gallery__item--1">
-                <i style="font-size:80%">MULTI-COLOR-PAM</i>
-                <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__img gallery__item--1">
-            </a>
-            <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__img gallery__item--2">
-                <i style="font-size:80%">DUAL-PAM</i>
-                <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__img gallery__item--2">
-            </a>
-            <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__img gallery__item--3">
-                <i style="font-size:80%">AquaPen</i>
-                <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__img gallery__item--1">
-            </a>
-            <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__img gallery__item--4">
-                <i style="font-size:80%">FluorPen</i>
-                <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__img gallery__item--2">
-            </a>
-        </div>
+    <div class="gallery_6_img">
+        <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">
+            <i style="font-size:80%">MULTI-COLOR-PAM</i>
+            <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__item--1">
+        </a>
+        <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">
+            <i style="font-size:80%">DUAL-PAM</i>
+            <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__item--2">
+        </a>
+        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">
+            <i style="font-size:80%">AquaPen</i>
+            <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__item--3">
+        </a>
+        <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">
+            <i style="font-size:80%">FluorPen</i>
+            <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__item--4">
+        </a>
     </div>
     </p>
     <div class="form-group">
@@ -256,16 +355,37 @@
         </tr>
     </table>
     <br>
-    <p><b>3. For the MULTI-COLOR PAM files, select time points to fit F<sub>m</sub>' kinetics</b>
-    <br><p style="line-height: 0.9"><i style="font-size:80%">
-        The F<sub>m</sub>' data can be interpolated by exponential function, in order to estimate rate of state transition. 
+    <p><b>3. To estimate state transition rates from MULTI-COLOR PAM measurements, select time points defining <i>State 1</i> and <i>State 2</i> intervals</b>
+    <br>
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        The F<sub>m</sub>' data can be interpolated by exponential function, in order to estimate rate of state transition:
+        <br><br>1. Exponential decay (typically State 1 -> 2 transition):
+
+        $$
+        \begin{multline}
+        \shoveleft F_{m}'\ (t) = F_{m}{'}_{t_0}\ *\ e^{-λ\ *\ τ}
+        \end{multline}
+        $$
+
+        <br>2. Exponential growth (typically State 2 -> 1 transition):
+                $$
+        \begin{multline}
+        \shoveleft F_{m}'\ (t) = F_{m}{'}_{t_0}\ *\  e^{λ\ *\ τ},
+        \end{multline}
+        $$
+
+        where <b>F<sub>m</sub>'<sub>t<sub>0</sub></sub></b> and <b>F<sub>m</sub>'</b> are maximum fluorescence yields at the onset and throughout a given actinic light period, 
+        <b>t</b> is time and <b>λ</b> is rate of exponential <a href="https://en.wikipedia.org/wiki/Exponential_decay" target="blank">decay</a> 
+        or <a href="https://en.wikipedia.org/wiki/Exponential_growth" target="blank">growth</a> (unit: t<sup>-1</sup>). 
+        <br><br>
         Protocols in AquaPen or PlantPen are pre-defined, and timing of dark and actinic light periods is fixed.
-        On the other hand, protocols in Multi-Color PAM or Dual PAM are user-defined, and timing of dark and actinic light periods is variable.
-        <br>Below, timing of individual periods within the slow kinetic protocol from Multi-Color PAM or Dual PAM can be specified, 
-        in order to evaluate state transitions rate also in protocols with variable timing.</i></p>
+        On the other hand, protocols in Multi-Color PAM or Dual PAM are user-defined with variable timing. 
+        Below, timing of individual periods (inducing State 1 or State 2) within the slow kinetic protocol from Multi-Color PAM or Dual PAM can be specified, 
+        in order to evaluate state transitions rate.</i></p>
+
     <i>3a. Initial time points</i>
     <div class="gallery_6">
-        <div class="gallery__img gallery__item--1">
+        <div class="gallery__item--1">
             <div class="form-inline">
                 <div class="input-group">
                     <input             
@@ -279,7 +399,7 @@
                 </div>
             </div>
         </div>
-        <div class="gallery__img gallery__item--2">
+        <div class="gallery__item--2">
             <div class='form-inline'>
                 <div class="input-group">
                     <input             
@@ -293,7 +413,7 @@
                 </div>
             </div>
         </div>
-        <div class="gallery__img gallery__item--3">
+        <div class="gallery__item--3">
             <div class='form-inline'>
                 <div class="input-group">
                     <input             
@@ -309,7 +429,7 @@
                 </div>
             </div>
         </div>
-        <div class="gallery__img gallery__item--4">
+        <div class="gallery__item--4">
             <div class='form-inline input-group'>
                 <input             
                     type="number"
@@ -321,7 +441,7 @@
                 &nbsp s
             </div>
         </div>
-        <div class="gallery__img gallery__item--5">
+        <div class="gallery__item--5">
             <div class='form-inline input-group'>
                 <input             
                     type="number"
@@ -333,7 +453,7 @@
                 &nbsp s
             </div>
         </div>
-        <div class="gallery__img gallery__item--6">
+        <div class="gallery__item--6">
             <div class='form-inline input-group'>
                 <input             
                     type="number"
@@ -348,7 +468,7 @@
     </div>
     <br><i>3b. End time points</i></p>
     <div class="gallery_6">
-        <div class="gallery__img gallery__item--1">
+        <div class="gallery__item--1">
             <div class="form-inline">
                 <div class="input-group">
                     <input             
@@ -362,7 +482,7 @@
                 </div>
             </div>
         </div>
-        <div class="gallery__img gallery__item--2">
+        <div class="gallery__item--2">
             <div class='form-inline'>
                 <div class="input-group">
                     <input             
@@ -376,7 +496,7 @@
                 </div>
             </div>
         </div>
-        <div class="gallery__img gallery__item--3">
+        <div class="gallery__item--3">
             <div class='form-inline'>
                 <div class="input-group">
                     <input             
@@ -392,7 +512,7 @@
                 </div>
             </div>
         </div>
-        <div class="gallery__img gallery__item--4">
+        <div class="gallery__item--4">
             <div class='form-inline input-group'>
                 <input             
                     type="number"
@@ -404,7 +524,7 @@
                 &nbsp s
             </div>
         </div>
-        <div class="gallery__img gallery__item--5">
+        <div class="gallery__item--5">
             <div class='form-inline input-group'>
                 <input             
                     type="number"
@@ -416,7 +536,7 @@
                 &nbsp s
             </div>
         </div>
-        <div class="gallery__img gallery__item--6">
+        <div class="gallery__item--6">
             <div class='form-inline input-group'>
                 <input             
                     type="number"
@@ -429,6 +549,17 @@
             </div>
         </div>
     </div>
+    <p style="font-size:70%">
+        <i><b>References:</b>
+            <br>
+            Calzadilla, P. I.  and  Kirilovsky, D. (2020): Photochemical & Photobiological Sciences,19: 585-603. DOI: 
+            <a href="https://pubs.rsc.org/en/content/articlehtml/2020/pp/c9pp00451c" target="_blank">10.1039/C9PP00451C</a>
+            <br>
+            Zavřel, T. et al. (2024): Plant and Cell Physiology, 65(8): 1285–1297. DOI: 
+            <a href="https://academic.oup.com/pcp/article/65/8/1285/7697223" target="_blank">10.1093/pcp/pcae062</a>
+        </i>
+    </p>
+    <br>
     <p><b>4. Select files</b></p>
     <div class="custom-file">
         <input 

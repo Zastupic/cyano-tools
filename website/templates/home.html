@@ -13,10 +13,13 @@
     <a href="https://www.czechglobe.cz/en/" target="_blank">(CzechGlobe)</a>. 
 <br>To begin, pease select a tool from the options below: 
 </p>  
-<br><br>
+<br>
 <div class="container">
     <div class="gallery_4">
-        <h5 class="gallery__img gallery__item--1"><a id="PAM fluorometry"></a> <u>PAM fluorometry</u> </h5>
+        <h5><u>PAM fluorometry</u></h5>
+        <h5></h5>
+        <h5></h5>
+        <h5><u>Fluorescence spectroscopy</u> </h5>
     </div>
 </div>
 <div class="container">
@@ -30,25 +33,71 @@
         <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">
             <i>Slow kinetics (Kautsky)</i>
         </a>
+        <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
+            <i>Excitation-emission spectra</i>
+        </a>
     </div>
 </div>
 <div class="container">
     <div class="gallery_4">
         <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}" >
-            <img src="static/images/light_curves.jpg" alt="Slow" class="gallery__img gallery__item--1">
+            <img src="static/images/light_curves.jpg" alt="Slow" class="gallery__img gallery__item--1-home">
         </a>
         <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}" >
-            <img src="static/images/OJIP_curves_example.jpg" alt="OJIP" class="gallery__img gallery__item--2">
+            <img src="static/images/OJIP_curves_example.jpg" alt="OJIP" class="gallery__img gallery__item--2-home">
         </a>
         <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}" >
-            <img src="static/images/Slow_kin_example_2.jpg" alt="Slow kinetics (Kautsky)" class="gallery__img gallery__item--3">
+            <img src="static/images/Slow_kin_example_2.jpg" alt="Slow kinetics (Kautsky)" class="gallery__img gallery__item--3-home">
+        </a>
+        <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}" >
+            <img src="static/images/Ex_em_spectra_example_2.jpg" alt="Slow" class="gallery__img gallery__item--3-home">
         </a>
     </div>
 </div>
-<br>
 <div class="container">
     <div class="gallery_4">
-        <h5 class="gallery__img gallery__item--1"> <a id="Confocal microscopy"></a> <u>Confocal microscopy</u> </h5>
+        <h5><u>Photobioreactors</u> </h5>
+        <h5></h5>
+        <h5><u>Fluorescence microscopy</u> </h5>
+        <h5></h5>
+
+    </div>
+</div>  
+<div class="container">
+    <div class="gallery_4">
+        <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank">
+            <i>PSI PBR FMT-150 data analysis</i>
+        </a>
+        <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank">
+            <i>PSI PBR FMT-150 control scripts</i>
+        </a>
+        <a href="{{ url_for('cell_count.count_cells') }}">
+            <i>Cell counting - round cells</i>
+        </a>
+        <a href="{{ url_for('cell_count_filament.count_filament_cells') }}">
+            <i>Cell counting - filaments</i>
+        </a>
+    </div>
+</div>
+<div class="container">
+    <div class="gallery_4">
+        <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" >
+            <img src="static/images/PBRtool2.jpg" alt="PBR data analysis" class="gallery__img gallery__item--1-home" style="aspect-ratio: 1">
+        </a>
+        <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" >
+            <img src="static/images/PBRscripts2.jpg" alt="PBR scripts" class="gallery__img gallery__item--1-home" style="aspect-ratio: 1">
+        </a>
+        <a href="{{ url_for('cell_count.count_cells') }}" >
+            <img src="static/images/cell_counting_counted.jpg" alt="Cell counting - round cells" class="gallery__img gallery__item--1-home">
+        </a>
+        <a href="{{ url_for('cell_count_filament.count_filament_cells') }}">
+            <img src="static/images/cells_filamentous_counted.jpg" alt="Cell counting - filament strains" class="gallery__img gallery__item--1-home">
+        </a>
+    </div>
+</div>
+<div class="container">
+    <div class="gallery_4">
+        <h5><u>Confocal microscopy</u> </h5>
     </div>
 </div>
 <div class="container">
@@ -70,63 +119,27 @@
 <div class="container">
     <div class="gallery_4">
         <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}" >
-            <img src="static/images/pigment_profiles_analzyed.jpg" alt="Pigment profiles" class="gallery__img gallery__item--1">
+            <img src="static/images/pigment_profiles_analzyed.jpg" alt="Pigment profiles" class="gallery__img gallery__item--1-home">
         </a> 
         <a href="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}" >
-            <img src="static/images/pigment_profiles_filaments_analyzed.jpg" alt="Pigment profiles - filaments" class="gallery__img gallery__item--2">
+            <img src="static/images/pigment_profiles_filaments_analyzed.jpg" alt="Pigment profiles - filaments" class="gallery__img gallery__item--2-home">
         </a>
         <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}" >
-            <img src="static/images/cell_size_analzyed.jpg" alt="Cell size - round cells" class="gallery__img gallery__item--3">
+            <img src="static/images/cell_size_analzyed.jpg" alt="Cell size - round cells" class="gallery__img gallery__item--3-home">
         </a>
         <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}" >
-            <img src="static/images/cell_size_filaments_analyzed_2.JPG" alt="Cell size - filaments" class="gallery__img gallery__item--4">
+            <img src="static/images/cell_size_filaments_analyzed_2.JPG" alt="Cell size - filaments" class="gallery__img gallery__item--4-home">
         </a>
     </div>
 </div>
-<br>
 <div class="container">
     <div class="gallery_4">
-        <h5><u>Fluorescence microscopy</u> </h5>
+        <h5><u>Complex platforms</u></h5>
         <h5></h5>
-        <h5><u>Fluorescence spectroscopy</u> </h5>
-        <h5><u>Calculators</u> </h5>
+        <h5><u>Other tools:</u></h5>
+        <h5></h5>
     </div>
 </div>  
-<div class="container">
-    <div class="gallery_4">
-        <a href="{{ url_for('cell_count.count_cells') }}">
-            <i>Cell counting - round cells</i>
-        </a>
-        <a href="{{ url_for('cell_count_filament.count_filament_cells') }}">
-            <i>Cell counting - filaments</i>
-        </a>
-        <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
-            <i>Excitation-emission spectra</i>
-        </a>
-        <a href="{{ url_for('calculators.run_calculators') }}">
-            <i>Calculators</i>
-        </a>
-    </div>
-</div>
-<div class="container">
-    <div class="gallery_4">
-        <a href="{{ url_for('cell_count.count_cells') }}" >
-            <img src="static/images/cell_counting_counted.jpg" alt="Cell counting - round cells" class="gallery__img gallery__item--1">
-        </a>
-        <a href="{{ url_for('cell_count_filament.count_filament_cells') }}">
-            <img src="static/images/cells_filamentous_counted.jpg" alt="Cell counting - filament strains" class="gallery__img gallery__item--2">
-        </a>
-        <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}" >
-            <img src="static/images/Ex_em_spectra_example_2.jpg" alt="Slow" class="gallery__img gallery__item--3">
-        </a>
-        <a href="{{ url_for('calculators.run_calculators') }}">
-            <img src="static/images/calculator.jpg" alt="Calculators" class="gallery__img gallery__item--4">
-        </a>
-    </div>
-</div>
-<br>
-<br><br>
-<h5><u>Other tools developed at DoAB:</u></h5>
 <div class="container">
     <div class="gallery_4">
         <a href="https://www.optimalga.com/" target="_blank">
@@ -135,46 +148,36 @@
         <a href="https://www.e-cyanobacterium.org/" target="_blank">
             <i>E-cyanobacterium</i>
         </a>
+        <a href="{{ url_for('calculators.run_calculators') }}">
+            <i>Calculators</i>
+        </a>
+        <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">
+            <i>DIC in seawater</i>
+        </a>
     </div>
 </div>
 <div class="container">
     <div class="gallery_4">
         <a href="https://www.optimalga.com/" target="_blank" >
-            <img src="static/images/optimalga_logo2.png" alt="Optimalga" class="gallery__img gallery__item--1">
+            <img src="static/images/optimalga_logo.jpg" alt="Optimalga" class="gallery__img gallery__item--1-home" style="aspect-ratio: 1">
         </a>
         <a href="https://www.e-cyanobacterium.org/" target="_blank" >
-            <img src="static/images/ecyanobacterium2.png" alt="E-cyanobacterium" class="gallery__img gallery__item--2">
+            <img src="static/images/ecyanobacterium_2.jpg" alt="E-cyanobacterium" class="gallery__img gallery__item--1-home" style="aspect-ratio: 1">
         </a>
-    </div>
-</div>
-<br>
-<div class="container">
-    <div class="gallery_4">
-        <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank">
-            <i>Online tool for analysis of PSI photobioreactor data</i>
-        </a>
-        <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank">
-            <i>Set of control scripts for PSI photobioreactor SW client</i>
-        </a>
-        <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">
-            <i>Online tool for calculating DIC properties in seawater</i>
-        </a>
-    </div>
-</div>
-<div class="container">
-    <div class="gallery_4">
-        <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" >
-            <img src="static/images/PBRtool2.png" alt="PBR data analysis" class="gallery__img gallery__item--1">
-        </a>
-        <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" >
-            <img src="static/images/PBRscripts1.jpg" alt="PBR scripts" class="gallery__img gallery__item--2">
+        <a href="{{ url_for('calculators.run_calculators') }}">
+            <img src="static/images/calculator.jpg" alt="Calculators" class="gallery__img gallery__item--1-home">
         </a>
         <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" >
-            <img src="static/images/seacarb.png" alt="Sea Carb" class="gallery__img gallery__item--3">
+            <img src="static/images/seacarb2.jpg" alt="Sea Carb" class="gallery__img gallery__item--1-home"  style="aspect-ratio: 1">
         </a>
     </div>
 </div>
-<br><br>
+<div class="container">
+    <div class="gallery_4">
+
+    </div>
+</div>
+<br><br><br><br>
 <div class="container">
     <div class="gallery_4">
         <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">
@@ -209,6 +212,6 @@
         </a>
     </div>
 </div>
-<br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br>
 {% endblock %}
 

@@ -864,7 +864,7 @@ def analyze_OJIP_curves():
                             img_curves = Image(memory_for_OJIP_plot)
                             img_parameters = Image(memory_for_OJIP_parameters)
                             img_curves.anchor = 'A1'
-                            img_parameters.anchor = 'A66'
+                            img_parameters.anchor = 'A47'
                             ws.add_image(img_curves)
                             ws.add_image(img_parameters)
                             wb.save(f'{upload_folder}/{file_name_without_extension}_results.xlsx')

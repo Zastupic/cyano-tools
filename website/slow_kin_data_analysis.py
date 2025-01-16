@@ -16,22 +16,26 @@ def analyze_slow_kin_data():
     xlsx_file_path = str('')
     if request.method == "POST": 
         # Define variables
-        Initial_and_end_time_points = []
+        Initial_time_points = []
+        End_time_points = []
         max_number_of_files = 50
         upload_folder = UPLOAD_FOLDER
         file_Aquapen = Summary_file = Summary_file_incl_str = check = File_MULTI_COLOR_PAM = pd.DataFrame()
         ALLOWED_EXTENSIONS_MULTI_COLOR_PAM = set(['.csv', '.CSV'])
         ALLOWED_EXTENSIONS_AQUAPEN = set(['.txt']) 
-        F0 = FM = QY_MAX = ACTINIC_INTENSITY = pd.DataFrame()
-        Time_init_1 = Time_init_2 = Time_init_3 = Time_init_4 = Time_init_5 = Time_init_6 = Time_end_1 = Time_end_2 = Time_end_3 = Time_end_4 = Time_end_5 = Time_end_6 = pd.DataFrame()
-        Timing_Fm = Timing_Ft = FM_points = Ft_points = Fv_points = FM_PRIME_LIGHT_ALL = FM_PRIME_DARK_ALL = FM_PRIME_ALL = FM_MAX = FT_ALL = FV_ALL = PAR_ALL = pd.DataFrame() 
-        Timing_NPQ = NPQ_points = NPQ_LIGHT_ALL = NPQ_DARK_ALL = NPQ_ALL_FM = NPQ_ALL_FM_MAX = QN_ALL_FM = QN_ALL_FM_MAX = pd.DataFrame()
-        QP_points = QP_LIGHT_ALL = QP_DARK_ALL = QP_ALL = pd.DataFrame()
-        QY_points = QY_LIGHT_ALL = QY_DARK_ALL = QY_ALL = pd.DataFrame()
-        ETR_points = ETR_LIGHT_ALL = ETR_DARK_ALL = ETR_ALL = ETR_FM = pd.DataFrame()
+        F0 = FM = QY_MAX = ACTINIC_INTENSITY = FP = FS = RFD = pd.DataFrame()
+        Time_init_1 = Time_init_2 = Time_init_3 = Time_init_4 = Time_init_5 = Time_init_6 = Time_end_1 = Time_end_2 = Time_end_3 = Time_end_4 = Time_end_5 = Time_end_6 = int
+        Index_Fp_low = Index_Fp_high = Index_Fs_low = Index_Fs_high = int
+        Timing_Fm = Timing_Ft = FM_points = Ft_points = Fv_points = Timing_NPQ = NPQ_points = QP_points = QY_points = ETR_points = pd.DataFrame() 
+        FM_PRIME_LIGHT_ALL = FM_PRIME_DARK_ALL = FM_PRIME_ALL = FM_MAX = FT_ALL = FV_ALL = PAR_ALL = pd.DataFrame() 
+        FP_ALL = FS_ALL = FD_ALL = FM_PRIME_D1_ALL = FM_PRIME_D5_ALL = FM_PRIME_D20_ALL = RFD_ALL = pd.DataFrame() 
+        NPQ_LIGHT_ALL = NPQ_DARK_ALL = NPQ_ALL_FM = NPQ_ALL_FM_MAX = QN_ALL_FM = QN_ALL_FM_MAX = QE_ALL = QT_ALL = QI_ALL = pd.DataFrame()
+        QP_LIGHT_ALL = QP_DARK_ALL = QP_ALL = pd.DataFrame()
+        QY_LIGHT_ALL = QY_DARK_ALL = QY_ALL = pd.DataFrame()
+        ETR_LIGHT_ALL = ETR_DARK_ALL = ETR_ALL = ETR_FM = pd.DataFrame()
         files_extensions = set()
         file_extension = x_axis_unit = y_axis_unit = file_name_without_extension = str('') 
-        dictionary_ex_em = {
+        dictionary_Initial_and_end_time_points = {
             'Time_init_1': Time_init_1,
             'Time_init_2': Time_init_2,
             'Time_init_3': Time_init_3,
@@ -52,29 +56,29 @@ def analyze_slow_kin_data():
         ################################################
         # Collect selected EXCITATIONS and EMISSIONS
         if str(request.form.get('time_init_1')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_init_1'))))
+            Initial_time_points.append(int(str(request.form.get('time_init_1'))))
         if str(request.form.get('time_init_2')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_init_2'))))
+            Initial_time_points.append(int(str(request.form.get('time_init_2'))))
         if str(request.form.get('time_init_3')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_init_3'))))
+            Initial_time_points.append(int(str(request.form.get('time_init_3'))))
         if str(request.form.get('time_init_4')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_init_4'))))
+            Initial_time_points.append(int(str(request.form.get('time_init_4'))))
         if str(request.form.get('time_init_5')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_init_5'))))
+            Initial_time_points.append(int(str(request.form.get('time_init_5'))))
         if str(request.form.get('time_init_6')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_init_6'))))
+            Initial_time_points.append(int(str(request.form.get('time_init_6'))))
         if str(request.form.get('time_end_1')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_end_1'))))
+            End_time_points.append(int(str(request.form.get('time_end_1'))))
         if str(request.form.get('time_end_2')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_end_2'))))
+            End_time_points.append(int(str(request.form.get('time_end_2'))))
         if str(request.form.get('time_end_3')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_end_3'))))
+            End_time_points.append(int(str(request.form.get('time_end_3'))))
         if str(request.form.get('time_end_4')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_end_4'))))
+            End_time_points.append(int(str(request.form.get('time_end_4'))))
         if str(request.form.get('time_end_5')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_end_5'))))
+            End_time_points.append(int(str(request.form.get('time_end_5'))))
         if str(request.form.get('time_end_6')) != "":
-            Initial_and_end_time_points.append(int(str(request.form.get('time_end_6'))))
+            End_time_points.append(int(str(request.form.get('time_end_6'))))
         ##################
         ### Load files ###
         ##################
@@ -118,13 +122,14 @@ def analyze_slow_kin_data():
                             ##### Read PARAMETER FILES + process into a single dataframe #####
                             elif request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_parameters': 
                                 if len(File_MULTI_COLOR_PAM.columns) > 3 and 'ETR' in File_MULTI_COLOR_PAM: # Check if PARAMETER data files was selected
-                                    if file_number == 0: # Initiate dataframes with parameters
+                                    if file_number == 0: 
+                                        # Initiate dataframes with parameters
                                         PAR_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
                                         FT_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
                                         FM_PRIME_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
                                         QY_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
                                         ETR_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
-                                        # merge columns of particular names with the final dataframe
+                                                                                # merge columns of particular names with the final dataframe
                                         PAR_ALL = pd.concat([PAR_ALL,File_MULTI_COLOR_PAM['PAR']], axis = 1)
                                         FT_ALL = pd.concat([FT_ALL,File_MULTI_COLOR_PAM['F']], axis = 1) 
                                         FM_PRIME_ALL = pd.concat([FM_PRIME_ALL,File_MULTI_COLOR_PAM['Fm\'']], axis = 1)  
@@ -224,14 +229,25 @@ def analyze_slow_kin_data():
                                 NPQ_ALL_FM_MAX = (FM_MAX.iloc[1:] - FM_PRIME_ALL.iloc[:, 1:]) / FM_MAX.iloc[1:]
                                 NPQ_ALL_FM = pd.concat([FM_PRIME_ALL.iloc[:, 0], NPQ_ALL_FM], axis = 1) # Add the time column
                                 NPQ_ALL_FM_MAX = pd.concat([FM_PRIME_ALL.iloc[:, 0], NPQ_ALL_FM_MAX], axis = 1) # Add the time column
+                                #################################################
+                                ### PROCESS TIME POINTS FOR STATE TRANSITIONS ###
+                                #################################################
+                                if len(Initial_time_points) > 0 and len(End_time_points) > 0: # check if the lists are not empty
+                                    # Sort both lists
+                                    Initial_time_points.sort()
+                                    End_time_points.sort()
+                                    # Check if each value in End_time_points is higher than in Initial_time_points
+                                    end_points_higher_than_initial_points = all(e > i for i, e in zip(Initial_time_points, End_time_points))
+                                    if end_points_higher_than_initial_points:
+                                        print('Initial_time_points: ' + str(Initial_time_points))
+                                        print('End_time_points: ' + str(End_time_points))
+                                    else:
+                                        flash('Please select correctly the initial and end points for the state transition calculation: the end values need to be higher than the initial values.', category='error')
                             else:
                                 flash(f'There seems to be a problem with selected type of analysis (MULTI-COLOR-PAM / Dual PAM, files with calculated parameters), or with the uploaded files. Please revise the uploaded files and analysis type.', category='error')
                     #############################
                     ### PROCESS AQUAPEN FILES ###
                     #############################
-                    ######################################################################
-                    ### Remove parameters calculated by Aquapen and keep only F values ###
-                    ###################################################################### 
                     elif fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and file_extension in ALLOWED_EXTENSIONS_AQUAPEN:
                         if Summary_file['time_us'].str.contains('NPQ').any(): # Check if parameters were exported
                             ###################################################
@@ -240,9 +256,12 @@ def analyze_slow_kin_data():
                             # values measured for all settings
                             if not Summary_file["time_us"].isnull().any():
                                 F0 = ((Summary_file[Summary_file["time_us"].str.contains("Fo")]).iloc[: , 1:]) # find F0
+                                FP = ((Summary_file[Summary_file["time_us"].str.contains("Fp")]).iloc[: , 1:]) # find Fp
+                                RFD = ((Summary_file[Summary_file["time_us"].str.contains("Rfd")]).iloc[: , 1:]) # find Rfd
                                 FM = ((Summary_file[Summary_file["time_us"].str.contains("Fm")]).iloc[: , 1:]) # select all values, including Fm_L1-L4/Fm_L1-L9
                                 FM = pd.DataFrame(FM.iloc[0,:]).T # select only Fm
                                 QY_MAX = ((Summary_file[Summary_file["time_us"].str.contains("QY_max")]).iloc[: , 1:]) # find QY_max
+
                                 ACTINIC_INTENSITY = ((Summary_file[Summary_file["time_us"].str.contains("ACTINIC-Intensity")]).iloc[: , 1:]).reset_index(drop=True) # find intensity of actinic light
                                 # get indexes common for all NPQ files
                                 index_Fm_L1 = Summary_file.index[Summary_file['time_us'] == 'Fm_L1'].tolist()
@@ -270,11 +289,15 @@ def analyze_slow_kin_data():
                                         QP_points = pd.DataFrame({'QP points':['QP_L1','QP_L2','QP_L3','QP_L4','QP_Lss','QP_D1','QP_D2','QP_D3']})
                                         QY_points = pd.DataFrame({'QY points':['QY_max (Fv/Fm)','QY_L1','QY_L2','QY_L3','QY_L4','QY_Lss','QY_D1','QY_D2','QY_D3']})
                                         ETR_points = pd.DataFrame({'ETR points':['ETR_Fv/Fm','ETR_L1','ETR_L2','ETR_L3','ETR_L4','ETR_Lss','ETR_D1','ETR_D2','ETR_D3']})
-                                        # get indexes specific for NPQ3 files
+                                        # get indexes specific for NPQ1 files
                                         index_Fm_D3 = Summary_file.index[Summary_file['time_us'] == 'Fm_D3'].tolist()
                                         index_NPQ_D3 = Summary_file.index[Summary_file['time_us'] == 'NPQ_D3'].tolist()
                                         index_Qp_D3 = Summary_file.index[Summary_file['time_us'] == 'Qp_D3'].tolist()
                                         index_QY_D3 = Summary_file.index[Summary_file['time_us'] == 'QY_D3'].tolist()
+#                                        Index_Fp_low = 7E6
+#                                        Index_Fp_high = 17E6
+#                                        Index_Fs_low = 57E6
+#                                        Index_Fs_high = 66E6
                                         # get the whole series
                                         FM_PRIME_LIGHT_ALL = Summary_file.iloc[index_Fm_L1[0]:(index_Fm_Lss[0]+1)]
                                         FM_PRIME_DARK_ALL = Summary_file.iloc[index_Fm_D1[0]:(index_Fm_D3[0]+1)]
@@ -305,6 +328,10 @@ def analyze_slow_kin_data():
                                         index_NPQ_D7 = Summary_file.index[Summary_file['time_us'] == 'NPQ_D7'].tolist()
                                         index_Qp_D7 = Summary_file.index[Summary_file['time_us'] == 'Qp_D7'].tolist()
                                         index_QY_D7 = Summary_file.index[Summary_file['time_us'] == 'QY_D7'].tolist()
+#                                        Index_Fp_low = 17E6
+#                                        Index_Fp_high = 30E6
+#                                        Index_Fs_low =202E6
+#                                        Index_Fs_high = 219E6
                                         # get the whole series
                                         FM_PRIME_LIGHT_ALL = Summary_file.iloc[index_Fm_L1[0]:(index_Fm_Lss[0]+1)]
                                         FM_PRIME_DARK_ALL = Summary_file.iloc[index_Fm_D1[0]:(index_Fm_D7[0]+1)]
@@ -329,11 +356,15 @@ def analyze_slow_kin_data():
                                         QP_points = pd.DataFrame({'QP points':['QP_L1','QP_L2','QP_L3','QP_L4','QP_L5','QP_L6','QP_L7','QP_L8','QP_L9','QP_Lss','QP_D1','QP_D2']})
                                         QY_points = pd.DataFrame({'QY points':['QY_max (Fv/Fm)','QY_L1','QY_L2','QY_L3','QY_L4','QY_L5','QY_L6','QY_L7','QY_L8','QY_L9','QY_Lss','QY_D1','QY_D2']})
                                         ETR_points = pd.DataFrame({'ETR points':['ETR_Fv/Fm','ETR_L1','ETR_L2','ETR_L3','ETR_L4','ETR_L5','ETR_L6','ETR_L7','ETR_L8','ETR_L9','ETR_Lss','ETR_D1','ETR_D2']})
-                                        # get indexes specific for NPQ1 files
+                                        # get indexes specific for NPQ3 files
                                         index_Fm_D2 = Summary_file.index[Summary_file['time_us'] == 'Fm_D2'].tolist()
                                         index_NPQ_D2 = Summary_file.index[Summary_file['time_us'] == 'NPQ_D2'].tolist()
                                         index_Qp_D2 = Summary_file.index[Summary_file['time_us'] == 'Qp_D2'].tolist()
                                         index_QY_D2 = Summary_file.index[Summary_file['time_us'] == 'QY_D2'].tolist()
+#                                        Index_Fp_low = 17E6
+#                                        Index_Fp_high = 30E6
+#                                        Index_Fs_low =226E6
+#                                        Index_Fs_high = 240E6
                                         # get the whole series
                                         FM_PRIME_LIGHT_ALL = Summary_file.iloc[index_Fm_L1[0]:(index_Fm_Lss[0]+1)]
                                         FM_PRIME_DARK_ALL = Summary_file.iloc[index_Fm_D1[0]:(index_Fm_D2[0]+1)]
@@ -399,6 +430,9 @@ def analyze_slow_kin_data():
                             ETR_ALL = pd.concat([ETR_FM, ETR_ALL]).reset_index(drop=True)
                             ETR_ALL = pd.concat([Timing_Fm, ETR_ALL], axis=1).astype(float)
                             ETR_ALL = pd.concat([ETR_points, ETR_ALL], axis=1)
+                            # Merge Rfd data
+                            RFD_ALL =  RFD.T # transpose
+                            RFD_ALL.rename(columns={RFD_ALL.columns[0]: "Rfd"}, inplace = True) # rename the column with values
                             # Get Ft
                             FT_ALL = pd.merge_asof(Timing_Ft, Summary_file, left_on='time_us', right_on='time_us', direction='nearest')
                             FT_ALL = pd.concat([Ft_points, FT_ALL], axis=1)
@@ -416,31 +450,31 @@ def analyze_slow_kin_data():
                             NPQ_ALL_FM_MAX = pd.concat([NPQ_points, NPQ_ALL_FM_MAX], axis=1)
 
 
+
+                            print('RFD_ALL: \n' + str(RFD_ALL))
+
 #######################
 #### --- TO DO --- ####
 #######################
 
-#### CALCULATE ADDITIONAL PARAMETERS: 
+#### CALCULATE ADDITIONAL PARAMETERS (http://dx.doi.org/10.14715/cmb/2019.65.2.7):
 # NPQ-Fm(max)
 # qCN
 # Rfd
-# φfD
 # qE (Zavrel 2021)
 # qL
 # φNO
 # φP
 # φPt
 # φP0
-# PQ                       
+# PQ         
+          
 
 #### - fit FM by exp. function  
-
 #### - fit FV by exp. function  
 
 
-                    print('FM_PRIME_ALL: \n' + str(FM_PRIME_ALL))
-                    print('FM_MAX: \n' + str(FM_MAX))
-                    print('NPQ_ALL_FM_MAX: \n' + str(NPQ_ALL_FM_MAX))
+                    
 
 
                     #####################################
