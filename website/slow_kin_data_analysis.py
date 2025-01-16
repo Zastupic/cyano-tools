@@ -16,16 +16,16 @@ def analyze_slow_kin_data():
     xlsx_file_path = str('')
     if request.method == "POST": 
         # Define variables
-        Initial_time_points = []
-        End_time_points = []
+#        Initial_time_points = []
+#        End_time_points = []
         max_number_of_files = 50
         upload_folder = UPLOAD_FOLDER
         file_Aquapen = Summary_file = Summary_file_incl_str = check = File_MULTI_COLOR_PAM = pd.DataFrame()
         ALLOWED_EXTENSIONS_MULTI_COLOR_PAM = set(['.csv', '.CSV'])
         ALLOWED_EXTENSIONS_AQUAPEN = set(['.txt']) 
         F0 = FM = QY_MAX = ACTINIC_INTENSITY = FP = FS = RFD = pd.DataFrame()
-        Time_init_1 = Time_init_2 = Time_init_3 = Time_init_4 = Time_init_5 = Time_init_6 = Time_end_1 = Time_end_2 = Time_end_3 = Time_end_4 = Time_end_5 = Time_end_6 = int
-        Index_Fp_low = Index_Fp_high = Index_Fs_low = Index_Fs_high = int
+#        Time_init_1 = Time_init_2 = Time_init_3 = Time_init_4 = Time_init_5 = Time_init_6 = Time_end_1 = Time_end_2 = Time_end_3 = Time_end_4 = Time_end_5 = Time_end_6 = int
+#        Index_Fp_low = Index_Fp_high = Index_Fs_low = Index_Fs_high = int
         Timing_Fm = Timing_Ft = FM_points = Ft_points = Fv_points = Timing_NPQ = NPQ_points = QP_points = QY_points = ETR_points = pd.DataFrame() 
         FM_PRIME_LIGHT_ALL = FM_PRIME_DARK_ALL = FM_PRIME_ALL = FM_MAX = FT_ALL = FV_ALL = PAR_ALL = pd.DataFrame() 
         FP_ALL = FS_ALL = FD_ALL = FM_PRIME_D1_ALL = FM_PRIME_D5_ALL = FM_PRIME_D20_ALL = RFD_ALL = pd.DataFrame() 
@@ -35,50 +35,50 @@ def analyze_slow_kin_data():
         ETR_LIGHT_ALL = ETR_DARK_ALL = ETR_ALL = ETR_FM = pd.DataFrame()
         files_extensions = set()
         file_extension = x_axis_unit = y_axis_unit = file_name_without_extension = str('') 
-        dictionary_Initial_and_end_time_points = {
-            'Time_init_1': Time_init_1,
-            'Time_init_2': Time_init_2,
-            'Time_init_3': Time_init_3,
-            'Time_init_4': Time_init_4,
-            'Time_init_5': Time_init_5,
-            'Time_init_6': Time_init_6,
-            'Time_end_1': Time_end_1,
-            'Time_end_2': Time_end_2,
-            'Time_end_3': Time_end_3,
-            'Time_end_4': Time_end_4,
-            'Time_end_5': Time_end_5,
-            'Time_end_6': Time_end_6}  
+#        dictionary_Initial_and_end_time_points = {
+#            'Time_init_1': Time_init_1,
+#            'Time_init_2': Time_init_2,
+#            'Time_init_3': Time_init_3,
+#            'Time_init_4': Time_init_4,
+#            'Time_init_5': Time_init_5,
+#            'Time_init_6': Time_init_6,
+#            'Time_end_1': Time_end_1,
+#            'Time_end_2': Time_end_2,
+#            'Time_end_3': Time_end_3,
+#            'Time_end_4': Time_end_4,
+#            'Time_end_5': Time_end_5,
+#            'Time_end_6': Time_end_6}  
         # create upload directory, if there is not any
         if os.path.isdir(upload_folder) == False:
             os.mkdir(upload_folder)
-        ################################################
-        ### Read Excitations and Emissions from HTML ###
-        ################################################
-        # Collect selected EXCITATIONS and EMISSIONS
-        if str(request.form.get('time_init_1')) != "":
-            Initial_time_points.append(int(str(request.form.get('time_init_1'))))
-        if str(request.form.get('time_init_2')) != "":
-            Initial_time_points.append(int(str(request.form.get('time_init_2'))))
-        if str(request.form.get('time_init_3')) != "":
-            Initial_time_points.append(int(str(request.form.get('time_init_3'))))
-        if str(request.form.get('time_init_4')) != "":
-            Initial_time_points.append(int(str(request.form.get('time_init_4'))))
-        if str(request.form.get('time_init_5')) != "":
-            Initial_time_points.append(int(str(request.form.get('time_init_5'))))
-        if str(request.form.get('time_init_6')) != "":
-            Initial_time_points.append(int(str(request.form.get('time_init_6'))))
-        if str(request.form.get('time_end_1')) != "":
-            End_time_points.append(int(str(request.form.get('time_end_1'))))
-        if str(request.form.get('time_end_2')) != "":
-            End_time_points.append(int(str(request.form.get('time_end_2'))))
-        if str(request.form.get('time_end_3')) != "":
-            End_time_points.append(int(str(request.form.get('time_end_3'))))
-        if str(request.form.get('time_end_4')) != "":
-            End_time_points.append(int(str(request.form.get('time_end_4'))))
-        if str(request.form.get('time_end_5')) != "":
-            End_time_points.append(int(str(request.form.get('time_end_5'))))
-        if str(request.form.get('time_end_6')) != "":
-            End_time_points.append(int(str(request.form.get('time_end_6'))))
+#        ################################################
+#        ### Read Excitations and Emissions from HTML ###
+#        ################################################
+#        # Collect initial and end times
+#        if str(request.form.get('time_init_1')) != "":
+#            Initial_time_points.append(int(str(request.form.get('time_init_1'))))
+#        if str(request.form.get('time_init_2')) != "":
+#            Initial_time_points.append(int(str(request.form.get('time_init_2'))))
+#        if str(request.form.get('time_init_3')) != "":
+#            Initial_time_points.append(int(str(request.form.get('time_init_3'))))
+#        if str(request.form.get('time_init_4')) != "":
+#            Initial_time_points.append(int(str(request.form.get('time_init_4'))))
+#        if str(request.form.get('time_init_5')) != "":
+#            Initial_time_points.append(int(str(request.form.get('time_init_5'))))
+#        if str(request.form.get('time_init_6')) != "":
+#            Initial_time_points.append(int(str(request.form.get('time_init_6'))))
+#        if str(request.form.get('time_end_1')) != "":
+#            End_time_points.append(int(str(request.form.get('time_end_1'))))
+#        if str(request.form.get('time_end_2')) != "":
+#            End_time_points.append(int(str(request.form.get('time_end_2'))))
+#        if str(request.form.get('time_end_3')) != "":
+#            End_time_points.append(int(str(request.form.get('time_end_3'))))
+#        if str(request.form.get('time_end_4')) != "":
+#            End_time_points.append(int(str(request.form.get('time_end_4'))))
+#        if str(request.form.get('time_end_5')) != "":
+#            End_time_points.append(int(str(request.form.get('time_end_5'))))
+#        if str(request.form.get('time_end_6')) != "":
+#            End_time_points.append(int(str(request.form.get('time_end_6'))))
         ##################
         ### Load files ###
         ##################
@@ -229,22 +229,22 @@ def analyze_slow_kin_data():
                                 NPQ_ALL_FM_MAX = (FM_MAX.iloc[1:] - FM_PRIME_ALL.iloc[:, 1:]) / FM_MAX.iloc[1:]
                                 NPQ_ALL_FM = pd.concat([FM_PRIME_ALL.iloc[:, 0], NPQ_ALL_FM], axis = 1) # Add the time column
                                 NPQ_ALL_FM_MAX = pd.concat([FM_PRIME_ALL.iloc[:, 0], NPQ_ALL_FM_MAX], axis = 1) # Add the time column
-                                #################################################
-                                ### PROCESS TIME POINTS FOR STATE TRANSITIONS ###
-                                #################################################
-                                if len(Initial_time_points) > 0 and len(End_time_points) > 0: # check if the lists are not empty
-                                    # Sort both lists
-                                    Initial_time_points.sort()
-                                    End_time_points.sort()
-                                    # Check if each value in End_time_points is higher than in Initial_time_points
-                                    end_points_higher_than_initial_points = all(e > i for i, e in zip(Initial_time_points, End_time_points))
-                                    if end_points_higher_than_initial_points:
-                                        print('Initial_time_points: ' + str(Initial_time_points))
-                                        print('End_time_points: ' + str(End_time_points))
-                                    else:
-                                        flash('Please select correctly the initial and end points for the state transition calculation: the end values need to be higher than the initial values.', category='error')
-                            else:
-                                flash(f'There seems to be a problem with selected type of analysis (MULTI-COLOR-PAM / Dual PAM, files with calculated parameters), or with the uploaded files. Please revise the uploaded files and analysis type.', category='error')
+#                                #################################################
+#                                ### PROCESS TIME POINTS FOR STATE TRANSITIONS ###
+#                                #################################################
+#                                if len(Initial_time_points) > 0 and len(End_time_points) > 0: # check if the lists are not empty
+#                                    # Sort both lists
+#                                    Initial_time_points.sort()
+#                                    End_time_points.sort()
+#                                    # Check if each value in End_time_points is higher than in Initial_time_points
+#                                    end_points_higher_than_initial_points = all(e > i for i, e in zip(Initial_time_points, End_time_points))
+#                                    if end_points_higher_than_initial_points:
+#                                        print('Initial_time_points: ' + str(Initial_time_points))
+#                                        print('End_time_points: ' + str(End_time_points))
+#                                    else:
+#                                        flash('Please select correctly the initial and end points for the state transition calculation: the end values need to be higher than the initial values.', category='error')
+#                            else:
+#                                flash(f'There seems to be a problem with selected type of analysis (MULTI-COLOR-PAM / Dual PAM, files with calculated parameters), or with the uploaded files. Please revise the uploaded files and analysis type.', category='error')
                     #############################
                     ### PROCESS AQUAPEN FILES ###
                     #############################
@@ -449,10 +449,6 @@ def analyze_slow_kin_data():
                             NPQ_ALL_FM_MAX = pd.concat([Timing_Fm.astype(int), NPQ_ALL_FM_MAX], axis=1)
                             NPQ_ALL_FM_MAX = pd.concat([NPQ_points, NPQ_ALL_FM_MAX], axis=1)
 
-
-
-                            print('RFD_ALL: \n' + str(RFD_ALL))
-
 #######################
 #### --- TO DO --- ####
 #######################
@@ -467,14 +463,7 @@ def analyze_slow_kin_data():
 # φP
 # φPt
 # φP0
-# PQ         
-          
-
-#### - fit FM by exp. function  
-#### - fit FV by exp. function  
-
-
-                    
+# PQ                         
 
 
                     #####################################

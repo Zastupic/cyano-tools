@@ -10,7 +10,9 @@
 <div class="container">
     <div class="images-side-by-side">
         <img src="static/images/NPQ_protocol_examples.jpg" alt="NPQ protocol example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
+<!--
         <img data-enlargeable src="static/images/NPQ_protocol_example_state_transitions.jpg" alt="NPQ protocol example 2" class="gallery__img" width="50%" style="cursor: zoom-in; width: 25%">
+-->
     </div>
 </div>
 <p style="font-size:70%">
@@ -19,10 +21,12 @@
         <br>
         Roháček, K. et al., (2008):  Plant cell compartments: selected topics: 41-104. ISBN: 
         <a href="https://faculty.ksu.edu.sa/sites/default/files/CHLOROPHYLL%20FLOURESCENCE.PDF" target="_blank">978-81-308-0104-9</a>
-         <br>
+<!--
+        <br>
          Zavřel, T. et al. (2024): Plant and Cell Physiology, 65(8): 1285–1297. DOI: 
          <a href="https://academic.oup.com/pcp/article/65/8/1285/7697223" target="_blank">10.1093/pcp/pcae062</a>
-    </i>
+-->
+        </i>
 </p>
 <p>Welcome to the application analyzing slow fluorescence transients! These fluorescence transients, so-called Kautsky kinetics, or NPQ protocols, provide a sensitive method 
     for evaluating the efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. 
@@ -212,6 +216,7 @@
     <tr>
         <td colspan="4"><i>&nbsp</i></td>
     </tr>
+<!--
     <tr>
         <td colspan="4"><i>State transition rate (in cyanobacteria)</i></td>
     </tr>
@@ -221,6 +226,7 @@
         <td></td>
         <td>Time contant of exponential F<sub>m</sub>' growth or decay of during State 2 -> 1 or State 1 -> 2 transition</td>
     </tr>
+-->
 </table>
 
 <p style="font-size:70%">
@@ -355,6 +361,7 @@
         </tr>
     </table>
     <br>
+<!--
     <p><b>3. To estimate state transition rates from MULTI-COLOR PAM measurements, select time points defining <i>State 1</i> and <i>State 2</i> intervals</b>
     <br>
     <p style="line-height: 0.9"><i style="font-size:80%">
@@ -556,7 +563,8 @@
         </i>
     </p>
     <br>
-    <p><b>4. Select files</b></p>
+-->
+    <p><b>3. Select files</b></p>
     <div class="custom-file">
         <input 
             type="file" 
@@ -570,7 +578,7 @@
         <label class="custom-file-label" for="customFile">Select files</label>
     </div>
     <br><br>
-    <p><b>5. Analyze slow kinetic files</b></p>
+    <p><b>4. Analyze slow kinetic files</b></p>
     <br>
     <button id="show-image-button" type="submit" class="btn btn-primary" >Upload and analyze slow kinetic files </button>   
     <a href="{{url_for('static', filename='files/NPQ_example_files_AquaPen.zip')}}" download="NPQ_example_files_AquaPen">
