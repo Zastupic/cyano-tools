@@ -261,8 +261,7 @@
 </ol>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data', _anchor='results') }}">
-    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by MULTI-COLOR-PAM / DUAL-PAM 
-    or AquaPen / FluorPen fluorometers, respecitvely:</i>
+    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by the following fluorometers:</i>
     <div class="gallery_6_img">
         <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">
             <i style="font-size:80%">MULTI-COLOR-PAM</i>
@@ -284,8 +283,8 @@
     </p>
     <div class="form-group">
         <label for="fluorometer" ><p><b>1. Select fluorometer</b></p></label>
-            <select name="fluorometer" class="form-control"  aria-label="fluorometer" style="width:100%">
-                <option selected="MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
+            <select name="fluorometer" id="fluorometer" class="form-control"  aria-label="fluorometer" style="width:100%">
+                <option value="MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
                 <option value="AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
             </select>
     </div>

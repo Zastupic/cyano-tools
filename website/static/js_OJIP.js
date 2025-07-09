@@ -68,3 +68,23 @@ const myImage = document.getElementById("loadingimage");
 showImageButton.addEventListener("click", () => { 
    myImage.style.display = "block"; 
 });
+
+//--------------------------------------//
+//--- REMEMBER FLUOROMETER SELECTION ---//
+//--------------------------------------//
+$(document).ready(function () {
+  const select = document.getElementById("fluorometer");
+  const savedValue = localStorage.getItem("selectedFluorometer");
+  const defaultValue = "MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)";
+
+  if (savedValue && Array.from(select.options).some(opt => opt.value === savedValue)) {
+    select.value = savedValue;
+  } else {
+    select.value = defaultValue;
+  }
+
+  select.addEventListener("change", () => {
+    localStorage.setItem("selectedFluorometer", select.value);
+  });
+});
+

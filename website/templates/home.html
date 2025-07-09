@@ -11,7 +11,12 @@
 <p>This site offers tools for analyzing data acquaried by methods routinely used in laboratories working with cyanobacteria, algae, plants or bacteria. 
     The site is developed at <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">Department of Adaptive Biotechnologies (DoAB)</a> of Global Change Research Institute of the Czech Academy of Sciences 
     <a href="https://www.czechglobe.cz/en/" target="_blank">(CzechGlobe)</a>. 
-<br>To begin, pease select a tool from the options below: 
+<br>To begin, pease select a tool from the options below. 
+<p style="font-size: 1rem; margin-top: 1.5em;">
+  Updates of the CyanoTools webiste are being added regularly. For the latest updates,
+  <a href="{{ url_for('development_log.run_development_log') }}" target="_blank"> check the development log</a>.
+  </a>
+</p>
 </p>  
 <br>
 <div class="container">
@@ -21,7 +26,6 @@
         <h5></h5>
         <h5><u>Fluorescence spectroscopy</u> </h5>
     </div>
-</div>
 <div class="container">
     <div class="gallery_4">
         <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">
@@ -37,10 +41,10 @@
             <i>Excitation-emission spectra</i>
         </a>
     </div>
-</div>
+</div> 
 <div class="container">
     <div class="gallery_4">
-        <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}" >
+                <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}" >
             <img src="static/images/light_curves.jpg" alt="Slow" class="gallery__img gallery__item--1-home">
         </a>
         <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}" >
@@ -78,7 +82,7 @@
             <i>Cell counting - filaments</i>
         </a>
     </div>
-</div>
+</div> 
 <div class="container">
     <div class="gallery_4">
         <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" >
@@ -125,7 +129,7 @@
             <img src="static/images/pigment_profiles_filaments_analyzed.jpg" alt="Pigment profiles - filaments" class="gallery__img gallery__item--2-home">
         </a>
         <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}" >
-            <img src="static/images/cell_size_analzyed.jpg" alt="Cell size - round cells" class="gallery__img gallery__item--3-home">
+            <img src="static/images/cell_size_analzyed_2.jpg" alt="Cell size - round cells" class="gallery__img gallery__item--3-home">
         </a>
         <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}" >
             <img src="static/images/cell_size_filaments_analyzed_2.JPG" alt="Cell size - filaments" class="gallery__img gallery__item--4-home">
@@ -136,7 +140,7 @@
     <div class="gallery_4">
         <h5><u>Complex platforms</u></h5>
         <h5></h5>
-        <h5><u>Other tools:</u></h5>
+        <h5><u>Other tools</u></h5>
         <h5></h5>
     </div>
 </div>  
@@ -171,7 +175,39 @@
             <img src="static/images/seacarb2.jpg" alt="Sea Carb" class="gallery__img gallery__item--1-home"  style="aspect-ratio: 1">
         </a>
     </div>
-</div>
+</div> 
+
+<!--
+<div class="container">
+    <div class="gallery_4_pairs">
+      <div class="pair">
+        <a href="https://www.optimalga.com/" target="_blank">
+          <i>Optimalga</i>
+        </a>
+        <img src="static/images/optimalga_logo_2.jpg" alt="Optimalga">
+      </div>
+      <div class="pair">
+        <a href="https://www.e-cyanobacterium.org/" target="_blank">
+          <i>E-cyanobacterium</i>
+        </a>
+        <img src="static/images/ecyanobacterium_3.jpg" alt="E-cyanobacterium">
+      </div>
+      <div class="pair">
+        <a href="{{ url_for('calculators.run_calculators') }}">
+          <i>Calculators</i>
+        </a>
+        <img src="static/images/calculator_2.jpg" alt="Calculators">
+      </div>
+      <div class="pair">
+        <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">
+          <i>DIC in seawater</i>
+        </a>
+        <img src="static/images/seacarb2_2.jpg" alt="Sea Carb">
+      </div>
+    </div>
+  </div>
+-->
+
 <div class="container">
     <div class="gallery_4">
 

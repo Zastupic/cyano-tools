@@ -17,6 +17,7 @@ document.getElementById('image').addEventListener('change', function() {
 const canvas = document.getElementById("canvas_mouse_clicking");
 var context = canvas.getContext("2d");
 const img = document.getElementById("img_orig_decoded_from_memory");
+
 let img_size_y = img.height;
 let img_size_x = img.width;
 var storedLines = [];

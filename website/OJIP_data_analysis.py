@@ -1,11 +1,12 @@
-from flask import Blueprint, render_template, request, flash
+from flask import Blueprint, render_template, request, flash, redirect
 import os, base64, io, time, openpyxl
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import openpyxl
+from openpyxl.drawing.image import Image
 from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline
 from scipy.ndimage import gaussian_filter1d         
-from openpyxl.drawing.image import Image
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
 import time
@@ -23,10 +24,11 @@ def analyze_OJIP_curves():
         Area_above_curve_temp_O_J = Area_above_curve_temp_J_I = Area_above_curve_temp_I_P = Area_above_curve_temp_O_P = pd.DataFrame()
         AREAOJ = AREAJI = AREAIP = AREAOP = FJ_TIMES_IDENTIFIED = FI_TIMES_IDENTIFIED = FP_TIMES_IDENTIFIED = FJ = FI = pd.Series()      
         ALLOWED_EXTENSIONS_MULTI_COLOR_PAM = set(['.csv', '.CSV'])
-        ALLOWED_EXTENSIONS_AQUAPEN = set(['.txt']) 
+        ALLOWED_EXTENSIONS_AQUAPEN = ALLOWED_EXTENSIONS_FL6000 = set(['.txt']) 
         files_extensions = set()
         upload_folder = UPLOAD_FOLDER
-        OJIP_plot_from_memory = OJIP_parameters_from_memory = fluorescence = ()   
+        OJIP_plot_from_memory = OJIP_parameters_from_memory = fluorescence = ()  
+        memory_for_OJIP_plot = memory_for_OJIP_parameters = idx_FJ = None
         xlsx_file_path = x_axis_time = x_axis_unit = y_axis_unit = file_name_without_extension = str('')   
         F0_index = F_50us_index = FK_300us_index = FJ_index = FI_index = knots_reduction_factor = int()
         F_50_ms_index = F_100_ms_index = F_200_ms_index = F_300_ms_index = Fm_index = int()
@@ -58,6 +60,9 @@ def analyze_OJIP_curves():
                 elif fluorometer == 'Aquapen':
                     FJ_time = (float(str(request.form.get('FJ_time')))) * 1000
                     FI_time = (float(str(request.form.get('FI_time')))) * 1000
+                elif fluorometer == 'FL6000':
+                    FJ_time = (float(str(request.form.get('FJ_time')))) / 1000
+                    FI_time = (float(str(request.form.get('FI_time')))) / 1000             
                 if FJ_time < FI_time:
                     # Define fluorometer-dependent variables
                     if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
@@ -70,22 +75,28 @@ def analyze_OJIP_curves():
                         FI_time_max = 500  # (float(str(request.form.get('FI_time_max')))) 
                         FP_time_min = 100  # (float(str(request.form.get('FP_time_min')))) 
                         FP_time_max = 1000 # (float(str(request.form.get('FP_time_max')))) 
-#                        knots_reduction_factor = 10
                         xmin_for_plot = 10**-2
                     elif fluorometer == 'Aquapen':
                         x_axis_time = 'time_us'
                         x_axis_unit = "Time (μs)"
                         y_axis_unit = "Fluorescence intensity (a.u.)"
-                        FJ_time = (float(str(request.form.get('FJ_time')))) * 1000
-                        FI_time = (float(str(request.form.get('FI_time')))) * 1000
                         FJ_time_min = 0.1 * 1000  # (float(str(request.form.get('FJ_time_min')))) 
                         FJ_time_max = 50 * 1000   # (float(str(request.form.get('FJ_time_max')))) 
                         FI_time_min = 10 * 1000   # (float(str(request.form.get('FI_time_min')))) 
                         FI_time_max = 500 * 1000  # (float(str(request.form.get('FI_time_max')))) 
                         FP_time_min = 100 * 1000  # (float(str(request.form.get('FP_time_min')))) 
                         FP_time_max = 1000 * 1000 # (float(str(request.form.get('FP_time_max')))) 
-#                        knots_reduction_factor = 10
-                        xmin_for_plot = 10**1
+                    elif fluorometer == 'FL6000':
+                        x_axis_time = 'time_s'
+                        x_axis_unit = "Time (s)"
+                        y_axis_unit = "Fluorescence intensity (a.u.)"
+                        FJ_time_min = 0.1 / 1000  # (float(str(request.form.get('FJ_time_min')))) 
+                        FJ_time_max = 50 / 1000   # (float(str(request.form.get('FJ_time_max')))) 
+                        FI_time_min = 10 / 1000   # (float(str(request.form.get('FI_time_min')))) 
+                        FI_time_max = 500 / 1000  # (float(str(request.form.get('FI_time_max')))) 
+                        FP_time_min = 100 / 1000  # (float(str(request.form.get('FP_time_min')))) 
+                        FP_time_max = 1000 / 1000 # (float(str(request.form.get('FP_time_max'))))                         
+                        xmin_for_plot = 10**-5
                     # Check if number of selected files is within the set limit
                     if len(files) <= max_number_of_files:
                         file_number = 0
@@ -106,6 +117,12 @@ def analyze_OJIP_curves():
                                 if file_extension in ALLOWED_EXTENSIONS_MULTI_COLOR_PAM:
                                     # read csv file directly, without uploading to server
                                     OJIP_file_MULTI_COLOR_PAM = pd.read_csv(files[(file_number)], sep=';', engine='python')  # type: ignore
+                                    # Validate if the first column is named 'time/ms'
+                                    if str(OJIP_file_MULTI_COLOR_PAM.columns[0]) != 'time/ms':
+                                        flash(f"The file '{file_name_full}' does not appear to be a valid MULTI-COLOR-PAM / Dual PAM data file. "
+                                              "The first column header should be 'time/ms'. Please select a correct file.", category='error')
+                                        # Stop processing this file and redirect
+                                        return redirect(request.url)
                                     # Merge all data in the final dataframe
                                     if file_number == 0:
                                         # initiate final dataframe
@@ -132,16 +149,18 @@ def analyze_OJIP_curves():
                                     with open(upload_folder+file_name_full, "r") as temp_variable:
                                         # read the txt file 
                                         OJIP_file_Aquapen = temp_variable.readlines() # reading without header: add [9:]
-                                        OJIP_file_Aquapen =  pd.DataFrame(OJIP_file_Aquapen)
+                                        OJIP_file_Aquapen = pd.DataFrame(OJIP_file_Aquapen)
                                         OJIP_file_Aquapen = OJIP_file_Aquapen[0].str.split('\t', expand=True)
+                                        # Check if 'Fluorpen' is present in the first column
+                                        if not OJIP_file_Aquapen[0].astype(str).str.strip().str.contains('FluorPen|AquaPen', case=False).any():
+                                            flash(f"The file '{file_name_full}' does not appear to be a valid FluorPen/AquaPen data file. "
+                                                  "The first column should contain 'FluorPen'. Please ensure you selected correct files and fluorometers for analysis.", category='error')
+                                            return redirect(request.url)
                                         # Merge all data in the final dataframe
                                         if file_number == 0:
-                                            # initiate final dataframe + drop the last column win '\n' only
-                                            Summary_file = OJIP_file_Aquapen[OJIP_file_Aquapen.columns[:-1]]
-                                            # rename column with fluorescence values according to file name
-                                            Summary_file.rename(columns = {Summary_file.columns[1]: file_name_without_extension}, inplace = True)
-                                            # rename first column
-                                            Summary_file.rename(columns = {Summary_file.columns[0]: 'time_us'}, inplace = True)
+                                            Summary_file = OJIP_file_Aquapen[OJIP_file_Aquapen.columns[:-1]] # initiate final dataframe + drop the last column win '\n' only
+                                            Summary_file.rename(columns = {Summary_file.columns[1]: file_name_without_extension}, inplace = True) # rename column with fluorescence values according to file name
+                                            Summary_file.rename(columns = {Summary_file.columns[0]: 'time_us'}, inplace = True) # rename first column
                                         else:
                                             # read fluorescence, as 2nd column in all other files
                                             fluorescence = OJIP_file_Aquapen.iloc[:,1:2]
@@ -149,24 +168,73 @@ def analyze_OJIP_curves():
                                             Summary_file = pd.concat([Summary_file, fluorescence], axis = 1)
                                             # rename the newly added column
                                             Summary_file.rename(columns = {Summary_file.columns[file_number+1]: file_name_without_extension}, inplace = True)                                          
+                                    # Wait briefly before deleting (gives Windows time to release the file handle)
+                                    time.sleep(0.1)
+                                    # Delete the uploaded file
+                                    os.remove(os.path.join(upload_folder, file_name_full).replace("\\","/"))      
+                            #############################
+                            ### Process FL 6000 FILES ###
+                            #############################
+                            # Do for AquaPen / FluorPen files
+                            elif fluorometer == 'FL6000':
+                                # Check if each file is of allowed type
+                                if file_extension in ALLOWED_EXTENSIONS_FL6000:
+                                    # to read .txt files, the files need to be first uploaded to server
+                                    file.save(os.path.join(upload_folder, file_name_full).replace("\\","/"))
+                                    # read .txt files
+                                    with open(upload_folder+file_name_full, "r") as temp_variable:
+                                        # read the txt file 
+                                        OJIP_file_FL6000 = temp_variable.readlines() # reading without header: add [9:]
+                                        OJIP_file_FL6000 = pd.DataFrame(OJIP_file_FL6000)
+                                        OJIP_file_FL6000 = OJIP_file_FL6000[0].str.split('\t', expand=True)
+                                        OJIP_file_FL6000 = OJIP_file_FL6000.iloc[:, :2] # Select only first two columns - time and fluo values
+                                        # Check if 'Fluorometer' is present in the first column
+                                        if not OJIP_file_FL6000[0].astype(str).str.strip().str.contains('Fluorometer', case=False).any():
+                                            flash(f"The file '{file_name_full}' does not appear to be a valid FL6000 data file. "
+                                                  "The first column should contain 'Fluorometer'. Please ensure you selected correct files and fluorometers for analysis.", category='error')
+                                            return redirect(request.url)
+                                        # Find the index where the first column equals 'Time\n' (or 'Time' after stripping)
+                                        start_idx = OJIP_file_FL6000[OJIP_file_FL6000[0].str.strip() == 'Time'].index[0] + 1
+                                        # Keep only rows from that index onward
+                                        OJIP_file_FL6000 = OJIP_file_FL6000.iloc[start_idx:].reset_index(drop=True)
+                                        # Merge all data in the final dataframe
+                                        if file_number == 0:
+                                            Summary_file = OJIP_file_FL6000 # initiate final dataframe + drop the last column win '\n' only
+                                            Summary_file.rename(columns = {Summary_file.columns[1]: file_name_without_extension}, inplace = True) # rename column with fluorescence values according to file name
+                                        else:
+                                            # read fluorescence, as 2nd column in all other files
+                                            fluorescence = OJIP_file_FL6000.iloc[:,1:2]
+                                            # merge the fluorescence column with the final dataframe
+                                            Summary_file = pd.concat([Summary_file, fluorescence], axis = 1)
+                                            # rename the newly added column
+                                            Summary_file.rename(columns = {Summary_file.columns[file_number+1]: file_name_without_extension}, inplace = True)       
+                                    # Wait briefly before deleting (gives Windows time to release the file handle)
+                                    time.sleep(0.1)
                                     # Delete the uploaded file
                                     os.remove(os.path.join(upload_folder, file_name_full).replace("\\","/"))
-                            file_number = file_number + 1               
+                            file_number = file_number + 1         
                         ### check if correct file types were selected ###
-                        if (fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' and '.csv' in files_extensions) or (fluorometer == 'Aquapen' and '.txt' in files_extensions):
-                            ######################################################################
-                            ### Remove parameters calculated by Aquapen and keep only F values ###
-                            ######################################################################
+                        if (fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' and '.csv' in files_extensions) or (fluorometer == ('Aquapen') and '.txt' in files_extensions) or (fluorometer == ('FL6000') and '.txt' in files_extensions):
+                            #############################################################################
+                            ### Remove all excessive parameters and characters and keep only F values ###
+                            #############################################################################
                             if fluorometer == 'Aquapen':
                                 # Delete lines without numbers within the final dataframe
                                 check = pd.DataFrame(Summary_file.time_us.str.isnumeric())
-                                check.rename(columns={ check.columns[0]: "A" }, inplace = True)
+                                check.rename(columns={check.columns[0]: "A" }, inplace = True)
                                 # Remove all rows in 'Summary_file' according to 'False' values in 'check' DF
                                 Summary_file = Summary_file[check.A]
                                 # Remove first row in the 'Summary_file' DF
                                 Summary_file = Summary_file.iloc[1:, :]
                                 # convert df to numeric
                                 Summary_file = Summary_file.astype(int) # type: ignore
+                            elif fluorometer == 'FL6000':
+                                # Ensure the first column is named 'time_s' and is float, and all other columns are float
+                                Summary_file.rename(columns={Summary_file.columns[0]: 'time_s'}, inplace=True)
+                                # Only convert fluorescence columns to float (not time)
+                                for col in Summary_file.columns[0:]:
+                                    Summary_file[col] = pd.to_numeric(Summary_file[col], errors='coerce')
+                                Summary_file = Summary_file.dropna(subset=['time_s'])
                             #################################################
                             ### Reduce file size of MULTI-COLOR PAM FILES ###
                             #################################################
@@ -202,6 +270,10 @@ def analyze_OJIP_curves():
                                 F0_index = Summary_file[x_axis_time].sub(0.01).abs().idxmin() # locate F0 for MC-PAM
                             elif fluorometer == 'Aquapen':
                                 F0_index = Summary_file[x_axis_time].sub(0).abs().idxmin() # calculate F0 for Aquapen
+                            elif fluorometer == 'FL6000':
+                                # Always ensure the first column is named 'time' for FL6000
+                                Summary_file.rename(columns={Summary_file.columns[0]: 'time_s'}, inplace=True)
+                                F0_index = Summary_file[x_axis_time].sub(0).abs().idxmin() # calculate F0 for FL6000
                             # Find F0 and FM for all OJIP curves
                             F0 = (Summary_file.drop(x_axis_time, axis=1)).loc[F0_index]
                             FM = (Summary_file.drop(x_axis_time, axis=1)).max()
@@ -224,6 +296,7 @@ def analyze_OJIP_curves():
                             OJIP_double_normalized = (OJIP_shifted_to_zero.drop(x_axis_time, axis=1)).div(FMFORNORMALIZATION, axis = 1)
                             # merge the normalized DF with time 
                             OJIP_double_normalized = pd.concat([Summary_file.iloc[:, 0], OJIP_double_normalized], axis = 1) 
+
                             ##############################    
                             ### Get derivatives and R2 ###
                             ##############################
@@ -252,20 +325,34 @@ def analyze_OJIP_curves():
                             # Rename columns
                             Differences_1_DF.columns = Summary_file.columns.values
                             Differences_2_DF.columns = Summary_file.columns.values
-                            Raw_curves_reconstructed_DF.columns = Summary_file.columns.values
+                            Raw_curves_reconstructed_DF.columns = Summary_file.columns.values                            
                             #####################    
                             ### Get residuals ###
                             #####################
                             for i in range(len(OJIP_double_normalized.columns)):
                                 if i > 0: # exclude time axis
                                     # interpolate the reconstructed curves (log x-axis) based on measured x-axis
-                                    interpolated_values = pd.DataFrame(np.interp(OJIP_double_normalized.iloc[:,0],Raw_curves_reconstructed_DF.iloc[:,0],Raw_curves_reconstructed_DF.iloc[:,i])) 
+#                                    interpolated_values = pd.DataFrame(np.interp(OJIP_double_normalized.iloc[:,0],Raw_curves_reconstructed_DF.iloc[:,0],Raw_curves_reconstructed_DF.iloc[:,i]))
+                                    interp_result = np.interp(x=np.array(OJIP_double_normalized.iloc[:, 0]),xp=np.array(Raw_curves_reconstructed_DF.iloc[:, 0]),fp=np.array(Raw_curves_reconstructed_DF.iloc[:, i]))
+                                    interpolated_values = pd.DataFrame(interp_result.reshape(-1, 1))
                                     residuals = OJIP_double_normalized.iloc[:,i] - interpolated_values.iloc[:,0]
                                     # Append to DF
                                     Residuals_DF = pd.concat([Residuals_DF, residuals], axis = 1)
                             # Append time and rename columns
                             Residuals_DF = pd.concat([OJIP_double_normalized.iloc[:, 0], Residuals_DF], axis = 1)
                             Residuals_DF.columns = Summary_file.columns.values
+                            ###############################
+                            #### GET INFLECTION POINTS #### 
+                            ###############################
+ 
+
+
+################################################         
+################################################
+#### SELECT FJ AS EITHER MIN, OR INFLECTION #### 
+################################################
+################################################        
+                            
                             ################################    
                             ### Find FJ, FI and FP times ###
                             ################################
@@ -280,11 +367,24 @@ def analyze_OJIP_curves():
                             for i in range(len(Differences_2_DF.columns)):
                                 if i > 0: # exclude time axis
                                     FJ_found = Differences_2_DF.iloc[:,i].loc[FJ_found_index_low: FJ_found_index_high].min()
+                                    idx_FJ = Differences_2_DF.iloc[:,i].sub(FJ_found).abs().idxmin()
+                                    if pd.isna(idx_FJ):
+                                        flash('There seems to be a problem with the uploaded data. Please check data integrity before re-uploading the files.', category='error')
+                                        return redirect(request.url) 
                                     FI_found = Differences_2_DF.iloc[:,i].loc[FI_found_index_low: FI_found_index_high].min()
+                                    idx_FI = Differences_2_DF.iloc[:,i].sub(FI_found).abs().idxmin()
+                                    if pd.isna(idx_FI):
+                                        flash('There seems to be a problem with the uploaded data. Please check data integrity before re-uploading the files.', category='error')
+                                        return redirect(request.url)  
                                     FP_found = Differences_2_DF.iloc[:,i].loc[FP_found_index_low: FP_found_index_high].min()
-                                    FJ_found_index = int(Differences_2_DF.iloc[:,i].sub(FJ_found).abs().idxmin())
-                                    FI_found_index = int(Differences_2_DF.iloc[:,i].sub(FI_found).abs().idxmin())
-                                    FP_found_index = int(Differences_2_DF.iloc[:,i].sub(FP_found).abs().idxmin())
+                                    idx_FP = Differences_2_DF.iloc[:,i].sub(FP_found).abs().idxmin()
+                                    if pd.isna(idx_FP):
+                                        flash('There seems to be a problem with the uploaded data. Please check data integrity before re-uploading the files.', category='error')
+                                        return redirect(request.url)  
+                                    FP_found = Differences_2_DF.iloc[:,i].loc[FP_found_index_low: FP_found_index_high].min()
+                                    FJ_found_index = int(idx_FJ)
+                                    FI_found_index = int(idx_FI)
+                                    FP_found_index = int(idx_FP)
                                     FJ_found_time = Differences_2_DF[x_axis_time].iloc[FJ_found_index]
                                     FI_found_time = Differences_2_DF[x_axis_time].iloc[FI_found_index]
                                     FP_found_time = Differences_2_DF[x_axis_time].iloc[FP_found_index]
@@ -299,7 +399,7 @@ def analyze_OJIP_curves():
                             ############################
                             ### Calculate parameters ###
                             ############################
-                            ### Find indexes of parameters for MULTI-COLOR-PAM
+                            ### Find indexes of selected parameters
                             if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
                                 # find indexes of rows with closest value to individual points column
 #                                F_20us_index = Summary_file[x_axis_time].sub(0.02).abs().idxmin()
@@ -310,7 +410,6 @@ def analyze_OJIP_curves():
                                 F_100_ms_index = Summary_file[x_axis_time].sub(100).abs().idxmin()
                                 F_200_ms_index = Summary_file[x_axis_time].sub(200).abs().idxmin()
                                 F_300_ms_index = Summary_file[x_axis_time].sub(300).abs().idxmin()
-                            ### Find indexes of parameters for AQUAPEN 
                             elif fluorometer == 'Aquapen':
                                 # find indexes of rows with closest value to individual points column
 #                                F_20us_index = Summary_file[x_axis_time].sub(20).abs().idxmin()
@@ -321,6 +420,13 @@ def analyze_OJIP_curves():
                                 F_100_ms_index = Summary_file[x_axis_time].sub(100000).abs().idxmin()
                                 F_200_ms_index = Summary_file[x_axis_time].sub(200000).abs().idxmin()
                                 F_300_ms_index = Summary_file[x_axis_time].sub(300000).abs().idxmin()
+                            elif fluorometer == 'FL6000':
+                                F_50us_index = Summary_file[x_axis_time].sub(0.00005).abs().idxmin()
+                                FK_300us_index = Summary_file[x_axis_time].sub(0.0003).abs().idxmin()
+                                F_50_ms_index = Summary_file[x_axis_time].sub(0.05).abs().idxmin()
+                                F_100_ms_index = Summary_file[x_axis_time].sub(0.1).abs().idxmin()
+                                F_200_ms_index = Summary_file[x_axis_time].sub(0.2).abs().idxmin()
+                                F_300_ms_index = Summary_file[x_axis_time].sub(0.3).abs().idxmin()
                             FJ_index = Summary_file[x_axis_time].sub(FJ_time).abs().idxmin()
                             FI_index = Summary_file[x_axis_time].sub(FI_time).abs().idxmin()
                             FJ = (Summary_file.drop(x_axis_time, axis=1)).loc[FJ_index]
@@ -352,29 +458,29 @@ def analyze_OJIP_curves():
                             ET0RC = TR0RC * PSIE0 # ET0/RC = (M0/VJ) × ψE0          
                             RE0RC = TR0RC * PSIR0 # RE0/RC = (M0/VJ) × ψR0
                             DI0RC = ABSRC - TR0RC # DI0/RC = ABS/RC – TR0/RC  
-                           # calcualte area above and below curve
+                            # calcualte area above and below curve
                             for i in range(len(Summary_file.columns)):
                                 # do not plot time axis
                                 if i > 0:
                                     Fm = 0 
                                     # identify time of P-peak: 
-                                    if (F100MS[i-1]) < (F50MS[i-1]):
+                                    if (F100MS.iloc[i-1].item()) < (F50MS.iloc[i-1].item()):
                                         Fm = (Summary_file.iloc[F_100_ms_index:, i]).max()
                                         Fm_index = Summary_file.iloc[F_100_ms_index:,i].sub(Fm).abs().idxmin()
-                                        if (F200MS[i-1]) < (F100MS[i-1]):
+                                        if (F200MS.iloc[i-1].item()) < (F100MS.iloc[i-1].item()):
                                             Fm = (Summary_file.iloc[F_200_ms_index:, i]).max()
                                             Fm_index = Summary_file.iloc[F_200_ms_index:,i].sub(Fm).abs().idxmin()
-                                            if (F300MS[i-1]) < (F200MS[i-1]):
+                                            if (F300MS.iloc[i-1].item()) < (F200MS.iloc[i-1].item()):
                                                 Fm = (Summary_file.iloc[F_300_ms_index:, i]).max()
                                                 Fm_index = Summary_file.iloc[F_300_ms_index:,i].sub(Fm).abs().idxmin()
                                     else:   
                                         Fm = (Summary_file.iloc[F_50_ms_index:, i]).max()
                                         Fm_index = Summary_file.iloc[F_50_ms_index:,i].sub(Fm).abs().idxmin()
                                     # find areas below curve
-                                    area_below_curve_O_J = np.trapz(Summary_file.iloc[:FJ_index, i], Summary_file.iloc[:FJ_index, 0]) # (y, x)
-                                    area_below_curve_J_I = np.trapz(Summary_file.iloc[FJ_index:FI_index, i], Summary_file.iloc[FJ_index:FI_index, 0]) # (y, x)                                
-                                    area_below_curve_I_P = np.trapz(Summary_file.iloc[FI_index:Fm_index, i], Summary_file.iloc[FI_index:Fm_index, 0]) # (y, x) 
-                                    area_below_curve_O_P = np.trapz(Summary_file.iloc[:Fm_index, i], Summary_file.iloc[:Fm_index, 0]) # (y, x)
+                                    area_below_curve_O_J = np.trapezoid(Summary_file.iloc[:FJ_index, i], Summary_file.iloc[:FJ_index, 0]) # (y, x)
+                                    area_below_curve_J_I = np.trapezoid(Summary_file.iloc[FJ_index:FI_index, i], Summary_file.iloc[FJ_index:FI_index, 0]) # (y, x)                                
+                                    area_below_curve_I_P = np.trapezoid(Summary_file.iloc[FI_index:Fm_index, i], Summary_file.iloc[FI_index:Fm_index, 0]) # (y, x) 
+                                    area_below_curve_O_P = np.trapezoid(Summary_file.iloc[:Fm_index, i], Summary_file.iloc[:Fm_index, 0]) # (y, x)
                                     # find total areas below + above curve
                                     total_area_O_J = max(Summary_file.iloc[:FJ_index, 0]) * max(Summary_file.iloc[:Fm_index, i])
                                     total_area_J_I = (max(Summary_file.iloc[FJ_index:FI_index, 0]) - min(Summary_file.iloc[FJ_index:FI_index, 0])) * max(Summary_file.iloc[:Fm_index, i])
@@ -397,485 +503,243 @@ def analyze_OJIP_curves():
                             Area_above_curve_temp_J_I.index = file_names # type: ignore
                             Area_above_curve_temp_I_P.index = file_names # type: ignore
                             Area_above_curve_temp_O_P.index = file_names # type: ignore
-                            AREAOJ = pd.Series(Area_above_curve_temp_O_J.squeeze()) # squeeze: converts DF to SERIES
-                            AREAJI = pd.Series(Area_above_curve_temp_J_I.squeeze()) # squeeze: converts DF to SERIES
-                            AREAIP = pd.Series(Area_above_curve_temp_I_P.squeeze()) # squeeze: converts DF to SERIES
-                            AREAOP = pd.Series(Area_above_curve_temp_O_P.squeeze()) # squeeze: converts DF to SERIES
-                            SM = AREAOP / FVFM
+                            AREAOJ = Area_above_curve_temp_O_J.squeeze() # type: ignore # squeeze: converts DF to SERIES
+                            AREAJI = Area_above_curve_temp_J_I.squeeze() # type: ignore # squeeze: converts DF to SERIES
+                            AREAIP = Area_above_curve_temp_I_P.squeeze() # type: ignore # squeeze: converts DF to SERIES
+                            AREAOP = Area_above_curve_temp_O_P.squeeze() # type: ignore # squeeze: converts DF to SERIES
+                            SM = AREAOP / FVFM # type: ignore
                             N = SM * M0 * (1 / VJ)
-
 
                             #### CALCULATING TIME ####
                             calculation_time = time.time() 
-                            print("===calculation_time: "+str(calculation_time - current_time))
+                            print("===calculations_time: "+str(calculation_time - current_time))      
 
-                            ########################
-                            ### Plot OJIP curves ###
-                            ########################                            
-                            # Select color map, according to number of lines (files)
-                            colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number+1)) # type: ignore
-                            # Initialise the subplot function using number of rows and columns 
-                            fig = plt.figure(figsize=(17,11))
-                            fig.tight_layout() # Shrink to fit the canvas together with legend    
-                            fig.subplots_adjust(hspace=0.6, wspace=0.3) 
-                            plt.rcParams['mathtext.default'] = 'regular' # Prevent subscripts in axes titles in italics  
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,1) 
-                            subplot.set_title("OJIP curves: raw data")
-                            for i in range(len(Summary_file.columns)):
-                                    if i > 0: # do not plot time axis
-                                        subplot.plot(
-                                            Summary_file.iloc[:, 0], # x-axis data
-                                            Summary_file.iloc[:, i], # y-axis data
-                                            label = Summary_file.columns[i],
-                                            color=colors[i-1]
-                                            ) 
-                            subplot.set_xscale("log") 
-                            subplot.set_xlim(xmin=xmin_for_plot)
-                            subplot.grid(which='both', color='lightgray') 
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel(y_axis_unit) 
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,2)
-                            subplot.set_title("OJIP curves: shifted to zero") 
-                            for i in range(len(OJIP_shifted_to_zero.columns)):
-                                if i > 0: # do not plot time axis
-                                    plt.plot(
-                                        OJIP_shifted_to_zero.iloc[:, 0], # x-axis data
-                                        OJIP_shifted_to_zero.iloc[:, i], # y-axis data
-                                        label = OJIP_shifted_to_zero.columns[i], 
-                                        color=colors[i-1]
-                                        )
-                            subplot.set_xscale("log")
-                            subplot.set_xlim(xmin=xmin_for_plot)
-                            subplot.grid(which='both', color='lightgray') 
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel(y_axis_unit) 
-                            subplot.set_ylim(0,)
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,3) 
-                            subplot.set_title("OJIP curves: shifted to Fm")
-                            for i in range(len(OJIP_shifted_to_max.columns)):
-                                if i > 0: # do not plot time axis
-                                    plt.plot(
-                                        OJIP_shifted_to_max.iloc[:, 0], # x-axis data
-                                        OJIP_shifted_to_max.iloc[:, i], # y-axis data
-                                        label = OJIP_shifted_to_max.columns[i], 
-                                        color=colors[i-1]
-                                        ) 
-                            subplot.set_xscale("log")
-                            subplot.set_xlim(xmin=xmin_for_plot)
-                            subplot.grid(which='both', color='lightgray') 
-                            subplot.set_xlabel(x_axis_unit)     
-                            subplot.set_ylabel(y_axis_unit)
-                            if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
-                                subplot.set_ylim(0,)
-                            ########## Sub-plot OJIP ##########
-                            subplot = fig.add_subplot(4,4,5)
-                            subplot.set_title("OJIP curves: double normalized")
-                            for i in range(len(OJIP_double_normalized.columns)):
-                                if i > 0: # do not plot time axis
-                                    plt.plot(
-                                        OJIP_double_normalized.iloc[:, 0], # x-axis data
-                                        OJIP_double_normalized.iloc[:, i], # y-axis data
-                                        label = OJIP_double_normalized.columns[i], 
-                                        color=colors[i-1]
-                                        )
-                            subplot.set_xscale("log")
-                            subplot.set_xlim(xmin=xmin_for_plot)
-                            subplot.grid(which='both', color='lightgray') 
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel("Fluorescence intensity (r.u.)")
-                            subplot.set_ylim(0,1.1)
-                            subplot.axvline(x = FJ_time, color = '0', ls='-.', lw=1) 
-                            subplot.axvline(x = FI_time, color = '0', ls='-.', lw=1) 
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,6)
-                            subplot.set_title("Reconstructed curves (double normalized)")
-                            for i in range(len(Raw_curves_reconstructed_DF.columns)):
-                                if i > 0: # do not plot time axis
-                                    plt.plot(
-                                        Raw_curves_reconstructed_DF.iloc[:, 0], # x-axis data: 1st column
-                                        Raw_curves_reconstructed_DF.iloc[:, i], # y-axis data
-                                        label = Raw_curves_reconstructed_DF.columns[i], # Column names for legend
-                                        color=colors[i-1],# linestyle='dashed', # alpha=0.5,  # linewidth=0.7 
-                                        ) 
-                            subplot.set_xscale("log")
-                            subplot.set_xlim(xmin=xmin_for_plot)
-                            subplot.grid(which='both', color='lightgray')
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel("Fluorescence intensity (r.u.)")
-                            subplot.set_ylim(0,1.1)
-                            subplot.axvline(x = FJ_time, color = '0', ls='-.', lw=1) 
-                            subplot.axvline(x = FI_time, color = '0', ls='-.', lw=1)  
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,7)
-                            subplot.set_title("Residuals of the reconstructed curves")
-                            for i in range(len(Residuals_DF.columns)):
-                                if i > 0: # do not plot time axis
-                                    plt.plot(
-                                        Residuals_DF.iloc[:, 0], # x-axis data: 1st column
-                                        Residuals_DF.iloc[:, i], # y-axis data
-                                        label = Residuals_DF.columns[i], # Column names for legend
-                                        color=colors[i-1],# linestyle='dashed', # alpha=0.5,  # linewidth=0.7 
-                                        ) 
-                            subplot.set_xlim(xmin=xmin_for_plot)
-                            subplot.grid(which='both', color='lightgray')
-                            subplot.set_xlabel(f"{x_axis_unit} - lin") 
-                            subplot.set_ylabel("Residuals (r.u.)")
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,9)
-                            for i in range(len(Differences_2_DF.columns)):
-                                if i > 0: # do not plot time axis
-                                    plt.plot(
-                                        Differences_2_DF.iloc[:, 0], # x-axis data: 1st column
-                                        Differences_2_DF.iloc[:, i], # y-axis data
-                                        label = Differences_2_DF.columns[i],
-                                        color=colors[i-1] # linestyle='dashed', # alpha=0.5,  # linewidth=0.7 
-                                        )
-                            subplot.set_xscale("log")
-                            subplot.set_xlim(xmin=xmin_for_plot)
-                            subplot.grid(which='both', color='lightgray') 
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel("2$^{nd}$ derivative")
-                            subplot.set_title("2$^{nd}$ derivative + F$_{J}$ timing")
-                            subplot.axvline(x = FJ_time, color = '0', ls='-.', lw=2, label = 'FJ time selected (used for calculations)') 
-                            for i in range(len(FJ_TIMES_IDENTIFIED)):
-                                if i == 0:
-                                    subplot.axvline(x = FJ_TIMES_IDENTIFIED[i], color = colors[i], ls=':', lw=1.5)
-                                else:
-                                    subplot.axvline(x = FJ_TIMES_IDENTIFIED[i], color = colors[i], ls=':', lw=1.5)    
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,10)
-                            for i in range(len(Differences_2_DF.columns)):
-                                if i > 0: # do not plot time axis
-                                    plt.plot(
-                                        Differences_2_DF.iloc[:, 0], # x-axis data: 1st column
-                                        Differences_2_DF.iloc[:, i], # y-axis data
-                                        label = Differences_2_DF.columns[i],
-                                        color=colors[i-1] # linestyle='dashed', # alpha=0.5,  # linewidth=0.7 
-                                        )
-                            subplot.set_xscale("log")
-                            subplot.set_xlim(xmin=xmin_for_plot)
-                            subplot.grid(which='both', color='lightgray') 
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel("2$^{nd}$ derivative")   
-                            subplot.set_title("2$^{nd}$ derivative + F$_{I}$ timing")
-                            subplot.axvline(x = FI_time, color = '0.2', ls='-.', lw=2, label = 'F$_{J}$ / F$_{I}$ times used for calculations (selected by user)')
-                            for i in range(len(FJ_TIMES_IDENTIFIED)):
-                                if i == 0:
-                                    subplot.axvline(x = FI_TIMES_IDENTIFIED[i], color = colors[i], ls=':', lw=1.5, label='F$_{J}$ / F$_{I}$ / F$_{P}$ times identified (used only for visualization)')
-                                else:
-                                    subplot.axvline(x = FI_TIMES_IDENTIFIED[i], color = colors[i], ls=':', lw=1.5)
-                            subplot.legend(loc='upper left', bbox_to_anchor=(2.38, 4.28))
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,11)
-                            for i in range(len(Differences_2_DF.columns)):
-                                if i > 0: # do not plot time axis
-                                    plt.plot(
-                                        Differences_2_DF.iloc[:, 0], # x-axis data: 1st column
-                                        Differences_2_DF.iloc[:, i], # y-axis data
-                                        label = Differences_2_DF.columns[i],
-                                        color=colors[i-1] # linestyle='dashed', # alpha=0.5,  # linewidth=0.7 
-                                        )
-                            subplot.set_title("2$^{nd}$ derivative + F$_{P}$ timing")
-                            subplot.set_xscale("log")
-                            subplot.set_xlim(xmin=xmin_for_plot)
-                            subplot.grid(which='both', color='lightgray') 
-                            subplot.set_xlabel(x_axis_unit)     
-                            subplot.set_ylabel("2$^{nd}$ derivative")
-                            for i in range(len(FP_TIMES_IDENTIFIED)):
-                                if i == 0:
-                                    subplot.axvline(x = FP_TIMES_IDENTIFIED[i], color = colors[i], ls=':', lw=1.5)
-                                else:
-                                    subplot.axvline(x = FP_TIMES_IDENTIFIED[i], color = colors[i], ls=':', lw=1.5)
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,13)        
-                            FJ_TIMES_IDENTIFIED.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("F$_{J}$ times identified (only for visualization)")
-                            subplot.set_ylabel(x_axis_unit)
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,14)                  
-                            FI_TIMES_IDENTIFIED.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("F$_{I}$ times identified (only for visualization)")   
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(4,4,15)     
-                            FP_TIMES_IDENTIFIED.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("F$_{P}$ times identified (only for visualization)")  
-                            ########## saving scatter plot to memory ##########
-                            memory_for_OJIP_plot = io.BytesIO()
-                            plt.savefig(memory_for_OJIP_plot, bbox_inches='tight', format='JPEG')
-                            memory_for_OJIP_plot.seek(0)
-                            OJIP_plot_in_memory = base64.b64encode(memory_for_OJIP_plot.getvalue())
-                            OJIP_plot_from_memory = OJIP_plot_in_memory.decode('ascii')
-                            # Clearing the plot
-                            plt.clf()
-                            plt.cla()
-                            plt.close()
+                            # ================
+                            # === PLOTTING ===
+                            # =================
+                            # HELPING FUNCTIONS FOR PLOTS 
+                            def plot_dataframe_subplot(ax, df, colors, title, x_label, y_label, x_log=True, ylim=(None, None), vlines=None):
+                                ax.set_title(title)
+                                for i in range(1, df.shape[1]):
+                                    ax.plot(df.iloc[:, 0], df.iloc[:, i], label=df.columns[i], color=colors[i - 1])
+                                if x_log:
+                                    ax.set_xscale("log")
+                                ax.set_xlim(xmin=xmin_for_plot)
+                                if ylim is not None:
+                                    ymin, ymax = ylim
+                                    ax.set_ylim(bottom=ymin, top=ymax)
+                                if vlines:
+                                    for x, props in vlines:
+                                        ax.axvline(x=x, **props)
+                                ax.grid(which='both', color='lightgray')
+                                ax.set_xlabel(x_label)
+                                ax.set_ylabel(y_label)
 
-#### CALCULATING TIME #### 
+                            def plot_vertical_lines(ax, times, colors, linestyle=':', linewidth=1.5, label_first=None):
+                                for i, t in enumerate(times):
+                                    kwargs = dict(x=t, color=colors[i], ls=linestyle, lw=linewidth)
+                                    if i == 0 and label_first:
+                                        kwargs['label'] = label_first
+                                    ax.axvline(**kwargs)
+
+                            def plot_bar_subplot(ax, df_or_series, colors, title, ylabel=None, legend=False):
+                                df_or_series.plot.bar(ax=ax, xticks=[], color=colors)
+                                ax.set_title(title)
+                                if ylabel:
+                                    ax.set_ylabel(ylabel)
+                                if legend:
+                                    ax.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02))
+                                ax.set_xticks([])
+
+                            # =========================
+                            # === Plot OJIP Curves ====
+                            # =========================
+                            # --- Plot OJIP Curves (Subplots 1–15) ---
+                            def plot_all_ojip_curves():
+                                colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number + 1)) # type: ignore
+                                fig = plt.figure(figsize=(17, 11))
+                                fig.tight_layout()
+                                fig.subplots_adjust(hspace=0.6, wspace=0.3)
+                                plt.rcParams['mathtext.default'] = 'regular'
+                                # For FL6000, always use 'time' as x-axis and ensure all y columns are float
+                                plot_df = Summary_file.copy()
+                                if fluorometer == 'FL6000':
+                                    plot_df.rename(columns={plot_df.columns[0]: 'time'}, inplace=True)
+                                    for col in plot_df.columns[1:]:
+                                        plot_df[col] = pd.to_numeric(plot_df[col], errors='coerce')
+                                    plot_df = plot_df.dropna(subset=['time'])
+                                else:
+                                    plot_df = Summary_file
+                                plot_dataframe_subplot(fig.add_subplot(4, 4, 1), plot_df, colors, "OJIP curves: raw data", x_axis_unit, y_axis_unit)
+                                # Shifted to zero (subplot 2)
+                                plot_dataframe_subplot(fig.add_subplot(4, 4, 2), OJIP_shifted_to_zero, colors, "OJIP curves: shifted to zero", x_axis_unit, y_axis_unit, ylim=(0, None))
+                                # Shifted to Fm (subplot 3)
+                                plot_dataframe_subplot(fig.add_subplot(4, 4, 3), OJIP_shifted_to_max, colors, "OJIP curves: shifted to Fm", x_axis_unit, y_axis_unit,
+                                                       ylim=(0, None) if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' else (None, None))
+                                # Double normalized (subplot 5)
+                                plot_dataframe_subplot(fig.add_subplot(4, 4, 5), OJIP_double_normalized, colors, "OJIP curves: double normalized", x_axis_unit, "Fluorescence intensity (r.u.)",
+                                                       ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '-.', 'lw': 1}), (FI_time, {'color': '0', 'ls': '-.', 'lw': 1})])
+                                # Reconstructed curves (subplot 6)
+                                plot_dataframe_subplot(fig.add_subplot(4, 4, 6), Raw_curves_reconstructed_DF, colors, "Reconstructed curves (double normalized)", x_axis_unit, "Fluorescence intensity (r.u.)",
+                                                       ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '-.', 'lw': 1}), (FI_time, {'color': '0', 'ls': '-.', 'lw': 1})])
+                                # Residuals (subplot 7)
+                                plot_dataframe_subplot(fig.add_subplot(4, 4, 7), Residuals_DF, colors, "Residuals of the reconstructed curves", f"{x_axis_unit} - lin", "Residuals (r.u.)", x_log=False)
+                                # 2nd derivative + FJ (subplot 9)
+                                ax = fig.add_subplot(4, 4, 9)
+                                plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{J}$ timing", x_axis_unit, "2$^{nd}$ derivative")
+                                ax.axvline(x=FJ_time, color='0', ls='-.', lw=2, label='FJ time selected (used for calculations)')
+                                plot_vertical_lines(ax, FJ_TIMES_IDENTIFIED, colors)
+                                # 2nd derivative + FI (subplot 10)
+                                ax = fig.add_subplot(4, 4, 10)
+                                plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{I}$ timing", x_axis_unit, "2$^{nd}$ derivative")
+                                ax.axvline(x=FI_time, color='0.2', ls='-.', lw=2, label='F$_{J}$ / F$_{I}$ times used for calculations (selected by user)')
+                                plot_vertical_lines(ax, FI_TIMES_IDENTIFIED, colors, label_first='F$_{J}$ / F$_{I}$ / F$_{P}$ times identified (used only for visualization)')
+                                ax.legend(loc='upper left', bbox_to_anchor=(2.38, 4.28))
+                                # 2nd derivative + FP (subplot 11)
+                                ax = fig.add_subplot(4, 4, 11)
+                                plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{P}$ timing", x_axis_unit, "2$^{nd}$ derivative")
+                                plot_vertical_lines(ax, FP_TIMES_IDENTIFIED, colors)
+                                # FJ bar plot (subplot 13)
+                                plot_bar_subplot(fig.add_subplot(4, 4, 13), FJ_TIMES_IDENTIFIED, colors, "F$_{J}$ times identified (only for visualization)", x_axis_unit)
+                                # FI bar plot (subplot 14)
+                                plot_bar_subplot(fig.add_subplot(4, 4, 14), FI_TIMES_IDENTIFIED, colors, "F$_{I}$ times identified (only for visualization)")
+                                # FP bar plot (subplot 15)
+                                plot_bar_subplot(fig.add_subplot(4, 4, 15), FP_TIMES_IDENTIFIED, colors, "F$_{P}$ times identified (only for visualization)")
+
+                                memory_for_OJIP_plot = io.BytesIO()
+                                plt.savefig(memory_for_OJIP_plot, bbox_inches='tight', format='JPEG')
+                                memory_for_OJIP_plot.seek(0)
+                                OJIP_plot_in_memory = base64.b64encode(memory_for_OJIP_plot.getvalue())
+                                OJIP_plot_from_memory = OJIP_plot_in_memory.decode('ascii')
+                                plt.close()
+                                return OJIP_plot_from_memory, memory_for_OJIP_plot
+                            # Call the function to plot OJIP curves
+                            OJIP_plot_from_memory, memory_for_OJIP_plot = plot_all_ojip_curves()
+                            #### CALCULATING TIME #### 
                             OJIP_plottin_time = time.time()  
-                            print("===OJIP_plottin_time: "+str(OJIP_plottin_time - calculation_time))
+                            print("===OJIP_plotting_time: "+str(OJIP_plottin_time - calculation_time))
 
+                            # ===============================
+                            # === PLOT PARAMETERS - BARS ====
+                            # ===============================
+                            # --- Plot Parameter Bar Charts (Subplots 1–30) ---
+                            def plot_all_parameter_bars():
+                                colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number + 1)) # type: ignore 
+                                fig = plt.figure(figsize=(26, 11))
+                                fig.tight_layout()
+                                plt.rcParams['mathtext.default'] = 'regular'
+                                IP_list = pd.DataFrame([IP])
 
-                            ##################################
-                            ### Plot calculated parameters ###
-                            ##################################
-                            # Initialise the subplot function using number of rows and columns 
-                            fig = plt.figure(figsize=(26,11)) 
-                            fig.tight_layout() # Shrink to fit the canvas together with legend 
-                            plt.rcParams['mathtext.default'] = 'regular' # Prevent subscripts in axes titles in italics  
-                            IP_list = pd.DataFrame([IP])# FM to df, needed for legend
-                            # Sub-plot F0 
-                            subplot = fig.add_subplot(5, 8, 1)                  
-                            F0.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("F$_{in}$")
-                            subplot.set_ylabel(y_axis_unit)
-                            # Sub-plot FJ 
-                            subplot = fig.add_subplot(5, 8, 2)                  
-                            FJ.plot.bar(xticks=[], color=colors)
-                            if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
-                                subplot.set_title(f'FJ at {FJ_time} ms')
-                            elif fluorometer == 'Aquapen':
-                                subplot.set_title(f'FJ at {FJ_time/1000} ms')
-                            # Sub-plot FI 
-                            subplot = fig.add_subplot(5, 8, 3) 
-                            FI.plot.bar(xticks=[],color=colors)
-                            if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
-                                subplot.set_title(f'FI at {FI_time} ms')
-                            elif fluorometer == 'Aquapen':
-                                subplot.set_title(f'FI at {FI_time/1000} ms')
-                            # Sub-plot FM 
-                            subplot = fig.add_subplot(5, 8, 4)   
-                            # Prepare the plot
-                            FM.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("F$_{max}$")
-                            # Sub-plot  
-                            subplot = fig.add_subplot(5, 8, 5)                  
-                            OJ.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("A$_{0-J}$")
-                            # Sub-plot  
-                            subplot = fig.add_subplot(5, 8, 6)                  
-                            JI.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("A$_{J-I}$")
-                            # Sub-plot  
-                            subplot = fig.add_subplot(5, 8, 7)  
-                            # Prepare the plot
-                            for i in range(len(IP_list.columns)):
-                                # do not plot time axis
-                                plt.bar(
-                                    IP_list.columns[i], # x-axis data
-                                    IP_list.iloc[:, i], # y-axis data
-                                    label = IP_list.columns[i], # Column names for legend
-                                    color=colors[i],
-                                    width = 0.5 # width of the columns
-                                    )                  
-                            subplot.set_title("A$_{I-P}$")
-                            subplot.margins(x=0.42**len(IP_list.columns)) # space between the axes and the first and last bar
-                            subplot.set_xticks([]) # no X-axis values
-                            subplot.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02)) # legend
-                            # Sub-plot 
-                            subplot = fig.add_subplot(5, 8, 9)                  
-                            VJ.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("V$_{J}$")
-                            subplot.set_ylabel("r.u.")
-                            # Sub-plot VI 
-                            subplot = fig.add_subplot(5, 8, 10)                  
-                            VI.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("V$_{I}$")
-                            # Sub-plot M0 
-                            subplot = fig.add_subplot(5, 8, 11)                  
-                            M0.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("M$_{0}$")
-                            # Sub-plot PSIE0 
-                            subplot = fig.add_subplot(5, 8, 12)                  
-                            PSIE0.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("ψE$_{0}$")
-                            # Sub-plot PSIR0 
-                            subplot = fig.add_subplot(5, 8, 13)                  
-                            PSIR0.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("ψR$_{0}$")
-                            # Sub-plot DELTAR0 
-                            subplot = fig.add_subplot(5, 8, 14)                  
-                            DELTAR0.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("δR$_{0}$")
-                            # Sub-plot PHIP0 
-                            subplot = fig.add_subplot(5, 8, 15)                  
-                            FVFM.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("φP$_{0}$ (F$_{v}$ / F$_{max}$)")
-                            # Sub-plot PHIE0 
-                            subplot = fig.add_subplot(5, 8, 17)                  
-                            PHIE0.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("φE$_{0}$")
-                            subplot.set_ylabel("r.u.")
-                            # Sub-plot PHIR0 
-                            subplot = fig.add_subplot(5, 8, 18)                  
-                            PHIR0.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("φR$_{0}$")
-                            # Sub-plot ABSRC 
-                            subplot = fig.add_subplot(5, 8, 19)                  
-                            ABSRC.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("ABS/RC")
-                            # Sub-plot TR0RC 
-                            subplot = fig.add_subplot(5, 8, 20)                  
-                            TR0RC.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("TR0/RC")
-                            # Sub-plot ET0RC 
-                            subplot = fig.add_subplot(5, 8, 21)                  
-                            ET0RC.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("ET0/RC")
-                            # Sub-plot RE0RC 
-                            subplot = fig.add_subplot(5, 8, 22)                  
-                            RE0RC.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("RE0/RC")
-                            # Sub-plot DI0RC 
-                            subplot = fig.add_subplot(5, 8, 23)                  
-                            DI0RC.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("DI0/RC")
-                            # Sub-plot area above curve O-J 
-                            subplot = fig.add_subplot(5, 8, 25)                  
-                            AREAOJ.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("Area$_{0-J}$")
-                            subplot.set_ylabel("r.u.")
-                            # Sub-plot 
-                            subplot = fig.add_subplot(5, 8, 26)                  
-                            AREAJI.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("Area$_{J-I}$")
-                            # Sub-plot 
-                            subplot = fig.add_subplot(5, 8, 27)                  
-                            AREAIP.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("Area$_{I-P}$")
-                            # Sub-plot 
-                            subplot = fig.add_subplot(5, 8, 28)                  
-                            AREAOP.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("Area$_{(0-P)}$")
-                            # Sub-plot 
-                            subplot = fig.add_subplot(5, 8, 29)                  
-                            SM.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("Normalized area S$_{m}$")
-                            # Sub-plot 
-                            subplot = fig.add_subplot(5, 8, 30)                  
-                            N.plot.bar(xticks=[], color=colors)
-                            subplot.set_title("N (turn-over number Q$_{A}$)") 
-                            # saving scatter plot to memory
-                            memory_for_OJIP_parameters = io.BytesIO()
-                            plt.savefig(memory_for_OJIP_parameters, bbox_inches='tight', format='JPEG')
-                            memory_for_OJIP_parameters.seek(0)
-                            OJIP_parameters_in_memory = base64.b64encode(memory_for_OJIP_parameters.getvalue())
-                            OJIP_parameters_from_memory = OJIP_parameters_in_memory.decode('ascii')
-                            # Clearing the plot
-                            plt.clf()
-                            plt.cla()
-                            plt.close()   
+                                bar_data = [
+                                    (1, F0, "F$_{in}$", y_axis_unit),
+                                    (2, FJ, f"FJ at {FJ_time if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' else FJ_time/1000} ms"),
+                                    (3, FI, f"FI at {FI_time if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' else FI_time/1000} ms"),
+                                    (4, FM, "F$_{max}$"),
+                                    (5, OJ, "A$_{0-J}$"),
+                                    (6, JI, "A$_{J-I}$"),
+                                    (9, VJ, "V$_{J}$", "r.u."),
+                                    (10, VI, "V$_{I}$"),
+                                    (11, M0, "M$_{0}$"),
+                                    (12, PSIE0, "ψE$_{0}$"),
+                                    (13, PSIR0, "ψR$_{0}$"),
+                                    (14, DELTAR0, "δR$_{0}$"),
+                                    (15, FVFM, "φP$_{0}$ (F$_{v}$ / F$_{max}$)"),
+                                    (17, PHIE0, "φE$_{0}$", "r.u."),
+                                    (18, PHIR0, "φR$_{0}$"),
+                                    (19, ABSRC, "ABS/RC"),
+                                    (20, TR0RC, "TR0/RC"),
+                                    (21, ET0RC, "ET0/RC"),
+                                    (22, RE0RC, "RE0/RC"),
+                                    (23, DI0RC, "DI0/RC"),
+                                    (25, AREAOJ, "Area$_{0-J}$", "r.u."),
+                                    (26, AREAJI, "Area$_{J-I}$"),
+                                    (27, AREAIP, "Area$_{I-P}$"),
+                                    (28, AREAOP, "Area$_{(0-P)}$"),
+                                    (29, SM, "Normalized area S$_{m}$"),
+                                    (30, N, "N (turn-over number Q$_{A}$)")
+                                ]
 
-#### CALCULATING TIME ####
+                                for pos, data, title, *ylabel in bar_data:
+                                    ax = fig.add_subplot(5, 8, pos)
+                                    plot_bar_subplot(ax, data, colors, title, ylabel[0] if ylabel else None)
+
+                                # Special bar plot for A$_{I-P}$ (subplot 7)
+                                ax = fig.add_subplot(5, 8, 7)
+                                for i in range(len(IP_list.columns)):
+                                    ax.bar(IP_list.columns[i], IP_list.iloc[:, i], color=colors[i], width=0.5, label=IP_list.columns[i])
+                                ax.set_title("A$_{I-P}$")
+                                ax.margins(x=0.42 ** len(IP_list.columns))
+                                ax.set_xticks([])
+                                ax.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02))
+
+                                memory_for_OJIP_parameters = io.BytesIO()
+                                plt.savefig(memory_for_OJIP_parameters, bbox_inches='tight', format='JPEG')
+                                memory_for_OJIP_parameters.seek(0)
+                                OJIP_parameters_in_memory = base64.b64encode(memory_for_OJIP_parameters.getvalue())
+                                OJIP_parameters_from_memory = OJIP_parameters_in_memory.decode('ascii')
+                                plt.close()
+                                return OJIP_parameters_from_memory, memory_for_OJIP_parameters
+                            # Call the function to plot parameter bars
+                            OJIP_parameters_from_memory, memory_for_OJIP_parameters = plot_all_parameter_bars()
+
+                            #### CALCULATE TIME ####
                             bars_plottin_time = time.time()  
-                            print("===bars_plottin_time: "+str(bars_plottin_time - OJIP_plottin_time))
+                            print("===bars_plotting_time: "+str(bars_plottin_time - OJIP_plottin_time))
 
 
                             #######################
                             ### Export to excel ###
                             #######################
-#                            # Prepare DF with parameters more efficiently by concatenating all columns at once
-#                            OJIP_param_all = pd.concat([
-#                                OJIP_param_all, F0, FK, FJ, FI, FM, OJ, JI, IP, VJ, VI, M0, PSIE0, PSIR0, DELTAR0, 
-#                                FVFM, PHIE0, PHIR0, ABSRC, TR0RC, ET0RC, RE0RC, DI0RC, AREAOJ, AREAJI, AREAIP, AREAOP, 
-#                                SM, N, FJ_TIMES_IDENTIFIED, FI_TIMES_IDENTIFIED, FP_TIMES_IDENTIFIED
-#                            ], axis=1)
-#
-#                            # Name columns once after concatenation
-#                            OJIP_param_all.columns = [
-#                                'Fin', 'FK', 'FJ', 'FI', 'Fmax', 'Amplitude(0-J)', 'Amplitude(J-I)', 'Amplitude(I-P)', 
-#                                'VJ', 'VI', 'M0', 'ψE0', 'ψR0', 'δR0', 'ψP0 (Fv/Fm)', 'φE0', 'φR0', 'ABS/RC', 'TR0/RC', 
-#                                'ET0/RC', 'RE0/RC', 'DI0/RC', 'Complementary area O-J', 'Complementary area J-I', 
-#                                'Complementary area I-P', 'Complementary area (O-P)', 'Normalized complementary area Sm', 
-#                                'N (turn-over number QA)', 'FJ time identified', 'FI time identified', 'FP time identified'
-#                            ]
-#
-#                            # Write all parameters to Excel
-#                            output_path = f'{upload_folder}/{file_name_without_extension}_results.xlsx'
-#                            with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-#                                OJIP_param_all.to_excel(writer, sheet_name='Parameters', index=True)
-#                                Summary_file.to_excel(writer, sheet_name='OJIP_raw', index=False)
-#                                OJIP_shifted_to_zero.to_excel(writer, sheet_name='OJIP_to_zero', index=False)
-#                                OJIP_shifted_to_max.to_excel(writer, sheet_name='OJIP_to_max', index=False)
-#                                OJIP_double_normalized.to_excel(writer, sheet_name='OJIP_norm', index=False)
-#                                Differences_1_DF.to_excel(writer, sheet_name='1st_derivatives', index=False)
-#                                Differences_2_DF.to_excel(writer, sheet_name='2nd_derivatives', index=False)
-#                                Raw_curves_reconstructed_DF.to_excel(writer, sheet_name='OJIP_reconstructed', index=False)
-#                                Residuals_DF.to_excel(writer, sheet_name='Residuals', index=False)
+                            # Optimized: Prepare DF with parameters by concatenating all at once
+                            parameters_to_concat = [
+                                F0, FK, FJ, FI, FM, OJ, JI, IP, VJ, VI, M0, PSIE0, PSIR0, DELTAR0, FVFM, PHIE0, PHIR0,
+                                ABSRC, TR0RC, ET0RC, RE0RC, DI0RC, pd.Series(AREAOJ), pd.Series(AREAJI), pd.Series(AREAIP), pd.Series(AREAOP), # type: ignore
+                                SM, N, FJ_TIMES_IDENTIFIED, FI_TIMES_IDENTIFIED, FP_TIMES_IDENTIFIED]
+                            OJIP_param_all = pd.concat(parameters_to_concat, axis=1)
+                            # Name columns (this part is already efficient)
+                            OJIP_param_all.columns = ['Fin', 'FK', 'FJ', 'FI', 'Fmax', 'Amplitude(0-J)', 'Amplitude(J-I)', 'Amplitude(I-P)', 'VJ', 'VI',
+                                                      'M0', 'ψE0', 'ψR0', 'δR0', 'ψP0 (Fv/Fm)','φE0', 'φR0', 'ABS/RC', 'TR0/RC', 'ET0/RC',
+                                                      'RE0/RC', 'DI0/RC', 'Complementary area O-J', 'Complementary area J-I', 'Complementary area I-P',
+                                                      'Complementary area (O-P)','Normalized complementary area Sm', 'N (turn-over number QA)',
+                                                      'FJ time identified', 'FI time identified', 'FP time identified']
 
+                            # Optimized: Write all dataframes and images in a single ExcelWriter context
+                            excel_file_path = f'{upload_folder}/{file_name_without_extension}_results.xlsx'
 
-                            # prepare DF with parameters
-                            OJIP_param_all = pd.concat([OJIP_param_all, F0], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, FK], axis = 1)       
-                            OJIP_param_all = pd.concat([OJIP_param_all, FJ], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, FI], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, FM], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, OJ], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, JI], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, IP], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, VJ], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, VI], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, M0], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, PSIE0], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, PSIR0], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, DELTAR0], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, FVFM], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, PHIE0], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, PHIR0], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, ABSRC], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, TR0RC], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, ET0RC], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, RE0RC], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, DI0RC], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, AREAOJ], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, AREAJI], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, AREAIP], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, AREAOP], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, SM], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, N], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, FJ_TIMES_IDENTIFIED], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, FI_TIMES_IDENTIFIED], axis = 1)
-                            OJIP_param_all = pd.concat([OJIP_param_all, FP_TIMES_IDENTIFIED], axis = 1)
-                            # name columns
-                            OJIP_param_all.columns = ['Fin', 'FK', 'FJ', 'FI', 'Fmax', 'Amplitude(0-J)', 'Amplitude(J-I)', 'Amplitude(I-P)', 'VJ', 'VI', 
-                                                     'M0', 'ψE0', 'ψR0', 'δR0', 'ψP0 (Fv/Fm)','φE0', 'φR0', 'ABS/RC', 'TR0/RC', 'ET0/RC', 
-                                                     'RE0/RC', 'DI0/RC', 'Complementary area O-J', 'Complementary area J-I', 'Complementary area I-P', 
-                                                     'Complementary area (O-P)','Normalized complementary area Sm', 'N (turn-over number QA)', 
-                                                     'FJ time identified', 'FI time identified', 'FP time identified'] 
-                            # write all parameters to excel
-                            writer = pd.ExcelWriter(f'{upload_folder}/{file_name_without_extension}_results.xlsx', engine='openpyxl')
-                            OJIP_param_all.to_excel(writer, sheet_name = 'Parameters', index=True)
-                            Summary_file.to_excel(writer, sheet_name = 'OJIP_raw', index=False)
-                            OJIP_shifted_to_zero.to_excel(writer, sheet_name = 'OJIP_to_zero', index=False)
-                            OJIP_shifted_to_max.to_excel(writer, sheet_name = 'OJIP_to_max', index=False)
-                            OJIP_double_normalized.to_excel(writer, sheet_name = 'OJIP_norm', index=False)
-                            Differences_1_DF.to_excel(writer, sheet_name = '1st_derivatives', index=False)
-                            Differences_2_DF.to_excel(writer, sheet_name = '2nd_derivatives', index=False)
-                            Raw_curves_reconstructed_DF.to_excel(writer, sheet_name = 'OJIP_reconstructed', index=False)
-                            Residuals_DF.to_excel(writer, sheet_name = 'Residuals', index=False)
-                            writer.close()
-                            # Save images
-                            wb = openpyxl.load_workbook(f'{upload_folder}/{file_name_without_extension}_results.xlsx')
-                            wb.create_sheet(title='Images')
-                            wb.move_sheet('Images', -(len(wb.sheetnames)-1))
-                            ws = wb['Images']
-                            img_curves = Image(memory_for_OJIP_plot)
-                            img_parameters = Image(memory_for_OJIP_parameters)
-                            img_curves.anchor = 'A1'
-                            img_parameters.anchor = 'A47'
-                            ws.add_image(img_curves)
-                            ws.add_image(img_parameters)
-                            wb.save(f'{upload_folder}/{file_name_without_extension}_results.xlsx')
+                            # Use pd.ExcelWriter as a context manager for automatic saving and closing
+                            # The 'with' statement ensures that writer.close() is called automatically, saving all changes (DataFrames and images) to the Excel file.
+                            with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
+                                # Write all dataframes to their respective sheets
+                                OJIP_param_all.to_excel(writer, sheet_name = 'Parameters', index=True)
+                                Summary_file.to_excel(writer, sheet_name = 'OJIP_raw', index=False)
+                                OJIP_shifted_to_zero.to_excel(writer, sheet_name = 'OJIP_to_zero', index=False)
+                                OJIP_shifted_to_max.to_excel(writer, sheet_name = 'OJIP_to_max', index=False)
+                                OJIP_double_normalized.to_excel(writer, sheet_name = 'OJIP_norm', index=False)
+                                Differences_1_DF.to_excel(writer, sheet_name = '1st_derivatives', index=False)
+                                Differences_2_DF.to_excel(writer, sheet_name = '2nd_derivatives', index=False)
+                                Raw_curves_reconstructed_DF.to_excel(writer, sheet_name = 'OJIP_reconstructed', index=False)
+                                Residuals_DF.to_excel(writer, sheet_name = 'Residuals', index=False)
+                                # Access the underlying openpyxl workbook object from the writer
+                                wb = writer.book
+                                # Create the 'Images' sheet and position it (e.g., as the first sheet)
+                                # openpyxl's create_sheet will handle if a sheet with the same title exists by adding a number
+                                # However, for consistency, we can check if it exists and create it at index 0 if not
+                                if 'Images' not in wb.sheetnames:
+                                    ws_images = wb.create_sheet(title='Images', index=0)
+                                else:
+                                    ws_images = wb['Images'] # Get the existing sheet
+                                # Add images to the 'Images' sheet
+                                img_curves = Image(memory_for_OJIP_plot)
+                                img_parameters = Image(memory_for_OJIP_parameters)
+                                img_curves.anchor = 'A1'
+                                img_parameters.anchor = 'A47'
+                                ws_images.add_image(img_curves)
+                                ws_images.add_image(img_parameters)
+                            # Save the Excel file path for rendering in the template
+                            xlsx_file_path = f'uploads/{file_name_without_extension}_results.xlsx'  
 
-                            xlsx_file_path = f'uploads/{file_name_without_extension}_results.xlsx'   
-
-##################### 
                             Excel_saving_time = time.time()  
                             print("===Excel_saving_time: "+str(Excel_saving_time - bars_plottin_time))
-
-
 
                             ######################################
                             ### Delete files older than 20 min ###
@@ -894,13 +758,13 @@ def analyze_OJIP_curves():
                                 if(file_time < current_time - seconds):
                                     os.remove(os.path.join(upload_folder, str(i)).replace("\\","/")) 
                         else:
-                            flash('Please select correct file types for analysis (.csv files for MULTI-COLOR-PAM / DUAL-PAM, .txt files for AquaPen / FluorPen).', category='error')    
+                            flash('Please select correct file types for analysis (.csv files for MULTI-COLOR-PAM / DUAL-PAM, .txt files for AquaPen / FluorPen / FL6000).', category='error')    
                     else:
                         flash(f'Please select up to {max_number_of_files} files.', category='error')                
                 else:
                     flash(f'Please select FJ timing lower than FI timing', category='error')    
         else:
-            flash('Please select .csv (MULTI-COLOR-PAM / DUAL-PAM) or .txt (AquaPen / FluorPen) files.', category='error')
+            flash('Please select .csv (MULTI-COLOR-PAM / DUAL-PAM) or .txt (AquaPen / FluorPen / FL6000) files.', category='error')
         return render_template("OJIP_analysis.html",
                         max_number_of_files = max_number_of_files,
                         OJIP_file_MULTI_COLOR_PAM = OJIP_file_MULTI_COLOR_PAM,

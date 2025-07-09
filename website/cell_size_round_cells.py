@@ -18,6 +18,7 @@ def analyze_cell_size():
             flash('Please enter pixel size', category='error')
         else:
             pixel_size_nm = float(request.form.get('pixel_size')) # type: ignore
+            cell_sizes_final_df = pd.DataFrame()
             ##################
             ### Load image ###
             ##################
@@ -165,8 +166,6 @@ def analyze_cell_size():
                     ################################################
                     # Deleting files + temporary files from server #
                     ################################################
-                    # Clear session
-                    session.pop('coordinates_all_in_session', None)
                     # deleting uploaded images
                     os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
                     os.remove(os.path.join(f'{upload_folder}/{image_name}_plot.jpeg').replace("\\","/"))
@@ -206,6 +205,8 @@ def analyze_cell_size():
                         )
                 else:
                     flash('Please select an image file.', category='error')
+        # Clear session
+        session.pop('coordinates_all_in_session', None)
     return render_template("cell_size_round_cells.html")
 #    else:
 #        flash('Please login', category='error')

@@ -38,7 +38,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <td colspan="3"><i>Technical parameters</i></td>
     </tr>
     <tr>
-        <td>F<sub>in</sub>, F<sub>max</sub></td>
+        <td>F<sub>O</sub>, F<sub>M</sub></td>
         <td></td>
         <td>Initial and maximal fluorescence intensity, respectively</td>
     </tr>
@@ -52,8 +52,8 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
     </tr>
     <tr>
         <td>A<sub>0-J</sub></td>
-        <td>F<sub>J</sub> - F<sub>in</sub></td>
-        <td>Amplitude of fluorescence intensity between F<sub>in</sub> and F<sub>J</sub></td>
+        <td>F<sub>J</sub> - F<sub>O</sub></td>
+        <td>Amplitude of fluorescence intensity between F<sub>O</sub> and F<sub>J</sub></td>
     </tr>
     <tr>
         <td>A<sub>J-I</sub></td>
@@ -63,36 +63,36 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
     <tr>
         <td>A<sub>I-P</sub></td>
         <td>F<sub>P</sub> - F<sub>I</sub></td>
-        <td>Amplitude of fluorescence intensity between F<sub>I</sub> and F<sub>max</sub></td>
+        <td>Amplitude of fluorescence intensity between F<sub>I</sub> and F<sub>M</sub></td>
     </tr>
     <tr>
         <td>V<sub>J</sub></td>
-        <td>V<sub>J</sub> = (F<sub>J</sub> – F<sub>in</sub>) / (F<sub>max</sub> – F<sub>in</sub>)</td>
+        <td>V<sub>J</sub> = (F<sub>J</sub> – F<sub>O</sub>) / (F<sub>M</sub> – F<sub>O</sub>)</td>
         <td>Relative variable fluorescence at time of the J point, related to the redox state of the PQ pool</td>
     </tr>
     <tr>
         <td>V<sub>I</sub></td>
-        <td>V<sub>I</sub> = (F<sub>I</sub> – F<sub>in</sub>) / (F<sub>max</sub> – F<sub>in</sub>)</td>
+        <td>V<sub>I</sub> = (F<sub>I</sub> – F<sub>O</sub>) / (F<sub>M</sub> – F<sub>O</sub>)</td>
         <td>Relative variable fluorescence at time of the I point</td>
     </tr>
     <tr>
         <td>M<sub>0</sub>
-        <td>4(F<sub>0.3 ms</sub> - F<sub>0.05 ms</sub>) / (F<sub>max</sub> – F<sub>in</sub>)</td>
+        <td>4(F<sub>0.3 ms</sub> - F<sub>0.05 ms</sub>) / (F<sub>M</sub> – F<sub>O</sub>)</td>
         <td>Initial slope (in ms<sup>–1</sup>) of the O-J fluorescence rise</td>
     </tr>
     <tr>
         <td>Area<sub>0-J</sub></td>
-        <td>Complementary area above F<sub>0</sub>-F<sub>J</sub></td>
+        <td>Complementary area above the F<sub>O</sub>-F<sub>J</sub> interval</td>
         <td></td>
     </tr>
     <tr>
         <td>Area<sub>J-I</sub></td>
-        <td>Complementary area above F<sub>J</sub>-F<sub>I</sub></td>
+        <td>Complementary area above the F<sub>J</sub>-F<sub>I</sub> interval</td>
         <td></td>
     </tr>
     <tr>
         <td>Area<sub>I-P</sub></td>
-        <td>Complementary area above F<sub>I</sub>-F<sub>P</sub></td>
+        <td>Complementary area above the F<sub>I</sub>-F<sub>P</sub> interval</td>
         <td></td>
     </tr>
     <tr>
@@ -102,7 +102,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
     </tr>
     <tr>
         <td>S<sub>m</sub></td>
-        <td>Area / (F<sub>max</sub> – F<sub>in</sub>)</td>
+        <td>Area / (F<sub>M</sub> – F<sub>O</sub>)</td>
         <td>Proportional to the number of e<sup>-</sup> acceptors of the PSET</td>
     </tr>
     <tr>
@@ -129,7 +129,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
     </tr>
     <tr>
         <td>φP<sub>0</sub></td>
-        <td>(F<sub>max</sub> - F<sub>in</sub>) / F<sub>max</sub></td>
+        <td>(F<sub>M</sub> - F<sub>O</sub>) / F<sub>M</sub></td>
         <td>Maximum quantum yield of primary PSII photochemistry</td>
     </tr>
     <tr>
@@ -179,9 +179,9 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <td>Turn-over number Q<sub>A</sub></td>
     </tr>
 </table>
-<br>
-<b style="font-size:70%"><i>References:</i></b>
 <p style="line-height: 0.9">
+    <b style="font-size:70%"><i>References:</i></b>
+    <br>
     <i style="font-size:70%">Tsimilli-Michael, M. (2020):
         Photosynthetica, 58(SPECIAL ISSUE), 275-292. DOI:
         <a href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" target="_blank">10.32615/ps.2019.150</a></i>
@@ -215,8 +215,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
 </ol>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves', _anchor='results') }}">
-    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by MULTI-COLOR-PAM / DUAL-PAM 
-    or AquaPen / FluorPen fluorometers, respecitvely:</i>
+    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by the following fluorometers:</i>
     <div class="gallery_6_img">
         <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">
             <i style="font-size:80%">MULTI-COLOR-PAM</i>
@@ -234,13 +233,18 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
             <i style="font-size:80%">FluorPen</i>
             <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__item--4">
         </a>
+        <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" class="gallery__item--5">
+            <i style="font-size:80%">FL 6000</i>
+            <img src="static/images/FL6000.jpg" alt="FL6000" class="gallery__item--5">
+        </a>    
     </div>
     </p>
     <div class="form-group">
         <label for="fluorometer"><p><b>1. Select fluorometer</b></p></label>
-            <select name="fluorometer" class="form-control" type="text" style="width:100%">
-                <option selected="MULTI-COLOR-PAM">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
+            <select name="fluorometer" id="fluorometer" class="form-control" type="text" style="width:100%">
+                <option value="MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
                 <option value="Aquapen">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
+                <option value="FL6000">Fluorometer FL 6000 (Photon Systems Instruments spol. s r.o.)</option>
             </select>
     </div>
     <p style="font-size:80%"><i><b>Imporant notice:</b>
@@ -250,8 +254,8 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
         For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
         This will also allow to export reduced data to the summary .xlsx file for further processing. Reduced OJIP curves will contain about two thousand data points
-        (data between F<sub>0</sub> and F<sub>I</sub> are unabridged).
-        <br>If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen, data reduction is not necessary.
+        (data between F<sub>O</sub> and F<sub>I</sub> are unabridged).
+        <br>If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen and FL 6000, data reduction is not necessary.
         </i>
     </p>
     <div class="form-check">

@@ -139,7 +139,7 @@ def analyze_cell_size_filament():
                     plt.xlabel("Cell diameter (μm)")
                     plt.ylabel("Count")
                     # calculating histogram to get the y-axis range
-                    counts, bin_edges = np.histogram(cell_sizes_final_df[cell_sizes_final_df.columns[-1]])
+                    counts, bin_edges = np.histogram(cell_sizes_final_df[cell_sizes_final_df.columns])
                     plt.yticks(np.arange(0,(max(counts)+1),1))
                     # saving histogram to memory
                     memory_for_histogram = io.BytesIO()
