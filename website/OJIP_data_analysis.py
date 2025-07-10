@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import openpyxl
 from openpyxl.drawing.image import Image
 from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline
-from scipy.ndimage import gaussian_filter1d         
+from scipy.ndimage import gaussian_filter1d
+from sqlalchemy import Result         
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
 import time
@@ -20,9 +21,11 @@ def analyze_OJIP_curves():
         max_number_of_files = 50
         OJIP_file_MULTI_COLOR_PAM = OJIP_file_Aquapen = Summary_file = OJIP_param_all = pd.DataFrame()
         raw_curves_reconstructed = differences_1 = differences_2 = pd.DataFrame()
-        Raw_curves_reconstructed_DF = Residuals_DF = Differences_1_DF = Differences_2_DF = pd.DataFrame()
+        Raw_curves_reconstructed_DF = Residuals_DF = Differences_1_DF = Differences_2_DF = Inflection_times_DF = pd.DataFrame()
         Area_above_curve_temp_O_J = Area_above_curve_temp_J_I = Area_above_curve_temp_I_P = Area_above_curve_temp_O_P = pd.DataFrame()
-        AREAOJ = AREAJI = AREAIP = AREAOP = FJ_TIMES_IDENTIFIED = FI_TIMES_IDENTIFIED = FP_TIMES_IDENTIFIED = FJ = FI = pd.Series()      
+        AREAOJ = AREAJI = AREAIP = AREAOP = FJ = FI = pd.Series()      
+        FJ_TIMES_IDENTIFIED_DERIV = FI_TIMES_IDENTIFIED_DERIV = FP_TIMES_IDENTIFIED_DERIV = pd.Series()      
+        FJ_TIMES_IDENTIFIED_INFLECTION = FI_TIMES_IDENTIFIED_INFLECTION = FP_TIMES_IDENTIFIED_INFLECTION = pd.Series() 
         ALLOWED_EXTENSIONS_MULTI_COLOR_PAM = set(['.csv', '.CSV'])
         ALLOWED_EXTENSIONS_AQUAPEN = ALLOWED_EXTENSIONS_FL6000 = set(['.txt']) 
         files_extensions = set()
@@ -70,9 +73,9 @@ def analyze_OJIP_curves():
                         x_axis_unit = "Time (ms)"
                         y_axis_unit = "Fluorescence intensity (V)"
                         FJ_time_min = 0.1  # (float(str(request.form.get('FJ_time_min')))) 
-                        FJ_time_max = 50   # (float(str(request.form.get('FJ_time_max')))) 
+                        FJ_time_max = 10   # (float(str(request.form.get('FJ_time_max')))) 
                         FI_time_min = 10   # (float(str(request.form.get('FI_time_min')))) 
-                        FI_time_max = 500  # (float(str(request.form.get('FI_time_max')))) 
+                        FI_time_max = 100  # (float(str(request.form.get('FI_time_max')))) 
                         FP_time_min = 100  # (float(str(request.form.get('FP_time_min')))) 
                         FP_time_max = 1000 # (float(str(request.form.get('FP_time_max')))) 
                         xmin_for_plot = 10**-2
@@ -81,9 +84,9 @@ def analyze_OJIP_curves():
                         x_axis_unit = "Time (μs)"
                         y_axis_unit = "Fluorescence intensity (a.u.)"
                         FJ_time_min = 0.1 * 1000  # (float(str(request.form.get('FJ_time_min')))) 
-                        FJ_time_max = 50 * 1000   # (float(str(request.form.get('FJ_time_max')))) 
+                        FJ_time_max = 10 * 1000   # (float(str(request.form.get('FJ_time_max')))) 
                         FI_time_min = 10 * 1000   # (float(str(request.form.get('FI_time_min')))) 
-                        FI_time_max = 500 * 1000  # (float(str(request.form.get('FI_time_max')))) 
+                        FI_time_max = 100 * 1000  # (float(str(request.form.get('FI_time_max')))) 
                         FP_time_min = 100 * 1000  # (float(str(request.form.get('FP_time_min')))) 
                         FP_time_max = 1000 * 1000 # (float(str(request.form.get('FP_time_max')))) 
                     elif fluorometer == 'FL6000':
@@ -91,9 +94,9 @@ def analyze_OJIP_curves():
                         x_axis_unit = "Time (s)"
                         y_axis_unit = "Fluorescence intensity (a.u.)"
                         FJ_time_min = 0.1 / 1000  # (float(str(request.form.get('FJ_time_min')))) 
-                        FJ_time_max = 50 / 1000   # (float(str(request.form.get('FJ_time_max')))) 
+                        FJ_time_max = 10 / 1000   # (float(str(request.form.get('FJ_time_max')))) 
                         FI_time_min = 10 / 1000   # (float(str(request.form.get('FI_time_min')))) 
-                        FI_time_max = 500 / 1000  # (float(str(request.form.get('FI_time_max')))) 
+                        FI_time_max = 100 / 1000  # (float(str(request.form.get('FI_time_max')))) 
                         FP_time_min = 100 / 1000  # (float(str(request.form.get('FP_time_min')))) 
                         FP_time_max = 1000 / 1000 # (float(str(request.form.get('FP_time_max'))))                         
                         xmin_for_plot = 10**-5
@@ -297,9 +300,9 @@ def analyze_OJIP_curves():
                             # merge the normalized DF with time 
                             OJIP_double_normalized = pd.concat([Summary_file.iloc[:, 0], OJIP_double_normalized], axis = 1) 
 
-                            ##############################    
-                            ### Get derivatives and R2 ###
-                            ##############################
+                            #################################################    
+                            ### Get derivatives, inflection points and R2 ###
+                            #################################################
                             # Make x-axis logarithmic and without gaps (important for AquaPen)
                             time_axis_logarthmic = pd.DataFrame(np.geomspace(start=Summary_file.iloc[1,0], stop=Summary_file.iloc[-1,0], num=len(Summary_file))) # type: ignore
                             # Fit the OJIP curves
@@ -314,21 +317,31 @@ def analyze_OJIP_curves():
                                     differences_1 = pd.DataFrame(gaussian_filter1d(np.gradient(raw_curves_reconstructed.iloc[:,0]), 20))
                                     # Calculate 2nd drivative from 1st derivative
                                     differences_2 = pd.DataFrame(gaussian_filter1d(np.gradient(differences_1.iloc[:,0]), 20))
+                                    # Calculate inflection points of the second derivative
+                                    zero_crossings = np.where(np.diff(np.sign(differences_2.iloc[:,0])))[0]
+                                    Inflection_times = pd.Series(time_axis_logarthmic.iloc[zero_crossings, 0]).reset_index(drop=True)
                                     # Append derivatives to DF
                                     Differences_1_DF = pd.concat([Differences_1_DF, differences_1], axis = 1)
                                     Differences_2_DF = pd.concat([Differences_2_DF, differences_2], axis = 1)
                                     Raw_curves_reconstructed_DF = pd.concat([Raw_curves_reconstructed_DF, raw_curves_reconstructed], axis = 1)
-                            # Append time
+                                    # Append inflection points to DF
+                                    if i == 1:
+                                        Inflection_times_DF[file_name_without_extension] = Inflection_times
+                                    else:
+                                        Inflection_times_DF = pd.concat([Inflection_times_DF, Inflection_times], axis = 1)
+                                # Append time
                             Differences_1_DF = pd.concat([time_axis_logarthmic.iloc[:, 0], Differences_1_DF], axis = 1)
                             Differences_2_DF = pd.concat([time_axis_logarthmic.iloc[:, 0], Differences_2_DF], axis = 1)
                             Raw_curves_reconstructed_DF = pd.concat([time_axis_logarthmic.iloc[:, 0], Raw_curves_reconstructed_DF], axis = 1)
                             # Rename columns
                             Differences_1_DF.columns = Summary_file.columns.values
                             Differences_2_DF.columns = Summary_file.columns.values
-                            Raw_curves_reconstructed_DF.columns = Summary_file.columns.values                            
+                            Raw_curves_reconstructed_DF.columns = Summary_file.columns.values 
+                            Inflection_times_DF.columns = Summary_file.columns[1:].values                     
                             #####################    
                             ### Get residuals ###
                             #####################
+                            Residuals_DF = pd.DataFrame() # A safety check - Residuals_DF contained some data, for some yet uknown reasons
                             for i in range(len(OJIP_double_normalized.columns)):
                                 if i > 0: # exclude time axis
                                     # interpolate the reconstructed curves (log x-axis) based on measured x-axis
@@ -341,18 +354,6 @@ def analyze_OJIP_curves():
                             # Append time and rename columns
                             Residuals_DF = pd.concat([OJIP_double_normalized.iloc[:, 0], Residuals_DF], axis = 1)
                             Residuals_DF.columns = Summary_file.columns.values
-                            ###############################
-                            #### GET INFLECTION POINTS #### 
-                            ###############################
- 
-
-
-################################################         
-################################################
-#### SELECT FJ AS EITHER MIN, OR INFLECTION #### 
-################################################
-################################################        
-                            
                             ################################    
                             ### Find FJ, FI and FP times ###
                             ################################
@@ -362,40 +363,57 @@ def analyze_OJIP_curves():
                             FI_found_index_low = Differences_2_DF[x_axis_time].sub(FI_time_min).abs().idxmin()
                             FI_found_index_high = Differences_2_DF[x_axis_time].sub(FI_time_max).abs().idxmin()
                             FP_found_index_low = Differences_2_DF[x_axis_time].sub(FP_time_min).abs().idxmin()
-                            FP_found_index_high = Differences_2_DF[x_axis_time].sub(FP_time_max).abs().idxmin()
-                            # Find FJ, FI, FP + append to pd.series
+                            FP_found_index_high = Differences_2_DF[x_axis_time].sub(FP_time_max).abs().idxmin() 
+                            ### Find min of 2nd deriv of fluo signal before FJ, FI, FP + append to pd.series ###
                             for i in range(len(Differences_2_DF.columns)):
                                 if i > 0: # exclude time axis
-                                    FJ_found = Differences_2_DF.iloc[:,i].loc[FJ_found_index_low: FJ_found_index_high].min()
-                                    idx_FJ = Differences_2_DF.iloc[:,i].sub(FJ_found).abs().idxmin()
-                                    if pd.isna(idx_FJ):
+                                    Min_2nd_deriv_pre_FJ = Differences_2_DF.iloc[:,i].loc[FJ_found_index_low: FJ_found_index_high].min()
+                                    Index_min_2nd_deriv_pre_FJ = Differences_2_DF.iloc[:,i].sub(Min_2nd_deriv_pre_FJ).abs().idxmin()
+                                    if pd.isna(Index_min_2nd_deriv_pre_FJ):
                                         flash('There seems to be a problem with the uploaded data. Please check data integrity before re-uploading the files.', category='error')
                                         return redirect(request.url) 
-                                    FI_found = Differences_2_DF.iloc[:,i].loc[FI_found_index_low: FI_found_index_high].min()
-                                    idx_FI = Differences_2_DF.iloc[:,i].sub(FI_found).abs().idxmin()
-                                    if pd.isna(idx_FI):
+                                    Min_2nd_deriv_pre_FI = Differences_2_DF.iloc[:,i].loc[FI_found_index_low: FI_found_index_high].min()
+                                    Index_min_2nd_deriv_pre_FI = Differences_2_DF.iloc[:,i].sub(Min_2nd_deriv_pre_FI).abs().idxmin()
+                                    if pd.isna(Index_min_2nd_deriv_pre_FI):
                                         flash('There seems to be a problem with the uploaded data. Please check data integrity before re-uploading the files.', category='error')
                                         return redirect(request.url)  
-                                    FP_found = Differences_2_DF.iloc[:,i].loc[FP_found_index_low: FP_found_index_high].min()
-                                    idx_FP = Differences_2_DF.iloc[:,i].sub(FP_found).abs().idxmin()
-                                    if pd.isna(idx_FP):
+                                    Min_2nd_deriv_pre_FP = Differences_2_DF.iloc[:,i].loc[FP_found_index_low: FP_found_index_high].min()
+                                    Index_min_2nd_deriv_pre_FP = Differences_2_DF.iloc[:,i].sub(Min_2nd_deriv_pre_FP).abs().idxmin()
+                                    if pd.isna(Index_min_2nd_deriv_pre_FP):
                                         flash('There seems to be a problem with the uploaded data. Please check data integrity before re-uploading the files.', category='error')
                                         return redirect(request.url)  
-                                    FP_found = Differences_2_DF.iloc[:,i].loc[FP_found_index_low: FP_found_index_high].min()
-                                    FJ_found_index = int(idx_FJ)
-                                    FI_found_index = int(idx_FI)
-                                    FP_found_index = int(idx_FP)
+                                    # Get indexes of min of 2nd deriv of fluo signal before FJ, FI, FP
+                                    FJ_found_index = int(Index_min_2nd_deriv_pre_FJ)
+                                    FI_found_index = int(Index_min_2nd_deriv_pre_FI)
+                                    FP_found_index = int(Index_min_2nd_deriv_pre_FP)
                                     FJ_found_time = Differences_2_DF[x_axis_time].iloc[FJ_found_index]
                                     FI_found_time = Differences_2_DF[x_axis_time].iloc[FI_found_index]
                                     FP_found_time = Differences_2_DF[x_axis_time].iloc[FP_found_index]
                                     # Append to pd.Series
-                                    FJ_TIMES_IDENTIFIED = pd.concat([FJ_TIMES_IDENTIFIED, pd.Series(FJ_found_time)], axis=0)
-                                    FI_TIMES_IDENTIFIED = pd.concat([FI_TIMES_IDENTIFIED, pd.Series(FI_found_time)], axis=0)
-                                    FP_TIMES_IDENTIFIED = pd.concat([FP_TIMES_IDENTIFIED, pd.Series(FP_found_time)], axis=0)
+                                    FJ_TIMES_IDENTIFIED_DERIV = pd.concat([FJ_TIMES_IDENTIFIED_DERIV, pd.Series(FJ_found_time)], axis=0)
+                                    FI_TIMES_IDENTIFIED_DERIV = pd.concat([FI_TIMES_IDENTIFIED_DERIV, pd.Series(FI_found_time)], axis=0)
+                                    FP_TIMES_IDENTIFIED_DERIV = pd.concat([FP_TIMES_IDENTIFIED_DERIV, pd.Series(FP_found_time)], axis=0)
                             # Rename
-                            FJ_TIMES_IDENTIFIED.index = F0.index
-                            FI_TIMES_IDENTIFIED.index = F0.index   
-                            FP_TIMES_IDENTIFIED.index = F0.index          
+                            FJ_TIMES_IDENTIFIED_DERIV.index = F0.index
+                            FI_TIMES_IDENTIFIED_DERIV.index = F0.index   
+                            FP_TIMES_IDENTIFIED_DERIV.index = F0.index    
+                            # Find closest higher values = FJ, FI, FP inflection points
+                            Inflection_points_FJ = {
+                                col: Inflection_times_DF[col][Inflection_times_DF[col] > val].min()
+                                for col, val in FJ_TIMES_IDENTIFIED_DERIV.items()
+                            }   
+                            Inflection_points_FI = {
+                                col: Inflection_times_DF[col][Inflection_times_DF[col] > val].min()
+                                for col, val in FI_TIMES_IDENTIFIED_DERIV.items()
+                            }    
+                            Inflection_points_FP = {
+                                col: Inflection_times_DF[col][Inflection_times_DF[col] > val].min()
+                                for col, val in FP_TIMES_IDENTIFIED_DERIV.items()
+                            }                       
+                            FJ_TIMES_IDENTIFIED_INFLECTION = pd.Series(Inflection_points_FJ)
+                            FI_TIMES_IDENTIFIED_INFLECTION = pd.Series(Inflection_points_FI)
+                            FP_TIMES_IDENTIFIED_INFLECTION = pd.Series(Inflection_points_FP)
+
                             ############################
                             ### Calculate parameters ###
                             ############################
@@ -477,10 +495,10 @@ def analyze_OJIP_curves():
                                         Fm = (Summary_file.iloc[F_50_ms_index:, i]).max()
                                         Fm_index = Summary_file.iloc[F_50_ms_index:,i].sub(Fm).abs().idxmin()
                                     # find areas below curve
-                                    area_below_curve_O_J = np.trapezoid(Summary_file.iloc[:FJ_index, i], Summary_file.iloc[:FJ_index, 0]) # (y, x)
-                                    area_below_curve_J_I = np.trapezoid(Summary_file.iloc[FJ_index:FI_index, i], Summary_file.iloc[FJ_index:FI_index, 0]) # (y, x)                                
-                                    area_below_curve_I_P = np.trapezoid(Summary_file.iloc[FI_index:Fm_index, i], Summary_file.iloc[FI_index:Fm_index, 0]) # (y, x) 
-                                    area_below_curve_O_P = np.trapezoid(Summary_file.iloc[:Fm_index, i], Summary_file.iloc[:Fm_index, 0]) # (y, x)
+                                    area_below_curve_O_J = np.trapz(Summary_file.iloc[:FJ_index, i], Summary_file.iloc[:FJ_index, 0]) # (y, x)
+                                    area_below_curve_J_I = np.trapz(Summary_file.iloc[FJ_index:FI_index, i], Summary_file.iloc[FJ_index:FI_index, 0]) # (y, x)                                
+                                    area_below_curve_I_P = np.trapz(Summary_file.iloc[FI_index:Fm_index, i], Summary_file.iloc[FI_index:Fm_index, 0]) # (y, x) 
+                                    area_below_curve_O_P = np.trapz(Summary_file.iloc[:Fm_index, i], Summary_file.iloc[:Fm_index, 0]) # (y, x)
                                     # find total areas below + above curve
                                     total_area_O_J = max(Summary_file.iloc[:FJ_index, 0]) * max(Summary_file.iloc[:Fm_index, i])
                                     total_area_J_I = (max(Summary_file.iloc[FJ_index:FI_index, 0]) - min(Summary_file.iloc[FJ_index:FI_index, 0])) * max(Summary_file.iloc[:Fm_index, i])
@@ -535,7 +553,14 @@ def analyze_OJIP_curves():
                                 ax.set_xlabel(x_label)
                                 ax.set_ylabel(y_label)
 
-                            def plot_vertical_lines(ax, times, colors, linestyle=':', linewidth=1.5, label_first=None):
+                            def plot_vertical_lines(ax, times, colors, linestyle=':', linewidth=1, label_first=None):
+                                for i, t in enumerate(times):
+                                    kwargs = dict(x=t, color=colors[i], ls=linestyle, lw=linewidth)
+                                    if i == 0 and label_first:
+                                        kwargs['label'] = label_first
+                                    ax.axvline(**kwargs)
+                            
+                            def plot_vertical_lines_inflections(ax, times, colors, linestyle='-.', linewidth=1, label_first=None):
                                 for i, t in enumerate(times):
                                     kwargs = dict(x=t, color=colors[i], ls=linestyle, lw=linewidth)
                                     if i == 0 and label_first:
@@ -543,6 +568,8 @@ def analyze_OJIP_curves():
                                     ax.axvline(**kwargs)
 
                             def plot_bar_subplot(ax, df_or_series, colors, title, ylabel=None, legend=False):
+                                if isinstance(df_or_series, (float, np.floating, int, np.integer)):
+                                    df_or_series = pd.Series([df_or_series])
                                 df_or_series.plot.bar(ax=ax, xticks=[], color=colors)
                                 ax.set_title(title)
                                 if ylabel:
@@ -561,16 +588,8 @@ def analyze_OJIP_curves():
                                 fig.tight_layout()
                                 fig.subplots_adjust(hspace=0.6, wspace=0.3)
                                 plt.rcParams['mathtext.default'] = 'regular'
-                                # For FL6000, always use 'time' as x-axis and ensure all y columns are float
-                                plot_df = Summary_file.copy()
-                                if fluorometer == 'FL6000':
-                                    plot_df.rename(columns={plot_df.columns[0]: 'time'}, inplace=True)
-                                    for col in plot_df.columns[1:]:
-                                        plot_df[col] = pd.to_numeric(plot_df[col], errors='coerce')
-                                    plot_df = plot_df.dropna(subset=['time'])
-                                else:
-                                    plot_df = Summary_file
-                                plot_dataframe_subplot(fig.add_subplot(4, 4, 1), plot_df, colors, "OJIP curves: raw data", x_axis_unit, y_axis_unit)
+                                # Plot raw data (subplot 1)
+                                plot_dataframe_subplot(fig.add_subplot(4, 4, 1), Summary_file, colors, "OJIP curves: raw data", x_axis_unit, y_axis_unit)
                                 # Shifted to zero (subplot 2)
                                 plot_dataframe_subplot(fig.add_subplot(4, 4, 2), OJIP_shifted_to_zero, colors, "OJIP curves: shifted to zero", x_axis_unit, y_axis_unit, ylim=(0, None))
                                 # Shifted to Fm (subplot 3)
@@ -578,33 +597,36 @@ def analyze_OJIP_curves():
                                                        ylim=(0, None) if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' else (None, None))
                                 # Double normalized (subplot 5)
                                 plot_dataframe_subplot(fig.add_subplot(4, 4, 5), OJIP_double_normalized, colors, "OJIP curves: double normalized", x_axis_unit, "Fluorescence intensity (r.u.)",
-                                                       ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '-.', 'lw': 1}), (FI_time, {'color': '0', 'ls': '-.', 'lw': 1})])
+                                                       ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '--', 'lw': 1}), (FI_time, {'color': '0', 'ls': '--', 'lw': 1})])
                                 # Reconstructed curves (subplot 6)
                                 plot_dataframe_subplot(fig.add_subplot(4, 4, 6), Raw_curves_reconstructed_DF, colors, "Reconstructed curves (double normalized)", x_axis_unit, "Fluorescence intensity (r.u.)",
-                                                       ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '-.', 'lw': 1}), (FI_time, {'color': '0', 'ls': '-.', 'lw': 1})])
+                                                       ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '--', 'lw': 1}), (FI_time, {'color': '0', 'ls': '--', 'lw': 1})])
                                 # Residuals (subplot 7)
                                 plot_dataframe_subplot(fig.add_subplot(4, 4, 7), Residuals_DF, colors, "Residuals of the reconstructed curves", f"{x_axis_unit} - lin", "Residuals (r.u.)", x_log=False)
                                 # 2nd derivative + FJ (subplot 9)
                                 ax = fig.add_subplot(4, 4, 9)
                                 plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{J}$ timing", x_axis_unit, "2$^{nd}$ derivative")
-                                ax.axvline(x=FJ_time, color='0', ls='-.', lw=2, label='FJ time selected (used for calculations)')
-                                plot_vertical_lines(ax, FJ_TIMES_IDENTIFIED, colors)
+                                ax.axvline(x=FJ_time, color='0', ls='--', lw=1, label='FJ time selected (used for calculations)')
+                                plot_vertical_lines(ax, FJ_TIMES_IDENTIFIED_DERIV, colors)
+                                plot_vertical_lines_inflections(ax, FJ_TIMES_IDENTIFIED_INFLECTION, colors)
                                 # 2nd derivative + FI (subplot 10)
                                 ax = fig.add_subplot(4, 4, 10)
                                 plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{I}$ timing", x_axis_unit, "2$^{nd}$ derivative")
-                                ax.axvline(x=FI_time, color='0.2', ls='-.', lw=2, label='F$_{J}$ / F$_{I}$ times used for calculations (selected by user)')
-                                plot_vertical_lines(ax, FI_TIMES_IDENTIFIED, colors, label_first='F$_{J}$ / F$_{I}$ / F$_{P}$ times identified (used only for visualization)')
+                                ax.axvline(x=FI_time, color='0.2', ls='--', lw=1, label='F$_{J}$/F$_{I}$ times used for calculations (selected by user)')
+                                plot_vertical_lines_inflections(ax, FI_TIMES_IDENTIFIED_INFLECTION, colors, label_first=' Identified F$_{J}$/F$_{I}$/F$_{P}$ times (inflection points)')
+                                plot_vertical_lines(ax, FI_TIMES_IDENTIFIED_DERIV, colors, label_first=' Min of 2nd Deriv of Fluo Signal Pre-F$_{J}$/F$_{I}$/F$_{P}$')
                                 ax.legend(loc='upper left', bbox_to_anchor=(2.38, 4.28))
                                 # 2nd derivative + FP (subplot 11)
                                 ax = fig.add_subplot(4, 4, 11)
                                 plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{P}$ timing", x_axis_unit, "2$^{nd}$ derivative")
-                                plot_vertical_lines(ax, FP_TIMES_IDENTIFIED, colors)
+                                plot_vertical_lines(ax, FP_TIMES_IDENTIFIED_DERIV, colors)
+                                plot_vertical_lines_inflections(ax, FP_TIMES_IDENTIFIED_INFLECTION, colors)
                                 # FJ bar plot (subplot 13)
-                                plot_bar_subplot(fig.add_subplot(4, 4, 13), FJ_TIMES_IDENTIFIED, colors, "F$_{J}$ times identified (only for visualization)", x_axis_unit)
+                                plot_bar_subplot(fig.add_subplot(4, 4, 13), FJ_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{J}$ times identified (only for visualization)", x_axis_unit)
                                 # FI bar plot (subplot 14)
-                                plot_bar_subplot(fig.add_subplot(4, 4, 14), FI_TIMES_IDENTIFIED, colors, "F$_{I}$ times identified (only for visualization)")
+                                plot_bar_subplot(fig.add_subplot(4, 4, 14), FI_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{I}$ times identified (only for visualization)")
                                 # FP bar plot (subplot 15)
-                                plot_bar_subplot(fig.add_subplot(4, 4, 15), FP_TIMES_IDENTIFIED, colors, "F$_{P}$ times identified (only for visualization)")
+                                plot_bar_subplot(fig.add_subplot(4, 4, 15), FP_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{P}$ times identified (only for visualization)")
 
                                 memory_for_OJIP_plot = io.BytesIO()
                                 plt.savefig(memory_for_OJIP_plot, bbox_inches='tight', format='JPEG')
@@ -632,8 +654,8 @@ def analyze_OJIP_curves():
 
                                 bar_data = [
                                     (1, F0, "F$_{in}$", y_axis_unit),
-                                    (2, FJ, f"FJ at {FJ_time if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' else FJ_time/1000} ms"),
-                                    (3, FI, f"FI at {FI_time if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' else FI_time/1000} ms"),
+                                    (2, FJ, f"FJ at {(str(request.form.get('FJ_time')))} ms"),
+                                    (3, FI, f"FI at {(str(request.form.get('FI_time')))} ms"),
                                     (4, FM, "F$_{max}$"),
                                     (5, OJ, "A$_{0-J}$"),
                                     (6, JI, "A$_{J-I}$"),
@@ -686,7 +708,6 @@ def analyze_OJIP_curves():
                             bars_plottin_time = time.time()  
                             print("===bars_plotting_time: "+str(bars_plottin_time - OJIP_plottin_time))
 
-
                             #######################
                             ### Export to excel ###
                             #######################
@@ -694,14 +715,15 @@ def analyze_OJIP_curves():
                             parameters_to_concat = [
                                 F0, FK, FJ, FI, FM, OJ, JI, IP, VJ, VI, M0, PSIE0, PSIR0, DELTAR0, FVFM, PHIE0, PHIR0,
                                 ABSRC, TR0RC, ET0RC, RE0RC, DI0RC, pd.Series(AREAOJ), pd.Series(AREAJI), pd.Series(AREAIP), pd.Series(AREAOP), # type: ignore
-                                SM, N, FJ_TIMES_IDENTIFIED, FI_TIMES_IDENTIFIED, FP_TIMES_IDENTIFIED]
+                                SM, N, FJ_TIMES_IDENTIFIED_INFLECTION, FI_TIMES_IDENTIFIED_INFLECTION, FP_TIMES_IDENTIFIED_INFLECTION,
+                                FJ_TIMES_IDENTIFIED_DERIV, FI_TIMES_IDENTIFIED_DERIV, FP_TIMES_IDENTIFIED_DERIV]
                             OJIP_param_all = pd.concat(parameters_to_concat, axis=1)
                             # Name columns (this part is already efficient)
                             OJIP_param_all.columns = ['Fin', 'FK', 'FJ', 'FI', 'Fmax', 'Amplitude(0-J)', 'Amplitude(J-I)', 'Amplitude(I-P)', 'VJ', 'VI',
                                                       'M0', 'ψE0', 'ψR0', 'δR0', 'ψP0 (Fv/Fm)','φE0', 'φR0', 'ABS/RC', 'TR0/RC', 'ET0/RC',
                                                       'RE0/RC', 'DI0/RC', 'Complementary area O-J', 'Complementary area J-I', 'Complementary area I-P',
                                                       'Complementary area (O-P)','Normalized complementary area Sm', 'N (turn-over number QA)',
-                                                      'FJ time identified', 'FI time identified', 'FP time identified']
+                                                      'Time FJ', 'Time FI', 'Time FP', 'Time Min 2nd Deriv Pre-FJ', 'Time Min 2nd Deriv Pre-FI', 'Time Min 2nd Deriv Pre-FP']
 
                             # Optimized: Write all dataframes and images in a single ExcelWriter context
                             excel_file_path = f'{upload_folder}/{file_name_without_extension}_results.xlsx'
