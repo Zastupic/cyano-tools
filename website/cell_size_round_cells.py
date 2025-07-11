@@ -121,9 +121,9 @@ def analyze_cell_size():
                                 cv2.line(img_orig_copy, ((a-cell_radius_incremented), b), ((a+cell_radius_incremented), b), (255, 0, 0), 2) # type: ignore
                                 # Store the results for all cells
                                 cell_sizes_final.append((i, cell_diameter_um)) 
-                        ####################################
-                        ### Save pixel profiles to excel ###
-                        ####################################
+                        ###########################################
+                        ### Preparing cell sizes for histograms ###
+                        ###########################################
                         # Making a dataframe with all results from all cells, as a tranformation of the original list
                         cell_sizes_final_df = pd.DataFrame(cell_sizes_final)
                         # calculating histogram to get the y-axis range
@@ -134,10 +134,7 @@ def analyze_cell_size():
                         plt.hist(
                             cell_sizes_final_df[cell_sizes_final_df.columns[-1]]
                             )
-                        # Saving the result into excel
                         cell_sizes_final_df = pd.DataFrame(cell_sizes_final_df)
-                        cell_sizes_final_df.to_excel(f'{upload_folder}/{image_name}_cell_sizes.xlsx')
-                        xlsx_file_path = f'uploads/{image_name}_cell_sizes.xlsx'
                     ###################################################
                     ### Preparing images for showing on the webiste ###
                     ###################################################
@@ -163,6 +160,30 @@ def analyze_cell_size():
                     plt.savefig(memory_for_final_plot, format='JPEG')
                     fina_plot_encoded_in_memory = base64.b64encode(memory_for_final_plot.getvalue())
                     final_plot_decoded_from_memory = fina_plot_encoded_in_memory.decode('ascii')
+                    ##########################################
+                    ### Saving results and images to excel ###
+                    ##########################################
+                    # Save dataframe and images in Excel using xlsxwriter
+                    xlsx_full_path = os.path.join(f'{upload_folder}/{image_name}_cell_sizes.xlsx')
+                    with pd.ExcelWriter(xlsx_full_path, engine='xlsxwriter') as writer:
+                        # Create new sheet for images
+                        workbook = writer.book
+                        worksheet_Results = workbook.add_worksheet('Results') # type: ignore
+                        worksheet_processed_image = workbook.add_worksheet('Processed Image') # type: ignore
+                        worksheet_original_image = workbook.add_worksheet('Original Image') # type: ignore
+                        # Write cell size results
+                        cell_sizes_final_df.to_excel(writer, sheet_name='Results', index=False)
+                        # Decode base64 images to BytesIO
+                        orig_img_bytes = io.BytesIO(base64.b64decode(img_orig_decoded_from_memory))
+                        download_img_bytes = io.BytesIO(base64.b64decode(img_for_download_decoded_from_memory))
+                        plot_img_bytes = io.BytesIO(base64.b64decode(final_plot_decoded_from_memory))
+
+                        # Insert images into 'Images' worksheet
+                        worksheet_original_image.insert_image('A1', 'Original Image', {'image_data': orig_img_bytes})
+                        worksheet_processed_image.insert_image('A1', 'Annotated Image', {'image_data': download_img_bytes})
+                        worksheet_Results.insert_image('E1', 'Histogram Plot', {'image_data': plot_img_bytes})
+                    
+                    xlsx_file_path = f'uploads/{image_name}_cell_sizes.xlsx'
                     ################################################
                     # Deleting files + temporary files from server #
                     ################################################
@@ -189,6 +210,8 @@ def analyze_cell_size():
                         # if a file is modified before 20 min then delete it
                         if(file_time < current_time - seconds):
                             os.remove(os.path.join(upload_folder, str(i)).replace("\\","/"))
+                    # clear session
+                    session.pop('coordinates_all_in_session', None)
                     ######################
                     # Returning template #
                     ######################

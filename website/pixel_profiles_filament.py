@@ -484,6 +484,8 @@ def get_pixel_profiles():
                         # if a file is modified before 20 min then delete it
                         if(file_time < current_time - seconds):
                             os.remove(os.path.join(upload_folder, str(i)).replace("\\","/"))
+                    # clear session
+                    session.pop('coordinates_all_in_session', None)
                     ######################
                     # Returning template #
                     ######################

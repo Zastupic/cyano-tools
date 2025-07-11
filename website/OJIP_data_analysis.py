@@ -37,6 +37,7 @@ def analyze_OJIP_curves():
         F_50_ms_index = F_100_ms_index = F_200_ms_index = F_300_ms_index = Fm_index = int()
         FJ_found_index_low = FJ_found_index_high = FI_found_index_low = FI_found_index_high = FP_found_index_low = FP_found_index_high = FJ_found_index = FI_found_index = FP_found_index = int()
         FJ_time = FI_time = FJ_time_min = FJ_time_max = FI_time_min = FI_time_max = FP_time_min = FP_time_max = xmin_for_plot = float()
+        fm_timings = {}
         # create upload directory, if there is not any
         if os.path.isdir(upload_folder) == False:
             os.mkdir(upload_folder)
@@ -527,6 +528,13 @@ def analyze_OJIP_curves():
                             AREAOP = Area_above_curve_temp_O_P.squeeze() # type: ignore # squeeze: converts DF to SERIES
                             SM = AREAOP / FVFM # type: ignore
                             N = SM * M0 * (1 / VJ)
+                            ######################
+                            ### Find FM timing ###
+                            ######################
+                            for col, max_val in FM.items(): 
+                                idx = Summary_file[Summary_file[col] == max_val].index[0] # Find the row index where FM occurs
+                                fm_timings[col] = Summary_file.loc[idx, x_axis_time] # Get the corresponding time
+                            FM_timings_series = pd.Series(fm_timings) # Convert to Series for clean display
 
                             #### CALCULATING TIME ####
                             calculation_time = time.time() 
@@ -598,6 +606,7 @@ def analyze_OJIP_curves():
                                 # Double normalized (subplot 5)
                                 plot_dataframe_subplot(fig.add_subplot(4, 4, 5), OJIP_double_normalized, colors, "OJIP curves: double normalized", x_axis_unit, "Fluorescence intensity (r.u.)",
                                                        ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '--', 'lw': 1}), (FI_time, {'color': '0', 'ls': '--', 'lw': 1})])
+                                
                                 # Reconstructed curves (subplot 6)
                                 plot_dataframe_subplot(fig.add_subplot(4, 4, 6), Raw_curves_reconstructed_DF, colors, "Reconstructed curves (double normalized)", x_axis_unit, "Fluorescence intensity (r.u.)",
                                                        ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '--', 'lw': 1}), (FI_time, {'color': '0', 'ls': '--', 'lw': 1})])
@@ -616,18 +625,20 @@ def analyze_OJIP_curves():
                                 plot_vertical_lines_inflections(ax, FI_TIMES_IDENTIFIED_INFLECTION, colors, label_first=' Identified F$_{J}$/F$_{I}$/F$_{P}$ times (inflection points)')
                                 plot_vertical_lines(ax, FI_TIMES_IDENTIFIED_DERIV, colors, label_first=' Min of 2nd Deriv of Fluo Signal Pre-F$_{J}$/F$_{I}$/F$_{P}$')
                                 ax.legend(loc='upper left', bbox_to_anchor=(2.38, 4.28))
-                                # 2nd derivative + FP (subplot 11)
+                                # 2nd derivative + FM (subplot 11)
                                 ax = fig.add_subplot(4, 4, 11)
                                 plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{P}$ timing", x_axis_unit, "2$^{nd}$ derivative")
-                                plot_vertical_lines(ax, FP_TIMES_IDENTIFIED_DERIV, colors)
                                 plot_vertical_lines_inflections(ax, FP_TIMES_IDENTIFIED_INFLECTION, colors)
+                                plot_vertical_lines(ax, FP_TIMES_IDENTIFIED_DERIV, colors)
                                 # FJ bar plot (subplot 13)
                                 plot_bar_subplot(fig.add_subplot(4, 4, 13), FJ_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{J}$ times identified (only for visualization)", x_axis_unit)
                                 # FI bar plot (subplot 14)
                                 plot_bar_subplot(fig.add_subplot(4, 4, 14), FI_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{I}$ times identified (only for visualization)")
                                 # FP bar plot (subplot 15)
-                                plot_bar_subplot(fig.add_subplot(4, 4, 15), FP_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{P}$ times identified (only for visualization)")
-
+                                plot_bar_subplot(fig.add_subplot(4, 4, 15), FP_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{P}$ times identified")
+                                # FM bar plot (subplot 15)
+                                plot_bar_subplot(fig.add_subplot(4, 4, 16), FM_timings_series, colors, "F$_{M}$ times identified")
+                                
                                 memory_for_OJIP_plot = io.BytesIO()
                                 plt.savefig(memory_for_OJIP_plot, bbox_inches='tight', format='JPEG')
                                 memory_for_OJIP_plot.seek(0)
@@ -675,8 +686,8 @@ def analyze_OJIP_curves():
                                     (23, DI0RC, "DI0/RC"),
                                     (25, AREAOJ, "Area$_{0-J}$", "r.u."),
                                     (26, AREAJI, "Area$_{J-I}$"),
-                                    (27, AREAIP, "Area$_{I-P}$"),
-                                    (28, AREAOP, "Area$_{(0-P)}$"),
+                                    (27, AREAIP, "Area$_{I-M}$"),
+                                    (28, AREAOP, "Area$_{(0-M)}$"),
                                     (29, SM, "Normalized area S$_{m}$"),
                                     (30, N, "N (turn-over number Q$_{A}$)")
                                 ]
@@ -689,7 +700,7 @@ def analyze_OJIP_curves():
                                 ax = fig.add_subplot(5, 8, 7)
                                 for i in range(len(IP_list.columns)):
                                     ax.bar(IP_list.columns[i], IP_list.iloc[:, i], color=colors[i], width=0.5, label=IP_list.columns[i])
-                                ax.set_title("A$_{I-P}$")
+                                ax.set_title("A$_{I-M}$")
                                 ax.margins(x=0.42 ** len(IP_list.columns))
                                 ax.set_xticks([])
                                 ax.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02))

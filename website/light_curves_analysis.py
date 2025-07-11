@@ -250,7 +250,7 @@ def analyze_light_curves():
                                             slope2, intercept2, r2, p2, se2 = stats.linregress(ETRALL.iloc[-2:,0], fit_ETR.iloc[-2:,0]) # linregress(x, y)
                                             alpha = slope1
                                             beta = slope2
-                                            beta_abs = abs(slope2)
+                                            beta_abs = abs(slope2) # type: ignore
                                             # Calculate the additional parameters
                                             Ik = ETRMAX.iloc[i-1] / alpha # Ik = ETRmax/alpha
                                             Ib = ETRMAX.iloc[i-1] / beta_abs # Calculate Ib = ETRmax/beta
@@ -546,7 +546,7 @@ def analyze_light_curves():
                                     img_data_raw = Image(memory_for_plot)
                                     img_parameters = Image(memory_for_parameters)
                                     img_data_raw.anchor = 'A1'
-                                    img_parameters.anchor = 'A65'
+                                    img_parameters.anchor = 'A54'
                                     ws.add_image(img_parameters)
                                     ws.add_image(img_data_raw)
                                     wb.save(f'{upload_folder}/{file_name_without_extension}_results.xlsx')                                       

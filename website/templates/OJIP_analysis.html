@@ -61,7 +61,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <td>Amplitude of fluorescence intensity between F<sub>J</sub> and F<sub>I</sub></td>
     </tr>
     <tr>
-        <td>A<sub>I-P</sub></td>
+        <td>A<sub>I-M</sub></td>
         <td>F<sub>P</sub> - F<sub>I</sub></td>
         <td>Amplitude of fluorescence intensity between F<sub>I</sub> and F<sub>M</sub></td>
     </tr>
@@ -91,8 +91,8 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         <td></td>
     </tr>
     <tr>
-        <td>Area<sub>I-P</sub></td>
-        <td>Complementary area above the F<sub>I</sub>-F<sub>P</sub> interval</td>
+        <td>Area<sub>I-M</sub></td>
+        <td>Complementary area above the F<sub>I</sub>-F<sub>M</sub> interval</td>
         <td></td>
     </tr>
     <tr>
@@ -312,10 +312,13 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         </div>
     </div>
     <p><a style="line-height:3px;"></a></p>
-    <p style="line-height: 0.9"><i style="font-size:80%">The selected values are used for the calculation of parameters summarized in the table above. 
-            However, the script also allows for the identification of exact F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> timing. Once identified, the F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> 
-            time points are ploted for visualization, to lead exact selection F<sub>J</sub> and F<sub>I</sub> timings for the caluculation of parameters summarized in the table above. 
-            For identification of F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> timing, following boundaries are used:</i>
+    <p style="line-height: 0.9"><i style="font-size:80%"> The selected values are used to calculate the parameters summarized in the table above. 
+        The script enables identification of the exact timing of F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> by detecting inflection points 
+        in the fluorescence signal. It also identifies minima in the second derivative of the signal to 
+        estimate the peak of Q<sub>A</sub>⁻–Q<sub>B</sub> accumulation 
+        (<a href="https://www.publish.csiro.au/fp/PP01065" target="_blank">Tomek et al., 2001</a>). Once identified, all points are 
+        plotted to visually verify manual selection of F<sub>J</sub> and F<sub>I</sub> timings, used for the calculation of the above-summarized 
+        parameters. For identification of F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> timing, the following boundaries are used:</i>
         <table style="width:95%">
             <colgroup>
                 <col style="width:1%">

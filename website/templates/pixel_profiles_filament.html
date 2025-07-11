@@ -7,8 +7,12 @@
 {% block content %}
 <h1> Pigment profiles - filamentous strains</h1>
 <br>
+<div class="container">
+    <img src="static/images/workflow_pixel_profiles_filaments.jpg" 
+    alt="Pixel_profiles_cell_selection" class="gallery__img_tall"
+    width="70%">
+</div>
 <p>Welcome to the app for obtaining cellular pigment profiles! 
-<br>
 <p>To analyze pigment profiles of cells on the fluorescence microscopy image, please follow the instructions below:</p>
 <ol>
     <li>Enter width of the profile line</li>
@@ -44,7 +48,7 @@
     <br><br>
     <button id="show-image-button" type="submit" class="btn btn-primary">Upload images and select individual cells</button>
     <a href="{{url_for('static', filename='files/cells_filamentous_example.rar')}}" download="example_image">
-        <button type="button" class="btn btn-outline-primary">Download an example image</button>
+        <button type="button" class="btn btn-outline-primary">Download example images</button>
     </a>
 </form>
 <br>
@@ -125,42 +129,44 @@
             </a>
         </div>
     </div>
-    {% if diff_plot_1_2 %}
-        <b><i>5.3: Pixel profile differences:</i></b>
-         <div class="container">
-            <div class="gallery_4">
-                <a class="gallery__item--1">
-                    <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_2 }}" class="gallery__img"/> 
-                    {% if diff_plot_1_3 %}  
-                        <a class="gallery__item--2">         
-                            <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_3 }}" class="gallery__img"/>
-                            {% if diff_plot_2_3 %}  
-                                <a class="gallery__item--3">         
-                                    <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_2_3 }}" class="gallery__img"/>
-                                </a>
-                            {% endif %}  
-                            {% if diff_plot_1_4 %}
-                            <a class="gallery__item--4">
-                                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_4 }}" class="gallery__img"/> 
-                            </a>
-                            {% endif %}
-                   {% endif %}
-                </a>
-            </div>
-        </div>
-        {% if diff_plot_2_4 %}
-            <div class="container">
+    {% if img_final_1 %} 
+        {% if diff_plot_1_2 %} 
+            <b><i>5.3: Pixel profile differences:</i></b>
+             <div class="container">
                 <div class="gallery_4">
                     <a class="gallery__item--1">
-                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_2_4 }}" class="gallery__img"/> 
-                        {% if diff_plot_3_4 %}
-                            <a class="gallery__item--2">
-                                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_3_4 }}" class="gallery__img"/>
-                            </a>
-                        {% endif %}
+                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_2 }}" class="gallery__img"/> 
+                        {% if diff_plot_1_3 %}  
+                            <a class="gallery__item--2">         
+                                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_3 }}" class="gallery__img"/>
+                                {% if diff_plot_2_3 %}  
+                                    <a class="gallery__item--3">         
+                                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_2_3 }}" class="gallery__img"/>
+                                    </a>
+                                {% endif %}  
+                                {% if diff_plot_1_4 %}
+                                <a class="gallery__item--4">
+                                    <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_4 }}" class="gallery__img"/> 
+                                </a>
+                                {% endif %}
+                       {% endif %}
                     </a>
                 </div>
             </div>
+            {% if diff_plot_2_4 %}
+                <div class="container">
+                    <div class="gallery_4">
+                        <a class="gallery__item--1">
+                            <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_2_4 }}" class="gallery__img"/> 
+                            {% if diff_plot_3_4 %}
+                                <a class="gallery__item--2">
+                                    <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_3_4 }}" class="gallery__img"/>
+                                </a>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
         {% endif %}
         <br>
         <p><b>6. Download pixel profiles as .xlsx file</b></p>

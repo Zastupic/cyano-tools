@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, session, json
 from PIL import Image as im
-import os, cv2, base64, io, time, math
+import os, cv2, base64, io, time, math, openpyxl
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -56,17 +56,21 @@ def analyze_cell_size_filament():
                         coordinates = list(coordinates_all_from_session) # type: ignore
                         #define empty tuple for storing coordinates of the cells
                         selection_coordinates = []
-                        # convert coordiates to tuple
+                        # convert coordinates to tuple with robust error checking
                         for i in range(len(coordinates)):
                             coordinate = coordinates[i]
+                            values = list(coordinate.values())
+                            if len(values) < 8:
+                                flash(f'Coordinate data for cell {i+1} is incomplete or corrupted. Skipping this cell.', category='error')
+                                continue
                             # coordinates of image from website - can change when window size changes
-                            x_coordinate_img = int(list(coordinate.values())[2])
-                            y_coordinate_img = int(list(coordinate.values())[3])
+                            x_coordinate_img = int(values[2])
+                            y_coordinate_img = int(values[3])
                             # coordinates of selection within image
-                            x_coordinate_selection_start = int(list(coordinate.values())[6])
-                            y_coordiante_selection_start = int(list(coordinate.values())[7])
-                            x_coordinate_selection_end = int(list(coordinate.values())[4])
-                            y_coordiante_selection_end = int(list(coordinate.values())[5])
+                            x_coordinate_selection_start = int(values[6])
+                            y_coordiante_selection_start = int(values[7])
+                            x_coordinate_selection_end = int(values[4])
+                            y_coordiante_selection_end = int(values[5])
                             # recalculating coordinates for original image
                             x_coordinate_for_original_picture_start = int(x_coordinate_selection_start / x_coordinate_img * x_pixels)
                             y_coordinate_for_original_picture_start = int(y_coordiante_selection_start / y_coordinate_img * y_pixels)
@@ -116,9 +120,9 @@ def analyze_cell_size_filament():
                             cv2.circle(img_orig_copy, (int(center_coordinate_x), int(center_coordinate_y)), int(cell_radius_incremented), (0, 255, 0), 1)
                             # Draw line
                             cv2.line(img_orig_copy, (x_rough_start, y_rough_start), (x_rough_end, y_rough_end), (255, 0, 0), 1)  
-                        ###################################
-                        ### Preparing results for excel ###
-                        ###################################
+                        ##########################
+                        ### Preparing final DF ###
+                        ##########################
                         # Preparing dataframe with cell sizes
                         cell_sizes_final_df = pd.DataFrame(cell_sizes_final)
                         cell_sizes_final_df.rename(columns = {list(cell_sizes_final_df)[0]:'Cell number'}, inplace=True)
@@ -127,9 +131,6 @@ def analyze_cell_size_filament():
                         plt.hist(
                             cell_sizes_final_df[cell_sizes_final_df.columns[-1]]
                             )
-                        # Saving the result into excel
-                        cell_sizes_final_df.to_excel(f'{upload_folder}/{image_name}_cell_sizes.xlsx')
-                        xlsx_file_path = f'uploads/{image_name}_cell_sizes.xlsx'
                     ##################################
                     ### Preparing and saving plots ###
                     ##################################
@@ -170,6 +171,33 @@ def analyze_cell_size_filament():
                     plt.clf()
                     plt.cla()
                     plt.close()
+                    ##########################################
+                    ### Saving results and images to excel ###
+                    ##########################################
+                    # Save dataframe and images in Excel using xlsxwriter
+                    xlsx_full_path = os.path.join(upload_folder, f"{image_name}_cell_sizes.xlsx")
+                    with pd.ExcelWriter(xlsx_full_path, engine='xlsxwriter') as writer:
+                        # Create new sheet for images
+                        workbook = writer.book
+                        worksheet_Results = workbook.add_worksheet('Results') # type: ignore
+                        worksheet_processed_image = workbook.add_worksheet('Processed Image') # type: ignore
+                        worksheet_original_image = workbook.add_worksheet('Original Image') # type: ignore
+                        
+                        # Write cell size results
+                        cell_sizes_final_df.to_excel(writer, sheet_name='Results', index=False)
+                        # Decode base64 images to BytesIO
+                        orig_img_bytes = io.BytesIO(base64.b64decode(img_orig_decoded_from_memory))
+                        download_img_bytes = io.BytesIO(base64.b64decode(img_for_download_decoded_from_memory))
+                        plot_img_bytes = io.BytesIO(base64.b64decode(final_plot_decoded_from_memory))
+
+                        # Insert images into 'Images' worksheet
+                        worksheet_original_image.insert_image('A1', 'Original Image', {'image_data': orig_img_bytes})
+                        worksheet_processed_image.insert_image('A1', 'Annotated Image', {'image_data': download_img_bytes})
+                        worksheet_Results.insert_image('E1', 'Histogram Plot', {'image_data': plot_img_bytes})
+                    
+                    xlsx_file_path = f'uploads/{image_name}_cell_sizes.xlsx'
+
+                
                 else:
                     flash('Please select an image file.', category='error')  
                 ################################################
@@ -196,6 +224,8 @@ def analyze_cell_size_filament():
                     # if a file is modified before 20 min then delete it
                     if(file_time < current_time - seconds):
                         os.remove(os.path.join(upload_folder, str(i)).replace("\\","/")) # type: ignore
+                # clear session
+                session.pop('coordinates_all_in_session', None)
                 ######################
                 # Returning template #
                 ######################
@@ -217,6 +247,7 @@ def analyze_cell_size_filament():
 #        flash('Please login', category='error')
 #        return redirect("/login")
 #
+
 # GETTING COORDINATES FROM JS
 @cell_size_filament.route('/cell_size_filament/coordinates', methods=['POST'])
 def coordinates_from_js():
