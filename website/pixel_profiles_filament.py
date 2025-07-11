@@ -33,7 +33,7 @@ def get_pixel_profiles():
                 pixel_profiles_1_temp = pixel_profiles_2_temp = pixel_profiles_3_temp = pixel_profiles_4_temp = pd.DataFrame()
                 pixel_profiles_dif_1_2_temp = pixel_profiles_dif_1_3_temp = pixel_profiles_dif_1_4_temp = pixel_profiles_dif_2_3_temp = pixel_profiles_dif_2_4_temp = pixel_profiles_dif_3_4_temp = pd.DataFrame()
                 pixel_profiles_dif_1_2 = pixel_profiles_dif_1_3 = pixel_profiles_dif_1_4 = pixel_profiles_dif_2_3 = pixel_profiles_dif_2_4 = pixel_profiles_dif_3_4 = pd.DataFrame()
-                img_final_1 = img_final_2 = img_final_3 = img_final_4 = img_orig_1 = ()
+                img_final_1 = img_final_2 = img_final_3 = img_final_4 = img_orig_1 = image_for_excel_1 = image_for_excel_1 = ()
                 scatter_plot_1 = scatter_plot_2 = scatter_plot_3 = scatter_plot_4 = ()
                 diff_plot_1_2 = diff_plot_1_3 = diff_plot_2_3 = diff_plot_1_4 = diff_plot_2_4 = diff_plot_3_4 = ()
                 Final_profiles = []
@@ -248,12 +248,12 @@ def get_pixel_profiles():
                             if not pixel_profiles_2.empty:
                                 pixel_profiles_dif_1_2_temp = pixel_profiles_1_temp.sub(pixel_profiles_2_temp) # type: ignore
                                 if not pixel_profiles_3.empty:
-                                    pixel_profiles_dif_1_3_temp = pixel_profiles_1_temp.sub(pixel_profiles_3_temp) # type: ignore
-                                    pixel_profiles_dif_2_3_temp = pixel_profiles_2_temp.sub(pixel_profiles_3_temp) # type: ignore
-                                    if not pixel_profiles_4.empty:
-                                        pixel_profiles_dif_1_4_temp = pixel_profiles_1_temp.sub(pixel_profiles_4_temp) # type: ignore
-                                        pixel_profiles_dif_2_4_temp = pixel_profiles_2_temp.sub(pixel_profiles_4_temp) # type: ignore
-                                        pixel_profiles_dif_3_4_temp = pixel_profiles_3_temp.sub(pixel_profiles_4_temp) # type: ignore
+                                   pixel_profiles_dif_1_3_temp = pixel_profiles_1_temp.sub(pixel_profiles_3_temp) # type: ignore
+                                   pixel_profiles_dif_2_3_temp = pixel_profiles_2_temp.sub(pixel_profiles_3_temp) # type: ignore
+                                   if not pixel_profiles_4.empty:
+                                       pixel_profiles_dif_1_4_temp = pixel_profiles_1_temp.sub(pixel_profiles_4_temp) # type: ignore
+                                       pixel_profiles_dif_2_4_temp = pixel_profiles_2_temp.sub(pixel_profiles_4_temp) # type: ignore
+                                       pixel_profiles_dif_3_4_temp = pixel_profiles_3_temp.sub(pixel_profiles_4_temp) # type: ignore
                             # save differences to data frames
                             if not pixel_profiles_2.empty:
                                 pixel_profiles_dif_1_2 = pd.concat([pixel_profiles_dif_1_2, pixel_profiles_dif_1_2_temp], axis=1) # type: ignore
@@ -270,22 +270,60 @@ def get_pixel_profiles():
                                         pixel_profiles_dif_1_4 = (pixel_profiles_dif_1_4.replace([np.nan], "0")).astype(int) # delete NaN in final dataframe
                                         pixel_profiles_dif_2_4 = (pixel_profiles_dif_2_4.replace([np.nan], "0")).astype(int) # delete NaN in final dataframe
                                         pixel_profiles_dif_3_4 = (pixel_profiles_dif_3_4.replace([np.nan], "0")).astype(int) # delete NaN in final dataframe
-                    #######################################################
+                    ######################################################
                     ### Saving the result into specific sheets in excel ###
                     #######################################################
-                    writer = pd.ExcelWriter(f'{upload_folder}/{image_name_without_extension}_results.xlsx', engine='openpyxl')
-                    dictionary_arrays_all_results['pixel_profiles_1'].to_excel(writer, sheet_name = 'Pixel_profiles_1')
-                    dictionary_arrays_all_results['pixel_profiles_2'].to_excel(writer, sheet_name = 'Pixel_profiles_2')
-                    dictionary_arrays_all_results['pixel_profiles_3'].to_excel(writer, sheet_name = 'Pixel_profiles_3')
-                    dictionary_arrays_all_results['pixel_profiles_4'].to_excel(writer, sheet_name = 'Pixel_profiles_4')
-                    pixel_profiles_dif_1_2.to_excel(writer, sheet_name = 'Delta_profiles_1-2')
-                    pixel_profiles_dif_1_3.to_excel(writer, sheet_name = 'Delta_profiles_1-3')
-                    pixel_profiles_dif_1_4.to_excel(writer, sheet_name = 'Delta_profiles_1-4')
-                    pixel_profiles_dif_2_3.to_excel(writer, sheet_name = 'Delta_profiles_2-3')
-                    pixel_profiles_dif_2_4.to_excel(writer, sheet_name = 'Delta_profiles_2-4')
-                    pixel_profiles_dif_3_4.to_excel(writer, sheet_name = 'Delta_profiles_3-4')
-                    writer.close()
+                    xlsx_full_path = os.path.join(f'{upload_folder}/{image_name_without_extension}_results.xlsx')
+                    with pd.ExcelWriter(xlsx_full_path, engine='xlsxwriter') as writer:
+                        # Create new sheet for images
+                        workbook = writer.book
+                        worksheet_Selected_cells = workbook.add_worksheet('Selected cells') # type: ignore
+                        worksheet_original_image = workbook.add_worksheet('Original Image') # type: ignore
+                        worksheet_Pixel_profiles_1 = workbook.add_worksheet('Pixel_profiles_1') # type: ignore
+                        worksheet_Pixel_profiles_2 = workbook.add_worksheet('Pixel_profiles_2') # type: ignore
+                        worksheet_Pixel_profiles_3 = workbook.add_worksheet('Pixel_profiles_3') # type: ignore
+                        worksheet_Pixel_profiles_4 = workbook.add_worksheet('Pixel_profiles_4') # type: ignore
+                        worksheet_pixel_Delta_profiles_1_2 = workbook.add_worksheet('Delta_profiles_1-2') # type: ignore
+                        worksheet_pixel_Delta_profiles_1_3 = workbook.add_worksheet('Delta_profiles_1-3') # type: ignore
+                        worksheet_pixel_Delta_profiles_1_4 = workbook.add_worksheet('Delta_profiles_1-4') # type: ignore
+                        worksheet_pixel_Delta_profiles_2_3 = workbook.add_worksheet('Delta_profiles_2-3') # type: ignore
+                        worksheet_pixel_Delta_profiles_2_4 = workbook.add_worksheet('Delta_profiles_2-4') # type: ignore
+                        worksheet_pixel_Delta_profiles_3_4 = workbook.add_worksheet('Delta_profiles_3-4') # type: ignore
+                        # Write results
+                        dictionary_arrays_all_results['pixel_profiles_1'].to_excel(writer, sheet_name='Pixel_profiles_1', index=False)
+                        dictionary_arrays_all_results['pixel_profiles_2'].to_excel(writer, sheet_name='Pixel_profiles_2', index=False)
+                        dictionary_arrays_all_results['pixel_profiles_3'].to_excel(writer, sheet_name='Pixel_profiles_3', index=False)
+                        dictionary_arrays_all_results['pixel_profiles_4'].to_excel(writer, sheet_name='Pixel_profiles_4', index=False)
+                        pixel_profiles_dif_1_2.to_excel(writer, sheet_name='Delta_profiles_1-2')
+                        pixel_profiles_dif_1_3.to_excel(writer, sheet_name='Delta_profiles_1-3')
+                        pixel_profiles_dif_1_4.to_excel(writer, sheet_name='Delta_profiles_1-4')
+                        pixel_profiles_dif_2_3.to_excel(writer, sheet_name='Delta_profiles_2-3')
+                        pixel_profiles_dif_2_4.to_excel(writer, sheet_name='Delta_profiles_2-4')
+                        pixel_profiles_dif_3_4.to_excel(writer, sheet_name='Delta_profiles_3-4')
+                        # Prepare original image from dictionary for excel
+                        memory_for_image_1 = io.BytesIO()
+                        img_bytes = base64.b64decode(dictionary_arrays_all_results['img_orig_1'])
+                        img_obj = im.open(io.BytesIO(img_bytes))
+                        img_obj.save(memory_for_image_1, "JPEG")
+                        image_1_encoded_in_memory = base64.b64encode(memory_for_image_1.getvalue())
+                        image_1_decoded_from_memory = image_1_encoded_in_memory.decode('utf-8')
+                        # Prepare 2nd image from dictionary to excel
+                        memory_for_image_2 = io.BytesIO()
+                        img_bytes = base64.b64decode(dictionary_arrays_all_results['img_final_1'])
+                        img_obj = im.open(io.BytesIO(img_bytes))
+                        img_obj.save(memory_for_image_2, "JPEG")
+                        image_2_encoded_in_memory = base64.b64encode(memory_for_image_2.getvalue())
+                        image_2_decoded_from_memory = image_2_encoded_in_memory.decode('utf-8')
+                        # Decode base64 images to BytesIO
+                        orig_img_bytes = io.BytesIO(base64.b64decode(image_1_decoded_from_memory))
+                        download_img_bytes = io.BytesIO(base64.b64decode(image_2_decoded_from_memory))
+                        # Insert images into 'Images' worksheet
+                        worksheet_Selected_cells.insert_image('A1', 'Selected cells', {'image_data': download_img_bytes})
+                        worksheet_original_image.insert_image('A1', 'Original Image', {'image_data': orig_img_bytes})
+
+                    
                     xlsx_file_path = f'uploads/{image_name_without_extension}_results.xlsx'
+
                     #####################################
                     ### Plotting profiles differences ###
                     #####################################

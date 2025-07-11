@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, session, json
 from PIL import Image as im
-import os, cv2, base64, io, time
+import os, cv2, base64, io, time, openpyxl
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -184,6 +184,7 @@ def analyze_cell_size():
                         worksheet_Results.insert_image('E1', 'Histogram Plot', {'image_data': plot_img_bytes})
                     
                     xlsx_file_path = f'uploads/{image_name}_cell_sizes.xlsx'
+                    
                     ################################################
                     # Deleting files + temporary files from server #
                     ################################################

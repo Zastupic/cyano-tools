@@ -148,46 +148,42 @@ def get_pixel_profiles():
                             cv2.circle(img_orig_copy, (a, b), detected_cell_radius, (0, 255, 0), 1)
                             # Store the pixel intensitiy results for all cells  
                             Final_profiles.append(Pixel_profiles)
-                    ####################################
-                    ### Save pixel profiles to excel ###
-                    ####################################
-                    # Making a dataframe with all pixel intensities from all cells, as a tranformation of the original list
-                    Pixel_profiles_df = pd.DataFrame(Final_profiles)
-                    Pixel_profiles_df = Pixel_profiles_df.T
-                    column_index = 0
-                    # Spliting the dataframe to individual columns
-                    for i in range(len(Pixel_profiles_df.columns)):
-                        # Define temporary data frame and fill it with data for i-th cell
-                        Pixel_profiles_df2 = pd.DataFrame(Pixel_profiles_df[i].to_list())
-                        # Append to the final data frame for the i-th cell
-                        Pixel_profiles_df3[(column_index)] = Pixel_profiles_df2[0]
-                        # Rename column 1 for i-th cell in final data frame
-                        Pixel_profiles_df3.rename(columns = {list(Pixel_profiles_df3)[column_index]:'Cell number'}, inplace=True)
-                        # Append to the final data frame for the i-th cell
-                        Pixel_profiles_df3[(column_index+1)] = Pixel_profiles_df2[1]
-                        # Rename column 2 for i-th cell in final data frame
-                        Pixel_profiles_df3.rename(columns = {list(Pixel_profiles_df3)[column_index+1]:'Angle'}, inplace=True)
-                        # Append to the final data frame for the i-th cell
-                        Pixel_profiles_df3[(column_index+2)] = Pixel_profiles_df2[2]
-                        # Rename column 3 for i-th cell in final data frame
-                        Pixel_profiles_df3.rename(columns = {list(Pixel_profiles_df3)[column_index+2]:'Pixel number cell '+str(i+1)}, inplace=True)
-                        # Append to the final data frame for the i-th cell
-                        Pixel_profiles_df3[(column_index+3)] = Pixel_profiles_df2[3]
-                        # Rename column 4 for i-th cell in final data frame
-                        Pixel_profiles_df3.rename(columns = {list(Pixel_profiles_df3)[column_index+3]:'Pixel intensity cell '+str(i+1)}, inplace=True)
-                        # Skip already used columns
-                        column_index = column_index+4
-                        plt.scatter(
-                            Pixel_profiles_df3.iloc[:, ((i+1)*4-2)], # x-axis data
-                            Pixel_profiles_df3.iloc[:, ((i+1)*4-1)], # y-axis data
-                            s=20,
-                            facecolors='none',
-                            edgecolors = (round(np.random.uniform(0,1),2),round(np.random.uniform(0,1),2),round(np.random.uniform(0,1),2))
-                            )
-                    # Saving the result into excel
-                    Pixel_profiles_df3.to_excel(f'{upload_folder}/{image_name}_pixel_profiles.xlsx')
-                    xlsx_file_path = f'uploads/{image_name}_pixel_profiles.xlsx'
-                    print("xlsx_file_path: "+ str(xlsx_file_path))
+                ####################################
+                ### Save pixel profiles to excel ###
+                ####################################
+                # Making a dataframe with all pixel intensities from all cells, as a tranformation of the original list
+                Pixel_profiles_df = pd.DataFrame(Final_profiles)
+                Pixel_profiles_df = Pixel_profiles_df.T
+                column_index = 0
+                # Spliting the dataframe to individual columns
+                for i in range(len(Pixel_profiles_df.columns)):
+                    # Define temporary data frame and fill it with data for i-th cell
+                    Pixel_profiles_df2 = pd.DataFrame(Pixel_profiles_df[i].to_list())
+                    # Append to the final data frame for the i-th cell
+                    Pixel_profiles_df3[(column_index)] = Pixel_profiles_df2[0]
+                    # Rename column 1 for i-th cell in final data frame
+                    Pixel_profiles_df3.rename(columns = {list(Pixel_profiles_df3)[column_index]:'Cell number'}, inplace=True)
+                    # Append to the final data frame for the i-th cell
+                    Pixel_profiles_df3[(column_index+1)] = Pixel_profiles_df2[1]
+                    # Rename column 2 for i-th cell in final data frame
+                    Pixel_profiles_df3.rename(columns = {list(Pixel_profiles_df3)[column_index+1]:'Angle'}, inplace=True)
+                    # Append to the final data frame for the i-th cell
+                    Pixel_profiles_df3[(column_index+2)] = Pixel_profiles_df2[2]
+                    # Rename column 3 for i-th cell in final data frame
+                    Pixel_profiles_df3.rename(columns = {list(Pixel_profiles_df3)[column_index+2]:'Pixel number cell '+str(i+1)}, inplace=True)
+                    # Append to the final data frame for the i-th cell
+                    Pixel_profiles_df3[(column_index+3)] = Pixel_profiles_df2[3]
+                    # Rename column 4 for i-th cell in final data frame
+                    Pixel_profiles_df3.rename(columns = {list(Pixel_profiles_df3)[column_index+3]:'Pixel intensity cell '+str(i+1)}, inplace=True)
+                    # Skip already used columns
+                    column_index = column_index+4
+                    plt.scatter(
+                        Pixel_profiles_df3.iloc[:, ((i+1)*4-2)], # x-axis data
+                        Pixel_profiles_df3.iloc[:, ((i+1)*4-1)], # y-axis data
+                        s=20,
+                        facecolors='none',
+                        edgecolors = (round(np.random.uniform(0,1),2),round(np.random.uniform(0,1),2),round(np.random.uniform(0,1),2))
+                        )
                 ###################################################
                 ### Preparing images for showing on the webiste ###
                 ###################################################
@@ -212,6 +208,30 @@ def get_pixel_profiles():
                 plt.savefig(memory_for_final_plot, format='JPEG')
                 final_plot_encoded_in_memory = base64.b64encode(memory_for_final_plot.getvalue())
                 final_plot_decoded_from_memory = final_plot_encoded_in_memory.decode('ascii')
+                ############################
+                ### Saving images to excel ###
+                ##############################
+                # Save dataframe and images in Excel using xlsxwriter
+                xlsx_full_path = os.path.join(f'{upload_folder}/{image_name}_pixel_profiles.xlsx')
+                with pd.ExcelWriter(xlsx_full_path, engine='xlsxwriter') as writer:
+                    # Create new sheet for images
+                    workbook = writer.book
+                    worksheet_Results = workbook.add_worksheet('Results') # type: ignore
+                    worksheet_final_plot = workbook.add_worksheet('Intensities plot') # type: ignore
+                    worksheet_Selected_cells = workbook.add_worksheet('Selected cells') # type: ignore
+                    worksheet_original_image = workbook.add_worksheet('Original Image') # type: ignore
+                    # Write cell size results
+                    Pixel_profiles_df3.to_excel(writer, sheet_name='Results', index=False)
+                    # Decode base64 images to BytesIO
+                    orig_img_bytes = io.BytesIO(base64.b64decode(img_orig_decoded_from_memory))
+                    download_img_bytes = io.BytesIO(base64.b64decode(img_for_download_decoded_from_memory))
+                    plot_img_bytes = io.BytesIO(base64.b64decode(final_plot_decoded_from_memory))
+                    # Insert images into 'Images' worksheet
+                    worksheet_final_plot.insert_image('A1', 'Intensities plot', {'image_data': plot_img_bytes})
+                    worksheet_Selected_cells.insert_image('A1', 'Selected cells', {'image_data': download_img_bytes})
+                    worksheet_original_image.insert_image('A1', 'Original Image', {'image_data': orig_img_bytes})
+
+                xlsx_file_path = f'uploads/{image_name}_pixel_profiles.xlsx'
                 ################################################
                 # Deleting files + temporary files from server #
                 ################################################
