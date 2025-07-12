@@ -7,11 +7,11 @@
 {% block content %}
 <h1>Cell counting</h1>
 <br>
-<p>Welcome to the cell counting app! This tool identifies and counts cells 
-in an image obtained by a fluorescence microscope where either a hemocytometer (such as a Bürker chamber) 
-or a disposable counting slide of known depth has been used. Any combination of a fluorescence microscope and hemocytometer or cell counting slide 
-    is suitable for this application.</p>
-<a>Below is shown a full workflow, on the examples of Nexcellom 
+<p>Welcome to the Cell Counting Tool!
+This tool is designed to count cells in images captured using a fluorescence microscope. It works with samples prepared on a hemocytometer 
+(such as a Bürker chamber) or a disposable counting slide of known depth. Any combination of a fluorescence microscope and a cell counting 
+chamber is suitable for use with this application.</p>
+<a>The following example illustrates the full workflow using Nexcellom 
     <a href="https://www.nexcelom.com/nexcelom-products/cellometer-disposable-counting-chambers/" target="_blank">cell counting slides</a> and Zeiss
     <a href="https://www.zeiss.com/microscopy/en/products/light-microscopes/widefield-microscopes/axio-imager-2-for-life-science-research.html" target="_blank">fluorescence microscope</a>:</a>
 <br>
@@ -21,17 +21,17 @@ or a disposable counting slide of known depth has been used. Any combination of 
 <br>
 <p><u>How to use this tool:</u></p>
 <ol>
-    <li>Enter pixel size</li>
-    <li>Select threshold filter</li>
+    <li>Enter pixel size (in nm)</li>
+    <li>Select a thresholding method to identify and segment cells</li>
     <li>Enter additional parameters:</li>
     <ul>
-        <li>Minimal cell diameter (smaller objects will not be considered for counting)</li>
-        <li>Depth of the microscopy chamber</li>
+        <li>Threshold cell diameter — smaller objects will be excluded from counting</li>
+        <li>Depth of the microscopy chamber — used to calculate cell concentration</li>
     </ul>
-    <li>Select image</li>
-    <li>Perform cell identification and counting</li>
-    <li>Read the result</li>
-    <li>If some cells have been missed, a correction can be made by mouse clicking on the counted image.</li>
+    <li>Upload your image (fluorescence microscopy)</li>
+    <li>Run the analysis to identify and count cells</li>
+    <li>Review the results</li>
+    <li>Manually correct the output, if needed, by clicking on the image to add cells</li>
 </ol> 
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count.count_cells') }}">
@@ -69,7 +69,8 @@ or a disposable counting slide of known depth has been used. Any combination of 
                         value="120" 
                         class="slider" 
                         name="chamber_depth_range"
-                        id="chamber_depth_range"/>
+                        id="chamber_depth_range"
+                        style="vertical-align: middle; margin-bottom: 2px;"/>
             </div>
             <span STYLE="font-size:9.5pt">1000</span>
             <p>Depth of the counting chamber (µm): <span id="chamber_depth"></span></p>
@@ -85,7 +86,7 @@ or a disposable counting slide of known depth has been used. Any combination of 
                     id="minimal_diameter_range"/>
             </div>
             <span STYLE="font-size:9.5pt">30</span>
-            <p>Minimal expected cell diameter (µm): <span id="minimal_diameter"></span></p>
+            <p>Threshold expected cell diameter (µm): <span id="minimal_diameter"></span></p>
 
             </div>
         </div>
@@ -161,7 +162,7 @@ or a disposable counting slide of known depth has been used. Any combination of 
     <p>Volume of the imaged area: {{ img_volume_nl }} nL</p>
     <p>Pixel size: {{ pixel_size_nm }} nm 
     / Depth of the chamber: {{ depth_um }} µm 
-    / Minimal cell size: {{ minimal_expected_size }} µm</p>
+    / Threshold cell diameter: {{ minimal_expected_size }} µm</p>
         <!-- <a href="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" download="{{ img_for_download }}">
             <button type="button" class="btn btn-primary">Download image with counted cells</button>
         </a> 
@@ -185,7 +186,11 @@ or a disposable counting slide of known depth has been used. Any combination of 
         </div>
     </div>
     <br>    
-    </div> 
+    <p><b>6. Download the results in .xlsx file (without manual correction)</b></p>
+    <a href="{{ url_for('static', filename=xlsx_file_path) }}" class="btn btn-primary" download>
+        Download the results
+    </a>
+</div> 
 
 {% else %}
 <br><br><br><br><br><br><br><br><br><br><br><br>

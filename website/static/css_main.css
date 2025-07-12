@@ -1,556 +1,552 @@
-  html {
-    --text-color-normal: #0a244d;
-    --text-color-light: #8cabd9;
-  }
-
-  html[data-theme='dark'] {
-    --text-color-normal: hsl(210, 10%, 62%);
-    --text-color-light: hsl(144, 30%, 24%);
-    --text-color-richer: hsl(210, 50%, 72%);
-    --text-color-highlight: hsl(25, 70%, 45%);
-  }
-
-  * {
-    margin: 0;
-    padding: 0;
-  }
-  /* Font size and padding for desktop */
-  h3 {
-  font-size: 2em;
-  padding-bottom: 0.5rem;
-  text-align: center;
-  }
-
-  p {
-  font-size: 1rem;
-  margin: 1rem 0;
-  }
-
-
-  .dropdown-submenu {
-  position: relative;
-  }
-
-  .dropdown-submenu > .dropdown-menu {
-  top: 0;
-  left: 100%;
-  margin-top: -6px;
-  }
-
-  .dropdown-submenu:hover > .dropdown-menu {
-  display: block;
-  }
-
-  .imgbox {
-    display: grid;
-    min-width: 50px;
-    height: 100%;
-  }
-  .center-fit {
-    min-width: 50px;
-    max-width: 100%;
-    max-height: 100%;
-    margin: auto;
-  }
-  #footer_relative {
-  position: relative;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  font-size:small
-  }
-  #footer_absolute {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  font-size:small
-  }
-  .container {
-  width: 100%;
-  margin: 0rem auto;
-  margin-bottom: 5px;
-  /* padding: 1rem 2rem; */
-  }
-
-  /* Additional layout adjustments for mobile */
-  .column {
-  width: 100%;
-  padding: 5px;
-  }
-
-  #grey_rectangle, #white_rectangle {
-  width: 100%;
-  height: auto;
-  padding: 10px;
-  margin: 5px 0;
-  }
-  /* Additional layout adjustments for mobile */
-
-    .gallery {
+html {
+  --text-color-normal: #0a244d;
+  --text-color-light: #8cabd9;
+}
+html[data-theme='dark'] {
+  --text-color-normal: hsl(210, 10%, 62%);
+  --text-color-light: hsl(144, 30%, 24%);
+  --text-color-richer: hsl(210, 50%, 72%);
+  --text-color-highlight: hsl(25, 70%, 45%);
+}
+* {
+  margin: 0;
+  padding: 0;
+}
+/* Font size and padding for desktop */
+h3 {
+font-size: 2em;
+padding-bottom: 0.5rem;
+text-align: center;
+}
+p {
+font-size: 1rem;
+margin: 1rem 0;
+}
+.dropdown-submenu {
+position: relative;
+}
+.dropdown-submenu > .dropdown-menu {
+top: 0;
+left: 100%;
+margin-top: -6px;
+}
+.dropdown-submenu:hover > .dropdown-menu {
+display: block;
+}
+.imgbox {
   display: grid;
-  grid-template-columns: repeat(3, 2fr);
-  grid-template-rows: repeat(1, 2fr);
-  grid-gap: 1.1rem;
-  grid-row-gap: 5px;
-  }
-  .gallery_3 {
-  display: grid;
-  grid-template-columns: repeat(3, 2fr);
-  grid-template-rows: repeat(1, 2fr);
-  grid-gap: 1.1rem;
-  }
-  .gallery_2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(1, 1fr);
-  grid-gap: 3.0rem;
-  }
-  .gallery__img {
-  width: 95%;
-  height: 90%;
-  object-fit: cover;
-  display: block;
-  grid-row-gap: 1px;
-  grid-column-gap: 1px;
-  flex: 1 1 auto; /* Flexible size based on content */
-  min-width: 200px; /* Minimum width for each item */
-  max-width: 250px; /* Maximum width to prevent items from growing too large */
-  /* padding: 0.5rem; */
-  }
-  .images-side-by-side {
-  display: flex; /* Align items in a row */
-  justify-content: left; 
-  align-items: center; /* Align images vertically */
-  gap: 1rem; /* Add space between images */
-  }
-  .gallery__img:hover {
-  height: 96%;
-  }
-  .gallery__img__tall {
-  width: 95%;
-  height: 90%;
-  object-fit: cover;
-  display: block;
-  grid-row-gap: 2px;
-  grid-column-gap: 2px;
-  padding: 0.5rem;
-  }
-  .gallery__item--1 {
+  min-width: 50px;
+  height: 100%;
+}
+.center-fit {
+  min-width: 50px;
+  max-width: 100%;
+  max-height: 100%;
+  margin: auto;
+}
+#footer_relative {
+position: relative;
+bottom: 0;
+left: 0;
+width: 100%;
+font-size:small
+}
+#footer_absolute {
+position: absolute;
+bottom: 0;
+left: 0;
+width: 100%;
+font-size:small
+}
+.container {
+width: 100%;
+margin: 0rem auto;
+margin-bottom: 5px;
+/* padding: 1rem 2rem; */
+}
+/* Additional layout adjustments for mobile */
+.column {
+width: 100%;
+padding: 5px;
+}
+#grey_rectangle, #white_rectangle {
+width: 100%;
+height: auto;
+padding: 10px;
+margin: 5px 0;
+}
+/* Additional layout adjustments for mobile */
+  .gallery {
+display: grid;
+grid-template-columns: repeat(3, 2fr);
+grid-template-rows: repeat(1, 2fr);
+grid-gap: 1.1rem;
+grid-row-gap: 5px;
+}
+.gallery_3 {
+display: grid;
+grid-template-columns: repeat(3, 2fr);
+grid-template-rows: repeat(1, 2fr);
+grid-gap: 1.1rem;
+}
+.gallery_2 {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+grid-template-rows: repeat(1, 1fr);
+grid-gap: 3.0rem;
+}
+.gallery__img {
+width: 95%;
+height: 90%;
+object-fit: cover;
+display: block;
+grid-row-gap: 1px;
+grid-column-gap: 1px;
+flex: 1 1 auto; /* Flexible size based on content */
+min-width: 200px; /* Minimum width for each item */
+max-width: 250px; /* Maximum width to prevent items from growing too large */
+/* padding: 0.5rem; */
+}
+.images-side-by-side {
+display: flex; /* Align items in a row */
+justify-content: left; 
+align-items: center; /* Align images vertically */
+gap: 1rem; /* Add space between images */
+}
+.gallery__img:hover {
+height: 96%;
+}
+.gallery__img__tall {
+width: 95%;
+height: 90%;
+object-fit: cover;
+display: block;
+grid-row-gap: 2px;
+grid-column-gap: 2px;
+padding: 0.5rem;
+}
+.gallery__item--1 {
+grid-column-start: 1;
+grid-column-end: 1;
+grid-row-start: 1;
+grid-row-end: 1;
+max-width: 165px;
+}
+.gallery__item--2 {
+grid-column-start: 2;
+grid-column-end: 2;
+grid-row-start: 1;
+grid-row-end: 1;
+max-width: 165px;
+}
+.gallery__item--3 {
+grid-column-start: 3;
+grid-column-end: 3;
+grid-row-start: 1;
+grid-row-end: 1;
+max-width: 165px;
+}
+.gallery__item--4 {
+grid-column-start: 4;
+grid-column-end: 4;
+grid-row-start: 1;
+grid-row-end: 1;
+max-width: 165px;
+}
+.gallery__item--5 {
+grid-column-start: 5;
+grid-column-end: 5;
+grid-row-start: 1;
+grid-row-end: 1;
+max-width: 165px;
+}
+.gallery__item--6 {
+grid-column-start: 6;
+grid-column-end: 6;
+grid-row-start: 1;
+grid-row-end: 1;
+max-width: 165px;
+}
+.gallery__item--1-home {
   grid-column-start: 1;
   grid-column-end: 1;
   grid-row-start: 1;
   grid-row-end: 1;
-  max-width: 165px;
-  }
-  .gallery__item--2 {
+}
+.gallery__item--2-home {
   grid-column-start: 2;
   grid-column-end: 2;
   grid-row-start: 1;
   grid-row-end: 1;
-  max-width: 165px;
-  }
-  .gallery__item--3 {
-  grid-column-start: 3;
-  grid-column-end: 3;
-  grid-row-start: 1;
-  grid-row-end: 1;
-  max-width: 165px;
-  }
-  .gallery__item--4 {
-  grid-column-start: 4;
-  grid-column-end: 4;
-  grid-row-start: 1;
-  grid-row-end: 1;
-  max-width: 165px;
-  }
-  .gallery__item--5 {
-  grid-column-start: 5;
-  grid-column-end: 5;
-  grid-row-start: 1;
-  grid-row-end: 1;
-  max-width: 165px;
-  }
-  .gallery__item--6 {
-  grid-column-start: 6;
-  grid-column-end: 6;
-  grid-row-start: 1;
-  grid-row-end: 1;
-  max-width: 165px;
-  }
-  .gallery__item--1-home {
-    grid-column-start: 1;
-    grid-column-end: 1;
-    grid-row-start: 1;
-    grid-row-end: 1;
-  }
-  .gallery__item--2-home {
-    grid-column-start: 2;
-    grid-column-end: 2;
-    grid-row-start: 1;
-    grid-row-end: 1;
-  }
-  .gallery__item--3-home {
-  grid-column-start: 3;
-  grid-column-end: 3;
-  grid-row-start: 1;
-  grid-row-end: 1;
-  }
-  .gallery__item--4-home {
-  grid-column-start: 4;
-  grid-column-end: 4;
-  grid-row-start: 1;
-  grid-row-end: 1;
-  }
-  .gallery_4 {
-  display: grid;
-  grid-template-columns: repeat(4, 2fr);
-  grid-template-rows: repeat(1, 2fr);
+}
+.gallery__item--3-home {
+grid-column-start: 3;
+grid-column-end: 3;
+grid-row-start: 1;
+grid-row-end: 1;
+}
+.gallery__item--4-home {
+grid-column-start: 4;
+grid-column-end: 4;
+grid-row-start: 1;
+grid-row-end: 1;
+}
+.gallery_4 {
+display: grid;
+grid-template-columns: repeat(4, 2fr);
+grid-template-rows: repeat(1, 2fr);
+grid-gap: 1rem;
+}
+.gallery_5 {
+  display: flex; /* Use flexbox for layout */
+  flex-wrap: nowrap; /* Prevent wrapping onto the next line */
+  justify-content: flex-start; 
+  gap: 0.5rem; /* Space between items */
+}
+.gallery_5 .gallery__img {
+  flex: 0 1 auto; /* Prevent images from shrinking too much or growing excessively */
+  max-width: 18%; /* Ensure consistent width across all items */
+  box-sizing: border-box; /* Include padding and border in width calculations */
+  text-align: left; /* Center the text below images */
+  margin: 0; /* Remove default margin */
+  padding: 0; /* Remove default padding */
+}
+.gallery_5 .gallery__img img {
+  width: 100%; /* Make images fill their container */
+  height: auto; /* Maintain aspect ratio */
+  object-fit: cover; /* Prevent image distortion */
+  border-radius: 4px; /* Optional: Add rounded corners */
+}
+.gallery_6 {
+  display: flex; /* display: grid*/
+  grid-template-columns: repeat(6, 2fr);
   grid-gap: 1rem;
+  flex-wrap: wrap; /* Allow items to wrap to the next line */
+  justify-content: flex-start; /* Align items to the start */
+  gap: 0.5rem; /* Space between items */
+  padding: 0; /* Remove any extra padding */
+  margin: 0; /* Remove any extra margin */
+}
+.gallery_6_img{ /* Ensure container items in .gallery_6 are consistent */
+display: flex; /* Use flexbox for the gallery */
+flex-wrap: wrap; /* Allow items to wrap */
+gap: 1rem; /* Space between items */
+}
+.gallery_6_img a {
+flex: 1 0 45%; /* Allow each item to grow and set a base width of 45% */
+max-width: 150px; /* Set max width for each image link */
+box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+.gallery_6_img img {
+width: 150px; /* Make images scale to fill their container */
+height: 150px; /* Maintain aspect ratio */
+object-fit: cover; /* Crop images to fit their container while preserving aspect ratio */
+display: block; /* Remove inline spacing and gaps caused by images */
+border-radius: 8px; /* Optional: Add rounded corners for a polished look */
+transition: transform 0.3s ease; /* Smooth transition for the zoom effect */
+}
+.gallery_6_img img:hover {
+transform: scale(1.1); /* Scale the image to 110% of its original size on hover */
+}
+.gallery_6_OJIP {
+display: grid;
+grid-template-columns: 30px 150px 30px 150px 30px 150px;
+grid-template-rows: repeat(1, 2fr);
+grid-gap: 5px
+}
+.gallery_4__item--4 {
+grid-column-start: 4;
+grid-column-end: 4;
+grid-row-start: 1;
+grid-row-end: 1;
+}
+.gallery_sliders_filaments {
+display: grid;
+grid-template-columns: 8px 180px 28px auto;
+grid-template-rows: repeat(5, 1fr);
+grid-gap: 1.1rem;
+}
+.gallery_sliders_cell_count {
+display: grid;
+grid-template-columns: 8px 180px 28px auto;
+grid-template-rows: repeat(2, 1fr);
+grid-gap: 1.1rem;
+}
+.gallery_sliders_pixel_profile {
+display: grid;
+grid-template-columns: 8px 180px 28px auto;
+grid-template-rows: repeat(1, 1fr);
+grid-gap: 1.1rem;
+}
+/* Centered text */
+.centered {
+position: relative;
+top: -50%;
+left: 50%;
+transform: translate(-25%, -50%);
+color: hwb(54 17% 15%);
+font-size: 1.5em;
+}
+img {
+border-radius: 20px;
+}
+.outsideWrapper {
+min-width: 50px;
+max-width: 100%;
+max-height: 100%;
+margin:20px 60px;
+/*border:1px solid blue;*/
+}
+/* Canvas */
+.insideWrapper {
+width:100%;
+height:100%;
+position:relative;
+}
+.coveredImage {
+width:100%;
+height:100%;
+position:absolute;
+top:0px;
+left:0px;
+}
+.coveringCanvas {
+width:100%;
+height:100%;
+position:absolute;
+top:0px;
+left:0px;
+/*background-color: rgba(255, 255, 255, 0.1);*/
+}
+table {
+border-collapse: collapse;
+width: 100%;
+tr:nth-child(odd){background-color:#fff; }
+tr:nth-child(even){background-color:#f7f7f7; }
+}
+td, th {
+border: none;
+text-align: left;
+padding: 0px;
+margin:0px;
+font-size:80%;
+}
+#form {
+width: 100%;
+float: left;
+}
+#form_short {
+width: 50%;
+float: left;
+clear: both;
+}
+.text_below_form {
+width: 100%;
+float: left;
+padding-top: 2em;
+clear: both;
+}
+.column { /* Create two equal columns that floats next to each other */
+float: left;
+width: 50%;
+padding: 10px;
+}
+#grey_rectangle{
+width:385px;
+height:320px;
+border-radius: 25px;
+background:rgb(229, 229, 234);
+padding: 20px;
+}
+#white_rectangle{
+width:650px;
+height:580px;
+border-radius: 25px;
+background:rgb(121, 103, 103);
+padding: 20px;
+}
+.input-group-prepend {
+width : 80px; /*adjust as needed*/
+}
+/* Additional mobile adjustments */
+.column {
+width: 100%;
+padding: 5px;
+}
+.background-box {
+background-color: rgba(220, 220, 220, 1); /* Light grey background */
+border-radius: 10px; /* Rounded corners */
+padding: 20px; /* Inner spacing */
+margin: 20px auto; /* Centering the box with some margin */
+box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional shadow for visual depth */
+max-width: 1200px; /* Optional: Limit maximum width */
+}
+#footer_relative, #footer_absolute {
+font-size: 0.8rem; /* Smaller footer text for compact display */
+padding: 1rem 0;
+}
+.custom-modal {
+background: rgba(0, 0, 0, 0.8) no-repeat center;
+background-size: contain;
+width: 100vw;
+height: 100vh;
+position: fixed;
+z-index: 10000;
+top: 0;
+left: 0;
+cursor: zoom-out;
+}
+.form-inline { /* Ensure form fields are visible and readable on small screens */
+display: flex; /* Maintain flexible alignment */
+flex-wrap: wrap; /* Allow wrapping if necessary */
+justify-content: space-between; /* Distribute space between elements */
+}
+.form-control {
+min-width: 120px; /* Minimum width to keep the field readable */
+max-width: 100%; /* Prevent overflow on small screens */
+font-size: 16px; /* Ensure text is readable */
+padding: 0.5rem; /* Add padding for better usability */
+}
+/* GALLERIES */
+/* Adjust gallery grid layout for different screen sizes */
+@media (max-width: 1200px) {
+  .gallery_4, .gallery_5, .gallery_6 {
+      grid-template-columns: repeat(3, 1fr);
+      }
+  .gallery_5, .gallery_6 {
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
   }
-  .gallery_5 {
-    display: flex; /* Use flexbox for layout */
-    flex-wrap: nowrap; /* Prevent wrapping onto the next line */
-    justify-content: flex-start; 
-    gap: 0.5rem; /* Space between items */
+  h3 {
+    font-size: 1.75em;
   }
-  .gallery_5 .gallery__img {
-    flex: 0 1 auto; /* Prevent images from shrinking too much or growing excessively */
-    max-width: 18%; /* Ensure consistent width across all items */
-    box-sizing: border-box; /* Include padding and border in width calculations */
-    text-align: left; /* Center the text below images */
-    margin: 0; /* Remove default margin */
-    padding: 0; /* Remove default padding */
+  p {
+      font-size: 0.95rem;
   }
-  .gallery_5 .gallery__img img {
-    width: 100%; /* Make images fill their container */
-    height: auto; /* Maintain aspect ratio */
-    object-fit: cover; /* Prevent image distortion */
-    border-radius: 4px; /* Optional: Add rounded corners */
+  .container {
+      padding: 1rem;
   }
-  .gallery_6 {
-    display: flex; /* display: grid*/
-    grid-template-columns: repeat(6, 2fr);
-    grid-gap: 1rem;
-    flex-wrap: wrap; /* Allow items to wrap to the next line */
-    justify-content: flex-start; /* Align items to the start */
-    gap: 0.5rem; /* Space between items */
-    padding: 0; /* Remove any extra padding */
-    margin: 0; /* Remove any extra margin */
-
+}
+@media (max-width: 768px) {
+  .gallery_4, .gallery_5, .gallery_6 {
+      grid-template-columns: repeat(2, 1fr);
   }
-  .gallery_6_img{ /* Ensure container items in .gallery_6 are consistent */
-  display: flex; /* Use flexbox for the gallery */
-  flex-wrap: wrap; /* Allow items to wrap */
-  gap: 1rem; /* Space between items */
+  h3 {
+    font-size: 1.5em;
   }
-  .gallery_6_img a {
-  flex: 1 0 45%; /* Allow each item to grow and set a base width of 45% */
-  max-width: 150px; /* Set max width for each image link */
-  box-sizing: border-box; /* Include padding and border in element's total width and height */
+  p {
+      font-size: 0.9rem;
   }
-  .gallery_6_img img {
-  width: 150px; /* Make images scale to fill their container */
-  height: 150px; /* Maintain aspect ratio */
-  object-fit: cover; /* Crop images to fit their container while preserving aspect ratio */
-  display: block; /* Remove inline spacing and gaps caused by images */
-  border-radius: 8px; /* Optional: Add rounded corners for a polished look */
-  transition: transform 0.3s ease; /* Smooth transition for the zoom effect */
+  .container {
+      padding: 0.8rem;
   }
-  .gallery_6_img img:hover {
-  transform: scale(1.1); /* Scale the image to 110% of its original size on hover */
+  .gallery__img, .gallery__img__tall { /* Reduce padding for images */
+      padding: 0.3rem;
   }
-
-  .gallery_6_OJIP {
-  display: grid;
-  grid-template-columns: 30px 150px 30px 150px 30px 150px;
-  grid-template-rows: repeat(1, 2fr);
-  grid-gap: 5px
-  }
-
-  .gallery_4__item--4 {
-  grid-column-start: 4;
-  grid-column-end: 4;
-  grid-row-start: 1;
-  grid-row-end: 1;
-  }
-
-  .gallery_sliders_filaments {
-  display: grid;
-  grid-template-columns: 8px 180px 28px auto;
-  grid-template-rows: repeat(5, 1fr);
-  grid-gap: 1.1rem;
-  }
-  .gallery_sliders_cell_count {
-  display: grid;
-  grid-template-columns: 8px 180px 28px auto;
-  grid-template-rows: repeat(2, 1fr);
-  grid-gap: 1.1rem;
-  }
-  .gallery_sliders_pixel_profile {
-  display: grid;
-  grid-template-columns: 8px 180px 28px auto;
-  grid-template-rows: repeat(1, 1fr);
-  grid-gap: 1.1rem;
-  }
-
-  /* Centered text */
-  .centered {
-  position: relative;
-  top: -50%;
-  left: 50%;
-  transform: translate(-25%, -50%);
-  color: hwb(54 17% 15%);
-  font-size: 1.5em;
-  }
-
-  img {
-  border-radius: 20px;
-  }
-
-  .outsideWrapper {
-  min-width: 50px;
-  max-width: 100%;
-  max-height: 100%;
-  margin:20px 60px;
-  /*border:1px solid blue;*/
-  }
-  /* Canvas */
-  .insideWrapper {
-  width:100%;
-  height:100%;
-  position:relative;
-  }
-  .coveredImage {
-  width:100%;
-  height:100%;
-  position:absolute;
-  top:0px;
-  left:0px;
-  }
-  .coveringCanvas {
-  width:100%;
-  height:100%;
-  position:absolute;
-  top:0px;
-  left:0px;
-  /*background-color: rgba(255, 255, 255, 0.1);*/
-  }
-  table {
-  border-collapse: collapse;
-  width: 100%;
-  tr:nth-child(odd){background-color:#fff; }
-  tr:nth-child(even){background-color:#f7f7f7; }
-  }
-  td, th {
-  border: none;
-  text-align: left;
-  padding: 0px;
-  margin:0px;
-  font-size:80%;
-  }
-  #form {
-  width: 100%;
-  float: left;
-  }
-  #form_short {
-  width: 50%;
-  float: left;
-  clear: both;
-  }
-  .text_below_form {
-  width: 100%;
-  float: left;
-  padding-top: 2em;
-  clear: both;
-  }
-  .column { /* Create two equal columns that floats next to each other */
-  float: left;
-  width: 50%;
-  padding: 10px;
-  }
-  #grey_rectangle{
-  width:385px;
-  height:320px;
-  border-radius: 25px;
-  background:rgb(229, 229, 234);
-  padding: 20px;
-  }
-  #white_rectangle{
-  width:650px;
-  height:580px;
-  border-radius: 25px;
-  background:rgb(121, 103, 103);
-  padding: 20px;
-  }
-  .input-group-prepend {
-  width : 80px; /*adjust as needed*/
-  }
-
-  /* Additional mobile adjustments */
-  .column {
-  width: 100%;
-  padding: 5px;
-  }
-
-  .background-box {
-  background-color: rgba(220, 220, 220, 1); /* Light grey background */
-  border-radius: 10px; /* Rounded corners */
-  padding: 20px; /* Inner spacing */
-  margin: 20px auto; /* Centering the box with some margin */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional shadow for visual depth */
-  max-width: 1200px; /* Optional: Limit maximum width */
-  }
-
-  #footer_relative, #footer_absolute {
-  font-size: 0.8rem; /* Smaller footer text for compact display */
-  padding: 1rem 0;
-  }
-  .custom-modal {
-  background: rgba(0, 0, 0, 0.8) no-repeat center;
-  background-size: contain;
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  z-index: 10000;
-  top: 0;
-  left: 0;
-  cursor: zoom-out;
-  }
-  .form-inline { /* Ensure form fields are visible and readable on small screens */
-  display: flex; /* Maintain flexible alignment */
-  flex-wrap: wrap; /* Allow wrapping if necessary */
-  justify-content: space-between; /* Distribute space between elements */
+  .background-box { /* Make the box responsive */
+    padding: 15px;
+    margin: 15px;
   }
   .form-control {
-  min-width: 120px; /* Minimum width to keep the field readable */
-  max-width: 100%; /* Prevent overflow on small screens */
-  font-size: 16px; /* Ensure text is readable */
-  padding: 0.5rem; /* Add padding for better usability */
+    min-width: 100px; /* Slightly reduce minimum width for narrower screens */
+    font-size: 14px; /* Adjust font size */
   }
-
-  /* GALLERIES */
-  /* Adjust gallery grid layout for different screen sizes */
-  @media (max-width: 1200px) {
-    .gallery_4, .gallery_5, .gallery_6 {
-        grid-template-columns: repeat(3, 1fr);
-        }
-    .gallery_5, .gallery_6 {
-      flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    }
-    h3 {
-      font-size: 1.75em;
-    }
-    p {
-        font-size: 0.95rem;
-    }
-    .container {
-        padding: 1rem;
-    }
+  .gallery_6 {
+    grid-template-columns: repeat(4, 1fr); /* 4 columns */
   }
-
-  @media (max-width: 768px) {
-    .gallery_4, .gallery_5, .gallery_6 {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    h3 {
-      font-size: 1.5em;
-    }
-    p {
-        font-size: 0.9rem;
-    }
-    .container {
-        padding: 0.8rem;
-    }
-    .gallery__img, .gallery__img__tall { /* Reduce padding for images */
-        padding: 0.3rem;
-    }
-    .background-box { /* Make the box responsive */
-      padding: 15px;
-      margin: 15px;
-    }
-    .form-control {
-      min-width: 100px; /* Slightly reduce minimum width for narrower screens */
-      font-size: 14px; /* Adjust font size */
-    }
-    .gallery_6 {
-      grid-template-columns: repeat(4, 1fr); /* 4 columns */
-    }
-    .gallery_5 {
-      grid-template-columns: repeat(2, 1fr); /* 4 columns */
-      flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    }
-    .gallery_5 .gallery__img {
-      max-width: 45%; /* Two items per row */
-    }
-    .gallery__item--3 {
-        grid-column: span 2; /* Place item 3 on its own columns */
-    }
-    .gallery__item--4 {
-        grid-column: span 2; /* Place item 4 on its own columns */
-    }
-    .gallery__item--5 {
+  .gallery_5 {
+    grid-template-columns: repeat(2, 1fr); /* 4 columns */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  }
+  .gallery_5 .gallery__img {
+    max-width: 45%; /* Two items per row */
+  }
+  .gallery__item--3 {
+      grid-column: span 2; /* Place item 3 on its own columns */
+  }
+  .gallery__item--4 {
       grid-column: span 2; /* Place item 4 on its own columns */
-    }
   }
+  .gallery__item--5 {
+    grid-column: span 2; /* Place item 4 on its own columns */
+  }
+}
+@media (max-width: 480px) {
+  .gallery_4, .gallery_5, .gallery_6 {
+      grid-template-columns: 1fr;
+      grid-gap: 0.8rem;
+  }
+  .gallery__img, .gallery__img__tall { /* Ensure images are responsive */
+      width: 100%;
+      height: auto;
+  }
+  .centered { /* Adjust centered text for smaller screens */
+      font-size: 1.2em;
+      transform: translate(-50%, -50%);
+  }
+  h3 {
+    font-size: 1.3em;
+  }
+  p {
+      font-size: 0.85rem;
+  }
+  .container {
+      padding: 0.5rem;
+  }
+  .gallery__img, .gallery__img__tall { /* Make images full-width on very small screens */
+      width: 100%;
+      padding: 0.2rem;
+  }
+  .gallery_5 .gallery__img {
+    max-width: 100%; /* One item per row */
+  }
+  .centered {
+      font-size: 1em; /* Adjust centered text for small screens */
+  }
+  .background-box { /* Make the box responsive */
+    padding: 10px;
+    margin: 10px;
+  }
+  .form-control {
+    min-width: 80px; /* Minimum width for very small screens */
+    font-size: 12px; /* Further reduce font size for compact layout */
+  }
+  .form-inline {
+    min-width: 80px; /* Minimum width for very small screens */
+    font-size: 12px; /* Further reduce font size for compact layout */
+  }
+  .gallery__item--3,
+  .gallery__item--4,
+  .gallery__item--5{
+      grid-column: span 2; /* Span full width of the row */
+      flex-basis: 100%; /* Force these items to span the full row */ /* Force specific items to appear on a new line */
+  }
+  .gallery__img {
+    flex: 1 1 100%; /* Each item takes the full row width */
+  }
+}
+/* Specific case: Keep item--3 inline with item--2 */
+.keep-inline .gallery__item--2,
+.keep-inline .gallery__item--3 {
+  flex: 1 1 auto; /* Adjust size dynamically to stay on the same line */
+}
 
-  @media (max-width: 480px) {
-    .gallery_4, .gallery_5, .gallery_6 {
-        grid-template-columns: 1fr;
-        grid-gap: 0.8rem;
-    }
-    .gallery__img, .gallery__img__tall { /* Ensure images are responsive */
-        width: 100%;
-        height: auto;
-    }
-    .centered { /* Adjust centered text for smaller screens */
-        font-size: 1.2em;
-        transform: translate(-50%, -50%);
-    }
-    h3 {
-      font-size: 1.3em;
-    }
-    p {
-        font-size: 0.85rem;
-    }
-    .container {
-        padding: 0.5rem;
-    }
-    .gallery__img, .gallery__img__tall { /* Make images full-width on very small screens */
-        width: 100%;
-        padding: 0.2rem;
-    }
-    .gallery_5 .gallery__img {
-      max-width: 100%; /* One item per row */
-    }
-    .centered {
-        font-size: 1em; /* Adjust centered text for small screens */
-    }
-    .background-box { /* Make the box responsive */
-      padding: 10px;
-      margin: 10px;
-    }
-    .form-control {
-      min-width: 80px; /* Minimum width for very small screens */
-      font-size: 12px; /* Further reduce font size for compact layout */
-    }
-    .form-inline {
-      min-width: 80px; /* Minimum width for very small screens */
-      font-size: 12px; /* Further reduce font size for compact layout */
-    }
-    .gallery__item--3,
-    .gallery__item--4,
-    .gallery__item--5{
-        grid-column: span 2; /* Span full width of the row */
-        flex-basis: 100%; /* Force these items to span the full row */ /* Force specific items to appear on a new line */
-    }
-    .gallery__img {
-      flex: 1 1 100%; /* Each item takes the full row width */
-    }
-  }
+/* for small */
+.tool_pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5em;
+}
 
-  /* Specific case: Keep item--3 inline with item--2 */
-  .keep-inline .gallery__item--2,
-  .keep-inline .gallery__item--3 {
-    flex: 1 1 auto; /* Adjust size dynamically to stay on the same line */
+.gallery_tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5em;
+}
+
+@media (min-width: 768px) {
+  .tool_pair {
+    flex: 0 1 200px;
   }
+}

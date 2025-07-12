@@ -140,5 +140,21 @@ $('img[data-enlargeable]').addClass('img-enlargeable').click(function() {
 });
 
 
-
-
+//--------------------------------------//
+//--- REMEMBER PIXEL SIZE ---//
+//--------------------------------------//
+//document.addEventListener("DOMContentLoaded", function () {
+//  const pixelInput = document.getElementById("pixel_size");
+//
+//  if (pixelInput) {
+//    const savedPixelSize = localStorage.getItem("savedPixelSize");
+//
+//    if (savedPixelSize !== null) {
+//      pixelInput.value = savedPixelSize;
+//    }
+//
+//    pixelInput.addEventListener("input", () => {
+//      localStorage.setItem("savedPixelSize", pixelInput.value);
+//    });
+//  }
+//});

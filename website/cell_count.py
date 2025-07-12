@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, flash, redirect
-from PIL import Image as im
 import os, cv2, base64, io
+import pandas as pd
+import time
+from PIL import Image as im
 from werkzeug.utils import secure_filename
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 #from flask_login import current_user
@@ -18,6 +20,8 @@ def count_cells():
             depth_um = (int(request.form["chamber_depth_range"]))
             minimal_expected_size = float(request.form["minimal_diameter_range"]) # Get smallest cell size (in um)
             minimum_area = 3.141592653*((minimal_expected_size * 1000 / pixel_size_nm)/2)**2 # Defines area of the smallest cell (in pixels)
+            # get the current time
+            current_time = time.time()
             ####################################
             ### Load image for cell counting ###
             ####################################
@@ -124,17 +128,64 @@ def count_cells():
                         img_th_to_show.save(memory_for_threshold_image, "JPEG")
                         img_th_encoded_in_memory = base64.b64encode(memory_for_threshold_image.getvalue())
                         img_th_decoded_from_memory = img_th_encoded_in_memory.decode('utf-8')
-#                              img_for_download.save(memory_for_image_to_download, "JPEG")
-#                              img_for_download_encoded_in_memory = base64.b64encode(memory_for_image_to_download.getvalue())
-#                              img_for_download_decoded_from_memory = img_for_download_encoded_in_memory.decode('utf-8')
-                        # deleting original image
+                        ##############################
+                        ### Saving images to excel ###
+                        ##############################
+                        # Save results and images in Excel using xlsxwriter
+                        xlsx_full_path = os.path.join(f'{upload_folder}/{filename2}_counted_cells.xlsx')
+                        # Write summary text data to worksheet
+                        summary_lines = [
+                            f"Cell count without manual correction: {million_cells_per_mL} x 10^6 cells mL^-1",
+                            f"Identified cells: {cell_count}",
+                            f"Image resolution: {x_pixels} x {y_pixels} pixels",
+                            f"Image area: {img_area_mm2} mm² ({int(x_nm / 1000)} x {int(y_nm / 1000)} µm)",
+                            f"Volume of the imaged area: {img_volume_nl} nL",
+                            f"Pixel size: {pixel_size_nm} nm",
+                            f"Depth of the chamber: {depth_um} µm",
+                            f"Threshold cell size: {minimal_expected_size} µm"]
+                        with pd.ExcelWriter(xlsx_full_path, engine='xlsxwriter') as writer:
+                            # Create new sheet for images
+                            workbook = writer.book
+                            worksheet_Results = workbook.add_worksheet('Results') # type: ignore
+                            worksheet_final_plot = workbook.add_worksheet('Intensities plot') # type: ignore
+                            worksheet_Selected_cells = workbook.add_worksheet('Selected cells') # type: ignore
+                            worksheet_original_image = workbook.add_worksheet('Original Image') # type: ignore
+                            # Write results
+                            for row_num, line in enumerate(summary_lines):
+                                worksheet_Results.write(row_num, 0, line)
+                            # Decode base64 images to BytesIO
+                            orig_img_bytes = io.BytesIO(base64.b64decode(img_orig_decoded_from_memory))
+                            counted_img_bytes = io.BytesIO(base64.b64decode(img_counted_decoded_from_memory))
+                            thresholded_img_bytes = io.BytesIO(base64.b64decode(img_th_decoded_from_memory))
+                            # Insert images into 'Images' worksheet
+                            worksheet_final_plot.insert_image('A1', 'Results, counted cells', {'image_data': counted_img_bytes})
+                            worksheet_Selected_cells.insert_image('A1', 'Thresholded image', {'image_data': thresholded_img_bytes})
+                            worksheet_original_image.insert_image('A1', 'Original Image', {'image_data': orig_img_bytes})
+                        xlsx_file_path = f'uploads/{filename2}_counted_cells.xlsx'
+                        ######################################
+                        ### Delete files older than 20 min ###
+                        ######################################
+                        # deleting original image - instantly
                         os.remove(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
+                        # List all files
+                        list_of_files_in_upload_folder = os.listdir(upload_folder)
+                        # get number of seconds to reset
+                        seconds = 1200
+                        # scan for old files
+                        for i in list_of_files_in_upload_folder:
+                            # get the location of each file
+                            file_location = os.path.join(upload_folder, str(i)).replace("\\","/")
+                            # get time when the file was modified
+                            file_time = os.stat(file_location).st_mtime
+                            # if a file is modified before 20 min then delete it
+                            if(file_time < current_time - seconds):
+                                os.remove(os.path.join(upload_folder, str(i)).replace("\\","/")) 
+                        # render template
                         return render_template("cell_count.html", 
                             #user_id = user_id,
                             img_orig_decoded_from_memory = img_orig_decoded_from_memory, 
                             img_th_decoded_from_memory = img_th_decoded_from_memory,
                             img_counted_decoded_from_memory = img_counted_decoded_from_memory,
-#                                  img_for_download_decoded_from_memory = img_for_download_decoded_from_memory,
                             img_for_download = f'{image_name}_counted{image_extension}',
                             cell_count = cell_count,
                             cells_per_ml = cells_per_ml,
@@ -149,8 +200,8 @@ def count_cells():
                             pixel_size_nm = pixel_size_nm,
                             depth_um = depth_um,
                             minimal_expected_size = minimal_expected_size,
-#                                 manually_identified_cells = manually_identified_cells,
-                            threshold = threshold
+                            threshold = threshold,
+                            xlsx_file_path = xlsx_file_path
                             )
                     else:
                         cells_per_ml = '0.00'
