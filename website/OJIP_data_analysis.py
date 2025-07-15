@@ -7,7 +7,7 @@ import openpyxl
 from openpyxl.drawing.image import Image
 from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline
 from scipy.ndimage import gaussian_filter1d
-from sqlalchemy import Result         
+# from sqlalchemy import Result         
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
 import time

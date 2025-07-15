@@ -147,8 +147,8 @@ def count_cells():
                             # Create new sheet for images
                             workbook = writer.book
                             worksheet_Results = workbook.add_worksheet('Results') # type: ignore
-                            worksheet_final_plot = workbook.add_worksheet('Intensities plot') # type: ignore
-                            worksheet_Selected_cells = workbook.add_worksheet('Selected cells') # type: ignore
+                            worksheet_final_plot = workbook.add_worksheet('Counted cells') # type: ignore
+                            worksheet_Selected_cells = workbook.add_worksheet('Thresholded cells') # type: ignore
                             worksheet_original_image = workbook.add_worksheet('Original Image') # type: ignore
                             # Write results
                             for row_num, line in enumerate(summary_lines):

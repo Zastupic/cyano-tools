@@ -285,7 +285,7 @@
 </div>
 
 <div class="background-box">
-    <h4 id="growth_rate"> 3. Specific growth rate </h4>
+    <h4 id="growth_rate"> 3. Specific growth rate from doubling time and vice versa </h4>
     <p>In microbiology, the most typical cell division is a (mitotic) binary division, where each cell divides 
         into two daughter cells. These daugther cells divide again into four cells, 
         the four cells divie again into eight cells etc. Time required for the cell division is known as 
@@ -393,7 +393,7 @@
 </div>
 
 <div class="background-box">
-    <h4 id="OD720_correction"> 4. Optical density signal correction</h4>
+    <h4 id="OD720_correction"> 4. Correcting nonlinearity in optical density signal from FMT-150, MC-1000, and AquaPen </h4>
     <p>The values of optical density (OD), mesured in the liquid cultures of algae or cyanobacteria, require correction at higher densities due to scattering 
         of the measuring light caused by increasing concentration of cells. The OD correction is specific for each instrument. For the instruments listed below, 
         it appliesfor OD meaured at 720 nm, <b>OD<sub>720</sub> > 0.4</b>. Below this value, the OD sensors measure linearly. 
@@ -513,6 +513,187 @@
         <br><sup>1</sup>Zavřel et al., (2021): Algal Research, 56: 1-15, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926421001478?dgcid=coauthor", target="blank">10.1016/j.algal.2021.102328</a>
         <br><sup>2</sup>Sukačová et al., (2023): Algal Research, 71: 1-10, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926423000887", target="blank">10.1016/j.algal.2023.103055</a></i>
     </p>
+</div>
+<div class="background-box">
+    <h4 id="OD720_recalculation"> 5. Recalculation of optical density signal for cuvettes of different diameter </h4>
+    <p>The values of optical density (OD), mesured in the liquid cultures of algae, cyanobacteria or bacteria, depend on the optical path length,
+        i.e. thickness of the cuvette in which the culture suspension is measured. In spectrophotometry, OD is usually calculated 
+        same as absorbance (<i>A</i>) as:</p>
+    <p style="line-height: 1"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft OD = A = log_{10}\ \frac{I_{0}}{I}
+        \end{multline}
+        $$
+    </i></p>
+    <a>where <i>I<sub>0</sub></i> and <i>I</i> represent incident and transmitted light intensity, respectively [&#xb5mol photons m<sup>-1</sup> s<sup>-1</sup>]. 
+        Absorbance is directly proportional to the concentration of the absorbing species, the extinction coefficient, 
+        and the path length through which light travels, according to the Lambert-Beer law:</a>
+    </p>
+    <p style="line-height: 1"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft A = &#949\ c\ l
+        \end{multline}
+        $$
+    </i></p>
+    <a>where <i>&#949</i> represents molar extinction coefficient [L<sup>-1</sup> mol<sup>-1</sup> cm<sup>-1</sup>], 
+        <i>c</i> represents concentration of the sample [mol L<sup>-1</sup>], and 
+        <i>l</i> represents optical path length [cm]. When identical culture is measured in cuvettes of different thickness, 
+        the cell concentration and extinction coefficient remain constant, and the only parameter changing is the optical path length.
+        Absorbance in cuvettes of various thickness can be then recalculated as following:</a>
+    <p style="line-height: 1"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft A_{2} = A_{1}\ \frac{l_{2}}{l_{1}}
+        \end{multline}
+        $$
+    </i></p>
+    <p>where <i>A<sub>2</sub></i> and <i>A<sub>2</sub></i> represent optical densities in cuvettes of thickness <i>l<sub>2</sub></i>
+        and <i>l<sub>1</sub></i>, respectively. </p>
+    <br>
+    <h5> 5.1 Recalculate absorbance (A) between cuvettes of different thicknesses </h5>
+    <p> This calculation is valid for clear solutions that absorb, but do not scatter, the measuring light—such as those without suspended cells.</p>
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Absorbance 1 (<i>A<sub>1</sub></i>): </a>
+        </div>
+        <div class=" gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input
+                    class="form-control"    
+                    type="number"
+                    id="A1_measured" 
+                    min = "0"
+                    step="0.01"
+                    onkeypress="return isNumberKey(event)"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="gallery_5" keep-inline>
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Thickness of cuvette 1 (<i>l<sub>1</sub></i>):</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input
+                    class="form-control"    
+                    type="number"
+                    id="thickness_cuvette_1" 
+                    min = "0"
+                    step="0.1"
+                    onkeypress="return isNumberKey(event)"/>
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>cm</a>
+        </div>
+    </div> 
+    <div class="gallery_5" keep-inline>
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Thickness of cuvette 2 (<i>l<sub>2</sub></i>):</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input
+                    class="form-control"    
+                    type="number"
+                    id="thickness_cuvette_2" 
+                    min = "0"
+                    step="0.1"
+                    onkeypress="return isNumberKey(event)"/>
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>cm</a>
+        </div>
+    </div> 
+    <br>
+    <button id="calculate_A2" type="button" class="btn btn-primary" onclick="calculate_A2();"> Calculate <i>A<sub>2</sub></i></button>
+    <button type="button" class="btn btn-info"><a>Absorbance 2 (<i>A<sub>2</sub></i>): <span id="recalculated_A2_for_span"></span></a></button>
+    <br><br>
+    <h5> 5.2 Recalculate optical density (OD) between specific devices </h5>
+    <p> To accurately convert OD values between different devices, comparative measurements are necessary to capture the effects 
+        of both light absorption and scattering by suspended cells. The following recalculation describes the relationship between 
+        optical densities measured at 720 nm (OD<sub>720</sub>) across four devices: 
+        <a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank"><i>Multi-Cultivator MC-1000-OD</i></a> (inner cuvette thicknesses 2.6 cm), 
+        <a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank"><i>Photobioreactor PBR FMT-150</i></a> (2.4 cm),
+        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank"><i>AquaPen</i></a> (1.0 cm) and
+        <a href="https://www.shimadzu.cz/products/molecular-spectroscopy/uv-vis/uv-vis-nir-spectroscopy/uv-2600i-uv-2700i/index.html" target="_blank"> 
+            <i>UV-2600 spectrophotometer</i></a> (1.0 cm). 
+            <br>
+            Measurements were conducted using cell suspensions of the unicellular cyanobacterium
+            <i>Synechocystis</i> sp. PCC 6803 and unicellular green alga <i>Chlorella vulgaris</i>. Since the differences 
+            in OD<sub>720</sub> readings between devices were comparable for both strains (R<sup>2</sup> = 0.98-1.00 for both strains individually and combined), 
+            the tool below provides a common recalculation for both <i>Chlorella</i> and <i>Synechocystis</i>. 
+            <br> The <i>Chlorella</i> and <i>Synechocystis</i> cultures were measured up to OD<sub>720</sub>  
+            1.3 (<i>UV-2600</i>), 0.88 (<i>Multi-Cultivator MC-1000-OD</i>), 0.83 (<i>Photobioreactor PBR FMT-150</i>) and 0.19 (<i>AquaPen</i>). 
+            Concentration of Chlorophyll <i>a</i> in the cultures was ranging between 0.01-2.27 &#xb5g mL<sup>-1</sup>.       
+    </p>
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Device 1: </a>
+        </div>
+        <div class=" gallery__img gallery__item--2">
+            <div class="form-group">
+                <select id="measuring_device_1_from_dropdown" class="form-control">
+                    <option value="UV-2600">UV-2600 </option>
+                    <option value="AquaPen">AquaPen </option>
+                    <option selected value="MC-1000">MC-1000 </option>
+                    <option value="FMT-150">FMT-150 </option>
+                </select>
+            </div>
+        </div>
+    </div>
+        <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp OD in Device 1: </a>
+        </div>
+        <div class=" gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input
+                    class="form-control"    
+                    type="number"
+                    id="OD_in_device_1_mesured" 
+                    min = "0"
+                    step="0.01"
+                    onkeypress="return isNumberKey(event)"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Device 2: </a>
+        </div>
+        <div class=" gallery__img gallery__item--2">
+            <div class="form-group">
+                <select id="measuring_device_2_from_dropdown" class="form-control">
+                    <option selected value="UV-2600">UV-2600</option>
+                    <option value="AquaPen">AquaPen</option>
+                    <option value="MC-1000">MC-1000</option>
+                    <option value="FMT-150">FMT-150</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <br>
+    <button id="calculate_OD2" type="button" class="btn btn-primary" onclick="recalculate_OD();"> Recalculate <i>OD</i></button>
+    <button type="button" class="btn btn-info"><a>
+        <i>OD<sub>720</sub></i> <span id="OD_in_device_1_for_span"></span><span id="measuring_device_1_for_span"></span>
+        <span id="recalculated_OD2_for_span"></span><span id="measuring_device_2_for_span"></span> </button>
+    <br>
+    <div>
+        <a style="line-height: 0.9"><i style="font-size:80%"><span id="warning_message_for_span"></span></i></a>
+        <a style="line-height: 0.9"><i style="font-size:80%"><span id="chl_a_recalculated_for_span"></span></i></a>
+    </div>
 </div>
 
 <br><br><br><br><br><br><br><br><br><br><br><br>

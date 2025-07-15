@@ -401,6 +401,9 @@ display: flex; /* Maintain flexible alignment */
 flex-wrap: wrap; /* Allow wrapping if necessary */
 justify-content: space-between; /* Distribute space between elements */
 }
+.form-group { /* Ensure form fields are visible and readable on small screens */
+margin-bottom: 0rem;
+}
 .form-control {
 min-width: 120px; /* Minimum width to keep the field readable */
 max-width: 100%; /* Prevent overflow on small screens */
