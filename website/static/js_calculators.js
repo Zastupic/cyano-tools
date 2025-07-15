@@ -145,13 +145,13 @@ function recalculate_OD() {
     } 
 
     if (OD_in_device_1_mesured > 1.3){
-      warning_message_for_span = "Warning: the entered OD value is higher than the experimentally measured range. Please proceed carefully with results interpretation.";
+      warning_message_for_span = "Warning: the entered OD value is higher than the experimentally measured range. Proceed carefully with results interpretation.";
       document.getElementById('chl_a_recalculated_for_span').innerHTML = "";
     } else {
       warning_message_for_span = "";
       chl_a_recalculated_for_span = 1.7572 * OD_in_device_1_mesured - 0.0001;
       document.getElementById('chl_a_recalculated_for_span').innerHTML = 
-      "Approximate concentration of Chlorophyll <i>a</i> in the measured culture is: "+chl_a_recalculated_for_span.toFixed(2)+" &#xb5g mL<sup>-1</sup>.";
+      "Approximate concentration of Chlorophyll <i>a</i> in the measured Chlorella or Synechocystis culture is "+chl_a_recalculated_for_span.toFixed(2)+" &#xb5g mL<sup>-1</sup>.";
     }
   }
 
@@ -166,13 +166,13 @@ function recalculate_OD() {
       recalculated_OD2_for_span = OD_in_device_1_mesured
     }
     if (OD_in_device_1_mesured > 0.19){
-      warning_message_for_span = "Warning: the entered OD value is higher than the experimentally measured range. Please proceed carefully with results interpretation.";
+      warning_message_for_span = "Warning: the entered OD value is higher than the experimentally measured range. Proceed carefully with results interpretation.";
       document.getElementById('chl_a_recalculated_for_span').innerHTML = "";
     } else {
       warning_message_for_span = "";
       chl_a_recalculated_for_span = 12.83 * OD_in_device_1_mesured + 0.0459;
       document.getElementById('chl_a_recalculated_for_span').innerHTML = 
-      "Approximate concentration of Chlorophyll <i>a</i> in the measured culture is: "+chl_a_recalculated_for_span.toFixed(2)+" &#xb5g mL<sup>-1</sup>.";
+      "Approximate concentration of Chlorophyll <i>a</i> in the measured Chlorella or Synechocystis culture is "+chl_a_recalculated_for_span.toFixed(2)+" &#xb5g mL<sup>-1</sup>.";
     }
   }
 
@@ -187,13 +187,13 @@ function recalculate_OD() {
       recalculated_OD2_for_span = OD_in_device_1_mesured
     }
     if (OD_in_device_1_mesured > 0.88){
-      warning_message_for_span = "Warning: the entered OD value is higher than the experimentally measured range. Please proceed carefully with results interpretation.";
+      warning_message_for_span = "Warning: the entered OD value is higher than the experimentally measured range. Proceed carefully with results interpretation.";
       document.getElementById('chl_a_recalculated_for_span').innerHTML = "";
     } else {
       warning_message_for_span = "";
       chl_a_recalculated_for_span = 2.5981 * OD_in_device_1_mesured - 0.0362;
       document.getElementById('chl_a_recalculated_for_span').innerHTML = 
-      "Approximate concentration of Chlorophyll <i>a</i> in the measured culture is: "+chl_a_recalculated_for_span.toFixed(2)+" &#xb5g mL<sup>-1</sup>.";
+      "Approximate concentration of Chlorophyll <i>a</i> in the measured Chlorella or Synechocystis culture is "+chl_a_recalculated_for_span.toFixed(2)+" &#xb5g mL<sup>-1</sup>.";
     }
   }
 
@@ -209,13 +209,13 @@ function recalculate_OD() {
     }
   
     if (OD_in_device_1_mesured > 0.83){
-      warning_message_for_span = "Warning: the entered OD value is higher than the experimentally measured range. Please proceed carefully with results interpretation.";
+      warning_message_for_span = "Warning: the entered OD value is higher than the experimentally measured range. Proceed carefully with results interpretation.";
       document.getElementById('chl_a_recalculated_for_span').innerHTML = "";
     } else {
       warning_message_for_span = "";
       chl_a_recalculated_for_span = 2.7332 * OD_in_device_1_mesured - 0.0007;
       document.getElementById('chl_a_recalculated_for_span').innerHTML = 
-      "Approximate concentration of Chlorophyll <i>a</i> in the measured culture is: "+chl_a_recalculated_for_span.toFixed(2)+" &#xb5g mL<sup>-1</sup>.";
+      "Approximate concentration of Chlorophyll <i>a</i> in the measured Chlorella or Synechocystis culture is "+chl_a_recalculated_for_span.toFixed(2)+" &#xb5g mL<sup>-1</sup>.";
     }
   }
 
