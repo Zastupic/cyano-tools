@@ -7,22 +7,32 @@
 {% block content %}
 <h1>Analysis of rapid light curves 
     <br>(Photosynthesis-Irradiance curves)</h1>
+<p>Welcome to the rapid light curves analyzing tool! Rapid light curves 
+    (also called photosynthesis-irradiance curves) are a widely used method for assessing photosynthetic performance 
+    under varying light intensities. By analyzing how chlorophyll fluorescence changes in response to stepwise increases in actinic light, 
+    this method provides insights into photosynthetic efficiency, photoprotection mechanisms, and the functional state of photosystem II (PSII).
+    The rapid light curves can be measured in plants, algae, cyanobacteria and in some photosynthetic bacteria. 
+</p>
+<p>This tool allows visualization and quantitative analysis of rapid ligth curves recorded with various PAM fluorometers, including 
+    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
+    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">DUAL-PAM</a>, 
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">AquaPen</a>, 
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">FluorPen</a> or
+    <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" class="gallery__item--5">FL 6000</a>.
+    Up to 50 files can be uploaded simultaneously for batch processing. The tool generates multiple visualizations for each file precessed, including:
+<ul style="font-size:95%">
+    <li>Raw fluorescence signal under stepwise increased actinic light</li>
+    <li>Technical parameters of the fluorescence signal, such as <i>F<sub>t</sub></i> or <i>F<sub>M</sub></i></li>
+    <li>Derived parameters (for details, see the summary table below):
+        <ul>
+            <li><i>Q<sub>Y</sub></i>, <i>rETR</i>, <i>qP</i>, <i>qN</i> and <i>NPQ</i></li>
+            <li>Parameters of ETR fitting: <i>α</i>, <i>β</i>, <i>ETR<sub>max</sub></i>, I<sub>k</sub>, I<sub>b</sub></li>
+        </ul>
+    </li>
+</ul>
 <br>
-<div class="container">
-    <img src="static/images/light_curve_orig.jpg" alt="Light curve example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
-</div>
-<br>
-<p>Welcome to the application for analyzing rapid light curves (Photosynthesis-Irradiance, P-I curves)! Rapid light curves provide 
-    a detailed information on the ability of the studied organism to cope with increasing light intensity, 
-    on the overall performance and saturation level of photosynthetic electron transport rate 
-    as well as on the efficiency of both photochemical and non-photochemical quenching. 
-    The rapid light curves can be measured for all photosyntheetically active organisms, i.e. for plants, algae, cyanobacteria or photosynthetic bacteria. 
-<br><br>
-This tool visualizes and analyzes rapid ligth curves curves, as obtained by PAM fluorometry measurements. The tool reads up to 50 rapid light curve files and plots 
-    several graphs: raw fluorescence signal and parameters <i>Ft</i>, <i>Fm</i>, <i>qP</i>, <i>qN</i>, <i>NPQ</i>, <i>Qy</i> and <i>ETR</i> (see the summary table below).
-    <br>
-    Besides plotting the fluorescence signals and calculating these parameters under each light intensity, the curves are fitted by a 
-    model described by <a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank">Platt et al. (1980)</a>:  
+The curves are fitted by a model described by 
+<a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank">Platt et al. (1980)</a>:  
 </p>
 <p>$$
     \begin{multline}
@@ -30,10 +40,16 @@ This tool visualizes and analyzes rapid ligth curves curves, as obtained by PAM 
     \end{multline}
     $$
 </p>
-<p>This allows to derive additional paramters such as photosynthesis efficiency under low irradiance (<i>α</i>), photoinhibition coefficient under high irradiance (<i>β</i>), 
-    maximum potential electron transport rate (<i>ETR<sub>max</sub></i>), or irradiance required to reach maximal rETR in theoretical scenario where 
-    photoinhibition would be absent. The full list of parameters is summarized below:
+<p>This allows to derive additional paramters such as photosynthesis efficiency under low irradiance (<i>α</i>), 
+    photoinhibition coefficient under high irradiance (<i>β</i>), maximum potential electron transport rate (<i>ETR<sub>max</sub></i>), 
+    or irradiance required to reach maximal rETR in theoretical scenario where 
+    photoinhibition would be absent. The full list of parameters is summarized below.
+    After analysis, all curves, calculated values, and summary statistics are compiled into a downloadable .xlsx file for further use.
 </p>
+<br>
+<div class="container">
+    <img src="static/images/light_curve_orig.jpg" alt="Light curve example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%;">
+</div>
 <table style="width:95%">
     <colgroup>
         <col style="width:2%">
@@ -171,19 +187,6 @@ This tool visualizes and analyzes rapid ligth curves curves, as obtained by PAM 
     <a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank">1525</a></i>
 </p>
 <br>
-Accepted file formats include .txt files, as obtained by <i>AquaPen / FluorPen</i> fluorometers:
-<br>
-<div class="gallery_6_img">
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--1">
-        <i style="font-size:80%">AquaPen</i>
-        <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__item--3">
-    </a>
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--2">
-        <i style="font-size:80%">FluorPen</i>
-        <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__item--4">
-    </a>
-</div>
-<br>
 <u>How to use this tool:</u>
 <br>
 <ol>
@@ -194,6 +197,18 @@ Accepted file formats include .txt files, as obtained by <i>AquaPen / FluorPen</
     <li>Review the light curves and the calculated parameters</li>
     <li>Download the processed results in a summary .xlsx file</li>
 </ol>
+<br>
+<a style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .txt files, as obtained by <i>AquaPen / FluorPen</i> fluorometers:</i></a>
+<div class="gallery_6_img">
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--1">
+        <i style="font-size:80%">AquaPen</i>
+        <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__item--3">
+    </a>
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--2">
+        <i style="font-size:80%">FluorPen</i>
+        <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__item--4">
+    </a>
+</div>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('light_curves_analysis.analyze_light_curves', _anchor='results') }}">
     <div class="form-group">

@@ -6,21 +6,30 @@
 
 {% block content %}
 <h1> Cell size analysis - filamentous strains </h1>
-<br>
+<p>Welcome to the cell size analysis tool for irregular structures — 
+    a flexible and accurate solution for measuring the cell size of filamentous algae or cyanobacteria, or any object of interest in fluorescence microscopy images.
+    This tool is optimized for images acquired with a fluorescence microscope and is specifically designed to analyze cells arranged in filaments or other clearly defined structures.
+    Objects, such as individual cells within filaments, are manually marked by the user. 
+    Once selected, the tool automatically collects all marked objects and calculates their length based on the pixel size provided.
+</p>
+<p>The following example illustrates the full workflow using TCS SP8 DMI 
+    <a href="https://www.leica-microsystems.com/products/confocal-microscopes/" target="_blank">confocal laser scanning microscope</a> 
+     (Leica Microsystems) and cells of a unicellular cyanobacterium <i>Nostoc</i> sp. CCAP 1453/38.
+    </p>
 <div class="container">
     <img src="static/images/workflow_cell_size_filaments.jpg" 
     alt="Pixel_profiles_cell_selection" class="gallery__img_tall"
-    width="65%">
+    data-enlargeable style="cursor: zoom-in; width: 75%">
 </div>
-<p>Welcome to the app for analyzing cell size! 
-<br>
-<p>To analyze size of cells on the fluorescence microscopy image, please follow the instructions below:</p>
+<p><u>How to use this tool:</u></p>
 <ol>
-    <li>Enter pixel size</li>
-    <li>Select and upload your image</li>
-    <li>Mark diameters of cells on your image for analysis</li>
+    <li>Enter the pixel size </li>
+    <li>Upload your image</li>
+    <li>Mark the cells – manually draw lines across individual cells or objects to define their size.</li>
     <li>Confirm selection and analyze size of the selected cells</li>
-</ol> 
+    <li>Read and/or download the results</li>
+</ol>
+<br> 
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}">
     <div class="form-group">
         <p><b>1. Enter pixel size (nm)</b></p>

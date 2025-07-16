@@ -6,19 +6,18 @@
 
 {% block content %}
 <h1>Cell counting</h1>
-<br>
-<p>Welcome to the Cell Counting Tool!
-This tool is designed to count cells in images captured using a fluorescence microscope. It works with samples prepared on a hemocytometer 
-(such as a Bürker chamber) or a disposable counting slide of known depth. Any combination of a fluorescence microscope and a cell counting 
-chamber is suitable for use with this application.</p>
+<p>Welcome to the cell counting tool - a simple and efficient solution for counting cells in fluorescence microscopy images.
+This tool is optimized for images captured by a fluorescence microscope and supports cell counting from images captured
+ in a Bürker chamber, hemocytometer, or any disposable counting slide of known depth. 
+Any combination of a fluorescence microscope and a cell counting chamber is suitable for use with this application.</p>
 <a>The following example illustrates the full workflow using Nexcellom 
     <a href="https://www.nexcelom.com/nexcelom-products/cellometer-disposable-counting-chambers/" target="_blank">cell counting slides</a> and Zeiss
     <a href="https://www.zeiss.com/microscopy/en/products/light-microscopes/widefield-microscopes/axio-imager-2-for-life-science-research.html" target="_blank">fluorescence microscope</a>:</a>
 <br>
 <div class="container">
-    <img src="static/images/worflow_cell_counting.jpg" alt="Cell counting workflow" class="gallery__img__tall">
+    <img src="static/images/worflow_cell_counting.jpg" alt="Cell counting workflow" class="gallery__img__tall"
+    data-enlargeable style="cursor: zoom-in">
 </div>
-<br>
 <p><u>How to use this tool:</u></p>
 <ol>
     <li>Enter pixel size (in nm)</li>
@@ -32,6 +31,7 @@ chamber is suitable for use with this application.</p>
     <li>Run the analysis to identify and count cells</li>
     <li>Review the results</li>
     <li>Manually correct the output, if needed, by clicking on the image to add cells</li>
+    <li>Read and/or download the results</li>
 </ol> 
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count.count_cells') }}">
@@ -163,11 +163,6 @@ chamber is suitable for use with this application.</p>
     <p>Pixel size: {{ pixel_size_nm }} nm 
     / Depth of the chamber: {{ depth_um }} µm 
     / Threshold cell diameter: {{ minimal_expected_size }} µm</p>
-        <!-- <a href="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" download="{{ img_for_download }}">
-            <button type="button" class="btn btn-primary">Download image with counted cells</button>
-        </a> 
-        <br>
-        <br> -->
     <br>
     <b>Click to enlarge:</b>
     <br>

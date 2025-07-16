@@ -38,8 +38,6 @@ $('img[data-enlargeable]').addClass('img-enlargeable').click(function() {
     left: '0',
     cursor: 'zoom-out'
     }).click(function() {
-      $('img[data-enlargeable]').click(function() {
-      });
       removeModal();
   }).appendTo('body');
   //handling ESC

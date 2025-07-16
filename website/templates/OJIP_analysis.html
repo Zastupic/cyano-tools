@@ -5,24 +5,53 @@
 {% endblock %}
 
 {% block content %}
-<h1> Analysis of fast fluorescence transients (OJIP) </h1>
+<h1> Analysis of fast chlorophyll fluorescence induction kinetics </h1>
+<p>Welcome to the tool analyzing fast chlorophyll fluorescence induction kinetics! Fast chlorophyll fluorescence induction kinetics, known also as OJIP transient,
+    provides a rapid and sensitive method for assessing the efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. 
+    Analysis of the OJIP transient allows to determine bottlenecks in the e<sup>-</sup> transport chain at various sites — 
+    including charge separation at photosystem II (PSII), the plastoquinon (PQ) pool, or at the site of photosystem I (PSI). 
+</p>
+<p>This tool enables visualization and analysis of OJIP fluorescence acquired by several common PAM fluorometers, including 
+    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
+    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">DUAL-PAM</a>, 
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">AquaPen</a>, 
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">FluorPen</a> or
+    <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" class="gallery__item--5">FL 6000</a>.
+    Up to 50 files with recorded OJIP fluorescence can be uploaded simultaneously for batch processing. 
+    The tool generates multiple visualizations for each file precessed, including:
+    <ul style="font-size:95%">
+        <li>Fluorescence signal
+            <ul>
+                <li>Raw OJIP curves</li>
+                <li>OJIP curves shifted to F<sub>O</sub></li>
+                <li>OJIP curves shifted to F<sub>M</sub></li>
+                <li>OJIP curves double normalized between F<sub>O</sub> and F<sub>M</sub></li>
+            </ul>
+        </li>
+        <li>Derivatives of the fluorescence signal
+            <ul>
+                <li>2<sup>nd</sup> derivative of the fluorescence signal</li>
+                <li>Identified minima of the fluorescence signal's 2<sup>nd</sup> derivative</li>
+                <li>Idenified <i>J</i>, <i>I</i> and <i>P</i> inflection points</li>
+            </ul>
+        </li>
+        <li>Technical parameters of the fluorescence signal, such as F<sub>O</sub>, F<sub>J</sub>, F<sub>I</sub> or F<sub>M</sub></li>
+        <li>Derived and calculated parameters (see below)</li>
+    </ul>
+    <br>
+    In addition to curve normalization and visualization, the tool calculates and plots key parameters describing 
+    the efficiency of light capture by photosystem II and various aspects of e<sup>-</sup> 
+    transport between photosystem II and photosystem I. These parameters, as summarized in the table below (for references, 
+    see <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" 
+        target="_blank">Stirbet et al., 2018</a>
+    or <a href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" 
+        target="_blank">Tsimilli-Michael 2020)</a></b></i>, 
+    are calculated and plotted in bar charts. After processing, all data, plots and calculated parameters are stored in a summary .xlsx file that is available for download. 
+</p>   
 <br>
-
 <div class="container">
     <img data-enlargeable src="static/images/OJIP_curves_example_orig.jpg" alt="OJIP example" class="gallery__img" width="50%" style="cursor: zoom-in; width: 25%">
 </div>
-<br>
-<p>Welcome to the application analyzing OJIP curves! Fast fluorescence transients (so-called OJIP curves) provide a rapid and highly sensitive method for evaluating the efficiency 
-    of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. Analysis of the OJIP curves allows to determine bottlenecks in the e<sup>-</sup>
-    transport on the site of charge separation at photosystem II (PSII), plastoquinon (PQ) pool, or at the site of photosystem I (PSI). Parameters describing the e<sup>-</sup> 
-    transport eficiency (mostly qualitatively), are summarized in the table below.
-<br><br>
-    This tool visualizes and analyzes OJIP curves obtained by PAM fluorometry measurements. It allows to read up to 50 OJIP curves and plots four graphs: i) raw data, 
-ii) all curves shifted to zero, iii) all curves shifted to maximal fluorescence (F<sub>P</sub> or F<sub>M</sub>) and iv) double-normalized curves where all values are between 0 and 1.
-Besides curves normalization and plotting, physiological parameters describing the efficiency of light capture by photosystem II and
-various aspects of e<sup>-</sup> transport between photosystem II and photosystem I are calculated and plotted (for references, see <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" target="_blank">Stirbet et al., 2018</a>
-and <a href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" target="_blank">Tsimilli-Michael 2020)</a></b></i>.
-After processing, all curves and parameters are stored in a summary .xlsx file that is available for download.<p>
 <table style="width:95%">
     <colgroup>
         <col style="width:1%">
@@ -205,9 +234,9 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
 </p>
 <br>
 <u>How to use this tool:</u>
-<br><br>
+<br>
 <ol>
-    <li>Select your fluorometer (MULTI-COLOR-PAM / DUAL-PAM or AquaPen / PlantPen)</li>
+    <li>Select fluorometer</li>
     <li>Confirm or update timing of F<sub>J</sub> and F<sub>I</sub></li>
     <li>Upload and analyze OJIP files (up to 50 files)</li>
     <li>Review OJIP curves and calculated parameters</li>
@@ -215,7 +244,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
 </ol>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves', _anchor='results') }}">
-    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by the following fluorometers:</i>
+    <a style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by the following fluorometers:</i></a>
     <div class="gallery_6_img">
         <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">
             <i style="font-size:80%">MULTI-COLOR-PAM</i>
@@ -238,7 +267,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
             <img src="static/images/FL6000.JPG" alt="FL6000" class="gallery__item--5">
         </a>    
     </div>
-    </p>
+    <br>
     <div class="form-group">
         <label for="fluorometer"><p><b>1. Select fluorometer</b></p></label>
             <select name="fluorometer" id="fluorometer" class="form-control" type="text" style="width:100%">
@@ -346,7 +375,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         </table>
     </p>
     <br>
-    <b>3. Select additional parameters for 1<sup>st</sup> and 2<sup>nd</sup> OJIP derivation</b>
+    <b>3. Select additional parameters for fluorescence signal derivation</b>
     <p style="line-height: 0.9"><i style="font-size:80%">The parameter <b>k<sub>r</sub></b> is related to the fitting, interpolation and reconstruction of the OJIP curves, 
         as necessary for the estimation of the 1<sup>st</sup> and 2<sup>nd</sup> derivatives of the fluorescence signal. 
         The parameter <b>k<sub>r</sub></b> defines reduction of the number of <a href = "https://en.wikipedia.org/wiki/Spline_(mathematics)">knots</a> within
@@ -375,7 +404,7 @@ After processing, all curves and parameters are stored in a summary .xlsx file t
         </div>
     </div>
     <br>   
-    <p class="font-weight-bold">4. Select files</p>
+    <p><b>4. Select files</b> (up to 50 files can be uploaded and analyzed concurrently)</p>
     <div class="custom-file">
         <input 
             type="file" 

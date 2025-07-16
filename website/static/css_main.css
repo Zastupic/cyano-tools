@@ -553,3 +553,30 @@ padding: 0.5rem; /* Add padding for better usability */
     flex: 0 1 200px;
   }
 }
+
+ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-left: 1em 0;
+  margin-top: 0em;
+  margin-bottom: 0em;
+}
+
+ul ul {
+  list-style-type: circle;
+  padding-left: 1em;
+  margin-top: 0em;
+  margin-bottom: 0em;
+}
+
+ol {
+  padding-left: 1em;
+  margin-top: 0em;
+  margin-bottom: 0em;
+}
+
+ol ol {
+  padding-left: 1em;
+  margin-top: 0em;
+  margin-bottom: 0em;
+}

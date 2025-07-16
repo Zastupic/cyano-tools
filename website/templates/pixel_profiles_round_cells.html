@@ -6,21 +6,32 @@
 
 {% block content %}
 <h1> Pigment profiles - round cells</h1>
-<br>
+<p>Welcome to the fluorescence intensity profile analyzer — 
+    a simple and effective tool to analyze fluorescence intensity across individual round or near-spherical cells in microscopy images.
+    This tool is optimized for images acquired with a confocal fluorescence microscope 
+    and is designed for studying spatial distribution of fluorescence signal within single cells, typically of pigment fluorescence signal.
+    Individual cells are selected manually by the user. Once selected, the tool extracts fluoresence intensity 
+    <a href="https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.profile_line" target="_blank">profiles</a>
+    along each selected cell (with fixed angle of 15°), allowing for detailed analysis of intracellular fluorescence patterns. 
+</p>
+<p>The following example illustrates the full workflow using TCS SP8 DMI 
+    <a href="https://www.leica-microsystems.com/products/confocal-microscopes/" target="_blank">confocal laser scanning microscope</a> 
+     (Leica Microsystems) and cells of a unicellular cyanobacterium <i>Synechocystsis</i> sp. PCC 6803.
+</p>
 <div class="container">
     <img src="static/images/workflow_pixel_profiles_round_cells.jpg" 
     alt="Pixel_profiles_cell_selection" class="gallery__img_tall"
-    width="65%">
+    data-enlargeable style="cursor: zoom-in; width: 75%">
 </div>
-<p>Welcome to the app for obtaining cellular pigment profiles! 
-<br>
-<p>To analyze pigment profiles of cells on the fluorescence microscopy image, please follow the instructions below:</p>
+<p><u>How to use this tool:</u></p>
 <ol>
-    <li>Select your image</li>
-    <li>Select cells on your image for the pigment profile analysis</li>
-        <ul>Select expected cell size</ul>
-        <ul>Select the cells</ul>
-    <li>Confirm selection and analyze intensity of pixels across the cellular profile (with fixed angle of 15°)</li>
+    <li>Upload your image</li>
+    <li>Manually identify cells on your image for the fluorescence profile analysis.</li>
+    <ol>
+        <li>Select expected cell size (it can be modified at any time)</li>
+        <li>Select the cells</li>
+    </ol>
+    <li>Confirm selection and analyze fluorescence intensity across the cellular profile (with fixed angle of 15°)</li>
 </ol> 
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">
     <p class="font-weight-bold">Select your image</p>

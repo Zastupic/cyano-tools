@@ -6,20 +6,28 @@
 
 {% block content %}
 <h1> Cell size analysis - round cells</h1>
-<br>
+<p>Welcome to the app for analyzing cell size — a fast and easy way to measure size of unicellular algae or cyanobacteira in fluorescence microscopy images.
+    This tool is optimized for images captured with a confocal fluorescence microscope and is designed specifically for analyzing round or near-spherical cells.
+    Individual cells are selected manually by the user. Once selected, the tool identifies cell boundaries and calculates the cell diameter based on the pixel size provided.
+</p>
+<p>The following example illustrates the full workflow using TCS SP8 DMI 
+    <a href="https://www.leica-microsystems.com/products/confocal-microscopes/" target="_blank">confocal laser scanning microscope</a> 
+     (Leica Microsystems) and cells of a unicellular cyanobacterium <i>Synechocystsis</i> sp. PCC 6803.
+</p>
 <div class="container">
     <img src="static/images/workflow_cell_size_round_cells.jpg" 
-    alt="Pixel_profiles_cell_selection" class="gallery__img_tall"
-    width="65%">
-</div>
-<p>Welcome to the app for analyzing cell size! 
-<p>To analyze cell size on the fluorescence microscopy image, please follow the instructions below:</p>
+    alt="Pixel_profiles_cell_selection" class="gallery__img_tall" 
+    data-enlargeable style="cursor: zoom-in; width: 75%">
+</div> 
+<p><u>How to use this tool:</u></p>
 <ol>
-    <li>Enter pixel size</li>
-    <li>Select and upload your image</li>
-    <li>Mark cells on your image for analysis</li>
+    <li>Enter the pixel size </li>
+    <li>Upload your image</li>
+    <li>Mark the cells – manually select round cells on your image for analysis.</li>
     <li>Confirm selection and analyze size of the selected cells</li>
+    <li>Read and/or download the results</li>
 </ol> 
+<br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">
     <div class="form-group">
         <p><b>1. Enter pixel size (nm)</b></p>
@@ -118,6 +126,6 @@
 {% endif %}
 <br><br><br><br><br><br><br>
 
-<script src="{{url_for('static', filename='js_cell_size_round_cells.js')}}"></script>
+<script src="{{url_for('static', filename='js_cell_size_round_cells.js')}}" defer></script>
 
 {% endblock %}

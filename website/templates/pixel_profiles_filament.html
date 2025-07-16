@@ -6,19 +6,36 @@
 
 {% block content %}
 <h1> Pigment profiles - filamentous strains</h1>
-<br>
+<p>Welcome to the fluorescence intensity profile analyzer — 
+    a powerful tool for analyzing fluorescence intensity along cells of cyanobacteria, algae, 
+    or other fluorescent structures in microscopy images. This tool is optimized for images acquired 
+    with a confocal fluorescence microscope and is designed to study the spatial distribution of fluorescence 
+    signals across individual cells, whether filamentous or unicellular. 
+    It can also be applied to any structure of interest emitting a measurable fluorescence signal. 
+</p>
+<p>Cells or structures are manually selected by drawing lines directly over them in the uploaded image. 
+    Once selected, the tool extracts fluorescence intensity profiles along each line, allowing detailed analysis within each selected region.
+    Up to four images from different microscope channels can be uploaded — including fluorescence or brightfield channels. 
+    For each selected profile, the tool does not only analyze individual channels, but also calculates 
+    the difference in fluorescence intensity between the channels, using a shared selection mask.
+    Typical application involves analysis of chlorophyll or phycobilisomes autofluorescence signal across individual cells of filamentous algae or cyanoabacteria.</p>
+<p>The following example illustrates the full workflow using TCS SP8 DMI 
+    <a href="https://www.leica-microsystems.com/products/confocal-microscopes/" target="_blank">confocal laser scanning microscope</a> 
+     (Leica Microsystems) and cells of a unicellular cyanobacterium <i>Nostoc</i> sp. CCAP 1453/38.
+</p>
 <div class="container">
     <img src="static/images/workflow_pixel_profiles_filaments.jpg" 
     alt="Pixel_profiles_cell_selection" class="gallery__img_tall"
-    width="70%">
+    data-enlargeable style="cursor: zoom-in; width: 75%">
 </div>
-<p>Welcome to the app for obtaining cellular pigment profiles! 
-<p>To analyze pigment profiles of cells on the fluorescence microscopy image, please follow the instructions below:</p>
+<p><u>How to use this tool:</u></p>
 <ol>
-    <li>Enter width of the profile line</li>
-    <li>Select and upload your image</li>
-    <li>Mark diameters of cells on your image for analysis</li>
-    <li>Confirm selection and analyze size of the selected cells</li>
+    <li>Enter width of the 
+        <a href="https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.profile_line" target="_blank">profile line</a>, 
+        defining number of pixels over which the fluorescence profile perpendicular to the line will be averaged</li>
+    <li>Upload your image</li>
+    <li>Draw lines over the cells in your image to select them for analysis</li>
+    <li>Confirm selection and analyze fluorescence intensity across the selected cells</li>
 </ol> 
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}">
     <label for="pixel_size"><p><b>1. Enter width of the profile line (in pixels)</b></p></label>

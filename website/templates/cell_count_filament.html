@@ -6,19 +6,20 @@
 
 {% block content %}
 <h1>Cell counting - filamentous strains</h1>
-<br>
-<p>Welcome to the cell counting app! This tool splits filaments and identifies and counts individual cells 
-in an image obtained by a fluorescence microscope where either a hemocytometer (such as a Bürker chamber) 
-or a disposable counting slide of known depth has been used. Any combination of a fluorescence microscope and hemocytometer or cell counting slide 
-    is suitable for this application.</p>
-<a>Below is shown a full workflow, on the examples of Nexcellom 
+<p>Welcome to the cell counting tool - a simple and efficient solution for counting cells in fluorescence microscopy images.
+This tool automatically detects filamentous algae or cyanobacteria in a fluorescence microscopy image, segments filaments into individual cells, 
+and counts all cell within all identified filaments. 
+The tool is optimized for images captured by a fluorescence microscope and supports cell counting from images captured
+ in a Bürker chamber, hemocytometer, or any disposable counting slide of known depth. 
+Any combination of a fluorescence microscope and a cell counting chamber is suitable for use with this application.</p>
+<a>The following example illustrates the full workflow using Nexcellom 
     <a href="https://www.nexcelom.com/nexcelom-products/cellometer-disposable-counting-chambers/" target="_blank">cell counting slides</a> and Zeiss
     <a href="https://www.zeiss.com/microscopy/en/products/light-microscopes/widefield-microscopes/axio-imager-2-for-life-science-research.html" target="_blank">fluorescence microscope</a>:</a>
 <br><br>
 <div class="container">
-    <img src="static/images/worflow_cell_counting_filaments.jpg" alt="Cell counting workflow" class="gallery__img__tall">
+    <img src="static/images/worflow_cell_counting_filaments.jpg" alt="Cell counting workflow" class="gallery__img__tall"
+    data-enlargeable style="cursor: zoom-in">
 </div>
-<br>
 <p><u>How to use this tool:</u></p>
 <ol>
     <li>Enter pixel size</li>
@@ -26,18 +27,18 @@ or a disposable counting slide of known depth has been used. Any combination of 
     <li>Enter additional parameters:</li>
     <ul>
         <li>Depth of the microscopy chamber</li>
-        <li>Minimal cell diameter (smaller objects will be ingnored)</li>
-        <li>Number of iterations (how many times will the algorithm split the identified objets to smaller objects) </li>
-        <li>Threshold factor (determines whether a newly identified cell lies within already identified cell)</li>
-        <li>Distance factor (defines distance of centers between two cells within a filament) </li>
+        <li>Minimum cell diameter (smaller objects will be ingnored)</li>
+        <li>Number of iterations (controls how many times the algorithm splits identified objects into smaller ones) </li>
+        <li>Threshold factor (defines whether a newly identified cell is considered part of an already detected cell)</li>
+        <li>Distance factor (sets the minimum center-to-center distance between cells within a filament) </li>
     </ul>
     <li>Select image</li>
     <li>Identify and count individual cells within filaments</li>
-    <li>Read the result</li>
+    <li>Read and/or download the results</li>
     <br>
-    <li>Optional: If some cells have been missed, a correction can be made by identifying the missing cells by clicking the mouse on the counted image.</li>
+    <li>Optional: If some cells were not detected automatically, you can manually add them by clicking on the image.</li>
 </ol> 
-<br> <br>
+<br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count_filament.count_filament_cells') }}">
     <div class="form-group">
     <label for="pixel_size"><p class="font-weight-bold">{{ '1. Enter pixel size (nm)' }}</p></label>

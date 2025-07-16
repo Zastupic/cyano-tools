@@ -1,37 +1,68 @@
 {% extends "base.html" %} 
 
 {% block title %} 
-    Slow fluorescence kinetics analysis
+    Slow fluorescence transients analysis
 {% endblock %}
 
 {% block content %}
-<h1> Analysis of slow (Kautsky) fluorescence kinetics data </h1>
-<br>
+<h1> Analysis of slow chlorophyll fluorescence transients </h1>
+<p>Welcome to tool analyzing slow chlorophyll fluorescence induction kinetics! 
+This tool enables visualization and analysis of fluorescence traces acquired by several common PAM fluorometers, including 
+    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
+    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">DUAL-PAM</a>, 
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">AquaPen</a> or 
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">FluorPen</a>.
+    Up to 50 files can be uploaded simultaneously for batch processing. 
+    The tool generates multiple visualizations for the precessed files, including: 
+    <ul style="font-size:95%">
+        <li>AquaPen / FluorPen:
+            <ul>
+                <li>Raw fluorescence signals</li>
+                <li>Technical parameters of the fluorescence signal, such as <i>F<sub>t</sub></i>, <i>F<sub>M</sub></i> or <i>F<sub>v</sub></i></li>
+                <li>Derived parameters: <i>Q<sub>Y</sub></i>, <i>rETR</i>, <i>qP</i>, <i>qN</i> and <i>NPQ</i>
+            </ul>
+        </li>
+        <li>Multi-Color PAM / Dual PAM
+            <ul>
+                <li>Raw data files
+                    <ul>
+                        <li>Raw fluorescence signals</li>
+                    </ul>
+                </li>
+                <li>Files with calculated parameters
+                    <ul>
+                        <li>Technical parameters of the fluorescence signal, such as <i>F<sub>t</sub></i>, <i>F<sub>M</sub></i> or <i>F<sub>v</sub></i></li>
+                        <li>Calculated parameters: <i>Q<sub>Y</sub></i>, <i>rETR</i>, <i>qP</i>, <i>qN</i> and <i>NPQ</i></li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+    <br>
+    The tool is well suited for the analysis of ETR efficiency, NPQ relaxation, state transitions, 
+    and other long-term fluorescence responses of cyanobacteria, algae, and higher plants.
+    After analysis, all curves and calculated values are compiled into a downloadable .xlsx file for further use. 
+    The figure and table below summarizes parameters that can be obtained from the fluorescence kinetics traces.
+    For furhter info, see the references provided below, or 
+    <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank">NPQ protocols</a>
+    available for 
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank">AquaPen</a> or
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank">FluorPen</a> fluorometers.
+</p>
+<br>  
 <div class="container">
     <div class="images-side-by-side">
         <img src="static/images/NPQ_protocol_examples.jpg" alt="NPQ protocol example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
-<!--
-        <img data-enlargeable src="static/images/NPQ_protocol_example_state_transitions.jpg" alt="NPQ protocol example 2" class="gallery__img" width="50%" style="cursor: zoom-in; width: 25%">
--->
     </div>
 </div>
-<p style="font-size:70%">
+<div style="font-size:70%">
     <i>
-        <b>Example protocols modified from:</b>
-        <br>
+        <b>Example protocol modified from:</b>
         Roháček, K. et al., (2008):  Plant cell compartments: selected topics: 41-104. ISBN: 
         <a href="https://faculty.ksu.edu.sa/sites/default/files/CHLOROPHYLL%20FLOURESCENCE.PDF" target="_blank">978-81-308-0104-9</a>
-<!--
-        <br>
-         Zavřel, T. et al. (2024): Plant and Cell Physiology, 65(8): 1285–1297. DOI: 
-         <a href="https://academic.oup.com/pcp/article/65/8/1285/7697223" target="_blank">10.1093/pcp/pcae062</a>
--->
         </i>
-</p>
-<p>Welcome to the application analyzing slow fluorescence transients! These fluorescence transients, so-called Kautsky kinetics, or NPQ protocols, provide a sensitive method 
-    for evaluating the efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. 
-<br><br>
-
+</div>  
+<br> 
 <table style="width:100%">
     <colgroup>
         <col style="width:1%">
@@ -213,22 +244,7 @@
         <td></td>
         <td>Variable chlorophyll fluorescence decrease ratio</td>
     </tr>
-    <tr>
-        <td colspan="4"><i>&nbsp</i></td>
-    </tr>
-<!--
-    <tr>
-        <td colspan="4"><i>State transition rate (in cyanobacteria)</i></td>
-    </tr>
-        <tr>
-        <td>τ<sub>F<sub>m</sub>' growth</sub></td>
-        <td></td>
-        <td></td>
-        <td>Time contant of exponential F<sub>m</sub>' growth or decay of during State 2 -> 1 or State 1 -> 2 transition</td>
-    </tr>
--->
 </table>
-
 <p style="font-size:70%">
     <i>
         <b>References:</b>
@@ -249,19 +265,19 @@
         <a href="https://link.springer.com/article/10.1023/A:1005936823310" target="_blank">10.1023/A:1005936823310</a>
     </i>
 </p>
-
 <br>
 <u>How to use this tool:</u>
-<br><br>
+<br>
 <ol>
     <li>Select your fluorometer</li>
-    <li>Upload and analyze slow kinetic files (up to 50 files)</li>
+    <li>Select type of the fluorescence kinetics measurement protocol</li>
+    <li>Upload and analyze fluorescence kinetic files (up to 50 files)</li>
     <li>Review the results</li>
-    <li>Download the results in a summary .xlsx file</li>
+    <li>Download the processed results in a summary .xlsx file</li>
 </ol>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data', _anchor='results') }}">
-    <p style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by the following fluorometers:</i>
+    <a style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by the following fluorometers:</i></a>
     <div class="gallery_6_img">
         <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">
             <i style="font-size:80%">MULTI-COLOR-PAM</i>
@@ -280,7 +296,7 @@
             <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__item--4">
         </a>
     </div>
-    </p>
+    <br>
     <div class="form-group">
         <label for="fluorometer" ><p><b>1. Select fluorometer</b></p></label>
             <select name="fluorometer" id="fluorometer" class="form-control"  aria-label="fluorometer" style="width:100%">
@@ -360,209 +376,6 @@
         </tr>
     </table>
     <br>
-<!--
-    <p><b>3. To estimate state transition rates from MULTI-COLOR PAM measurements, select time points defining <i>State 1</i> and <i>State 2</i> intervals</b>
-    <br>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        The F<sub>m</sub>' data can be interpolated by exponential function, in order to estimate rate of state transition:
-        <br><br>1. Exponential decay (typically State 1 -> 2 transition):
-
-        $$
-        \begin{multline}
-        \shoveleft F_{m}'\ (t) = F_{m}{'}_{t_0}\ *\ e^{-λ\ *\ τ}
-        \end{multline}
-        $$
-
-        <br>2. Exponential growth (typically State 2 -> 1 transition):
-                $$
-        \begin{multline}
-        \shoveleft F_{m}'\ (t) = F_{m}{'}_{t_0}\ *\  e^{λ\ *\ τ},
-        \end{multline}
-        $$
-
-        where <b>F<sub>m</sub>'<sub>t<sub>0</sub></sub></b> and <b>F<sub>m</sub>'</b> are maximum fluorescence yields at the onset and throughout a given actinic light period, 
-        <b>t</b> is time and <b>λ</b> is rate of exponential <a href="https://en.wikipedia.org/wiki/Exponential_decay" target="blank">decay</a> 
-        or <a href="https://en.wikipedia.org/wiki/Exponential_growth" target="blank">growth</a> (unit: t<sup>-1</sup>). 
-        <br><br>
-        Protocols in AquaPen or PlantPen are pre-defined, and timing of dark and actinic light periods is fixed.
-        On the other hand, protocols in Multi-Color PAM or Dual PAM are user-defined with variable timing. 
-        Below, timing of individual periods (inducing State 1 or State 2) within the slow kinetic protocol from Multi-Color PAM or Dual PAM can be specified, 
-        in order to evaluate state transitions rate.</i></p>
-
-    <i>3a. Initial time points</i>
-    <div class="gallery_6">
-        <div class="gallery__item--1">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input             
-                        type="number"
-                        id="time_init_1" 
-                        name="time_init_1"
-                        class="form-control"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp s
-                </div>
-            </div>
-        </div>
-        <div class="gallery__item--2">
-            <div class='form-inline'>
-                <div class="input-group">
-                    <input             
-                        type="number"
-                        id="time_init_2" 
-                        name="time_init_2"
-                        class="form-control"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp s
-                </div>
-            </div>
-        </div>
-        <div class="gallery__item--3">
-            <div class='form-inline'>
-                <div class="input-group">
-                    <input             
-                        type="number"
-                        id="time_init_3" 
-                        name="time_init_3"
-                        class="form-control"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp s
-                </div>
-            </div>
-        </div>
-        <div class="gallery__item--4">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="time_init_4" 
-                    name="time_init_4"
-                    class="form-control"
-                    step="1"
-                    onkeypress="return isNumberKey(event)">
-                &nbsp s
-            </div>
-        </div>
-        <div class="gallery__item--5">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="time_init_5" 
-                    name="time_init_5"
-                    class="form-control"
-                    step="1"
-                    onkeypress="return isNumberKey(event)">
-                &nbsp s
-            </div>
-        </div>
-        <div class="gallery__item--6">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="time_init_6" 
-                    name="time_init_6"
-                    class="form-control"
-                    step="1"
-                    onkeypress="return isNumberKey(event)">
-                &nbsp s
-            </div>
-        </div>
-    </div>
-    <br><i>3b. End time points</i></p>
-    <div class="gallery_6">
-        <div class="gallery__item--1">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input             
-                        type="number"
-                        id="time_end_1" 
-                        name="time_end_1"
-                        class="form-control"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp s
-                </div>
-            </div>
-        </div>
-        <div class="gallery__item--2">
-            <div class='form-inline'>
-                <div class="input-group">
-                    <input             
-                        type="number"
-                        id="time_end_2" 
-                        name="time_end_2"
-                        class="form-control"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp s
-                </div>
-            </div>
-        </div>
-        <div class="gallery__item--3">
-            <div class='form-inline'>
-                <div class="input-group">
-                    <input             
-                        type="number"
-                        id="time_end_3" 
-                        name="time_end_3"
-                        class="form-control"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp s
-                </div>
-            </div>
-        </div>
-        <div class="gallery__item--4">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="time_end_4" 
-                    name="time_end_4"
-                    class="form-control"
-                    step="1"
-                    onkeypress="return isNumberKey(event)">
-                &nbsp s
-            </div>
-        </div>
-        <div class="gallery__item--5">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="time_end_5" 
-                    name="time_end_5"
-                    class="form-control"
-                    step="1"
-                    onkeypress="return isNumberKey(event)">
-                &nbsp s
-            </div>
-        </div>
-        <div class="gallery__item--6">
-            <div class='form-inline input-group'>
-                <input             
-                    type="number"
-                    id="time_end_6" 
-                    name="time_end_6"
-                    class="form-control"
-                    step="1"
-                    onkeypress="return isNumberKey(event)">
-                &nbsp s
-            </div>
-        </div>
-    </div>
-    <p style="font-size:70%">
-        <i><b>References:</b>
-            <br>
-            Calzadilla, P. I.  and  Kirilovsky, D. (2020): Photochemical & Photobiological Sciences,19: 585-603. DOI: 
-            <a href="https://pubs.rsc.org/en/content/articlehtml/2020/pp/c9pp00451c" target="_blank">10.1039/C9PP00451C</a>
-            <br>
-            Zavřel, T. et al. (2024): Plant and Cell Physiology, 65(8): 1285–1297. DOI: 
-            <a href="https://academic.oup.com/pcp/article/65/8/1285/7697223" target="_blank">10.1093/pcp/pcae062</a>
-        </i>
-    </p>
-    <br>
--->
     <p><b>3. Select files</b></p>
     <div class="custom-file">
         <input 
@@ -580,7 +393,7 @@
     <p><b>4. Analyze slow kinetic files</b></p>
     <br>
     <button id="show-image-button" type="submit" class="btn btn-primary" >Upload and analyze slow kinetic files </button>   
-    <a href="{{url_for('static', filename='files/NPQ_example_files_AquaPen.zip')}}" download="NPQ_example_files_AquaPen">
+    <a href="{{url_for('static', filename='files/Slow_kin_example_files.zip')}}" download="Slow_kin_example_files">
         <button type="button" class="btn btn-outline-primary">Download example slow kinetic files</button>
     </a>
 </form>
@@ -618,6 +431,7 @@
             </ul>
         </ul>
         {% endif %}
+        <br><br>
         <a href="{{ url_for('static', filename=xlsx_file_path)}}">
             <button type="button" class="btn btn-primary">Download the summary .xlsx file</button>
         </a>
