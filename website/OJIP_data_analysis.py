@@ -1,13 +1,11 @@
 from flask import Blueprint, render_template, request, flash, redirect
-import os, base64, io, time, openpyxl
+import os, base64, io, time
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import openpyxl
 from openpyxl.drawing.image import Image
 from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline
-from scipy.ndimage import gaussian_filter1d
-# from sqlalchemy import Result         
+from scipy.ndimage import gaussian_filter1d     
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
 import time
@@ -535,11 +533,6 @@ def analyze_OJIP_curves():
                                 idx = Summary_file[Summary_file[col] == max_val].index[0] # Find the row index where FM occurs
                                 fm_timings[col] = Summary_file.loc[idx, x_axis_time] # Get the corresponding time
                             FM_timings_series = pd.Series(fm_timings) # Convert to Series for clean display
-
-                            #### CALCULATING TIME ####
-                            calculation_time = time.time() 
-                            print("===calculations_time: "+str(calculation_time - current_time))      
-
                             # ================
                             # === PLOTTING ===
                             # =================
@@ -648,10 +641,6 @@ def analyze_OJIP_curves():
                                 return OJIP_plot_from_memory, memory_for_OJIP_plot
                             # Call the function to plot OJIP curves
                             OJIP_plot_from_memory, memory_for_OJIP_plot = plot_all_ojip_curves()
-                            #### CALCULATING TIME #### 
-                            OJIP_plottin_time = time.time()  
-                            print("===OJIP_plotting_time: "+str(OJIP_plottin_time - calculation_time))
-
                             # ===============================
                             # === PLOT PARAMETERS - BARS ====
                             # ===============================
@@ -714,11 +703,6 @@ def analyze_OJIP_curves():
                                 return OJIP_parameters_from_memory, memory_for_OJIP_parameters
                             # Call the function to plot parameter bars
                             OJIP_parameters_from_memory, memory_for_OJIP_parameters = plot_all_parameter_bars()
-
-                            #### CALCULATE TIME ####
-                            bars_plottin_time = time.time()  
-                            print("===bars_plotting_time: "+str(bars_plottin_time - OJIP_plottin_time))
-
                             #######################
                             ### Export to excel ###
                             #######################
@@ -770,10 +754,6 @@ def analyze_OJIP_curves():
                                 ws_images.add_image(img_parameters)
                             # Save the Excel file path for rendering in the template
                             xlsx_file_path = f'uploads/{file_name_without_extension}_results.xlsx'  
-
-                            Excel_saving_time = time.time()  
-                            print("===Excel_saving_time: "+str(Excel_saving_time - bars_plottin_time))
-
                             ######################################
                             ### Delete files older than 20 min ###
                             ######################################
