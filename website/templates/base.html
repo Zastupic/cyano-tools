@@ -6,30 +6,44 @@
 
     <!-- SEO Meta Tags -->
     <title>{% block title %}Home | CyanoTools{% endblock %}</title>
-    <meta name="description" content="CyanoTools is a browser-based platform for analyzing photosynthesis, fluorescence, microscopy, 
-      and bioreactor data from wet-lab experiments with plants, cyanobacteria, algae and other microbes.">
+    <meta name="description" content="{% block description %}CyanoTools is a browser-based platform for analyzing photosynthesis, fluorescence, microscopy, 
+      and bioreactor data from wet-lab experiments with plants, cyanobacteria, algae and other microbes.{% endblock %}">
     <meta name="keywords" content="CyanoTools, cyanobacteria, algae, chlorophyll fluorescence, OJIP, light curves, 
       aquapen, fluorpen, dual pam, multi-color pam, microscopy, image analysis, cell counting, cell size determination, photobioreactor, photosynthesis tools">
     <meta name="author" content="Department of Adaptive Biotechnologies, CzechGlobe">
+    <meta name="robots" content="index, follow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="theme-color" content="#0a3c58">
+    <meta name="copyright" content="© 2025 CzechGlobe - Department of Adaptive Biotechnologies">
+    <meta name="publisher" content="CzechGlobe">
 
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="CyanoTools - Tools for Cyanobacteria and Algal Research">
-    <meta property="og:description" content="CyanoTools is a web platform supporting advanced biological research through specialized tools for photosynthesis, microscopy, and spectroscopy analysis.">
+    <meta property="og:title" content="{% block og_title %}CyanoTools - Tools for Cyanobacteria and Algal Research{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}CyanoTools is a web platform supporting advanced biological research through specialized tools for photosynthesis, microscopy, and spectroscopy analysis.{% endblock %}">
     <meta property="og:image" content="{{ url_for('static', filename='img/cyano_preview.png') }}">
     <meta property="og:url" content="https://tools-py.e-cyanobacterium.org/">
     <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_US">
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CyanoTools">
-    <meta name="twitter:description" content="Web tools for analyzing cyanobacteria, algae, and photosynthetic systems.">
+    <meta name="twitter:title" content="{% block twitter_title %}CyanoTools{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Web tools for analyzing cyanobacteria, algae, and photosynthetic systems.{% endblock %}">
     <meta name="twitter:image" content="{{ url_for('static', filename='img/cyano_preview.png') }}">
 
-    <!-- Favicon -->
+    <!-- Favicon and Icons -->
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <link rel="icon" sizes="192x192" href="{{ url_for('static', filename='favicon-192x192.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
 
     <!-- Canonical Link -->
     <link rel="canonical" href="https://tools-py.e-cyanobacterium.org/">
+
+    <!-- Performance Hints -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
@@ -73,6 +87,11 @@
     <!-- Custom JS -->
     <script src="{{url_for('static', filename='js_index.js')}}"></script>
 </head>
+
+<body>
+    {% block body %}{% endblock %}
+</body>
+</html>
  
     <body>
         <!-- Google tag (gtag.js) -->
