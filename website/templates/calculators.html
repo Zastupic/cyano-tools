@@ -5,6 +5,9 @@
 {% endblock %}
 
 {% block content %}
+<div id="banner-content">
+    <img src="static/images/homepage_upper_banner_1.jpg" alt="Banner Image" style="width: 100%;">
+</div>
 <br>
 <h1> Calculators </h1>
 <div class="background-box">
@@ -12,7 +15,7 @@
     <p>In many laboratories as well as in the industrial setups, 
         CO<sub>2</sub> and air require mixing to secure increased CO<sub>2</sub> levels.
         For a precise control of specific CO<sub>2</sub> concentration in air, Gas Mixing Systems or Gas Controllers can be used,
-        for instance those manufactured by <a href="https://other-devices.psi.cz/products/gas-mixing-system-gms-150/" target="_blank">PSI</a>, 
+        for instance those manufactured by <a href="https://other-devices.psi.cz/products/gas-mixing-system-gms-150/" target="_blank">Photon System Instruments</a>, 
         <a href="https://qubitsystems.com/products/gas-analysis-and-environment/gas-mixing-and-flow/gas-mixing/g400-gas-mixing-system/" target="_blank">Qubit</a> 
         or <a href="https://www.google.cz/search?q=co2+controller&sca_esv=31504b4340b63b2d&hl=cs&sxsrf=ADLYWILVc_VJ0VcbfzwTRDtzXWUc9XpC_g%3A1727971871707&source=hp&ei=H8L-ZsydKOe2i-gPiuSjiQk&iflsig=AL9hbdgAAAAAZv7QLzhLZYY2Z8EPMeI9MWVdFxWmUSQL&oq=CO2&gs_lp=Egdnd3Mtd2l6IgNDTzIqAggAMgoQIxiABBgnGIoFMgQQIxgnMhAQABiABBixAxhDGIMBGIoFMgUQABiABDIFEAAYgAQyChAAGIAEGEMYigUyBRAAGIAEMgoQABiABBhDGIoFMgUQABiABDIFEAAYgARInitQAFjjH3ABeACQAQCYAagBoAH-CaoBAzAuObgBA8gBAPgBAvgBAZgCB6AC2gaoAgrCAggQABiABBiiBMICCBAAGIAEGMsBwgILEAAYgAQYsQMYgwHCAgUQLhiABMICCxAuGIAEGMcBGK8BwgIHEAAYgAQYCsICBxAjGCcY6gLCAhEQLhiABBixAxjRAxiDARjHAcICCBAAGIAEGLEDwgIMECMYgAQYExgnGIoFwgIOEC4YgAQYsQMY0QMYxwGYAw6SBwMxLjagB8NC&sclient=gws-wiz" target="_blank">
             other companies</a>. Here, we provide a simple tool for the calculation of CO<sub>2</sub> concentration in a gas mixture, as set by a Gas Mixing System, according to the following equation:
@@ -698,7 +701,7 @@
     </div>
 </div>
 
-<br><br><br><br><br><br><br><br><br><br><br><br>
+<br>
 
 <script src="{{url_for('static', filename='js_calculators.js')}}"></script>
 

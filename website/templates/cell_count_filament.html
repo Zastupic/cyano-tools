@@ -5,6 +5,10 @@
 {% endblock %}
 
 {% block content %}
+<div id="banner-content">
+    <img src="static/images/homepage_upper_banner_1.jpg" alt="Banner Image" style="width: 100%;">
+</div>
+<br>
 <h1>Cell counting - filamentous strains</h1>
 <p>Welcome to the cell counting tool - a simple and efficient solution for counting cells in fluorescence microscopy images.
 This tool automatically detects filamentous algae or cyanobacteria in a fluorescence microscopy image, segments filaments into individual cells, 
@@ -42,14 +46,15 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count_filament.count_filament_cells') }}">
     <div class="form-group">
     <label for="pixel_size"><p class="font-weight-bold">{{ '1. Enter pixel size (nm)' }}</p></label>
-    <input  
-       type="number"
-       id="pixel_size" 
-       class="form-control"
-       name="pixel_size"
-       value=""
-       step="0.01"
-    />
+        <input  
+           type="number"
+           id="pixel_size" 
+           class="form-control"
+           name="pixel_size"
+           value=""
+           step="0.01"
+        />
+    </div>
     <br>
     <p><b>2. Select threshold filter</b></p>
     <div class="form-group">
@@ -233,8 +238,7 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
     </div>
 
 {% else %}
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br>
 
 {% endif %}
 

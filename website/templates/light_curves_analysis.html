@@ -5,6 +5,10 @@
 {% endblock %}
 
 {% block content %}
+<div id="banner-content">
+    <img src="static/images/homepage_upper_banner_1.jpg" alt="Banner Image" style="width: 100%;">
+</div>
+<br>
 <h1>Analysis of rapid light curves 
     <br>(Photosynthesis-Irradiance curves)</h1>
 <p>Welcome to the rapid light curves analyzing tool! Rapid light curves 
@@ -312,8 +316,7 @@ The curves are fitted by a model described by
     <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ raw_data_from_memory }}"/>
 
 {% else %}
-<br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br>
 
 {% endif %}
 <br><br><br><br><br><br><br>
