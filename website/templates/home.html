@@ -5,36 +5,39 @@ DoAB-CyanoTools
 {% endblock %}
 
 {% block content %}
+<!-- Banner -->
 <div id="banner-content">
-    <img src="static/images/homepage_upper_banner_1.jpg" alt="Banner Image" style="width: 100%;">
+    <img src="static/images/homepage_upper_banner_1.jpg" alt="CyanoTools analytical tools for algae and cyanobacteria" style="width: 100%;">
 </div>
 <br>
+
+<!-- Introductory Paragraph with Keywords -->
 <div class="container">
-    <p style="font-size: 1.1em;">Welcome to CyanoTools, an interactive and comprehensive web platform created to 
-        empower researchers and students working with cyanobacteria, algae, plants, and bacteria. 
-        Developed by the <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/" target="_blank">
-        Department of Adaptive Biotechnologies (DoAB)</a> at the 
-        <a href="https://www.czechglobe.cz/en/" target="_blank">Global Change Research Institute</a> of the 
-        <a href="https://www.avcr.cz/en/" target="_blank">Czech Academy of Sciences</a>
-        (CzechGlobe), CyanoTools offers an advanced suite of data analysis modules specifically tailored 
-        for modern experimental approaches in biosciences.
-        <br><br>
-        Each tool reflects common data formats and protocols used in chlorophyll fluorescence, confocal or fluorescence microscopy or bioreactor control.
-        No installation is required — simply upload your dataset and get immediate, meaningful results with visual feedback, integrated calculators, and downloadable outputs.
-        <br><br>
-        Backed by years of laboratory research, CyanoTools evolves continually with input from the scientific community and collaboration with industrial partners. 
+    
+    <p style="font-size: 1.1em;">
+        Welcome to <strong>CyanoTools</strong>, an interactive and comprehensive web platform designed to support researchers and students working in 
+        <strong>cyanobacteria, algae, plant biology</strong>, and <strong>microbial research</strong>. Developed by the
+        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/" target="_blank">
+        Department of Adaptive Biotechnologies (DoAB)</a> at the <a href="https://www.czechglobe.cz/en/" target="_blank">Global Change Research Institute</a> 
+        of the <a href="https://www.avcr.cz/en/" target="_blank">Czech Academy of Sciences</a>, CyanoTools provides advanced tools for <strong>biological data analysis</strong>.
+    </p>
+    <p style="font-size: 1.1em;">
+        From <strong>chlorophyll fluorescence</strong> and <strong>microscopy</strong> to <strong>bioreactor control</strong>, 
+        CyanoTools supports experimental workflows using browser-based tools—no installation needed.
     </p>
     <p style="font-size: 1rem; margin-top: 1.5em;">
-      CyanoTools webiste is being updated regularly. For the latest updates,
-      <a href="{{ url_for('development_log.run_development_log') }}" target="_blank"> check the development log</a>.
-      </a>
+      CyanoTools is regularly updated with new features and improvements. 
+      For the latest news, visit our <a href="{{ url_for('development_log.run_development_log') }}" target="_blank">development log</a>.
     </p>
-    
 </div>
 <br>
+
+<!-- Features Section Heading -->
 <section class="features">
     <div class="container">
-        <h2 class="section-title" style="font-size: 2em;">Discover the analytical features of <b><a style="color: #00b894">Cyano</a><a style="color: #525151">Tools</a></b></h2>
+        <h2 class="section-title" style="font-size: 2em;">
+            Explore the analytical features of <b><a style="color: #00b894">Cyano</a><a style="color: #525151">Tools</a></b>
+        </h2>
         <div class="features-grid">
             <div class="feature">
                 <h3><b>Rapid Light Curves</b></h3> 
@@ -170,9 +173,13 @@ DoAB-CyanoTools
     </div> 
 </section>
 <br>
+
+<!-- Key Benefits Section -->
 <section class="features">
     <div class="container">
-        <h2 class="section-title" style="font-size: 2em;"><a style="color: #00b894"><b>Cyano</b><b style="color: #525151">Tools</b></a> Features</h2>
+        <h2 class="section-title" style="font-size: 2em;">
+            Why use <a style="color: #00b894"><b>Cyano</b><b style="color: #525151">Tools</b></a>?
+        </h2>
         <div class="features-grid">
             <div class="feature-no-background">
                 <div class="feature-icon">🎯</div>
@@ -218,9 +225,13 @@ DoAB-CyanoTools
     </div>
 </section>
 <br>
+
+<!-- About DoAB Section -->
 <section class="features">
     <div class="container">
-        <h2 class="section-title"><a style="font-size: 0.7em;">About Department od Adaptive Biotechnologies (DoAB)</a></h2>
+        <h2 class="section-title" style="font-size: 1.5em;">
+            About the Department of Adaptive Biotechnologies (DoAB)
+        </h2>
         <div class="features-grid">
             <div class="feature">
                 <h3>DoAB home page</h3> 
