@@ -5,8 +5,18 @@
 {% endblock %}
 
 {% block content %}
+<!-- Banner -->
 <div id="banner-content">
-    <img src="static/images/homepage_upper_banner_1.jpg" alt="Banner Image" style="width: 100%;">
+    <div class="banner-desktop"><!-- Desktop banner -->
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
+             alt="CyanoTools analytical tools for algae and cyanobacteria"
+             style="width: 100%;">
+    </div>
+    <div class="banner-mobile"><!-- Mobile banner -->
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
+             alt="CyanoTools mobile banner"
+             style="width: 100%;">
+    </div>
 </div>
 <br>
 <h1>Cell counting - filamentous strains</h1>

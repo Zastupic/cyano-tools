@@ -108,7 +108,21 @@ line-height: 1.3;
   height: auto;
   border-radius: 0%;
 }
+/* Hide mobile banner by default */
+.banner-mobile {
+  display: none;
+}
 
+/* === Responsive banner switching === */
+@media screen and (max-width: 768px) {
+  .banner-desktop {
+    display: none !important;
+  }
+
+  .banner-mobile {
+    display: block !important;
+  }
+}
 /* Font size and padding for desktop */
 h3 {
 font-size: 2em;

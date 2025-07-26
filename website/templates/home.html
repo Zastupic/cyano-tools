@@ -7,13 +7,20 @@ DoAB-CyanoTools
 {% block content %}
 <!-- Banner -->
 <div id="banner-content">
-    <img src="static/images/homepage_upper_banner_1.jpg" alt="CyanoTools analytical tools for algae and cyanobacteria" style="width: 100%;">
+    <div class="banner-desktop"><!-- Desktop banner -->
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
+             alt="CyanoTools analytical tools for algae and cyanobacteria"
+             style="width: 100%;">
+    </div>
+    <div class="banner-mobile"><!-- Mobile banner -->
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
+             alt="CyanoTools mobile banner"
+             style="width: 100%;">
+    </div>
 </div>
 <br>
-
 <!-- Introductory Paragraph with Keywords -->
 <div class="container">
-    
     <p style="font-size: 1.1em;">
         Welcome to <strong>CyanoTools</strong>, an interactive and comprehensive web platform designed to support researchers and students working in 
         <strong>cyanobacteria, algae, plant biology</strong>, and <strong>microbial research</strong>. Developed by the
