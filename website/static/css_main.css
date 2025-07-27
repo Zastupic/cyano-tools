@@ -481,6 +481,9 @@ width : 80px; /*adjust as needed*/
 width: 100%;
 padding: 5px;
 }
+
+
+/* === MIMS plots === */
 .background-box {
 background-color: rgba(220, 220, 220, 1); /* Light grey background */
 border-radius: 10px; /* Rounded corners */
@@ -489,6 +492,24 @@ margin: 20px auto; /* Centering the box with some margin */
 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional shadow for visual depth */
 max-width: 1200px; /* Optional: Limit maximum width */
 }
+.background-box-plot {
+  display: none; /* Hidden by default */
+  background-color: rgba(220, 220, 220, 1);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 100%;         /* ⚠️ Important for smaller screens */
+  width: 100%;             /* Full width */
+  overflow-x: auto;        /* Allow horizontal scroll if needed */
+  box-sizing: border-box;  /* Prevent overflow from padding */
+}
+#normalized-plot-div {
+  height: 300px;   /* or whatever fixed height you prefer */
+  width: 100%;
+}
+
+
 #footer_relative, #footer_absolute {
 font-size: 0.8rem; /* Smaller footer text for compact display */
 padding: 0;

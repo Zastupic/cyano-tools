@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-DoAB-CyanoTools
+    DoAB-CyanoTools
 {% endblock %}
 
 {% block content %}
@@ -79,12 +79,28 @@ DoAB-CyanoTools
                 <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Cell counting - single cells</b></h3> 
+                <h3 style="font-size: 0.95em;"><b>Cell counting</b></h3> 
                 <a href="{{ url_for('cell_count.count_cells') }}">    
                     <img src="static/images/cell_counting_counted_1.JPG" alt="Slow" class="gallery_img_home">
                 </a>
                 <p>Counting round cells in fluorescence microscopy images.</p>
                 <a href="{{ url_for('cell_count.count_cells') }}"><b>Launch tool &rarr;</b></a>
+            </div>
+            <div class="feature">
+                <h3 style="font-size: 0.95em;"><b>Cell size</b></h3> 
+                <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">    
+                    <img src="static/images/cell_size_analzyed_1.JPG" class="gallery_img_home">
+                </a>
+                <p>Diameter of individual round cells determined by automated detection.</p>
+                <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}"><b>Launch tool &rarr;</b></a>
+            </div>
+            <div class="feature">
+                <h3 style="font-size: 0.95em;"><b>Pigment profiles</b></h3> 
+                <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">    
+                    <img src="static/images/pigment_profiles_analzyed_1.JPG" alt="Slow" class="gallery_img_home">
+                </a>
+                <p>Fluorescence intensity of individual pigments in single round cells</p>
+                <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
                 <h3 style="font-size: 0.95em;"><b>Cell counting - filaments</b></h3> 
@@ -95,28 +111,12 @@ DoAB-CyanoTools
                 <a href="{{ url_for('cell_count_filament.count_filament_cells') }}"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Cell size - round cells</b></h3> 
-                <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">    
-                    <img src="static/images/cell_size_analzyed_1.JPG" class="gallery_img_home">
-                </a>
-                <p>Diameter of individual round cells determined by automated detection.</p>
-                <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
                 <h3 style="font-size: 0.95em;"><b>Cell size - filaments</b></h3> 
                 <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}">    
                     <img src="static/images/cell_size_filaments_analyzed_1.JPG" class="gallery_img_home">
                 </a>
                 <p>Diameter of individual round cells determined by manual detection.</p>
                 <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Pigment profiles - round cells</b></h3> 
-                <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">    
-                    <img src="static/images/pigment_profiles_analzyed_1.JPG" alt="Slow" class="gallery_img_home">
-                </a>
-                <p>Fluorescence intensity of individual pigments in single round cells</p>
-                <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
                 <h3 style="font-size: 0.95em;"><b>Pigment profiles - filaments</b></h3> 
@@ -147,7 +147,7 @@ DoAB-CyanoTools
                 <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="blank">
                     <img src="static/images/PBRtool2_1.jpg" alt="Slow" class="gallery_img_home">
                 </a>
-                <p>Tools for <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a> photobioreactors:
+                <p>Tools for photobioreactors <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a>:
                 batch, turbidostat and periodic data analysis.</p>
                 <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="blank"><b>Launch tool &rarr;</b></a>
             </div>
@@ -156,7 +156,7 @@ DoAB-CyanoTools
                 <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="blank">    
                     <img src="static/images/PBRscripts2_1.JPG" alt="Slow" class="gallery_img_home">
                 </a>
-                <p>Control scripts for <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a> photobioreactors
+                <p>Control scripts for photobioreactors <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a>
                 including growth optimizer and PI curves measurement scripts.</p>
                 <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="blank"><b>Launch tool &rarr;</b></a>
             </div>
