@@ -47,7 +47,7 @@
         </h2>
         <div class="features-grid">
             <div class="feature">
-                <h3><b>Rapid Light Curves</b></h3> 
+                <h3 style="font-size: 0.95em;"><b>Rapid Light Curves</b></h3> 
                 <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">
                     <img src="static/images/light_curves_3.jpg" alt="Slow" class="gallery_img_home">
                 </a>
@@ -55,7 +55,7 @@
                 <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
-                <h3><b>OJIP transients</b></h3> 
+                <h3 style="font-size: 0.95em;"><b>OJIP transients</b></h3> 
                 <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">
                     <img src="static/images/OJIP_curves_example_4.jpg" alt="Slow" class="gallery_img_home">
                 </a>
@@ -63,7 +63,7 @@
                 <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
-                <h3><b>Kautsky kinetics</b></h3> 
+                <h3 style="font-size: 0.95em;"><b>Kautsky kinetics</b></h3> 
                 <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">
                     <img src="static/images/Slow_kin_example_4.jpg" alt="Slow" class="gallery_img_home">
                 </a>
@@ -71,12 +71,38 @@
                 <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
-                <h3><b>77K fluorescence</b></h3> 
+                <h3 style="font-size: 0.95em;"><b>77K fluorescence</b></h3> 
                 <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
                     <img src="static/images/Ex_em_spectra_example_4.jpg" alt="Slow" class="gallery_img_home">
                 </a>
                 <p>Content, ratio and interactions of pigment-protein complexes.</p>
                 <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}"><b>Launch tool &rarr;</b></a>
+            </div>
+            <div class="feature">
+                <h3 style="font-size: 0.95em;"><b>MIMS</b></h3> 
+                <a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">
+                    <img src="static/images/MIMS.jpg" alt="MIMS" class="gallery_img_home">
+                </a>
+                <p>Analysis of Membrane Inlet Mass Spetrometry (MIMS) data</p>
+                <a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}"><b>Launch tool &rarr;</b></a>
+            </div>
+            <div class="feature">
+                <h3 style="font-size: 0.95em;"><b>Photobioreactors</b></h3> 
+                <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="blank">
+                    <img src="static/images/PBRtool2_1.jpg" alt="Slow" class="gallery_img_home">
+                </a>
+                <p>Tools for photobioreactors <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a>:
+                batch, turbidostat and periodic data analysis.</p>
+                <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="blank"><b>Launch tool &rarr;</b></a>
+            </div>
+            <div class="feature">
+                <h3 style="font-size: 0.95em;"><b>PBR control scripts</b></h3> 
+                <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="blank">    
+                    <img src="static/images/PBRscripts2_1.JPG" alt="Slow" class="gallery_img_home">
+                </a>
+                <p>Control scripts for photobioreactors <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a>
+                including growth optimizer and PI curves measurement scripts.</p>
+                <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="blank"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
                 <h3 style="font-size: 0.95em;"><b>Cell counting</b></h3> 
@@ -143,25 +169,7 @@
                 <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
-                <h3><b>Photobioreactors</b></h3> 
-                <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="blank">
-                    <img src="static/images/PBRtool2_1.jpg" alt="Slow" class="gallery_img_home">
-                </a>
-                <p>Tools for photobioreactors <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a>:
-                batch, turbidostat and periodic data analysis.</p>
-                <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="blank"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3><b>PBR control scripts</b></h3> 
-                <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="blank">    
-                    <img src="static/images/PBRscripts2_1.JPG" alt="Slow" class="gallery_img_home">
-                </a>
-                <p>Control scripts for photobioreactors <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a>
-                including growth optimizer and PI curves measurement scripts.</p>
-                <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="blank"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3><b>Optimalga</b></h3> 
+                <h3 style="font-size: 0.95em;"><b>Optimalga</b></h3> 
                 <a href="https://www.optimalga.com/" target="_blank">    
                     <img src="static/images/optimalga_logo_1.jpg" class="gallery_img_home">
                 </a>
@@ -169,7 +177,7 @@
                 <a href="https://www.optimalga.com/" target="_blank"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
-                <h3><b>E-cyanobacterium</b></h3> 
+                <h3 style="font-size: 0.95em;"><b>E-cyanobacterium</b></h3> 
                 <a href="https://www.e-cyanobacterium.org/" target="_blank">    
                     <img src="static/images/ecyanobacterium_1.JPG" class="gallery_img_home">
                 </a>

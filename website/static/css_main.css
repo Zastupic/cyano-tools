@@ -354,7 +354,7 @@ border-radius: 8px; /* Optional: Add rounded corners for a polished look */
 transition: transform 0.3s ease; /* Smooth transition for the zoom effect */
 }
 .gallery_6_img img:hover {
-transform: scale(1.1); /* Scale the image to 110% of its original size on hover */
+height: 96%;
 }
 .gallery_6_OJIP {
 display: grid;
@@ -507,6 +507,18 @@ max-width: 1200px; /* Optional: Limit maximum width */
 #normalized-plot-div {
   height: 300px;   /* or whatever fixed height you prefer */
   width: 100%;
+}
+
+/* === MIMS ===*/
+#calibration-section {
+  max-height: none;
+  overflow: visible;
+  display: block;
+}
+.label-select-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 
