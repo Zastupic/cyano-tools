@@ -35,6 +35,8 @@
         microscopy or working with 
         <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank">photobiorectors</a></strong>, 
         CyanoTools provides a fast and user-friendly interface to process, visualize, and interpret your measurements.
+        For common questions about supported data formats, usage, or outputs, see the 
+        <a href="#faq"><b>FAQ section</b></a>.
     </p>
     <p style="font-size: 1.1em;">
         The site is developed by the
@@ -249,6 +251,179 @@
             </div>
         </div>
     </div>
+</section>
+<br>
+
+<!-- FAQ section-->
+<section class="features">
+  <div class="container">
+    <h2 id="faq" class="section-title" style="font-size: 1.5em;">
+        FAQ
+    </h2>
+    <div id="faqAccordion" class="accordion">
+      <div class="card">
+        <div class="card-header" id="faq1-heading">
+          <a href="#faq1" class="d-block" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="faq1">
+            What types of data can I analyze with CyanoTools?
+          </a>
+        </div>
+        <div id="faq1" class="collapse" aria-labelledby="faq1-heading" data-parent="#faqAccordion">
+          <div class="card-body">
+            <u>CyanoTools supports data analysis from a the following instruments and file formats:</u>
+            <br><strong>Chlorophyll fluorescence</strong>: 
+            <br>- <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank">MULTI-COLOR-PAM</a>, 
+            <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank">DUAL-PAM</a>: <code>.csv</code> files
+            <br>- <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank">FluorPen</a>,
+            <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank">AquaPen</a>,
+            <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank">FL 6000</a>: <code>.txt</code> files
+            <br><strong>Spectrofluorometry</strong>: 
+            <br>- <a href="https://jascoinc.com/products/spectroscopy/fluorometer/spectrofluorometer-models/" target="_blank">Jasco spectrofluorometers</a>: <code>.csv</code> files
+            <br><strong>MIMS</strong>: 
+            <br>- <a href="https://www.hidenanalytical.com/products/gas-analysis/hpr-40-dsa/" target="_blank">Hiden HPR-40</a>: <code>.csv</code> files
+            <br>- <a href="https://mims.psi.cz/products/mass-spectrometer-ms-gas/" target="_blank">MS GAS</a>: <code>.asc</code> files
+            <br><strong>Photobioreactors</strong>: 
+            <br>- <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a>: <code>.xlsx</code> files
+            <br>
+            <strong>Microscopy/image analysis</strong>:
+            <br>- <code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.tif</code>, <code>.bmp</code>, <code>.gif</code> files
+            <br>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="faq2-heading">
+          <a href="#faq2" class="d-block" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="faq2">
+              What types of analysis can I perform?
+          </a>
+        </div>
+        <div id="faq2" class="collapse" aria-labelledby="faq2-heading" data-parent="#faqAccordion">
+          <div class="card-body">
+            <u>CyanoTools supports the following types of data analysis:</u>
+            <br>
+            <strong>Chlorophyll fluorescence</strong>:
+            <br> 
+            - For details on <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">Rapid light curves</a>,
+            <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">OJIP transients</a>, 
+            <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Slow (Kautsky) kinetics</a>, 
+            please see the individual tools with detailed explanation. 
+            <br>
+            <strong>Spectrofluorometry</strong>: 
+            <br>- For details on <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
+            Low temperature (77K) excitation-emission pigment fluorescence spectra</a>, please see the tool with detailed explanation. 
+            <br><strong> Membrane inlet mass spectrometry</strong> (<a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">MIMS</a>): 
+            <br>- Visualize dynamics of dissolved or gaseous-phase analytes (e.g., O<sub>2</sub>, CO<sub>2</sub>, H<sub>2</sub>, CH<sub>4</sub> etc.)  
+            <br>- Normalize signals to compensate for MIMS system drift, baseline shift, or external disturbances.
+            <br><strong>Photobioreactors</strong>: 
+            <br>- Analyze specific growth rate during batch growth experiments.
+            <br>- Analyze specific growth rate in tubidostat experiments. Apply statistical methods to identify fully acclimated (i.e. stable) growth rate under given cultivation conditions.
+            <br>- Analyze dynamics in the measured data during periodic experiments (such as diurnal)
+            <br>- Process exported excel files for easier subsequent manipulation 
+            (using <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html" target="blank">Tidy Data</a> R package.) 
+            <br><strong>Microscopy/image analysis</strong>:
+            <br>- Count cells or fluorescence particles on a microscopy image.
+            <br>- Identify fluorescence profiles across cells, based on pigment autofluorescence or fluorescence probes.
+            <br>- Identify size of cells or object of interest on an image.
+            <br>- Work with both regular and irregular cellular, or object shapes. 
+            <br>
+            <strong>Complex platforms</strong>:
+            <br>- For details, please visit the <a href="https://www.optimalga.com/" target="blank">Optimalga</a> 
+            or <a href="https://www.e-cyanobacterium.org/" target="blank">E-cyanobacterium</a> platforms.
+            <br>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" id="faq3-heading">
+          <a href="#faq3" class="d-block" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="faq3">
+              Can I upload multiple files or datasets?
+          </a>
+        </div>
+        <div id="faq3" class="collapse" aria-labelledby="faq3-heading" data-parent="#faqAccordion">
+          <div class="card-body">
+            <strong>Chlorophyll fluorescence</strong> and <strong>Spectrofluorometry</strong> support batch uploads and can analyze up to 50 datasets simultaneously.
+            <br><strong>MIMS</strong>, <strong>Photobioreactors</strong> and <strong>Image Analysis</strong> tools are designed for single-file analysis.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" id="faq4-heading">
+          <a href="#faq4" class="d-block" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="faq4">
+              Can I use the tools without registration?
+          </a>
+        </div>
+        <div id="faq4" class="collapse" aria-labelledby="faq4-heading" data-parent="#faqAccordion">
+          <div class="card-body">
+            Yes. All tools are fully open-access and can be used without registration or login. 
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="faq5-heading">
+          <a href="#faq5" class="d-block" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="faq5">
+              Will my data be saved on the server?
+          </a>
+        </div>
+        <div id="faq5" class="collapse" aria-labelledby="faq5-heading" data-parent="#faqAccordion">
+          <div class="card-body">
+            No — all processing takes place within your browser session, and no data is stored on the server. This ensures complete confidentiality of your data.
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="faq6-heading">
+          <a href="#faq6" class="d-block" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="faq6">
+              Is the source code available?
+          </a>
+        </div>
+        <div id="faq6" class="collapse" aria-labelledby="faq6-heading" data-parent="#faqAccordion">
+          <div class="card-body">
+              Yes. The source code is freely accessible on <a href="https://github.com/Zastupic/tools-py.e-cyanobacterium.org" target="blank">GitHub</a>. Contributions are welcome!
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="faq7-heading">
+          <a href="#faq7" class="d-block" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="faq7">
+              Can I request a new feature or tool?
+          </a>
+        </div>
+        <div id="faq7" class="collapse" aria-labelledby="faq7-heading" data-parent="#faqAccordion">
+          <div class="card-body">
+            Yes! Suggestions for new tools, analysis types, or device support are welcome. 
+            Feel free to <a href="mailto:zavrel.t@czechglobe.cz">email us</a>.
+          </div>
+        </div>
+      </div>    
+
+      <div class="card">
+        <div class="card-header" id="faq8-heading">
+          <a href="#faq8" class="d-block" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="faq8">
+              Where can I find tutorials or help?
+          </a>
+        </div>
+        <div id="faq8" class="collapse" aria-labelledby="faq10-heading" data-parent="#faqAccordion">
+          <div class="card-body">
+            Each tool comes with detailed usage instructions to guide you through the process.
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="faq9-heading">
+          <a href="#faq9" class="d-block" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="faq9">
+              How do I cite CyanoTools in my publication?
+          </a>
+        </div>
+        <div id="faq9" class="collapse" aria-labelledby="faq9-heading" data-parent="#faqAccordion">
+          <div class="card-body">
+            To refer to CyanoTools, please use the following citation style: <br>
+            <em>“CyanoTools – a web-based toolkit for on cyanobacteria, algae, and plants research. Available at: https://tools-py.e-cyanobacterium.org”</em>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 <br>
 

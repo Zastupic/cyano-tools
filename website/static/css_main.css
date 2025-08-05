@@ -3,6 +3,7 @@
 html {
   --text-color-normal: #0a244d;
   --text-color-light: #8cabd9;
+  scroll-behavior: smooth;
 }
 html[data-theme='dark'] {
   --text-color-normal: hsl(210, 10%, 62%);
@@ -817,6 +818,17 @@ max-width: 1200px;
 margin: 0 auto;
 padding: 0 20px;
 }
+
+/* --- ACORDION --- */
+#faqAccordion .card {
+  background-color: #ceeae2; /* Bootstrap dark gray */
+  color: #1f1f1f;            /* text */
+  border-color: #e7f7f1;
+}
+#faqAccordion .card-body {
+  background-color: #e9f1ef; /* Bootstrap dark gray */
+}
+
 
 /* === Features Section ===*/
 .features {
