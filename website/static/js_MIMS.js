@@ -303,18 +303,7 @@ function populateNormalizationDropdown(yFields) {
 // ===================================================
 document.getElementById("normalize-button").addEventListener("click", function() {
     plotNormalizedData(); // plot normalized signals
-
-
-//=============================================     
-//====== !!!!! UNCOMMENT THIS PART !!!!!! ===== 
-//=============================================   
-
-//    document.getElementById("calibration-section").style.display = "block"; // show calibration UI
-
-//=============================================     
-//====== !!!!! UNCOMMENT THIS PART !!!!!! ===== 
-//=============================================   
-
+    // document.getElementById("calibration-section").style.display = "block"; // show calibration UI
 });
 
 // ===================================================
@@ -389,6 +378,7 @@ function plotNormalizedData() {
         Plotly.Plots.resize('normalized-plot-div');
     });
 }
+
 
 // ==============================
 // 8. Calibration Input Handling
@@ -478,5 +468,74 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".calibration-unit-header").forEach(header => {
       header.textContent = `Known concentration (${unit})`;
     });
+  });
+});
+
+// ====================
+// 9. Plot calibrations
+// ====================
+document.getElementById("plot-calibration-button").addEventListener("click", () => {
+  const calibrationContainer = document.getElementById("calibration-inputs-container");
+  const calibrationBlocks = calibrationContainer.querySelectorAll(".calibration-block");
+
+  if (calibrationBlocks.length === 0) {
+    alert("No calibration data to plot. Please add calibration gases and points.");
+    return;
+  }
+
+  const mode = document.getElementById("calibration-mode").value;
+  const unit = document.getElementById("calibration-units").value || "";
+
+  let traces = [];
+
+  calibrationBlocks.forEach(block => {
+    const gasName = block.querySelector("select").value; // selected gas (field)
+    const rows = block.querySelectorAll("tbody tr");
+    
+    // Extract signal and concentration pairs for this gas
+    let xVals = [];
+    let yVals = [];
+
+    rows.forEach(row => {
+      const signalInput = row.querySelector(".signal-input");
+      const concInput = row.querySelector(".concentration-input");
+
+      const signal = parseFloat(signalInput.value);
+      const conc = parseFloat(concInput.value);
+
+      if (!isNaN(signal) && !isNaN(conc)) {
+        xVals.push(signal);
+        yVals.push(conc);
+      }
+    });
+
+    if (xVals.length > 0) {
+      traces.push({
+        x: xVals,
+        y: yVals,
+        mode: "markers+lines",
+        name: gasName,
+        marker: { size: 8 },
+        line: { shape: "linear" }
+      });
+    }
+  });
+
+  if (traces.length === 0) {
+    alert("No valid calibration points found.");
+    return;
+  }
+
+  Plotly.newPlot("calibration-plot-div", traces, {
+    title: `Calibration Curves (${mode} data)`,
+    xaxis: {
+      title: `Signal value (${mode})`,
+      automargin: true
+    },
+    yaxis: {
+      title: `Known concentration (${unit})`,
+      automargin: true
+    },
+    margin: { l: 60, r: 30, t: 50, b: 50 }
   });
 });

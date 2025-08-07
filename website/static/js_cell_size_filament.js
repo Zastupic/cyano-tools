@@ -1,180 +1,114 @@
-//-----------------------------//
-//--- IMAGES ON FULL SCREEN ---//
-//-----------------------------//
-$('img[data-enlargeable]').addClass('img-enlargeable').click(function() {
-  var src = $(this).attr('src');
-  var modal;
+document.addEventListener("DOMContentLoaded", function () {
 
-  function removeModal() {
-    modal.remove();
-    $('body').off('keyup.modal-close');
-  }
-  modal = $('<div>').css({
-    background: 'RGBA(0,0,0,.5) url(' + src + ') no-repeat center',
-    backgroundSize: 'contain',
-    width: '100%',
-    height: '100%',
-    position: 'fixed',
-    zIndex: '10000',
-    top: '0',
-    left: '0',
-    cursor: 'zoom-out'
-  }).click(function() {
-    removeModal();
-  }).appendTo('body');
-  //handling ESC
-  $('body').on('keyup.modal-close', function(e) {
-    if (e.key === 'Escape') {
-      removeModal();
-    }
+  // ----------------------------- //
+  // --- IMAGES ON FULL SCREEN --- //
+  // ----------------------------- //
+  $('img[data-enlargeable]').addClass('img-enlargeable').click(function () {
+    const src = $(this).attr('src');
+    const modal = $('<div>').css({
+      background: `RGBA(0,0,0,.5) url(${src}) no-repeat center`,
+      backgroundSize: 'contain',
+      width: '100%',
+      height: '100%',
+      position: 'fixed',
+      zIndex: '10000',
+      top: '0',
+      left: '0',
+      cursor: 'zoom-out'
+    }).click(() => modal.remove()).appendTo('body');
+
+    $('body').on('keyup.modal-close', function (e) {
+      if (e.key === 'Escape') {
+        modal.remove();
+        $('body').off('keyup.modal-close');
+      }
+    });
   });
-});
 
-//--------------------------------------------// 
-//--- Fill file names to the selection box ---//
-//--------------------------------------------// 
-document.getElementById('image').addEventListener('change', function() {
-  let fileName = Array.from(this.files)
-      .map(file => file.name)
-      .join(', ');
-  this.nextElementSibling.innerText = fileName || 'Select files';
-});
+  // -------------------------------------------- //
+  // --- Fill file names to the selection box --- //
+  // -------------------------------------------- //
+  const fileInput = document.getElementById('image');
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      const fileName = Array.from(this.files).map(file => file.name).join(', ');
+      const label = this.nextElementSibling;
+      if (label) {
+        label.innerText = fileName || 'Select files';
+      }
+    });
+  }
 
-//---------------------------------------------//
-//--- DRAWING LINES BY MOUSE CLICK IN CANVAS---//
-//---------------------------------------------//
-//-------------------------//
-//--- DEFINING VARIABLES---//
-//-------------------------//
-const canvas = document.getElementById("canvas_mouse_clicking");
-var context = canvas.getContext("2d");
-const img = document.getElementById("img_orig_decoded_from_memory");
+  // --------------------------------------------- //
+  // --- DRAWING LINES BY MOUSE CLICK IN CANVAS--- //
+  // --------------------------------------------- //
+  const canvas = document.getElementById("canvas_mouse_clicking");
+  const context = canvas?.getContext("2d");
+  const img = document.getElementById("img_orig_decoded_from_memory");
 
-let img_size_y = img.height;
-let img_size_x = img.width;
-var storedLines = [];
-var isDown;
+  if (!canvas || !context || !img) {
+    console.warn("Canvas, context, or image not found.");
+    return;
+  }
 
-coordinates = [];
+  const img_size_y = img.height;
+  const img_size_x = img.width;
+  let startX = 0;
+  let startY = 0;
+  let isDown = false;
+  let storedLines = [];
+  let coordinates = [];
 
-$("#canvas_mouse_clicking").mousedown(function (e) {handleMouseDown(e);});
-$("#canvas_mouse_clicking").mousemove(function (e) {handleMouseMove(e);});
-$("#canvas_mouse_clicking").mouseup(function (e) {handleMouseUp(e);});
-$("#canvas_mouse_clicking").mouseout(function (e) {handleMouseOut(e);});
-$("#clear_selection").click(function () {
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    storedLines = [];
-    coordinates = [];
-    redrawStoredLines();
-});
-
-//-------------------//
-//--- MOUSE CLICK ---//
-//-------------------//
-function handleMouseDown(e) {
-    // let the browser know we will handle this event
-    e.preventDefault();   
-    e.stopPropagation();
-
-    // get the mouse position
-    let rect = canvas.getBoundingClientRect();
-    canvas.height = rect.height;
+  // --------------------- //
+  // --- INITIAL SETUP --- //
+  // --------------------- //
+  function initializeCanvasSize() {
+    const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width;
+    canvas.height = rect.height;
+  }
 
-    let mouseX = (e.clientX - rect.left).toFixed(0); //.toFixed(0) = zero digits
-    let mouseY = (e.clientY - rect.top).toFixed(0);
-    
-    // set an isDown flag to indicate dragging has started
+  initializeCanvasSize();
+
+  window.addEventListener("resize", () => {
+    initializeCanvasSize();
+    redrawStoredLines();
+  });
+
+  // ------------------------ //
+  // --- MOUSE INTERACTION -- //
+  // ------------------------ //
+  canvas.addEventListener("mousedown", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    startX = Math.round(e.clientX - rect.left);
+    startY = Math.round(e.clientY - rect.top);
     isDown = true;
+  });
 
-    // save the starting mouse position (it will be the beginning point of the line)
-    startX = mouseX;
-    startY = mouseY;
-     
-    redrawStoredLines();
-}
+  canvas.addEventListener("mousemove", (e) => {
+    if (!isDown) return;
 
-//------------------//
-//--- MOUSE MOVE ---//
-//------------------//
-function handleMouseMove(e){
-    // let the browser know we will handle this event
-    e.preventDefault();     
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = Math.round(e.clientX - rect.left);
+    const mouseY = Math.round(e.clientY - rect.top);
 
-    // if we're not dragging, ignore this mousemove
-    if(!isDown){ 
-      return; }
+    redrawStoredLines(); // clear and redraw previous lines
 
-    // get the mouse position
-    let rect = canvas.getBoundingClientRect();
-    canvas.height = rect.height;
-    canvas.width = rect.width;
-
-    let mouseX = (e.clientX - rect.left).toFixed(0); //.toFixed(0) = zero digits
-    let mouseY = (e.clientY - rect.top).toFixed(0);
-
-    // draw the current line
     context.beginPath();
-    context.moveTo(startX,startY);
-    context.lineTo(mouseX,mouseY);
+    context.moveTo(startX, startY);
+    context.lineTo(mouseX, mouseY);
     context.strokeStyle = '#ff0000';
     context.lineWidth = 3;
-    context.stroke()
+    context.stroke();
+  });
 
-    redrawStoredLines();
-}   
-
-//----------------//
-//--- MOUSE UP ---//
-//----------------//
-function handleMouseUp(e){
-    // let the browser know we will handle this event
-    e.preventDefault();   
-
-    // clear the dragging flag since the drag is donw
-    isDown=false;
-
-    // get the mouse position
-    let rect = canvas.getBoundingClientRect();
-    canvas.height = rect.height;
-    canvas.width = rect.width;
-
-    let canvas_size_y = canvas.height;
-    let canvas_size_x = canvas.width;
-
-    let mouseX = (e.clientX - rect.left).toFixed(0); //.toFixed(0) = zero digits
-    let mouseY = (e.clientY - rect.top).toFixed(0);
-
-    //console.log(startX,startY, mouseX, mouseY, canvas_size_x, canvas_size_y, img_size_x, img_size_y);
-    coordinates.push({startX, startY, mouseX, mouseY, canvas_size_x, canvas_size_y, img_size_x, img_size_y});
-
-    storedLines.push({
-     x_coord_initial: startX,
-     y_coord_initial: startY,
-     x_coord_final: mouseX,
-     y_coord_final: mouseY
-    });
-
-    // Jsonify data to send it to server as ajax 
-    const coordinates_for_flask = JSON.stringify(coordinates); // Stringify converts a JavaScript object or value to a JSON string
-    $.ajax({
-      url:"/cell_size_filament/coordinates",
-      type:"POST",
-      contentType: "application/json",
-      data: JSON.stringify(coordinates_for_flask)});
-
-    redrawStoredLines();
-}
-
-//-----------------//
-//--- MOUSE OUT ---//
-//-----------------//
-function handleMouseOut(e) {
-    e.preventDefault();   
-
-    if(!isDown){return;}
-    // clear the dragging flag since the drag is donw
+  canvas.addEventListener("mouseup", (e) => {
+    if (!isDown) return;
     isDown = false;
+
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = Math.round(e.clientX - rect.left);
+    const mouseY = Math.round(e.clientY - rect.top);
 
     storedLines.push({
       x_coord_initial: startX,
@@ -182,29 +116,64 @@ function handleMouseOut(e) {
       x_coord_final: mouseX,
       y_coord_final: mouseY
     });
-      
-    redrawStoredLines();
-}
 
-//---------------------//
-//--- DRAWING LINES ---//
-//---------------------//
-function redrawStoredLines() { 
-  // needed to clear canvas by button
-  //context.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // define initial state
-  if (storedLines.length == 0) {
-      return;
+    coordinates.push({
+      startX,
+      startY,
+      mouseX,
+      mouseY,
+      canvas_size_x: canvas.width,
+      canvas_size_y: canvas.height,
+      img_size_x,
+      img_size_y
+    });
+
+    $.ajax({
+      url: "/cell_size_filament/coordinates",
+      type: "POST",
+      contentType: "application/json",
+      data: JSON.stringify(JSON.stringify(coordinates)), // Flask expects double-stringified JSON
+      success: function () {
+        console.log("Coordinates sent to server.");
+      },
+      error: function (xhr, status, error) {
+        console.error("AJAX error:", error);
+      }
+    });
+
+    redrawStoredLines();
+  });
+
+  canvas.addEventListener("mouseout", () => {
+    if (!isDown) return;
+    isDown = false;
+  });
+
+  // --------------------- //
+  // --- CLEAR BUTTON ---- //
+  // --------------------- //
+  const clearButton = document.getElementById("clear_selection");
+  if (clearButton) {
+    clearButton.addEventListener("click", () => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      storedLines = [];
+      coordinates = [];
+    });
   }
-  
-  // redraw all stored lines
-  for (var i = 0; i < storedLines.length; i++) {
-    context.beginPath();
-    context.moveTo(storedLines[i].x_coord_initial, storedLines[i].y_coord_initial);
-    context.lineTo(storedLines[i].x_coord_final, storedLines[i].y_coord_final);
-    context.strokeStyle = '#ff0000';
-    context.lineWidth = 3;
-    context.stroke();
+
+  // --------------------- //
+  // --- DRAWING LINES --- //
+  // --------------------- //
+  function redrawStoredLines() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    storedLines.forEach(line => {
+      context.beginPath();
+      context.moveTo(line.x_coord_initial, line.y_coord_initial);
+      context.lineTo(line.x_coord_final, line.y_coord_final);
+      context.strokeStyle = '#ff0000';
+      context.lineWidth = 3;
+      context.stroke();
+    });
   }
-}  
+
+});

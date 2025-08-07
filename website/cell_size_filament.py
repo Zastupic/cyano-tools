@@ -110,7 +110,7 @@ def analyze_cell_size_filament():
                             # calculate cell diameter and other parameters in um
                             cell_diameter_um = float(radius*2*pixel_size_nm / 1000)
                             # Store the results for all cells
-                            cell_sizes_final.append((i, cell_diameter_um)) 
+                            cell_sizes_final.append((i+1, cell_diameter_um)) 
                             ##############################
                             ### Draw lines and circles ###
                             ##############################
