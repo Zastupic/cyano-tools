@@ -313,6 +313,7 @@ function plotNormalizedData() {
 
     document.getElementById('normalized-container').style.display = 'block';
     document.getElementById('normalized-preview-label').style.display = 'block';
+    document.getElementById('find-coefficients-label').style.display = 'block';
 
     requestAnimationFrame(() => {
         // Show buttons now
@@ -526,10 +527,10 @@ function refreshRegressionTable() {
                     <th>Selection #</th>
                     <th>Start Time</th>
                     <th>Signal</th>
-                    <th>Slope Raw Data</th>
-                    <th>R² Raw Data</th>
                     <th>Slope Normalized Data</th>
+                    <th>Slope Raw Data</th>
                     <th>R² Normalized Data</th>
+                    <th>R² Raw Data</th>
                 </tr>
             </thead>
             <tbody>
@@ -542,11 +543,10 @@ function refreshRegressionTable() {
                     <td>${selectionId}</td>    
                     <td>${start_time.toFixed(2)}</td>
                     <td>${signal}</td>
-                    <td>${slopeRaw.toExponential(3)}</td>
-                    <td>${r2Raw.toFixed(4)}</td>
                     <td>${slopeNorm !== null ? slopeNorm.toExponential(3) : '-'}</td>
+                    <td>${slopeRaw.toExponential(3)}</td>
                     <td>${r2Norm !== null ? r2Norm.toFixed(4) : '-'}</td>
-                    
+                    <td>${r2Raw.toFixed(4)}</td>
                 </tr>
             `;
         });
