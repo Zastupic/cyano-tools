@@ -79,7 +79,8 @@ document.getElementById('show-image-button').addEventListener('click', function 
     if (!validType) {
         mimsErrorAlert.innerHTML = `
           <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Invalid MIMS file selected:</strong>
+            <strong>Invalid MIMS file selected.</strong> 
+            <br>Please check file extensions available for individual MIMS types (HPR40: <code>.csv</code>, MS GAS: <code>.asc</code> files). 
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
           </div>`;
         return;
@@ -431,7 +432,7 @@ function applyLinearRegression(x0, x1) {
             y: [slopeRaw * x0 + interceptRaw, slopeRaw * x1 + interceptRaw],
             mode: 'lines',
             name: `Selection ${selectionCounter} Fit: ${field}`,
-            line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'gray' }
+            line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'black' }
         });
 
         // Linear regression for normalized data (if applicable)
@@ -453,7 +454,7 @@ function applyLinearRegression(x0, x1) {
                 y: [slopeNorm * x0 + interceptNorm, slopeNorm * x1 + interceptNorm],
                 mode: 'lines',
                 name: `Selection ${selectionCounter} Fit: ${field}/${refField}`,
-                line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'gray' }
+                line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'black' }
             });
         }
 
