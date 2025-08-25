@@ -12,7 +12,6 @@ let rawTraceIndicesBySelection = new Map();
 let normTraceIndicesBySelection = new Map();
 let lastAddedStartTime = null;
 let selectionCounter = 0;
-
 // =================
 // 1. File selection
 // =================
@@ -37,7 +36,6 @@ function resetUI() {
     document.getElementById('preview-label').style.display = 'none';
     document.getElementById('normalized-preview-label').style.display = 'none';
     document.getElementById('normalization-controls').style.display = 'none';
-    document.getElementById('calibration-section').style.display = 'none';
     document.getElementById('regression-results-table').innerHTML = "";
     regressionResults = [];
     currentZoomRange = null;
@@ -307,7 +305,6 @@ function plotNormalizedData() {
                     x0: parseFloat(eventData['xaxis.range[0]']),
                     x1: parseFloat(eventData['xaxis.range[1]'])
                 };
-                console.log("Zoom range updated:", currentZoomRange);
             }
         });
     });
@@ -458,15 +455,23 @@ function applyLinearRegression(x0, x1) {
             });
         }
 
+        let slopeNormCal = slopeNorm;
+        let slopeRawCal = slopeRaw;
+        let unit = null;
+
         // Save regression results with selectionId
         regressionResults.push({
-            selectionId: selectionCounter,
-            signal: field === refField ? field : `${field}/${refField}`,
-            start_time: x0,
-            slopeRaw: slopeRaw,
-            r2Raw: r2Raw,
-            slopeNorm: slopeNorm,
-            r2Norm: r2Norm
+          selectionId: selectionCounter,
+          signal: field,
+          start_time: x0,
+          start_time_ms: Math.round(x0 * 60 * 1000),
+          end_time: x1,
+          end_time_ms: Math.round(x1 * 60 * 1000),
+          slopeRaw, slopeRawCal,
+          r2Raw,
+          slopeNorm, slopeNormCal,
+          r2Norm,
+          unit
         });
     });
 
@@ -483,7 +488,6 @@ function applyLinearRegression(x0, x1) {
             { length: rawRegressionTraces.length },
             (_, i) => rawCurrentTraceCount + i
         );
-        console.log("Calculated raw indices:", newRawIndices);
         rawTraceIndicesBySelection.set(selectionCounter, newRawIndices);
     });
 
@@ -493,7 +497,6 @@ function applyLinearRegression(x0, x1) {
             { length: normRegressionTraces.length },
             (_, i) => normCurrentTraceCount + i
         );
-        console.log("Calculated norm indices:", newNormIndices);
         normTraceIndicesBySelection.set(selectionCounter, newNormIndices);
     });
 
@@ -505,57 +508,57 @@ function applyLinearRegression(x0, x1) {
 // Refresh regression results table with new layout and selection # column
 function refreshRegressionTable() {
     const tableDiv = document.getElementById('regression-results-table');
-
+    const downloadDiv = document.getElementById('xlsx-download-section');
     if (regressionResults.length === 0) {
         tableDiv.innerHTML = "";
+        downloadDiv.style.display = 'none';
         return;
     }
-
-    // Group results by selectionId to keep selection # ordering
+    downloadDiv.style.display = 'block';
     const grouped = {};
     regressionResults.forEach(r => {
         if (!grouped[r.selectionId]) grouped[r.selectionId] = [];
         grouped[r.selectionId].push(r);
     });
-
-    // Sort selectionIds ascending
-    const sortedSelectionIds = Object.keys(grouped).map(Number).sort((a,b) => a-b);
-
+    const sortedSelectionIds = Object.keys(grouped).map(Number).sort((a, b) => a - b);
     let html = `
         <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Selection #</th>
-                    <th>Start Time</th>
+                    <th>Start Time (ms)</th>
+                    <th>Start Time (min)</th>
+                    <th>End Time (ms)</th>
+                    <th>End Time (min)</th>
                     <th>Signal</th>
-                    <th>Slope Normalized Data</th>
-                    <th>Slope Raw Data</th>
-                    <th>R² Normalized Data</th>
+                    <th>Slope Raw Data (min<sup>-1</sup>)</th>
+                    <th>Slope Normalized Data (min<sup>-1</sup>)</th>
                     <th>R² Raw Data</th>
+                    <th>R² Normalized Data</th>
                 </tr>
             </thead>
             <tbody>
     `;
-
     sortedSelectionIds.forEach(selectionId => {
-        grouped[selectionId].forEach(({ signal, start_time, slopeRaw, r2Raw, slopeNorm, r2Norm }) => {
+        grouped[selectionId].forEach(({ signal, start_time, start_time_ms, end_time_ms, end_time, slopeRaw, r2Raw, slopeNorm, r2Norm, slopeRawCal, slopeNormCal, unit }) => {
             html += `
                 <tr>
-                    <td>${selectionId}</td>    
+                    <td>${selectionId}</td>
+                    <td>${start_time_ms}</td>
                     <td>${start_time.toFixed(2)}</td>
+                    <td>${end_time_ms}</td>
+                    <td>${end_time.toFixed(2)}</td>
                     <td>${signal}</td>
-                    <td>${slopeNorm !== null ? slopeNorm.toExponential(3) : '-'}</td>
                     <td>${slopeRaw.toExponential(3)}</td>
-                    <td>${r2Norm !== null ? r2Norm.toFixed(4) : '-'}</td>
+                    <td>${slopeNorm !== null ? slopeNorm.toExponential(3) : '-'}</td>
                     <td>${r2Raw.toFixed(4)}</td>
+                    <td>${r2Norm !== null ? r2Norm.toFixed(4) : '-'}</td>
                 </tr>
             `;
         });
     });
-
     html += `</tbody></table>`;
     tableDiv.innerHTML = html;
-
 }
 
 //Refresh plots
@@ -608,3 +611,89 @@ function clearRegressionTracesFromPlots() {
     rawTraceIndicesBySelection.clear();
     normTraceIndicesBySelection.clear();
 }
+
+// =============================================
+// 8 Summarize results in XLSX file for download
+// =============================================
+
+document.getElementById('download-xlsx').addEventListener('click', function() {
+    if (!mimsRawData.length) {
+        alert("No data available for export.");
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    wb.Props = {
+        Title: "MIMS Analysis Results",
+        Author: "Your App",
+        CreatedDate: new Date()
+    };
+
+    const selectedModel = getSelectedMIMSModel();
+    const refField = document.getElementById("normalize-by-select").value;
+
+    // ---- Data sheet ----
+    const dataSheet = mimsRawData.map(row => {
+        const combinedRow = {};
+
+        if (selectedModel === "HPR40 (Hiden Analytical)") {
+            combinedRow["Time (ms)"] = row["ms"]; // only for HPR40
+        } else if (selectedModel === "MS GAS (Photon System Instruments)") {
+            combinedRow["Time (s)"] = row["Time"]; // only for MS GAS
+        }
+
+        combinedRow["Time (min)"] = row["min"] !== undefined ? row["min"].toFixed(2) : null; // always 2 decimals
+
+        // raw data columns
+        mimsYFields.forEach(field => combinedRow[field] = row[field]);
+
+    // normalized data columns
+    mimsYFields.forEach(field => {
+        let val = row[field];
+        let refVal = row[refField];
+
+        if (typeof val === "number" && typeof refVal === "number" && refVal !== 0) {
+            combinedRow[`${field}/${refField}_norm`] = val / refVal;
+        } else {
+            combinedRow[`${field}/${refField}_norm`] = null;
+        }
+    });
+
+            return combinedRow;
+    });
+
+    const dataSheetXLSX = XLSX.utils.json_to_sheet(dataSheet);
+    XLSX.utils.book_append_sheet(wb, dataSheetXLSX, "Data");
+
+    // ---- Regression table sheet ----
+    const regressionSheetData = regressionResults.map(r => {
+        const row = {};
+        row["Selection #"] = r.selectionId;
+        // ms/s columns first
+        if (selectedModel === "HPR40 (Hiden Analytical)") {
+            row["Start Time (ms)"] = r.start_time_ms;
+            row["End Time (ms)"] = r.end_time_ms;
+        } else if (selectedModel === "MS GAS (Photon System Instruments)") {
+            row["Start Time (s)"] = r.start_time;
+            row["End Time (s)"] = r.end_time;
+        }
+        // min columns
+        row["Start Time (min)"] = r.start_time.toFixed(2);
+        row["End Time (min)"] = r.end_time.toFixed(2);
+        // the rest of columns
+        row["Selection #"] = r.selectionId;
+        row["Signal"] = r.signal;
+        row["Slope Raw (per min)"] = r.slopeRaw;
+        row["Slope Normalized (per min)"] = r.slopeNorm;
+        row["R² Raw Data"] = r.r2Raw;
+        row["R² Normalized Data"] = r.r2Norm;
+      
+        return row;
+    });
+
+    const regressionSheet = XLSX.utils.json_to_sheet(regressionSheetData);
+    XLSX.utils.book_append_sheet(wb, regressionSheet, "Regression Table");
+
+    const baseName = selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, "") : "MIMS_Analysis";
+    XLSX.writeFile(wb, `${baseName}_analyzed.xlsx`);
+});

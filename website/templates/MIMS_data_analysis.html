@@ -86,7 +86,35 @@ making it particularly valuable for sensitive and rapid analysis in both researc
     <li>Upload MIMS file and preview the data</li>
     <li>Select a signal for normalization and drift correction (typically Ar or N signals)</li>
     <li>Normalize the signals and preview the normalized data</li>
+    <li>Find linear regresion coefficients for time intervals of interest (for both raw and normalized signals)</li>
+    <li>Download summary .xlsx file with all data</li>
 </ol>
+<br>
+< >Calibrations</u>
+<p>Please note that the tool does not provide option for data calibration. 
+  For calibration of either raw or normalized MIMS signals, linear regression is typically required:
+  <p>$$
+      \begin{multline}
+      \shoveleft y = a_{x} + b,
+      \end{multline}
+      $$
+  </p>
+where <i>y</i> represents gas concentration in real units (such as, for example, µmol L<sup>-1</sup>), <i>x</i> represents 
+respective value of MIMS signal, <i>a</i> represents calibration slope and <i>b</i> represents calibration intercept. 
+<br>
+The tool allows to obtain MIMS signal derivatives, i.e. a change of MIMS signal in time. To recalculate the obtained MIMS signal slopes,
+following equation can be used:
+  <p>$$
+     \begin{multline}
+     \shoveleft y = a * s,
+     \end{multline}
+     $$
+  </p>
+where <i>y</i> represents slope in real units (such as, for example, µmol L<sup>-1</sup> min<sup>-1</sup>), <i>s</i> represents 
+respective value of derivative of either raw or normalized MIMS signal (with units signal min<sup>-1</sup>) and
+ <i>a</i> represents calibration slope. For recalculating slopes to real concentrations, intercept from calibration 
+ is not required (it does nto affect the slope).
+</p>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('MIMS_data_analysis.analyze_MIMS_data', _anchor='results') }}">
     <div class="container">
@@ -97,7 +125,6 @@ making it particularly valuable for sensitive and rapid analysis in both researc
                 <option selected="MS GAS (Photon System Instruments)">MS GAS (Photon System Instruments)</option>
             </select>
         </div>
-        <br>
         <p class="font-weight-bold">2. Select the MIMS file</p>
         <div class="custom-file">
             <input 
@@ -110,8 +137,6 @@ making it particularly valuable for sensitive and rapid analysis in both researc
             <label class="custom-file-label" for="MIMS_file">Select files</label>
         </div>
         <div id="mims-error-alert" class="mt-3"></div>
-        <br><br>
-
         <button id="show-image-button" type="submit" class="btn btn-primary">Preview the MIMS file</button>
         <a href="{{url_for('static', filename='files/MIMS_example_file.csv')}}" download="MIMS_example_file">
             <button type="button" class="btn btn-outline-primary">Download example MIMS file</button>
@@ -124,13 +149,12 @@ making it particularly valuable for sensitive and rapid analysis in both researc
 <div id="raw-container" class="background-box-plot">
   <div id="raw-plot-div" style="height: 400px;"></div>
 </div>
-<br>
 <!-- Normalization controls -->
 <div id="normalization-controls" style="display:none; margin-top:20px;">
     <p class="font-weight-bold">4. Normalize the signals</p>
   <label for="normalize-by-select">Select a signal by which all signal will be normalized:</label>
   <select id="normalize-by-select" class="form-control" style="max-width:300px;"></select>
-  <br>
+  <div style="margin-bottom: 10px;"></div>
   <button id="normalize-button" class="btn btn-primary">Plot normalized data</button>
 </div>
 <br>
@@ -140,62 +164,27 @@ making it particularly valuable for sensitive and rapid analysis in both researc
   <div id="normalized-plot-div" style="height: 400px;"></div>
 </div>
 
-
 <!-- Confirm button to apply linear regression -->
-<br>
-<p id="find-coefficients-label" class="font-weight-bold" style="display:none;">6. Find regression coefficients - zoom the normalized plot and click the button below</p>
-<button id="confirm-selection-button" type="button" class="btn btn-primary" style="display:none;">Find regression for current zoom</button>
+<p id="find-coefficients-label" style="display:none;"><b>6. Find regression coefficients - zoom the normalized plot and click the button below</b>
+<br>To find multiple regressions, simply unzoom the normalized plot (by double-click on the plot), zoom new time window and click the button again.</p>
+<button id="confirm-selection-button" type="button" class="btn btn-primary" style="display:none;">Find linear regressions for current zoom</button>
 <button id="clear-regressions-in-table-button" type="button"class="btn btn-outline-danger" style="display:none;">Remove the last regression line</button>
 
 <!-- Show regressions -->
 <div id="regression-results-table" style="margin-top:20px;"></div>
 
-<br>
-<!-- Calibration section -->
-<div id="calibration-section" style="display: none; margin-top: 40px;">
-    <p class="font-weight-bold">6. Calibrate signals</p>
-    <div class="form-group">
-    <div class="label-select-inline">
-      <label for="calibration-mode">Choose data to calibrate:</label>
-      <select id="calibration-mode" class="form-control" style="max-width: 300px;">
-        <option value="raw">Raw signals</option>
-        <option value="normalized">Normalized signals</option>
-      </select>
-    </div>
-    <div style="line-height:10px;">
-      <br>
-    </div>
-    <div class="label-select-inline">
-      <label for="calibration-units">Select calibration units:&nbsp&nbsp&nbsp</label>
-      <select id="calibration-units" class="form-control" style="max-width: 300px;">
-        <option value="nmol/L">nmol/L</option>
-        <option value="µmol/L">µmol/L</option>
-        <option value="mmol/L">mmol/L</option>
-        <option value="mol/L">mol/L</option>
-        <option value="nmol">nmol</option>
-        <option value="µmol">µmol</option>
-        <option value="mmol">mmol</option>
-        <option value="mol">mol</option>
-      </select>
-    </div>
-  </div>
-  <br>
-  <button id="add-calibration-button" class="btn btn-primary">Add gas for calibration</button>
-  <br>
-  <div id="calibration-inputs-container">
-  <br>
-    <!-- Dynamic gas calibration forms will be injected here by JS -->
-    <!-- 
-    <button id="plot-calibration-button" class="btn btn-primary mt-3">Plot Calibrations</button>
-    <div id="calibration-plot-div" style="width:100%; height:400px;"></div>
-    -->
-  </div>
+<!-- Show optional XLSX download file -->
+<div id="xlsx-download-section" style="display:none;">
+  <p>7. <b>Download summary XLSX file with raw data, normalized data and regression coefficients for all selected intervals.</b></p>  
+  <button id="download-xlsx" class="btn btn-success">Download summary XLSX filename</button>
 </div>
 <br><br><br><br><br>
 
+<script src="{{url_for('static', filename='js_MIMS.js')}}"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.30.1.min.js"></script>
-<script src="{{url_for('static', filename='js_MIMS.js')}}"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
 
 {% endblock %}
