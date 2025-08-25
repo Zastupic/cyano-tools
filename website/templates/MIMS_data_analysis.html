@@ -90,8 +90,7 @@ making it particularly valuable for sensitive and rapid analysis in both researc
     <li>Download summary .xlsx file with all data</li>
 </ol>
 <br>
-< >Calibrations</u>
-<p>Please note that the tool does not provide option for data calibration. 
+<p><small>Please note that the tool does not provide option for data calibration. 
   For calibration of either raw or normalized MIMS signals, linear regression is typically required:
   <p>$$
       \begin{multline}
@@ -101,7 +100,6 @@ making it particularly valuable for sensitive and rapid analysis in both researc
   </p>
 where <i>y</i> represents gas concentration in real units (such as, for example, µmol L<sup>-1</sup>), <i>x</i> represents 
 respective value of MIMS signal, <i>a</i> represents calibration slope and <i>b</i> represents calibration intercept. 
-<br>
 The tool allows to obtain MIMS signal derivatives, i.e. a change of MIMS signal in time. To recalculate the obtained MIMS signal slopes,
 following equation can be used:
   <p>$$
@@ -114,7 +112,7 @@ where <i>y</i> represents slope in real units (such as, for example, µmol L<sup
 respective value of derivative of either raw or normalized MIMS signal (with units signal min<sup>-1</sup>) and
  <i>a</i> represents calibration slope. For recalculating slopes to real concentrations, intercept from calibration 
  is not required (it does nto affect the slope).
-</p>
+</small></p>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('MIMS_data_analysis.analyze_MIMS_data', _anchor='results') }}">
     <div class="container">
