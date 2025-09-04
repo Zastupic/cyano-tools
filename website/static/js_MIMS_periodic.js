@@ -12,6 +12,7 @@ let rawTraceIndicesBySelection = new Map();
 let normTraceIndicesBySelection = new Map();
 let lastAddedStartTime = null;
 let selectionCounter = 0;
+
 // =================
 // 1. File selection
 // =================
@@ -101,18 +102,16 @@ function parseMIMSFile(file, callback) {
     const fileName = file.name.toLowerCase();
 
     if (fileName.endsWith(".asc") || fileName.endsWith(".asci")) {
-        if (!content.includes("Ion Current [A]") ||
-            !content.includes("Concentration [%]") ||
-            !content.includes("Pressure [mbar]")) {
-            document.getElementById("mims-error-alert").innerHTML = `
-              <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Error:</strong> Missing <code>"Ion Current [A], Concentration [%] or "</code> in file.
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>`;
-            return;
-        }
+      if (!content.includes("Ion Current [A]")) {
+        document.getElementById("mims-error-alert").innerHTML = `
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error:</strong> Missing <code>"Ion Current [A]"</code> in file.
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>`;
+        return;
+      }
 
       try {
         const lines = content.split(/\r?\n/);

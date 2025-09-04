@@ -43,6 +43,7 @@ def create_app():
     from .calculators import calculators
     from .development_log import development_log
     from .MIMS_data_analysis import MIMS_data_analysis
+    from .MIMS_data_analysis_periodic import MIMS_data_analysis_periodic
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
@@ -61,6 +62,7 @@ def create_app():
     app.register_blueprint(calculators, url_prefix='/') 
     app.register_blueprint(development_log, url_prefix='/')
     app.register_blueprint(MIMS_data_analysis, url_prefix='/')
+    app.register_blueprint(MIMS_data_analysis_periodic, url_prefix='/')
 
     #### DATABASE ####
     with app.app_context(): # creating the database

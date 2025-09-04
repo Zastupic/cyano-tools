@@ -107,7 +107,7 @@ def analyze_slow_kin_data():
                                         FT_ALL.rename(columns = {FT_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True) 
                                         FM_PRIME_ALL.rename(columns = {FM_PRIME_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True) 
                                         QY_ALL.rename(columns = {QY_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True)  
-                                        ETR_ALL.rename(columns = {ETR_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True)                                  
+                                        ETR_ALL.rename(columns = {ETR_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True)     
                         ##########################
                         ### READ AQUAPEN FILES ###
                         ##########################
@@ -316,9 +316,9 @@ def analyze_slow_kin_data():
                     #############################################################
                     ### PROCESS THE IDENTIFIED VALUES FROM AQUAPEN / PLANTPEN ###
                     #############################################################
-                    if QY_LIGHT_ALL.empty: # check if DF has some values
+                    if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and QY_LIGHT_ALL.empty: # check if DF has some values
                         return redirect(request.url)   
-                    else: # check if DF has some values AND if the values are not NaN
+                    else: # check if DF has some values AND if the values are not NaN                        
                         if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)':
                             ##################################################
                             ### KEEP ONLY NUMERICAL VALUES IN SUMMARY FILE ###
@@ -385,7 +385,7 @@ def analyze_slow_kin_data():
                     ### PLOT MC-PAM FILES - RAW DATA  ###
                     #####################################
                     # Check if correct file type was selected
-                    if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' and \
+                    if "MULTI-COLOR-PAM" in fluorometer and \
                         ((request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_raw_data' and (len(File_MULTI_COLOR_PAM.columns) < 4 and 'ETR' not in File_MULTI_COLOR_PAM) or \
                         (request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_parameters' and not PAR_ALL.empty))) or \
                         'time_us' in Summary_file.columns and (fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and \

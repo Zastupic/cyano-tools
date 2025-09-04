@@ -643,11 +643,18 @@
         <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank"><i>AquaPen</i></a> (1.0 cm) and
         <a href="https://www.shimadzu.cz/products/molecular-spectroscopy/uv-vis/uv-vis-nir-spectroscopy/uv-2600i-uv-2700i/index.html" target="_blank"> 
         <i>UV-2600 spectrophotometer</i></a> (1.0 cm). 
+    </p> 
+    <p> Measurements were conducted using cell suspensions of the unicellular cyanobacterium
+        <i>Synechocystis</i> sp. PCC 6803 and unicellular green alga <i>Chlorella vulgaris</i>:
         <br>
-        Measurements were conducted using cell suspensions of the unicellular cyanobacterium
-        <i>Synechocystis</i> sp. PCC 6803 and unicellular green alga <i>Chlorella vulgaris</i>. Since the differences 
-        in OD<sub>720</sub> readings between devices were comparable for both strains (R<sup>2</sup> = 0.98-1.00 for both strains individually and combined), 
-        the tool below provides a common recalculation for both <i>Chlorella</i> and <i>Synechocystis</i>. </p> 
+        <div class="container">
+            <img src="static/images/OD720_devices.jpg" alt="OD720_devices" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%;">
+        </div>
+    </p> 
+    <p> Since the OD<sub>720</sub> readings 
+        were comparable for both strains (R<sup>2</sup> = 0.98-1.00 for both strains individually and combined), 
+        the tool below provides a common recalculation for both <i>Chlorella</i> and <i>Synechocystis</i>.
+    </p>
     <p> The <i>Chlorella</i> and <i>Synechocystis</i> cultures were measured up to OD<sub>720</sub>  
         1.3 (<i>UV-2600</i>), 0.88 (<i>Multi-Cultivator MC-1000-OD</i>), 0.83 (<i>Photobioreactor PBR FMT-150</i>) and 0.19 (<i>AquaPen</i>). 
         Concentration of Chlorophyll <i>a</i> in the cultures was ranging between 0.01-2.27 &#xb5g mL<sup>-1</sup>. </p>
@@ -668,7 +675,7 @@
     </div>
         <div class="gallery_5">
         <div class="gallery__img gallery__item--1">
-            <a>&nbsp OD in Device 1: </a>
+            <a>&nbsp OD<sub>720</sub> in Device 1: </a>
         </div>
         <div class=" gallery__img gallery__item--2">
             <div class="form-inline">
@@ -700,7 +707,7 @@
         </div>
     </div>
     <br>
-    <button id="calculate_OD2" type="button" class="btn btn-primary" onclick="recalculate_OD();"> Recalculate <i>OD</i></button>
+    <button id="calculate_OD2" type="button" class="btn btn-primary" onclick="recalculate_OD();"> Recalculate <i>OD<sub>720</sub></i></button>
     <button type="button" class="btn btn-info"><a>
         <i>OD<sub>720</sub></i> <span id="OD_in_device_1_for_span"></span><span id="measuring_device_1_for_span"></span>
         <span id="recalculated_OD2_for_span"></span><span id="measuring_device_2_for_span"></span> </button>
