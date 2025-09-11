@@ -1,700 +1,654 @@
-// ========================================
-// 0. Global variables
-// ========================================
+// MIMS full script — robust ASC/ASCI + CSV parsing with correct unit mapping,
+// plotting (Plotly), normalization, linear regression, table and XLSX export.
+// (Make sure Plotly, PapaParse and XLSX are loaded on the page.)
+
+// ======================
+// 0) Globals
+// ======================
 let selectedFile = null;
-let mimsRawData = [];
-let mimsXField = "";
-let mimsYFields = [];
-let mimsFieldColors = {};
+let mimsRawData = [];            // array of { Time, min, <field>: value, ... }
+let mimsXField = "";             // 'min'
+let mimsYFields = [];            // canonical field names (no units appended)
+let mimsFieldUnits = {};         // map canonical field -> unit string (e.g. 'A', 'mbar', '%')
+let mimsFieldColors = {};        // map canonical field -> color (string)
 let currentZoomRange = null;
-let regressionResults = []; // store all regression results here
+let regressionResults = [];      // list of regression objects
 let rawTraceIndicesBySelection = new Map();
 let normTraceIndicesBySelection = new Map();
-let lastAddedStartTime = null;
 let selectionCounter = 0;
 
-// =================
-// 1. File selection
-// =================
-function getSelectedMIMSModel() {
-    const select = document.querySelector('select[name="MIMS_model"]');
-    return select ? select.value : "HPR40 (Hiden Analytical)";
+// ======================
+// 1) Helpers
+// ======================
+function splitColumnsPreserve(line) {
+  // Preserve empty tokens. Prefer tab-splitting; otherwise split by 2+ spaces.
+  if (line.indexOf('\t') >= 0) {
+    // preserve exact tokens (don't trim to preserve empties; trim later)
+    return line.split('\t').map(s => s === undefined ? '' : s);
+  } else {
+    // split by two or more spaces (keeps empty leading/trailing tokens)
+    return line.split(/\s{2,}/).map(s => s === undefined ? '' : s);
+  }
 }
 
-document.getElementById('MIMS_file').addEventListener('change', function (event) {
-    selectedFile = event.target.files[0];
-    if (!selectedFile) return;
-
-    const label = document.querySelector('label[for="MIMS_file"]');
-    if (label) label.textContent = selectedFile.name;
-
-    resetUI();
-});
-
-function resetUI() {
-    document.getElementById('raw-container').style.display = 'none';
-    document.getElementById('normalized-container').style.display = 'none';
-    document.getElementById('preview-label').style.display = 'none';
-    document.getElementById('normalized-preview-label').style.display = 'none';
-    document.getElementById('normalization-controls').style.display = 'none';
-    document.getElementById('regression-results-table').innerHTML = "";
-    regressionResults = [];
-    currentZoomRange = null;
-    rawTraceIndicesBySelection.clear();
-    normTraceIndicesBySelection.clear();
-    selectionCounter = 0;
-
-    const errorDiv = document.getElementById("mims-error-alert");
-    if (errorDiv) errorDiv.innerHTML = "";
+function trimTokens(arr) {
+  return arr.map(t => (t === null || t === undefined) ? '' : String(t).trim());
 }
 
-// =============================================
-// 2. Handle file and trigger parsing/plotting
-// =============================================
-document.getElementById('show-image-button').addEventListener('click', function (event) {
-    event.preventDefault();
-    const mimsErrorAlert = document.getElementById('mims-error-alert');
-    mimsErrorAlert.innerHTML = '';
+function parseNumberStringToFloat(s) {
+  if (s === null || s === undefined) return null;
+  const t = String(s).trim();
+  if (t === '') return null;
+  // replace comma decimal with dot, allow scientific notation
+  const n = Number(t.replace(/,/g, '.'));
+  return Number.isFinite(n) ? n : null;
+}
 
-    const fileInput = document.getElementById('MIMS_file');
-    const file = fileInput.files[0];
+function ensureUniqueLabel(base, existing) {
+  if (!existing.has(base)) { existing.add(base); return base; }
+  let i = 2;
+  while (existing.has(`${base}_${i}`)) i++;
+  const lbl = `${base}_${i}`;
+  existing.add(lbl);
+  return lbl;
+}
 
-    if (!file) {
-        mimsErrorAlert.innerHTML = `<div class="alert alert-danger">Please select a MIMS file first.</div>`;
-        return;
+// ======================
+// 2) ASC/ASCI parsing (robust) -> returns { data, fields, xField, yFields }
+// ======================
+function parseAsciiContent(content) {
+  const lines = content.split(/\r?\n/);
+  // find header index: line that contains 'Time' and 'Relative [s]' ideally
+  let headerIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const L = lines[i];
+    if (/Time\s+Relative\s*\[s\]/i.test(L) || /Time\s*\[s\]/i.test(L)) { headerIndex = i; break; }
+  }
+  if (headerIndex === -1) {
+    // fallback: line containing 'Time' and 'Concentration' or 'Ion Current' etc.
+    for (let i = 0; i < lines.length; i++) {
+      const L = lines[i];
+      if (/\bTime\b/i.test(L) && /(Ion Current|Concentration|Pressure|Relative)/i.test(L)) { headerIndex = i; break; }
+    }
+  }
+  if (headerIndex === -1) {
+    return { data: [], fields: [], xField: null, yFields: [] };
+  }
+
+  const channelLine = (lines[headerIndex - 1] || '');
+  const headerLine = (lines[headerIndex] || '');
+  const dataLines = lines.slice(headerIndex + 1).filter(l => l.trim() !== '');
+
+  // split header & channel lines preserving columns
+  let headerCols = splitColumnsPreserve(headerLine);
+  let channelCols = splitColumnsPreserve(channelLine);
+  headerCols = trimTokens(headerCols);
+  channelCols = trimTokens(channelCols);
+
+  // pad channelCols to same length as headerCols
+  while (channelCols.length < headerCols.length) channelCols.push('');
+
+  // find all Time Relative indices
+  const timeRelRegex = /Time\s+Relative\s*\[s\]|Time\s*\[s\]/i;
+  const timeIndices = [];
+  for (let i = 0; i < headerCols.length; i++) {
+    if (timeRelRegex.test(headerCols[i])) timeIndices.push(i);
+  }
+
+  // for each timeRelative index pick the nearest measurement column to the right
+  const measurementIndices = [];
+  timeIndices.forEach(ti => {
+    let found = null;
+    // look a few columns to the right; measurement usually immediate after Time Relative
+    for (let j = ti + 1; j < Math.min(headerCols.length, ti + 6); j++) {
+      const c = headerCols[j] || '';
+      if (!/\bTime\b/i.test(c) && c.trim() !== '') { found = j; break; }
+    }
+    if (found !== null) measurementIndices.push(found);
+  });
+
+  // fallback: any non-Time columns
+  if (measurementIndices.length === 0) {
+    for (let i = 0; i < headerCols.length; i++) {
+      if (!/\bTime\b/i.test(headerCols[i]) && headerCols[i].trim() !== '') measurementIndices.push(i);
+    }
+  }
+
+  // unique & sorted
+  const uniqMeas = Array.from(new Set(measurementIndices)).sort((a,b) => a - b);
+
+  // Build canonical labels using column index alignment with channelCols
+  const labels = []; // objects: { label, colIdx, unit }
+  const usedLabels = new Set();
+  uniqMeas.forEach(colIdx => {
+    const headerLabel = headerCols[colIdx] || `Signal${colIdx}`;
+    const unitMatch = headerLabel.match(/\[([^\]]+)\]/);
+    const unit = unitMatch ? unitMatch[1].trim() : null;
+
+    // channel label may appear above the block's first column; try same col, then left offsets
+    let channelToken = '';
+    const leftOffsets = [0, -1, -2, -3];
+    for (const off of leftOffsets) {
+      const idx = colIdx + off;
+      if (idx >= 0 && idx < channelCols.length) {
+        const token = channelCols[idx];
+        if (token && token.trim() !== '') { channelToken = token.trim(); break; }
+      }
     }
 
-    const selectedModel = getSelectedMIMSModel();
-    const fileName = file.name;
-    const fileExt = fileName.split('.').pop().toLowerCase();
+    const cleanedHeader = headerLabel.replace(/\s*\[[^\]]+\]/, '').trim();
+    let baseLabel = channelToken || cleanedHeader || `Signal${colIdx}`;
+    // ensure uniqueness
+    const label = ensureUniqueLabel(baseLabel, usedLabels);
+    labels.push({ label, colIdx, unit });
+    mimsFieldUnits[label] = unit;
+  });
 
-    const isCSV = fileExt === 'csv';
-    const isASCI = fileExt === 'asc' || fileExt === 'asci';
-
-    let validType = false;
-    if (selectedModel === 'HPR40 (Hiden Analytical)' && isCSV) validType = true;
-    if (selectedModel === 'MS GAS (Photon System Instruments)' && isASCI) validType = true;
-
-    if (!validType) {
-        mimsErrorAlert.innerHTML = `
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Invalid MIMS file selected.</strong> 
-            <br>Please check file extensions available for individual MIMS types (HPR40: <code>.csv</code>, MS GAS: <code>.asc</code> files). 
-            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-          </div>`;
-        return;
+  // Parse data rows. For each row choose canonical time as the first available TimeRelative value (scanning timeIndices).
+  const data = [];
+  for (const line of dataLines) {
+    const parts = splitColumnsPreserve(line).map(p => (p === undefined ? '' : String(p).trim()));
+    while (parts.length < headerCols.length) parts.push('');
+    // find first available time from timeIndices
+    let timeVal = null;
+    for (const ti of timeIndices) {
+      const raw = parts[ti] !== undefined ? parts[ti] : '';
+      const parsed = parseNumberStringToFloat(raw);
+      if (parsed !== null) { timeVal = parsed; break; }
     }
+    // fallback: any 'Time' column
+    if (timeVal === null) {
+      for (let i = 0; i < headerCols.length; i++) {
+        if (/\bTime\b/i.test(headerCols[i])) {
+          const parsed = parseNumberStringToFloat(parts[i]);
+          if (parsed !== null) { timeVal = parsed; break; }
+        }
+      }
+    }
+    if (timeVal === null) continue; // skip line without usable time
 
-    selectedFile = file;
-    parseMIMSFile(file, function (result) {
-        plotMIMSData(result);
+    const row = { Time: timeVal };
+    labels.forEach(({ label, colIdx }) => {
+      const raw = parts[colIdx] !== undefined ? parts[colIdx] : '';
+      row[label] = parseNumberStringToFloat(raw);
     });
-});
+    row.min = row.Time !== null ? row.Time / 60 : null;
+    data.push(row);
+  }
 
-// =============================================
-// 3. Parse MIMS File (CSV or ASC/ASCI formats)
-// =============================================
+  const yFields = labels.map(o => o.label);
+  const fields = ['min', ...yFields];
+  const xField = 'min';
+  const fieldUnits = {};
+  labels.forEach(o => fieldUnits[o.label] = o.unit);
+
+  return { data, fields, xField, yFields, fieldUnits };
+}
+
+// ======================
+// 3) Full parse wrapper (CSV + ASC) — signature: parseMIMSFile(file, callback(result))
+// result: { data, fields, xField, yFields }
+// ======================
 function parseMIMSFile(file, callback) {
   const reader = new FileReader();
-
-  reader.onload = function (e) {
+  reader.onload = function(e) {
     const content = e.target.result;
-    const fileName = file.name.toLowerCase();
+    const fname = (file.name || '').toLowerCase();
 
-    if (fileName.endsWith(".asc") || fileName.endsWith(".asci")) {
-      if (!content.includes("Ion Current [A]")) {
-        document.getElementById("mims-error-alert").innerHTML = `
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Error:</strong> Missing <code>"Ion Current [A]"</code> in file.
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>`;
+    // ASC/ASCI (MS GAS)
+    if (fname.endsWith('.asc') || fname.endsWith('.asci')) {
+      // quick sanity check
+      if (!/Time\s+Relative\s*\[s\]/i.test(content) && !/Time\s*\[s\]/i.test(content)) {
+        document.getElementById('mims-error-alert').innerHTML = `<div class="alert alert-danger">Missing \"Time Relative [s]\" header in ASC/ASCI file.</div>`;
         return;
       }
-
       try {
-        const lines = content.split(/\r?\n/);
-        const headerIndex = lines.findIndex(line => line.includes("Ion Current [A]"));
-        const channelLine = lines[headerIndex - 1] || "";
-        const headerLine = lines[headerIndex];
-        const dataLines = lines.slice(headerIndex + 1);
-
-        const columns = headerLine.trim().split("\t");
-        const timeIndex = columns.findIndex(col => col.includes("Time Relative [s]"));
-        const signalIndices = columns.map((col, i) => col.includes("Ion Current") ? i : -1).filter(i => i !== -1);
-        const channelNumbers = channelLine.trim().split(/\s+/).filter(Boolean);
-
-        const parsedData = dataLines.map(line => {
-          const parts = line.trim().split("\t");
-          if (parts.length <= Math.max(timeIndex, ...signalIndices)) return null;
-
-          const row = {
-            "Time": parseFloat(parts[timeIndex].replace(",", ".")),
-          };
-          signalIndices.forEach((idx, i) => {
-            const channel = channelNumbers[i] || `Signal${i + 1}`;
-            row[channel] = parseFloat(parts[idx].replace(",", "."));
-          });
-          row["min"] = row["Time"] / 60;
-          return row;
-        }).filter(Boolean);
-
-        const fields = ["min", ...channelNumbers];
-        callback({ data: parsedData, fields, xField: "min", yFields: channelNumbers });
+        const parsed = parseAsciiContent(content);
+        if (!parsed || !parsed.data || parsed.data.length === 0) {
+          document.getElementById('mims-error-alert').innerHTML = `<div class="alert alert-danger">No data parsed from ASC/ASCI file.</div>`;
+          return;
+        }
+        // copy units map to global
+        mimsFieldUnits = parsed.fieldUnits || {};
+        callback({ data: parsed.data, fields: parsed.fields, xField: parsed.xField, yFields: parsed.yFields });
       } catch (err) {
-        document.getElementById("mims-error-alert").innerHTML = `
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Parsing Error:</strong> ${err.message}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>`;
+        document.getElementById('mims-error-alert').innerHTML = `<div class="alert alert-danger">Parsing error: ${err.message}</div>`;
       }
       return;
     }
 
-    // CSV
+    // CSV (HPR40)
     const pattern = /"Time"\s*,\s*"ms"/gi;
     const matches = [...content.matchAll(pattern)];
     if (matches.length < 1) {
-      document.getElementById("mims-error-alert").innerHTML = `
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-          <strong>Error:</strong> Missing <code>"Time"</code> and <code>"ms"</code> columns in CSV.
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>`;
+      document.getElementById('mims-error-alert').innerHTML = `<div class="alert alert-danger">Missing "Time" and "ms" columns in CSV.</div>`;
       return;
     }
-
     const startIndex = matches[0].index;
     const usableContent = content.slice(startIndex);
-
     Papa.parse(usableContent, {
       header: true,
       dynamicTyping: true,
       skipEmptyLines: true,
-      complete: function (results) {
+      complete: function(results) {
         let data = results.data;
         let fields = results.meta.fields;
-
-        fields = fields.filter(field =>
-          data.some(row => {
-            const value = row[field];
-            return value !== null && value !== undefined && value !== "" && !Number.isNaN(value);
-          })
-        );
-
-        data.forEach(row => {
-          row["min"] = typeof row["ms"] === "number" ? row["ms"] / 60000 : null;
+        // drop empty columns
+        fields = fields.filter(field => data.some(row => {
+          const v = row[field]; return v !== null && v !== undefined && v !== '' && !Number.isNaN(v);
+        }));
+        // add min column
+        data.forEach(row => { row['min'] = typeof row['ms'] === 'number' ? row['ms'] / 60000 : null; });
+        const msIndex = fields.indexOf('ms');
+        if (msIndex !== -1) fields = [...fields.slice(0, msIndex + 1), 'min', ...fields.slice(msIndex + 1)];
+        else fields.push('min');
+        const xField = fields.includes('min') ? 'min' : (fields.includes('ms') ? 'ms' : 'Time');
+        const yFields = fields.filter(f => !['Time','ms','min'].includes(f));
+        // extract units
+        yFields.forEach(f => {
+          const match = (''+f).match(/\[([^\]]+)\]/);
+          mimsFieldUnits[f] = match ? match[1] : null;
         });
-
-        const msIndex = fields.indexOf("ms");
-        if (msIndex !== -1) {
-          fields = [...fields.slice(0, msIndex + 1), "min", ...fields.slice(msIndex + 1)];
-        } else {
-          fields.push("min");
-        }
-
-        const xField = fields.includes("min") ? "min" : fields.includes("ms") ? "ms" : "Time";
-        const yFields = fields.filter(f => !["Time", "ms", "min"].includes(f));
-
         callback({ data, fields, xField, yFields });
       },
-      error: function (err) {
-        document.getElementById("mims-error-alert").innerHTML = `
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Parsing Error:</strong> ${err.message}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>`;
+      error: function(err) {
+        document.getElementById('mims-error-alert').innerHTML = `<div class="alert alert-danger">CSV parsing error: ${err.message}</div>`;
       }
     });
   };
-
   reader.readAsText(file);
 }
 
-// ================================
-// 4. Plot raw MIMS data with Plotly
-// ================================
+// ======================
+// 4) Plot raw MIMS data
+// ======================
 function plotMIMSData({ data, xField, yFields }) {
-    mimsRawData = data;
-    mimsXField = xField;
-    mimsYFields = yFields;
+  mimsRawData = data; mimsXField = xField; mimsYFields = yFields;
 
-    const traces = yFields.map(field => ({
-        x: data.map(row => row[xField]),
-        y: data.map(row => row[field]),
-        mode: 'lines',
-        name: field,
-        line: { width: 2 }
-    }));
+  // create traces with unit in legend but keep canonical field identifiers in mimsYFields
+  const traces = yFields.map((field, idx) => {
+    const unit = mimsFieldUnits[field] || null;
+    return {
+      x: data.map(row => row[xField]),
+      y: data.map(row => row[field]),
+      mode: 'lines',
+      name: unit ? `${field} [${unit}]` : field,
+      line: { width: 2 }
+    };
+  });
 
-    Plotly.newPlot('raw-plot-div', traces, {
-        title: 'Raw MIMS data: Signals vs Time',
-        xaxis: { title: xField === "min" ? "Time (min)" : xField },
-        yaxis: { title: 'Signal intensity (Torr)', tickformat: '.1e' }
-    }).then(plot => {
-        plot.data.forEach(trace => {
-            if (trace.name) mimsFieldColors[trace.name] = trace.line.color;
-        });
-        document.getElementById('raw-container').style.display = 'block';
-        document.getElementById('preview-label').style.display = 'block';
+  Plotly.newPlot('raw-plot-div', traces, {
+    title: 'Raw MIMS data: Signals vs Time',
+    xaxis: { title: xField === 'min' ? 'Time (min)' : xField },
+    yaxis: { title: 'Signal', tickformat: '.1e' },
+    //legend: { orientation: 'h' }
+  }).then(plot => {
+    // store colors by canonical field (index-based)
+    plot.data.forEach((trace, i) => {
+      const field = yFields[i];
+      mimsFieldColors[field] = trace.line && trace.line.color ? trace.line.color : undefined;
     });
+    document.getElementById('raw-container').style.display = 'block';
+    document.getElementById('preview-label').style.display = 'block';
+    updateRawYAxisLabel();
+  });
 
-    populateNormalizationDropdown(yFields);
-    document.getElementById('normalization-controls').style.display = 'block';
+  populateNormalizationDropdown(yFields);
+  document.getElementById('normalization-controls').style.display = 'block';
+  requestAnimationFrame(() => Plotly.Plots.resize('raw-plot-div'));
+}
 
-    requestAnimationFrame(() => {
-      Plotly.Plots.resize('raw-plot-div');
+function updateRawYAxisLabel() {
+  const units = Array.from(new Set(mimsYFields.map(f => mimsFieldUnits[f] || null)));
+  let title = 'Signal';
+  if (units.length === 1 && units[0]) title = `Signal (${units[0]})`;
+  else if (units.length > 1) title = 'Signal (mixed units)';
+  Plotly.relayout('raw-plot-div', { 'yaxis.title.text': title }).catch(()=>{});
+}
+
+// ======================
+// 5) Normalization UI & plotting
+// ======================
+function populateNormalizationDropdown(yFields) {
+  const normalizeSelect = document.getElementById('normalize-by-select');
+  normalizeSelect.innerHTML = '';
+  yFields.forEach(field => {
+    const opt = document.createElement('option');
+    const unit = mimsFieldUnits[field];
+    opt.value = field;
+    opt.textContent = unit ? `${field} [${unit}]` : field;
+    normalizeSelect.appendChild(opt);
   });
 }
 
-// ===================================================
-// 5. Normalization
-// ===================================================
-function populateNormalizationDropdown(yFields) {
-    const normalizeSelect = document.getElementById("normalize-by-select");
-    normalizeSelect.innerHTML = "";
-    yFields.forEach(field => {
-        const option = document.createElement("option");
-        option.value = field;
-        option.textContent = field;
-        normalizeSelect.appendChild(option);
-    });
-}
-
-document.getElementById("normalize-button").addEventListener("click", plotNormalizedData);
+document.getElementById('normalize-button').addEventListener('click', plotNormalizedData);
 
 function plotNormalizedData() {
-    const refField = document.getElementById("normalize-by-select").value;
-    const data = mimsRawData;
-    const xField = mimsXField;
-    const yFields = mimsYFields;
-    const traces = yFields.map(field => {
-        const yValues = data.map(row => {
-            const refVal = row[refField];
-            const val = row[field];
-            return (typeof val === "number" && typeof refVal === "number" && refVal !== 0)
-                ? val / refVal : null;
-        });
-        return {
-            x: data.map(row => row[xField]),
-            y: yValues,
-            mode: 'lines',
-            name: `${field} / ${refField}`, // Fixed template literal
-            line: {
-                width: 2,
-                dash: field === refField ? 'dot' : 'solid',
-                color: mimsFieldColors[field] || undefined
-            }
-        };
+  const refField = document.getElementById('normalize-by-select').value;
+  const data = mimsRawData; const xField = mimsXField; const yFields = mimsYFields;
+
+  const traces = yFields.map(field => {
+    const yValues = data.map(row => {
+      const val = row[field]; const refVal = row[refField];
+      return (typeof val === 'number' && typeof refVal === 'number' && refVal !== 0) ? val / refVal : null;
     });
-
-    Plotly.newPlot('normalized-plot-div', traces, {
-        title: `Normalized Signals (divided by ${refField})`, // Fixed template literal
-        xaxis: { title: xField === "min" ? "Time (min)" : xField },
-        yaxis: { title: `Signal / ${refField} (r.u.)` } // Fixed template literal
-    }).then(() => {
-        // capture zoom range from normalized plot
-        document.getElementById('normalized-plot-div').on('plotly_relayout', function (eventData) {
-            if (eventData['xaxis.range[0]'] && eventData['xaxis.range[1]']) {
-                currentZoomRange = {
-                    x0: parseFloat(eventData['xaxis.range[0]']),
-                    x1: parseFloat(eventData['xaxis.range[1]'])
-                };
-            }
-        });
-    });
-
-    document.getElementById('normalized-container').style.display = 'block';
-    document.getElementById('normalized-preview-label').style.display = 'block';
-    document.getElementById('find-coefficients-label').style.display = 'block';
-
-    requestAnimationFrame(() => {
-        // Show buttons now
-        document.getElementById('confirm-selection-button').style.display = 'inline-block';
-        document.getElementById('clear-regressions-in-table-button').style.display = 'inline-block';
-
-        Plotly.Plots.resize('normalized-plot-div');
-    });
-}
-
-// ===================================================
-// 6. Regression fitting
-// ===================================================
-document.getElementById('confirm-selection-button').addEventListener('click', function () {
-    if (!currentZoomRange) {
-        alert("Please zoom in on the normalized plot to select a range first.");
-        return;
-    }
-    applyLinearRegression(currentZoomRange.x0, currentZoomRange.x1);
-});
-
-// Clear last selection from table and plots
-document.getElementById('clear-regressions-in-table-button').addEventListener('click', function () {
-    if (regressionResults.length === 0) {
-        alert("No selections to clear.");
-        return;
-    }
-
-    // Find the highest selectionId in regressionResults (the latest selection)
-    const selectionIds = regressionResults.map(r => r.selectionId);
-    const maxSelectionId = Math.max(...selectionIds);
-
-    // Get trace indices for the latest selection
-    const rawIndicesToRemove = rawTraceIndicesBySelection.get(maxSelectionId) || [];
-    const normIndicesToRemove = normTraceIndicesBySelection.get(maxSelectionId) || [];
-
-    console.log(`Removing raw indices for selection ${maxSelectionId}:`, rawIndicesToRemove);
-    console.log(`Removing norm indices for selection ${maxSelectionId}:`, normIndicesToRemove);
-
-    // Remove traces from raw plot
-    if (rawIndicesToRemove.length > 0) {
-        try {
-            Plotly.deleteTraces('raw-plot-div', rawIndicesToRemove);
-            console.log("Successfully removed raw traces:", rawIndicesToRemove);
-        } catch (error) {
-            console.error("Error removing raw traces:", error);
-        }
-    } else {
-        console.log("No raw indices to remove for selection:", maxSelectionId);
-    }
-
-    // Remove traces from normalized plot
-    if (normIndicesToRemove.length > 0) {
-        try {
-            Plotly.deleteTraces('normalized-plot-div', normIndicesToRemove);
-            console.log("Successfully removed norm traces:", normIndicesToRemove);
-        } catch (error) {
-            console.error("Error removing norm traces:", error);
-        }
-    } else {
-        console.log("No norm indices to remove for selection:", maxSelectionId);
-    }
-
-    // Remove regression results for the latest selection
-    regressionResults = regressionResults.filter(r => r.selectionId !== maxSelectionId);
-
-    // Remove trace indices from Maps
-    rawTraceIndicesBySelection.delete(maxSelectionId);
-    normTraceIndicesBySelection.delete(maxSelectionId);
-
-    // Refresh the regression results table
-    refreshRegressionTable();
-});
-
-// Confirm selection - apply linear regression to current zoom range
-function applyLinearRegression(x0, x1) {
-    selectionCounter++; // new selection number
-
-    const data = mimsRawData;
-    const xField = mimsXField;
-    const yFields = mimsYFields;
-    const refField = document.getElementById("normalize-by-select").value;
-
-    const filtered = data.filter(row => row[xField] >= x0 && row[xField] <= x1);
-
-    if (filtered.length < 2) {
-        alert("Not enough data points in selected range.");
-        selectionCounter--;
-        return;
-    }
-
-    const rawRegressionTraces = [];
-    const normRegressionTraces = [];
-
-    yFields.forEach(field => {
-        const x = filtered.map(row => row[xField]);
-        const yRaw = filtered.map(row => row[field]);
-        const n = x.length;
-
-        // Linear regression for raw data
-        const sumX = x.reduce((a, b) => a + b, 0);
-        const sumY = yRaw.reduce((a, b) => a + b, 0);
-        const sumXY = x.reduce((sum, xi, i) => sum + xi * yRaw[i], 0);
-        const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0);
-        const slopeRaw = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-        const interceptRaw = (sumY - slopeRaw * sumX) / n;
-        const yPredRaw = x.map(xi => slopeRaw * xi + interceptRaw);
-        const ssTotRaw = yRaw.reduce((sum, yi) => sum + Math.pow(yi - (sumY / n), 2), 0);
-        const ssResRaw = yRaw.reduce((sum, yi, i) => sum + Math.pow(yi - yPredRaw[i], 2), 0);
-        const r2Raw = 1 - (ssResRaw / ssTotRaw);
-
-        // Add raw regression trace with selection prefix in legend
-        rawRegressionTraces.push({
-            x: [x0, x1],
-            y: [slopeRaw * x0 + interceptRaw, slopeRaw * x1 + interceptRaw],
-            mode: 'lines',
-            name: `Selection ${selectionCounter} Fit: ${field}`,
-            line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'black' }
-        });
-
-        // Linear regression for normalized data (if applicable)
-        let slopeNorm = null;
-        let r2Norm = null;
-        if (field !== refField) {
-            const normField = filtered.map(row => row[field] / row[refField]);
-            const sumYnorm = normField.reduce((a, b) => a + b, 0);
-            const sumXYnorm = x.reduce((sum, xi, i) => sum + xi * normField[i], 0);
-            slopeNorm = (n * sumXYnorm - sumX * sumYnorm) / (n * sumXX - sumX * sumX);
-            const interceptNorm = (sumYnorm - slopeNorm * sumX) / n;
-            const yPredNorm = x.map(xi => slopeNorm * xi + interceptNorm);
-            const ssTotNorm = normField.reduce((sum, yi) => sum + Math.pow(yi - (sumYnorm / n), 2), 0);
-            const ssResNorm = normField.reduce((sum, yi, i) => sum + Math.pow(yi - yPredNorm[i], 2), 0);
-            r2Norm = 1 - (ssResNorm / ssTotNorm);
-
-            normRegressionTraces.push({
-                x: [x0, x1],
-                y: [slopeNorm * x0 + interceptNorm, slopeNorm * x1 + interceptNorm],
-                mode: 'lines',
-                name: `Selection ${selectionCounter} Fit: ${field}/${refField}`,
-                line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'black' }
-            });
-        }
-
-        let slopeNormCal = slopeNorm;
-        let slopeRawCal = slopeRaw;
-        let unit = null;
-
-        // Save regression results with selectionId
-        regressionResults.push({
-          selectionId: selectionCounter,
-          signal: field,
-          start_time: x0,
-          start_time_ms: Math.round(x0 * 60 * 1000),
-          end_time: x1,
-          end_time_ms: Math.round(x1 * 60 * 1000),
-          slopeRaw, slopeRawCal,
-          r2Raw,
-          slopeNorm, slopeNormCal,
-          r2Norm,
-          unit
-        });
-    });
-
-    // Get current number of traces to calculate indices
-    const rawPlot = document.getElementById('raw-plot-div');
-    const normPlot = document.getElementById('normalized-plot-div');
-    const rawCurrentTraceCount = rawPlot.data ? rawPlot.data.length : 0;
-    const normCurrentTraceCount = normPlot.data ? normPlot.data.length : 0;
-
-    // Add traces to plots and calculate indices
-    Plotly.addTraces('raw-plot-div', rawRegressionTraces).then(() => {
-        // Calculate indices based on the number of traces before adding
-        const newRawIndices = Array.from(
-            { length: rawRegressionTraces.length },
-            (_, i) => rawCurrentTraceCount + i
-        );
-        rawTraceIndicesBySelection.set(selectionCounter, newRawIndices);
-    });
-
-    Plotly.addTraces('normalized-plot-div', normRegressionTraces).then(() => {
-        // Calculate indices based on the number of traces before adding
-        const newNormIndices = Array.from(
-            { length: normRegressionTraces.length },
-            (_, i) => normCurrentTraceCount + i
-        );
-        normTraceIndicesBySelection.set(selectionCounter, newNormIndices);
-    });
-
-    // Sort regressionResults by start_time (optional)
-    regressionResults.sort((a, b) => a.start_time - b.start_time);
-    refreshRegressionTable();
-}
-
-// Refresh regression results table with new layout and selection # column
-function refreshRegressionTable() {
-    const tableDiv = document.getElementById('regression-results-table');
-    const downloadDiv = document.getElementById('xlsx-download-section');
-    if (regressionResults.length === 0) {
-        tableDiv.innerHTML = "";
-        downloadDiv.style.display = 'none';
-        return;
-    }
-    downloadDiv.style.display = 'block';
-    const grouped = {};
-    regressionResults.forEach(r => {
-        if (!grouped[r.selectionId]) grouped[r.selectionId] = [];
-        grouped[r.selectionId].push(r);
-    });
-    const sortedSelectionIds = Object.keys(grouped).map(Number).sort((a, b) => a - b);
-    let html = `
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Selection #</th>
-                    <th>Start Time (ms)</th>
-                    <th>Start Time (min)</th>
-                    <th>End Time (ms)</th>
-                    <th>End Time (min)</th>
-                    <th>Signal</th>
-                    <th>Slope Raw Data (min<sup>-1</sup>)</th>
-                    <th>Slope Normalized Data (min<sup>-1</sup>)</th>
-                    <th>R² Raw Data</th>
-                    <th>R² Normalized Data</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    sortedSelectionIds.forEach(selectionId => {
-        grouped[selectionId].forEach(({ signal, start_time, start_time_ms, end_time_ms, end_time, slopeRaw, r2Raw, slopeNorm, r2Norm, slopeRawCal, slopeNormCal, unit }) => {
-            html += `
-                <tr>
-                    <td>${selectionId}</td>
-                    <td>${start_time_ms}</td>
-                    <td>${start_time.toFixed(2)}</td>
-                    <td>${end_time_ms}</td>
-                    <td>${end_time.toFixed(2)}</td>
-                    <td>${signal}</td>
-                    <td>${slopeRaw.toExponential(3)}</td>
-                    <td>${slopeNorm !== null ? slopeNorm.toExponential(3) : '-'}</td>
-                    <td>${r2Raw.toFixed(4)}</td>
-                    <td>${r2Norm !== null ? r2Norm.toFixed(4) : '-'}</td>
-                </tr>
-            `;
-        });
-    });
-    html += `</tbody></table>`;
-    tableDiv.innerHTML = html;
-}
-
-//Refresh plots
-function clearRegressionTracesFromPlots() {
-    const rawIndicesToRemove = [];
-    const normIndicesToRemove = [];
-
-    for (const [selectionId, indices] of rawTraceIndicesBySelection) {
-        console.log(`Raw indices for selection ${selectionId}:`, indices);
-        rawIndicesToRemove.push(...indices);
-    }
-    for (const [selectionId, indices] of normTraceIndicesBySelection) {
-        console.log(`Norm indices for selection ${selectionId}:`, indices);
-        normIndicesToRemove.push(...indices);
-    }
-
-    // Verify all are integers
-    console.log("All raw indices to remove:", rawIndicesToRemove);
-    console.log("All norm indices to remove:", normIndicesToRemove);
-
-    // Filter out any invalid indices (just in case)
-    const validRawIndices = rawIndicesToRemove.filter(i => Number.isInteger(i) && i >= 0);
-    const validNormIndices = normIndicesToRemove.filter(i => Number.isInteger(i) && i >= 0);
-
-    console.log("Valid raw indices:", validRawIndices);
-    console.log("Valid norm indices:", validNormIndices);
-
-    if (validRawIndices.length > 0) {
-        try {
-            Plotly.deleteTraces('raw-plot-div', validRawIndices);
-            console.log("Successfully removed raw traces:", validRawIndices);
-        } catch (error) {
-            console.error("Error removing raw traces:", error);
-        }
-    } else {
-        console.log("No valid raw indices to remove.");
-    }
-
-    if (validNormIndices.length > 0) {
-        try {
-            Plotly.deleteTraces('normalized-plot-div', validNormIndices);
-            console.log("Successfully removed norm traces:", validNormIndices);
-        } catch (error) {
-            console.error("Error removing norm traces:", error);
-        }
-    } else {
-        console.log("No valid norm indices to remove.");
-    }
-
-    rawTraceIndicesBySelection.clear();
-    normTraceIndicesBySelection.clear();
-}
-
-// =============================================
-// 8 Summarize results in XLSX file for download
-// =============================================
-
-document.getElementById('download-xlsx').addEventListener('click', function() {
-    if (!mimsRawData.length) {
-        alert("No data available for export.");
-        return;
-    }
-
-    const wb = XLSX.utils.book_new();
-    wb.Props = {
-        Title: "MIMS Analysis Results",
-        Author: "Your App",
-        CreatedDate: new Date()
+    const unit = mimsFieldUnits[field] || null; const refUnit = mimsFieldUnits[refField] || null;
+    const left = unit ? `${field} [${unit}]` : field; const right = refUnit ? `${refField} [${refUnit}]` : refField;
+    return {
+      x: data.map(row => row[xField]),
+      y: yValues,
+      mode: 'lines',
+      name: `${left} / ${right}`,
+      line: { width: 2, dash: field === refField ? 'dot' : 'solid', color: mimsFieldColors[field] || undefined }
     };
+  });
 
-    const selectedModel = getSelectedMIMSModel();
-    const refField = document.getElementById("normalize-by-select").value;
+  Plotly.newPlot('normalized-plot-div', traces, {
+    title: `Normalized Signals (divided by ${refField})`,
+    xaxis: { title: xField === 'min' ? 'Time (min)' : xField },
+    yaxis: { title: `Signal / ${refField} (unitless)`, tickformat: '.1e' }
+  }).then(() => {
+    const np = document.getElementById('normalized-plot-div');
+    np.on('plotly_relayout', function(eventData) {
+      if (eventData['xaxis.range[0]'] !== undefined && eventData['xaxis.range[1]'] !== undefined) {
+        currentZoomRange = { x0: parseFloat(eventData['xaxis.range[0]']), x1: parseFloat(eventData['xaxis.range[1]']) };
+      }
+    });
+  });
 
-    // ---- Data sheet ----
-    const dataSheet = mimsRawData.map(row => {
-        const combinedRow = {};
+  document.getElementById('normalized-container').style.display = 'block';
+  document.getElementById('normalized-preview-label').style.display = 'block';
+  document.getElementById('find-coefficients-label').style.display = 'block';
 
-        if (selectedModel === "HPR40 (Hiden Analytical)") {
-            combinedRow["Time (ms)"] = row["ms"]; // only for HPR40
-        } else if (selectedModel === "MS GAS (Photon System Instruments)") {
-            combinedRow["Time (s)"] = row["Time"]; // only for MS GAS
-        }
+  requestAnimationFrame(() => {
+    document.getElementById('confirm-selection-button').style.display = 'inline-block';
+    document.getElementById('clear-regressions-in-table-button').style.display = 'inline-block';
+    Plotly.Plots.resize('normalized-plot-div');
+  });
+}
 
-        combinedRow["Time (min)"] = row["min"] !== undefined ? row["min"].toFixed(2) : null; // always 2 decimals
+// ======================
+// 6) Regression fitting
+// ======================
+document.getElementById('confirm-selection-button').addEventListener('click', function() {
+  if (!currentZoomRange) { alert('Please zoom in on the normalized plot to select a range first.'); return; }
+  applyLinearRegression(currentZoomRange.x0, currentZoomRange.x1);
+});
 
-        // raw data columns
-        mimsYFields.forEach(field => combinedRow[field] = row[field]);
+document.getElementById('clear-regressions-in-table-button').addEventListener('click', function() {
+  if (regressionResults.length === 0) { alert('No selections to clear.'); return; }
+  const selectionIds = regressionResults.map(r => r.selectionId);
+  const maxSelectionId = Math.max(...selectionIds);
+  const rawIndicesToRemove = rawTraceIndicesBySelection.get(maxSelectionId) || [];
+  const normIndicesToRemove = normTraceIndicesBySelection.get(maxSelectionId) || [];
+  if (rawIndicesToRemove.length) try { Plotly.deleteTraces('raw-plot-div', rawIndicesToRemove); } catch(e){ console.error(e); }
+  if (normIndicesToRemove.length) try { Plotly.deleteTraces('normalized-plot-div', normIndicesToRemove); } catch(e){ console.error(e); }
+  regressionResults = regressionResults.filter(r => r.selectionId !== maxSelectionId);
+  rawTraceIndicesBySelection.delete(maxSelectionId); normTraceIndicesBySelection.delete(maxSelectionId);
+  refreshRegressionTable();
+});
 
-    // normalized data columns
+function applyLinearRegression(x0, x1) {
+  selectionCounter++;
+  const data = mimsRawData; const xField = mimsXField; const yFields = mimsYFields;
+  const refField = document.getElementById('normalize-by-select').value;
+  const filtered = data.filter(row => typeof row[xField] === 'number' && row[xField] >= x0 && row[xField] <= x1);
+  if (filtered.length < 2) { alert('Not enough data points in selected range.'); selectionCounter--; return; }
+
+  const rawRegressionTraces = [];
+  const normRegressionTraces = [];
+
+  yFields.forEach(field => {
+    // gather valid pairs
+    const pairs = filtered.map(r => ({ x: r[xField], y: r[field] })).filter(p => typeof p.x === 'number' && typeof p.y === 'number');
+    if (pairs.length < 2) {
+      regressionResults.push({
+        selectionId: selectionCounter, signal: field, unit: mimsFieldUnits[field] || null,
+        start_time: x0, start_time_ms: Math.round(x0 * 60 * 1000), end_time: x1, end_time_ms: Math.round(x1 * 60 * 1000),
+        slopeRaw: NaN, r2Raw: NaN, slopeNorm: NaN, r2Norm: NaN
+      });
+      return;
+    }
+
+    const x = pairs.map(p => p.x);
+    const yRaw = pairs.map(p => p.y);
+    const n = x.length;
+    const sumX = x.reduce((a,b) => a+b, 0);
+    const sumY = yRaw.reduce((a,b) => a+b, 0);
+    const sumXY = x.reduce((s, xi, i) => s + xi * yRaw[i], 0);
+    const sumXX = x.reduce((s, xi) => s + xi*xi, 0);
+    const denom = (n * sumXX - sumX * sumX);
+    const slopeRaw = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : NaN;
+    const interceptRaw = denom !== 0 ? (sumY - slopeRaw * sumX) / n : NaN;
+    const yPredRaw = x.map(xi => slopeRaw * xi + interceptRaw);
+    const ssTotRaw = yRaw.reduce((s, yi) => s + Math.pow(yi - (sumY / n), 2), 0);
+    const ssResRaw = yRaw.reduce((s, yi, i) => s + Math.pow(yi - yPredRaw[i], 2), 0);
+    const r2Raw = ssTotRaw !== 0 ? 1 - (ssResRaw / ssTotRaw) : NaN;
+
+    rawRegressionTraces.push({
+      x: [x0, x1],
+      y: [slopeRaw * x0 + interceptRaw, slopeRaw * x1 + interceptRaw],
+      mode: 'lines',
+      name: `Selection ${selectionCounter} Fit: ${field} ${mimsFieldUnits[field] ? '[' + mimsFieldUnits[field] + ']' : ''}`,
+      line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'black' }
+    });
+
+    // normalized
+    let slopeNorm = NaN, r2Norm = NaN;
+    const normPairs = filtered.map(r => {
+      const val = r[field], ref = r[refField];
+      return { x: r[xField], y: (typeof val === 'number' && typeof ref === 'number' && ref !== 0) ? val / ref : null };
+    }).filter(p => typeof p.x === 'number' && typeof p.y === 'number');
+
+    if (normPairs.length >= 2) {
+      const xn = normPairs.map(p => p.x);
+      const yn = normPairs.map(p => p.y);
+      const nn = xn.length;
+      const sumXn = xn.reduce((a,b)=>a+b,0);
+      const sumYn = yn.reduce((a,b)=>a+b,0);
+      const sumXYn = xn.reduce((s, xi, i) => s + xi * yn[i], 0);
+      const sumXXn = xn.reduce((s, xi) => s + xi * xi, 0);
+      const denomN = (nn * sumXXn - sumXn * sumXn);
+      slopeNorm = denomN !== 0 ? (nn * sumXYn - sumXn * sumYn) / denomN : NaN;
+      const interceptNorm = denomN !== 0 ? (sumYn - slopeNorm * sumXn) / nn : NaN;
+      const yPredNorm = xn.map(xi => slopeNorm * xi + interceptNorm);
+      const ssTotNorm = yn.reduce((s, yi) => s + Math.pow(yi - (sumYn / nn), 2), 0);
+      const ssResNorm = yn.reduce((s, yi, i) => s + Math.pow(yi - yPredNorm[i], 2), 0);
+      r2Norm = ssTotNorm !== 0 ? 1 - (ssResNorm / ssTotNorm) : NaN;
+
+      normRegressionTraces.push({
+        x: [x0, x1],
+        y: [slopeNorm * x0 + interceptNorm, slopeNorm * x1 + interceptNorm],
+        mode: 'lines',
+        name: `Selection ${selectionCounter} Fit: ${field}/${refField}`,
+        line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'black' }
+      });
+    }
+
+    const slopeRawUnit = mimsFieldUnits[field] ? `${mimsFieldUnits[field]}/min` : 'a.u./min';
+
+    regressionResults.push({
+      selectionId: selectionCounter, signal: field, unit: mimsFieldUnits[field] || null,
+      start_time: x0, start_time_ms: Math.round(x0 * 60 * 1000), end_time: x1, end_time_ms: Math.round(x1 * 60 * 1000),
+      slopeRaw, slopeRawUnit, r2Raw, slopeNorm, r2Norm
+    });
+  });
+
+  // add traces to plots and record indices
+  const rawPlot = document.getElementById('raw-plot-div');
+  const normPlot = document.getElementById('normalized-plot-div');
+  const rawCurrentTraceCount = rawPlot && rawPlot.data ? rawPlot.data.length : 0;
+  const normCurrentTraceCount = normPlot && normPlot.data ? normPlot.data.length : 0;
+
+  Plotly.addTraces('raw-plot-div', rawRegressionTraces).then(() => {
+    const newRawIndices = Array.from({ length: rawRegressionTraces.length }, (_, i) => rawCurrentTraceCount + i);
+    rawTraceIndicesBySelection.set(selectionCounter, newRawIndices);
+  }).catch(err => console.error(err));
+
+  Plotly.addTraces('normalized-plot-div', normRegressionTraces).then(() => {
+    const newNormIndices = Array.from({ length: normRegressionTraces.length }, (_, i) => normCurrentTraceCount + i);
+    normTraceIndicesBySelection.set(selectionCounter, newNormIndices);
+  }).catch(err => console.error(err));
+
+  regressionResults.sort((a,b) => a.start_time - b.start_time);
+  refreshRegressionTable();
+}
+
+// ======================
+// 7) Regression table
+// ======================
+function refreshRegressionTable() {
+  const tableDiv = document.getElementById('regression-results-table');
+  const downloadDiv = document.getElementById('xlsx-download-section');
+  if (regressionResults.length === 0) {
+    if (tableDiv) tableDiv.innerHTML = '';
+    if (downloadDiv) downloadDiv.style.display = 'none';
+    return;
+  }
+  if (downloadDiv) downloadDiv.style.display = 'block';
+
+  const grouped = {};
+  regressionResults.forEach(r => { if (!grouped[r.selectionId]) grouped[r.selectionId] = []; grouped[r.selectionId].push(r); });
+  const selectionIds = Object.keys(grouped).map(Number).sort((a,b)=>a-b);
+
+  let html = `<table class="table table-striped"><thead><tr>
+    <th>Selection #</th><th>Start Time (ms)</th><th>Start Time (min)</th><th>End Time (ms)</th><th>End Time (min)</th>
+    <th>Signal</th><th>Unit</th><th>Slope Raw</th><th>Slope Normalized (min<sup>-1</sup>)</th><th>R² Raw</th><th>R² Normalized</th>
+  </tr></thead><tbody>`;
+
+  selectionIds.forEach(sel => {
+    grouped[sel].forEach(r => {
+      const slopeRawStr = typeof r.slopeRaw === 'number' && !Number.isNaN(r.slopeRaw) ? `${r.slopeRaw.toExponential(3)} (${r.slopeRawUnit || 'per min'})` : '-';
+      const slopeNormStr = typeof r.slopeNorm === 'number' && !Number.isNaN(r.slopeNorm) ? `${r.slopeNorm.toExponential(3)}` : '-';
+      const r2RawStr = typeof r.r2Raw === 'number' && !Number.isNaN(r.r2Raw) ? r.r2Raw.toFixed(4) : '-';
+      const r2NormStr = typeof r.r2Norm === 'number' && !Number.isNaN(r.r2Norm) ? r.r2Norm.toFixed(4) : '-';
+
+      html += `<tr>
+        <td>${r.selectionId}</td>
+        <td>${r.start_time_ms}</td>
+        <td>${r.start_time.toFixed(2)}</td>
+        <td>${r.end_time_ms}</td>
+        <td>${r.end_time.toFixed(2)}</td>
+        <td>${r.signal}</td>
+        <td>${r.unit || 'a.u.'}</td>
+        <td>${slopeRawStr}</td>
+        <td>${slopeNormStr}</td>
+        <td>${r2RawStr}</td>
+        <td>${r2NormStr}</td>
+      </tr>`;
+    });
+  });
+
+  html += '</tbody></table>';
+  if (tableDiv) tableDiv.innerHTML = html;
+}
+
+// ======================
+// 8) Clear all regression traces from plots
+// ======================
+function clearRegressionTracesFromPlots() {
+  const rawIndicesToRemove = [];
+  const normIndicesToRemove = [];
+  for (const [sel, idxs] of rawTraceIndicesBySelection) rawIndicesToRemove.push(...idxs);
+  for (const [sel, idxs] of normTraceIndicesBySelection) normIndicesToRemove.push(...idxs);
+  const validRaw = rawIndicesToRemove.filter(i => Number.isInteger(i) && i >= 0);
+  const validNorm = normIndicesToRemove.filter(i => Number.isInteger(i) && i >= 0);
+  if (validRaw.length) try { Plotly.deleteTraces('raw-plot-div', validRaw); } catch(e){console.error(e);} else console.log('No raw traces to remove');
+  if (validNorm.length) try { Plotly.deleteTraces('normalized-plot-div', validNorm); } catch(e){console.error(e);} else console.log('No norm traces to remove');
+  rawTraceIndicesBySelection.clear(); normTraceIndicesBySelection.clear();
+}
+
+// ======================
+// 9) XLSX export
+// ======================
+document.getElementById('download-xlsx').addEventListener('click', function() {
+  if (!mimsRawData.length) { alert('No data available for export.'); return; }
+  const wb = XLSX.utils.book_new();
+  wb.Props = { Title: 'MIMS Analysis Results', Author: 'MIMS App', CreatedDate: new Date() };
+  const selectedModel = (document.querySelector('select[name="MIMS_model"]') || {}).value || 'HPR40 (Hiden Analytical)';
+  const refField = document.getElementById('normalize-by-select').value;
+
+  // Data sheet
+  const dataSheet = mimsRawData.map(row => {
+    const combinedRow = {};
+    if (selectedModel === 'HPR40 (Hiden Analytical)') combinedRow['Time (ms)'] = row['ms'];
+    else if (selectedModel === 'MS GAS (Photon System Instruments)') combinedRow['Time (s)'] = row['Time'];
+    combinedRow['Time (min)'] = row['min'] !== undefined && row['min'] !== null ? row['min'].toFixed(2) : null;
     mimsYFields.forEach(field => {
-        let val = row[field];
-        let refVal = row[refField];
-
-        if (typeof val === "number" && typeof refVal === "number" && refVal !== 0) {
-            combinedRow[`${field}/${refField}_norm`] = val / refVal;
-        } else {
-            combinedRow[`${field}/${refField}_norm`] = null;
-        }
+      const unit = mimsFieldUnits[field] || '';
+      const header = unit ? `${field} [${unit}]` : field;
+      combinedRow[header] = row[field];
     });
-
-            return combinedRow;
+    // normalized columns (unitless)
+    mimsYFields.forEach(field => {
+      const val = row[field]; const refVal = row[refField];
+      const normTitle = `${field}/${refField}_normalized`;
+      if (typeof val === 'number' && typeof refVal === 'number' && refVal !== 0) combinedRow[normTitle] = val / refVal; else combinedRow[normTitle] = null;
     });
+    return combinedRow;
+  });
+  const dataSheetXLSX = XLSX.utils.json_to_sheet(dataSheet); XLSX.utils.book_append_sheet(wb, dataSheetXLSX, 'Data');
 
-    const dataSheetXLSX = XLSX.utils.json_to_sheet(dataSheet);
-    XLSX.utils.book_append_sheet(wb, dataSheetXLSX, "Data");
+  // Regression sheet
+  const regressionSheetData = regressionResults.map(r => {
+    const row = {};
+    row['Selection #'] = r.selectionId;
+    if (selectedModel === 'HPR40 (Hiden Analytical)') { row['Start Time (ms)'] = r.start_time_ms; row['End Time (ms)'] = r.end_time_ms; }
+    else if (selectedModel === 'MS GAS (Photon System Instruments)') { row['Start Time (s)'] = r.start_time; row['End Time (s)'] = r.end_time; }
+    row['Start Time (min)'] = typeof r.start_time === 'number' ? r.start_time.toFixed(2) : ''; row['End Time (min)'] = typeof r.end_time === 'number' ? r.end_time.toFixed(2) : '';
+    row['Signal'] = r.signal; 
+    row['Unit'] = r.unit || 'a.u.';
+    row['Slope Raw (per min)'] = typeof r.slopeRaw === 'number' && !Number.isNaN(r.slopeRaw) ? r.slopeRaw : null;
+    // row['Slope Raw Unit'] = r.slopeRawUnit || '';
+    row['Slope Normalized (per min)'] = typeof r.slopeNorm === 'number' && !Number.isNaN(r.slopeNorm) ? r.slopeNorm : null;
+    row['R2 Raw'] = typeof r.r2Raw === 'number' && !Number.isNaN(r.r2Raw) ? r.r2Raw : null;
+    row['R2 Normalized'] = typeof r.r2Norm === 'number' && !Number.isNaN(r.r2Norm) ? r.r2Norm : null;
+    return row;
+  });
+  const regressionSheet = XLSX.utils.json_to_sheet(regressionSheetData); XLSX.utils.book_append_sheet(wb, regressionSheet, 'Regression Table');
 
-    // ---- Regression table sheet ----
-    const regressionSheetData = regressionResults.map(r => {
-        const row = {};
-        row["Selection #"] = r.selectionId;
-        // ms/s columns first
-        if (selectedModel === "HPR40 (Hiden Analytical)") {
-            row["Start Time (ms)"] = r.start_time_ms;
-            row["End Time (ms)"] = r.end_time_ms;
-        } else if (selectedModel === "MS GAS (Photon System Instruments)") {
-            row["Start Time (s)"] = r.start_time;
-            row["End Time (s)"] = r.end_time;
-        }
-        // min columns
-        row["Start Time (min)"] = r.start_time.toFixed(2);
-        row["End Time (min)"] = r.end_time.toFixed(2);
-        // the rest of columns
-        row["Selection #"] = r.selectionId;
-        row["Signal"] = r.signal;
-        row["Slope Raw (per min)"] = r.slopeRaw;
-        row["Slope Normalized (per min)"] = r.slopeNorm;
-        row["R² Raw Data"] = r.r2Raw;
-        row["R² Normalized Data"] = r.r2Norm;
-      
-        return row;
-    });
+  const baseName = selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, '') : 'MIMS_Analysis';
+  XLSX.writeFile(wb, `${baseName}_analyzed.xlsx`);
+});
 
-    const regressionSheet = XLSX.utils.json_to_sheet(regressionSheetData);
-    XLSX.utils.book_append_sheet(wb, regressionSheet, "Regression Table");
+// ======================
+// 10) UI wiring for file & show
+// ======================
+document.getElementById('MIMS_file').addEventListener('change', function (ev) {
+  selectedFile = ev.target.files[0];
+  const label = document.querySelector('label[for="MIMS_file"]');
+  if (label && selectedFile) label.textContent = selectedFile.name;
+  // reset UI bits
+  document.getElementById('raw-container').style.display = 'none';
+  document.getElementById('normalized-container').style.display = 'none';
+  document.getElementById('preview-label').style.display = 'none';
+  document.getElementById('normalized-preview-label').style.display = 'none';
+  document.getElementById('normalization-controls').style.display = 'none';
+  document.getElementById('regression-results-table').innerHTML = '';
+  regressionResults = []; currentZoomRange = null; rawTraceIndicesBySelection.clear(); normTraceIndicesBySelection.clear(); selectionCounter = 0;
+  const err = document.getElementById('mims-error-alert'); if (err) err.innerHTML = '';
+});
 
-    const baseName = selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, "") : "MIMS_Analysis";
-    XLSX.writeFile(wb, `${baseName}_analyzed.xlsx`);
+document.getElementById('show-image-button').addEventListener('click', function (ev) {
+  ev.preventDefault();
+  const errDiv = document.getElementById('mims-error-alert'); if (errDiv) errDiv.innerHTML = '';
+  const fileInput = document.getElementById('MIMS_file'); const file = fileInput.files[0];
+  if (!file) { if (errDiv) errDiv.innerHTML = `<div class="alert alert-danger">Please select a MIMS file first.</div>`; return; }
+  const selectedModel = (document.querySelector('select[name="MIMS_model"]') || {}).value || 'MS GAS (Photon System Instruments)';
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const isCSV = ext === 'csv'; const isASCI = ext === 'asc' || ext === 'asci';
+  let valid = false;
+  if (selectedModel.includes('HPR40') && isCSV) valid = true;
+  if (selectedModel.includes('MS GAS') && isASCI) valid = true;
+  if (!valid) { if (errDiv) errDiv.innerHTML = `<div class="alert alert-danger">Invalid file type for selected model.</div>`; return; }
+
+  parseMIMSFile(file, function(result) {
+    if (!result || !result.data || result.data.length === 0) {
+      document.getElementById('mims-error-alert').innerHTML = `<div class="alert alert-danger">No data parsed.</div>`;
+      return;
+    }
+    // store units if parser provided them
+    if (result.fieldUnits) Object.assign(mimsFieldUnits, result.fieldUnits);
+    plotMIMSData(result);
+  });
 });
