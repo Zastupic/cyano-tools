@@ -90,28 +90,39 @@ making it particularly valuable for sensitive and rapid analysis in both researc
     <li>Download summary .xlsx file with all data</li>
 </ol>
 <br>
-<p><small>Please note that the tool does not provide option for data calibration. 
-  For calibration of either raw or normalized MIMS signals, linear regression is typically required:
-  <p>$$
-      \begin{multline}
-      \shoveleft y = a_{x} + b,
-      \end{multline}
-      $$
-  </p>
-where <i>y</i> represents gas concentration in real units (such as, for example, µmol L<sup>-1</sup>), <i>x</i> represents 
-respective value of MIMS signal, <i>a</i> represents calibration slope and <i>b</i> represents calibration intercept. 
-The tool allows to obtain MIMS signal derivatives, i.e. a change of MIMS signal in time. To recalculate the obtained MIMS signal slopes,
-following equation can be used:
-  <p>$$
-     \begin{multline}
-     \shoveleft y = a * s,
-     \end{multline}
-     $$
-  </p>
-where <i>y</i> represents slope in real units (such as, for example, µmol L<sup>-1</sup> min<sup>-1</sup>), <i>s</i> represents 
-respective value of derivative of either raw or normalized MIMS signal (with units signal min<sup>-1</sup>) and
- <i>a</i> represents calibration slope. For recalculating slopes to real concentrations, intercept from calibration 
- is not required (it does nto affect the slope).
+<small><b>Calibrations</b></small>
+<p><small>
+<u>Calibration of MIMS signals</u>
+<br>
+Please note that the tool does not provide option for data calibration. 
+  Calibration of raw or normalized MIMS signals is typically done by linear regression between the measured signal 
+  and the known concentration of the gas  according to the equation:
+    <p align="center" style="font-size:14px">$$
+    y = a \, x + b
+    $$
+    </p>
+where <i>y</i> is the gas concentration in real units (e.g. µmol L<sup>-1</sup>), <i>x</i> is the measured MIMS signal, 
+<i>a</i> is the calibration slope, and <i>b</i> is the intercept.  
+The slope <i>a</i> describes how strongly the signal responds to changes in concentration, while the intercept <i>b</i> accounts for background offsets in the system.
+Both raw and normalized MIMS signals can be used for calibration.
+<br><br>
+<u>Calibration of slopes (signal derivatives)</u>
+<br>
+The tool also provides derivatives of the MIMS signal, i.e. the change of signal over time. 
+To convert these derivatives into real units (e.g. µmol L<sup>-1</sup> min<sup>-1</sup>), only the slope <i>a</i> is required: 
+  <p align="center" style="font-size:14px">$$
+    y = a \, s
+  $$</p>
+Here, <i>s</i> is the derivative of the MIMS signal (<i>signal min<sup>-1</sup></i>), and <i>y</i> is the rate of concentration change in real units.  
+The intercept <i>b</i> disappears because the derivative of a constant is zero:
+  <p align="center" style="font-size:14px">$$
+  \frac{d}{dt}(a \, x + b) = a \, \frac{dx}{dt} + \frac{db}{dt} = a \, s
+  $$</p>
+This is why only the slope <i>a</i> is needed when working with signal derivatives: the calibration intercept has no effect on rates of change.
+<br><br>
+Please not that the equilibrium concentration of dissolved <i>O<sub>2</sub></i> and <i>CO<sub>2</sub></i> can be estimated in   
+  <a href="/calculators#dO2_conc" target="blank">dO<sub>2</sub></a> and 
+  <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="blank">dCO<sub>2</sub> calculators</a>.
 </small></p>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('MIMS_data_analysis.analyze_MIMS_data', _anchor='results') }}">
