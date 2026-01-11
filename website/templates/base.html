@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
     <!-- SEO Meta Tags -->
     <title>{% block title %}Home | CyanoTools{% endblock %}</title>
     <meta name="description" content="{% block description %}CyanoTools is a browser-based platform for analyzing photosynthesis, fluorescence, microscopy, 
@@ -16,7 +15,6 @@
     <meta name="theme-color" content="#0a3c58">
     <meta name="copyright" content="© 2025 CzechGlobe - Department of Adaptive Biotechnologies">
     <meta name="publisher" content="CzechGlobe">
-
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="{% block og_title %}CyanoTools - Tools for Cyanobacteria and Algal Research{% endblock %}">
     <meta property="og:description" content="{% block og_description %}CyanoTools is a web platform supporting advanced biological research through specialized tools for photosynthesis, microscopy, spectroscopy and mass spectrometry analysis.{% endblock %}">
@@ -24,65 +22,49 @@
     <meta property="og:url" content="https://tools-py.e-cyanobacterium.org/">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="en_US">
-
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}CyanoTools{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Web tools for analyzing cyanobacteria, algae, and photosynthetic systems.{% endblock %}">
     <meta name="twitter:image" content="{{ url_for('static', filename='img/cyano_preview.png') }}">
-
     <!-- Favicon and Icons -->
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="icon" sizes="32x32" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="icon" sizes="192x192" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
-
     <!-- Canonical Link -->
     <link rel="canonical" href="https://tools-py.e-cyanobacterium.org/">
-
     <!-- Performance Hints -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
-
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
-
     <!-- Font Awesome CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous" />
-
     <!-- Animate CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
-
     <!-- Custom CSS -->
     <link rel="stylesheet" type="text/css" href="static/css_main.css" />
-
     <!-- MathJax -->
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
     <!-- Socket.io -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" 
         integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" 
         crossorigin="anonymous">
     </script>
-
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <!--  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>  -->
-
     <!-- Popper Js -->
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-
     <!-- Bootstrap Js -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
     <!-- Bootstrap Bundle for later version 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" 
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+Ue0jt8z5PJm3Ib0bQ4Bl+f2QUaIH" 
         crossorigin="anonymous">
     </script>
-    
     -->
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S"></script>
@@ -92,16 +74,37 @@
         gtag('js', new Date());
         gtag('config', 'G-V1B3ZCRT9S');
     </script>
-
     <!-- Custom JS -->
     <script src="{{url_for('static', filename='js_index.js')}}"></script>
+    <!-- Add Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "CyanoTools",
+      "url": "https://tools-py.e-cyanobacterium.org/",
+      "description": "Platform for analyzing photosynthesis and microbial data",
+      "publisher": {
+        "@type": "Organization",
+        "name": "CzechGlobe - Department of Adaptive Biotechnologies",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "{{ url_for('static', filename='img/cyano_preview.png') }}"
+        }
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://tools-py.e-cyanobacterium.org/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
 </head>
 
 <body>
     {% block body %}{% endblock %}
 </body>
 </html>
- 
     <body>       
         <!-- Navbar -->
         <div class="max-width">
@@ -201,36 +204,38 @@
                 </nav>
             </header>
 
-            <!-- Flash messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        {% if category == 'error'%}
-                            <div class="alert alert-danger alert-dismissable fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="close" data-dismiss="alert">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        {% else %}
-                            <div class="alert alert-success alert-dismissable fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="close" data-dismiss="alert">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        {% endif %}
-                    {% endfor%}
-                {% endif %}
-            {% endwith%}
+            <!-- Main part of the page -->
+            <main id="main-content" class="page-wrapper">
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            {% if category == 'error'%}
+                                <div class="alert alert-danger alert-dismissable fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="close" data-dismiss="alert">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-success alert-dismissable fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="close" data-dismiss="alert">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        {% endfor%}
+                    {% endif %}
+                {% endwith%}
 
-            <!-- Main part of the page-->
-            <div class="page-wrapper">
                 <div class="wrapper-box">
                     {% block content %}
                     {% endblock %}
                 </div>
-            </div>      
+            </main>
+
+            <!-- Footer -->
             <footer id="footer_position">
                 <div class="footer-container"> 
                     <div class="footer-content">

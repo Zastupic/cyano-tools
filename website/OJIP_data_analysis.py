@@ -585,52 +585,52 @@ def analyze_OJIP_curves():
                             # --- Plot OJIP Curves (Subplots 1–15) ---
                             def plot_all_ojip_curves():
                                 colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number + 1)) # type: ignore
-                                fig = plt.figure(figsize=(17, 11))
+                                fig = plt.figure(figsize=(17, 14))
                                 fig.tight_layout()
                                 fig.subplots_adjust(hspace=0.6, wspace=0.3)
                                 plt.rcParams['mathtext.default'] = 'regular'
                                 # Plot raw data (subplot 1)
-                                plot_dataframe_subplot(fig.add_subplot(4, 4, 1), Summary_file, colors, "OJIP curves: raw data", x_axis_unit, y_axis_unit)
+                                plot_dataframe_subplot(fig.add_subplot(5, 4, 1), Summary_file, colors, "OJIP curves: raw data", x_axis_unit, y_axis_unit)
                                 # Shifted to zero (subplot 2)
-                                plot_dataframe_subplot(fig.add_subplot(4, 4, 2), OJIP_shifted_to_zero, colors, "OJIP curves: shifted to zero", x_axis_unit, y_axis_unit, ylim=(0, None))
+                                plot_dataframe_subplot(fig.add_subplot(5, 4, 2), OJIP_shifted_to_zero, colors, "OJIP curves: shifted to zero", x_axis_unit, y_axis_unit, ylim=(0, None))
                                 # Shifted to Fm (subplot 3)
-                                plot_dataframe_subplot(fig.add_subplot(4, 4, 3), OJIP_shifted_to_max, colors, "OJIP curves: shifted to Fm", x_axis_unit, y_axis_unit,
+                                plot_dataframe_subplot(fig.add_subplot(5, 4, 3), OJIP_shifted_to_max, colors, "OJIP curves: shifted to Fm", x_axis_unit, y_axis_unit,
                                                        ylim=(0, None) if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' else (None, None))
                                 # Double normalized (subplot 5)
-                                plot_dataframe_subplot(fig.add_subplot(4, 4, 5), OJIP_double_normalized, colors, "OJIP curves: double normalized", x_axis_unit, "Fluorescence intensity (r.u.)",
+                                plot_dataframe_subplot(fig.add_subplot(5, 4, 5), OJIP_double_normalized, colors, "OJIP curves: double normalized", x_axis_unit, "Fluorescence intensity (r.u.)",
                                                        ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '--', 'lw': 1}), (FI_time, {'color': '0', 'ls': '--', 'lw': 1})])
                                 
                                 # Reconstructed curves (subplot 6)
-                                plot_dataframe_subplot(fig.add_subplot(4, 4, 6), Raw_curves_reconstructed_DF, colors, "Reconstructed curves (double normalized)", x_axis_unit, "Fluorescence intensity (r.u.)",
+                                plot_dataframe_subplot(fig.add_subplot(5, 4, 6), Raw_curves_reconstructed_DF, colors, "Reconstructed curves (double normalized)", x_axis_unit, "Fluorescence intensity (r.u.)",
                                                        ylim=(0, 1.1), vlines=[(FJ_time, {'color': '0', 'ls': '--', 'lw': 1}), (FI_time, {'color': '0', 'ls': '--', 'lw': 1})])
                                 # Residuals (subplot 7)
-                                plot_dataframe_subplot(fig.add_subplot(4, 4, 7), Residuals_DF, colors, "Residuals of the reconstructed curves", f"{x_axis_unit} - lin", "Residuals (r.u.)", x_log=False)
+                                plot_dataframe_subplot(fig.add_subplot(5, 4, 7), Residuals_DF, colors, "Residuals of the reconstructed curves", f"{x_axis_unit} - lin", "Residuals (r.u.)", x_log=False)
                                 # 2nd derivative + FJ (subplot 9)
-                                ax = fig.add_subplot(4, 4, 9)
+                                ax = fig.add_subplot(5, 4, 9)
                                 plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{J}$ timing", x_axis_unit, "2$^{nd}$ derivative")
                                 ax.axvline(x=FJ_time, color='0', ls='--', lw=1, label='FJ time selected (used for calculations)')
                                 plot_vertical_lines(ax, FJ_TIMES_IDENTIFIED_DERIV, colors)
                                 plot_vertical_lines_inflections(ax, FJ_TIMES_IDENTIFIED_INFLECTION, colors)
                                 # 2nd derivative + FI (subplot 10)
-                                ax = fig.add_subplot(4, 4, 10)
+                                ax = fig.add_subplot(5, 4, 10)
                                 plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{I}$ timing", x_axis_unit, "2$^{nd}$ derivative")
                                 ax.axvline(x=FI_time, color='0.2', ls='--', lw=1, label='F$_{J}$/F$_{I}$ times used for calculations (selected by user)')
                                 plot_vertical_lines_inflections(ax, FI_TIMES_IDENTIFIED_INFLECTION, colors, label_first=' Identified F$_{J}$/F$_{I}$/F$_{P}$ times (inflection points)')
                                 plot_vertical_lines(ax, FI_TIMES_IDENTIFIED_DERIV, colors, label_first=' Min of 2nd Deriv of Fluo Signal Pre-F$_{J}$/F$_{I}$/F$_{P}$')
                                 ax.legend(loc='upper left', bbox_to_anchor=(2.38, 4.28))
                                 # 2nd derivative + FM (subplot 11)
-                                ax = fig.add_subplot(4, 4, 11)
+                                ax = fig.add_subplot(5, 4, 11)
                                 plot_dataframe_subplot(ax, Differences_2_DF, colors, "2$^{nd}$ derivative + F$_{P}$ timing", x_axis_unit, "2$^{nd}$ derivative")
                                 plot_vertical_lines_inflections(ax, FP_TIMES_IDENTIFIED_INFLECTION, colors)
                                 plot_vertical_lines(ax, FP_TIMES_IDENTIFIED_DERIV, colors)
                                 # FJ bar plot (subplot 13)
-                                plot_bar_subplot(fig.add_subplot(4, 4, 13), FJ_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{J}$ times identified (only for visualization)", x_axis_unit)
+                                plot_bar_subplot(fig.add_subplot(5, 4, 13), FJ_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{J}$ times identified (only for visualization)", x_axis_unit)
                                 # FI bar plot (subplot 14)
-                                plot_bar_subplot(fig.add_subplot(4, 4, 14), FI_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{I}$ times identified (only for visualization)")
+                                plot_bar_subplot(fig.add_subplot(5, 4, 14), FI_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{I}$ times identified (only for visualization)")
                                 # FP bar plot (subplot 15)
-                                plot_bar_subplot(fig.add_subplot(4, 4, 15), FP_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{P}$ times identified")
+                                plot_bar_subplot(fig.add_subplot(5, 4, 15), FP_TIMES_IDENTIFIED_INFLECTION, colors, "F$_{P}$ times identified")
                                 # FM bar plot (subplot 15)
-                                plot_bar_subplot(fig.add_subplot(4, 4, 16), FM_timings_series, colors, "F$_{M}$ times identified")
+                                plot_bar_subplot(fig.add_subplot(5, 4, 17), FM_timings_series, colors, "F$_{M}$ times identified")
                                 
                                 memory_for_OJIP_plot = io.BytesIO()
                                 plt.savefig(memory_for_OJIP_plot, bbox_inches='tight', format='JPEG')
@@ -711,14 +711,15 @@ def analyze_OJIP_curves():
                                 F0, FK, FJ, FI, FM, OJ, JI, IP, VJ, VI, M0, PSIE0, PSIR0, DELTAR0, FVFM, PHIE0, PHIR0,
                                 ABSRC, TR0RC, ET0RC, RE0RC, DI0RC, pd.Series(AREAOJ), pd.Series(AREAJI), pd.Series(AREAIP), pd.Series(AREAOP), # type: ignore
                                 SM, N, FJ_TIMES_IDENTIFIED_INFLECTION, FI_TIMES_IDENTIFIED_INFLECTION, FP_TIMES_IDENTIFIED_INFLECTION,
-                                FJ_TIMES_IDENTIFIED_DERIV, FI_TIMES_IDENTIFIED_DERIV, FP_TIMES_IDENTIFIED_DERIV]
+                                FM_timings_series, FJ_TIMES_IDENTIFIED_DERIV, FI_TIMES_IDENTIFIED_DERIV, FP_TIMES_IDENTIFIED_DERIV]
                             OJIP_param_all = pd.concat(parameters_to_concat, axis=1)
                             # Name columns (this part is already efficient)
                             OJIP_param_all.columns = ['Fin', 'FK', 'FJ', 'FI', 'Fmax', 'Amplitude(0-J)', 'Amplitude(J-I)', 'Amplitude(I-P)', 'VJ', 'VI',
                                                       'M0', 'ψE0', 'ψR0', 'δR0', 'ψP0 (Fv/Fm)','φE0', 'φR0', 'ABS/RC', 'TR0/RC', 'ET0/RC',
                                                       'RE0/RC', 'DI0/RC', 'Complementary area O-J', 'Complementary area J-I', 'Complementary area I-P',
                                                       'Complementary area (O-P)','Normalized complementary area Sm', 'N (turn-over number QA)',
-                                                      'Time FJ', 'Time FI', 'Time FP', 'Time Min 2nd Deriv Pre-FJ', 'Time Min 2nd Deriv Pre-FI', 'Time Min 2nd Deriv Pre-FP']
+                                                      'Time FJ', 'Time FI', 'Time FP', 'Time FM', 'Time Min 2nd Deriv Pre-FJ', 
+                                                      'Time Min 2nd Deriv Pre-FI', 'Time Min 2nd Deriv Pre-FP']
 
                             # Optimized: Write all dataframes and images in a single ExcelWriter context
                             excel_file_path = f'{upload_folder}/{file_name_without_extension}_results.xlsx'
@@ -749,7 +750,7 @@ def analyze_OJIP_curves():
                                 img_curves = Image(memory_for_OJIP_plot)
                                 img_parameters = Image(memory_for_OJIP_parameters)
                                 img_curves.anchor = 'A1'
-                                img_parameters.anchor = 'A47'
+                                img_parameters.anchor = 'A60'
                                 ws_images.add_image(img_curves)
                                 ws_images.add_image(img_parameters)
                             # Save the Excel file path for rendering in the template

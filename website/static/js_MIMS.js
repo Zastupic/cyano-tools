@@ -53,19 +53,54 @@ function ensureUniqueLabel(base, existing) {
   return lbl;
 }
 
+// Replace all "/" with "_" in a string
+function replaceAllSlashesInString(s) {
+    if (s === null || s === undefined) return s;
+    return String(s).replace(/\//g, "_");
+}
+
 // ======================
 // 2) ASC/ASCI parsing (robust) -> returns { data, fields, xField, yFields }
 // ======================
 function parseAsciiContent(content) {
-  const lines = content.split(/\r?\n/);
-  // find header index: line that contains 'Time' and 'Relative [s]' ideally
+  const lines = content.split(/\r\n|\r|\n/g);
+  // 1. Pre-scan for Quadstar "Datablock" units (e.g., Datablock 0 Ion Current [A])
+  const channelMeta = {}; // Map of '0/0' -> { unit: 'A', name: 'Ion Current' }
+  let currentUnit = null;
+  let currentName = null;
+  for (const line of lines) {
+    if (line.trim().startsWith('Datablock')) {
+      // Extract unit inside brackets, e.g. [A] or [mbar]
+      const unitMatch = line.match(/\[([^\]]+)\]/);
+      currentUnit = unitMatch ? unitMatch[1].trim() : null;
+
+      // Extract the name before the unit
+      const beforeBracket = unitMatch ? line.substring(0, unitMatch.index).trim() : line.trim();
+      const beforeParts = beforeBracket.split(/\s+/);
+      currentName = beforeParts.slice(2).join(' ').trim(); // e.g., "Ion Current" or "PKR"
+    } else {
+      // Look for channel ID lines starting with 'x/y'
+      const parts = splitColumnsPreserve(line).map(s => s.trim());
+      if (parts.length >= 2 && parts[0].match(/^'\d+\/\d+'$/) && currentUnit) {
+        const id = parts[0];
+        const denomStr = parts[1];
+        const denom = parseFloat(denomStr);
+        channelMeta[id] = { unit: currentUnit, name: currentName };
+        if (!isNaN(denom)) {
+          channelMeta[id].denom = denom;
+        }
+      }
+    }
+  }
+
+  // Find header index: line that contains 'Time' and 'Relative [s]' ideally
   let headerIndex = -1;
   for (let i = 0; i < lines.length; i++) {
     const L = lines[i];
-    if (/Time\s+Relative\s*\[s\]/i.test(L) || /Time\s*\[s\]/i.test(L)) { headerIndex = i; break; }
+    if (/Time\s+Relative\s*\[s\]|Time\s*\[s\]|RelTime\s*\[s\]/i.test(L)) { headerIndex = i; break; }
   }
   if (headerIndex === -1) {
-    // fallback: line containing 'Time' and 'Concentration' or 'Ion Current' etc.
+    // Fallback: line containing 'Time' and 'Concentration' or 'Ion Current' etc.
     for (let i = 0; i < lines.length; i++) {
       const L = lines[i];
       if (/\bTime\b/i.test(L) && /(Ion Current|Concentration|Pressure|Relative)/i.test(L)) { headerIndex = i; break; }
@@ -79,42 +114,55 @@ function parseAsciiContent(content) {
   const headerLine = (lines[headerIndex] || '');
   const dataLines = lines.slice(headerIndex + 1).filter(l => l.trim() !== '');
 
-  // split header & channel lines preserving columns
+  // Split header & channel lines preserving columns
   let headerCols = splitColumnsPreserve(headerLine);
   let channelCols = splitColumnsPreserve(channelLine);
   headerCols = trimTokens(headerCols);
   channelCols = trimTokens(channelCols);
 
-  // pad channelCols to same length as headerCols
+  // Pad channelCols to same length as headerCols
   while (channelCols.length < headerCols.length) channelCols.push('');
 
-  // find all Time Relative indices
-  const timeRelRegex = /Time\s+Relative\s*\[s\]|Time\s*\[s\]/i;
+  // Find all Time Relative indices
+  const timeRelRegex = /Time\s+Relative\s*\[s\]|Time\s*\[s\]|RelTime\s*\[s\]/i;
   const timeIndices = [];
   for (let i = 0; i < headerCols.length; i++) {
     if (timeRelRegex.test(headerCols[i])) timeIndices.push(i);
   }
+  console.log('Header columns:', headerCols); // DEBUG: Check exact header strings
+  console.log('Time indices (should include RelTime[s] column):', timeIndices); // DEBUG: If empty, regex didn't match
 
-  // for each timeRelative index pick the nearest measurement column to the right
-  const measurementIndices = [];
-  timeIndices.forEach(ti => {
-    let found = null;
-    // look a few columns to the right; measurement usually immediate after Time Relative
-    for (let j = ti + 1; j < Math.min(headerCols.length, ti + 6); j++) {
+  // For each timeRelative index, pick the measurement column(s) to the right
+  let measurementIndices = [];
+  if (timeIndices.length === 1) {
+    // Single time column format: take all subsequent non-empty columns as measurements
+    const ti = timeIndices[0];
+    for (let j = ti + 1; j < headerCols.length; j++) {
       const c = headerCols[j] || '';
-      if (!/\bTime\b/i.test(c) && c.trim() !== '') { found = j; break; }
+      if (c.trim() !== '') {
+        measurementIndices.push(j);
+      }
     }
-    if (found !== null) measurementIndices.push(found);
-  });
+  } else {
+    // Original logic: one measurement per time column
+    timeIndices.forEach(ti => {
+      let found = null;
+      for (let j = ti + 1; j < Math.min(headerCols.length, ti + 6); j++) {
+        const c = headerCols[j] || '';
+        if (!/\bTime\b/i.test(c) && c.trim() !== '') { found = j; break; }
+      }
+      if (found !== null) measurementIndices.push(found);
+    });
+  }
 
-  // fallback: any non-Time columns
+  // Fallback: any non-Time columns
   if (measurementIndices.length === 0) {
     for (let i = 0; i < headerCols.length; i++) {
       if (!/\bTime\b/i.test(headerCols[i]) && headerCols[i].trim() !== '') measurementIndices.push(i);
     }
   }
 
-  // unique & sorted
+  // Unique & sorted
   const uniqMeas = Array.from(new Set(measurementIndices)).sort((a,b) => a - b);
 
   // Build canonical labels using column index alignment with channelCols
@@ -122,10 +170,19 @@ function parseAsciiContent(content) {
   const usedLabels = new Set();
   uniqMeas.forEach(colIdx => {
     const headerLabel = headerCols[colIdx] || `Signal${colIdx}`;
+    // Check if this header matches a known Quadstar identifier (e.g. '0/0')
+    let metaUnit = null;
+    let metaName = null;
+    let metaDenom = null;
+    if (channelMeta[headerLabel]) {
+      metaUnit = channelMeta[headerLabel].unit;
+      metaName = channelMeta[headerLabel].name;
+      metaDenom = channelMeta[headerLabel].denom;
+    }
     const unitMatch = headerLabel.match(/\[([^\]]+)\]/);
-    const unit = unitMatch ? unitMatch[1].trim() : null;
+    const unit = metaUnit || (unitMatch ? unitMatch[1].trim() : null);
 
-    // channel label may appear above the block's first column; try same col, then left offsets
+    // Channel label may appear above the block's first column; try same col, then left offsets
     let channelToken = '';
     const leftOffsets = [0, -1, -2, -3];
     for (const off of leftOffsets) {
@@ -136,9 +193,9 @@ function parseAsciiContent(content) {
       }
     }
 
-    const cleanedHeader = headerLabel.replace(/\s*\[[^\]]+\]/, '').trim();
-    let baseLabel = channelToken || cleanedHeader || `Signal${colIdx}`;
-    // ensure uniqueness
+    const cleanedHeader = headerLabel.replace(/\s*\[[^\]]+\]/, '').trim().replace(/['"]/g, ''); // Remove quotes
+    let baseLabel = metaName ? `${metaName} ${metaDenom || cleanedHeader}` : (channelToken || cleanedHeader || `Signal${colIdx}`);
+    // Ensure uniqueness
     const label = ensureUniqueLabel(baseLabel, usedLabels);
     labels.push({ label, colIdx, unit });
     mimsFieldUnits[label] = unit;
@@ -149,14 +206,14 @@ function parseAsciiContent(content) {
   for (const line of dataLines) {
     const parts = splitColumnsPreserve(line).map(p => (p === undefined ? '' : String(p).trim()));
     while (parts.length < headerCols.length) parts.push('');
-    // find first available time from timeIndices
+    // Find first available time from timeIndices
     let timeVal = null;
     for (const ti of timeIndices) {
       const raw = parts[ti] !== undefined ? parts[ti] : '';
       const parsed = parseNumberStringToFloat(raw);
       if (parsed !== null) { timeVal = parsed; break; }
     }
-    // fallback: any 'Time' column
+    // Fallback: any 'Time' column
     if (timeVal === null) {
       for (let i = 0; i < headerCols.length; i++) {
         if (/\bTime\b/i.test(headerCols[i])) {
@@ -165,7 +222,10 @@ function parseAsciiContent(content) {
         }
       }
     }
-    if (timeVal === null) continue; // skip line without usable time
+    if (timeVal === null) {
+      console.log('Skipping row due to no valid timeVal:', parts); // DEBUG: If rows are skipped, log why
+      continue; // skip line without usable time
+    }
 
     const row = { Time: timeVal };
     labels.forEach(({ label, colIdx }) => {
@@ -198,7 +258,8 @@ function parseMIMSFile(file, callback) {
     // ASC/ASCI (MS GAS)
     if (fname.endsWith('.asc') || fname.endsWith('.asci')) {
       // quick sanity check
-      if (!/Time\s+Relative\s*\[s\]/i.test(content) && !/Time\s*\[s\]/i.test(content)) {
+      if (!/Time\s+Relative\s*\[s\]/i.test(content) && !/Time\s*\[s\]/i.test(content) && !/RelTime\s*\[s\]/i.test(content)) {
+      // === CHANGE MADE HERE === if (!/Time\s+Relative\s*\[s\]/i.test(content) && !/Time\s*\[s\]/i.test(content)) {
         document.getElementById('mims-error-alert').innerHTML = `<div class="alert alert-danger">Missing \"Time Relative [s]\" header in ASC/ASCI file.</div>`;
         return;
       }
@@ -346,7 +407,7 @@ function plotNormalizedData() {
   Plotly.newPlot('normalized-plot-div', traces, {
     title: `Normalized Signals (divided by ${refField})`,
     xaxis: { title: xField === 'min' ? 'Time (min)' : xField },
-    yaxis: { title: `Signal / ${refField} (unitless)`, tickformat: '.1e' }
+    yaxis: { title: `Signal / ${refField} (r.u.)`, tickformat: '.1e' }
   }).then(() => {
     const np = document.getElementById('normalized-plot-div');
     np.on('plotly_relayout', function(eventData) {
@@ -463,6 +524,7 @@ function applyLinearRegression(x0, x1) {
         name: `Selection ${selectionCounter} Fit: ${field}/${refField}`,
         line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'black' }
       });
+
     }
 
     const slopeRawUnit = mimsFieldUnits[field] ? `${mimsFieldUnits[field]}/min` : 'a.u./min';
@@ -511,14 +573,27 @@ function refreshRegressionTable() {
   regressionResults.forEach(r => { if (!grouped[r.selectionId]) grouped[r.selectionId] = []; grouped[r.selectionId].push(r); });
   const selectionIds = Object.keys(grouped).map(Number).sort((a,b)=>a-b);
 
-  let html = `<table class="table table-striped"><thead><tr>
-    <th>Selection #</th><th>Start Time (ms)</th><th>Start Time (min)</th><th>End Time (ms)</th><th>End Time (min)</th>
-    <th>Signal</th><th>Unit</th><th>Slope Raw</th><th>Slope Normalized (min<sup>-1</sup>)</th><th>R² Raw</th><th>R² Normalized</th>
-  </tr></thead><tbody>`;
+  let html = `<table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Selection #</th>
+                    <th>Start Time (ms)</th>
+                    <th>Start Time (min)</th>
+                    <th>End Time (ms)</th>
+                    <th>End Time (min)</th>
+                    <th>Signal</th>
+                    <th>Slope Raw (min<sup>-1</sup>)</th>
+                    <th>Slope Normalized (min<sup>-1</sup>)</th>
+                    <th>R² Raw</th>
+                    <th>R² Normalized</th>
+                  </tr>
+                </thead>
+              <tbody>
+            `;
 
   selectionIds.forEach(sel => {
     grouped[sel].forEach(r => {
-      const slopeRawStr = typeof r.slopeRaw === 'number' && !Number.isNaN(r.slopeRaw) ? `${r.slopeRaw.toExponential(3)} (${r.slopeRawUnit || 'per min'})` : '-';
+      const slopeRawStr = typeof r.slopeRaw === 'number' && !Number.isNaN(r.slopeRaw) ? `${r.slopeRaw.toExponential(3)}` : '-';
       const slopeNormStr = typeof r.slopeNorm === 'number' && !Number.isNaN(r.slopeNorm) ? `${r.slopeNorm.toExponential(3)}` : '-';
       const r2RawStr = typeof r.r2Raw === 'number' && !Number.isNaN(r.r2Raw) ? r.r2Raw.toFixed(4) : '-';
       const r2NormStr = typeof r.r2Norm === 'number' && !Number.isNaN(r.r2Norm) ? r.r2Norm.toFixed(4) : '-';
@@ -530,7 +605,6 @@ function refreshRegressionTable() {
         <td>${r.end_time_ms}</td>
         <td>${r.end_time.toFixed(2)}</td>
         <td>${r.signal}</td>
-        <td>${r.unit || 'a.u.'}</td>
         <td>${slopeRawStr}</td>
         <td>${slopeNormStr}</td>
         <td>${r2RawStr}</td>
@@ -565,14 +639,21 @@ document.getElementById('download-xlsx').addEventListener('click', function() {
   if (!mimsRawData.length) { alert('No data available for export.'); return; }
   const wb = XLSX.utils.book_new();
   wb.Props = { Title: 'MIMS Analysis Results', Author: 'MIMS App', CreatedDate: new Date() };
-  const selectedModel = (document.querySelector('select[name="MIMS_model"]') || {}).value || 'HPR40 (Hiden Analytical)';
+  const selectedModel = (document.querySelector('select[name="MIMS_model"]') || {}).value || 'HPR40';
   const refField = document.getElementById('normalize-by-select').value;
 
   // Data sheet
   const dataSheet = mimsRawData.map(row => {
     const combinedRow = {};
-    if (selectedModel === 'HPR40 (Hiden Analytical)') combinedRow['Time (ms)'] = row['ms'];
-    else if (selectedModel === 'MS GAS (Photon System Instruments)') combinedRow['Time (s)'] = row['Time'];
+    // HPR40 uses milliseconds from 'ms' column
+    if (selectedModel === 'HPR40') {
+        combinedRow['Time (ms)'] = row['ms'];
+    } 
+    // QMS and MS GAS use seconds from 'Time' column
+    else {
+        combinedRow['Time (s)'] = row['Time'];
+    }
+
     combinedRow['Time (min)'] = row['min'] !== undefined && row['min'] !== null ? row['min'].toFixed(2) : null;
     mimsYFields.forEach(field => {
       const unit = mimsFieldUnits[field] || '';
@@ -593,11 +674,17 @@ document.getElementById('download-xlsx').addEventListener('click', function() {
   const regressionSheetData = regressionResults.map(r => {
     const row = {};
     row['Selection #'] = r.selectionId;
-    if (selectedModel === 'HPR40 (Hiden Analytical)') { row['Start Time (ms)'] = r.start_time_ms; row['End Time (ms)'] = r.end_time_ms; }
-    else if (selectedModel === 'MS GAS (Photon System Instruments)') { row['Start Time (s)'] = r.start_time; row['End Time (s)'] = r.end_time; }
+    if (selectedModel.includes('HPR40')) { 
+        row['Start Time (ms)'] = r.start_time_ms; 
+        row['End Time (ms)'] = r.end_time_ms; 
+    } else { 
+        // Covers both MS GAS and QMS
+        row['Start Time (s)'] = r.start_time; 
+        row['End Time (s)'] = r.end_time; 
+    }
     row['Start Time (min)'] = typeof r.start_time === 'number' ? r.start_time.toFixed(2) : ''; row['End Time (min)'] = typeof r.end_time === 'number' ? r.end_time.toFixed(2) : '';
     row['Signal'] = r.signal; 
-    row['Unit'] = r.unit || 'a.u.';
+    // row['Unit'] = r.unit || 'a.u.';
     row['Slope Raw (per min)'] = typeof r.slopeRaw === 'number' && !Number.isNaN(r.slopeRaw) ? r.slopeRaw : null;
     // row['Slope Raw Unit'] = r.slopeRawUnit || '';
     row['Slope Normalized (per min)'] = typeof r.slopeNorm === 'number' && !Number.isNaN(r.slopeNorm) ? r.slopeNorm : null;
@@ -634,12 +721,16 @@ document.getElementById('show-image-button').addEventListener('click', function 
   const errDiv = document.getElementById('mims-error-alert'); if (errDiv) errDiv.innerHTML = '';
   const fileInput = document.getElementById('MIMS_file'); const file = fileInput.files[0];
   if (!file) { if (errDiv) errDiv.innerHTML = `<div class="alert alert-danger">Please select a MIMS file first.</div>`; return; }
-  const selectedModel = (document.querySelector('select[name="MIMS_model"]') || {}).value || 'MS GAS (Photon System Instruments)';
+const selectedModel = (document.querySelector('select[name="MIMS_model"]') || {}).value || '';
   const ext = (file.name.split('.').pop() || '').toLowerCase();
-  const isCSV = ext === 'csv'; const isASCI = ext === 'asc' || ext === 'asci';
+  const isCSV = ext === 'csv'; 
+  const isASCI = ext === 'asc' || ext === 'asci';
+  
   let valid = false;
+  // HPR40 uses CSV
   if (selectedModel.includes('HPR40') && isCSV) valid = true;
-  if (selectedModel.includes('MS GAS') && isASCI) valid = true;
+  // Both MS GAS and QMS use ASC/ASCI files
+  if ((selectedModel.includes('MSGAS') || selectedModel.includes('QMS')) && isASCI) valid = true;
   if (!valid) { if (errDiv) errDiv.innerHTML = `<div class="alert alert-danger">Invalid file type for selected model.</div>`; return; }
 
   parseMIMSFile(file, function(result) {

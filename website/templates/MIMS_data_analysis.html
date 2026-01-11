@@ -69,11 +69,15 @@ making it particularly valuable for sensitive and rapid analysis in both researc
     <div class="gallery_6_img">
         <a href="https://www.hidenanalytical.com/products/gas-analysis/hpr-40-dsa/" target="_blank" class="gallery__item--1">
             <i style="font-size:80%">Hiden HPR-40</i>
-            <img src="static/images/HPR40.jpg" alt="HPR40" class="gallery__item--1">
+            <img src="static/images/HPR40.jpg" alt="HPR-40" class="gallery__item--1">
+        </a>
+        <a href="https://www.pfeiffer-vacuum.com/global/en/products/measurement-technology/mass-spectrometers/" target="_blank" class="gallery__item--3">
+          <i style="font-size:80%">Prisma Plus&trade;</i>
+          <img src="static/images/prisma.jpg" alt="Prisma Plus" class="gallery__item--3">
         </a>
         <a href="https://mims.psi.cz/products/mass-spectrometer-ms-gas/" target="_blank" class="gallery__item--2">
           <i style="font-size:80%">MS GAS</i>
-          <img src="static/images/MS100.jpg" alt="HPR40" class="gallery__item--2">
+          <img src="static/images/MS100.jpg" alt="MS GAS" class="gallery__item--2">
         </a>
     </div>
 </div>
@@ -94,33 +98,33 @@ making it particularly valuable for sensitive and rapid analysis in both researc
 <p><small>
 <u>Calibration of MIMS signals</u>
 <br>
-Please note that the tool does not provide option for data calibration. 
   Calibration of raw or normalized MIMS signals is typically done by linear regression between the measured signal 
-  and the known concentration of the gas  according to the equation:
+  and the known concentration of the gas according to the equation:
     <p align="center" style="font-size:14px">$$
     y = a \, x + b
     $$
     </p>
-where <i>y</i> is the gas concentration in real units (e.g. µmol L<sup>-1</sup>), <i>x</i> is the measured MIMS signal, 
-<i>a</i> is the calibration slope, and <i>b</i> is the intercept.  
-The slope <i>a</i> describes how strongly the signal responds to changes in concentration, while the intercept <i>b</i> accounts for background offsets in the system.
-Both raw and normalized MIMS signals can be used for calibration.
+  where <i>y</i> is the gas concentration in real units (e.g. µmol L<sup>-1</sup>), <i>x</i> is the measured MIMS signal (either raw or normalized), 
+  <i>a</i> is the calibration slope, and <i>b</i> is the intercept.  
+  The slope <i>a</i> describes how strongly the signal responds to changes in concentration, while the intercept <i>b</i> accounts for background MIMS offset.
+ Both raw and normalized MIMS signals can be used for calibration. 
+ The use of normalized signals assumes that the gas used for normalization remains at a stable concentration in the calibration mixture.
 <br><br>
 <u>Calibration of slopes (signal derivatives)</u>
 <br>
-The tool also provides derivatives of the MIMS signal, i.e. the change of signal over time. 
+The tool also allows to determine derivatives of the MIMS signal, i.e. the change of signal over time. 
 To convert these derivatives into real units (e.g. µmol L<sup>-1</sup> min<sup>-1</sup>), only the slope <i>a</i> is required: 
   <p align="center" style="font-size:14px">$$
     y = a \, s
   $$</p>
-Here, <i>s</i> is the derivative of the MIMS signal (<i>signal min<sup>-1</sup></i>), and <i>y</i> is the rate of concentration change in real units.  
+Here, <i>s</i> is the derivative of the MIMS signal (<i>signal min<sup>-1</sup></i>), <i>a</i> is again the calibration slope, 
+and <i>y</i> is the rate of concentration change in real units.  
 The intercept <i>b</i> disappears because the derivative of a constant is zero:
   <p align="center" style="font-size:14px">$$
   \frac{d}{dt}(a \, x + b) = a \, \frac{dx}{dt} + \frac{db}{dt} = a \, s
   $$</p>
-This is why only the slope <i>a</i> is needed when working with signal derivatives: the calibration intercept has no effect on rates of change.
-<br><br>
-Please not that the equilibrium concentration of dissolved <i>O<sub>2</sub></i> and <i>CO<sub>2</sub></i> in water can be estimated in   
+<br>
+Please note that the equilibrium concentration of dissolved <i>O<sub>2</sub></i> and <i>CO<sub>2</sub></i> in water can be estimated in   
   <a href="/calculators#dO2_conc" target="blank">dO<sub>2</sub></a> and 
   <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="blank">dCO<sub>2</sub> calculators</a>.
 </small></p>
@@ -130,8 +134,9 @@ Please not that the equilibrium concentration of dissolved <i>O<sub>2</sub></i> 
         <div class="form-group">    
             <p><b>1. Select MIMS model</b><p>
             <select name="MIMS_model" class="form-control"  aria-label="MIMS_model">
-                <option selected="HPR40 (Hiden Analytical)">HPR40 (Hiden Analytical)</option>
-                <option selected="MS GAS (Photon System Instruments)">MS GAS (Photon System Instruments)</option>
+                <option value="HPR40">MASsoft&reg;7 software; HPR-40 (Hiden Analytical)</option>
+                <option value="MSGAS">Quadera&reg; software; MS GAS (Photon System Instruments) or QMS Prisma Plus&trade; (Pfeiffer Vacuum)</option>
+                <option value="QMS">Quadstar&reg; software; QMS Prisma Plus&trade; (Pfeiffer Vacuum)</option> 
             </select>
         </div>
         <p class="font-weight-bold">2. Select the MIMS file</p>
@@ -147,8 +152,8 @@ Please not that the equilibrium concentration of dissolved <i>O<sub>2</sub></i> 
         </div>
         <div id="mims-error-alert" class="mt-3"></div>
         <button id="show-image-button" type="submit" class="btn btn-primary">Preview the MIMS file</button>
-        <a href="{{url_for('static', filename='files/MIMS_example_file_HPR_40.csv')}}" download="MIMS_example_file">
-            <button type="button" class="btn btn-outline-primary">Download example MIMS file</button>
+        <a href="{{url_for('static', filename='files/MIMS example files.zip')}}" download="MIMS_example_file">
+            <button type="button" class="btn btn-outline-primary">Download example MIMS files</button>
         </a>
     </div>
 </form>
