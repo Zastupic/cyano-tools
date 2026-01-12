@@ -1,85 +1,72 @@
-# Cyano-tools
+# CyanoTools
 
-## Computational tools for the analysis of fluorescence, microscopic and spectroscopic data, as obtained in laboratories working with algae, cyanobacteria and plants
+[![Website](https://img.shields.io/badge/Website-tools--py.e--cyanobacterium.org-blue)](https://tools-py.e-cyanobacterium.org/)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen)](#)
+[![Stack](https://img.shields.io/badge/Stack-Python%20|%20Flask-lightgrey)](https://www.pythonanywhere.com/)
 
-### The tools, available online (https://tools-py.e-cyanobacterium.org/), are designed to perform the following analyses:
-- ***Fluorometry***
-  - ***OJIP curves***
-    - Shifting (to F<sub>0</sub>' and F<sub>P</sub>) and normalizing (between F<sub>0</sub>' and F<sub>P</sub>) the measured OJIP curves, uploaded by a user
-    - Identifying F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> timing based on a second derivation of the fluorescence signal
-    - Eventual manual correction of F<sub>J</sub> and F<sub>I</sub> timing
-    - Calculating relevant parameters, including those based on F<sub>J</sub> and F<sub>I</sub>
-    - Plotting all OJIP curves (measured, shifted and normalized), second derivations and the calculated parameters
-    - Exporting all results and plots to a summary **.xlsx** file, available for download
-  - ***Rapid light curves***
-    - Plotting the measured rapid light curves (all fluorescence traces), uploaded by a user
-    - Fitting the measured curves by the equation of Platt et al., 1980
-    - Calculating relevant parameters
-    - Exporting all results and plots to a summary **.xlsx** file, available for download
-- ***Microscopy***
-  - ***Cell counting*** _(fluorescence microscopy, confocal microscopy)_
-    - ***Round cells***
-      - Automated identification of the cells on a fluorescence microscopy image uploaded by a user
-      - Automated counting of the identified cells
-      - Eventual manual correction
-    - ***Filamentous strains***
-      - Automated identification of filaments on a fluorescence microscopy image uploaded by a user
-      - Automated splitting the filaments to individual cells, and counting the individual cells
-      - Eventual manual correction
-  - ***Cell size estimation*** _(confocal microscopy)_
-    - ***Round cells***
-      - Manual selection of the cells on a confocal microscopy image uploaded by a user
-      - Automated determination of size of the selected cells
-      - Plotting the cell size histogram
-      - Exporting all results and plots to a summary **.xlsx** file, available for download
-    - ***Filamentous strains***
-      - Manual selection of the cells on a confocal microscopy image uploaded by a user
-      - Manual determination of size of the selected cells
-      - Plotting the cell size histogram
-      - Exporting all results and plots to a summary **.xlsx** file, available for download
-  - ***Pixel profiles***
-    - ***Round cells***
-      - Manual selection of the cells on a confocal microscopy image uploaded by a user
-      - Automated determination of pixels intensity across the cell profile (with fixed angle of 15°)
-      - Plotting average pixel intensities across cellular profiles for all selected cells
-      - Exporting all results and plots to a summary **.xlsx** file, available for download
-    - ***Filamentous strains***
-      - Manual selection of the cells and cells cross-section on a confocal microscopy image uploaded by a user
-      - Automated determination of pixels intensity across the selected cells cross-secions
-      - Plotting average pixel intensities across cellular profiles for all selected cells
-      - Exporting all results and plots to a summary **.xlsx** file, available for download
-- ***Spectrofluorometry***
-  - Selection of type of organism
-    -  Strain with _chlorophyll_ only
-    -  Strain with _chlorophyll_ and _phycocyanin_
-    -  Strain with _chlorophyll_ and _phycoerythrin_
-    -  Strain with _chlorophyll_ and _phycocyanin_ and _phycoerythrin_
-  - Selection of excitation and emission wavelengths of interest within the measured fluorescence excitation-emission matrix, uploaded by a user
-  - Selection of excitation and emission wavelengths for normalization
-  - Calculation of parameters related to ratio of PSII/PSI and antenna attachment to PSII or PSI
-  - Plotting the spectra and calculated parameters
-  - Exporting all results and plots to a summary **.xlsx** file, available for download
+**CyanoTools** is a collection of open-access, web-based computational tools designed for researchers working with photosynthetic microorganisms, algae, and plants. Developed by the **Department of Adaptive Biotechnologies (DoAB)** at the Global Change Research Institute of the Czech Academy of Sciences, it provides high-performance analysis for fluorescence, microscopic, and spectroscopic data.
 
-### The tools accept data files from the following devices:
-- ***Fluorometers***
-  - **Multi-Color PAM / Dual PAM**, Walz
-    - .csv
-  - **AquaPen / FluorPen**, Photon System Instruments
-    - .txt
-- ***Confocal and fluorescence microscopes***
-  - .png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif
-- ***Spectrofluorometers***
-  - **FP series**, Jasco
-    - .csv
+## 🚀 Key Features
+- **Research-Focused:** Tailored for cyanobacterial and algal biology.
+- **Batch Processing:** Support for up to 50 files simultaneously with summary `.xlsx` exports.
+- **Privacy First:** Data is processed in-session or temporarily and is never retained or shared.
+- **No Installation:** Runs entirely in the browser across desktops, tablets, and phones.
 
-### The tools are based on python ***Flask*** framework, and are hosted at https://www.pythonanywhere.com/. The files related to individual tools are located in the folder ***Website*** within main folder (***Flask_server***). The folder ***Website*** contains the following sub-folders and files:
-- Folder **static**
-  - Sub-folders **images**, **files** and **uploads**
-  - Files:
-    - The main **.css** file
-    - All **.js** files
-- Folder **templates**
-  - All **.html** files
-- Files:
-  - All **.py** files
+---
 
+## 🛠️ Analytical Tools Overview
+
+### 1. Chlorophyll Fluorescence Analysis
+Comprehensive processing for PAM (Pulse-Amplitude-Modulation) fluorometry data.
+- **OJIP Curves:** - Automatic shifting and normalization (F₀ to Fₚ).
+  - Inflection point identification (J, I, P) using 2nd derivation.
+  - Calculation of efficiency parameters for PSII and electron transport.
+- **Rapid Light Curves (RLC):** - Fitting curves using the Platt et al. (1980) equation.
+  - Parameter calculation (ETRmax, α, Ek) and automated plotting.
+- **Slow (Kautsky) Kinetics:** - Analysis of induction kinetics, NPQ relaxation, and state transitions.
+  - Calculates QY, rETR, qP, qN, and NPQ.
+
+### 2. Microscopy & Image Analysis
+Optimized for fluorescence and confocal microscopy images.
+- **Cell Counting:** - **Round Cells:** Automated detection and counting.
+  - **Filamentous Strains:** Automated filament segmentation into individual cells.
+- **Cell Size Estimation:** - Manual selection with automated size determination and histogram generation.
+- **Pixel/Pigment Profiles:** - Analyzes fluorescence intensity across cellular cross-sections.
+  - Supports multi-channel overlays (up to 4 channels) to study intracellular pigment distribution.
+
+### 3. Spectrofluorometry
+Analysis of 3D Excitation-Emission Matrices (EEM).
+- **Pigment Composition:** Supports strains with Chlorophyll, Phycocyanin, and Phycoerythrin.
+- **Energy Transfer:** Calculates ratios for PSII/PSI and antenna attachment.
+- **Normalization:** Custom selection of excitation/emission wavelengths for spectrum normalization.
+
+### 4. Specialized Tools
+- **MIMS (Membrane Inlet Mass Spectrometry):** Visualization and normalization of dissolved gases (O₂, CO₂, H₂, CH₄).
+- **Photobioreactors:** Specific growth rate analysis for batch and turbidostat experiments (e.g., FMT-150).
+- **Calculators:** Tools for CO₂/O₂ solubility, OD₇₂₀ non-linearity correction, and device-to-device OD recalibration.
+
+---
+
+## 📱 Supported Devices & Formats
+
+| Category | Supported Devices | File Formats |
+| :--- | :--- | :--- |
+| **Fluorometers** | Walz (Multi-Color PAM, Dual PAM), PSI (AquaPen, FluorPen, FL 6000) | `.csv`, `.txt` |
+| **Microscopes** | Any Confocal or Fluorescence Microscope | `.png`, `.jpg`, `.tif`, `.bmp`, `.gif` |
+| **Spectrofluorometers** | Jasco (FP-8050 Series and others) | `.csv` |
+| **MIMS** | Hiden HPR-40, MS GAS | `.csv`, `.asc` |
+| **Photobioreactors** | PSI (FMT-150) | `.xlsx` |
+
+---
+
+## 📂 Project Structure
+The website is built on the **Python Flask** framework and hosted on PythonAnywhere.
+```text
+Flask_server/
+└── Website/
+    ├── static/          # CSS, JS, and image assets
+    │   ├── images/      # UI icons and graphics
+    │   ├── files/       # Sample data files
+    │   └── uploads/     # Temporary user data handling
+    ├── templates/       # HTML Jinja2 templates
+    └── *.py             # Backend logic for individual analytical tools
