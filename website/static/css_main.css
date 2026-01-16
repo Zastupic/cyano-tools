@@ -931,3 +931,172 @@ margin: 0 auto;
 padding: 0 20px;
 }
 
+.loader-container {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  } 
+.custom-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+  }
+/* ==========================================================================
+   STATISTICS TOOL SPECIFIC STYLES
+   ========================================================================== */
+
+/* Container for Variable Checkboxes */
+.variable-box {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 15px; /* Matches your 'feature' class */
+    background-color: #f9f9f9;
+    margin-bottom: 1rem;
+}
+
+/* Customizing Checkboxes to match your green theme */
+.form-check-input:checked {
+    background-color: #00b894; /* Matches your --text-color-highlight */
+    border-color: #00b894;
+}
+
+/* Plot Card Styling - Consistent with your 'feature' class */
+.plot-card-wrapper {
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e0e0e0;
+    transition: transform 0.3s ease;
+    color: #333; /* Dark text for readability on white background */
+}
+
+.plot-card-wrapper:hover {
+    transform: translateY(-5px);
+}
+
+.plot-card-wrapper img {
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+/* Stats Table within the cards */
+.plot-card-wrapper table {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    background-color: transparent;
+}
+
+.plot-card-wrapper table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Button override to match your brand */
+#updateAnalysisBtn {
+    background-color: #00b894;
+    border: none;
+    font-weight: bold;
+}
+
+#updateAnalysisBtn:hover {
+    background-color: #009475;
+}
+
+/* Custom Green Tabs */
+#statsTab .nav-link.active {
+    border-bottom: 3px solid #00b894;
+    color: #00b894 !important;
+    background-color: #f8f9fa;
+}
+
+#statsTab .nav-link:hover {
+    color: #00b894;
+    border-color: #dee2e6 #dee2e6 #00b894;
+}
+
+#statsTabContent {
+    min-height: 400px; /* Prevents layout jump when switching tabs */
+}
+/* Styling for Factor Tags Interaction */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.hover-white:hover {
+    color: #ffffff !important;
+    transform: scale(1.2);
+    transition: all 0.2s ease;
+}
+
+.badge.bg-primary {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.badge.bg-primary:hover {
+    background-color: #0056b3 !important; /* Darker blue on hover */
+    transform: translateY(-2px);
+}
+
+/* Ensure icons align correctly */
+.bi-x-circle-fill {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* Nice fading alert animation */
+.animate__animated {
+    animation-duration: 0.5s;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate__fadeInUp {
+    animation-name: fadeInUp;
+}
+
+/* Style the factor selector when limit is reached */
+.factor-limit-reached {
+    border-color: #ff7675 !important;
+    background-color: #fff5f5 !important;
+}
+
+/* Optional: Adding a soft glow to the active factor tags */
+.badge.bg-primary {
+    box-shadow: 0 2px 4px rgba(10, 36, 77, 0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Force the dropdown to respect sidebar width */
+#factorSelector {
+    width: 100% !important;
+    max-width: 100%;
+    table-layout: fixed;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Optional: This ensures the dropdown options don't push the box 
+   but remain readable when the menu is actually clicked open */
+#factorSelector option {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+

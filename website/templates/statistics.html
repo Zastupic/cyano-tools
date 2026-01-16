@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Statistics - Beta {% endblock %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="wrapper-box">
+        <!-- Hero Section -->
+        <div class="row mb-4 w-100">
+            <div class="col-12">
+                <div class="p-4 border rounded shadow-sm bg-white">
+                    <h2 class="fw-bold mb-3">
+                        <i class="bi bi-graph-up-arrow"></i> Statistics Tool
+                    </h2>
+                    <p class="lead mb-4" style="font-size: 1.1rem;">
+                        Streamline analysis of wet-lab cultivation experiments and physiological assays. 
+                        Process complex datasets with multi-factor grouping, descriptive statistics, and instant visualizations.
+                    </p>
+                    <!-- Key Features Grid -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-light rounded h-100">
+                                <h6 class="fw-bold text-primary mb-2">
+                                    <i class="bi bi-layers"></i> Multi-Factor Analysis
+                                </h6>
+                                <p class="small mb-0 text-muted">Group by up to 3 factors for comprehensive cross-variable insights</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-light rounded h-100">
+                                <h6 class="fw-bold text-primary mb-2">
+                                    <i class="bi bi-cpu"></i> Smart Data Parsing
+                                </h6>
+                                <p class="small mb-0 text-muted">Handles scientific notation and auto-strips units (e.g., "h⁻¹")</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-light rounded h-100">
+                                <h6 class="fw-bold text-primary mb-2">
+                                    <i class="bi bi-bar-chart"></i> Rich Visualizations
+                                </h6>
+                                <p class="small mb-0 text-muted">Box plots with swarm overlays plus instant N, Mean, Std Dev</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="p-3 bg-light rounded h-100">
+                                <h6 class="fw-bold text-primary mb-2">
+                                    <i class="bi bi-file-earmark-excel"></i> Easy Export
+                                </h6>
+                                <p class="small mb-0 text-muted">Download complete analysis reports as .xlsx files</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Collapsible Data Requirements (Bootstrap 4) -->
+                    <div class="accordion" id="requirementsAccordion">
+                        <div class="card">
+                            <div class="card-header" id="headingRequirements">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link collapsed w-100 text-left" type="button" data-toggle="collapse" data-target="#dataRequirements" aria-expanded="false" aria-controls="dataRequirements">
+                                        <i class="bi bi-info-circle mr-2"></i> Data Requirements & Best Practices
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="dataRequirements" class="collapse" aria-labelledby="headingRequirements" data-parent="#requirementsAccordion">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="font-weight-bold mb-2">Required Format:</h6>
+                                            <ol class="small">
+                                                <li><strong>Long Tabular Structure:</strong> One observation per row</li>
+                                                <li><strong>Numeric Consistency:</strong> Values must be numeric (units auto-handled)</li>
+                                                <li><strong>Independent Measurements:</strong> Each data point should be independent</li>
+                                                <li><strong>Discrete Factors:</strong> Use clear categorical variables for grouping</li>
+                                            </ol>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="alert alert-info mb-0">
+                                                <strong><i class="bi bi-lightbulb"></i> Current Status:</strong>
+                                                <p class="small mb-0 mt-2">Optimized for data visualization and basic satistics. ANOVA and advanced statistical tests are under development.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Example Data Download Button Inside Accordion -->
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <hr class="my-3">
+                                            <div class="text-center">
+                                                <p class="small text-muted mb-2">Need a sample dataset to get started?</p>
+                                                <a href="{{url_for('static', filename='files/ExampleStatisticsData.xlsx')}}" 
+                                                   class="btn btn-outline-primary btn-sm" 
+                                                   download>
+                                                    <i class="bi bi-download mr-1"></i> Download Example Dataset
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Main Work Area -->
+        <div class="row w-100">
+            <!-- Left Panel: Data Input -->
+            <div class="col-md-4">
+                <div class="p-3 border rounded shadow-sm bg-light">
+                    <h5 class="fw-bold border-bottom pb-2 mb-3">
+                        <span class="badge bg-primary me-2">1</span> Data Input
+                    </h5>
+                    <p class="small text-muted mb-3">
+                        Copy-paste date from an Excel file, or paste Tab-delimited data
+                    </p>
+                    <textarea id="excelPasteBox" class="form-control mb-3" rows="6" 
+                              placeholder="Paste your Excel data with headers here..."></textarea>
+                    <button id="processDataBtn" class="btn btn-primary w-100 fw-bold shadow-sm">
+                        <i class="bi bi-upload"></i> Load Data
+                    </button>
+                    <!-- Selection Card (hidden initially) -->
+                    <div id="selectionCard" class="mt-4" style="display:none;">
+                        <h5 class="fw-bold border-bottom pb-2 mb-3">
+                            <span class="badge bg-primary me-2">2</span> Select Categirical Factors
+                        </h5>
+                        <p class="small text-muted mb-3">
+                            Choose up to 3 factors to categorize your data
+                        </p>
+                        
+                        <div class="mb-3">
+                            <select id="factorSelector" class="form-control form-control-sm">
+                                <option value="">-- Choose Factor --</option>
+                            </select>
+                        </div>
+                        <div id="activeFactorsContainer" class="d-flex flex-column gap-2 mb-4"></div>
+                        <h5 class="fw-bold border-bottom pb-2 mb-3">
+                            <span class="badge bg-primary me-2">3</span> Select Variables
+                        </h5>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="selectAllVars">
+                            <label class="form-check-label small fw-bold" for="selectAllVars">
+                                Select All Variables
+                            </label>
+                        </div>
+                        
+                        <div id="checkboxContainer" class="mb-3" 
+                             style="max-height: 300px; overflow-y: auto; padding-right: 5px;"></div>
+                        <button id="updateAnalysisBtn" class="btn btn-success w-100 fw-bold shadow-sm">
+                            <i class="bi bi-play-fill"></i> Run Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Right Panel: Results -->
+            <div class="col-md-8">
+                <!-- Results Area (hidden initially) -->
+                <div id="resultsArea" style="display: none;">
+                    <ul class="nav nav-tabs mb-3" id="statsTab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active fw-bold" id="viz-tab" 
+                                    data-bs-toggle="tab" data-bs-target="#viz-content">
+                                <i class="bi bi-bar-chart-line"></i> Visualizations
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold" id="tests-tab" 
+                                    data-bs-toggle="tab" data-bs-target="#tests-content">
+                                <i class="bi bi-calculator"></i> Statistical Tests
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content border p-3 rounded bg-white shadow-sm">
+                        <div class="tab-pane fade show active" id="viz-content" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                <h5 class="fw-bold mb-0"></h5>
+                                <button id="downloadExcelBtn" class="btn btn-success btn-sm fw-bold">
+                                    <i class="bi bi-download"></i> Download results
+                                </button>
+                            </div>
+                            <div id="loadingSpinner" class="loader-container" style="display: none;">
+                                <div class="custom-spinner"></div>
+                            </div>
+                            <div id="statsContent" class="row"></div>
+                        </div>
+                        <div class="tab-pane fade" id="tests-content" role="tabpanel">
+                            <div class="text-center py-5">
+                                <i class="bi bi-tools fs-1 text-muted"></i>
+                                <h5 class="mt-3 text-muted">Advanced Statistical Tests</h5>
+                                <p class="text-muted">Coming soon: ANOVA, t-tests, and more</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Placeholder (shown initially) -->
+                <div id="placeholderText" class="text-center py-5">
+                    <i class="bi bi-table fs-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">Ready to Analyze</h5>
+                    <p class="text-muted">Paste your dataset in the left panel to begin</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{url_for('static', filename='js_statistics.js')}}"></script>
+{% endblock %}
