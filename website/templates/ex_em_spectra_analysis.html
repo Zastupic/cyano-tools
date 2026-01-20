@@ -533,7 +533,10 @@ After processing, all spectra, derived parameters, and summary statistics are co
 {% if spectra_plot_from_memory %}
 <section id="results"></section>
 <div class="container">
-    <br> <br>
+    <br><br>
+    <h6><b>2D fluorescence maps: </b></h6>
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ map_2d_plot_from_memory }}"/>
+    <br><br>
     <h6><b>Excitations and emission spectra - raw data: </b></h6>
     <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ spectra_plot_from_memory }}"/>
     <br><br>

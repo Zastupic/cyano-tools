@@ -23,6 +23,7 @@ def analyze_ex_em_spectra():
         emission_wavelengths = []
         wavelengths_for_norm = []
         files_names = []
+        spectra_2d_maps = [] 
         spectra_plot_from_memory = normalized_spectra_plot_from_memory = bar_plot_from_memory = ()
         Ex_Em_spectra_file = param_all = pd.DataFrame()
         Excitation_1 = Excitation_2 = Excitation_3 = Excitation_4 = Excitation_5 = Excitation_6 = Emission_1 = Emission_2 = Emission_3 = Emission_4 = Emission_5 = Emission_6 = pd.DataFrame()
@@ -47,7 +48,7 @@ def analyze_ex_em_spectra():
             'Emission_4': Emission_4,
             'Emission_5': Emission_5,
             'Emission_6': Emission_6
-            }   
+            }
         ALLOWED_EXTENSIONS = set(['.csv, .CSV'])
         xlsx_file_path = file_name_without_extension = str('')
         # create upload directory, if there is not any
@@ -134,6 +135,11 @@ def analyze_ex_em_spectra():
                                     # reset index and drop first column
                                     Ex_Em_spectra_file.reset_index(inplace = True)
                                     Ex_Em_spectra_file = Ex_Em_spectra_file.drop(Ex_Em_spectra_file.columns[0], axis=1) # drop('index', axis=1)
+                                    # Append values to 2D maps
+                                    spectra_2d_maps.append((file_name_without_extension, 
+                                        Ex_Em_spectra_file.iloc[0, 1:].values,  # excitation wavelengths (first row, skip first col)
+                                        Ex_Em_spectra_file.iloc[1:, 0].values,  # emission wavelengths (first col, skip first row)
+                                        Ex_Em_spectra_file.iloc[1:, 1:].values))  # intensity matrix
                                     #################################################################
                                     ### Append individual excitations and emissions to dataframes ###
                                     #################################################################
@@ -624,7 +630,7 @@ def analyze_ex_em_spectra():
                                         fig_norm= plt.figure(figsize=(15,18))
                                         fig_norm.tight_layout() # Shrink to fit the canvas together with legend
                                         fig_norm.subplots_adjust(hspace=0.45) # add horizontal space to read the x-axis and titles well
-                                        fig_norm.suptitle("\t\t   Emission spectra \t\t\t\t     Excitation spectra".expandtabs(), x=0.1, y=.91, horizontalalignment='left', verticalalignment='top', fontsize = 15)
+                                        fig_norm.suptitle("\t Normalized emission spectra \t\t   Normalized excitation spectra".expandtabs(), x=0.1, y=.91, horizontalalignment='left', verticalalignment='top', fontsize = 15)
                                         ########## Sub-plot ##########
                                         fig_norm_1 = fig_norm.add_subplot(6,3,1)
                                         if str(request.form.get('ex_1')) != "":
@@ -1159,6 +1165,50 @@ def analyze_ex_em_spectra():
                                         plt.clf()
                                         plt.cla()
                                         plt.close()
+                                        ####################
+                                        ### plot 2D maps ###
+                                        ####################
+                                        if len(spectra_2d_maps) > 0:
+                                            # Calculate grid dimensions for subplot
+                                            n_files = len(spectra_2d_maps)
+                                            n_cols = min(4, n_files)  # Max 4 columns
+                                            n_rows = (n_files + n_cols - 1) // n_cols
+
+                                            fig_2d = plt.figure(figsize=(5*n_cols, 4*n_rows))
+                                            fig_2d.suptitle("2D Excitation-Emission Maps (Fluorescence Intensity)", fontsize=14, y=1.02)
+
+                                            for idx, (filename, ex_wl, em_wl, intensity) in enumerate(spectra_2d_maps):
+                                                ax = fig_2d.add_subplot(n_rows, n_cols, idx + 1)
+
+                                                # Create 2D heatmap using pcolormesh
+                                                # X = excitation wavelengths, Y = emission wavelengths, Z = intensity
+                                                X, Y = np.meshgrid(ex_wl.astype(float), em_wl.astype(float))
+
+                                                # Plot heatmap with colorbar
+                                                c = ax.pcolormesh(X, Y, intensity.astype(float), 
+                                                                  shading='auto', 
+                                                                  cmap='viridis')  # or 'jet', 'plasma', 'inferno'
+
+                                                ax.set_xlabel('Excitation wavelength (nm)')
+                                                ax.set_ylabel('Emission wavelength (nm)')
+                                                ax.set_title(filename, fontsize=10)
+
+                                                # Add colorbar
+                                                cbar = plt.colorbar(c, ax=ax)
+                                                cbar.set_label('Fluorescence (a.u.)')
+
+                                            fig_2d.tight_layout()
+
+                                            # Save 2D map plot to memory
+                                            memory_for_2d_plot = io.BytesIO()
+                                            plt.savefig(memory_for_2d_plot, bbox_inches='tight', format='JPEG', dpi=150)
+                                            memory_for_2d_plot.seek(0)
+                                            map_2d_plot_in_memory = base64.b64encode(memory_for_2d_plot.getvalue())
+                                            map_2d_plot_from_memory = map_2d_plot_in_memory.decode('ascii')
+
+                                            plt.clf()
+                                            plt.cla()
+                                            plt.close()
                                         #######################
                                         ### Export to excel ###
                                         #######################
@@ -1252,12 +1302,15 @@ def analyze_ex_em_spectra():
                                         img_parameters = Image(memory_for_bar_plot)
                                         img_data_raw = Image(memory_for_spectra_plot)
                                         img_data_normalized = Image(memory_for_normalized_spectra_plot)
+                                        img_map_2d_plot = Image(memory_for_2d_plot)
                                         img_parameters.anchor = 'A1'
                                         img_data_raw.anchor = 'A60'
                                         img_data_normalized.anchor = 'R60'
+                                        img_map_2d_plot.anchor = 'AJ1'
                                         ws.add_image(img_parameters)
                                         ws.add_image(img_data_raw)
                                         ws.add_image(img_data_normalized)
+                                        ws.add_image(img_map_2d_plot)
                                         wb.save(f'{upload_folder}/{file_name_without_extension}.xlsx')
                                         # save path for html
                                         xlsx_file_path = f'uploads/{file_name_without_extension}.xlsx'
@@ -1296,7 +1349,8 @@ def analyze_ex_em_spectra():
                         spectra_plot_from_memory = spectra_plot_from_memory,
                         normalized_spectra_plot_from_memory = normalized_spectra_plot_from_memory,
                         bar_plot_from_memory = bar_plot_from_memory,
-                        xlsx_file_path = xlsx_file_path
+                        xlsx_file_path = xlsx_file_path,
+                        map_2d_plot_from_memory = map_2d_plot_from_memory
                             )
 
     return render_template("ex_em_spectra_analysis.html")

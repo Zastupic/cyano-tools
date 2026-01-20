@@ -157,16 +157,25 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
 });
 
 // --- 4. Analysis & Export ---
-
 document.getElementById('updateAnalysisBtn').addEventListener('click', function() {
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    if (selectedFactors.length === 0) return alert("Select at least one factor.");
+    if (selectedVars.length === 0) return alert("Select at least one variable.");
+
+    document.getElementById('resultsArea').style.display = 'block';
+    document.getElementById('placeholderText').style.display = 'none';
+});
+
+document.getElementById('runVizBtn').addEventListener('click', function() {
     const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
     if (selectedFactors.length === 0) return alert("Select at least one factor.");
     if (selectedVars.length === 0) return alert("Select at least one variable.");
 
     const statsContent = document.getElementById('statsContent');
     const loadingSpinner = document.getElementById('loadingSpinner');
-    
-    document.getElementById('resultsArea').style.display = 'block';
+    const vizResultsHeader = document.getElementById('vizResultsHeader');
+
+    // Clear and show loading
     loadingSpinner.style.display = 'flex';
     statsContent.innerHTML = "";
 
@@ -184,7 +193,9 @@ document.getElementById('updateAnalysisBtn').addEventListener('click', function(
         loadingSpinner.style.display = 'none';
         if (result.error) throw new Error(result.error);
         lastResults = result;
-        document.getElementById('downloadExcelBtn').style.display = 'block';
+
+        // Show header with download button
+        document.getElementById('downloadExcelBtn').style.display = 'inline-flex';
 
         result.results.forEach(res => {
             const card = document.createElement('div');
@@ -239,4 +250,102 @@ document.getElementById('downloadExcelBtn').addEventListener('click', function()
         a.click();
         window.URL.revokeObjectURL(url);
     });
+});
+
+// --- 5. PCA Analysis Logic ---
+// 1. Add a global variable at the top of js_statistics.js to store PCA results
+let lastPCAResults = null;
+
+// 2. Updated runPCABtn Event Listener
+document.getElementById('runPCABtn').addEventListener('click', function() {
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    if (selectedVars.length < 2) {
+        return alert("PCA requires at least 2 variables to compare.");
+    }
+
+    const pcaResults = document.getElementById('pcaResults');
+    const pcaSpinner = document.getElementById('pcaSpinner');
+    const pcaHeader = document.getElementById('pcaResultsHeader');
+
+    // 1. CLEAR AND HIDE EVERYTHING AT START
+    pcaResults.innerHTML = "";
+    pcaHeader.style.display = 'none'; 
+    pcaSpinner.style.display = 'block';
+
+    fetch('/run-pca', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            data: globalData, 
+            variables: selectedVars, 
+            factors: selectedFactors 
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        pcaSpinner.style.display = 'none';
+        if (result.error) throw new Error(result.error);
+
+        lastPCAResults = result;
+
+        // 2. SHOW THE HEADER ONLY NOW
+        pcaHeader.style.display = 'flex'; 
+
+        pcaResults.innerHTML = `
+            <div class="plot-card-wrapper bg-white p-3 rounded shadow-sm border mb-3 text-center">
+                <img src="data:image/png;base64,${result.plot_url}" class="img-fluid rounded shadow-sm">
+            </div>
+            <div class="alert alert-success py-2 small shadow-sm text-left">
+                <strong>PCA Success:</strong> ${result.n_samples} samples analyzed 
+                    (${selectedVars.length} variables, ${selectedFactors.length} factors).
+                <br>PC1 explains ${(result.explained_variance[0] * 100).toFixed(1)}% of variance.
+                <br>PC2 explains ${(result.explained_variance[1] * 100).toFixed(1)}% of variance.
+            </div>
+        `;
+    })
+    .catch(err => {
+        pcaSpinner.style.display = 'none';
+        pcaHeader.style.display = 'none'; // Keep hidden on error
+        alert("PCA Error: " + err.message);
+    });
+});
+
+// --- 6. PCA Export & UI Logic ---
+
+// This listener handles the actual Excel download for PCA
+document.getElementById('downloadPCAExcelBtn').addEventListener('click', function() {
+    // Keep this as a safety "guard clause," but the alert is unnecessary 
+    // because the button is hidden until results are ready.
+    if (!lastPCAResults) return;
+
+    // Use the coordinates/table already processed and returned by the server
+    // this includes the PC1 and PC2 scores we want in the Excel file.
+    fetch('/export-pca-excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            pca_details: {
+                n_samples: lastPCAResults.n_samples,
+                variance: lastPCAResults.explained_variance,
+                plot_url: lastPCAResults.plot_url,
+                coordinates: lastPCAResults.pca_table, // This contains original data + scores
+                loadings: lastPCAResults.loadings      // This contains the arrow data
+            }
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Export failed");
+        return res.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "PCA_Full_Analysis_Report.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    })
+    .catch(err => alert("Export Error: " + err.message));
 });

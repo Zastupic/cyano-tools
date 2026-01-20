@@ -144,7 +144,7 @@
                         <div id="checkboxContainer" class="mb-3" 
                              style="max-height: 300px; overflow-y: auto; padding-right: 5px;"></div>
                         <button id="updateAnalysisBtn" class="btn btn-success w-100 fw-bold shadow-sm">
-                            <i class="bi bi-play-fill"></i> Run Analysis
+                            <i class="bi bi-play-fill"></i> Confirm Selection & Start Analyses
                         </button>
                     </div>
                 </div>
@@ -156,29 +156,66 @@
                     <ul class="nav nav-tabs mb-3" id="statsTab" role="tablist">
                         <li class="nav-item">
                             <button class="nav-link active fw-bold" id="viz-tab" 
-                                    data-bs-toggle="tab" data-bs-target="#viz-content">
-                                <i class="bi bi-bar-chart-line"></i> Visualizations
+                                    data-toggle="tab" data-target="#viz-content"> <i class="bi bi-bar-chart-line"></i> Visualizations
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold" id="pca-tab" 
+                                    data-toggle="tab" data-target="#pca-content"> <i class="bi bi-grid-3x3-gap"></i> Multivariate (PCA)
                             </button>
                         </li>
                         <li class="nav-item">
                             <button class="nav-link fw-bold" id="tests-tab" 
-                                    data-bs-toggle="tab" data-bs-target="#tests-content">
-                                <i class="bi bi-calculator"></i> Statistical Tests
+                                    data-toggle="tab" data-target="#tests-content"> <i class="bi bi-calculator"></i> Statistical Tests
                             </button>
                         </li>
                     </ul>
-                    <div class="tab-content border p-3 rounded bg-white shadow-sm">
+                    <div class="tab-content border p-3 rounded bg-white shadow-sm" id="statsTabContent">
                         <div class="tab-pane fade show active" id="viz-content" role="tabpanel">
-                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                                <h5 class="fw-bold mb-0"></h5>
-                                <button id="downloadExcelBtn" class="btn btn-success btn-sm fw-bold">
-                                    <i class="bi bi-download"></i> Download results
+                            <div class="p-3">
+                                <h5 class="fw-bold mb-3">Data Visualizations</h5>
+                                <p class="text-muted small">Generate box plots with swarm overlays for selected variables grouped by factors.</p>
+                            
+                                <button id="runVizBtn" class="btn btn-primary btn-sm mb-4">
+                                    <i class="bi bi-play-fill"></i> Run Visualizations
                                 </button>
+                                
+                                <div id="vizResultsHeader" class="d-flex justify-content-left align-items-left mb-3 pb-2 border-bottom">
+                                    <h5 class="fw-bold mb-0"></h5>
+                                    <button id="downloadExcelBtn" class="btn btn-success btn-sm fw-bold">
+                                        <i class="bi bi-download"></i> Download results
+                                    </button>
+                                </div>
+                            
+                                <div id="loadingSpinner" class="loader-container" style="display: none;">
+                                    <div class="custom-spinner"></div>
+                                </div>
+                            
+                                <div id="statsContent" class="row"></div>
                             </div>
-                            <div id="loadingSpinner" class="loader-container" style="display: none;">
-                                <div class="custom-spinner"></div>
+                        </div>
+                        <div class="tab-pane fade" id="pca-content" role="tabpanel">
+                            <div class="p-3">
+                                <h5 class="fw-bold mb-3">Principal Component Analysis</h5>
+                                <p class="text-muted small">PCA reduces the dimensionality of your data to show relationships between samples and variables.</p>
+
+                                <button id="runPCABtn" class="btn btn-primary btn-sm mb-4">
+                                    <i class="bi bi-play-fill"></i> Run PCA Analysis
+                                </button>
+                            
+                                <div id="pcaResultsHeader" style="display: none;" class="justify-content-between align-items-center mb-3">
+                                    <button id="downloadPCAExcelBtn" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-file-earmark-excel"></i> Export PCA Report
+                                    </button>
+                                </div>
+                            
+                                <div id="pcaSpinner" class="text-center py-4" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2 text-muted small">Calculating Variance & Generating Biplot...</p>
+                                </div>
+                            
+                                <div id="pcaResults" class="text-center"></div>
                             </div>
-                            <div id="statsContent" class="row"></div>
                         </div>
                         <div class="tab-pane fade" id="tests-content" role="tabpanel">
                             <div class="text-center py-5">
