@@ -8,8 +8,56 @@ from . import UPLOAD_FOLDER
 from time import strftime, localtime
 # from flask_login import current_user
 from werkzeug.utils import secure_filename
+from matplotlib.colors import LinearSegmentedColormap
 
 ex_em_spectra_analysis = Blueprint('ex_em_spectra_analysis', __name__)
+
+def apply_2d_map_range(ex_wl, em_wl, intensity, map_range):
+    """
+    Apply user-defined range to 2D map data.
+    
+    - If range is smaller than original data: crop to selected range
+    - If range extends beyond original data: pad with zeros
+    
+    Args:
+        ex_wl: Original excitation wavelengths (1D array)
+        em_wl: Original emission wavelengths (1D array)
+        intensity: Original intensity matrix (2D array)
+        map_range: Dict with 'ex_min', 'ex_max', 'em_min', 'em_max'
+    
+    Returns:
+        new_ex_wl, new_em_wl, new_intensity
+    """
+    # Determine step sizes from original data
+    ex_step = ex_wl[1] - ex_wl[0] if len(ex_wl) > 1 else 1
+    em_step = em_wl[1] - em_wl[0] if len(em_wl) > 1 else 1
+    
+    # Determine target ranges
+    ex_min = map_range['ex_min'] if map_range['ex_min'] else ex_wl.min()
+    ex_max = map_range['ex_max'] if map_range['ex_max'] else ex_wl.max()
+    em_min = map_range['em_min'] if map_range['em_min'] else em_wl.min()
+    em_max = map_range['em_max'] if map_range['em_max'] else em_wl.max()
+    
+    # Create new wavelength arrays for the target range
+    new_ex_wl = np.arange(ex_min, ex_max + ex_step, ex_step)
+    new_em_wl = np.arange(em_min, em_max + em_step, em_step)
+    
+    # Create zero-filled matrix for the new range
+    new_intensity = np.zeros((len(new_em_wl), len(new_ex_wl)))
+    
+    # Map original data into the new matrix
+    for i, ex in enumerate(ex_wl):
+        if ex_min <= ex <= ex_max:
+            # Find index in new excitation array
+            new_ex_idx = np.argmin(np.abs(new_ex_wl - ex))
+            for j, em in enumerate(em_wl):
+                if em_min <= em <= em_max:
+                    # Find index in new emission array
+                    new_em_idx = np.argmin(np.abs(new_em_wl - em))
+                    new_intensity[new_em_idx, new_ex_idx] = intensity[j, i]
+    
+    return new_ex_wl, new_em_wl, new_intensity
+
 
 @ex_em_spectra_analysis.route('/ex_em_spectra_analysis', methods=['GET', 'POST'])
 def analyze_ex_em_spectra():
@@ -24,7 +72,7 @@ def analyze_ex_em_spectra():
         wavelengths_for_norm = []
         files_names = []
         spectra_2d_maps = [] 
-        spectra_plot_from_memory = normalized_spectra_plot_from_memory = bar_plot_from_memory = ()
+        spectra_plot_from_memory = normalized_spectra_plot_from_memory = bar_plot_from_memory = map_2d_plot_from_memory = ()
         Ex_Em_spectra_file = param_all = pd.DataFrame()
         Excitation_1 = Excitation_2 = Excitation_3 = Excitation_4 = Excitation_5 = Excitation_6 = Emission_1 = Emission_2 = Emission_3 = Emission_4 = Emission_5 = Emission_6 = pd.DataFrame()
         Excitation_1_norm = Excitation_2_norm = Excitation_3_norm = Excitation_4_norm = Excitation_5_norm = Excitation_6_norm = Emission_1_norm = Emission_2_norm = Emission_3_norm = Emission_4_norm = Emission_5_norm = Emission_6_norm = pd.DataFrame()
@@ -93,6 +141,27 @@ def analyze_ex_em_spectra():
             if str(request.form.get('ex_for_norm')) != "" and str(request.form.get('em_for_norm')) != "":
                 wavelengths_for_norm.append(int(str(request.form.get('ex_for_norm'))))
                 wavelengths_for_norm.append(int(str(request.form.get('em_for_norm'))))
+                
+                # Read 2D map plotting range (optional)
+                map_range = {
+                    'ex_min': None, 'ex_max': None,
+                    'em_min': None, 'em_max': None
+                }
+
+                ex_map_min = request.form.get('ex_map_min')
+                ex_map_max = request.form.get('ex_map_max')
+                em_map_min = request.form.get('em_map_min')
+                em_map_max = request.form.get('em_map_max')
+
+                if ex_map_min and str(ex_map_min).strip():
+                    map_range['ex_min'] = int(ex_map_min) 
+                if ex_map_max and str(ex_map_max).strip():
+                    map_range['ex_max'] = int(ex_map_max) 
+                if em_map_min and str(em_map_min).strip():
+                    map_range['em_min'] = int(em_map_min)
+                if em_map_max and str(em_map_max).strip():
+                    map_range['em_max'] = int(em_map_max)
+                
                 # check if some file is selected
                 if '77K_files' in request.files:
                     # get list of files
@@ -1169,6 +1238,11 @@ def analyze_ex_em_spectra():
                                         ### plot 2D maps ###
                                         ####################
                                         if len(spectra_2d_maps) > 0:
+
+                                            # Transition: Black -> Dark Blue -> Green -> Yellow -> Orange -> Red
+                                            colors = ['black', 'indigo', 'blue', 'dodgerblue', 'deepskyblue', 'cyan', 'mediumspringgreen', 'lime', 'chartreuse', 'yellow', 'orange', 'orangered']
+                                            custom_spectral = LinearSegmentedColormap.from_list('eem_spectral', colors)
+
                                             # Calculate grid dimensions for subplot
                                             n_files = len(spectra_2d_maps)
                                             n_cols = min(4, n_files)  # Max 4 columns
@@ -1180,20 +1254,26 @@ def analyze_ex_em_spectra():
                                             for idx, (filename, ex_wl, em_wl, intensity) in enumerate(spectra_2d_maps):
                                                 ax = fig_2d.add_subplot(n_rows, n_cols, idx + 1)
 
-                                                # Create 2D heatmap using pcolormesh
-                                                # X = excitation wavelengths, Y = emission wavelengths, Z = intensity
-                                                X, Y = np.meshgrid(ex_wl.astype(float), em_wl.astype(float))
+                                                # Apply user-defined range if any boundaries are specified
+                                                if any([map_range['ex_min'], map_range['ex_max'], 
+                                                        map_range['em_min'], map_range['em_max']]):
+                                                    plot_ex, plot_em, plot_intensity = apply_2d_map_range(
+                                                        ex_wl.astype(float), em_wl.astype(float), 
+                                                        intensity.astype(float), map_range
+                                                    )
+                                                else:
+                                                    plot_ex = ex_wl.astype(float)
+                                                    plot_em = em_wl.astype(float)
+                                                    plot_intensity = intensity.astype(float)
 
-                                                # Plot heatmap with colorbar
-                                                c = ax.pcolormesh(X, Y, intensity.astype(float), 
-                                                                  shading='auto', 
-                                                                  cmap='viridis')  # or 'jet', 'plasma', 'inferno'
+                                                # Create 2D heatmap using pcolormesh
+                                                X, Y = np.meshgrid(plot_ex, plot_em)
+                                                c = ax.pcolormesh(X, Y, plot_intensity, shading='auto', cmap=custom_spectral)
 
                                                 ax.set_xlabel('Excitation wavelength (nm)')
                                                 ax.set_ylabel('Emission wavelength (nm)')
                                                 ax.set_title(filename, fontsize=10)
 
-                                                # Add colorbar
                                                 cbar = plt.colorbar(c, ax=ax)
                                                 cbar.set_label('Fluorescence (a.u.)')
 
