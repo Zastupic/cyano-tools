@@ -165,8 +165,14 @@
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link fw-bold" id="tests-tab" 
-                                    data-toggle="tab" data-target="#tests-content"> <i class="bi bi-calculator"></i> Statistical Tests
+                            <button class="nav-link fw-bold" id="assumptions-tab" 
+                                    data-toggle="tab" data-target="#assumptions-content"> <i class="bi bi-calculator"></i> Assumptions
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold text-success" id="anova-tab" 
+                                    data-toggle="tab" data-target="#anova-content" style="display: none;"> 
+                                <i class="bi bi-list-check"></i> Significance Tests
                             </button>
                         </li>
                     </ul>
@@ -198,6 +204,29 @@
                             <div class="p-3">
                                 <h5 class="fw-bold mb-3">Principal Component Analysis</h5>
                                 <p class="text-muted small">PCA reduces the dimensionality of your data to show relationships between samples and variables.</p>
+                                
+                                <div class="bg-light p-3 rounded border mb-3">
+                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Data Preparation</h6>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="pcaRemoveMissing" checked>
+                                        <label class="form-check-label small" for="pcaRemoveMissing">
+                                            Remove rows with missing data (Required for PCA)
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="pcaAverageByFactor">
+                                        <label class="form-check-label small" for="pcaAverageByFactor">
+                                            Average replicates by factor(s) before analysis
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="pcaShowLoadings" checked>
+                                    <label class="form-check-label small fw-bold" for="pcaShowLoadings">
+                                        Plot Variable Loadings (Arrows)
+                                    </label>
+                                </div>
 
                                 <button id="runPCABtn" class="btn btn-primary btn-sm mb-4">
                                     <i class="bi bi-play-fill"></i> Run PCA Analysis
@@ -217,11 +246,71 @@
                                 <div id="pcaResults" class="text-center"></div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="tests-content" role="tabpanel">
+                        <div class="tab-pane fade" id="assumptions-content" role="tabpanel">
                             <div class="text-center py-5">
                                 <i class="bi bi-tools fs-1 text-muted"></i>
-                                <h5 class="mt-3 text-muted">Advanced Statistical Tests</h5>
-                                <p class="text-muted">Coming soon: ANOVA, t-tests, and more</p>
+                                <div class="p-3">
+                                    <h5 class="fw-bold mb-3">Statistical Assumptions Tests</h5>
+
+                                    <div class="alert alert-info border-0 shadow-sm mb-4">
+                                        <h6 class="fw-bold d-flex align-items-center">
+                                            <i class="bi bi-info-circle-fill me-2"></i> How to interpret these tests:
+                                        </h6>
+                                        <div class="row g-3 mt-1">
+                                            <div class="col-md-6">
+                                                <div class="p-2 bg-white rounded-3 border-start border-4 border-primary">
+                                                    <p class="small mb-1"><strong>1. Shapiro-Wilk (Normality)</strong></p>
+                                                    <p class="extra-small text-muted mb-0">
+                                                        Checks if each group follows a <strong>Normal Distribution</strong>. 
+                                                        If <span class="badge bg-light text-dark">p > 0.05</span>, the data is likely normal (Assumption Met).
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="p-2 bg-white rounded-3 border-start border-4 border-info">
+                                                    <p class="small mb-1"><strong>2. Levene's Test (Homogeneity)</strong></p>
+                                                    <p class="extra-small text-muted mb-0">
+                                                        Checks if <strong>Variances</strong> are equal across groups. 
+                                                        If <span class="badge bg-light text-dark">p > 0.05</span>, variances are consistent (Assumption Met).
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="extra-small text-muted mt-3 mb-0 italic">
+                                            * Note: If either test fails (p < 0.05), consider using non-parametric alternatives like Kruskal-Wallis or applying data transformations.
+                                        </p>
+                                    </div>
+                                
+                                    <button id="runTestsBtn" class="btn btn-primary btn-sm mb-4">
+                                        <i class="bi bi-play-fill"></i> Run Normality & Variance Tests
+                                    </button>
+                                
+                                    <div id="testSpinner" class="text-center py-4" style="display: none;">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                        <p class="mt-2 text-muted small">Performing statistical calculations...</p>
+                                    </div>
+                                    <div id="testResults"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="anova-content" role="tabpanel">
+                            <div class="p-3">
+                                <h5 class="fw-bold mb-3">Significance Testing</h5>
+                                <div class="alert alert-warning border-0 shadow-sm mb-4">
+                                    <h6 class="fw-bold"><i class="bi bi-lightbulb-fill"></i> Decision Guide</h6>
+                                    <ul class="small mb-0 pl-3">
+                                        <li><strong>One-Way ANOVA:</strong> Use if data passed <u>both</u> Normality and Homogeneity.</li>
+                                        <li><strong>Kruskal-Wallis:</strong> Use if data <u>failed</u> either assumption.</li>
+                                    </ul>
+                                </div>
+                                <button id="runAnovaBtn" class="btn btn-success btn-sm mb-4">
+                                    <i class="bi bi-lightning-fill"></i> Run Significance Tests
+                                </button>
+                                <div id="anovaSpinner" class="text-center py-4" style="display: none;">
+                                    <div class="spinner-border text-success" role="status"></div>
+                                    <p class="mt-2 text-muted small">Calculating p-values...</p>
+                                </div>
+                                <div id="anovaResults"></div>
                             </div>
                         </div>
                     </div>

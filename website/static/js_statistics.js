@@ -259,6 +259,10 @@ let lastPCAResults = null;
 // 2. Updated runPCABtn Event Listener
 document.getElementById('runPCABtn').addEventListener('click', function() {
     const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    const removeMissing = document.getElementById('pcaRemoveMissing').checked;
+    const averageByFactor = document.getElementById('pcaAverageByFactor').checked;
+    const showLoadings = document.getElementById('pcaShowLoadings').checked;
+
     if (selectedVars.length < 2) {
         return alert("PCA requires at least 2 variables to compare.");
     }
@@ -278,7 +282,10 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
         body: JSON.stringify({ 
             data: globalData, 
             variables: selectedVars, 
-            factors: selectedFactors 
+            factors: selectedFactors,
+            remove_missing: removeMissing, 
+            average_by_factors: averageByFactor, 
+            plot_loadings: showLoadings
         })
     })
     .then(res => res.json())
@@ -348,4 +355,155 @@ document.getElementById('downloadPCAExcelBtn').addEventListener('click', functio
         document.body.removeChild(a);
     })
     .catch(err => alert("Export Error: " + err.message));
+});
+
+// Test assumptions
+document.getElementById('runTestsBtn').addEventListener('click', function() {
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    
+    if (selectedVars.length === 0) {
+        return alert("Please select at least one variable in the 'Data Input' panel.");
+    }
+
+    const testResults = document.getElementById('testResults');
+    const testSpinner = document.getElementById('testSpinner');
+
+    testResults.innerHTML = "";
+    testSpinner.style.display = 'block';
+
+    fetch('/run-tests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            data: globalData, 
+            target_columns: selectedVars, 
+            factors: selectedFactors 
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        testSpinner.style.display = 'none';
+        if (data.error) throw new Error(data.error);
+
+        data.results.forEach(res => {
+            const section = document.createElement('div');
+            section.className = "mb-5 p-4 border rounded bg-white shadow-sm";
+            
+            // Check for Levene status for the summary alert
+            const leveneClass = res.levene.is_homogeneous === null ? 'secondary' : (res.levene.is_homogeneous ? 'success' : 'danger');
+            const leveneText = res.levene.is_homogeneous === null ? 'N/A' : (res.levene.is_homogeneous ? 'Equal' : 'Unequal');
+        
+            section.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h5 class="fw-bold text-primary mb-0">Variable: ${res.variable}</h5>
+                    <span class="badge bg-${leveneClass}">Variance: ${leveneText}</span>
+                </div>
+        
+                <div class="row">
+                    <div class="col-lg-8 text-center border-end">
+                        <img src="data:image/png;base64,${res.plot_url}" class="img-fluid rounded" style="max-height: 450px;">
+                    </div>
+        
+                    <div class="col-lg-4">
+                        <label class="small fw-bold text-uppercase text-muted mb-2">Normality (Shapiro-Wilk)</label>
+                        <div class="table-responsive">
+                            <table class="table table-sm extra-small">
+                                <thead class="table-light">
+                                    <tr><th>Group</th><th>p-val</th><th>Res.</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${res.shapiro.map(s => `
+                                        <tr class="${s.is_normal ? '' : 'table-danger-light'}">
+                                            <td class="text-truncate" style="max-width: 100px;">${s.group}</td>
+                                            <td>${s.p.toFixed(3)}</td>
+                                            <td>${s.is_normal ? '✅' : '❌'}</td>
+                                        </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="extra-small text-muted mt-2">
+                            <i class="bi bi-info-circle"></i> Green boxes in plot indicate normal distribution (p > 0.05).
+                        </p>
+                    </div>
+                </div>
+            `;
+            testResults.appendChild(section);
+        });
+
+        // Unhide the ANOVA tab
+        const anovaTab = document.getElementById('anova-tab');
+        anovaTab.style.display = 'block';
+        anovaTab.classList.add('animate__animated', 'animate__fadeIn');
+    })
+    .catch(err => {
+        testSpinner.style.display = 'none';
+        alert("Testing Error: " + err.message);
+    });
+});
+
+// 2. ADD NEW LISTENER for 'runAnovaBtn'
+document.getElementById('runAnovaBtn').addEventListener('click', function() {
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    const anovaSpinner = document.getElementById('anovaSpinner');
+    const anovaResults = document.getElementById('anovaResults');
+
+    anovaResults.innerHTML = "";
+    anovaSpinner.style.display = 'block';
+
+    fetch('/run-anova', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            data: globalData, 
+            target_columns: selectedVars, 
+            factors: selectedFactors 
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        anovaSpinner.style.display = 'none';
+        if (data.error) throw new Error(data.error);
+
+        data.results.forEach(res => {
+            const section = document.createElement('div');
+            section.className = "mb-4 p-3 border rounded bg-white shadow-sm";
+            
+            const isAnovaSig = res.anova.p !== null && res.anova.p < 0.05;
+            const isKruskalSig = res.kruskal.p !== null && res.kruskal.p < 0.05;
+
+            section.innerHTML = `
+                <h6 class="fw-bold border-bottom pb-2 text-success">${res.variable}</h6>
+                <div class="table-responsive mt-3">
+                    <table class="table table-bordered table-sm extra-small text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Test Type</th>
+                                <th>Statistic</th>
+                                <th>p-value</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-start fw-bold text-muted">Parametric (ANOVA)</td>
+                                <td>${res.anova.stat !== null ? res.anova.stat.toFixed(2) : '-'}</td>
+                                <td>${res.anova.p !== null ? res.anova.p.toFixed(4) : '-'}</td>
+                                <td>${isAnovaSig ? '<span class="badge bg-success">Significant</span>' : '<span class="badge bg-secondary">NS</span>'}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-start fw-bold text-muted">Non-Parametric (Kruskal)</td>
+                                <td>${res.kruskal.stat !== null ? res.kruskal.stat.toFixed(2) : '-'}</td>
+                                <td>${res.kruskal.p !== null ? res.kruskal.p.toFixed(4) : '-'}</td>
+                                <td>${isKruskalSig ? '<span class="badge bg-success">Significant</span>' : '<span class="badge bg-secondary">NS</span>'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>`;
+            anovaResults.appendChild(section);
+        });
+    })
+    .catch(err => {
+        anovaSpinner.style.display = 'none';
+        alert("ANOVA Error: " + err.message);
+    });
 });
