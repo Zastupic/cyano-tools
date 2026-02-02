@@ -154,13 +154,13 @@ def analyze_ex_em_spectra():
                 em_map_max = request.form.get('em_map_max')
 
                 if ex_map_min and str(ex_map_min).strip():
-                    map_range['ex_min'] = int(ex_map_min) 
+                    map_range['ex_min'] = int(ex_map_min)  # type: ignore
                 if ex_map_max and str(ex_map_max).strip():
-                    map_range['ex_max'] = int(ex_map_max) 
+                    map_range['ex_max'] = int(ex_map_max)  # type: ignore
                 if em_map_min and str(em_map_min).strip():
-                    map_range['em_min'] = int(em_map_min)
+                    map_range['em_min'] = int(em_map_min)  # type: ignore
                 if em_map_max and str(em_map_max).strip():
-                    map_range['em_max'] = int(em_map_max)
+                    map_range['em_max'] = int(em_map_max)  # type: ignore
                 
                 # check if some file is selected
                 if '77K_files' in request.files:
@@ -499,8 +499,8 @@ def analyze_ex_em_spectra():
                                             fig_2.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_2.set_title("Excitation 2 not selected")
-                                            fig_2.axes.get_xaxis().set_visible(False)
-                                            fig_2.axes.get_yaxis().set_visible(False)
+                                            fig_2.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_2.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_3 = fig.add_subplot(6,3,7)
                                         fig_3.set_ylabel('Fluorescence (a.u.)')
@@ -518,8 +518,8 @@ def analyze_ex_em_spectra():
                                             fig_3.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_3.set_title("Excitation 3 not selected")
-                                            fig_3.axes.get_xaxis().set_visible(False)
-                                            fig_3.axes.get_yaxis().set_visible(False)
+                                            fig_3.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_3.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_4 = fig.add_subplot(6,3,10)
                                         if str(request.form.get('ex_4')) != "":
@@ -535,8 +535,8 @@ def analyze_ex_em_spectra():
                                             fig_4.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_4.set_title("Excitation 4 not selected")
-                                            fig_4.axes.get_xaxis().set_visible(False)
-                                            fig_4.axes.get_yaxis().set_visible(False)
+                                            fig_4.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_4.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_5 = fig.add_subplot(6,3,13)
                                         if str(request.form.get('ex_5')) != "":
@@ -552,8 +552,8 @@ def analyze_ex_em_spectra():
                                             fig_5.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_5.set_title("Excitation 5 not selected")
-                                            fig_5.axes.get_xaxis().set_visible(False)
-                                            fig_5.axes.get_yaxis().set_visible(False)
+                                            fig_5.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_5.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_6 = fig.add_subplot(6,3,16)
                                         if str(request.form.get('ex_6')) != "":
@@ -570,8 +570,8 @@ def analyze_ex_em_spectra():
                                             fig_6.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_6.set_title("Excitation 6 not selected")
-                                            fig_6.axes.get_xaxis().set_visible(False)
-                                            fig_6.axes.get_yaxis().set_visible(False)
+                                            fig_6.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_6.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_7 = fig.add_subplot(6,3,2)
                                         if str(request.form.get('em_1')) != "":
@@ -590,8 +590,8 @@ def analyze_ex_em_spectra():
                                             fig_7.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02))
                                         else:
                                             fig_7.set_title("Emission 1 not selected")
-                                            fig_7.axes.get_xaxis().set_visible(False)
-                                            fig_7.axes.get_yaxis().set_visible(False)
+                                            fig_7.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_7.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_8 = fig.add_subplot(6,3,5)
                                         if str(request.form.get('em_2')) != "":
@@ -608,8 +608,8 @@ def analyze_ex_em_spectra():
                                             fig_8.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_8.set_title("Emission 2 not selected")
-                                            fig_8.axes.get_xaxis().set_visible(False)
-                                            fig_8.axes.get_yaxis().set_visible(False)
+                                            fig_8.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_8.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_9 = fig.add_subplot(6,3,8)
                                         if str(request.form.get('em_3')) != "":
@@ -626,8 +626,8 @@ def analyze_ex_em_spectra():
                                             fig_9.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_9.set_title("Emission 3 not selected")
-                                            fig_9.axes.get_xaxis().set_visible(False)
-                                            fig_9.axes.get_yaxis().set_visible(False)
+                                            fig_9.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_9.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_10 = fig.add_subplot(6,3,11)
                                         if str(request.form.get('em_4')) != "":
@@ -644,8 +644,8 @@ def analyze_ex_em_spectra():
                                             fig_10.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_10.set_title("Emission 4 not selected")
-                                            fig_10.axes.get_xaxis().set_visible(False)
-                                            fig_10.axes.get_yaxis().set_visible(False)
+                                            fig_10.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_10.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_11 = fig.add_subplot(6,3,14)
                                         if str(request.form.get('em_5')) != "":
@@ -662,8 +662,8 @@ def analyze_ex_em_spectra():
                                             fig_11.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_11.set_title("Emission 5 not selected")
-                                            fig_11.axes.get_xaxis().set_visible(False)
-                                            fig_11.axes.get_yaxis().set_visible(False)
+                                            fig_11.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_11.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_12 = fig.add_subplot(6,3,17)
                                         if str(request.form.get('em_6')) != "":
@@ -680,8 +680,8 @@ def analyze_ex_em_spectra():
                                             fig_12.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_12.set_title("Emission 6 not selected")
-                                            fig_12.axes.get_xaxis().set_visible(False)
-                                            fig_12.axes.get_yaxis().set_visible(False)
+                                            fig_12.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_12.axes.get_yaxis().set_visible(False) # type: ignore
                                         # saving scatter plot to memory
                                         memory_for_spectra_plot = io.BytesIO()
                                         plt.savefig(memory_for_spectra_plot, bbox_inches='tight', format='JPEG')
@@ -715,8 +715,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_1.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_norm_1.set_title("Excitation 1 not selected")
-                                            fig_norm_1.axes.get_xaxis().set_visible(False)
-                                            fig_norm_1.axes.get_yaxis().set_visible(False)
+                                            fig_norm_1.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_1.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_2 = fig_norm.add_subplot(6,3,4)
                                         if str(request.form.get('ex_2')) != "":
@@ -733,8 +733,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_2.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_norm_2.set_title("Excitation 2 not selected")
-                                            fig_norm_2.axes.get_xaxis().set_visible(False)
-                                            fig_norm_2.axes.get_yaxis().set_visible(False)
+                                            fig_norm_2.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_2.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_3 = fig_norm.add_subplot(6,3,7)
                                         fig_norm_3.set_ylabel('Fluorescence (r.u.)')
@@ -752,8 +752,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_3.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_norm_3.set_title("Excitation 3 not selected")
-                                            fig_norm_3.axes.get_xaxis().set_visible(False)
-                                            fig_norm_3.axes.get_yaxis().set_visible(False)
+                                            fig_norm_3.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_3.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_4 = fig_norm.add_subplot(6,3,10)
                                         if str(request.form.get('ex_4')) != "":
@@ -769,8 +769,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_4.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_norm_4.set_title("Excitation 4 not selected")
-                                            fig_norm_4.axes.get_xaxis().set_visible(False)
-                                            fig_norm_4.axes.get_yaxis().set_visible(False)
+                                            fig_norm_4.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_4.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_5 = fig_norm.add_subplot(6,3,13)
                                         if str(request.form.get('ex_5')) != "":
@@ -786,8 +786,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_5.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_norm_5.set_title("Excitation 5 not selected")
-                                            fig_norm_5.axes.get_xaxis().set_visible(False)
-                                            fig_norm_5.axes.get_yaxis().set_visible(False)
+                                            fig_norm_5.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_5.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_6 = fig_norm.add_subplot(6,3,16)
                                         if str(request.form.get('ex_6')) != "":
@@ -804,8 +804,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_6.set_xlabel('Emission wavelength (nm)')
                                         else:
                                             fig_norm_6.set_title("Excitation 6 not selected")
-                                            fig_norm_6.axes.get_xaxis().set_visible(False)
-                                            fig_norm_6.axes.get_yaxis().set_visible(False)
+                                            fig_norm_6.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_6.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_7 = fig_norm.add_subplot(6,3,2)
                                         if str(request.form.get('em_1')) != "":
@@ -824,8 +824,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_7.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02))
                                         else:
                                             fig_norm_7.set_title("Emission 1 not selected")
-                                            fig_norm_7.axes.get_xaxis().set_visible(False)
-                                            fig_norm_7.axes.get_yaxis().set_visible(False)
+                                            fig_norm_7.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_7.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_8 = fig_norm.add_subplot(6,3,5)
                                         if str(request.form.get('em_2')) != "":
@@ -842,8 +842,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_8.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_norm_8.set_title("Emission 2 not selected")
-                                            fig_norm_8.axes.get_xaxis().set_visible(False)
-                                            fig_norm_8.axes.get_yaxis().set_visible(False)
+                                            fig_norm_8.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_8.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_9 = fig_norm.add_subplot(6,3,8)
                                         if str(request.form.get('em_3')) != "":
@@ -860,8 +860,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_9.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_norm_9.set_title("Emission 3 not selected")
-                                            fig_norm_9.axes.get_xaxis().set_visible(False)
-                                            fig_norm_9.axes.get_yaxis().set_visible(False)
+                                            fig_norm_9.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_9.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_10 = fig_norm.add_subplot(6,3,11)
                                         if str(request.form.get('em_4')) != "":
@@ -878,8 +878,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_10.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_norm_10.set_title("Emission 4 not selected")
-                                            fig_norm_10.axes.get_xaxis().set_visible(False)
-                                            fig_norm_10.axes.get_yaxis().set_visible(False)
+                                            fig_norm_10.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_10.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_11 = fig_norm.add_subplot(6,3,14)
                                         if str(request.form.get('em_5')) != "":
@@ -896,8 +896,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_11.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_norm_11.set_title("Emission 5 not selected")
-                                            fig_norm_11.axes.get_xaxis().set_visible(False)
-                                            fig_norm_11.axes.get_yaxis().set_visible(False)
+                                            fig_norm_11.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_11.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_norm_12 = fig_norm.add_subplot(6,3,17)
                                         if str(request.form.get('em_6')) != "":
@@ -914,8 +914,8 @@ def analyze_ex_em_spectra():
                                             fig_norm_12.set_xlabel('Excitation wavelength (nm)')
                                         else:
                                             fig_norm_12.set_title("Emission 6 not selected")
-                                            fig_norm_12.axes.get_xaxis().set_visible(False)
-                                            fig_norm_12.axes.get_yaxis().set_visible(False)
+                                            fig_norm_12.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_norm_12.axes.get_yaxis().set_visible(False) # type: ignore
                                         # saving scatter plot to memory
                                         memory_for_normalized_spectra_plot = io.BytesIO()
                                         plt.savefig(memory_for_normalized_spectra_plot, bbox_inches='tight', format='JPEG')
@@ -941,8 +941,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_360_em_580.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_1.set_ylabel("a.u.")
                                         else:
-                                            fig_param_1.axes.get_xaxis().set_visible(False)
-                                            fig_param_1.axes.get_yaxis().set_visible(False)
+                                            fig_param_1.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_1.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_7 = fig_param.add_subplot(5,8,9)
                                         fig_param_7.set_title("Ex 360, Em 662")
@@ -950,8 +950,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_360_em_662.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_7.set_ylabel("a.u.")
                                         else:
-                                            fig_param_7.axes.get_xaxis().set_visible(False)
-                                            fig_param_7.axes.get_yaxis().set_visible(False)
+                                            fig_param_7.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_7.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_13 = fig_param.add_subplot(5,8,17)
                                         fig_param_13.set_title("Ex 360, Em 689")
@@ -959,8 +959,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_360_em_689.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_13.set_ylabel("a.u.")
                                         else:
-                                            fig_param_13.axes.get_xaxis().set_visible(False)
-                                            fig_param_13.axes.get_yaxis().set_visible(False)
+                                            fig_param_13.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_13.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_19 = fig_param.add_subplot(5,8,25)
                                         fig_param_19.set_title("Ex 360, Em 724")
@@ -968,8 +968,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_360_em_724.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_19.set_ylabel("a.u.")
                                         else:
-                                            fig_param_19.axes.get_xaxis().set_visible(False)
-                                            fig_param_19.axes.get_yaxis().set_visible(False)
+                                            fig_param_19.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_19.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_25 = fig_param.add_subplot(5,8,2)
                                         fig_param_25.set_title("Ex 440, Em 580")
@@ -977,8 +977,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_440_em_580.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_25.set_ylabel("a.u.")
                                         else:
-                                            fig_param_25.axes.get_xaxis().set_visible(False)
-                                            fig_param_25.axes.get_yaxis().set_visible(False)
+                                            fig_param_25.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_25.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_31 = fig_param.add_subplot(5,8,10)
                                         fig_param_31.set_title("Ex 440, Em 662")
@@ -986,8 +986,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_440_em_662.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_31.set_ylabel("a.u.")
                                         else:
-                                            fig_param_31.axes.get_xaxis().set_visible(False)
-                                            fig_param_31.axes.get_yaxis().set_visible(False)
+                                            fig_param_31.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_31.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_37 = fig_param.add_subplot(5,8,18)
                                         fig_param_37.set_title("Ex 440, Em 689")
@@ -995,8 +995,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_440_em_689.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_37.set_ylabel("a.u.")
                                         else:
-                                            fig_param_37.axes.get_xaxis().set_visible(False)
-                                            fig_param_37.axes.get_yaxis().set_visible(False)
+                                            fig_param_37.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_37.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_43 = fig_param.add_subplot(5,8,26)
                                         fig_param_43.set_title("Ex 440, Em 724")
@@ -1004,8 +1004,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_440_em_724.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_43.set_ylabel("a.u.")
                                         else:
-                                            fig_param_43.axes.get_xaxis().set_visible(False)
-                                            fig_param_43.axes.get_yaxis().set_visible(False)
+                                            fig_param_43.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_43.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_2 = fig_param.add_subplot(5,8,3)
                                         fig_param_2.set_title("Ex 560, Em 580")
@@ -1013,8 +1013,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_560_em_580.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_2.set_ylabel("a.u.")
                                         else:
-                                            fig_param_2.axes.get_xaxis().set_visible(False)
-                                            fig_param_2.axes.get_yaxis().set_visible(False)
+                                            fig_param_2.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_2.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_8 = fig_param.add_subplot(5,8,11)
                                         fig_param_8.set_title("Ex 560, Em 662")
@@ -1022,8 +1022,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_560_em_662.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_8.set_ylabel("a.u.")
                                         else:
-                                            fig_param_8.axes.get_xaxis().set_visible(False)
-                                            fig_param_8.axes.get_yaxis().set_visible(False)
+                                            fig_param_8.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_8.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_14 = fig_param.add_subplot(5,8,19)
                                         fig_param_14.set_title("Ex 560, Em 689")
@@ -1031,8 +1031,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_560_em_689.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_14.set_ylabel("a.u.")
                                         else:
-                                            fig_param_14.axes.get_xaxis().set_visible(False)
-                                            fig_param_14.axes.get_yaxis().set_visible(False)
+                                            fig_param_14.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_14.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_20 = fig_param.add_subplot(5,8,27)
                                         fig_param_20.set_title("Ex 560, Em 724")
@@ -1040,16 +1040,16 @@ def analyze_ex_em_spectra():
                                             fluo_ex_560_em_724.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_20.set_ylabel("a.u.")
                                         else:
-                                            fig_param_20.axes.get_xaxis().set_visible(False)
-                                            fig_param_20.axes.get_yaxis().set_visible(False)
+                                            fig_param_20.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_20.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_26 = fig_param.add_subplot(5,8,4)
                                         fig_param_26.set_title("Ex 620, Em 580")
                                         if len(fluo_ex_620_em_580) != 0:
                                             fluo_ex_620_em_580.plot.bar(xticks=[], color=colors[1:])
                                         else:
-                                            fig_param_26.axes.get_xaxis().set_visible(False)
-                                            fig_param_26.axes.get_yaxis().set_visible(False)
+                                            fig_param_26.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_26.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_32 = fig_param.add_subplot(5,8,12)
                                         fig_param_32.set_title("Ex 620, Em 662")
@@ -1057,8 +1057,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_620_em_662.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_32.set_ylabel("a.u.")
                                         else:
-                                            fig_param_32.axes.get_xaxis().set_visible(False)
-                                            fig_param_32.axes.get_yaxis().set_visible(False)
+                                            fig_param_32.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_32.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_38 = fig_param.add_subplot(5,8,20)
                                         fig_param_38.set_title("Ex 620, Em 689")
@@ -1067,8 +1067,8 @@ def analyze_ex_em_spectra():
 
                                             fig_param_38.set_ylabel("a.u.")
                                         else:
-                                            fig_param_38.axes.get_xaxis().set_visible(False)
-                                            fig_param_38.axes.get_yaxis().set_visible(False)
+                                            fig_param_38.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_38.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_44 = fig_param.add_subplot(5,8,28)
                                         fig_param_44.set_title("Ex 620, Em 724")
@@ -1076,8 +1076,8 @@ def analyze_ex_em_spectra():
                                             fluo_ex_620_em_724.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_44.set_ylabel("a.u.")
                                         else:
-                                            fig_param_44.axes.get_xaxis().set_visible(False)
-                                            fig_param_44.axes.get_yaxis().set_visible(False)
+                                            fig_param_44.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_44.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_3 = fig_param.add_subplot(5,8,5)
                                         fig_param_3.set_title("PBS-free")
@@ -1085,8 +1085,8 @@ def analyze_ex_em_spectra():
                                             PBS_free_fluo.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_3.set_ylabel("a.u.")
                                         else:
-                                            fig_param_3.axes.get_xaxis().set_visible(False)
-                                            fig_param_3.axes.get_yaxis().set_visible(False)
+                                            fig_param_3.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_3.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_9 = fig_param.add_subplot(5,8,13)
                                         fig_param_9.set_title("PBS-PSII")
@@ -1094,8 +1094,8 @@ def analyze_ex_em_spectra():
                                             PBS_PSII_fluo.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_9.set_ylabel("a.u.")
                                         else:
-                                            fig_param_9.axes.get_xaxis().set_visible(False)
-                                            fig_param_9.axes.get_yaxis().set_visible(False)
+                                            fig_param_9.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_9.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_15 = fig_param.add_subplot(5,8,21)
                                         fig_param_15.set_title("PBS-PSI")
@@ -1103,8 +1103,8 @@ def analyze_ex_em_spectra():
                                             PBS_PSI_fluo.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_15.set_ylabel("a.u.")
                                         else:
-                                            fig_param_15.axes.get_xaxis().set_visible(False)
-                                            fig_param_15.axes.get_yaxis().set_visible(False)
+                                            fig_param_15.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_15.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_21 = fig_param.add_subplot(5,8,29)
                                         fig_param_21.set_title("Chl-PSII")
@@ -1112,8 +1112,8 @@ def analyze_ex_em_spectra():
                                             Chl_PSII_fluo.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_21.set_ylabel("a.u.")
                                         else:
-                                            fig_param_21.axes.get_xaxis().set_visible(False)
-                                            fig_param_21.axes.get_yaxis().set_visible(False)
+                                            fig_param_21.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_21.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_27 = fig_param.add_subplot(5,8,37)
                                         fig_param_27.set_title("Chl-PSI")
@@ -1121,8 +1121,8 @@ def analyze_ex_em_spectra():
                                             Chl_PSI_fluo.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_27.set_ylabel("a.u.")
                                         else:
-                                            fig_param_27.axes.get_xaxis().set_visible(False)
-                                            fig_param_27.axes.get_yaxis().set_visible(False)
+                                            fig_param_27.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_27.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_4 = fig_param.add_subplot(5,8,6)
                                         fig_param_4.set_title("PBS-free / PBS-tot")
@@ -1130,8 +1130,8 @@ def analyze_ex_em_spectra():
                                             PBS_free_norm.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_4.set_ylabel("r.u.")
                                         else:
-                                            fig_param_4.axes.get_xaxis().set_visible(False)
-                                            fig_param_4.axes.get_yaxis().set_visible(False)
+                                            fig_param_4.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_4.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_9 = fig_param.add_subplot(5,8,14)
                                         fig_param_9.set_title("PBS-PSII / PBS-tot")
@@ -1139,8 +1139,8 @@ def analyze_ex_em_spectra():
                                             PBS_PSII_norm.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_9.set_ylabel("r.u.")
                                         else:
-                                            fig_param_9.axes.get_xaxis().set_visible(False)
-                                            fig_param_9.axes.get_yaxis().set_visible(False)
+                                            fig_param_9.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_9.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_14 = fig_param.add_subplot(5,8,22)
                                         fig_param_14.set_title("PBS-PSI / PBS-tot")
@@ -1148,8 +1148,8 @@ def analyze_ex_em_spectra():
                                             PBS_PSI_norm.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_14.set_ylabel("r.u.")
                                         else:
-                                            fig_param_14.axes.get_xaxis().set_visible(False)
-                                            fig_param_14.axes.get_yaxis().set_visible(False)
+                                            fig_param_14.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_14.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_19 = fig_param.add_subplot(5,8,30)
                                         fig_param_19.set_title("Chl-PSII / Chl-tot")
@@ -1157,8 +1157,8 @@ def analyze_ex_em_spectra():
                                             Chl_PSII_norm.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_19.set_ylabel("r.u.")
                                         else:
-                                            fig_param_19.axes.get_xaxis().set_visible(False)
-                                            fig_param_19.axes.get_yaxis().set_visible(False)
+                                            fig_param_19.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_19.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_24 = fig_param.add_subplot(5,8,38)
                                         fig_param_24.set_title("Chl-PSI / Chl-tot")
@@ -1166,8 +1166,8 @@ def analyze_ex_em_spectra():
                                             Chl_PSI_norm.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_24.set_ylabel("r.u.")
                                         else:
-                                            fig_param_24.axes.get_xaxis().set_visible(False)
-                                            fig_param_24.axes.get_yaxis().set_visible(False)
+                                            fig_param_24.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_24.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_45 = fig_param.add_subplot(5,8,7)
                                         fig_param_45.set_title("Chl-tot")
@@ -1186,8 +1186,8 @@ def analyze_ex_em_spectra():
                                             fig_param_45.set_xticks([]) # no X-axis values
                                             fig_param_45.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02)) # legend
                                         else:
-                                            fig_param_45.axes.get_xaxis().set_visible(False)
-                                            fig_param_45.axes.get_yaxis().set_visible(False)
+                                            fig_param_45.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_45.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_39 = fig_param.add_subplot(5,8,15)
                                         fig_param_39.set_title("PBS-tot")
@@ -1195,8 +1195,8 @@ def analyze_ex_em_spectra():
                                             PBS_tot_fluo.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_39.set_ylabel("a.u.")
                                         else:
-                                            fig_param_39.axes.get_xaxis().set_visible(False)
-                                            fig_param_39.axes.get_yaxis().set_visible(False)
+                                            fig_param_39.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_39.axes.get_yaxis().set_visible(False) # type: ignore
 
                                         fig_param_29 = fig_param.add_subplot(5,8,23)
                                         fig_param_29.set_title("PBS-PSII / PBS-PSI")
@@ -1204,8 +1204,8 @@ def analyze_ex_em_spectra():
                                             PBS_PSII_to_PBS_PSI.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_29.set_ylabel("r.u.")
                                         else:
-                                            fig_param_29.axes.get_xaxis().set_visible(False)
-                                            fig_param_29.axes.get_yaxis().set_visible(False)
+                                            fig_param_29.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_29.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_34 = fig_param.add_subplot(5,8,31)
                                         fig_param_34.set_title("Chl-PSII / Chl-PSI")
@@ -1213,8 +1213,8 @@ def analyze_ex_em_spectra():
                                             PSII_to_PSI.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_34.set_ylabel("r.u.")
                                         else:
-                                            fig_param_34.axes.get_xaxis().set_visible(False)
-                                            fig_param_34.axes.get_yaxis().set_visible(False)
+                                            fig_param_34.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_34.axes.get_yaxis().set_visible(False) # type: ignore
                                         ########## Sub-plot ##########
                                         fig_param_39 = fig_param.add_subplot(5,8,39)
                                         fig_param_39.set_title("PC / PE")
@@ -1222,8 +1222,8 @@ def analyze_ex_em_spectra():
                                             PC_to_PE.plot.bar(xticks=[], color=colors[1:])
                                             fig_param_39.set_ylabel("r.u.")
                                         else:
-                                            fig_param_39.axes.get_xaxis().set_visible(False)
-                                            fig_param_39.axes.get_yaxis().set_visible(False)
+                                            fig_param_39.axes.get_xaxis().set_visible(False) # type: ignore
+                                            fig_param_39.axes.get_yaxis().set_visible(False) # type: ignore
                                         # saving scatter plot to memory
                                         memory_for_bar_plot = io.BytesIO()
                                         plt.savefig(memory_for_bar_plot, bbox_inches='tight', format='JPEG')
