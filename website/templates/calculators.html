@@ -21,7 +21,93 @@
 <br>
 <h1> Calculators </h1>
 <div class="background-box">
-    <h4 id="CO2_conc"> 1. CO<sub>2</sub> concentration in air+CO<sub>2</sub> mixture</h4>
+    <h4 id="CO2_conc"> 1. CO<sub>2</sub> concentration in sparging gas</h4>
+    <h5> 1.1 Calculate required flow rates for a target CO<sub>2</sub> concentration</h5>
+    <p>
+        To achieve a specific target CO<sub>2</sub> concentration within a defined total gas flow, 
+        the required flow rate of pure CO<sub>2</sub> is calculated as:
+    </p>
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft Flow\ rate\ CO_{2} = Total\ flow\ rate * \frac{Target\ CO_{2} - CO_{2}\ in\ air}{1\ 000\ 000 - CO_{2}\ in\ air}
+        \end{multline}
+        $$
+    </i></p>
+    <p>
+        The flow rate of air is then determined by subtracting the CO<sub>2</sub> flow from the total flow:
+    </p>
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft Flow\ rate\ air = Total\ flow\ rate - Flow\ rate\ CO_{2}
+        \end{multline}
+        $$
+    </i></p>
+    
+
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp</a>
+        </div>
+    </div>
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Target CO<sub>2</sub>:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input class="form-control" type="number" id="target_CO2_ppm" value="2000" step="100" onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>ppm</a>
+        </div>
+    </div>
+
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Total Flow Rate:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input class="form-control" type="number" id="target_total_flow" value="1000" step="10" onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>mL min<sup>-1</sup></a>
+        </div>
+    </div>
+
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp CO<sub>2</sub> in air:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <div class="input-group">
+                    <input class="form-control" type="number" id="CO2_in_air_ppm_target" value="500" step="1" onkeypress="return isNumberKey(event)">
+                </div>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>ppm</a>
+        </div>
+    </div>
+
+    <br>
+    <button type="button" class="btn btn-primary" onclick="calculateReverseCO2();">Calculate Flow Rates</button>
+    
+    <button type="button" class="btn btn-info">
+        <a>Required settings: CO<sub>2</sub>: <span id="req_CO2_span"><b>...</b></span>; Air: <span id="req_air_span"><b>...</b></span></a>
+    </button>
+
+    <hr>
+    <h5> 1.2 Calculate CO<sub>2</sub> concentration in air+CO<sub>2</sub> mixture</h5>
     <p>In many laboratories as well as in the industrial setups, 
         CO<sub>2</sub> and air require mixing to secure increased CO<sub>2</sub> levels.
         For a precise control of specific CO<sub>2</sub> concentration in air, Gas Mixing Systems or Gas Controllers can be used,
@@ -31,17 +117,13 @@
             other companies</a>. Here, we provide a simple tool for the calculation of CO<sub>2</sub> concentration in a gas mixture, as set by a Gas Mixing System, according to the following equation:
     </p>
     <p style="line-height: 0.9"><i style="font-size:80%">
-        $$
+        $$    
         \begin{multline}
-        \shoveleft CO_{2}\ concentration\ in\ air + CO_{2}\ mixture = \frac{Flow\ rate\ CO_{2} + Flow\ rate\ air * CO_{2}\ concentration\ in\ air}{Flow\ rate\ CO_{2} + Flow\ rate\ air}
+        \shoveleft CO_{2}\ concentration\ (ppm)\ in\ air + CO_{2}\ mixture = \frac{Flow\ rate\ CO_{2} \times 10^{6} + Flow\ rate\ air \times CO_{2}\ concentration\ in\ air}{Flow\ rate\ CO_{2} + Flow\ rate\ air}
         \end{multline}
         $$
     </i></p>
     <br>    
-    <!-- 
-    <h5> 1.1 Calculating CO<sub>2</sub> concentration in a user-defined gas mixture </h5>
-    <br>
-    -->
     <div class="gallery_5">
         <div class="gallery__img gallery__item--1">
             <a>&nbsp Flow rate of CO<sub>2</sub>:</a>
@@ -109,83 +191,11 @@
     <br>
     <button id="calculateCO2_button" type="button" class="btn btn-primary" onclick="calculateCO2();"> Calculate</button>
     <button type="button" class="btn btn-info"><a>CO<sub>2</sub> concentration in the air + CO<sub>2</sub> mixture: <span id="CO2_conc_ppm_for_span"></span></button>  
-    <!--
-    <br><br><br>
-    <h5> 1.2 Calculating Gas Controller settings for a target CO<sub>2</sub> concentration</h5>
-    <br>
-    <div class="gallery_6">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Required CO<sub>2</sub> level:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type=number
-                    id="Required_CO2_level" 
-                    min = "0"
-                    step="1"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>ppm</a>
-        </div>
-    </div>
-    <div class="gallery_6">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Total flow rate:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type=number
-                    id="Required_flow_rate" 
-                    min = "0"
-                    step="1"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>mL min<sup>-1</sup></a>
-        </div>
-    </div>
-    <div class="gallery_6">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp CO<sub>2</sub> in air:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="CO2_in_air_ppm_2" 
-                    min = "1"
-                    step="1"
-                    value="500"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>ppm</a>
-        </div>
-    </div>
-    <br>
-    <button id="calculate_GMS_settings" type="button" class="btn btn-primary" onclick="calculateGMSSettings();"> Calculate</button>
-    <button type="button" class="btn btn-info"><a>Gas Controller settings: CO<sub>2</sub>: 
-        <span id="GMS_settings_for_span"></span></button>
-    -->
+
 </div>  
+
 <div class="background-box">
     <h4 id="dO2_conc"> 2. Equilibrium concentration of dissolved oxygen (dO<sub>2</sub>) and carbon dioxide (dCO<sub>2</sub>) in water</h4>
-    <br>
     <h5> 2.1 Equilibrium concentration of dO<sub>2</sub> in water</h5>
     <p>The concentration of dissoled oxygen in water, in equilibrium with atmosphere, can be calcualted based on the values of temperature, salinity, 
         O<sub>2</sub> concentration in the atmosphere and the atmospheric pressure, according to the following equation:
@@ -289,8 +299,9 @@
     <button type="button" class="btn btn-info"><a>dO<sub>2</sub> in water: 
         <span id="dO2_for_span"></span></a>
     </button>
-    <br><br><br>
-
+    <br><br>
+    
+    <hr>
     <h5 id="dCO2_conc"> 2.2 Equilibrium concentration of dCO<sub>2</sub> in water</h5>
     <p>For the calcualtion of dissolved CO<sub>2</sub> in water, please use the 
         <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">Seawater Carbonate System calculator</a>
@@ -717,6 +728,123 @@
         <a style="line-height: 0.9"><i style="font-size:80%"><span id="chl_a_recalculated_for_span"></span></i></a>
     </div>
 </div>
+
+<div class="background-box">
+    <h4 id="dilution_estimator"> 6. Substance Dilution Estimator (Continuous Culture) </h4>
+    <p>
+        In continuous or quasi-continuous cultivation systems (chemostat or turbidostat, respecitvely), the concentration of a non-reproducing substance in a culture suspension
+        decreases over time as fresh medium dilutes the culture. The washout kinetics follow a first-order decay equation:
+    </p>
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        $$
+        \begin{multline}
+        \shoveleft C_{t} = C_{0} * e^{-D * t}
+        \end{multline}
+        $$
+    </i></p>
+    <p>
+        where <i>C<sub>t</sub></i> is the concentration at time <i>t</i>, <i>C<sub>0</sub></i> is the initial concentration, 
+        and <i>D</i> is the dilution rate [h<sup>-1</sup>]. The medium inflow rate (<i>F</i>, units [mL h<sup>-1</sup>]) required to achieve this 
+        dilution depends on the culture volume (<i>V</i>): 
+        </p>
+            <p style="line-height: 0.9"><i style="font-size:80%">
+                $$
+                \begin{multline}
+                \shoveleft F = D \cdot V
+                \end{multline}
+                $$
+            </i></p>
+    </p>
+    
+    <br>
+    <h5> 6.1 Estimate concentration decay over time </h5>
+    
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Initial Concentration (<i>C<sub>0</sub></i>):</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <input class="form-control" type="number" id="init_conc" min="0" step="0.1" value="1" onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>mM, or mg L<sup>-1</sup></a>
+        </div>
+    </div>
+
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Culture Volume (<i>V</i>):</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <input class="form-control" type="number" id="culture_volume" min="0" step="1" value="400" onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>mL</a>
+        </div>
+    </div>
+
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Dilution Rate (<i>D</i>):</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <input class="form-control" type="number" id="dilution_rate" mi n="0" step="0.01" value="0.05" onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>h<sup>-1</sup></a>
+        </div>
+    </div>
+
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Medium Inflow Rate (<i>F</i>):</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <input 
+                    class="form-control" 
+                    type="text" 
+                    id="flow_rate_output" 
+                    readonly 
+                    style="background-color: #e9ecef; font-weight: bold;"
+                />
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>mL h<sup>-1</sup></a>
+        </div>
+    </div>
+
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1">
+            <a>&nbsp Time Range:</a>
+        </div>
+        <div class="gallery__img gallery__item--2">
+            <div class="form-inline">
+                <input class="form-control" type="number" id="time_range" min="1" step="1" value="100" onkeypress="return isNumberKey(event)"/>
+            </div>
+        </div>
+        <div class="gallery__img gallery__item--3">
+            <a>hours</a>
+        </div>
+    </div>
+
+    <br>
+    
+    <button id="calculate_dilution_btn" type="button" class="btn btn-primary" onclick="calculateDilutionPlot();"> Generate Plot</button>
+    
+    <div style="margin-top: 20px; padding: 10px; background-color: #fff; border-radius: 5px;">
+        <canvas id="dilutionChart" style="width:100%; max-height:400px;"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <br>
 

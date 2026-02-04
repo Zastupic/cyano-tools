@@ -99,17 +99,7 @@
                 <p>Analysis of Membrane Inlet Mass Spetrometry (MIMS) data</p>
                 <a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}"><b>Launch tool &rarr;</b></a>
             </div>
-            
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Statistics</b></h3> 
-                <a href="{{ url_for('statistics.statistics_page') }}">
-                    <img src="static/images/boxplot.jpg" alt="Statistics" class="gallery_img_home">
-                </a>
-                <p>Statistical analysis of experimental data</p>
-                <a href="{{ url_for('statistics.statistics_page') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-
-            <div class="feature">
+                        <div class="feature">
                 <h3 style="font-size: 0.95em;"><b>Photobioreactors</b></h3> 
                 <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="blank">
                     <img src="static/images/PBRtool2_1.jpg" alt="Slow" class="gallery_img_home">
@@ -126,6 +116,14 @@
                 <p>Control scripts for photobioreactors <a href="https://photo-bio-reactors.com/" target="blank">FMT-150</a>
                 including growth optimizer and PI curves measurement scripts.</p>
                 <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="blank"><b>Launch tool &rarr;</b></a>
+            </div>
+            <div class="feature">
+                <h3 style="font-size: 0.95em;"><b>Statistics</b></h3> 
+                <a href="{{ url_for('statistics.statistics_page') }}">
+                    <img src="static/images/boxplot.jpg" alt="Statistics" class="gallery_img_home">
+                </a>
+                <p>Statistical analysis of experimental data</p>
+                <a href="{{ url_for('statistics.statistics_page') }}"><b>Launch tool &rarr;</b></a>
             </div>
             <div class="feature">
                 <h3 style="font-size: 0.95em;"><b>Cell counting</b></h3> 

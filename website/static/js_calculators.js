@@ -54,6 +54,28 @@ function calculateCO2() {
   var flow_rate_total = flow_rate_CO2 + flow_rate_air
   document.getElementById('CO2_conc_ppm_for_span').innerHTML = "<b>"+CO2_conc_ppm_for_span.toFixed(0)+"</b> ppm (<b>"+CO2_conc_percent.toFixed(2)+"</b> %); total flow rate: "+flow_rate_total+" mL min<sup>-1<sup>";
 }
+function calculateReverseCO2() {
+    // 1. Get Inputs
+    const targetPPM = parseFloat(document.getElementById("target_CO2_ppm").value);
+    const totalFlow = parseFloat(document.getElementById("target_total_flow").value);
+    const airPPM = parseFloat(document.getElementById("CO2_in_air_ppm_target").value);
+
+    // 2. Logic Check: Target must be higher than background air
+    if (targetPPM <= airPPM) {
+        document.getElementById('req_CO2_span').innerHTML = "<b>Error</b>";
+        document.getElementById('req_air_span').innerHTML = "Target must be > Air ppm";
+        return;
+    }
+
+    // 3. Calculation
+    // 1,000,000 represents 100% pure CO2 in ppm
+    const flowCO2 = totalFlow * (targetPPM - airPPM) / (1000000 - airPPM);
+    const flowAir = totalFlow - flowCO2;
+
+    // 4. Update UI
+    document.getElementById('req_CO2_span').innerHTML = "<b>" + flowCO2.toFixed(2) + "</b> mL min<sup>-1</sup>";
+    document.getElementById('req_air_span').innerHTML = "<b>" + flowAir.toFixed(1) + "</b> mL min<sup>-1</sup>";
+}
 //----------------------//
 //--- dO2 CALCULATOR ---//
 //----------------------//
@@ -72,11 +94,18 @@ function calculate_dO2() {
   var B1 = -0.033096;
   var B2 = 0.014259;
   var B3 = -0.0017;
-  var pw = 2.338;
   var T = 273.15+temperature;
-  var p = 101.32*atmospheric_pressure;
+  var t = temperature;  // in °C
+  var pw_hPa = 6.112 * Math.exp((17.67 * t) / (t + 243.5));  // Tetens/Magnus in hPa
+  var pw = pw_hPa / 10;  // convert to kPa
+  var p = 101.325*atmospheric_pressure;
   var dO2_for_span = ((p-pw)/p)*Math.E**(A1 + A2*100/T + A3*Math.log(T/100) + A4*T/100 + salinity*(B1 + B2*(T/100) + B3*((T/100)**2)))*O2_concentration_in_air/20.9;
   document.getElementById('dO2_for_span').innerHTML = "<b>"+dO2_for_span.toFixed(2)+"</b> mL L<sup>-1</sup> (<b>"+(1.428*dO2_for_span).toFixed(2)+"</b> mg L<sup>-1</sup>; <b>"+(1.428*dO2_for_span/32*1000).toFixed(2)+"</b> μmol L<sup>-1</sup>)";
+
+    if (t < 0 || t > 50) {
+    alert("Warning: Temperature outside 0–50°C range; water vapor pressure may be inaccurate.");
+  }
+
 }
 //---------------------------------------//
 //--- SPECIFIC GROWTH RATE CALCULATOR ---//
@@ -263,3 +292,68 @@ function recalculate_OD() {
   document.getElementById('measuring_device_2_for_span').innerHTML = " <b>"+measuring_device_2_for_span+"</b>";
   document.getElementById('warning_message_for_span').innerHTML = warning_message_for_span; 
 }
+
+//------------------------------------//
+//--- SUBSTANCE DILUTION CALCULATOR ---//
+//------------------------------------//
+let dilutionChartInstance = null;
+function calculateDilutionPlot() {
+    // 1. Get Inputs
+    const C0 = parseFloat(document.getElementById("init_conc").value);
+    const V = parseFloat(document.getElementById("culture_volume").value);
+    const D = parseFloat(document.getElementById("dilution_rate").value);
+    const maxTime = parseFloat(document.getElementById("time_range").value);
+
+    // 2. Calculate Medium Addition Rate (F = D * V)
+    const flowRate = D * V;
+    
+    // 3. Update the new field
+    document.getElementById("flow_rate_output").value = flowRate.toFixed(2);
+
+    // 4. Generate Data for Plot
+    const timeLabels = [];
+    const concentrationData = [];
+    const step = maxTime / 50;
+
+    for (let t = 0; t <= maxTime; t += step) {
+        timeLabels.push(t.toFixed(0));
+        const Ct = C0 * Math.exp(-D * t);
+        concentrationData.push(Ct.toFixed(2));
+    }
+
+    // 5. Render Chart
+    const ctx = document.getElementById('dilutionChart').getContext('2d');
+    if (window.dilutionChartInstance) { 
+        window.dilutionChartInstance.destroy(); 
+    }
+
+    window.dilutionChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [{
+                label: 'Substance Concentration',
+                data: concentrationData,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { title: { display: true, text: 'Time (hours)' } },
+                y: { title: { display: true, text: 'Concentration' }, beginAtZero: true }
+            }
+        }
+    });
+}
+
+// FIX for the "Initial Load" issue:
+// This ensures the plot is drawn as soon as the page finishes loading
+window.onload = function() {
+    if (document.getElementById("dilutionChart")) {
+        calculateDilutionPlot();
+    }
+};
