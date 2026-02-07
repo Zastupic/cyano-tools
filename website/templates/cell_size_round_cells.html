@@ -4,6 +4,29 @@
     Cell size
 {% endblock %}
 
+{% block description %}
+Measure the diameter and biovolume of unicellular algae and cyanobacteria. Features manual cell selection with automated boundary detection for precise size distribution analysis.
+{% endblock %}
+
+{% block keywords %}
+cell size analysis, cell diameter, biovolume calculator, microbial morphology, Synechocystis, Chlorella, microscopy measurement, image analysis software
+{% endblock %}
+
+{% block extra_schema %}
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "CyanoTools Cell Size Analyzer",
+          "operatingSystem": "Web",
+          "applicationCategory": "ImageProcessingSoftware",
+          "description": "Tool for measuring cell diameter and length of unicellular or filamentous algae from microscopy images.",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "featureList": "Pixel-to-micrometer conversion, Manual object marking, Statistical distribution of sizes"
+        }
+    </script>
+{% endblock %}
+
 {% block content %}
 <!-- Banner -->
 <div id="banner-content">
@@ -25,12 +48,12 @@
     Individual cells are selected manually by the user. Once selected, the tool identifies cell boundaries and calculates the cell diameter based on the pixel size provided.
 </p>
 <p>The following example illustrates the full workflow using TCS SP8 DMI 
-    <a href="https://www.leica-microsystems.com/products/confocal-microscopes/" target="_blank">confocal laser scanning microscope</a> 
+    <a href="https://www.leica-microsystems.com/products/confocal-microscopes/" target="_blank" rel="noopener">confocal laser scanning microscope</a> 
      (Leica Microsystems) and cells of a unicellular cyanobacterium <i>Synechocystsis</i> sp. PCC 6803.
 </p>
 <div class="container">
     <img src="static/images/workflow_cell_size_round_cells.jpg" 
-    alt="Pixel_profiles_cell_selection" class="gallery__img_tall" 
+    alt="Workflow for cell size identification" class="gallery__img_tall" 
     data-enlargeable style="cursor: zoom-in; width: 75%">
 </div> 
 <p><u>How to use this tool:</u></p>
@@ -103,7 +126,7 @@
 
     <div class="imgbox" id="imgbox">
             <div class="insideWrapper">
-                <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit" id="img_orig_decoded_from_memory">
+                <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit" id="img_orig_decoded_from_memory" alt="Microscopy image for cell size determination">
                 <canvas class="coveringCanvas" id="canvas_mouse_clicking">
                 </canvas>
             </div>
@@ -121,8 +144,8 @@
     <a><b>6. Visually confirm the results</b> (click on the images below to enlarge)</a>
     <p>In case the cells have not been marked according to your selection, make a new selection and adjust size of the selecting circles. </p>
     <div class="insideWrapper">
-        <img data-enlargeable src="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" style="cursor: zoom-in" class="center-fit" width="45%" >
-        <img data-enlargeable src='data:image/jpeg;base64,{{ final_plot_decoded_from_memory }}' style="cursor: zoom-in" class="center-fit" width="49%" >
+        <img data-enlargeable src="data:image/jpeg;base64,{{ img_for_download_decoded_from_memory }}" style="cursor: zoom-in" class="center-fit" width="45%" alt="Microscopy image with cell size identified">
+        <img data-enlargeable src='data:image/jpeg;base64,{{ final_plot_decoded_from_memory }}' style="cursor: zoom-in" class="center-fit" width="49%" alt="Histogram with diameters of selected cells">
     </div>
 
     <br>

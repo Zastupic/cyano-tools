@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SEO Meta Tags -->
     <title>{% block title %}Home | CyanoTools{% endblock %}</title>
-    <meta name="description" content="{% block description %}CyanoTools is a browser-based platform for analyzing photosynthesis, fluorescence, microscopy, 
-      and bioreactor data from wet-lab experiments with plants, cyanobacteria, algae and other microbes.{% endblock %}">
-    <meta name="keywords" content="CyanoTools, cyanobacteria, algae, chlorophyll fluorescence, OJIP, light curves, 
-      aquapen, fluorpen, dual pam, multi-color pam, microscopy, image analysis, cell counting, cell size determination, photobioreactor, photosynthesis tools">
+    <meta name="description" content="{% block description %}CyanoTools is a browser-based platform for analyzing photosynthesis, fluorescence, microscopy, and bioreactor data from wet-lab experiments with plants, cyanobacteria, algae and other microbes.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}CyanoTools, photosynthesis analysis, chlorophyll fluorescence, wet-lab calculators, algae research, plant physiology tools, cyanobacteria, microbiology data analysis{% endblock %}">
     <meta name="author" content="Department of Adaptive Biotechnologies, CzechGlobe">
     <meta name="robots" content="index, follow">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -80,23 +78,37 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "CyanoTools",
-      "url": "https://tools-py.e-cyanobacterium.org/",
-      "description": "Platform for analyzing photosynthesis and microbial data",
+      "@type": "SoftwareApplication",
+      "name": "{% block schema_name %}CyanoTools{% endblock %}",
+      "operatingSystem": "Web",
+      "applicationCategory": "ScientificSoftware",
+      "url": "{{ request.url }}",
+      "description": {{ self.description()|tojson }},
       "publisher": {
         "@type": "Organization",
         "name": "CzechGlobe - Department of Adaptive Biotechnologies",
         "logo": {
-          "@type": "ImageObject",
-          "url": "{{ url_for('static', filename='img/cyano_preview.png') }}"
+        "type": "ImageObject",
+          "url": "{{ url_for('static', filename='img/cyano_preview.png', _external=True) }}"
         }
-      },
+      }
+      {% if self.search_query is defined %},
       "potentialAction": {
         "@type": "SearchAction",
         "target": "https://tools-py.e-cyanobacterium.org/search?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5",
+        "reviewCount": "1" 
+      },
+      {% endif %}
     }
     </script>
 </head>

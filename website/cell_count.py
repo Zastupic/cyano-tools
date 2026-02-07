@@ -12,7 +12,7 @@ cell_count = Blueprint('cell_count', __name__)
 @cell_count.route('/cell_count', methods=['GET', 'POST'])
 def count_cells():
 #    if current_user.is_authenticated:
-    if request.method == "POST":               
+    if request.method == "POST":
         if request.form.get('pixel_size') == '':
             flash('Please enter pixel size', category='error')
         else:
@@ -36,11 +36,11 @@ def count_cells():
                     filename = secure_filename(str(image.filename))
                     # saving original image
                     image.save(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
-                    # Noise reduction before application of threshold 
+                    # Noise reduction before application of threshold
                     filename2 = f'original_{filename}'
                     img_orig = cv2.imread(f'{upload_folder}/{filename2}')
                     img_blur = cv2.blur(img_orig, (3,3))
-                    img_grey = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY) # Converting image to gray 
+                    img_grey = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY) # Converting image to gray
                     # Get threshold selection from select box on webpage
                     threshold = (request.form.get('threshold_filter'))
                     img_th = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TRIANGLE + cv2.THRESH_BINARY)
@@ -61,16 +61,16 @@ def count_cells():
                     # Apply another threshold for showing the counted cells on saved image
                     img_for_counted_cells = cv2.threshold(img_grey, 0, 255,cv2.THRESH_TOZERO + cv2.THRESH_TRIANGLE)[1]
                     img_for_counted_cells = cv2.cvtColor(img_for_counted_cells, cv2.COLOR_GRAY2BGR)
-                    # Select ararys from the applied threshold fof further processing 
+                    # Select ararys from the applied threshold fof further processing
                     img_th = img_th[1]
                     ############################
                     ### Mark counted objects ###
                     ############################
-                    contours_th = cv2.findContours(img_th, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[0] 
+                    contours_th = cv2.findContours(img_th, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[0]
                     cell_count = 0
                     rough_coordinates_autmated_counting = []
                     # Count mark and number the contours found (= cells bigger then defined "minimum_area")
-                    if contours_th is not None: 
+                    if contours_th is not None:
                         for i in range(len(contours_th)):
                             area = cv2.contourArea(contours_th[i])
                             if area > minimum_area:
@@ -82,8 +82,8 @@ def count_cells():
                                 cv2.circle(img_for_counted_cells,(x_coord, y_coord), width,(0,255,0), 1)
                                 cv2.putText(img_for_counted_cells, str(cell_count), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
                                 coords = tuple([cell_count,x_coord,y_coord])
-                                rough_coordinates_autmated_counting.append(coords)          
-                    # preapring images for showing on the webiste  
+                                rough_coordinates_autmated_counting.append(coords)
+                    # preapring images for showing on the webiste
                     img_original = im.fromarray(img_orig)
                     img_th_to_show = im.fromarray(img_th)
                     img_counted = im.fromarray(img_for_counted_cells)
@@ -179,11 +179,11 @@ def count_cells():
                             file_time = os.stat(file_location).st_mtime
                             # if a file is modified before 20 min then delete it
                             if(file_time < current_time - seconds):
-                                os.remove(os.path.join(upload_folder, str(i)).replace("\\","/")) 
+                                os.remove(os.path.join(upload_folder, str(i)).replace("\\","/"))
                         # render template
-                        return render_template("cell_count.html", 
+                        return render_template("cell_count.html",
                             #user_id = user_id,
-                            img_orig_decoded_from_memory = img_orig_decoded_from_memory, 
+                            img_orig_decoded_from_memory = img_orig_decoded_from_memory,
                             img_th_decoded_from_memory = img_th_decoded_from_memory,
                             img_counted_decoded_from_memory = img_counted_decoded_from_memory,
                             img_for_download = f'{image_name}_counted{image_extension}',
@@ -216,9 +216,9 @@ def count_cells():
 
 def additional_cells_marking():
     return render_template("cell_count.html")
-        
 
-    
+
+
 
 
 

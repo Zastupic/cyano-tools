@@ -4,6 +4,14 @@
     Slow fluorescence transients analysis
 {% endblock %}
 
+{% block description %}
+Analyze slow chlorophyll fluorescence induction kinetics (Kautsky effect). Process PAM data to calculate NPQ, qP, qL, and steady-state photosynthetic parameters.
+{% endblock %}
+
+{% block keywords %}
+slow kinetics analysis, Kautsky effect, NPQ, quenching analysis, PAM fluorometry, photosynthetic induction, chlorophyll fluorescence, plant physiology, algae research
+{% endblock %}
+
 {% block content %}
 <!-- Banner -->
 <div id="banner-content">
@@ -22,10 +30,10 @@
 <h1> Analysis of slow chlorophyll fluorescence transients </h1>
 <p>Welcome to tool analyzing slow chlorophyll fluorescence induction kinetics! 
 This tool enables visualization and analysis of fluorescence traces acquired by several common PAM fluorometers, including 
-    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
-    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">DUAL-PAM</a>, 
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">AquaPen</a> or 
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">FluorPen</a>.
+    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
+    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">DUAL-PAM</a>, 
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">AquaPen</a> or 
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">FluorPen</a>.
     Up to 50 files can be uploaded simultaneously for batch processing. 
     The tool generates multiple visualizations for the precessed files, including: 
     <ul style="font-size:95%">
@@ -58,22 +66,23 @@ This tool enables visualization and analysis of fluorescence traces acquired by 
     After analysis, all curves and calculated values are compiled into a downloadable .xlsx file for further use. 
     The figure and table below summarizes parameters that can be obtained from the fluorescence kinetics traces.
     For furhter info, see the references provided below, or 
-    <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank">NPQ protocols</a>
+    <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank" rel="noopener">NPQ protocols</a>
     available for 
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank">AquaPen</a> or
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank">FluorPen</a> fluorometers.
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener">AquaPen</a> or
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener">FluorPen</a> fluorometers.
 </p>
 <br>  
 <div class="container">
     <div class="images-side-by-side">
-        <img src="static/images/NPQ_protocol_examples.jpg" alt="NPQ protocol example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
+        <img src="static/images/NPQ_protocol_examples.jpg" 
+        alt="Slow Kautsky chlorophyll kinetic protocol example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
     </div>
 </div>
 <div style="font-size:70%">
     <i>
         <b>Example protocol modified from:</b>
         Roháček, K. et al., (2008):  Plant cell compartments: selected topics: 41-104. ISBN: 
-        <a href="https://faculty.ksu.edu.sa/sites/default/files/CHLOROPHYLL%20FLOURESCENCE.PDF" target="_blank">978-81-308-0104-9</a>
+        <a href="https://faculty.ksu.edu.sa/sites/default/files/CHLOROPHYLL%20FLOURESCENCE.PDF" target="_blank" rel="noopener">978-81-308-0104-9</a>
         </i>
 </div>  
 <br> 
@@ -264,19 +273,19 @@ This tool enables visualization and analysis of fluorescence traces acquired by 
         <b>References:</b>
         <br>
         Ruban, A. V. (2016): Plant Physiology, 170(4):1903–1916. DOI:
-        <a href="https://academic.oup.com/plphys/article/170/4/1903/6114162" target="_blank">10.1104/pp.15.01935</a>
+        <a href="https://academic.oup.com/plphys/article/170/4/1903/6114162" target="_blank" rel="noopener">10.1104/pp.15.01935</a>
         <br>
         Baker, N. R. (2008): The Annual Review of Plant Biology: 89-113. DOI:
-        <a href="https://www.annualreviews.org/content/journals/10.1146/annurev.arplant.59.032607.092759" target="_blank">10.1146/annurev.arplant.59.032607.092759</a>
+        <a href="https://www.annualreviews.org/content/journals/10.1146/annurev.arplant.59.032607.092759" target="_blank" rel="noopener">10.1146/annurev.arplant.59.032607.092759</a>
         <br>
         Lichtenthaler, H. K. et al., (2005): Photosynthetica, 43(3):379-393. DOI:
         <a href="https://ps.ueb.cas.cz/artkey/phs-200503-0009_how-to-correctly-determine-the-different-chlorophyll-fluorescence-parameters-and-the-chlorophyll-fluorescence-d.php" target="_blank">10.1007/s11099-005-0062-6</a>
         <br>
         Roháček, K. (2002): Photosynthetica, 40:13-29. DOI: 
-        <a href="https://link.springer.com/article/10.1023/A:1020125719386" target="_blank">10.1023/A:1020125719386</a>
+        <a href="https://link.springer.com/article/10.1023/A:1020125719386" target="_blank" rel="noopener">10.1023/A:1020125719386</a>
         <br>
         Oxborough, K., Baker, N. R. (1997): Photosynthesis Research, 54:135–142. DOI:
-        <a href="https://link.springer.com/article/10.1023/A:1005936823310" target="_blank">10.1023/A:1005936823310</a>
+        <a href="https://link.springer.com/article/10.1023/A:1005936823310" target="_blank" rel="noopener">10.1023/A:1005936823310</a>
     </i>
 </p>
 <br>
@@ -293,21 +302,22 @@ This tool enables visualization and analysis of fluorescence traces acquired by 
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data', _anchor='results') }}">
     <a style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by the following fluorometers:</i></a>
     <div class="gallery_6_img">
-        <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">
+        <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">
             <i style="font-size:80%">MULTI-COLOR-PAM</i>
-            <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__item--1">
+            <img src="static/images/MC_PAM.jpg"
+            alt="MULTI-COLOR PAM Walz" class="gallery__item--1">
         </a>
-        <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">
+        <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">
             <i style="font-size:80%">DUAL-PAM</i>
-            <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__item--2">
+            <img src="static/images/dualpam.jpg" alt="Dual PAM Walz" class="gallery__item--2">
         </a>
-        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">
+        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">
             <i style="font-size:80%">AquaPen</i>
-            <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__item--3">
+            <img src="static/images/aquapen.jpg" alt="Aquapen Photon System Instruments" class="gallery__item--3">
         </a>
-        <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">
+        <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">
             <i style="font-size:80%">FluorPen</i>
-            <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__item--4">
+            <img src="static/images/fluorpen.jpg" alt="FluorPen Aquapen Photon System Instruments" class="gallery__item--4">
         </a>
     </div>
     <br>
@@ -320,7 +330,7 @@ This tool enables visualization and analysis of fluorescence traces acquired by 
     </div>
     <br>
     <label class="form-label"><p class="font-weight-bold">2a. For AquaPen/FluorPen, select type of the
-        <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank"> NPQ protocol</a>:</p></label>
+        <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank" rel="noopener"> NPQ protocol</a>:</p></label>
     <div class="form-check">
         <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ1" value="checkbox_NPQ1" checked>
         <label class="form-check-label" for="checkbox_NPQ_Aquapen">
@@ -420,7 +430,7 @@ This tool enables visualization and analysis of fluorescence traces acquired by 
     <section id="results"></section>   
     <br> <br>
     <h6><b>Measured data: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ plot_from_memory }}"/>
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ plot_from_memory }}" alt="Slow Kautsky chlorophyll fluorescence kinetics analyzed"/>
     <br> <br>
     <form>
         {% if plots_MC_PAM_raw_data %}

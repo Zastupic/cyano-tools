@@ -1,7 +1,30 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
-{% block title %} 
-    Cell counting
+{% block title %}
+    Automated Cell Counter for Microscopy Images | Free Online Tool
+{% endblock %}
+
+{% block description %}
+Automated cell counting tool for fluorescence microscopy. Easily count unicellular algae, cyanobacteria, or yeast in Bürker chambers and hemocytometers with manual correction support.
+{% endblock %}
+
+{% block keywords %}
+cell counter, automated cell counting, hemocytometer, Bürker chamber, fluorescence microscopy, algae counting, cyanobacteria, microbiology tools, image analysis
+{% endblock %}
+
+{% block extra_schema %}
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "CyanoTools Automated Cell Counter",
+          "operatingSystem": "Web",
+          "applicationCategory": "ImageProcessingSoftware",
+          "description": "Automated cell counting tool for fluorescence microscopy images, supporting Bürker chambers and hemocytometers.",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "featureList": "Automated segmentation, Manual correction, Filamentous algae support, Export to XLSX"
+        }
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -22,11 +45,11 @@
 <h1>Cell counting</h1>
 <p>Welcome to the cell counting tool - a simple and efficient solution for counting cells in fluorescence microscopy images.
 This tool is optimized for images captured by a fluorescence microscope and supports cell counting from images captured
- in a Bürker chamber, hemocytometer, or any disposable counting slide of known depth. 
+ in a Bürker chamber, hemocytometer, or any disposable counting slide of known depth.
 Any combination of a fluorescence microscope and a cell counting chamber is suitable for use with this application.</p>
-<a>The following example illustrates the full workflow using Nexcellom 
-    <a href="https://www.nexcelom.com/nexcelom-products/cellometer-disposable-counting-chambers/" target="_blank">cell counting slides</a> and Zeiss
-    <a href="https://www.zeiss.com/microscopy/en/products/light-microscopes/widefield-microscopes/axio-imager-2-for-life-science-research.html" target="_blank">fluorescence microscope</a>:</a>
+<a>The following example illustrates the full workflow using Nexcellom
+    <a href="https://www.nexcelom.com/nexcelom-products/cellometer-disposable-counting-chambers/" target="_blank" rel="noopener">cell counting slides</a> and Zeiss
+    <a href="https://www.zeiss.com/microscopy/en/products/light-microscopes/widefield-microscopes/axio-imager-2-for-life-science-research.html" target="_blank" rel="noopener">fluorescence microscope</a>:</a>
 <br>
 <div class="container">
     <img src="static/images/worflow_cell_counting.jpg" alt="Cell counting workflow" class="gallery__img__tall"
@@ -46,14 +69,14 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
     <li>Review the results</li>
     <li>Manually correct the output, if needed, by clicking on the image to add cells</li>
     <li>Read and/or download the results</li>
-</ol> 
+</ol>
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count.count_cells') }}">
     <div class="form-group">
         <label for="pixel_size"><p><b>1. Enter pixel size (nm)</b></p></label>
-        <input  
+        <input
                 type="number"
-                id="pixel_size" 
+                id="pixel_size"
                 class="form-control"
                 name="pixel_size"
                 value=""
@@ -79,10 +102,10 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
         <div class="gallery_sliders_cell_count">
             <span STYLE="font-size:9.5pt">10</span>
             <div class="slidecontainer">
-                <input type="range" 
-                        min="10" max="1000" 
-                        value="120" 
-                        class="slider" 
+                <input type="range"
+                        min="10" max="1000"
+                        value="120"
+                        class="slider"
                         name="chamber_depth_range"
                         id="chamber_depth_range"
                         style="vertical-align: middle; margin-bottom: 2px;"/>
@@ -92,11 +115,11 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
 
             <span STYLE="font-size:9.5pt">0.5</span>
             <div class="slidecontainer">
-            <input type="range" 
-                    min="0.5" max="30.0" 
+            <input type="range"
+                    min="0.5" max="30.0"
                     value="1.0"
-                    step="0.1"  
-                    class="slider" 
+                    step="0.1"
+                    class="slider"
                     name="minimal_diameter_range"
                     id="minimal_diameter_range"/>
             </div>
@@ -108,9 +131,9 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
         <br>
         <p class="font-weight-bold">5. Select your image</p>
         <div class="custom-file">
-            <input 
-                type="file" 
-                class="custom-file-input" 
+            <input
+                type="file"
+                class="custom-file-input"
                 name="selected_images"
                 id="selected_image"
                 style="width:100%"
@@ -123,10 +146,10 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
             <button type="button" class="btn btn-outline-primary">Download an example image</button>
         </a>
 </form>
-                
+
 <br>
 {% if img_orig_decoded_from_memory %}
-    <script> 
+    <script>
         var cell_conc_autom_million_cells_per_ml = {{ million_cells_per_mL }};
         var volume_imaged_area = {{ img_volume_ml }};
         var image_area = {{ img_area_mm2 }};
@@ -145,11 +168,11 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
         <div class="gallery_sliders_pixel_profile">
             <span STYLE="font-size:9.5pt">1</span>
             <div class="slidecontainer">
-                <input type="range" 
-                min="1" max="100" 
+                <input type="range"
+                min="1" max="100"
                 value="10"
-                step="1"  
-                class="slider" 
+                step="1"
+                class="slider"
                 name="expected_cell_size_range"
                 id="expected_cell_size_px_range"/>
             </div>
@@ -162,21 +185,21 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
         <figcaption>Identified cells (for visualization, <i>To zero</i> and <i>Triangle</i> thresholds are combined). To manually identify missed cells, start clicking on the image below:</figcaption>
         <div class="imgbox" id="imgbox">
             <div class="insideWrapper">
-                <img src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" id="Identified_cells" alt="Identified cells">
+                <img src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" id="Identified_cells" alt="Cell count-counted cells">
                 <canvas class="coveringCanvas" id="canvas_mouse_clicking">
                 </canvas>
             </div>
         </div>
     </div>
-    <br> 
+    <br>
     <p>Cell count without manual correction: {{ million_cells_per_mL }}  x 10<sup>6</sup> cells mL<sup>-1</sup></p>
     <p>Identified cells: {{ cell_count }}</p>
     <p>Additionally identified cells (manual correction): <span id="identified_cells"></span></p>
     <p>Image resolution: {{ x_pixels }} x {{ y_pixels }} pixels </p>
     <p>Image area: {{ img_area_mm2 }} mm<sup>2</sup> ({{ x_um }} x {{ y_um }} µm)</p>
     <p>Volume of the imaged area: {{ img_volume_nl }} nL</p>
-    <p>Pixel size: {{ pixel_size_nm }} nm 
-    / Depth of the chamber: {{ depth_um }} µm 
+    <p>Pixel size: {{ pixel_size_nm }} nm
+    / Depth of the chamber: {{ depth_um }} µm
     / Threshold cell diameter: {{ minimal_expected_size }} µm</p>
     <br>
     <b>Click to enlarge:</b>
@@ -195,12 +218,12 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
             <img data-enlargeable style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="gallery__img gallery__item--3">
         </div>
     </div>
-    <br>    
+    <br>
     <p><b>Download the results in .xlsx file</b> (without manual correction)</p>
     <a href="{{ url_for('static', filename=xlsx_file_path) }}" class="btn btn-success" download>
         Download the results
     </a>
-</div> 
+</div>
 
 {% else %}
 <br><br><br><br><br><br><br>

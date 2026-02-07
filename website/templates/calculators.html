@@ -1,7 +1,30 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    Calculators
+{% block title %}
+    Lab Calculators: Growth Rate, Doubling Time & Dilution, Dissolved gasses | CyanoTools
+{% endblock %}
+
+{% block description %}
+    Essential wet-lab calculators: Convert OD to specific growth rate (µ), calculate bacterial doubling time, CO2 mixing ratios, and dissolved oxygen (dO2) solubility.
+{% endblock %}
+
+{% block keywords %}
+    doubling time calculator, specific growth rate formula, bacterial growth calculator, chemostat dilution rate, CO2 mixing ratio, OD720 correction, lab math tools
+{% endblock %}
+
+{% block extra_schema %}
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "CyanoTools Scientific Calculators",
+          "operatingSystem": "Web",
+          "applicationCategory": "EducationalApplication",
+          "description": "Calculators for growth rate, doubling time, CO2 mixing ratios, and gas solubility in photobioreactors.",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "featureList": "Growth rate calculator, Doubling time estimator, CO2 flow rate calculator, Oxygen solubility"
+        }
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -111,9 +134,9 @@
     <p>In many laboratories as well as in the industrial setups, 
         CO<sub>2</sub> and air require mixing to secure increased CO<sub>2</sub> levels.
         For a precise control of specific CO<sub>2</sub> concentration in air, Gas Mixing Systems or Gas Controllers can be used,
-        for instance those manufactured by <a href="https://other-devices.psi.cz/products/gas-mixing-system-gms-150/" target="_blank">Photon System Instruments</a>, 
-        <a href="https://qubitsystems.com/products/gas-analysis-and-environment/gas-mixing-and-flow/gas-mixing/g400-gas-mixing-system/" target="_blank">Qubit</a> 
-        or <a href="https://www.google.cz/search?q=co2+controller&sca_esv=31504b4340b63b2d&hl=cs&sxsrf=ADLYWILVc_VJ0VcbfzwTRDtzXWUc9XpC_g%3A1727971871707&source=hp&ei=H8L-ZsydKOe2i-gPiuSjiQk&iflsig=AL9hbdgAAAAAZv7QLzhLZYY2Z8EPMeI9MWVdFxWmUSQL&oq=CO2&gs_lp=Egdnd3Mtd2l6IgNDTzIqAggAMgoQIxiABBgnGIoFMgQQIxgnMhAQABiABBixAxhDGIMBGIoFMgUQABiABDIFEAAYgAQyChAAGIAEGEMYigUyBRAAGIAEMgoQABiABBhDGIoFMgUQABiABDIFEAAYgARInitQAFjjH3ABeACQAQCYAagBoAH-CaoBAzAuObgBA8gBAPgBAvgBAZgCB6AC2gaoAgrCAggQABiABBiiBMICCBAAGIAEGMsBwgILEAAYgAQYsQMYgwHCAgUQLhiABMICCxAuGIAEGMcBGK8BwgIHEAAYgAQYCsICBxAjGCcY6gLCAhEQLhiABBixAxjRAxiDARjHAcICCBAAGIAEGLEDwgIMECMYgAQYExgnGIoFwgIOEC4YgAQYsQMY0QMYxwGYAw6SBwMxLjagB8NC&sclient=gws-wiz" target="_blank">
+        for instance those manufactured by <a href="https://other-devices.psi.cz/products/gas-mixing-system-gms-150/" target="_blank" rel="noopener">Photon System Instruments</a>, 
+        <a href="https://qubitsystems.com/products/gas-analysis-and-environment/gas-mixing-and-flow/gas-mixing/g400-gas-mixing-system/" target="_blank" rel="noopener">Qubit</a> 
+        or <a href="https://www.google.cz/search?q=co2+controller&sca_esv=31504b4340b63b2d&hl=cs&sxsrf=ADLYWILVc_VJ0VcbfzwTRDtzXWUc9XpC_g%3A1727971871707&source=hp&ei=H8L-ZsydKOe2i-gPiuSjiQk&iflsig=AL9hbdgAAAAAZv7QLzhLZYY2Z8EPMeI9MWVdFxWmUSQL&oq=CO2&gs_lp=Egdnd3Mtd2l6IgNDTzIqAggAMgoQIxiABBgnGIoFMgQQIxgnMhAQABiABBixAxhDGIMBGIoFMgUQABiABDIFEAAYgAQyChAAGIAEGEMYigUyBRAAGIAEMgoQABiABBhDGIoFMgUQABiABDIFEAAYgARInitQAFjjH3ABeACQAQCYAagBoAH-CaoBAzAuObgBA8gBAPgBAvgBAZgCB6AC2gaoAgrCAggQABiABBiiBMICCBAAGIAEGMsBwgILEAAYgAQYsQMYgwHCAgUQLhiABMICCxAuGIAEGMcBGK8BwgIHEAAYgAQYCsICBxAjGCcY6gLCAhEQLhiABBixAxjRAxiDARjHAcICCBAAGIAEGLEDwgIMECMYgAQYExgnGIoFwgIOEC4YgAQYsQMY0QMYxwGYAw6SBwMxLjagB8NC&sclient=gws-wiz" target="_blank" rel="noopener">
             other companies</a>. Here, we provide a simple tool for the calculation of CO<sub>2</sub> concentration in a gas mixture, as set by a Gas Mixing System, according to the following equation:
     </p>
     <p style="line-height: 0.9"><i style="font-size:80%">
@@ -208,7 +231,7 @@
         </i></a>
         where <i>p</i> represents atmospheric pressure [kPa], <i>pw</i> represents partial pressure of the water vapor [kPa], <i>T</i> represents temperature [K], 
         <i>S</i> represents salinity [g kg<sup>-1</sup>], <i>C</i> represents O<sub>2</sub> concentration in air [%] and <i>A1 - A4</i> and <i>B1 - B4</i> represent 
-        <a href="http://corrosion-doctors.org/Seawater/Oxygen.htm" target="blank">constants</a>.
+        <a href="http://corrosion-doctors.org/Seawater/Oxygen.htm" target="_blank" rel="noopener">constants</a>.
     </p>
     <div class="gallery_5">
         <div class="gallery__img gallery__item--1">
@@ -304,7 +327,7 @@
     <hr>
     <h5 id="dCO2_conc"> 2.2 Equilibrium concentration of dCO<sub>2</sub> in water</h5>
     <p>For the calcualtion of dissolved CO<sub>2</sub> in water, please use the 
-        <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">Seawater Carbonate System calculator</a>
+        <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" rel="noopener">Seawater Carbonate System calculator</a>
     </p>
 </div>
 
@@ -331,7 +354,7 @@
     <p style="line-height: 0.9"><i style="font-size:80%">
         Please note that the specific growth rate can be calculated from differences in the culture density 
         (expressed as cell number, cell weight, or culture optical density), 
-        as measured during <a href="https://en.wikipedia.org/wiki/Bacterial_growth", target="blank"> exponential culture growth</a> 
+        as measured during <a href="https://en.wikipedia.org/wiki/Bacterial_growth", target="blank" rel="noopener"> exponential culture growth</a> 
         according to the following equation:
         $$
         \begin{multline}
@@ -425,7 +448,7 @@
         due to the use of an exponential correction model with discrete initial conditions (OD<sub>720</sub> = 0.4; below this value, correction is not applied).
         To correct OD<sub>720</sub> signal across the entire measuring range, i.e. across both linear and non-linear ranges, a polynomial correction would be required.
     </p>
-    <p> 4.1 OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank"> photobioreactor PBR FMT-150</b></u></a>, based on the following equation<sup>1</sup>:
+    <p> 4.1 OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener"> photobioreactor PBR FMT-150</b></u></a>, based on the following equation<sup>1</sup>:
         <p style="line-height: 0.9"><i style="font-size:80%">
             $$
             \begin{multline}
@@ -462,7 +485,7 @@
         </div>
     </div>
     <br>
-    <p> 4.2 OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank">Multi-Cultivator MC-1000-OD</b></u></a>, based on the following equation<sup>2</sup>: 
+    <p> 4.2 OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank" rel="noopener">Multi-Cultivator MC-1000-OD</b></u></a>, based on the following equation<sup>2</sup>: 
         <p style="line-height: 0.9"><i style="font-size:80%">
             $$
             \begin{multline}
@@ -498,7 +521,7 @@
         </div>
     </div>
     <br>
-    <p> 4.3 OD<sub>720</sub> correction for <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank"><b><u>AquaPen</b></u></a>, based on the following equation: 
+    <p> 4.3 OD<sub>720</sub> correction for <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank" rel="noopener"><b><u>AquaPen</b></u></a>, based on the following equation: 
         <p style="line-height: 0.9"><i style="font-size:80%">
             $$
             \begin{multline}
@@ -534,8 +557,8 @@
         </div>
     </div>
     <p style="font-size:80%"><i><b>References:</b>
-        <br><sup>1</sup>Zavřel et al., (2021): Algal Research, 56: 1-15, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926421001478?dgcid=coauthor", target="blank">10.1016/j.algal.2021.102328</a>
-        <br><sup>2</sup>Sukačová et al., (2023): Algal Research, 71: 1-10, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926423000887", target="blank">10.1016/j.algal.2023.103055</a></i>
+        <br><sup>1</sup>Zavřel et al., (2021): Algal Research, 56: 1-15, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926421001478?dgcid=coauthor", target="blank" rel="noopener">10.1016/j.algal.2021.102328</a>
+        <br><sup>2</sup>Sukačová et al., (2023): Algal Research, 71: 1-10, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926423000887", target="blank" rel="noopener">10.1016/j.algal.2023.103055</a></i>
     </p>
 </div>
 <div class="background-box">
@@ -642,6 +665,7 @@
     <button id="calculate_A2" type="button" class="btn btn-primary" onclick="calculate_A2();"> Calculate <i>A<sub>2</sub></i></button>
     <button type="button" class="btn btn-info"><a>Absorbance 2 (<i>A<sub>2</sub></i>): <span id="recalculated_A2_for_span"></span></a></button>
     <br><br>
+    <hr>
     <h5 id="OD720_recalculation"> 5.2 Recalculate optical density (OD) between specific devices </h5>
     <p> To accurately convert OD values between different devices, comparative measurements are necessary to capture the effects 
         of both light absorption and scattering by suspended cells. Besided thickness of the cuvette (optical path length) and cell concentration, 
@@ -649,17 +673,17 @@
         including optical geometry, detector position or sensitivity. </p>
     <p> The following recalculation describes the relationship between 
         optical densities measured at 720 nm (OD<sub>720</sub>) across four devices: 
-        <a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank"><i>Multi-Cultivator MC-1000-OD</i></a> (inner cuvette thicknesses 2.6 cm), 
-        <a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank"><i>Photobioreactor PBR FMT-150</i></a> (2.4 cm),
-        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank"><i>AquaPen</i></a> (1.0 cm) and
-        <a href="https://www.shimadzu.cz/products/molecular-spectroscopy/uv-vis/uv-vis-nir-spectroscopy/uv-2600i-uv-2700i/index.html" target="_blank"> 
+        <a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank" rel="noopener"><i>Multi-Cultivator MC-1000-OD</i></a> (inner cuvette thicknesses 2.6 cm), 
+        <a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener"><i>Photobioreactor PBR FMT-150</i></a> (2.4 cm),
+        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank" rel="noopener"><i>AquaPen</i></a> (1.0 cm) and
+        <a href="https://www.shimadzu.cz/products/molecular-spectroscopy/uv-vis/uv-vis-nir-spectroscopy/uv-2600i-uv-2700i/index.html" target="_blank" rel="noopener"> 
         <i>UV-2600 spectrophotometer</i></a> (1.0 cm). 
     </p> 
     <p> Measurements were conducted using cell suspensions of the unicellular cyanobacterium
         <i>Synechocystis</i> sp. PCC 6803 and unicellular green alga <i>Chlorella vulgaris</i>:
         <br>
         <div class="container">
-            <img src="static/images/OD720_devices.jpg" alt="OD720_devices" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%;">
+            <img src="static/images/OD720_devices.jpg" alt="Optical_density" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%;">
         </div>
     </p> 
     <p> Since the OD<sub>720</sub> readings 
@@ -732,117 +756,93 @@
 <div class="background-box">
     <h4 id="dilution_estimator"> 6. Substance Dilution Estimator (Continuous Culture) </h4>
     <p>
-        In continuous or quasi-continuous cultivation systems (chemostat or turbidostat, respecitvely), the concentration of a non-reproducing substance in a culture suspension
+        In continuous or quasi-continuous cultivation systems (chemostat or turbidostat, respectively), the concentration of a non-reproducing substance in a culture suspension
         decreases over time as fresh medium dilutes the culture. The washout kinetics follow a first-order decay equation:
     </p>
     <p style="line-height: 0.9"><i style="font-size:80%">
-        $$
-        \begin{multline}
-        \shoveleft C_{t} = C_{0} * e^{-D * t}
-        \end{multline}
-        $$
+        $$ \begin{multline} \shoveleft C_{t} = C_{0} * e^{-D * t} \end{multline} $$
     </i></p>
     <p>
         where <i>C<sub>t</sub></i> is the concentration at time <i>t</i>, <i>C<sub>0</sub></i> is the initial concentration, 
         and <i>D</i> is the dilution rate [h<sup>-1</sup>]. The medium inflow rate (<i>F</i>, units [mL h<sup>-1</sup>]) required to achieve this 
         dilution depends on the culture volume (<i>V</i>): 
-        </p>
-            <p style="line-height: 0.9"><i style="font-size:80%">
-                $$
-                \begin{multline}
-                \shoveleft F = D \cdot V
-                \end{multline}
-                $$
-            </i></p>
     </p>
+    <p style="line-height: 0.9"><i style="font-size:80%">
+        $$ \begin{multline} \shoveleft F = D \cdot V \end{multline} $$
+    </i></p>
     
     <br>
     <h5> 6.1 Estimate concentration decay over time </h5>
     
     <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Initial Concentration (<i>C<sub>0</sub></i>):</a>
-        </div>
+        <div class="gallery__img gallery__item--1"><a>&nbsp Culture Volume (<i>V</i>):</a></div>
         <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <input class="form-control" type="number" id="init_conc" min="0" step="0.1" value="1" onkeypress="return isNumberKey(event)"/>
-            </div>
+            <input class="form-control" type="number" id="culture_volume" value="400" oninput="calculateDilutionPlot()"/>
         </div>
-        <div class="gallery__img gallery__item--3">
-            <a>mM, or mg L<sup>-1</sup></a>
+        <div class="gallery__img gallery__item--3"><a>mL</a></div>
+    </div>
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1"><a>&nbsp Dilution Rate (<i>D</i>):</a></div>
+        <div class="gallery__img gallery__item--2">
+            <input class="form-control" type="number" id="dilution_rate" value="0.05" step="0.01" oninput="calculateDilutionPlot()"/>
         </div>
+        <div class="gallery__img gallery__item--3"><a>h<sup>-1</sup></a></div>
+    </div>
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1"><a>&nbsp Medium Inflow Rate (<i>F</i>):</a></div>
+        <div class="gallery__img gallery__item--2">
+            <input class="form-control" type="text" id="flow_rate_output" readonly style="background-color: #e9ecef; font-weight: bold;"/>
+        </div>
+        <div class="gallery__img gallery__item--3"><a>mL h<sup>-1</sup></a></div>
     </div>
 
+    <hr>
+    <h6>Initial Dose (at t = 0)</h6>
     <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Culture Volume (<i>V</i>):</a>
-        </div>
+        <div class="gallery__img gallery__item--1"><a>&nbsp Stock Vol. Added:</a></div>
         <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <input class="form-control" type="number" id="culture_volume" min="0" step="1" value="400" onkeypress="return isNumberKey(event)"/>
-            </div>
+            <input class="form-control" type="number" id="init_stock_vol" value="1" step="0.1" oninput="calculateDilutionPlot()">
         </div>
-        <div class="gallery__img gallery__item--3">
-            <a>mL</a>
+        <div class="gallery__img gallery__item--3"><a>mL</a></div>
+    </div>
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1"><a>&nbsp Stock Conc.:</a></div>
+        <div class="gallery__img gallery__item--2">
+            <input class="form-control" type="number" id="init_stock_conc" value="400" step="1" oninput="calculateDilutionPlot()">
         </div>
+        <div class="gallery__img gallery__item--3"><a>mM (or mg/L)</a></div>
+    </div>
+    <div class="gallery_5">
+        <div class="gallery__img gallery__item--1"><a>&nbsp Initial Dose <i>C<sub>0</sub></i>:</a></div>
+        <div class="gallery__img gallery__item--2">
+            <input class="form-control" type="text" id="init_conc_display" readonly style="background-color: #e9ecef; font-weight: bold;">
+        </div>
+        <div class="gallery__img gallery__item--3"><a>mM (or mg/L)</a></div>
     </div>
 
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Dilution Rate (<i>D</i>):</a>
+    <hr>
+    <h6>Subsequent Additions</h6>
+    <div id="additions_wrapper">
         </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <input class="form-control" type="number" id="dilution_rate" mi n="0" step="0.01" value="0.05" onkeypress="return isNumberKey(event)"/>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>h<sup>-1</sup></a>
-        </div>
-    </div>
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addAdditionRow()">+ Add Time Point</button>
 
+    <hr>
     <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Medium Inflow Rate (<i>F</i>):</a>
-        </div>
+        <div class="gallery__img gallery__item--1"><a>&nbsp Time Range:</a></div>
         <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <input 
-                    class="form-control" 
-                    type="text" 
-                    id="flow_rate_output" 
-                    readonly 
-                    style="background-color: #e9ecef; font-weight: bold;"
-                />
-            </div>
+            <input class="form-control" type="number" id="time_range" value="100" oninput="calculateDilutionPlot()">
         </div>
-        <div class="gallery__img gallery__item--3">
-            <a>mL h<sup>-1</sup></a>
-        </div>
-    </div>
-
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Time Range:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <input class="form-control" type="number" id="time_range" min="1" step="1" value="100" onkeypress="return isNumberKey(event)"/>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>hours</a>
-        </div>
+        <div class="gallery__img gallery__item--3"><a>hours</a></div>
     </div>
 
     <br>
-    
-    <button id="calculate_dilution_btn" type="button" class="btn btn-primary" onclick="calculateDilutionPlot();"> Generate Plot</button>
+    <button id="calculate_dilution_btn" type="button" class="btn btn-sm btn-outline-secondary" onclick="calculateDilutionPlot();"> ↻ Refresh Plot</button>
     
     <div style="margin-top: 20px; padding: 10px; background-color: #fff; border-radius: 5px;">
         <canvas id="dilutionChart" style="width:100%; max-height:400px;"></canvas>
     </div>
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 

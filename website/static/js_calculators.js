@@ -296,29 +296,82 @@ function recalculate_OD() {
 //------------------------------------//
 //--- SUBSTANCE DILUTION CALCULATOR ---//
 //------------------------------------//
-let dilutionChartInstance = null;
-function calculateDilutionPlot() {
-    // 1. Get Inputs
-    const C0 = parseFloat(document.getElementById("init_conc").value);
-    const V = parseFloat(document.getElementById("culture_volume").value);
-    const D = parseFloat(document.getElementById("dilution_rate").value);
-    const maxTime = parseFloat(document.getElementById("time_range").value);
 
-    // 2. Calculate Medium Addition Rate (F = D * V)
+// Function to add a new dynamic row for additions
+function addAdditionRow() {
+    const wrapper = document.getElementById('additions_wrapper');
+    const rowId = 'row_' + Date.now();
+    const newRow = document.createElement('div');
+    newRow.className = 'row mb-2 addition-row';
+    newRow.id = rowId;
+    newRow.innerHTML = `
+        <div class="col-md-3"><small>Time (h)</small><input type="number" class="form-control add-time" oninput="calculateDilutionPlot()"></div>
+        <div class="col-md-3"><small>Vol (mL)</small><input type="number" class="form-control add-vol" oninput="calculateDilutionPlot()"></div>
+        <div class="col-md-4"><small>Stock Conc (mM, or mg/L)</small><input type="number" class="form-control add-conc" oninput="calculateDilutionPlot()"></div>
+        <div class="col-md-2"><small>&nbsp;</small><button class="btn btn-outline-danger btn-sm d-block" onclick="removeAdditionRow('${rowId}')">×</button></div>
+    `;
+    wrapper.appendChild(newRow);
+}
+
+function removeAdditionRow(id) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.remove();
+        calculateDilutionPlot();
+    }
+}
+
+function calculateDilutionPlot() {
+    // 1. Core Inputs & Flow Rate (F = D * V)
+    const V = parseFloat(document.getElementById("culture_volume").value) || 0;
+    const D = parseFloat(document.getElementById("dilution_rate").value) || 0;
     const flowRate = D * V;
-    
-    // 3. Update the new field
     document.getElementById("flow_rate_output").value = flowRate.toFixed(2);
 
-    // 4. Generate Data for Plot
+    // 2. Initial C0 Calculation
+    const initVol = parseFloat(document.getElementById("init_stock_vol").value) || 0;
+    const initStock = parseFloat(document.getElementById("init_stock_conc").value) || 0;
+    const C0 = V > 0 ? (initVol * initStock) / V : 0;
+    document.getElementById("init_conc_display").value = C0.toFixed(3);
+
+    const maxTime = parseFloat(document.getElementById("time_range").value) || 100;
+
+    // 3. Collect & Sort Additions
+    const additions = [];
+    document.querySelectorAll('.addition-row').forEach(row => {
+        const t = parseFloat(row.querySelector('.add-time').value);
+        const v = parseFloat(row.querySelector('.add-vol').value);
+        const c = parseFloat(row.querySelector('.add-conc').value);
+        if (!isNaN(t) && !isNaN(v) && !isNaN(c)) {
+            additions.push({ time: t, vol: v, conc: c });
+        }
+    });
+    additions.sort((a, b) => a.time - b.time);
+
+    // 4. Simulation Loop
     const timeLabels = [];
     const concentrationData = [];
-    const step = maxTime / 50;
+    const steps = 100; // Adjusted resolution to see points clearly
+    const dt = maxTime / steps;
+    
+    let currentC = C0;
+    let addIdx = 0;
 
-    for (let t = 0; t <= maxTime; t += step) {
-        timeLabels.push(t.toFixed(0));
-        const Ct = C0 * Math.exp(-D * t);
-        concentrationData.push(Ct.toFixed(2));
+    for (let i = 0; i <= steps; i++) {
+        let t = i * dt;
+
+        // Apply any substance "pulses" that happened in this time step
+        while (addIdx < additions.length && additions[addIdx].time <= t) {
+            let pulse = additions[addIdx];
+            currentC = (currentC * V + pulse.conc * pulse.vol) / V;
+            addIdx++;
+        }
+
+        timeLabels.push(t.toFixed(0)); // Labels as whole numbers for cleaner axis
+        concentrationData.push(currentC.toFixed(3));
+
+        // Washout decay for the next interval: Ct = C * e^(-D*dt)
+        currentC = currentC * Math.exp(-D * dt);
     }
 
     // 5. Render Chart
@@ -334,26 +387,31 @@ function calculateDilutionPlot() {
             datasets: [{
                 label: 'Substance Concentration',
                 data: concentrationData,
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                borderColor: '#007bff',                // Blue line
+                backgroundColor: 'rgba(0, 123, 255, 0.1)', // Light blue fill
                 fill: true,
-                tension: 0.3
+                pointRadius: 3,                        // Visible round points
+                pointBackgroundColor: '#007bff',
+                tension: 0.3                           // Smoother curve
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 x: { title: { display: true, text: 'Time (hours)' } },
                 y: { title: { display: true, text: 'Concentration' }, beginAtZero: true }
+            },
+            plugins: {
+                legend: { display: false }
             }
         }
     });
 }
 
-// FIX for the "Initial Load" issue:
-// This ensures the plot is drawn as soon as the page finishes loading
-window.onload = function() {
+// Auto-load plot on window open
+window.addEventListener('load', function() {
     if (document.getElementById("dilutionChart")) {
         calculateDilutionPlot();
     }
-};
+});

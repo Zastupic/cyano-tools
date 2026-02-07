@@ -1,7 +1,30 @@
 {% extends "base.html" %}
 
 {% block title %}
-    OJIP analysis
+    OJIP Fluorescence Transient Analysis (JIP-Test) | CyanoTools
+{% endblock %}
+
+{% block description %}
+    Automated JIP-test analysis for chlorophyll a fluorescence transients. Calculate PI_Abs, ABS/RC, and performance indices from OJIP raw data (fluorometer compatible).
+{% endblock %}
+
+{% block keywords %}
+    OJIP analysis, JIP-test, chlorophyll a fluorescence, JIP-test, plant stress detection, QA reduction, photosystem II efficiency, fluorescence transient, Kautsky effect
+{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CyanoTools OJIP Transient Analyzer",
+      "operatingSystem": "Web",
+      "applicationCategory": "ScientificSoftware",
+      "description": "Online analysis of fast chlorophyll fluorescence induction kinetics (OJIP) for photosynthesis research.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": "JIP-test parameter calculation, Fluorescence curve normalization, Multi-format PAM data support"
+    }
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -26,11 +49,11 @@
     including charge separation at photosystem II (PSII), the plastoquinon (PQ) pool, or at the site of photosystem I (PSI). 
 </p>
 <p>This tool enables visualization and analysis of OJIP fluorescence acquired by several common PAM fluorometers, including 
-    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
-    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">DUAL-PAM</a>, 
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">AquaPen</a>, 
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">FluorPen</a> or
-    <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" class="gallery__item--5">FL 6000</a>.
+    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
+    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">DUAL-PAM</a>, 
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">AquaPen</a>, 
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">FluorPen</a> or
+    <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" rel="noopener" class="gallery__item--5">FL 6000</a>.
     Up to 50 files with recorded OJIP fluorescence can be uploaded simultaneously for batch processing. 
     The tool generates multiple visualizations for each file precessed, including:
     <ul style="font-size:95%">
@@ -57,14 +80,15 @@
     the efficiency of light capture by photosystem II and various aspects of e<sup>-</sup> 
     transport between photosystem II and photosystem I. These parameters, as summarized in the table below (for references, 
     see <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" 
-        target="_blank">Stirbet et al., 2018</a>
+        target="_blank" rel="noopener">Stirbet et al., 2018</a>
     or <a href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" 
-        target="_blank">Tsimilli-Michael 2020)</a></b></i>, 
+        target="_blank" rel="noopener">Tsimilli-Michael 2020)</a></b></i>, 
     are calculated and plotted in bar charts. After processing, all data, plots and calculated parameters are stored in a summary .xlsx file that is available for download. 
 </p>   
 <br>
 <div class="container">
-    <img data-enlargeable src="static/images/OJIP_curves_example_orig.jpg" alt="OJIP example" class="gallery__img" width="50%" style="cursor: zoom-in; width: 25%">
+    <img data-enlargeable src="static/images/OJIP_curves_example_orig.jpg" 
+    alt="OJIP curve example" class="gallery__img" width="50%" style="cursor: zoom-in; width: 25%">
 </div>
 <table style="width:95%">
     <colgroup>
@@ -227,23 +251,23 @@
     <br>
     <i style="font-size:70%">Tsimilli-Michael, M. (2020):
         Photosynthetica, 58(SPECIAL ISSUE), 275-292. DOI:
-        <a href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" target="_blank">10.32615/ps.2019.150</a></i>
+        <a href="https://ps.ueb.cas.cz/artkey/phs-202002-0010_special-issue-in-honour-of-prof-reto-j-strasser-8211-revisiting-jip-test-an-educative-review-on-concepts.php" target="_blank" rel="noopener">10.32615/ps.2019.150</a></i>
         <br>
     <i style="font-size:70%">Stirbet, A., Lazár, D., Kromdijk, J., & Govindjee, (2018):
     Photosynthetica, 56(SPECIAL ISSUE), 86-104. DOI:
-    <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" target="_blank">10.1007/s11099-018-0770-3</a></i>
+    <a href="https://ps.ueb.cas.cz/artkey/phs-201801-0008_chlorophyll-a-fluorescence-induction-can-just-a-one-second-measurement-be-used-to-quantify-abiotic-stress-resp.php" target="_blank" rel="noopener">10.1007/s11099-018-0770-3</a></i>
     <br>
     <i style="font-size:70%">Stirbet, A. & Govindjee (2011):
         Journal of Photochemistry and Photobiology B: Biology, 104,  236–257. DOI:
-        <a href="https://www.sciencedirect.com/science/article/pii/S1011134410002812" target="_blank">0.1016/j.jphotobiol.2010.12.010</a></i>
+        <a href="https://www.sciencedirect.com/science/article/pii/S1011134410002812" target="_blank" rel="noopener">0.1016/j.jphotobiol.2010.12.010</a></i>
         <br>
     <i style="font-size:70%">Strasser R. J., Srivastava A., Tsimilli-Michael, M. (2000):
         Probing photosynthesis : mechanism, regulation & adaptation, 445-483. ISBN:
-        <a href="https://www.taylorfrancis.com/books/mono/10.1201/9781482268010/probing-photosynthesis-prasanna-mohanty-mohammad-yunus-uday-pathre" target="_blank">9780748408214</a></i>
+        <a href="https://www.taylorfrancis.com/books/mono/10.1201/9781482268010/probing-photosynthesis-prasanna-mohanty-mohammad-yunus-uday-pathre" target="_blank" rel="noopener">9780748408214</a></i>
     <br>
     <i style="font-size:70%">Akinyemi O. O., Čepl J., Keski-Saari S., Tomášková I., Stejskal J., Kontunen-Soppela S. & Keinänen M. (2023):
         Photosynthesis Research , 133–146. DOI:
-        <a href="https://link.springer.com/article/10.1007/s11120-023-01050-w" target="_blank">10.1007/s11120-023-01050-w</a></i>
+        <a href="https://link.springer.com/article/10.1007/s11120-023-01050-w" target="_blank" rel="noopener">10.1007/s11120-023-01050-w</a></i>
     <br>
 </p>
 <br>
@@ -260,25 +284,30 @@
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves', _anchor='results') }}">
     <a style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by the following fluorometers:</i></a>
     <div class="gallery_6_img">
-        <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">
+        <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">
             <i style="font-size:80%">MULTI-COLOR-PAM</i>
-            <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM" class="gallery__item--1">
+            <img src="static/images/MC_PAM.jpg" 
+            alt="MULTI-COLOR PAM Walz" class="gallery__item--1">
         </a>
-        <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">
+        <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">
             <i style="font-size:80%">DUAL-PAM</i>
-            <img src="static/images/dualpam.jpg" alt="Dual PAM" class="gallery__item--2">
+            <img src="static/images/dualpam.jpg" 
+            alt="Dual PAM Walz" class="gallery__item--2">
         </a>
-        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">
+        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">
             <i style="font-size:80%">AquaPen</i>
-            <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__item--3">
+            <img src="static/images/aquapen.jpg" 
+            alt="Aquapen Photon System Instruments" class="gallery__item--3">
         </a>
-        <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">
+        <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">
             <i style="font-size:80%">FluorPen</i>
-            <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__item--4">
+            <img src="static/images/fluorpen.jpg" 
+            alt="FluorPen Photon System Instruments" class="gallery__item--4">
         </a>
-        <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" class="gallery__item--5">
+        <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" rel="noopener" class="gallery__item--5">
             <i style="font-size:80%">FL 6000</i>
-            <img src="static/images/FL6000.JPG" alt="FL6000" class="gallery__item--5">
+            <img src="static/images/FL6000.JPG" 
+            alt="FL6000 Photon System Instruments" class="gallery__item--5">
         </a>    
     </div>
     <br>
@@ -359,7 +388,7 @@
         The script enables identification of the exact timing of F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> by detecting inflection points 
         in the fluorescence signal. It also identifies minima in the second derivative of the signal to 
         estimate the peak of Q<sub>A</sub>⁻–Q<sub>B</sub> accumulation 
-        (<a href="https://www.publish.csiro.au/fp/PP01065" target="_blank">Tomek et al., 2001</a>). Once identified, all points are 
+        (<a href="https://www.publish.csiro.au/fp/PP01065" target="_blank" rel="noopener">Tomek et al., 2001</a>). Once identified, all points are 
         plotted to visually verify manual selection of F<sub>J</sub> and F<sub>I</sub> timings, used for the calculation of the above-summarized 
         parameters. For identification of F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> timing, the following boundaries are used:</i>
         <table style="width:95%">
@@ -393,7 +422,7 @@
     <p style="line-height: 0.9"><i style="font-size:80%">The parameter <b>k<sub>r</sub></b> is related to the fitting, interpolation and reconstruction of the OJIP curves, 
         as necessary for the estimation of the 1<sup>st</sup> and 2<sup>nd</sup> derivatives of the fluorescence signal. 
         The parameter <b>k<sub>r</sub></b> defines reduction of the number of <a href = "https://en.wikipedia.org/wiki/Spline_(mathematics)">knots</a> within
-        <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.UnivariateSpline.html" target="_blank"> UnivariateSpline</a> function.
+        <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.UnivariateSpline.html" target="_blank" rel="noopener"> UnivariateSpline</a> function.
         The knots are identified automatically, however, their number is typically overestimated and without reduction, 
         the OJIP curve reconstruction can correspond poorly to the measured data.</i></p>    
     <div class="gallery_6_OJIP">
@@ -449,14 +478,14 @@
     <b>Plotted OJIP curves</b><a style="font-size:80%">
         including identifed F<sub>J</sub>, F<sub>I</sub> and F<sub>P</sub> times</a>
     <br>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_plot_from_memory }}"/>
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_plot_from_memory }}" alt="OJIP curves analyzed-fluorescence kinetics"/>
     <br> <br>
     <b>Calculated parameters </b>
     <br>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_parameters_from_memory }}"/>
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_parameters_from_memory }}"  alt="OJIP curves analyzed-JIP test parameters"/>
     <br> <br>
     <form>
-        <b>Download results</b><a style="font-size:80%"> in a summary .xlsx file</a>
+        <b>Download results</b><a style="font-size: 80%"> in a summary .xlsx file</a>
         <p style="line-height: 0.9"></p>    
         <ol>
             <li>Plots (as shown above)</li>

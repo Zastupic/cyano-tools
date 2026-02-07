@@ -1,7 +1,30 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    Light curves analysis
+{% block title %}
+    Rapid Light Curve (RLC) Analysis & ETR Calculator | CyanoTools
+{% endblock %}
+
+{% block description %}
+    Analyze Photosynthesis-Irradiance (P-I) curves online. Fit data to Platt models to calculate ETRmax, Alpha, and Ik. Compatible with Walz, AquaPen, and FluorPen data.
+{% endblock %}
+
+{% block keywords %}
+    rapid light curves, RLC analysis, ETRmax calculator, photosynthetic efficiency, Platt 1980 model, rETR calculation, PAM fluorometry, photoinhibition analysis, plant stress physiology
+{% endblock %}
+
+{% block extra_schema %}
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "CyanoTools Rapid Light Curve Analyzer",
+          "operatingSystem": "Web",
+          "applicationCategory": "ScientificSoftware",
+          "description": "Fit Photosynthesis-Irradiance (P-I) curves using Platt or Eilers-Peeters models to calculate ETRmax and Alpha.",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "featureList": "Non-linear regression fitting, Photoinhibition analysis, Electron transport rate calculation"
+        }
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -28,11 +51,11 @@
     The rapid light curves can be measured in plants, algae, cyanobacteria and in some photosynthetic bacteria. 
 </p>
 <p>This tool allows visualization and quantitative analysis of rapid ligth curves recorded with various PAM fluorometers, including 
-    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
-    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" class="gallery__item--2">DUAL-PAM</a>, 
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--3">AquaPen</a>, 
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--4">FluorPen</a> or
-    <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" class="gallery__item--5">FL 6000</a>.
+    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
+    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">DUAL-PAM</a>, 
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">AquaPen</a>, 
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">FluorPen</a> or
+    <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" rel="noopener" class="gallery__item--5">FL 6000</a>.
     Up to 50 files can be uploaded simultaneously for batch processing. The tool generates multiple visualizations for each file precessed, including:
 <ul style="font-size:95%">
     <li>Raw fluorescence signal under stepwise increased actinic light</li>
@@ -46,7 +69,7 @@
 </ul>
 <br>
 The curves are fitted by a model described by 
-<a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank">Platt et al. (1980)</a>:  
+<a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank" rel="noopener">Platt et al. (1980)</a>:  
 </p>
 <p>$$
     \begin{multline}
@@ -121,7 +144,7 @@ The curves are fitted by a model described by
         <td>Q<sub>y</sub> * PAR</td>
         <td>µmol<sub>electrons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
         <td>Relative electron transport rate; assuming that
-            <a href="https://aquation.com.au/wp-content/uploads/2017/08/How-to-Analyse-a-Rapid-Light-Curve.pdf" target="blank">
+            <a href="https://aquation.com.au/wp-content/uploads/2017/08/How-to-Analyse-a-Rapid-Light-Curve.pdf" target="blank" rel="noopener">
                 the value of photons absorptance by PSII is unknown</a></td>
     </tr>
     <tr>
@@ -190,15 +213,15 @@ The curves are fitted by a model described by
     <br>
     <i style="font-size:70%">Ralph P., Gademann R. (2005):
         Aquatic Botany 82, 222–237, DOI: 
-    <a href="https://doi.org/10.1016/j.aquabot.2005.02.006" target="_blank">10.1016/j.aquabot.2005.02.006</a></i>
+    <a href="https://doi.org/10.1016/j.aquabot.2005.02.006" target="_blank" rel="noopener">10.1016/j.aquabot.2005.02.006</a></i>
     <br>
     <i style="font-size:70%">White A. J., Critchley C. (1999):
         Photosynthesis Research, 59, 63–72, DOI:
-    <a href=" https://doi.org/10.1023/A:1006188004189" target="_blank">10.1023/A:1006188004189</a></i>
+    <a href=" https://doi.org/10.1023/A:1006188004189" target="_blank" rel="noopener">10.1023/A:1006188004189</a></i>
     <br>
     <i style="font-size:70%">Platt T., Gallegos C. L., Harrison W. G (1980):
         Journal of Marine Research, 38, 687-701:
-    <a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank">1525</a></i>
+    <a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank" rel="noopener">1525</a></i>
 </p>
 <br>
 <u>How to use this tool:</u>
@@ -214,13 +237,15 @@ The curves are fitted by a model described by
 <br>
 <a style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .txt files, as obtained by <i>AquaPen / FluorPen</i> fluorometers:</i></a>
 <div class="gallery_6_img">
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" class="gallery__item--1">
+    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--1">
         <i style="font-size:80%">AquaPen</i>
-        <img src="static/images/aquapen.jpg" alt="Aquapen" class="gallery__item--3">
+        <img src="static/images/aquapen.jpg" 
+        alt="Aquapen Photon System Instruments" class="gallery__item--3">
     </a>
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" class="gallery__item--2">
+    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--2">
         <i style="font-size:80%">FluorPen</i>
-        <img src="static/images/fluorpen.jpg" alt="FluorPen" class="gallery__item--4">
+        <img src="static/images/fluorpen.jpg" 
+        alt="FluorPen Photon System Instruments" class="gallery__item--4">
     </a>
 </div>
 <br>
@@ -293,11 +318,11 @@ The curves are fitted by a model described by
     <section id="results"></section>   
     <br> <br>
     <h6><b>Light curves: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ plot_from_memory }}"/>
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ plot_from_memory }}" alt="Fluorescence rapid light curves analyzed-fluorescence kinetics"/>
     <br> <br>
 
     <h6><b>Calculated parameters: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ parameters_from_memory }}"/>
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ parameters_from_memory }}" alt="Fluorescence rapid light curves analyzed-parameters"/>
     <br> <br>
 
     <form>
@@ -324,7 +349,7 @@ The curves are fitted by a model described by
     </div>
     <br>     
     <h6><b>Raw fluorescence signals: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ raw_data_from_memory }}"/>
+    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ raw_data_from_memory }}" alt="Fluorescence rapid light curves analyzed-fluorescnce signal"/>
 
 {% else %}
 <br><br><br><br><br><br><br>

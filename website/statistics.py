@@ -12,7 +12,6 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from scipy import stats
 
-
 # IMPORTANT: Check your app.py. If you use url_prefix='/stats',
 # your JS must call '/stats/run-statistics'
 stats_bp = Blueprint('statistics', __name__)

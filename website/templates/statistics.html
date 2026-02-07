@@ -1,5 +1,33 @@
 {% extends "base.html" %}
-{% block title %}Statistics - Beta {% endblock %}
+
+{% block title %}
+    Online Statistical Analysis | CyanoTools
+{% endblock %}
+
+{% block description %}
+    Free statistical tool for biological datasets. Generate box plots with swarm overlays, run PCA, and perform normality tests and ANOVA on wet-lab data instantly.
+{% endblock %}
+
+{% block keywords %}
+    Online statistics for biology, box plot generator, PCA analysis online, ANOVA assumptions test, biological data visualization, 
+    experimental data analysis, free statistical software
+{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "CyanoTools Statistics Beta",
+  "operatingSystem": "Web",
+  "applicationCategory": "BusinessApplication",
+  "description": "Statistical tool for wet-lab data: ANOVA, Kruskal-Wallis, and automated visualization of physiological assays.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": "Multi-factor grouping, Significance testing, Instant boxplots and bar charts"
+}
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="page-wrapper">
     <div class="wrapper-box">

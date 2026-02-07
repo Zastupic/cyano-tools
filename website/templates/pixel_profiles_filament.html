@@ -4,6 +4,14 @@
     Pigment profiles - filamentous strains
 {% endblock %}
 
+{% block description %}
+Generate longitudinal pixel profiles along microbial filaments. Analyze signal intensity and cell-to-cell variability in filamentous cyanobacteria and algae.
+{% endblock %}
+
+{% block keywords %}
+longitudinal profile, filament intensity, pixel line profile, fluorescence gradient, trichome analysis, spatial fluorescence
+{% endblock %}
+
 {% block content %}
 <!-- Banner -->
 <div id="banner-content">
@@ -34,18 +42,18 @@
     the difference in fluorescence intensity between the channels, using a shared selection mask.
     Typical application involves analysis of chlorophyll or phycobilisomes autofluorescence signal across individual cells of filamentous algae or cyanoabacteria.</p>
 <p>The following example illustrates the full workflow using TCS SP8 DMI 
-    <a href="https://www.leica-microsystems.com/products/confocal-microscopes/" target="_blank">confocal laser scanning microscope</a> 
+    <a href="https://www.leica-microsystems.com/products/confocal-microscopes/" target="_blank" rel="noopener">confocal laser scanning microscope</a> 
      (Leica Microsystems) and cells of a unicellular cyanobacterium <i>Nostoc</i> sp. CCAP 1453/38.
 </p>
 <div class="container">
     <img src="static/images/workflow_pixel_profiles_filaments.jpg" 
-    alt="Pixel_profiles_cell_selection" class="gallery__img_tall"
+    alt="Fluorescence profiles in photosynthetic cells - workflow" class="gallery__img_tall"
     data-enlargeable style="cursor: zoom-in; width: 75%">
 </div>
 <p><u>How to use this tool:</u></p>
 <ol>
     <li>Enter width of the 
-        <a href="https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.profile_line" target="_blank">profile line</a>, 
+        <a href="https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.profile_line" target="_blank" rel="noopener">profile line</a>, 
         defining number of pixels over which the fluorescence profile perpendicular to the line will be averaged</li>
     <li>Upload your image</li>
     <li>Draw lines over the cells in your image to select them for analysis</li>
@@ -91,7 +99,9 @@
         Selected line width: <b>{{ line_width }} px</b></p>
     <div class="imgbox" id="imgbox">
         <div class="insideWrapper">
-            <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit" id="img_orig_decoded_from_memory">
+            <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" 
+            alt="Identified fluorescence across the seleted cells"
+            class="center-fit" id="img_orig_decoded_from_memory">
             <canvas class="coveringCanvas" id="canvas_mouse_clicking">
             </canvas>
         </div>
@@ -114,19 +124,19 @@
         <div class="gallery_4">
             <a class="gallery__item--1">
                 <i>{{ image_name_1 }}</i>
-                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_1 }}" class="gallery__img"/> 
+                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_1 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/> 
                 {% if img_final_2 %}  
                     <a class="gallery__item--2">         
                         <i>{{ image_name_2 }}</i>
-                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_2 }}" class="gallery__img"/>  
+                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_2 }}" alt="Identified fluorescence profiles across the seleted cells"class="gallery__img"/>  
                         {% if img_final_3 %}  
                             <a class="gallery__item--3">         
                                 <i>{{ image_name_3 }}</i>
-                                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_3 }}" class="gallery__img"/>
+                                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_3 }}" alt="Identified fluorescence profiles across the seleted cells"class="gallery__img"/>
                                 {% if img_final_4 %}  
                                     <a class="gallery__item--4">         
                                         <i>{{ image_name_3 }}</i>
-                                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_4 }}" class="gallery__img"/>  
+                                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_final_4 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/>  
                                     </a>
                                 {% endif %}  
                             </a>
@@ -141,16 +151,16 @@
     <div class="container">
         <div class="gallery_4">
             <a class="gallery__item--1">
-                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_1 }}" class="gallery__img"/> 
+                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_1 }}" alt="Identified fluorescence profiles across the seleted cells"class=" gallery__img"/> 
                 {% if img_final_2 %}  
                     <a class="gallery__item--2">         
-                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_2 }}" class="gallery__img"/>  
+                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_2 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/>  
                         {% if img_final_3 %}  
                             <a class="gallery__item--3">         
-                                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_3 }}" class="gallery__img"/>
+                                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_3 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/>
                                 {% if img_final_4 %}  
                                     <a class="gallery__item--4">         
-                                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_4 }}" class="gallery__img"/>  
+                                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ scatter_plot_4 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/>  
                                     </a>
                                 {% endif %}  
                             </a>
@@ -166,18 +176,18 @@
              <div class="container">
                 <div class="gallery_4">
                     <a class="gallery__item--1">
-                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_2 }}" class="gallery__img"/> 
+                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_2 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/> 
                         {% if diff_plot_1_3 %}  
                             <a class="gallery__item--2">         
-                                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_3 }}" class="gallery__img"/>
+                                <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_3 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/>
                                 {% if diff_plot_2_3 %}  
                                     <a class="gallery__item--3">         
-                                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_2_3 }}" class="gallery__img"/>
+                                        <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_2_3 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/>
                                     </a>
                                 {% endif %}  
                                 {% if diff_plot_1_4 %}
                                 <a class="gallery__item--4">
-                                    <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_4 }}" class="gallery__img"/> 
+                                    <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_1_4 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/> 
                                 </a>
                                 {% endif %}
                        {% endif %}
@@ -188,10 +198,10 @@
                 <div class="container">
                     <div class="gallery_4">
                         <a class="gallery__item--1">
-                            <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_2_4 }}" class="gallery__img"/> 
+                            <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_2_4 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/> 
                             {% if diff_plot_3_4 %}
                                 <a class="gallery__item--2">
-                                    <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_3_4 }}" class="gallery__img"/>
+                                    <img data-enlargeable width="100" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ diff_plot_3_4 }}" alt="Identified fluorescence profiles across the seleted cells" class="gallery__img"/>
                                 </a>
                             {% endif %}
                         </a>
