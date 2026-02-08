@@ -7,10 +7,15 @@ import matplotlib.transforms as transforms # Required for Ellipse rotation
 import seaborn as sns
 import io
 import base64
+import traceback
 from openpyxl.drawing.image import Image as XLImage
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from scipy import stats
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
+from statsmodels.stats.multitest import multipletests
+from itertools import combinations
+from typing import Any 
 
 # IMPORTANT: Check your app.py. If you use url_prefix='/stats',
 # your JS must call '/stats/run-statistics'
@@ -226,7 +231,6 @@ def run_analysis():
 
         return jsonify({"mode": "results", "factors": factors, "results": results})
     except Exception as e:
-        import traceback
         print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
@@ -256,7 +260,6 @@ def export_excel():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-from typing import Any 
 def confidence_ellipse(x, y, ax, n_std=2.0, facecolor: Any = 'none', **kwargs):
     """
     Utility to create a covariance confidence ellipse.
@@ -406,7 +409,6 @@ def run_pca():
             "pca_table": clean_df.to_dict(orient='records')
         })
     except Exception as e:
-        import traceback
         print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
     
@@ -469,14 +471,13 @@ def run_anova():
         results = []
 
         for var in selected_vars:
-            # 1. Clean Data
             temp_df = df.copy()
             temp_df[var] = pd.to_numeric(temp_df[var], errors='coerce')
             clean_df = temp_df.dropna(subset=[var]).copy()
 
-            if clean_df.empty: continue
+            if clean_df.empty:
+                continue
 
-            # 2. Prepare Groups (Same logic as other endpoints)
             if factors:
                 for f in factors:
                     clean_df[f] = clean_df[f].astype(str).replace(['nan', 'None'], "N/A")
@@ -484,38 +485,123 @@ def run_anova():
             else:
                 clean_df['Group'] = 'All Data'
 
-            # 3. Extract Arrays for Scipy (Only n >= 3)
-            grouped_data = []
-            valid_groups = clean_df['Group'].value_counts()
-            valid_groups = valid_groups[valid_groups >= 3].index.tolist()
+            group_counts = clean_df['Group'].value_counts()
+            valid_groups = group_counts[group_counts >= 3].index.tolist()
 
-            for g in valid_groups:
-                vals = clean_df[clean_df['Group'] == g][var].values
-                grouped_data.append(vals)
+            if len(valid_groups) < 2:
+                continue
 
-            # 4. Run Tests
-            anova_res = {"stat": None, "p": None}
-            kruskal_res = {"stat": None, "p": None}
+            group_data = {g: clean_df[clean_df['Group'] == g][var].values for g in valid_groups}
+            data_list = list(group_data.values())
+            group_names = list(group_data.keys())
 
-            if len(grouped_data) >= 2:
-                # Parametric: One-Way ANOVA
-                try:
-                    f_stat, f_p = stats.f_oneway(*grouped_data)
-                    anova_res = {"stat": float(f_stat), "p": float(f_p)}
-                except: pass
+            # === Assumptions ===
+            shapiro_ps = [stats.shapiro(d)[1] for d in data_list if len(d) >= 3]
+            all_normal = all(p > 0.05 for p in shapiro_ps) if shapiro_ps else False
+            _, levene_p = stats.levene(*data_list) if len(data_list) > 1 else (None, 1.0)
+            homogeneous = levene_p > 0.05
 
-                # Non-Parametric: Kruskal-Wallis
-                try:
-                    k_stat, k_p = stats.kruskal(*grouped_data)
-                    kruskal_res = {"stat": float(k_stat), "p": float(k_p)}
-                except: pass
-
-            results.append({
+            # === Result dict ===
+            result = {
                 "variable": var,
-                "anova": anova_res,
-                "kruskal": kruskal_res
-            })
+                "test_used": "",
+                "overall_p": None,
+                "assumptions": {
+                    "all_normal": bool(all_normal),      # force Python bool
+                    "homogeneous": bool(homogeneous)
+                },
+                "posthoc": []
+            }
 
-        return jsonify({"results": results})
+            if all_normal and homogeneous:
+                result["test_used"] = "One-way ANOVA + Tukey’s HSD"
+                f_stat, p = stats.f_oneway(*data_list)
+                result["overall_p"] = float(p)
+
+                if p < 0.05:
+                    all_values = np.concatenate(data_list)
+                    all_groups = np.concatenate([[g] * len(d) for g, d in zip(group_names, data_list)])
+                    tukey = pairwise_tukeyhsd(all_values, all_groups, alpha=0.05)
+
+                    for row in tukey.summary().data[1:]:
+                        g1, g2, _, p_adj, _, _, reject = row
+                        result["posthoc"].append({
+                            "group1": str(g1),
+                            "group2": str(g2),
+                            "p_adj": float(p_adj),
+                            "significant": bool(reject)          # still safe here
+                        })
+
+            elif homogeneous:
+                result["test_used"] = "Kruskal–Wallis + pairwise Mann–Whitney (BH)"
+                _, p = stats.kruskal(*data_list)
+                result["overall_p"] = float(p)
+                if p < 0.05:
+                    result["posthoc"] = _pairwise_posthoc(group_names, group_data, method='mannwhitneyu')
+
+            elif all_normal:
+                result["test_used"] = "Welch’s ANOVA + pairwise t-tests (BH)"
+                _, p = stats.f_oneway(*data_list)
+                result["overall_p"] = float(p)
+                result["posthoc"] = _pairwise_posthoc(group_names, group_data, method='welch_ttest')
+
+            else:
+                result["test_used"] = "Kruskal–Wallis + pairwise Mann–Whitney (BH) [default]"
+                _, p = stats.kruskal(*data_list)
+                result["overall_p"] = float(p)
+                if p < 0.05:
+                    result["posthoc"] = _pairwise_posthoc(group_names, group_data, method='mannwhitneyu')
+
+            results.append(result)
+            
+        return jsonify({"results": _make_json_safe(results)})
+
     except Exception as e:
+        print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
+
+
+# ================== HELPER FUNCTIONS ==================
+
+def _make_json_safe(obj):
+    """Convert numpy types (bool_, float64, int64, etc.) to native Python types"""
+    if isinstance(obj, np.generic):
+        return obj.item()
+    elif isinstance(obj, dict):
+        return {k: _make_json_safe(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_make_json_safe(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(_make_json_safe(item) for item in obj)
+    return obj
+
+
+def _pairwise_posthoc(group_names, group_data, method='mannwhitneyu'):
+
+    pairs = list(combinations(range(len(group_names)), 2))
+    p_values = []
+    comparisons = []
+
+    for i, j in pairs:
+        g1, g2 = group_names[i], group_names[j]
+        d1, d2 = group_data[g1], group_data[g2]
+
+        if method == 'mannwhitneyu':
+            _, p = stats.mannwhitneyu(d1, d2, alternative='two-sided')
+        else:  # welch
+            _, p = stats.ttest_ind(d1, d2, equal_var=False, alternative='two-sided')
+
+        p_values.append(p)
+        comparisons.append((g1, g2))
+
+    reject, p_adj, _, _ = multipletests(p_values, alpha=0.05, method='fdr_bh')
+
+    return [
+        {
+            "group1": str(g1),
+            "group2": str(g2),
+            "p_adj": float(p),
+            "significant": bool(r)          # r is np.bool_ → we will clean it with _make_json_safe
+        }
+        for (g1, g2), p, r in zip(comparisons, p_adj, reject)
+    ]

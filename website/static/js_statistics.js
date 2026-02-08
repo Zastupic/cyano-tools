@@ -462,48 +462,73 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
     .then(res => res.json())
     .then(data => {
         anovaSpinner.style.display = 'none';
-        if (data.error) throw new Error(data.error);
+
+        if (data.error) {
+            console.error("Backend ANOVA error:", data.error);
+            anovaResults.innerHTML = `
+                <div class="alert alert-danger p-3">
+                    <strong>Server Error:</strong><br>
+                    ${data.error}<br><br>
+                    <small>Tip: Check that you added the statsmodels imports in statistics.py</small>
+                </div>`;
+            return;
+        }
+
+        if (!data.results || data.results.length === 0) {
+            anovaResults.innerHTML = `
+                <div class="alert alert-warning">
+                    No valid groups with ≥3 replicates for statistical testing.
+                </div>`;
+            return;
+        }
 
         data.results.forEach(res => {
             const section = document.createElement('div');
-            section.className = "mb-4 p-3 border rounded bg-white shadow-sm";
-            
-            const isAnovaSig = res.anova.p !== null && res.anova.p < 0.05;
-            const isKruskalSig = res.kruskal.p !== null && res.kruskal.p < 0.05;
+            section.className = "mb-5 p-4 border rounded bg-white shadow-sm";
 
-            section.innerHTML = `
-                <h6 class="fw-bold border-bottom pb-2 text-success">${res.variable}</h6>
-                <div class="table-responsive mt-3">
-                    <table class="table table-bordered table-sm extra-small text-center">
+            let posthocHTML = '';
+            if (res.posthoc && res.posthoc.length > 0) {
+                posthocHTML = `
+                    <h6 class="mt-4 mb-2 fw-bold text-muted">Post-hoc comparisons</h6>
+                    <table class="table table-sm table-bordered">
                         <thead class="table-light">
-                            <tr>
-                                <th>Test Type</th>
-                                <th>Statistic</th>
-                                <th>p-value</th>
-                                <th>Result</th>
-                            </tr>
+                            <tr><th>Comparison</th><th>p (adj.)</th><th></th></tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td class="text-start fw-bold text-muted">Parametric (ANOVA)</td>
-                                <td>${res.anova.stat !== null ? res.anova.stat.toFixed(2) : '-'}</td>
-                                <td>${res.anova.p !== null ? res.anova.p.toFixed(4) : '-'}</td>
-                                <td>${isAnovaSig ? '<span class="badge bg-success">Significant</span>' : '<span class="badge bg-secondary">NS</span>'}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-start fw-bold text-muted">Non-Parametric (Kruskal)</td>
-                                <td>${res.kruskal.stat !== null ? res.kruskal.stat.toFixed(2) : '-'}</td>
-                                <td>${res.kruskal.p !== null ? res.kruskal.p.toFixed(4) : '-'}</td>
-                                <td>${isKruskalSig ? '<span class="badge bg-success">Significant</span>' : '<span class="badge bg-secondary">NS</span>'}</td>
-                            </tr>
+                            ${res.posthoc.map(ph => `
+                                <tr>
+                                    <td><strong>${ph.group1}</strong> vs <strong>${ph.group2}</strong></td>
+                                    <td>${ph.p_adj.toFixed(4)}</td>
+                                    <td>${ph.significant ? 
+                                        '<span class="badge bg-success">Significant</span>' : 
+                                        '<span class="badge bg-secondary">n.s.</span>'}
+                                    </td>
+                                </tr>
+                            `).join('')}
                         </tbody>
-                    </table>
-                </div>`;
+                    </table>`;
+            }
+
+            section.innerHTML = `
+                <div class="d-flex justify-content-between">
+                    <h5 class="fw-bold text-success">${res.variable}</h5>
+                    <span class="badge bg-primary">${res.test_used}</span>
+                </div>
+                
+                <div class="alert alert-info py-2 small mt-3">
+                    <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong><br>
+                    Normality: ${res.assumptions.all_normal ? '✓ All groups' : '✗'} | 
+                    Homogeneity: ${res.assumptions.homogeneous ? '✓' : '✗'}
+                </div>
+
+                ${posthocHTML}
+            `;
             anovaResults.appendChild(section);
         });
     })
     .catch(err => {
         anovaSpinner.style.display = 'none';
-        alert("ANOVA Error: " + err.message);
+        console.error(err);
+        anovaResults.innerHTML = `<div class="alert alert-danger">Request failed: ${err.message}</div>`;
     });
 });
