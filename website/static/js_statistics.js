@@ -1,13 +1,9 @@
-/**
- * js_statistics.js - Final Multivariate Edition
- * Changes: Auto-selection on dropdown change, 3-factor limit, nice alerts.
- */
-
 const API_URL = '/run-statistics';
 const EXPORT_URL = '/export-excel';
 let globalData = null;
 let lastResults = null;
 let selectedFactors = [];
+let lastAnovaResults = null;
 
 // --- 1. Factor Management (Auto-selection Logic) ---
 
@@ -36,6 +32,8 @@ document.getElementById('factorSelector').addEventListener('change', function() 
     this.value = ""; // Reset dropdown for next selection
 });
 
+// --- 1. Factor Management (Updated for Responsiveness) ---
+
 function renderFactorTags() {
     const container = document.getElementById('activeFactorsContainer');
     const selector = document.getElementById('factorSelector');
@@ -52,32 +50,38 @@ function renderFactorTags() {
             <i class="bi bi-x-circle-fill text-white-50 hover-white"></i>
         `;
 
-        // Remove factor on click
         tag.onclick = function() { removeFactor(factor); };
         container.appendChild(tag);
     });
 
-    // Disable selector if limit reached
     selector.disabled = (selectedFactors.length >= 3);
 
-    // Update grouping mode dropdown
+    // Update UI dependencies
     populateGroupingMode();
-
-    // Disable variable checkboxes that match selected factors
     updateVariableCheckboxes();
+    
+    // NEW: Sync the "Select All" checkbox state whenever factors change
+    updateSelectAllState();
 }
 
 function updateVariableCheckboxes() {
     const checkboxes = document.querySelectorAll('.var-check');
     checkboxes.forEach(cb => {
         const wrapper = cb.closest('.form-check');
+        // If the variable is currently a selected factor, disable and uncheck it
         if (selectedFactors.includes(cb.value)) {
-            cb.checked = false;
+            cb.checked = false; 
             cb.disabled = true;
-            if (wrapper) wrapper.style.opacity = '0.4';
+            if (wrapper) {
+                wrapper.style.opacity = '0.4';
+                wrapper.style.pointerEvents = 'none'; // Make it truly "unresponsive"
+            }
         } else {
             cb.disabled = false;
-            if (wrapper) wrapper.style.opacity = '1';
+            if (wrapper) {
+                wrapper.style.opacity = '1';
+                wrapper.style.pointerEvents = 'auto';
+            }
         }
     });
 }
@@ -147,12 +151,36 @@ function showNiceMessage(message, type) {
     }, 3000);
 }
 
-// --- 2. Variable Selection Logic ---
+/// --- 2. Variable Selection Logic (Updated Select All) ---
 
 document.getElementById('selectAllVars').addEventListener('change', function() {
-    const checkboxes = document.querySelectorAll('.var-check');
-    checkboxes.forEach(cb => { cb.checked = this.checked; });
+    // Select ONLY checkboxes that are not disabled (not factors)
+    const availableCheckboxes = document.querySelectorAll('.var-check:not(:disabled)');
+    const disabledCheckboxes = document.querySelectorAll('.var-check:disabled');
+
+    availableCheckboxes.forEach(cb => {
+        cb.checked = this.checked;
+    });
+
+    // Ensure disabled factors ALWAYS remain unchecked
+    disabledCheckboxes.forEach(cb => {
+        cb.checked = false;
+    });
 });
+
+// Helper to keep "Select All" state in sync with manual clicks
+function updateSelectAllState() {
+    const enabledCheckboxes = document.querySelectorAll('.var-check:not(:disabled)');
+    const selectAllBox = document.getElementById('selectAllVars');
+    
+    if (enabledCheckboxes.length === 0) {
+        selectAllBox.checked = false;
+        return;
+    }
+
+    const allChecked = Array.from(enabledCheckboxes).every(cb => cb.checked);
+    selectAllBox.checked = allChecked;
+}
 
 // --- 3. Data Loading ---
 
@@ -210,6 +238,11 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
                 </div>`;
         });
 
+        // Add change listeners to variable checkboxes for responsive "Select All"
+        document.querySelectorAll('.var-check').forEach(cb => {
+            cb.addEventListener('change', updateSelectAllState);
+        });
+
         // AUTO-SELECT FIRST COLUMN
         selectedFactors = [firstColumnName];
         renderFactorTags();
@@ -224,7 +257,9 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
 
 // --- 4. Analysis & Export ---
 document.getElementById('updateAnalysisBtn').addEventListener('click', function() {
-    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled)
+        .map(cb => cb.value);
     if (selectedFactors.length === 0) return alert("Select at least one factor.");
     if (selectedVars.length === 0) return alert("Select at least one variable.");
 
@@ -233,7 +268,9 @@ document.getElementById('updateAnalysisBtn').addEventListener('click', function(
 });
 
 document.getElementById('runVizBtn').addEventListener('click', function() {
-    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled)
+        .map(cb => cb.value);
     if (selectedFactors.length === 0) return alert("Select at least one factor.");
     if (selectedVars.length === 0) return alert("Select at least one variable.");
 
@@ -283,19 +320,20 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
                                         ${result.factors.map(f => `<td>${s[f]}</td>`).join('')}
                                         <td>${s.count}</td>
                                         <td>${s.mean ? s.mean.toFixed(4) : '0'}</td>
-                                        <td>${s.std ? s.std.toFixed(4) : 'N/A'}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </details>
-                </div>`;
+                                        <td>${s.std ? s.std.toFixed(4) : '0'}</td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </details>
+                    </div>
+                `;
             statsContent.appendChild(card);
         });
+        vizResultsHeader.style.display = 'flex';
     })
     .catch(err => {
         loadingSpinner.style.display = 'none';
-        alert("Analysis Error: " + err.message);
+        alert("Visualization Error: " + err.message);
     });
 });
 
@@ -324,7 +362,9 @@ let lastPCAResults = null;
 
 // 2. Updated runPCABtn Event Listener
 document.getElementById('runPCABtn').addEventListener('click', function() {
-    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled)
+        .map(cb => cb.value);
     const removeMissing = document.getElementById('pcaRemoveMissing').checked;
     const averageByFactor = document.getElementById('pcaAverageByFactor').checked;
     const showLoadings = document.getElementById('pcaShowLoadings').checked;
@@ -425,7 +465,9 @@ document.getElementById('downloadPCAExcelBtn').addEventListener('click', functio
 
 // Test assumptions
 document.getElementById('runTestsBtn').addEventListener('click', function() {
-    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled)
+        .map(cb => cb.value);
 
     if (selectedVars.length === 0) {
         return alert("Please select at least one variable in the 'Data Input' panel.");
@@ -509,7 +551,9 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
 
 // 2. ADD NEW LISTENER for 'runAnovaBtn'
 document.getElementById('runAnovaBtn').addEventListener('click', function() {
-    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled)
+        .map(cb => cb.value);
     const anovaSpinner = document.getElementById('anovaSpinner');
     const anovaResults = document.getElementById('anovaResults');
 
@@ -540,6 +584,11 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
                 </div>`;
             return;
         }
+
+        // Save the results for exporting
+        lastAnovaResults = data; 
+        // Show the download button
+        document.getElementById('downloadAnovaExcelBtn').style.display = 'inline-flex';
 
         if (!data.results || data.results.length === 0) {
             anovaResults.innerHTML = `
@@ -686,4 +735,30 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
         console.error(err);
         anovaResults.innerHTML = `<div class="alert alert-danger">Request failed: ${err.message}</div>`;
     });
+});
+
+// Download excel with ANOVA results
+document.getElementById('downloadAnovaExcelBtn').addEventListener('click', function() {
+    if (!lastAnovaResults) return;
+
+    fetch('/export-anova-excel', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lastAnovaResults)
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Export failed");
+        return res.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "Significance_Test_Report.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    })
+    .catch(err => alert("Export Error: " + err.message));
 });

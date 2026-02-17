@@ -17,8 +17,6 @@ from statsmodels.stats.multitest import multipletests
 from itertools import combinations
 from typing import Any
 
-# IMPORTANT: Check your app.py. If you use url_prefix='/stats',
-# your JS must call '/stats/run-statistics'
 stats_bp = Blueprint('statistics', __name__)
 
 def _sanitize(obj):
@@ -79,8 +77,8 @@ def run_tests():
             group_data = []
             shapiro_results = []
 
-            # Sort groups to ensure plot and calculations match
-            unique_groups = sorted(clean_df['Group'].unique())
+            # Use the order of appearance from the original data
+            unique_groups = clean_df['Group'].unique().tolist()
 
             for g_name in unique_groups:
                 data = clean_df[clean_df['Group'] == g_name][var].astype(float)
@@ -163,6 +161,11 @@ def run_analysis():
             temp_df[var] = pd.to_numeric(temp_df[var], errors='coerce')
             clean_df = temp_df.dropna(subset=[var]).copy()
 
+            # Also drop rows where any factor is empty/NaN
+            if factors:
+                clean_df = clean_df.dropna(subset=factors).copy()
+                clean_df = clean_df[~clean_df[factors].isin(['', 'nan', 'None', 'NaN']).any(axis=1)].copy()
+
             if clean_df.empty:
                 continue
 
@@ -235,7 +238,7 @@ def run_analysis():
                     g.ax.legend(title=hue_col, bbox_to_anchor=(1.05, 1), loc='upper left', frameon=False)
 
             g.fig.subplots_adjust(top=0.85)
-            g.fig.suptitle(f"Analysis of {var} by {', '.join(factors)}", fontsize=12, fontweight='bold')
+            g.fig.suptitle(f"Visualization of {var} by {', '.join(factors)}", fontsize=12, fontweight='bold')
             g.ax.set_xlabel(factors[0], fontsize=11, fontweight='bold')
             g.ax.set_ylabel(var, fontsize=11, fontweight='bold')
 
@@ -530,13 +533,14 @@ def run_anova():
                     slice_df = slice_df.copy()
                     slice_df['Group'] = slice_df[group_factors[0]]
 
-                group_counts = slice_df['Group'].value_counts()
-                valid_groups = group_counts[group_counts >= 3].index.tolist()
+                # Preserve original order and filter for n >= 3
+                all_ordered_groups = slice_df['Group'].unique().tolist()
+                valid_groups = [g for g in all_ordered_groups if len(slice_df[slice_df['Group'] == g]) >= 3]
 
                 if len(valid_groups) < 2:
                     continue
 
-                group_data = {g: slice_df[slice_df['Group'] == g][var].values for g in valid_groups}
+                group_data = {g: slice_df[slice_df['Group'] == g][var].astype(float).values for g in valid_groups}
                 data_list = list(group_data.values())
                 group_names = list(group_data.keys())
 
@@ -609,9 +613,16 @@ def run_anova():
 # ================== HELPER FUNCTIONS ==================
 
 def _make_json_safe(obj):
-    """Convert numpy types (bool_, float64, int64, etc.) to native Python types"""
+    """Convert numpy types (bool_, float64, int64, etc.) to native Python types and sanitize NaN/Inf"""
     if isinstance(obj, np.generic):
-        return obj.item()
+        val = obj.item()
+        if isinstance(val, float) and (val != val or val == float('inf') or val == float('-inf')):
+            return None
+        return val
+    elif isinstance(obj, float):
+        if obj != obj or obj == float('inf') or obj == float('-inf'):
+            return None
+        return obj
     elif isinstance(obj, dict):
         return {k: _make_json_safe(v) for k, v in obj.items()}
     elif isinstance(obj, list):
@@ -747,16 +758,102 @@ def _assign_letter_groups(group_names, group_data, posthoc_results, var, slice_d
                 group_letters[g].add(letters[letter_idx])
             letter_idx += 1
 
-    # Build result sorted by mean descending
-    result = []
+    # Build a lookup dictionary for the calculated statistics
+    stats_map = {}
     for g in sorted_groups:
         d = group_data[g]
-        result.append({
+        stats_map[g] = {
             "group": str(g),
             "mean": float(np.mean(d)),
             "std": float(np.std(d, ddof=1)) if len(d) > 1 else 0.0,
             "n": int(len(d)),
             "letter": "".join(sorted(group_letters[g]))
-        })
+        }
 
-    return result
+    # Return the results in the original order provided in group_names
+    return [stats_map[g] for g in group_names]
+
+@stats_bp.route('/export-anova-excel', methods=['POST'])
+def export_anova_excel():
+    try:
+        data = request.get_json()
+        if not data or 'results' not in data:
+            return jsonify({"error": "No data provided"}), 400
+
+        summary_rows = []
+        pairwise_rows = []
+
+        for res in data['results']:
+            var_name = res.get('variable', 'N/A')
+            slice_info = res.get('slice_label', 'All Data')
+            test_type = res.get('test_used', 'N/A')
+            overall_p = res.get('overall_p', 'N/A')
+            
+            # --- NEW: Extract Assumption Results ---
+            assumptions = res.get('assumptions', {})
+            all_normal = "Yes" if assumptions.get('all_normal') else "No"
+            homogeneous = "Yes" if assumptions.get('homogeneous') else "No"
+
+            # 1. Process Summary (Adding Assumption Columns)
+            if 'letter_groups' in res:
+                for lg in res['letter_groups']:
+                    summary_rows.append({
+                        "Variable": var_name,
+                        "Group": lg.get('group'),
+                        "Significance Letter": lg.get('letter'),
+                        "Slice/Subset": slice_info,
+                        "Test Selection": test_type,
+                        "Normality (All Groups)": all_normal,
+                        "Homogeneity (Levene)": homogeneous,
+                        "Overall p-value": overall_p,
+                        "Mean": lg.get('mean'),
+                        "Std Dev": lg.get('std'),
+                        "N": lg.get('n')
+                    })
+
+            # 2. Process Detailed Pairwise
+            if 'posthoc' in res:
+                for ph in res['posthoc']:
+                    pairwise_rows.append({
+                        "Variable": var_name,
+                        "Slice/Subset": slice_info,
+                        "Comparison": f"{ph.get('group1')} vs {ph.get('group2')}",
+                        "p-adj": ph.get('p_adj'),
+                        "Significant": "Yes" if ph.get('significant') else "No"
+                    })
+
+        # Create DataFrames
+        df_summary = pd.DataFrame(summary_rows)
+        df_pairwise = pd.DataFrame(pairwise_rows)
+
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            if not df_summary.empty:
+                df_summary.to_excel(writer, index=False, sheet_name='Summary Letters')
+            if not df_pairwise.empty:
+                df_pairwise.to_excel(writer, index=False, sheet_name='Detailed Pairwise')
+            
+            # Auto-adjust column widths
+            for sheetname in writer.sheets:
+                ws = writer.sheets[sheetname]
+                for col in ws.columns:
+                    max_length = 0
+                    column = col[0].column_letter
+                    for cell in col:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except: pass
+                    ws.column_dimensions[column].width = max_length + 2
+
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name="Significance_Report_With_Assumptions.xlsx"
+        )
+
+    except Exception as e:
+        print(f"Excel Export Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
