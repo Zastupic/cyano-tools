@@ -601,6 +601,47 @@ def run_anova():
                     group_names, group_data, result["posthoc"], var, slice_df
                 )
 
+                if result["letter_groups"]:
+                    # Prepare data for plotting (similar to /run-statistics)
+                    slice_df['Group'] = slice_df['Group'].astype(str)  # Ensure string for ordering
+                    unique_groups = slice_df['Group'].unique().tolist()  # Preserve order
+                    
+                    # Create letter map from letter_groups
+                    letter_map = {lg['group']: lg['letter'] for lg in result["letter_groups"]}
+                    
+                    # Base plot (box + swarm)
+                    plt.figure(figsize=(10, 6))
+                    sns.set_style("whitegrid")
+                    palette = sns.color_palette("nipy_spectral", len(unique_groups))  # Consistent palette
+                    
+                    # Box plot
+                    ax = sns.boxplot(data=slice_df, x='Group', y=var, order=unique_groups,
+                                     palette=palette, showfliers=False, linewidth=1.5)
+                    
+                    # Swarm overlay
+                    sns.stripplot(data=slice_df, x='Group', y=var, order=unique_groups,
+                                  color=".25", size=4, alpha=0.5)
+                    
+                    # Add CLD letters above boxes
+                    for i, group in enumerate(unique_groups):
+                        letter = letter_map.get(group, 'a')
+                        # Position: Above max whisker + offset
+                        max_val = slice_df[slice_df['Group'] == group][var].max()
+                        ax.text(i, max_val * 1.05, letter, ha='center', va='bottom', fontsize=12, fontweight='bold',
+                                color='black', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
+                    
+                    # Add info box (overall p, test, assumptions)
+                    info_text = f"{result['test_used']}\nOverall p: {result['overall_p']:.4f}\nNorm: {'✓' if result['assumptions']['all_normal'] else '✗'}\nHomo: {'✓' if result['assumptions']['homogeneous'] else '✗'}"
+                    plt.text(0.02, 0.95, info_text, transform=ax.transAxes, fontsize=9,
+                             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                    
+                    plt.title(f"{var} ({slice_label})", fontsize=14, fontweight='bold')
+                    plt.xticks(rotation=30, ha='right')
+                    plt.tight_layout()
+                    
+                    result["plot_url"] = get_plot_base64()  # Your existing function
+                    plt.close()
+
                 all_results.append(result)
 
         return jsonify({"results": _make_json_safe(all_results)})
@@ -800,8 +841,8 @@ def export_anova_excel():
                     summary_rows.append({
                         "Variable": var_name,
                         "Group": lg.get('group'),
-                        "Significance Letter": lg.get('letter'),
                         "Slice/Subset": slice_info,
+                        "Significance Letter": lg.get('letter'),
                         "Test Selection": test_type,
                         "Normality (All Groups)": all_normal,
                         "Homogeneity (Levene)": homogeneous,

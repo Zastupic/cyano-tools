@@ -182,6 +182,26 @@ function updateSelectAllState() {
     selectAllBox.checked = allChecked;
 }
 
+function getLetterGroupStyle(letters) {
+    if (!letters) return 'background-color: #6c757d; color: white;';
+    
+    // 1. Better Hash (djb2) to ensure 'a', 'b', and 'c' produce different numbers
+    let hash = 5381;
+    for (let i = 0; i < letters.length; i++) {
+        hash = ((hash << 5) + hash) + letters.charCodeAt(i);
+    }
+
+    // 2. Use Golden Ratio to spread hues (approx 0.618033)
+    // This prevents similar characters from getting colors that are too close
+    const goldenRatioConjugate = 0.618033988749895;
+    let hue = (Math.abs(hash) * goldenRatioConjugate) % 1;
+    hue = Math.floor(hue * 360); // Convert to 0-360 degrees
+    
+    // 3. Return HSL Color
+    // Saturation 75%, Lightness 40% for better contrast with white text
+    return `background-color: hsl(${hue}, 75%, 40%); color: white; border: 1px solid rgba(0,0,0,0.1);`;
+}
+
 // --- 3. Data Loading ---
 
 document.getElementById('processDataBtn').addEventListener('click', function() {
@@ -620,17 +640,33 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
                     : '';
 
                 if (res.letter_groups && res.letter_groups.length > 0) {
+                    const sliceInfo = res.slice_label && res.slice_label !== 'All' 
+                        ? `<span class="text-muted">${res.slice_label}</span>` 
+                        : 'All groups';
+                    
                     summaryHTML += `
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold small">${sliceInfo || 'All groups'}</span>
+                        <div class="border rounded p-3 mb-4 bg-white shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0 fw-bold">${sliceInfo}</h6>
                                 <span class="badge bg-primary">${res.test_used}</span>
                             </div>
-                            <div class="alert alert-info py-1 small mb-2">
-                                <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong> |
-                                Normality: ${res.assumptions.all_normal ? '✓' : '✗'} |
+                            
+                            <!-- NEW: Significance Plot (most important part) -->
+                            ${res.plot_url ? `
+                            <div class="text-center mb-4">
+                                <img src="data:image/png;base64,${res.plot_url}" 
+                                     class="img-fluid rounded shadow-sm" 
+                                     style="max-height: 420px; border: 1px solid #e9ecef;">
+                            </div>` : ''}
+                            
+                            <!-- Info banner -->
+                            <div class="alert alert-info py-2 small mb-3">
+                                <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong> | 
+                                Normality: ${res.assumptions.all_normal ? '✓' : '✗'} | 
                                 Homogeneity: ${res.assumptions.homogeneous ? '✓' : '✗'}
                             </div>
+                            
+                            <!-- Existing summary table -->
                             <table class="table table-sm table-bordered text-center">
                                 <thead class="table-light">
                                     <tr><th class="text-left">Group</th><th>Mean</th><th>SD</th><th>N</th><th>Letter</th></tr>
@@ -642,7 +678,11 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
                                             <td>${lg.mean.toFixed(4)}</td>
                                             <td>${lg.std.toFixed(4)}</td>
                                             <td>${lg.n}</td>
-                                            <td><span class="badge bg-success fs-6">${lg.letter}</span></td>
+                                            <td>
+                                                <span class="badge fs-6" style="padding: 6px 14px; border-radius: 50px; ${getLetterGroupStyle(lg.letter)}">
+                                                    ${lg.letter}
+                                                </span>
+                                            </td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -653,7 +693,8 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
                         <div class="mb-3">
                             <div class="alert alert-secondary py-2 small">
                                 ${sliceInfo || 'All groups'}: No significant differences found (p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
-                                All groups share the same letter <span class="badge bg-success">a</span>.
+                                All groups share the same letter 
+                                <span class="badge fs-6" style="padding: 5px 12px; border-radius: 12px; ${getLetterGroupStyle('a')}">a</span>.
                             </div>
                         </div>`;
                 }
@@ -706,19 +747,19 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
 
             section.innerHTML = `
                 <h5 class="fw-bold text-success mb-3">${varName}</h5>
-                <ul class="nav nav-pills nav-fill mb-3" role="tablist">
-                    <li class="nav-item">
-                        <button class="nav-link active small fw-bold" data-toggle="tab" data-target="#${varId}_summary">
-                            <i class="bi bi-grid-3x3-gap-fill"></i> Letter Groups
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link small fw-bold" data-toggle="tab" data-target="#${varId}_detail">
-                            <i class="bi bi-list-check"></i> Detailed Pairwise
-                        </button>
-                    </li>
-                </ul>
-                <div class="tab-content">
+                    <ul class="nav nav-tabs custom-anova-tabs mb-3" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active small fw-bold" data-toggle="tab" data-target="#${varId}_summary">
+                                <i class="bi bi-bar-chart-line me-2"></i> Summary with Plots
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link small fw-bold" data-toggle="tab" data-target="#${varId}_detail">
+                                <i class="bi bi-list-check me-2"></i> Detailed Pairwise
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
                     <div class="tab-pane fade show active" id="${varId}_summary" role="tabpanel">
                         ${summaryHTML}
                     </div>
