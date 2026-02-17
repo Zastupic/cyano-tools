@@ -1,7 +1,32 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    Development log
+{% block title %}
+    Development Log | CyanoTools Platform Updates & Feature Releases
+{% endblock %}
+
+{% block description %}
+    Track CyanoTools platform updates, new analysis tools, algorithm improvements, and feature releases. Stay informed about scientific capabilities added to support your research in photosynthesis and microbiology.
+{% endblock %}
+
+{% block keywords %}
+    CyanoTools updates, platform changelog, new features, development roadmap, tool improvements, software releases, feature announcements, scientific algorithm updates, version history, platform enhancements
+{% endblock %}
+
+{% block head %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "CyanoTools Development Log",
+      "description": "Platform updates and feature release history",
+      "url": "https://tools-py.e-cyanobacterium.org/development_log",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "CyanoTools",
+        "url": "https://tools-py.e-cyanobacterium.org"
+      }
+    }
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -29,6 +54,10 @@
     <tr>
         <td><u>Date</u></td>
         <td><u>Update</u></td>
+    </tr>
+    <tr>
+        <td>2026-02</td>
+        <td>MIMS tool improvement-advanced drift compensation algorithm allowing for signal normalization relative to a user-defined baseline time point.</i>
     </tr>
     <tr>
         <td>2026-02</td>

@@ -1,7 +1,7 @@
 {% extends "base.html" %} 
 
 {% block title %}
-    MIMS Data Analysis | Dissolved Gas & Volatiles Monitor
+    MIMS Data Analyzer | Dissolved Gas & Volatiles Monitor
 {% endblock %}
 
 {% block description %}
@@ -9,8 +9,7 @@
 {% endblock %}
 
 {% block keywords %}
-    MIMS analysis, membrane inlet mass spectrometry, dissolved gas analysis, online mass spec tool, gas exchange monitoring, fermentation analysis, 
-    Hiden HPR-40 data, MasSoft data, Quadera data, Quadstar data, Pfeifer Vacuum data
+    MIMS analyzer, membrane inlet mass spectrometry, dissolved gas analyzer, online mass spec tool, gas exchange monitoring, fermentation analysis, Hiden HPR-40, MasSoft data, Quadera data, Quadstar data, Pfeiffer Vacuum, real-time gas exchange, online mass spectrometry, fermentation analytics, dissolved oxygen monitoring, CO2 production measurement, methane detection, nitrous oxide analysis, photosynthetic gas exchange
 {% endblock %}
 
 {% block extra_schema %}
@@ -40,10 +39,10 @@
         <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
              alt="CyanoTools mobile banner"
              style="width: 100%;">
-    </div>
+    </div>  
 </div>
 <br>
-<h1>Membrane Inlet Mass Spectrometry (MIMS)</h1>
+<h1>Membrane Inlet Mass Spectrometry (MIMS) data analysis</h1>
 <p>Welcome to the tool for analysis of Membrane Inlet Mass Spectrometry (MIMS) data.
 MIMS is a highly effective and versatile analytical technique designed for the direct, 
 real-time measurement of dissolved gases and volatile organic compounds in a wide variety of samples, 
@@ -191,12 +190,42 @@ Please note that the equilibrium concentration of dissolved <i>O<sub>2</sub></i>
   <div id="raw-plot-div" style="height: 400px;"></div>
 </div>
 <!-- Normalization controls -->
+
 <div id="normalization-controls" style="display:none; margin-top:20px;">
-    <p class="font-weight-bold">4. Normalize the signals</p>
-  <label for="normalize-by-select">Select a signal by which all signal will be normalized:</label>
-  <select id="normalize-by-select" class="form-control" style="max-width:300px;"></select>
-  <div style="margin-bottom: 10px;"></div>
-  <button id="normalize-button" class="btn btn-primary">Plot normalized data</button>
+    <p class="font-weight-bold">4. Instrument Drift Compensation</p>
+    
+    <div class="card shadow-sm">
+        <div class="card-body bg-light">
+            <div class="row">
+                <div class="col-md-7 mb-3">
+                    <label for="normalize-by-select" class="form-label font-weight-bold">Reference Signal (e.g., Argon):</label>
+                    <select id="normalize-by-select" class="form-control"></select>
+                    <small class="text-muted">Select the gas used to track instrument sensitivity.</small>
+                </div>
+
+                <div class="col-md-5 mb-3">
+                    <label for="norm-timepoint" class="form-label font-weight-bold">Baseline Time Point (min):</label>
+                    <input type="number" id="norm-timepoint" class="form-control" value="0" step="any">
+                    <small class="text-muted">Time where the signal is most stable.</small>
+                </div>
+            </div>
+
+            <div class="mt-2 p-3 bg-white border rounded small text-secondary">
+                <p class="mb-1"><strong>How it works:</strong></p>
+                <ul class="mb-0 pl-3">
+                    <li>The <strong>Reference Signal</strong> is self-normalized to its value at your chosen <strong>Baseline Time</strong> (setting it to 1.0 at that moment).</li>
+                    <li>This creates a "drift factor" that is applied to all other signals.</li>
+                    <li>This compensates for changes in vacuum pressure or filament temperature while <strong>preserving the original magnitude</strong> of your data.</li>
+                </ul>
+            </div>
+
+            <div id="norm-timepoint-error" style="color:red; margin-top:10px; font-weight:bold;"></div>
+            
+            <div class="mt-3">
+                <button id="normalize-button" class="btn btn-primary btn-block">Plot Normalized Data</button>
+            </div>
+        </div>
+    </div>
 </div>
 <br>
 <p id="normalized-preview-label" class="font-weight-bold" style="display: none;">5. Preview the normalized signals</p>

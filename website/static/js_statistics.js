@@ -3,34 +3,34 @@
  * Changes: Auto-selection on dropdown change, 3-factor limit, nice alerts.
  */
 
-const API_URL = '/run-statistics'; 
-const EXPORT_URL = '/export-excel'; 
+const API_URL = '/run-statistics';
+const EXPORT_URL = '/export-excel';
 let globalData = null;
 let lastResults = null;
-let selectedFactors = []; 
+let selectedFactors = [];
 
 // --- 1. Factor Management (Auto-selection Logic) ---
 
 // Listen for selection changes directly on the dropdown
 document.getElementById('factorSelector').addEventListener('change', function() {
     const val = this.value;
-    
+
     if (!val) return; // Ignore empty selection
-    
+
     // Check if already added
     if (selectedFactors.includes(val)) {
         showNiceMessage(`"${val}" is already selected.`, "warning");
-        this.value = ""; 
+        this.value = "";
         return;
     }
-    
+
     // Enforce 3-factor limit
     if (selectedFactors.length >= 3) {
         showNiceMessage("Maximum of 3 factors reached for this analysis.", "info");
-        this.value = ""; 
+        this.value = "";
         return;
     }
-    
+
     selectedFactors.push(val);
     renderFactorTags();
     this.value = ""; // Reset dropdown for next selection
@@ -40,18 +40,18 @@ function renderFactorTags() {
     const container = document.getElementById('activeFactorsContainer');
     const selector = document.getElementById('factorSelector');
     container.innerHTML = "";
-    
+
     selectedFactors.forEach((factor, index) => {
         const tag = document.createElement('span');
         tag.className = "badge bg-primary d-flex align-items-center gap-2 p-2 mb-1 cursor-pointer animate__animated animate__fadeIn";
         tag.style.fontSize = "0.85rem";
         tag.style.borderRadius = "8px";
-        
+
         tag.innerHTML = `
             <span>${index + 1}. ${factor}</span>
             <i class="bi bi-x-circle-fill text-white-50 hover-white"></i>
         `;
-        
+
         // Remove factor on click
         tag.onclick = function() { removeFactor(factor); };
         container.appendChild(tag);
@@ -59,6 +59,72 @@ function renderFactorTags() {
 
     // Disable selector if limit reached
     selector.disabled = (selectedFactors.length >= 3);
+
+    // Update grouping mode dropdown
+    populateGroupingMode();
+
+    // Disable variable checkboxes that match selected factors
+    updateVariableCheckboxes();
+}
+
+function updateVariableCheckboxes() {
+    const checkboxes = document.querySelectorAll('.var-check');
+    checkboxes.forEach(cb => {
+        const wrapper = cb.closest('.form-check');
+        if (selectedFactors.includes(cb.value)) {
+            cb.checked = false;
+            cb.disabled = true;
+            if (wrapper) wrapper.style.opacity = '0.4';
+        } else {
+            cb.disabled = false;
+            if (wrapper) wrapper.style.opacity = '1';
+        }
+    });
+}
+
+function populateGroupingMode() {
+    const container = document.getElementById('groupingModeContainer');
+    const select = document.getElementById('groupingMode');
+    select.innerHTML = '';
+
+    if (selectedFactors.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    if (selectedFactors.length === 1) {
+        container.style.display = 'block';
+        select.innerHTML = '<option value="all_combined">' + selectedFactors[0] + ' (all levels)</option>';
+        return;
+    }
+
+    container.style.display = 'block';
+    const factors = selectedFactors;
+
+    // 1. Each factor pooled across all others
+    factors.forEach(f => {
+        const others = factors.filter(x => x !== f);
+        select.innerHTML += '<option value="across:' + f + '">' + f + ' throughout all ' + others.join(' & ') + '</option>';
+    });
+
+    // 2. Each factor stratified by each single other factor
+    factors.forEach(f => {
+        const others = factors.filter(x => x !== f);
+        others.forEach(stratifyBy => {
+            select.innerHTML += '<option value="per:' + f + '|' + stratifyBy + '">' + f + ' for each ' + stratifyBy + ' individually</option>';
+        });
+    });
+
+    // 3. For 3+ factors: each factor stratified by combination of all others
+    if (factors.length >= 3) {
+        factors.forEach(f => {
+            const others = factors.filter(x => x !== f);
+            select.innerHTML += '<option value="per:' + f + '|' + others.join(',') + '">' + f + ' for each ' + others.join(' × ') + ' combination</option>';
+        });
+    }
+
+    // 4. Full combination of all factors
+    select.innerHTML += '<option value="all_combined">Combination of all: ' + factors.join(' × ') + '</option>';
 }
 
 window.removeFactor = function(factorName) {
@@ -72,9 +138,9 @@ function showNiceMessage(message, type) {
     alertDiv.className = `alert alert-${type} mt-2 py-2 small shadow-sm animate__animated animate__fadeInUp`;
     alertDiv.style.fontSize = "0.75rem";
     alertDiv.innerHTML = `<i class="bi bi-info-circle-fill"></i> ${message}`;
-    
+
     container.prepend(alertDiv);
-    
+
     setTimeout(() => {
         alertDiv.classList.replace('animate__fadeInUp', 'animate__fadeOutDown');
         setTimeout(() => alertDiv.remove(), 500);
@@ -96,7 +162,7 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
 
     const rows = rawData.split('\n');
     const headers = rows[0].split(/\t| {2,}/).map(h => h.trim()).filter(h => h !== "");
-    
+
     if (headers.length === 0) return alert("Could not detect columns. Check your data format.");
     const firstColumnName = headers[0];
 
@@ -105,7 +171,7 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
         let obj = {};
         headers.forEach((h, i) => {
             let val = (values[i] || "").replace(',', '.'); // Normalize decimal
-            
+
             if (val === "") {
                 obj[h] = "N/A";
             } else {
@@ -120,7 +186,7 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
         });
         return obj;
     });
-    
+
     fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -145,8 +211,8 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
         });
 
         // AUTO-SELECT FIRST COLUMN
-        selectedFactors = [firstColumnName]; 
-        renderFactorTags(); 
+        selectedFactors = [firstColumnName];
+        renderFactorTags();
 
         document.getElementById('selectAllVars').checked = false;
         document.getElementById('selectionCard').style.display = 'block';
@@ -182,10 +248,10 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
     fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            data: globalData, 
-            target_columns: selectedVars, 
-            factors: selectedFactors 
+        body: JSON.stringify({
+            data: globalData,
+            target_columns: selectedVars,
+            factors: selectedFactors
         })
     })
     .then(res => res.json())
@@ -273,18 +339,18 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
 
     // 1. CLEAR AND HIDE EVERYTHING AT START
     pcaResults.innerHTML = "";
-    pcaHeader.style.display = 'none'; 
+    pcaHeader.style.display = 'none';
     pcaSpinner.style.display = 'block';
 
     fetch('/run-pca', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            data: globalData, 
-            variables: selectedVars, 
+        body: JSON.stringify({
+            data: globalData,
+            variables: selectedVars,
             factors: selectedFactors,
-            remove_missing: removeMissing, 
-            average_by_factors: averageByFactor, 
+            remove_missing: removeMissing,
+            average_by_factors: averageByFactor,
             plot_loadings: showLoadings
         })
     })
@@ -296,14 +362,14 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
         lastPCAResults = result;
 
         // 2. SHOW THE HEADER ONLY NOW
-        pcaHeader.style.display = 'flex'; 
+        pcaHeader.style.display = 'flex';
 
         pcaResults.innerHTML = `
             <div class="plot-card-wrapper bg-white p-3 rounded shadow-sm border mb-3 text-center">
                 <img src="data:image/png;base64,${result.plot_url}" class="img-fluid rounded shadow-sm">
             </div>
             <div class="alert alert-success py-2 small shadow-sm text-left">
-                <strong>PCA Success:</strong> ${result.n_samples} samples analyzed 
+                <strong>PCA Success:</strong> ${result.n_samples} samples analyzed
                     (${selectedVars.length} variables, ${selectedFactors.length} factors).
                 <br>PC1 explains ${(result.explained_variance[0] * 100).toFixed(1)}% of variance.
                 <br>PC2 explains ${(result.explained_variance[1] * 100).toFixed(1)}% of variance.
@@ -321,7 +387,7 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
 
 // This listener handles the actual Excel download for PCA
 document.getElementById('downloadPCAExcelBtn').addEventListener('click', function() {
-    // Keep this as a safety "guard clause," but the alert is unnecessary 
+    // Keep this as a safety "guard clause," but the alert is unnecessary
     // because the button is hidden until results are ready.
     if (!lastPCAResults) return;
 
@@ -330,7 +396,7 @@ document.getElementById('downloadPCAExcelBtn').addEventListener('click', functio
     fetch('/export-pca-excel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
             pca_details: {
                 n_samples: lastPCAResults.n_samples,
                 variance: lastPCAResults.explained_variance,
@@ -360,7 +426,7 @@ document.getElementById('downloadPCAExcelBtn').addEventListener('click', functio
 // Test assumptions
 document.getElementById('runTestsBtn').addEventListener('click', function() {
     const selectedVars = Array.from(document.querySelectorAll('.var-check:checked')).map(cb => cb.value);
-    
+
     if (selectedVars.length === 0) {
         return alert("Please select at least one variable in the 'Data Input' panel.");
     }
@@ -374,10 +440,10 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
     fetch('/run-tests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            data: globalData, 
-            target_columns: selectedVars, 
-            factors: selectedFactors 
+        body: JSON.stringify({
+            data: globalData,
+            target_columns: selectedVars,
+            factors: selectedFactors
         })
     })
     .then(res => res.json())
@@ -388,22 +454,22 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
         data.results.forEach(res => {
             const section = document.createElement('div');
             section.className = "mb-5 p-4 border rounded bg-white shadow-sm";
-            
+
             // Check for Levene status for the summary alert
             const leveneClass = res.levene.is_homogeneous === null ? 'secondary' : (res.levene.is_homogeneous ? 'success' : 'danger');
             const leveneText = res.levene.is_homogeneous === null ? 'N/A' : (res.levene.is_homogeneous ? 'Equal' : 'Unequal');
-        
+
             section.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                     <h5 class="fw-bold text-primary mb-0">Variable: ${res.variable}</h5>
                     <span class="badge bg-${leveneClass}">Variance: ${leveneText}</span>
                 </div>
-        
+
                 <div class="row">
                     <div class="col-lg-8 text-center border-end">
                         <img src="data:image/png;base64,${res.plot_url}" class="img-fluid rounded" style="max-height: 450px;">
                     </div>
-        
+
                     <div class="col-lg-4">
                         <label class="small fw-bold text-uppercase text-muted mb-2">Normality (Shapiro-Wilk)</label>
                         <div class="table-responsive">
@@ -453,10 +519,11 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
     fetch('/run-anova', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            data: globalData, 
-            target_columns: selectedVars, 
-            factors: selectedFactors 
+        body: JSON.stringify({
+            data: globalData,
+            target_columns: selectedVars,
+            factors: selectedFactors,
+            grouping_mode: document.getElementById('groupingMode').value || 'all_combined'
         })
     })
     .then(res => res.json())
@@ -482,46 +549,134 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
             return;
         }
 
+        // Group results by variable
+        const byVariable = {};
         data.results.forEach(res => {
+            if (!byVariable[res.variable]) byVariable[res.variable] = [];
+            byVariable[res.variable].push(res);
+        });
+
+        let varIdx = 0;
+        Object.keys(byVariable).forEach(varName => {
+            const varResults = byVariable[varName];
+            const varId = 'anova_var_' + varIdx++;
             const section = document.createElement('div');
             section.className = "mb-5 p-4 border rounded bg-white shadow-sm";
 
-            let posthocHTML = '';
-            if (res.posthoc && res.posthoc.length > 0) {
-                posthocHTML = `
-                    <h6 class="mt-4 mb-2 fw-bold text-muted">Post-hoc comparisons</h6>
-                    <table class="table table-sm table-bordered">
-                        <thead class="table-light">
-                            <tr><th>Comparison</th><th>p (adj.)</th><th></th></tr>
-                        </thead>
-                        <tbody>
-                            ${res.posthoc.map(ph => `
-                                <tr>
-                                    <td><strong>${ph.group1}</strong> vs <strong>${ph.group2}</strong></td>
-                                    <td>${ph.p_adj.toFixed(4)}</td>
-                                    <td>${ph.significant ? 
-                                        '<span class="badge bg-success">Significant</span>' : 
-                                        '<span class="badge bg-secondary">n.s.</span>'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>`;
-            }
+            // Build summary letter table HTML
+            let summaryHTML = '';
+            varResults.forEach(res => {
+                const sliceInfo = res.slice_label && res.slice_label !== 'All'
+                    ? ' <small class="text-muted fw-normal">(' + res.slice_label + ')</small>'
+                    : '';
+
+                if (res.letter_groups && res.letter_groups.length > 0) {
+                    summaryHTML += `
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold small">${sliceInfo || 'All groups'}</span>
+                                <span class="badge bg-primary">${res.test_used}</span>
+                            </div>
+                            <div class="alert alert-info py-1 small mb-2">
+                                <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong> |
+                                Normality: ${res.assumptions.all_normal ? '✓' : '✗'} |
+                                Homogeneity: ${res.assumptions.homogeneous ? '✓' : '✗'}
+                            </div>
+                            <table class="table table-sm table-bordered text-center">
+                                <thead class="table-light">
+                                    <tr><th class="text-left">Group</th><th>Mean</th><th>SD</th><th>N</th><th>Letter</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${res.letter_groups.map(lg => `
+                                        <tr>
+                                            <td class="text-left fw-bold">${lg.group}</td>
+                                            <td>${lg.mean.toFixed(4)}</td>
+                                            <td>${lg.std.toFixed(4)}</td>
+                                            <td>${lg.n}</td>
+                                            <td><span class="badge bg-success fs-6">${lg.letter}</span></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>`;
+                } else {
+                    summaryHTML += `
+                        <div class="mb-3">
+                            <div class="alert alert-secondary py-2 small">
+                                ${sliceInfo || 'All groups'}: No significant differences found (p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
+                                All groups share the same letter <span class="badge bg-success">a</span>.
+                            </div>
+                        </div>`;
+                }
+            });
+
+            // Build detailed pairwise table HTML
+            let detailedHTML = '';
+            varResults.forEach(res => {
+                const sliceInfo = res.slice_label && res.slice_label !== 'All'
+                    ? ' <small class="text-muted fw-normal">(' + res.slice_label + ')</small>'
+                    : '';
+
+                if (res.posthoc && res.posthoc.length > 0) {
+                    detailedHTML += `
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold small">${sliceInfo || 'All groups'}</span>
+                                <span class="badge bg-primary">${res.test_used}</span>
+                            </div>
+                            <div class="alert alert-info py-1 small mb-2">
+                                <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong>
+                            </div>
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr><th>Comparison</th><th>p (adj.)</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    ${res.posthoc.map(ph => `
+                                        <tr>
+                                            <td><strong>${ph.group1}</strong> vs <strong>${ph.group2}</strong></td>
+                                            <td>${ph.p_adj.toFixed(4)}</td>
+                                            <td>${ph.significant ?
+                                                '<span class="badge bg-success">Significant</span>' :
+                                                '<span class="badge bg-secondary">n.s.</span>'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>`;
+                } else {
+                    detailedHTML += `
+                        <div class="mb-3">
+                            <div class="alert alert-secondary py-2 small">
+                                ${sliceInfo || 'All groups'}: No pairwise comparisons (overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
+                            </div>
+                        </div>`;
+                }
+            });
 
             section.innerHTML = `
-                <div class="d-flex justify-content-between">
-                    <h5 class="fw-bold text-success">${res.variable}</h5>
-                    <span class="badge bg-primary">${res.test_used}</span>
+                <h5 class="fw-bold text-success mb-3">${varName}</h5>
+                <ul class="nav nav-pills nav-fill mb-3" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active small fw-bold" data-toggle="tab" data-target="#${varId}_summary">
+                            <i class="bi bi-grid-3x3-gap-fill"></i> Letter Groups
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link small fw-bold" data-toggle="tab" data-target="#${varId}_detail">
+                            <i class="bi bi-list-check"></i> Detailed Pairwise
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="${varId}_summary" role="tabpanel">
+                        ${summaryHTML}
+                    </div>
+                    <div class="tab-pane fade" id="${varId}_detail" role="tabpanel">
+                        ${detailedHTML}
+                    </div>
                 </div>
-                
-                <div class="alert alert-info py-2 small mt-3">
-                    <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong><br>
-                    Normality: ${res.assumptions.all_normal ? '✓ All groups' : '✗'} | 
-                    Homogeneity: ${res.assumptions.homogeneous ? '✓' : '✗'}
-                </div>
-
-                ${posthocHTML}
             `;
             anovaResults.appendChild(section);
         });

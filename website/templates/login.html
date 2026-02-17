@@ -1,7 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %} 
-    Login
+{% block title %}
+    Login | CyanoTools Scientific Data Analysis Platform | CzechGlobe
+{% endblock %}
+
+{% block description %}
+    Access your CyanoTools account to manage analysis projects, download results, and safely manage your research tools. Secure login for the Department of Adaptive Biotechnologies platform.
+{% endblock %}
+
+{% block keywords %}
+    CyanoTools login, research account access, DoAB account, scientific tools login, cyanobacteria research platform, secure authentication, CzechGlobe login
+{% endblock %}
+
+{% block head %}
+    <meta name="description" content="Secure CyanoTools login portal. Access your account, manage projects, and download scientific analysis results from the Department of Adaptive Biotechnologies.">
+    <meta name="keywords" content="CyanoTools login, research account, DoAB login, scientific platform access, cyanobacteria tools">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "CyanoTools Login",
+      "description": "Secure login point for CyanoTools research analysis platform",
+      "url": "https://tools-py.e-cyanobacterium.org/login",
+      "author": {
+        "@type": "Organization",
+        "name": "Department of Adaptive Biotechnologies",
+        "url": "https://www.czechglobe.cz",
+        "logo": "https://tools-py.e-cyanobacterium.org/static/logo.png"
+      }
+    }
+    </script>
 {% endblock %}
 
 {% block content %}

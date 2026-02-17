@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-    OJIP Fluorescence Transient Analysis (JIP-Test) | CyanoTools
+    Free Online OJIP Analyzer & JIP-Test Calculator | CyanoTools
 {% endblock %}
 
 {% block description %}
@@ -9,8 +9,14 @@
 {% endblock %}
 
 {% block keywords %}
-    OJIP analysis, JIP-test, chlorophyll a fluorescence, JIP-test, plant stress detection, QA reduction, photosystem II efficiency, fluorescence transient, Kautsky effect
+    OJIP analysis, JIP-test, chlorophyll a fluorescence, plant stress detection, QA reduction, photosystem II efficiency, fluorescence transient, Kautsky effect, OJIP analyzer, JIP-test calculator, Fv/Fm calculator, PAM fluorometer, PI_abs, fluorescence induction kinetics, MULTI-COLOR-PAM, DUAL-PAM, AquaPen, FluorPen, FL 6000, batch OJIP processing, fluorescence curve normalization, ABS/RC calculator, TR0/RC, ET0/RC, performance indices
 {% endblock %}
+
+{% block head %}
+  <meta name="description" content="Free online OJIP analyzer for chlorophyll fluorescence transient analysis. Calculate Fv/Fm, PI_abs, JIP-test parameters from your PAM fluorometer data instantly.">
+  <meta name="keywords" content="OJIP analyzer, JIP-test, chlorophyll fluorescence, OJIP curve, Fv/Fm calculator, PAM fluorometer, PI_abs, fluorescence transient, Kautsky curve, photosynthesis analysis">
+{% endblock %}
+
 
 {% block extra_schema %}
 <script type="application/ld+json">
@@ -42,19 +48,29 @@
     </div>
 </div>
 <br>
-<h1> Analysis of fast chlorophyll fluorescence induction kinetics </h1>
+<h1>OJIP Analyzer: Online Chlorophyll Fluorescence Transient Analysis</h1>
 <p>Welcome to the tool analyzing fast chlorophyll fluorescence induction kinetics! Fast chlorophyll fluorescence induction kinetics, known also as OJIP transient,
     provides a rapid and sensitive method for assessing the efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. 
     Analysis of the OJIP transient allows to determine bottlenecks in the e<sup>-</sup> transport chain at various sites — 
     including charge separation at photosystem II (PSII), the plastoquinon (PQ) pool, or at the site of photosystem I (PSI). 
 </p>
-<p>This tool enables visualization and analysis of OJIP fluorescence acquired by several common PAM fluorometers, including 
+<p>
+  This free <strong>OJIP analyzer</strong> processes fast <strong>chlorophyll <i>a</i> fluorescence induction kinetics</strong> 
+  (also called the <strong>OJIP transient</strong>) directly in your browser. It performs automated 
+  <strong>JIP-test calculations</strong> — including performance indices, specific energy fluxes 
+  (ABS/RC, TR<sub>0</sub>/RC, ET<sub>0</sub>/RC), quantum yields (φP<sub>0</sub>), maximum PSII efficiency 
+  (F<sub>v</sub>/F<sub>m</sub>) and more — from raw <strong>PAM fluorometer</strong> data files.
+</p>
+  The <strong>chlorophyll fluorescence analysis tool</strong> supports data from 
     <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
     <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">DUAL-PAM</a>, 
     <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">AquaPen</a>, 
     <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">FluorPen</a> or
     <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" rel="noopener" class="gallery__item--5">FL 6000</a>.
-    Up to 50 files with recorded OJIP fluorescence can be uploaded simultaneously for batch processing. 
+    You can upload up to 50 files for batch processing. 
+  All OJIP curves are normalized, visualized, and exported to a downloadable .xlsx summary.
+  No software installation is required — this <strong>online fluorescence transient analyzer</strong> 
+  runs entirely in the browser.
     The tool generates multiple visualizations for each file precessed, including:
     <ul style="font-size:95%">
         <li>Fluorescence signal
@@ -501,7 +517,7 @@
         </a>
     </form>
 </div>
-
+ 
 {% else %}
 <br><br><br><br><br><br><br>
 

@@ -1,15 +1,31 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    Cell size
+{% block title %}
+    Cell Size Analyzer | Unicellular Algae & Cyanobacteria Diameter Calculator | CyanoTools
 {% endblock %}
 
 {% block description %}
-Measure the diameter and biovolume of unicellular algae and cyanobacteria. Features manual cell selection with automated boundary detection for precise size distribution analysis.
+Measure cell diameter, biovolume, and size distribution of unicellular cyanobacteria and algae from microscopy images. Supports Synechocystis, Chlorella, and other single-celled organisms with automated boundary detection.
 {% endblock %}
 
 {% block keywords %}
-cell size analysis, cell diameter, biovolume calculator, microbial morphology, Synechocystis, Chlorella, microscopy measurement, image analysis software
+    cell diameter calculator, biovolume measurement, cell size analysis, Synechocystis sizing, Chlorella morphometry, unicellular size distribution, cell morphology analyzer, microbial dimensions, microscopy measurement tool
+{% endblock %}
+
+{% block head %}
+    <meta name="description" content="Calculate cell diameter and biovolume of unicellular algae and cyanobacteria. Analyze Synechocystis, Chlorella, and other species. Free online image analysis tool.">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CyanoTools Cell Size Analyzer - Round Cells",
+      "operatingSystem": "Web",
+      "applicationCategory": "ImageProcessingSoftware",
+      "description": "Tool for measuring cell diameter, biovolume, and size distribution of unicellular organisms",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": "Diameter calculation, Biovolume estimation, Size distribution analysis, Statistical summary, Excel export"
+    }
+    </script>
 {% endblock %}
 
 {% block extra_schema %}

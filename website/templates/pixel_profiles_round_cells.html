@@ -1,15 +1,31 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    Pigment profiles - round cells
+{% block title %}
+    Cell Fluorescence Profile Analyzer | Pixel Intensity Line Profiles | CyanoTools
 {% endblock %}
 
 {% block description %}
-Analyze cross-sectional pixel intensity profiles of round cells. Evaluate fluorescence distribution across cell boundaries for detailed spatial analysis.
+Analyze cross-sectional pixel intensity profiles of round or spherical cells. Evaluate spatial fluorescence distribution and pigment localization within individual cells from confocal microscopy images.
 {% endblock %}
 
 {% block keywords %}
-pixel profile, fluorescence intensity, spatial analysis, cross-section profile, cell boundary detection, fluorescence distribution
+    pixel profile analysis, fluorescence intensity distribution, spatial analysis, cell boundary profiling, confocal microscopy analysis, pigment localization, intensity cross-section, subcellular distribution pattern
+{% endblock %}
+
+{% block head %}
+    <meta name="description" content="Analyze fluorescence intensity profiles across individual cells. Evaluate pigment distribution, signal intensity gradients, and subcellular organization from microscopy images.">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CyanoTools Pixel Profile Analyzer - Round Cells",
+      "operatingSystem": "Web",
+      "applicationCategory": "ImageProcessingSoftware",
+      "description": "Analysis of pixel intensity profiles and fluorescence distribution in individual cells",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": "Cross-sectional profiling, Multi-channel analysis, Intensity statistics, Distribution mapping"
+    }
+    </script>
 {% endblock %}
 
 {% block content %}

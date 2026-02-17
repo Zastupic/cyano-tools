@@ -387,14 +387,55 @@ document.getElementById('normalize-button').addEventListener('click', plotNormal
 function plotNormalizedData() {
   const refField = document.getElementById('normalize-by-select').value;
   const data = mimsRawData; const xField = mimsXField; const yFields = mimsYFields;
+  const errorDiv = document.getElementById('norm-timepoint-error');
+  if (errorDiv) errorDiv.textContent = '';
 
+  // --- Validate and find refInitialValue ---
+  const tpInput = document.getElementById('norm-timepoint');
+  const tpValue = tpInput ? parseFloat(tpInput.value) : NaN;
+
+  const allTimes = data.map(r => r[xField]).filter(t => typeof t === 'number');
+  const minTime = Math.min(...allTimes);
+  const maxTime = Math.max(...allTimes);
+
+  if (isNaN(tpValue) || tpValue < minTime || tpValue > maxTime) {
+    if (errorDiv) errorDiv.textContent =
+      `Time point ${tpValue} is outside measured range [${minTime.toFixed(2)}, ${maxTime.toFixed(2)}] min. Please select a valid value.`;
+    return; // don't plot
+  }
+
+  // Find row closest to selected time point
+  let refRowIndex = 0;
+  let bestDiff = Infinity;
+  data.forEach((row, i) => {
+    const diff = Math.abs((row[xField] || 0) - tpValue);
+    if (diff < bestDiff) { bestDiff = diff; refRowIndex = i; }
+  });
+  const refInitialValue = data[refRowIndex][refField];
+  if (typeof refInitialValue !== 'number' || refInitialValue === 0) {
+    if (errorDiv) errorDiv.textContent =
+      `Reference signal "${refField}" has no valid value at time ${tpValue.toFixed(2)} min.`;
+    return;
+  }
+
+  // --- Clear previous regressions (they used old normalization) ---
+  clearRegressionTracesFromPlots();
+  regressionResults = [];
+  refreshRegressionTable();
+  selectionCounter = 0;
+  currentZoomRange = null;
+
+  // --- Build normalized traces ---
   const traces = yFields.map(field => {
     const yValues = data.map(row => {
       const val = row[field]; const refVal = row[refField];
-      return (typeof val === 'number' && typeof refVal === 'number' && refVal !== 0) ? val / refVal : null;
+      return (typeof val === 'number' && typeof refVal === 'number' && refVal !== 0)
+        ? val / (refVal / refInitialValue)
+        : null;
     });
     const unit = mimsFieldUnits[field] || null; const refUnit = mimsFieldUnits[refField] || null;
-    const left = unit ? `${field} [${unit}]` : field; const right = refUnit ? `${refField} [${refUnit}]` : refField;
+    const left = unit ? `${field} [${unit}]` : field;
+    const right = refUnit ? `${refField} [${refUnit}]` : refField;
     return {
       x: data.map(row => row[xField]),
       y: yValues,
@@ -405,7 +446,7 @@ function plotNormalizedData() {
   });
 
   Plotly.newPlot('normalized-plot-div', traces, {
-    title: `Normalized Signals (divided by ${refField})`,
+    title: `Normalized Signals (divided by ${refField}, self-norm at t=${tpValue.toFixed(2)} min)`,
     xaxis: { title: xField === 'min' ? 'Time (min)' : xField },
     yaxis: { title: `Signal / ${refField} (r.u.)`, tickformat: '.1e' }
   }).then(() => {
@@ -427,6 +468,7 @@ function plotNormalizedData() {
     Plotly.Plots.resize('normalized-plot-div');
   });
 }
+
 
 // ======================
 // 6) Regression fitting
@@ -458,6 +500,14 @@ function applyLinearRegression(x0, x1) {
 
   const rawRegressionTraces = [];
   const normRegressionTraces = [];
+
+  const tpValue = parseFloat(document.getElementById('norm-timepoint').value);
+  let refRowIndex = 0, bestDiff = Infinity;
+  data.forEach((row, i) => {
+    const diff = Math.abs((row[xField] || 0) - tpValue);
+    if (diff < bestDiff) { bestDiff = diff; refRowIndex = i; }
+  });
+  const refInitialValue = data[refRowIndex][refField];
 
   yFields.forEach(field => {
     // gather valid pairs
@@ -498,7 +548,7 @@ function applyLinearRegression(x0, x1) {
     let slopeNorm = NaN, r2Norm = NaN;
     const normPairs = filtered.map(r => {
       const val = r[field], ref = r[refField];
-      return { x: r[xField], y: (typeof val === 'number' && typeof ref === 'number' && ref !== 0) ? val / ref : null };
+      return { x: r[xField], y: (typeof val === 'number' && typeof ref === 'number' && ref !== 0) ? val / (ref / refInitialValue) : null };
     }).filter(p => typeof p.x === 'number' && typeof p.y === 'number');
 
     if (normPairs.length >= 2) {
@@ -661,10 +711,18 @@ document.getElementById('download-xlsx').addEventListener('click', function() {
       combinedRow[header] = row[field];
     });
     // normalized columns (unitless)
+    const tpValue = parseFloat(document.getElementById('norm-timepoint').value);
+    let refRowIndex = 0, bestDiff = Infinity;
+    mimsRawData.forEach((row, i) => {
+      const diff = Math.abs((row[mimsXField] || 0) - tpValue);
+      if (diff < bestDiff) { bestDiff = diff; refRowIndex = i; }
+    });
+    const refInitialValue = mimsRawData[refRowIndex][refField];
+
     mimsYFields.forEach(field => {
       const val = row[field]; const refVal = row[refField];
       const normTitle = `${field}/${refField}_normalized`;
-      if (typeof val === 'number' && typeof refVal === 'number' && refVal !== 0) combinedRow[normTitle] = val / refVal; else combinedRow[normTitle] = null;
+      if (typeof val === 'number' && typeof refVal === 'number' && refVal !== 0) combinedRow[normTitle] = val / (refVal / refInitialValue);
     });
     return combinedRow;
   });

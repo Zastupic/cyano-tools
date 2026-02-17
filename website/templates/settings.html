@@ -1,7 +1,26 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    User section
+{% block title %}
+    Account Settings | CyanoTools User Preferences
+{% endblock %}
+
+{% block description %}
+    Manage your CyanoTools profile, notification preferences, research subscriptions, and account settings from your personalized dashboard. Customize your research tool experience.
+{% endblock %}
+
+{% block keywords %}
+    account settings, user preferences, notification settings, profile management, research subscriptions, tool configuration, account management, privacy settings, email preferences
+{% endblock %}
+
+{% block head %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "User Settings",
+      "description": "Personalized settings page for CyanoTools user account management"
+    }
+    </script>
 {% endblock %}
 
 {% block content %}

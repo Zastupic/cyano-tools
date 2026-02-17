@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Online Statistical Analysis | CyanoTools
+    Online Statistical Data Analyzer | CyanoTools
 {% endblock %}
 
 {% block description %}
@@ -9,8 +9,7 @@
 {% endblock %}
 
 {% block keywords %}
-    Online statistics for biology, box plot generator, PCA analysis online, ANOVA assumptions test, biological data visualization, 
-    experimental data analysis, free statistical software
+    Online statistics for biology,  Statistical analysis, box plot generator, PCA analysis online, ANOVA assumptions test, biological data visualization, experimental data analysis, free statistical software, Shapiro-Wilk test, Levene test, Tukey HSD, ANOVA calculator, Kruskal-Wallis test, effect size calculation, statistical power analysis, bioinformatics tools, data analysis software
 {% endblock %}
 
 {% block extra_schema %}
@@ -333,7 +332,7 @@
                                         <strong>One-way ANOVA</strong> followed by <strong>Tukey’s HSD</strong> post-hoc test</li>
         
                                         <li><strong>Only homogeneity of variances passed</strong> → 
-                                        <strong>Kruskal–Wallis</strong> test with pairwise Mann–Whitney U tests (Benjamini–Hochberg corrected)</li>
+                                        <strong>Kruskal–Wallis</strong> test with pairwise Mann–Whitney U tests (Bonferroni corrected)</li>
         
                                         <li><strong>Only normality passed</strong> → 
                                         <strong>Welch’s one-way ANOVA</strong> followed by pairwise Welch’s t-tests (Benjamini–Hochberg corrected)</li>
@@ -348,6 +347,20 @@
                                         All p-values in post-hoc tests are corrected for multiple comparisons.
                                     </p>
                                 </div>
+                                
+                                <div id="groupingModeContainer" class="mt-2" style="display: none;">
+                                    <div class="card border-success bg-light shadow-sm">
+                                        <div class="card-body p-3">
+                                            <h6 class="fw-bold text-success mb-2"><i class="bi bi-diagram-3"></i> Post-hoc Grouping Mode</h6>
+                                            <select id="groupingMode" class="form-select form-select-sm border-success">
+                                                </select>
+                                            <p class="extra-small text-muted mt-2 mb-0">
+                                                Determines how significance is calculated when multiple factors are present.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <br>
                                 <button id="runAnovaBtn" class="btn btn-success btn-sm mb-4">
                                     <i class="bi bi-lightning-fill"></i> Run Significance Tests
                                 </button>

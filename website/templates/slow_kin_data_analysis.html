@@ -1,15 +1,32 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    Slow fluorescence transients analysis
+{% block title %}
+    Slow Fluorescence Transients (Kautsky Effect) Analysis | PAM Data Analyzer | CyanoTools
 {% endblock %}
 
 {% block description %}
-Analyze slow chlorophyll fluorescence induction kinetics (Kautsky effect). Process PAM data to calculate NPQ, qP, qL, and steady-state photosynthetic parameters.
+    Analyze slow chlorophyll fluorescence induction kinetics and Kautsky effect online. Process PAM fluorometer data to calculate Fv/Fm, NPQ, qP, qL, and photosynthetic parameters. Batch processing for 50+ files.
 {% endblock %}
 
 {% block keywords %}
-slow kinetics analysis, Kautsky effect, NPQ, quenching analysis, PAM fluorometry, photosynthetic induction, chlorophyll fluorescence, plant physiology, algae research
+    slow fluorescence kinetics analyzer, Kautsky effect analyzer, NPQ calculation, non-photochemical quenching, qP calculator, qL quenching, PAM fluorometry, photosynthetic induction, fluorescence transients, plant stress response detection, photoinhibition analysis, Multi-Color PAM data, Dual-PAM analysis
+{% endblock %}
+
+{% block head %}
+    <meta name="description" content="Analyze slow chlorophyll fluorescence transients (Kautsky curves). Calculate NPQ, qP, qL from PAM fluorometer data. Online Fv/Fm calculator for plant stress assessment.">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CyanoTools Slow Kinetics Analyzer",
+      "operatingSystem": "Web",
+      "applicationCategory": "ScientificSoftware",
+      "description": "Online analysis of slow chlorophyll fluorescence induction kinetics for photosynthesis research",
+      "url": "https://tools-py.e-cyanobacterium.org/slow_kin_data_analysis",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": "NPQ calculation, qP and qL analysis, Thermal energy dissipation, PAM data compatibility, Batch processing"
+    }
+    </script>
 {% endblock %}
 
 {% block content %}

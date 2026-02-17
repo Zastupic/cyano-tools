@@ -1,15 +1,31 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    Pigment profiles - filamentous strains
+{% block title %}
+    Filament Fluorescence Profile Generator | Longitudinal Intensity Analysis | CyanoTools
 {% endblock %}
 
 {% block description %}
-Generate longitudinal pixel profiles along microbial filaments. Analyze signal intensity and cell-to-cell variability in filamentous cyanobacteria and algae.
+Generate longitudinal pixel profiles along microbial filaments to analyze signal intensity variation and cell-to-cell heterogeneity in filamentous cyanobacteria and algae from fluorescence microscopy.
 {% endblock %}
 
 {% block keywords %}
-longitudinal profile, filament intensity, pixel line profile, fluorescence gradient, trichome analysis, spatial fluorescence
+    longitudinal profile analyzer, filament intensity analysis, pixel line profiles, fluorescence gradient detection, trichome analysis, cell heterogeneity assessment, intensity variability, multi-channel profile comparison
+{% endblock %}
+
+{% block head %}
+    <meta name="description" content="Generate longitudinal fluorescence intensity profiles along filaments. Analyze cell-to-cell heterogeneity and signal gradients in cyanobacteria and algae filaments.">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CyanoTools Pixel Profile Analyzer - Filaments",
+      "operatingSystem": "Web",
+      "applicationCategory": "ImageProcessingSoftware",
+      "description": "Analysis of longitudinal pixel intensity profiles along filamentous structures",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": "Longitudinal profiling, Cell-to-cell analysis, Multi-angle profiling, Heterogeneity detection"
+    }
+    </script>
 {% endblock %}
 
 {% block content %}

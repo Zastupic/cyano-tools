@@ -1,15 +1,31 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    Cell size - filamentous strains
+{% block title %}
+    Filament Length Analyzer | Cyanobacteria Cell Dimension Measurement | CyanoTools
 {% endblock %}
 
 {% block description %}
-Analyze the dimensions of filamentous microorganisms. Manually mark cells within filaments to calculate precise cell length and width distribution in complex structures.
+Analyze cell length and width of filamentous algae and cyanobacteria. Calculate dimensions of complex trichome structures with manual cell marking and automated boundary detection for phycological research.
 {% endblock %}
 
 {% block keywords %}
-filament length, cell dimensions, filamentous algae, trichome measurement, microscopy image analysis, microbial size distribution, phycological research
+    filament length calculator, trichome measurement, cell length analyzer, cyanobacteria dimensions, filamentous algae morphometry, microbial cell size, spatial cell analysis, length distribution
+{% endblock %}
+
+{% block head %}
+    <meta name="description" content="Measure cell length and width in filamentous cyanobacteria and algae. Analyze trichome structures and calculate cell dimension distributions from microscopy images.">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CyanoTools Cell Size Analyzer - Filamentous",
+      "operatingSystem": "Web",
+      "applicationCategory": "ImageProcessingSoftware",
+      "description": "Tool for measuring cell length and width in filamentous microorganisms",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": "Length measurement, Width analysis, Filament tracing, Dimension distribution, Morphological assessment"
+    }
+    </script>
 {% endblock %}
 
 {% block extra_schema %}

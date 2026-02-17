@@ -1,7 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %} 
-    Sign up 
+{% block title %}
+    Sign Up for Free Access | CyanoTools Research Analysis Platform
+{% endblock %}
+
+{% block description %}
+    Create a free CyanoTools account to access advanced photosynthesis analysis, automated cell counting, and statistical tools. No credit card required. Join researchers worldwide analyzing cyanobacteria and algae.
+{% endblock %}
+
+{% block keywords %}
+    CyanoTools registration, free account, create research account, research tool access, cyanobacteria tools signup, scientific platform membership, free photosynthesis analysis, join research community
+{% endblock %}
+
+{% block head %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "CyanoTools Registration",
+      "description": "Free account registration for CyanoTools research analysis platform",
+      "url": "https://tools-py.e-cyanobacterium.org/sign_up",
+      "mainEntity": {
+        "@type": "SoftwareApplication",
+        "name": "CyanoTools",
+        "applicationCategory": "ScientificSoftware",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    }
+    </script>
 {% endblock %}
 
 {% block content %}

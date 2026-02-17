@@ -1,7 +1,31 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    MIMS data analysis-periodic
+{% block title %}
+    Periodic MIMS Data Analysis | Dissolved Gas Monitoring Tool | CyanoTools
+{% endblock %}
+
+{% block description %}
+    Process periodic Membrane Inlet Mass Spectrometry measurements online. Analyze dissolved oxygen, CO2, and volatile compounds in biological samples with automated signal normalization and batch processing.
+{% endblock %}
+
+{% block keywords %}
+    periodic MIMS analysis, dissolved gas measurement, interval sampling mass spectrometry, gas exchange monitoring, fermentation tracking, O2 production measurement, CO2 consumption analysis, Hiden HPR-40, Quadera data, photosynthetic gas exchange, respiration measurement
+{% endblock %}
+
+{% block head %}
+    <meta name="description" content="Process periodic MIMS data with automated signal processing. Measure dissolved O2, CO2, and volatile compounds. Compatible with Hiden HPR-40 and other mass spec platforms.">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CyanoTools Periodic MIMS Analyzer",
+      "operatingSystem": "Web",
+      "applicationCategory": "ScientificSoftware",
+      "description": "Analysis of periodic membrane inlet mass spectrometry data for real-time dissolved gas measurement",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": "Signal normalization, Baseline correction, Linear rate calculation, Multi-gaseous support, Batch processing"
+    }
+    </script>
 {% endblock %}
 
 {% block content %}

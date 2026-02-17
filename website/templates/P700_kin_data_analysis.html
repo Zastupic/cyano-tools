@@ -1,7 +1,32 @@
 {% extends "base.html" %} 
 
-{% block title %} 
-    OJIP data analysis
+{% block title %}
+    P700 Re-reduction Kinetics Analyzer | PSI Electron Transport Tool | CyanoTools
+{% endblock %}
+
+{% block description %}
+    Analyze P700 oxidation-reduction kinetics to assess Photosystem I (PSI) electron transport efficiency. Measure photosynthetic electron transport chain performance and PSI photoinhibition. (Coming Soon - Beta)
+{% endblock %}
+
+{% block keywords %}
+    P700 kinetics analysis, PSI electron transport, photosystem I assessment, re-reduction kinetics, DAD absorption spectroscopy, photoinhibition measurement, PSI photochemistry, light-driven charge separation, electron transport chain
+{% endblock %}
+
+{% block head %}
+    <meta name="description" content="P700 kinetics analyzer for PSI electron transport assessment. Measure re-reduction kinetics and electron transport efficiency. (Beta - Coming Soon)">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CyanoTools P700 Kinetics Analyzer",
+      "operatingSystem": "Web",
+      "applicationCategory": "ScientificSoftware",
+      "softwareVersion": "Beta",
+      "description": "Analysis of P700 re-reduction kinetics for photosystem I electron transport characterization",
+      "status": "https://schema.org/ComingSoon",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
 {% endblock %}
 
 {% block content %}
