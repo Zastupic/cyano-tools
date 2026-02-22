@@ -1,5 +1,7 @@
 const API_URL = '/run-statistics';
 const EXPORT_URL = '/export-excel';
+const MAX_DATA_ROWS = 100;
+const MAX_DATA_COLUMNS = 50;
 let globalData = null;
 let lastResults = null;
 let selectedFactors = [];
@@ -136,19 +138,32 @@ window.removeFactor = function(factorName) {
     renderFactorTags();
 };
 
-function showNiceMessage(message, type) {
-    const container = document.getElementById('selectionCard');
+function showNiceMessage(message, type, containerId = 'selectionCard') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} mt-2 py-2 small shadow-sm animate__animated animate__fadeInUp`;
-    alertDiv.style.fontSize = "0.75rem";
-    alertDiv.innerHTML = `<i class="bi bi-info-circle-fill"></i> ${message}`;
+    // Using Bootstrap 4 classes: alert-dismissible and the close button span
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-2 py-2 small shadow-sm mx-auto`;
+    alertDiv.style.fontSize = "0.8rem";
+    alertDiv.style.maxWidth = "400px";
+    alertDiv.role = "alert";
+    
+    alertDiv.innerHTML = `
+        <i class="bi bi-info-circle-fill me-2"></i> ${message}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="padding: 0.5rem 0.5rem;">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    `;
 
     container.prepend(alertDiv);
 
+    // Auto-remove logic
     setTimeout(() => {
-        alertDiv.classList.replace('animate__fadeInUp', 'animate__fadeOutDown');
-        setTimeout(() => alertDiv.remove(), 500);
-    }, 3000);
+        if (alertDiv && alertDiv.parentNode) {
+            $(alertDiv).alert('close'); // Standard jQuery call for Bootstrap 4
+        }
+    }, 4000);
 }
 
 /// --- 2. Variable Selection Logic (Updated Select All) ---
@@ -182,6 +197,374 @@ function updateSelectAllState() {
     selectAllBox.checked = allChecked;
 }
 
+function renderPlotlyBoxSwarm(containerId, plotData, variableName, factorsLabel, boxStats) {
+    if (!window.Plotly || !plotData || !plotData.length) return;
+
+    const groupOrder = [];
+    const seen = new Set();
+    plotData.forEach(p => {
+        if (!seen.has(p.group)) { seen.add(p.group); groupOrder.push(p.group); }
+    });
+    const groupIndex = {};
+    groupOrder.forEach((g, i) => { groupIndex[g] = i; });
+
+    const xBox = plotData.map(p => groupIndex[p.group]);
+    const yBox = plotData.map(p => p.value);
+    const jitterWidth = 0.15;
+    const xScatter = plotData.map((p, i) => {
+        const base = groupIndex[p.group];
+        const jitter = ((i % 7) / 7 - 0.5) * 2 * jitterWidth;
+        return base + jitter;
+    });
+    const yScatter = plotData.map(p => p.value);
+    const hoverText = plotData.map(p => {
+        const label = `#${p.row_id} — ${p.factor_label}`;
+        return p.is_outlier ? label + ' (outlier - Click to remove)' : label;
+    });
+
+    const statsByGroup = {};
+    if (boxStats && boxStats.length) boxStats.forEach(s => { statsByGroup[s.group] = s; });
+
+    let boxTrace;
+    if (groupOrder.length && groupOrder.every(g => statsByGroup[g])) {
+        boxTrace = {
+            x: groupOrder.map((_, i) => i),
+            q1: groupOrder.map(g => statsByGroup[g].q1),
+            median: groupOrder.map(g => statsByGroup[g].median),
+            q3: groupOrder.map(g => statsByGroup[g].q3),
+            lowerfence: groupOrder.map(g => statsByGroup[g].lowerfence),
+            upperfence: groupOrder.map(g => statsByGroup[g].upperfence),
+            type: 'box',
+            boxpoints: false,
+            showlegend: false,
+            line: { width: 1.5 },
+            fillcolor: 'rgba(128,128,128,0.2)',
+        };
+    } else {
+        boxTrace = {
+            x: xBox,
+            y: yBox,
+            type: 'box',
+            boxpoints: 'outliers',
+            marker: { opacity: 0 },
+            quartilemethod: 'linear',
+            showlegend: false,
+            line: { width: 1.5 },
+            fillcolor: 'rgba(128,128,128,0.2)',
+        };
+    }
+
+    const scatterTrace = {
+        x: xScatter,
+        y: yScatter,
+        type: 'scatter',
+        mode: 'markers',
+        // CRITICAL FIX: Add customdata so the click event can access row metadata
+        customdata: plotData, 
+        marker: { 
+            size: 7, 
+            color: plotData.map(p => p.is_outlier ? 'red' : 'rgba(0,0,0,0.6)'), 
+            line: { width: 1, color: 'white' } 
+        },
+        text: hoverText,
+        hoverinfo: 'text',
+        showlegend: false,
+    };
+
+    const layout = {
+        title: { text: `Visualization of ${variableName}`, font: { size: 13, color: '#333' } },
+        xaxis: {
+            tickvals: groupOrder.map((_, i) => i),
+            ticktext: groupOrder,
+            tickangle: -30,
+        },
+        yaxis: { title: variableName, zeroline: false },
+        margin: { t: 40, b: 80, l: 50, r: 20 },
+        hovermode: 'closest',
+        height: 350,
+        autosize: true,
+    };
+
+    const plotDiv = document.getElementById(containerId);
+    if (!plotDiv) return;
+    Plotly.newPlot(containerId, [boxTrace, scatterTrace], layout, { responsive: true });
+
+    // Handle Outlier Removal on Click
+    plotDiv.on('plotly_click', function(data) {
+        const point = data.points[0];
+        const meta = point.customdata;
+
+        if (meta && meta.is_outlier) {
+            const modalEl = $('#confirmExclusionModal'); // Use jQuery for BS4 modal handling
+            const msgEl = document.getElementById('modalMessage');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+
+            msgEl.innerHTML = `Exclude <strong>Row #${meta.row_id}</strong> (${variableName}: ${meta.value})?`;
+
+            // Show modal using Bootstrap 4 jQuery syntax
+            modalEl.modal('show');
+
+            // Ensure button only has ONE listener by overwriting .onclick
+            confirmBtn.onclick = function() {
+                globalData = globalData.filter(row => row.row_id !== meta.row_id);
+
+                modalEl.modal('hide');
+
+                showNiceMessage(`Point #${meta.row_id} removed.`, "success", "loadingSpinner");
+                document.getElementById('runVizBtn').click();
+            };
+        }
+    });
+}
+
+/**
+ * Assumptions → Box Plots: Plotly box + swarm with green/red by normality (per group).
+ * normalityByGroup: { "Group A": true, "Group B": false } → green #A1D99B / red #F7969E.
+ * Outliers clickable → #confirmExclusionModal → on confirm remove row and trigger afterExcludeButtonId (e.g. runTestsBtn).
+ * Responsive: fills container width, no fixed pixel width.
+ */
+function renderPlotlyBoxSwarmAssumptions(containerId, plotData, variableName, factorsLabel, normalityByGroup, afterExcludeButtonId, boxStats) {
+    if (!window.Plotly || !plotData || !plotData.length) return;
+    afterExcludeButtonId = afterExcludeButtonId || 'runTestsBtn';
+
+    const groupOrder = [];
+    const seen = new Set();
+    plotData.forEach(p => {
+        if (!seen.has(p.group)) { seen.add(p.group); groupOrder.push(p.group); }
+    });
+    const groupIndex = {};
+    groupOrder.forEach((g, i) => { groupIndex[g] = i; });
+
+    const jitterWidth = 0.15;
+    const xScatter = plotData.map((p, i) => {
+        const base = groupIndex[p.group];
+        const jitter = ((i % 7) / 7 - 0.5) * 2 * jitterWidth;
+        return base + jitter;
+    });
+    const yScatter = plotData.map(p => p.value);
+    const hoverText = plotData.map(p => {
+        const label = `#${p.row_id} — ${p.factor_label}`;
+        return p.is_outlier ? label + ' (outlier - Click to remove)' : label;
+    });
+
+    const boxLineColor = '#adb5bd';
+    const statsByGroup = {};
+    if (boxStats && boxStats.length) boxStats.forEach(s => { statsByGroup[s.group] = s; });
+
+    let boxTraces;
+    if (groupOrder.length && groupOrder.every(g => statsByGroup[g])) {
+        boxTraces = groupOrder.map((grp, gi) => {
+            const s = statsByGroup[grp];
+            const isNormal = normalityByGroup && normalityByGroup[grp];
+            const fillColor = isNormal ? 'rgba(161,217,155,0.6)' : 'rgba(247,150,158,0.6)';
+            return {
+                x: [gi],
+                q1: [s.q1],
+                median: [s.median],
+                q3: [s.q3],
+                lowerfence: [s.lowerfence],
+                upperfence: [s.upperfence],
+                type: 'box',
+                boxpoints: false,
+                showlegend: false,
+                line: { width: 1.5, color: boxLineColor },
+                fillcolor: fillColor,
+            };
+        });
+    } else {
+        boxTraces = groupOrder.map((grp, gi) => {
+            const pts = plotData.filter(p => p.group === grp);
+            const isNormal = normalityByGroup && normalityByGroup[grp] === true;
+            const fillColor = isNormal ? 'rgba(161,217,155,0.6)' : 'rgba(247,150,158,0.6)';
+            return {
+                x: pts.map(() => gi),
+                y: pts.map(p => p.value),
+                type: 'box',
+                boxpoints: 'outliers',
+                quartilemethod: 'linear',
+                showlegend: false,
+                line: { width: 1.5, color: boxLineColor },
+                fillcolor: fillColor,
+            };
+        });
+    }
+
+    const scatterTrace = {
+        x: xScatter,
+        y: yScatter,
+        type: 'scatter',
+        mode: 'markers',
+        customdata: plotData,
+        marker: { size: 7, color: plotData.map(p => p.is_outlier ? 'red' : 'rgba(0,0,0,0.6)'), line: { width: 1, color: 'white' } },
+        text: hoverText,
+        hoverinfo: 'text',
+        showlegend: false,
+    };
+
+    const layout = {
+        title: { text: variableName, font: { size: 13, color: '#333' } },
+        xaxis: { tickvals: groupOrder.map((_, i) => i), ticktext: groupOrder, tickangle: -30 },
+        yaxis: { title: variableName, zeroline: false },
+        margin: { t: 36, b: 70, l: 48, r: 16 },
+        hovermode: 'closest',
+        autosize: true,
+        height: 320,
+    };
+
+    const plotDiv = document.getElementById(containerId);
+    if (!plotDiv) return;
+    Plotly.newPlot(containerId, [...boxTraces, scatterTrace], layout, { responsive: true });
+
+    plotDiv.on('plotly_click', function(data) {
+        const point = data.points[0];
+        const meta = point.customdata;
+        if (!meta || !meta.is_outlier) return;
+        openExclusionModal(meta, variableName, 'value', meta.value, afterExcludeButtonId);
+    });
+}
+
+/** Residuals vs Fitted diagnostic plot (Assumptions). Click point → modal → remove row, re-run tests.
+ *  Points with |standardized residual| > 2 are flagged red (potential outliers). Only flagged points are clickable.
+ */
+function renderResidualsVsFitted(containerId, residualsData, variableName, resIdx) {
+    if (!window.Plotly || !residualsData || !residualsData.length) return;
+    const fittedX = residualsData.map(d => d.fitted);
+    const residualY = residualsData.map(d => d.residual);
+    const minFitted = Math.min(...fittedX);
+    const maxFitted = Math.max(...fittedX);
+
+    // Compute standardized residuals on the fly to flag outliers (|z| > 2)
+    const mean = residualY.reduce((s, v) => s + v, 0) / residualY.length;
+    const std = Math.sqrt(residualY.reduce((s, v) => s + (v - mean) ** 2, 0) / residualY.length) || 1;
+    const isOutlier = residualY.map(r => Math.abs((r - mean) / std) > 2);
+
+    // Annotate each data point with its outlier flag for click handling
+    const annotatedData = residualsData.map((d, i) => ({ ...d, is_residual_outlier: isOutlier[i] }));
+
+    const pointColors = isOutlier.map(o => o ? 'rgba(220,53,69,0.85)' : 'rgba(50,100,200,0.7)');
+    const pointSizes  = isOutlier.map(o => o ? 10 : 8);
+
+    const trace = {
+        x: fittedX,
+        y: residualY,
+        type: 'scatter',
+        mode: 'markers',
+        customdata: annotatedData,
+        marker: { size: pointSizes, color: pointColors, line: { width: 1, color: 'white' } },
+        text: annotatedData.map(d => `Row #${d.row_id} · Fitted: ${d.fitted.toFixed(3)} · Residual: ${d.residual.toFixed(3)}` +
+              (d.is_residual_outlier ? ' ⚠ potential outlier — click to remove' : '')),
+        hoverinfo: 'text',
+        showlegend: false,
+    };
+    const layout = {
+        title: { text: `Residuals vs. Fitted — ${variableName}`, font: { size: 12 } },
+        xaxis: { title: 'Fitted Values' },
+        yaxis: { title: 'Residuals' },
+        shapes: [{ type: 'line', x0: minFitted, x1: maxFitted, y0: 0, y1: 0, line: { dash: 'dash', color: 'gray' } }],
+        margin: { t: 36, b: 48, l: 52, r: 16 },
+        hovermode: 'closest',
+        height: 320,
+        autosize: true,
+    };
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    Plotly.newPlot(containerId, [trace], layout, { responsive: true });
+    el.on('plotly_click', function(ev) {
+        const point = ev.points[0];
+        const meta = point.customdata;
+        if (!meta || !meta.is_residual_outlier) return;  // only flagged points are clickable
+        openExclusionModal(meta, variableName, 'residual', meta.residual, 'runTestsBtn');
+    });
+}
+
+/** Normal Q-Q diagnostic plot (Assumptions). Click point → modal → remove row, re-run tests.
+ *  Points with |std_residual| > 2 are flagged red (potential outliers). Only flagged points are clickable.
+ */
+function renderNormalQQ(containerId, residualsData, variableName, resIdx) {
+    if (!window.Plotly || !residualsData || !residualsData.length) return;
+    const tqX = residualsData.map(d => d.theoretical_quantile);
+    const stdY = residualsData.map(d => d.std_residual);
+    const minTq = Math.min(...tqX);
+    const maxTq = Math.max(...tqX);
+
+    // Flag points where |standardized residual| > 2 as potential outliers
+    const isOutlier = stdY.map(v => Math.abs(v) > 2);
+    const annotatedData = residualsData.map((d, i) => ({ ...d, is_qq_outlier: isOutlier[i] }));
+
+    const pointColors = isOutlier.map(o => o ? 'rgba(220,53,69,0.85)' : 'rgba(50,100,200,0.7)');
+    const pointSizes  = isOutlier.map(o => o ? 10 : 8);
+
+    const trace = {
+        x: tqX,
+        y: stdY,
+        type: 'scatter',
+        mode: 'markers',
+        customdata: annotatedData,
+        marker: { size: pointSizes, color: pointColors, line: { width: 1, color: 'white' } },
+        text: annotatedData.map(d => `Row #${d.row_id} · Theoretical: ${d.theoretical_quantile.toFixed(3)} · Std residual: ${d.std_residual.toFixed(3)}` +
+              (d.is_qq_outlier ? ' ⚠ potential outlier — click to remove' : '')),
+        hoverinfo: 'text',
+        showlegend: false,
+    };
+    const layout = {
+        title: { text: `Normal Q-Q — ${variableName}`, font: { size: 12 } },
+        xaxis: { title: 'Theoretical Quantiles' },
+        yaxis: { title: 'Standardized Residuals' },
+        shapes: [{ type: 'line', x0: minTq, x1: maxTq, y0: minTq, y1: maxTq, line: { dash: 'dash', color: 'gray' } }],
+        margin: { t: 36, b: 48, l: 52, r: 16 },
+        hovermode: 'closest',
+        height: 320,
+        autosize: true,
+    };
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    Plotly.newPlot(containerId, [trace], layout, { responsive: true });
+    el.on('plotly_click', function(ev) {
+        const point = ev.points[0];
+        const meta = point.customdata;
+        if (!meta || !meta.is_qq_outlier) return;  // only flagged points are clickable
+        openExclusionModal(meta, variableName, 'residual', meta.residual, 'runTestsBtn');
+    });
+}
+
+function openExclusionModal(meta, variableName, valueLabel, value, triggerButtonId) {
+    const msgEl = document.getElementById('modalMessage');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    if (msgEl) msgEl.innerHTML = `Remove Row #<strong>${meta.row_id}</strong> (${variableName}: ${valueLabel} ${Number(value).toFixed(3)}) from the dataset?`;
+    const modalEl = typeof $ !== 'undefined' && $('#confirmExclusionModal').length ? $('#confirmExclusionModal') : null;
+
+    // Show the success message above the spinner of whichever tab triggered the removal
+    const messageContainerId = triggerButtonId === 'runTestsBtn' ? 'testSpinner' : 'loadingSpinner';
+
+    if (modalEl && modalEl.length) {
+        modalEl.modal('show');
+        confirmBtn.onclick = function() {
+            globalData = globalData.filter(row => row.row_id !== meta.row_id);
+            modalEl.modal('hide');
+            showNiceMessage('Point #' + meta.row_id + ' removed. Refreshing...', 'success', messageContainerId);
+            if (triggerButtonId === 'runTestsBtn') {
+                var testSpinner = document.getElementById('testSpinner');
+                if (testSpinner) testSpinner.style.display = 'block';
+                var normalityTab = document.querySelector('#assumptions-normality-tab');
+                if (normalityTab) normalityTab.click();
+            }
+            document.getElementById(triggerButtonId || 'runTestsBtn').click();
+        };
+    } else {
+        if (confirm('Remove Row #' + meta.row_id + ' from the dataset?')) {
+            globalData = globalData.filter(row => row.row_id !== meta.row_id);
+            showNiceMessage('Point #' + meta.row_id + ' removed. Refreshing...', 'success', messageContainerId);
+            if (triggerButtonId === 'runTestsBtn') {
+                var testSpinner = document.getElementById('testSpinner');
+                if (testSpinner) testSpinner.style.display = 'block';
+                var normalityTab = document.querySelector('#assumptions-normality-tab');
+                if (normalityTab) normalityTab.click();
+            }
+            document.getElementById(triggerButtonId || 'runTestsBtn').click();
+        }
+    }
+}
+
 function getLetterGroupStyle(letters) {
     if (!letters) return 'background-color: #6c757d; color: white;';
     
@@ -204,7 +587,20 @@ function getLetterGroupStyle(letters) {
 
 // --- 3. Data Loading ---
 
+function showDataLimitError(message) {
+    const el = document.getElementById('dataLimitError');
+    el.textContent = message;
+    el.style.display = 'block';
+}
+
+function hideDataLimitError() {
+    const el = document.getElementById('dataLimitError');
+    el.textContent = '';
+    el.style.display = 'none';
+}
+
 document.getElementById('processDataBtn').addEventListener('click', function() {
+    hideDataLimitError();
     const rawData = document.getElementById('excelPasteBox').value.trim();
     if (!rawData) return alert("Please paste data from Excel.");
 
@@ -212,11 +608,23 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
     const headers = rows[0].split(/\t| {2,}/).map(h => h.trim()).filter(h => h !== "");
 
     if (headers.length === 0) return alert("Could not detect columns. Check your data format.");
+
+    const dataRows = rows.length - 1;
+    const colCount = headers.length;
+    if (dataRows > MAX_DATA_ROWS) {
+        showDataLimitError(`Data exceeds maximum allowed rows (${MAX_DATA_ROWS}). Your data has ${dataRows} rows. Please reduce the dataset.`);
+        return;
+    }
+    if (colCount > MAX_DATA_COLUMNS) {
+        showDataLimitError(`Data exceeds maximum allowed columns (${MAX_DATA_COLUMNS}). Your data has ${colCount} columns. Please reduce the dataset.`);
+        return;
+    }
+
     const firstColumnName = headers[0];
 
-    globalData = rows.slice(1).map(row => {
+    globalData = rows.slice(1).map((row, index) => {
         const values = row.split(/\t| {2,}/).map(v => v.trim());
-        let obj = {};
+        let obj = { row_id: index + 1 }; // 1-based persistent row index
         headers.forEach((h, i) => {
             let val = (values[i] || "").replace(',', '.'); // Normalize decimal
 
@@ -240,8 +648,12 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: globalData })
     })
-    .then(res => res.json())
-    .then(result => {
+    .then(res => res.json().then(result => ({ status: res.status, result })))
+    .then(({ status, result }) => {
+        if (status === 400 && result.error) {
+            showDataLimitError(result.error);
+            return;
+        }
         if (result.error) throw new Error(result.error);
 
         const factorSel = document.getElementById('factorSelector');
@@ -271,6 +683,7 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
         document.getElementById('selectionCard').style.display = 'block';
         document.getElementById('placeholderText').style.display = 'none';
         document.getElementById('downloadExcelBtn').style.display = 'none';
+        hideDataLimitError();
     })
     .catch(err => alert("Loading Error: " + err.message));
 });
@@ -320,15 +733,19 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
         // Show header with download button
         document.getElementById('downloadExcelBtn').style.display = 'inline-flex';
 
-        result.results.forEach(res => {
+        result.results.forEach((res, idx) => {
             const card = document.createElement('div');
             card.className = 'col-12 mb-4';
             let headers = result.factors.map(f => `<th>${f}</th>`).join('');
+            const plotDivId = `plot-viz-${idx}-${res.variable.replace(/\W/g, '_')}`;
+            const plotBlock = res.plot_data && res.plot_data.length
+                ? `<div id="${plotDivId}" class="mb-3"></div>`
+                : `<div class="text-center overflow-auto"><img src="data:image/png;base64,${res.plot_url}" class="img-fluid rounded mb-3"></div>`;
             card.innerHTML = `
                 <div class="plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border">
                     <h6 class="fw-bold border-bottom pb-2">${res.variable}</h6>
                     <div class="text-center overflow-auto">
-                        <img src="data:image/png;base64,${res.plot_url}" class="img-fluid rounded mb-3">
+                        ${plotBlock}
                     </div>
                     <details>
                         <summary class="small text-primary cursor-pointer fw-bold">View Data Table</summary>
@@ -348,6 +765,9 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
                     </div>
                 `;
             statsContent.appendChild(card);
+            if (res.plot_data && res.plot_data.length) {
+                renderPlotlyBoxSwarm(plotDivId, res.plot_data, res.variable, result.factors.join(', '), res.box_stats);
+            }
         });
         vizResultsHeader.style.display = 'flex';
     })
@@ -495,9 +915,13 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
 
     const testResults = document.getElementById('testResults');
     const testSpinner = document.getElementById('testSpinner');
+    const resultsArea = document.getElementById('assumptionsResultsArea');
 
     testResults.innerHTML = "";
     testSpinner.style.display = 'block';
+
+    // Hide the results area while loading 
+    if (resultsArea) resultsArea.style.display = 'none';
 
     fetch('/run-tests', {
         method: 'POST',
@@ -511,52 +935,96 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
     .then(res => res.json())
     .then(data => {
         testSpinner.style.display = 'none';
+        // Show the entire results area (tabs + content)
+        const resultsArea = document.getElementById('assumptionsResultsArea');
+        if (resultsArea) {
+            resultsArea.style.display = 'block';
+        }
+
         if (data.error) throw new Error(data.error);
 
+        const factorsLabel = selectedFactors.join(', ');
+
+        // Normality sub-tab: text-only summary per variable (Shapiro table + Levene)
         data.results.forEach(res => {
-            const section = document.createElement('div');
-            section.className = "mb-5 p-4 border rounded bg-white shadow-sm";
-
-            // Check for Levene status for the summary alert
             const leveneClass = res.levene.is_homogeneous === null ? 'secondary' : (res.levene.is_homogeneous ? 'success' : 'danger');
-            const leveneText = res.levene.is_homogeneous === null ? 'N/A' : (res.levene.is_homogeneous ? 'Equal' : 'Unequal');
-
+            const leveneText = res.levene.is_homogeneous === null ? 'N/A' : (res.levene.is_homogeneous ? 'equal' : 'unequal');
+            const leveneDetail = res.levene.p != null ? `Levene p = ${res.levene.p.toFixed(4)}` : 'Levene: N/A (single group)';
+            const section = document.createElement('div');
+            section.className = "mb-4 p-4 border rounded bg-white shadow-sm";
             section.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                     <h5 class="fw-bold text-primary mb-0">Variable: ${res.variable}</h5>
-                    <span class="badge bg-${leveneClass}">Variance: ${leveneText}</span>
                 </div>
-
-                <div class="row">
-                    <div class="col-lg-8 text-center border-end">
-                        <img src="data:image/png;base64,${res.plot_url}" class="img-fluid rounded" style="max-height: 450px;">
-                    </div>
-
-                    <div class="col-lg-4">
-                        <label class="small fw-bold text-uppercase text-muted mb-2">Normality (Shapiro-Wilk)</label>
-                        <div class="table-responsive">
-                            <table class="table table-sm extra-small">
-                                <thead class="table-light">
-                                    <tr><th>Group</th><th>p-val</th><th>Res.</th></tr>
-                                </thead>
-                                <tbody>
-                                    ${res.shapiro.map(s => `
-                                        <tr class="${s.is_normal ? '' : 'table-danger-light'}">
-                                            <td class="text-truncate" style="max-width: 100px;">${s.group}</td>
-                                            <td>${s.p.toFixed(3)}</td>
-                                            <td>${s.is_normal ? '✅' : '❌'}</td>
-                                        </tr>`).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                        <p class="extra-small text-muted mt-2">
-                            <i class="bi bi-info-circle"></i> Green boxes in plot indicate normal distribution (p > 0.05).
-                        </p>
-                    </div>
+                Homogeneity of variance (Levene's test):<br>
+                <span class="badge bg-${leveneClass}">Variance is ${leveneText} (${leveneDetail})</span>
+                <br><br>
+                Data normality (Shapiro-Wilk test):<br>
+                <div class="table-responsive">
+                    <table class="table table-sm extra-small">
+                        <thead class="table-light"><tr><th>Group</th><th>p-val</th><th>Res.</th></tr></thead>
+                        <tbody>
+                            ${res.shapiro.map(s => `<tr class="${s.is_normal ? '' : 'table-danger-light'}"><td class="text-truncate" style="max-width:100px;">${s.group}</td><td>${s.p.toFixed(3)}</td><td>${s.is_normal ? '✅' : '❌'}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
                 </div>
             `;
             testResults.appendChild(section);
         });
+
+        // Box Plots sub-tab: interactive Plotly with green/red by normality, click-to-remove outliers
+        const assumptionsBoxPlots = document.getElementById('assumptionsBoxPlots');
+        if (assumptionsBoxPlots) {
+            assumptionsBoxPlots.innerHTML = '';
+            data.results.forEach((res, resIdx) => {
+                const normalityByGroup = {};
+                if (res.shapiro) res.shapiro.forEach(s => { normalityByGroup[s.group] = !!s.is_normal; });
+                const card = document.createElement('div');
+                card.className = 'plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border mb-4';
+                const plotDivId = 'assumptions-plot-' + resIdx + '-' + (res.variable || '').replace(/\W/g, '_');
+                card.innerHTML = `<h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6><div id="${plotDivId}" class="assumptions-plot-container"></div>`;
+                assumptionsBoxPlots.appendChild(card);
+                if (res.plot_data && res.plot_data.length) {
+                    renderPlotlyBoxSwarmAssumptions(plotDivId, res.plot_data, res.variable, factorsLabel, normalityByGroup, 'runTestsBtn', res.box_stats);
+                }
+            });
+        }
+
+        // Residuals vs Fitted and Normal Q-Q: one plot per variable when residuals_data is present
+        const residualsContent = document.getElementById('assumptionsResidualsContent');
+        const qqContent = document.getElementById('assumptionsQQContent');
+        if (residualsContent) {
+            residualsContent.innerHTML = '';
+            if (!data.results.some(r => r.residuals_data && r.residuals_data.length)) {
+                residualsContent.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
+            } else {
+                data.results.forEach((res, resIdx) => {
+                    if (!res.residuals_data || !res.residuals_data.length) return;
+                    const card = document.createElement('div');
+                    card.className = 'plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border mb-4';
+                    const divId = 'diag-res-' + resIdx + '-' + (res.variable || '').replace(/\W/g, '_');
+                    card.innerHTML = `<h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6><div id="${divId}" class="assumptions-plot-container" style="min-height: 400px; width: 100%;"></div>`;
+                    residualsContent.appendChild(card);
+                    renderResidualsVsFitted(divId, res.residuals_data, res.variable, resIdx);
+                });
+            }
+        }
+        if (qqContent) {
+            qqContent.innerHTML = '';
+            if (!data.results.some(r => r.residuals_data && r.residuals_data.length)) {
+                qqContent.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
+            } else {
+                data.results.forEach((res, resIdx) => {
+                    if (!res.residuals_data || !res.residuals_data.length) return;
+                    const card = document.createElement('div');
+                    card.className = 'plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border mb-4';
+                    const divId = 'diag-qq-' + resIdx + '-' + (res.variable || '').replace(/\W/g, '_');
+                    card.innerHTML = `<h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6><div id="${divId}" class="assumptions-plot-container" style="min-height: 400px; width: 100%;"></div>`;
+                    qqContent.appendChild(card);
+                    renderNormalQQ(divId, res.residuals_data, res.variable, resIdx);
+                });
+            }
+        }
 
         // Unhide the ANOVA tab
         const anovaTab = document.getElementById('anova-tab');
@@ -802,4 +1270,30 @@ document.getElementById('downloadAnovaExcelBtn').addEventListener('click', funct
         document.body.removeChild(a);
     })
     .catch(err => alert("Export Error: " + err.message));
+});
+
+// Fix for missing plots in hidden sub-tabs
+$(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function (e) {
+    const targetId = $(e.target).attr('href'); // e.g., "#viz-content", "#assumptions-residuals"
+
+    // Visualizations tab: resize all Plotly plots inside #statsContent
+    if (targetId === "#viz-content") {
+        document.querySelectorAll('#statsContent .js-plotly-plot').forEach(container => {
+            Plotly.Plots.resize(container);
+        });
+        return;
+    }
+
+    // Assumptions sub-tabs: resize their plots
+    if (targetId === "#assumptions-residuals" || targetId === "#assumptions-qq" || targetId === "#assumptions-boxplots") {
+        // Find all Plotly plots inside the newly visible tab
+        const containers = document.querySelectorAll(targetId + ' .assumptions-plot-container, ' + targetId + ' [id^="plot-box-swarm-"]');
+        
+        containers.forEach(container => {
+            // Only resize if Plotly has already been initialized on this div
+            if (container.classList.contains('js-plotly-plot')) {
+                Plotly.Plots.resize(container);
+            }
+        });
+    }
 });

@@ -12,12 +12,91 @@ from openpyxl.drawing.image import Image as XLImage
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from scipy import stats
+from scipy.stats import norm as norm_dist
+from statsmodels.formula.api import ols
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from statsmodels.stats.multitest import multipletests
 from itertools import combinations
 from typing import Any
 
 stats_bp = Blueprint('statistics', __name__)
+
+MAX_DATA_ROWS = 100
+MAX_DATA_COLUMNS = 50
+
+def _validate_data_limits(data):
+    """Validate data does not exceed row/column limits. Returns (True, None) or (False, error_message)."""
+    if not data:
+        return True, None
+    rows = len(data)
+    first = data[0]
+    cols = len(first) if isinstance(first, (dict, list, tuple)) else 0
+    if rows > MAX_DATA_ROWS:
+        return False, f"Data exceeds maximum allowed rows ({MAX_DATA_ROWS}). Your data has {rows} rows. Please reduce the dataset."
+    if cols > MAX_DATA_COLUMNS:
+        return False, f"Data exceeds maximum allowed columns ({MAX_DATA_COLUMNS}). Your data has {cols} columns. Please reduce the dataset."
+    return True, None
+
+def _outlier_mask_15iqr(series):
+    """Return a boolean array: True where value is outside 1.5×IQR from the box (standard boxplot rule)."""
+    q1, q3 = np.quantile(series.dropna(), [0.25, 0.75])
+    iqr = q3 - q1
+    if iqr <= 0:
+        return pd.Series(False, index=series.index)
+    lower = q1 - 1.5 * iqr
+    upper = q3 + 1.5 * iqr
+    return (series < lower) | (series > upper)
+
+
+def _box_stats_per_group(clean_df, group_col, value_col):
+    """Return list of {group, q1, q3, median, lowerfence, upperfence} using 1.5×IQR rule (same as _outlier_mask_15iqr).
+    Fences are exactly Q1 - 1.5*IQR and Q3 + 1.5*IQR so Plotly whiskers match backend outlier logic."""
+    out = []
+    for grp, sub in clean_df.groupby(group_col, sort=False):
+        vals = sub[value_col].dropna()
+        if len(vals) == 0:
+            continue
+        q1, median, q3 = np.quantile(vals, [0.25, 0.5, 0.75])
+        q1, median, q3 = float(q1), float(median), float(q3)
+        iqr = q3 - q1
+        if iqr <= 0:
+            lowerfence = upperfence = median
+        else:
+            lowerfence = q1 - 1.5 * iqr
+            upperfence = q3 + 1.5 * iqr
+        out.append({
+            "group": str(grp),
+            "q1": q1,
+            "q3": q3,
+            "median": median,
+            "lowerfence": lowerfence,
+            "upperfence": upperfence,
+        })
+    return out
+
+def _build_plot_data(clean_df, group_col, value_col, row_id_col="row_id"):
+    """Build list of {group, value, row_id, factor_label, is_outlier} for frontend hover. Outliers = outside 1.5×IQR per group."""
+    if row_id_col not in clean_df.columns:
+        clean_df = clean_df.copy()
+        clean_df[row_id_col] = np.arange(1, len(clean_df) + 1)
+    plot_data = []
+    for grp, sub in clean_df.groupby(group_col, sort=False):
+        vals = sub[value_col]
+        outlier = _outlier_mask_15iqr(vals)
+        factor_label = str(grp)
+        for idx in sub.index:
+            row = sub.loc[idx]
+            rid = row.get(row_id_col, idx)
+            if pd.isna(rid):
+                rid = int(idx) if isinstance(idx, (int, np.integer)) else idx
+            plot_data.append({
+                "group": str(grp),
+                "value": float(row[value_col]),
+                "row_id": int(rid),
+                "factor_label": factor_label,
+                "is_outlier": bool(outlier.loc[idx]) if idx in outlier.index else False,
+            })
+    return plot_data
 
 def _sanitize(obj):
     """Replace NaN/Inf with None so JSON serialization succeeds."""
@@ -51,7 +130,11 @@ def statistics_page():
 def run_tests():
     try:
         request_data = request.get_json()
-        df = pd.DataFrame(request_data['data'])
+        data = request_data.get('data', [])
+        ok, err = _validate_data_limits(data)
+        if not ok:
+            return jsonify({"error": err}), 400
+        df = pd.DataFrame(data)
         factors = request_data.get('factors', [])
         selected_vars = request_data.get('target_columns', [])
 
@@ -81,17 +164,18 @@ def run_tests():
             unique_groups = clean_df['Group'].unique().tolist()
 
             for g_name in unique_groups:
-                data = clean_df[clean_df['Group'] == g_name][var].astype(float)
-                if len(data) >= 3:
-                    stat, p = stats.shapiro(data)
+                # Change 'data' to 'group_vals'
+                group_vals = clean_df[clean_df['Group'] == g_name][var].astype(float)
+                if len(group_vals) >= 3:
+                    stat, p = stats.shapiro(group_vals)
                     is_normal = bool(p > 0.05)
                     normality_status[g_name] = is_normal
-                    group_data.append(data.values)
+                    group_data.append(group_vals.values) # Use group_vals
                     shapiro_results.append({
                         "group": g_name, "stat": float(stat), "p": float(p), "is_normal": is_normal
                     })
                 else:
-                    normality_status[g_name] = True # Default color if too few points
+                    normality_status[g_name] = True
 
             # 3. Calculate Levene's Test
             l_stat, l_p, is_homo = None, None, None
@@ -127,15 +211,59 @@ def run_tests():
             plt.tight_layout()
 
             plot_url = get_plot_base64()
+            plot_data = _build_plot_data(clean_df, "Group", var)
 
-            test_results.append({
+            # 5. One-way ANOVA residuals for diagnostic plots (data only, no images)
+            residuals_data = []
+            if 'row_id' not in clean_df.columns:
+                clean_df = clean_df.copy()
+                clean_df['row_id'] = np.arange(1, len(clean_df) + 1)
+            n_vals = len(clean_df)
+            if n_vals >= 2 and len(unique_groups) >= 1:
+                try:
+                    model = ols(f"Q('{var}') ~ C(Group)", data=clean_df).fit()
+                    fitted = model.fittedvalues
+                    resid = model.resid
+                    res_std = np.std(resid, ddof=1)
+                    if res_std <= 0:
+                        res_std = 1.0
+                    std_residual = resid / res_std
+                    # Ranks for theoretical quantiles (rank 1..n by sorted std_residual)
+                    order = np.argsort(std_residual.values)
+                    rank_of_index = np.empty(len(order), dtype=float)
+                    rank_of_index[order] = np.arange(1, len(order) + 1)
+                    for i in range(len(clean_df)):
+                        row = clean_df.iloc[i]
+                        rid = row.get('row_id', i + 1)
+                        if pd.isna(rid):
+                            rid = int(i + 1)
+                        r_rank = rank_of_index[i]
+                        theoretical_quantile = float(norm_dist.ppf((r_rank - 0.5) / n_vals))
+                        residuals_data.append({
+                            "row_id": int(rid),
+                            "fitted": float(fitted.iloc[i]),
+                            "residual": float(resid.iloc[i]),
+                            "std_residual": float(std_residual.iloc[i]),
+                            "theoretical_quantile": theoretical_quantile,
+                            "group": str(row['Group']),
+                        })
+                except Exception:
+                    pass
+
+            box_stats = _box_stats_per_group(clean_df, "Group", var)
+            result_entry = {
                 "variable": var,
                 "plot_url": plot_url,
+                "plot_data": plot_data,
+                "box_stats": box_stats,
                 "shapiro": shapiro_results,
                 "levene": {"stat": float(l_stat) if l_stat else None,
                            "p": float(l_p) if l_p else None,
                            "is_homogeneous": is_homo}
-            })
+            }
+            if residuals_data:
+                result_entry["residuals_data"] = residuals_data
+            test_results.append(result_entry)
 
         return jsonify({"results": _sanitize(test_results)})
     except Exception as e:
@@ -145,19 +273,27 @@ def run_tests():
 def run_analysis():
     try:
         request_data = request.get_json()
-        df = pd.DataFrame(request_data['data'])
+        data = request_data.get('data', [])
+        ok, err = _validate_data_limits(data)
+        if not ok:
+            return jsonify({"error": err}), 400
+        df = pd.DataFrame(data)
         factors = request_data.get('factors', [])
         selected_vars = request_data.get('target_columns', [])
 
         if not selected_vars:
+            cols = [c for c in df.columns.tolist() if c != "row_id"]
             return jsonify({
-                "all_columns": df.columns.tolist(),
-                "variables": df.columns.tolist()
+                "all_columns": cols,
+                "variables": cols
             })
 
         results = []
         for var in selected_vars:
-            temp_df = df[factors + [var]].copy()
+            keep_cols = [c for c in factors + [var] if c in df.columns]
+            if "row_id" in df.columns:
+                keep_cols = ["row_id"] + [c for c in keep_cols if c != "row_id"]
+            temp_df = df[keep_cols].copy()
             temp_df[var] = pd.to_numeric(temp_df[var], errors='coerce')
             clean_df = temp_df.dropna(subset=[var]).copy()
 
@@ -242,10 +378,25 @@ def run_analysis():
             g.ax.set_xlabel(factors[0], fontsize=11, fontweight='bold')
             g.ax.set_ylabel(var, fontsize=11, fontweight='bold')
 
+            # Build plot_data by combined group (all factors) so frontend splits by both factors
+            if factors:
+                clean_df = clean_df.copy()
+                clean_df['Group'] = clean_df[factors].agg(' | '.join, axis=1)
+                group_col = 'Group'
+            else:
+                group_col = None
+            if group_col:
+                plot_data = _build_plot_data(clean_df, group_col, var)
+                box_stats = _box_stats_per_group(clean_df, group_col, var)
+            else:
+                plot_data = []
+                box_stats = []
             results.append({
                 "variable": var,
                 "summary": summary,
-                "plot_url": get_plot_base64()
+                "plot_url": get_plot_base64(),
+                "plot_data": plot_data,
+                "box_stats": box_stats,
             })
             plt.close('all')
 
@@ -313,7 +464,11 @@ def confidence_ellipse(x, y, ax, n_std=2.0, facecolor: Any = 'none', **kwargs):
 def run_pca():
     try:
         request_data = request.get_json()
-        df = pd.DataFrame(request_data['data'])
+        data = request_data.get('data', [])
+        ok, err = _validate_data_limits(data)
+        if not ok:
+            return jsonify({"error": err}), 400
+        df = pd.DataFrame(data)
         factors = request_data.get('factors', [])
         selected_vars = request_data.get('variables', [])
 
@@ -484,7 +639,11 @@ def export_pca_excel():
 def run_anova():
     try:
         request_data = request.get_json()
-        df = pd.DataFrame(request_data['data'])
+        data = request_data.get('data', [])
+        ok, err = _validate_data_limits(data)
+        if not ok:
+            return jsonify({"error": err}), 400
+        df = pd.DataFrame(data)
         factors = request_data.get('factors', [])
         selected_vars = request_data.get('target_columns', [])
         grouping_mode = request_data.get('grouping_mode', 'all_combined')
@@ -579,16 +738,26 @@ def run_anova():
                                 "p_adj": float(p_adj), "significant": bool(reject)
                             })
                 elif homogeneous:
-                    result["test_used"] = "Kruskal–Wallis + Mann–Whitney (BH)"
+                    # Normality failed, homogeneity passed → non-parametric; Bonferroni for pairwise
+                    result["test_used"] = "Kruskal–Wallis + Mann–Whitney (Bonferroni)"
                     _, p = stats.kruskal(*data_list)
                     result["overall_p"] = float(p)
                     if p < 0.05:
-                        result["posthoc"] = _pairwise_posthoc(group_names, group_data, method='mannwhitneyu')
+                        result["posthoc"] = _pairwise_posthoc(group_names, group_data,
+                                                               method='mannwhitneyu',
+                                                               correction='bonferroni')
                 elif all_normal:
+                    # Normality passed, homogeneity failed → Welch's ANOVA + Welch t-tests (BH)
                     result["test_used"] = "Welch's ANOVA + t-tests (BH)"
-                    _, p = stats.f_oneway(*data_list)
+                    _, p = _welch_anova(data_list)
+                    if p is None:
+                        # Fallback if Welch ANOVA cannot be computed (e.g. zero variance)
+                        _, p = stats.f_oneway(*data_list)
                     result["overall_p"] = float(p)
-                    result["posthoc"] = _pairwise_posthoc(group_names, group_data, method='welch_ttest')
+                    if p < 0.05:
+                        result["posthoc"] = _pairwise_posthoc(group_names, group_data,
+                                                               method='welch_ttest',
+                                                               correction='fdr_bh')
                 else:
                     result["test_used"] = "Kruskal–Wallis + Mann–Whitney (BH)"
                     _, p = stats.kruskal(*data_list)
@@ -673,7 +842,36 @@ def _make_json_safe(obj):
     return obj
 
 
-def _pairwise_posthoc(group_names, group_data, method='mannwhitneyu'):
+def _welch_anova(data_list):
+    """
+    Welch's one-way ANOVA (Welch 1951) — handles unequal variances.
+    Returns (F, p). Use instead of stats.f_oneway when homogeneity fails but normality holds.
+    Formula: F_W = num / denom, with adjusted df2 = (k²-1) / (3·λ)
+      where λ = Σ ((1 - wi/W)² / (ni-1))  and  wi = ni/si²
+    """
+    from scipy.stats import f as f_dist
+    k = len(data_list)
+    if k < 2:
+        return None, None
+    n  = np.array([len(d)             for d in data_list], dtype=float)
+    m  = np.array([np.mean(d)         for d in data_list])
+    v  = np.array([np.var(d, ddof=1)  for d in data_list])
+    if np.any(v <= 0):
+        return None, None
+    w  = n / v
+    W  = w.sum()
+    grand_mean = (w * m).sum() / W
+    lambda_    = ((1 - w / W) ** 2 / (n - 1)).sum()
+    num   = (w * (m - grand_mean) ** 2).sum() / (k - 1)
+    denom = 1 + (2 * (k - 2) / (k ** 2 - 1)) * lambda_
+    F     = num / denom
+    df1   = float(k - 1)
+    df2   = (k ** 2 - 1) / (3 * lambda_) if lambda_ > 0 else 1e6
+    p     = float(1 - f_dist.cdf(F, df1, df2))
+    return float(F), p
+
+
+def _pairwise_posthoc(group_names, group_data, method='mannwhitneyu', correction='fdr_bh'):
 
     pairs = list(combinations(range(len(group_names)), 2))
     p_values = []
@@ -691,7 +889,7 @@ def _pairwise_posthoc(group_names, group_data, method='mannwhitneyu'):
         p_values.append(p)
         comparisons.append((g1, g2))
 
-    reject, p_adj, _, _ = multipletests(p_values, alpha=0.05, method='fdr_bh')
+    reject, p_adj, _, _ = multipletests(p_values, alpha=0.05, method=correction)
 
     return [
         {

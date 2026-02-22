@@ -28,6 +28,27 @@
 {% endblock %}
 
 {% block content %}
+<style>
+    /* Main tab rows: active tab light blue, spacing between row1 and row2 */
+    #statsTabRow1 .nav-link,
+    #statsTabRow2 .nav-link { border: 1px solid #dee2e6 !important; margin-right: 2px; }
+    #statsTabRow1 .nav-link.active,
+    #statsTabRow2 .nav-link.active { background-color: #cce5ff !important; color: #004085; border-color: #b8daff !important; }
+    #statsTabRow1 { margin-bottom: 0.5rem; }
+    #statsTabRow2 { margin-top: 0.5rem; margin-bottom: 0; padding-top: 0.25rem; border-top: 1px solid #dee2e6; }
+    /* Significance Tests same style as other tabs (no green) */
+    #anova-tab.text-success { color: #495057 !important; }
+    #anova-tab.nav-link.active { color: #004085 !important; }
+    /* Assumptions sub-tabs: border and active light blue */
+    #assumptionsSubTabs .nav-link { border: 1px solid #dee2e6; margin-right: 4px; }
+    #assumptionsSubTabs .nav-link.active { background-color: #cce5ff !important; color: #004085; border-color: #b8daff !important; }
+    /* Assumption plots: fit inside card, no overflow */
+    .assumptions-plot-container { overflow: hidden; max-width: 100%; width: 100%; }
+    .assumptions-plot-container .plotly { width: 100% !important; max-width: 100% !important; }
+    #assumptionsBoxPlots .assumptions-plot-container,
+    #assumptionsResidualsContent .assumptions-plot-container,
+    #assumptionsQQContent .assumptions-plot-container { height: 320px; min-height: 320px; }
+</style>
 <div class="page-wrapper">
     <div class="wrapper-box">
         <!-- Hero Section -->
@@ -138,8 +159,12 @@
                     <p class="small text-muted mb-3">
                         Copy-paste date from an Excel file, or paste Tab-delimited data
                     </p>
-                    <textarea id="excelPasteBox" class="form-control mb-3" rows="6" 
+                    <p class="small text-muted mb-2">
+                        <i class="bi bi-info-circle"></i> Maximum: 100 rows, 50 columns
+                    </p>
+                    <textarea id="excelPasteBox" class="form-control mb-2" rows="6" 
                               placeholder="Paste your Excel data with headers here..."></textarea>
+                    <div id="dataLimitError" class="alert alert-danger small py-2 mb-3" role="alert" style="display: none;"></div>
                     <button id="processDataBtn" class="btn btn-primary w-100 fw-bold shadow-sm">
                         <i class="bi bi-upload"></i> Load Data
                     </button>
@@ -180,35 +205,40 @@
             <div class="col-md-8">
                 <!-- Results Area (hidden initially) -->
                 <div id="resultsArea" style="display: none;">
-                    <ul class="nav nav-tabs mb-3" id="statsTab" role="tablist">
+                    <!-- Row 1: Main analyses (Visualizations, Assumptions, Significance Tests) -->
+                    <ul class="nav nav-tabs border-bottom-0 mb-3" id="statsTabRow1" role="tablist">
                         <li class="nav-item">
-                            <button class="nav-link active fw-bold" id="viz-tab" 
-                                    data-toggle="tab" data-target="#viz-content"> <i class="bi bi-bar-chart-line"></i> Visualizations
-                            </button>
+                            <button class="nav-link active fw-bold border" id="viz-tab" data-toggle="tab" data-target="#viz-content" role="tab"><i class="bi bi-bar-chart-line"></i> Visualizations</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link fw-bold" id="pca-tab" 
-                                    data-toggle="tab" data-target="#pca-content"> <i class="bi bi-grid-3x3-gap"></i> Multivariate (PCA)
-                            </button>
+                            <button class="nav-link fw-bold border" id="assumptions-tab" data-toggle="tab" data-target="#assumptions-content" role="tab"><i class="bi bi-calculator"></i> ANOVA Assumptions</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link fw-bold" id="assumptions-tab" 
-                                    data-toggle="tab" data-target="#assumptions-content"> <i class="bi bi-calculator"></i> Assumptions
-                            </button>
+                            <button class="nav-link fw-bold border" id="anova-tab" data-toggle="tab" data-target="#anova-content" role="tab" style="display: none;"><i class="bi bi-list-check"></i> ANOVA Tests</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link fw-bold text-success" id="anova-tab" 
-                                    data-toggle="tab" data-target="#anova-content" style="display: none;"> 
-                                <i class="bi bi-list-check"></i> Significance Tests
-                            </button>
+                            <button class="nav-link fw-bold border" id="pca-tab" data-toggle="tab" data-target="#pca-content" role="tab"><i class="bi bi-grid-3x3-gap"></i> Multivariate (PCA)</button>
                         </li>
                     </ul>
-                    <div class="tab-content border p-3 rounded bg-white shadow-sm" id="statsTabContent">
+
+                    <hr class="my-2 border-secondary" style="opacity: 0.35;">
+                    <div class="tab-content border p-3 rounded-bottom rounded-top bg-white shadow-sm" id="statsTabContent">
                         <div class="tab-pane fade show active" id="viz-content" role="tabpanel">
                             <div class="p-3">
                                 <h5 class="fw-bold mb-3">Data Visualizations</h5>
                                 <p class="text-muted small">Generate box plots with swarm overlays for selected variables grouped by factors.</p>
-                            
+                                <small class="text-muted d-block mb-3">
+                                    <strong>What’s in the plots:</strong><br>
+                                    • Dots (swarm): one dot = one data point; jittered horizontally to avoid overlap.<br>
+                                    • Box: IQR (interquartile range — middle 50% of values); line inside = median.<br>
+                                    • Whiskers: extend to 1.5× IQR from box; points beyond are not shown.<br>
+                                    • Box color: factor group (matches legend).
+                                    <br><br>
+                                    <strong>Outlier Identification and Interactive Cleaning:</strong><br>
+                                    • Points falling beyond the whiskers (1.5× IQR) are automatically flagged as <span class="text-danger"><strong>red dots</strong></span>.<br>
+                                    • You can <strong>click</strong> on any red outlier to permanently exclude it from the dataset and re-calculate all statistics.<br>
+                                    • It is highly recommended to identify and remove outliers <strong>before</strong> beginning the significance analysis (ANOVA) to ensure the validity and robustness of your results.
+                                </small>
                                 <button id="runVizBtn" class="btn btn-primary btn-sm mb-4">
                                     <i class="bi bi-play-fill"></i> Run Visualizations
                                 </button>
@@ -227,96 +257,107 @@
                                 <div id="statsContent" class="row"></div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="pca-content" role="tabpanel">
-                            <div class="p-3">
-                                <h5 class="fw-bold mb-3">Principal Component Analysis</h5>
-                                <p class="text-muted small">PCA reduces the dimensionality of your data to show relationships between samples and variables.</p>
-                                
-                                <div class="bg-light p-3 rounded border mb-3">
-                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Data Preparation</h6>
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="pcaRemoveMissing" checked>
-                                        <label class="form-check-label small" for="pcaRemoveMissing">
-                                            Remove rows with missing data (Required for PCA)
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="pcaAverageByFactor">
-                                        <label class="form-check-label small" for="pcaAverageByFactor">
-                                            Average replicates by factor(s) before analysis
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="pcaShowLoadings" checked>
-                                    <label class="form-check-label small fw-bold" for="pcaShowLoadings">
-                                        Plot Variable Loadings (Arrows)
-                                    </label>
-                                </div>
-
-                                <button id="runPCABtn" class="btn btn-primary btn-sm mb-4">
-                                    <i class="bi bi-play-fill"></i> Run PCA Analysis
-                                </button>
-                            
-                                <div id="pcaResultsHeader" style="display: none;" class="justify-content-between align-items-center mb-3">
-                                    <button id="downloadPCAExcelBtn" class="btn btn-outline-success btn-sm">
-                                        <i class="bi bi-file-earmark-excel"></i> Export PCA Report
-                                    </button>
-                                </div>
-                            
-                                <div id="pcaSpinner" class="text-center py-4" style="display: none;">
-                                    <div class="spinner-border text-primary" role="status"></div>
-                                    <p class="mt-2 text-muted small">Calculating Variance & Generating Biplot...</p>
-                                </div>
-                            
-                                <div id="pcaResults" class="text-center"></div>
-                            </div>
-                        </div>
                         <div class="tab-pane fade" id="assumptions-content" role="tabpanel">
-                            <div class="text-center py-5">
-                                <i class="bi bi-tools fs-1 text-muted"></i>
-                                <div class="p-3">
-                                    <h5 class="fw-bold mb-3">Statistical Assumptions Tests</h5>
-
-                                    <div class="alert alert-info border-0 shadow-sm mb-4">
-                                        <h6 class="fw-bold d-flex align-items-center">
-                                            <i class="bi bi-info-circle-fill me-2"></i> How to interpret these tests:
-                                        </h6>
-                                        <div class="row g-3 mt-1">
-                                            <div class="col-md-6">
-                                                <div class="p-2 bg-white rounded-3 border-start border-4 border-primary">
-                                                    <p class="small mb-1"><strong>1. Shapiro-Wilk (Normality)</strong></p>
-                                                    <p class="extra-small text-muted mb-0">
-                                                        Checks if each group follows a <strong>Normal Distribution</strong>. 
-                                                        If <span class="badge bg-light text-dark">p > 0.05</span>, the data is likely normal (Assumption Met).
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="p-2 bg-white rounded-3 border-start border-4 border-info">
-                                                    <p class="small mb-1"><strong>2. Levene's Test (Homogeneity)</strong></p>
-                                                    <p class="extra-small text-muted mb-0">
-                                                        Checks if <strong>Variances</strong> are equal across groups. 
-                                                        If <span class="badge bg-light text-dark">p > 0.05</span>, variances are consistent (Assumption Met).
-                                                    </p>
-                                                </div>
+                            <div class="p-3">
+                                <div class="alert alert-info border-0 shadow-sm mb-4">
+                                    <h6 class="fw-bold d-flex align-items-center"><i class="bi bi-calculator-fill me-2"></i> Tests Performed</h6>
+                                    <p class="small mb-2">Before any significance test can be run, the data must satisfy two statistical assumptions required by ANOVA. This section runs those two tests automatically for each selected variable:</p>
+                                    <div class="row g-3 mt-1">
+                                        <div class="col-md-6">
+                                            <div class="p-2 bg-white rounded-3 border-start border-4 border-primary">
+                                                <p class="small mb-1"><strong>1. Shapiro-Wilk (Normality)</strong></p>
+                                                <p class="extra-small text-muted mb-0">Checks if each group follows a <strong>Normal Distribution</strong>. If <span class="badge bg-light text-dark">p &gt; 0.05</span>, the data is likely normal (Assumption Met).</p>
                                             </div>
                                         </div>
-                                        <p class="extra-small text-muted mt-3 mb-0 italic">
-                                            * Note: If either test fails (p < 0.05), consider using non-parametric alternatives like Kruskal-Wallis or applying data transformations.
-                                        </p>
+                                        <div class="col-md-6">
+                                            <div class="p-2 bg-white rounded-3 border-start border-4 border-info">
+                                                <p class="small mb-1"><strong>2. Levene's Test (Homogeneity)</strong></p>
+                                                <p class="extra-small text-muted mb-0">Checks if <strong>Variances</strong> are equal across groups. If <span class="badge bg-light text-dark">p &gt; 0.05</span>, variances are consistent (Assumption Met).</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                
-                                    <button id="runTestsBtn" class="btn btn-primary btn-sm mb-4">
-                                        <i class="bi bi-play-fill"></i> Run Normality & Variance Tests
-                                    </button>
-                                
-                                    <div id="testSpinner" class="text-center py-4" style="display: none;">
-                                        <div class="spinner-border text-primary" role="status"></div>
-                                        <p class="mt-2 text-muted small">Performing statistical calculations...</p>
+                                    <hr class="my-2" style="opacity:0.25;">
+                                    <p class="extra-small mb-1"><strong><i class="bi bi-signpost-split me-1"></i> Next step — ANOVA Tests tab:</strong> Results here determine which significance test is most appropriate. In the <em>ANOVA Tests</em> tab you can either let the tool <strong>select automatically</strong> based on these results, or <strong>choose a parametric or non-parametric test manually</strong>. The automated logic is: Both passed → <strong>One-way ANOVA</strong> + Tukey HSD; Only homogeneity → <strong>Kruskal–Wallis</strong> + Mann–Whitney U; Only normality → <strong>Welch's ANOVA</strong> + Welch's t-tests; Neither → <strong>Kruskal–Wallis</strong> + Mann–Whitney U.</p>
+                                </div>
+                        
+                                <button id="runTestsBtn" class="btn btn-primary btn-sm mb-4"><i class="bi bi-play-fill"></i> Run Normality &amp; Variance Tests</button>
+                        
+                                <div id="testSpinner" class="text-center py-4" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2 text-muted small">Performing statistical calculations...</p>
+                                </div>
+
+                                <div id="assumptionsResultsArea" style="display: none;">
+                                    <ul class="nav nav-pills mb-2 small" id="assumptionsSubTabs" role="tablist">
+                                        <li class="nav-item"><a class="nav-link active py-1 px-2" id="assumptions-normality-tab" data-toggle="tab" data-target="#assumptions-normality" href="#assumptions-normality" role="tab">Assumptions Summary</a></li>
+                                        <li class="nav-item"><a class="nav-link py-1 px-2" id="assumptions-boxplots-tab" data-toggle="tab" data-target="#assumptions-boxplots" href="#assumptions-boxplots" role="tab">Box Plots</a></li>
+                                        <li class="nav-item"><a class="nav-link py-1 px-2" id="assumptions-residuals-tab" data-toggle="tab" data-target="#assumptions-residuals" href="#assumptions-residuals" role="tab">Residuals vs Fitted</a></li>
+                                        <li class="nav-item"><a class="nav-link py-1 px-2" id="assumptions-qq-tab" data-toggle="tab" data-target="#assumptions-qq" href="#assumptions-qq" role="tab">Normal Q-Q</a></li>
+                                    </ul>
+                        
+                                    <hr class="my-2 border-secondary" style="opacity: 0.35;">
+                        
+                                    <div class="tab-content pt-2" id="assumptionsSubTabContent">
+                                        
+                                        <div class="tab-pane fade show active" id="assumptions-normality" role="tabpanel">
+                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3" style="font-size:0.78rem;">
+                                                <p class="mb-1"><strong><i class="bi bi-table me-1"></i> About this table:</strong> The summary below shows the combined results of two statistical assumption tests run for each variable:</p>
+                                                <ul class="mb-1 ps-3">
+                                                    <li><strong>Shapiro-Wilk (Normality):</strong> tests whether the data within each group follows a normal distribution. A p&nbsp;&gt;&nbsp;0.05 indicates normality is met.</li>
+                                                    <li><strong>Levene's Test (Homogeneity of Variances):</strong> tests whether the spread of values is similar across all groups. A p&nbsp;&gt;&nbsp;0.05 indicates equal variances.</li>
+                                                </ul>
+                                                <p class="mb-1">Both tests are evaluated together to decide the most appropriate significance test (ANOVA, Welch's ANOVA, or Kruskal-Wallis).</p>
+                                                <hr class="my-1" style="opacity:0.3;">
+                                                <p class="mb-0"><strong>Explore further in the other sub-tabs:</strong></p>
+                                                <ul class="mb-0 ps-3">
+                                                    <li><strong>Box Plots:</strong> inspect the raw distribution and spread of individual data points for each variant and variable.</li>
+                                                    <li><strong>Residuals vs Fitted:</strong> visually check for homogeneity of variances — points should be evenly scattered around the horizontal axis with no pattern.</li>
+                                                    <li><strong>Normal Q-Q:</strong> visually assess normality — points following the diagonal reference line indicate normally distributed residuals.</li>
+                                                </ul>
+                                            </div>
+                                            <div id="testResults"></div>
+                                        </div>
+                        
+                                        <div class="tab-pane fade" id="assumptions-boxplots" role="tabpanel">
+                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3" style="font-size:0.72rem;">
+                                                <p class="mb-1"><strong><i class="bi bi-box me-1"></i> What these plots show:</strong> One box plot per variant (group) for each variable, showing the full data distribution. Use these to visually inspect whether each group is roughly symmetric and whether spread (variance) differs markedly between groups — both key ANOVA assumptions.</p>
+                                                <ul class="mb-1 ps-3">
+                                                    <li><span style="color:#198754;"><strong>Green</strong></span> — group <strong>passed</strong> the Shapiro-Wilk normality test (p&nbsp;&gt;&nbsp;0.05).</li>
+                                                    <li><span style="color:#dc3545;"><strong>Red</strong></span> — group <strong>failed</strong> the Shapiro-Wilk normality test (p&nbsp;≤&nbsp;0.05).</li>
+                                                </ul>
+                                                <p class="mb-1"><i class="bi bi-info-circle me-1"></i> Color reflects only the <strong>per-group</strong> Shapiro-Wilk result. Levene's test is across all groups simultaneously and is shown in the Assumptions Summary table only.</p>
+                                                <p class="mb-0"><strong><i class="bi bi-cursor-fill me-1"></i> Outlier removal:</strong> Points beyond 1.5× IQR are flagged as <span class="text-danger"><strong>red dots</strong></span>. <strong>Click any red dot</strong> to permanently exclude it and recalculate. Remove outliers <em>before</em> running ANOVA tests.</p>
+                                            </div>
+                                            <div id="assumptionsBoxPlots"><p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p></div>
+                                        </div>
+                        
+                                        <div class="tab-pane fade" id="assumptions-residuals" role="tabpanel">
+                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3" style="font-size:0.72rem;">
+                                                <p class="mb-1"><strong><i class="bi bi-scatter-chart me-1"></i> Residuals vs Fitted — Primary purpose: Homogeneity of Variances</strong></p>
+                                                <p class="mb-1">Displays <em>residuals</em> (observed − group mean) on the Y-axis against <em>fitted values</em> (group means) on the X-axis. Because each group occupies one X position, the vertical spread at each position directly shows within-group variance — making it easy to spot whether spread is consistent across groups (Levene's assumption).</p>
+                                                <p class="mb-1"><strong>Well-behaved data:</strong> Points scattered <strong>evenly around zero</strong> with similar vertical spread across all groups.<br>
+                                                <strong>Warning signs:</strong> <em>Funnel/fan shape</em> → unequal variances (heteroscedasticity); <em>Curved trend</em> → non-linearity or non-normality; <em>Isolated points far from zero</em> → potential outliers.</p>
+                                                <hr class="my-1" style="opacity:0.25;">
+                                                <p class="mb-1"><strong><i class="bi bi-bullseye me-1"></i> Outlier identification (|z|&nbsp;&gt;&nbsp;2):</strong> Raw residuals are standardized (÷ SD) to a dimensionless z-score. Points with <strong>|z|&nbsp;&gt;&nbsp;2</strong> — beyond the ~95% range of a normal distribution — are flagged in <span class="text-danger"><strong>red</strong></span>. Before removing, ask: <em>measurement error?</em> → remove; <em>real biological extreme?</em> → keep; <em>many points flagged on one side?</em> → systematic variance issue, removal won't help; <em>does Levene's p change after removal?</em> → re-run to verify.</p>
+                                                <p class="mb-0"><strong><i class="bi bi-cursor-fill me-1"></i> Click any <span class="text-danger">red point</span></strong> to exclude it permanently and recalculate. Blue points are not clickable.</p>
+                                            </div>
+                                            <div id="assumptionsResidualsContent"><p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p></div>
+                                        </div>
+                        
+                                        <div class="tab-pane fade" id="assumptions-qq" role="tabpanel">
+                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3" style="font-size:0.72rem;">
+                                                <p class="mb-1"><strong><i class="bi bi-graph-up me-1"></i> Normal Q-Q — Primary purpose: Normality of Residuals</strong></p>
+                                                <p class="mb-1">Compares the <em>observed quantiles</em> of the residuals (Y-axis) against the <em>theoretical quantiles</em> of a perfect normal distribution (X-axis). If the data is truly normal, both sets of quantiles match and points lie along the diagonal reference line. Deviations reveal exactly where and how the distribution differs from normality.</p>
+                                                <p class="mb-1"><strong>Well-behaved data:</strong> Points lie <strong>closely along the diagonal</strong>; small deviations at the ends are acceptable.<br>
+                                                <strong>Warning signs:</strong> <em>S-shaped curve</em> → heavy/light tails; <em>one-end bend</em> → skewness; <em>gaps or jumps</em> → bimodality; <em>extreme off-line points</em> → outliers.</p>
+                                                <hr class="my-1" style="opacity:0.25;">
+                                                <p class="mb-1"><strong><i class="bi bi-bullseye me-1"></i> Outlier identification (|std residual|&nbsp;&gt;&nbsp;2):</strong> The Y-axis already shows standardized residuals, so the threshold is readable directly from the plot. Points with <strong>|std residual|&nbsp;&gt;&nbsp;2</strong> — beyond the ~95% range expected for normal data — are flagged in <span class="text-danger"><strong>red</strong></span>; they also tend to deviate most from the diagonal line. Before removing, ask: <em>measurement error?</em> → remove; <em>real biological extreme?</em> → keep; <em>consistent pattern across many points (S-curve, bend)?</em> → distribution is globally non-normal, removal won't help — consider data transformation; <em>does Shapiro-Wilk p pass after removal?</em> → re-run to verify.</p>
+                                                <p class="mb-0"><strong><i class="bi bi-cursor-fill me-1"></i> Click any <span class="text-danger">red point</span></strong> to exclude it permanently and recalculate. Blue points are not clickable.</p>
+                                            </div>
+                                            <div id="assumptionsQQContent"><p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p></div>
+                                        </div>
+                        
                                     </div>
-                                    <div id="testResults"></div>
                                 </div>
                             </div>
                         </div>
@@ -362,7 +403,7 @@
                                 </div>
                                 <br>
                                 <button id="runAnovaBtn" class="btn btn-success btn-sm mb-4">
-                                    <i class="bi bi-lightning-fill"></i> Run Significance Tests
+                                    <i class="bi bi-lightning-fill"></i> Run ANOVA Tests
                                 </button>
                                 <button id="downloadAnovaExcelBtn" class="btn btn-outline-success btn-sm mb-4" style="display: none;">
                                     <i class="bi bi-file-earmark-excel"></i> Export Significance Report to Excel
@@ -372,6 +413,36 @@
                                     <p class="mt-2 text-muted small">Calculating p-values...</p>
                                 </div>
                                 <div id="anovaResults"></div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="pca-content" role="tabpanel">
+                            <div class="p-3">
+                                <h5 class="fw-bold mb-3">Principal Component Analysis</h5>
+                                <p class="text-muted small">PCA reduces the dimensionality of your data to show relationships between samples and variables.</p>
+                                <div class="bg-light p-3 rounded border mb-3">
+                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Data Preparation</h6>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="pcaRemoveMissing" checked>
+                                        <label class="form-check-label small" for="pcaRemoveMissing">Remove rows with missing data (Required for PCA)</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="pcaAverageByFactor">
+                                        <label class="form-check-label small" for="pcaAverageByFactor">Average replicates by factor(s) before analysis</label>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="pcaShowLoadings" checked>
+                                    <label class="form-check-label small fw-bold" for="pcaShowLoadings">Plot Variable Loadings (Arrows)</label>
+                                </div>
+                                <button id="runPCABtn" class="btn btn-primary btn-sm mb-4"><i class="bi bi-play-fill"></i> Run PCA Analysis</button>
+                                <div id="pcaResultsHeader" style="display: none;" class="justify-content-between align-items-center mb-3">
+                                    <button id="downloadPCAExcelBtn" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Export PCA Report</button>
+                                </div>
+                                <div id="pcaSpinner" class="text-center py-4" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2 text-muted small">Calculating Variance &amp; Generating Biplot...</p>
+                                </div>
+                                <div id="pcaResults" class="text-center"></div>
                             </div>
                         </div>
                     </div>
@@ -386,5 +457,32 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script src="{{url_for('static', filename='js_statistics.js')}}"></script>
+
+<div class="modal fade" id="confirmExclusionModal" tabindex="-1" role="dialog" aria-labelledby="confirmExclusionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0 py-2">
+                <h6 class="modal-title" id="confirmExclusionModalLabel">
+                    <i class="bi bi-trash3-fill me-2"></i> Confirm Outlier Removal
+                </h6>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-3">
+                <p id="modalMessage" class="small mb-0 text-dark"></p>
+                <div class="mt-3 p-2 bg-light rounded shadow-sm" style="font-size: 0.75rem;">
+                    <i class="bi bi-info-circle-fill text-primary me-1"></i> 
+                    <strong>Note:</strong> After removing, Assumptions and all statistical significance (ANOVA/Letters) should be recalculated.
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light btn-sm px-3" data-dismiss="modal" style="font-size: 0.75rem;">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="btn btn-danger btn-sm px-3" style="font-size: 0.75rem;">Remove Point</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
