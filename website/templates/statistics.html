@@ -239,15 +239,15 @@
                                     • You can <strong>click</strong> on any red outlier to permanently exclude it from the dataset and re-calculate all statistics.<br>
                                     • It is highly recommended to identify and remove outliers <strong>before</strong> beginning the significance analysis (ANOVA) to ensure the validity and robustness of your results.
                                 </small>
-                                <button id="runVizBtn" class="btn btn-primary btn-sm mb-4">
-                                    <i class="bi bi-play-fill"></i> Run Visualizations
-                                </button>
-                                
-                                <div id="vizResultsHeader" class="d-flex justify-content-left align-items-left mb-3 pb-2 border-bottom">
-                                    <h5 class="fw-bold mb-0"></h5>
-                                    <button id="downloadExcelBtn" class="btn btn-success btn-sm fw-bold">
-                                        <i class="bi bi-download"></i> Download results
+                                <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+                                    <button id="runVizBtn" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-play-fill"></i> Run Visualizations
                                     </button>
+                                    <div id="vizResultsHeader" style="display:none;">
+                                        <button id="downloadExcelBtn" class="btn btn-success btn-sm fw-bold">
+                                            <i class="bi bi-download"></i> Download Results
+                                        </button>
+                                    </div>
                                 </div>
                             
                                 <div id="loadingSpinner" class="loader-container" style="display: none;">
@@ -277,7 +277,7 @@
                                         </div>
                                     </div>
                                     <hr class="my-2" style="opacity:0.25;">
-                                    <p class="extra-small mb-1"><strong><i class="bi bi-signpost-split me-1"></i> Next step — ANOVA Tests tab:</strong> Results here determine which significance test is most appropriate. In the <em>ANOVA Tests</em> tab you can either let the tool <strong>select automatically</strong> based on these results, or <strong>choose a parametric or non-parametric test manually</strong>. The automated logic is: Both passed → <strong>One-way ANOVA</strong> + Tukey HSD; Only homogeneity → <strong>Kruskal–Wallis</strong> + Mann–Whitney U; Only normality → <strong>Welch's ANOVA</strong> + Welch's t-tests; Neither → <strong>Kruskal–Wallis</strong> + Mann–Whitney U.</p>
+                                    <p style="font-size:0.70rem;" class="mb-1 text-muted"><strong><i class="bi bi-signpost-split me-1"></i> Next step — ANOVA Tests tab:</strong> Results here determine which significance test is most appropriate. In the <em>ANOVA Tests</em> tab you can either let the tool <strong>select automatically</strong> based on these results, or <strong>choose a parametric or non-parametric test manually</strong>. The automated logic is: Both passed → <strong>One-way ANOVA</strong> + Tukey HSD; Only homogeneity → <strong>Kruskal–Wallis</strong> + Mann–Whitney U; Only normality → <strong>Welch's ANOVA</strong> + Welch's t-tests; Neither → <strong>Kruskal–Wallis</strong> + Mann–Whitney U.</p>
                                 </div>
                         
                                 <button id="runTestsBtn" class="btn btn-primary btn-sm mb-4"><i class="bi bi-play-fill"></i> Run Normality &amp; Variance Tests</button>
@@ -286,6 +286,72 @@
                                     <div class="spinner-border text-primary" role="status"></div>
                                     <p class="mt-2 text-muted small">Performing statistical calculations...</p>
                                 </div>
+
+                                <!-- ═══════════ TRANSFORMATION PANEL ═══════════ -->
+                                <div id="transformationPanel" class="mt-3 mb-3" style="display:none;">
+                                    <div class="card shadow-sm" style="border: 1px solid #ffc107; border-left: 4px solid #fd7e14;">
+                                        <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between"
+                                             style="background: linear-gradient(to right, #fff8e1, #fff3e0); border-bottom: 1px solid #ffe082;">
+                                    <div>
+                                                <p class="fw-bold mb-0 text-dark" style="font-size:0.85rem;">
+                                                    <i class="bi bi-arrow-left-right text-warning me-1"></i> Data Transformations
+                                                    <span id="transformActiveBadge" class="badge bg-warning text-dark ms-2"
+                                                          style="display:none; font-size:0.65rem; vertical-align:middle;">
+                                                        <i class="bi bi-check-circle-fill me-1"></i> Transformations Applied
+                                                    </span>
+                                                </p>
+                                                <p class="mb-0 mt-1 text-muted" style="font-size:0.72rem;">
+                                                    Apply mathematical transformations per variable to improve normality or homogeneity before ANOVA.
+                                                </p>
+                                                <p class="mb-0 mt-1" style="font-size:0.68rem; color:#856404;">
+                                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                                    <strong>Note:</strong> Transformations are most reliable when n&nbsp;≥&nbsp;5 per group. With smaller sample sizes the normality and homogeneity test results — and therefore any suggested transformation — should be treated with caution.
+                                                </p>
+                                                <details class="mt-2">
+                                                    <summary style="font-size:0.70rem; cursor:pointer; color:#6c757d; font-weight:600;">
+                                                        <i class="bi bi-info-circle me-1"></i> When to use which transformation
+                                                    </summary>
+                                                    <div class="mt-2 p-2 rounded" style="background:#fffbf0; border:1px solid #ffe082; font-size:0.68rem; line-height:1.5;">
+                                                        <div class="mb-1"><strong>ln(x+1)</strong> — Best for right-skewed, count-like data with zeros. Compresses large values and handles zero safely. Use when both normality and homogeneity fail.</div>
+                                                        <div class="mb-1"><strong>√x (Square root)</strong> — Milder than log; suitable for moderately right-skewed data or count data without zeros. Use when only normality fails.</div>
+                                                        <div class="mb-1"><strong>xⁿ (Power)</strong> — Flexible: exponent &lt;1 compresses large values (like sqrt/log); exponent &gt;1 stretches them. Use when other transforms overshoot.</div>
+                                                        <div class="mb-1"><strong>1/x (Reciprocal)</strong> — Strong compression for heavily right-skewed data; reverses order of values. Use cautiously; avoid when data contains zeros.</div>
+                                                        <div class="mb-0"><strong>arcsin(√x)</strong> — Designed for proportions/percentages (data between 0 and 1). Stabilises variance in proportion data (e.g. survival rates, relative abundances).</div>
+                                                    </div>
+                                                </details>
+                                            </div>
+                                        </div>
+                                        <div class="card-body p-3">
+
+                                            <!-- Candidates summary (filled by JS) -->
+                                            <div id="transformCandidates" class="mb-3"></div>
+
+                                            <!-- Per-variable transform controls (filled by JS) -->
+                                            <div class="rounded border bg-white mb-3" style="overflow:hidden;">
+                                                <div class="row g-0 py-1 px-2 border-bottom"
+                                                     style="font-size:0.72rem; font-weight:600; color:#6c757d; background:#f8f9fa;">
+                                                    <div class="col-3">Variable</div>
+                                                    <div class="col-3">Transformation</div>
+                                                    <div class="col-2 text-center">Test Status</div>
+                                                    <div class="col-2">Suggested</div>
+                                                    <div class="col-2">Used</div>
+                                                </div>
+                                                <div id="transformControls"></div>
+                                            </div>
+
+                                            <div class="d-flex align-items-center flex-wrap mt-2" style="gap:1rem;">
+                                                <button id="applyTransformBtn" class="btn btn-sm btn-warning fw-bold shadow-sm">
+                                                    <i class="bi bi-arrow-repeat me-1"></i> Apply &amp; Re-run Tests
+                                                </button>
+                                                <button id="resetTransformBtn" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="bi bi-x-circle me-1"></i> Reset to Original Data
+                                                </button>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- ═══════════════════════════════════════════ -->
 
                                 <div id="assumptionsResultsArea" style="display: none;">
                                     <ul class="nav nav-pills mb-2 small" id="assumptionsSubTabs" role="tablist">
