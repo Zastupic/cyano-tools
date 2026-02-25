@@ -1,4 +1,3 @@
-
 /* === HTML, BODY === */
 html {
   --text-color-normal: #0a244d;
@@ -1148,3 +1147,31 @@ padding: 0 20px;
     }
 }
 
+
+/* ── Small info alert blocks ──────────────────────────────────────────────────
+   Font size scale reference (adjust the single value below):
+     0.68rem = original  |  0.85rem = +25%  |  1.02rem = +50%
+   The global `p { font-size: 1rem; margin: 1rem 0 }` rule would override
+   values inherited from a parent div, so we set them explicitly here. */
+.alert-info-sm,
+.alert-info-sm p,
+.alert-info-sm ul,
+.alert-info-sm ol,
+.alert-info-sm li,
+.alert-info-sm strong,
+.alert-info-sm em,
+.alert-info-sm span,
+.alert-info-sm hr {
+    font-size: 0.85rem; /* ← tune here: 0.68rem (original) | 0.85rem (+25%) | 1.02rem (+50%) */
+}
+
+/* Halved paragraph / list spacing inside these blocks */
+.alert-info-sm p,
+.alert-info-sm ul,
+.alert-info-sm ol {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+.alert-info-sm li {
+    margin-bottom: 0.1rem;
+}

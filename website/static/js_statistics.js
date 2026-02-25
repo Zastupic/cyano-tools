@@ -102,12 +102,14 @@ function populateGroupingMode() {
 
     if (selectedFactors.length === 0) {
         container.style.display = 'none';
+        syncOverrideSelect();
         return;
     }
 
     if (selectedFactors.length === 1) {
         container.style.display = 'block';
         select.innerHTML = '<option value="all_combined">' + selectedFactors[0] + ' (all levels)</option>';
+        syncOverrideSelect();
         return;
     }
 
@@ -138,12 +140,137 @@ function populateGroupingMode() {
 
     // 4. Full combination of all factors
     select.innerHTML += '<option value="all_combined">Combination of all: ' + factors.join(' × ') + '</option>';
+
+    syncOverrideSelect();
 }
 
 window.removeFactor = function(factorName) {
     selectedFactors = selectedFactors.filter(f => f !== factorName);
     renderFactorTags();
 };
+
+// ── Override select: sync options based on factor count AND grouping mode ──────
+function syncOverrideSelect() {
+    const sel = document.getElementById('anovaOverrideSelect');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="auto">🤖 Automatic (recommended)</option>';
+    const n = selectedFactors.length;
+
+    // Determine whether the selected grouping mode implies slicing (one-factor analysis)
+    // vs. a true multi-factor joint analysis (all_combined).
+    const groupingModeEl = document.getElementById('groupingMode');
+    const gMode = groupingModeEl ? groupingModeEl.value : 'all_combined';
+    const isSlicedMode = gMode && (gMode.startsWith('per:') || gMode.startsWith('across:'));
+
+    if (n === 1) {
+        // Single factor: always one-way family
+        sel.innerHTML += '<option value="one_way_anova">One-way ANOVA + Tukey HSD</option>';
+        sel.innerHTML += '<option value="welch_anova">Welch\'s ANOVA + Games-Howell</option>';
+        sel.innerHTML += '<option value="kruskal_wallis">Kruskal–Wallis + Dunn\'s (BH)</option>';
+    } else if (n === 2) {
+        if (isSlicedMode) {
+            // "F1 for each F2 individually" or "F1 throughout all F2":
+            // the data is sliced and each slice gets a one-way comparison → one-way family only.
+            sel.innerHTML += '<option value="one_way_anova">One-way ANOVA + Tukey HSD</option>';
+            sel.innerHTML += '<option value="welch_anova">Welch\'s ANOVA + Games-Howell</option>';
+            sel.innerHTML += '<option value="kruskal_wallis">Kruskal–Wallis + Dunn\'s (BH)</option>';
+        } else {
+            // "Combination of all: F1 × F2": joint two-factor model appropriate.
+            sel.innerHTML += '<option value="two_way_anova">Two-way ANOVA + Tukey HSD</option>';
+            sel.innerHTML += '<option value="scheirer_ray_hare">Scheirer–Ray–Hare + Dunn\'s (BH)</option>';
+        }
+    } else if (n >= 3) {
+        if (isSlicedMode) {
+            // Sliced modes with 3 factors also reduce to one-way comparisons per slice.
+            sel.innerHTML += '<option value="one_way_anova">One-way ANOVA + Tukey HSD</option>';
+            sel.innerHTML += '<option value="welch_anova">Welch\'s ANOVA + Games-Howell</option>';
+            sel.innerHTML += '<option value="kruskal_wallis">Kruskal–Wallis + Dunn\'s (BH)</option>';
+        } else {
+            sel.innerHTML += '<option value="manova">MANOVA (Pillai\'s Trace) + per-variable ANOVA (Bonferroni)</option>';
+            sel.innerHTML += '<option value="art_anova">ART ANOVA + per-variable follow-up (Bonferroni)</option>';
+        }
+    }
+
+    // Restore previous selection if still valid
+    if (Array.from(sel.options).some(o => o.value === current)) {
+        sel.value = current;
+    } else {
+        sel.value = 'auto';
+    }
+    updateOverrideBadge();
+}
+
+function updateOverrideBadge() {
+    const sel = document.getElementById('anovaOverrideSelect');
+    const badge = document.getElementById('overrideActiveBadge');
+    if (!sel || !badge) return;
+    badge.style.display = (sel.value !== 'auto') ? 'block' : 'none';
+}
+
+// Listen for override changes
+(function() {
+    const el = document.getElementById('anovaOverrideSelect');
+    if (el) el.addEventListener('change', updateOverrideBadge);
+})();
+
+// Re-sync the override dropdown whenever the grouping mode changes,
+// because switching between "per:" / "across:" (sliced → one-way family)
+// and "all_combined" (joint model → two-way family) changes which tests are valid.
+(function() {
+    const el = document.getElementById('groupingMode');
+    if (el) el.addEventListener('change', syncOverrideSelect);
+})();
+
+// ── Per-variable sort modes for ANOVA letter group tables ────────────────────
+let anovaVarSortModes = {};  // { varName: 'data_order'|'letter'|'mean_asc'|'mean_desc' }
+let lastAnovaRawData = null; // stores full ANOVA response for re-sorting
+
+// Event delegation for per-variable sort buttons (rendered dynamically)
+document.addEventListener('click', function(e) {
+    const btn = e.target && e.target.closest && e.target.closest('.var-sort-btn');
+    if (!btn) return;
+    const varName = btn.dataset.var;
+    const mode = btn.dataset.sort;
+    if (!varName || !mode) return;
+
+    // Update button visual state within this variable's section
+    const section = btn.closest('.anova-var-section');
+    if (section) {
+        section.querySelectorAll('.var-sort-btn').forEach(b => {
+            b.classList.remove('active', 'btn-secondary');
+            b.classList.add('btn-outline-secondary');
+        });
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('active', 'btn-secondary');
+    }
+
+    // Re-render tables for this variable only
+    anovaVarSortModes[varName] = mode;
+    if (lastAnovaRawData && section) {
+        const varResults = lastAnovaRawData.results.filter(r => r.variable === varName);
+        const summaryContainer = section.querySelector('.var-summary-content');
+        if (summaryContainer) {
+            summaryContainer.innerHTML = buildVariableSummaryHTML(varResults, mode, varName);
+        }
+    }
+});
+
+function sortLetterGroups(letterGroups, mode) {
+    if (!letterGroups || !letterGroups.length) return letterGroups;
+    const arr = [...letterGroups];
+    switch (mode) {
+        case 'letter':
+            return arr.sort((a, b) => (a.letter || '').localeCompare(b.letter || ''));
+        case 'mean_asc':
+            return arr.sort((a, b) => a.mean - b.mean);
+        case 'mean_desc':
+            return arr.sort((a, b) => b.mean - a.mean);
+        default:
+            return arr; // data_order: original from backend
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function showNiceMessage(message, type, containerId = 'selectionCard') {
     const container = document.getElementById(containerId);
@@ -747,6 +874,20 @@ function populateTransformationPanel(testResults, selectedVars) {
                 </span>
             </div>`).join('');
 
+        const whenToUseGuide = `
+            <details class="mt-2 mb-0">
+                <summary style="font-size:0.70rem; cursor:pointer; color:#856404; font-weight:600;">
+                    <i class="bi bi-info-circle me-1"></i> When to use which transformation
+                </summary>
+                <div class="mt-2 p-2 rounded" style="background:#fffbf0; border:1px solid #ffe082; font-size:0.68rem; line-height:1.5;">
+                    <div class="mb-1"><strong>ln(x+1)</strong> — Best for right-skewed, count-like data with zeros. Compresses large values and handles zero safely. Use when both normality and homogeneity fail.</div>
+                    <div class="mb-1"><strong>√x (Square root)</strong> — Milder than log; suitable for moderately right-skewed data or count data without zeros. Use when only normality fails.</div>
+                    <div class="mb-1"><strong>xⁿ (Power)</strong> — Flexible: exponent &lt;1 compresses large values (like sqrt/log); exponent &gt;1 stretches them. Use when other transforms overshoot.</div>
+                    <div class="mb-1"><strong>1/x (Reciprocal)</strong> — Strong compression for heavily right-skewed data; reverses order of values. Use cautiously; avoid when data contains zeros.</div>
+                    <div class="mb-0"><strong>arcsin(√x)</strong> — Designed for proportions/percentages (data between 0 and 1). Stabilises variance in proportion data (e.g. survival rates, relative abundances).</div>
+                </div>
+            </details>`;
+
         candidatesDiv.innerHTML = `
             <div class="alert alert-warning py-2 px-3 mb-0" style="font-size:0.78rem;">
                 <div class="fw-bold mb-2">
@@ -754,6 +895,7 @@ function populateTransformationPanel(testResults, selectedVars) {
                     Transformation Candidates (${candidates.length} variable${candidates.length > 1 ? 's' : ''})
                 </div>
                 ${rows}
+                ${whenToUseGuide}
             </div>`;
     }
 
@@ -810,10 +952,10 @@ function populateTransformationPanel(testResults, selectedVars) {
         <div class="row g-0 align-items-center py-2 px-2 border-bottom"
              style="font-size:0.8rem; ${rowBg}">
             <div class="col-3 fw-semibold text-truncate pe-2" title="${varName}">${varName}</div>
-            <div class="col-3 d-flex align-items-center gap-1">
+            <div class="col-3 d-flex align-items-center gap-1" style="min-width:0; overflow:hidden;">
                 <select class="form-select form-select-sm transform-type-select"
                         data-var="${varName}"
-                        style="font-size:0.76rem; min-width:0;"
+                        style="font-size:0.76rem; min-width:0; flex:1 1 0;"
                         onchange="onTransformTypeChange('${varName}', this.value)">
                     <option value="none"      ${currentTf.type === 'none'      ? 'selected' : ''}>— None —</option>
                     <option value="ln1p"      ${currentTf.type === 'ln1p'      ? 'selected' : ''}>ln(x+1)</option>
@@ -825,10 +967,10 @@ function populateTransformationPanel(testResults, selectedVars) {
                 <input type="number"
                        id="power_${safeId}"
                        class="form-control form-control-sm"
-                       value="${currentTf.power || 2}"
-                       min="0.1" max="10" step="0.5"
-                       title="Exponent (n) for power transform"
-                       style="width:38px; font-size:0.76rem; padding:2px 4px; flex-shrink:0;
+                       value="${Math.round(currentTf.power) || 2}"
+                       min="1" max="10" step="1"
+                       title="Exponent (n)"
+                       style="width:42px; min-width:42px; max-width:42px; font-size:0.72rem; padding:2px 3px; flex-shrink:0;
                               display:${currentTf.type === 'power' ? 'block' : 'none'};">
             </div>
             <div class="col-2 text-center" style="font-size:0.73rem;">${statusIcon}</div>
@@ -1126,23 +1268,53 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
         });
 });
 
-document.getElementById('downloadExcelBtn').addEventListener('click', function() {
+// Download Results (Visualizations tab)
+// Excel is built server-side (Python/openpyxl) — better for multi-sheet styling.
+// Plotly plots exist only in the browser, so we capture them here and send as base64 PNGs.
+document.getElementById('downloadExcelBtn').addEventListener('click', async function() {
     if (!lastResults) return;
-    fetch(EXPORT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lastResults)
-    })
-    .then(res => res.blob())
-    .then(blob => {
+
+    const btn = this;
+    const spinner = document.getElementById('vizExportSpinner');
+    btn.disabled = true;
+    if (spinner) spinner.style.display = 'inline-flex';
+
+    try {
+        // Capture current Plotly plots from the Visualizations tab
+        const plotCaptures = [];
+        const plotDivs = document.querySelectorAll('#statsContent .js-plotly-plot');
+        for (const div of plotDivs) {
+            try {
+                const img = await Plotly.toImage(div, { format: 'png', width: 700, height: 380 });
+                const varLabel = div.id || '';
+                plotCaptures.push({ id: varLabel, image: img.split(',')[1] });
+            } catch(e) { /* skip if not a Plotly plot */ }
+        }
+
+        const payload = { ...lastResults, plotly_captures: plotCaptures };
+
+        const res = await fetch(EXPORT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error('Export failed');
+        const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = "lab_report.xlsx";
+        a.download = 'Box_plots.xlsx';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
-    });
+        document.body.removeChild(a);
+    } catch(err) {
+        alert('Export Error: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+    }
 });
 
 // --- 5. PCA Analysis Logic ---
@@ -1266,6 +1438,16 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
 
     testResults.innerHTML = "";
     testSpinner.style.display = 'block';
+
+    // ── Also clear ANOVA results (assumptions changed → old ANOVA is stale) ──
+    const anovaResults = document.getElementById('anovaResults');
+    if (anovaResults) anovaResults.innerHTML = '';
+    const exportBtn = document.getElementById('exportFullReportBtn');
+    if (exportBtn) exportBtn.style.display = 'none';
+    lastAnovaResults = null;
+    lastAnovaRawData = null;
+    anovaVarSortModes = {};
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Hide the transformation panel while calculations run (spinner visible)
     const transformPanel = document.getElementById('transformationPanel');
@@ -1490,7 +1672,7 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
                 const transformLabel = hasTransformForVar ? getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power) : '';
 
                 const toggleBtnHtml = hasTransformForVar && origRes ? `
-                    <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+                    <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
                         <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>Transformation method used: ${transformLabel}</span>
                         <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
                                 style="font-size:0.70rem; padding:2px 8px;"
@@ -1539,7 +1721,7 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
                     const divIdOrig = divId + '-orig';
 
                     const toggleBtnHtml = hasTransformForVar && origRes && origRes.residuals_data && origRes.residuals_data.length ? `
-                        <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+                        <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
                             <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>Transformation method used: ${transformLabel}</span>
                             <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
                                     style="font-size:0.70rem; padding:2px 8px;"
@@ -1580,7 +1762,7 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
                     const divIdOrig = divId + '-orig';
 
                     const toggleBtnHtml = hasTransformForVar && origRes && origRes.residuals_data && origRes.residuals_data.length ? `
-                        <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+                        <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
                             <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>Transformation method used: ${transformLabel}</span>
                             <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
                                     style="font-size:0.70rem; padding:2px 8px;"
@@ -1615,25 +1797,41 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
     });
 });
 
-// 2. ADD NEW LISTENER for 'runAnovaBtn'
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ANOVA RUN HANDLER
+// ══════════════════════════════════════════════════════════════════════════════
 document.getElementById('runAnovaBtn').addEventListener('click', function() {
     const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
         .filter(cb => !cb.disabled)
         .map(cb => cb.value);
     const anovaSpinner = document.getElementById('anovaSpinner');
     const anovaResults = document.getElementById('anovaResults');
+    const exportBtn = document.getElementById('exportFullReportBtn');
+
+    // Ensure override dropdown is in sync with current factor count
+    syncOverrideSelect();
 
     anovaResults.innerHTML = "";
     anovaSpinner.style.display = 'block';
+    if (exportBtn) exportBtn.style.display = 'none';
+    lastAnovaRawData = null;
+    anovaVarSortModes = {};
+
+    // Use transformed data if transformations are active
+    const dataToSend = buildTransformedData(globalData, appliedTransformations);
+
+    const overrideVal = (document.getElementById('anovaOverrideSelect') || {}).value || 'auto';
 
     fetch('/run-anova', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            data: globalData,
+            data: dataToSend,
             target_columns: selectedVars,
             factors: selectedFactors,
-            grouping_mode: document.getElementById('groupingMode').value || 'all_combined'
+            grouping_mode: (document.getElementById('groupingMode') || {}).value || 'all_combined',
+            manual_override: overrideVal
         })
     })
     .then(res => res.json())
@@ -1646,15 +1844,17 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
                 <div class="alert alert-danger p-3">
                     <strong>Server Error:</strong><br>
                     ${data.error}<br><br>
-                    <small>Tip: Check that you added the statsmodels imports in statistics.py</small>
+                    <small>Tip: Check that statsmodels, scipy, and openpyxl are installed</small>
                 </div>`;
             return;
         }
 
-        // Save the results for exporting
-        lastAnovaResults = data; 
-        // Show the download button
-        document.getElementById('downloadAnovaExcelBtn').style.display = 'inline-flex';
+        // Save results
+        lastAnovaResults = data;
+        lastAnovaRawData = data;
+
+        // Show export button
+        if (exportBtn) exportBtn.style.display = 'inline-flex';
 
         if (!data.results || data.results.length === 0) {
             anovaResults.innerHTML = `
@@ -1664,191 +1864,292 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
             return;
         }
 
-        // Group results by variable
-        const byVariable = {};
-        data.results.forEach(res => {
-            if (!byVariable[res.variable]) byVariable[res.variable] = [];
-            byVariable[res.variable].push(res);
-        });
-
-        let varIdx = 0;
-        Object.keys(byVariable).forEach(varName => {
-            const varResults = byVariable[varName];
-            const varId = 'anova_var_' + varIdx++;
-            const section = document.createElement('div');
-            section.className = "mb-5 p-4 border rounded bg-white shadow-sm";
-
-            // Build summary letter table HTML
-            let summaryHTML = '';
-            varResults.forEach(res => {
-                const sliceInfo = res.slice_label && res.slice_label !== 'All'
-                    ? ' <small class="text-muted fw-normal">(' + res.slice_label + ')</small>'
-                    : '';
-
-                if (res.letter_groups && res.letter_groups.length > 0) {
-                    const sliceInfo = res.slice_label && res.slice_label !== 'All' 
-                        ? `<span class="text-muted">${res.slice_label}</span>` 
-                        : 'All groups';
-                    
-                    summaryHTML += `
-                        <div class="border rounded p-3 mb-4 bg-white shadow-sm">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0 fw-bold">${sliceInfo}</h6>
-                                <span class="badge bg-primary">${res.test_used}</span>
-                            </div>
-                            
-                            <!-- NEW: Significance Plot (most important part) -->
-                            ${res.plot_url ? `
-                            <div class="text-center mb-4">
-                                <img src="data:image/png;base64,${res.plot_url}" 
-                                     class="img-fluid rounded shadow-sm" 
-                                     style="max-height: 420px; border: 1px solid #e9ecef;">
-                            </div>` : ''}
-                            
-                            <!-- Info banner -->
-                            <div class="alert alert-info py-2 small mb-3">
-                                <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong> | 
-                                Normality: ${res.assumptions.all_normal ? '✓' : '✗'} | 
-                                Homogeneity: ${res.assumptions.homogeneous ? '✓' : '✗'}
-                            </div>
-                            
-                            <!-- Existing summary table -->
-                            <table class="table table-sm table-bordered text-center">
-                                <thead class="table-light">
-                                    <tr><th class="text-left">Group</th><th>Mean</th><th>SD</th><th>N</th><th>Letter</th></tr>
-                                </thead>
-                                <tbody>
-                                    ${res.letter_groups.map(lg => `
-                                        <tr>
-                                            <td class="text-left fw-bold">${lg.group}</td>
-                                            <td>${lg.mean.toFixed(4)}</td>
-                                            <td>${lg.std.toFixed(4)}</td>
-                                            <td>${lg.n}</td>
-                                            <td>
-                                                <span class="badge fs-6" style="padding: 6px 14px; border-radius: 50px; ${getLetterGroupStyle(lg.letter)}">
-                                                    ${lg.letter}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-                } else {
-                    summaryHTML += `
-                        <div class="mb-3">
-                            <div class="alert alert-secondary py-2 small">
-                                ${sliceInfo || 'All groups'}: No significant differences found (p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
-                                All groups share the same letter 
-                                <span class="badge fs-6" style="padding: 5px 12px; border-radius: 12px; ${getLetterGroupStyle('a')}">a</span>.
-                            </div>
-                        </div>`;
-                }
-            });
-
-            // Build detailed pairwise table HTML
-            let detailedHTML = '';
-            varResults.forEach(res => {
-                const sliceInfo = res.slice_label && res.slice_label !== 'All'
-                    ? ' <small class="text-muted fw-normal">(' + res.slice_label + ')</small>'
-                    : '';
-
-                if (res.posthoc && res.posthoc.length > 0) {
-                    detailedHTML += `
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold small">${sliceInfo || 'All groups'}</span>
-                                <span class="badge bg-primary">${res.test_used}</span>
-                            </div>
-                            <div class="alert alert-info py-1 small mb-2">
-                                <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong>
-                            </div>
-                            <table class="table table-sm table-bordered">
-                                <thead class="table-light">
-                                    <tr><th>Comparison</th><th>p (adj.)</th><th></th></tr>
-                                </thead>
-                                <tbody>
-                                    ${res.posthoc.map(ph => `
-                                        <tr>
-                                            <td><strong>${ph.group1}</strong> vs <strong>${ph.group2}</strong></td>
-                                            <td>${ph.p_adj.toFixed(4)}</td>
-                                            <td>${ph.significant ?
-                                                '<span class="badge bg-success">Significant</span>' :
-                                                '<span class="badge bg-secondary">n.s.</span>'}
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-                } else {
-                    detailedHTML += `
-                        <div class="mb-3">
-                            <div class="alert alert-secondary py-2 small">
-                                ${sliceInfo || 'All groups'}: No pairwise comparisons (overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
-                            </div>
-                        </div>`;
-                }
-            });
-
-            section.innerHTML = `
-                <h5 class="fw-bold text-success mb-3">${varName}</h5>
-                    <ul class="nav nav-tabs custom-anova-tabs mb-3" role="tablist">
-                        <li class="nav-item">
-                            <button class="nav-link active small fw-bold" data-toggle="tab" data-target="#${varId}_summary">
-                                <i class="bi bi-bar-chart-line me-2"></i> Summary with Plots
-                            </button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link small fw-bold" data-toggle="tab" data-target="#${varId}_detail">
-                                <i class="bi bi-list-check me-2"></i> Detailed Pairwise
-                            </button>
-                        </li>
-                    </ul>
-                    <div class="tab-content">
-                    <div class="tab-pane fade show active" id="${varId}_summary" role="tabpanel">
-                        ${summaryHTML}
-                    </div>
-                    <div class="tab-pane fade" id="${varId}_detail" role="tabpanel">
-                        ${detailedHTML}
-                    </div>
-                </div>
-            `;
-            anovaResults.appendChild(section);
-        });
+        renderAnovaResults(data);
     })
     .catch(err => {
         anovaSpinner.style.display = 'none';
         console.error(err);
-        anovaResults.innerHTML = `<div class="alert alert-danger">Request failed: ${err.message}</div>`;
+        document.getElementById('anovaResults').innerHTML = `<div class="alert alert-danger">Request failed: ${err.message}</div>`;
     });
 });
 
-// Download excel with ANOVA results
-document.getElementById('downloadAnovaExcelBtn').addEventListener('click', function() {
+// ── Helper: build the summary table HTML for one variable's results ───────────
+function buildVariableSummaryHTML(varResults, sortMode, varName) {
+    let html = '';
+
+    const sortBtnsInline = varName ? (() => {
+        const sortBtns = ['data_order', 'letter', 'mean_asc', 'mean_desc'];
+        const sortLabels = { data_order: 'Data Order', letter: 'Letter Group', mean_asc: 'Mean ↑', mean_desc: 'Mean ↓' };
+        const btns = sortBtns.map(s => `
+            <button type="button"
+                    class="btn btn-sm var-sort-btn ${s === (sortMode || 'data_order') ? 'btn-secondary active' : 'btn-outline-secondary'}"
+                    data-var="${varName}" data-sort="${s}"
+                    style="font-size:0.72rem; padding:2px 8px;">
+                ${sortLabels[s]}
+            </button>`).join('');
+        return `
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-2 mt-1">
+                <span class="small fw-bold text-muted" style="font-size:0.78rem;">
+                    <i class="bi bi-sort-down me-1"></i>Sort groups by:
+                </span>
+                <span style="display:inline-block; width:0.5rem;"></span>
+                <div class="btn-group btn-group-sm" role="group">${btns}</div>
+            </div>`;
+    })() : '';
+
+    varResults.forEach(res => {
+        const sliceInfo = res.slice_label && res.slice_label !== 'All'
+            ? `<span class="text-muted">${res.slice_label}</span>`
+            : 'All groups';
+
+        const sortedGroups = sortLetterGroups(res.letter_groups, sortMode || 'data_order');
+
+        if (sortedGroups && sortedGroups.length > 0) {
+            html += `
+                <div class="border rounded p-3 mb-4 bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-bold">${sliceInfo}</h6>
+                        <span class="badge bg-primary">${res.test_used}</span>
+                    </div>
+                    ${res.plot_url ? `
+                    <div class="text-center mb-3">
+                        <img src="data:image/png;base64,${res.plot_url}"
+                             class="img-fluid rounded shadow-sm"
+                             style="max-height: 420px; border: 1px solid #e9ecef;">
+                    </div>` : ''}
+                    <div class="alert alert-info py-2 small mb-2">
+                        <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong> |
+                        Normality: ${res.assumptions && res.assumptions.all_normal ? '✓' : '✗'} |
+                        Homogeneity: ${res.assumptions && res.assumptions.homogeneous ? '✓' : '✗'}
+                        ${res.effect_size != null ? ` | Effect size: ${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}` : ''}
+                    </div>
+                    ${sortBtnsInline}
+                    <table class="table table-sm table-bordered text-center">
+                        <thead class="table-light">
+                            <tr><th class="text-left">Group</th><th>Mean</th><th>SD</th><th>N</th><th>Letter</th></tr>
+                        </thead>
+                        <tbody>
+                            ${sortedGroups.map(lg => `
+                                <tr>
+                                    <td class="text-left fw-bold">${lg.group}</td>
+                                    <td>${lg.mean.toFixed(4)}</td>
+                                    <td>${lg.std.toFixed(4)}</td>
+                                    <td>${lg.n}</td>
+                                    <td>
+                                        <span class="badge fs-6" style="padding: 6px 14px; border-radius: 50px; ${getLetterGroupStyle(lg.letter)}">
+                                            ${lg.letter}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+        } else {
+            html += `
+                <div class="mb-3">
+                    <div class="alert alert-secondary py-2 small">
+                        ${sliceInfo}: No significant differences found (p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
+                        All groups share the same letter
+                        <span class="badge fs-6" style="padding: 5px 12px; border-radius: 12px; ${getLetterGroupStyle('a')}">a</span>.
+                    </div>
+                </div>`;
+        }
+    });
+    return html;
+}
+
+// ── Render ANOVA results (called on first run and on re-sort) ─────────────────
+function renderAnovaResults(data) {
+    const anovaResults = document.getElementById('anovaResults');
+    anovaResults.innerHTML = '';
+
+    // Test selection rationale banner (from backend)
+    if (data.test_rationale) {
+        const rationale = document.createElement('div');
+        rationale.className = 'alert alert-info border-0 shadow-sm mb-4 py-2 px-3 small';
+        rationale.innerHTML = `<i class="bi bi-cpu-fill me-2"></i><strong>Test Selected:</strong> ${data.test_rationale}`;
+        anovaResults.appendChild(rationale);
+    }
+
+    // Group results by variable (preserve order)
+    const byVariable = {};
+    const varOrder = [];
+    data.results.forEach(res => {
+        if (!byVariable[res.variable]) {
+            byVariable[res.variable] = [];
+            varOrder.push(res.variable);
+        }
+        byVariable[res.variable].push(res);
+    });
+
+    let varIdx = 0;
+    varOrder.forEach(varName => {
+        const varResults = byVariable[varName];
+        const varId = 'anova_var_' + varIdx++;
+        const currentSortMode = anovaVarSortModes[varName] || 'data_order';
+
+        const section = document.createElement('div');
+        section.className = "mb-5 p-4 border rounded bg-white shadow-sm anova-var-section";
+        section.dataset.varName = varName;
+
+        // Build detailed pairwise HTML
+        let detailedHTML = '';
+        varResults.forEach(res => {
+            const sliceInfo = res.slice_label && res.slice_label !== 'All'
+                ? ' <small class="text-muted fw-normal">(' + res.slice_label + ')</small>'
+                : '';
+            if (res.posthoc && res.posthoc.length > 0) {
+                detailedHTML += `
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold small">${sliceInfo || 'All groups'}</span>
+                            <span class="badge bg-primary">${res.test_used}</span>
+                        </div>
+                        <div class="alert alert-info py-1 small mb-2">
+                            <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong>
+                            ${res.posthoc_method ? ` | Post-hoc: ${res.posthoc_method}` : ''}
+                        </div>
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr><th>Comparison</th><th>p (adj.)</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                                ${res.posthoc.map(ph => `
+                                    <tr>
+                                        <td><strong>${ph.group1}</strong> vs <strong>${ph.group2}</strong></td>
+                                        <td>${ph.p_adj.toFixed(4)}</td>
+                                        <td>${ph.significant ?
+                                            '<span class="badge bg-success">Significant</span>' :
+                                            '<span class="badge bg-secondary">n.s.</span>'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+            } else {
+                detailedHTML += `
+                    <div class="mb-3">
+                        <div class="alert alert-secondary py-2 small">
+                            ${sliceInfo || 'All groups'}: No pairwise comparisons (overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
+                        </div>
+                    </div>`;
+            }
+        });
+
+        section.innerHTML = `
+            <h5 class="fw-bold text-success mb-3">${varName}</h5>
+            <ul class="nav nav-tabs custom-anova-tabs mb-3" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active small fw-bold" data-toggle="tab" data-target="#${varId}_summary">
+                        <i class="bi bi-bar-chart-line me-2"></i> Summary with Plots
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link small fw-bold" data-toggle="tab" data-target="#${varId}_detail">
+                        <i class="bi bi-list-check me-2"></i> Detailed Pairwise
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="${varId}_summary" role="tabpanel">
+                    <div class="var-summary-content">
+                        ${buildVariableSummaryHTML(varResults, currentSortMode, varName)}
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="${varId}_detail" role="tabpanel">
+                    ${detailedHTML}
+                </div>
+            </div>
+        `;
+        anovaResults.appendChild(section);
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FULL REPORT EXPORT
+// ══════════════════════════════════════════════════════════════════════════════
+document.getElementById('exportFullReportBtn').addEventListener('click', async function() {
     if (!lastAnovaResults) return;
 
-    fetch('/export-anova-excel', { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lastAnovaResults)
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("Export failed");
-        return res.blob();
-    })
-    .then(blob => {
+    const exportSpinner = document.getElementById('exportSpinner');
+    const btn = this;
+    btn.disabled = true;
+    if (exportSpinner) exportSpinner.style.display = 'inline-flex';
+
+    try {
+        // Capture Plotly plots as base64 PNG
+        const plotCaptures = [];
+        const plotSelectors = [
+            { selector: '#assumptionsBoxPlots .js-plotly-plot', type: 'box' },
+            { selector: '#assumptionsResidualsContent .js-plotly-plot', type: 'residuals' },
+            { selector: '#assumptionsQQContent .js-plotly-plot', type: 'qq' }
+        ];
+
+        for (const { selector, type } of plotSelectors) {
+            const divs = document.querySelectorAll(selector);
+            for (const div of divs) {
+                try {
+                    const img = await Plotly.toImage(div, { format: 'png', width: 700, height: 380 });
+                    plotCaptures.push({
+                        label: div.id || div.getAttribute('data-var') || type,
+                        type,
+                        image: img.split(',')[1]
+                    });
+                } catch(e) { /* skip non-Plotly divs */ }
+            }
+        }
+
+        const originalData = globalData;
+        const analysedData = buildTransformedData(globalData, appliedTransformations);
+        const transformNotes = Object.entries(appliedTransformations)
+            .filter(([, t]) => t && t.type && t.type !== 'none')
+            .map(([v, t]) => v + ': ' + getTransformLabel(t.type, t.power))
+            .join(', ') || 'None';
+
+        const payload = {
+            original_data: originalData,
+            analysed_data: analysedData,
+            transform_notes: transformNotes,
+            anova_results: lastAnovaResults,
+            assumption_results: lastTestResults,
+            original_assumption_results: lastOriginalTestResults,
+            plot_captures: plotCaptures,
+            factors: selectedFactors,
+            target_columns: Array.from(document.querySelectorAll('.var-check:checked'))
+                .filter(cb => !cb.disabled).map(cb => cb.value)
+        };
+
+        const res = await fetch('/export-full-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || 'Export failed');
+        }
+
+        const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = "Significance_Test_Report.xlsx";
+        a.download = 'Statistical_Analysis_Full_Report.xlsx';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-    })
-    .catch(err => alert("Export Error: " + err.message));
+
+    } catch(err) {
+        alert('Export Error: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        if (exportSpinner) exportSpinner.style.display = 'none';
+    }
 });
+
 
 // Fix for missing plots in hidden sub-tabs
 $(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function (e) {

@@ -48,6 +48,19 @@
     #assumptionsBoxPlots .assumptions-plot-container,
     #assumptionsResidualsContent .assumptions-plot-container,
     #assumptionsQQContent .assumptions-plot-container { height: 320px; min-height: 320px; }
+    /* Assumptions sub-tabs: base and heading sizes */
+    #assumptionsSubTabContent { font-size: 0.72rem; }
+    #assumptionsSubTabContent h5 { font-size: 0.95rem; }
+    #assumptionsSubTabContent h6 { font-size: 0.82rem; }
+    #assumptionsSubTabContent .badge { font-size: 0.62rem; }
+    /* Summary (normality) table: larger for readability */
+    #testResults .table { font-size: 0.84rem; }
+    /* Box plots / residuals / Q-Q tables: keep compact */
+    #assumptionsBoxPlots .table,
+    #assumptionsResidualsContent .table,
+    #assumptionsQQContent .table { font-size: 0.70rem; }
+    /* Grey info boxes in every sub-tab: smaller than body text */
+    #assumptionsSubTabContent .alert-secondary { font-size: 0.60rem !important; }
 </style>
 <div class="page-wrapper">
     <div class="wrapper-box">
@@ -239,14 +252,18 @@
                                     • You can <strong>click</strong> on any red outlier to permanently exclude it from the dataset and re-calculate all statistics.<br>
                                     • It is highly recommended to identify and remove outliers <strong>before</strong> beginning the significance analysis (ANOVA) to ensure the validity and robustness of your results.
                                 </small>
-                                <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+                                <div class="d-flex align-items-center mb-4 flex-wrap" style="gap: 1rem;">
                                     <button id="runVizBtn" class="btn btn-primary btn-sm">
                                         <i class="bi bi-play-fill"></i> Run Visualizations
                                     </button>
-                                    <div id="vizResultsHeader" style="display:none;">
-                                        <button id="downloadExcelBtn" class="btn btn-success btn-sm fw-bold">
-                                            <i class="bi bi-download"></i> Download Results
+                                    <div id="vizResultsHeader" style="display:none;" class="ms-2">
+                                        <button id="downloadExcelBtn" class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-file-earmark-excel"></i> Download Results
                                         </button>
+                                        <span id="vizExportSpinner" style="display:none;" class="ms-2">
+                                            <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                                            <span class="small text-muted ms-1">Generating…</span>
+                                        </span>
                                     </div>
                                 </div>
                             
@@ -277,7 +294,7 @@
                                         </div>
                                     </div>
                                     <hr class="my-2" style="opacity:0.25;">
-                                    <p style="font-size:0.70rem;" class="mb-1 text-muted"><strong><i class="bi bi-signpost-split me-1"></i> Next step — ANOVA Tests tab:</strong> Results here determine which significance test is most appropriate. In the <em>ANOVA Tests</em> tab you can either let the tool <strong>select automatically</strong> based on these results, or <strong>choose a parametric or non-parametric test manually</strong>. The automated logic is: Both passed → <strong>One-way ANOVA</strong> + Tukey HSD; Only homogeneity → <strong>Kruskal–Wallis</strong> + Mann–Whitney U; Only normality → <strong>Welch's ANOVA</strong> + Welch's t-tests; Neither → <strong>Kruskal–Wallis</strong> + Mann–Whitney U.</p>
+                                    <p style="font-size:0.70rem;" class="mb-1 text-muted"><strong><i class="bi bi-signpost-split me-1"></i> Next step — ANOVA Tests tab:</strong> Results here determine which significance test is most appropriate. In the <em>ANOVA Tests</em> tab you can either let the tool <strong>select automatically</strong> based on these results, or <strong>choose a parametric or non-parametric test manually</strong>. The automated logic is: Both passed → <strong>One-way ANOVA</strong> + Tukey HSD; Only normality → <strong>Welch's ANOVA</strong> + Games-Howell (BH); Only homogeneity → <strong>Kruskal–Wallis</strong> + Dunn's (BH); Neither → <strong>Kruskal–Wallis</strong> + Dunn's (BH).</p>
                                 </div>
                         
                                 <button id="runTestsBtn" class="btn btn-primary btn-sm mb-4"><i class="bi bi-play-fill"></i> Run Normality &amp; Variance Tests</button>
@@ -307,24 +324,12 @@
                                                     <i class="bi bi-exclamation-triangle-fill me-1"></i>
                                                     <strong>Note:</strong> Transformations are most reliable when n&nbsp;≥&nbsp;5 per group. With smaller sample sizes the normality and homogeneity test results — and therefore any suggested transformation — should be treated with caution.
                                                 </p>
-                                                <details class="mt-2">
-                                                    <summary style="font-size:0.70rem; cursor:pointer; color:#6c757d; font-weight:600;">
-                                                        <i class="bi bi-info-circle me-1"></i> When to use which transformation
-                                                    </summary>
-                                                    <div class="mt-2 p-2 rounded" style="background:#fffbf0; border:1px solid #ffe082; font-size:0.68rem; line-height:1.5;">
-                                                        <div class="mb-1"><strong>ln(x+1)</strong> — Best for right-skewed, count-like data with zeros. Compresses large values and handles zero safely. Use when both normality and homogeneity fail.</div>
-                                                        <div class="mb-1"><strong>√x (Square root)</strong> — Milder than log; suitable for moderately right-skewed data or count data without zeros. Use when only normality fails.</div>
-                                                        <div class="mb-1"><strong>xⁿ (Power)</strong> — Flexible: exponent &lt;1 compresses large values (like sqrt/log); exponent &gt;1 stretches them. Use when other transforms overshoot.</div>
-                                                        <div class="mb-1"><strong>1/x (Reciprocal)</strong> — Strong compression for heavily right-skewed data; reverses order of values. Use cautiously; avoid when data contains zeros.</div>
-                                                        <div class="mb-0"><strong>arcsin(√x)</strong> — Designed for proportions/percentages (data between 0 and 1). Stabilises variance in proportion data (e.g. survival rates, relative abundances).</div>
-                                                    </div>
-                                                </details>
                                             </div>
                                         </div>
                                         <div class="card-body p-3">
 
-                                            <!-- Candidates summary (filled by JS) -->
-                                            <div id="transformCandidates" class="mb-3"></div>
+                                            <!-- Candidates summary + When to use guide (filled by JS) -->
+                                            <div id="transformCandidates" class="mb-2"></div>
 
                                             <!-- Per-variable transform controls (filled by JS) -->
                                             <div class="rounded border bg-white mb-3" style="overflow:hidden;">
@@ -366,7 +371,7 @@
                                     <div class="tab-content pt-2" id="assumptionsSubTabContent">
                                         
                                         <div class="tab-pane fade show active" id="assumptions-normality" role="tabpanel">
-                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3" style="font-size:0.78rem;">
+                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
                                                 <p class="mb-1"><strong><i class="bi bi-table me-1"></i> About this table:</strong> The summary below shows the combined results of two statistical assumption tests run for each variable:</p>
                                                 <ul class="mb-1 ps-3">
                                                     <li><strong>Shapiro-Wilk (Normality):</strong> tests whether the data within each group follows a normal distribution. A p&nbsp;&gt;&nbsp;0.05 indicates normality is met.</li>
@@ -385,7 +390,7 @@
                                         </div>
                         
                                         <div class="tab-pane fade" id="assumptions-boxplots" role="tabpanel">
-                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3" style="font-size:0.72rem;">
+                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
                                                 <p class="mb-1"><strong><i class="bi bi-box me-1"></i> What these plots show:</strong> One box plot per variant (group) for each variable, showing the full data distribution. Use these to visually inspect whether each group is roughly symmetric and whether spread (variance) differs markedly between groups — both key ANOVA assumptions.</p>
                                                 <ul class="mb-1 ps-3">
                                                     <li><span style="color:#198754;"><strong>Green</strong></span> — group <strong>passed</strong> the Shapiro-Wilk normality test (p&nbsp;&gt;&nbsp;0.05).</li>
@@ -398,7 +403,7 @@
                                         </div>
                         
                                         <div class="tab-pane fade" id="assumptions-residuals" role="tabpanel">
-                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3" style="font-size:0.72rem;">
+                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
                                                 <p class="mb-1"><strong><i class="bi bi-scatter-chart me-1"></i> Residuals vs Fitted — Primary purpose: Homogeneity of Variances</strong></p>
                                                 <p class="mb-1">Displays <em>residuals</em> (observed − group mean) on the Y-axis against <em>fitted values</em> (group means) on the X-axis. Because each group occupies one X position, the vertical spread at each position directly shows within-group variance — making it easy to spot whether spread is consistent across groups (Levene's assumption).</p>
                                                 <p class="mb-1"><strong>Well-behaved data:</strong> Points scattered <strong>evenly around zero</strong> with similar vertical spread across all groups.<br>
@@ -411,7 +416,7 @@
                                         </div>
                         
                                         <div class="tab-pane fade" id="assumptions-qq" role="tabpanel">
-                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3" style="font-size:0.72rem;">
+                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
                                                 <p class="mb-1"><strong><i class="bi bi-graph-up me-1"></i> Normal Q-Q — Primary purpose: Normality of Residuals</strong></p>
                                                 <p class="mb-1">Compares the <em>observed quantiles</em> of the residuals (Y-axis) against the <em>theoretical quantiles</em> of a perfect normal distribution (X-axis). If the data is truly normal, both sets of quantiles match and points lie along the diagonal reference line. Deviations reveal exactly where and how the distribution differs from normality.</p>
                                                 <p class="mb-1"><strong>Well-behaved data:</strong> Points lie <strong>closely along the diagonal</strong>; small deviations at the ends are acceptable.<br>
@@ -430,31 +435,95 @@
                         <div class="tab-pane fade" id="anova-content" role="tabpanel">
                             <div class="p-3">
                                 <h5 class="fw-bold mb-3">Significance Testing</h5>
-                                <div class="alert alert-warning border-0 shadow-sm mb-4">
-                                    <h6 class="fw-bold"><i class="bi bi-lightbulb-fill"></i> Decision Guide (Automated)</h6>
-                                    <p class="small mb-3">The tool automatically chooses the best statistical approach based on the assumption tests:</p>
-    
-                                    <ul class="small mb-0 pl-3">
-                                        <li><strong>Both normality + homogeneity passed</strong> → 
-                                        <strong>One-way ANOVA</strong> followed by <strong>Tukey’s HSD</strong> post-hoc test</li>
-        
-                                        <li><strong>Only homogeneity of variances passed</strong> → 
-                                        <strong>Kruskal–Wallis</strong> test with pairwise Mann–Whitney U tests (Bonferroni corrected)</li>
-        
-                                        <li><strong>Only normality passed</strong> → 
-                                        <strong>Welch’s one-way ANOVA</strong> followed by pairwise Welch’s t-tests (Benjamini–Hochberg corrected)</li>
-        
-                                        <li><strong>Neither assumption passed</strong> → 
-                                        <strong>Kruskal–Wallis</strong> (default) + pairwise Mann–Whitney U tests (Benjamini–Hochberg corrected)</li>
-                                    </ul>
 
-                                    <p class="extra-small text-muted mt-3 mb-0">
-                                    <i class="bi bi-info-circle"></i> 
-                                        Post-hoc comparisons are shown only when the overall test is significant (p &lt; 0.05). 
-                                        All p-values in post-hoc tests are corrected for multiple comparisons.
+                                <!-- Decision Guide -->
+                                <div class="alert alert-warning border-0 shadow-sm mb-3">
+                                    <h6 class="fw-bold"><i class="bi bi-lightbulb-fill"></i> Automated Test Selection Logic</h6>
+                                    <p class="small mb-2">The tool selects the best test based on the number of factors and assumption results:</p>
+                                    <div class="row g-2 small mb-0">
+                                        <div class="col-md-4">
+                                            <div class="p-2 bg-white rounded border-start border-3 border-warning">
+                                                <div class="fw-bold mb-1" style="font-size:0.75rem;"><i class="bi bi-1-square-fill text-warning me-1"></i> 1 Factor</div>
+                                                <div style="font-size:0.70rem;">
+                                                    Both passed → <strong>One-way ANOVA</strong> + Tukey HSD<br>
+                                                    Only normality → <strong>Welch's ANOVA</strong> + Games-Howell (BH)<br>
+                                                    Only homogeneity → <strong>Kruskal–Wallis</strong> + Dunn's (BH)<br>
+                                                    Neither passed → <strong>Kruskal–Wallis</strong> + Dunn's (BH)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="p-2 bg-white rounded border-start border-3 border-warning">
+                                                <div class="fw-bold mb-1" style="font-size:0.75rem;"><i class="bi bi-2-square-fill text-warning me-1"></i> 2 Factors</div>
+                                                <div style="font-size:0.70rem;">
+                                                    Both passed → <strong>Two-way ANOVA</strong> + Tukey HSD<br>
+                                                    Assumptions fail → <strong>Scheirer–Ray–Hare</strong> + Dunn's (BH)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="p-2 bg-white rounded border-start border-3 border-warning">
+                                                <div class="fw-bold mb-1" style="font-size:0.75rem;"><i class="bi bi-3-square-fill text-warning me-1"></i> 3+ Factors</div>
+                                                <div style="font-size:0.70rem;">
+                                                    Both passed → <strong>MANOVA</strong> (Pillai's Trace) + per-variable ANOVA (Bonferroni)<br>
+                                                    Assumptions fail → <strong>ART ANOVA</strong> + per-variable follow-up (Bonferroni)
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="extra-small text-muted mt-2 mb-0">
+                                        <i class="bi bi-info-circle"></i>
+                                        Post-hoc comparisons shown only when overall test is significant (p &lt; 0.05). All p-values corrected for multiple comparisons.
                                     </p>
                                 </div>
-                                
+
+                                <!-- Limitations Notice -->
+                                <div class="accordion mb-3" id="limitationsAccordion">
+                                    <div class="card shadow-sm" style="border: 1px solid #dee2e6; border-left: 4px solid #6c757d !important;">
+                                        <div class="card-header py-2 px-3 bg-light" id="limHead">
+                                            <button class="btn btn-link btn-sm p-0 text-secondary text-decoration-none w-100 text-left d-flex align-items-center justify-content-between"
+                                                    type="button" data-toggle="collapse" data-target="#limBody" aria-expanded="false">
+                                                <span style="font-size:0.78rem;"><i class="bi bi-exclamation-triangle me-1 text-secondary"></i> <strong>Current Limitations — Read Before Interpreting Results</strong></span>
+                                                <i class="bi bi-chevron-down small text-muted"></i>
+                                            </button>
+                                        </div>
+                                        <div id="limBody" class="collapse" aria-labelledby="limHead">
+                                            <div class="card-body py-2 px-3" style="font-size:0.75rem;">
+                                                <div class="mb-2">
+                                                    <strong><i class="bi bi-x-circle text-danger me-1"></i> Continuous factors not supported.</strong>
+                                                    This tool treats all factors as categorical. Dose-response curves, time-series, or any factor with a meaningful numeric ordering (e.g. 0 µM, 10 µM, 100 µM dose) should be analysed with regression or repeated-measures ANOVA in dedicated software (R, SPSS, Prism). Using such data here may produce misleading letter groups.
+                                                </div>
+                                                <div class="mb-0">
+                                                    <strong><i class="bi bi-x-circle text-danger me-1"></i> Hierarchical / nested designs not supported.</strong>
+                                                    The tool assumes a fully crossed, independent-groups design. Split-plot, repeated measures, or nested experiments (e.g. multiple technical replicates per biological replicate) require mixed-effects models and are not handled here.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Manual Override Control -->
+                                <div class="card border-0 shadow-sm mb-3" style="border: 1px solid #dee2e6 !important;">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                            <div>
+                                                <label class="fw-bold small mb-1 d-block" for="anovaOverrideSelect">
+                                                    <i class="bi bi-toggles me-1"></i> Test Selection
+                                                </label>
+                                                <select id="anovaOverrideSelect" class="form-select form-select-sm" style="min-width:260px; max-width:380px;">
+                                                    <option value="auto">🤖 Automatic (recommended)</option>
+                                                </select>
+                                            </div>
+                                            <div id="overrideActiveBadge" style="display:none;">
+                                                <span class="badge bg-warning text-dark" style="font-size:0.72rem;">
+                                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Automated recommendation overridden
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p class="extra-small text-muted mt-2 mb-0">Override to force a specific test (e.g. run parametric ANOVA even if normality failed). Only do this if you have scientific justification.</p>
+                                    </div>
+                                </div>
+
                                 <div id="groupingModeContainer" class="mt-2" style="display: none;">
                                     <div class="card border-success bg-light shadow-sm">
                                         <div class="card-body p-3">
@@ -468,12 +537,22 @@
                                     </div>
                                 </div>
                                 <br>
-                                <button id="runAnovaBtn" class="btn btn-success btn-sm mb-4">
-                                    <i class="bi bi-lightning-fill"></i> Run ANOVA Tests
-                                </button>
-                                <button id="downloadAnovaExcelBtn" class="btn btn-outline-success btn-sm mb-4" style="display: none;">
-                                    <i class="bi bi-file-earmark-excel"></i> Export Significance Report to Excel
-                                </button>
+
+                                <!-- Sort control removed - now per-variable inside results -->
+
+                                <div class="d-flex flex-wrap mb-4 align-items-center" style="gap: 1.25rem;">
+                                    <button id="runAnovaBtn" class="btn btn-success btn-sm">
+                                        <i class="bi bi-lightning-fill"></i> Run ANOVA Tests
+                                    </button>
+                                    <button id="exportFullReportBtn" class="btn btn-outline-success btn-sm" style="display: none;">
+                                        <i class="bi bi-file-earmark-excel"></i> Export Full Report
+                                    </button>
+                                    <span id="exportSpinner" style="display:none;">
+                                        <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                                        <span class="small text-muted ms-1">Generating report…</span>
+                                    </span>
+                                </div>
+
                                 <div id="anovaSpinner" class="text-center py-4" style="display: none;">
                                     <div class="spinner-border text-success" role="status"></div>
                                     <p class="mt-2 text-muted small">Calculating p-values...</p>
