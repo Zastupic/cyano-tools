@@ -18,7 +18,6 @@ from openpyxl.utils import get_column_letter
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from scipy import stats
-from scipy.stats import norm as norm_dist
 from statsmodels.formula.api import ols
 import statsmodels.api as sm
 from statsmodels.stats.multicomp import pairwise_tukeyhsd, MultiComparison
@@ -214,27 +213,21 @@ def run_tests():
             else:
                 clean_df['Group'] = 'All Data'
 
-            # 2. Pre-calculate Normality for Plot Coloring
-            normality_status = {}
+            # 2. Normality and group data for Shapiro-Wilk / Levene tests
             group_data = []
             shapiro_results = []
 
-            # Use the order of appearance from the original data
             unique_groups = clean_df['Group'].unique().tolist()
 
             for g_name in unique_groups:
-                # Change 'data' to 'group_vals'
                 group_vals = clean_df[clean_df['Group'] == g_name][var].astype(float)
                 if len(group_vals) >= 3:
                     stat, p = stats.shapiro(group_vals)
                     is_normal = bool(p > 0.05)
-                    normality_status[g_name] = is_normal
-                    group_data.append(group_vals.values) # Use group_vals
+                    group_data.append(group_vals.values)
                     shapiro_results.append({
                         "group": g_name, "stat": float(stat), "p": float(p), "is_normal": is_normal
                     })
-                else:
-                    normality_status[g_name] = True
 
             # 3. Calculate Levene's Test
             l_stat, l_p, is_homo = None, None, None
@@ -242,77 +235,12 @@ def run_tests():
                 l_stat, l_p = stats.levene(*group_data)
                 is_homo = bool(l_p > 0.05)
 
-            # 4. Generate Enhanced Plot
-            plt.figure(figsize=(10, 6))
-            sns.set_style("whitegrid")
-
-            # Color palette: Green if Normal, Red/Salmon if Non-Normal
-            palette = {grp: ("#A1D99B" if normality_status.get(grp, True) else "#F7969E")
-                       for grp in unique_groups}
-
-            ax = sns.boxplot(data=clean_df, x='Group', y=var, order=unique_groups,
-                             palette=palette, showfliers=False, linewidth=1.5)
-            sns.stripplot(data=clean_df, x='Group', y=var, order=unique_groups,
-                          color=".25", size=4, alpha=0.5)
-
-            # Add Assumption Text Box inside the plot
-            info_text = f"ASSUMPTIONS CHECK:\n"
-            if l_p is not None:
-                info_text += f"Var. Homogeneity (Levene) p: {l_p:.4f} ({'PASS' if is_homo else 'FAIL'})\n"
-            info_text += "Colors: Green = Normal | Red = Non-Normal"
-
-            # Place text box in the upper left/right
-            plt.text(0.02, 0.95, info_text, transform=ax.transAxes, fontsize=9,
-                     verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-
-            plt.title(f"Assumptions Analysis: {var}", fontsize=14, fontweight='bold', pad=20)
-            plt.xticks(rotation=30, ha='right')
-            plt.tight_layout()
-
-            plot_url = get_plot_base64()
+            # 4. Build plot data for Plotly rendering on the frontend
             plot_data = _build_plot_data(clean_df, "Group", var)
-
-            # 5. One-way ANOVA residuals for diagnostic plots (data only, no images)
-            residuals_data = []
-            if 'row_id' not in clean_df.columns:
-                clean_df = clean_df.copy()
-                clean_df['row_id'] = np.arange(1, len(clean_df) + 1)
-            n_vals = len(clean_df)
-            if n_vals >= 2 and len(unique_groups) >= 1:
-                try:
-                    model = ols(f"Q('{var}') ~ C(Group)", data=clean_df).fit()
-                    fitted = model.fittedvalues
-                    resid = model.resid
-                    res_std = float(np.std(resid, ddof=1))
-                    if res_std <= 0:
-                        res_std = 1.0
-                    std_residual = resid / res_std
-                    # Ranks for theoretical quantiles (rank 1..n by sorted std_residual)
-                    order = np.argsort(std_residual.values)
-                    rank_of_index = np.empty(len(order), dtype=float)
-                    rank_of_index[order] = np.arange(1, len(order) + 1)
-                    for i in range(len(clean_df)):
-                        row = clean_df.iloc[i]
-                        rid = row['row_id'] if 'row_id' in row.index else i + 1
-                        if pd.isna(rid):
-                            rid = int(i + 1)
-                        r_rank = rank_of_index[i]
-                        theoretical_quantile = float(norm_dist.ppf((r_rank - 0.5) / n_vals))
-                        residuals_data.append({
-                            "row_id": int(rid),
-                            "fitted": float(fitted.iloc[i]),
-                            "residual": float(resid.iloc[i]),
-                            "std_residual": float(std_residual.iloc[i]),
-                            "theoretical_quantile": theoretical_quantile,
-                            "group": str(row['Group']),
-                        })
-                except Exception:
-                    pass
 
             box_stats = _box_stats_per_group(clean_df, "Group", var)
             result_entry = {
                 "variable": var,
-                "plot_url": plot_url,
                 "plot_data": plot_data,
                 "box_stats": box_stats,
                 "shapiro": shapiro_results,
@@ -320,8 +248,6 @@ def run_tests():
                            "p": float(l_p) if l_p else None,
                            "is_homogeneous": is_homo}
             }
-            if residuals_data:
-                result_entry["residuals_data"] = residuals_data
             test_results.append(result_entry)
 
         return jsonify({"results": _sanitize(test_results)})
@@ -378,64 +304,9 @@ def run_analysis():
                 for f in factors:
                     clean_df[f] = clean_df[f].astype(str).replace(['nan', 'None'], "N/A")
 
-            # 2. CREATE COMBINED FACTOR FOR HUE (LEGEND)
-            # If 3+ factors, combine all except the first one for the legend
-            if len(factors) > 1:
-                hue_col = " & ".join(factors[1:])
-                clean_df[hue_col] = clean_df[factors[1:]].agg(' | '.join, axis=1)
-            else:
-                hue_col = factors[0] if factors else None
-
-            # Calculate counts per group
-            counts = clean_df.groupby(factors)[var].transform('count')
-            box_df = clean_df[counts >= 3]
-
             # Summary Stats (grouped by original factors)
             summary_df = clean_df.groupby(factors)[var].agg(['count', 'mean', 'std']).reset_index()
             summary = summary_df.replace({np.nan: None}).to_dict(orient='records')
-
-            # --- PLOTTING ---
-            hue_order = clean_df[hue_col].unique() if hue_col else None
-
-            # 1. Swarm Plot
-            g = sns.catplot(
-                kind="swarm",
-                data=clean_df,
-                x=factors[0],
-                y=var,
-                hue=hue_col,
-                hue_order=hue_order,
-                dodge=True,
-                palette=['#444444'],
-                size=5,
-                alpha=0.6,
-                height=5,
-                aspect=1.5,
-                legend=False
-            )
-
-            # 2. Box Plot Overlay with nipy_spectral
-            if not box_df.empty:
-                sns.boxplot(
-                    data=box_df,
-                    x=factors[0],
-                    y=var,
-                    hue=hue_col,
-                    hue_order=hue_order,
-                    ax=g.ax,
-                    showfliers=False,
-                    palette="nipy_spectral",
-                    boxprops={'alpha': 0.4},
-                    whiskerprops={'alpha': 0.5}
-                )
-
-                if hue_col:
-                    g.ax.legend(title=hue_col, bbox_to_anchor=(1.05, 1), loc='upper left', frameon=False)
-
-            g.fig.subplots_adjust(top=0.85)
-            g.fig.suptitle(f"Visualization of {var} by {', '.join(factors)}", fontsize=12, fontweight='bold')
-            g.ax.set_xlabel(factors[0], fontsize=11, fontweight='bold')
-            g.ax.set_ylabel(var, fontsize=11, fontweight='bold')
 
             # Build plot_data by combined group (all factors) so frontend splits by both factors
             if factors:
@@ -453,11 +324,9 @@ def run_analysis():
             results.append({
                 "variable": var,
                 "summary": summary,
-                "plot_url": get_plot_base64(),
                 "plot_data": plot_data,
                 "box_stats": box_stats,
             })
-            plt.close('all')
 
         return jsonify({"mode": "results", "factors": factors, "results": _sanitize(results)})
     except Exception as e:
@@ -1010,47 +879,6 @@ def _letter_groups_from_posthoc(groups_dict, posthoc):
     return stats_list
 
 
-def _make_anova_plot(slice_df, var, slice_label, result):
-    """Generate the box+swarm+letters plot used in all ANOVA tests. Returns base64 PNG or None."""
-    try:
-        letter_groups = result.get('letter_groups', [])
-        if not letter_groups:
-            return None
-        unique_groups = slice_df['Group'].unique().tolist()
-        letter_map = {lg['group']: lg['letter'] for lg in letter_groups}
-        plt.figure(figsize=(10, 6))
-        sns.set_style("whitegrid")
-        palette = sns.color_palette("nipy_spectral", len(unique_groups))
-        ax = sns.boxplot(data=slice_df, x='Group', y=var, order=unique_groups,
-                         palette=palette, showfliers=False, linewidth=1.5)
-        sns.stripplot(data=slice_df, x='Group', y=var, order=unique_groups,
-                      color=".25", size=4, alpha=0.5)
-        for i, group in enumerate(unique_groups):
-            letter = letter_map.get(group, '')
-            if letter:
-                group_vals = slice_df[slice_df['Group'] == group][var]
-                max_val = group_vals.max()
-                # Position letter just above the top whisker (Q3 + 1.5*IQR or data max)
-                y_range = slice_df[var].max() - slice_df[var].min()
-                offset = y_range * 0.03 if y_range > 0 else abs(max_val) * 0.03 if max_val != 0 else 0.05
-                ax.text(i, max_val + offset, letter, ha='center', va='bottom',
-                        fontsize=12, fontweight='bold', color='black',
-                        bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
-        info_text = (f"{result['test_used']}\nOverall p: {result['overall_p']:.4f}"
-                     f"\nNorm: {'✓' if result['assumptions']['all_normal'] else '✗'}"
-                     f"  Homo: {'✓' if result['assumptions']['homogeneous'] else '✗'}")
-        plt.text(0.02, 0.95, info_text, transform=ax.transAxes, fontsize=9,
-                 verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-        plt.title(f"{var} ({slice_label})", fontsize=14, fontweight='bold')
-        plt.xticks(rotation=30, ha='right')
-        plt.tight_layout()
-        plot_url = get_plot_base64()
-        plt.close()
-        return plot_url
-    except Exception:
-        plt.close('all')
-        return None
-
 
 def _anova_build_slices(df, factors, grouping_mode):
     """Parse grouping_mode and return list of (label, slice_df, [factor(s)])."""
@@ -1175,7 +1003,6 @@ def _run_one_factor_tests(df, selected_vars, factors, grouping_mode,
                 "letter_groups": letter_groups,
                 "posthoc": posthoc,
             }
-            result["plot_url"] = _make_anova_plot(slice_df, var, slice_label, result)
             all_results.append(result)
 
     return all_results
@@ -1253,7 +1080,6 @@ def _run_two_way_anova(df, selected_vars, factors, all_normal, homogeneous):
                 "assumptions": {"all_normal": all_normal, "homogeneous": homogeneous},
                 "letter_groups": letter_groups, "posthoc": posthoc,
             }
-            result["plot_url"] = _make_anova_plot(sub, var, "All", result)
             all_results.append(result)
         except Exception as e:
             all_results.append({"variable": var, "slice_label": "All", "error": str(e)})
@@ -1340,7 +1166,6 @@ def _run_scheirer_ray_hare(df, selected_vars, factors, all_normal, homogeneous):
             "letter_groups": letter_groups, "posthoc": posthoc,
             "srh_table": {f1: srh[f1], f2: srh[f2], 'interaction': srh['interaction']}
         }
-        result["plot_url"] = _make_anova_plot(sub, var, "All", result)
         all_results.append(result)
 
     return all_results
@@ -1435,8 +1260,6 @@ def _run_manova(df, selected_vars, factors, all_normal, homogeneous):
             except Exception:
                 pass
 
-        slice_df = clean[['_group', var]].copy()
-        slice_df.columns = ['Group', var]
         letter_groups = _letter_groups_from_posthoc(groups_dict, posthoc)
         result = {
             "variable": var, "slice_label": "All",
@@ -1449,7 +1272,6 @@ def _run_manova(df, selected_vars, factors, all_normal, homogeneous):
             "manova_pillais_trace": float(pillai) if pillai is not None else None,
             "manova_p": float(manova_p) if manova_p is not None else None,
         }
-        result["plot_url"] = _make_anova_plot(slice_df, var, "All", result)
         all_results.append(result)
 
     return all_results
@@ -1517,8 +1339,6 @@ def _run_art_anova(df, selected_vars, factors, all_normal, homogeneous):
             for ph in posthoc:
                 ph['significant'] = ph['p_adj'] < bonferroni_alpha
 
-        slice_df = sub[['_group', var]].copy()
-        slice_df.columns = ['Group', var]
         letter_groups = _letter_groups_from_posthoc(groups_dict, posthoc)
         result = {
             "variable": var, "slice_label": "All",
@@ -1530,7 +1350,6 @@ def _run_art_anova(df, selected_vars, factors, all_normal, homogeneous):
             "letter_groups": letter_groups, "posthoc": posthoc,
             "art_factor_table": art_res,
         }
-        result["plot_url"] = _make_anova_plot(slice_df, var, "All", result)
         all_results.append(result)
 
     return all_results
@@ -2047,7 +1866,7 @@ def export_anova_excel():
             slice_info = res.get('slice_label', 'All Data')
             test_type = res.get('test_used', 'N/A')
             overall_p = res.get('overall_p', 'N/A')
-            
+
             # --- NEW: Extract Assumption Results ---
             assumptions = res.get('assumptions', {})
             all_normal = "Yes" if assumptions.get('all_normal') else "No"
@@ -2091,7 +1910,7 @@ def export_anova_excel():
                 df_summary.to_excel(writer, index=False, sheet_name='Summary Letters')
             if not df_pairwise.empty:
                 df_pairwise.to_excel(writer, index=False, sheet_name='Detailed Pairwise')
-            
+
             for sheetname in writer.sheets:
                 _xl_auto_width(writer.sheets[sheetname])
 

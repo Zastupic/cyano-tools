@@ -8,10 +8,562 @@ let selectedFactors = [];
 let lastAnovaResults = null;
 let lastPCAResults = null;
 
+// ── Abort controllers for cancellable operations ──────────────────────────────
+let vizAbortController = null;
+let testsAbortController = null;
+let anovaAbortController = null;
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Transformation state ──────────────────────────────────────────────────────
 let appliedTransformations = {};  // { varName: { type: 'ln1p'|'sqrt'|'power'|'reciprocal'|'arcsin', power: Number } }
 let lastTestResults = null;       // Cached after each run-tests call
 let lastOriginalTestResults = null;  // When transforms active: results on original data
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Assumption Scope State ────────────────────────────────────────────────────
+let allScopeResults    = {};   // { scopeKey: { data, originalData } }
+let lastAssumptionScopes = []; // [{ key, label, n, rawData }]
+let activeScopeKey     = 'all';
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Assumption Scope Helpers ──────────────────────────────────────────────────
+
+/** Build the list of scopes from globalData + selectedFactors.
+ *  Returns: [{ key, label, n, rawData }]
+ *  Scope "all" covers the full dataset.
+ *  Each factor level yields an additional scope.
+ */
+function buildAssumptionScopes() {
+    if (!globalData) return [];
+    const scopes = [{ key: 'all', label: 'All data', n: globalData.length, rawData: globalData }];
+    if (!selectedFactors.length) return scopes;
+
+    selectedFactors.forEach(factor => {
+        const seen   = new Set();
+        const levels = [];
+        globalData.forEach(row => {
+            const v = String(row[factor] ?? '');
+            if (!seen.has(v)) { seen.add(v); levels.push(v); }
+        });
+        if (levels.length < 2) return; // single-level factor — no useful subset
+
+        levels.forEach(level => {
+            const filtered = globalData.filter(r => String(r[factor] ?? '') === level);
+            scopes.push({ key: `${factor}|||${level}`, label: `${factor} = ${level}`, n: filtered.length, rawData: filtered });
+        });
+    });
+    return scopes;
+}
+
+/** Render the pill-style scope-switcher row above the sub-tabs. */
+function renderAssumptionScopeTabs(scopes, activeKey) {
+    const container = document.getElementById('assumptionsScopeTabs');
+    if (!container) return;
+
+    let html = '';
+    let currentFactor = null;
+    scopes.forEach(scope => {
+        const isActive = scope.key === activeKey;
+        const factor   = scope.key.includes('|||') ? scope.key.split('|||')[0] : null;
+
+        if (factor && factor !== currentFactor) {
+            currentFactor = factor;
+            html += `<span class="scope-group-label flex-shrink-0">
+                         <i class="bi bi-chevron-right" style="font-size:0.55rem;"></i> ${factor}:
+                     </span>`;
+        }
+
+        const isCached = !!allScopeResults[scope.key];
+        const btnCls   = isActive ? 'btn-primary'  : 'btn-outline-secondary';
+        const badgeCls = isActive ? 'bg-white text-primary' : 'bg-secondary text-white';
+        // Show a small cloud-download icon on tabs not yet fetched (except the active one)
+        const lazyIcon = (!isCached && !isActive) ? ' <i class="bi bi-cloud-download" style="font-size:0.60rem; opacity:0.6;"></i>' : '';
+        html += `<button type="button"
+                    class="btn btn-sm scope-tab-btn flex-shrink-0 ${btnCls}"
+                    style="font-size:0.73rem; padding:2px 10px; white-space:nowrap;"
+                    data-scope-key="${scope.key}">
+                    ${scope.label}${lazyIcon}
+                    <span class="badge ms-1 ${badgeCls}" style="font-size:0.60rem;">${scope.n}</span>
+                 </button>`;
+    });
+    container.innerHTML = html;
+}
+
+// ── Client-side residuals computation (replaces server-side OLS) ─────────────
+
+/**
+ * Rational approximation of the standard normal inverse CDF (probit).
+ * Peter Acklam algorithm — accurate to ~1e-9.
+ */
+function normInv(p) {
+    if (p <= 0) return -Infinity;
+    if (p >= 1) return Infinity;
+    const a = [-3.969683028665376e+01,  2.209460984245205e+02,
+               -2.759285104469687e+02,  1.383577518672690e+02,
+               -3.066479806614716e+01,  2.506628277459239e+00];
+    const b = [-5.447609879822406e+01,  1.615858368580409e+02,
+               -1.556989798598866e+02,  6.680131188771972e+01,
+               -1.328068155288572e+01];
+    const c = [-7.784894002430293e-03, -3.223964580411365e-01,
+               -2.400758277161838e+00, -2.549732539343734e+00,
+                4.374664141464968e+00,  2.938163982698783e+00];
+    const d = [ 7.784695709041462e-03,  3.224671290700398e-01,
+                2.445134137142996e+00,  3.754408661907416e+00];
+    const pLow = 0.02425, pHigh = 1 - pLow;
+    if (p < pLow) {
+        const q = Math.sqrt(-2 * Math.log(p));
+        return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+               ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+    } else if (p <= pHigh) {
+        const q = p - 0.5, r = q * q;
+        return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q /
+               (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+    } else {
+        const q = Math.sqrt(-2 * Math.log(1 - p));
+        return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+                ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+    }
+}
+
+/**
+ * Compute residuals data from plot_data (same format the server used to return).
+ * Fitted = per-group mean; residuals standardized with ddof=1; theoretical
+ * quantiles via Blom's formula (rank-0.5)/n.
+ */
+function computeResidualsFromPlotData(plotData) {
+    if (!plotData || plotData.length === 0) return [];
+
+    // Group means (= fitted values)
+    const sums = {}, counts = {};
+    plotData.forEach(d => {
+        if (!sums[d.group]) { sums[d.group] = 0; counts[d.group] = 0; }
+        sums[d.group] += d.value;
+        counts[d.group]++;
+    });
+    const means = {};
+    Object.keys(sums).forEach(g => { means[g] = sums[g] / counts[g]; });
+
+    // Raw residuals
+    const withRes = plotData.map(d => ({
+        row_id: d.row_id,
+        group:  d.group,
+        fitted: means[d.group],
+        residual: d.value - means[d.group],
+    }));
+
+    // Standardize (ddof=1)
+    const n = withRes.length;
+    const resMean = withRes.reduce((s, d) => s + d.residual, 0) / n;
+    const resVar  = withRes.reduce((s, d) => s + (d.residual - resMean) ** 2, 0) / Math.max(n - 1, 1);
+    const resStd  = Math.sqrt(resVar) || 1;
+    const withStd = withRes.map(d => ({ ...d, std_residual: d.residual / resStd }));
+
+    // Ranks → theoretical quantiles (Blom)
+    const idxBySorted = withStd.map((_, i) => i)
+        .sort((i, j) => withStd[i].std_residual - withStd[j].std_residual);
+    const ranks = new Array(n);
+    idxBySorted.forEach((origIdx, rank) => { ranks[origIdx] = rank + 1; });
+
+    return withStd.map((d, i) => ({
+        ...d,
+        theoretical_quantile: normInv((ranks[i] - 0.5) / n),
+    }));
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Render all 4 assumption sub-tabs for a given scope key using cached results. */
+function renderAssumptionScopeContent(scopeKey) {
+    const scopeResult = allScopeResults[scopeKey];
+    if (!scopeResult) return;
+    const { data, originalData } = scopeResult;
+    const scope = lastAssumptionScopes.find(s => s.key === scopeKey) || { label: 'All data', n: '?' };
+
+    const hasTransforms  = Object.values(appliedTransformations).some(t => t && t.type && t.type !== 'none');
+    const factorsLabel   = selectedFactors.join(', ');
+    const originalByVar  = (originalData && originalData.results)
+        ? originalData.results.reduce((acc, r) => { acc[r.variable] = r; return acc; }, {})
+        : {};
+
+    // ── Scope context banner ──────────────────────────────────────────────────
+    const scopeInfo = document.getElementById('assumptionsScopeInfo');
+    if (scopeInfo) {
+        if (scopeKey === 'all') {
+            scopeInfo.style.display = 'none';
+        } else {
+            scopeInfo.style.display = 'block';
+            scopeInfo.innerHTML = `
+                <div class="alert alert-primary border-0 py-2 px-3 mb-2"
+                     style="border-left:4px solid #0d6efd !important; font-size:0.78rem;">
+                    <i class="bi bi-funnel-fill me-1"></i>
+                    <strong>Subset:</strong> ${scope.label}
+                    <span class="badge bg-primary ms-1" style="font-size:0.65rem;">${scope.n} rows</span>
+                    <span class="text-muted ms-2" style="font-size:0.72rem;">
+                        Groups below are the remaining factor combinations within this subset.
+                    </span>
+                </div>`;
+        }
+    }
+
+    // ── Assumptions Summary sub-tab ───────────────────────────────────────────
+    const testResults = document.getElementById('testResults');
+    testResults.innerHTML = '';
+
+    if (hasTransforms) {
+        const activeList = Object.entries(appliedTransformations)
+            .filter(([, cfg]) => cfg && cfg.type && cfg.type !== 'none')
+            .map(([v, cfg]) => `<strong>${v}</strong>: ${getTransformLabel(cfg.type, cfg.power)}`)
+            .join(' &nbsp;|&nbsp; ');
+        const banner = document.createElement('div');
+        banner.className = 'alert alert-info py-2 px-3 mb-3 small';
+        banner.style.fontSize = '0.78rem';
+        banner.innerHTML = `<i class="bi bi-arrow-left-right me-1 text-warning"></i>
+            <strong>Tests run on transformed data.</strong> Active: ${activeList}.
+            Use <em>Reset to Original Data</em> above to revert.`;
+        testResults.appendChild(banner);
+    }
+
+    data.results.forEach(res => {
+        const section = document.createElement('div');
+        section.className = 'mb-4 p-4 border rounded bg-white shadow-sm assumptions-var-card';
+        section.dataset.var = res.variable;
+        const hasTransformForVar = hasTransforms && appliedTransformations[res.variable] && appliedTransformations[res.variable].type !== 'none';
+        const origRes = hasTransformForVar ? originalByVar[res.variable] : null;
+        const bodyHtml = origRes ? renderSideBySideAssumptionBlock(origRes, res) : renderOneAssumptionBlock(res, null);
+        section.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                <h5 class="fw-bold text-primary mb-0">Variable: ${res.variable}</h5>
+                ${hasTransformForVar ? `<span class="badge bg-warning text-dark" style="font-size:0.72rem;"><i class="bi bi-arrow-left-right me-1"></i>${getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power)}</span>` : ''}
+            </div>
+            ${bodyHtml}`;
+        testResults.appendChild(section);
+    });
+
+    // ── Box Plots sub-tab ─────────────────────────────────────────────────────
+    const assumptionsBoxPlots = document.getElementById('assumptionsBoxPlots');
+    if (assumptionsBoxPlots) {
+        assumptionsBoxPlots.innerHTML = '';
+        const safeScope = scopeKey.replace(/\W/g, '_');
+
+        data.results.forEach((res, resIdx) => {
+            const normalityByGroup = {};
+            if (res.shapiro) res.shapiro.forEach(s => { normalityByGroup[s.group] = !!s.is_normal; });
+            const hasTransformForVar = hasTransforms && appliedTransformations[res.variable] && appliedTransformations[res.variable].type !== 'none';
+            const origRes       = hasTransformForVar ? originalByVar[res.variable] : null;
+            const transformLabel = hasTransformForVar ? getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power) : '';
+
+            const card = document.createElement('div');
+            card.className = 'plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border mb-4';
+            card.dataset.var = res.variable;
+            const plotId     = `bp-${safeScope}-${resIdx}-${(res.variable || '').replace(/\W/g, '_')}`;
+            const plotIdOrig = plotId + '-orig';
+
+            card.innerHTML = `
+                <h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6>
+                ${hasTransformForVar && origRes ? `
+                    <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
+                        <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>${transformLabel}</span>
+                        <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
+                                style="font-size:0.70rem; padding:2px 8px;"
+                                data-transformed="${plotId}" data-original="${plotIdOrig}" data-showing="transformed">
+                            <i class="bi bi-eye me-1"></i> Show Original
+                        </button>
+                    </div>` : ''}
+                <div id="${plotId}" class="assumptions-plot-container"></div>
+                ${hasTransformForVar && origRes ? `<div id="${plotIdOrig}" class="assumptions-plot-container" style="display:none;"></div>` : ''}`;
+            assumptionsBoxPlots.appendChild(card);
+
+            if (res.plot_data && res.plot_data.length) {
+                renderPlotlyBoxSwarmAssumptions(plotId, res.plot_data, hasTransformForVar ? res.variable + ' (transformed)' : res.variable, factorsLabel, normalityByGroup, 'runTestsBtn', res.box_stats);
+            }
+            if (hasTransformForVar && origRes && origRes.plot_data && origRes.plot_data.length) {
+                const origNorm = {};
+                if (origRes.shapiro) origRes.shapiro.forEach(s => { origNorm[s.group] = !!s.is_normal; });
+                renderPlotlyBoxSwarmAssumptions(plotIdOrig, origRes.plot_data, res.variable + ' (original)', factorsLabel, origNorm, 'runTestsBtn', origRes.box_stats);
+            }
+        });
+    }
+
+    // ── Residuals vs Fitted sub-tab ───────────────────────────────────────────
+    const residualsContent = document.getElementById('assumptionsResidualsContent');
+    if (residualsContent) {
+        residualsContent.innerHTML = '';
+        const hasPlotData = data.results.some(r => r.plot_data && r.plot_data.length);
+        if (!hasPlotData) {
+            residualsContent.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
+        } else {
+            const safeScope = scopeKey.replace(/\W/g, '_');
+            data.results.forEach((res, resIdx) => {
+                if (!res.plot_data || !res.plot_data.length) return;
+                const residualsData  = computeResidualsFromPlotData(res.plot_data);
+                const hasTransformForVar = hasTransforms && appliedTransformations[res.variable] && appliedTransformations[res.variable].type !== 'none';
+                const origRes        = hasTransformForVar ? originalByVar[res.variable] : null;
+                const transformLabel = hasTransformForVar ? getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power) : '';
+
+                const card = document.createElement('div');
+                card.className = 'plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border mb-4';
+                card.dataset.var = res.variable;
+                const divId      = `res-${safeScope}-${resIdx}-${(res.variable || '').replace(/\W/g, '_')}`;
+                const divIdOrig  = divId + '-orig';
+                const hasOrigPlotData = hasTransformForVar && origRes && origRes.plot_data && origRes.plot_data.length;
+
+                card.innerHTML = `
+                    <h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6>
+                    ${hasOrigPlotData ? `
+                        <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
+                            <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>${transformLabel}</span>
+                            <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
+                                    style="font-size:0.70rem; padding:2px 8px;"
+                                    data-transformed="${divId}" data-original="${divIdOrig}" data-showing="transformed">
+                                <i class="bi bi-eye me-1"></i> Show Original
+                            </button>
+                        </div>` : ''}
+                    <div id="${divId}" class="assumptions-plot-container" style="min-height:400px; width:100%;"></div>
+                    ${hasOrigPlotData ? `<div id="${divIdOrig}" class="assumptions-plot-container" style="min-height:400px; width:100%; display:none;"></div>` : ''}`;
+                residualsContent.appendChild(card);
+                renderResidualsVsFitted(divId, residualsData, hasTransformForVar ? res.variable + ' (transformed)' : res.variable, resIdx);
+                if (hasOrigPlotData) {
+                    const origResiduals = computeResidualsFromPlotData(origRes.plot_data);
+                    renderResidualsVsFitted(divIdOrig, origResiduals, res.variable + ' (original)', resIdx);
+                }
+            });
+        }
+    }
+
+    // ── Normal Q-Q sub-tab ────────────────────────────────────────────────────
+    const qqContent = document.getElementById('assumptionsQQContent');
+    if (qqContent) {
+        qqContent.innerHTML = '';
+        const hasPlotData = data.results.some(r => r.plot_data && r.plot_data.length);
+        if (!hasPlotData) {
+            qqContent.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
+        } else {
+            const safeScope = scopeKey.replace(/\W/g, '_');
+            data.results.forEach((res, resIdx) => {
+                if (!res.plot_data || !res.plot_data.length) return;
+                const residualsData  = computeResidualsFromPlotData(res.plot_data);
+                const hasTransformForVar = hasTransforms && appliedTransformations[res.variable] && appliedTransformations[res.variable].type !== 'none';
+                const origRes        = hasTransformForVar ? originalByVar[res.variable] : null;
+                const transformLabel = hasTransformForVar ? getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power) : '';
+
+                const card = document.createElement('div');
+                card.className = 'plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border mb-4';
+                card.dataset.var = res.variable;
+                const divId      = `qq-${safeScope}-${resIdx}-${(res.variable || '').replace(/\W/g, '_')}`;
+                const divIdOrig  = divId + '-orig';
+                const hasOrigPlotData = hasTransformForVar && origRes && origRes.plot_data && origRes.plot_data.length;
+
+                card.innerHTML = `
+                    <h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6>
+                    ${hasOrigPlotData ? `
+                        <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
+                            <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>${transformLabel}</span>
+                            <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
+                                    style="font-size:0.70rem; padding:2px 8px;"
+                                    data-transformed="${divId}" data-original="${divIdOrig}" data-showing="transformed">
+                                <i class="bi bi-eye me-1"></i> Show Original
+                            </button>
+                        </div>` : ''}
+                    <div id="${divId}" class="assumptions-plot-container" style="min-height:400px; width:100%;"></div>
+                    ${hasOrigPlotData ? `<div id="${divIdOrig}" class="assumptions-plot-container" style="min-height:400px; width:100%; display:none;"></div>` : ''}`;
+                qqContent.appendChild(card);
+                renderNormalQQ(divId, residualsData, hasTransformForVar ? res.variable + ' (transformed)' : res.variable, resIdx);
+                if (hasOrigPlotData) {
+                    const origResiduals = computeResidualsFromPlotData(origRes.plot_data);
+                    renderNormalQQ(divIdOrig, origResiduals, res.variable + ' (original)', resIdx);
+                }
+            });
+        }
+    }
+}
+
+// ── Scope tab click delegation ────────────────────────────────────────────────
+let scopeFetchController = null; // abort any in-progress on-demand scope fetch
+
+document.addEventListener('click', function(e) {
+    const btn = e.target && e.target.closest && e.target.closest('.scope-tab-btn');
+    if (!btn) return;
+    const scopeKey = btn.dataset.scopeKey;
+    if (!scopeKey) return;
+
+    activeScopeKey = scopeKey;
+    renderAssumptionScopeTabs(lastAssumptionScopes, scopeKey);
+
+    // Already cached → render immediately
+    if (allScopeResults[scopeKey]) {
+        renderAssumptionScopeContent(scopeKey);
+        setTimeout(() => {
+            const activePane = document.querySelector('#assumptionsSubTabContent .tab-pane.active.show');
+            if (activePane) activePane.querySelectorAll('.js-plotly-plot').forEach(p => Plotly.Plots.resize(p));
+        }, 80);
+        return;
+    }
+
+    // Not yet cached → fetch on demand
+    const scope = lastAssumptionScopes.find(s => s.key === scopeKey);
+    if (!scope) return;
+
+    // Cancel any previous on-demand fetch
+    if (scopeFetchController) scopeFetchController.abort();
+    scopeFetchController = new AbortController();
+    const signal = scopeFetchController.signal;
+
+    // Show loading state in the results area
+    const resultsArea = document.getElementById('assumptionsResultsArea');
+    const testResults = document.getElementById('testResults');
+    const assumptionsBoxPlots = document.getElementById('assumptionsBoxPlots');
+    const assumptionsResidualsContent = document.getElementById('assumptionsResidualsContent');
+    const assumptionsQQContent = document.getElementById('assumptionsQQContent');
+    const loadingHtml = `<div class="text-center py-4">
+        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        <p class="mt-2 text-muted small">Loading subset: ${scope.label}…</p></div>`;
+    if (testResults) testResults.innerHTML = loadingHtml;
+    if (assumptionsBoxPlots) assumptionsBoxPlots.innerHTML = loadingHtml;
+    if (assumptionsResidualsContent) assumptionsResidualsContent.innerHTML = '';
+    if (assumptionsQQContent) assumptionsQQContent.innerHTML = '';
+
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    const hasTransforms = Object.values(appliedTransformations).some(t => t && t.type && t.type !== 'none');
+
+    const makePayload = (rawData) => ({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: buildTransformedData(rawData, appliedTransformations), target_columns: selectedVars, factors: selectedFactors }),
+        signal
+    });
+    const makeOrigPayload = (rawData) => ({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: rawData, target_columns: selectedVars, factors: selectedFactors }),
+        signal
+    });
+
+    const fetchT = fetch('/run-tests', makePayload(scope.rawData)).then(r => r.json());
+    const fetchO = hasTransforms
+        ? fetch('/run-tests', makeOrigPayload(scope.rawData)).then(r => r.json())
+        : Promise.resolve(null);
+
+    Promise.all([fetchT, fetchO]).then(([scopeData, origData]) => {
+        if (scopeData.error) throw new Error(scopeData.error);
+        allScopeResults[scopeKey] = { data: scopeData, originalData: origData };
+        // Only render if the user is still on this scope tab
+        if (activeScopeKey === scopeKey) {
+            renderAssumptionScopeContent(scopeKey);
+            setTimeout(() => {
+                const activePane = document.querySelector('#assumptionsSubTabContent .tab-pane.active.show');
+                if (activePane) activePane.querySelectorAll('.js-plotly-plot').forEach(p => Plotly.Plots.resize(p));
+            }, 80);
+        }
+    }).catch(err => {
+        if (err.name === 'AbortError') return;
+        if (testResults) testResults.innerHTML = `<div class="alert alert-danger small">Error loading subset: ${err.message}</div>`;
+    });
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Standalone assumption block renderers (used by renderAssumptionScopeContent) ──
+
+function renderOneAssumptionBlock(res, blockLabel) {
+    const leveneClass  = res.levene.is_homogeneous === null ? 'secondary' : (res.levene.is_homogeneous ? 'success' : 'danger');
+    const leveneText   = res.levene.is_homogeneous === null ? 'N/A' : (res.levene.is_homogeneous ? 'equal' : 'unequal');
+    const leveneDetail = res.levene.p != null ? `Levene p = ${res.levene.p.toFixed(4)}` : 'Levene: N/A (single group)';
+    const allNormal    = res.shapiro && res.shapiro.length > 0 && res.shapiro.every(s => s.is_normal);
+    const normCount    = res.shapiro ? res.shapiro.filter(s => s.is_normal).length : 0;
+    const normTotal    = res.shapiro ? res.shapiro.length : 0;
+    const normBadgeCls = allNormal ? 'success' : (normCount > 0 ? 'warning' : 'danger');
+    const normText     = allNormal
+        ? `Normal distribution in all groups (${normCount}/${normTotal} groups, p > 0.05)`
+        : normCount > 0 ? `Normality met in ${normCount}/${normTotal} groups` : 'Normality not met in any group';
+
+    return `
+        <div class="mb-3 ${blockLabel ? 'ps-2 border-start border-3 border-primary' : ''}">
+            ${blockLabel ? `<div class="fw-bold text-primary mb-2 small">${blockLabel}</div>` : ''}
+            Homogeneity of variance (Levene's test):<br>
+            <span class="badge bg-${leveneClass}">Variance is ${leveneText} (${leveneDetail})</span><br><br>
+            Data normality (Shapiro-Wilk test):<br>
+            <span class="badge bg-${normBadgeCls} mb-2">${normText}</span>
+            <div class="table-responsive">
+                <table class="table table-sm extra-small">
+                    <thead class="table-light"><tr><th>Group</th><th>p-val</th><th>Res.</th></tr></thead>
+                    <tbody>
+                        ${res.shapiro.map(s => `<tr class="${s.is_normal ? '' : 'table-danger-light'}"><td class="text-truncate" style="max-width:100px;">${s.group}</td><td>${s.p.toFixed(3)}</td><td>${s.is_normal ? '✅' : '❌'}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+}
+
+function renderSideBySideAssumptionBlock(origRes, transRes) {
+    function leveneInfo(res) {
+        const cls = res.levene.is_homogeneous === null ? 'secondary' : (res.levene.is_homogeneous ? 'success' : 'danger');
+        const txt = res.levene.is_homogeneous === null ? 'N/A' : (res.levene.is_homogeneous ? 'equal' : 'unequal');
+        const p   = res.levene.p != null ? `p = ${res.levene.p.toFixed(4)}` : 'N/A';
+        return { cls, txt, p };
+    }
+    const o = leveneInfo(origRes);
+    const t = leveneInfo(transRes);
+
+    const oAllNormal  = origRes.shapiro && origRes.shapiro.every(s => s.is_normal);
+    const tAllNormal  = transRes.shapiro && transRes.shapiro.every(s => s.is_normal);
+    const oNormCount  = origRes.shapiro ? origRes.shapiro.filter(s => s.is_normal).length : 0;
+    const tNormCount  = transRes.shapiro ? transRes.shapiro.filter(s => s.is_normal).length : 0;
+    const normTotal   = origRes.shapiro ? origRes.shapiro.length : 0;
+
+    function normBadge(count, total, allNorm) {
+        const cls = allNorm ? 'success' : (count > 0 ? 'warning' : 'danger');
+        const txt = allNorm ? `All groups normal (${count}/${total})` : count > 0 ? `${count}/${total} groups normal` : `Not met (0/${total})`;
+        return `<span class="badge bg-${cls}">${txt}</span>`;
+    }
+
+    const groups      = origRes.shapiro.map(s => s.group);
+    const origByGroup = {};
+    origRes.shapiro.forEach(s => { origByGroup[s.group] = s; });
+    const transByGroup = {};
+    transRes.shapiro.forEach(s => { transByGroup[s.group] = s; });
+
+    const shapiroRows = groups.map(g => {
+        const os = origByGroup[g] || {};
+        const ts = transByGroup[g] || {};
+        return `<tr>
+            <td class="text-truncate" style="max-width:80px;">${g}</td>
+            <td>${os.p != null ? os.p.toFixed(3) : '—'}</td>
+            <td>${os.is_normal != null ? (os.is_normal ? '✅' : '❌') : '—'}</td>
+            <td>${ts.p != null ? ts.p.toFixed(3) : '—'}</td>
+            <td>${ts.is_normal != null ? (ts.is_normal ? '✅' : '❌') : '—'}</td>
+        </tr>`;
+    }).join('');
+
+    return `
+        <div class="mb-3">
+            Homogeneity of variance (Levene's test):<br>
+            <div class="d-flex gap-2 flex-wrap mt-1 mb-2">
+                <div><small class="text-muted">Original:</small><br><span class="badge bg-${o.cls}">Variance ${o.txt} (${o.p})</span></div>
+                <div><small class="text-muted">Transformed:</small><br><span class="badge bg-${t.cls}">Variance ${t.txt} (${t.p})</span></div>
+            </div>
+            Data normality (Shapiro-Wilk test):<br>
+            <div class="d-flex gap-2 flex-wrap mt-1 mb-2">
+                <div><small class="text-muted">Original:</small><br>${normBadge(oNormCount, normTotal, oAllNormal)}</div>
+                <div><small class="text-muted">Transformed:</small><br>${normBadge(tNormCount, normTotal, tAllNormal)}</div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm extra-small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Group</th>
+                            <th colspan="2" class="text-center border-start" style="background:#e8f4f8;">Original</th>
+                            <th colspan="2" class="text-center border-start" style="background:#fff8e1;">Transformed</th>
+                        </tr>
+                        <tr style="font-size:0.70rem;">
+                            <th></th>
+                            <th class="border-start" style="background:#e8f4f8;">p-val</th><th style="background:#e8f4f8;">Res.</th>
+                            <th class="border-start" style="background:#fff8e1;">p-val</th><th style="background:#fff8e1;">Res.</th>
+                        </tr>
+                    </thead>
+                    <tbody>${shapiroRows}</tbody>
+                </table>
+            </div>
+        </div>`;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 // --- 1. Factor Management (Auto-selection Logic) ---
@@ -68,7 +620,7 @@ function renderFactorTags() {
     // Update UI dependencies
     populateGroupingMode();
     updateVariableCheckboxes();
-    
+
     // NEW: Sync the "Select All" checkbox state whenever factors change
     updateSelectAllState();
 }
@@ -79,7 +631,7 @@ function updateVariableCheckboxes() {
         const wrapper = cb.closest('.form-check');
         // If the variable is currently a selected factor, disable and uncheck it
         if (selectedFactors.includes(cb.value)) {
-            cb.checked = false; 
+            cb.checked = false;
             cb.disabled = true;
             if (wrapper) {
                 wrapper.style.opacity = '0.4';
@@ -252,6 +804,20 @@ document.addEventListener('click', function(e) {
         const summaryContainer = section.querySelector('.var-summary-content');
         if (summaryContainer) {
             summaryContainer.innerHTML = buildVariableSummaryHTML(varResults, mode, varName);
+            // Re-render Plotly bar charts into newly inserted placeholder divs
+            summaryContainer.querySelectorAll('.anova-bar-chart-placeholder').forEach(div => {
+                try {
+                    const letterGroups = JSON.parse(decodeURIComponent(div.dataset.letterGroups || '[]'));
+                    const fakeRes = {
+                        variable:          decodeURIComponent(div.dataset.resVariable || ''),
+                        test_used:         decodeURIComponent(div.dataset.resTest || ''),
+                        overall_p:         div.dataset.resP !== '' ? parseFloat(div.dataset.resP) : null,
+                        effect_size:       div.dataset.resEffect !== '' ? parseFloat(div.dataset.resEffect) : null,
+                        effect_size_label: decodeURIComponent(div.dataset.resEffectLabel || 'η²'),
+                    };
+                    renderAnovaBarChart(div.id, letterGroups, fakeRes);
+                } catch (e) { /* skip */ }
+            });
         }
     }
 });
@@ -282,7 +848,7 @@ function showNiceMessage(message, type, containerId = 'selectionCard') {
     alertDiv.style.fontSize = "0.8rem";
     alertDiv.style.maxWidth = "400px";
     alertDiv.role = "alert";
-    
+
     alertDiv.innerHTML = `
         <i class="bi bi-info-circle-fill me-2"></i> ${message}
         <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="padding: 0.5rem 0.5rem;">
@@ -321,7 +887,7 @@ document.getElementById('selectAllVars').addEventListener('change', function() {
 function updateSelectAllState() {
     const enabledCheckboxes = document.querySelectorAll('.var-check:not(:disabled)');
     const selectAllBox = document.getElementById('selectAllVars');
-    
+
     if (enabledCheckboxes.length === 0) {
         selectAllBox.checked = false;
         return;
@@ -394,11 +960,11 @@ function renderPlotlyBoxSwarm(containerId, plotData, variableName, factorsLabel,
         type: 'scatter',
         mode: 'markers',
         // CRITICAL FIX: Add customdata so the click event can access row metadata
-        customdata: plotData, 
-        marker: { 
-            size: 7, 
-            color: plotData.map(p => p.is_outlier ? 'red' : 'rgba(0,0,0,0.6)'), 
-            line: { width: 1, color: 'white' } 
+        customdata: plotData,
+        marker: {
+            size: 7,
+            color: plotData.map(p => p.is_outlier ? 'red' : 'rgba(0,0,0,0.6)'),
+            line: { width: 1, color: 'white' }
         },
         text: hoverText,
         hoverinfo: 'text',
@@ -701,7 +1267,7 @@ function openExclusionModal(meta, variableName, valueLabel, value, triggerButton
 
 function getLetterGroupStyle(letters) {
     if (!letters) return 'background-color: #6c757d; color: white;';
-    
+
     // 1. Better Hash (djb2) to ensure 'a', 'b', and 'c' produce different numbers
     let hash = 5381;
     for (let i = 0; i < letters.length; i++) {
@@ -713,7 +1279,7 @@ function getLetterGroupStyle(letters) {
     const goldenRatioConjugate = 0.618033988749895;
     let hue = (Math.abs(hash) * goldenRatioConjugate) % 1;
     hue = Math.floor(hue * 360); // Convert to 0-360 degrees
-    
+
     // 3. Return HSL Color
     // Saturation 75%, Lightness 40% for better contrast with white text
     return `background-color: hsl(${hue}, 75%, 40%); color: white; border: 1px solid rgba(0,0,0,0.1);`;
@@ -1126,11 +1692,80 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
 
         document.getElementById('selectAllVars').checked = false;
         document.getElementById('selectionCard').style.display = 'block';
+        document.getElementById('clearDataBtn').style.display = 'block';
         document.getElementById('placeholderText').style.display = 'none';
         document.getElementById('downloadExcelBtn').style.display = 'none';
         hideDataLimitError();
     })
     .catch(err => alert("Loading Error: " + err.message));
+});
+
+// ── Clear Loaded Data button ──────────────────────────────────────────────────
+document.getElementById('clearDataBtn').addEventListener('click', function() {
+    // Reset all state
+    globalData = null;
+    lastResults = null;
+    lastAnovaResults = null;
+    lastAnovaRawData = null;
+    lastPCAResults = null;
+    lastTestResults = null;
+    lastOriginalTestResults = null;
+    selectedFactors = [];
+    appliedTransformations = {};
+    anovaVarSortModes = {};
+
+    // Reset left panel
+    document.getElementById('excelPasteBox').value = '';
+    document.getElementById('selectionCard').style.display = 'none';
+    document.getElementById('clearDataBtn').style.display = 'none';
+    hideDataLimitError();
+
+    // Reset right panel
+    document.getElementById('resultsArea').style.display = 'none';
+    document.getElementById('placeholderText').style.display = 'block';
+
+    // Clear all results content
+    const statsContent = document.getElementById('statsContent');
+    if (statsContent) statsContent.innerHTML = '';
+    const testResults = document.getElementById('testResults');
+    if (testResults) testResults.innerHTML = '';
+    const anovaResults = document.getElementById('anovaResults');
+    if (anovaResults) anovaResults.innerHTML = '';
+    const pcaResults = document.getElementById('pcaResults');
+    if (pcaResults) pcaResults.innerHTML = '';
+    const assumptionsBoxPlots = document.getElementById('assumptionsBoxPlots');
+    if (assumptionsBoxPlots) assumptionsBoxPlots.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
+    const assumptionsResidualsContent = document.getElementById('assumptionsResidualsContent');
+    if (assumptionsResidualsContent) assumptionsResidualsContent.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
+    const assumptionsQQContent = document.getElementById('assumptionsQQContent');
+    if (assumptionsQQContent) assumptionsQQContent.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
+
+    // Hide optional UI elements
+    const vizResultsHeader = document.getElementById('vizResultsHeader');
+    if (vizResultsHeader) vizResultsHeader.style.display = 'none';
+    const assumptionsResultsArea = document.getElementById('assumptionsResultsArea');
+    if (assumptionsResultsArea) assumptionsResultsArea.style.display = 'none';
+    const anovaTab = document.getElementById('anova-tab');
+    if (anovaTab) anovaTab.style.display = 'none';
+    const exportFullReportBtn = document.getElementById('exportFullReportBtn');
+    if (exportFullReportBtn) exportFullReportBtn.style.display = 'none';
+    const pcaResultsHeader = document.getElementById('pcaResultsHeader');
+    if (pcaResultsHeader) pcaResultsHeader.style.display = 'none';
+    const transformationPanel = document.getElementById('transformationPanel');
+    if (transformationPanel) transformationPanel.style.display = 'none';
+
+    // Reset variable filter
+    const varFilter = document.getElementById('assumptionsVarFilter');
+    if (varFilter) varFilter.innerHTML = '<option value="all">— All variables —</option>';
+
+    // Reset scope state
+    allScopeResults = {};
+    lastAssumptionScopes = [];
+    activeScopeKey = 'all';
+    const scopeTabsEl = document.getElementById('assumptionsScopeTabs');
+    if (scopeTabsEl) scopeTabsEl.innerHTML = '';
+    const scopeInfoEl = document.getElementById('assumptionsScopeInfo');
+    if (scopeInfoEl) { scopeInfoEl.style.display = 'none'; scopeInfoEl.innerHTML = ''; }
 });
 
 // --- 4. Analysis & Export ---
@@ -1199,10 +1834,16 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
     const statsContent = document.getElementById('statsContent');
     const loadingSpinner = document.getElementById('loadingSpinner');
     const vizResultsHeader = document.getElementById('vizResultsHeader');
+    const stopBtn = document.getElementById('stopVizBtn');
+
+    // Cancel any in-progress request
+    if (vizAbortController) vizAbortController.abort();
+    vizAbortController = new AbortController();
 
     // Clear and show loading
     loadingSpinner.style.display = 'flex';
     statsContent.innerHTML = "";
+    if (stopBtn) stopBtn.style.display = 'inline-block';
 
     fetch(API_URL, {
         method: 'POST',
@@ -1211,11 +1852,13 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
             data: globalData,
             target_columns: selectedVars,
             factors: selectedFactors
-        })
+        }),
+        signal: vizAbortController.signal
     })
     .then(res => res.json())
     .then(result => {
         loadingSpinner.style.display = 'none';
+        if (stopBtn) stopBtn.style.display = 'none';
         if (result.error) throw new Error(result.error);
         lastResults = result;
 
@@ -1264,9 +1907,36 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
         })
         .catch(err => {
             loadingSpinner.style.display = 'none';
+            if (document.getElementById('stopVizBtn')) document.getElementById('stopVizBtn').style.display = 'none';
+            if (err.name === 'AbortError') return; // user cancelled
             alert("Visualization Error: " + err.message);
         });
 });
+
+// ── Stop button handlers ──────────────────────────────────────────────────────
+document.getElementById('stopVizBtn').addEventListener('click', function() {
+    if (vizAbortController) { vizAbortController.abort(); vizAbortController = null; }
+    document.getElementById('loadingSpinner').style.display = 'none';
+    this.style.display = 'none';
+});
+
+document.getElementById('stopTestsBtn').addEventListener('click', function() {
+    if (testsAbortController) { testsAbortController.abort(); testsAbortController = null; }
+    document.getElementById('testSpinner').style.display = 'none';
+    const transformPanel = document.getElementById('transformationPanel');
+    if (transformPanel && transformPanel.getAttribute('data-was-visible') === '1') {
+        transformPanel.style.display = 'block';
+        transformPanel.removeAttribute('data-was-visible');
+    }
+    this.style.display = 'none';
+});
+
+document.getElementById('stopAnovaBtn').addEventListener('click', function() {
+    if (anovaAbortController) { anovaAbortController.abort(); anovaAbortController = null; }
+    document.getElementById('anovaSpinner').style.display = 'none';
+    this.style.display = 'none';
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Download Results (Visualizations tab)
 // Excel is built server-side (Python/openpyxl) — better for multi-sheet styling.
@@ -1435,9 +2105,15 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
     const testResults = document.getElementById('testResults');
     const testSpinner = document.getElementById('testSpinner');
     const resultsArea = document.getElementById('assumptionsResultsArea');
+    const stopBtn = document.getElementById('stopTestsBtn');
 
     testResults.innerHTML = "";
     testSpinner.style.display = 'block';
+    if (stopBtn) stopBtn.style.display = 'inline-block';
+
+    // Cancel any in-progress request
+    if (testsAbortController) testsAbortController.abort();
+    testsAbortController = new AbortController();
 
     // ── Also clear ANOVA results (assumptions changed → old ANOVA is stale) ──
     const anovaResults = document.getElementById('anovaResults');
@@ -1449,342 +2125,60 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
     anovaVarSortModes = {};
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Hide the transformation panel while calculations run (spinner visible)
+    // Hide the transformation panel while calculations run
     const transformPanel = document.getElementById('transformationPanel');
     if (transformPanel && transformPanel.style.display !== 'none') transformPanel.setAttribute('data-was-visible', '1');
     if (transformPanel) transformPanel.style.display = 'none';
-
-    // Hide the results area while loading 
     if (resultsArea) resultsArea.style.display = 'none';
 
-    // Apply any active transformations before sending to backend
-    const dataToSend = buildTransformedData(globalData, appliedTransformations);
-
-    // Show a banner in results area if transforms are active
     const hasTransforms = Object.values(appliedTransformations).some(t => t && t.type && t.type !== 'none');
 
-    function runTestsPayload(data) {
-        return {
+    // Build all scope definitions (all data + each factor level) but only FETCH "all" now;
+    // individual factor-level scopes are fetched on demand when the user clicks their tab.
+    const scopes = buildAssumptionScopes();
+    lastAssumptionScopes = scopes;
+    allScopeResults = {}; // clear any stale cached scope results
+
+    const signal = testsAbortController ? testsAbortController.signal : undefined;
+    const allScope = scopes.find(s => s.key === 'all') || scopes[0];
+
+    const fetchT = fetch('/run-tests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: buildTransformedData(allScope.rawData, appliedTransformations), target_columns: selectedVars, factors: selectedFactors }),
+        signal
+    }).then(r => r.json());
+
+    const fetchO = hasTransforms
+        ? fetch('/run-tests', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                data: data,
-                target_columns: selectedVars,
-                factors: selectedFactors
-            })
-        };
-    }
-
-    function renderOneAssumptionBlock(res, blockLabel) {
-        const leveneClass = res.levene.is_homogeneous === null ? 'secondary' : (res.levene.is_homogeneous ? 'success' : 'danger');
-        const leveneText = res.levene.is_homogeneous === null ? 'N/A' : (res.levene.is_homogeneous ? 'equal' : 'unequal');
-        const leveneDetail = res.levene.p != null ? `Levene p = ${res.levene.p.toFixed(4)}` : 'Levene: N/A (single group)';
-
-        // Compute normality summary (all-groups pass/fail)
-        const allNormal = res.shapiro && res.shapiro.length > 0 && res.shapiro.every(s => s.is_normal);
-        const normCount = res.shapiro ? res.shapiro.filter(s => s.is_normal).length : 0;
-        const normTotal = res.shapiro ? res.shapiro.length : 0;
-        const normalityBadgeClass = allNormal ? 'success' : (normCount > 0 ? 'warning' : 'danger');
-        const normalityText = allNormal
-            ? `Normal distribution in all groups (${normCount}/${normTotal} groups, p > 0.05)`
-            : normCount > 0
-                ? `Normality met in ${normCount}/${normTotal} groups`
-                : `Normality not met in any group`;
-
-        return `
-            <div class="mb-3 ${blockLabel ? 'ps-2 border-start border-3 border-primary' : ''}">
-                ${blockLabel ? `<div class="fw-bold text-primary mb-2 small">${blockLabel}</div>` : ''}
-                Homogeneity of variance (Levene's test):<br>
-                <span class="badge bg-${leveneClass}">Variance is ${leveneText} (${leveneDetail})</span>
-                <br><br>
-                Data normality (Shapiro-Wilk test):<br>
-                <span class="badge bg-${normalityBadgeClass} mb-2">${normalityText}</span>
-                <div class="table-responsive">
-                    <table class="table table-sm extra-small">
-                        <thead class="table-light"><tr><th>Group</th><th>p-val</th><th>Res.</th></tr></thead>
-                        <tbody>
-                            ${res.shapiro.map(s => `<tr class="${s.is_normal ? '' : 'table-danger-light'}"><td class="text-truncate" style="max-width:100px;">${s.group}</td><td>${s.p.toFixed(3)}</td><td>${s.is_normal ? '✅' : '❌'}</td></tr>`).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>`;
-    }
-
-    /**
-     * Render side-by-side original+transformed assumption results into a single block.
-     * origRes = original test result, transRes = transformed test result.
-     */
-    function renderSideBySideAssumptionBlock(origRes, transRes) {
-        function leveneInfo(res) {
-            const cls = res.levene.is_homogeneous === null ? 'secondary' : (res.levene.is_homogeneous ? 'success' : 'danger');
-            const txt = res.levene.is_homogeneous === null ? 'N/A' : (res.levene.is_homogeneous ? 'equal' : 'unequal');
-            const p = res.levene.p != null ? `p = ${res.levene.p.toFixed(4)}` : 'N/A';
-            return { cls, txt, p };
-        }
-        const o = leveneInfo(origRes);
-        const t = leveneInfo(transRes);
-
-        const oAllNormal = origRes.shapiro && origRes.shapiro.every(s => s.is_normal);
-        const tAllNormal = transRes.shapiro && transRes.shapiro.every(s => s.is_normal);
-        const oNormCount = origRes.shapiro ? origRes.shapiro.filter(s => s.is_normal).length : 0;
-        const tNormCount = transRes.shapiro ? transRes.shapiro.filter(s => s.is_normal).length : 0;
-        const normTotal = origRes.shapiro ? origRes.shapiro.length : 0;
-
-        function normBadge(count, total, allNorm) {
-            const cls = allNorm ? 'success' : (count > 0 ? 'warning' : 'danger');
-            const txt = allNorm ? `All groups normal (${count}/${total})` : count > 0 ? `${count}/${total} groups normal` : `Not met (0/${total})`;
-            return `<span class="badge bg-${cls}">${txt}</span>`;
-        }
-
-        // Build unified Shapiro table with both columns
-        const groups = origRes.shapiro.map(s => s.group);
-        const origByGroup = {};
-        origRes.shapiro.forEach(s => { origByGroup[s.group] = s; });
-        const transByGroup = {};
-        transRes.shapiro.forEach(s => { transByGroup[s.group] = s; });
-
-        const shapiroRows = groups.map(g => {
-            const os = origByGroup[g] || {};
-            const ts = transByGroup[g] || {};
-            return `<tr>
-                <td class="text-truncate" style="max-width:80px;">${g}</td>
-                <td>${os.p != null ? os.p.toFixed(3) : '—'}</td>
-                <td>${os.is_normal != null ? (os.is_normal ? '✅' : '❌') : '—'}</td>
-                <td>${ts.p != null ? ts.p.toFixed(3) : '—'}</td>
-                <td>${ts.is_normal != null ? (ts.is_normal ? '✅' : '❌') : '—'}</td>
-            </tr>`;
-        }).join('');
-
-        return `
-            <div class="mb-3">
-                Homogeneity of variance (Levene's test):<br>
-                <div class="d-flex gap-2 flex-wrap mt-1 mb-2">
-                    <div><small class="text-muted">Original:</small><br>
-                        <span class="badge bg-${o.cls}">Variance ${o.txt} (${o.p})</span></div>
-                    <div><small class="text-muted">Transformed:</small><br>
-                        <span class="badge bg-${t.cls}">Variance ${t.txt} (${t.p})</span></div>
-                </div>
-                Data normality (Shapiro-Wilk test):<br>
-                <div class="d-flex gap-2 flex-wrap mt-1 mb-2">
-                    <div><small class="text-muted">Original:</small><br>${normBadge(oNormCount, normTotal, oAllNormal)}</div>
-                    <div><small class="text-muted">Transformed:</small><br>${normBadge(tNormCount, normTotal, tAllNormal)}</div>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm extra-small">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Group</th>
-                                <th colspan="2" class="text-center border-start" style="background:#e8f4f8;">Original</th>
-                                <th colspan="2" class="text-center border-start" style="background:#fff8e1;">Transformed</th>
-                            </tr>
-                            <tr style="font-size:0.70rem;">
-                                <th></th>
-                                <th class="border-start" style="background:#e8f4f8;">p-val</th><th style="background:#e8f4f8;">Res.</th>
-                                <th class="border-start" style="background:#fff8e1;">p-val</th><th style="background:#fff8e1;">Res.</th>
-                            </tr>
-                        </thead>
-                        <tbody>${shapiroRows}</tbody>
-                    </table>
-                </div>
-            </div>`;
-    }
-
-    const fetchTransformed = fetch('/run-tests', runTestsPayload(dataToSend)).then(r => r.json());
-    const fetchOriginal = hasTransforms
-        ? fetch('/run-tests', runTestsPayload(globalData)).then(r => r.json())
+            body: JSON.stringify({ data: allScope.rawData, target_columns: selectedVars, factors: selectedFactors }),
+            signal
+          }).then(r => r.json())
         : Promise.resolve(null);
 
-    Promise.all([fetchTransformed, fetchOriginal])
-    .then(([data, originalData]) => {
+    Promise.all([fetchT, fetchO]).then(([transformedResult, originalResult]) => {
         testSpinner.style.display = 'none';
-        const resultsArea = document.getElementById('assumptionsResultsArea');
+        if (stopBtn) stopBtn.style.display = 'none';
         if (resultsArea) resultsArea.style.display = 'block';
-
-        // Restore the transformation panel now that calculations are done
-        const transformPanel = document.getElementById('transformationPanel');
         if (transformPanel) transformPanel.style.display = 'block';
 
-        if (data.error) throw new Error(data.error);
-        if (originalData && originalData.error) throw new Error(originalData.error);
+        if (transformedResult.error) throw new Error(transformedResult.error);
+        if (originalResult && originalResult.error) throw new Error(originalResult.error);
 
-        lastTestResults = data;
-        lastOriginalTestResults = originalData || null;
+        // Cache only the "all" scope; others will be fetched on demand
+        allScopeResults['all'] = { data: transformedResult, originalData: originalResult || null };
 
-        populateTransformationPanel(data.results, selectedVars);
+        // Primary results → feed transformation panel
+        lastTestResults         = allScopeResults['all'].data;
+        lastOriginalTestResults = allScopeResults['all'].originalData || null;
+        populateTransformationPanel(lastTestResults.results, selectedVars);
 
-        const factorsLabel = selectedFactors.join(', ');
-        const originalByVar = (lastOriginalTestResults && lastOriginalTestResults.results)
-            ? lastOriginalTestResults.results.reduce((acc, r) => { acc[r.variable] = r; return acc; }, {})
-            : {};
-
-        if (hasTransforms) {
-            const activeList = Object.entries(appliedTransformations)
-                .filter(([, cfg]) => cfg && cfg.type && cfg.type !== 'none')
-                .map(([v, cfg]) => `<strong>${v}</strong>: ${getTransformLabel(cfg.type, cfg.power)}`)
-                .join(' &nbsp;|&nbsp; ');
-            const banner = document.createElement('div');
-            banner.className = 'alert alert-info py-2 px-3 mb-3 small';
-            banner.style.fontSize = '0.78rem';
-            banner.innerHTML = `<i class="bi bi-arrow-left-right me-1 text-warning"></i>
-                <strong>Tests run on transformed data.</strong> Active transformations: ${activeList}.
-                Use <em>Reset to Original Data</em> in the panel above to revert.`;
-            testResults.appendChild(banner);
-        }
-
-        // Normality sub-tab: summary per variable; for transformed vars show side-by-side columns
-        data.results.forEach(res => {
-            const section = document.createElement('div');
-            section.className = "mb-4 p-4 border rounded bg-white shadow-sm";
-            const hasTransformForVar = hasTransforms && appliedTransformations[res.variable] && appliedTransformations[res.variable].type !== 'none';
-            const origRes = hasTransformForVar ? originalByVar[res.variable] : null;
-
-            let bodyHtml = '';
-            if (origRes) {
-                bodyHtml += renderSideBySideAssumptionBlock(origRes, res);
-            } else {
-                bodyHtml += renderOneAssumptionBlock(res, null);
-            }
-            section.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-                    <h5 class="fw-bold text-primary mb-0">Variable: ${res.variable}</h5>
-                    ${hasTransformForVar ? `<span class="badge bg-warning text-dark" style="font-size:0.72rem;"><i class="bi bi-arrow-left-right me-1"></i>Transformation method used: ${getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power)}</span>` : ''}
-                </div>
-                ${bodyHtml}
-            `;
-            testResults.appendChild(section);
-        });
-
-        // Box Plots sub-tab: interactive Plotly with green/red by normality, click-to-remove outliers
-        const assumptionsBoxPlots = document.getElementById('assumptionsBoxPlots');
-        if (assumptionsBoxPlots) {
-            assumptionsBoxPlots.innerHTML = '';
-            data.results.forEach((res, resIdx) => {
-                const normalityByGroup = {};
-                if (res.shapiro) res.shapiro.forEach(s => { normalityByGroup[s.group] = !!s.is_normal; });
-
-                const hasTransformForVar = hasTransforms && appliedTransformations[res.variable] && appliedTransformations[res.variable].type !== 'none';
-                const origRes = hasTransformForVar ? originalByVar[res.variable] : null;
-
-                const card = document.createElement('div');
-                card.className = 'plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border mb-4';
-                const plotDivId = 'assumptions-plot-' + resIdx + '-' + (res.variable || '').replace(/\W/g, '_');
-                const plotDivIdOrig = plotDivId + '-orig';
-                const transformLabel = hasTransformForVar ? getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power) : '';
-
-                const toggleBtnHtml = hasTransformForVar && origRes ? `
-                    <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
-                        <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>Transformation method used: ${transformLabel}</span>
-                        <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
-                                style="font-size:0.70rem; padding:2px 8px;"
-                                data-transformed="${plotDivId}" data-original="${plotDivIdOrig}"
-                                data-showing="transformed">
-                            <i class="bi bi-eye me-1"></i> Show Original
-                        </button>
-                    </div>` : '';
-
-                card.innerHTML = `
-                    <h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6>
-                    ${toggleBtnHtml}
-                    <div id="${plotDivId}" class="assumptions-plot-container"></div>
-                    ${hasTransformForVar && origRes ? `<div id="${plotDivIdOrig}" class="assumptions-plot-container" style="display:none;"></div>` : ''}`;
-                assumptionsBoxPlots.appendChild(card);
-
-                if (res.plot_data && res.plot_data.length) {
-                    renderPlotlyBoxSwarmAssumptions(plotDivId, res.plot_data, hasTransformForVar ? res.variable + ' (transformed)' : res.variable, factorsLabel, normalityByGroup, 'runTestsBtn', res.box_stats);
-                }
-                if (hasTransformForVar && origRes && origRes.plot_data && origRes.plot_data.length) {
-                    const origNormalityByGroup = {};
-                    if (origRes.shapiro) origRes.shapiro.forEach(s => { origNormalityByGroup[s.group] = !!s.is_normal; });
-                    renderPlotlyBoxSwarmAssumptions(plotDivIdOrig, origRes.plot_data, res.variable + ' (original)', factorsLabel, origNormalityByGroup, 'runTestsBtn', origRes.box_stats);
-                }
-            });
-        }
-
-        // Residuals vs Fitted and Normal Q-Q: one plot per variable when residuals_data is present
-        const residualsContent = document.getElementById('assumptionsResidualsContent');
-        const qqContent = document.getElementById('assumptionsQQContent');
-        if (residualsContent) {
-            residualsContent.innerHTML = '';
-            if (!data.results.some(r => r.residuals_data && r.residuals_data.length)) {
-                residualsContent.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
-            } else {
-                data.results.forEach((res, resIdx) => {
-                    if (!res.residuals_data || !res.residuals_data.length) return;
-
-                    const hasTransformForVar = hasTransforms && appliedTransformations[res.variable] && appliedTransformations[res.variable].type !== 'none';
-                    const origRes = hasTransformForVar ? originalByVar[res.variable] : null;
-                    const transformLabel = hasTransformForVar ? getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power) : '';
-
-                    const card = document.createElement('div');
-                    card.className = 'plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border mb-4';
-                    const divId = 'diag-res-' + resIdx + '-' + (res.variable || '').replace(/\W/g, '_');
-                    const divIdOrig = divId + '-orig';
-
-                    const toggleBtnHtml = hasTransformForVar && origRes && origRes.residuals_data && origRes.residuals_data.length ? `
-                        <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
-                            <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>Transformation method used: ${transformLabel}</span>
-                            <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
-                                    style="font-size:0.70rem; padding:2px 8px;"
-                                    data-transformed="${divId}" data-original="${divIdOrig}"
-                                    data-showing="transformed">
-                                <i class="bi bi-eye me-1"></i> Show Original
-                            </button>
-                        </div>` : '';
-
-                    card.innerHTML = `
-                        <h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6>
-                        ${toggleBtnHtml}
-                        <div id="${divId}" class="assumptions-plot-container" style="min-height: 400px; width: 100%;"></div>
-                        ${hasTransformForVar && origRes && origRes.residuals_data && origRes.residuals_data.length ? `<div id="${divIdOrig}" class="assumptions-plot-container" style="min-height: 400px; width: 100%; display:none;"></div>` : ''}`;
-                    residualsContent.appendChild(card);
-                    renderResidualsVsFitted(divId, res.residuals_data, hasTransformForVar ? res.variable + ' (transformed)' : res.variable, resIdx);
-                    if (hasTransformForVar && origRes && origRes.residuals_data && origRes.residuals_data.length) {
-                        renderResidualsVsFitted(divIdOrig, origRes.residuals_data, res.variable + ' (original)', resIdx);
-                    }
-                });
-            }
-        }
-        if (qqContent) {
-            qqContent.innerHTML = '';
-            if (!data.results.some(r => r.residuals_data && r.residuals_data.length)) {
-                qqContent.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
-            } else {
-                data.results.forEach((res, resIdx) => {
-                    if (!res.residuals_data || !res.residuals_data.length) return;
-
-                    const hasTransformForVar = hasTransforms && appliedTransformations[res.variable] && appliedTransformations[res.variable].type !== 'none';
-                    const origRes = hasTransformForVar ? originalByVar[res.variable] : null;
-                    const transformLabel = hasTransformForVar ? getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power) : '';
-
-                    const card = document.createElement('div');
-                    card.className = 'plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border mb-4';
-                    const divId = 'diag-qq-' + resIdx + '-' + (res.variable || '').replace(/\W/g, '_');
-                    const divIdOrig = divId + '-orig';
-
-                    const toggleBtnHtml = hasTransformForVar && origRes && origRes.residuals_data && origRes.residuals_data.length ? `
-                        <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
-                            <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>Transformation method used: ${transformLabel}</span>
-                            <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
-                                    style="font-size:0.70rem; padding:2px 8px;"
-                                    data-transformed="${divId}" data-original="${divIdOrig}"
-                                    data-showing="transformed">
-                                <i class="bi bi-eye me-1"></i> Show Original
-                            </button>
-                        </div>` : '';
-
-                    card.innerHTML = `
-                        <h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6>
-                        ${toggleBtnHtml}
-                        <div id="${divId}" class="assumptions-plot-container" style="min-height: 400px; width: 100%;"></div>
-                        ${hasTransformForVar && origRes && origRes.residuals_data && origRes.residuals_data.length ? `<div id="${divIdOrig}" class="assumptions-plot-container" style="min-height: 400px; width: 100%; display:none;"></div>` : ''}`;
-                    qqContent.appendChild(card);
-                    renderNormalQQ(divId, res.residuals_data, hasTransformForVar ? res.variable + ' (transformed)' : res.variable, resIdx);
-                    if (hasTransformForVar && origRes && origRes.residuals_data && origRes.residuals_data.length) {
-                        renderNormalQQ(divIdOrig, origRes.residuals_data, res.variable + ' (original)', resIdx);
-                    }
-                });
-            }
-        }
+        // Render scope tabs + initial content (always start on "All data")
+        activeScopeKey = 'all';
+        renderAssumptionScopeTabs(scopes, 'all');
+        renderAssumptionScopeContent('all');
 
         // Unhide the ANOVA tab
         const anovaTab = document.getElementById('anova-tab');
@@ -1793,6 +2187,8 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
     })
     .catch(err => {
         testSpinner.style.display = 'none';
+        if (stopBtn) stopBtn.style.display = 'none';
+        if (err.name === 'AbortError') return;
         alert("Testing Error: " + err.message);
     });
 });
@@ -1808,15 +2204,21 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
     const anovaSpinner = document.getElementById('anovaSpinner');
     const anovaResults = document.getElementById('anovaResults');
     const exportBtn = document.getElementById('exportFullReportBtn');
+    const stopBtn = document.getElementById('stopAnovaBtn');
 
     // Ensure override dropdown is in sync with current factor count
     syncOverrideSelect();
 
     anovaResults.innerHTML = "";
     anovaSpinner.style.display = 'block';
+    if (stopBtn) stopBtn.style.display = 'inline-block';
     if (exportBtn) exportBtn.style.display = 'none';
     lastAnovaRawData = null;
     anovaVarSortModes = {};
+
+    // Cancel any in-progress request
+    if (anovaAbortController) anovaAbortController.abort();
+    anovaAbortController = new AbortController();
 
     // Use transformed data if transformations are active
     const dataToSend = buildTransformedData(globalData, appliedTransformations);
@@ -1832,11 +2234,13 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
             factors: selectedFactors,
             grouping_mode: (document.getElementById('groupingMode') || {}).value || 'all_combined',
             manual_override: overrideVal
-        })
+        }),
+        signal: anovaAbortController ? anovaAbortController.signal : undefined
     })
     .then(res => res.json())
     .then(data => {
         anovaSpinner.style.display = 'none';
+        if (stopBtn) stopBtn.style.display = 'none';
 
         if (data.error) {
             console.error("Backend ANOVA error:", data.error);
@@ -1868,10 +2272,81 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
     })
     .catch(err => {
         anovaSpinner.style.display = 'none';
+        if (stopBtn) stopBtn.style.display = 'none';
+        if (err.name === 'AbortError') return; // user cancelled
         console.error(err);
         document.getElementById('anovaResults').innerHTML = `<div class="alert alert-danger">Request failed: ${err.message}</div>`;
     });
 });
+
+// ── ANOVA Plotly bar chart (mean ± SD with letter annotations) ────────────────
+/**
+ * Render a mean ± SD bar chart with compact letter display (CLD) above bars.
+ * containerId: id of the target div; letterGroups: [{group,mean,std,n,letter}];
+ * res: the full ANOVA result object (for p, test name, variable name).
+ */
+function renderAnovaBarChart(containerId, letterGroups, res) {
+    if (!window.Plotly || !letterGroups || !letterGroups.length) return;
+    const el = document.getElementById(containerId);
+    if (!el) return;
+
+    const groups = letterGroups.map(g => g.group);
+    const means  = letterGroups.map(g => g.mean);
+    const stds   = letterGroups.map(g => g.std);
+    const ns     = letterGroups.map(g => g.n);
+    const letters = letterGroups.map(g => g.letter);
+    const n = groups.length;
+
+    // Color bars with a spectral-like hue spread
+    const colors = groups.map((_, i) => `hsl(${Math.round(i / Math.max(n - 1, 1) * 260 + 20)}, 65%, 55%)`);
+
+    const trace = {
+        x: groups,
+        y: means,
+        error_y: { type: 'data', array: stds, visible: true, color: '#555', thickness: 1.5, width: 5 },
+        type: 'bar',
+        marker: { color: colors, line: { color: '#333', width: 0.5 } },
+        hovertemplate: groups.map((g, i) =>
+            `<b>${g}</b><br>Mean: ${means[i].toFixed(4)}<br>SD: ${stds[i].toFixed(4)}<br>N: ${ns[i]}<br>Letter: <b>${letters[i]}</b><extra></extra>`
+        ),
+    };
+
+    // Letter annotations positioned just above the top of the error bar
+    const yMax = Math.max(...means.map((m, i) => m + (stds[i] || 0)));
+    const yRange = yMax - Math.min(...means);
+    const offset = (yRange > 0 ? yRange : Math.abs(yMax)) * 0.04 + 0.001;
+    const annotations = letterGroups.map((g, i) => ({
+        x: g.group,
+        y: g.mean + (g.std || 0) + offset,
+        text: `<b>${g.letter}</b>`,
+        showarrow: false,
+        font: { size: 13, color: '#111' },
+        yanchor: 'bottom',
+    }));
+
+    const overallP = res.overall_p !== null ? res.overall_p.toFixed(4) : '—';
+    const testInfo = `${res.test_used || ''} | p = ${overallP}` +
+        (res.effect_size != null ? ` | ${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}` : '');
+
+    const layout = {
+        xaxis: { tickangle: groups.length > 6 ? -35 : 0, automargin: true },
+        yaxis: { title: res.variable || '', zeroline: true, zerolinewidth: 1, zerolinecolor: '#ccc' },
+        margin: { t: 28, b: 80, l: 60, r: 16 },
+        bargap: 0.3,
+        annotations: [
+            ...annotations,
+            { x: 0, y: 1.04, xref: 'paper', yref: 'paper', text: testInfo,
+              showarrow: false, font: { size: 9, color: '#555' }, xanchor: 'left' }
+        ],
+        autosize: true,
+        height: 340,
+        plot_bgcolor: 'white',
+        paper_bgcolor: 'white',
+    };
+
+    Plotly.newPlot(containerId, [trace], layout, { responsive: true, displayModeBar: false });
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ── Helper: build the summary table HTML for one variable's results ───────────
 function buildVariableSummaryHTML(varResults, sortMode, varName) {
@@ -1897,12 +2372,14 @@ function buildVariableSummaryHTML(varResults, sortMode, varName) {
             </div>`;
     })() : '';
 
+    let sliceIdx = 0;
     varResults.forEach(res => {
         const sliceInfo = res.slice_label && res.slice_label !== 'All'
             ? `<span class="text-muted">${res.slice_label}</span>`
             : 'All groups';
 
         const sortedGroups = sortLetterGroups(res.letter_groups, sortMode || 'data_order');
+        const chartId = `anova-bar-${(varName || 'v').replace(/\W/g, '_')}-${sliceIdx++}`;
 
         if (sortedGroups && sortedGroups.length > 0) {
             html += `
@@ -1911,12 +2388,15 @@ function buildVariableSummaryHTML(varResults, sortMode, varName) {
                         <h6 class="mb-0 fw-bold">${sliceInfo}</h6>
                         <span class="badge bg-primary">${res.test_used}</span>
                     </div>
-                    ${res.plot_url ? `
-                    <div class="text-center mb-3">
-                        <img src="data:image/png;base64,${res.plot_url}"
-                             class="img-fluid rounded shadow-sm"
-                             style="max-height: 420px; border: 1px solid #e9ecef;">
-                    </div>` : ''}
+                    <div id="${chartId}" class="anova-bar-chart-placeholder mb-3"
+                         data-letter-groups="${encodeURIComponent(JSON.stringify(sortedGroups))}"
+                         data-res-variable="${encodeURIComponent(res.variable || '')}"
+                         data-res-test="${encodeURIComponent(res.test_used || '')}"
+                         data-res-p="${res.overall_p !== null ? res.overall_p : ''}"
+                         data-res-effect="${res.effect_size !== null && res.effect_size !== undefined ? res.effect_size : ''}"
+                         data-res-effect-label="${encodeURIComponent(res.effect_size_label || 'η²')}"
+                         style="height:340px;">
+                    </div>
                     <div class="alert alert-info py-2 small mb-2">
                         <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong> |
                         Normality: ${res.assumptions && res.assumptions.all_normal ? '✓' : '✗'} |
@@ -2064,6 +2544,21 @@ function renderAnovaResults(data) {
             </div>
         `;
         anovaResults.appendChild(section);
+
+        // Render Plotly bar charts into the placeholder divs just added to the DOM
+        section.querySelectorAll('.anova-bar-chart-placeholder').forEach(div => {
+            try {
+                const letterGroups = JSON.parse(decodeURIComponent(div.dataset.letterGroups || '[]'));
+                const fakeRes = {
+                    variable:          decodeURIComponent(div.dataset.resVariable || ''),
+                    test_used:         decodeURIComponent(div.dataset.resTest || ''),
+                    overall_p:         div.dataset.resP !== '' ? parseFloat(div.dataset.resP) : null,
+                    effect_size:       div.dataset.resEffect !== '' ? parseFloat(div.dataset.resEffect) : null,
+                    effect_size_label: decodeURIComponent(div.dataset.resEffectLabel || 'η²'),
+                };
+                renderAnovaBarChart(div.id, letterGroups, fakeRes);
+            } catch (e) { /* skip if data is malformed */ }
+        });
     });
 }
 
@@ -2084,7 +2579,8 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
         const plotSelectors = [
             { selector: '#assumptionsBoxPlots .js-plotly-plot', type: 'box' },
             { selector: '#assumptionsResidualsContent .js-plotly-plot', type: 'residuals' },
-            { selector: '#assumptionsQQContent .js-plotly-plot', type: 'qq' }
+            { selector: '#assumptionsQQContent .js-plotly-plot', type: 'qq' },
+            { selector: '#anovaResults .anova-bar-chart-placeholder.js-plotly-plot', type: 'anova' }
         ];
 
         for (const { selector, type } of plotSelectors) {
@@ -2167,7 +2663,7 @@ $(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function (e) {
     if (targetId === "#assumptions-residuals" || targetId === "#assumptions-qq" || targetId === "#assumptions-boxplots") {
         // Find all Plotly plots inside the newly visible tab
         const containers = document.querySelectorAll(targetId + ' .assumptions-plot-container, ' + targetId + ' [id^="plot-box-swarm-"]');
-        
+
         containers.forEach(container => {
             // Only resize if Plotly has already been initialized on this div
             if (container.classList.contains('js-plotly-plot')) {

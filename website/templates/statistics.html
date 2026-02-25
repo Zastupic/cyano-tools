@@ -61,6 +61,9 @@
     #assumptionsQQContent .table { font-size: 0.70rem; }
     /* Grey info boxes in every sub-tab: smaller than body text */
     #assumptionsSubTabContent .alert-secondary { font-size: 0.60rem !important; }
+    /* Scope tabs row */
+    #assumptionsScopeTabs .scope-tab-btn { transition: all 0.15s ease; }
+    #assumptionsScopeTabs .scope-group-label { font-size: 0.65rem; color: #888; align-self: center; white-space: nowrap; margin: 0 2px; }
 </style>
 <div class="page-wrapper">
     <div class="wrapper-box">
@@ -72,7 +75,7 @@
                         <i class="bi bi-graph-up-arrow"></i> Statistics Tool
                     </h2>
                     <p class="lead mb-4" style="font-size: 1.1rem;">
-                        Streamline analysis of wet-lab cultivation experiments and physiological assays. 
+                        Streamline analysis of wet-lab cultivation experiments and physiological assays.
                         Process complex datasets with multi-factor grouping, descriptive statistics, and instant visualizations.
                     </p>
                     <!-- Key Features Grid -->
@@ -114,10 +117,15 @@
                     <div class="accordion" id="requirementsAccordion">
                         <div class="card">
                             <div class="card-header" id="headingRequirements">
-                                <h5 class="mb-0">
-                                    <button class="btn btn-link collapsed w-100 text-left" type="button" data-toggle="collapse" data-target="#dataRequirements" aria-expanded="false" aria-controls="dataRequirements">
+                                <h5 class="mb-0 d-flex align-items-center flex-wrap" style="gap:0.5rem;">
+                                    <button class="btn btn-link collapsed text-left flex-grow-1" type="button" data-toggle="collapse" data-target="#dataRequirements" aria-expanded="false" aria-controls="dataRequirements" style="min-width:0;">
                                         <i class="bi bi-info-circle mr-2"></i> Data Requirements & Best Practices
                                     </button>
+                                    <a href="{{url_for('static', filename='files/ExampleStatisticsData.xlsx')}}"
+                                       class="btn btn-outline-primary btn-sm flex-shrink-0"
+                                       download style="font-size:0.82rem;">
+                                        <i class="bi bi-download mr-1"></i> Download Example Dataset
+                                    </a>
                                 </h5>
                             </div>
                             <div id="dataRequirements" class="collapse" aria-labelledby="headingRequirements" data-parent="#requirementsAccordion">
@@ -139,21 +147,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Example Data Download Button Inside Accordion -->
-                                    <div class="row mt-3">
-                                        <div class="col-12">
-                                            <hr class="my-3">
-                                            <div class="text-center">
-                                                <p class="small text-muted mb-2">Need a sample dataset to get started?</p>
-                                                <a href="{{url_for('static', filename='files/ExampleStatisticsData.xlsx')}}" 
-                                                   class="btn btn-outline-primary btn-sm" 
-                                                   download>
-                                                    <i class="bi bi-download mr-1"></i> Download Example Dataset
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -175,11 +169,14 @@
                     <p class="small text-muted mb-2">
                         <i class="bi bi-info-circle"></i> Maximum: 100 rows, 50 columns
                     </p>
-                    <textarea id="excelPasteBox" class="form-control mb-2" rows="6" 
+                    <textarea id="excelPasteBox" class="form-control mb-2" rows="6"
                               placeholder="Paste your Excel data with headers here..."></textarea>
                     <div id="dataLimitError" class="alert alert-danger small py-2 mb-3" role="alert" style="display: none;"></div>
                     <button id="processDataBtn" class="btn btn-primary w-100 fw-bold shadow-sm">
                         <i class="bi bi-upload"></i> Load Data
+                    </button>
+                    <button id="clearDataBtn" class="btn btn-outline-danger w-100 mt-2 shadow-sm" style="display:none;">
+                        <i class="bi bi-x-circle"></i> Clear Loaded Data
                     </button>
                     <!-- Selection Card (hidden initially) -->
                     <div id="selectionCard" class="mt-4" style="display:none;">
@@ -189,7 +186,7 @@
                         <p class="small text-muted mb-3">
                             Choose up to 3 factors to categorize your data
                         </p>
-                        
+
                         <div class="mb-3">
                             <select id="factorSelector" class="form-control form-control-sm">
                                 <option value="">-- Choose Factor --</option>
@@ -205,8 +202,8 @@
                                 Select All Variables
                             </label>
                         </div>
-                        
-                        <div id="checkboxContainer" class="mb-3" 
+
+                        <div id="checkboxContainer" class="mb-3"
                              style="max-height: 300px; overflow-y: auto; padding-right: 5px;"></div>
                         <button id="updateAnalysisBtn" class="btn btn-success w-100 fw-bold shadow-sm">
                             <i class="bi bi-play-fill"></i> Confirm Selection & Start Analyses
@@ -256,6 +253,9 @@
                                     <button id="runVizBtn" class="btn btn-primary btn-sm">
                                         <i class="bi bi-play-fill"></i> Run Visualizations
                                     </button>
+                                    <button id="stopVizBtn" class="btn btn-danger btn-sm" style="display:none;">
+                                        <i class="bi bi-stop-fill"></i> Stop
+                                    </button>
                                     <div id="vizResultsHeader" style="display:none;" class="ms-2">
                                         <button id="downloadExcelBtn" class="btn btn-outline-success btn-sm">
                                             <i class="bi bi-file-earmark-excel"></i> Download Results
@@ -266,11 +266,11 @@
                                         </span>
                                     </div>
                                 </div>
-                            
+
                                 <div id="loadingSpinner" class="loader-container" style="display: none;">
                                     <div class="custom-spinner"></div>
                                 </div>
-                            
+
                                 <div id="statsContent" class="row"></div>
                             </div>
                         </div>
@@ -296,9 +296,12 @@
                                     <hr class="my-2" style="opacity:0.25;">
                                     <p style="font-size:0.70rem;" class="mb-1 text-muted"><strong><i class="bi bi-signpost-split me-1"></i> Next step — ANOVA Tests tab:</strong> Results here determine which significance test is most appropriate. In the <em>ANOVA Tests</em> tab you can either let the tool <strong>select automatically</strong> based on these results, or <strong>choose a parametric or non-parametric test manually</strong>. The automated logic is: Both passed → <strong>One-way ANOVA</strong> + Tukey HSD; Only normality → <strong>Welch's ANOVA</strong> + Games-Howell (BH); Only homogeneity → <strong>Kruskal–Wallis</strong> + Dunn's (BH); Neither → <strong>Kruskal–Wallis</strong> + Dunn's (BH).</p>
                                 </div>
-                        
-                                <button id="runTestsBtn" class="btn btn-primary btn-sm mb-4"><i class="bi bi-play-fill"></i> Run Normality &amp; Variance Tests</button>
-                        
+
+                                <div class="d-flex align-items-center flex-wrap mb-4" style="gap:0.75rem;">
+                                    <button id="runTestsBtn" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run Normality &amp; Variance Tests</button>
+                                    <button id="stopTestsBtn" class="btn btn-danger btn-sm" style="display:none;"><i class="bi bi-stop-fill"></i> Stop</button>
+                                </div>
+
                                 <div id="testSpinner" class="text-center py-4" style="display: none;">
                                     <div class="spinner-border text-primary" role="status"></div>
                                     <p class="mt-2 text-muted small">Performing statistical calculations...</p>
@@ -359,17 +362,21 @@
                                 <!-- ═══════════════════════════════════════════ -->
 
                                 <div id="assumptionsResultsArea" style="display: none;">
+                                    <!-- Scope tabs: All data + per factor-level -->
+                                    <div id="assumptionsScopeTabs" class="d-flex flex-wrap align-items-center mb-2" style="gap:0.35rem; overflow-x:auto; padding-bottom:2px;"></div>
+                                    <!-- Active scope context banner (hidden when "All data") -->
+                                    <div id="assumptionsScopeInfo" style="display:none;"></div>
                                     <ul class="nav nav-pills mb-2 small" id="assumptionsSubTabs" role="tablist">
                                         <li class="nav-item"><a class="nav-link active py-1 px-2" id="assumptions-normality-tab" data-toggle="tab" data-target="#assumptions-normality" href="#assumptions-normality" role="tab">Assumptions Summary</a></li>
                                         <li class="nav-item"><a class="nav-link py-1 px-2" id="assumptions-boxplots-tab" data-toggle="tab" data-target="#assumptions-boxplots" href="#assumptions-boxplots" role="tab">Box Plots</a></li>
                                         <li class="nav-item"><a class="nav-link py-1 px-2" id="assumptions-residuals-tab" data-toggle="tab" data-target="#assumptions-residuals" href="#assumptions-residuals" role="tab">Residuals vs Fitted</a></li>
                                         <li class="nav-item"><a class="nav-link py-1 px-2" id="assumptions-qq-tab" data-toggle="tab" data-target="#assumptions-qq" href="#assumptions-qq" role="tab">Normal Q-Q</a></li>
                                     </ul>
-                        
+
                                     <hr class="my-2 border-secondary" style="opacity: 0.35;">
-                        
+
                                     <div class="tab-content pt-2" id="assumptionsSubTabContent">
-                                        
+
                                         <div class="tab-pane fade show active" id="assumptions-normality" role="tabpanel">
                                             <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
                                                 <p class="mb-1"><strong><i class="bi bi-table me-1"></i> About this table:</strong> The summary below shows the combined results of two statistical assumption tests run for each variable:</p>
@@ -388,7 +395,7 @@
                                             </div>
                                             <div id="testResults"></div>
                                         </div>
-                        
+
                                         <div class="tab-pane fade" id="assumptions-boxplots" role="tabpanel">
                                             <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
                                                 <p class="mb-1"><strong><i class="bi bi-box me-1"></i> What these plots show:</strong> One box plot per variant (group) for each variable, showing the full data distribution. Use these to visually inspect whether each group is roughly symmetric and whether spread (variance) differs markedly between groups — both key ANOVA assumptions.</p>
@@ -401,7 +408,7 @@
                                             </div>
                                             <div id="assumptionsBoxPlots"><p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p></div>
                                         </div>
-                        
+
                                         <div class="tab-pane fade" id="assumptions-residuals" role="tabpanel">
                                             <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
                                                 <p class="mb-1"><strong><i class="bi bi-scatter-chart me-1"></i> Residuals vs Fitted — Primary purpose: Homogeneity of Variances</strong></p>
@@ -414,7 +421,7 @@
                                             </div>
                                             <div id="assumptionsResidualsContent"><p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p></div>
                                         </div>
-                        
+
                                         <div class="tab-pane fade" id="assumptions-qq" role="tabpanel">
                                             <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
                                                 <p class="mb-1"><strong><i class="bi bi-graph-up me-1"></i> Normal Q-Q — Primary purpose: Normality of Residuals</strong></p>
@@ -427,7 +434,7 @@
                                             </div>
                                             <div id="assumptionsQQContent"><p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p></div>
                                         </div>
-                        
+
                                     </div>
                                 </div>
                             </div>
@@ -544,6 +551,9 @@
                                     <button id="runAnovaBtn" class="btn btn-success btn-sm">
                                         <i class="bi bi-lightning-fill"></i> Run ANOVA Tests
                                     </button>
+                                    <button id="stopAnovaBtn" class="btn btn-danger btn-sm" style="display:none;">
+                                        <i class="bi bi-stop-fill"></i> Stop
+                                    </button>
                                     <button id="exportFullReportBtn" class="btn btn-outline-success btn-sm" style="display: none;">
                                         <i class="bi bi-file-earmark-excel"></i> Export Full Report
                                     </button>
@@ -619,7 +629,7 @@
             <div class="modal-body p-3">
                 <p id="modalMessage" class="small mb-0 text-dark"></p>
                 <div class="mt-3 p-2 bg-light rounded shadow-sm" style="font-size: 0.75rem;">
-                    <i class="bi bi-info-circle-fill text-primary me-1"></i> 
+                    <i class="bi bi-info-circle-fill text-primary me-1"></i>
                     <strong>Note:</strong> After removing, Assumptions and all statistical significance (ANOVA/Letters) should be recalculated.
                 </div>
             </div>
