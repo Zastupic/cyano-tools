@@ -62,6 +62,27 @@
         text-decoration: none;
     }
 
+    /* Accordion header icon + subtitle layout */
+    #calculatorsAccordion .card-header .accordion-header-inner {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65em;
+    }
+    #calculatorsAccordion .card-header .accordion-icon {
+        color: #17a2b8;
+        margin-top: 0.18em;
+        flex-shrink: 0;
+        font-size: 1.05em;
+    }
+    #calculatorsAccordion .card-header .accordion-subtitle {
+        display: block;
+        font-size: 0.78em;
+        font-weight: normal;
+        color: #5a7a8a;
+        margin-top: 0.15em;
+        line-height: 1.3;
+    }
+
     /* Collapsible reference/note blocks (details > summary) */
     #calculatorsAccordion .card-body details > summary {
         background-color: #e8f4f8;
@@ -81,7 +102,13 @@
                 <button class="btn btn-link collapsed text-left w-100" type="button"
                         data-toggle="collapse" data-target="#collapseCO2"
                         aria-expanded="false" aria-controls="collapseCO2">
-                    <strong>CO<sub>2</sub> concentration in sparging gas</strong>
+                    <span class="accordion-header-inner">
+                        <i class="fa fa-cloud fa-fw accordion-icon" aria-hidden="true"></i>
+                        <span>
+                            <strong>CO<sub>2</sub> concentration in sparging gas</strong>
+                            <span class="accordion-subtitle">Calculate CO₂ flow rates or resulting ppm concentration in air + CO₂ mixtures</span>
+                        </span>
+                    </span>
                 </button>
             </h4>
         </div>
@@ -282,7 +309,13 @@
                 <button class="btn btn-link collapsed text-left w-100" type="button"
                         data-toggle="collapse" data-target="#collapsedO2"
                         aria-expanded="false" aria-controls="collapsedO2">
-                    <strong>Equilibrium concentration of dissolved O<sub>2</sub> and CO<sub>2</sub> in water</strong>
+                    <span class="accordion-header-inner">
+                        <i class="fa fa-tint fa-fw accordion-icon" aria-hidden="true"></i>
+                        <span>
+                            <strong>Equilibrium concentration of dissolved O<sub>2</sub> and CO<sub>2</sub> in water</strong>
+                            <span class="accordion-subtitle">Dissolved gas solubility as a function of temperature, salinity, and pressure</span>
+                        </span>
+                    </span>
                 </button>
             </h4>
         </div>
@@ -428,7 +461,13 @@
                 <button class="btn btn-link collapsed text-left w-100" type="button"
                         data-toggle="collapse" data-target="#collapseGrowth"
                         aria-expanded="false" aria-controls="collapseGrowth">
-                    <strong>Specific growth rate and doubling time</strong>
+                    <span class="accordion-header-inner">
+                        <i class="fa fa-line-chart fa-fw accordion-icon" aria-hidden="true"></i>
+                        <span>
+                            <strong>Specific growth rate and doubling time</strong>
+                            <span class="accordion-subtitle">Interconvert specific growth rate (µ) and doubling time (DT) for any time unit</span>
+                        </span>
+                    </span>
                 </button>
             </h4>
         </div>
@@ -562,7 +601,13 @@
                 <button class="btn btn-link collapsed text-left w-100" type="button"
                         data-toggle="collapse" data-target="#collapseODcorr"
                         aria-expanded="false" aria-controls="collapseODcorr">
-                    <strong>Correcting OD<sub>720</sub> signal non-linearity (FMT-150, MC-1000, AquaPen)</strong>
+                    <span class="accordion-header-inner">
+                        <i class="fa fa-adjust fa-fw accordion-icon" aria-hidden="true"></i>
+                        <span>
+                            <strong>Correcting OD<sub>720</sub> signal non-linearity (FMT-150, MC-1000, AquaPen)</strong>
+                            <span class="accordion-subtitle">Correct OD₇₂₀ readings above 0.4 for FMT-150, MC-1000, and AquaPen instruments</span>
+                        </span>
+                    </span>
                 </button>
             </h4>
         </div>
@@ -714,7 +759,13 @@
                 <button class="btn btn-link collapsed text-left w-100" type="button"
                         data-toggle="collapse" data-target="#collapseODrecalc"
                         aria-expanded="false" aria-controls="collapseODrecalc">
-                    <strong>Recalculation of OD<sub>720</sub> signal between devices</strong>
+                    <span class="accordion-header-inner">
+                        <i class="fa fa-exchange fa-fw accordion-icon" aria-hidden="true"></i>
+                        <span>
+                            <strong>Recalculation of OD<sub>720</sub> signal between devices</strong>
+                            <span class="accordion-subtitle">Convert OD₇₂₀ values across UV-2600, MC-1000, FMT-150, and AquaPen</span>
+                        </span>
+                    </span>
                 </button>
             </h4>
         </div>
@@ -936,7 +987,13 @@
                 <button class="btn btn-link collapsed text-left w-100" type="button"
                         data-toggle="collapse" data-target="#collapseDilution"
                         aria-expanded="false" aria-controls="collapseDilution">
-                    <strong>Substance Dilution Estimator (Continuous Culture)</strong>
+                    <span class="accordion-header-inner">
+                        <i class="fa fa-flask fa-fw accordion-icon" aria-hidden="true"></i>
+                        <span>
+                            <strong>Substance Dilution Estimator (Continuous Culture)</strong>
+                            <span class="accordion-subtitle">Track washout kinetics of any substance in a chemostat or turbidostat</span>
+                        </span>
+                    </span>
                 </button>
             </h4>
         </div>
