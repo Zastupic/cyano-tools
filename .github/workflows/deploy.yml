@@ -9,40 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Pull latest code on PythonAnywhere
+      - name: Trigger deploy on PythonAnywhere
         env:
-          PA_API_TOKEN: ${{ secrets.PA_API_TOKEN }}
-        run: |
-          # Open a bash console on PythonAnywhere
-          RESPONSE=$(curl -s -X POST \
-            --header "Authorization: Token $PA_API_TOKEN" \
-            --data "executable=bash" \
-            "https://eu.pythonanywhere.com/api/v0/user/Zastupic/consoles/")
-
-          CONSOLE_ID=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
-          echo "Console ID: $CONSOLE_ID"
-
-          # Wait for console to initialize
-          sleep 5
-
-          # Run git pull
-          curl -s -X POST \
-            --header "Authorization: Token $PA_API_TOKEN" \
-            --data-urlencode "input=cd /home/Zastupic/mysite && git pull origin main && exit\n" \
-            "https://eu.pythonanywhere.com/api/v0/user/Zastupic/consoles/$CONSOLE_ID/send_input/"
-
-          # Wait for git pull to complete
-          sleep 15
-
-          # Clean up the console
-          curl -s -X DELETE \
-            --header "Authorization: Token $PA_API_TOKEN" \
-            "https://eu.pythonanywhere.com/api/v0/user/Zastupic/consoles/$CONSOLE_ID/"
-
-      - name: Reload web app
-        env:
-          PA_API_TOKEN: ${{ secrets.PA_API_TOKEN }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
           curl -s -X POST \
-            --header "Authorization: Token $PA_API_TOKEN" \
-            "https://eu.pythonanywhere.com/api/v0/user/Zastupic/webapps/tools-py.e-cyanobacterium.org/reload/"
+            --header "X-Deploy-Token: $DEPLOY_TOKEN" \
+            "https://tools-py.e-cyanobacterium.org/deploy"

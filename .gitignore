@@ -2,6 +2,10 @@
 #uploads, temp
 uploads/
 **/temp/
+temp/
+
+# VS Code
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 **/__pycache__/
