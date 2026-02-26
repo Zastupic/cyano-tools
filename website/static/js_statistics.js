@@ -35,9 +35,10 @@ let activeScopeKey     = 'all';
  */
 function buildAssumptionScopes() {
     if (!globalData) return [];
-    const scopes = [{ key: 'all', label: 'All data', n: globalData.length, rawData: globalData }];
+    const scopes = [{ key: 'all', label: 'All data', n: globalData.length, rawData: globalData, type: 'all' }];
     if (!selectedFactors.length) return scopes;
 
+    // ── Factor-level subsets (filter rows) ───────────────────────────────────
     selectedFactors.forEach(factor => {
         const seen   = new Set();
         const levels = [];
@@ -49,44 +50,120 @@ function buildAssumptionScopes() {
 
         levels.forEach(level => {
             const filtered = globalData.filter(r => String(r[factor] ?? '') === level);
-            scopes.push({ key: `${factor}|||${level}`, label: `${factor} = ${level}`, n: filtered.length, rawData: filtered });
+            scopes.push({ key: `${factor}|||${level}`, label: `${factor} = ${level}`, n: filtered.length, rawData: filtered, type: 'factor-level' });
         });
     });
+
+    // ── Variable-level subsets (same rows, single variable shown) ────────────
+    const selectedVarNames = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    if (selectedVarNames.length > 1) {
+        selectedVarNames.forEach(varName => {
+            scopes.push({
+                key:     `var|||${varName}`,
+                label:   varName,
+                n:       globalData.length,
+                rawData: globalData,
+                type:    'variable',
+                vars:    [varName]
+            });
+        });
+    }
+
     return scopes;
 }
 
-/** Render the pill-style scope-switcher row above the sub-tabs. */
+/** Render the two-row scope-switcher above the sub-tabs.
+ *  Row 1 — "Data scope":    All data + factor-level row-filters (grouped by factor).
+ *  Row 2 — "Variable focus": per-variable column-filters (only when >1 variable).
+ *  The two rows are visually distinct so users immediately grasp the two dimensions.
+ */
 function renderAssumptionScopeTabs(scopes, activeKey) {
     const container = document.getElementById('assumptionsScopeTabs');
     if (!container) return;
 
-    let html = '';
-    let currentFactor = null;
-    scopes.forEach(scope => {
-        const isActive = scope.key === activeKey;
-        const factor   = scope.key.includes('|||') ? scope.key.split('|||')[0] : null;
+    const scopeScopes = scopes.filter(s => s.type !== 'variable');
+    const varScopes   = scopes.filter(s => s.type === 'variable');
 
-        if (factor && factor !== currentFactor) {
-            currentFactor = factor;
-            html += `<span class="scope-group-label flex-shrink-0">
-                         <i class="bi bi-chevron-right" style="font-size:0.55rem;"></i> ${factor}:
-                     </span>`;
+    // ── Row 1: Data scope (All data + factor-level subsets) ──────────────────
+    let row1 = `
+        <div class="scope-row" id="scopeRowData">
+            <span class="scope-row-label">
+                <i class="bi bi-funnel-fill me-1"></i>Data scope
+                <span class="scope-row-hint"
+                      title="Filter which rows are included in the analysis below">
+                    <i class="bi bi-question-circle"></i>
+                </span>
+            </span>
+            <div class="scope-row-pills">`;
+
+    let currentFactor = null;
+
+    scopeScopes.forEach(scope => {
+        const isActive = scope.key === activeKey;
+        const isCached = !!allScopeResults[scope.key];
+
+        // Open a factor-group bubble when we enter a new factor
+        if (scope.type === 'factor-level') {
+            const factor = scope.key.split('|||')[0];
+            if (factor !== currentFactor) {
+                if (currentFactor !== null) row1 += `</div>`; // close prev group
+                row1 += `<div class="scope-factor-group">
+                              <span class="scope-factor-label">${factor}:</span>`;
+                currentFactor = factor;
+            }
+        } else if (scope.type === 'all' && currentFactor !== null) {
+            row1 += `</div>`;
+            currentFactor = null;
         }
 
-        const isCached = !!allScopeResults[scope.key];
-        const btnCls   = isActive ? 'btn-primary'  : 'btn-outline-secondary';
+        const btnCls  = isActive ? 'btn-primary' : 'btn-outline-secondary';
         const badgeCls = isActive ? 'bg-white text-primary' : 'bg-secondary text-white';
-        // Show a small cloud-download icon on tabs not yet fetched (except the active one)
-        const lazyIcon = (!isCached && !isActive) ? ' <i class="bi bi-cloud-download" style="font-size:0.60rem; opacity:0.6;"></i>' : '';
-        html += `<button type="button"
-                    class="btn btn-sm scope-tab-btn flex-shrink-0 ${btnCls}"
+        const badge   = `<span class="badge ms-1 ${badgeCls}" style="font-size:0.60rem;">${scope.n}</span>`;
+        const lazy    = (!isCached && !isActive)
+            ? ` <i class="bi bi-cloud-download" style="font-size:0.60rem;opacity:0.6;"></i>`
+            : '';
+
+        row1 += `<button type="button"
+                    class="btn btn-sm scope-tab-btn ${btnCls}"
                     style="font-size:0.73rem; padding:2px 10px; white-space:nowrap;"
                     data-scope-key="${scope.key}">
-                    ${scope.label}${lazyIcon}
-                    <span class="badge ms-1 ${badgeCls}" style="font-size:0.60rem;">${scope.n}</span>
+                    ${scope.label}${lazy}${badge}
                  </button>`;
     });
-    container.innerHTML = html;
+
+    if (currentFactor !== null) row1 += `</div>`; // close last factor group
+    row1 += `</div></div>`; // close .scope-row-pills + .scope-row
+
+    // ── Row 2: Variable focus (only rendered when more than one variable) ─────
+    let row2 = '';
+    if (varScopes.length) {
+        row2 = `
+        <div class="scope-row scope-row-vars" id="scopeRowVars">
+            <span class="scope-row-label">
+                <i class="bi bi-bar-chart-line me-1"></i>Variable focus
+                <span class="scope-row-hint"
+                      title="Keep all rows but show only one variable at a time">
+                    <i class="bi bi-question-circle"></i>
+                </span>
+            </span>
+            <div class="scope-row-pills">`;
+
+        varScopes.forEach(scope => {
+            const isActive = scope.key === activeKey;
+            const btnCls   = isActive ? 'btn-success' : 'btn-outline-success';
+            row2 += `<button type="button"
+                        class="btn btn-sm scope-tab-btn ${btnCls}"
+                        style="font-size:0.73rem; padding:2px 10px; white-space:nowrap;"
+                        data-scope-key="${scope.key}">
+                        ${scope.label}
+                     </button>`;
+        });
+
+        row2 += `</div></div>`;
+    }
+
+    container.innerHTML = row1 + row2;
 }
 
 // ── Client-side residuals computation (replaces server-side OLS) ─────────────
@@ -189,9 +266,22 @@ function renderAssumptionScopeContent(scopeKey) {
     if (scopeInfo) {
         if (scopeKey === 'all') {
             scopeInfo.style.display = 'none';
+        } else if (scope.type === 'variable') {
+            scopeInfo.style.display = 'block';
+            scopeInfo.innerHTML = `
+                <div style="height: 0.5em;"></div>
+                <div class="alert alert-success border-0 py-2 px-3 mb-2"
+                     style="border-left:4px solid #198754 !important; font-size:0.78rem;">
+                    <i class="bi bi-bar-chart-line me-1"></i>
+                    <strong>Variable focus:</strong> ${scope.label}
+                    <span class="text-muted ms-2" style="font-size:0.72rem;">
+                        All ${scope.n} rows included — only this variable shown across all groups.
+                    </span>
+                </div>`;
         } else {
             scopeInfo.style.display = 'block';
             scopeInfo.innerHTML = `
+                <div style="height: 0.5em;"></div>
                 <div class="alert alert-primary border-0 py-2 px-3 mb-2"
                      style="border-left:4px solid #0d6efd !important; font-size:0.78rem;">
                     <i class="bi bi-funnel-fill me-1"></i>
@@ -425,16 +515,19 @@ document.addEventListener('click', function(e) {
         .filter(cb => !cb.disabled).map(cb => cb.value);
     const hasTransforms = Object.values(appliedTransformations).some(t => t && t.type && t.type !== 'none');
 
+    // Variable-type scopes restrict target_columns to a single variable
+    const targetCols = scope.vars || selectedVars;
+
     const makePayload = (rawData) => ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: buildTransformedData(rawData, appliedTransformations), target_columns: selectedVars, factors: selectedFactors }),
+        body: JSON.stringify({ data: buildTransformedData(rawData, appliedTransformations), target_columns: targetCols, factors: selectedFactors }),
         signal
     });
     const makeOrigPayload = (rawData) => ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: rawData, target_columns: selectedVars, factors: selectedFactors }),
+        body: JSON.stringify({ data: rawData, target_columns: targetCols, factors: selectedFactors }),
         signal
     });
 
@@ -801,23 +894,9 @@ document.addEventListener('click', function(e) {
     anovaVarSortModes[varName] = mode;
     if (lastAnovaRawData && section) {
         const varResults = lastAnovaRawData.results.filter(r => r.variable === varName);
-        const summaryContainer = section.querySelector('.var-summary-content');
-        if (summaryContainer) {
-            summaryContainer.innerHTML = buildVariableSummaryHTML(varResults, mode, varName);
-            // Re-render Plotly bar charts into newly inserted placeholder divs
-            summaryContainer.querySelectorAll('.anova-bar-chart-placeholder').forEach(div => {
-                try {
-                    const letterGroups = JSON.parse(decodeURIComponent(div.dataset.letterGroups || '[]'));
-                    const fakeRes = {
-                        variable:          decodeURIComponent(div.dataset.resVariable || ''),
-                        test_used:         decodeURIComponent(div.dataset.resTest || ''),
-                        overall_p:         div.dataset.resP !== '' ? parseFloat(div.dataset.resP) : null,
-                        effect_size:       div.dataset.resEffect !== '' ? parseFloat(div.dataset.resEffect) : null,
-                        effect_size_label: decodeURIComponent(div.dataset.resEffectLabel || 'η²'),
-                    };
-                    renderAnovaBarChart(div.id, letterGroups, fakeRes);
-                } catch (e) { /* skip */ }
-            });
+        const groupsContainer = section.querySelector('.var-groups-content');
+        if (groupsContainer) {
+            groupsContainer.innerHTML = buildVariableGroupsHTML(varResults, mode, varName);
         }
     }
 });
@@ -2339,71 +2418,118 @@ function renderAnovaBarChart(containerId, letterGroups, res) {
               showarrow: false, font: { size: 9, color: '#555' }, xanchor: 'left' }
         ],
         autosize: true,
-        height: 340,
         plot_bgcolor: 'white',
         paper_bgcolor: 'white',
     };
 
     Plotly.newPlot(containerId, [trace], layout, { responsive: true, displayModeBar: false });
 }
+
+// ── Render all pending ANOVA bar charts inside a given pane element ───────────
+// Charts are marked with .anova-chart-rendered once drawn to avoid double-rendering.
+function renderPendingAnovaCharts(pane) {
+    if (!pane) return;
+    pane.querySelectorAll('.anova-bar-chart-placeholder:not(.anova-chart-rendered)').forEach(div => {
+        try {
+            const letterGroups = JSON.parse(decodeURIComponent(div.dataset.letterGroups || '[]'));
+            const fakeRes = {
+                variable:          decodeURIComponent(div.dataset.resVariable || ''),
+                test_used:         decodeURIComponent(div.dataset.resTest || ''),
+                overall_p:         div.dataset.resP !== '' ? parseFloat(div.dataset.resP) : null,
+                effect_size:       div.dataset.resEffect !== '' ? parseFloat(div.dataset.resEffect) : null,
+                effect_size_label: decodeURIComponent(div.dataset.resEffectLabel || 'η²'),
+            };
+            renderAnovaBarChart(div.id, letterGroups, fakeRes);
+            div.classList.add('anova-chart-rendered');
+        } catch (e) { /* skip malformed data */ }
+    });
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Helper: build the summary table HTML for one variable's results ───────────
-function buildVariableSummaryHTML(varResults, sortMode, varName) {
+// ── Helper: build chart-only HTML for one variable (one tab) ─────────────────
+function buildVariableChartHTML(varResults, varName) {
     let html = '';
-
-    const sortBtnsInline = varName ? (() => {
-        const sortBtns = ['data_order', 'letter', 'mean_asc', 'mean_desc'];
-        const sortLabels = { data_order: 'Data Order', letter: 'Letter Group', mean_asc: 'Mean ↑', mean_desc: 'Mean ↓' };
-        const btns = sortBtns.map(s => `
-            <button type="button"
-                    class="btn btn-sm var-sort-btn ${s === (sortMode || 'data_order') ? 'btn-secondary active' : 'btn-outline-secondary'}"
-                    data-var="${varName}" data-sort="${s}"
-                    style="font-size:0.72rem; padding:2px 8px;">
-                ${sortLabels[s]}
-            </button>`).join('');
-        return `
-            <div class="d-flex align-items-center gap-2 flex-wrap mb-2 mt-1">
-                <span class="small fw-bold text-muted" style="font-size:0.78rem;">
-                    <i class="bi bi-sort-down me-1"></i>Sort groups by:
-                </span>
-                <span style="display:inline-block; width:0.5rem;"></span>
-                <div class="btn-group btn-group-sm" role="group">${btns}</div>
-            </div>`;
-    })() : '';
-
     let sliceIdx = 0;
     varResults.forEach(res => {
         const sliceInfo = res.slice_label && res.slice_label !== 'All'
-            ? `<span class="text-muted">${res.slice_label}</span>`
-            : 'All groups';
-
-        const sortedGroups = sortLetterGroups(res.letter_groups, sortMode || 'data_order');
-        const chartId = `anova-bar-${(varName || 'v').replace(/\W/g, '_')}-${sliceIdx++}`;
-
+            ? `<span class="badge bg-light text-dark border me-2">${res.slice_label}</span>` : '';
+        const sortedGroups = sortLetterGroups(res.letter_groups, 'data_order');
+        const chartId = `anova-bar-${(varName || 'v').replace(/\W/g, '_')}-chart-${sliceIdx++}`;
         if (sortedGroups && sortedGroups.length > 0) {
+            const pVal = res.overall_p !== null ? res.overall_p.toFixed(4) : '—';
+            const isSig = res.overall_p !== null && res.overall_p < 0.05;
             html += `
-                <div class="border rounded p-3 mb-4 bg-white shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0 fw-bold">${sliceInfo}</h6>
-                        <span class="badge bg-primary">${res.test_used}</span>
-                    </div>
-                    <div id="${chartId}" class="anova-bar-chart-placeholder mb-3"
+                <div class="mb-4">
+                    ${sliceInfo ? `<div class="mb-2">${sliceInfo}</div>` : ''}
+                    <div id="${chartId}" class="anova-bar-chart-placeholder"
                          data-letter-groups="${encodeURIComponent(JSON.stringify(sortedGroups))}"
                          data-res-variable="${encodeURIComponent(res.variable || '')}"
                          data-res-test="${encodeURIComponent(res.test_used || '')}"
                          data-res-p="${res.overall_p !== null ? res.overall_p : ''}"
                          data-res-effect="${res.effect_size !== null && res.effect_size !== undefined ? res.effect_size : ''}"
                          data-res-effect-label="${encodeURIComponent(res.effect_size_label || 'η²')}"
-                         style="height:340px;">
+                         style="width:100%; height:380px;">
                     </div>
-                    <div class="alert alert-info py-2 small mb-2">
-                        <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong> |
-                        Normality: ${res.assumptions && res.assumptions.all_normal ? '✓' : '✗'} |
-                        Homogeneity: ${res.assumptions && res.assumptions.homogeneous ? '✓' : '✗'}
-                        ${res.effect_size != null ? ` | Effect size: ${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}` : ''}
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2" style="font-size:0.78rem;">
+                        <span class="badge ${isSig ? 'bg-success' : 'bg-secondary'}">
+                            p = ${pVal}${isSig ? ' ✓ Significant' : ' n.s.'}
+                        </span>
+                        <span class="badge bg-primary">${res.test_used || ''}</span>
+                        ${res.effect_size != null
+                            ? `<span class="badge bg-light text-dark border">${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}</span>`
+                            : ''}
+                        <span class="text-muted" style="font-size:0.72rem;">
+                            Normality: ${res.assumptions && res.assumptions.all_normal ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>'}
+                            &nbsp;Homogeneity: ${res.assumptions && res.assumptions.homogeneous ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>'}
+                        </span>
                     </div>
-                    ${sortBtnsInline}
+                </div>`;
+        } else {
+            html += `
+                <div class="alert alert-secondary py-2 small">
+                    ${sliceInfo || 'All groups'}: No significant differences (p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
+                    All groups share letter <span class="badge" style="padding:4px 10px; border-radius:10px; ${getLetterGroupStyle('a')}">a</span>.
+                </div>`;
+        }
+    });
+    return html;
+}
+
+// ── Helper: build groups table HTML for one variable (one tab) ────────────────
+function buildVariableGroupsHTML(varResults, sortMode, varName) {
+    let html = '';
+
+    // Sort controls row
+    const sortBtns = ['data_order', 'letter', 'mean_asc', 'mean_desc'];
+    const sortLabels = { data_order: 'Data Order', letter: 'Letter Group', mean_asc: 'Mean ↑', mean_desc: 'Mean ↓' };
+    const btns = sortBtns.map(s => `
+        <button type="button"
+                class="btn btn-sm var-sort-btn ${s === (sortMode || 'data_order') ? 'btn-secondary active' : 'btn-outline-secondary'}"
+                data-var="${varName}" data-sort="${s}"
+                style="font-size:0.72rem; padding:2px 8px;">
+            ${sortLabels[s]}
+        </button>`).join('');
+    html += `
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+            <span class="small fw-bold text-muted"><i class="bi bi-sort-down me-1"></i>Sort groups by:</span>
+            <div class="btn-group btn-group-sm" role="group">${btns}</div>
+        </div>`;
+
+    varResults.forEach(res => {
+        const sliceInfo = res.slice_label && res.slice_label !== 'All'
+            ? `<span class="badge bg-light text-dark border me-2">${res.slice_label}</span>` : '';
+        const sortedGroups = sortLetterGroups(res.letter_groups, sortMode || 'data_order');
+        if (sortedGroups && sortedGroups.length > 0) {
+            const pVal = res.overall_p !== null ? res.overall_p.toFixed(4) : '—';
+            const isSig = res.overall_p !== null && res.overall_p < 0.05;
+            html += `
+                <div class="mb-4">
+                    ${sliceInfo ? `<div class="mb-2">${sliceInfo}</div>` : ''}
+                    <div class="d-flex align-items-center gap-2 mb-2" style="font-size:0.78rem;">
+                        <span class="badge ${isSig ? 'bg-success' : 'bg-secondary'}">p = ${pVal}${isSig ? ' ✓' : ' n.s.'}</span>
+                        <span class="badge bg-primary">${res.test_used || ''}</span>
+                        ${res.posthoc_method ? `<span class="text-muted">Post-hoc: ${res.posthoc_method}</span>` : ''}
+                    </div>
                     <table class="table table-sm table-bordered text-center">
                         <thead class="table-light">
                             <tr><th class="text-left">Group</th><th>Mean</th><th>SD</th><th>N</th><th>Letter</th></tr>
@@ -2416,27 +2542,142 @@ function buildVariableSummaryHTML(varResults, sortMode, varName) {
                                     <td>${lg.std.toFixed(4)}</td>
                                     <td>${lg.n}</td>
                                     <td>
-                                        <span class="badge fs-6" style="padding: 6px 14px; border-radius: 50px; ${getLetterGroupStyle(lg.letter)}">
+                                        <span class="badge fs-6" style="padding:6px 14px; border-radius:50px; ${getLetterGroupStyle(lg.letter)}">
                                             ${lg.letter}
                                         </span>
                                     </td>
-                                </tr>
-                            `).join('')}
+                                </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+        } else {
+            html += `
+                <div class="alert alert-secondary py-2 small">
+                    ${sliceInfo || 'All groups'}: No significant differences (p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
+                </div>`;
+        }
+    });
+    return html;
+}
+
+// ── Helper: build pairwise detail HTML for one variable (one tab) ─────────────
+function buildVariablePairwiseHTML(varResults) {
+    let html = '';
+    let hasAny = false;
+    varResults.forEach(res => {
+        const sliceInfo = res.slice_label && res.slice_label !== 'All'
+            ? `<div class="mb-1"><span class="badge bg-light text-dark border">${res.slice_label}</span></div>` : '';
+        if (res.posthoc && res.posthoc.length > 0) {
+            hasAny = true;
+            html += `
+                <div class="mb-4">
+                    ${sliceInfo}
+                    <div class="d-flex gap-2 align-items-center mb-2" style="font-size:0.78rem;">
+                        <span class="badge bg-primary">${res.test_used}</span>
+                        ${res.posthoc_method ? `<span class="text-muted">Post-hoc: ${res.posthoc_method}</span>` : ''}
+                        <strong>p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong>
+                    </div>
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr><th>Comparison</th><th>p (adj.)</th><th>Result</th></tr>
+                        </thead>
+                        <tbody>
+                            ${res.posthoc.map(ph => `
+                                <tr>
+                                    <td><strong>${ph.group1}</strong> vs <strong>${ph.group2}</strong></td>
+                                    <td>${ph.p_adj.toFixed(4)}</td>
+                                    <td>${ph.significant
+                                        ? '<span class="badge bg-success">Significant</span>'
+                                        : '<span class="badge bg-secondary">n.s.</span>'}</td>
+                                </tr>`).join('')}
                         </tbody>
                     </table>
                 </div>`;
         } else {
             html += `
                 <div class="mb-3">
+                    ${sliceInfo}
                     <div class="alert alert-secondary py-2 small">
-                        ${sliceInfo}: No significant differences found (p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
-                        All groups share the same letter
-                        <span class="badge fs-6" style="padding: 5px 12px; border-radius: 12px; ${getLetterGroupStyle('a')}">a</span>.
+                        No pairwise comparisons (overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
                     </div>
                 </div>`;
         }
     });
+    if (!hasAny && !html.includes('alert')) {
+        html = `<div class="alert alert-secondary small">No post-hoc comparisons available for this variable.</div>`;
+    }
     return html;
+}
+
+// ── Helper: build Overview tab (cross-variable summary table) ─────────────────
+function buildAnovaOverviewHTML(byVariable, varOrder) {
+    let rows = '';
+    varOrder.forEach(varName => {
+        const res = byVariable[varName][0]; // use first slice for overview
+        const isSig = res.overall_p !== null && res.overall_p < 0.05;
+        const pFormatted = res.overall_p !== null ? res.overall_p.toFixed(4) : '—';
+        const normOk  = res.assumptions && res.assumptions.all_normal;
+        const homogOk = res.assumptions && res.assumptions.homogeneous;
+
+        // Compact letter groups preview
+        const letters = res.letter_groups && res.letter_groups.length
+            ? [...new Set(res.letter_groups.map(g => g.letter))].join(', ')
+            : '—';
+
+        rows += `
+            <tr>
+                <td class="fw-bold">${varName}</td>
+                <td><span class="badge bg-primary" style="font-size:0.68rem;">${res.test_used || '—'}</span></td>
+                <td>
+                    <span class="fw-bold ${isSig ? 'text-success' : 'text-secondary'}">${pFormatted}</span>
+                </td>
+                <td>${res.effect_size != null
+                    ? `<span style="font-size:0.80rem;">${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}</span>`
+                    : '<span class="text-muted">—</span>'}</td>
+                <td class="text-center">
+                    <span title="Normality">${normOk ? '✅' : '❌'}</span>
+                    <span title="Homogeneity" class="ms-1">${homogOk ? '✅' : '❌'}</span>
+                </td>
+                <td>
+                    <span class="badge ${isSig ? 'bg-success' : 'bg-secondary'}" style="font-size:0.70rem;">
+                        ${isSig ? '✓ Significant' : 'n.s.'}
+                    </span>
+                </td>
+                <td style="font-size:0.78rem; font-family:monospace; letter-spacing:0.05em;">${letters}</td>
+            </tr>`;
+    });
+
+    return `
+        <div class="mb-2 pb-1 d-flex align-items-center gap-2">
+            <i class="bi bi-grid-3x3-gap-fill text-success"></i>
+            <span class="fw-bold" style="font-size:0.9rem;">All Variables at a Glance</span>
+            <span class="text-muted small">— click a variable tab above to explore its chart and groups</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover" style="font-size:0.82rem;">
+                <thead class="table-light">
+                    <tr>
+                        <th>Variable</th>
+                        <th>Test</th>
+                        <th>Overall p</th>
+                        <th>Effect size</th>
+                        <th class="text-center" title="Normality / Homogeneity">Assumptions</th>
+                        <th>Result</th>
+                        <th>Letter groups</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+        <p class="extra-small text-muted mt-1 mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            Assumptions column: left = Normality (Shapiro-Wilk), right = Homogeneity (Levene's). ✅ = passed (p &gt; 0.05).
+        </p>`;
+}
+
+// ── Helper: kept for backward-compat (export code calls this) ────────────────
+function buildVariableSummaryHTML(varResults, sortMode, varName) {
+    return buildVariableGroupsHTML(varResults, sortMode, varName);
 }
 
 // ── Render ANOVA results (called on first run and on re-sort) ─────────────────
@@ -2447,7 +2688,7 @@ function renderAnovaResults(data) {
     // Test selection rationale banner (from backend)
     if (data.test_rationale) {
         const rationale = document.createElement('div');
-        rationale.className = 'alert alert-info border-0 shadow-sm mb-4 py-2 px-3 small';
+        rationale.className = 'alert alert-info border-0 shadow-sm mb-3 py-2 px-3 small';
         rationale.innerHTML = `<i class="bi bi-cpu-fill me-2"></i><strong>Test Selected:</strong> ${data.test_rationale}`;
         anovaResults.appendChild(rationale);
     }
@@ -2463,102 +2704,111 @@ function renderAnovaResults(data) {
         byVariable[res.variable].push(res);
     });
 
-    let varIdx = 0;
-    varOrder.forEach(varName => {
+    // ── Outer wrapper ─────────────────────────────────────────────────────────
+    const wrapper = document.createElement('div');
+    wrapper.className = 'anova-results-wrapper';
+
+    // ── Outer tab nav: Overview + one tab per variable ────────────────────────
+    const navId = 'anovaOuterNav';
+    let navHTML = `<ul class="nav custom-anova-tabs mb-0" id="${navId}" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active small fw-bold" data-toggle="tab" data-target="#anova_overview">
+                <i class="bi bi-grid-3x3-gap me-1"></i>Overview
+            </button>
+        </li>`;
+
+    varOrder.forEach((varName, idx) => {
+        const varId = 'anova_var_' + idx;
+        const firstRes = byVariable[varName][0];
+        const isSig = firstRes.overall_p !== null && firstRes.overall_p < 0.05;
+        navHTML += `
+        <li class="nav-item">
+            <button class="nav-link small fw-bold" data-toggle="tab" data-target="#${varId}"
+                    style="position:relative;">
+                ${varName}
+                <span class="anova-var-sig-dot ${isSig ? 'sig' : 'ns'}" title="${isSig ? 'Significant' : 'Not significant'}"></span>
+            </button>
+        </li>`;
+    });
+    navHTML += `</ul>`;
+
+    // ── Outer tab content ─────────────────────────────────────────────────────
+    let contentHTML = `<div class="tab-content border border-top-0 rounded-bottom bg-white p-3 shadow-sm" id="${navId}Content">
+        <!-- Overview tab -->
+        <div class="tab-pane fade show active" id="anova_overview" role="tabpanel">
+            ${buildAnovaOverviewHTML(byVariable, varOrder)}
+        </div>`;
+
+    varOrder.forEach((varName, idx) => {
         const varResults = byVariable[varName];
-        const varId = 'anova_var_' + varIdx++;
+        const varId = 'anova_var_' + idx;
         const currentSortMode = anovaVarSortModes[varName] || 'data_order';
 
-        const section = document.createElement('div');
-        section.className = "mb-5 p-4 border rounded bg-white shadow-sm anova-var-section";
-        section.dataset.varName = varName;
+        const subNavId = `${varId}_subnav`;
 
-        // Build detailed pairwise HTML
-        let detailedHTML = '';
-        varResults.forEach(res => {
-            const sliceInfo = res.slice_label && res.slice_label !== 'All'
-                ? ' <small class="text-muted fw-normal">(' + res.slice_label + ')</small>'
-                : '';
-            if (res.posthoc && res.posthoc.length > 0) {
-                detailedHTML += `
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold small">${sliceInfo || 'All groups'}</span>
-                            <span class="badge bg-primary">${res.test_used}</span>
-                        </div>
-                        <div class="alert alert-info py-1 small mb-2">
-                            <strong>Overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong>
-                            ${res.posthoc_method ? ` | Post-hoc: ${res.posthoc_method}` : ''}
-                        </div>
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light">
-                                <tr><th>Comparison</th><th>p (adj.)</th><th></th></tr>
-                            </thead>
-                            <tbody>
-                                ${res.posthoc.map(ph => `
-                                    <tr>
-                                        <td><strong>${ph.group1}</strong> vs <strong>${ph.group2}</strong></td>
-                                        <td>${ph.p_adj.toFixed(4)}</td>
-                                        <td>${ph.significant ?
-                                            '<span class="badge bg-success">Significant</span>' :
-                                            '<span class="badge bg-secondary">n.s.</span>'}
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>`;
-            } else {
-                detailedHTML += `
-                    <div class="mb-3">
-                        <div class="alert alert-secondary py-2 small">
-                            ${sliceInfo || 'All groups'}: No pairwise comparisons (overall p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}).
-                        </div>
-                    </div>`;
-            }
-        });
+        contentHTML += `
+        <!-- Variable tab: ${varName} -->
+        <div class="tab-pane fade anova-var-section" id="${varId}" role="tabpanel" data-var-name="${varName}">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="fw-bold text-success mb-0">${varName}</h6>
+            </div>
 
-        section.innerHTML = `
-            <h5 class="fw-bold text-success mb-3">${varName}</h5>
-            <ul class="nav nav-tabs custom-anova-tabs mb-3" role="tablist">
+            <!-- Inner pill sub-tabs: Chart | Groups | Pairwise -->
+            <ul class="nav anova-var-subtabs mb-3" id="${subNavId}" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link active small fw-bold" data-toggle="tab" data-target="#${varId}_summary">
-                        <i class="bi bi-bar-chart-line me-2"></i> Summary with Plots
+                    <button class="nav-link active" data-toggle="tab" data-target="#${varId}_chart">
+                        <i class="bi bi-bar-chart-line me-1"></i>Chart
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link small fw-bold" data-toggle="tab" data-target="#${varId}_detail">
-                        <i class="bi bi-list-check me-2"></i> Detailed Pairwise
+                    <button class="nav-link" data-toggle="tab" data-target="#${varId}_groups">
+                        <i class="bi bi-table me-1"></i>Groups
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-toggle="tab" data-target="#${varId}_pairwise">
+                        <i class="bi bi-list-check me-1"></i>Pairwise
                     </button>
                 </li>
             </ul>
+
             <div class="tab-content">
-                <div class="tab-pane fade show active" id="${varId}_summary" role="tabpanel">
-                    <div class="var-summary-content">
-                        ${buildVariableSummaryHTML(varResults, currentSortMode, varName)}
+                <div class="tab-pane fade show active" id="${varId}_chart" role="tabpanel">
+                    <div class="var-chart-content">
+                        ${buildVariableChartHTML(varResults, varName)}
                     </div>
                 </div>
-                <div class="tab-pane fade" id="${varId}_detail" role="tabpanel">
-                    ${detailedHTML}
+                <div class="tab-pane fade" id="${varId}_groups" role="tabpanel">
+                    <div class="var-groups-content" data-var-name="${varName}">
+                        ${buildVariableGroupsHTML(varResults, currentSortMode, varName)}
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="${varId}_pairwise" role="tabpanel">
+                    ${buildVariablePairwiseHTML(varResults)}
                 </div>
             </div>
-        `;
-        anovaResults.appendChild(section);
+        </div>`;
+    });
 
-        // Render Plotly bar charts into the placeholder divs just added to the DOM
-        section.querySelectorAll('.anova-bar-chart-placeholder').forEach(div => {
-            try {
-                const letterGroups = JSON.parse(decodeURIComponent(div.dataset.letterGroups || '[]'));
-                const fakeRes = {
-                    variable:          decodeURIComponent(div.dataset.resVariable || ''),
-                    test_used:         decodeURIComponent(div.dataset.resTest || ''),
-                    overall_p:         div.dataset.resP !== '' ? parseFloat(div.dataset.resP) : null,
-                    effect_size:       div.dataset.resEffect !== '' ? parseFloat(div.dataset.resEffect) : null,
-                    effect_size_label: decodeURIComponent(div.dataset.resEffectLabel || 'η²'),
-                };
-                renderAnovaBarChart(div.id, letterGroups, fakeRes);
-            } catch (e) { /* skip if data is malformed */ }
-        });
+    contentHTML += `</div>`; // close tab-content
+
+    wrapper.innerHTML = navHTML + contentHTML;
+    anovaResults.appendChild(wrapper);
+
+    // Lazy-render ANOVA charts: render only when a variable tab is first shown.
+    // Rendering into hidden tab panes (display:none) gives Plotly a width of 0,
+    // causing charts to overflow/shrink. Deferring to shown.bs.tab fixes this.
+    $(wrapper).on('shown.bs.tab', 'button[data-toggle="tab"]', function () {
+        const targetId = $(this).data('target');
+        if (!targetId || targetId === '#anova_overview') return;
+        const pane = wrapper.querySelector(targetId);
+        renderPendingAnovaCharts(pane);
+        // Resize already-rendered charts in case the container changed size
+        if (window.Plotly && pane) {
+            pane.querySelectorAll('.anova-chart-rendered.js-plotly-plot').forEach(div => {
+                Plotly.Plots.resize(div);
+            });
+        }
     });
 }
 
@@ -2574,6 +2824,15 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
     if (exportSpinner) exportSpinner.style.display = 'inline-flex';
 
     try {
+        // Pre-render any ANOVA variable charts the user never opened (hidden tab panes).
+        // Temporarily display each pane so Plotly can measure the container width.
+        document.querySelectorAll('#anovaResults .anova-var-section').forEach(pane => {
+            const wasHidden = window.getComputedStyle(pane).display === 'none';
+            if (wasHidden) { pane.style.display = 'block'; pane.style.visibility = 'hidden'; }
+            renderPendingAnovaCharts(pane);
+            if (wasHidden) { pane.style.display = ''; pane.style.visibility = ''; }
+        });
+
         // Capture Plotly plots as base64 PNG
         const plotCaptures = [];
         const plotSelectors = [

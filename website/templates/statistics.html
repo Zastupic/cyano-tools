@@ -39,9 +39,67 @@
     /* Significance Tests same style as other tabs (no green) */
     #anova-tab.text-success { color: #495057 !important; }
     #anova-tab.nav-link.active { color: #004085 !important; }
-    /* Assumptions sub-tabs: border and active light blue */
-    #assumptionsSubTabs .nav-link { border: 1px solid #dee2e6; margin-right: 4px; }
-    #assumptionsSubTabs .nav-link.active { background-color: #cce5ff !important; color: #004085; border-color: #b8daff !important; }
+    /* ── Assumptions sub-tabs: prominent segmented-control style ── */
+    #assumptionsSubTabs {
+        display: flex;
+        background: #e8edf2;
+        border-radius: 10px;
+        padding: 4px;
+        gap: 3px;
+        border: 1px solid #c8d3de;
+    }
+    #assumptionsSubTabs .nav-item { flex: 1; }
+    #assumptionsSubTabs .nav-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        border: none !important;
+        border-radius: 7px !important;
+        padding: 7px 6px !important;
+        font-size: 0.79rem !important;
+        font-weight: 600;
+        color: #5a6a7a;
+        text-align: center;
+        white-space: nowrap;
+        background: transparent;
+        transition: all 0.17s ease;
+        line-height: 1.2;
+    }
+    #assumptionsSubTabs .nav-link:hover:not(.active) {
+        background: #d4dde7 !important;
+        color: #003566;
+    }
+    #assumptionsSubTabs .nav-link.active {
+        background: #ffffff !important;
+        color: #004085 !important;
+        box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
+        border: none !important;
+    }
+    #assumptionsSubTabs .nav-link .stab-icon {
+        font-size: 1.05rem;
+        opacity: 0.7;
+    }
+    #assumptionsSubTabs .nav-link.active .stab-icon { opacity: 1; }
+    /* Scope-row label */
+    .scope-section-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #8a9bb0;
+        white-space: nowrap;
+        align-self: center;
+        padding-right: 4px;
+    }
+    /* Divider between scope row and sub-tabs */
+    .scope-subtab-divider {
+        border: 0;
+        border-top: 2px dashed #d0dae4;
+        margin: 8px 0 10px;
+        opacity: 1;
+    }
     /* Assumption plots: fit inside card, no overflow */
     .assumptions-plot-container { overflow: hidden; max-width: 100%; width: 100%; }
     .assumptions-plot-container .plotly { width: 100% !important; max-width: 100% !important; }
@@ -61,9 +119,126 @@
     #assumptionsQQContent .table { font-size: 0.70rem; }
     /* Grey info boxes in every sub-tab: smaller than body text */
     #assumptionsSubTabContent .alert-secondary { font-size: 0.60rem !important; }
-    /* Scope tabs row */
+    /* ── ANOVA inner variable sub-tabs (pill style) ── */
+    .anova-var-subtabs {
+        display: flex;
+        gap: 4px;
+        background: #f0f4f8;
+        border-radius: 8px;
+        padding: 3px;
+        border: 1px solid #d8e3ef;
+        width: fit-content;
+    }
+    .anova-var-subtabs .nav-item { flex-shrink: 0; }
+    .anova-var-subtabs .nav-link {
+        border: none !important;
+        border-radius: 5px !important;
+        padding: 4px 14px !important;
+        font-size: 0.78rem !important;
+        font-weight: 600;
+        color: #5a6a7a;
+        background: transparent;
+        transition: all 0.15s ease;
+    }
+    .anova-var-subtabs .nav-link:hover:not(.active) {
+        background: #dce5ef !important;
+        color: #003566;
+    }
+    .anova-var-subtabs .nav-link.active {
+        background: #fff !important;
+        color: #00b894 !important;
+        box-shadow: 0 1px 5px rgba(0,40,100,0.12) !important;
+    }
+    /* Significance dot on outer variable tabs */
+    .anova-var-sig-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        position: absolute;
+        top: 6px;
+        right: 6px;
+    }
+    .anova-var-sig-dot.sig  { background: #00b894; }
+    .anova-var-sig-dot.ns   { background: #adb5bd; }
+    /* Outer tabs: keep variable name tabs compact */
+    .anova-results-wrapper .custom-anova-tabs .nav-link {
+        padding: 10px 18px 8px;
+        font-size: 0.84rem;
+    }
+    /* ANOVA bar charts: always fill the full width of their container */
+    .anova-bar-chart-placeholder {
+        width: 100% !important;
+        min-width: 0;
+        display: block;
+    }
+    /* Chart wrapper: remove horizontal constraints so chart box fills tab width */
+    .var-chart-content { width: 100%; }
+    .var-chart-content .mb-4 { width: 100%; }
+    /* ── Two-row scope selector ── */
     #assumptionsScopeTabs .scope-tab-btn { transition: all 0.15s ease; }
-    #assumptionsScopeTabs .scope-group-label { font-size: 0.65rem; color: #888; align-self: center; white-space: nowrap; margin: 0 2px; }
+
+    /* Each row: label on the left, pills flowing right */
+    .scope-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.55rem;
+        width: 100%;
+    }
+    .scope-row-label {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 0.66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #6c757d;
+        white-space: nowrap;
+        padding-top: 4px;
+        min-width: 105px;
+    }
+    /* Variable-focus row: slightly different left-border accent */
+    .scope-row-vars .scope-row-label { color: #198754; }
+    .scope-row-hint {
+        font-size: 0.68rem;
+        color: #adb5bd;
+        cursor: help;
+        margin-left: 2px;
+        vertical-align: middle;
+    }
+    .scope-row-hint:hover { color: #6c757d; }
+    /* Wrapping pill area */
+    .scope-row-pills {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    /* Factor group bubble — visually groups sibling factor-level buttons */
+    .scope-factor-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.25rem;
+        background: #f0f4f8;
+        border: 1px solid #d8e3ef;
+        border-radius: 7px;
+        padding: 3px 7px;
+    }
+    .scope-factor-label {
+        font-size: 0.64rem;
+        font-weight: 700;
+        color: #495057;
+        white-space: nowrap;
+        margin-right: 1px;
+    }
+    /* Divider between the two rows */
+    .scope-row + .scope-row {
+        border-top: 1px dashed #dee2e6;
+        padding-top: 0.4rem;
+        margin-top: 0.1rem;
+    }
 </style>
 <div class="page-wrapper">
     <div class="wrapper-box">
@@ -311,8 +486,10 @@
                                 <div id="transformationPanel" class="mt-3 mb-3" style="display:none;">
                                     <div class="card shadow-sm" style="border: 1px solid #ffc107; border-left: 4px solid #fd7e14;">
                                         <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between"
-                                             style="background: linear-gradient(to right, #fff8e1, #fff3e0); border-bottom: 1px solid #ffe082;">
-                                    <div>
+                                             style="background: linear-gradient(to right, #fff8e1, #fff3e0); border-bottom: 1px solid #ffe082; cursor:pointer;"
+                                             data-toggle="collapse" data-target="#transformBodyCollapse"
+                                             aria-expanded="false" aria-controls="transformBodyCollapse">
+                                            <div>
                                                 <p class="fw-bold mb-0 text-dark" style="font-size:0.85rem;">
                                                     <i class="bi bi-arrow-left-right text-warning me-1"></i> Data Transformations
                                                     <span id="transformActiveBadge" class="badge bg-warning text-dark ms-2"
@@ -328,7 +505,10 @@
                                                     <strong>Note:</strong> Transformations are most reliable when n&nbsp;≥&nbsp;5 per group. With smaller sample sizes the normality and homogeneity test results — and therefore any suggested transformation — should be treated with caution.
                                                 </p>
                                             </div>
+                                            <i class="bi bi-chevron-down ms-3 text-muted flex-shrink-0" id="transformChevron"
+                                               style="font-size:1rem; transition:transform 0.2s;"></i>
                                         </div>
+                                        <div id="transformBodyCollapse" class="collapse">
                                         <div class="card-body p-3">
 
                                             <!-- Candidates summary + When to use guide (filled by JS) -->
@@ -357,20 +537,66 @@
                                             </div>
 
                                         </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <!-- ═══════════════════════════════════════════ -->
 
                                 <div id="assumptionsResultsArea" style="display: none;">
-                                    <!-- Scope tabs: All data + per factor-level -->
-                                    <div id="assumptionsScopeTabs" class="d-flex flex-wrap align-items-center mb-2" style="gap:0.35rem; overflow-x:auto; padding-bottom:2px;"></div>
-                                    <!-- Active scope context banner (hidden when "All data") -->
-                                    <div id="assumptionsScopeInfo" style="display:none;"></div>
-                                    <ul class="nav nav-pills mb-2 small" id="assumptionsSubTabs" role="tablist">
-                                        <li class="nav-item"><a class="nav-link active py-1 px-2" id="assumptions-normality-tab" data-toggle="tab" data-target="#assumptions-normality" href="#assumptions-normality" role="tab">Assumptions Summary</a></li>
-                                        <li class="nav-item"><a class="nav-link py-1 px-2" id="assumptions-boxplots-tab" data-toggle="tab" data-target="#assumptions-boxplots" href="#assumptions-boxplots" role="tab">Box Plots</a></li>
-                                        <li class="nav-item"><a class="nav-link py-1 px-2" id="assumptions-residuals-tab" data-toggle="tab" data-target="#assumptions-residuals" href="#assumptions-residuals" role="tab">Residuals vs Fitted</a></li>
-                                        <li class="nav-item"><a class="nav-link py-1 px-2" id="assumptions-qq-tab" data-toggle="tab" data-target="#assumptions-qq" href="#assumptions-qq" role="tab">Normal Q-Q</a></li>
+                                    <!-- ── Scope selector (accordion) ── -->
+                                    <div class="card mb-2 shadow-sm" style="border:1px solid #d0dae4;">
+                                        <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between"
+                                             style="background:#f0f4f8; cursor:pointer; border-bottom:1px solid #d0dae4;"
+                                             data-toggle="collapse" data-target="#scopeFilterBody"
+                                             aria-expanded="false" aria-controls="scopeFilterBody">
+                                            <span class="scope-section-label mb-0" style="font-size:0.72rem;">
+                                                <i class="bi bi-funnel me-1"></i>Filter data subsets for visualization
+                                            </span>
+                                            <i class="bi bi-chevron-down text-muted" id="scopeFilterChevron"
+                                               style="font-size:0.8rem; transition:transform 0.2s;"></i>
+                                        </div>
+                                        <div id="scopeFilterBody" class="collapse">
+                                            <div class="card-body py-2 px-3">
+                                                <div id="assumptionsScopeTabs" class="d-flex flex-column" style="gap:0.5rem;"></div>
+                                                <!-- Active scope context banner (hidden when "All data") -->
+                                                <div id="assumptionsScopeInfo" style="display:none;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ── Divider ── -->
+                                    <hr class="scope-subtab-divider">
+
+                                    <!-- ── Sub-tab navigation ── -->
+                                    <div class="d-flex align-items-center mb-2" style="gap:0.4rem;">
+                                        <span class="scope-section-label"><i class="bi bi-layout-tabs me-1"></i>Analysis view</span>
+                                        <div style="flex:1; height:1px; background:#d0dae4;"></div>
+                                    </div>
+                                    <ul class="nav mb-3" id="assumptionsSubTabs" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" id="assumptions-normality-tab" data-toggle="tab" data-target="#assumptions-normality" href="#assumptions-normality" role="tab">
+                                                <i class="bi bi-table stab-icon"></i>
+                                                Assumptions<br>Summary
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="assumptions-boxplots-tab" data-toggle="tab" data-target="#assumptions-boxplots" href="#assumptions-boxplots" role="tab">
+                                                <i class="bi bi-box-seam stab-icon"></i>
+                                                Box<br>Plots
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="assumptions-residuals-tab" data-toggle="tab" data-target="#assumptions-residuals" href="#assumptions-residuals" role="tab">
+                                                <i class="bi bi-scatter-chart stab-icon"></i>
+                                                Residuals<br>vs Fitted
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="assumptions-qq-tab" data-toggle="tab" data-target="#assumptions-qq" href="#assumptions-qq" role="tab">
+                                                <i class="bi bi-graph-up stab-icon"></i>
+                                                Normal<br>Q-Q
+                                            </a>
+                                        </li>
                                     </ul>
 
                                     <hr class="my-2 border-secondary" style="opacity: 0.35;">
@@ -378,59 +604,115 @@
                                     <div class="tab-content pt-2" id="assumptionsSubTabContent">
 
                                         <div class="tab-pane fade show active" id="assumptions-normality" role="tabpanel">
-                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
-                                                <p class="mb-1"><strong><i class="bi bi-table me-1"></i> About this table:</strong> The summary below shows the combined results of two statistical assumption tests run for each variable:</p>
-                                                <ul class="mb-1 ps-3">
-                                                    <li><strong>Shapiro-Wilk (Normality):</strong> tests whether the data within each group follows a normal distribution. A p&nbsp;&gt;&nbsp;0.05 indicates normality is met.</li>
-                                                    <li><strong>Levene's Test (Homogeneity of Variances):</strong> tests whether the spread of values is similar across all groups. A p&nbsp;&gt;&nbsp;0.05 indicates equal variances.</li>
-                                                </ul>
-                                                <p class="mb-1">Both tests are evaluated together to decide the most appropriate significance test (ANOVA, Welch's ANOVA, or Kruskal-Wallis).</p>
-                                                <hr class="my-1" style="opacity:0.3;">
-                                                <p class="mb-0"><strong>Explore further in the other sub-tabs:</strong></p>
-                                                <ul class="mb-0 ps-3">
-                                                    <li><strong>Box Plots:</strong> inspect the raw distribution and spread of individual data points for each variant and variable.</li>
-                                                    <li><strong>Residuals vs Fitted:</strong> visually check for homogeneity of variances — points should be evenly scattered around the horizontal axis with no pattern.</li>
-                                                    <li><strong>Normal Q-Q:</strong> visually assess normality — points following the diagonal reference line indicate normally distributed residuals.</li>
-                                                </ul>
+                                            <div class="card border-0 shadow-sm mb-3" style="border:1px solid #d0d8e0 !important;">
+                                                <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between bg-light"
+                                                     style="cursor:pointer; border-bottom:1px solid #d0d8e0;"
+                                                     data-toggle="collapse" data-target="#infoNormality"
+                                                     aria-expanded="false" aria-controls="infoNormality">
+                                                    <span style="font-size:0.75rem; font-weight:600; color:#495057;">
+                                                        <i class="bi bi-info-circle-fill text-secondary me-1"></i>
+                                                        <i class="bi bi-table me-1"></i> About this table &amp; how to read results
+                                                    </span>
+                                                    <i class="bi bi-chevron-down text-muted" style="font-size:0.8rem; transition:transform 0.2s;"></i>
+                                                </div>
+                                                <div id="infoNormality" class="collapse">
+                                                    <div class="card-body py-2 px-3" style="font-size:0.60rem;">
+                                                        <p class="mb-1"><strong><i class="bi bi-table me-1"></i> About this table:</strong> The summary below shows the combined results of two statistical assumption tests run for each variable:</p>
+                                                        <ul class="mb-1 ps-3">
+                                                            <li><strong>Shapiro-Wilk (Normality):</strong> tests whether the data within each group follows a normal distribution. A p&nbsp;&gt;&nbsp;0.05 indicates normality is met.</li>
+                                                            <li><strong>Levene's Test (Homogeneity of Variances):</strong> tests whether the spread of values is similar across all groups. A p&nbsp;&gt;&nbsp;0.05 indicates equal variances.</li>
+                                                        </ul>
+                                                        <p class="mb-1">Both tests are evaluated together to decide the most appropriate significance test (ANOVA, Welch's ANOVA, or Kruskal-Wallis).</p>
+                                                        <hr class="my-1" style="opacity:0.3;">
+                                                        <p class="mb-0"><strong>Explore further in the other sub-tabs:</strong></p>
+                                                        <ul class="mb-0 ps-3">
+                                                            <li><strong>Box Plots:</strong> inspect the raw distribution and spread of individual data points for each variant and variable.</li>
+                                                            <li><strong>Residuals vs Fitted:</strong> visually check for homogeneity of variances — points should be evenly scattered around the horizontal axis with no pattern.</li>
+                                                            <li><strong>Normal Q-Q:</strong> visually assess normality — points following the diagonal reference line indicate normally distributed residuals.</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div id="testResults"></div>
                                         </div>
 
                                         <div class="tab-pane fade" id="assumptions-boxplots" role="tabpanel">
-                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
-                                                <p class="mb-1"><strong><i class="bi bi-box me-1"></i> What these plots show:</strong> One box plot per variant (group) for each variable, showing the full data distribution. Use these to visually inspect whether each group is roughly symmetric and whether spread (variance) differs markedly between groups — both key ANOVA assumptions.</p>
-                                                <ul class="mb-1 ps-3">
-                                                    <li><span style="color:#198754;"><strong>Green</strong></span> — group <strong>passed</strong> the Shapiro-Wilk normality test (p&nbsp;&gt;&nbsp;0.05).</li>
-                                                    <li><span style="color:#dc3545;"><strong>Red</strong></span> — group <strong>failed</strong> the Shapiro-Wilk normality test (p&nbsp;≤&nbsp;0.05).</li>
-                                                </ul>
-                                                <p class="mb-1"><i class="bi bi-info-circle me-1"></i> Color reflects only the <strong>per-group</strong> Shapiro-Wilk result. Levene's test is across all groups simultaneously and is shown in the Assumptions Summary table only.</p>
-                                                <p class="mb-0"><strong><i class="bi bi-cursor-fill me-1"></i> Outlier removal:</strong> Points beyond 1.5× IQR are flagged as <span class="text-danger"><strong>red dots</strong></span>. <strong>Click any red dot</strong> to permanently exclude it and recalculate. Remove outliers <em>before</em> running ANOVA tests.</p>
+                                            <div class="card border-0 shadow-sm mb-3" style="border:1px solid #d0d8e0 !important;">
+                                                <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between bg-light"
+                                                     style="cursor:pointer; border-bottom:1px solid #d0d8e0;"
+                                                     data-toggle="collapse" data-target="#infoBoxPlots"
+                                                     aria-expanded="false" aria-controls="infoBoxPlots">
+                                                    <span style="font-size:0.75rem; font-weight:600; color:#495057;">
+                                                        <i class="bi bi-info-circle-fill text-secondary me-1"></i>
+                                                        <i class="bi bi-box-seam me-1"></i> How to read these plots &amp; colour coding
+                                                    </span>
+                                                    <i class="bi bi-chevron-down text-muted" style="font-size:0.8rem; transition:transform 0.2s;"></i>
+                                                </div>
+                                                <div id="infoBoxPlots" class="collapse">
+                                                    <div class="card-body py-2 px-3" style="font-size:0.60rem;">
+                                                        <p class="mb-1"><strong><i class="bi bi-box me-1"></i> What these plots show:</strong> One box plot per variant (group) for each variable, showing the full data distribution. Use these to visually inspect whether each group is roughly symmetric and whether spread (variance) differs markedly between groups — both key ANOVA assumptions.</p>
+                                                        <ul class="mb-1 ps-3">
+                                                            <li><span style="color:#198754;"><strong>Green</strong></span> — group <strong>passed</strong> the Shapiro-Wilk normality test (p&nbsp;&gt;&nbsp;0.05).</li>
+                                                            <li><span style="color:#dc3545;"><strong>Red</strong></span> — group <strong>failed</strong> the Shapiro-Wilk normality test (p&nbsp;≤&nbsp;0.05).</li>
+                                                        </ul>
+                                                        <p class="mb-1"><i class="bi bi-info-circle me-1"></i> Color reflects only the <strong>per-group</strong> Shapiro-Wilk result. Levene's test is across all groups simultaneously and is shown in the Assumptions Summary table only.</p>
+                                                        <p class="mb-0"><strong><i class="bi bi-cursor-fill me-1"></i> Outlier removal:</strong> Points beyond 1.5× IQR are flagged as <span class="text-danger"><strong>red dots</strong></span>. <strong>Click any red dot</strong> to permanently exclude it and recalculate. Remove outliers <em>before</em> running ANOVA tests.</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div id="assumptionsBoxPlots"><p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p></div>
                                         </div>
 
                                         <div class="tab-pane fade" id="assumptions-residuals" role="tabpanel">
-                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
-                                                <p class="mb-1"><strong><i class="bi bi-scatter-chart me-1"></i> Residuals vs Fitted — Primary purpose: Homogeneity of Variances</strong></p>
-                                                <p class="mb-1">Displays <em>residuals</em> (observed − group mean) on the Y-axis against <em>fitted values</em> (group means) on the X-axis. Because each group occupies one X position, the vertical spread at each position directly shows within-group variance — making it easy to spot whether spread is consistent across groups (Levene's assumption).</p>
-                                                <p class="mb-1"><strong>Well-behaved data:</strong> Points scattered <strong>evenly around zero</strong> with similar vertical spread across all groups.<br>
-                                                <strong>Warning signs:</strong> <em>Funnel/fan shape</em> → unequal variances (heteroscedasticity); <em>Curved trend</em> → non-linearity or non-normality; <em>Isolated points far from zero</em> → potential outliers.</p>
-                                                <hr class="my-1" style="opacity:0.25;">
-                                                <p class="mb-1"><strong><i class="bi bi-bullseye me-1"></i> Outlier identification (|z|&nbsp;&gt;&nbsp;2):</strong> Raw residuals are standardized (÷ SD) to a dimensionless z-score. Points with <strong>|z|&nbsp;&gt;&nbsp;2</strong> — beyond the ~95% range of a normal distribution — are flagged in <span class="text-danger"><strong>red</strong></span>. Before removing, ask: <em>measurement error?</em> → remove; <em>real biological extreme?</em> → keep; <em>many points flagged on one side?</em> → systematic variance issue, removal won't help; <em>does Levene's p change after removal?</em> → re-run to verify.</p>
-                                                <p class="mb-0"><strong><i class="bi bi-cursor-fill me-1"></i> Click any <span class="text-danger">red point</span></strong> to exclude it permanently and recalculate. Blue points are not clickable.</p>
+                                            <div class="card border-0 shadow-sm mb-3" style="border:1px solid #d0d8e0 !important;">
+                                                <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between bg-light"
+                                                     style="cursor:pointer; border-bottom:1px solid #d0d8e0;"
+                                                     data-toggle="collapse" data-target="#infoResiduals"
+                                                     aria-expanded="false" aria-controls="infoResiduals">
+                                                    <span style="font-size:0.75rem; font-weight:600; color:#495057;">
+                                                        <i class="bi bi-info-circle-fill text-secondary me-1"></i>
+                                                        <i class="bi bi-scatter-chart me-1"></i> Residuals vs Fitted — how to interpret &amp; outlier removal
+                                                    </span>
+                                                    <i class="bi bi-chevron-down text-muted" style="font-size:0.8rem; transition:transform 0.2s;"></i>
+                                                </div>
+                                                <div id="infoResiduals" class="collapse">
+                                                    <div class="card-body py-2 px-3" style="font-size:0.60rem;">
+                                                        <p class="mb-1"><strong><i class="bi bi-scatter-chart me-1"></i> Residuals vs Fitted — Primary purpose: Homogeneity of Variances</strong></p>
+                                                        <p class="mb-1">Displays <em>residuals</em> (observed − group mean) on the Y-axis against <em>fitted values</em> (group means) on the X-axis. Because each group occupies one X position, the vertical spread at each position directly shows within-group variance — making it easy to spot whether spread is consistent across groups (Levene's assumption).</p>
+                                                        <p class="mb-1"><strong>Well-behaved data:</strong> Points scattered <strong>evenly around zero</strong> with similar vertical spread across all groups.<br>
+                                                        <strong>Warning signs:</strong> <em>Funnel/fan shape</em> → unequal variances (heteroscedasticity); <em>Curved trend</em> → non-linearity or non-normality; <em>Isolated points far from zero</em> → potential outliers.</p>
+                                                        <hr class="my-1" style="opacity:0.25;">
+                                                        <p class="mb-1"><strong><i class="bi bi-bullseye me-1"></i> Outlier identification (|z|&nbsp;&gt;&nbsp;2):</strong> Raw residuals are standardized (÷ SD) to a dimensionless z-score. Points with <strong>|z|&nbsp;&gt;&nbsp;2</strong> — beyond the ~95% range of a normal distribution — are flagged in <span class="text-danger"><strong>red</strong></span>. Before removing, ask: <em>measurement error?</em> → remove; <em>real biological extreme?</em> → keep; <em>many points flagged on one side?</em> → systematic variance issue, removal won't help; <em>does Levene's p change after removal?</em> → re-run to verify.</p>
+                                                        <p class="mb-0"><strong><i class="bi bi-cursor-fill me-1"></i> Click any <span class="text-danger">red point</span></strong> to exclude it permanently and recalculate. Blue points are not clickable.</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div id="assumptionsResidualsContent"><p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p></div>
                                         </div>
 
                                         <div class="tab-pane fade" id="assumptions-qq" role="tabpanel">
-                                            <div class="alert alert-secondary border-0 shadow-sm mb-3 py-2 px-3 alert-info-sm">
-                                                <p class="mb-1"><strong><i class="bi bi-graph-up me-1"></i> Normal Q-Q — Primary purpose: Normality of Residuals</strong></p>
-                                                <p class="mb-1">Compares the <em>observed quantiles</em> of the residuals (Y-axis) against the <em>theoretical quantiles</em> of a perfect normal distribution (X-axis). If the data is truly normal, both sets of quantiles match and points lie along the diagonal reference line. Deviations reveal exactly where and how the distribution differs from normality.</p>
-                                                <p class="mb-1"><strong>Well-behaved data:</strong> Points lie <strong>closely along the diagonal</strong>; small deviations at the ends are acceptable.<br>
-                                                <strong>Warning signs:</strong> <em>S-shaped curve</em> → heavy/light tails; <em>one-end bend</em> → skewness; <em>gaps or jumps</em> → bimodality; <em>extreme off-line points</em> → outliers.</p>
-                                                <hr class="my-1" style="opacity:0.25;">
-                                                <p class="mb-1"><strong><i class="bi bi-bullseye me-1"></i> Outlier identification (|std residual|&nbsp;&gt;&nbsp;2):</strong> The Y-axis already shows standardized residuals, so the threshold is readable directly from the plot. Points with <strong>|std residual|&nbsp;&gt;&nbsp;2</strong> — beyond the ~95% range expected for normal data — are flagged in <span class="text-danger"><strong>red</strong></span>; they also tend to deviate most from the diagonal line. Before removing, ask: <em>measurement error?</em> → remove; <em>real biological extreme?</em> → keep; <em>consistent pattern across many points (S-curve, bend)?</em> → distribution is globally non-normal, removal won't help — consider data transformation; <em>does Shapiro-Wilk p pass after removal?</em> → re-run to verify.</p>
-                                                <p class="mb-0"><strong><i class="bi bi-cursor-fill me-1"></i> Click any <span class="text-danger">red point</span></strong> to exclude it permanently and recalculate. Blue points are not clickable.</p>
+                                            <div class="card border-0 shadow-sm mb-3" style="border:1px solid #d0d8e0 !important;">
+                                                <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between bg-light"
+                                                     style="cursor:pointer; border-bottom:1px solid #d0d8e0;"
+                                                     data-toggle="collapse" data-target="#infoQQ"
+                                                     aria-expanded="false" aria-controls="infoQQ">
+                                                    <span style="font-size:0.75rem; font-weight:600; color:#495057;">
+                                                        <i class="bi bi-info-circle-fill text-secondary me-1"></i>
+                                                        <i class="bi bi-graph-up me-1"></i> Normal Q-Q — how to interpret &amp; outlier removal
+                                                    </span>
+                                                    <i class="bi bi-chevron-down text-muted" style="font-size:0.8rem; transition:transform 0.2s;"></i>
+                                                </div>
+                                                <div id="infoQQ" class="collapse">
+                                                    <div class="card-body py-2 px-3" style="font-size:0.60rem;">
+                                                        <p class="mb-1"><strong><i class="bi bi-graph-up me-1"></i> Normal Q-Q — Primary purpose: Normality of Residuals</strong></p>
+                                                        <p class="mb-1">Compares the <em>observed quantiles</em> of the residuals (Y-axis) against the <em>theoretical quantiles</em> of a perfect normal distribution (X-axis). If the data is truly normal, both sets of quantiles match and points lie along the diagonal reference line. Deviations reveal exactly where and how the distribution differs from normality.</p>
+                                                        <p class="mb-1"><strong>Well-behaved data:</strong> Points lie <strong>closely along the diagonal</strong>; small deviations at the ends are acceptable.<br>
+                                                        <strong>Warning signs:</strong> <em>S-shaped curve</em> → heavy/light tails; <em>one-end bend</em> → skewness; <em>gaps or jumps</em> → bimodality; <em>extreme off-line points</em> → outliers.</p>
+                                                        <hr class="my-1" style="opacity:0.25;">
+                                                        <p class="mb-1"><strong><i class="bi bi-bullseye me-1"></i> Outlier identification (|std residual|&nbsp;&gt;&nbsp;2):</strong> The Y-axis already shows standardized residuals, so the threshold is readable directly from the plot. Points with <strong>|std residual|&nbsp;&gt;&nbsp;2</strong> — beyond the ~95% range expected for normal data — are flagged in <span class="text-danger"><strong>red</strong></span>; they also tend to deviate most from the diagonal line. Before removing, ask: <em>measurement error?</em> → remove; <em>real biological extreme?</em> → keep; <em>consistent pattern across many points (S-curve, bend)?</em> → distribution is globally non-normal, removal won't help — consider data transformation; <em>does Shapiro-Wilk p pass after removal?</em> → re-run to verify.</p>
+                                                        <p class="mb-0"><strong><i class="bi bi-cursor-fill me-1"></i> Click any <span class="text-danger">red point</span></strong> to exclude it permanently and recalculate. Blue points are not clickable.</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div id="assumptionsQQContent"><p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p></div>
                                         </div>
@@ -614,6 +896,24 @@
 </div>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script src="{{url_for('static', filename='js_statistics.js')}}"></script>
+
+<script>
+// Rotate chevrons on Bootstrap 4 accordion open/close
+$(document).ready(function () {
+    $('[data-toggle="collapse"]').each(function () {
+        var $trigger = $(this);
+        var targetSel = $trigger.data('target');
+        if (!targetSel) return;
+        var $target = $(targetSel);
+        $target.on('show.bs.collapse', function () {
+            $trigger.find('.bi-chevron-down').css('transform', 'rotate(180deg)');
+        });
+        $target.on('hide.bs.collapse', function () {
+            $trigger.find('.bi-chevron-down').css('transform', 'rotate(0deg)');
+        });
+    });
+});
+</script>
 
 <div class="modal fade" id="confirmExclusionModal" tabindex="-1" role="dialog" aria-labelledby="confirmExclusionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
