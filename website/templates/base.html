@@ -17,7 +17,7 @@
     <meta property="og:title" content="{% block og_title %}CyanoTools - Tools for Cyanobacteria and Algal Research{% endblock %}">
     <meta property="og:description" content="{% block og_description %}CyanoTools is a web platform supporting advanced biological research through specialized tools for photosynthesis, microscopy, spectroscopy and mass spectrometry analysis.{% endblock %}">
     <meta property="og:image" content="{{ url_for('static', filename='img/cyano_preview.png') }}">
-    <meta property="og:url" content="https://tools-py.e-cyanobacterium.org/">
+    <meta property="og:url" content="{{ request.base_url|replace('http://', 'https://') }}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="en_US">
     <!-- Twitter Card Meta Tags -->
@@ -31,7 +31,7 @@
     <link rel="icon" sizes="192x192" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
     <!-- Canonical Link -->
-    <link rel="canonical" href="https://tools-py.e-cyanobacterium.org/">
+    <link rel="canonical" href="{{ request.base_url|replace('http://', 'https://') }}">
     <!-- Performance Hints -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -53,7 +53,6 @@
     </script>
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <!--  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>  -->
     <!-- Popper Js -->
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <!-- Bootstrap Js -->
@@ -74,7 +73,7 @@
     </script>
     <!-- Custom JS -->
     <script src="{{url_for('static', filename='js_index.js')}}"></script>
-    <!-- Add Structured Data (JSON-LD) -->
+    <!-- Base Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -82,202 +81,190 @@
       "name": "{% block schema_name %}CyanoTools{% endblock %}",
       "operatingSystem": "Web",
       "applicationCategory": "ScientificSoftware",
-      "url": "{{ request.url }}",
+      "url": "{{ request.base_url|replace('http://', 'https://') }}",
       "description": {{ self.description()|tojson }},
-      "publisher": {
-        "@type": "Organization",
-        "name": "CzechGlobe - Department of Adaptive Biotechnologies",
-        "logo": {
-        "type": "ImageObject",
-          "url": "{{ url_for('static', filename='img/cyano_preview.png', _external=True) }}"
-        }
-      }
-      {% if self.search_query is defined %},
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://tools-py.e-cyanobacterium.org/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
       "offers": {
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD"
       },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "1" 
-      },
-      {% endif %}
+      "publisher": {
+        "@type": "Organization",
+        "name": "CzechGlobe - Department of Adaptive Biotechnologies",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "{{ url_for('static', filename='img/cyano_preview.png', _external=True) }}"
+        }
+      }
     }
     </script>
+    <!-- Page-specific structured data -->
+    {% block extra_schema %}{% endblock %}
+    <!-- Additional page-specific head elements -->
+    {% block head %}{% endblock %}
 </head>
 
-<body>
-    {% block body %}{% endblock %}
+<body>       
+    <!-- Navbar -->
+    <div class="max-width">
+        <header id="site-header" class="site-header">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                <div class="container-fluid">   
+                    <a class="navbar-brand" href="/"><b style="color: #00b894">Cyano</b><b style="color: #d1d1d1">Tools</b></a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="pamDropdown" data-toggle="dropdown">PAM fluorometry</a>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li><a class="dropdown-item" href="/OJIP_data_analysis">OJIP curves</a></li>
+                                    <li><a class="dropdown-item" href="/light_curves_analysis">Light curves (P-I curves)</a></li>
+                                    <li><a class="dropdown-item" href="/slow_kin_data_analysis">Slow kinetics (Kautsky)</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="MicroscopyDropdown" data-toggle="dropdown">Image analysis</a>
+                                <ul class="dropdown-menu">
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" id="FluoMicroscopyDropdown">Cell counting</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="/cell_count">Cell counting - round cells</a></li>
+                                            <li><a class="dropdown-item" href="/cell_count_filament">Cell counting - filaments</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" id="confocalMicroscopyDropdown"> Confocal microscopy </a>
+                                        <ul class="dropdown-menu">
+                                            <a class="dropdown-item" href="/pixel_profiles_round_cells"> Pigment profiles - round cells </a>
+                                            <a class="dropdown-item" href="/pixel_profiles_filament"> Pigment profiles - filaments </a>
+                                            <a class="dropdown-item" href="/cell_size_round_cells"> Cell size - round cells </a>
+                                            <a class="dropdown-item" href="/cell_size_filament"> Cell size - filaments </a>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/ex_em_spectra_analysis">Fluorescence spectroscopy</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="MassSpetrometryDropdown" data-toggle="dropdown"> Mass spectrometry </a>
+                                <ul class="dropdown-menu">
+                                    <a class="dropdown-item" href="/MIMS_data_analysis"> Membrane inlet mass spectrometry (MIMS) </a>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="PBRDropdown" data-toggle="dropdown"> PBRs </a>
+                                <ul class="dropdown-menu">
+                                    <a class="dropdown-item" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank"> PSI PBR data analysis </a>
+                                    <a class="dropdown-item" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank"> PSI PBR control scripts </a>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/statistics">Statistics</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Calculators </a>
+                                <ul class="dropdown-menu">
+                                    <a class="dropdown-item" href="/calculators#CO2_conc"> CO<sub>2</sub> concentration in air + CO<sub>2</sub> mixture</a>
+                                    <a class="dropdown-item" href="/calculators#dO2_conc"> dO<sub>2</sub> concentration in water </a>
+                                    <a class="dropdown-item" href="/calculators#dCO2_conc"> dCO<sub>2</sub> concentration in water </a>
+                                    <a class="dropdown-item" href="/calculators#growth_rate"> Specific growth rate </a>
+                                    <a class="dropdown-item" href="/calculators#OD720_correction"> Correcting OD<sub>720</sub> signal non-linearity</a>
+                                    <a class="dropdown-item" href="/calculators#OD720_recalculation"> Recalculating OD<sub>720</sub> signal between devices</a>
+                                    <a class="dropdown-item" href="/calculators#dilution_estimator"> Substance Dilution Estimator</a>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="ModelsDropdown" data-toggle="dropdown">Other</a>
+                                <ul class="dropdown-menu">
+                                    <a class="dropdown-item" href="https://www.optimalga.com/" target="_blank">Optimalga</a>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Models</a>
+                                        <ul class="dropdown-menu">
+                                            <a class="dropdown-item" href="https://www.e-cyanobacterium.org/" target="_blank">E-cyanobacterium</a>
+                                            <a class="dropdown-item" href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">Seawater carbonate system</a>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">DoAB</a>
+                                        <ul class="dropdown-menu">
+                                            <a class="dropdown-item" href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">DoAB home page</a>
+                                            <a class="dropdown-item" href="http://www.pracovistedrasov.pano3d.eu/" target="_blank">DoAB research infrastructure</a>
+                                            <a class="dropdown-item" href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank">DoAB results and publications</a>
+                                            <a class="dropdown-item" href="https://twitter.com/CzechGlobe_DoAB" target="_blank">DoAB social media channel</a>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item"  href="/development_log">Development Log</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Main part of the page -->
+        <main id="main-content" class="page-wrapper">
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category == 'error'%}
+                            <div class="alert alert-danger alert-dismissable fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success alert-dismissable fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endfor%}
+                {% endif %}
+            {% endwith%}
+
+            <div class="wrapper-box">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer id="footer_position">
+            <div class="footer-container"> 
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h4>About DoAB</h4>
+                        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/research-group-of-adaptive-biotechnologies/" target="blank">Department of Adaptive Biotechnologies</a><br>
+                        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/" target="blank">Domain of Adaptive and Innovative Techniques</a><br>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Documentation</h4>
+                        <a href="/development_log" target="blank">Development Log</a><br>
+                        <a href="https://github.com/Zastupic/tools-py.e-cyanobacterium.org" target="blank">Documentation (GitHub)</a><br>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Quick Links</h4>
+                        <a href="https://www.czechglobe.cz/en/" target="blank">CzechGlobe</a><br>
+                        <a href="https://www.avcr.cz/en/" target="blank">Czech Academy of Sciences</a><br>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Contact</h4>
+                        <a href="mailto:zavrel.t@czechglobe.cz">Contact Us</a><br>
+                        <a href="mailto:zavrel.t@czechglobe.cz"><i>zavrel.t@czechglobe.cz</i></a><br>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>  
 </body>
-</html>
-    <body>       
-        <!-- Navbar -->
-        <div class="max-width">
-            <header id="site-header" class="site-header">
-                <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-                    <div class="container-fluid">   
-                        <a class="navbar-brand" href="/"><b style="color: #00b894">Cyano</b><b style="color: #d1d1d1">Tools</b></a>
-                        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                        <div class="collapse navbar-collapse" id="navbarNav">
-                            <ul class="navbar-nav">
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="pamDropdown" data-toggle="dropdown">PAM fluorometry</a>
-                                    <ul class="dropdown-menu dropdown-menu-dark">
-                                        <li><a class="dropdown-item" href="/OJIP_data_analysis">OJIP curves</a></li>
-                                        <li><a class="dropdown-item" href="/light_curves_analysis">Light curves (P-I curves)</a></li>
-                                        <li><a class="dropdown-item" href="/slow_kin_data_analysis">Slow kinetics (Kautsky)</a></li>
-                                    </ul>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="MicroscopyDropdown" data-toggle="dropdown">Image analysis</a>
-                                    <ul class="dropdown-menu">
-                                        <li class="dropdown-submenu">
-                                            <a class="dropdown-item dropdown-toggle" href="#" id="FluoMicroscopyDropdown">Cell counting</a>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="/cell_count">Cell counting - round cells</a></li>
-                                                <li><a class="dropdown-item" href="/cell_count_filament">Cell counting - filaments</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="dropdown-submenu">
-                                            <a class="dropdown-item dropdown-toggle" href="#" id="confocalMicroscopyDropdown"> Confocal microscopy </a>
-                                            <ul class="dropdown-menu">
-                                                <a class="dropdown-item" href="/pixel_profiles_round_cells"> Pigment profiles - round cells </a>
-                                                <a class="dropdown-item" href="/pixel_profiles_filament"> Pigment profiles - filaments </a>
-                                                <a class="dropdown-item" href="/cell_size_round_cells"> Cell size - round cells </a>
-                                                <a class="dropdown-item" href="/cell_size_filament"> Cell size - filaments </a>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/ex_em_spectra_analysis">Fluorescence spectroscopy</a>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="MassSpetrometryDropdown" data-toggle="dropdown"> Mass spectrometry </a>
-                                    <ul class="dropdown-menu">
-                                        <a class="dropdown-item" href="/MIMS_data_analysis"> Membrane inlet mass spectrometry (MIMS) </a>
-                                    </ul>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="PBRDropdown" data-toggle="dropdown"> PBRs </a>
-                                    <ul class="dropdown-menu">
-                                        <a class="dropdown-item" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank"> PSI PBR data analysis </a>
-                                        <a class="dropdown-item" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank"> PSI PBR control scripts </a>
-                                    </ul>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/statistics">Statistics</a>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Calculators </a>
-                                    <ul class="dropdown-menu">
-                                        <a class="dropdown-item" href="/calculators#CO2_conc"> CO<sub>2</sub> concentration in air + CO<sub>2</sub> mixture</a>
-                                        <a class="dropdown-item" href="/calculators#dO2_conc"> dO<sub>2</sub> concentration in water </a>
-                                        <a class="dropdown-item" href="/calculators#dCO2_conc"> dCO<sub>2</sub> concentration in water </a>
-                                        <a class="dropdown-item" href="/calculators#growth_rate"> Specific growth rate </a>
-                                        <a class="dropdown-item" href="/calculators#OD720_correction"> Correcting OD<sub>720</sub> signal non-linearity</a>
-                                        <a class="dropdown-item" href="/calculators#OD720_recalculation"> Recalculating OD<sub>720</sub> signal between devices</a>
-                                        <a class="dropdown-item" href="/calculators#dilution_estimator"> Substance Dilution Estimator</a>
-                                    </ul>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="ModelsDropdown" data-toggle="dropdown">Other</a>
-                                    <ul class="dropdown-menu">
-                                        <a class="dropdown-item" href="https://www.optimalga.com/" target="_blank">Optimalga</a>
-                                        <li class="dropdown-submenu">
-                                            <a class="dropdown-item dropdown-toggle" href="#">Models</a>
-                                            <ul class="dropdown-menu">
-                                                <a class="dropdown-item" href="https://www.e-cyanobacterium.org/" target="_blank">E-cyanobacterium</a>
-                                                <a class="dropdown-item" href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank">Seawater carbonate system</a>
-                                            </ul>
-                                        </li>
-                                        <li class="dropdown-submenu">
-                                            <a class="dropdown-item dropdown-toggle" href="#">DoAB</a>
-                                            <ul class="dropdown-menu">
-                                                <a class="dropdown-item" href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">DoAB home page</a>
-                                                <a class="dropdown-item" href="http://www.pracovistedrasov.pano3d.eu/" target="_blank">DoAB research infrastructure</a>
-                                                <a class="dropdown-item" href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank">DoAB results and publications</a>
-                                                <a class="dropdown-item" href="https://twitter.com/CzechGlobe_DoAB" target="_blank">DoAB social media channel</a>
-                                            </ul>
-                                        <li class="dropdown-submenu">
-                                            <a class="dropdown-item"  href="/development_log">Development Log</a>
-                                        </li>
-                                        </li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
-            </header>
-
-            <!-- Main part of the page -->
-            <main id="main-content" class="page-wrapper">
-                <!-- Flash messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            {% if category == 'error'%}
-                                <div class="alert alert-danger alert-dismissable fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="close" data-dismiss="alert">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            {% else %}
-                                <div class="alert alert-success alert-dismissable fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="close" data-dismiss="alert">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            {% endif %}
-                        {% endfor%}
-                    {% endif %}
-                {% endwith%}
-
-                <div class="wrapper-box">
-                    {% block content %}
-                    {% endblock %}
-                </div>
-            </main>
-
-            <!-- Footer -->
-            <footer id="footer_position">
-                <div class="footer-container"> 
-                    <div class="footer-content">
-                        <div class="footer-section">
-                            <h4>About DoAB</h4>
-                            <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/research-group-of-adaptive-biotechnologies/" target="blank">Department of Adaptive Biotechnologies</a><br>
-                            <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/" target="blank">Domain of Adaptive and Innovative Techniques</a><br>
-                        </div>
-                        <div class="footer-section">
-                            <h4>Documentation</h4>
-                            <a href="/development_log" target="blank">Development Log</a><br>
-                            <a href="https://github.com/Zastupic/tools-py.e-cyanobacterium.org" target="blank">Documentation (GitHub)</a><br>
-                        </div>
-                        <div class="footer-section">
-                            <h4>Quick Links</h4>
-                            <a href="https://www.czechglobe.cz/en/" target="blank">CzechGlobe</a><br>
-                            <a href="https://www.avcr.cz/en/" target="blank">Czech Academy of Sciences</a><br>
-                        </div>
-                        <div class="footer-section">
-                            <h4>Contact</h4>
-                            <a href="mailto:zavrel.t@czechglobe.cz">Contact Us</a><br>
-                            <a href="mailto:zavrel.t@czechglobe.cz"><i>zavrelt.t@czechglobe.cz</i></a><br>
-                        </div>
-                    </div>
-                </div>
-            </footer>
-        </div>  
-    </body>
 </html>
