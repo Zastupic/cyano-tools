@@ -205,18 +205,33 @@ Please note that the equilibrium concentration of dissolved <i>O<sub>2</sub></i>
 
                 <div class="col-md-5 mb-3">
                     <label for="norm-timepoint" class="form-label font-weight-bold">Baseline Time Point (min):</label>
-                    <input type="number" id="norm-timepoint" class="form-control" value="0" step="any">
-                    <small class="text-muted">Time where the signal is most stable.</small>
+                    <input type="number" id="norm-timepoint" class="form-control" value="" step="any" placeholder="auto">
+                    <small class="text-muted">Time where the signal is most stable. Defaults to the first recorded time point.</small>
                 </div>
             </div>
 
-            <div class="mt-2 p-3 bg-white border rounded small text-secondary">
-                <p class="mb-1"><strong>How it works:</strong></p>
-                <ul class="mb-0 pl-3">
-                    <li>The <strong>Reference Signal</strong> is self-normalized to its value at your chosen <strong>Baseline Time</strong> (setting it to 1.0 at that moment).</li>
-                    <li>This creates a "drift factor" that is applied to all other signals.</li>
-                    <li>This compensates for changes in vacuum pressure or filament temperature while <strong>preserving the original magnitude</strong> of your data.</li>
-                </ul>
+            <div class="mt-2" id="how-it-works-accordion">
+              <div class="card mb-0 border-0">
+                <div class="card-header bg-white p-0 border rounded" id="how-it-works-heading">
+                  <button class="btn btn-link btn-block text-left text-secondary small font-weight-bold py-2 px-3 collapsed"
+                          type="button"
+                          data-toggle="collapse"
+                          data-target="#how-it-works-body"
+                          aria-expanded="false"
+                          aria-controls="how-it-works-body">
+                    ℹ️ How it works <span class="float-right" style="font-size:0.85em;">▼</span>
+                  </button>
+                </div>
+                <div id="how-it-works-body" class="collapse" aria-labelledby="how-it-works-heading" data-parent="#how-it-works-accordion">
+                  <div class="card-body bg-white border border-top-0 rounded-bottom small text-secondary pt-2">
+                    <ul class="mb-0 pl-3">
+                        <li>The <strong>Reference Signal</strong> is self-normalized to its value at your chosen <strong>Baseline Time</strong> (setting it to 1.0 at that moment).</li>
+                        <li>This creates a "drift factor" that is applied to all other signals.</li>
+                        <li>This compensates for changes in vacuum pressure or filament temperature while <strong>preserving the original magnitude</strong> of your data.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div id="norm-timepoint-error" style="color:red; margin-top:10px; font-weight:bold;"></div>
@@ -234,20 +249,28 @@ Please note that the equilibrium concentration of dissolved <i>O<sub>2</sub></i>
   <div id="normalized-plot-div" style="height: 400px;"></div>
 </div>
 
+<!-- Early data-only XLSX download (shown after normalization, hidden once regressions found) -->
+<div id="early-xlsx-download-section" style="display:none; margin-top:12px;">
+  <p><b>Optional: Download data</b>
+  <br><small class="text-muted" style="font-size:0.9em;">Export raw and normalized signal data (without regression). Once you add regressions below, use the summary download instead.</small></p>
+  <button id="download-early-xlsx" class="btn btn-success">Download data .XLSX file</button>
+</div>
+
 <!-- Confirm button to apply linear regression -->
-<p id="find-coefficients-label" style="display:none;"><b>6. Find regression coefficients - zoom the normalized plot and click the button below</b>
-<br>To find multiple regressions, simply unzoom the normalized plot (by double-click on the plot), zoom new time window and click the button again.</p>
+<p id="find-coefficients-label" style="display:none;"><b>6. Find regression coefficients — zoom the normalized plot and click the button below</b>
+<br><small class="text-muted">To find multiple regressions, unzoom (double-click on the plot), zoom a new time window and click again.</small></p>
 <button id="confirm-selection-button" type="button" class="btn btn-primary" style="display:none;">Find linear regressions for current zoom</button>
-<button id="clear-regressions-in-table-button" type="button"class="btn btn-outline-danger" style="display:none;">Remove the last regression line</button>
+<button id="clear-regressions-in-table-button" type="button" class="btn btn-outline-danger" style="display:none;">Remove the last regression</button>
 
 <!-- Show regressions -->
 <div id="regression-results-table" style="margin-top:20px;"></div>
 
 <br>
-<!-- Show XLSX download file -->
+<!-- Show XLSX download file (shown only after regressions found) -->
 <div id="xlsx-download-section" style="display:none;">
-  <p>7. <b>Download summary XLSX file</b> with raw data, normalized data and regression coefficients for all selected intervals.</p>  
-  <button id="download-xlsx" class="btn btn-success">Download summary XLSX file</button>
+  <p><b>7. Download summary .XLSX file</b>
+  <br><small class="text-muted">Includes raw data, normalized data and regression coefficients for all selected intervals.</small></p>
+  <button id="download-xlsx" class="btn btn-success">Download summary .XLSX file</button>
 </div>
 <br><br><br><br><br>
 

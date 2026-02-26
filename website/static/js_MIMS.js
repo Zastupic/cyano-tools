@@ -338,8 +338,13 @@ function plotMIMSData({ data, xField, yFields }) {
     };
   });
 
+  const rawPlotTitle = {
+    text: `Raw MIMS data<br><span style="font-size:0.85em;">${selectedFile ? selectedFile.name : ''}</span>`,
+    font: { size: 13 }
+  };
+
   Plotly.newPlot('raw-plot-div', traces, {
-    title: 'Raw MIMS data: Signals vs Time',
+    title: rawPlotTitle,
     xaxis: { title: xField === 'min' ? 'Time (min)' : xField },
     yaxis: { title: 'Signal', tickformat: '.1e' },
     //legend: { orientation: 'h' }
@@ -373,16 +378,63 @@ function updateRawYAxisLabel() {
 function populateNormalizationDropdown(yFields) {
   const normalizeSelect = document.getElementById('normalize-by-select');
   normalizeSelect.innerHTML = '';
-  yFields.forEach(field => {
+
+  // Preference order for auto-selection: saved value > Ar/N2 keywords > first field
+  const savedRef = localStorage.getItem('mims_lastRefSignal');
+  let bestMatchIndex = 0;
+
+  yFields.forEach((field, i) => {
     const opt = document.createElement('option');
     const unit = mimsFieldUnits[field];
     opt.value = field;
     opt.textContent = unit ? `${field} [${unit}]` : field;
     normalizeSelect.appendChild(opt);
+
+    // Prefer saved selection (exact match)
+    if (savedRef && field === savedRef) { bestMatchIndex = i; }
+    // Fallback: prefer Ar/Argon/N2/N signal keywords if no saved match yet
+    else if (!savedRef || bestMatchIndex === 0) {
+      const fl = field.toLowerCase();
+      if (/\bar\b|argon|^n2$|^n$|^n\s|nitrogen/.test(fl)) { bestMatchIndex = i; }
+    }
   });
+
+  normalizeSelect.selectedIndex = bestMatchIndex;
+
+  // Restore or set sensible default baseline time
+  const savedTime = localStorage.getItem('mims_lastNormTime');
+  const timepointInput = document.getElementById('norm-timepoint');
+  if (savedTime !== null && savedTime !== '') {
+    timepointInput.value = savedTime;
+  } else {
+    // Default: second data point time to avoid t=0 and first-point noise
+    const validTimes = mimsRawData
+      .map(r => r[mimsXField])
+      .filter(t => typeof t === 'number')
+      .sort((a, b) => a - b);
+    const secondValidTime = validTimes.length >= 2 ? validTimes[1] : validTimes[0];
+    timepointInput.value = secondValidTime !== undefined ? secondValidTime.toFixed(4) : '';
+  }
 }
 
-document.getElementById('normalize-button').addEventListener('click', plotNormalizedData);
+document.getElementById('normalize-button').addEventListener('click', function() {
+  // Persist user selections for next session / next file
+  const refField = document.getElementById('normalize-by-select').value;
+  const tpVal = document.getElementById('norm-timepoint').value;
+  if (refField) localStorage.setItem('mims_lastRefSignal', refField);
+  if (tpVal !== '') localStorage.setItem('mims_lastNormTime', tpVal);
+  plotNormalizedData();
+});
+
+// Persist reference signal selection on change
+document.getElementById('normalize-by-select').addEventListener('change', function() {
+  if (this.value) localStorage.setItem('mims_lastRefSignal', this.value);
+});
+
+// Persist timepoint on change
+document.getElementById('norm-timepoint').addEventListener('change', function() {
+  if (this.value !== '') localStorage.setItem('mims_lastNormTime', this.value);
+});
 
 function plotNormalizedData() {
   const refField = document.getElementById('normalize-by-select').value;
@@ -445,8 +497,17 @@ function plotNormalizedData() {
     };
   });
 
+  const normPlotTitle = {
+    text: [
+      'Normalized MIMS signals',
+      `<span style="font-size:0.85em;">divided by ${refField} signal, self-normalized at t = ${tpValue.toFixed(2)} min</span>`,
+      `<span style="font-size:0.85em;">${selectedFile ? selectedFile.name : ''}</span>`
+    ].join('<br>'),
+    font: { size: 13 }
+  };
+
   Plotly.newPlot('normalized-plot-div', traces, {
-    title: `Normalized Signals (divided by ${refField}, self-norm at t=${tpValue.toFixed(2)} min)`,
+    title: normPlotTitle,
     xaxis: { title: xField === 'min' ? 'Time (min)' : xField },
     yaxis: { title: `Signal / ${refField} (r.u.)`, tickformat: '.1e' }
   }).then(() => {
@@ -461,6 +522,7 @@ function plotNormalizedData() {
   document.getElementById('normalized-container').style.display = 'block';
   document.getElementById('normalized-preview-label').style.display = 'block';
   document.getElementById('find-coefficients-label').style.display = 'block';
+  document.getElementById('early-xlsx-download-section').style.display = 'block';
 
   requestAnimationFrame(() => {
     document.getElementById('confirm-selection-button').style.display = 'inline-block';
@@ -612,58 +674,111 @@ function applyLinearRegression(x0, x1) {
 function refreshRegressionTable() {
   const tableDiv = document.getElementById('regression-results-table');
   const downloadDiv = document.getElementById('xlsx-download-section');
+  const earlyDownloadDiv = document.getElementById('early-xlsx-download-section');
+
   if (regressionResults.length === 0) {
     if (tableDiv) tableDiv.innerHTML = '';
     if (downloadDiv) downloadDiv.style.display = 'none';
+    // Restore early download if normalized data exists
+    if (earlyDownloadDiv && document.getElementById('normalized-container').style.display === 'block') {
+      earlyDownloadDiv.style.display = 'block';
+    }
     return;
   }
+
+  // Swap buttons: hide early download, show summary download
+  if (earlyDownloadDiv) earlyDownloadDiv.style.display = 'none';
   if (downloadDiv) downloadDiv.style.display = 'block';
 
   const grouped = {};
-  regressionResults.forEach(r => { if (!grouped[r.selectionId]) grouped[r.selectionId] = []; grouped[r.selectionId].push(r); });
-  const selectionIds = Object.keys(grouped).map(Number).sort((a,b)=>a-b);
+  regressionResults.forEach(r => {
+    if (!grouped[r.selectionId]) grouped[r.selectionId] = [];
+    grouped[r.selectionId].push(r);
+  });
+  const selectionIds = Object.keys(grouped).map(Number).sort((a, b) => a - b);
+  const selectedModel = (document.querySelector('select[name="MIMS_model"]') || {}).value || 'HPR40';
 
-  let html = `<table class="table table-striped">
-                <thead>
-                  <tr>
-                    <th>Selection #</th>
-                    <th>Start Time (ms)</th>
-                    <th>Start Time (min)</th>
-                    <th>End Time (ms)</th>
-                    <th>End Time (min)</th>
-                    <th>Signal</th>
-                    <th>Slope Raw (min<sup>-1</sup>)</th>
-                    <th>Slope Normalized (min<sup>-1</sup>)</th>
-                    <th>R² Raw</th>
-                    <th>R² Normalized</th>
-                  </tr>
-                </thead>
-              <tbody>
-            `;
+  function r2Badge(val) {
+    if (typeof val !== 'number' || Number.isNaN(val)) return `<span class="badge badge-secondary">—</span>`;
+    const display = val.toFixed(4);
+    if (val >= 0.99) return `<span class="badge badge-success">${display}</span>`;
+    if (val >= 0.95) return `<span class="badge badge-warning text-dark">${display}</span>`;
+    return `<span class="badge badge-danger">${display}</span>`;
+  }
+
+  function slopeStr(v) {
+    return (typeof v === 'number' && !Number.isNaN(v)) ? v.toExponential(3) : '—';
+  }
+
+  const lastSel = selectionIds[selectionIds.length - 1];
+  let html = `<div id="regression-accordion">`;
 
   selectionIds.forEach(sel => {
-    grouped[sel].forEach(r => {
-      const slopeRawStr = typeof r.slopeRaw === 'number' && !Number.isNaN(r.slopeRaw) ? `${r.slopeRaw.toExponential(3)}` : '-';
-      const slopeNormStr = typeof r.slopeNorm === 'number' && !Number.isNaN(r.slopeNorm) ? `${r.slopeNorm.toExponential(3)}` : '-';
-      const r2RawStr = typeof r.r2Raw === 'number' && !Number.isNaN(r.r2Raw) ? r.r2Raw.toFixed(4) : '-';
-      const r2NormStr = typeof r.r2Norm === 'number' && !Number.isNaN(r.r2Norm) ? r.r2Norm.toFixed(4) : '-';
+    const rows = grouped[sel];
+    const first = rows[0];
+    const startMin = first.start_time.toFixed(2);
+    const endMin = first.end_time.toFixed(2);
+    const timeExtra = selectedModel === 'HPR40'
+      ? ` &nbsp;<small class="text-muted">(${first.start_time_ms} – ${first.end_time_ms} ms)</small>`
+      : '';
+    const isLast = sel === lastSel;
+    const collapseId = `regression-collapse-${sel}`;
+    const headingId  = `regression-heading-${sel}`;
 
-      html += `<tr>
-        <td>${r.selectionId}</td>
-        <td>${r.start_time_ms}</td>
-        <td>${r.start_time.toFixed(2)}</td>
-        <td>${r.end_time_ms}</td>
-        <td>${r.end_time.toFixed(2)}</td>
-        <td>${r.signal}</td>
-        <td>${slopeRawStr}</td>
-        <td>${slopeNormStr}</td>
-        <td>${r2RawStr}</td>
-        <td>${r2NormStr}</td>
-      </tr>`;
+    html += `
+    <div class="card mb-2 shadow-sm">
+      <div class="card-header p-0" id="${headingId}" style="background:#f0f4ff;">
+        <button class="btn btn-link btn-block text-left d-flex align-items-center justify-content-between px-3 py-2${isLast ? '' : ' collapsed'}"
+                type="button"
+                data-toggle="collapse"
+                data-target="#${collapseId}"
+                aria-expanded="${isLast ? 'true' : 'false'}"
+                aria-controls="${collapseId}"
+                style="text-decoration:none; color:inherit;">
+          <span>
+            <strong>Regression coefficients #${sel}</strong>
+            <span class="text-muted ml-2" style="font-size:0.88em;">⏱ ${startMin} – ${endMin} min${timeExtra}</span>
+          </span>
+          <span style="font-size:0.8em;">${isLast ? '▲' : '▼'}</span>
+        </button>
+      </div>
+      <div id="${collapseId}" class="${isLast ? 'collapse show' : 'collapse'}"
+           aria-labelledby="${headingId}">
+        <div class="card-body p-0">
+          <table class="table table-sm table-hover mb-0" style="font-size:0.88em;">
+            <thead class="thead-light">
+              <tr>
+                <th style="width:22%">Signal</th>
+                <th>Slope raw data<br><small>(min⁻¹)</small></th>
+                <th>R² raw</th>
+                <th>Slope normalized data<br><small>(min⁻¹)</small></th>
+                <th>R² normalized</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+    rows.forEach(r => {
+      const unit = r.unit ? ` [${r.unit}]` : '';
+      html += `
+              <tr>
+                <td><code>${r.signal}${unit}</code></td>
+                <td><code>${slopeStr(r.slopeRaw)}</code></td>
+                <td>${r2Badge(r.r2Raw)}</td>
+                <td><code>${slopeStr(r.slopeNorm)}</code></td>
+                <td>${r2Badge(r.r2Norm)}</td>
+              </tr>`;
     });
+
+    html += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
   });
 
-  html += '</tbody></table>';
+  html += `</div>`;
+
   if (tableDiv) tableDiv.innerHTML = html;
 }
 
@@ -757,7 +872,44 @@ document.getElementById('download-xlsx').addEventListener('click', function() {
 });
 
 // ======================
-// 10) UI wiring for file & show
+// 9b) Early data-only XLSX export (no regression sheet)
+// ======================
+document.getElementById('download-early-xlsx').addEventListener('click', function() {
+  if (!mimsRawData.length) { alert('No data available for export.'); return; }
+  const wb = XLSX.utils.book_new();
+  wb.Props = { Title: 'MIMS Data Export', Author: 'MIMS App', CreatedDate: new Date() };
+  const selectedModel = (document.querySelector('select[name="MIMS_model"]') || {}).value || 'HPR40';
+  const refField = document.getElementById('normalize-by-select').value;
+  const tpValue = parseFloat(document.getElementById('norm-timepoint').value);
+
+  let refRowIndex = 0, bestDiff = Infinity;
+  mimsRawData.forEach((row, i) => {
+    const diff = Math.abs((row[mimsXField] || 0) - tpValue);
+    if (diff < bestDiff) { bestDiff = diff; refRowIndex = i; }
+  });
+  const refInitialValue = mimsRawData[refRowIndex][refField];
+
+  const dataSheet = mimsRawData.map(row => {
+    const out = {};
+    if (selectedModel === 'HPR40') out['Time (ms)'] = row['ms'];
+    else out['Time (s)'] = row['Time'];
+    out['Time (min)'] = row['min'] !== undefined && row['min'] !== null ? row['min'].toFixed(2) : null;
+    mimsYFields.forEach(field => {
+      const unit = mimsFieldUnits[field] || '';
+      out[unit ? `${field} [${unit}]` : field] = row[field];
+    });
+    mimsYFields.forEach(field => {
+      const val = row[field]; const refVal = row[refField];
+      if (typeof val === 'number' && typeof refVal === 'number' && refVal !== 0)
+        out[`${field}/${refField}_normalized`] = val / (refVal / refInitialValue);
+    });
+    return out;
+  });
+
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataSheet), 'Data');
+  const baseName = selectedFile ? selectedFile.name.replace(/\.[^/.]+$/, '') : 'MIMS_Data';
+  XLSX.writeFile(wb, `${baseName}_data.xlsx`);
+});
 // ======================
 document.getElementById('MIMS_file').addEventListener('change', function (ev) {
   selectedFile = ev.target.files[0];
@@ -770,6 +922,11 @@ document.getElementById('MIMS_file').addEventListener('change', function (ev) {
   document.getElementById('normalized-preview-label').style.display = 'none';
   document.getElementById('normalization-controls').style.display = 'none';
   document.getElementById('regression-results-table').innerHTML = '';
+  document.getElementById('find-coefficients-label').style.display = 'none';
+  document.getElementById('confirm-selection-button').style.display = 'none';
+  document.getElementById('clear-regressions-in-table-button').style.display = 'none';
+  document.getElementById('xlsx-download-section').style.display = 'none';
+  document.getElementById('early-xlsx-download-section').style.display = 'none';
   regressionResults = []; currentZoomRange = null; rawTraceIndicesBySelection.clear(); normTraceIndicesBySelection.clear(); selectionCounter = 0;
   const err = document.getElementById('mims-error-alert'); if (err) err.innerHTML = '';
 });
