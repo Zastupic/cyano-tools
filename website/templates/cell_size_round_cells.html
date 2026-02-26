@@ -58,8 +58,11 @@ Measure cell diameter, biovolume, and size distribution of unicellular cyanobact
     </div>
 </div>
 <br>
-<h1> Cell size analysis - round cells</h1>
-<p>Welcome to the app for analyzing cell size — a fast and easy way to measure size of unicellular algae or cyanobacteira in fluorescence microscopy images.
+<h1>Cell size analysis — round cells</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload a fluorescence microscopy image, click to select individual round cells, and measure their diameters in micrometers — calibrated to the pixel size of your microscope objective and camera. Results download as an .xlsx file with all individual measurements for statistical analysis.
+</div>
+<p>Welcome to the app for analyzing cell size — a fast and easy way to measure size of unicellular algae or cyanobacteria in fluorescence microscopy images.
     This tool is optimized for images captured with a confocal fluorescence microscope and is designed specifically for analyzing round or near-spherical cells.
     Individual cells are selected manually by the user. Once selected, the tool identifies cell boundaries and calculates the cell diameter based on the pixel size provided.
 </p>
@@ -165,6 +168,17 @@ Measure cell diameter, biovolume, and size distribution of unicellular cyanobact
     </div>
 
     <br>
+    <details style="margin-bottom:1em;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
+        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+            <ul class="mb-0">
+                <li>Typical cell diameters: <em>Synechocystis</em> sp. PCC 6803 ≈ <strong>2–3 µm</strong>; <em>Chlorella vulgaris</em> ≈ 2–10 µm; <em>Chlamydomonas reinhardtii</em> ≈ 5–10 µm; mammalian cells (e.g. HeLa) ≈ 10–30 µm.</li>
+                <li>If measured sizes appear <strong>too large or too small</strong>, verify that the pixel size (nm/pixel) was entered correctly for your objective magnification and camera combination.</li>
+                <li>The histogram shows the size distribution of all selected cells. A narrow distribution indicates uniform cell population; a broad or bimodal distribution may indicate asynchronous growth or mixed populations.</li>
+                <li>The download file contains individual diameter measurements for all selected cells — use these values for calculating mean ± SD or other statistics.</li>
+            </ul>
+        </div>
+    </details>
     <p><b>7. Download the cell size results as .xlsx file</b></p>
     <a href="{{ url_for('static', filename=xlsx_file_path)}}">
         <button type=" download" class="btn btn-success">Download the results</button>
@@ -172,7 +186,7 @@ Measure cell diameter, biovolume, and size distribution of unicellular cyanobact
 
 {% else %}
 <br><br><br><br><br><br><br>
-    
+
 {% endif %}
 <br><br><br><br><br><br><br>
 

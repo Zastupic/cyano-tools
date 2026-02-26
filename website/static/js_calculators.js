@@ -193,6 +193,8 @@ function recalculate_OD() {
   var measuring_device_2_for_span = measuring_device_2_from_dropdown;
   var chl_a_recalculated_for_span = null;
   var OD_in_device_1_for_span = OD_in_device_1_mesured;
+  var recalculated_OD2_for_span;
+  var warning_message_for_span;
 
   if (measuring_device_1_from_dropdown === "UV-2600"){
     if (measuring_device_2_from_dropdown === "AquaPen"){
@@ -409,9 +411,133 @@ function calculateDilutionPlot() {
     });
 }
 
-// Auto-load plot on window open
-window.addEventListener('load', function() {
-    if (document.getElementById("dilutionChart")) {
+(function () {
+    // Run all calculators so results are visible immediately when a section is opened
+    function runAll() {
+        calculateReverseCO2();
+        calculateCO2();
+        calculate_dO2();
+        calculateGrowthRate();
+        calculateDoublingTime();
+        correct_OD_720_PBRFMT150();
+        correct_OD_720_MC1000();
+        correct_OD_720_AquaPen();
+        calculate_A2();
+        recalculate_OD();
         calculateDilutionPlot();
     }
-});
+
+    // Auto-open accordion panel targeted by URL hash
+    function openByHash(hash) {
+        if (!hash) return;
+        var card = document.querySelector(hash);
+        if (!card) return;
+        var collapseDiv = card.querySelector('.collapse');
+        if (collapseDiv) { $(collapseDiv).collapse('show'); }
+    }
+
+    // OD720 non-linearity chart — data and init function
+    var odChartInstance = null;
+    var odNonlinearityDetails = document.getElementById('odNonlinearityDetails');
+
+    function initOdChart() {
+        if (odChartInstance) return;
+            // Data: x = Chlorophyll a (µg/mL), y = OD720 measured — Synechocystis sp. PCC 6803
+            var aquapenSynData = [
+                {x: 62, y: 1.348833}, {x: 31, y: 0.962533}, {x: 15.5, y: 0.637767},
+                {x: 7.75, y: 0.3452}, {x: 3.875, y: 0.168167}, {x: 1.9375, y: 0.074033},
+                {x: 0.96875, y: 0.0219}, {x: 0.484375, y: -0.002},
+                {x: 0.2421875, y: -0.003867}, {x: 0.12109375, y: -0.020567},
+                {x: 0.060546875, y: -0.022467}
+            ];
+            var mc1000Data = [
+                {x: 126.007, y: 1.54}, {x: 94.614, y: 1.44}, {x: 75.779, y: 1.35},
+                {x: 63.222, y: 1.29}, {x: 47.525, y: 1.18}, {x: 42.293, y: 1.13},
+                {x: 31.829, y: 1.01}, {x: 25.551, y: 0.91}, {x: 20.528, y: 0.82},
+                {x: 15.891, y: 0.71}, {x: 11.011, y: 0.55}, {x: 7.363, y: 0.42},
+                {x: 6.098, y: 0.34}, {x: 5.188, y: 0.29}, {x: 4.024, y: 0.23},
+                {x: 3.209, y: 0.18}, {x: 2.800, y: 0.16}, {x: 2.481, y: 0.14},
+                {x: 2.286, y: 0.13}, {x: 1.880, y: 0.11}, {x: 1.604, y: 0.10}
+            ];
+            var fmt150Data = [
+                {x: 0.00, y: 0}, {x: 0.40, y: 0.082}, {x: 1.00, y: 0.194167},
+                {x: 1.79, y: 0.32}, {x: 2.57, y: 0.428667}, {x: 3.36, y: 0.5195},
+                {x: 3.75, y: 0.563}, {x: 4.14, y: 0.602333}, {x: 4.52, y: 0.641833},
+                {x: 4.91, y: 0.677833}, {x: 5.68, y: 0.742167}, {x: 7.21, y: 0.858167},
+                {x: 9.10, y: 0.979167}, {x: 12.81, y: 1.176667}, {x: 16.42, y: 1.327667},
+                {x: 21.68, y: 1.510667}, {x: 26.74, y: 1.657167}
+            ];
+            odChartInstance = new Chart(document.getElementById('odNonlinearityChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'AquaPen',
+                            data: aquapenSynData,
+                            borderColor: '#ff6600', backgroundColor: 'transparent',
+                            showLine: false, pointRadius: 4, borderWidth: 2
+                        },
+                        {
+                            label: 'MC-1000',
+                            data: mc1000Data,
+                            borderColor: '#009933', backgroundColor: 'transparent',
+                            showLine: false, pointRadius: 4, borderWidth: 2
+                        },
+                        {
+                            label: 'FMT-150',
+                            data: fmt150Data,
+                            borderColor: '#9900cc', backgroundColor: 'transparent',
+                            showLine: false, pointRadius: 4, borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.dataset.label + ': Chl ' + ctx.parsed.x.toFixed(3) +
+                                        ' µg/mL → OD₇₂₀ ' + ctx.parsed.y.toFixed(3);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Chlorophyll a (µg mL⁻¹)', font: {size: 12} },
+                            min: 0
+                        },
+                        y: {
+                            title: { display: true, text: 'OD₇₂₀ measured', font: {size: 12} }
+                        }
+                    }
+                }
+            });
+    }
+
+    if (odNonlinearityDetails) {
+        odNonlinearityDetails.addEventListener('toggle', function () {
+            if (this.open) initOdChart();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        runAll();
+        openByHash(window.location.hash);
+        if (odNonlinearityDetails) {
+            odNonlinearityDetails.open = true;
+            initOdChart();
+        }
+    });
+
+    window.addEventListener('hashchange', function () {
+        openByHash(window.location.hash);
+    });
+
+    // Re-render dilution chart each time its panel is opened (canvas must be visible)
+    $('#collapseDilution').on('shown.bs.collapse', function () {
+        calculateDilutionPlot();
+    });
+}());

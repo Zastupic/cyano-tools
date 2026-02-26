@@ -49,6 +49,9 @@
 </div>
 <br>
 <h1>OJIP Analyzer: Online Chlorophyll Fluorescence Transient Analysis</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload raw data files from your PAM fluorometer to instantly visualize OJIP fluorescence curves and calculate photosystem II efficiency parameters — including Fv/Fm, PI<sub>abs</sub>, and the full JIP-test parameter set. No software installation needed; results download as a formatted .xlsx file. Supports batch processing of up to 50 files. 
+</div>
 <p>Welcome to the tool analyzing fast chlorophyll fluorescence induction kinetics! Fast chlorophyll fluorescence induction kinetics, known also as OJIP transient,
     provides a rapid and sensitive method for assessing the efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain. 
     Analysis of the OJIP transient allows to determine bottlenecks in the e<sup>-</sup> transport chain at various sites — 
@@ -500,6 +503,18 @@
     <br>
     <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ OJIP_parameters_from_memory }}"  alt="OJIP curves analyzed-JIP test parameters"/>
     <br> <br>
+    <details style="margin-bottom:1em;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
+        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+            <ul class="mb-0">
+                <li><strong>Fv/Fm</strong> — maximum PSII photochemical efficiency. Unstressed plants/algae: <strong>0.75–0.82</strong>; mild stress: 0.60–0.74; severe photoinhibition or damage: &lt; 0.55.</li>
+                <li><strong>PI<sub>abs</sub></strong> — performance index on absorption basis; integrates light absorption, trapping, and electron transport. Higher = healthier. Values below 1 often indicate measurable stress; typical unstressed range 1–10.</li>
+                <li><strong>φP₀</strong> — equal to Fv/Fm. Maximum probability of primary charge separation at the PSII reaction center.</li>
+                <li><strong>ABS/RC</strong> — effective antenna chlorophyll per active reaction center. Values &gt; 3–4 may indicate photoinhibition with inactivated or closed reaction centers.</li>
+                <li><strong>ET₀/RC and TR₀/RC</strong> — electron transport and energy trapping per active reaction center. Declining values relative to ABS/RC indicate a blockage downstream of charge separation.</li>
+            </ul>
+        </div>
+    </details>
     <form>
         <b>Download results</b><a style="font-size: 80%"> in a summary .xlsx file</a>
         <p style="line-height: 0.9"></p>    

@@ -74,11 +74,12 @@
     <!-- Custom JS -->
     <script src="{{url_for('static', filename='js_index.js')}}"></script>
     <!-- Base Structured Data (JSON-LD) -->
+    {%- set _schema_name -%}{% block schema_name %}CyanoTools{% endblock %}{%- endset -%}
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      "name": "{% block schema_name %}CyanoTools{% endblock %}",
+      "name": {{ _schema_name|tojson }},
       "operatingSystem": "Web",
       "applicationCategory": "ScientificSoftware",
       "url": "{{ request.base_url|replace('http://', 'https://') }}",
@@ -135,7 +136,7 @@
                                         </ul>
                                     </li>
                                     <li class="dropdown-submenu">
-                                        <a class="dropdown-item dropdown-toggle" href="#" id="confocalMicroscopyDropdown"> Confocal microscopy </a>
+                                        <a class="dropdown-item dropdown-toggle" href="#" id="fluoMicroscopyDropdown"> Fluorescence microscopy </a>
                                         <ul class="dropdown-menu">
                                             <a class="dropdown-item" href="/pixel_profiles_round_cells"> Pigment profiles - round cells </a>
                                             <a class="dropdown-item" href="/pixel_profiles_filament"> Pigment profiles - filaments </a>
@@ -164,17 +165,8 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="/statistics">Statistics</a>
                             </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown"> Calculators </a>
-                                <ul class="dropdown-menu">
-                                    <a class="dropdown-item" href="/calculators#CO2_conc"> CO<sub>2</sub> concentration in air + CO<sub>2</sub> mixture</a>
-                                    <a class="dropdown-item" href="/calculators#dO2_conc"> dO<sub>2</sub> concentration in water </a>
-                                    <a class="dropdown-item" href="/calculators#dCO2_conc"> dCO<sub>2</sub> concentration in water </a>
-                                    <a class="dropdown-item" href="/calculators#growth_rate"> Specific growth rate </a>
-                                    <a class="dropdown-item" href="/calculators#OD720_correction"> Correcting OD<sub>720</sub> signal non-linearity</a>
-                                    <a class="dropdown-item" href="/calculators#OD720_recalculation"> Recalculating OD<sub>720</sub> signal between devices</a>
-                                    <a class="dropdown-item" href="/calculators#dilution_estimator"> Substance Dilution Estimator</a>
-                                </ul>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/calculators"> Calculators </a>
                             </li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="ModelsDropdown" data-toggle="dropdown">Other</a>

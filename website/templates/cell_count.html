@@ -43,6 +43,9 @@ Automated cell counting tool for fluorescence microscopy. Easily count unicellul
 </div>
 <br>
 <h1>Cell counting</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload a fluorescence microscopy image of cells in a counting chamber (hemocytometer, Bürker chamber, or disposable slide) to automatically detect, count, and calculate cell concentration in cells/mL. Manual correction is available for missed or incorrectly detected cells.
+</div>
 <p>Welcome to the cell counting tool - a simple and efficient solution for counting cells in fluorescence microscopy images.
 This tool is optimized for images captured by a fluorescence microscope and supports cell counting from images captured
  in a Bürker chamber, hemocytometer, or any disposable counting slide of known depth.
@@ -219,6 +222,18 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
         </div>
     </div>
     <br>
+    <details style="margin-bottom:1em;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
+        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+            <ul class="mb-0">
+                <li>The reported <strong>cell concentration</strong> (×10⁶ cells mL⁻¹) is calculated from the number of detected cells, the imaged field area, and the chamber depth you entered.</li>
+                <li>If cells are <strong>being missed</strong>: try lowering the minimum cell diameter threshold to detect smaller objects.</li>
+                <li>If debris or noise is <strong>counted as cells</strong>: raise the minimum cell diameter threshold to exclude small objects.</li>
+                <li>Use <strong>manual correction</strong> by clicking on the image to add any cells the algorithm missed — the concentration updates automatically in real time.</li>
+                <li>For best results, use images where cells are clearly separated and the background is uniform; avoid overexposed images.</li>
+            </ul>
+        </div>
+    </details>
     <p><b>Download the results in .xlsx file</b> (without manual correction)</p>
     <a href="{{ url_for('static', filename=xlsx_file_path) }}" class="btn btn-success" download>
         Download the results

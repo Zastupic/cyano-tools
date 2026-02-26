@@ -58,8 +58,11 @@ Analyze cell length and width of filamentous algae and cyanobacteria. Calculate 
     </div>
 </div>
 <br>
-<h1> Cell size analysis - filamentous strains </h1>
-<p>Welcome to the cell size analysis tool for irregular structures — 
+<h1>Cell size analysis — filamentous strains</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload a microscopy image of filamentous cells, draw a line across each cell to mark its length, and download all measurements in micrometers — calibrated to your pixel size. Suitable for any filamentous algae, cyanobacteria, or other elongated structures.
+</div>
+<p>Welcome to the cell size analysis tool for irregular structures —
     a flexible and accurate solution for measuring the cell size of filamentous algae or cyanobacteria, or any object of interest in fluorescence microscopy images.
     This tool is optimized for images acquired with a fluorescence microscope and is specifically designed to analyze cells arranged in filaments or other clearly defined structures.
     Objects, such as individual cells within filaments, are manually marked by the user. 
@@ -143,6 +146,17 @@ Analyze cell length and width of filamentous algae and cyanobacteria. Calculate 
     </div> 
 
     <br>
+    <details style="margin-bottom:1em;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
+        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+            <ul class="mb-0">
+                <li>Draw lines <strong>perpendicular to the filament axis</strong> to measure individual cell lengths accurately. Lines drawn at an angle will overestimate the true cell width.</li>
+                <li>Typical cell dimensions: <em>Anabaena</em> sp. ≈ <strong>5–15 µm</strong> long; <em>Nostoc</em> sp. ≈ 4–12 µm; <em>Spirulina</em> cell width ≈ 3–6 µm.</li>
+                <li>If measured sizes appear <strong>too large or too small</strong>, verify that the pixel size (nm/pixel) was entered correctly for your objective magnification and camera.</li>
+                <li>The download file contains individual length measurements for all marked cells — use these for mean ± SD calculations or size distribution histograms.</li>
+            </ul>
+        </div>
+    </details>
     <br>
     <p><b>7. Download the cell size results as .xlsx file</b></p>
     <a href="{{ url_for('static', filename=xlsx_file_path)}}">

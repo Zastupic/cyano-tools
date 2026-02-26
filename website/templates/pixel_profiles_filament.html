@@ -43,8 +43,11 @@ Generate longitudinal pixel profiles along microbial filaments to analyze signal
     </div>
 </div>
 <br>
-<h1> Pigment profiles - filamentous strains</h1>
-<p>Welcome to the fluorescence intensity profile analyzer — 
+<h1>Pigment profiles — filamentous strains</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload fluorescence microscopy images from up to 4 channels, draw lines over individual cells, and extract longitudinal fluorescence intensity profiles. The tool compares pigment distributions across channels and computes inter-channel intensity differences.
+</div>
+<p>Welcome to the fluorescence intensity profile analyzer —
     a powerful tool for analyzing fluorescence intensity along cells of cyanobacteria, algae, 
     or other fluorescent structures in microscopy images. This tool is optimized for images acquired 
     with a confocal fluorescence microscope and is designed to study the spatial distribution of fluorescence 
@@ -226,6 +229,17 @@ Generate longitudinal pixel profiles along microbial filaments to analyze signal
             {% endif %}
         {% endif %}
         <br>
+        <details style="margin-bottom:1em;">
+            <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
+            <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                <ul class="mb-0">
+                    <li>The <strong>difference trace</strong> between two channels reveals where one pigment class is relatively more abundant along the cell — useful for studying pigment segregation or remodeling under stress.</li>
+                    <li><strong>Heterocysts</strong> (nitrogen-fixing cells in cyanobacteria such as <em>Anabaena</em>) typically show strongly reduced phycobilisome fluorescence relative to neighboring vegetative cells.</li>
+                    <li>A <strong>uniform profile</strong> along all cells in a filament = even pigment distribution; peaks at <strong>cell septa</strong> may indicate division-related pigment redistribution.</li>
+                    <li>The download file contains numerical intensity data for all selected profiles and channel comparisons — suitable for further statistical analysis.</li>
+                </ul>
+            </div>
+        </details>
         <p><b>6. Download pixel profiles as .xlsx file</b></p>
         <a href="{{ url_for('static', filename=xlsx_file_path)}}">
             <button type=" download" class="btn btn-success">Download the results</button>

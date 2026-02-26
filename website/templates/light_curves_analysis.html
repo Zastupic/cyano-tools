@@ -42,8 +42,11 @@
     </div>
 </div>
 <br>
-<h1>Analysis of rapid light curves 
+<h1>Analysis of rapid light curves
     <br>(Photosynthesis-Irradiance curves)</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload rapid light curve data from your PAM fluorometer to plot electron transport rate (rETR) vs. irradiance and extract key photosynthetic parameters — including ETR<sub>max</sub>, photosynthetic efficiency (α), saturation irradiance (I<sub>k</sub>), and the photoinhibition coefficient (β). No software installation needed; results download as a formatted .xlsx file. Supports batch processing of up to 50 files.
+</div>
 <p>Welcome to the rapid light curves analyzing tool! Rapid light curves 
     (also called photosynthesis-irradiance curves) are a widely used method for assessing photosynthetic performance 
     under varying light intensities. By analyzing how chlorophyll fluorescence changes in response to stepwise increases in actinic light, 
@@ -325,6 +328,18 @@ The curves are fitted by a model described by
     <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ parameters_from_memory }}" alt="Fluorescence rapid light curves analyzed-parameters"/>
     <br> <br>
 
+    <details style="margin-bottom:1em;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
+        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+            <ul class="mb-0">
+                <li><strong>ETR<sub>max</sub></strong> — maximum relative electron transport rate. Typical unstressed cyanobacteria/algae: <strong>50–200 μmol e⁻ m⁻² s⁻¹</strong>; higher values = greater photosynthetic capacity.</li>
+                <li><strong>α</strong> — initial slope of the light curve; photosynthetic efficiency under weak light. Higher α = better use of dim light. Typical range: 0.2–0.8.</li>
+                <li><strong>I<sub>k</sub></strong> — saturation irradiance (light level where ETR saturates). Low-light adapted: 50–200 μmol photons m⁻² s⁻¹; high-light adapted: 200–600+ μmol photons m⁻² s⁻¹.</li>
+                <li><strong>β</strong> — photoinhibition coefficient. β &gt; 0 indicates a measurable decline in ETR at high irradiance (photoinhibition); β ≈ 0 means no significant photoinhibition was detected.</li>
+                <li><strong>NPQ</strong> — non-photochemical quenching; a measure of photoprotective thermal dissipation. Values &gt; 1 indicate active photoprotection; &gt; 3 suggests strong dissipation under stress.</li>
+            </ul>
+        </div>
+    </details>
     <form>
         <h6><b>Download results:</b></h6>
         <ol>

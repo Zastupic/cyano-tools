@@ -43,8 +43,11 @@ Analyze cross-sectional pixel intensity profiles of round or spherical cells. Ev
     </div>
 </div>
 <br>
-<h1> Pigment profiles - round cells</h1>
-<p>Welcome to the fluorescence intensity profile analyzer — 
+<h1>Pigment profiles — round cells</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload a fluorescence microscopy image, click to select individual round cells, and extract cross-sectional fluorescence intensity profiles showing how pigments are distributed inside each cell — from edge to edge at multiple angles.
+</div>
+<p>Welcome to the fluorescence intensity profile analyzer —
     a simple and effective tool to analyze fluorescence intensity across individual round or near-spherical cells in microscopy images.
     This tool is optimized for images acquired with a confocal fluorescence microscope 
     and is designed for studying spatial distribution of fluorescence signal within single cells, typically of pigment fluorescence signal.
@@ -146,6 +149,17 @@ Analyze cross-sectional pixel intensity profiles of round or spherical cells. Ev
     </div>
 
     <br>
+    <details style="margin-bottom:1em;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
+        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+            <ul class="mb-0">
+                <li>A <strong>flat, uniform profile</strong> across the cell indicates homogeneous pigment distribution throughout the cell interior.</li>
+                <li>A <strong>dip in the center</strong> = peripherally distributed pigments — typical of cyanobacteria where thylakoid membranes are arranged at the cell periphery.</li>
+                <li><strong>Peaks near the cell edges</strong> = membrane-localized fluorescence; common for chlorophyll in thylakoid stacks near the outer membrane.</li>
+                <li>Profiles are extracted along lines at fixed 15° angular intervals through each selected cell. The download file contains all raw intensity values for statistical analysis.</li>
+            </ul>
+        </div>
+    </details>
     <p><b>6. Download the pixel profiles as .xlsx file</b></p>
     <a href="{{ url_for('static', filename=xlsx_file_path)}}">
         <button type=" download" class="btn btn-success">Download the results</button>

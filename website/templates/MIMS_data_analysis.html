@@ -43,6 +43,9 @@
 </div>
 <br>
 <h1>Membrane Inlet Mass Spectrometry (MIMS) data analysis</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload MIMS data files to plot dissolved gas signals (O₂, CO₂, and others) over time, normalize them to a chemically inert reference gas (e.g., Ar), and calculate linear regression slopes — giving you net gas exchange rates for photosynthesis, respiration, or other biological processes.
+</div>
 <p>Welcome to the tool for analysis of Membrane Inlet Mass Spectrometry (MIMS) data.
 MIMS is a highly effective and versatile analytical technique designed for the direct, 
 real-time measurement of dissolved gases and volatile organic compounds in a wide variety of samples, 
@@ -266,6 +269,20 @@ Please note that the equilibrium concentration of dissolved <i>O<sub>2</sub></i>
 <div id="regression-results-table" style="margin-top:20px;"></div>
 
 <br>
+<!-- Interpretation guide -->
+<details style="margin-bottom:1em;" id="mims-interpretation-guide">
+    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
+    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+        <ul class="mb-0">
+            <li>A <strong>rising O₂ signal</strong> (m/z 32) after light onset = net photosynthetic oxygen evolution; the slope of the linear regression gives the gross photosynthetic rate. A <strong>falling O₂ signal</strong> in darkness = respiratory oxygen consumption.</li>
+            <li>A <strong>falling CO₂ signal</strong> (m/z 44) during illumination indicates net carbon fixation by photosynthesis. A rising CO₂ in the dark = respiratory CO₂ release.</li>
+            <li><strong>Normalization to Ar</strong> (m/z 40) is essential — argon is chemically inert, so any changes in the Ar signal reflect instrumental drift or temperature fluctuations. Normalizing to Ar removes these artifacts from your biological signals.</li>
+            <li>The <strong>linear regression slope</strong> over a selected time window gives the gas exchange rate in normalized signal units per minute. Compare slopes between experiments or conditions — do not compare raw absolute values between separate runs.</li>
+            <li>To select a regression window: zoom in on the normalized plot to the desired time range, then click "Find linear regressions for current zoom".</li>
+        </ul>
+    </div>
+</details>
+
 <!-- Show XLSX download file (shown only after regressions found) -->
 <div id="xlsx-download-section" style="display:none;">
   <p><b>7. Download summary .XLSX file</b>

@@ -1,4 +1,4 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
 {% block title %}
     Lab Calculators: Growth Rate, Doubling Time & Dilution, Dissolved gasses | CyanoTools
@@ -42,805 +42,1008 @@
     </div>
 </div>
 <br>
-<h1> Calculators </h1>
-<div class="background-box">
-    <h4 id="CO2_conc"> 1. CO<sub>2</sub> concentration in sparging gas</h4>
-    <h5> 1.1 Calculate required flow rates for a target CO<sub>2</sub> concentration</h5>
-    <p>
-        To achieve a specific target CO<sub>2</sub> concentration within a defined total gas flow, 
-        the required flow rate of pure CO<sub>2</sub> is calculated as:
-    </p>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        $$
-        \begin{multline}
-        \shoveleft Flow\ rate\ CO_{2} = Total\ flow\ rate * \frac{Target\ CO_{2} - CO_{2}\ in\ air}{1\ 000\ 000 - CO_{2}\ in\ air}
-        \end{multline}
-        $$
-    </i></p>
-    <p>
-        The flow rate of air is then determined by subtracting the CO<sub>2</sub> flow from the total flow:
-    </p>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        $$
-        \begin{multline}
-        \shoveleft Flow\ rate\ air = Total\ flow\ rate - Flow\ rate\ CO_{2}
-        \end{multline}
-        $$
-    </i></p>
-    
-
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp</a>
-        </div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Target CO<sub>2</sub>:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input class="form-control" type="number" id="target_CO2_ppm" value="2000" step="100" onkeypress="return isNumberKey(event)">
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>ppm</a>
-        </div>
-    </div>
-
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Total Flow Rate:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input class="form-control" type="number" id="target_total_flow" value="1000" step="10" onkeypress="return isNumberKey(event)">
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>mL min<sup>-1</sup></a>
-        </div>
-    </div>
-
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp CO<sub>2</sub> in air:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input class="form-control" type="number" id="CO2_in_air_ppm_target" value="500" step="1" onkeypress="return isNumberKey(event)">
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>ppm</a>
-        </div>
-    </div>
-
-    <br>
-    <button type="button" class="btn btn-primary" onclick="calculateReverseCO2();">Calculate Flow Rates</button>
-    
-    <button type="button" class="btn btn-info">
-        <a>Required settings: CO<sub>2</sub>: <span id="req_CO2_span"><b>...</b></span>; Air: <span id="req_air_span"><b>...</b></span></a>
-    </button>
-
-    <hr>
-    <h5> 1.2 Calculate CO<sub>2</sub> concentration in air+CO<sub>2</sub> mixture</h5>
-    <p>In many laboratories as well as in the industrial setups, 
-        CO<sub>2</sub> and air require mixing to secure increased CO<sub>2</sub> levels.
-        For a precise control of specific CO<sub>2</sub> concentration in air, Gas Mixing Systems or Gas Controllers can be used,
-        for instance those manufactured by <a href="https://other-devices.psi.cz/products/gas-mixing-system-gms-150/" target="_blank" rel="noopener">Photon System Instruments</a>, 
-        <a href="https://qubitsystems.com/products/gas-analysis-and-environment/gas-mixing-and-flow/gas-mixing/g400-gas-mixing-system/" target="_blank" rel="noopener">Qubit</a> 
-        or <a href="https://www.google.cz/search?q=co2+controller&sca_esv=31504b4340b63b2d&hl=cs&sxsrf=ADLYWILVc_VJ0VcbfzwTRDtzXWUc9XpC_g%3A1727971871707&source=hp&ei=H8L-ZsydKOe2i-gPiuSjiQk&iflsig=AL9hbdgAAAAAZv7QLzhLZYY2Z8EPMeI9MWVdFxWmUSQL&oq=CO2&gs_lp=Egdnd3Mtd2l6IgNDTzIqAggAMgoQIxiABBgnGIoFMgQQIxgnMhAQABiABBixAxhDGIMBGIoFMgUQABiABDIFEAAYgAQyChAAGIAEGEMYigUyBRAAGIAEMgoQABiABBhDGIoFMgUQABiABDIFEAAYgARInitQAFjjH3ABeACQAQCYAagBoAH-CaoBAzAuObgBA8gBAPgBAvgBAZgCB6AC2gaoAgrCAggQABiABBiiBMICCBAAGIAEGMsBwgILEAAYgAQYsQMYgwHCAgUQLhiABMICCxAuGIAEGMcBGK8BwgIHEAAYgAQYCsICBxAjGCcY6gLCAhEQLhiABBixAxjRAxiDARjHAcICCBAAGIAEGLEDwgIMECMYgAQYExgnGIoFwgIOEC4YgAQYsQMY0QMYxwGYAw6SBwMxLjagB8NC&sclient=gws-wiz" target="_blank" rel="noopener">
-            other companies</a>. Here, we provide a simple tool for the calculation of CO<sub>2</sub> concentration in a gas mixture, as set by a Gas Mixing System, according to the following equation:
-    </p>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        $$    
-        \begin{multline}
-        \shoveleft CO_{2}\ concentration\ (ppm)\ in\ air + CO_{2}\ mixture = \frac{Flow\ rate\ CO_{2} \times 10^{6} + Flow\ rate\ air \times CO_{2}\ concentration\ in\ air}{Flow\ rate\ CO_{2} + Flow\ rate\ air}
-        \end{multline}
-        $$
-    </i></p>
-    <br>    
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Flow rate of CO<sub>2</sub>:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="flow_rate_CO2" 
-                    min = "0"
-                    step="0.1"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>mL min<sup>-1</sup></a>
-        </div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Flow rate of air:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                        class="form-control"    
-                        type="number"
-                        id="flow_rate_air" 
-                        min = "1"
-                        step="1"
-                        onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__item--3">
-            <a>mL min<sup>-1</sup></a>
-        </div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp CO<sub>2</sub> in air:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="CO2_in_air_ppm_1" 
-                    min = "1"
-                    step="1"
-                    value="500"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>ppm</a>
-        </div>
-    </div>
-    <br>
-    <button id="calculateCO2_button" type="button" class="btn btn-primary" onclick="calculateCO2();"> Calculate</button>
-    <button type="button" class="btn btn-info"><a>CO<sub>2</sub> concentration in the air + CO<sub>2</sub> mixture: <span id="CO2_conc_ppm_for_span"></span></button>  
-
-</div>  
-
-<div class="background-box">
-    <h4 id="dO2_conc"> 2. Equilibrium concentration of dissolved oxygen (dO<sub>2</sub>) and carbon dioxide (dCO<sub>2</sub>) in water</h4>
-    <h5> 2.1 Equilibrium concentration of dO<sub>2</sub> in water</h5>
-    <p>The concentration of dissoled oxygen in water, in equilibrium with atmosphere, can be calcualted based on the values of temperature, salinity, 
-        O<sub>2</sub> concentration in the atmosphere and the atmospheric pressure, according to the following equation:
-        <a style="line-height: 0.9"><i style="font-size:80%">
-            $$
-            \begin{multline}
-            \shoveleft dO_{2}\ [mL\ L^{-1}]= \frac{(p - p_{w})}{p} *e^{({A_{1} + A_{2}*\frac{100}{T}} + A3*ln(\frac{T}{100}) + A4*\frac{T}{100} + S*(B1 + B2*\frac{T}{100} + B3*(\frac{T}{100})^{2}))} * \frac{C}{20.9},
-            \end{multline}
-            $$
-        </i></a>
-        where <i>p</i> represents atmospheric pressure [kPa], <i>pw</i> represents partial pressure of the water vapor [kPa], <i>T</i> represents temperature [K], 
-        <i>S</i> represents salinity [g kg<sup>-1</sup>], <i>C</i> represents O<sub>2</sub> concentration in air [%] and <i>A1 - A4</i> and <i>B1 - B4</i> represent 
-        <a href="http://corrosion-doctors.org/Seawater/Oxygen.htm" target="_blank" rel="noopener">constants</a>.
-    </p>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Temperature:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="temperature" 
-                    min = "0"
-                    step="0.1"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>° C</a>
-        </div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Salinity:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="salinity" 
-                    min = "0"
-                    step="0.1"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>g kg<sup>-1</sup> (‰)</a>
-        </div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp O<sub>2</sub>&nbspin&nbspair:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="O2_concentration_in_air" 
-                    min = "0"
-                    step="0.1"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>%</a>
-        </div>
-    </div>
-    <div class="gallery_5" keep-inline>
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Atm.&nbsppressure:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="atmospheric_pressure" 
-                    min = "0"
-                    step="0.1"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>atm</a>
-        </div>
-    </div>
-    <br>
-    <button id="calculate_dO2" type="button" class="btn btn-primary" onclick="calculate_dO2();"> Calculate</button>
-    <button type="button" class="btn btn-info"><a>dO<sub>2</sub> in water: 
-        <span id="dO2_for_span"></span></a>
-    </button>
-    <br><br>
-    
-    <hr>
-    <h5 id="dCO2_conc"> 2.2 Equilibrium concentration of dCO<sub>2</sub> in water</h5>
-    <p>For the calcualtion of dissolved CO<sub>2</sub> in water, please use the 
-        <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" rel="noopener">Seawater Carbonate System calculator</a>
-    </p>
+<h1>Calculators</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> A collection of instant web calculators for common wet-lab tasks — CO₂ gas mixing, dissolved oxygen solubility, specific growth rate and doubling time, optical density correction and cross-device conversion, and substance dilution in continuous cultures. No data upload needed; all calculations run directly in the browser.
 </div>
 
-<div class="background-box">
-    <h4 id="growth_rate"> 3. Specific growth rate from doubling time and vice versa </h4>
-    <p>In microbiology, the most typical cell division is a (mitotic) binary division, where each cell divides 
-        into two daughter cells. These daugther cells divide again into four cells, 
-        the four cells divie again into eight cells etc. Time required for the cell division is known as 
-        a <b>doubling time</b> (unit: time), and the rate of cell division is known as 
-        a <b>specific growth rate</b> (unit: time<sup>-1</sup>). 
-        Here, we provide a tool for a simple calcualtion of doubling time from specific growth rate, and vise versa. 
-        Theoretical background on the calculation of both values can be studied for instance on 
-        <a href="https://en.wikipedia.org/wiki/Doubling_time" target="blank">Wikipedia</a>. In short, the relationship can be defined
-        as following:
-        <br>
-        <p style="line-height: 0.9"><i style="font-size:80%">
-            $$
-            \begin{multline}
-            \shoveleft Specific\ growth\ rate = \frac{ln(2)}{Doubling\ time}
-            \end{multline}
-            $$
-        </i></p>
-    </p>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        Please note that the specific growth rate can be calculated from differences in the culture density 
-        (expressed as cell number, cell weight, or culture optical density), 
-        as measured during <a href="https://en.wikipedia.org/wiki/Bacterial_growth", target="blank" rel="noopener"> exponential culture growth</a> 
-        according to the following equation:
-        $$
-        \begin{multline}
-        \shoveleft Specific\ growth\ rate = \frac{ln(cell\ density\ at\ time\ 2) - ln(cell\ density\ at\ time\ 1)}{time\ 2 - time\ 1}
-        \end{multline}
-        $$
-    </i></p>
-    <br>
-    <h5> 3.1 calculate specific growth rate (μ) from the doubling time (DT)</h5>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Doubling time: </a>
+<style>
+    /* Accordion section header buttons */
+    #calculatorsAccordion .card-header {
+        background-color: #d1ecf1;
+        border-bottom: 1px solid #bee5eb;
+    }
+    #calculatorsAccordion .card-header .btn-link {
+        color: #0a3c58;
+    }
+    #calculatorsAccordion .card-header .btn-link:hover,
+    #calculatorsAccordion .card-header .btn-link:focus {
+        color: #17a2b8;
+        text-decoration: none;
+    }
+
+    /* Collapsible reference/note blocks (details > summary) */
+    #calculatorsAccordion .card-body details > summary {
+        background-color: #e8f4f8;
+        border-radius: 4px;
+        border-left: 3px solid #17a2b8;
+        display: block;
+        padding: 0.4em 0.8em !important;
+    }
+</style>
+
+<div class="accordion" id="calculatorsAccordion">
+
+    <!-- Section 1: CO2 concentration -->
+    <div class="card" id="CO2_conc">
+        <div class="card-header" id="headingCO2">
+            <h4 class="mb-0">
+                <button class="btn btn-link collapsed text-left w-100" type="button"
+                        data-toggle="collapse" data-target="#collapseCO2"
+                        aria-expanded="false" aria-controls="collapseCO2">
+                    <strong>CO<sub>2</sub> concentration in sparging gas</strong>
+                </button>
+            </h4>
         </div>
-        <div class=" gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="Doubling_time" 
-                    min = "0"
-                    step="0.01"
-                    onkeypress="return isNumberKey(event)"/>
+        <div id="collapseCO2" class="collapse" aria-labelledby="headingCO2" data-parent="#calculatorsAccordion">
+            <div class="card-body bg-light">
+                <h5>Calculate required flow rates for a target CO<sub>2</sub> concentration</h5>
+                <p>
+                    To achieve a specific target CO<sub>2</sub> concentration within a defined total gas flow,
+                    the required flow rate of pure CO<sub>2</sub> is calculated as:
+                </p>
+                <p style="line-height: 0.9"><i style="font-size:80%">
+                    $$
+                    \begin{multline}
+                    \shoveleft Flow\ rate\ CO_{2} = Total\ flow\ rate * \frac{Target\ CO_{2} - CO_{2}\ in\ air}{1\ 000\ 000 - CO_{2}\ in\ air}
+                    \end{multline}
+                    $$
+                </i></p>
+                <p>
+                    The flow rate of air is then determined by subtracting the CO<sub>2</sub> flow from the total flow:
+                </p>
+                <p style="line-height: 0.9"><i style="font-size:80%">
+                    $$
+                    \begin{multline}
+                    \shoveleft Flow\ rate\ air = Total\ flow\ rate - Flow\ rate\ CO_{2}
+                    \end{multline}
+                    $$
+                </i></p>
+
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp</a>
+                    </div>
                 </div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Target CO<sub>2</sub>:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input class="form-control" type="number" id="target_CO2_ppm" value="2000" step="100"
+                                       onkeypress="return isNumberKey(event)" oninput="calculateReverseCO2()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>ppm</a>
+                    </div>
+                </div>
+
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Total Flow Rate:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input class="form-control" type="number" id="target_total_flow" value="1000" step="10"
+                                       onkeypress="return isNumberKey(event)" oninput="calculateReverseCO2()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>mL min<sup>-1</sup></a>
+                    </div>
+                </div>
+
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp CO<sub>2</sub> in air:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input class="form-control" type="number" id="CO2_in_air_ppm_target" value="500" step="1"
+                                       onkeypress="return isNumberKey(event)" oninput="calculateReverseCO2()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>ppm</a>
+                    </div>
+                </div>
+
+                <br>
+                <button type="button" class="btn btn-info">
+                    <a>Required settings: CO<sub>2</sub>: <span id="req_CO2_span"><b>...</b></span>; Air: <span id="req_air_span"><b>...</b></span></a>
+                </button>
+
+                <hr>
+                <h5>Calculate CO<sub>2</sub> concentration in air + CO<sub>2</sub> mixture</h5>
+                <p>In many laboratories as well as in the industrial setups,
+                    CO<sub>2</sub> and air require mixing to secure increased CO<sub>2</sub> levels.
+                    For a precise control of specific CO<sub>2</sub> concentration in air, Gas Mixing Systems or Gas Controllers can be used,
+                    for instance those manufactured by <a href="https://other-devices.psi.cz/products/gas-mixing-system-gms-150/" target="_blank" rel="noopener">Photon System Instruments</a>,
+                    <a href="https://qubitsystems.com/products/gas-analysis-and-environment/gas-mixing-and-flow/gas-mixing/g400-gas-mixing-system/" target="_blank" rel="noopener">Qubit</a>
+                    or <a href="https://www.google.cz/search?q=co2+controller&sca_esv=31504b4340b63b2d&hl=cs&sxsrf=ADLYWILVc_VJ0VcbfzwTRDtzXWUc9XpC_g%3A1727971871707&source=hp&ei=H8L-ZsydKOe2i-gPiuSjiQk&iflsig=AL9hbdgAAAAAZv7QLzhLZYY2Z8EPMeI9MWVdFxWmUSQL&oq=CO2&gs_lp=Egdnd3Mtd2l6IgNDTzIqAggAMgoQIxiABBgnGIoFMgQQIxgnMhAQABiABBixAxhDGIMBGIoFMgUQABiABDIFEAAYgAQyChAAGIAEGEMYigUyBRAAGIAEMgoQABiABBhDGIoFMgUQABiABDIFEAAYgARInitQAFjjH3ABeACQAQCYAagBoAH-CaoBAzAuObgBA8gBAPgBAvgBAZgCB6AC2gaoAgrCAggQABiABBiiBMICCBAAGIAEGMsBwgILEAAYgAQYsQMYgwHCAgUQLhiABMICCxAuGIAEGMcBGK8BwgIHEAAYgAQYCsICBxAjGCcY6gLCAhEQLhiABBixAxjRAxiDARjHAcICCBAAGIAEGLEDwgIMECMYgAQYExgnGIoFwgIOEC4YgAQYsQMY0QMYxwGYAw6SBwMxLjagB8NC&sclient=gws-wiz" target="_blank" rel="noopener">
+                        other companies</a>. Here, we provide a simple tool for the calculation of CO<sub>2</sub> concentration in a gas mixture, as set by a Gas Mixing System, according to the following equation:
+                </p>
+                <p style="line-height: 0.9"><i style="font-size:80%">
+                    $$
+                    \begin{multline}
+                    \shoveleft CO_{2}\ concentration\ (ppm)\ in\ air + CO_{2}\ mixture = \frac{Flow\ rate\ CO_{2} \times 10^{6} + Flow\ rate\ air \times CO_{2}\ concentration\ in\ air}{Flow\ rate\ CO_{2} + Flow\ rate\ air}
+                    \end{multline}
+                    $$
+                </i></p>
+                <br>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Flow rate of CO<sub>2</sub>:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="flow_rate_CO2"
+                                min = "0"
+                                step="0.1"
+                                value="9.6"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculateCO2()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>mL min<sup>-1</sup></a>
+                    </div>
+                </div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Flow rate of air:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                    class="form-control"
+                                    type="number"
+                                    id="flow_rate_air"
+                                    min = "1"
+                                    step="1"
+                                    value="1000"
+                                    onkeypress="return isNumberKey(event)"
+                                    oninput="calculateCO2()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__item--3">
+                        <a>mL min<sup>-1</sup></a>
+                    </div>
+                </div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp CO<sub>2</sub> in air:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="CO2_in_air_ppm_1"
+                                min = "1"
+                                step="1"
+                                value="500"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculateCO2()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>ppm</a>
+                    </div>
+                </div>
+                <br>
+                <button type="button" class="btn btn-info"><a>CO<sub>2</sub> concentration in the air + CO<sub>2</sub> mixture: <span id="CO2_conc_ppm_for_span"></span></button>
+                <br><br>
+                <details>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Typical CO₂ concentrations for reference</summary>
+                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <ul class="mb-0">
+                            <li><strong>Ambient air:</strong> ~420–500 ppm CO₂ (varies by location and season).</li>
+                            <li><strong>Standard photobioreactor cultures:</strong> 2,000–10,000 ppm (0.2–1%) to support elevated photosynthetic rates.</li>
+                            <li><strong>High-density or CO₂-stressed cultures:</strong> up to 30,000–50,000 ppm (3–5%).</li>
+                        </ul>
+                    </div>
+                </details>
             </div>
-        </div>
-        <div class=" gallery__img gallery__item--3">
-            <div class="form-group">
-                <select id="time_unit_from_dropdown" class="form-control">
-                    <option selected="Day">Days</option>
-                    <option value="Hour">Hours</option>
-                    <option value="Minute">Minutes</option>
-                </select>
-            </div>
-        </div>
-        <div class="gallery__item--5">
-            <button id="calculateGrowthRate" type="button" class="btn btn-primary" onclick="calculateGrowthRate();"> Calculate μ</button>
-        </div>
-        <div class="gallery__item--6">
-            <button type="button" class="btn btn-info"><a>μ: 
-                <span id="growth_rate_for_span"></span></a>
-            </button>
         </div>
     </div>
 
-    <br>
-    <h5> 3.2 Calculate doubling time (DT) from specific growth rate (μ)</h5>
-    <div class="gallery_5"> 
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Specific growth rate: </a>
+    <!-- Section 2: dO2 / dCO2 -->
+    <div class="card" id="dO2_conc">
+        <div class="card-header" id="headingdO2">
+            <h4 class="mb-0">
+                <button class="btn btn-link collapsed text-left w-100" type="button"
+                        data-toggle="collapse" data-target="#collapsedO2"
+                        aria-expanded="false" aria-controls="collapsedO2">
+                    <strong>Equilibrium concentration of dissolved O<sub>2</sub> and CO<sub>2</sub> in water</strong>
+                </button>
+            </h4>
         </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                        class="form-control"    
-                        type="number"
-                        id="growth_rate_from_dropdown" 
-                        min = "0"
-                        step="0.01"
-                        onkeypress="return isNumberKey(event)"/>
+        <div id="collapsedO2" class="collapse" aria-labelledby="headingdO2" data-parent="#calculatorsAccordion">
+            <div class="card-body bg-light">
+                <h5>Equilibrium concentration of dO<sub>2</sub> in water</h5>
+                <p>The concentration of dissoled oxygen in water, in equilibrium with atmosphere, can be calcualted based on the values of temperature, salinity,
+                    O<sub>2</sub> concentration in the atmosphere and the atmospheric pressure, according to the following equation:
+                    <a style="line-height: 0.9"><i style="font-size:80%">
+                        $$
+                        \begin{multline}
+                        \shoveleft dO_{2}\ [mL\ L^{-1}]= \frac{(p - p_{w})}{p} *e^{({A_{1} + A_{2}*\frac{100}{T}} + A3*ln(\frac{T}{100}) + A4*\frac{T}{100} + S*(B1 + B2*\frac{T}{100} + B3*(\frac{T}{100})^{2}))} * \frac{C}{20.9},
+                        \end{multline}
+                        $$
+                    </i></a>
+                    where <i>p</i> represents atmospheric pressure [kPa], <i>pw</i> represents partial pressure of the water vapor [kPa], <i>T</i> represents temperature [K],
+                    <i>S</i> represents salinity [g kg<sup>-1</sup>], <i>C</i> represents O<sub>2</sub> concentration in air [%] and <i>A1 - A4</i> and <i>B1 - B4</i> represent
+                    <a href="http://corrosion-doctors.org/Seawater/Oxygen.htm" target="_blank" rel="noopener">constants</a>.
+                </p>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Temperature:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="temperature"
+                                min = "0"
+                                step="0.1"
+                                value="25"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculate_dO2()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>° C</a>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <div class="form-group">            
-                <select id="per_time_unit_from_dropdown" class="form-control">
-                    <option selected="Day" value="Days"><a>Day<span>&#8315;</span>&sup1</a></option>
-                    <option value="Hours"><a>Hour<span>&#8315;</span>&sup1</a></option>
-                    <option value="Minutes"><a>Minute<span>&#8315;</span>&sup1</a></option>
-                </select>
-            </div>
-        </div>
-        <div class="gallery__item--5">
-            <button id="calculate_growth_rate" type="button" class="btn btn-primary" onclick="calculateDoublingTime();"> Calculate DT</button>
-        </div>
-        <div class="gallery__item--6">
-            <button type="button" class="btn btn-info"><a>DT: 
-                <span id="doubling_time_for_span"></span></span></a>
-            </button>
-        </div>
-    </div>
-</div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Salinity:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="salinity"
+                                min = "0"
+                                step="0.1"
+                                value="0"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculate_dO2()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>g kg<sup>-1</sup> (‰)</a>
+                    </div>
+                </div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp O<sub>2</sub>&nbspin&nbspair:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="O2_concentration_in_air"
+                                min = "0"
+                                step="0.1"
+                                value="20.9"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculate_dO2()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>%</a>
+                    </div>
+                </div>
+                <div class="gallery_5" keep-inline>
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Atm.&nbsppressure:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="atmospheric_pressure"
+                                min = "0"
+                                step="0.1"
+                                value="1"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculate_dO2()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>atm</a>
+                    </div>
+                </div>
+                <br>
+                <button type="button" class="btn btn-info"><a>dO<sub>2</sub> in water:
+                    <span id="dO2_for_span"></span></a>
+                </button>
+                <br><br>
+                <details>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Typical dissolved O₂ values for reference</summary>
+                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <ul class="mb-0">
+                            <li>Air-saturated freshwater at <strong>25°C, 1 atm, 0 salinity</strong>: ~8.0 mg L⁻¹ (~250 µmol L⁻¹).</li>
+                            <li>Air-saturated freshwater at <strong>20°C</strong>: ~8.9 mg L⁻¹; at <strong>15°C</strong>: ~9.9 mg L⁻¹. Dissolved O₂ decreases with rising temperature.</li>
+                            <li><strong>Photosynthetically active cultures</strong> under strong illumination can reach 200–400% air saturation; hypersaturation may inhibit some organisms.</li>
+                            <li><strong>Dark/respiring cultures</strong> approach 0 mg L⁻¹; anoxia below ~1 mg L⁻¹ can cause stress in aerobic organisms.</li>
+                        </ul>
+                    </div>
+                </details>
+                <br>
 
-<div class="background-box">
-    <h4 id="OD720_correction"> 4. Correcting nonlinearity in optical density signal from FMT-150, MC-1000, and AquaPen </h4>
-    <p>The values of optical density (OD), mesured in the liquid cultures of algae or cyanobacteria, require correction at higher densities due to scattering 
-        of the measuring light caused by increasing concentration of cells. The OD correction is specific for each instrument. For the instruments listed below, 
-        it appliesfor OD meaured at 720 nm, <b>OD<sub>720</sub> > 0.4</b>. Below this value, the OD sensors measure linearly. 
-        Please note that for optical densites only slightly above OD<sub>720</sub> > 0.4, the corrected OD may not exactly match the expected value, 
-        due to the use of an exponential correction model with discrete initial conditions (OD<sub>720</sub> = 0.4; below this value, correction is not applied).
-        To correct OD<sub>720</sub> signal across the entire measuring range, i.e. across both linear and non-linear ranges, a polynomial correction would be required.
-    </p>
-    <p> 4.1 OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener"> photobioreactor PBR FMT-150</b></u></a>, based on the following equation<sup>1</sup>:
-        <p style="line-height: 0.9"><i style="font-size:80%">
-            $$
-            \begin{multline}
-            \shoveleft OD_{720}\ corrected = 0.23\ e^{1.83\ OD_{720}\ measured}
-            \end{multline}
-            $$
-        </i></p>
-
-    </p>
-    <div class="gallery_5">
-        <div class="ggallery__item--1">
-            <a>&nbsp OD<sub>720</sub> measured:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="OD_720_measured_PBR" 
-                    min = "0"
-                    step="0.01"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
+                <hr>
+                <h5 id="dCO2_conc">Equilibrium concentration of dCO<sub>2</sub> in water</h5>
+                <p>For the calcualtion of dissolved CO<sub>2</sub> in water, please use the
+                    <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" rel="noopener">Seawater Carbonate System calculator</a>
+                </p>
             </div>
         </div>
-        <div class="gallery__item--3">
-            <button id="correct_OD_720_PBRFMT150" type="button" class="btn btn-primary" onclick="correct_OD_720_PBRFMT150();"> Correct OD<sub>720</sub></button>
-        </div>
-        <div>
-            <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected: 
-                <span id="corrected_OD_720_PBRFMT150_for_span"></span></span></a>
-            </button>
-        </div>
-    </div>
-    <br>
-    <p> 4.2 OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank" rel="noopener">Multi-Cultivator MC-1000-OD</b></u></a>, based on the following equation<sup>2</sup>: 
-        <p style="line-height: 0.9"><i style="font-size:80%">
-            $$
-            \begin{multline}
-            \shoveleft OD_{720}\ corrected = 0.029 + 0.143\ e^{2.497\ OD_{720}\ measured}
-            \end{multline}
-            $$
-        </i></p>
-    </p>
-    <div class="gallery_5">
-        <div class="gallery__item--1">
-            <a>&nbsp OD<sub>720</sub> measured:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="OD_720_measured_MC1000" 
-                    min = "0"
-                    step="0.01"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__item--3">
-            <button id="correct_OD_720_MC1000" type="button" class="btn btn-primary" onclick="correct_OD_720_MC1000();"> Correct OD<sub>720</sub></button>
-        </div>
-        <div>
-            <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected: 
-                <span id="corrected_OD_720_MC1000_for_span"></span></span></a>
-            </button>
-        </div>
-    </div>
-    <br>
-    <p> 4.3 OD<sub>720</sub> correction for <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank" rel="noopener"><b><u>AquaPen</b></u></a>, based on the following equation: 
-        <p style="line-height: 0.9"><i style="font-size:80%">
-            $$
-            \begin{multline}
-            \shoveleft OD_{720}\ corrected = 0.247\ e^{1.677\ OD_{720}\ measured}
-            \end{multline}
-            $$
-        </i></p>
-    </p>
-    <div class="gallery_5">
-        <div class="gallery__item--1">
-            <a>&nbsp OD<sub>720</sub> measured:</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="OD_720_measured_AquaPen" 
-                    min = "0"
-                    step="0.01"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__item--3">
-            <button id="correct_OD_720_AquaPen" type="button" class="btn btn-primary" onclick="correct_OD_720_AquaPen();"> Correct OD<sub>720</sub></button>
-        </div>
-        <div>
-            <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected: 
-                <span id="corrected_OD_720_AquaPen_for_span"></span></span></a>
-            </button>
-        </div>
-    </div>
-    <p style="font-size:80%"><i><b>References:</b>
-        <br><sup>1</sup>Zavřel et al., (2021): Algal Research, 56: 1-15, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926421001478?dgcid=coauthor", target="blank" rel="noopener">10.1016/j.algal.2021.102328</a>
-        <br><sup>2</sup>Sukačová et al., (2023): Algal Research, 71: 1-10, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926423000887", target="blank" rel="noopener">10.1016/j.algal.2023.103055</a></i>
-    </p>
-</div>
-<div class="background-box">
-    <h4> 5. Recalculation of optical density signal between devices </h4>
-    <p>The values of optical density (OD), mesured in the liquid cultures of algae, cyanobacteria or bacteria, depend on the optical path length,
-        i.e. thickness of the cuvette in which the culture suspension is measured. In spectrophotometry, OD is usually calculated 
-        same as absorbance (<i>A</i>) as:</p>
-    <p style="line-height: 1"><i style="font-size:80%">
-        $$
-        \begin{multline}
-        \shoveleft OD = A = log_{10}\ \frac{I_{0}}{I}
-        \end{multline}
-        $$
-    </i></p>
-    <a>where <i>I<sub>0</sub></i> and <i>I</i> represent incident and transmitted light intensity, respectively [&#xb5mol photons m<sup>-1</sup> s<sup>-1</sup>]. 
-        Absorbance is directly proportional to the concentration of the absorbing species, the extinction coefficient, 
-        and the path length through which light travels, according to the Lambert-Beer law:</a>
-    </p>
-    <p style="line-height: 1"><i style="font-size:80%">
-        $$
-        \begin{multline}
-        \shoveleft A = &#949\ c\ l
-        \end{multline}
-        $$
-    </i></p>
-    <a>where <i>&#949</i> represents molar extinction coefficient [L<sup>-1</sup> mol<sup>-1</sup> cm<sup>-1</sup>], 
-        <i>c</i> represents concentration of the sample [mol L<sup>-1</sup>], and 
-        <i>l</i> represents optical path length [cm]. When identical culture is measured in cuvettes of different thickness, 
-        the cell concentration and extinction coefficient remain constant, and the only parameter changing is the optical path length.
-        Absorbance in cuvettes of various thickness can be then recalculated as following:</a>
-    <p style="line-height: 1"><i style="font-size:80%">
-        $$
-        \begin{multline}
-        \shoveleft A_{2} = A_{1}\ \frac{l_{2}}{l_{1}}
-        \end{multline}
-        $$
-    </i></p>
-    <p>where <i>A<sub>2</sub></i> and <i>A<sub>2</sub></i> represent optical densities in cuvettes of thickness <i>l<sub>2</sub></i>
-        and <i>l<sub>1</sub></i>, respectively. </p>
-    <br>
-    <h5> 5.1 Recalculate absorbance (A) between cuvettes of different thicknesses </h5>
-    <p> This calculation is valid for clear solutions that absorb, but do not scatter, the measuring light—such as those without suspended cells.</p>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Absorbance 1 (<i>A<sub>1</sub></i>): </a>
-        </div>
-        <div class=" gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="A1_measured" 
-                    min = "0"
-                    step="0.01"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="gallery_5" keep-inline>
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Thickness of cuvette 1 (<i>l<sub>1</sub></i>):</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="thickness_cuvette_1" 
-                    min = "0"
-                    step="0.1"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>cm</a>
-        </div>
-    </div> 
-    <div class="gallery_5" keep-inline>
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Thickness of cuvette 2 (<i>l<sub>2</sub></i>):</a>
-        </div>
-        <div class="gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="thickness_cuvette_2" 
-                    min = "0"
-                    step="0.1"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-        <div class="gallery__img gallery__item--3">
-            <a>cm</a>
-        </div>
-    </div> 
-    <br>
-    <button id="calculate_A2" type="button" class="btn btn-primary" onclick="calculate_A2();"> Calculate <i>A<sub>2</sub></i></button>
-    <button type="button" class="btn btn-info"><a>Absorbance 2 (<i>A<sub>2</sub></i>): <span id="recalculated_A2_for_span"></span></a></button>
-    <br><br>
-    <hr>
-    <h5 id="OD720_recalculation"> 5.2 Recalculate optical density (OD) between specific devices </h5>
-    <p> To accurately convert OD values between different devices, comparative measurements are necessary to capture the effects 
-        of both light absorption and scattering by suspended cells. Besided thickness of the cuvette (optical path length) and cell concentration, 
-        the measured OD value further depends on cell size and graularity, and configuration of light source and detector, 
-        including optical geometry, detector position or sensitivity. </p>
-    <p> The following recalculation describes the relationship between 
-        optical densities measured at 720 nm (OD<sub>720</sub>) across four devices: 
-        <a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank" rel="noopener"><i>Multi-Cultivator MC-1000-OD</i></a> (inner cuvette thicknesses 2.6 cm), 
-        <a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener"><i>Photobioreactor PBR FMT-150</i></a> (2.4 cm),
-        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank" rel="noopener"><i>AquaPen</i></a> (1.0 cm) and
-        <a href="https://www.shimadzu.cz/products/molecular-spectroscopy/uv-vis/uv-vis-nir-spectroscopy/uv-2600i-uv-2700i/index.html" target="_blank" rel="noopener"> 
-        <i>UV-2600 spectrophotometer</i></a> (1.0 cm). 
-    </p> 
-    <p> Measurements were conducted using cell suspensions of the unicellular cyanobacterium
-        <i>Synechocystis</i> sp. PCC 6803 and unicellular green alga <i>Chlorella vulgaris</i>:
-        <br>
-        <div class="container">
-            <img src="static/images/OD720_devices.jpg" alt="Optical_density" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%;">
-        </div>
-    </p> 
-    <p> Since the OD<sub>720</sub> readings 
-        were comparable for both strains (R<sup>2</sup> = 0.98-1.00 for both strains individually and combined), 
-        the tool below provides a common recalculation for both <i>Chlorella</i> and <i>Synechocystis</i>.
-    </p>
-    <p> The <i>Chlorella</i> and <i>Synechocystis</i> cultures were measured up to OD<sub>720</sub>  
-        1.3 (<i>UV-2600</i>), 0.88 (<i>Multi-Cultivator MC-1000-OD</i>), 0.83 (<i>Photobioreactor PBR FMT-150</i>) and 0.19 (<i>AquaPen</i>). 
-        Concentration of Chlorophyll <i>a</i> in the cultures was ranging between 0.01-2.27 &#xb5g mL<sup>-1</sup>. </p>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Device 1: </a>
-        </div>
-        <div class=" gallery__img gallery__item--2">
-            <div class="form-group">
-                <select id="measuring_device_1_from_dropdown" class="form-control">
-                    <option value="UV-2600">UV-2600 </option>
-                    <option value="AquaPen">AquaPen </option>
-                    <option selected value="MC-1000">MC-1000 </option>
-                    <option value="FMT-150">FMT-150 </option>
-                </select>
-            </div>
-        </div>
-    </div>
-        <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp OD<sub>720</sub> in Device 1: </a>
-        </div>
-        <div class=" gallery__img gallery__item--2">
-            <div class="form-inline">
-                <div class="input-group">
-                    <input
-                    class="form-control"    
-                    type="number"
-                    id="OD_in_device_1_mesured" 
-                    min = "0"
-                    step="0.01"
-                    onkeypress="return isNumberKey(event)"/>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1">
-            <a>&nbsp Device 2: </a>
-        </div>
-        <div class=" gallery__img gallery__item--2">
-            <div class="form-group">
-                <select id="measuring_device_2_from_dropdown" class="form-control">
-                    <option selected value="UV-2600">UV-2600</option>
-                    <option value="AquaPen">AquaPen</option>
-                    <option value="MC-1000">MC-1000</option>
-                    <option value="FMT-150">FMT-150</option>
-                </select>
-            </div>
-        </div>
-    </div>
-    <br>
-    <button id="calculate_OD2" type="button" class="btn btn-primary" onclick="recalculate_OD();"> Recalculate <i>OD<sub>720</sub></i></button>
-    <button type="button" class="btn btn-info"><a>
-        <i>OD<sub>720</sub></i> <span id="OD_in_device_1_for_span"></span><span id="measuring_device_1_for_span"></span>
-        <span id="recalculated_OD2_for_span"></span><span id="measuring_device_2_for_span"></span> </button>
-    <br>
-    <div>
-        <a style="line-height: 0.9"><i style="font-size:80%"><span id="warning_message_for_span"></span></i></a>
-        <a style="line-height: 0.9"><i style="font-size:80%"><span id="chl_a_recalculated_for_span"></span></i></a>
-    </div>
-</div>
-
-<div class="background-box">
-    <h4 id="dilution_estimator"> 6. Substance Dilution Estimator (Continuous Culture) </h4>
-    <p>
-        In continuous or quasi-continuous cultivation systems (chemostat or turbidostat, respectively), the concentration of a non-reproducing substance in a culture suspension
-        decreases over time as fresh medium dilutes the culture. The washout kinetics follow a first-order decay equation:
-    </p>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        $$ \begin{multline} \shoveleft C_{t} = C_{0} * e^{-D * t} \end{multline} $$
-    </i></p>
-    <p>
-        where <i>C<sub>t</sub></i> is the concentration at time <i>t</i>, <i>C<sub>0</sub></i> is the initial concentration, 
-        and <i>D</i> is the dilution rate [h<sup>-1</sup>]. The medium inflow rate (<i>F</i>, units [mL h<sup>-1</sup>]) required to achieve this 
-        dilution depends on the culture volume (<i>V</i>): 
-    </p>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        $$ \begin{multline} \shoveleft F = D \cdot V \end{multline} $$
-    </i></p>
-    
-    <br>
-    <h5> 6.1 Estimate concentration decay over time </h5>
-    
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1"><a>&nbsp Culture Volume (<i>V</i>):</a></div>
-        <div class="gallery__img gallery__item--2">
-            <input class="form-control" type="number" id="culture_volume" value="400" oninput="calculateDilutionPlot()"/>
-        </div>
-        <div class="gallery__img gallery__item--3"><a>mL</a></div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1"><a>&nbsp Dilution Rate (<i>D</i>):</a></div>
-        <div class="gallery__img gallery__item--2">
-            <input class="form-control" type="number" id="dilution_rate" value="0.05" step="0.01" oninput="calculateDilutionPlot()"/>
-        </div>
-        <div class="gallery__img gallery__item--3"><a>h<sup>-1</sup></a></div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1"><a>&nbsp Medium Inflow Rate (<i>F</i>):</a></div>
-        <div class="gallery__img gallery__item--2">
-            <input class="form-control" type="text" id="flow_rate_output" readonly style="background-color: #e9ecef; font-weight: bold;"/>
-        </div>
-        <div class="gallery__img gallery__item--3"><a>mL h<sup>-1</sup></a></div>
     </div>
 
-    <hr>
-    <h6>Initial Dose (at t = 0)</h6>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1"><a>&nbsp Stock Vol. Added:</a></div>
-        <div class="gallery__img gallery__item--2">
-            <input class="form-control" type="number" id="init_stock_vol" value="1" step="0.1" oninput="calculateDilutionPlot()">
+    <!-- Section 3: Growth rate -->
+    <div class="card" id="growth_rate">
+        <div class="card-header" id="headingGrowth">
+            <h4 class="mb-0">
+                <button class="btn btn-link collapsed text-left w-100" type="button"
+                        data-toggle="collapse" data-target="#collapseGrowth"
+                        aria-expanded="false" aria-controls="collapseGrowth">
+                    <strong>Specific growth rate and doubling time</strong>
+                </button>
+            </h4>
         </div>
-        <div class="gallery__img gallery__item--3"><a>mL</a></div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1"><a>&nbsp Stock Conc.:</a></div>
-        <div class="gallery__img gallery__item--2">
-            <input class="form-control" type="number" id="init_stock_conc" value="400" step="1" oninput="calculateDilutionPlot()">
+        <div id="collapseGrowth" class="collapse" aria-labelledby="headingGrowth" data-parent="#calculatorsAccordion">
+            <div class="card-body bg-light">
+                <p>In microbiology, the most typical cell division is a (mitotic) binary division, where each cell divides
+                    into two daughter cells. These daugther cells divide again into four cells,
+                    the four cells divie again into eight cells etc. Time required for the cell division is known as
+                    a <b>doubling time</b> (unit: time), and the rate of cell division is known as
+                    a <b>specific growth rate</b> (unit: time<sup>-1</sup>).
+                    Here, we provide a tool for a simple calcualtion of doubling time from specific growth rate, and vise versa.
+                    Theoretical background on the calculation of both values can be studied for instance on
+                    <a href="https://en.wikipedia.org/wiki/Doubling_time" target="blank">Wikipedia</a>. In short, the relationship can be defined
+                    as following:
+                    <br>
+                    <p style="line-height: 0.9"><i style="font-size:80%">
+                        $$
+                        \begin{multline}
+                        \shoveleft Specific\ growth\ rate = \frac{ln(2)}{Doubling\ time}
+                        \end{multline}
+                        $$
+                    </i></p>
+                </p>
+                <p style="line-height: 0.9"><i style="font-size:80%">
+                    Please note that the specific growth rate can be calculated from differences in the culture density
+                    (expressed as cell number, cell weight, or culture optical density),
+                    as measured during <a href="https://en.wikipedia.org/wiki/Bacterial_growth", target="blank" rel="noopener"> exponential culture growth</a>
+                    according to the following equation:
+                    $$
+                    \begin{multline}
+                    \shoveleft Specific\ growth\ rate = \frac{ln(cell\ density\ at\ time\ 2) - ln(cell\ density\ at\ time\ 1)}{time\ 2 - time\ 1}
+                    \end{multline}
+                    $$
+                </i></p>
+                <br>
+                <h5>Calculate specific growth rate (μ) from doubling time (DT)</h5>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Doubling time: </a>
+                    </div>
+                    <div class=" gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="Doubling_time"
+                                min = "0"
+                                step="0.01"
+                                value="7"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculateGrowthRate()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class=" gallery__img gallery__item--3">
+                        <div class="form-group">
+                            <select id="time_unit_from_dropdown" class="form-control" onchange="calculateGrowthRate()">
+                                <option value="Day">Days</option>
+                                <option selected="Hour">Hours</option>
+                                <option value="Minute">Minutes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="gallery__item--6">
+                        <button type="button" class="btn btn-info"><a>μ:
+                            <span id="growth_rate_for_span"></span></a>
+                        </button>
+                    </div>
+                </div>
+
+                <br>
+                <h5>Calculate doubling time (DT) from specific growth rate (μ)</h5>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Specific growth rate: </a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                    class="form-control"
+                                    type="number"
+                                    id="growth_rate_from_dropdown"
+                                    min = "0"
+                                    step="0.01"
+                                    value="0.1"
+                                    onkeypress="return isNumberKey(event)"
+                                    oninput="calculateDoublingTime()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <div class="form-group">
+                            <select id="per_time_unit_from_dropdown" class="form-control" onchange="calculateDoublingTime()">
+                                <option value="Days"><a>Day<span>&#8315;</span>&sup1</a></option>
+                                <option selected="Hours"><a>Hour<span>&#8315;</span>&sup1</a></option>
+                                <option value="Minutes"><a>Minute<span>&#8315;</span>&sup1</a></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="gallery__item--6">
+                        <button type="button" class="btn btn-info"><a>DT:
+                            <span id="doubling_time_for_span"></span></span></a>
+                        </button>
+                    </div>
+                </div>
+                <br>
+                <details>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Typical growth rates for reference</summary>
+                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <ul class="mb-0">
+                            <li><strong>Cyanobacteria</strong> (<em>Synechocystis</em>, <em>Anabaena</em>): µ ≈ 0.01–0.06 h⁻¹ → DT ≈ 12–70 h under optimal conditions.</li>
+                            <li><strong>Fast-growing cyanobacteria</strong> (<em>Synechococcus</em> sp. UTEX 2973, PCC 11901): DT ≈ 1.5–2.5 h under optimal conditions.</li>
+                            <li><strong>Fast-growing green algae</strong> (<em>Chlorella ohadii</em>, <em>C. vulgaris</em>): DT ≈ 1.5–6 h.</li>
+                            <li><strong><em>Saccharomyces cerevisiae</em></strong> (yeast): µ ≈ 0.1–0.4 h⁻¹ → DT ≈ 2–7 h.</li>
+                            <li><strong><em>E. coli</em></strong>: µ ≈ 0.5–1.2 h⁻¹ → DT ≈ 35–80 min under optimal conditions.</li>
+                            <li><strong><em>Vibrio natriegens</em></strong>: fastest-growing known bacterium, capable of doubling in under 10 minutes.</li>
+                            <li>Note: µ must be calculated during exponential growth only — lag phase and stationary phase values are not meaningful.</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
         </div>
-        <div class="gallery__img gallery__item--3"><a>mM (or mg/L)</a></div>
-    </div>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1"><a>&nbsp Initial Dose <i>C<sub>0</sub></i>:</a></div>
-        <div class="gallery__img gallery__item--2">
-            <input class="form-control" type="text" id="init_conc_display" readonly style="background-color: #e9ecef; font-weight: bold;">
-        </div>
-        <div class="gallery__img gallery__item--3"><a>mM (or mg/L)</a></div>
     </div>
 
-    <hr>
-    <h6>Subsequent Additions</h6>
-    <div id="additions_wrapper">
+    <!-- Section 4: OD720 correction -->
+    <div class="card" id="OD720_correction">
+        <div class="card-header" id="headingODcorr">
+            <h4 class="mb-0">
+                <button class="btn btn-link collapsed text-left w-100" type="button"
+                        data-toggle="collapse" data-target="#collapseODcorr"
+                        aria-expanded="false" aria-controls="collapseODcorr">
+                    <strong>Correcting OD<sub>720</sub> signal non-linearity (FMT-150, MC-1000, AquaPen)</strong>
+                </button>
+            </h4>
         </div>
-    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addAdditionRow()">+ Add Time Point</button>
+        <div id="collapseODcorr" class="collapse" aria-labelledby="headingODcorr" data-parent="#calculatorsAccordion">
+            <div class="card-body bg-light">
+                <p>The values of optical density (OD), mesured in the liquid cultures of algae or cyanobacteria, require correction at higher densities due to scattering
+                    of the measuring light caused by increasing concentration of cells. The OD correction is specific for each instrument. For the instruments listed below,
+                    it appliesfor OD meaured at 720 nm, <b>OD<sub>720</sub> > 0.4</b>. Below this value, the OD sensors measure linearly.
+                    Please note that for optical densites only slightly above OD<sub>720</sub> > 0.4, the corrected OD may not exactly match the expected value,
+                    due to the use of an exponential correction model with discrete initial conditions (OD<sub>720</sub> = 0.4; below this value, correction is not applied).
+                    To correct OD<sub>720</sub> signal across the entire measuring range, i.e. across both linear and non-linear ranges, a polynomial correction would be required.
+                </p>
+                <p> OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener"> photobioreactor PBR FMT-150</b></u></a>, based on the following equation<sup>1</sup>:
+                    <p style="line-height: 0.9"><i style="font-size:80%">
+                        $$
+                        \begin{multline}
+                        \shoveleft OD_{720}\ corrected = 0.23\ e^{1.83\ OD_{720}\ measured}
+                        \end{multline}
+                        $$
+                    </i></p>
 
-    <hr>
-    <div class="gallery_5">
-        <div class="gallery__img gallery__item--1"><a>&nbsp Time Range:</a></div>
-        <div class="gallery__img gallery__item--2">
-            <input class="form-control" type="number" id="time_range" value="100" oninput="calculateDilutionPlot()">
+                </p>
+                <div class="gallery_5">
+                    <div class="ggallery__item--1">
+                        <a>&nbsp OD<sub>720</sub> measured:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="OD_720_measured_PBR"
+                                min = "0"
+                                step="0.01"
+                                value="0.6"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="correct_OD_720_PBRFMT150()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected:
+                            <span id="corrected_OD_720_PBRFMT150_for_span"></span></span></a>
+                        </button>
+                    </div>
+                </div>
+                <br>
+                <p> OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank" rel="noopener">Multi-Cultivator MC-1000-OD</b></u></a>, based on the following equation<sup>2</sup>:
+                    <p style="line-height: 0.9"><i style="font-size:80%">
+                        $$
+                        \begin{multline}
+                        \shoveleft OD_{720}\ corrected = 0.029 + 0.143\ e^{2.497\ OD_{720}\ measured}
+                        \end{multline}
+                        $$
+                    </i></p>
+                </p>
+                <div class="gallery_5">
+                    <div class="gallery__item--1">
+                        <a>&nbsp OD<sub>720</sub> measured:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="OD_720_measured_MC1000"
+                                min = "0"
+                                step="0.01"
+                                value="0.6"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="correct_OD_720_MC1000()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected:
+                            <span id="corrected_OD_720_MC1000_for_span"></span></span></a>
+                        </button>
+                    </div>
+                </div>
+                <br>
+                <p> OD<sub>720</sub> correction for <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank" rel="noopener"><b><u>AquaPen</b></u></a>, based on the following equation:
+                    <p style="line-height: 0.9"><i style="font-size:80%">
+                        $$
+                        \begin{multline}
+                        \shoveleft OD_{720}\ corrected = 0.247\ e^{1.677\ OD_{720}\ measured}
+                        \end{multline}
+                        $$
+                    </i></p>
+                </p>
+                <div class="gallery_5">
+                    <div class="gallery__item--1">
+                        <a>&nbsp OD<sub>720</sub> measured:</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="OD_720_measured_AquaPen"
+                                min = "0"
+                                step="0.01"
+                                value="0.12"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="correct_OD_720_AquaPen()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected:
+                            <span id="corrected_OD_720_AquaPen_for_span"></span></span></a>
+                        </button>
+                    </div>
+                </div>
+                <p style="font-size:80%"><i><b>References:</b>
+                    <br><sup>1</sup>Zavřel et al., (2021): Algal Research, 56: 1-15, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926421001478?dgcid=coauthor", target="blank" rel="noopener">10.1016/j.algal.2021.102328</a>
+                    <br><sup>2</sup>Sukačová et al., (2023): Algal Research, 71: 1-10, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926423000887", target="blank" rel="noopener">10.1016/j.algal.2023.103055</a></i>
+                </p>
+                <details id="odNonlinearityDetails">
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0 !important;">OD<sub>720</sub> non-linearity — measured data (<i>Synechocystis</i> sp. PCC 6803)</summary>
+                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <div style="background:#fff; border-radius:4px; padding:8px; width:50%;">
+                            <canvas id="odNonlinearityChart" style="width:100%; max-height:270px;"></canvas>
+                        </div>
+                    </div>
+                </details>
+                <br>
+                <details>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">When to apply OD correction</summary>
+                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <ul class="mb-0">
+                            <li>Correction is only needed and valid for <strong>OD₇₂₀ &gt; 0.4</strong>. Below this threshold, sensors in these instruments measure linearly — no correction is required.</li>
+                            <li>At OD₇₂₀ slightly above 0.4, small discrepancies may appear due to the discrete boundary conditions of the exponential model.</li>
+                            <li>The corrected OD is useful for accurately tracking culture growth and comparing densities across time or experiments. Raw (uncorrected) values will underestimate true cell density at high densities.</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
         </div>
-        <div class="gallery__img gallery__item--3"><a>hours</a></div>
     </div>
 
-    <br>
-    <button id="calculate_dilution_btn" type="button" class="btn btn-sm btn-outline-secondary" onclick="calculateDilutionPlot();"> ↻ Refresh Plot</button>
-    
-    <div style="margin-top: 20px; padding: 10px; background-color: #fff; border-radius: 5px;">
-        <canvas id="dilutionChart" style="width:100%; max-height:400px;"></canvas>
+    <!-- Section 5: OD720 recalculation between devices -->
+    <div class="card" id="OD720_recalculation">
+        <div class="card-header" id="headingODrecalc">
+            <h4 class="mb-0">
+                <button class="btn btn-link collapsed text-left w-100" type="button"
+                        data-toggle="collapse" data-target="#collapseODrecalc"
+                        aria-expanded="false" aria-controls="collapseODrecalc">
+                    <strong>Recalculation of OD<sub>720</sub> signal between devices</strong>
+                </button>
+            </h4>
+        </div>
+        <div id="collapseODrecalc" class="collapse" aria-labelledby="headingODrecalc" data-parent="#calculatorsAccordion">
+            <div class="card-body bg-light">
+                <p>The values of optical density (OD), mesured in the liquid cultures of algae, cyanobacteria or bacteria, depend on the optical path length,
+                    i.e. thickness of the cuvette in which the culture suspension is measured. In spectrophotometry, OD is usually calculated
+                    same as absorbance (<i>A</i>) as:</p>
+                <p style="line-height: 1"><i style="font-size:80%">
+                    $$
+                    \begin{multline}
+                    \shoveleft OD = A = log_{10}\ \frac{I_{0}}{I}
+                    \end{multline}
+                    $$
+                </i></p>
+                <a>where <i>I<sub>0</sub></i> and <i>I</i> represent incident and transmitted light intensity, respectively [&#xb5mol photons m<sup>-1</sup> s<sup>-1</sup>].
+                    Absorbance is directly proportional to the concentration of the absorbing species, the extinction coefficient,
+                    and the path length through which light travels, according to the Lambert-Beer law:</a>
+                </p>
+                <p style="line-height: 1"><i style="font-size:80%">
+                    $$
+                    \begin{multline}
+                    \shoveleft A = &#949\ c\ l
+                    \end{multline}
+                    $$
+                </i></p>
+                <a>where <i>&#949</i> represents molar extinction coefficient [L<sup>-1</sup> mol<sup>-1</sup> cm<sup>-1</sup>],
+                    <i>c</i> represents concentration of the sample [mol L<sup>-1</sup>], and
+                    <i>l</i> represents optical path length [cm]. When identical culture is measured in cuvettes of different thickness,
+                    the cell concentration and extinction coefficient remain constant, and the only parameter changing is the optical path length.
+                    Absorbance in cuvettes of various thickness can be then recalculated as following:</a>
+                <p style="line-height: 1"><i style="font-size:80%">
+                    $$
+                    \begin{multline}
+                    \shoveleft A_{2} = A_{1}\ \frac{l_{2}}{l_{1}}
+                    \end{multline}
+                    $$
+                </i></p>
+                <p>where <i>A<sub>2</sub></i> and <i>A<sub>2</sub></i> represent optical densities in cuvettes of thickness <i>l<sub>2</sub></i>
+                    and <i>l<sub>1</sub></i>, respectively. </p>
+                <br>
+                <h5>Recalculate absorbance (A) between cuvettes of different thicknesses</h5>
+                <p> This calculation is valid for clear solutions that absorb, but do not scatter, the measuring light—such as those without suspended cells.</p>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Absorbance 1 (<i>A<sub>1</sub></i>): </a>
+                    </div>
+                    <div class=" gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="A1_measured"
+                                min = "0"
+                                step="0.01"
+                                value="0.5"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculate_A2()"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="gallery_5" keep-inline>
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Thickness of cuvette 1 (<i>l<sub>1</sub></i>):</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="thickness_cuvette_1"
+                                min = "0"
+                                step="0.1"
+                                value="1"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculate_A2()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>cm</a>
+                    </div>
+                </div>
+                <div class="gallery_5" keep-inline>
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Thickness of cuvette 2 (<i>l<sub>2</sub></i>):</a>
+                    </div>
+                    <div class="gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="thickness_cuvette_2"
+                                min = "0"
+                                step="0.1"
+                                value="2"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="calculate_A2()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery__img gallery__item--3">
+                        <a>cm</a>
+                    </div>
+                </div>
+                <br>
+                <button type="button" class="btn btn-info"><a>Absorbance 2 (<i>A<sub>2</sub></i>): <span id="recalculated_A2_for_span"></span></a></button>
+                <br><br>
+                <hr>
+                <h5>Recalculate optical density (OD) between specific devices</h5>
+                <p> To accurately convert OD values between different devices, comparative measurements are necessary to capture the effects
+                    of both light absorption and scattering by suspended cells. Besided thickness of the cuvette (optical path length) and cell concentration,
+                    the measured OD value further depends on cell size and graularity, and configuration of light source and detector,
+                    including optical geometry, detector position or sensitivity. </p>
+                <p> The following recalculation describes the relationship between
+                    optical densities measured at 720 nm (OD<sub>720</sub>) across four devices:
+                    <a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank" rel="noopener"><i>Multi-Cultivator MC-1000-OD</i></a> (inner cuvette thicknesses 2.6 cm),
+                    <a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener"><i>Photobioreactor PBR FMT-150</i></a> (2.4 cm),
+                    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank" rel="noopener"><i>AquaPen</i></a> (1.0 cm) and
+                    <a href="https://www.shimadzu.cz/products/molecular-spectroscopy/uv-vis/uv-vis-nir-spectroscopy/uv-2600i-uv-2700i/index.html" target="_blank" rel="noopener">
+                    <i>UV-2600 spectrophotometer</i></a> (1.0 cm).
+                </p>
+                <p> Measurements were conducted using cell suspensions of the unicellular cyanobacterium
+                    <i>Synechocystis</i> sp. PCC 6803 and unicellular green alga <i>Chlorella vulgaris</i>:
+                    <br>
+                    <div class="container">
+                        <img src="static/images/OD720_devices.jpg" alt="Optical_density" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%;">
+                    </div>
+                </p>
+                <p> Since the OD<sub>720</sub> readings
+                    were comparable for both strains (R<sup>2</sup> = 0.98-1.00 for both strains individually and combined),
+                    the tool below provides a common recalculation for both <i>Chlorella</i> and <i>Synechocystis</i>.
+                </p>
+                <p> The <i>Chlorella</i> and <i>Synechocystis</i> cultures were measured up to OD<sub>720</sub>
+                    1.3 (<i>UV-2600</i>), 0.88 (<i>Multi-Cultivator MC-1000-OD</i>), 0.83 (<i>Photobioreactor PBR FMT-150</i>) and 0.19 (<i>AquaPen</i>).
+                    Concentration of Chlorophyll <i>a</i> in the cultures was ranging between 0.01-2.27 &#xb5g mL<sup>-1</sup>. </p>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Device 1: </a>
+                    </div>
+                    <div class=" gallery__img gallery__item--2">
+                        <div class="form-group">
+                            <select id="measuring_device_1_from_dropdown" class="form-control" onchange="recalculate_OD()">
+                                <option value="UV-2600">UV-2600 </option>
+                                <option value="AquaPen">AquaPen </option>
+                                <option selected value="MC-1000">MC-1000 </option>
+                                <option value="FMT-150">FMT-150 </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                    <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp OD<sub>720</sub> in Device 1: </a>
+                    </div>
+                    <div class=" gallery__img gallery__item--2">
+                        <div class="form-inline">
+                            <div class="input-group">
+                                <input
+                                class="form-control"
+                                type="number"
+                                id="OD_in_device_1_mesured"
+                                min = "0"
+                                step="0.01"
+                                value="0.5"
+                                onkeypress="return isNumberKey(event)"
+                                oninput="recalculate_OD()"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1">
+                        <a>&nbsp Device 2: </a>
+                    </div>
+                    <div class=" gallery__img gallery__item--2">
+                        <div class="form-group">
+                            <select id="measuring_device_2_from_dropdown" class="form-control" onchange="recalculate_OD()">
+                                <option selected value="UV-2600">UV-2600</option>
+                                <option value="AquaPen">AquaPen</option>
+                                <option value="MC-1000">MC-1000</option>
+                                <option value="FMT-150">FMT-150</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <button type="button" class="btn btn-info"><a>
+                    <i>OD<sub>720</sub></i> <span id="OD_in_device_1_for_span"></span><span id="measuring_device_1_for_span"></span>
+                    <span id="recalculated_OD2_for_span"></span><span id="measuring_device_2_for_span"></span> </button>
+                <br>
+                <div>
+                    <a style="line-height: 0.9"><i style="font-size:80%"><span id="warning_message_for_span"></span></i></a>
+                    <a style="line-height: 0.9"><i style="font-size:80%"><span id="chl_a_recalculated_for_span"></span></i></a>
+                </div>
+                <br>
+                <details>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Important notes on OD cross-device conversion</summary>
+                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <ul class="mb-0">
+                            <li>These conversions are calibrated for <em>Synechocystis</em> sp. PCC 6803 and <em>Chlorella vulgaris</em>. Conversions may differ for organisms with substantially different cell sizes, shapes, or pigmentation.</li>
+                            <li>Conversions are only valid within the OD ranges measured during calibration (see above). Extrapolating beyond these ranges may give inaccurate results.</li>
+                            <li>The recalculation accounts for both cuvette path length and device-specific optical geometry — it cannot be replaced by simple path-length scaling alone.</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </div>
     </div>
+
+    <!-- Section 6: Dilution estimator -->
+    <div class="card" id="dilution_estimator">
+        <div class="card-header" id="headingDilution">
+            <h4 class="mb-0">
+                <button class="btn btn-link collapsed text-left w-100" type="button"
+                        data-toggle="collapse" data-target="#collapseDilution"
+                        aria-expanded="false" aria-controls="collapseDilution">
+                    <strong>Substance Dilution Estimator (Continuous Culture)</strong>
+                </button>
+            </h4>
+        </div>
+        <div id="collapseDilution" class="collapse" aria-labelledby="headingDilution" data-parent="#calculatorsAccordion">
+            <div class="card-body bg-light">
+                <p>
+                    In continuous or quasi-continuous cultivation systems (chemostat or turbidostat, respectively), the concentration of a non-reproducing substance in a culture suspension
+                    decreases over time as fresh medium dilutes the culture. The washout kinetics follow a first-order decay equation:
+                </p>
+                <p style="line-height: 0.9"><i style="font-size:80%">
+                    $$ \begin{multline} \shoveleft C_{t} = C_{0} * e^{-D * t} \end{multline} $$
+                </i></p>
+                <p>
+                    where <i>C<sub>t</sub></i> is the concentration at time <i>t</i>, <i>C<sub>0</sub></i> is the initial concentration,
+                    and <i>D</i> is the dilution rate [h<sup>-1</sup>]. The medium inflow rate (<i>F</i>, units [mL h<sup>-1</sup>]) required to achieve this
+                    dilution depends on the culture volume (<i>V</i>):
+                </p>
+                <p style="line-height: 0.9"><i style="font-size:80%">
+                    $$ \begin{multline} \shoveleft F = D \cdot V \end{multline} $$
+                </i></p>
+
+                <br>
+                <h5>Estimate concentration decay over time</h5>
+
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1"><a>&nbsp Culture Volume (<i>V</i>):</a></div>
+                    <div class="gallery__img gallery__item--2">
+                        <input class="form-control" type="number" id="culture_volume" value="400" oninput="calculateDilutionPlot()"/>
+                    </div>
+                    <div class="gallery__img gallery__item--3"><a>mL</a></div>
+                </div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1"><a>&nbsp Dilution Rate (<i>D</i>):</a></div>
+                    <div class="gallery__img gallery__item--2">
+                        <input class="form-control" type="number" id="dilution_rate" value="0.05" step="0.01" oninput="calculateDilutionPlot()"/>
+                    </div>
+                    <div class="gallery__img gallery__item--3"><a>h<sup>-1</sup></a></div>
+                </div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1"><a>&nbsp Medium Inflow Rate (<i>F</i>):</a></div>
+                    <div class="gallery__img gallery__item--2">
+                        <input class="form-control" type="text" id="flow_rate_output" readonly style="background-color: #e9ecef; font-weight: bold;"/>
+                    </div>
+                    <div class="gallery__img gallery__item--3"><a>mL h<sup>-1</sup></a></div>
+                </div>
+
+                <hr>
+                <h6>Initial Dose (at t = 0)</h6>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1"><a>&nbsp Stock Vol. Added:</a></div>
+                    <div class="gallery__img gallery__item--2">
+                        <input class="form-control" type="number" id="init_stock_vol" value="1" step="0.1" oninput="calculateDilutionPlot()">
+                    </div>
+                    <div class="gallery__img gallery__item--3"><a>mL</a></div>
+                </div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1"><a>&nbsp Stock Conc.:</a></div>
+                    <div class="gallery__img gallery__item--2">
+                        <input class="form-control" type="number" id="init_stock_conc" value="400" step="1" oninput="calculateDilutionPlot()">
+                    </div>
+                    <div class="gallery__img gallery__item--3"><a>mM (or mg/L)</a></div>
+                </div>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1"><a>&nbsp Initial Dose <i>C<sub>0</sub></i>:</a></div>
+                    <div class="gallery__img gallery__item--2">
+                        <input class="form-control" type="text" id="init_conc_display" readonly style="background-color: #e9ecef; font-weight: bold;">
+                    </div>
+                    <div class="gallery__img gallery__item--3"><a>mM (or mg/L)</a></div>
+                </div>
+
+                <hr>
+                <h6>Subsequent Additions</h6>
+                <div id="additions_wrapper">
+                    </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addAdditionRow()">+ Add Time Point</button>
+
+                <hr>
+                <div class="gallery_5">
+                    <div class="gallery__img gallery__item--1"><a>&nbsp Time Range:</a></div>
+                    <div class="gallery__img gallery__item--2">
+                        <input class="form-control" type="number" id="time_range" value="100" oninput="calculateDilutionPlot()">
+                    </div>
+                    <div class="gallery__img gallery__item--3"><a>hours</a></div>
+                </div>
+
+                <br>
+                <button id="calculate_dilution_btn" type="button" class="btn btn-sm btn-outline-secondary" onclick="calculateDilutionPlot();"> ↻ Refresh Plot</button>
+
+                <div style="margin-top: 20px; padding: 10px; background-color: #fff; border-radius: 5px;">
+                    <canvas id="dilutionChart" style="width:100%; max-height:400px;"></canvas>
+                </div>
+                <br>
+                <details>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret the dilution plot</summary>
+                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <ul class="mb-0">
+                            <li>The curve shows the <strong>remaining concentration</strong> of a non-reproducing substance (e.g., a drug, nutrient, or tracer) as the culture is continuously diluted at rate D.</li>
+                            <li>At <strong>D = 0.05 h⁻¹</strong> (a common chemostat rate), the residence time is 20 h. After ~4 residence times (80 h), &gt; 98% of the original substance has been washed out.</li>
+                            <li>Subsequent additions (spikes) appear as step increases on the curve, each followed by the same exponential decay.</li>
+                            <li>The <strong>Medium Inflow Rate (F)</strong> tells you how many mL per hour of fresh medium must be pumped in to maintain the chosen dilution rate at your culture volume.</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 
@@ -849,5 +1052,6 @@
 <br>
 
 <script src="{{url_for('static', filename='js_calculators.js')}}"></script>
+
 
 {% endblock %}

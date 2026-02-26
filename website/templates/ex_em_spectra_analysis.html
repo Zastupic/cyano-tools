@@ -43,6 +43,9 @@
 </div>
 <br>
 <h1>Analysis of excitation-emission fluorescence maps</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload 3D excitation-emission fluorescence maps measured at 77K from your spectrofluorometer to visualize pigment-protein complex composition and calculate fluorescence intensities and ratios for photosystem I (PSI), photosystem II (PSII), and phycobilisomes. Supports batch processing of up to 50 files.
+</div>
 <p>
 Welcome to the excitation-emission spectra analysis tool! Excitation-emission matrix (EEM) fluorescence spectroscopy is an advanced approach 
 for analyzing the pigment composition and energy transfer dynamics in photosynthetic organisms. 
@@ -590,6 +593,18 @@ After processing, all spectra, derived parameters, and summary statistics are co
     <h6><b>Photosystems and phycobilisomes: </b></h6>
     <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ bar_plot_from_memory }}" alt="Fluorescence excitation-emission parameters"/>
     <br><br> 
+    <details style="margin-bottom:1em;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
+        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+            <ul class="mb-0">
+                <li>Under <strong>435 nm excitation</strong>: chlorophyll emission at ~685 nm = PSII; ~730 nm = PSI. The 685/730 ratio reflects the relative PSII:PSI balance.</li>
+                <li>Under <strong>580 nm excitation</strong>: dominant emission at ~660–685 nm reflects phycobilisome content (phycocyanin/APC). Strong energy transfer to ~685 nm indicates functional coupling of phycobilisomes to PSII.</li>
+                <li>A <strong>high 660/685 nm ratio</strong> (under 580 nm excitation) suggests uncoupled or detached phycobilisomes — common under stress or during state transitions.</li>
+                <li>An <strong>elevated PSI:PSII ratio</strong> is typical of low-light acclimation; a <strong>reduced PSII signal</strong> may indicate photoinhibition or active state 2 transition toward PSI.</li>
+                <li>All 77K spectra are acquired on ice-frozen samples — compare measurements only between samples prepared under identical conditions.</li>
+            </ul>
+        </div>
+    </details>
     <form>
         <h6><b>Download results:</b></h6>
         <ol>

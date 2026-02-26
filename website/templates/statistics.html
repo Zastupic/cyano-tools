@@ -249,6 +249,9 @@
                     <h2 class="fw-bold mb-3">
                         <i class="bi bi-graph-up-arrow"></i> Statistics Tool
                     </h2>
+                    <div class="alert alert-info mb-3" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+                        <strong>At a glance:</strong> Upload a table of measurements (Excel or CSV), define grouping variables, and instantly get box plots with individual data points, descriptive statistics, PCA, and significance tests (ANOVA / Kruskal–Wallis, Tukey HSD). Results export as a formatted .xlsx file.
+                    </div>
                     <p class="lead mb-4" style="font-size: 1.1rem;">
                         Streamline analysis of wet-lab cultivation experiments and physiological assays.
                         Process complex datasets with multi-factor grouping, descriptive statistics, and instant visualizations.
@@ -323,6 +326,50 @@
                                         </div>
                                     </div>
 
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Second accordion item: How to interpret results -->
+                        <div class="card">
+                            <div class="card-header" id="headingInterpretation">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link collapsed text-left w-100" type="button" data-toggle="collapse" data-target="#interpretationGuide" aria-expanded="false" aria-controls="interpretationGuide">
+                                        <i class="bi bi-book mr-2"></i> How to interpret statistical results
+                                    </button>
+                                </h5>
+                            </div>
+                            <div id="interpretationGuide" class="collapse" aria-labelledby="headingInterpretation" data-parent="#requirementsAccordion">
+                                <div class="card-body" style="font-size:0.92em;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="font-weight-bold mb-2">P-values and significance</h6>
+                                            <ul class="small mb-3">
+                                                <li><strong>p &lt; 0.05</strong> — statistically significant at the conventional α = 0.05 threshold.</li>
+                                                <li><strong>p &lt; 0.01</strong> — highly significant; &nbsp;<strong>p &lt; 0.001</strong> — very highly significant.</li>
+                                                <li>A significant p-value does not tell you the size or biological importance of the effect — always inspect the actual data and effect size.</li>
+                                            </ul>
+                                            <h6 class="font-weight-bold mb-2">Box plots</h6>
+                                            <ul class="small mb-3">
+                                                <li><strong>Box</strong> = interquartile range (IQR; 25th–75th percentile). <strong>Line</strong> inside box = median.</li>
+                                                <li><strong>Whiskers</strong> extend to 1.5 × IQR beyond the box edges. <strong>Dots outside whiskers</strong> = potential outliers.</li>
+                                                <li>Individual data points (swarm) show the actual measurements; if N is small, inspect them directly rather than relying only on the box.</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="font-weight-bold mb-2">Choosing a significance test</h6>
+                                            <ul class="small mb-3">
+                                                <li><strong>ANOVA</strong> — compares means of 3+ groups; assumes normality (Shapiro–Wilk p &gt; 0.05) and equal variances (Levene p &gt; 0.05).</li>
+                                                <li><strong>Kruskal–Wallis</strong> — non-parametric alternative to ANOVA; use when normality or variance assumptions are violated.</li>
+                                                <li><strong>Tukey HSD</strong> — post-hoc test after ANOVA; shows which specific group pairs differ. Significance letters group means that are <em>not</em> significantly different from each other (same letter = no significant difference).</li>
+                                            </ul>
+                                            <h6 class="font-weight-bold mb-2">Assumptions tests</h6>
+                                            <ul class="small mb-0">
+                                                <li><strong>Shapiro–Wilk</strong>: p &gt; 0.05 = no evidence against normality — the parametric ANOVA is appropriate.</li>
+                                                <li><strong>Levene</strong>: p &gt; 0.05 = variances are homogeneous across groups — the equal-variance ANOVA assumption is met.</li>
+                                                <li>With small samples (N &lt; 5 per group), these tests have low power — consider using non-parametric tests regardless.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
