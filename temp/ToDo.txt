@@ -1,6 +1,0 @@
-ToDo:
-- averages and SDs of pixel profiles for each cell + for all cells
-- save only one excel file
-- the final excel file should have pixel profiles from each channel in a separate list, and cell size also in a separate list
-- upload multiple images - individual channels
-
