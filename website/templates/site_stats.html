@@ -71,7 +71,7 @@
                 <tbody>
                     {% for page in top_pages %}
                     <tr>
-                        <td><code>{{ page.path }}</code></td>
+                        <td><a href="{{ page.path }}">{{ page.name }}</a></td>
                         <td style="text-align:right;">{{ page.count }}</td>
                     </tr>
                     {% endfor %}

@@ -1,7 +1,7 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
 {% block title %}
-    Automated Filamentous Cell Counter | Cyanobacteria & Algae Analysis | CyanoTools
+    Automated Filamentous Cell Counter | Cyanobacteria &amp; Algae Analysis | CyanoTools
 {% endblock %}
 
 {% block description %}
@@ -17,25 +17,37 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
         {
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          "name": "CyanoTools Automated Cell Counter",
+          "name": "CyanoTools Automated Filamentous Cell Counter",
           "operatingSystem": "Web",
           "applicationCategory": "ImageProcessingSoftware",
-          "description": "Automated cell counting tool for fluorescence microscopy images, supporting Bürker chambers and hemocytometers.",
+          "description": "Automated cell counting tool for filamentous cyanobacteria and algae. Segments filaments into individual cells and calculates cell concentration.",
           "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-          "featureList": "Automated segmentation, Manual correction, Filamentous algae support, Export to XLSX"
+          "featureList": "Automated watershed segmentation, Manual correction, Filamentous algae support, Export to XLSX"
         }
     </script>
 {% endblock %}
 
 {% block content %}
+<!-- Loading overlay — shown while the server processes the image -->
+<div id="loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.88); z-index:9999; text-align:center; padding-top:180px;">
+    <div class="custom-spinner mx-auto" style="margin-bottom:1em;"></div>
+    <p style="font-size:1.1em; color:#333; margin-top:0.5em;">Analysing filaments, please wait…</p>
+</div>
+
+<!-- Hover tooltip for identified cells -->
+<div id="cc-tooltip" style="display:none; position:fixed; background:#333; color:#fff; padding:3px 8px; border-radius:3px; font-size:0.82em; pointer-events:none; z-index:8000;"></div>
+
+<!-- Toast notification -->
+<div id="cc-toast" style="position:fixed; bottom:24px; right:24px; background:#333; color:#fff; padding:8px 16px; border-radius:4px; opacity:0; transition:opacity 0.3s; z-index:9000; pointer-events:none;"></div>
+
 <!-- Banner -->
 <div id="banner-content">
-    <div class="banner-desktop"><!-- Desktop banner -->
+    <div class="banner-desktop">
         <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
              alt="CyanoTools analytical tools for algae and cyanobacteria"
              style="width: 100%;">
     </div>
-    <div class="banner-mobile"><!-- Mobile banner -->
+    <div class="banner-mobile">
         <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
              alt="CyanoTools mobile banner"
              style="width: 100%;">
@@ -44,165 +56,518 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
 <br>
 <h1>Cell counting — filamentous strains</h1>
 <div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
-    <strong>At a glance:</strong> Upload a fluorescence microscopy image of filamentous algae or cyanobacteria to automatically segment filaments into individual cells and calculate their concentration in cells/mL. Fine-tune segmentation parameters if cells are merged or split incorrectly.
+    <strong>At a glance:</strong> Upload a fluorescence microscopy image of filamentous algae or cyanobacteria to automatically <strong>segment filaments into individual cells</strong> and calculate their concentration in cells/mL. The tool uses a watershed-based algorithm to separate touching cells within filaments. Fine-tune all segmentation parameters before running the full analysis.
 </div>
-<p>Welcome to the cell counting tool - a simple and efficient solution for counting cells in fluorescence microscopy images.
-This tool automatically detects filamentous algae or cyanobacteria in a fluorescence microscopy image, segments filaments into individual cells, 
-and counts all cell within all identified filaments. 
-The tool is optimized for images captured by a fluorescence microscope and supports cell counting from images captured
- in a Bürker chamber, hemocytometer, or any disposable counting slide of known depth. 
-Any combination of a fluorescence microscope and a cell counting chamber is suitable for use with this application.</p>
-<a>The following example illustrates the full workflow using Nexcellom 
-    <a href="https://www.nexcelom.com/nexcelom-products/cellometer-disposable-counting-chambers/" target="_blank" rel="noopener">cell counting slides</a> and Zeiss
-    <a href="https://www.zeiss.com/microscopy/en/products/light-microscopes/widefield-microscopes/axio-imager-2-for-life-science-research.html" target="_blank" rel="noopener">fluorescence microscope</a>:</a>
-<br><br>
+<p class="text-muted" style="font-size:0.93em;">Example workflow using Nexcellom
+    <a href="https://www.nexcelom.com/nexcelom-products/cellometer-disposable-counting-chambers/" target="_blank" rel="noopener">cell counting slides</a> and a Zeiss
+    <a href="https://www.zeiss.com/microscopy/en/products/light-microscopes/widefield-microscopes/axio-imager-2-for-life-science-research.html" target="_blank" rel="noopener">fluorescence microscope</a>:
+</p>
 <div class="container">
-    <img src="static/images/worflow_cell_counting_filaments.jpg" alt="Cell counting workflow" class="gallery__img__tall"
+    <img src="{{ url_for('static', filename='images/worflow_cell_counting_filaments.jpg') }}" alt="Filamentous cell counting workflow" class="gallery__img__tall"
     data-enlargeable style="cursor: zoom-in">
 </div>
-<p><u>How to use this tool:</u></p>
-<ol>
-    <li>Enter pixel size</li>
-    <li>Select threshold filter</li>
-    <li>Enter additional parameters:</li>
-    <ul>
-        <li>Depth of the microscopy chamber</li>
-        <li>Minimum cell diameter (smaller objects will be ingnored)</li>
-        <li>Number of iterations (controls how many times the algorithm splits identified objects into smaller ones) </li>
-        <li>Threshold factor (defines whether a newly identified cell is considered part of an already detected cell)</li>
-        <li>Distance factor (sets the minimum center-to-center distance between cells within a filament) </li>
-    </ul>
-    <li>Select image</li>
-    <li>Identify and count individual cells within filaments</li>
-    <li>Read and/or download the results</li>
-    <br>
-    <li>Optional: If some cells were not detected automatically, you can manually add them by clicking on the image.</li>
-</ol> 
-<br>
-<form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count_filament.count_filament_cells') }}">
-    <div class="form-group">
-    <label for="pixel_size"><p class="font-weight-bold">{{ '1. Enter pixel size (nm)' }}</p></label>
-        <input  
-           type="number"
-           id="pixel_size" 
-           class="form-control"
-           name="pixel_size"
-           value=""
-           step="0.01"
-        />
-    </div>
-    <br>
-    <p><b>2. Select threshold filter</b></p>
-    <div class="form-group">
-        <select name="threshold_filter" class="form-control" style="width:100%">
-            <option selected="Binary + Otsu">Binary + Otsu</option>
-            <option value="Triangle + Binary">Triangle + Binary</option>
-            <option value="To zero + Triangle">To zero + Triangle</option>
-            <option value="Binary">Binary</option>
-            <option value="To zero">To zero</option>
-            <option value="Triangle">Triangle</option>
-            <option value="Otsu">Otsu</option>
-        </select>
-    </div>
-    <br>
-    <div class="form-group">
-    <p><b>3. Adjust additional parameters</b></p>
-    <div class="form-group">
-        <div class="gallery_sliders_filaments">
-            <span STYLE="font-size:9.5pt">10</span>
-            <div class="slidecontainer">
-                <input type="range" 
-                        min="10" max="1000" 
-                        value="120" 
-                        class="slider" 
-                        name="chamber_depth_range"
-                        id="chamber_depth_range"/>
-            </div>
-            <span STYLE="font-size:9.5pt">1000</span>
-            <p>Depth of the counting chamber (µm): <span id="chamber_depth"></span></p>
-
-            <span STYLE="font-size:9.5pt">0.5</span>
-            <div class="slidecontainer">
-                <input type="range" 
-                min="0.5" max="30.0" 
-                value="1.0"
-                step="0.1"  
-                class="slider" 
-                name="minimal_diameter_range"
-                id="minimal_diameter_range"/>
-            </div>
-            <span STYLE="font-size:9.5pt">30</span>
-            <p>Minimal expected cell diameter (µm): <span id="minimal_diameter"></span></p>
-
-            <span STYLE="font-size:9.5pt">1</span>
-            <div class="slidecontainer">
-                <input type="range" 
-                min="1" max="20" 
-                value="4" 
-                class="slider" 
-                name="iterations_range"
-                id="iterations_range"/>
-            </div>
-            <span STYLE="font-size:9.5pt">20</span>
-            <p>Number of iterations: <span id="number_of_iterations"></span></p>
-
-            <span STYLE="font-size:9.5pt">0.1</span>
-            <div class="slidecontainer">
-                <input type="range" 
-                min="0.1" max="2.0" 
-                value="1.4" 
-                step="0.1" 
-                class="slider" 
-                name="factor_1_multiplication_range"
-                id="factor_1_multiplication_range"/>
-            </div>
-            <span STYLE="font-size:9.5pt">2.0</span>
-            <p>Threshold factor: <span id="factor_1_multiplication"></span></p>
-
-            <span STYLE="font-size:9.5pt">1</span>            
-            <div class="slidecontainer">
-            <input type="range" 
-                min="1" max="100" 
-                value="28" 
-                class="slider" 
-                name="factor_2_distance_range"
-                id="factor_2_distance_range"/>
-            </div>
-            <span STYLE="font-size:9.5pt">100</span>
-            <p>Distance factor: <span id="factor_2_distance"></span></p>  
+<div style="margin-bottom:1em;">
+    <button type="button" class="btn btn-sm btn-outline-secondary"
+            data-toggle="collapse" data-target="#how-to-use-collapse"
+            aria-expanded="false" aria-controls="how-to-use-collapse">
+        &#9432; How to use this tool &#9660;
+    </button>
+    <div class="collapse" id="how-to-use-collapse">
+        <div class="card card-body py-2" style="font-size:0.9em; margin-top:0.4em;">
+            <ol class="mb-0" style="padding-left:1.2em;">
+                <li>Upload your image — the Live Preview appears automatically</li>
+                <li>Enter <strong>pixel size (nm)</strong> — the threshold preview fires immediately</li>
+                <li>Optionally use <strong>Compare all thresholds</strong> to pick the best threshold method, then fine-tune the pre-processing and filament segmentation parameters</li>
+                <li>Click <strong>Run complete filament analysis</strong> to run the watershed segmentation on the server and get the full result with XLSX export</li>
+                <li>Review results and manually correct if needed:
+                    <span class="badge badge-success" style="font-size:0.85em;">Left-click</span> to add a missed cell &nbsp;
+                    <span class="badge badge-danger" style="font-size:0.85em;">Right-click</span> to remove a circle &nbsp;
+                    <kbd>Ctrl+Z</kbd> to undo</li>
+                <li>Download the results</li>
+            </ol>
         </div>
     </div>
-    <p><b>4. Select image </b>
-    <br>Recommended image resolution is around to 2000 x 2000 px. In case your image is too high resolution, 
-    please use any available tool for image splitting, for instance <a href="https://imagestool.com/split-images" target="_blank" rel="noopener">imagestool</a> or <a href="https://pinetools.com/split-image" target="_blank" rel="noopener">pinetools</a>. </p></label>
-    <div class="custom-file">
-        <input 
-            type="file" 
-            class="custom-file-input" 
-            name="selected_images"
-            id="selected_image"
-            style="width:100%"
-            multiple=""
-            accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif">
-        <label class="custom-file-label" for="customFile">Select files</label>
-    </div>
-    <br>
-    <br>
-    <button id="show-image-button" type="submit" class="btn btn-primary">Split the filaments and count individual cells</button>
-    <a href="{{url_for('static', filename='images/cells_filamentous_example.jpg')}}" download="example_image">
-        <button type="button" class="btn btn-outline-primary">Download an example image</button>
+</div>
+<div style="margin-top:0.5em; margin-bottom:1em;">
+    <a href="{{url_for('static', filename='images/cells_filamentous_example.jpg')}}" download="example_filament_image">
+        <button type="button" class="btn btn-sm btn-outline-secondary">&#128229; Download example image</button>
     </a>
-    <br>
-    </div>
-</form>
-<br>
-<div class="container">
-    <img id="loadingimage" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
 </div>
 
-<br>
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count_filament.count_filament_cells') }}" id="cell-count-filament-form">
+    <!-- Hidden ROI inputs -->
+    <input type="hidden" id="roi_x_pct" name="roi_x_pct" value="0">
+    <input type="hidden" id="roi_y_pct" name="roi_y_pct" value="0">
+    <input type="hidden" id="roi_w_pct" name="roi_w_pct" value="0">
+    <input type="hidden" id="roi_h_pct" name="roi_h_pct" value="0">
+    <!-- Hidden threshold selection -->
+    <input type="hidden" id="threshold_filter" name="threshold_filter" value="{{ threshold | default('Binary + Otsu') }}">
+
+    <!-- ── Select your image ─────────────────────────────────────────────── -->
+    <p class="font-weight-bold mb-1">Upload your image</p>
+    <div id="upload-drop-zone"
+         style="border:2px dashed #adb5bd; border-radius:8px; padding:1.5em 1em; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; background:#fafbfc; margin-bottom:0.5em;">
+        <div style="font-size:2em; line-height:1;">&#128247;</div>
+        <p style="margin:0.3em 0 0; color:#495057; font-size:0.95em;">
+            Drop your image here, or <strong>click to browse</strong>
+        </p>
+        <p style="margin:0.2em 0 0; font-size:0.78em; color:#adb5bd;">PNG · JPG · TIFF · BMP · GIF</p>
+        <p id="drop-zone-filename" style="margin:0.5em 0 0; font-weight:600; font-size:0.9em; color:#17a2b8; display:none;"></p>
+        <input type="file" name="selected_images" id="selected_image"
+               accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif" style="display:none;">
+    </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     LIVE PREVIEW SECTION
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="img-upload-preview-box" style="display:none; margin-top:1em; background:#f0f2f4; border-radius:8px; padding:1em 1.25em;">
+    <h5 style="margin-bottom:0.35em;">Live Preview</h5>
+    <p class="text-muted" style="font-size:0.87em; margin-bottom:0.75em;">
+        Adjust threshold and pre-processing parameters in real time. The <strong>filament segmentation</strong> (watershed) runs on the server when you click <em>Run complete filament analysis</em>.
+    </p>
+
+    <!-- Pixel size -->
+    <div class="mb-2">
+        <div class="d-flex align-items-center flex-wrap" style="gap:0.5em; margin-bottom:0.15em;">
+            <label class="mb-0" style="font-size:0.9em;" for="pixel_size">
+                <strong>Pixel size (nm)</strong>
+            </label>
+            <input
+                type="number"
+                id="pixel_size"
+                class="form-control form-control-sm"
+                name="pixel_size"
+                value="{{ pixel_size_nm | default('') }}"
+                step="0.01"
+                style="width:120px;">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="px-calc-toggle">
+                &#128300; Calculator
+            </button>
+        </div>
+        <div id="px-volume-error" style="display:none; color:#dc3545; font-size:0.82em; margin-top:0.25em;"></div>
+        <div id="px-calc-box" style="display:none; margin-top:0.5em; padding:0.8em 1em; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; max-width:440px;">
+            <p style="margin-bottom:0.5em; font-size:0.88em; color:#555;">
+                Pixel size (nm) = camera pixel pitch (µm) &times; 1000 &divide; (objective mag &times; relay mag)
+            </p>
+            <div class="form-group row mb-2">
+                <label class="col-sm-6 col-form-label col-form-label-sm">Objective magnification (&times;)</label>
+                <div class="col-sm-6">
+                    <input type="number" id="px-obj-mag" class="form-control form-control-sm" placeholder="e.g. 40" min="1" step="0.1">
+                </div>
+            </div>
+            <div class="form-group row mb-2">
+                <label class="col-sm-6 col-form-label col-form-label-sm">Camera pixel pitch (µm)</label>
+                <div class="col-sm-6">
+                    <input type="number" id="px-cam-pitch" class="form-control form-control-sm" placeholder="e.g. 6.5" min="0.1" step="0.01">
+                </div>
+            </div>
+            <div class="form-group row mb-2">
+                <label class="col-sm-6 col-form-label col-form-label-sm">Relay/adapter magnification (&times;)</label>
+                <div class="col-sm-6">
+                    <input type="number" id="px-crop-factor" class="form-control form-control-sm" placeholder="1.0" value="1.0" min="0.1" step="0.01">
+                </div>
+            </div>
+            <p style="margin-bottom:0.4em; font-size:0.92em;">
+                Calculated pixel size: <strong id="px-calc-result">—</strong>
+            </p>
+            <button type="button" class="btn btn-sm btn-primary" id="px-calc-apply">Apply to pixel size field</button>
+        </div>
+    </div>
+
+    <!-- Three-column image row -->
+    <div class="row mb-2">
+        <div class="col-md-4 mb-2">
+            <div style="display:inline-block; font-size:0.75em; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#6c757d; background:#e9ecef; border-radius:12px; padding:2px 10px; margin-bottom:5px;">Uploaded image</div>
+            <div style="position:relative; display:block;">
+                <img id="img-upload-preview" src="" alt="Preview"
+                     style="width:100%; display:block; border:1px solid #dee2e6; border-radius:4px; min-height:60px; cursor:zoom-in;">
+                <canvas id="roi-canvas"
+                        style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; border-radius:4px;"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div style="display:inline-block; font-size:0.75em; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#6c757d; background:#e9ecef; border-radius:12px; padding:2px 10px; margin-bottom:5px;">
+                Threshold &mdash; <span id="selected-thresh-label" style="font-weight:400; text-transform:none; letter-spacing:0;">{{ threshold | default('Binary + Otsu') }}</span>
+            </div>
+            <canvas id="live-preview-canvas"
+                    style="width:100%; border:1px solid #dee2e6; border-radius:4px; display:block; min-height:60px; background:#f0f0f0; cursor:zoom-in;"></canvas>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div style="display:inline-block; font-size:0.75em; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#6c757d; background:#e9ecef; border-radius:12px; padding:2px 10px; margin-bottom:5px;">Counted cells — rough estimate</div>
+            <canvas id="live-counted-canvas"
+                    style="width:100%; border:1px solid #dee2e6; border-radius:4px; display:block; min-height:60px; background:#f0f0f0; cursor:zoom-in;"></canvas>
+        </div>
+    </div>
+    <p class="text-muted" style="font-size:0.78em; margin-bottom:0.5em;">
+        &#9432; Live count uses simple contour detection — filaments may appear as single blobs. Click <strong>Run complete filament analysis</strong> for accurate watershed-based cell segmentation.
+    </p>
+
+    <!-- Identified Cells counter -->
+    <div class="d-flex align-items-center mb-2" style="gap:0.6em;">
+        <span style="font-size:0.8em; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:#6c757d;">Identified Cells (estimate)</span>
+        <span id="live-cell-count" style="background:#17a2b8; color:#fff; font-size:1.15em; font-weight:700; padding:0.1em 0.65em; border-radius:20px; min-width:2.5em; text-align:center; display:inline-block; line-height:1.6;">—</span>
+        <span id="live-count-spinner" style="display:none;">
+            <span class="custom-spinner-sm"></span>
+            <span style="font-size:0.82em; color:#888; font-style:italic; margin-left:3px;">updating…</span>
+        </span>
+        <span id="live-pixel-size-hint" style="display:none; font-size:0.8em; color:#868e96; font-style:italic;">&#8592; enter pixel size (nm) first</span>
+    </div>
+
+    <!-- Controls row -->
+    <div class="d-flex flex-wrap align-items-center mb-1" style="gap:0.4em;">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="roi-toggle-btn"
+                title="Activate, then drag on the image above to restrict counting to a rectangular area">
+            &#9701; Draw ROI
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="roi-clear-btn"
+                title="Remove the region of interest">
+            &#10005; Clear ROI
+        </button>
+        <button type="button" class="btn btn-sm btn-info active" id="live-preview-btn" disabled
+                title="Toggle live threshold preview — updates automatically as you change parameters">
+            &#128065; Live preview: ON
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="multi-thresh-btn"
+                title="Preview all threshold filters side by side">
+            &#9706; Compare all thresholds
+        </button>
+        <style>
+            #microscopy-mode-group .btn-mode-fluor        { border-color:#17a2b8; color:#17a2b8; }
+            #microscopy-mode-group .btn-mode-fluor.active { background:#17a2b8; color:#fff; border-color:#17a2b8; }
+            #microscopy-mode-group .btn-mode-bright        { border-color:#e67e22; color:#e67e22; }
+            #microscopy-mode-group .btn-mode-bright.active { background:#e67e22; color:#fff; border-color:#e67e22; }
+        </style>
+        <div class="btn-group btn-group-toggle btn-group-sm" data-toggle="buttons" id="microscopy-mode-group"
+             title="Select microscopy mode">
+            <label class="btn btn-sm btn-mode-fluor{% if not microscopy_mode or microscopy_mode == 'fluorescence' %} active{% endif %}">
+                <input type="radio" name="microscopy_mode" id="mode_fluorescence" value="fluorescence"
+                       {% if not microscopy_mode or microscopy_mode == 'fluorescence' %}checked{% endif %}>
+                &#128294; Fluorescence image
+            </label>
+            <label class="btn btn-sm btn-mode-bright{% if microscopy_mode == 'brightfield' %} active{% endif %}">
+                <input type="radio" name="microscopy_mode" id="mode_brightfield" value="brightfield"
+                       {% if microscopy_mode == 'brightfield' %}checked{% endif %}>
+                &#9728; Brightfield image
+            </label>
+        </div>
+    </div>
+
+    <!-- ── Analysis parameters card ─────────────────────────────────────── -->
+    <style>
+        #params-card-header .params-chevron { display:inline-block; transition:transform 0.2s ease; }
+        #params-card-header.collapsed .params-chevron { transform:rotate(-90deg); }
+    </style>
+    <div class="card mb-3" style="border-color:#dee2e6;">
+        <div class="card-header py-2 collapsed" id="params-card-header"
+             data-toggle="collapse" data-target="#params-card-body"
+             aria-expanded="false" aria-controls="params-card-body"
+             style="font-size:0.95em; font-weight:bold; background:#f8f9fa; cursor:pointer; user-select:none;">
+            Analysis parameters
+            <small class="text-muted font-weight-normal" style="font-size:0.78em;">
+                — adjust and preview live; all values are sent with the full analysis
+            </small>
+            <span class="params-chevron float-right">&#9660;</span>
+        </div>
+        <div id="params-card-body" class="collapse">
+        <div class="card-body py-2 px-3">
+
+            <!-- Bürker chamber grid-line exclusion + bilateral filter -->
+            <div class="mb-2 d-flex flex-wrap" style="gap:0.5em 1.5em;">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="exclude_stripes_check"
+                           name="exclude_stripes" value="1"
+                           {% if exclude_stripes %}checked{% endif %}>
+                    <label class="custom-control-label" for="exclude_stripes_check" style="font-size:0.88em;">
+                        <strong>Exclude counting chamber grid lines</strong>
+                        <span class="text-muted" style="font-size:0.88em;">— detects and removes horizontal and vertical lines (Bürker chamber grid) before counting</span>
+                    </label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="bilateral_filter_check"
+                           name="bilateral_filter" value="1"
+                           {% if bilateral_filter %}checked{% endif %}>
+                    <label class="custom-control-label" for="bilateral_filter_check" style="font-size:0.88em;">
+                        <strong>Edge-preserving (bilateral) blur</strong>
+                        <span class="text-muted" style="font-size:0.88em;">— smooths noise while keeping cell boundaries sharp</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Two-column slider grid — pre-processing parameters -->
+            <div class="row no-gutters" style="margin:0 -6px;">
+
+                <!-- Min cell diameter -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">Min cell diameter (µm): <strong><span id="minimal_diameter"></span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">smaller objects are excluded (debris)</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0.5</small>
+                        <input type="range" min="0.5" max="30.0" step="0.1"
+                               value="{{ minimal_expected_size | default(1.0) }}"
+                               class="slider" name="minimal_diameter_range" id="minimal_diameter_range"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">30</small>
+                    </div>
+                </div>
+
+                <!-- Max cell diameter -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">Max cell diameter (µm): <strong><span id="max_diameter_val">{{ max_diam_um | default(0) }}</span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = no limit</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                        <input type="range" min="0" max="100" step="1"
+                               value="{{ max_diam_um | default(0) }}"
+                               class="slider" name="max_diam_range" id="max_diam_range"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">100</small>
+                    </div>
+                </div>
+
+                <!-- Pre-blur radius -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">Pre-blur radius (px): <strong><span id="blur_radius_val">{{ blur_radius | default(3) }}</span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">larger values smooth noise before thresholding; 1 = no blur</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                        <input type="range" min="1" max="20" step="1"
+                               value="{{ blur_radius | default(3) }}"
+                               class="slider" name="blur_radius" id="blur_radius_range"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">20</small>
+                    </div>
+                </div>
+
+                <!-- CLAHE contrast enhancement -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">CLAHE contrast enhancement: <strong><span id="clahe_clip_val">{{ clahe_clip | default(0) }}</span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = off; boosts local contrast</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                        <input type="range" min="0" max="8" step="0.5"
+                               value="{{ clahe_clip | default(0) }}"
+                               class="slider" name="clahe_clip" id="clahe_clip"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">8</small>
+                    </div>
+                </div>
+
+                <!-- Erosion / Dilation -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">Erosion &larr; 0 &rarr; Dilation: <strong><span id="morph_iter_val">{{ morph_iter | default(0) }}</span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">negative = erode; positive = dilate</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">−5</small>
+                        <input type="range" min="-5" max="5" step="1"
+                               value="{{ morph_iter | default(0) }}"
+                               class="slider" name="morph_iter" id="morph_iter"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">+5</small>
+                    </div>
+                </div>
+
+                <!-- Min circularity -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">Min circularity: <strong><span id="circularity_val">{{ circularity_min | default(0) }}</span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = off; 1 = perfect circle</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                        <input type="range" min="0" max="1" step="0.05"
+                               value="{{ circularity_min | default(0) }}"
+                               class="slider" name="circularity_min" id="circularity_min"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                    </div>
+                </div>
+
+                <!-- Manual threshold override -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">Manual threshold (0–255): <strong><span id="manual_thresh_val">{{ manual_thresh | default(0) }}</span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = auto; &gt;0 overrides threshold with a fixed pixel value</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                        <input type="range" min="0" max="255" step="1"
+                               value="{{ manual_thresh | default(0) }}"
+                               class="slider" name="manual_thresh" id="manual_thresh"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">255</small>
+                    </div>
+                </div>
+
+                <!-- Adaptive block size -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">Adaptive block size: <strong><span id="adaptive_block_val">{{ adaptive_block_size | default(51) }}</span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">used only with Adaptive Mean/Gaussian threshold methods</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">3</small>
+                        <input type="range" min="3" max="201" step="2"
+                               value="{{ adaptive_block_size | default(51) }}"
+                               class="slider" name="adaptive_block_size" id="adaptive_block_size"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">201</small>
+                    </div>
+                </div>
+
+                <!-- Adaptive C constant -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">Adaptive C constant: <strong><span id="adaptive_c_val">{{ adaptive_c | default(2) }}</span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">subtracted from mean/Gaussian; higher = less sensitive</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">−20</small>
+                        <input type="range" min="-20" max="20" step="1"
+                               value="{{ adaptive_c | default(2) }}"
+                               class="slider" name="adaptive_c" id="adaptive_c"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">+20</small>
+                    </div>
+                </div>
+
+            </div><!-- end pre-processing sliders -->
+
+            <!-- ── Filament segmentation sub-section ─────────────────────── -->
+            <div class="mt-2 pt-2" style="border-top:1px solid #e9ecef;">
+                <div style="font-size:0.88em; font-weight:600; margin-bottom:0.5em; color:#495057;">
+                    &#128260; Filament segmentation (watershed) parameters
+                    <small class="text-muted font-weight-normal" style="font-size:0.82em;">— only applied during full server-side analysis</small>
+                </div>
+
+                <!-- Segmentation method selection -->
+                <div class="mb-2 d-flex flex-wrap align-items-center" style="gap:0.25em 1.2em; font-size:0.88em;">
+                    <strong>Method:</strong>
+                    <div class="custom-control custom-radio d-inline-flex align-items-center">
+                        <input type="radio" class="custom-control-input" id="seg_iterative"
+                               name="use_peak_local_max" value=""
+                               {% if not use_peak_local_max %}checked{% endif %}>
+                        <label class="custom-control-label" for="seg_iterative">
+                            Iterative watershed <span class="text-muted" style="font-size:0.85em;">(original)</span>
+                        </label>
+                    </div>
+                    <div class="custom-control custom-radio d-inline-flex align-items-center">
+                        <input type="radio" class="custom-control-input" id="seg_plm"
+                               name="use_peak_local_max" value="1"
+                               {% if use_peak_local_max %}checked{% endif %}>
+                        <label class="custom-control-label" for="seg_plm">
+                            Peak local max <span class="text-muted" style="font-size:0.85em;">(single-pass, faster)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- H-maxima seeding toggle (only meaningful for iterative method) -->
+                <div class="mb-2" id="hmax-row">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="use_hmax_check"
+                               name="use_hmax" value="1"
+                               {% if use_hmax is not defined or use_hmax %}checked{% endif %}>
+                        <label class="custom-control-label" for="use_hmax_check" style="font-size:0.88em;">
+                            <strong>H-maxima seeding</strong>
+                            <span class="text-muted" style="font-size:0.88em;">— finds distinct local maxima per cell in the distance transform (better seed separation)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="row no-gutters" style="margin:0 -6px;">
+
+                    <!-- Number of iterations (hidden when peak_local_max active) -->
+                    <div class="col-12 col-sm-6 mb-2 px-2" id="iterations-row">
+                        <div style="font-size:0.88em;">Number of iterations: <strong><span id="iterations_range_val">{{ number_of_iterations | default(4) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">controls how aggressively the algorithm separates cells within filaments</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                            <input type="range" min="1" max="20" step="1"
+                                   value="{{ number_of_iterations | default(4) }}"
+                                   class="slider" name="iterations_range" id="iterations_range"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">20</small>
+                        </div>
+                    </div>
+
+                    <!-- Threshold factor -->
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Threshold factor: <strong><span id="factor_1_mult_val">{{ factor_multiplying | default(1.4) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">defines whether a new circle is part of an already detected cell; higher = fewer splits</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0.1</small>
+                            <input type="range" min="0.1" max="2.0" step="0.1"
+                                   value="{{ factor_multiplying | default(1.4) }}"
+                                   class="slider" name="factor_1_multiplication_range" id="factor_1_multiplication_range"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">2.0</small>
+                        </div>
+                    </div>
+
+                    <!-- Distance factor -->
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Distance factor: <strong><span id="factor_2_dist_val">{{ factor_distance_centers | default(28) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">minimum center-to-center distance between cells within a filament (px); lower = more splits</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                            <input type="range" min="1" max="100" step="1"
+                                   value="{{ factor_distance_centers | default(28) }}"
+                                   class="slider" name="factor_2_distance_range" id="factor_2_distance_range"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">100</small>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="mt-2 pt-2" style="border-top:1px solid #f0f0f0;">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="params-reset-btn"
+                        title="Reset all analysis parameters to their default values">
+                    &#8635; Reset to defaults
+                </button>
+            </div>
+
+        </div>
+        </div><!-- end params collapse -->
+    </div>
+    <!-- end parameters card -->
+
+    <!-- Threshold comparison thumbnails -->
+    <div id="multi-thresh-box" style="display:none; margin-bottom:0.75em;">
+        <p style="font-size:0.88em; font-weight:bold; margin-bottom:0.25em;">
+            Threshold comparison
+            <small class="text-muted">(click a thumbnail to select that filter)</small>
+            <span id="multi-thresh-spinner" style="display:none; margin-left:6px;">
+                <span class="custom-spinner-sm"></span>
+                <em style="vertical-align:middle; font-size:0.82em; color:#888; font-weight:normal;">updating…</em>
+            </span>
+        </p>
+        <div id="multi-thresh-container" style="display:flex; flex-wrap:wrap; gap:6px; align-items:flex-start; transition:opacity 0.15s;"></div>
+    </div>
+
+    <!-- Chamber depth -->
+    <div class="mb-3">
+        <div class="d-flex align-items-center flex-wrap" style="gap:0.5em; margin-bottom:0.15em;">
+            <label class="mb-0" style="font-size:0.9em;" for="chamber_depth_range">
+                <strong>Chamber depth (µm)</strong>
+            </label>
+            <input type="number"
+                   min="10" max="1000" step="1"
+                   value="{{ depth_um | default(120) }}"
+                   class="form-control form-control-sm"
+                   name="chamber_depth_range"
+                   id="chamber_depth_range"
+                   style="width:90px;">
+        </div>
+        <div class="text-muted" style="font-size:0.77em;">used to calculate cell concentration per mL</div>
+    </div>
+
+</div>
+<!-- Submit button -->
+<div id="submit-box" style="display:none; margin-top:1em;">
+    <button type="submit" class="btn btn-primary">
+        &#128202; Run complete filament analysis
+    </button>
+    <p class="text-muted" style="font-size:0.81em; margin-top:0.4em; margin-bottom:0;">
+        Runs the full watershed segmentation on the server and generates detailed results with XLSX export and interactive manual correction tools.
+    </p>
+</div>
+</form>
+
 {% if img_orig_decoded_from_memory %}
-    <script> 
+    <script>
         var cell_conc_autom_million_cells_per_ml = {{ million_cells_per_mL }};
         var volume_imaged_area = {{ img_volume_ml }};
         var image_area = {{ img_area_mm2 }};
@@ -211,88 +576,223 @@ Any combination of a fluorescence microscope and a cell counting chamber is suit
         var pixels_x = {{ x_pixels }};
         var pixels_y = {{ y_pixels }};
         var size_of_pixel = {{ pixel_size_nm }};
+        var x_um_val = {{ x_um }};
+        var y_um_val = {{ y_um }};
+        var img_volume_nl_val = {{ img_volume_nl }};
+        var minimal_size_um_val = {{ minimal_expected_size }};
+        var threshold_name_val = "{{ threshold }}";
+        var microscopy_mode_val = "{{ microscopy_mode }}";
+        var contour_data_val = {{ contour_data | tojson }};
+        var cell_diameters_val = {{ cell_diameters | tojson }};
+        var upload_image_name = "{{ image_name }}";
+        // Filament-specific
+        var iterations_val = {{ number_of_iterations }};
+        var factor_mult_val = {{ factor_multiplying }};
+        var factor_dist_val = {{ factor_distance_centers }};
+        var use_peak_local_max_val = {{ 'true' if use_peak_local_max else 'false' }};
+        var use_hmax_val = {{ 'true' if use_hmax else 'false' }};
+        var bilateral_filter_val = {{ 'true' if bilateral_filter else 'false' }};
     </script>
 
-    <br>
-    <p><h3>Cell count: <span id="cell_conc_corrected"></span>  x 10<sup>6</sup> cells mL<sup>-1</sup> </h3></p>
-    <br>
-    <br>
-    <p><b>Select size of the marking circle (in pixels, can be changed dynamically)</b></p>
-    <div class="container">
-        <div class="gallery_sliders_pixel_profile">
-            <span STYLE="font-size:9.5pt">1</span>
-            <div class="slidecontainer">
-                <input type="range" 
-                min="1" max="250" 
-                value="10"
-                step="1"  
-                class="slider" 
-                name="expected_cell_size_range"
-                id="expected_cell_size_px_range"/>
-            </div>
-            <span STYLE="font-size:9.5pt">250</span>
-            <p>Diameter of marking circle (px): <span id="expected_cell_size_px"></span></p>
+    <div class="card mt-3" style="border:1px solid #dee2e6; border-radius:8px;">
+    <div class="card-body pb-3">
+
+    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:0.5em; padding-bottom:0.75em; border-bottom:1px solid #f0f0f0;">
+        <div>
+            <div style="font-size:0.72em; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:#6c757d; margin-bottom:2px;">Cell concentration</div>
+            <h3 style="margin:0; color:#0a3c58;"><span id="cell_conc_corrected"></span> &times; 10<sup>6</sup> cells mL<sup>-1</sup></h3>
         </div>
     </div>
-    <br>
+
+    <!-- Manual correction + circle settings -->
+    <div style="margin-bottom:0.6em;">
+        <button type="button" class="btn btn-sm btn-outline-warning"
+                data-toggle="collapse" data-target="#manual-correction-collapse"
+                aria-expanded="false" aria-controls="manual-correction-collapse">
+            &#9998; Manual correction &amp; circle settings &#9660;
+        </button>
+        <div class="collapse" id="manual-correction-collapse">
+            <div class="card card-body py-2 px-3" style="margin-top:0.4em; font-size:0.9em;">
+                <div class="mb-2" style="display:flex; flex-direction:column; gap:4px;">
+                    <div><span class="badge badge-success" style="font-size:0.88em;">&#10133; Left-click</span> on any missed cell to add it.</div>
+                    <div><span class="badge badge-danger" style="font-size:0.88em;">&#10006; Right-click</span> on a marked circle to remove it.</div>
+                    <div><kbd>Ctrl+Z</kbd> to undo.</div>
+                </div>
+                <div class="d-flex flex-wrap align-items-center" style="gap:1.5em;">
+                    <div>
+                        <small class="text-muted" style="font-size:0.82em;">Circle diameter:</small>
+                        <div class="d-flex align-items-center" style="gap:4px; margin-top:2px;">
+                            <small class="text-muted" style="font-size:0.8em;">1</small>
+                            <input type="range" min="1" max="100" value="10" step="1"
+                                   class="slider" name="expected_cell_size_range"
+                                   id="expected_cell_size_px_range" style="width:120px;">
+                            <small class="text-muted" style="font-size:0.8em;">100</small>
+                            <strong style="font-size:0.9em;"><span id="expected_cell_size_px"></span> px</strong>
+                        </div>
+                    </div>
+                    <div>
+                        <small class="text-muted" style="font-size:0.82em;">Line width:</small>
+                        <div class="d-flex align-items-center" style="gap:4px; margin-top:2px;">
+                            <small class="text-muted" style="font-size:0.8em;">1</small>
+                            <input type="range" min="1" max="5" value="1" step="1"
+                                   class="slider" id="circle_line_width_range" style="width:80px;">
+                            <small class="text-muted" style="font-size:0.8em;">5</small>
+                            <strong style="font-size:0.9em;"><span id="circle_line_width_val">1</span> px</strong>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="undoLastCell()" title="Ctrl+Z">
+                        &#8630; Undo last
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="imgbox">
-        <figcaption>Identified cells (for visualization, <i>To zero</i> and <i>Triangle</i> thresholds are combined). To manually identify missed cells, start clicking on the image below.</figcaption>
-        <div class="imgbox" id="imgbox">
-            <div class="insideWrapper">
-                <img src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" id="Identified_cells" alt="Counted cells">
+        <div class="imgbox" id="imgbox" style="overflow:hidden;">
+            <div class="insideWrapper" style="transform-origin: top left; transition: transform 0.08s linear; will-change: transform;">
+                <img src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" id="Identified_cells" alt="Filament cell count — counted cells" style="width:100%; display:block;">
                 <canvas class="coveringCanvas" id="canvas_mouse_clicking">
                 </canvas>
             </div>
         </div>
     </div>
-    <br>
-    <p>Cell count without manual correction: {{ million_cells_per_mL }}  x 10<sup>6</sup> cells mL<sup>-1</sup></p>
-    <p>Identified cells (by the cell-counting script): {{ cell_count }}</p>
-    <p>Additionally identified cells (manual correction): <span id="identified_cells"></span></p>
-    <p>Image resolution: {{ x_pixels }} x {{ y_pixels }} pixels </p>
-    <p>Image area: {{ img_area_mm2  }} mm<sup>2</sup> ({{ x_um }} x {{ y_um }} µm)</p>
-    <p>Volume of the imaged area: {{ img_volume_nl }} nL</p>
-    <p>Pixel size: {{ pixel_size_nm }} nm 
-    / Depth of the chamber: {{ depth_um }} µm 
-    / Minimal cell size: {{ minimal_expected_size }} µm</p>
-    <br>
-    <b>Click to enlarge:</b>
-    <br> 
-    <div class="container">
-        <div class="gallery">
-            <a>Counted cells</a>
-            <a>Thresholded image (<i>{{ threshold }}</i>)</a>
-            <a>Original image</a>
-        </div>
+
+    <!-- Cell size distribution histogram -->
+    <div id="histogram-box" style="display:none; margin-bottom:1em;">
+        <p style="font-size:0.88em; font-weight:bold; margin-bottom:0.25em;">Cell size distribution (equivalent diameter, µm)</p>
+        <canvas id="histogram-canvas"
+                style="width:100%; max-width:300px; height:260px; border:1px solid #dee2e6; border-radius:4px; display:block; background:#fff; cursor:zoom-in;"
+                title="Click to enlarge"></canvas>
     </div>
-    <div class="container">
-        <div class="gallery">
-            <img data-enlargeable style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="gallery__img gallery__item--1" alt="Cell count-counted cellss">
-            <img data-enlargeable style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_th_decoded_from_memory }}" class="gallery__img gallery__item--2" alt="Thresholded image for cell counting">
-            <img data-enlargeable style="cursor: zoom-in" src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="gallery__img gallery__item--3" alt="Microscopy image for cell counting">
+
+    <!-- Histogram enlarge modal -->
+    <div class="modal fade" id="histogram-modal" tabindex="-1" role="dialog" aria-labelledby="histModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="histModalLabel">Cell size distribution (equivalent diameter, µm)</h6>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body p-2">
+                    <canvas id="histogram-canvas-large" style="width:100%; height:420px; display:block; background:#fff;"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
-    <br>
-    <details style="margin-bottom:1em;">
-        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
-        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-            <ul class="mb-0">
-                <li>The reported <strong>cell concentration</strong> (×10⁶ cells mL⁻¹) is calculated from total cell count, the imaged field area, and the chamber depth you entered.</li>
-                <li>If cells within filaments are <strong>merged</strong> (undercounting): decrease the <em>distance factor</em> or increase the number of <em>iterations</em> so the algorithm separates cells more aggressively.</li>
-                <li>If single cells are being <strong>split into multiple objects</strong> (overcounting): increase the <em>threshold factor</em> or decrease <em>iterations</em>.</li>
-                <li>Use <strong>manual correction</strong> by clicking on the image to add cells that were not detected automatically — the concentration updates in real time.</li>
-            </ul>
+    <!-- Analysis details accordion -->
+    <div style="margin-bottom:0.75em;">
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-toggle="collapse" data-target="#results-info-collapse"
+                aria-expanded="false" aria-controls="results-info-collapse">
+            &#128202; Analysis details &#9660;
+        </button>
+        <div class="collapse" id="results-info-collapse">
+            <div class="card card-body py-2 px-3" style="margin-top:0.4em;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.87em;">
+                    <tbody>
+                        <tr><td class="text-muted" style="width:42%; padding:2px 6px 2px 0; white-space:nowrap;">Initial auto-detection</td>
+                            <td style="padding:2px 0;">{{ cell_count }} cells / {{ million_cells_per_mL }} &times; 10<sup>6</sup> cells mL<sup>-1</sup></td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">After correction</td>
+                            <td style="padding:2px 0;">auto: <strong><span id="server_cells_count">{{ cell_count }}</span></strong> &nbsp;|&nbsp; manual: <strong><span id="identified_cells">0</span></strong> &nbsp;|&nbsp; total: <strong><span id="total_cells_count">{{ cell_count }}</span></strong></td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Image resolution</td>
+                            <td style="padding:2px 0;">{{ x_pixels }} &times; {{ y_pixels }} pixels</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Image area</td>
+                            <td style="padding:2px 0;">{{ img_area_mm2 }} mm<sup>2</sup> &nbsp;({{ x_um }} &times; {{ y_um }} µm)</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Volume imaged</td>
+                            <td style="padding:2px 0;">{{ img_volume_nl }} nL</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Pixel size</td>
+                            <td style="padding:2px 0;">{{ pixel_size_nm }} nm</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Chamber depth</td>
+                            <td style="padding:2px 0;">{{ depth_um }} µm</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Min cell diameter</td>
+                            <td style="padding:2px 0;">{{ minimal_expected_size }} µm</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Pre-blur radius</td>
+                            <td style="padding:2px 0;">{{ blur_radius | default(3) }} px</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Microscopy mode</td>
+                            <td style="padding:2px 0;">{{ microscopy_mode }}</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Threshold method</td>
+                            <td style="padding:2px 0;">{{ threshold }}</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Segmentation method</td>
+                            <td style="padding:2px 0;">{{ 'Peak local max' if use_peak_local_max else 'Iterative watershed' }}</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">H-maxima seeding</td>
+                            <td style="padding:2px 0;">{{ 'Yes' if use_hmax else 'No' }}</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Bilateral blur</td>
+                            <td style="padding:2px 0;">{{ 'Yes' if bilateral_filter else 'No' }}</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Iterations</td>
+                            <td style="padding:2px 0;">{{ number_of_iterations if not use_peak_local_max else '—' }}</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Threshold factor</td>
+                            <td style="padding:2px 0;">{{ factor_multiplying }}</td></tr>
+                        <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Distance factor</td>
+                            <td style="padding:2px 0;">{{ factor_distance_centers }} px</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </details>
+    </div>
+    <div style="margin-bottom:1em;">
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-toggle="collapse" data-target="#interpret-collapse"
+                aria-expanded="false" aria-controls="interpret-collapse">
+            &#128270; How to interpret your results &#9660;
+        </button>
+        <div class="collapse" id="interpret-collapse">
+            <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.4em;">
+                <p class="mb-1" style="font-weight:600; color:#0a3c58;">Interpreting the results</p>
+                <ul class="mb-3">
+                    <li>The reported <strong>cell concentration</strong> (×10⁶ cells mL⁻¹) is calculated from the number of detected cells, the imaged field area, and the chamber depth you entered.</li>
+                </ul>
+                <p class="mb-1" style="font-weight:600; color:#0a3c58;">Tips for optimal filament cell counting</p>
+                <ul class="mb-0">
+                    <li>If cells within filaments are <strong>merged</strong> (undercounting): decrease the <em>distance factor</em> or increase the number of <em>iterations</em> so the algorithm separates cells more aggressively.</li>
+                    <li>If single cells are being <strong>split into multiple objects</strong> (overcounting): increase the <em>threshold factor</em> or decrease <em>iterations</em>.</li>
+                    <li>If cells are <strong>being missed entirely</strong>: try lowering the minimum cell diameter or increasing CLAHE contrast enhancement.</li>
+                    <li>Use <strong>manual correction</strong> by clicking on the image to add cells that were not detected — right-click a circle to remove it, or press <kbd>Ctrl+Z</kbd>.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <p><b>Download results</b></p>
+    <div class="d-flex flex-wrap mb-4" style="gap:0.5em;">
+        <button type="button" class="btn btn-success" onclick="downloadAll()">
+            &#128194; Download results (.zip)
+            <small style="font-size:0.78em; opacity:0.85;">XLSX + images</small>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="exportWithOverlay()"
+                title="Export the counted image with manual corrections baked in as a PNG">
+            Export image with corrections
+        </button>
+    </div>
+
+    </div><!-- /.card-body -->
+    </div><!-- /.card results -->
+
+    <!-- Auto-restore live preview from the server result image -->
+    <script>
+    (function () {
+        var bgImg      = document.getElementById('Identified_cells');
+        var previewImg = document.getElementById('img-upload-preview');
+        var previewBox = document.getElementById('img-upload-preview-box');
+        var submitBox  = document.getElementById('submit-box');
+        if (!bgImg || !previewImg || !previewBox) return;
+        function restorePreview() {
+            previewImg.src = bgImg.src;
+            previewBox.style.display = 'block';
+            if (submitBox) submitBox.style.display = 'block';
+        }
+        if (bgImg.complete && bgImg.naturalWidth > 0) restorePreview();
+        else bgImg.addEventListener('load', restorePreview);
+    })();
+    </script>
 
 {% else %}
-<br><br><br><br><br><br><br>
-
+<div style="min-height:12em;"></div>
 {% endif %}
+<div style="min-height:4em;"></div>
 
-<br><br><br><br><br><br><br>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="{{url_for('static', filename='js_cell_count_filament.js')}}"></script>
 
 {% endblock %}

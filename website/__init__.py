@@ -37,7 +37,7 @@ def create_app():
 
     @app.before_request
     def log_page_view():
-        if request.path.startswith('/static'):
+        if request.path.startswith('/static') or request.path == '/site_stats':
             return
         if request.method != 'GET':
             return
