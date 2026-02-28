@@ -44,7 +44,6 @@ var WORKER_URL = (function () {
 '];\n' +
 'function buildGreyTh(imgBGR, microscopyMode, blurRadius, claheClip) {\n' +
 '    var kSize = Math.max(1, parseInt(blurRadius) || 3);\n' +
-'    if (kSize % 2 === 0) kSize += 1;\n' +
 '    var imgBlur  = new cv.Mat();\n' +
 '    var imgGrey  = new cv.Mat();\n' +
 '    var imgGreyTh = new cv.Mat();\n' +
@@ -505,7 +504,31 @@ var LS_KEYS = {
 (function () {
     var form = document.getElementById('cell-count-form');
     if (!form) return;
-    form.addEventListener('submit', function () {
+    form.addEventListener('submit', function (e) {
+        var errEl  = document.getElementById('px-volume-error');
+        var ps     = parseFloat((document.getElementById('pixel_size') || {}).value);
+        // Validate pixel size
+        if (!isFinite(ps) || ps <= 0) {
+            e.preventDefault();
+            if (errEl) { errEl.textContent = '⚠ Please enter a valid pixel size (nm) before running the analysis.'; errEl.style.display = 'block'; }
+            var pxEl = document.getElementById('pixel_size'); if (pxEl) pxEl.focus();
+            return;
+        }
+        // Validate imaged volume (mirrors the server check: img_volume_nl > 1)
+        var previewImg = document.getElementById('img-upload-preview');
+        var depth = parseFloat((document.getElementById('chamber_depth_range') || {}).value) || 120;
+        if (previewImg && previewImg.naturalWidth > 0) {
+            var xNm   = previewImg.naturalWidth  * ps;
+            var yNm   = previewImg.naturalHeight * ps;
+            var volNl = xNm * yNm * (depth * 1000) / 1e15;
+            if (volNl <= 1) {
+                e.preventDefault();
+                if (errEl) { errEl.textContent = '⚠ Pixel size is too low — the imaged volume would be ≤ 1 nL. Please increase the pixel size or chamber depth.'; errEl.style.display = 'block'; }
+                var pxEl = document.getElementById('pixel_size'); if (pxEl) pxEl.focus();
+                return;
+            }
+        }
+        if (errEl) errEl.style.display = 'none';
         var overlay = document.getElementById('loading-overlay');
         if (overlay) overlay.style.display = 'block';
         // Disable submit button and show spinner inside it
@@ -948,8 +971,7 @@ function getFormParams() {
     function bv(id) { var el = document.getElementById(id); return el ? el.checked : false; }
 
     var microscopyMode = (document.querySelector('input[name="microscopy_mode"]:checked') || {}).value || 'fluorescence';
-    var blurRaw = fv('blur_radius_range');
-    var blurRadius = Math.max(1, Math.round(blurRaw % 2 === 0 ? blurRaw + 1 : blurRaw));
+    var blurRadius = Math.max(1, Math.round(fv('blur_radius_range')));
     return {
         pixelSizeNm:    fv('pixel_size'),
         depthUm:        fv('chamber_depth_range'),
@@ -1220,7 +1242,7 @@ function highlightMultiSelected(name) {
             workerBusy = true;
             worker.postMessage({ type: 'multi', data: { imageData: imgData, params: params } },
                 [imgData.data.buffer]);
-            if (mb) mb.style.display = 'block';
+            if (mb) { mb.style.display = 'block'; setTimeout(function () { var depth = document.getElementById('chamber_depth_range'); if (depth) depth.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); }
             setMultiSpinner(true);
         });
     }

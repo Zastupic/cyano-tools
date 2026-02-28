@@ -145,6 +145,7 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
                 &#128300; Calculator
             </button>
         </div>
+        <div id="px-volume-error" style="display:none; color:#dc3545; font-size:0.82em; margin-top:0.25em;"></div>
         <div id="px-calc-box" style="display:none; margin-top:0.5em; padding:0.8em 1em; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; max-width:440px;">
             <p style="margin-bottom:0.5em; font-size:0.88em; color:#555;">
                 Pixel size (nm) = camera pixel pitch (µm) &times; 1000 &divide; (objective mag &times; relay mag)
@@ -315,14 +316,14 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
                 <!-- Pre-blur radius -->
                 <div class="col-12 col-sm-6 mb-2 px-2">
                     <div style="font-size:0.88em;">Pre-blur radius (px): <strong><span id="blur_radius_val">{{ blur_radius | default(3) }}</span></strong></div>
-                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">larger values smooth noise before thresholding</div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">larger values smooth noise before thresholding; 1 = no blur</div>
                     <div class="d-flex align-items-center" style="gap:3px;">
                         <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
-                        <input type="range" min="1" max="15" step="2"
+                        <input type="range" min="1" max="20" step="1"
                                value="{{ blur_radius | default(3) }}"
                                class="slider" name="blur_radius" id="blur_radius_range"
                                style="flex:1; min-width:0;">
-                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">15</small>
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">20</small>
                     </div>
                 </div>
 

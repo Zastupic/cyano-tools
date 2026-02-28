@@ -27,12 +27,8 @@ def count_cells():
             roi_h_pct = float(request.form.get('roi_h_pct') or 0)
             use_roi = roi_w_pct > 0 and roi_h_pct > 0
 
-            # Pre-blur radius (must be positive and odd)
-            blur_radius = int(request.form.get('blur_radius') or 3)
-            if blur_radius < 1:
-                blur_radius = 1
-            if blur_radius % 2 == 0:
-                blur_radius += 1
+            # Pre-blur radius (cv2.blur is a box filter — any positive integer is valid)
+            blur_radius = max(1, int(request.form.get('blur_radius') or 3))
 
             # New analysis parameters
             max_diam_um     = float(request.form.get('max_diam_range') or 0)
@@ -145,7 +141,7 @@ def count_cells():
 
                     # Fluorescence: green circles on dark bg; Brightfield: black circles on light bg
                     circle_color = (0, 255, 0) if microscopy_mode != 'brightfield' else (0, 0, 0)
-                    contours_th = cv2.findContours(img_th, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[0]
+                    contours_th = cv2.findContours(img_th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
                     cell_count_num = 0
                     contour_data = []   # [cx, cy, r] in image pixels — for JS hover tooltip
                     cell_diameters = [] # equivalent cell diameters in µm — for histogram
