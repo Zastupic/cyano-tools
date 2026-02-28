@@ -30,18 +30,33 @@ def webhook():
         abort(403)
 
     try:
+        # 1. Fetch updates from GitHub
+        subprocess.run(['git', 'fetch', 'origin', 'main'], cwd=REPO_DIR, check=True)
+
+        # 2. Force reset to match origin/main (This fixes the 'overwritten' error)
         result = subprocess.run(
-            ['git', 'pull'],
+            ['git', 'reset', '--hard', 'origin/main'],
             cwd=REPO_DIR,
             capture_output=True,
             text=True,
             timeout=60,
         )
-        current_app.logger.info('git pull stdout: %s', result.stdout)
-        if result.returncode != 0:
-            current_app.logger.error('git pull stderr: %s', result.stderr)
-            return {'status': 'error', 'detail': result.stderr}, 500
-    except subprocess.TimeoutExpired:
-        return {'status': 'error', 'detail': 'git pull timed out'}, 500
 
-    return {'status': 'ok', 'detail': result.stdout}, 200
+        # 3. Clean untracked files (This fixes the 'untracked working tree files' error)
+        subprocess.run(['git', 'clean', '-fd'], cwd=REPO_DIR, check=True)
+
+        # 4. AUTO-RELOAD PythonAnywhere (Crucial!)
+        # Replace 'yourusername' and 'yourdomain_com' with your actual details
+        wsgi_file = "/var/www/yourusername_pythonanywhere_com_wsgi.py"
+        if os.path.exists(wsgi_file):
+            os.utime(wsgi_file, None)
+
+        current_app.logger.info('Git Reset Success: %s', result.stdout)
+
+    except subprocess.CalledProcessError as e:
+        current_app.logger.error('Git command failed: %s', e.stderr)
+        return {'status': 'error', 'detail': str(e.stderr)}, 500
+    except subprocess.TimeoutExpired:
+        return {'status': 'error', 'detail': 'git operation timed out'}, 500
+
+    return {'status': 'ok', 'detail': 'Server updated and reloaded'}, 200
