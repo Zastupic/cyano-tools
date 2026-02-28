@@ -50,10 +50,10 @@ def create_app():
             ip_hash = hashlib.sha256((ip + salt).encode()).hexdigest()[:16]
             ref = (request.referrer or '')[:500]
             db.session.add(PageView(
-                timestamp = datetime.utcnow(),
-                path      = request.path[:200],
-                ip_hash   = ip_hash,
-                referrer  = ref or None,
+                timestamp = datetime.utcnow(), # type: ignore
+                path      = request.path[:200], # type: ignore
+                ip_hash   = ip_hash, # type: ignore
+                referrer  = ref or None, # type: ignore
             ))
             db.session.commit()
         except Exception:
