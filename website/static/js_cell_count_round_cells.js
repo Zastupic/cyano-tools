@@ -585,6 +585,11 @@ var LS_KEYS = {
             if (mb) mb.style.display = 'none';
             triggerLivePreview();
             autoRunCount();
+            // Show hint after layout settles if pixel size is not yet entered
+            setTimeout(function () {
+                var ps = parseFloat((document.getElementById('pixel_size') || {}).value);
+                if (!isFinite(ps) || ps <= 0) showNoPixelSizeHint();
+            }, 200);
         };
         reader.readAsDataURL(file);
     });
@@ -887,12 +892,37 @@ function setSpinner(on) {
     if (sp) sp.style.display = on ? 'inline-flex' : 'none';
 }
 
+function showNoPixelSizeHint() {
+    var cv = document.getElementById('live-counted-canvas');
+    if (!cv) return;
+    var rect = cv.getBoundingClientRect();
+    var w = Math.max(Math.round(rect.width), 100);
+    var h = Math.max(Math.round(rect.height), 60);
+    cv.width = w;
+    cv.height = h;
+    var ctx = cv.getContext('2d');
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#868e96';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('Enter pixel size (nm)', w / 2, h / 2 - 9);
+    ctx.font = '12px sans-serif';
+    ctx.fillText('to see live cell count', w / 2, h / 2 + 9);
+    var hint = document.getElementById('live-pixel-size-hint');
+    if (hint) hint.style.display = 'inline';
+}
+
 /** Auto-run the live count if worker is ready, pixel size is set, and image is loaded. */
 function autoRunCount() {
     if (!worker || !workerReady) return;
     var ps = parseFloat((document.getElementById('pixel_size') || {}).value);
-    if (!isFinite(ps) || ps <= 0) return;
     var previewImg = document.getElementById('img-upload-preview');
+    if (!isFinite(ps) || ps <= 0) {
+        if (previewImg && previewImg.naturalWidth > 0) showNoPixelSizeHint();
+        return;
+    }
     if (!previewImg || !previewImg.src || previewImg.src === window.location.href) return;
     setTimeout(dispatchCount, 350);
 }
@@ -904,7 +934,7 @@ function dispatchCount() {
     var imgData = getImageDataFromPreview();
     if (!imgData) return;
     var params  = getFormParams();
-    if (!isFinite(params.pixelSizeNm) || params.pixelSizeNm <= 0) return;
+    if (!isFinite(params.pixelSizeNm) || params.pixelSizeNm <= 0) { showNoPixelSizeHint(); return; }
     params.pixelSizeNm = params.pixelSizeNm * (imgData._pixelScale || 1);
     workerBusy = true;
     setSpinner(true);
@@ -1046,8 +1076,10 @@ function applyWorkerResult(r) {
         countedEl.getContext('2d').putImageData(new ImageData(r.countedData, r.width, r.height), 0, 0);
     }
 
-    // Update Identified Cells counter
+    // Update Identified Cells counter and hide the pixel-size hint
     setText('live-cell-count', r.count);
+    var hint = document.getElementById('live-pixel-size-hint');
+    if (hint) hint.style.display = 'none';
 }
 
 function setMultiSpinner(on) {
