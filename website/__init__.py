@@ -1,9 +1,11 @@
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_uploads import IMAGES, UploadSet, configure_uploads
 from .shared import db
 from os import path
+import hashlib
+from datetime import datetime
 
 DB_NAME = "database.db"
 UPLOAD_FOLDER = 'website/static/uploads/'
@@ -31,7 +33,31 @@ def create_app():
     from .cell_count_filament import cell_count_filament
     from .pixel_profiles_round_cells import pixel_profiles_round_cells
     from .pixel_profiles_filament import pixel_profiles_filament
-    from .models import User
+    from .models import User, PageView
+
+    @app.before_request
+    def log_page_view():
+        if request.path.startswith('/static'):
+            return
+        if request.method != 'GET':
+            return
+        ua = (request.headers.get('User-Agent') or '').lower()
+        if any(b in ua for b in ('bot', 'crawler', 'spider', 'slurp', 'headless', 'python-requests')):
+            return
+        try:
+            ip   = request.remote_addr or ''
+            salt = datetime.utcnow().strftime('%Y-%m-%d')
+            ip_hash = hashlib.sha256((ip + salt).encode()).hexdigest()[:16]
+            ref = (request.referrer or '')[:500]
+            db.session.add(PageView(
+                timestamp = datetime.utcnow(),
+                path      = request.path[:200],
+                ip_hash   = ip_hash,
+                referrer  = ref or None,
+            ))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
     from .OJIP_data_analysis import OJIP_data_analysis
     from .slow_kin_data_analysis import slow_kin_data_analysis
     from .P700_kin_data_analysis import P700_kin_data_analysis
