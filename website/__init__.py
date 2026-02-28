@@ -71,7 +71,8 @@ def create_app():
     from .MIMS_data_analysis import MIMS_data_analysis
     from .MIMS_data_analysis_periodic import MIMS_data_analysis_periodic
     from .statistics import stats_bp
-    
+    from .deploy import deploy
+
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(cell_count, url_prefix='/')
@@ -91,6 +92,7 @@ def create_app():
     app.register_blueprint(MIMS_data_analysis, url_prefix='/')
     app.register_blueprint(MIMS_data_analysis_periodic, url_prefix='/')
     app.register_blueprint(stats_bp, url_prefix='/')
+    app.register_blueprint(deploy, url_prefix='/')
 
     #### DATABASE ####
     with app.app_context(): # creating the database
