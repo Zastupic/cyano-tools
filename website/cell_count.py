@@ -208,6 +208,7 @@ def count_cells():
                         img_counted_decoded_from_memory = base64.b64encode(mem_counted.getvalue()).decode('utf-8')
 
                         return render_template("cell_count.html",
+                            image_name=image_name,
                             img_orig_decoded_from_memory=img_orig_decoded_from_memory,
                             img_th_decoded_from_memory=img_th_decoded_from_memory,
                             img_counted_decoded_from_memory=img_counted_decoded_from_memory,

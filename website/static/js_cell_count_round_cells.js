@@ -1242,7 +1242,7 @@ function highlightMultiSelected(name) {
             workerBusy = true;
             worker.postMessage({ type: 'multi', data: { imageData: imgData, params: params } },
                 [imgData.data.buffer]);
-            if (mb) { mb.style.display = 'block'; setTimeout(function () { var depth = document.getElementById('chamber_depth_range'); if (depth) depth.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); }
+            if (mb) { mb.style.display = 'block'; setTimeout(function () { mb.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50); }
             setMultiSpinner(true);
         });
     }
@@ -1575,20 +1575,24 @@ function downloadAll() {
             }
         }
 
+        var zipBaseName = (typeof upload_image_name !== 'undefined' && upload_image_name)
+            ? upload_image_name + '_cell_count' : 'cell_count_results';
         zip.generateAsync({ type: 'blob' }).then(function (content) {
             var url = URL.createObjectURL(content);
             var a   = document.createElement('a');
-            a.href  = url; a.download = 'cell_count_results.zip';
+            a.href  = url; a.download = zipBaseName + '.zip';
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
         });
 
     } else {
         // JSZip not loaded — fallback to plain XLSX download
+        var xlsxBaseName = (typeof upload_image_name !== 'undefined' && upload_image_name)
+            ? upload_image_name + '_cell_count' : 'cell_count_results';
         var blob = new Blob([xlsxBuf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         var url  = URL.createObjectURL(blob);
         var a    = document.createElement('a');
-        a.href   = url; a.download = 'cell_count_results.xlsx';
+        a.href   = url; a.download = xlsxBaseName + '.xlsx';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
     }
