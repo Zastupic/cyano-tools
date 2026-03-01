@@ -640,9 +640,8 @@ var LS_KEYS = {
         if (cn) cn.value = '';
         if (fnLabel) { fnLabel.textContent = '✓ ' + file.name; fnLabel.style.display = 'block'; }
         if (zone) { zone.style.borderColor = '#17a2b8'; zone.style.borderStyle = 'solid'; zone.style.background = '#fafbfc'; }
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            preview.src = e.target.result;
+        function applyPreviewAndTrigger(src) {
+            preview.src = src;
             box.style.display = 'block';
             if (submitBox) submitBox.style.display = 'block';
             var mb = document.getElementById('multi-thresh-box');
@@ -654,8 +653,55 @@ var LS_KEYS = {
                 var ps = parseFloat((document.getElementById('pixel_size') || {}).value);
                 if (!isFinite(ps) || ps <= 0) showNoPixelSizeHint();
             }, 200);
-        };
-        reader.readAsDataURL(file);
+        }
+        var isTiff = /\.tiff?$/i.test(file.name);
+        var reader = new FileReader();
+        if (isTiff && typeof UTIF !== 'undefined') {
+            reader.onload = function (e) {
+                try {
+                    var buf  = e.target.result;
+                    var ifds = UTIF.decode(buf);
+                    UTIF.decodeImage(buf, ifds[0]);
+                    var rgba = UTIF.toRGBA8(ifds[0]);
+                    var tw = ifds[0].width, th = ifds[0].height;
+                    var oc = document.createElement('canvas');
+                    oc.width = tw; oc.height = th;
+                    var octx = oc.getContext('2d');
+                    var tid = octx.createImageData(tw, th);
+                    tid.data.set(rgba);
+                    octx.putImageData(tid, 0, 0);
+                    // Store canvas synchronously so getImageDataFromPreview() works immediately
+                    _tiffPreviewCanvas = oc;
+                    box.style.display = 'block';
+                    if (submitBox) submitBox.style.display = 'block';
+                    var mb = document.getElementById('multi-thresh-box');
+                    if (mb) mb.style.display = 'none';
+                    unlockFilamentSegSection();
+                    triggerLivePreview();
+                    autoRunCount();
+                    setTimeout(function () {
+                        var ps = parseFloat((document.getElementById('pixel_size') || {}).value);
+                        if (!isFinite(ps) || ps <= 0) showNoPixelSizeHint();
+                    }, 200);
+                    // Set visual preview asynchronously via blob URL
+                    oc.toBlob(function (blob) {
+                        if (preview._tiffBlobUrl) URL.revokeObjectURL(preview._tiffBlobUrl);
+                        preview._tiffBlobUrl = URL.createObjectURL(blob);
+                        preview.src = preview._tiffBlobUrl;
+                    }, 'image/png');
+                } catch (err) {
+                    _tiffPreviewCanvas = null;
+                    var fr2 = new FileReader();
+                    fr2.onload = function (e2) { applyPreviewAndTrigger(e2.target.result); };
+                    fr2.readAsDataURL(file);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            _tiffPreviewCanvas = null;
+            reader.onload = function (e) { applyPreviewAndTrigger(e.target.result); };
+            reader.readAsDataURL(file);
+        }
     });
 })();
 
@@ -882,6 +928,7 @@ var worker        = null;
 var workerReady   = false;
 var previewPending = false;
 var liveEnabled   = true;
+var _tiffPreviewCanvas = null;
 
 (function () {
     if (!WORKER_URL) return;
@@ -958,11 +1005,12 @@ function autoRunCount() {
     if (!worker || !workerReady) return;
     var ps = parseFloat((document.getElementById('pixel_size') || {}).value);
     var previewImg = document.getElementById('img-upload-preview');
+    var hasImage = _tiffPreviewCanvas || (previewImg && previewImg.naturalWidth > 0);
     if (!isFinite(ps) || ps <= 0) {
-        if (previewImg && previewImg.naturalWidth > 0) showNoPixelSizeHint();
+        if (hasImage) showNoPixelSizeHint();
         return;
     }
-    if (!previewImg || !previewImg.src || previewImg.src === window.location.href) return;
+    if (!hasImage) return;
     setTimeout(dispatchCount, 350);
 }
 
@@ -1017,11 +1065,19 @@ function getFormParams() {
 var LIVE_MAX_DIM = 1024;
 
 function getImageDataFromPreview(maxDim) {
-    var previewImg = document.getElementById('img-upload-preview');
-    if (!previewImg || !previewImg.src || previewImg.src === window.location.href) return null;
-    var nw = previewImg.naturalWidth;
-    var nh = previewImg.naturalHeight;
-    if (nw === 0) return null;
+    var source, nw, nh;
+    if (_tiffPreviewCanvas) {
+        source = _tiffPreviewCanvas;
+        nw = _tiffPreviewCanvas.width;
+        nh = _tiffPreviewCanvas.height;
+    } else {
+        var previewImg = document.getElementById('img-upload-preview');
+        if (!previewImg || !previewImg.src || previewImg.src === window.location.href) return null;
+        nw = previewImg.naturalWidth;
+        nh = previewImg.naturalHeight;
+        if (nw === 0) return null;
+        source = previewImg;
+    }
     var limit = maxDim || LIVE_MAX_DIM;
     var scale = (Math.max(nw, nh) > limit) ? limit / Math.max(nw, nh) : 1;
     var w = Math.round(nw * scale);
@@ -1029,7 +1085,7 @@ function getImageDataFromPreview(maxDim) {
     var offscreen = document.createElement('canvas');
     offscreen.width = w; offscreen.height = h;
     var ctx = offscreen.getContext('2d');
-    ctx.drawImage(previewImg, 0, 0, w, h);
+    ctx.drawImage(source, 0, 0, w, h);
     var imgData = ctx.getImageData(0, 0, w, h);
     imgData._pixelScale = 1 / scale;
     return imgData;
@@ -1362,7 +1418,12 @@ var undoStack   = [];
             tooltip.style.display = 'block';
             tooltip.style.left    = (e.clientX + 12) + 'px';
             tooltip.style.top     = (e.clientY - 28) + 'px';
-            tooltip.textContent   = 'Cell #' + (found + 1);
+            var tipText = 'Cell #' + (found + 1);
+            if (typeof contour_data_val !== 'undefined' && contour_data_val[found] && contour_data_val[found].length >= 7) {
+                var cd = contour_data_val[found];
+                tipText += '  |  Filament ' + cd[6] + '  |  AR ' + cd[5];
+            }
+            tooltip.textContent = tipText;
         } else {
             tooltip.style.display = 'none';
         }
@@ -1539,13 +1600,44 @@ function downloadAll() {
     XLSX.utils.book_append_sheet(wb, ws1, 'Results');
 
     if (typeof cell_diameters_val !== 'undefined' && cell_diameters_val.length > 0) {
-        var diamData = [['Cell #', 'Diameter (µm)']];
-        for (var k = 0; k < cell_diameters_val.length; k++) {
-            diamData.push([k + 1, cell_diameters_val[k]]);
+        var hasExtended = typeof contour_data_val !== 'undefined' &&
+                          contour_data_val.length > 0 && contour_data_val[0].length >= 7;
+        var diamData;
+        if (hasExtended) {
+            diamData = [['Cell #', 'Diameter (µm)', 'Major axis (µm)', 'Minor axis (µm)', 'Aspect ratio', 'Filament ID']];
+            for (var k = 0; k < cell_diameters_val.length; k++) {
+                var cd = contour_data_val[k];
+                diamData.push([k + 1, cell_diameters_val[k], cd[3], cd[4], cd[5], cd[6]]);
+            }
+        } else {
+            diamData = [['Cell #', 'Diameter (µm)']];
+            for (var k = 0; k < cell_diameters_val.length; k++) {
+                diamData.push([k + 1, cell_diameters_val[k]]);
+            }
         }
         var ws3 = XLSX.utils.aoa_to_sheet(diamData);
-        ws3['!cols'] = [{wch: 10}, {wch: 18}];
+        ws3['!cols'] = hasExtended
+            ? [{wch:10},{wch:16},{wch:18},{wch:18},{wch:14},{wch:12}]
+            : [{wch:10},{wch:18}];
         XLSX.utils.book_append_sheet(wb, ws3, 'Cell Diameters');
+    }
+
+    if (typeof filament_stats_val !== 'undefined' && filament_stats_val.length > 0) {
+        var filmData = [
+            ['CyanoTools — Filament Statistics'],
+            [],
+            ['Total filament count',  typeof filament_count_val !== 'undefined' ? filament_count_val : filament_stats_val.length, ''],
+            ['Total filament length', typeof total_filament_length_um_val !== 'undefined' ? total_filament_length_um_val : '', 'µm'],
+            [],
+            ['Filament ID', 'Cell count', 'Avg major axis (µm)', 'CV (%)', 'Total length (µm)']
+        ];
+        for (var fi = 0; fi < filament_stats_val.length; fi++) {
+            var fs = filament_stats_val[fi];
+            filmData.push([fs.filament_id, fs.cell_count, fs.avg_major_um, fs.cv_pct, fs.total_length_um]);
+        }
+        var wsFilm = XLSX.utils.aoa_to_sheet(filmData);
+        wsFilm['!cols'] = [{wch:12},{wch:12},{wch:22},{wch:10},{wch:20}];
+        XLSX.utils.book_append_sheet(wb, wsFilm, 'Filament Statistics');
     }
 
     if (coordinates.length > 0) {

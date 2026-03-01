@@ -39,6 +39,7 @@ def count_cells():
             circularity_min = float(request.form.get('circularity_min') or 0)
             manual_thresh   = int(request.form.get('manual_thresh') or 0)
             exclude_stripes = request.form.get('exclude_stripes') == '1'
+            noise_removal   = request.form.get('noise_removal') == '1'
             adaptive_block_size = int(request.form.get('adaptive_block_size') or 51)
             if adaptive_block_size < 3: adaptive_block_size = 3
             if adaptive_block_size % 2 == 0: adaptive_block_size += 1
@@ -170,36 +171,81 @@ def count_cells():
 
                     # Fluorescence: green circles on dark bg; Brightfield: black circles on light bg
                     circle_color = (0, 255, 0) if microscopy_mode != 'brightfield' else (0, 0, 0)
-                    contours_th = cv2.findContours(img_th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
+
+                    # ── Contour detection (with optional watershed for touching-cell separation) ─
+                    if noise_removal:
+                        kernel_nr = np.ones((3, 3), np.uint8)
+                        opening   = cv2.morphologyEx(img_th, cv2.MORPH_OPEN, kernel_nr, iterations=2)
+                        sure_bg   = cv2.dilate(opening, kernel_nr, iterations=3)
+                        dist_t    = cv2.distanceTransform(opening, cv2.DIST_L2, 5)
+                        dist_max  = float(dist_t.max())
+                        if dist_max > 0:
+                            _, sure_fg = cv2.threshold(dist_t, 0.5 * dist_max, 255, 0)
+                            sure_fg    = np.uint8(sure_fg)
+                            unknown    = cv2.subtract(sure_bg, sure_fg)
+                            _, markers = cv2.connectedComponents(sure_fg)
+                            markers    = markers + 1
+                            markers[unknown == 255] = 0
+                            ws_src     = img_for_counted_cells.copy()
+                            cv2.watershed(ws_src, markers)
+                            final_contours = []
+                            for lbl in range(2, int(markers.max()) + 1):
+                                mask = np.uint8(markers == lbl) * 255
+                                cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
+                                if cnts:
+                                    final_contours.append(max(cnts, key=cv2.contourArea))
+                        else:
+                            final_contours = list(cv2.findContours(opening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0] or [])
+                    else:
+                        final_contours = list(cv2.findContours(img_th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0] or [])
+
+                    # ── Two-pass clump detection ─────────────────────────────────────────────
+                    # First pass: collect all contours passing min-size, circularity, ROI filters
+                    _accepted = []
+                    for cnt in final_contours:
+                        area = cv2.contourArea(cnt)
+                        if area <= minimum_area:
+                            continue
+                        if circularity_min > 0:
+                            perimeter = cv2.arcLength(cnt, True)
+                            circ = (4 * math.pi * area / perimeter ** 2) if perimeter > 0 else 0
+                            if circ < circularity_min:
+                                continue
+                        x, y, w, h = cv2.boundingRect(cnt)
+                        xc = int(x + w / 2)
+                        yc = int(y + h / 2)
+                        if use_roi and not (roi_x1 <= xc <= roi_x2 and roi_y1 <= yc <= roi_y2):
+                            continue
+                        _accepted.append((cnt, area, xc, yc, max(1, int(w / 2))))
+
+                    # Compute clump threshold: 4× median area of accepted objects
+                    clump_count          = 0
+                    clump_total_area_um2 = 0.0
+                    if _accepted:
+                        sorted_areas = sorted(a for _, a, *_ in _accepted)
+                        median_area  = sorted_areas[len(sorted_areas) // 2]
+                        clump_thresh = 4.0 * median_area
+                    else:
+                        clump_thresh = 0.0
+
+                    # Second pass: draw circles; flag clumps in orange
                     cell_count_num = 0
-                    contour_data = []   # [cx, cy, r] in image pixels — for JS hover tooltip
-                    cell_diameters = [] # equivalent cell diameters in µm — for histogram
-                    if contours_th is not None:
-                        for i in range(len(contours_th)):
-                            area = cv2.contourArea(contours_th[i])
-                            if area <= minimum_area:
-                                continue
-                            # Max diameter filter
-                            if maximum_area > 0 and area > maximum_area:
-                                continue
-                            # Circularity filter
-                            if circularity_min > 0:
-                                perimeter = cv2.arcLength(contours_th[i], True)
-                                circularity = (4 * math.pi * area / perimeter ** 2) if perimeter > 0 else 0
-                                if circularity < circularity_min:
-                                    continue
-                            x, y, w, h = cv2.boundingRect(contours_th[i])
-                            x_coord = int(x + w / 2)
-                            y_coord = int(y + h / 2)
-                            radius = int(w / 2)
-                            # Skip if cell center lies outside the drawn ROI
-                            if use_roi and not (roi_x1 <= x_coord <= roi_x2 and roi_y1 <= y_coord <= roi_y2):
-                                continue
-                            cell_count_num += 1
-                            cv2.circle(img_for_counted_cells, (x_coord, y_coord), radius, circle_color, 1)
-                            contour_data.append([x_coord, y_coord, radius])
-                            diam_um = round(2 * (area / math.pi) ** 0.5 * pixel_size_nm / 1000, 2)
-                            cell_diameters.append(diam_um)
+                    contour_data   = []
+                    cell_diameters = []
+                    for cnt, area, xc, yc, radius in _accepted:
+                        is_clump = (clump_thresh > 0 and area > clump_thresh) or \
+                                   (maximum_area > 0 and area > maximum_area)
+                        if is_clump:
+                            clump_count          += 1
+                            clump_total_area_um2 += area * (pixel_size_nm / 1000) ** 2
+                            cv2.circle(img_for_counted_cells, (xc, yc), radius, (0, 165, 255), 1)
+                            continue
+                        cell_count_num += 1
+                        cv2.circle(img_for_counted_cells, (xc, yc), radius, circle_color, 1)
+                        contour_data.append([xc, yc, radius])
+                        diam_um = round(2 * (area / math.pi) ** 0.5 * pixel_size_nm / 1000, 2)
+                        cell_diameters.append(diam_um)
+                    clump_total_area_um2 = round(clump_total_area_um2, 1)
 
                     # Draw ROI rectangle on the counted image
                     if use_roi:
@@ -266,10 +312,13 @@ def count_cells():
                             circularity_min=circularity_min,
                             manual_thresh=manual_thresh,
                             exclude_stripes=exclude_stripes,
+                            noise_removal=noise_removal,
                             adaptive_block_size=adaptive_block_size,
                             adaptive_c=adaptive_c,
                             cached_image_key=cached_image_key,
                             cached_image_name=image_name,
+                            clump_count=clump_count,
+                            clump_total_area_um2=clump_total_area_um2,
                         )
                     else:
                         flash('Pixel size is too low', category='error')

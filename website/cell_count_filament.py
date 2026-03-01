@@ -188,6 +188,12 @@ def count_filament_cells():
                         img_for_counted_cells = cv2.cvtColor(img_for_counted_cells, cv2.COLOR_GRAY2BGR)
                     img_for_counted_cells_copy = img_for_counted_cells.copy()
 
+                    # ── Pre-compute filament grouping maps (items 11-13) ─────────────────────
+                    # Connected components of the noise-reduced binary: each component = one filament
+                    _, component_labels = cv2.connectedComponents(img_noise_reduced)
+                    # Skeleton for per-filament length measurement (item 12)
+                    skeleton_full = skeletonize(img_noise_reduced > 0).astype(np.uint8) if SKIMAGE_AVAILABLE else None
+
                     if use_skeleton and SKIMAGE_AVAILABLE:
                         # ── Skeleton-guided seeding ──────────────────────────
                         # Seeds are placed along the filament medial axis at cell-length
@@ -416,7 +422,29 @@ def count_filament_cells():
                         cv2.putText(img_for_counted_cells_copy, str(cell_count_num), (xc, yc),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, circle_color, 1)
                         cv2.circle(img_for_counted_cells_copy, (xc, yc), rc, (255, 255, 0), 1)
-                        contour_data.append([xc, yc, rc])
+
+                        # Aspect ratio from fitEllipse (item 14)
+                        if len(contour) >= 5:
+                            try:
+                                _, (MA, ma_ax), _ = cv2.fitEllipse(contour)
+                                major_um     = round(max(MA, ma_ax) * pixel_size_nm / 1000, 2)
+                                minor_um     = round(min(MA, ma_ax) * pixel_size_nm / 1000, 2)
+                                aspect_ratio = round(max(MA, ma_ax) / max(min(MA, ma_ax), 0.01), 3)
+                            except Exception:
+                                major_um = round(2 * rc * pixel_size_nm / 1000, 2)
+                                minor_um = major_um
+                                aspect_ratio = 1.0
+                        else:
+                            major_um = round(2 * rc * pixel_size_nm / 1000, 2)
+                            minor_um = major_um
+                            aspect_ratio = 1.0
+
+                        # Filament (connected component) ID at cell centre (item 11)
+                        _cy = min(yc, component_labels.shape[0] - 1)
+                        _cx = min(xc, component_labels.shape[1] - 1)
+                        filament_id = int(component_labels[_cy, _cx])
+
+                        contour_data.append([xc, yc, rc, major_um, minor_um, aspect_ratio, filament_id])
                         diam_um = round(2 * rc * pixel_size_nm / 1000, 2)
                         cell_diameters.append(diam_um)
 
@@ -424,6 +452,45 @@ def count_filament_cells():
                     if use_roi:
                         cv2.rectangle(img_for_counted_cells_copy, (roi_x1, roi_y1), (roi_x2, roi_y2),
                                       (0, 165, 255), 2)
+
+                    # ── Per-filament statistics (items 11-13) ────────────────────────────────
+                    filament_cell_map = {}   # filament_id -> list of major_um diameters
+                    for cd in contour_data:
+                        fid = cd[6]
+                        if fid not in filament_cell_map:
+                            filament_cell_map[fid] = []
+                        filament_cell_map[fid].append(cd[3])   # major_um
+
+                    # Filament lengths: count skeleton pixels per filament component (item 12)
+                    filament_lengths = {}
+                    if skeleton_full is not None:
+                        skel_pixels = zip(*np.where(skeleton_full > 0))
+                        for sy, sx in skel_pixels:
+                            fid = int(component_labels[sy, sx])
+                            if fid > 0:
+                                filament_lengths[fid] = filament_lengths.get(fid, 0.0) + pixel_size_nm / 1000.0
+
+                    filament_stats = []
+                    for fid in sorted(filament_cell_map.keys()):
+                        diams = filament_cell_map[fid]
+                        n     = len(diams)
+                        avg_d = sum(diams) / n if n > 0 else 0.0
+                        if n > 1:
+                            variance = sum((d - avg_d) ** 2 for d in diams) / (n - 1)
+                            cv_pct   = round((variance ** 0.5) / avg_d * 100, 1) if avg_d > 0 else 0.0
+                        else:
+                            cv_pct = 0.0
+                        length_um = round(filament_lengths.get(fid, 0.0), 1)
+                        filament_stats.append({
+                            'filament_id':    fid,
+                            'cell_count':     n,
+                            'avg_major_um':   round(avg_d, 2),
+                            'cv_pct':         cv_pct,
+                            'total_length_um': length_um,
+                        })
+
+                    filament_count           = len(filament_stats)
+                    total_filament_length_um = round(sum(s['total_length_um'] for s in filament_stats), 1)
 
                     # ─────────────────────────────────────────────────────────
                     # Calculate cell concentration
@@ -496,6 +563,9 @@ def count_filament_cells():
                             max_aspect_ratio=max_aspect_ratio,
                             cached_image_key=cached_image_key,
                             cached_image_name=image_name,
+                            filament_stats=filament_stats,
+                            filament_count=filament_count,
+                            total_filament_length_um=total_filament_length_um,
                         )
                     else:
                         flash('Pixel size is too low', category='error')

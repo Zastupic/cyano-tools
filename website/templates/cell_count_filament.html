@@ -150,6 +150,11 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
             <button type="button" class="btn btn-sm btn-outline-secondary" id="px-calc-toggle">
                 &#128300; Calculator
             </button>
+            <button type="button" class="btn btn-sm btn-outline-info" id="px-detect-btn"
+                    title="Try to read pixel size from image TIFF/EXIF metadata">
+                &#128269; Detect from image
+            </button>
+            <span id="px-detect-status" style="font-size:0.8em; color:#6c757d; display:none;"></span>
         </div>
         <div id="px-volume-error" style="display:none; color:#dc3545; font-size:0.82em; margin-top:0.25em;"></div>
         <div id="px-calc-box" style="display:none; margin-top:0.5em; padding:0.8em 1em; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; max-width:440px;">
@@ -639,6 +644,10 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
         var seg_method_val = "{{ seg_method }}";
         var use_hmax_val = {{ 'true' if use_hmax else 'false' }};
         var bilateral_filter_val = {{ 'true' if bilateral_filter else 'false' }};
+        // Filament statistics
+        var filament_stats_val = {{ filament_stats | default([]) | tojson }};
+        var filament_count_val = {{ filament_count | default(0) }};
+        var total_filament_length_um_val = {{ total_filament_length_um | default(0) }};
     </script>
 
     <div class="card mt-3" style="border:1px solid #dee2e6; border-radius:8px;">
@@ -726,6 +735,49 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
             </div>
         </div>
     </div>
+
+    {% if filament_count and filament_count > 0 %}
+    <!-- Filament statistics panel -->
+    <div style="margin-bottom:0.75em;">
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-toggle="collapse" data-target="#filament-stats-collapse"
+                aria-expanded="false" aria-controls="filament-stats-collapse">
+            &#129332; Filament statistics &#9660;
+        </button>
+        <div class="collapse" id="filament-stats-collapse">
+            <div class="card card-body py-2 px-3" style="margin-top:0.4em;">
+                <div class="d-flex flex-wrap mb-2" style="gap:1.5em; font-size:0.88em;">
+                    <div><span class="text-muted">Filaments detected:</span> <strong>{{ filament_count }}</strong></div>
+                    <div><span class="text-muted">Total filament length:</span> <strong>{{ total_filament_length_um }} µm</strong></div>
+                </div>
+                <div style="overflow-x:auto; max-height:220px; overflow-y:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.83em;">
+                    <thead>
+                        <tr style="background:#f0f2f4; position:sticky; top:0;">
+                            <th style="padding:3px 6px; text-align:left; white-space:nowrap;">Filament</th>
+                            <th style="padding:3px 6px; text-align:right; white-space:nowrap;">Cells</th>
+                            <th style="padding:3px 6px; text-align:right; white-space:nowrap;">Avg major (µm)</th>
+                            <th style="padding:3px 6px; text-align:right; white-space:nowrap;">CV (%)</th>
+                            <th style="padding:3px 6px; text-align:right; white-space:nowrap;">Length (µm)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for fs in filament_stats %}
+                        <tr style="border-top:1px solid #f0f0f0;">
+                            <td style="padding:2px 6px;">{{ fs.filament_id }}</td>
+                            <td style="padding:2px 6px; text-align:right;">{{ fs.cell_count }}</td>
+                            <td style="padding:2px 6px; text-align:right;">{{ fs.avg_major_um }}</td>
+                            <td style="padding:2px 6px; text-align:right;">{{ fs.cv_pct }}</td>
+                            <td style="padding:2px 6px; text-align:right;">{{ fs.total_length_um }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Analysis details accordion -->
     <div style="margin-bottom:0.75em;">
@@ -841,6 +893,47 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
 <script src="{{url_for('static', filename='js_cell_count_filament.js')}}"></script>
+
+<script>
+// ── Pixel-size detection from image metadata ──────────────────────────────────
+(function () {
+    var btn      = document.getElementById('px-detect-btn');
+    var status   = document.getElementById('px-detect-status');
+    var pxInput  = document.getElementById('pixel_size');
+    var fileInput = document.getElementById('selected_image');
+    if (!btn) return;
+
+    btn.addEventListener('click', function () {
+        var file = fileInput && fileInput.files && fileInput.files[0];
+        var cachedKey = (document.getElementById('cached_image_key') || {}).value || '';
+        if (!file && !cachedKey) {
+            if (status) { status.style.display = 'inline'; status.style.color = '#dc3545'; status.textContent = 'Upload an image first.'; }
+            return;
+        }
+        if (status) { status.style.display = 'inline'; status.style.color = '#6c757d'; status.textContent = 'Detecting\u2026'; }
+        var fd = new FormData();
+        if (file) {
+            fd.append('image', file);
+        } else {
+            fd.append('cached_image_key', cachedKey);
+        }
+        fetch('/api/pixel_size', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.pixel_size_nm) {
+                    if (pxInput) { pxInput.value = data.pixel_size_nm; pxInput.dispatchEvent(new Event('input')); }
+                    if (status) { status.style.color = '#28a745'; status.textContent = '\u2713 ' + data.pixel_size_nm + ' nm (from ' + data.source + ')'; }
+                } else {
+                    if (status) { status.style.color = '#dc3545'; status.textContent = data.error || 'Not found'; }
+                }
+            })
+            .catch(function () {
+                if (status) { status.style.color = '#dc3545'; status.textContent = 'Request failed.'; }
+            });
+    });
+})();
+</script>
 
 {% endblock %}

@@ -178,7 +178,16 @@ var WORKER_URL = (function () {
 '    }\n' +
 '    var imgViz  = buildVizBase(imgBGR, imgGreyForViz, microscopyMode);\n' +
 '    imgGreyForViz.delete();\n' +
-'    var h = imgTh.rows, w = imgTh.cols;\n' +
+'    var imgFinal;\n' +
+'    if (params.noiseRemoval !== false) {\n' +
+'        var kernelNR = cv.Mat.ones(3, 3, cv.CV_8U);\n' +
+'        imgFinal = new cv.Mat();\n' +
+'        cv.morphologyEx(imgTh, imgFinal, cv.MORPH_OPEN, kernelNR, new cv.Point(-1, -1), 2);\n' +
+'        kernelNR.delete(); imgTh.delete();\n' +
+'    } else {\n' +
+'        imgFinal = imgTh;\n' +
+'    }\n' +
+'    var h = imgFinal.rows, w = imgFinal.cols;\n' +
 '    var useRoi = roi && roi.w > 0 && roi.h > 0;\n' +
 '    var roiX1 = 0, roiY1 = 0, roiX2 = w, roiY2 = h;\n' +
 '    if (useRoi) {\n' +
@@ -199,7 +208,7 @@ var WORKER_URL = (function () {
 '        : new cv.Scalar(0, 255, 0, 255);\n' +
 '    var contours  = new cv.MatVector();\n' +
 '    var hierarchy = new cv.Mat();\n' +
-'    cv.findContours(imgTh, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);\n' +
+'    cv.findContours(imgFinal, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);\n' +
 '    hierarchy.delete();\n' +
 '    var cellCountNum  = 0;\n' +
 '    var contourData   = [];\n' +
@@ -243,9 +252,8 @@ var WORKER_URL = (function () {
 '    var imgAreaMm2 = Math.round((xNm / 1e6) * (yNm / 1e6) * 1000) / 1000;\n' +
 '    var imgVolNl   = Math.round((xNm * yNm * (depthUm * 1000)) / 1e15 * 1000) / 1000;\n' +
 '    var countedData = matToRGBA(imgViz);\n' +
-'    var threshData  = matToRGBA(imgTh);\n' +
-'    imgViz.delete();\n' +
-'    imgTh.delete();\n' +
+'    var threshData  = matToRGBA(imgFinal);\n' +
+'    imgViz.delete(); imgFinal.delete();\n' +
 '    imgBGR.delete();\n' +
 '    return {\n' +
 '        countedData: countedData,\n' +
@@ -609,9 +617,8 @@ var LS_KEYS = {
         // Show filename in drop zone
         if (fnLabel) { fnLabel.textContent = '✓ ' + file.name; fnLabel.style.display = 'block'; }
         if (zone) { zone.style.borderColor = '#17a2b8'; zone.style.borderStyle = 'solid'; zone.style.background = '#fafbfc'; }
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            preview.src = e.target.result;
+        function applyPreviewAndTrigger(src) {
+            preview.src = src;
             box.style.display = 'block';
             if (submitBox) {
                 submitBox.style.display = 'block';
@@ -627,8 +634,61 @@ var LS_KEYS = {
                 var ps = parseFloat((document.getElementById('pixel_size') || {}).value);
                 if (!isFinite(ps) || ps <= 0) showNoPixelSizeHint();
             }, 200);
-        };
-        reader.readAsDataURL(file);
+        }
+        var isTiff = /\.tiff?$/i.test(file.name);
+        var reader = new FileReader();
+        if (isTiff && typeof UTIF !== 'undefined') {
+            reader.onload = function (e) {
+                try {
+                    var buf  = e.target.result;
+                    var ifds = UTIF.decode(buf);
+                    UTIF.decodeImage(buf, ifds[0]);
+                    var rgba = UTIF.toRGBA8(ifds[0]);
+                    var tw = ifds[0].width, th = ifds[0].height;
+                    var oc = document.createElement('canvas');
+                    oc.width = tw; oc.height = th;
+                    var octx = oc.getContext('2d');
+                    var tid = octx.createImageData(tw, th);
+                    tid.data.set(rgba);
+                    octx.putImageData(tid, 0, 0);
+                    // Store canvas synchronously — getImageDataFromPreview() uses it
+                    // immediately without needing preview.naturalWidth to be non-zero.
+                    _tiffPreviewCanvas = oc;
+                    // Show preview box and trigger worker immediately (canvas is ready now)
+                    box.style.display = 'block';
+                    if (submitBox) {
+                        submitBox.style.display = 'block';
+                        var btn = document.getElementById('run-analysis-btn');
+                        if (btn) { btn.disabled = false; btn.title = ''; }
+                    }
+                    var mb = document.getElementById('multi-thresh-box');
+                    if (mb) mb.style.display = 'none';
+                    triggerLivePreview();
+                    autoRunCount();
+                    setTimeout(function () {
+                        var ps = parseFloat((document.getElementById('pixel_size') || {}).value);
+                        if (!isFinite(ps) || ps <= 0) showNoPixelSizeHint();
+                    }, 200);
+                    // Set visual preview image asynchronously via blob URL
+                    // (toBlob is faster than toDataURL; preview.src is only for display)
+                    oc.toBlob(function (blob) {
+                        if (preview._tiffBlobUrl) URL.revokeObjectURL(preview._tiffBlobUrl);
+                        preview._tiffBlobUrl = URL.createObjectURL(blob);
+                        preview.src = preview._tiffBlobUrl;
+                    }, 'image/png');
+                } catch (err) {
+                    _tiffPreviewCanvas = null;
+                    var fr2 = new FileReader();
+                    fr2.onload = function (e2) { applyPreviewAndTrigger(e2.target.result); };
+                    fr2.readAsDataURL(file);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            _tiffPreviewCanvas = null;
+            reader.onload = function (e) { applyPreviewAndTrigger(e.target.result); };
+            reader.readAsDataURL(file);
+        }
     });
 })();
 
@@ -869,6 +929,42 @@ function drawHistogram(diameters, canvasId) {
     ctx.textAlign = 'center';
     ctx.fillText('n', 0, 0);
     ctx.restore();
+
+    // Log-normal fit curve overlay
+    if (diameters.length >= 3) {
+        var logVals = diameters.map(function (d) { return Math.log(Math.max(d, 1e-9)); });
+        var muLn    = logVals.reduce(function (a, b) { return a + b; }, 0) / logVals.length;
+        var sigma2  = logVals.reduce(function (a, b) { return a + (b - muLn) * (b - muLn); }, 0) / Math.max(logVals.length - 1, 1);
+        var sigmaLn = Math.sqrt(sigma2);
+        if (sigmaLn > 0) {
+            ctx.strokeStyle = '#dc3545';
+            ctx.lineWidth   = 2;
+            ctx.beginPath();
+            var firstPt = true;
+            for (var xi = 0; xi <= iW; xi++) {
+                var xVal = min + (xi / iW) * (max - min);
+                if (xVal <= 0) continue;
+                var lnX   = Math.log(xVal);
+                var pdf   = Math.exp(-(lnX - muLn) * (lnX - muLn) / (2 * sigma2)) /
+                            (xVal * sigmaLn * Math.sqrt(2 * Math.PI));
+                var scaledY = pdf * diameters.length * step;
+                var canvasY = PAD.top + iH - (maxCount > 0 ? (scaledY / maxCount) * iH : 0);
+                if (firstPt) { ctx.moveTo(PAD.left + xi, canvasY); firstPt = false; }
+                else          { ctx.lineTo(PAD.left + xi, canvasY); }
+            }
+            ctx.stroke();
+            ctx.lineWidth = 1;
+
+            // Annotation: log-normal mean and CV
+            var meanUm = Math.exp(muLn + sigma2 / 2);
+            var cv     = Math.sqrt(Math.exp(sigma2) - 1) * 100;
+            ctx.fillStyle  = '#dc3545';
+            ctx.font       = '9px sans-serif';
+            ctx.textAlign  = 'left';
+            ctx.fillText('\u03bc=' + meanUm.toFixed(2) + '\u00b5m  CV=' + cv.toFixed(0) + '%',
+                         PAD.left + 2, PAD.top + 9);
+        }
+    }
 }
 
 // ── Live preview via Web Worker ───────────────────────────────────────────────
@@ -876,6 +972,11 @@ var worker        = null;
 var workerReady   = false;
 var previewPending = false;
 var liveEnabled   = true;
+// Offscreen canvas holding UTIF-decoded TIFF pixel data.
+// Set synchronously when a TIF is loaded; cleared when a non-TIF is loaded.
+// getImageDataFromPreview() reads from this canvas so the worker can start
+// immediately without waiting for the browser to decode the preview <img>.
+var _tiffPreviewCanvas = null;
 
 (function () {
     if (!WORKER_URL) return;
@@ -956,11 +1057,12 @@ function autoRunCount() {
     if (!worker || !workerReady) return;
     var ps = parseFloat((document.getElementById('pixel_size') || {}).value);
     var previewImg = document.getElementById('img-upload-preview');
+    var hasImage = _tiffPreviewCanvas || (previewImg && previewImg.naturalWidth > 0);
     if (!isFinite(ps) || ps <= 0) {
-        if (previewImg && previewImg.naturalWidth > 0) showNoPixelSizeHint();
+        if (hasImage) showNoPixelSizeHint();
         return;
     }
-    if (!previewImg || !previewImg.src || previewImg.src === window.location.href) return;
+    if (!hasImage) return;
     setTimeout(dispatchCount, 350);
 }
 
@@ -999,6 +1101,7 @@ function getFormParams() {
         circularityMin: fv('circularity_min'),
         manualThresh:   Math.round(fv('manual_thresh')),
         excludeStripes:    bv('exclude_stripes_check'),
+        noiseRemoval:      bv('noise_removal_check'),
         adaptiveBlockSize: fv('adaptive_block_size') || 51,
         adaptiveC:         fv('adaptive_c'),
         roi: currentROI,
@@ -1011,11 +1114,20 @@ function getFormParams() {
 var LIVE_MAX_DIM = 1024;
 
 function getImageDataFromPreview(maxDim) {
-    var previewImg = document.getElementById('img-upload-preview');
-    if (!previewImg || !previewImg.src || previewImg.src === window.location.href) return null;
-    var nw = previewImg.naturalWidth;
-    var nh = previewImg.naturalHeight;
-    if (nw === 0) return null;
+    var source, nw, nh;
+    if (_tiffPreviewCanvas) {
+        // TIF decoded by UTIF — use stored canvas directly (no naturalWidth timing issue)
+        source = _tiffPreviewCanvas;
+        nw = _tiffPreviewCanvas.width;
+        nh = _tiffPreviewCanvas.height;
+    } else {
+        var previewImg = document.getElementById('img-upload-preview');
+        if (!previewImg || !previewImg.src || previewImg.src === window.location.href) return null;
+        nw = previewImg.naturalWidth;
+        nh = previewImg.naturalHeight;
+        if (nw === 0) return null;
+        source = previewImg;
+    }
     var limit = maxDim || LIVE_MAX_DIM;
     var scale = (Math.max(nw, nh) > limit) ? limit / Math.max(nw, nh) : 1;
     var w = Math.round(nw * scale);
@@ -1024,7 +1136,7 @@ function getImageDataFromPreview(maxDim) {
     offscreen.width  = w;
     offscreen.height = h;
     var ctx = offscreen.getContext('2d');
-    ctx.drawImage(previewImg, 0, 0, w, h);
+    ctx.drawImage(source, 0, 0, w, h);
     var imgData = ctx.getImageData(0, 0, w, h);
     imgData._pixelScale = 1 / scale; // multiply pixelSizeNm by this before sending to worker
     return imgData;
@@ -1525,6 +1637,14 @@ function downloadAll() {
         [],
         ['Cell concentration (automated)',            parseFloat(cell_conc_autom_million_cells_per_ml.toFixed(3)), '× 10⁶ cells mL⁻¹'],
         ['Cell concentration (with manual correction)', parseFloat(corrConc),                                      '× 10⁶ cells mL⁻¹'],
+    ];
+    if (typeof clump_count_val !== 'undefined' && clump_count_val > 0) {
+        summaryData.push([]);
+        summaryData.push(['Clumps detected (excluded from count, drawn in orange)']);
+        summaryData.push(['Clump count',       clump_count_val,   '']);
+        summaryData.push(['Total clump area',  clump_area_um2_val, 'µm²']);
+    }
+    summaryData = summaryData.concat([
         [],
         ['Image parameters'],
         ['Image resolution',        pixels_x + ' × ' + pixels_y,  'pixels'],
@@ -1534,7 +1654,7 @@ function downloadAll() {
         ['Pixel size',              size_of_pixel,  'nm'],
         ['Chamber depth',           chamber_depth_um, 'µm'],
         ['Threshold cell diameter', (typeof minimal_size_um_val !== 'undefined') ? minimal_size_um_val : '?', 'µm'],
-    ];
+    ]);
     var ws1 = XLSX.utils.aoa_to_sheet(summaryData);
     ws1['!cols'] = [{wch: 44}, {wch: 28}, {wch: 20}];
     XLSX.utils.book_append_sheet(wb, ws1, 'Results');

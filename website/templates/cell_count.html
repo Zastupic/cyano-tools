@@ -151,6 +151,11 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
             <button type="button" class="btn btn-sm btn-outline-secondary" id="px-calc-toggle">
                 &#128300; Calculator
             </button>
+            <button type="button" class="btn btn-sm btn-outline-info" id="px-detect-btn"
+                    title="Try to read pixel size from image TIFF/EXIF metadata">
+                &#128269; Detect from image
+            </button>
+            <span id="px-detect-status" style="font-size:0.8em; color:#6c757d; display:none;"></span>
         </div>
         <div id="px-volume-error" style="display:none; color:#dc3545; font-size:0.82em; margin-top:0.25em;"></div>
         <div id="px-calc-box" style="display:none; margin-top:0.5em; padding:0.8em 1em; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; max-width:440px;">
@@ -276,8 +281,17 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
         <div id="params-card-body" class="collapse">
         <div class="card-body py-2 px-3">
 
-            <!-- Bürker chamber grid-line exclusion — full width at top -->
-            <div class="mb-2">
+            <!-- Checkboxes row -->
+            <div class="mb-2 d-flex flex-wrap" style="gap:0.5em 1.5em;">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="noise_removal_check"
+                           name="noise_removal" value="1"
+                           {% if noise_removal is not defined or noise_removal %}checked{% endif %}>
+                    <label class="custom-control-label" for="noise_removal_check" style="font-size:0.88em;">
+                        <strong>Separate touching cells / clumps</strong>
+                        <span class="text-muted" style="font-size:0.88em;">— morphological opening + watershed splits merged cells; uncheck if cells are undercounted</span>
+                    </label>
+                </div>
                 <div class="custom-control custom-checkbox">
                     <input type="checkbox" class="custom-control-input" id="exclude_stripes_check"
                            name="exclude_stripes" value="1"
@@ -499,6 +513,8 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
         var contour_data_val = {{ contour_data | tojson }};
         var cell_diameters_val = {{ cell_diameters | tojson }};
         var upload_image_name = "{{ image_name }}";
+        var clump_count_val   = {{ clump_count | default(0) }};
+        var clump_area_um2_val = {{ clump_total_area_um2 | default(0) }};
     </script>
 
     <div class="card mt-3" style="border:1px solid #dee2e6; border-radius:8px;">
@@ -510,6 +526,12 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
             <h3 style="margin:0; color:#0a3c58;"><span id="cell_conc_corrected"></span> &times; 10<sup>6</sup> cells mL<sup>-1</sup></h3>
         </div>
     </div>
+
+    {% if clump_count and clump_count > 0 %}
+    <div class="alert alert-warning py-2" role="alert" style="font-size:0.9em; border-left:4px solid #e67e22;">
+        <strong>&#9888; Clumps detected:</strong> {{ clump_count }} object(s) significantly larger than the median cell were excluded from counting and drawn in <span style="color:#e67e22; font-weight:600;">orange</span> on the image. Total clump area: {{ clump_total_area_um2 }} µm². Use the <em>Max cell diameter</em> slider or <em>Erosion</em> to split clumps before re-running.
+    </div>
+    {% endif %}
 
     <!-- Manual correction + circle settings — compact accordion -->
     <div style="margin-bottom:0.6em;">
@@ -693,6 +715,47 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
 <script src="{{url_for('static', filename='js_cell_count_round_cells.js')}}"></script>
+
+<script>
+// ── Pixel-size detection from image metadata ──────────────────────────────────
+(function () {
+    var btn    = document.getElementById('px-detect-btn');
+    var status = document.getElementById('px-detect-status');
+    var pxInput = document.getElementById('pixel_size');
+    var fileInput = document.getElementById('selected_image');
+    if (!btn) return;
+
+    btn.addEventListener('click', function () {
+        var file = fileInput && fileInput.files && fileInput.files[0];
+        var cachedKey = (document.getElementById('cached_image_key') || {}).value || '';
+        if (!file && !cachedKey) {
+            if (status) { status.style.display = 'inline'; status.style.color = '#dc3545'; status.textContent = 'Upload an image first.'; }
+            return;
+        }
+        if (status) { status.style.display = 'inline'; status.style.color = '#6c757d'; status.textContent = 'Detecting\u2026'; }
+        var fd = new FormData();
+        if (file) {
+            fd.append('image', file);
+        } else {
+            fd.append('cached_image_key', cachedKey);
+        }
+        fetch('/api/pixel_size', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.pixel_size_nm) {
+                    if (pxInput) { pxInput.value = data.pixel_size_nm; pxInput.dispatchEvent(new Event('input')); }
+                    if (status) { status.style.color = '#28a745'; status.textContent = '\u2713 ' + data.pixel_size_nm + ' nm (from ' + data.source + ')'; }
+                } else {
+                    if (status) { status.style.color = '#dc3545'; status.textContent = data.error || 'Not found'; }
+                }
+            })
+            .catch(function () {
+                if (status) { status.style.color = '#dc3545'; status.textContent = 'Request failed.'; }
+            });
+    });
+})();
+</script>
 
 {% endblock %}
