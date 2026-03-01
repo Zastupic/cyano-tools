@@ -193,7 +193,7 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
                     style="width:100%; border:1px solid #dee2e6; border-radius:4px; display:block; min-height:60px; background:#f0f0f0; cursor:zoom-in;"></canvas>
         </div>
         <div class="col-md-4 mb-2">
-            <div style="display:inline-block; font-size:0.75em; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#6c757d; background:#e9ecef; border-radius:12px; padding:2px 10px; margin-bottom:5px;">Counted cells — rough estimate</div>
+            <div style="display:inline-block; font-size:0.75em; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#6c757d; background:#e9ecef; border-radius:12px; padding:2px 10px; margin-bottom:5px;">Identified filaments</div>
             <canvas id="live-counted-canvas"
                     style="width:100%; border:1px solid #dee2e6; border-radius:4px; display:block; min-height:60px; background:#f0f0f0; cursor:zoom-in;"></canvas>
         </div>
@@ -425,10 +425,11 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
             </div><!-- end pre-processing sliders -->
 
             <!-- ── Filament segmentation sub-section ─────────────────────── -->
-            <div class="mt-2 pt-2" style="border-top:1px solid #e9ecef;">
+            <div id="filament-seg-section" class="mt-2 pt-2" style="border-top:1px solid #e9ecef;">
                 <div style="font-size:0.88em; font-weight:600; margin-bottom:0.5em; color:#495057;">
                     &#128260; Filament segmentation (watershed) parameters
-                    <small class="text-muted font-weight-normal" style="font-size:0.82em;">— only applied during full server-side analysis</small>
+                    <small class="text-muted font-weight-normal" style="font-size:0.82em;">— only applied during full analysis</small>
+                    <span id="seg-locked-badge" style="display:none; font-size:0.75em; font-weight:normal; color:#6c757d; background:#e9ecef; border-radius:3px; padding:1px 6px; margin-left:6px;">&#128274; used for last analysis — upload new image to change</span>
                 </div>
 
                 <!-- Segmentation method selection -->
@@ -467,20 +468,6 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
 
                 <div class="row no-gutters" style="margin:0 -6px;">
 
-                    <!-- Number of iterations (hidden when peak_local_max active) -->
-                    <div class="col-12 col-sm-6 mb-2 px-2" id="iterations-row">
-                        <div style="font-size:0.88em;">Number of iterations: <strong><span id="iterations_range_val">{{ number_of_iterations | default(4) }}</span></strong></div>
-                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">controls how aggressively the algorithm separates cells within filaments</div>
-                        <div class="d-flex align-items-center" style="gap:3px;">
-                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
-                            <input type="range" min="1" max="20" step="1"
-                                   value="{{ number_of_iterations | default(4) }}"
-                                   class="slider" name="iterations_range" id="iterations_range"
-                                   style="flex:1; min-width:0;">
-                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">20</small>
-                        </div>
-                    </div>
-
                     <!-- Threshold factor -->
                     <div class="col-12 col-sm-6 mb-2 px-2">
                         <div style="font-size:0.88em;">Threshold factor: <strong><span id="factor_1_mult_val">{{ factor_multiplying | default(1.4) }}</span></strong></div>
@@ -506,6 +493,20 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
                                    class="slider" name="factor_2_distance_range" id="factor_2_distance_range"
                                    style="flex:1; min-width:0;">
                             <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">100</small>
+                        </div>
+                    </div>
+
+                    <!-- Number of iterations (hidden when peak_local_max active) -->
+                    <div class="col-12 col-sm-6 mb-2 px-2" id="iterations-row">
+                        <div style="font-size:0.88em;">Number of iterations: <strong><span id="iterations_range_val">{{ number_of_iterations | default(4) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">controls how aggressively the algorithm separates cells within filaments</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                            <input type="range" min="1" max="20" step="1"
+                                   value="{{ number_of_iterations | default(4) }}"
+                                   class="slider" name="iterations_range" id="iterations_range"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">20</small>
                         </div>
                     </div>
 
@@ -650,7 +651,7 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
     <div class="imgbox">
         <div class="imgbox" id="imgbox" style="overflow:hidden;">
             <div class="insideWrapper" style="transform-origin: top left; transition: transform 0.08s linear; will-change: transform;">
-                <img src="data:image/jpeg;base64,{{ img_counted_decoded_from_memory }}" class="center-fit" id="Identified_cells" alt="Filament cell count — counted cells" style="width:100%; display:block;">
+                <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}" class="center-fit" id="Identified_cells" alt="Filament cell count — original image" style="width:100%; display:block;">
                 <canvas class="coveringCanvas" id="canvas_mouse_clicking">
                 </canvas>
             </div>
@@ -779,7 +780,6 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
         function restorePreview() {
             previewImg.src = bgImg.src;
             previewBox.style.display = 'block';
-            if (submitBox) submitBox.style.display = 'block';
         }
         if (bgImg.complete && bgImg.naturalWidth > 0) restorePreview();
         else bgImg.addEventListener('load', restorePreview);

@@ -459,7 +459,7 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
 </div>
 <!-- Submit button — outside grey box, inside form, hidden until image loaded -->
 <div id="submit-box" style="display:none; margin-top:1em;">
-    <button type="submit" class="btn btn-primary">
+    <button type="submit" class="btn btn-primary" id="run-analysis-btn">
         &#128202; Run complete cell count analysis
     </button>
     <p class="text-muted" style="font-size:0.81em; margin-top:0.4em; margin-bottom:0;">
@@ -668,7 +668,6 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
         function restorePreview() {
             previewImg.src = bgImg.src;
             previewBox.style.display = 'block';
-            if (submitBox) submitBox.style.display = 'block';
         }
         if (bgImg.complete && bgImg.naturalWidth > 0) restorePreview();
         else bgImg.addEventListener('load', restorePreview);

@@ -35,9 +35,20 @@ def create_app():
     from .pixel_profiles_filament import pixel_profiles_filament
     from .models import User, PageView
 
+    TRACKED_PATHS = frozenset([
+        '/', '/cell_count', '/cell_count_filament',
+        '/pixel_profiles_round_cells', '/pixel_profiles_filament',
+        '/OJIP_data_analysis', '/slow_kin_data_analysis',
+        '/P700_kin_data_analysis', '/ex_em_spectra_analysis',
+        '/cell_size_round_cells', '/cell_size_filament',
+        '/light_curves_analysis', '/MIMS_data_analysis',
+        '/MIMS_data_analysis_periodic', '/statistics',
+        '/calculators', '/development_log',
+    ])
+
     @app.before_request
     def log_page_view():
-        if request.path.startswith('/static') or request.path == '/site_stats':
+        if request.path not in TRACKED_PATHS:
             return
         if request.method != 'GET':
             return

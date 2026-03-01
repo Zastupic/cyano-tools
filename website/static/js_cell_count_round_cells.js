@@ -541,11 +541,16 @@ var LS_KEYS = {
     window.addEventListener('pageshow', function () {
         var overlay = document.getElementById('loading-overlay');
         if (overlay) overlay.style.display = 'none';
-        // Re-enable submit button in case of back-navigation
+        // Re-enable submit button only on back-navigation (file input retains file from cache)
         var form2 = document.getElementById('cell-count-form');
         if (form2) {
             var btn = form2.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = false; btn.innerHTML = '&#128202; Run complete cell count analysis'; }
+            var inp = document.getElementById('selected_image');
+            var hasFile = inp && inp.files && inp.files.length > 0;
+            if (btn && hasFile) {
+                btn.disabled = false;
+                btn.innerHTML = '&#128202; Run complete cell count analysis';
+            }
         }
     });
 })();
@@ -603,7 +608,11 @@ var LS_KEYS = {
         reader.onload = function (e) {
             preview.src = e.target.result;
             box.style.display = 'block';
-            if (submitBox) submitBox.style.display = 'block';
+            if (submitBox) {
+                submitBox.style.display = 'block';
+                var btn = document.getElementById('run-analysis-btn');
+                if (btn) { btn.disabled = false; btn.title = ''; }
+            }
             var mb = document.getElementById('multi-thresh-box');
             if (mb) mb.style.display = 'none';
             triggerLivePreview();

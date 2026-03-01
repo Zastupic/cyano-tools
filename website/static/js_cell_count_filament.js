@@ -224,7 +224,10 @@ var WORKER_URL = (function () {
 '            continue;\n' +
 '        }\n' +
 '        cellCountNum++;\n' +
-'        cv.circle(imgViz, new cv.Point(xCoord, yCoord), radius, circleColor, 1);\n' +
+'        var cntVec = new cv.MatVector();\n' +
+'        cntVec.push_back(cnt);\n' +
+'        cv.drawContours(imgViz, cntVec, 0, circleColor, 1);\n' +
+'        cntVec.delete();\n' +
 '        contourData.push([xCoord, yCoord, radius]);\n' +
 '        var diamUm = Math.round(2 * Math.sqrt(area / Math.PI) * pixelSizeNm / 1000 * 100) / 100;\n' +
 '        cellDiameters.push(diamUm);\n' +
@@ -560,10 +563,16 @@ var LS_KEYS = {
     window.addEventListener('pageshow', function () {
         var overlay = document.getElementById('loading-overlay');
         if (overlay) overlay.style.display = 'none';
+        // Re-enable submit button only on back-navigation (file input retains file from cache)
         var form2 = document.getElementById('cell-count-filament-form');
         if (form2) {
             var btn = form2.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = false; btn.innerHTML = '&#128202; Run complete filament analysis'; }
+            var inp = document.getElementById('selected_image');
+            var hasFile = inp && inp.files && inp.files.length > 0;
+            if (btn && hasFile) {
+                btn.disabled = false;
+                btn.innerHTML = '&#128202; Run complete filament analysis';
+            }
         }
     });
 })();
@@ -623,6 +632,7 @@ var LS_KEYS = {
             if (submitBox) submitBox.style.display = 'block';
             var mb = document.getElementById('multi-thresh-box');
             if (mb) mb.style.display = 'none';
+            unlockFilamentSegSection();
             triggerLivePreview();
             autoRunCount();
             setTimeout(function () {
@@ -1400,6 +1410,27 @@ var undoStack   = [];
     });
 })();
 
+// ── Filament-seg section lock/unlock ──────────────────────────────────────────
+function lockFilamentSegSection() {
+    var section = document.getElementById('filament-seg-section');
+    if (!section) return;
+    section.style.opacity       = '0.5';
+    section.style.pointerEvents = 'none';
+    section.title = 'Parameters used for the last full analysis. Upload a new image to adjust them.';
+    var badge = document.getElementById('seg-locked-badge');
+    if (badge) badge.style.display = 'inline';
+}
+
+function unlockFilamentSegSection() {
+    var section = document.getElementById('filament-seg-section');
+    if (!section) return;
+    section.style.opacity       = '';
+    section.style.pointerEvents = '';
+    section.title = '';
+    var badge = document.getElementById('seg-locked-badge');
+    if (badge) badge.style.display = 'none';
+}
+
 // ── Global functions ──────────────────────────────────────────────────────────
 
 function redrawAllCircles() {
@@ -1573,6 +1604,7 @@ function downloadAll() {
 
     if (typeof contour_data_val !== 'undefined') {
         serverCells = contour_data_val.map(function (c) { return { x: c[0], y: c[1], r: c[2] }; });
+        lockFilamentSegSection();
     }
 
     updateStats();

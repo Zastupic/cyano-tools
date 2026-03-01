@@ -291,43 +291,52 @@
         <h5 class="modal-title" id="cookiePolicyModalLabel">Cookie Policy</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
-      <div class="modal-body" style="font-size:0.875rem;">
-        <p>CyanoTools uses the following types of cookies and browser storage. You can review and change your analytics consent at any time.</p>
+      <div class="modal-body" style="font-size:0.875rem; padding:1.25rem;">
+        <p class="text-muted mb-3">CyanoTools uses cookies and browser storage listed below. You can review and change your analytics consent at any time.</p>
 
-        <h6 class="mt-3"><span class="badge badge-success">Always active</span> Strictly necessary cookies</h6>
-        <p>Required for the site to function. These cannot be disabled.</p>
-        <table class="table table-sm table-bordered">
-          <thead class="thead-light"><tr><th>Name</th><th>Purpose</th><th>Duration</th></tr></thead>
-          <tbody>
-            <tr><td><code>session</code></td><td>Flask session — stores temporary analysis data (e.g. cell coordinates) between page requests</td><td>Session</td></tr>
-            <tr><td>Login cookie</td><td>Keeps you logged in if you use the login feature</td><td>Session</td></tr>
-          </tbody>
-        </table>
+        <!-- ── Always active ── -->
+        <p class="mb-1" style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#28a745;">Always active</p>
 
-        <h6 class="mt-3"><span class="badge badge-info">Always active</span> Functional browser storage</h6>
-        <p>Stored in your browser's <code>localStorage</code>. Not transmitted to our server. Remembers your analysis preferences between visits.</p>
-        <table class="table table-sm table-bordered">
-          <thead class="thead-light"><tr><th>Key</th><th>Purpose</th></tr></thead>
-          <tbody>
-            <tr><td><code>cc_pixel_size</code></td><td>Last pixel size (nm) entered in the cell counter</td></tr>
-            <tr><td><code>cc_chamber_depth</code></td><td>Last chamber depth setting</td></tr>
-            <tr><td><code>cc_minimal_diameter</code></td><td>Last minimum cell diameter setting</td></tr>
-            <tr><td><code>cc_threshold_filter</code></td><td>Last selected threshold method</td></tr>
-            <tr><td><code>cyanotools_cookie_consent</code></td><td>Your cookie consent decision (stored here)</td></tr>
-          </tbody>
-        </table>
+        <div style="border-left:4px solid #28a745; background:#f8f9fa; border-radius:4px; padding:12px 14px; margin-bottom:16px;">
+          <strong>Strictly necessary &amp; functional</strong>
+          <p class="text-muted mb-2 mt-1" style="font-size:0.82rem;">Required for the site to function or to remember your preferences locally. Never sent to our server. Cannot be disabled.</p>
+          <details>
+            <summary style="cursor:pointer; color:#555; font-size:0.82rem;">Show details</summary>
+            <table class="table table-sm table-striped mb-0 mt-2">
+              <thead class="thead-light"><tr><th>Name / Key</th><th>Purpose</th><th>Duration</th></tr></thead>
+              <tbody>
+                <tr><td><code>session</code></td><td>Flask session — stores temporary analysis data between page requests</td><td>Session</td></tr>
+                <tr><td><code>remember_token</code></td><td>Keeps you logged in if you use the login feature</td><td>Session</td></tr>
+                <tr><td><code>cc_pixel_size</code></td><td>Last pixel size (nm) entered in the cell counter</td><td>Persistent</td></tr>
+                <tr><td><code>cc_chamber_depth</code></td><td>Last chamber depth setting</td><td>Persistent</td></tr>
+                <tr><td><code>cc_minimal_diameter</code></td><td>Last minimum cell diameter setting</td><td>Persistent</td></tr>
+                <tr><td><code>cc_threshold_filter</code></td><td>Last selected threshold method</td><td>Persistent</td></tr>
+                <tr><td><code>cyanotools_cookie_consent</code></td><td>Your cookie consent decision</td><td>Persistent</td></tr>
+              </tbody>
+            </table>
+          </details>
+        </div>
 
-        <h6 class="mt-3"><span class="badge badge-warning">Optional</span> Analytics cookies</h6>
-        <p>We use <strong>Google Analytics</strong> to understand which tools are used and how to improve them. No personally identifiable information is collected or shared.</p>
-        <table class="table table-sm table-bordered">
-          <thead class="thead-light"><tr><th>Name</th><th>Purpose</th><th>Duration</th></tr></thead>
-          <tbody>
-            <tr><td><code>_ga</code></td><td>Distinguishes unique users</td><td>2 years</td></tr>
-            <tr><td><code>_gid</code></td><td>Distinguishes users (session-level)</td><td>24 hours</td></tr>
-            <tr><td><code>_ga_*</code></td><td>Persists session state for the GA4 property</td><td>2 years</td></tr>
-          </tbody>
-        </table>
-        <p>You can withdraw your analytics consent at any time using the button below. This will remove your decision and show the consent banner again on your next visit.</p>
+        <!-- ── Analytical ── -->
+        <p class="mb-1" style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#fd7e14;">Analytical</p>
+
+        <div style="border-left:4px solid #fd7e14; background:#f8f9fa; border-radius:4px; padding:12px 14px; margin-bottom:4px;">
+          <strong>Analytics (Google Analytics)</strong>
+          <p class="text-muted mb-2 mt-1" style="font-size:0.82rem;">Helps us understand which tools are used so we can improve them. No personally identifiable information is collected or shared.</p>
+          <details>
+            <summary style="cursor:pointer; color:#555; font-size:0.82rem;">Show cookies</summary>
+            <table class="table table-sm table-striped mb-0 mt-2">
+              <thead class="thead-light"><tr><th>Name</th><th>Purpose</th><th>Duration</th></tr></thead>
+              <tbody>
+                <tr><td><code>_ga</code></td><td>Distinguishes unique users</td><td>2 years</td></tr>
+                <tr><td><code>_gid</code></td><td>Distinguishes users (session-level)</td><td>24 hours</td></tr>
+                <tr><td><code>_ga_*</code></td><td>Persists session state for the GA4 property</td><td>2 years</td></tr>
+              </tbody>
+            </table>
+          </details>
+        </div>
+
+        <p class="text-muted mt-3 mb-0" style="font-size:0.8rem;">You can withdraw your analytics consent at any time using the button below — this will remove your choice and show the banner again on your next visit.</p>
       </div>
       <div class="modal-footer" style="justify-content:space-between;">
         <button type="button" id="cookie-reset-btn" class="btn btn-sm btn-outline-secondary">Reset my choice</button>

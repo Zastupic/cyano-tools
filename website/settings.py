@@ -26,9 +26,6 @@ PAGE_NAMES = {
     '/statistics':                'Statistics',
     '/calculators':               'Calculators',
     '/development_log':           'Development Log',
-    '/settings':                  'Settings',
-    '/login':                     'Login',
-    '/sign-up':                   'Sign Up',
 }
 
 @settings.route('/settings', methods=['GET', 'POST'])
@@ -58,10 +55,10 @@ def site_stats():
         PageView.path,
         func.count(PageView.id).label('count')
     ).filter(PageView.timestamp >= since,
-             PageView.path != '/site_stats') \
+             PageView.path.in_(list(PAGE_NAMES.keys()))) \
      .group_by(PageView.path) \
      .order_by(func.count(PageView.id).desc()) \
-     .limit(20).all()
+     .all()
 
     top_pages = [
         {'path': r.path, 'name': PAGE_NAMES.get(r.path, r.path), 'count': r.count}

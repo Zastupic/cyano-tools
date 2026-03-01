@@ -260,7 +260,7 @@ def count_filament_cells():
                             circles_all_actual = [*set(circles_all_actual)]
 
                             circles_to_remain_old = [x for x in circles_all_old if x not in circles_to_be_deleted_old]
-                            circles_to_remain_old = circles_to_remain_old + circles_to_remain_old_temp
+                            circles_to_remain_old = list(dict.fromkeys(circles_to_remain_old + circles_to_remain_old_temp))
                             circles_to_remain_actual = [x for x in circles_to_remain_actual_temp if x not in circles_to_be_deleted_actual]
 
                             contours_watershed_temp = list(contours_watershed_th)
