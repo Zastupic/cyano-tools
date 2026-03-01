@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, request, flash
-import math, os, cv2, base64, io
+import math, os, cv2, base64, io, uuid, glob, time
 import numpy as np
 from PIL import Image as im
-from . import ALLOWED_EXTENSIONS
+from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 
 try:
-    from skimage.morphology import h_maxima
+    from skimage.morphology import h_maxima, skeletonize
     from skimage.feature import peak_local_max
     from skimage.segmentation import watershed as skimage_watershed
     SKIMAGE_AVAILABLE = True
@@ -17,6 +17,8 @@ cell_count_filament = Blueprint('cell_count_filament', __name__)
 @cell_count_filament.route('/cell_count_filament', methods=['GET', 'POST'])
 def count_filament_cells():
     if request.method == "POST":
+        cached_image_key      = request.form.get('cached_image_key', '').strip()
+        cached_image_name_form = request.form.get('cached_image_name', '').strip()
         if request.form.get('pixel_size') == '':
             flash('Please enter pixel size', category='error')
         else:
@@ -32,7 +34,12 @@ def count_filament_cells():
             factor_distance_centers = int(request.form.get("factor_2_distance_range") or 28)
             bilateral_filter = request.form.get('bilateral_filter', '') == '1'
             use_hmax = request.form.get('use_hmax', '1') == '1'
-            use_peak_local_max = request.form.get('use_peak_local_max', '') == '1'
+            # Segmentation method: 'iterative' | 'peak_local_max' | 'skeleton'
+            seg_method = request.form.get('seg_method', 'peak_local_max')
+            use_peak_local_max = (seg_method == 'peak_local_max')
+            use_skeleton       = (seg_method == 'skeleton')
+            separate_filaments = request.form.get('separate_filaments', '') == '1'
+            max_aspect_ratio   = float(request.form.get('max_aspect_ratio') or 0)
 
             # Microscopy mode
             microscopy_mode = request.form.get('microscopy_mode', 'fluorescence')
@@ -58,14 +65,42 @@ def count_filament_cells():
             adaptive_c = int(request.form.get('adaptive_c') or 2)
             threshold = request.form.get('threshold_filter', 'Binary + Otsu')
 
-            if 'selected_images' in request.files:
-                image = request.files['selected_images']
-                image_name = str.lower(os.path.splitext(str(image.filename))[0])
-                image_extension = str.lower(os.path.splitext(str(image.filename))[1])
+            # Determine image source: new upload or server-side cache
+            _new_image = request.files.get('selected_images')
+            _new_image = _new_image if (_new_image and _new_image.filename) else None
+            if _new_image is not None:
+                image_name      = str.lower(os.path.splitext(str(_new_image.filename))[0])
+                image_extension = str.lower(os.path.splitext(str(_new_image.filename))[1])
+            elif cached_image_key:
+                image_name      = cached_image_name_form or 'image'
+                image_extension = os.path.splitext(cached_image_key)[1]
+            else:
+                image_name = image_extension = ''
+
+            if _new_image is not None or cached_image_key:
                 if image_extension in ALLOWED_EXTENSIONS:
-                    # Decode image directly from memory — no disk I/O
-                    nparr = np.frombuffer(image.read(), np.uint8)
-                    img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                    if _new_image is not None:
+                        img_bytes = _new_image.read()
+                        nparr = np.frombuffer(img_bytes, np.uint8)
+                        img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        # Cache to disk so the user can re-run without re-uploading
+                        cached_image_key = 'filament_cache_' + uuid.uuid4().hex + image_extension
+                        try:
+                            # Clean up old cache files (older than 2 h)
+                            for _old in glob.glob(os.path.join(UPLOAD_FOLDER, 'filament_cache_*')):
+                                if time.time() - os.path.getmtime(_old) > 7200:
+                                    os.remove(_old)
+                            with open(os.path.join(UPLOAD_FOLDER, cached_image_key), 'wb') as _cf:
+                                _cf.write(img_bytes)
+                        except Exception:
+                            cached_image_key = ''
+                    else:
+                        _cache_path = os.path.join(UPLOAD_FOLDER, cached_image_key)
+                        if not os.path.exists(_cache_path):
+                            flash('Cached image not found. Please upload again.', category='error')
+                            return render_template("cell_count_filament.html")
+                        nparr = np.frombuffer(open(_cache_path, 'rb').read(), np.uint8)
+                        img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
                     img_grey_raw = cv2.cvtColor(img_orig, cv2.COLOR_BGR2GRAY)
                     if bilateral_filter:
@@ -137,7 +172,13 @@ def count_filament_cells():
                     # ─────────────────────────────────────────────────────────
                     kernel_ellipse = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
                     img_noise_reduced = cv2.morphologyEx(img_th, cv2.MORPH_OPEN, kernel_ellipse, iterations=3)
-                    img_background = cv2.dilate(img_noise_reduced, kernel_ellipse, iterations=2)
+
+                    # Optional: separate touching filaments with a narrow erosion before background computation
+                    if separate_filaments:
+                        sep_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+                        img_noise_reduced = cv2.erode(img_noise_reduced, sep_kernel, iterations=1)
+                    img_background = cv2.dilate(img_noise_reduced, kernel_ellipse,
+                                                iterations=3 if separate_filaments else 2)
 
                     # Visualization base
                     if microscopy_mode == 'brightfield':
@@ -147,10 +188,39 @@ def count_filament_cells():
                         img_for_counted_cells = cv2.cvtColor(img_for_counted_cells, cv2.COLOR_GRAY2BGR)
                     img_for_counted_cells_copy = img_for_counted_cells.copy()
 
-                    if use_peak_local_max and SKIMAGE_AVAILABLE:
+                    if use_skeleton and SKIMAGE_AVAILABLE:
+                        # ── Skeleton-guided seeding ──────────────────────────
+                        # Seeds are placed along the filament medial axis at cell-length
+                        # intervals, giving one seed per cell rather than per blob.
+                        dist_transform = cv2.distanceTransform(img_noise_reduced, cv2.DIST_L2, 5)
+                        skeleton = skeletonize(img_noise_reduced > 0).astype(np.uint8)
+                        # Restrict peak search to skeleton pixels (1D constraint)
+                        dist_on_skel = dist_transform * skeleton
+                        min_skel_dist = max(2, int(min_diameter_px * 0.7))
+                        coords = peak_local_max(
+                            dist_on_skel,
+                            min_distance=min_skel_dist,
+                            labels=skeleton.astype(bool)
+                        )
+                        markers = np.zeros(dist_transform.shape, dtype=np.int32)
+                        for _idx, (_py, _px) in enumerate(coords, start=1):
+                            markers[_py, _px] = _idx
+                        markers = cv2.dilate(
+                            markers.astype(np.float32), np.ones((3, 3), np.uint8), iterations=2
+                        ).astype(np.int32)
+                        labels = skimage_watershed(-dist_transform, markers, mask=img_noise_reduced > 0)
+                        final_contours = []
+                        for label_id in range(1, int(labels.max()) + 1):
+                            mask_label = (labels == label_id).astype(np.uint8) * 255
+                            cnts, _ = cv2.findContours(mask_label, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                            if cnts:
+                                final_contours.append(max(cnts, key=cv2.contourArea))
+                        contours_watershed_temp = (final_contours, None)
+
+                    elif use_peak_local_max and SKIMAGE_AVAILABLE:
                         # ── Single-pass: peak_local_max seeding ─────────────
                         dist_transform = cv2.distanceTransform(img_noise_reduced, cv2.DIST_L2, 5)
-                        min_dist_px = max(2, int(factor_distance_centers / max(0.001, pixel_size_nm / 1000)))
+                        min_dist_px = max(2, factor_distance_centers)
                         thresh_rel  = max(0.05, factor_multiplying * 0.3)
                         coords = peak_local_max(
                             dist_transform,
@@ -182,15 +252,27 @@ def count_filament_cells():
                         def _get_fg(dist_img, sft):
                             """Return uint8 foreground mask via h-maxima or simple threshold."""
                             if use_hmax and SKIMAGE_AVAILABLE:
-                                h_val = max(0.5, sft * dist_img.max())
+                                # Use relative floor (10% of max) so thin filaments are not missed
+                                h_val = max(0.1 * dist_img.max(), sft * dist_img.max())
                                 local_max = h_maxima(dist_img, h=h_val)
                                 return (local_max > 0).astype(np.uint8) * 255
                             else:
                                 fg = cv2.threshold(dist_img, sft * dist_img.max(), 255, 0)[1]
                                 return np.uint8(fg)
 
-                        # Iteration 1: reference contours
+                        def _effective_radius(cnt):
+                            """Minor-axis half-length from fitEllipse (= cell width).
+                            Falls back to minEnclosingCircle for short contours."""
+                            if len(cnt) >= 5:
+                                _, (MA, ma), _ = cv2.fitEllipse(cnt)
+                                return ma / 2.0
+                            (_, r) = cv2.minEnclosingCircle(cnt)
+                            return r
+
+                        # Compute distance transform once — inputs never change between iterations
                         img_dist_t = cv2.distanceTransform(img_noise_reduced, cv2.DIST_L2, scaling_factor_distance_transform)
+
+                        # Iteration 1: reference contours
                         img_fg = _get_fg(img_dist_t, scaling_factor_threshold)
                         img_sub = cv2.subtract(img_background, img_fg)
                         _, central_parts = cv2.connectedComponents(img_fg)
@@ -211,7 +293,6 @@ def count_filament_cells():
                             circles_to_be_deleted_old = []
                             circles_to_be_deleted_actual = []
                             scaling_factor_threshold = scaling_factor_threshold + 0.1
-                            img_dist_t = cv2.distanceTransform(img_noise_reduced, cv2.DIST_L2, scaling_factor_distance_transform)
                             img_fg = _get_fg(img_dist_t, scaling_factor_threshold)
                             img_sub = cv2.subtract(img_background, img_fg)
                             _, central_parts = cv2.connectedComponents(img_fg)
@@ -229,18 +310,18 @@ def count_filament_cells():
 
                             for j in range(len(contours_watershed_th[0])):
                                 contour = contours_watershed_th[0][j]
-                                ((x, y), r) = cv2.minEnclosingCircle(contour)
-                                if r > min_diameter_px:
+                                ((x, y), _r) = cv2.minEnclosingCircle(contour)
+                                rc_act = _effective_radius(contour)
+                                if rc_act > min_diameter_px / 2:
                                     xc_act = int(x)
                                     yc_act = int(y)
-                                    rc_act = int(r)
                                     circles_all_actual.append(int(j))
                                     for a in range(len(contours_watershed_last[0])):
                                         contour_last = contours_watershed_last[0][a]
-                                        ((c, d), e) = cv2.minEnclosingCircle(contour_last)
+                                        ((c, d), _r2) = cv2.minEnclosingCircle(contour_last)
                                         xc_old = int(c)
                                         yc_old = int(d)
-                                        rc_old = int(e)
+                                        rc_old = _effective_radius(contour_last)
                                         circles_all_old.append(int(a))
                                         dist_centers = math.sqrt((xc_act - xc_old) ** 2 + (yc_act - yc_old) ** 2)
                                         if factor_multiplying * rc_old > (dist_centers + rc_act):
@@ -318,6 +399,13 @@ def count_filament_cells():
                             perimeter = cv2.arcLength(contour, True)
                             circularity = (4 * math.pi * cnt_area / perimeter ** 2) if perimeter > 0 else 0
                             if circularity < circularity_min:
+                                continue
+
+                        # Aspect ratio filter
+                        if max_aspect_ratio > 0:
+                            x_br, y_br, w_br, h_br = cv2.boundingRect(contour)
+                            ar = max(w_br, h_br) / max(1, min(w_br, h_br))
+                            if ar > max_aspect_ratio:
                                 continue
 
                         # ROI filter
@@ -403,11 +491,17 @@ def count_filament_cells():
                             factor_distance_centers=factor_distance_centers,
                             bilateral_filter=bilateral_filter,
                             use_hmax=use_hmax,
-                            use_peak_local_max=use_peak_local_max,
+                            seg_method=seg_method,
+                            separate_filaments=separate_filaments,
+                            max_aspect_ratio=max_aspect_ratio,
+                            cached_image_key=cached_image_key,
+                            cached_image_name=image_name,
                         )
                     else:
                         flash('Pixel size is too low', category='error')
-                    return render_template("cell_count_filament.html")
+                    return render_template("cell_count_filament.html",
+                                          cached_image_key=cached_image_key,
+                                          cached_image_name=image_name)
                 else:
                     flash('Please select an image file.', category='error')
     return render_template("cell_count_filament.html")

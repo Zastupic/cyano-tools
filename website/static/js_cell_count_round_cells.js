@@ -601,9 +601,14 @@ var LS_KEYS = {
     inp.addEventListener('change', function () {
         var file = this.files[0];
         if (!file) { box.style.display = 'none'; if (submitBox) submitBox.style.display = 'none'; return; }
+        // Clear server-side cache key — new file takes precedence
+        var ck = document.getElementById('cached_image_key');
+        if (ck) ck.value = '';
+        var cn = document.getElementById('cached_image_name');
+        if (cn) cn.value = '';
         // Show filename in drop zone
         if (fnLabel) { fnLabel.textContent = '✓ ' + file.name; fnLabel.style.display = 'block'; }
-        if (zone) { zone.style.borderColor = '#17a2b8'; zone.style.borderStyle = 'solid'; }
+        if (zone) { zone.style.borderColor = '#17a2b8'; zone.style.borderStyle = 'solid'; zone.style.background = '#fafbfc'; }
         var reader = new FileReader();
         reader.onload = function (e) {
             preview.src = e.target.result;

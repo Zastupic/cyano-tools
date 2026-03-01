@@ -102,14 +102,21 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
     <input type="hidden" id="roi_h_pct" name="roi_h_pct" value="0">
     <!-- Hidden threshold selection — updated when user clicks a multi-threshold thumbnail -->
     <input type="hidden" id="threshold_filter" name="threshold_filter" value="{{ threshold | default('Triangle + Binary') }}">
+    <!-- Hidden image cache key — avoids re-uploading between successive analyses -->
+    <input type="hidden" id="cached_image_key" name="cached_image_key" value="{{ cached_image_key | default('') }}">
+    <input type="hidden" id="cached_image_name" name="cached_image_name" value="{{ image_name | default('') }}">
 
     <!-- ── Select your image ─────────────────────────────────────────────── -->
     <p class="font-weight-bold mb-1">Upload your image</p>
     <div id="upload-drop-zone"
-         style="border:2px dashed #adb5bd; border-radius:8px; padding:1.5em 1em; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; background:#fafbfc; margin-bottom:0.5em;">
-        <div style="font-size:2em; line-height:1;">&#128247;</div>
+         style="border:2px dashed {% if cached_image_key %}#28a745{% else %}#adb5bd{% endif %}; border-radius:8px; padding:1.5em 1em; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; background:{% if cached_image_key %}#f0fff4{% else %}#fafbfc{% endif %}; margin-bottom:0.5em;">
+        <div style="font-size:2em; line-height:1;">{% if cached_image_key %}&#128190;{% else %}&#128247;{% endif %}</div>
         <p style="margin:0.3em 0 0; color:#495057; font-size:0.95em;">
-            Drop your image here, or <strong>click to browse</strong>
+            {% if cached_image_key %}
+                Image <strong>{{ image_name | default('') }}</strong> is cached &mdash; click to replace, or just click <em>Re-run analysis</em> below
+            {% else %}
+                Drop your image here, or <strong>click to browse</strong>
+            {% endif %}
         </p>
         <p style="margin:0.2em 0 0; font-size:0.78em; color:#adb5bd;">PNG · JPG · TIFF · BMP · GIF</p>
         <p id="drop-zone-filename" style="margin:0.5em 0 0; font-weight:600; font-size:0.9em; color:#17a2b8; display:none;"></p>
@@ -458,12 +465,16 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
 
 </div>
 <!-- Submit button — outside grey box, inside form, hidden until image loaded -->
-<div id="submit-box" style="display:none; margin-top:1em;">
+<div id="submit-box" style="display:{% if cached_image_key %}block{% else %}none{% endif %}; margin-top:1em;">
     <button type="submit" class="btn btn-primary" id="run-analysis-btn">
-        &#128202; Run complete cell count analysis
+        &#128202; {% if cached_image_key %}Re-run cell count analysis{% else %}Run complete cell count analysis{% endif %}
     </button>
     <p class="text-muted" style="font-size:0.81em; margin-top:0.4em; margin-bottom:0;">
-        Runs the complete analysis and generates detailed results with XLSX export and interactive manual correction tools.
+        {% if cached_image_key %}
+            Adjust any parameters above and click to re-run — the image is already cached on the server, no re-upload needed.
+        {% else %}
+            Runs the complete analysis and generates detailed results with XLSX export and interactive manual correction tools.
+        {% endif %}
     </p>
 </div>
 <!-- end live preview section / end form contents -->
@@ -668,6 +679,7 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
         function restorePreview() {
             previewImg.src = bgImg.src;
             previewBox.style.display = 'block';
+            if (submitBox) submitBox.style.display = 'block';
         }
         if (bgImg.complete && bgImg.naturalWidth > 0) restorePreview();
         else bgImg.addEventListener('load', restorePreview);

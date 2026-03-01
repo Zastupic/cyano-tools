@@ -215,6 +215,11 @@ var WORKER_URL = (function () {
 '            var circ  = perim > 0 ? (4 * Math.PI * area) / (perim * perim) : 0;\n' +
 '            if (circ < circularityMin) { cnt.delete(); continue; }\n' +
 '        }\n' +
+'        if (params.maxAspectRatio > 0) {\n' +
+'            var brect = cv.boundingRect(cnt);\n' +
+'            var ar = Math.max(brect.width, brect.height) / Math.max(1, Math.min(brect.width, brect.height));\n' +
+'            if (ar > params.maxAspectRatio) { cnt.delete(); continue; }\n' +
+'        }\n' +
 '        var rect   = cv.boundingRect(cnt);\n' +
 '        var xCoord = Math.round(rect.x + rect.width  / 2);\n' +
 '        var yCoord = Math.round(rect.y + rect.height / 2);\n' +
@@ -380,6 +385,7 @@ $('img[data-enlargeable]').addClass('img-enlargeable').on('click', function () {
     bindSlider('iterations_range',              'iterations_range_val');
     bindSlider('factor_1_multiplication_range', 'factor_1_mult_val');
     bindSlider('factor_2_distance_range',       'factor_2_dist_val');
+    bindSlider('max_aspect_ratio_range',        'max_aspect_ratio_val');
 })();
 
 // ── Reset analysis parameters to defaults ─────────────────────────────────────
@@ -397,6 +403,7 @@ var PARAM_DEFAULTS = {
     iterations_range:              4,
     factor_1_multiplication_range: 1.4,
     factor_2_distance_range:       28,
+    max_aspect_ratio_range:        0,
 };
 var PARAM_OUTPUTS = {
     minimal_diameter_range:        'minimal_diameter',
@@ -411,6 +418,7 @@ var PARAM_OUTPUTS = {
     iterations_range:              'iterations_range_val',
     factor_1_multiplication_range: 'factor_1_mult_val',
     factor_2_distance_range:       'factor_2_dist_val',
+    max_aspect_ratio_range:        'max_aspect_ratio_val',
 };
 (function () {
     var btn = document.getElementById('params-reset-btn');
@@ -430,10 +438,12 @@ var PARAM_OUTPUTS = {
         if (chk) { chk.checked = false; chk.dispatchEvent(new Event('change')); }
         var bfChk = document.getElementById('bilateral_filter_check');
         if (bfChk) { bfChk.checked = false; bfChk.dispatchEvent(new Event('change')); }
+        var sfChk = document.getElementById('separate_filaments_check');
+        if (sfChk) { sfChk.checked = false; sfChk.dispatchEvent(new Event('change')); }
         var hmaxChk = document.getElementById('use_hmax_check');
         if (hmaxChk) { hmaxChk.checked = true; hmaxChk.dispatchEvent(new Event('change')); }
-        var iterRad = document.getElementById('seg_iterative');
-        if (iterRad) { iterRad.checked = true; iterRad.dispatchEvent(new Event('change')); }
+        var plmRad = document.getElementById('seg_plm');
+        if (plmRad) { plmRad.checked = true; plmRad.dispatchEvent(new Event('change')); }
         triggerAutoCount();
         triggerMultiIfVisible();
     });
@@ -442,15 +452,15 @@ var PARAM_OUTPUTS = {
 // ── Segmentation method radio: show/hide iterative-only controls ──────────────
 (function () {
     function applySegMethod() {
-        var plm = document.querySelector('input[name="use_peak_local_max"]:checked');
-        var isPlm = plm && plm.value === '1';
+        var plm = document.querySelector('input[name="seg_method"]:checked');
+        var isIterative = plm && plm.value === 'iterative';
         var iterRow = document.getElementById('iterations-row');
         var hmaxRow = document.getElementById('hmax-row');
-        if (iterRow) iterRow.style.display = isPlm ? 'none' : '';
-        if (hmaxRow) hmaxRow.style.display = isPlm ? 'none' : '';
+        if (iterRow) iterRow.style.display = isIterative ? '' : 'none';
+        if (hmaxRow) hmaxRow.style.display = isIterative ? '' : 'none';
     }
     applySegMethod();
-    document.querySelectorAll('input[name="use_peak_local_max"]').forEach(function (r) {
+    document.querySelectorAll('input[name="seg_method"]').forEach(function (r) {
         r.addEventListener('change', applySegMethod);
     });
 })();
@@ -623,8 +633,13 @@ var LS_KEYS = {
     inp.addEventListener('change', function () {
         var file = this.files[0];
         if (!file) { box.style.display = 'none'; if (submitBox) submitBox.style.display = 'none'; return; }
+        // Clear server-side cache key — new file takes precedence
+        var ck = document.getElementById('cached_image_key');
+        if (ck) ck.value = '';
+        var cn = document.getElementById('cached_image_name');
+        if (cn) cn.value = '';
         if (fnLabel) { fnLabel.textContent = '✓ ' + file.name; fnLabel.style.display = 'block'; }
-        if (zone) { zone.style.borderColor = '#17a2b8'; zone.style.borderStyle = 'solid'; }
+        if (zone) { zone.style.borderColor = '#17a2b8'; zone.style.borderStyle = 'solid'; zone.style.background = '#fafbfc'; }
         var reader = new FileReader();
         reader.onload = function (e) {
             preview.src = e.target.result;
@@ -994,7 +1009,8 @@ function getFormParams() {
         factorDist:        Math.round(fv('factor_2_distance_range')) || 28,
         bilateralFilter:   bv('bilateral_filter_check'),
         useHmax:           bv('use_hmax_check'),
-        usePeakLocalMax:   (function () { var r = document.querySelector('input[name="use_peak_local_max"]:checked'); return r ? r.value === '1' : false; })(),
+        segMethod:         (document.querySelector('input[name="seg_method"]:checked') || {}).value || 'iterative',
+        maxAspectRatio:    fv('max_aspect_ratio_range'),
     };
 }
 
@@ -1166,7 +1182,7 @@ function highlightMultiSelected(name) {
     var paramIds = [
         'threshold_filter',
         'chamber_depth_range', 'minimal_diameter_range', 'blur_radius_range',
-        'max_diam_range', 'clahe_clip', 'morph_iter', 'circularity_min', 'manual_thresh',
+        'max_diam_range', 'clahe_clip', 'morph_iter', 'circularity_min', 'max_aspect_ratio_range', 'manual_thresh',
         'adaptive_block_size', 'adaptive_c'
         // Note: filament segmentation params (iterations, factor_mult, factor_dist) are
         // server-side only — changing them does NOT trigger the live count.
@@ -1182,7 +1198,7 @@ function highlightMultiSelected(name) {
     // Multi-threshold: refreshes on slider release
     var multiParamIds = [
         'chamber_depth_range', 'minimal_diameter_range', 'blur_radius_range',
-        'max_diam_range', 'clahe_clip', 'morph_iter', 'circularity_min', 'manual_thresh',
+        'max_diam_range', 'clahe_clip', 'morph_iter', 'circularity_min', 'max_aspect_ratio_range', 'manual_thresh',
         'adaptive_block_size', 'adaptive_c'
     ];
     multiParamIds.forEach(function (id) {
@@ -1412,21 +1428,13 @@ var undoStack   = [];
 
 // ── Filament-seg section lock/unlock ──────────────────────────────────────────
 function lockFilamentSegSection() {
-    var section = document.getElementById('filament-seg-section');
-    if (!section) return;
-    section.style.opacity       = '0.5';
-    section.style.pointerEvents = 'none';
-    section.title = 'Parameters used for the last full analysis. Upload a new image to adjust them.';
+    // Show informational badge only — section stays fully interactive so the user
+    // can change parameters and click Re-run without re-uploading the image.
     var badge = document.getElementById('seg-locked-badge');
     if (badge) badge.style.display = 'inline';
 }
 
 function unlockFilamentSegSection() {
-    var section = document.getElementById('filament-seg-section');
-    if (!section) return;
-    section.style.opacity       = '';
-    section.style.pointerEvents = '';
-    section.title = '';
     var badge = document.getElementById('seg-locked-badge');
     if (badge) badge.style.display = 'none';
 }
@@ -1501,7 +1509,7 @@ function downloadAll() {
         ['Parameter', 'Value', 'Unit'],
         ['Microscopy mode',   (typeof microscopy_mode_val  !== 'undefined') ? microscopy_mode_val  : '—', ''],
         ['Threshold filter',  (typeof threshold_name_val   !== 'undefined') ? threshold_name_val   : '—', ''],
-        ['Segmentation method',(typeof use_peak_local_max_val !== 'undefined') ? (use_peak_local_max_val ? 'Peak local max' : 'Iterative watershed') : '—', ''],
+        ['Segmentation method',(typeof seg_method_val !== 'undefined') ? ({'skeleton':'Skeleton-guided','peak_local_max':'Peak local max'}[seg_method_val] || 'Iterative watershed') : '—', ''],
         ['H-maxima seeding',  (typeof use_hmax_val          !== 'undefined') ? (use_hmax_val ? 'Yes' : 'No') : '—', ''],
         ['Bilateral blur',    (typeof bilateral_filter_val  !== 'undefined') ? (bilateral_filter_val ? 'Yes' : 'No') : '—', ''],
         ['Iterations',        (typeof iterations_val       !== 'undefined') ? iterations_val       : '—', ''],

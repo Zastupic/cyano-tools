@@ -102,14 +102,21 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
     <input type="hidden" id="roi_h_pct" name="roi_h_pct" value="0">
     <!-- Hidden threshold selection -->
     <input type="hidden" id="threshold_filter" name="threshold_filter" value="{{ threshold | default('Binary + Otsu') }}">
+    <!-- Hidden image cache key — avoids re-uploading between successive analyses -->
+    <input type="hidden" id="cached_image_key" name="cached_image_key" value="{{ cached_image_key | default('') }}">
+    <input type="hidden" id="cached_image_name" name="cached_image_name" value="{{ image_name | default('') }}">
 
     <!-- ── Select your image ─────────────────────────────────────────────── -->
     <p class="font-weight-bold mb-1">Upload your image</p>
     <div id="upload-drop-zone"
-         style="border:2px dashed #adb5bd; border-radius:8px; padding:1.5em 1em; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; background:#fafbfc; margin-bottom:0.5em;">
-        <div style="font-size:2em; line-height:1;">&#128247;</div>
+         style="border:2px dashed {% if cached_image_key %}#28a745{% else %}#adb5bd{% endif %}; border-radius:8px; padding:1.5em 1em; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; background:{% if cached_image_key %}#f0fff4{% else %}#fafbfc{% endif %}; margin-bottom:0.5em;">
+        <div style="font-size:2em; line-height:1;">{% if cached_image_key %}&#128190;{% else %}&#128247;{% endif %}</div>
         <p style="margin:0.3em 0 0; color:#495057; font-size:0.95em;">
-            Drop your image here, or <strong>click to browse</strong>
+            {% if cached_image_key %}
+                Image <strong>{{ image_name | default('') }}</strong> is cached &mdash; click to replace, or just click <em>Run analysis</em> below
+            {% else %}
+                Drop your image here, or <strong>click to browse</strong>
+            {% endif %}
         </p>
         <p style="margin:0.2em 0 0; font-size:0.78em; color:#adb5bd;">PNG · JPG · TIFF · BMP · GIF</p>
         <p id="drop-zone-filename" style="margin:0.5em 0 0; font-weight:600; font-size:0.9em; color:#17a2b8; display:none;"></p>
@@ -380,6 +387,20 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
                     </div>
                 </div>
 
+                <!-- Max aspect ratio -->
+                <div class="col-12 col-sm-6 mb-2 px-2">
+                    <div style="font-size:0.88em;">Max aspect ratio: <strong><span id="max_aspect_ratio_val">{{ max_aspect_ratio | default(0) }}</span></strong></div>
+                    <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = off; rejects objects wider than this ratio of their shortest side (removes elongated debris)</div>
+                    <div class="d-flex align-items-center" style="gap:3px;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                        <input type="range" min="0" max="10" step="0.5"
+                               value="{{ max_aspect_ratio | default(0) }}"
+                               class="slider" name="max_aspect_ratio" id="max_aspect_ratio_range"
+                               style="flex:1; min-width:0;">
+                        <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">10</small>
+                    </div>
+                </div>
+
                 <!-- Manual threshold override -->
                 <div class="col-12 col-sm-6 mb-2 px-2">
                     <div style="font-size:0.88em;">Manual threshold (0–255): <strong><span id="manual_thresh_val">{{ manual_thresh | default(0) }}</span></strong></div>
@@ -429,26 +450,47 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
                 <div style="font-size:0.88em; font-weight:600; margin-bottom:0.5em; color:#495057;">
                     &#128260; Filament segmentation (watershed) parameters
                     <small class="text-muted font-weight-normal" style="font-size:0.82em;">— only applied during full analysis</small>
-                    <span id="seg-locked-badge" style="display:none; font-size:0.75em; font-weight:normal; color:#6c757d; background:#e9ecef; border-radius:3px; padding:1px 6px; margin-left:6px;">&#128274; used for last analysis — upload new image to change</span>
+                    <span id="seg-locked-badge" style="display:none; font-size:0.75em; font-weight:normal; color:#6c757d; background:#e9ecef; border-radius:3px; padding:1px 6px; margin-left:6px;">&#128293; used for last analysis — change values and click Re-run below</span>
                 </div>
 
                 <!-- Segmentation method selection -->
                 <div class="mb-2 d-flex flex-wrap align-items-center" style="gap:0.25em 1.2em; font-size:0.88em;">
                     <strong>Method:</strong>
                     <div class="custom-control custom-radio d-inline-flex align-items-center">
-                        <input type="radio" class="custom-control-input" id="seg_iterative"
-                               name="use_peak_local_max" value=""
-                               {% if not use_peak_local_max %}checked{% endif %}>
-                        <label class="custom-control-label" for="seg_iterative">
-                            Iterative watershed <span class="text-muted" style="font-size:0.85em;">(original)</span>
+                        <input type="radio" class="custom-control-input" id="seg_plm"
+                               name="seg_method" value="peak_local_max"
+                               {% if seg_method == 'peak_local_max' or not seg_method %}checked{% endif %}>
+                        <label class="custom-control-label" for="seg_plm">
+                            Peak local max <span class="text-muted" style="font-size:0.85em;">(single-pass, faster)</span>
                         </label>
                     </div>
                     <div class="custom-control custom-radio d-inline-flex align-items-center">
-                        <input type="radio" class="custom-control-input" id="seg_plm"
-                               name="use_peak_local_max" value="1"
-                               {% if use_peak_local_max %}checked{% endif %}>
-                        <label class="custom-control-label" for="seg_plm">
-                            Peak local max <span class="text-muted" style="font-size:0.85em;">(single-pass, faster)</span>
+                        <input type="radio" class="custom-control-input" id="seg_skeleton"
+                               name="seg_method" value="skeleton"
+                               {% if seg_method == 'skeleton' %}checked{% endif %}>
+                        <label class="custom-control-label" for="seg_skeleton">
+                            Skeleton-guided <span class="text-muted" style="font-size:0.85em;">(recommended for uniform filaments)</span>
+                        </label>
+                    </div>
+                    <div class="custom-control custom-radio d-inline-flex align-items-center">
+                        <input type="radio" class="custom-control-input" id="seg_iterative"
+                               name="seg_method" value="iterative"
+                               {% if seg_method == 'iterative' %}checked{% endif %}>
+                        <label class="custom-control-label" for="seg_iterative">
+                            Iterative watershed
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Separate touching filaments -->
+                <div class="mb-2">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="separate_filaments_check"
+                               name="separate_filaments" value="1"
+                               {% if separate_filaments %}checked{% endif %}>
+                        <label class="custom-control-label" for="separate_filaments_check" style="font-size:0.88em;">
+                            <strong>Separate touching filaments</strong>
+                            <span class="text-muted" style="font-size:0.88em;">— narrow erosion step to break filament-to-filament contacts before counting</span>
                         </label>
                     </div>
                 </div>
@@ -475,7 +517,7 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
                         <div class="d-flex align-items-center" style="gap:3px;">
                             <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0.1</small>
                             <input type="range" min="0.1" max="2.0" step="0.1"
-                                   value="{{ factor_multiplying | default(1.4) }}"
+                                   value="{{ factor_multiplying | default(0.1) }}"
                                    class="slider" name="factor_1_multiplication_range" id="factor_1_multiplication_range"
                                    style="flex:1; min-width:0;">
                             <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">2.0</small>
@@ -489,7 +531,7 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
                         <div class="d-flex align-items-center" style="gap:3px;">
                             <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
                             <input type="range" min="1" max="100" step="1"
-                                   value="{{ factor_distance_centers | default(28) }}"
+                                   value="{{ factor_distance_centers | default(10) }}"
                                    class="slider" name="factor_2_distance_range" id="factor_2_distance_range"
                                    style="flex:1; min-width:0;">
                             <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">100</small>
@@ -557,12 +599,16 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
 
 </div>
 <!-- Submit button -->
-<div id="submit-box" style="display:none; margin-top:1em;">
+<div id="submit-box" style="display:{% if cached_image_key %}block{% else %}none{% endif %}; margin-top:1em;">
     <button type="submit" class="btn btn-primary">
-        &#128202; Run complete filament analysis
+        &#128202; {% if cached_image_key %}Re-run filament analysis{% else %}Run complete filament analysis{% endif %}
     </button>
     <p class="text-muted" style="font-size:0.81em; margin-top:0.4em; margin-bottom:0;">
-        Runs the full watershed segmentation on the server and generates detailed results with XLSX export and interactive manual correction tools.
+        {% if cached_image_key %}
+            Adjust any parameters above and click to re-run — the image is already cached on the server, no re-upload needed.
+        {% else %}
+            Runs the full watershed segmentation on the server and generates detailed results with XLSX export and interactive manual correction tools.
+        {% endif %}
     </p>
 </div>
 </form>
@@ -590,7 +636,7 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
         var iterations_val = {{ number_of_iterations }};
         var factor_mult_val = {{ factor_multiplying }};
         var factor_dist_val = {{ factor_distance_centers }};
-        var use_peak_local_max_val = {{ 'true' if use_peak_local_max else 'false' }};
+        var seg_method_val = "{{ seg_method }}";
         var use_hmax_val = {{ 'true' if use_hmax else 'false' }};
         var bilateral_filter_val = {{ 'true' if bilateral_filter else 'false' }};
     </script>
@@ -715,13 +761,13 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
                         <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Threshold method</td>
                             <td style="padding:2px 0;">{{ threshold }}</td></tr>
                         <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Segmentation method</td>
-                            <td style="padding:2px 0;">{{ 'Peak local max' if use_peak_local_max else 'Iterative watershed' }}</td></tr>
+                            <td style="padding:2px 0;">{{ {'skeleton':'Skeleton-guided','peak_local_max':'Peak local max'}.get(seg_method,'Iterative watershed') }}</td></tr>
                         <tr><td class="text-muted" style="padding:2px 6px 2px 0;">H-maxima seeding</td>
                             <td style="padding:2px 0;">{{ 'Yes' if use_hmax else 'No' }}</td></tr>
                         <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Bilateral blur</td>
                             <td style="padding:2px 0;">{{ 'Yes' if bilateral_filter else 'No' }}</td></tr>
                         <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Iterations</td>
-                            <td style="padding:2px 0;">{{ number_of_iterations if not use_peak_local_max else '—' }}</td></tr>
+                            <td style="padding:2px 0;">{{ number_of_iterations if seg_method == 'iterative' or not seg_method else '—' }}</td></tr>
                         <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Threshold factor</td>
                             <td style="padding:2px 0;">{{ factor_multiplying }}</td></tr>
                         <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Distance factor</td>
@@ -780,6 +826,8 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
         function restorePreview() {
             previewImg.src = bgImg.src;
             previewBox.style.display = 'block';
+            // Image is cached on server — user can re-run immediately without re-uploading
+            if (submitBox) submitBox.style.display = 'block';
         }
         if (bgImg.complete && bgImg.naturalWidth > 0) restorePreview();
         else bgImg.addEventListener('load', restorePreview);

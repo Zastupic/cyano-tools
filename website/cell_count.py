@@ -1,14 +1,16 @@
 from flask import Blueprint, render_template, request, flash
-import math, os, cv2, base64, io
+import math, os, cv2, base64, io, uuid, glob, time
 import numpy as np
 from PIL import Image as im
-from . import ALLOWED_EXTENSIONS
+from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 
 cell_count = Blueprint('cell_count', __name__)
 
 @cell_count.route('/cell_count', methods=['GET', 'POST'])
 def count_cells():
     if request.method == "POST":
+        cached_image_key       = request.form.get('cached_image_key', '').strip()
+        cached_image_name_form = request.form.get('cached_image_name', '').strip()
         if request.form.get('pixel_size') == '':
             flash('Please enter pixel size', category='error')
         else:
@@ -42,14 +44,41 @@ def count_cells():
             if adaptive_block_size % 2 == 0: adaptive_block_size += 1
             adaptive_c      = int(request.form.get('adaptive_c') or 2)
 
-            if 'selected_images' in request.files:
-                image = request.files['selected_images']
-                image_name = str.lower(os.path.splitext(str(image.filename))[0])
-                image_extension = str.lower(os.path.splitext(str(image.filename))[1])
+            # Determine image source: new upload or server-side cache
+            _new_image = request.files.get('selected_images')
+            _new_image = _new_image if (_new_image and _new_image.filename) else None
+            if _new_image is not None:
+                image_name      = str.lower(os.path.splitext(str(_new_image.filename))[0])
+                image_extension = str.lower(os.path.splitext(str(_new_image.filename))[1])
+            elif cached_image_key:
+                image_name      = cached_image_name_form or 'image'
+                image_extension = os.path.splitext(cached_image_key)[1]
+            else:
+                image_name = image_extension = ''
+
+            if _new_image is not None or cached_image_key:
                 if image_extension in ALLOWED_EXTENSIONS:
-                    # Decode image directly from memory — no temporary files on disk
-                    nparr = np.frombuffer(image.read(), np.uint8)
-                    img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                    if _new_image is not None:
+                        img_bytes = _new_image.read()
+                        nparr = np.frombuffer(img_bytes, np.uint8)
+                        img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        # Cache to disk so the user can re-run without re-uploading
+                        cached_image_key = 'round_cache_' + uuid.uuid4().hex + image_extension
+                        try:
+                            for _old in glob.glob(os.path.join(UPLOAD_FOLDER, 'round_cache_*')):
+                                if time.time() - os.path.getmtime(_old) > 7200:
+                                    os.remove(_old)
+                            with open(os.path.join(UPLOAD_FOLDER, cached_image_key), 'wb') as _cf:
+                                _cf.write(img_bytes)
+                        except Exception:
+                            cached_image_key = ''
+                    else:
+                        _cache_path = os.path.join(UPLOAD_FOLDER, cached_image_key)
+                        if not os.path.exists(_cache_path):
+                            flash('Cached image not found. Please upload again.', category='error')
+                            return render_template("cell_count.html")
+                        nparr = np.frombuffer(open(_cache_path, 'rb').read(), np.uint8)
+                        img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
                     img_blur = cv2.blur(img_orig, (blur_radius, blur_radius))
                     img_grey = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY)
@@ -239,10 +268,14 @@ def count_cells():
                             exclude_stripes=exclude_stripes,
                             adaptive_block_size=adaptive_block_size,
                             adaptive_c=adaptive_c,
+                            cached_image_key=cached_image_key,
+                            cached_image_name=image_name,
                         )
                     else:
                         flash('Pixel size is too low', category='error')
-                    return render_template("cell_count.html")
+                    return render_template("cell_count.html",
+                                          cached_image_key=cached_image_key,
+                                          cached_image_name=image_name)
                 else:
                     flash('Please select an image file.', category='error')
     return render_template("cell_count.html")
