@@ -13,9 +13,11 @@ def count_cells():
         cached_image_name_form = request.form.get('cached_image_name', '').strip()
         if request.form.get('pixel_size') == '':
             flash('Please enter pixel size', category='error')
+        elif not (request.form.get('chamber_depth_range') or '').strip():
+            flash('Please enter chamber depth', category='error')
         else:
             pixel_size_nm = float(str(request.form.get('pixel_size')))
-            depth_um = int(request.form["chamber_depth_range"])
+            depth_um = int(float((request.form.get('chamber_depth_range') or '').strip() or 120))
             minimal_expected_size = float(request.form["minimal_diameter_range"])
             minimum_area = math.pi * ((minimal_expected_size * 1000 / pixel_size_nm) / 2) ** 2
             # Fluorescence: cells bright on dark background (standard thresholding)
