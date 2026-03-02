@@ -13,274 +13,316 @@
 {% endblock %}
 
 {% block content %}
-<!-- Banner -->
-<div id="banner-content">
-    <div class="banner-desktop"><!-- Desktop banner -->
+<!-- Banner with hero overlay -->
+<div id="banner-content" style="position:relative;">
+    <div class="banner-desktop">
         <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
              alt="CyanoTools analytical tools for algae and cyanobacteria"
              style="width: 100%;">
     </div>
-    <div class="banner-mobile"><!-- Mobile banner -->
+    <div class="banner-mobile">
         <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
              alt="CyanoTools mobile banner"
              style="width: 100%;">
     </div>
-</div>
-<br>
-<!-- Introductory Paragraph with Keywords -->
-<div class="container">
-    <p style="font-size: 1.1em;">
-        Welcome to <strong>CyanoTools</strong>, a collection of open-access, web-based tools designed to support 
-        researchers working with <strong>photosynthetic microorganisms, algae, </strong>and <strong>plants</strong>. 
-        The platform focuses on analyzing experimental data from commonly used instruments in photobiology,
-        microbiology and plant physiology. Whether you study <strong>chlorophyll fluorescence
-        (<a href="/OJIP_data_analysis">OJIP curves</a>, 
-        <a href="/light_curves_analysis">Rapid Light Curves</a>, 
-        <a href="/slow_kin_data_analysis">Slow Kinetics</a>), 
-        gas exchange or volatiles production 
-        (using <a href="/MIMS_data_analysis"> Membrane Inlet Mass Spectrometry, MIMS</a>),
-        <a href="/ex_em_spectra_analysis">fluorescence spectroscopy</a>, 
-        microscopy or working with 
-        <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" rel="noopener">photobiorectors</a></strong>, 
-        CyanoTools provides a fast and user-friendly interface to process, visualize, and interpret your measurements.
-        For common questions about supported data formats, usage, or outputs, see the 
-        <a href="#faq"><b>FAQ section</b></a>.
-    </p>
-    <p style="font-size: 1.1em;">
-        The site is developed by the
-        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/" target="_blank" rel="noopener">
-        Department of Adaptive Biotechnologies (DoAB)</a> at the <a href="https://www.czechglobe.cz/en/" target="_blank" rel="noopener">Global Change Research Institute</a> 
-        of the <a href="https://www.avcr.cz/en/" target="_blank" rel="noopener">Czech Academy of Sciences</a>.
-        It is regularly updated with new features and improvements. 
-      For the latest news, visit our <a href="{{ url_for('development_log.run_development_log') }}" target="_blank" rel="noopener">development log</a>.
-    </p>
-    <p style="font-size: 1.1em;"> 
-      Below is an overview of the available tools:
-    </p>
+    <div class="hero-overlay">
+        <h1 class="hero-title">Open-access tools for photosynthesis &amp; microscopy research</h1>
+        <p class="hero-sub">Browser-based data analysis for photosynthesis and microscopy research. Free and open access.
+        <br></p>
+        <a href="#tools" class="btn btn-lg hero-btn">Browse all tools &darr;</a>
+    </div>
 </div>
 <br>
 
-<!-- Features Section Heading -->
-<section class="features">
+<!-- Introductory Paragraph with Keywords -->
+<div class="container">
+    <div style="font-size: 0.875em; font-family: 'Georgia', serif; max-width: 100%; margin: 0.5rem 0 0; color: #333; line-height: 1.65;">
+
+        <p style="margin-bottom: 0.6rem;">
+            <strong>CyanoTools</strong> is an open-access, browser-based platform providing integrated analytical tools
+            for researchers working with photosynthetic organisms — <strong>microalgae, cyanobacteria, and higher plants</strong>.
+            It covers PAM fluorometry, low-temperature spectroscopy, membrane inlet mass spectrometry, and microscopy-based cell analysis —
+            pre-processing raw instrument files for publication-ready results.
+            All tools run entirely in the browser with no installation, account registration, or server-side data retention.
+        </p>
+
+        <p style="margin-bottom: 0.6rem;">
+            <strong>&#128261; PAM fluorometry</strong> — Following complementary fluorescence-based approaches are supported:
+            <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">Rapid Light Curves (RLC)</a> for characterizing
+            the light-response of photosynthesis and deriving apparent electron transport rates (ETR) and non-photochemical quenching (NPQ);
+            <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">OJIP transients</a> for millisecond-resolution assessment
+            of PSII photochemical efficiency and the full electron transport chain via the JIP-test;
+            and <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Kautsky (slow) kinetics</a> for resolving
+            slower regulatory processes including NPQ induction/relaxation and state transitions.
+            Compatible instruments: MULTI-COLOR-PAM, DUAL-PAM (Walz), FluorPen, AquaPen, FL-6000 (PSI).
+        </p>
+
+        <p style="margin-bottom: 0.6rem;">
+            <strong>&#127752; 77K fluorescence spectroscopy</strong> —
+            <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">77K fluorescence spectroscopy</a> enables
+            excitation-emission analysis of pigment-protein complexes at cryogenic temperature, supporting quantification of
+            PSII/PSI antenna stoichiometry and energy-coupling states.
+            Compatible instruments: Jasco spectrofluorometers (<code>.csv</code>).
+        </p>
+
+        <p style="margin-bottom: 0.6rem;">
+            <strong>&#128300; Membrane inlet mass spectrometry (MIMS)</strong> —
+            The <a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">MIMS module</a> processes data from membrane inlet
+            mass spectrometers to visualize and normalize dissolved gas dynamics
+            (O<sub>2</sub>, CO<sub>2</sub>, H<sub>2</sub>, CH<sub>4</sub>, and more).
+            Compatible instruments: Hiden HPR-40, PSI MS GAS.
+        </p>
+
+        <p style="margin-bottom: 0.6rem;">
+            <strong>&#128247; Microscopy &amp; image analysis</strong> — Dedicated tools cover quantitative image-based
+            phenotyping from fluorescence and brightfield microscopy: automated counting of round or filamentous cells,
+            cell diameter estimation, and pixel-intensity profiling of individual pigments within single cells.
+            Analysis handles both regular (spherical) and irregular (filamentous, elongated) morphologies.
+            All standard image formats are supported (PNG, JPG, TIF, BMP).
+        </p>
+
+        <p style="margin-bottom: 0.6rem;">
+            <strong>&#128202; Statistics</strong> — General statistical analysis of experimental datasets,
+            including ANOVA, pairwise comparisons, and boxplot visualisation.
+        </p>
+
+        <p style="margin-bottom: 0.6rem;">
+            <strong>&#129518; Calculators</strong> — Calculators for dissolved O<sub>2</sub> and CO<sub>2</sub> concentration,
+            OD correction and recalculation, culture doubling time, and more.
+        </p>
+
+        <p style="margin-bottom: 0;">
+            Developed at the
+            <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank" rel="noopener">Department of Adaptive Biotechnologies</a>,
+            <a href="https://www.czechglobe.cz/en/" target="_blank" rel="noopener">CzechGlobe</a>, Czech Academy of Sciences.
+            See the <a href="#faq">FAQ</a> for supported file formats.
+        </p>
+
+    </div>
+</div>
+<br>
+
+<!-- Features Section -->
+<section class="features" id="tools">
     <div class="container">
         <h2 class="section-title" style="font-size: 2em;">
             Explore the analytical features of <b><a style="color: #00b894">Cyano</a><a style="color: #525151">Tools</a></b>
         </h2>
-        <div class="features-grid">
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Rapid Light Curves</b></h3> 
-                <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">
-                    <img src="static/images/light_curves_3.jpg" alt="Chlorophyll fluorescence rapid light curves" class="gallery_img_home">
-                </a>
-                <p>Photosynthetic performance under varying light intensities.</p>
-                <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}"><b>Launch tool &rarr;</b></a>
+        <div class="features-all-categories">
+
+            <!-- === PAM Fluorometry (3 tools) === -->
+            <div class="tool-category cat-pam">
+                <div class="features-category-header">&#128261; PAM Fluorometry</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">
+                        <img src="{{ url_for('static', filename='images/light_curves_3.jpg') }}" alt="Rapid light curves" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Rapid Light Curves</b>{% if updated_tools.get('light_curves') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('light_curves') }}">Updated</span>{% endif %}</h3>
+                            <p>Photosynthetic performance under varying light intensities.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">
+                        <img src="{{ url_for('static', filename='images/OJIP_curves_example_4.jpg') }}" alt="OJIP transients" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>OJIP transients</b>{% if updated_tools.get('ojip') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('ojip') }}">Updated</span>{% endif %}</h3>
+                            <p>Efficiency of electron transport within the photosynthetic electron transport chain.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">
+                        <img src="{{ url_for('static', filename='images/Slow_kin_example_4.jpg') }}" alt="Kautsky kinetics" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Kautsky kinetics</b>{% if updated_tools.get('slow_kin') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('slow_kin') }}">Updated</span>{% endif %}</h3>
+                            <p>ETR efficiency, NPQ, state transitions and more.</p>
+                        </div>
+                    </a>
+                </div>
             </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>OJIP transients</b></h3> 
-                <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">
-                    <img src="static/images/OJIP_curves_example_4.jpg" alt="Fast fluorescence transients - OJIP curves" class="gallery_img_home">
-                </a>
-                <p>Efficiency of electron transport within the photosynthetic electron transport chain.</p>
-                <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}"><b>Launch tool &rarr;</b></a>
+
+            <!-- === Row: Spectroscopy (2) + Statistics (2) === -->
+            <div class="tool-category-row">
+
+            <!-- === Spectroscopy & Mass Spectrometry (2 tools) === -->
+            <div class="tool-category cat-spectroscopy">
+                <div class="features-category-header">&#127752; Spectroscopy &amp; Mass Spectrometry</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
+                        <img src="{{ url_for('static', filename='images/Ex_em_spectra_example_4.jpg') }}" alt="77K fluorescence spectroscopy" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>77K fluorescence</b>{% if updated_tools.get('ex_em') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('ex_em') }}">Updated</span>{% endif %}</h3>
+                            <p>Content, ratio and interactions of pigment-protein complexes.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">
+                        <img src="{{ url_for('static', filename='images/MIMS.jpg') }}" alt="MIMS data analysis" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>MIMS</b>{% if updated_tools.get('mims') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('mims') }}">Updated</span>{% endif %}</h3>
+                            <p>Analysis of Membrane Inlet Mass Spectrometry (MIMS) data.</p>
+                        </div>
+                    </a>
+                </div>
             </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Kautsky kinetics</b></h3> 
-                <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">
-                    <img src="static/images/Slow_kin_example_4.jpg" alt="Chlorophyll fluorescence slow kinetics - Kautsky kinetics" class="gallery_img_home">
-                </a>
-                <p>ETR efficiency, NPQ, state transitions and more.</p>
-                <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}"><b>Launch tool &rarr;</b></a>
+
+            <!-- === Statistics & Calculators (2 tools) === -->
+            <div class="tool-category cat-stats">
+                <div class="features-category-header">&#128202; Statistics &amp; Calculators</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="{{ url_for('statistics.statistics_page') }}">
+                        <img src="{{ url_for('static', filename='images/boxplot.jpg') }}" alt="Statistical analysis" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Statistics</b>{% if updated_tools.get('statistics') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('statistics') }}">Updated</span>{% endif %}</h3>
+                            <p>Statistical analysis of experimental data.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('calculators.run_calculators') }}">
+                        <img src="{{ url_for('static', filename='images/calculator_1.JPG') }}" alt="Scientific calculators" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Calculators</b>{% if updated_tools.get('calculators') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('calculators') }}">Updated</span>{% endif %}</h3>
+                            <p>Dissolved O<sub>2</sub>, doubling time, OD correction and recalculation, and more.</p>
+                        </div>
+                    </a>
+                </div>
             </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>77K fluorescence</b></h3> 
-                <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
-                    <img src="static/images/Ex_em_spectra_example_4.jpg" alt="Fluorescence spectroscopy-excitation-emission spectra analysis" class="gallery_img_home">
-                </a>
-                <p>Content, ratio and interactions of pigment-protein complexes.</p>
-                <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}"><b>Launch tool &rarr;</b></a>
+
+            </div><!-- /.tool-category-row (Spectroscopy + Statistics) -->
+
+            <!-- === Image Analysis (6 tools) === -->
+            <div class="tool-category cat-image">
+                <div class="features-category-header">&#128247; Image Analysis</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="{{ url_for('cell_count.count_cells') }}">
+                        <img src="{{ url_for('static', filename='images/cell_counting_counted_1.JPG') }}" alt="Cell counting" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Cell counting</b>{% if updated_tools.get('cell_count') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('cell_count') }}">Updated</span>{% endif %}</h3>
+                            <p>Counting round cells in fluorescence microscopy images.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('cell_count_filament.count_filament_cells') }}">
+                        <img src="{{ url_for('static', filename='images/cells_filamentous_counted_4.jpg') }}" alt="Cell counting filaments" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Cell counting &ndash; filaments</b>{% if updated_tools.get('cell_count_filament') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('cell_count_filament') }}">Updated</span>{% endif %}</h3>
+                            <p>Counting filamentous cells in fluorescence microscopy images.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">
+                        <img src="{{ url_for('static', filename='images/cell_size_analzyed_1.JPG') }}" alt="Cell size" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Cell size</b>{% if updated_tools.get('cell_size') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('cell_size') }}">Updated</span>{% endif %}</h3>
+                            <p>Diameter of round cells by automated detection.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}">
+                        <img src="{{ url_for('static', filename='images/cell_size_filaments_analyzed_1.JPG') }}" alt="Cell size filaments" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Cell size &ndash; filaments</b>{% if updated_tools.get('cell_size_filament') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('cell_size_filament') }}">Updated</span>{% endif %}</h3>
+                            <p>Diameter of filamentous cells by manual detection.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">
+                        <img src="{{ url_for('static', filename='images/pigment_profiles_analzyed_1.JPG') }}" alt="Pigment profiles" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Pigment profiles</b>{% if updated_tools.get('pixel_profiles') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('pixel_profiles') }}">Updated</span>{% endif %}</h3>
+                            <p>Fluorescence intensity of individual pigments in single round cells.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}">
+                        <img src="{{ url_for('static', filename='images/pigment_profiles_filaments_analyzed_1.JPG') }}" alt="Pigment profiles filaments" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Pigment profiles &ndash; filaments</b>{% if updated_tools.get('pixel_profiles_filament') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('pixel_profiles_filament') }}">Updated</span>{% endif %}</h3>
+                            <p>Fluorescence profiles of individual pigments in filamentous cells.</p>
+                        </div>
+                    </a>
+                </div>
             </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>MIMS</b></h3> 
-                <a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">
-                    <img src="static/images/MIMS.jpg" alt="Membrane inlet mass spectrometry-MIMS-data analysis" class="gallery_img_home">
-                </a>
-                <p>Analysis of Membrane Inlet Mass Spetrometry (MIMS) data</p>
-                <a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}"><b>Launch tool &rarr;</b></a>
+
+            <!-- === Row: Photobioreactors (2) + Other Platforms (3) === -->
+            <div class="tool-category-row">
+
+            <!-- === Photobioreactors (2 tools) === -->
+            <div class="tool-category cat-pbr">
+                <div class="features-category-header">&#127981; Photobioreactors</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/PBRtool2_1.jpg') }}" alt="Photobioreactors data analysis" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Photobioreactors</b></h3>
+                            <p>Batch, turbidostat and periodic data analysis for FMT-150 photobioreactors.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/PBRscripts2_1.JPG') }}" alt="PBR control scripts" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>PBR control scripts</b></h3>
+                            <p>FMT-150 control scripts including growth optimizer and PI curves measurement.</p>
+                        </div>
+                    </a>
+                </div>
             </div>
-                        <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Photobioreactors</b></h3> 
-                <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="blank" rel="noopener">
-                    <img src="static/images/PBRtool2_1.jpg" alt="Photobioreactors data analysis" class="gallery_img_home">
-                </a>
-                <p>Tools for photobioreactors <a href="https://photo-bio-reactors.com/" target="blank" rel="noopener">FMT-150</a>:
-                batch, turbidostat and periodic data analysis.</p>
-                <a href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="blank" rel="noopener"><b>Launch tool &rarr;</b></a>
+
+            <!-- === Other Platforms (3 tools) === -->
+            <div class="tool-category cat-other">
+                <div class="features-category-header">&#127760; Other Platforms</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/seacarb2_1.JPG') }}" alt="DIC in seawater" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>DIC in (sea)water</b></h3>
+                            <p>Concentration and ratio of dissolved CO<sub>2</sub>, HCO<sub>3</sub><sup>-</sup>, CO<sub>3</sub><sup>2-</sup>, and more.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="https://www.optimalga.com/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/optimalga_logo_1.jpg') }}" alt="Optimalga platform" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Optimalga</b></h3>
+                            <p>Centralized platform for data collection, transformation and sharing.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/ecyanobacterium_1.JPG') }}" alt="E-cyanobacterium" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>E-cyanobacterium</b></h3>
+                            <p>Sharing, annotation, analysis, and visualisation of models and wet-lab experiments.</p>
+                        </div>
+                    </a>
+                </div>
             </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>PBR control scripts</b></h3> 
-                <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="blank" rel="noopener">    
-                    <img src="static/images/PBRscripts2_1.JPG" alt="Photobioreactors data analysis" class="gallery_img_home">
-                </a>
-                <p>Control scripts for photobioreactors <a href="https://photo-bio-reactors.com/" target="blank" rel="noopener">FMT-150</a>
-                including growth optimizer and PI curves measurement scripts.</p>
-                <a href="https://smartbiotech.github.io/PBR-ControlScripts/" target="blank" rel="noopener"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Statistics</b></h3> 
-                <a href="{{ url_for('statistics.statistics_page') }}">
-                    <img src="static/images/boxplot.jpg" alt="Statistical analysis of experimental data" class="gallery_img_home">
-                </a>
-                <p>Statistical analysis of experimental data</p>
-                <a href="{{ url_for('statistics.statistics_page') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Cell counting</b></h3> 
-                <a href="{{ url_for('cell_count.count_cells') }}">    
-                    <img src="static/images/cell_counting_counted_1.JPG" alt="Cell counter - counting cells from microscopy images" class="gallery_img_home">
-                </a>
-                <p>Counting round cells in fluorescence microscopy images.</p>
-                <a href="{{ url_for('cell_count.count_cells') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Cell size</b></h3> 
-                <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">    
-                    <img src="static/images/cell_size_analzyed_1.JPG" 
-                    alt="Cell size - determining size of cells from microscopy images"
-                    class="gallery_img_home">
-                </a>
-                <p>Diameter of individual round cells determined by automated detection.</p>
-                <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Pigment profiles</b></h3> 
-                <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">    
-                    <img src="static/images/pigment_profiles_analzyed_1.JPG" 
-                    alt="Pigment profiles - determining fluorescence profiles across cell diameter from microscopy image"
-                    class="gallery_img_home">
-                </a>
-                <p>Fluorescence intensity of individual pigments in single round cells</p>
-                <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Cell counting - filaments</b></h3> 
-                <a href="{{ url_for('cell_count_filament.count_filament_cells') }}">    
-                    <img src="static/images/cells_filamentous_counted_4.jpg" 
-                    alt="Cell counter - counting cells within filaments from microscopy images"  
-                    class="gallery_img_home">
-                </a>
-                <p>Counting filamentous cells in fluorescence microscopy images.</p>
-                <a href="{{ url_for('cell_count_filament.count_filament_cells') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Cell size - filaments</b></h3> 
-                <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}">    
-                    <img src="static/images/cell_size_filaments_analyzed_1.JPG" 
-                    alt="Object size - determining size of objects from microscopy images" 
-                    class="gallery_img_home">
-                </a>
-                <p>Diameter of individual round cells determined by manual detection.</p>
-                <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Pigment profiles - filaments</b></h3> 
-                <a href="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}">    
-                    <img src="static/images/pigment_profiles_filaments_analyzed_1.JPG"  
-                    alt="Pigment profiles - determining fluorescence profiles across cell diameter from microscopy image"
-                    class="gallery_img_home">
-                </a>
-                <p>Fluorescence profiles of individual pigments in filamentous cells.</p>
-                <a href="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Calculators</b></h3> 
-                <a href="{{ url_for('calculators.run_calculators') }}">    
-                    <img src="static/images/calculator_1.JPG" 
-                    alt="Scientific calculators for microbiology and photosynthesis research"
-                    class="gallery_img_home">
-                </a>
-                <p>Dissolved O<sub>2</sub>, doubling time, correction and recalculation of optical density, and more.</p>
-                <a href="{{ url_for('calculators.run_calculators') }}"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>DIC in (sea)water</b></h3> 
-                <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" rel="noopener">    
-                    <img src="static/images/seacarb2_1.JPG" 
-                    alt="Calcualtor for chemical distribution of inorganic carbon in sea water"
-                    class="gallery_img_home">
-                </a>
-                <p>Calculating concentration and ratio of dissolved CO<sub>2</sub>, HCO<sub>3</sub><sup>-</sup>, CO<sub>3</sub><sup>2-</sup>, and more.</p>
-                <a href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" rel="noopener"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>Optimalga</b></h3> 
-                <a href="https://www.optimalga.com/" target="_blank" rel="noopener">    
-                    <img src="static/images/optimalga_logo_1.jpg" 
-                    alt="Plaform for experimental data management and computational modelling"
-                    class="gallery_img_home">
-                </a>
-                <p>Centralized platform for data collection, transformation and sharing.</p>
-                <a href="https://www.optimalga.com/" target="_blank" rel="noopener"><b>Launch tool &rarr;</b></a>
-            </div>
-            <div class="feature">
-                <h3 style="font-size: 0.95em;"><b>E-cyanobacterium</b></h3> 
-                <a href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">    
-                    <img src="static/images/ecyanobacterium_1.JPG" class="gallery_img_home">
-                </a>
-                <p>Sharing, annotation, analysis, and visualisation of models and wet-lab experiments.</p>
-                <a href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener"><b>Launch tool &rarr;</b></a>
-            </div>
+
+            </div><!-- /.tool-category-row (Photobioreactors + Other Platforms) -->
+
         </div>
-    </div> 
+    </div>
 </section>
 <br>
 
 <!-- Key Benefits Section -->
 <section class="features">
     <div class="container">
-        <h2 class="section-title" style="font-size: 2em;">
+        <h2 class="section-title" style="font-size: 1.4em;">
             Why use <a style="color: #00b894"><b>Cyano</b><b style="color: #525151">Tools</b></a>?
         </h2>
-        <div class="features-grid">
-            <div class="feature-no-background">
-                <div class="feature-icon">🎯</div>
-                <h3 style="font-size: 1.5em;">Research-Focused</h3>
-                <p>Tools are tailored for cyanobacterial and algal biology, reflecting widely used methods of Chl <i>a</i> fluorescence, microscopy or spectrofluorometry.</p>
-            </div>
-            <div class="feature-no-background">
-                <div class="feature-icon">🚀</div>
-                <h3 style="font-size: 1.5em;">Fast Processing</h3>
-                <p>Optimized algorithms deliver fast, real-time analysis of complex data — no delays, even with large input files.</p>
-            </div>
-            <div class="feature-no-background">
-                <div class="feature-icon">📚</div>
-                <h3 style="font-size: 1.5em;">Educational Value</h3>
-                <p>The tools include explanations, equations, and definitions of key parameters — making them ideal for educational purpose.</p>
-            </div>
-            <div class="feature-no-background">
-                <div class="feature-icon">🔒</div>
-                <h3 style="font-size: 1.5em;">Secure & Private</h3>
-                <p>Input files are either processed entirely within the browser session or temporarily uploaded to the server for analysis. 
-                In both cases, data remains confidential and secure — it is never tracked, retained, or shared.</p>
-            </div>
-            <div class="feature-no-background">
-                <div class="feature-icon">📥</div>
-                <h3 style="font-size: 1.5em;">Batch processing</h3>
-                <p>The tools support batch processing of multiple files with results downloadable in a summary .xlsx  file.</p>
-            </div>
-            <div class="feature-no-background">
-                <div class="feature-icon">📱</div>
-                <h3 style="font-size: 1.5em;">Cross-Platform</h3>
-                <p>Responsive design adapts to phones, tablets, and desktops. The analysis can be run from lab benches, classrooms, or field sites.</p>
-            </div>
-            <div class="feature-no-background">
-                <div class="feature-icon">🔧</div>
-                <h3 style="font-size: 1.5em;">No Installation</h3>
-                <p>Everything runs in the browser. No software installation or updates needed — just open the site and start analyzing.</p>
-            </div>
-            <div class="feature-no-background">
-                <div class="feature-icon">🌐</div>
-                <h3 style="font-size: 1.5em;">Open and Accessible</h3>
-                <p>Freely available to all users worldwide. Fully transparent tool logic allows reproducibility and validation of results.</p>
+        <div class="why-grid">
+            <div class="why-item">🎯 <strong>Research-focused</strong> — tailored for algal, cyanobacterial and plant biology.</div>
+            <div class="why-item">🚀 <strong>Fast</strong> — real-time analysis, even with large input files.</div>
+            <div class="why-item">📚 <strong>Educational</strong> — built-in equations, explanations and parameter definitions.</div>
+            <div class="why-item">🔒 <strong>Private</strong> — data is never tracked, retained, or shared.</div>
+            <div class="why-item">📥 <strong>Batch processing</strong> — analyze multiple files; download results as .xlsx.</div>
+            <div class="why-item">📱 <strong>Cross-platform</strong> — works on phones, tablets and desktops.</div>
+            <div class="why-item">🔧 <strong>No installation</strong> — runs entirely in the browser.</div>
+            <div class="why-item">🌐 <strong>Open access</strong> — free worldwide, transparent analysis logic.</div>
+        </div>
+    </div>
+</section>
+
+<br>
+
+<!-- Citation Box -->
+<section class="features">
+    <div class="container">
+        <h2 id="cite" class="section-title" style="font-size: 1.5em; margin-bottom: 0.6rem;">How to Cite <a style="color: #00b894"><b>Cyano</b><b style="color: #525151">Tools</b></h2>
+        <div class="citation-box" style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+            <p id="citation-text" class="citation-text">CyanoTools – a web-based toolkit for cyanobacteria, algae, and plants research. Available at: https://tools-py.e-cyanobacterium.org</p>
+            <div style="flex-shrink:0;">
+                <button class="btn btn-sm citation-copy-btn" onclick="copyCitation()" title="Copy citation"><i class="fa fa-copy"></i></button>
+                <span id="citation-copied" style="display:none; margin-left:0.3rem; font-size:0.85rem;">Copied!</span>
             </div>
         </div>
     </div>
@@ -290,7 +332,7 @@
 <!-- FAQ section-->
 <section class="features">
   <div class="container">
-    <h2 id="faq" class="section-title" style="font-size: 1.5em;">
+    <h2 id="faq" class="section-title" style="font-size: 1.5em; margin-bottom: 0.6rem;">
         FAQ
     </h2>
     <div id="faqAccordion" class="accordion">
@@ -303,19 +345,19 @@
         <div id="faq1" class="collapse" aria-labelledby="faq1-heading" data-parent="#faqAccordion">
           <div class="card-body">
             <u>CyanoTools supports data analysis from a the following instruments and file formats:</u>
-            <br><strong>Chlorophyll fluorescence</strong>: 
-            <br>- <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener">MULTI-COLOR-PAM</a>, 
+            <br><strong>Chlorophyll fluorescence</strong>:
+            <br>- <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener">MULTI-COLOR-PAM</a>,
             <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener">DUAL-PAM</a>: <code>.csv</code> files
             <br>- <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener">FluorPen</a>,
             <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener">AquaPen</a>,
             <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" rel="noopener">FL 6000</a>: <code>.txt</code> files
-            <br><strong>Spectrofluorometry</strong>: 
+            <br><strong>Spectrofluorometry</strong>:
             <br>- <a href="https://jascoinc.com/products/spectroscopy/fluorometer/spectrofluorometer-models/" target="_blank" rel="noopener">Jasco spectrofluorometers</a>: <code>.csv</code> files
-            <br><strong>MIMS</strong>: 
+            <br><strong>MIMS</strong>:
             <br>- <a href="https://www.hidenanalytical.com/products/gas-analysis/hpr-40-dsa/" target="_blank" rel="noopener">Hiden HPR-40</a>: <code>.csv</code> files
             <br>- <a href="https://mims.psi.cz/products/mass-spectrometer-ms-gas/" target="_blank" rel="noopener">MS GAS</a>: <code>.asc</code> files
-            <br><strong>Photobioreactors</strong>: 
-            <br>- <a href="https://photo-bio-reactors.com/" target="blank" rel="noopener">FMT-150</a>: <code>.xlsx</code> files
+            <br><strong>Photobioreactors</strong>:
+            <br>- <a href="https://photo-bio-reactors.com/" target="_blank" rel="noopener">FMT-150</a>: <code>.xlsx</code> files
             <br>
             <strong>Microscopy/image analysis</strong>:
             <br>- <code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.tif</code>, <code>.bmp</code>, <code>.gif</code> files
@@ -334,33 +376,33 @@
             <u>CyanoTools supports the following types of data analysis:</u>
             <br>
             <strong>Chlorophyll fluorescence</strong>:
-            <br> 
-            - For details on <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">Rapid light curves</a>,
-            <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">OJIP transients</a>, 
-            <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Slow (Kautsky) kinetics</a>, 
-            please see the individual tools with detailed explanation. 
             <br>
-            <strong>Spectrofluorometry</strong>: 
+            - For details on <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">Rapid light curves</a>,
+            <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">OJIP transients</a>,
+            <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Slow (Kautsky) kinetics</a>,
+            please see the individual tools with detailed explanation.
+            <br>
+            <strong>Spectrofluorometry</strong>:
             <br>- For details on <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
-            Low temperature (77K) excitation-emission pigment fluorescence spectra</a>, please see the tool with detailed explanation. 
-            <br><strong> Membrane inlet mass spectrometry</strong> (<a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">MIMS</a>): 
-            <br>- Visualize dynamics of dissolved or gaseous-phase analytes (e.g., O<sub>2</sub>, CO<sub>2</sub>, H<sub>2</sub>, CH<sub>4</sub> etc.)  
+            Low temperature (77K) excitation-emission pigment fluorescence spectra</a>, please see the tool with detailed explanation.
+            <br><strong> Membrane inlet mass spectrometry</strong> (<a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">MIMS</a>):
+            <br>- Visualize dynamics of dissolved or gaseous-phase analytes (e.g., O<sub>2</sub>, CO<sub>2</sub>, H<sub>2</sub>, CH<sub>4</sub> etc.)
             <br>- Normalize signals to compensate for MIMS system drift, baseline shift, or external disturbances.
-            <br><strong>Photobioreactors</strong>: 
+            <br><strong>Photobioreactors</strong>:
             <br>- Analyze specific growth rate during batch growth experiments.
             <br>- Analyze specific growth rate in tubidostat experiments. Apply statistical methods to identify fully acclimated (i.e. stable) growth rate under given cultivation conditions.
             <br>- Analyze dynamics in the measured data during periodic experiments (such as diurnal)
-            <br>- Process exported excel files for easier subsequent manipulation 
-            (using <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html" target="blank">Tidy Data</a> R package.) 
+            <br>- Process exported excel files for easier subsequent manipulation
+            (using <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html" target="_blank">Tidy Data</a> R package.)
             <br><strong>Microscopy/image analysis</strong>:
             <br>- Count cells or fluorescence particles on a microscopy image.
             <br>- Identify fluorescence profiles across cells, based on pigment autofluorescence or fluorescence probes.
             <br>- Identify size of cells or object of interest on an image.
-            <br>- Work with both regular and irregular cellular, or object shapes. 
+            <br>- Work with both regular and irregular cellular, or object shapes.
             <br>
             <strong>Complex platforms</strong>:
-            <br>- For details, please visit the <a href="https://www.optimalga.com/" target="blank" rel="noopener">Optimalga</a> 
-            or <a href="https://www.e-cyanobacterium.org/" target="blank" rel="noopener">E-cyanobacterium</a> platforms.
+            <br>- For details, please visit the <a href="https://www.optimalga.com/" target="_blank" rel="noopener">Optimalga</a>
+            or <a href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">E-cyanobacterium</a> platforms.
             <br>
           </div>
         </div>
@@ -388,7 +430,7 @@
         </div>
         <div id="faq4" class="collapse" aria-labelledby="faq4-heading" data-parent="#faqAccordion">
           <div class="card-body">
-            Yes. All tools are fully open-access and can be used without registration or login. 
+            Yes. All tools are fully open-access and can be used without registration or login.
           </div>
         </div>
       </div>
@@ -400,8 +442,8 @@
         </div>
         <div id="faq5" class="collapse" aria-labelledby="faq5-heading" data-parent="#faqAccordion">
           <div class="card-body">
-            Most tools operate entirely within your browser, ensuring that no data is uploaded to the server. 
-            However, some tools require file uploads to our servers for processing; in such cases, the files are stored temporarily 
+            Most tools operate entirely within your browser, ensuring that no data is uploaded to the server.
+            However, some tools require file uploads to our servers for processing; in such cases, the files are stored temporarily
             and automatically deleted shortly after your session ends. We do not retain or access uploaded data beyond what is necessary for immediate analysis.
           </div>
         </div>
@@ -414,7 +456,7 @@
         </div>
         <div id="faq6" class="collapse" aria-labelledby="faq6-heading" data-parent="#faqAccordion">
           <div class="card-body">
-              Yes. The source code is freely accessible on <a href="https://github.com/Zastupic/tools-py.e-cyanobacterium.org" target="blank" rel="noopener">GitHub</a>. Contributions are welcome!
+              Yes. The source code is freely accessible on <a href="https://github.com/Zastupic/tools-py.e-cyanobacterium.org" target="_blank" rel="noopener">GitHub</a>. Contributions are welcome!
           </div>
         </div>
       </div>
@@ -426,11 +468,11 @@
         </div>
         <div id="faq7" class="collapse" aria-labelledby="faq7-heading" data-parent="#faqAccordion">
           <div class="card-body">
-            Yes! Suggestions for new tools, analysis types, or device support are welcome. 
+            Yes! Suggestions for new tools, analysis types, or device support are welcome.
             Feel free to <a href="mailto:zavrel.t@czechglobe.cz">email us</a>.
           </div>
         </div>
-      </div>    
+      </div>
 
       <div class="card">
         <div class="card-header" id="faq8-heading">
@@ -438,7 +480,7 @@
               Where can I find tutorials or help?
           </a>
         </div>
-        <div id="faq8" class="collapse" aria-labelledby="faq10-heading" data-parent="#faqAccordion">
+        <div id="faq8" class="collapse" aria-labelledby="faq8-heading" data-parent="#faqAccordion">
           <div class="card-body">
             Each tool comes with detailed usage instructions to guide you through the process.
           </div>
@@ -453,7 +495,8 @@
         <div id="faq9" class="collapse" aria-labelledby="faq9-heading" data-parent="#faqAccordion">
           <div class="card-body">
             To refer to CyanoTools, please use the following citation style: <br>
-            <em>“CyanoTools – a web-based toolkit for on cyanobacteria, algae, and plants research. Available at: https://tools-py.e-cyanobacterium.org”</em>
+            <em>"CyanoTools – a web-based toolkit for cyanobacteria, algae, and plants research. Available at: https://tools-py.e-cyanobacterium.org"</em>
+            <br>Or use the <a href="#cite">citation box</a> above to copy it directly.
           </div>
         </div>
       </div>
@@ -465,38 +508,79 @@
 <!-- About DoAB Section -->
 <section class="features">
     <div class="container">
-        <h2 class="section-title" style="font-size: 1.5em;">
-            About the Department of Adaptive Biotechnologies (DoAB)
-        </h2>
-        <div class="features-grid">
-            <div class="feature">
-                <h3>DoAB home page</h3> 
-                <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/" target="_blank" rel="noopener">    
-                    <img src="static/images/drasov_2_2.JPG" class="gallery_img_home">
+        <h2 class="section-title" style="font-size: 1.3em; margin-bottom: 0.9rem;">About</h2>
+
+        <!-- Facility photo -->
+        <img src="{{ url_for('static', filename='images/drasov_5.JPG') }}"
+             alt="CzechGlobe Drasov research facility"
+             class="about-facility-img">
+
+        <!-- Description -->
+        <p style="max-width: 680px; margin: 0 auto 1.2rem; text-align: center; font-size: 0.95em; color: #444; line-height: 1.6;">
+            Developed at the
+            <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/dep46/" target="_blank" rel="noopener">Department of Adaptive Biotechnologies (DoAB)</a>,
+            <a href="https://www.czechglobe.cz/en/" target="_blank" rel="noopener">CzechGlobe</a>,
+            <a href="https://www.avcr.cz/en/" target="_blank" rel="noopener">Czech Academy of Sciences</a> —
+            focusing on biotechnological applications of photosynthetic microorganisms.
+        </p>
+
+        <!-- Link cards -->
+        <div class="row justify-content-center" style="max-width: 640px; margin: 0 auto;">
+            <div class="col-sm-4 mb-3">
+                <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/dep46/"
+                   target="_blank" rel="noopener" class="about-link-card text-center p-3">
+                    <i class="fa fa-university fa-2x" style="color: var(--color-brand); margin-bottom: 0.45rem; display: block;"></i>
+                    <div style="font-weight: 600; font-size: 0.88em;">DoAB Homepage</div>
+                    <div style="font-size: 0.76em; color: #777; margin-top: 2px;">CzechGlobe &middot; Czech Academy of Sciences</div>
                 </a>
             </div>
-            <div class="feature">
-                <h3>DoAB infrastructure</h3> 
-                <a href="http://www.pracovistedrasov.pano3d.eu/" target="_blank" rel="noopener">    
-                    <img src="http://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png" 
-                    srcset="https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png 400w, 
-                    https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final-300x191.png 300w" class="gallery_img_home">
+            <div class="col-sm-4 mb-3">
+                <a href="https://www.researchgate.net/lab/Jan-Cerveny-Lab"
+                   target="_blank" rel="noopener" class="about-link-card text-center p-3">
+                    <i class="fa fa-researchgate fa-2x" style="color: #00d0af; margin-bottom: 0.45rem; display: block;"></i>
+                    <div style="font-weight: 600; font-size: 0.88em;">ResearchGate</div>
+                    <div style="font-size: 0.76em; color: #777; margin-top: 2px;">Jan Červený Lab &middot; publications</div>
                 </a>
             </div>
-            <div class="feature">
-                <h3>DoAB results</h3> 
-                <a href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank" rel="noopener">    
-                    <img src="static/images/drasov_6.JPG" class="gallery_img_home">
-                </a>
-            </div>
-            <div class="feature">
-                <h3>DoAB social media</h3> 
-                <a href="https://twitter.com/CzechGlobe_DoAB" target="_blank" rel="noopener">    
-                    <img src="static/images/drasov_5.JPG" class="gallery_img_home">
+            <div class="col-sm-4 mb-3">
+                <a href="https://x.com/CzechGlobe_DoAB"
+                   target="_blank" rel="noopener" class="about-link-card text-center p-3">
+                    <i class="fa fa-twitter fa-2x" style="color: #1da1f2; margin-bottom: 0.45rem; display: block;"></i>
+                    <div style="font-weight: 600; font-size: 0.88em;">X (Twitter)</div>
+                    <div style="font-size: 0.76em; color: #777; margin-top: 2px;">@CzechGlobe_DoAB</div>
                 </a>
             </div>
         </div>
+
     </div>
 </section>
-{% endblock %}
 
+<!-- Citation copy JS -->
+<script>
+function copyCitation() {
+    var text = document.getElementById('citation-text').innerText;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(showCopied).catch(fallbackCopy.bind(null, text));
+    } else {
+        fallbackCopy(text);
+    }
+}
+function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showCopied();
+}
+function showCopied() {
+    var el = document.getElementById('citation-copied');
+    el.style.display = 'inline';
+    setTimeout(function() { el.style.display = 'none'; }, 2500);
+}
+$(function() { $('[data-toggle="tooltip"]').tooltip(); });
+</script>
+{% endblock %}

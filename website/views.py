@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
+from .github_updates import get_updated_tools
 import subprocess
 import os
 
@@ -8,7 +9,8 @@ views = Blueprint('views', __name__)
 @views.route('/')
 #@login_required
 def home():
-    return render_template("home.html", user=current_user)
+    updated_tools = get_updated_tools()
+    return render_template("home.html", user=current_user, updated_tools=updated_tools)
 
 @views.route('/deploy', methods=['POST'])
 def deploy():
