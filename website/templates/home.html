@@ -75,19 +75,22 @@
 
         <p style="margin-bottom: 0.6rem;">
             <strong>&#128247; Microscopy &amp; image analysis</strong> — Dedicated tools cover quantitative image-based
-            phenotyping from fluorescence and brightfield microscopy: automated counting of round or filamentous cells,
-            cell diameter estimation, and pixel-intensity profiling of individual pigments within single cells.
+            phenotyping from fluorescence and brightfield microscopy:
+            <a href="{{ url_for('cell_count.count_cells') }}">automated counting of round</a> or
+            <a href="{{ url_for('cell_count_filament.count_filament_cells') }}">filamentous cells</a>,
+            <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">cell diameter estimation</a>,
+            and <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">pixel-intensity profiling of individual pigments within single cells</a>.
             Analysis handles both regular (spherical) and irregular (filamentous, elongated) morphologies.
             All standard image formats are supported (PNG, JPG, TIF, BMP).
         </p>
 
         <p style="margin-bottom: 0.6rem;">
-            <strong>&#128202; Statistics</strong> — General statistical analysis of experimental datasets,
+            <strong>&#128202; Statistics</strong> — General <a href="{{ url_for('statistics.statistics_page') }}">statistical analysis</a> of experimental datasets,
             including ANOVA, pairwise comparisons, and boxplot visualisation.
         </p>
 
         <p style="margin-bottom: 0.6rem;">
-            <strong>&#129518; Calculators</strong> — Calculators for dissolved O<sub>2</sub> and CO<sub>2</sub> concentration,
+            <strong>&#129518; Calculators</strong> — <a href="{{ url_for('calculators.run_calculators') }}">Calculators</a> for dissolved O<sub>2</sub> and CO<sub>2</sub> concentration,
             OD correction and recalculation, culture doubling time, and more.
         </p>
 
