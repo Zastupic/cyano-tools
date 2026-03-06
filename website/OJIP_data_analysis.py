@@ -235,12 +235,12 @@ def _calc_areas_fm_timing(Summary_file, data_cols, FJ_idx, FI_idx, ms_factor,
         y = Summary_file.iloc[:, i]
         FM_raw = y.iloc[:Fm_idx].max()
 
-        aoj.append(max(x.iloc[:FJ_idx]) * FM_raw - np.trapezoid(y.iloc[:FJ_idx], x.iloc[:FJ_idx]))
+        aoj.append(max(x.iloc[:FJ_idx]) * FM_raw - np.trapz(y.iloc[:FJ_idx], x.iloc[:FJ_idx]))
         aji.append((max(x.iloc[FJ_idx:FI_idx]) - min(x.iloc[FJ_idx:FI_idx])) * FM_raw
-                   - np.trapezoid(y.iloc[FJ_idx:FI_idx], x.iloc[FJ_idx:FI_idx]))
+                   - np.trapz(y.iloc[FJ_idx:FI_idx], x.iloc[FJ_idx:FI_idx]))
         aip.append((max(x.iloc[FI_idx:Fm_idx]) - min(x.iloc[FI_idx:Fm_idx])) * FM_raw
-                   - np.trapezoid(y.iloc[FI_idx:Fm_idx], x.iloc[FI_idx:Fm_idx]))
-        aop.append(max(x.iloc[:Fm_idx]) * FM_raw - np.trapezoid(y.iloc[:Fm_idx], x.iloc[:Fm_idx]))
+                   - np.trapz(y.iloc[FI_idx:Fm_idx], x.iloc[FI_idx:Fm_idx]))
+        aop.append(max(x.iloc[:Fm_idx]) * FM_raw - np.trapz(y.iloc[:Fm_idx], x.iloc[:Fm_idx]))
 
     return (pd.Series(aoj, index=data_cols), pd.Series(aji, index=data_cols),
             pd.Series(aip, index=data_cols), pd.Series(aop, index=data_cols),
