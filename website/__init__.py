@@ -15,7 +15,7 @@ ALLOWED_EXTENSIONS = set(['.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.gi
 images = UploadSet('images', IMAGES)
 
 
-def _start_upload_cleanup(folder, max_age_minutes=30, interval_hours=2):
+def _start_upload_cleanup(folder, max_age_minutes=30, interval_hours=1):
     """Daemon thread: every interval_hours, delete files in folder older than max_age_minutes."""
     def _loop():
         while True:
@@ -34,6 +34,8 @@ def _start_upload_cleanup(folder, max_age_minutes=30, interval_hours=2):
 
 def create_app():
     app = Flask(__name__)
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
     app.config['UPLOADED_IMAGES_DEST'] = UPLOAD_FOLDER # if UploadSet ("invoices", INVOICES) --> app.config[UPLOADED_INVOICES_DEST]
     app.config['SECRET_KEY'] = 'TotallySecretKey' 
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}' 
