@@ -64,7 +64,7 @@
                             for characterizing
                             the light-response of photosynthesis and deriving apparent
                             electron transport rates (ETR) and non-photochemical quenching (NPQ);
-                            <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">OJIP transients</a> for millisecond-resolution assessment
+                            <a href="{{ url_for('OJIP_data_analysis.ojip_page') }}">OJIP transients</a> for millisecond-resolution assessment
                             of PSII photochemical efficiency and the full electron transport chain via the JIP-test;
                             and <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Kautsky (slow) kinetics</a> for resolving
                             slower regulatory processes including NPQ induction/relaxation and state transitions.
@@ -142,7 +142,7 @@
                             <p>Photosynthetic performance under varying light intensities.</p>
                         </div>
                     </a>
-                    <a class="feature" href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">
+                    <a class="feature" href="{{ url_for('OJIP_data_analysis.ojip_page') }}">
                         <img src="{{ url_for('static', filename='images/OJIP_curves_example_4.jpg') }}" alt="OJIP transients" class="feature-thumb">
                         <div class="feature-text">
                             <h3><b>OJIP transients</b>{% if updated_tools.get('ojip') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('ojip') }}">Updated</span>{% endif %}</h3>
@@ -367,7 +367,7 @@
           <div class="card-body">
             <u>CyanoTools supports data analysis from a the following instruments and file formats:</u>
             <br><strong>Chlorophyll fluorescence</strong>:
-            <br>- <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener">MULTI-COLOR-PAM</a>,
+            <br>- <a href="https://www.walz.com/products/multi-color-pam-ii/" target="_blank" rel="noopener">MULTI-COLOR-PAM</a>,
             <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener">DUAL-PAM</a>: <code>.csv</code> files
             <br>- <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener">FluorPen</a>,
             <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener">AquaPen</a>,
@@ -399,7 +399,7 @@
             <strong>Chlorophyll fluorescence</strong>:
             <br>
             - For details on <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">Rapid light curves</a>,
-            <a href="{{ url_for('OJIP_data_analysis.analyze_OJIP_curves') }}">OJIP transients</a>,
+            <a href="{{ url_for('OJIP_data_analysis.ojip_page') }}">OJIP transients</a>,
             <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Slow (Kautsky) kinetics</a>,
             please see the individual tools with detailed explanation.
             <br>

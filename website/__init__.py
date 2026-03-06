@@ -6,12 +6,31 @@ from .shared import db
 from os import path
 import hashlib
 from datetime import datetime
+import os, glob, time, threading
 
 DB_NAME = "database.db"
 UPLOAD_FOLDER = 'website/static/uploads/'
 ALLOWED_EXTENSIONS = set(['.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.gif'])
 
 images = UploadSet('images', IMAGES)
+
+
+def _start_upload_cleanup(folder, max_age_minutes=30, interval_hours=2):
+    """Daemon thread: every interval_hours, delete files in folder older than max_age_minutes."""
+    def _loop():
+        while True:
+            time.sleep(interval_hours * 3600)
+            cutoff = time.time() - max_age_minutes * 60
+            for path_ in glob.glob(os.path.join(folder, '*')):
+                try:
+                    if os.path.isfile(path_) and os.path.getmtime(path_) < cutoff:
+                        os.remove(path_)
+                except OSError:
+                    pass
+
+    t = threading.Thread(target=_loop, daemon=True)
+    t.start()
+
 
 def create_app():
     app = Flask(__name__)
@@ -21,6 +40,7 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
     
     # Konfigurace session cookies
+    app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB — allow large OJIP batch uploads
     app.config['SESSION_COOKIE_SAMESITE'] = 'None'    # Použijte 'None' pro třetí strany, 'Strict' pro silné omezení
     app.config['SESSION_COOKIE_SECURE'] = True       # Pouze pro HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True     # Zabrání přístupu JavaScriptem
@@ -123,7 +143,12 @@ def create_app():
         return User.query.get(int(id))
 
     #### UPLOADING IMAGE ####
-    configure_uploads(app, images)  
+    configure_uploads(app, images)
+
+    # Start background cleanup only in the real worker process, not in the
+    # Werkzeug reloader watcher (which would otherwise start two threads).
+    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        _start_upload_cleanup(UPLOAD_FOLDER, max_age_minutes=30, interval_hours=2)
 
     return app
 

@@ -1721,12 +1721,20 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
             if (val === "") {
                 obj[h] = "N/A";
             } else {
-                // Remove text from values intended to be numeric (e.g. "0.04 h-1" -> "0.04")
-                let cleanVal = val.replace(/[^-0-9.]/g, '');
-                if (cleanVal !== "" && !isNaN(cleanVal)) {
-                    obj[h] = parseFloat(cleanVal);
+                // Try plain numeric first
+                const asNum = parseFloat(val);
+                if (!isNaN(asNum) && String(val).trim() !== '') {
+                    // Plain number (possibly with trailing whitespace)
+                    obj[h] = asNum;
                 } else {
-                    obj[h] = val; // Keep as string for Factors
+                    // Strip trailing unit suffixes only when the value STARTS with a digit
+                    // (e.g. "0.04 h⁻¹" → 0.04), but NOT for strings like "AT_High_CO2"
+                    const numMatch = val.match(/^([+-]?\d[\d.]*(?:[eE][+-]?\d+)?)/);
+                    if (numMatch && !isNaN(parseFloat(numMatch[1]))) {
+                        obj[h] = parseFloat(numMatch[1]);
+                    } else {
+                        obj[h] = val; // Keep as string for Factors
+                    }
                 }
             }
         });
@@ -2376,8 +2384,8 @@ function renderAnovaBarChart(containerId, letterGroups, res) {
     const letters = letterGroups.map(g => g.letter);
     const n = groups.length;
 
-    // Color bars with a spectral-like hue spread
-    const colors = groups.map((_, i) => `hsl(${Math.round(i / Math.max(n - 1, 1) * 260 + 20)}, 65%, 55%)`);
+    // All bars use the same colour
+    const colors = groups.map(() => 'hsl(210, 65%, 55%)');
 
     const trace = {
         x: groups,
@@ -2447,14 +2455,16 @@ function renderPendingAnovaCharts(pane) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Helper: build chart-only HTML for one variable (one tab) ─────────────────
-function buildVariableChartHTML(varResults, varName) {
+function buildVariableChartHTML(varResults, varName, varIdx) {
     let html = '';
     let sliceIdx = 0;
     varResults.forEach(res => {
         const sliceInfo = res.slice_label && res.slice_label !== 'All'
             ? `<span class="badge bg-light text-dark border me-2">${res.slice_label}</span>` : '';
         const sortedGroups = sortLetterGroups(res.letter_groups, 'data_order');
-        const chartId = `anova-bar-${(varName || 'v').replace(/\W/g, '_')}-chart-${sliceIdx++}`;
+        // Use the numeric varIdx (not the variable name) to avoid ID collisions
+        // when different variable names map to the same sanitised string (e.g. φE₀ vs ψE₀)
+        const chartId = `anova-bar-v${varIdx ?? 0}-chart-${sliceIdx++}`;
         if (sortedGroups && sortedGroups.length > 0) {
             const pVal = res.overall_p !== null ? res.overall_p.toFixed(4) : '—';
             const isSig = res.overall_p !== null && res.overall_p < 0.05;
@@ -2775,7 +2785,7 @@ function renderAnovaResults(data) {
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="${varId}_chart" role="tabpanel">
                     <div class="var-chart-content">
-                        ${buildVariableChartHTML(varResults, varName)}
+                        ${buildVariableChartHTML(varResults, varName, idx)}
                     </div>
                 </div>
                 <div class="tab-pane fade" id="${varId}_groups" role="tabpanel">

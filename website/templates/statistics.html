@@ -945,6 +945,27 @@
 <script src="{{url_for('static', filename='js_statistics.js')}}"></script>
 
 <script>
+// ── Auto-load OJIP export from sessionStorage ───────────────────────────
+(function () {
+  const raw = sessionStorage.getItem('ojip_export');
+  if (!raw) return;
+  try {
+    const payload = JSON.parse(raw);
+    sessionStorage.removeItem('ojip_export');
+    // Wait for js_statistics.js to finish initialising before populating
+    window.addEventListener('load', function () {
+      const box = document.getElementById('excelPasteBox');
+      const btn = document.getElementById('processDataBtn');
+      if (!box || !btn) return;
+      box.value = payload.tsv;
+      // Small delay so any statistics.js listeners are ready
+      setTimeout(function () { btn.click(); }, 150);
+      // Scroll to input panel
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  } catch (e) { /* ignore malformed payload */ }
+})();
+
 // Rotate chevrons on Bootstrap 4 accordion open/close
 $(document).ready(function () {
     $('[data-toggle="collapse"]').each(function () {
