@@ -1033,23 +1033,51 @@ function setSpinner(on) {
 function showNoPixelSizeHint() {
     var cv = document.getElementById('live-counted-canvas');
     if (!cv) return;
-    var rect = cv.getBoundingClientRect();
-    var w = Math.max(Math.round(rect.width), 100);
-    var h = Math.max(Math.round(rect.height), 60);
-    cv.width = w;
-    cv.height = h;
+    // Use requestAnimationFrame to avoid forcing layout before styles are ready
+    requestAnimationFrame(function () {
+        var rect = cv.getBoundingClientRect();
+        var w = Math.max(Math.round(rect.width), 100);
+        var h = Math.max(Math.round(rect.height), 60);
+        cv.width = w;
+        cv.height = h;
+        var ctx = cv.getContext('2d');
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#868e96';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('Enter pixel size (nm)', w / 2, h / 2 - 9);
+        ctx.font = '12px sans-serif';
+        ctx.fillText('to see live cell count', w / 2, h / 2 + 9);
+        var hint = document.getElementById('live-pixel-size-hint');
+        if (hint) hint.style.display = 'inline';
+    });
+}
+
+function showZeroCellsHint() {
+    var cv = document.getElementById('live-counted-canvas');
+    if (!cv || cv.width === 0 || cv.height === 0) return;
     var ctx = cv.getContext('2d');
-    ctx.fillStyle = '#f0f0f0';
+    var w = cv.width, h = cv.height;
+    // Semi-transparent overlay on top of the already-painted counted image
+    ctx.fillStyle = 'rgba(255,255,255,0.80)';
     ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#868e96';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText('Enter pixel size (nm)', w / 2, h / 2 - 9);
-    ctx.font = '12px sans-serif';
-    ctx.fillText('to see live cell count', w / 2, h / 2 + 9);
-    var hint = document.getElementById('live-pixel-size-hint');
-    if (hint) hint.style.display = 'inline';
+    ctx.fillStyle = '#856404';
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillText('No cells detected', w / 2, h / 2 - 44);
+    ctx.fillStyle = '#555';
+    ctx.font = '22px sans-serif';
+    var lines = [
+        'Pixel size (nm) may be incorrect for this image.',
+        'Try \u2315 Calculator or \u{1F50D} Detect from image.',
+        'Also check Min cell diameter & threshold method.'
+    ];
+    lines.forEach(function (line, i) {
+        ctx.fillText(line, w / 2, h / 2 - 8 + i * 30);
+    });
 }
 
 /** Auto-run the live count if worker is ready, pixel size is set, and image is loaded. */
@@ -1228,6 +1256,12 @@ function applyWorkerResult(r) {
     setText('live-cell-count', r.count);
     var hint = document.getElementById('live-pixel-size-hint');
     if (hint) hint.style.display = 'none';
+
+    // If 0 cells found but pixel size is set, warn the user the pixel size may be wrong
+    if (r.count === 0) {
+        var ps = parseFloat((document.getElementById('pixel_size') || {}).value);
+        if (isFinite(ps) && ps > 0) showZeroCellsHint();
+    }
 }
 
 function setMultiSpinner(on) {
