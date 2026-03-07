@@ -8,24 +8,25 @@ import json
 from datetime import datetime, timedelta, timezone
 
 GITHUB_REPO = "Zastupic/tools-py.e-cyanobacterium.org"
-BADGE_DAYS  = 60   # badge visible this many days after the last commit to the tool file
+BADGE_DAYS  = 21   # badge visible this many days after the last commit to the tool file
 _CACHE_TTL  = timedelta(hours=6)
 
-# Map home-page tile key → path of the tool's main Python file in the repo
+# Map home-page tile key → list of repo paths to track (badge shows if any was recently committed)
+# Tracks .py (backend logic) and .js (frontend features); .html excluded (minor layout changes too frequent)
 TOOL_FILES = {
-    'light_curves':            'website/light_curves_analysis.py',
-    'ojip':                    'website/OJIP_data_analysis.py',
-    'slow_kin':                'website/slow_kin_data_analysis.py',
-    'ex_em':                   'website/ex_em_spectra_analysis.py',
-    'mims':                    'website/MIMS_data_analysis.py',
-    'statistics':              'website/statistics.py',
-    'calculators':             'website/calculators.py',
-    'cell_count':              'website/cell_count.py',
-    'cell_count_filament':     'website/cell_count_filament.py',
-    'cell_size':               'website/cell_size_round_cells.py',
-    'cell_size_filament':      'website/cell_size_filament.py',
-    'pixel_profiles':          'website/pixel_profiles_round_cells.py',
-    'pixel_profiles_filament': 'website/pixel_profiles_filament.py',
+    'light_curves':            ['website/light_curves_analysis.py',      'website/static/js_light_curves.js'],
+    'ojip':                    ['website/OJIP_data_analysis.py',          'website/static/js_OJIP.js'],
+    'slow_kin':                ['website/slow_kin_data_analysis.py',      'website/static/js_slow_kin_analysis.js'],
+    'ex_em':                   ['website/ex_em_spectra_analysis.py',      'website/static/js_ex_em_spectra_analysis.js'],
+    'mims':                    ['website/MIMS_data_analysis.py',          'website/static/js_MIMS.js'],
+    'statistics':              ['website/statistics.py',                  'website/static/js_statistics.js'],
+    'calculators':             ['website/calculators.py',                 'website/static/js_calculators.js'],
+    'cell_count':              ['website/cell_count.py',                  'website/static/js_cell_count_round_cells.js'],
+    'cell_count_filament':     ['website/cell_count_filament.py',         'website/static/js_cell_count_filament.js'],
+    'cell_size':               ['website/cell_size_round_cells.py',       'website/static/js_cell_size_round_cells.js'],
+    'cell_size_filament':      ['website/cell_size_filament.py',          'website/static/js_cell_size_filament.js'],
+    'pixel_profiles':          ['website/pixel_profiles_round_cells.py',  'website/static/js_pixel_profies_round_cells.js'],
+    'pixel_profiles_filament': ['website/pixel_profiles_filament.py',     'website/static/js_pixel_profies_filaments.js'],
 }
 
 _cache      = {}
@@ -49,20 +50,25 @@ def get_updated_tools():
     cutoff  = now - timedelta(days=BADGE_DAYS)
     headers = {'Accept': 'application/vnd.github.v3+json'}
 
-    for key, path in TOOL_FILES.items():
-        try:
-            params = urllib.parse.urlencode({'path': path, 'per_page': 1})
-            url    = f"https://api.github.com/repos/{GITHUB_REPO}/commits?{params}"
-            req    = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=4) as resp:
-                commits = json.loads(resp.read().decode())
-            if commits:
-                date_str  = commits[0]['commit']['committer']['date']
-                commit_dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                result[key] = commit_dt.strftime('%Y-%m-%d') if commit_dt > cutoff else None
-            else:
-                result[key] = None
-        except Exception:
+    for key, paths in TOOL_FILES.items():
+        latest_dt = None
+        for path in paths:
+            try:
+                params = urllib.parse.urlencode({'path': path, 'per_page': 1})
+                url    = f"https://api.github.com/repos/{GITHUB_REPO}/commits?{params}"
+                req    = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=4) as resp:
+                    commits = json.loads(resp.read().decode())
+                if commits:
+                    date_str  = commits[0]['commit']['committer']['date']
+                    commit_dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                    if latest_dt is None or commit_dt > latest_dt:
+                        latest_dt = commit_dt
+            except Exception:
+                pass
+        if latest_dt and latest_dt > cutoff:
+            result[key] = latest_dt.strftime('%Y-%m-%d')
+        else:
             result[key] = None
 
     _cache      = result
