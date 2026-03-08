@@ -2873,6 +2873,8 @@ function renderAnovaBarChart(containerId, letterGroups, res) {
     const yRange           = computeYRange(letterGroups, rawGroups, s);
     const letterAnnotations = buildPubLetterAnnotations(letterGroups, rawGroups, s);
     const layout = buildPubLayout(res, groups, letterAnnotations, s, yRange);
+    // Restore custom y-axis title if the user previously edited it for this chart
+    if (el.dataset.customYTitle) layout.yaxis.title.text = el.dataset.customYTitle;
     let traces = [];
 
     if (plotType === 'bar') {
@@ -3022,7 +3024,24 @@ function renderAnovaBarChart(containerId, letterGroups, res) {
         });
     }
 
-    Plotly.newPlot(containerId, traces, layout, { responsive: true, displayModeBar: false });
+    Plotly.newPlot(containerId, traces, layout, {
+        responsive: true,
+        displayModeBar: false,
+        edits: { axisTitleText: true },
+    });
+    // Persist custom y-axis title: when the user edits it inline, save to the element so
+    // re-renders (e.g. changing plot style) restore the edited title instead of the variable name.
+    el.on('plotly_relayout', data => {
+        if (data['yaxis.title.text'] !== undefined) {
+            const newTitle = data['yaxis.title.text'];
+            // Clear saved title when the user restores the variable name (or empties it)
+            if (!newTitle || newTitle === (res.variable || '')) {
+                delete el.dataset.customYTitle;
+            } else {
+                el.dataset.customYTitle = newTitle;
+            }
+        }
+    });
 }
 
 // ── Render all pending ANOVA bar charts inside a given pane element ───────────
