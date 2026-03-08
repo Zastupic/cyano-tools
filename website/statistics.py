@@ -811,12 +811,13 @@ def _games_howell(groups_dict):
 
 
 def _group_stats(groups_dict):
-    """Return list of { group, mean, std, n } preserving key order."""
+    """Return list of { group, mean, std, n, values } preserving key order."""
     return [
         {'group': g,
          'mean': float(np.mean(v)),
          'std': float(np.std(v, ddof=1)) if len(v) > 1 else 0.0,
-         'n': int(len(v))}
+         'n': int(len(v)),
+         'values': [float(x) for x in v]}
         for g, v in groups_dict.items()
     ]
 

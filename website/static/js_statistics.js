@@ -20,6 +20,33 @@ let lastTestResults = null;       // Cached after each run-tests call
 let lastOriginalTestResults = null;  // When transforms active: results on original data
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Publication plot settings ─────────────────────────────────────────────────
+const PUB_PALETTES = {
+    okabe:  ['#E69F00','#56B4E9','#009E73','#F0E442','#0072B2','#D55E00','#CC79A7','#999999'],
+    nature: ['#4DBBD5','#E64B35','#00A087','#3C5488','#F39B7F','#8491B4','#91D1C2','#DC0000'],
+    cell:   ['#0099B4','#925E9F','#DA3978','#42B540','#FD9F2C','#AD002A','#00B4EE','#5A5A5A'],
+    gray:   ['#222222','#555555','#888888','#aaaaaa','#444444','#777777','#999999','#333333'],
+    blue:   ['#084594','#2171b5','#4292c6','#6baed6','#9ecae1','#3182bd','#c6dbef','#1261a0'],
+    pastel: ['#FFB347','#87CEEB','#98FB98','#FFB6C1','#DDA0DD','#F0E68C','#B0E0E6','#FFDAB9'],
+};
+const PUB_PLOT_DEFAULTS = {
+    plotType: 'bar', sizePreset: 'single',
+    exportWidth: 85, aspectRatio: 1.5, exportDPI: 300, exportFormat: 'png',
+    fontFamily: 'Arial', axisTitleSize: 12, tickLabelSize: 10, annotationSize: 11, legendSize: 10,
+    showGridY: true, showGridX: false, gridStyle: 'solid', gridColor: '#e0e0e0',
+    tickPosition: 'outside', tickLen: 5, showAxisLine: true,
+    showPlotFrame: false, showPaperBorder: false,
+    yStartZero: false, yHeadroom: 15,
+    colorScheme: 'okabe', fillOpacity: 85, unifyColor: false, unifyFillColor: '#4DBBD5',
+    barBorderColor: '#333333', barBorderWidth: 1,
+    errBarColor: '#333333', errBarThickness: 1.5, errBarCap: 5,
+    pointSymbol: 'circle', pointSize: 7, pointColor: '#333333', pointOpacity: 70, jitter: 20,
+    showLegend: false, legendPosition: 'top-right', legendOrientation: 'v',
+    showLetters: true, letterBold: true, letterOffset: 7, letterPerBar: false, showTestInfo: true, bgColor: '#ffffff',
+};
+let pubPlotSettings = Object.assign({}, PUB_PLOT_DEFAULTS);
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Assumption Scope State ────────────────────────────────────────────────────
 let allScopeResults    = {};   // { scopeKey: { data, originalData } }
 let lastAssumptionScopes = []; // [{ key, label, n, rawData }]
@@ -1836,6 +1863,10 @@ document.getElementById('clearDataBtn').addEventListener('click', function() {
     if (anovaTab) anovaTab.style.display = 'none';
     const exportFullReportBtn = document.getElementById('exportFullReportBtn');
     if (exportFullReportBtn) exportFullReportBtn.style.display = 'none';
+    const exportPubPlotsBtn = document.getElementById('exportPubPlotsBtn');
+    if (exportPubPlotsBtn) exportPubPlotsBtn.style.display = 'none';
+    const pubPlotStyleCard = document.getElementById('pubPlotStyleCard');
+    if (pubPlotStyleCard) pubPlotStyleCard.style.display = 'none';
     const pcaResultsHeader = document.getElementById('pcaResultsHeader');
     if (pcaResultsHeader) pcaResultsHeader.style.display = 'none';
     const transformationPanel = document.getElementById('transformationPanel');
@@ -2207,6 +2238,10 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
     if (anovaResults) anovaResults.innerHTML = '';
     const exportBtn = document.getElementById('exportFullReportBtn');
     if (exportBtn) exportBtn.style.display = 'none';
+    const pubPlotsBtn2 = document.getElementById('exportPubPlotsBtn');
+    if (pubPlotsBtn2) pubPlotsBtn2.style.display = 'none';
+    const pubCard2 = document.getElementById('pubPlotStyleCard');
+    if (pubCard2) pubCard2.style.display = 'none';
     lastAnovaResults = null;
     lastAnovaRawData = null;
     anovaVarSortModes = {};
@@ -2300,6 +2335,10 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
     anovaSpinner.style.display = 'block';
     if (stopBtn) stopBtn.style.display = 'inline-block';
     if (exportBtn) exportBtn.style.display = 'none';
+    const pubPlotsBtn3 = document.getElementById('exportPubPlotsBtn');
+    if (pubPlotsBtn3) pubPlotsBtn3.style.display = 'none';
+    const pubCard3 = document.getElementById('pubPlotStyleCard');
+    if (pubCard3) pubCard3.style.display = 'none';
     lastAnovaRawData = null;
     anovaVarSortModes = {};
 
@@ -2344,8 +2383,12 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
         lastAnovaResults = data;
         lastAnovaRawData = data;
 
-        // Show export button
+        // Show export buttons and pub plot style card
         if (exportBtn) exportBtn.style.display = 'inline-flex';
+        const pubPlotsBtn4 = document.getElementById('exportPubPlotsBtn');
+        if (pubPlotsBtn4) pubPlotsBtn4.style.display = 'inline-flex';
+        const pubCard4 = document.getElementById('pubPlotStyleCard');
+        if (pubCard4) pubCard4.style.display = '';
 
         if (!data.results || data.results.length === 0) {
             anovaResults.innerHTML = `
@@ -2366,9 +2409,427 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
     });
 });
 
-// ── ANOVA Plotly bar chart (mean ± SD with letter annotations) ────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// PUBLICATION PLOT HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── PNG DPI injection helpers ─────────────────────────────────────────────────
+const _CRC32_TABLE = (() => {
+    const t = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+        let c = i;
+        for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        t[i] = c;
+    }
+    return t;
+})();
+function _crc32(data) {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < data.length; i++) c = _CRC32_TABLE[(c ^ data[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+}
 /**
- * Render a mean ± SD bar chart with compact letter display (CLD) above bars.
+ * Inject a pHYs chunk into a base64-encoded PNG so that image viewers
+ * interpret the correct DPI (pixels per inch) instead of defaulting to 96.
+ */
+function injectPngDpi(b64, dpi) {
+    const raw = atob(b64);
+    const src = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) src[i] = raw.charCodeAt(i);
+
+    const ppm = Math.round(dpi / 0.0254); // convert DPI → pixels per metre
+    const typeBytes = new Uint8Array([112, 72, 89, 115]); // 'pHYs'
+    const pdata = new Uint8Array(9);
+    const dv = new DataView(pdata.buffer);
+    dv.setUint32(0, ppm, false); // X density
+    dv.setUint32(4, ppm, false); // Y density
+    pdata[8] = 1;                // unit = metre
+
+    const crcBuf = new Uint8Array(13);
+    crcBuf.set(typeBytes, 0); crcBuf.set(pdata, 4);
+    const crc = _crc32(crcBuf);
+
+    // Assemble 21-byte chunk: 4 len + 4 type + 9 data + 4 CRC
+    const chunk = new Uint8Array(21);
+    chunk[3] = 9; // length field (big-endian; top 3 bytes are 0)
+    chunk.set(typeBytes, 4);
+    chunk.set(pdata, 8);
+    chunk[17] = (crc >>> 24) & 0xFF; chunk[18] = (crc >>> 16) & 0xFF;
+    chunk[19] = (crc >>>  8) & 0xFF; chunk[20] =  crc         & 0xFF;
+
+    // Insert after IHDR chunk (always at byte offset 33 in a valid PNG)
+    const out = new Uint8Array(src.length + 21);
+    out.set(src.slice(0, 33));
+    out.set(chunk, 33);
+    out.set(src.slice(33), 54);
+
+    let s = '';
+    for (let i = 0; i < out.length; i++) s += String.fromCharCode(out[i]);
+    return btoa(s);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Convert #rrggbb hex colour + 0-1 alpha → rgba() string */
+function hexToRgba(hex, alpha) {
+    const h = hex.replace('#','');
+    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    return `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+}
+
+/** Return N fill colours from the current palette */
+function getPubColors(n, scheme, opacityPct) {
+    const pal = PUB_PALETTES[scheme] || PUB_PALETTES.okabe;
+    const a = (opacityPct ?? 85) / 100;
+    return Array.from({length: n}, (_, i) => hexToRgba(pal[i % pal.length], a));
+}
+/** Return N solid (opaque) colours from the current palette */
+function getPubSolidColors(n, scheme) {
+    const pal = PUB_PALETTES[scheme] || PUB_PALETTES.okabe;
+    return Array.from({length: n}, (_, i) => pal[i % pal.length]);
+}
+
+/**
+ * Try to match each letter_group.group name to rows in globalData and return
+ * { groupName: [values...] } or null if matching fails.
+ */
+function extractRawGroupValues(variable, letterGroups) {
+    if (!globalData || !globalData.length || !selectedFactors || !selectedFactors.length) return null;
+    const groupNames = new Set(letterGroups.map(g => g.group));
+    const result = {};
+    letterGroups.forEach(g => { result[g.group] = []; });
+
+    // Single factor: use factor value directly (no join needed)
+    if (selectedFactors.length === 1) {
+        globalData.forEach(row => {
+            const key = String(row[selectedFactors[0]] ?? '');
+            if (Object.prototype.hasOwnProperty.call(result, key)) {
+                const v = parseFloat(row[variable]);
+                if (!isNaN(v)) result[key].push(v);
+            }
+        });
+        // Always return result (even if empty); callers use || [mean] as fallback
+        return result;
+    }
+
+    // Multiple factors: scan all data rows to find which separator the backend used
+    // (two-way/MANOVA/ART/SRH use ' / '; one-factor sliced use ' | '; try all)
+    // First row may not belong to any ANOVA group (excluded for insufficient replicates),
+    // so we must try all rows before giving up.
+    const separators = [' / ', ' | ', ' - ', ' _ ', '_', '|', '-'];
+    let sep = null;
+    outer: for (const s of separators) {
+        for (const row of globalData) {
+            const computed = selectedFactors.map(f => String(row[f] ?? '')).join(s);
+            if (groupNames.has(computed)) { sep = s; break outer; }
+        }
+    }
+    // If separator not found, return empty-arrays object; callers use || [mean] as fallback
+    if (sep === null) return result;
+
+    globalData.forEach(row => {
+        const key = selectedFactors.map(f => String(row[f] ?? '')).join(sep);
+        if (Object.prototype.hasOwnProperty.call(result, key)) {
+            const v = parseFloat(row[variable]);
+            if (!isNaN(v)) result[key].push(v);
+        }
+    });
+    return result;
+}
+
+/** Y ceiling for letter placement — max of (raw values ∪ mean+SD) */
+function calcYCeiling(letterGroups, rawGroups) {
+    let top = -Infinity;
+    letterGroups.forEach(g => {
+        const bar = g.mean + (g.std || 0);
+        if (bar > top) top = bar;
+        if (rawGroups) {
+            (rawGroups[g.group] || []).forEach(v => { if (v > top) top = v; });
+        }
+    });
+    return isFinite(top) ? top : 0;
+}
+
+/** Compute data min (for Y range and letter offset base) */
+function calcYFloor(letterGroups, rawGroups, yStartZero) {
+    if (yStartZero) return 0;
+    let floor = Infinity;
+    letterGroups.forEach(g => {
+        const v = g.mean - (g.std || 0);
+        if (v < floor) floor = v;
+        if (rawGroups) (rawGroups[g.group] || []).forEach(x => { if (x < floor) floor = x; });
+    });
+    return isFinite(floor) ? floor : 0;
+}
+
+/** Return the top Y value for one group (top of error bar, or max raw value) */
+function groupTopY(g, rawGroups) {
+    let top = g.mean + (g.std || 0);
+    if (rawGroups && rawGroups[g.group] && rawGroups[g.group].length) {
+        top = Math.max(top, Math.max(...rawGroups[g.group]));
+    }
+    return top;
+}
+
+/** Return the bottom Y value for one group (bottom of error bar, or min raw value) */
+function groupBottomY(g, rawGroups) {
+    let bot = g.mean - (g.std || 0);
+    if (rawGroups && rawGroups[g.group] && rawGroups[g.group].length) {
+        bot = Math.min(bot, Math.min(...rawGroups[g.group]));
+    }
+    return bot;
+}
+
+/** Compute explicit Y axis range respecting yStartZero + yHeadroom + letter space */
+function computeYRange(letterGroups, rawGroups, s) {
+    const ceil  = calcYCeiling(letterGroups, rawGroups);
+    // Never force yStartZero when any mean is negative — doing so sets floor=0,
+    // making hasNegative=false and minVal=0, which clips negative bars at y=0 and
+    // shows only the positive part of their error bars (appearing as positive values).
+    const anyNegMean = letterGroups.some(g => g.mean < 0);
+    const floor = calcYFloor(letterGroups, rawGroups, s.yStartZero && !anyNegMean);
+    const span  = Math.abs(ceil - floor) || Math.abs(ceil) || 1;
+
+    // allNeg: all bar tops (incl. error bars) are at/below zero.
+    // When true, the user-controlled headroom applies BELOW the minimum instead of above the maximum.
+    const allNeg = ceil <= 0;
+    let topFrac = allNeg ? 0.05 : Math.max(s.yHeadroom / 100, 0.02);
+    let botFrac = allNeg ? Math.max(s.yHeadroom / 100, 0.02) : 0.05;
+
+    if (s.showLetters) {
+        if (allNeg) {
+            // Letters placed below bars; compute required space below floor.
+            if (s.letterPerBar) {
+                const fixedOffset = Math.abs(floor) * (s.letterOffset / 100) + 0.001;
+                const minLetterY  = Math.min(...letterGroups.map(g => groupBottomY(g, rawGroups))) - fixedOffset;
+                const required    = (floor - minLetterY + fixedOffset * 0.3) / span;
+                if (required > botFrac) botFrac = required;
+            } else {
+                const letterFrac = (s.letterOffset / 100) * 1.4;
+                if (letterFrac > botFrac) botFrac = letterFrac;
+            }
+        } else {
+            // Letters placed above bars; compute required space above ceil.
+            if (s.letterPerBar) {
+                const fixedOffset = Math.abs(ceil) * (s.letterOffset / 100) + 0.001;
+                const maxLetterY  = Math.max(...letterGroups.map(g => groupTopY(g, rawGroups))) + fixedOffset;
+                const required    = (maxLetterY + fixedOffset * 0.3 - ceil) / span;
+                if (required > topFrac) topFrac = required;
+            } else {
+                const letterFrac = (s.letterOffset / 100) * 1.4;
+                if (letterFrac > topFrac) topFrac = letterFrac;
+            }
+        }
+    }
+
+    const hasNegative = floor < 0;
+
+    // Floor: always explicit when data has negative values (null is treated as 0 by Plotly)
+    let minVal;
+    if (s.yStartZero && !anyNegMean) {
+        minVal = 0;
+    } else if (hasNegative) {
+        minVal = floor - span * botFrac;
+    } else {
+        minVal = null;                  // positive-only: let Plotly autorange the bottom
+    }
+
+    // Ceiling: when data has negative values the zero baseline must stay in view —
+    // bars in Plotly start at base=0, so if 0 is above the chart range the bars
+    // appear clipped to the top edge.  Guarantee at least 10 % of span above zero.
+    const rawMax = ceil + span * topFrac;
+    const maxVal = hasNegative ? Math.max(rawMax, span * 0.1) : rawMax;
+
+    return { min: minVal, max: maxVal };
+}
+
+/** Build Plotly letter annotations positioned above bars/points (or below for all-negative data) */
+function buildPubLetterAnnotations(letterGroups, rawGroups, s) {
+    if (!s.showLetters) return [];
+    const ceil  = calcYCeiling(letterGroups, rawGroups);
+    const anyNegMean = letterGroups.some(g => g.mean < 0);
+    const floor = calcYFloor(letterGroups, rawGroups, s.yStartZero && !anyNegMean);
+    const span  = Math.abs(ceil - floor) || Math.abs(ceil) || 1;
+
+    // When all bar tops are at/below zero, place letters below the bars instead of above.
+    const allNeg = ceil <= 0;
+
+    const makeAnnotation = (group, y, letter, anchor) => ({
+        x: group, y,
+        text: s.letterBold ? `<b>${letter}</b>` : letter,
+        showarrow: false,
+        font: { size: s.annotationSize, color: '#111', family: s.fontFamily },
+        yanchor: anchor,
+    });
+
+    if (s.letterPerBar) {
+        if (allNeg) {
+            // Each letter below its own bar/whisker/point cloud.
+            const fixedOffset = Math.abs(floor) * (s.letterOffset / 100) + 0.001;
+            return letterGroups.map(g =>
+                makeAnnotation(g.group, groupBottomY(g, rawGroups) - fixedOffset, g.letter, 'top')
+            );
+        } else {
+            // Each letter above its own bar/whisker/point cloud.
+            const fixedOffset = Math.abs(ceil) * (s.letterOffset / 100) + 0.001;
+            return letterGroups.map(g =>
+                makeAnnotation(g.group, groupTopY(g, rawGroups) + fixedOffset, g.letter, 'bottom')
+            );
+        }
+    } else {
+        if (allNeg) {
+            // All letters at the same depth (below the lowest bar).
+            const offset = span * (s.letterOffset / 100) + 0.001;
+            return letterGroups.map(g =>
+                makeAnnotation(g.group, floor - offset, g.letter, 'top')
+            );
+        } else {
+            // All letters at the same height (above the tallest bar).
+            const offset = span * (s.letterOffset / 100) + 0.001;
+            return letterGroups.map(g =>
+                makeAnnotation(g.group, ceil + offset, g.letter, 'bottom')
+            );
+        }
+    }
+}
+
+/** Build the common Plotly layout object from pubPlotSettings.
+ *  yRange: { min: number|null, max: number|null } — pass result of computeYRange() */
+function buildPubLayout(res, groups, extraAnnotations, s, yRange) {
+    const gridDash = s.gridStyle === 'dash' ? 'dash' : s.gridStyle === 'dot' ? 'dot' : 'solid';
+    const showTick = (s.tickPosition !== '' && s.tickPosition != null);
+    const tickDir  = showTick ? (s.tickPosition === 'both' ? 'outside' : s.tickPosition) : '';
+    const mirror   = s.showPlotFrame ? true : false;  // 'true' = line only, no mirrored ticks
+
+    const legendCfg = s.showLegend ? {
+        font: { size: s.legendSize, family: s.fontFamily },
+        orientation: s.legendOrientation,
+        x: s.legendPosition === 'top-left' ? 0.01 : s.legendPosition === 'bottom' ? 0.5 : 0.99,
+        y: s.legendPosition === 'bottom' ? -0.18 : 0.99,
+        xanchor: s.legendPosition === 'top-left' ? 'left' : s.legendPosition === 'bottom' ? 'center' : 'right',
+        yanchor: s.legendPosition === 'bottom' ? 'top' : 'top',
+        bgcolor: 'rgba(255,255,255,0.88)', bordercolor: '#ccc', borderwidth: 1,
+    } : {};
+
+    const overallP = res.overall_p !== null ? res.overall_p.toFixed(4) : '—';
+    const testInfo = `${res.test_used || ''} | p = ${overallP}` +
+        (res.effect_size != null ? ` | ${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}` : '');
+    const infoAnnotation = s.showTestInfo ? [{
+        x: 0, y: 1.04, xref: 'paper', yref: 'paper', text: testInfo,
+        showarrow: false, font: { size: 9, color: '#555', family: s.fontFamily }, xanchor: 'left',
+    }] : [];
+
+    const axisBase = {
+        tickfont: { size: s.tickLabelSize, family: s.fontFamily },
+        showgrid: false,
+        ticks: showTick ? tickDir : '',
+        ticklen: s.tickLen,
+        showline: s.showAxisLine || s.showPlotFrame,
+        linecolor: '#333', linewidth: 1, mirror,
+        gridcolor: s.gridColor, griddash: gridDash,
+    };
+
+    // Y range: explicit when yStartZero or yHeadroom specified
+    const yAxisRange = (yRange && yRange.max != null)
+        ? [yRange.min ?? null, yRange.max]
+        : undefined;
+
+    // Paper border: thin rect shape drawn around the full figure area
+    const paperBorderShapes = s.showPaperBorder ? [{
+        type: 'rect', xref: 'paper', yref: 'paper',
+        x0: 0, y0: 0, x1: 1, y1: 1,
+        line: { color: '#333333', width: 1.5 }, fillcolor: 'rgba(0,0,0,0)', layer: 'above',
+    }] : [];
+
+    return {
+        font: { family: s.fontFamily },
+        xaxis: {
+            ...axisBase,
+            tickangle: groups.length > 6 ? -35 : 0,
+            automargin: true,
+            showgrid: s.showGridX,
+        },
+        yaxis: {
+            ...axisBase,
+            title: { text: res.variable || '', font: { size: s.axisTitleSize, family: s.fontFamily } },
+            zeroline: true, zerolinewidth: 1, zerolinecolor: '#aaa',
+            showgrid: s.showGridY,
+            ...(yAxisRange ? { range: yAxisRange } : {}),
+        },
+        shapes: paperBorderShapes,
+        margin: { t: 34, b: 80, l: 65, r: 20 },
+        bargap: 0.3,
+        showlegend: s.showLegend,
+        legend: legendCfg,
+        annotations: [...(extraAnnotations || []), ...infoAnnotation],
+        autosize: true,
+        plot_bgcolor: s.bgColor,
+        paper_bgcolor: s.bgColor,
+    };
+}
+
+/** Apply the current aspectRatio and sizePreset to all ANOVA chart container dimensions. */
+function applyAspectRatioToCharts() {
+    const ratio = pubPlotSettings.aspectRatio || 1.5;
+    const s = pubPlotSettings;
+    // Map size preset to on-screen width fraction (single=85mm, half=120mm, double=175mm)
+    const presetWidthsMm = { single: 85, half: 120, double: 175 };
+    const maxMm = 175;
+    const widthMm = presetWidthsMm[s.sizePreset] != null
+        ? presetWidthsMm[s.sizePreset]
+        : Math.min(s.exportWidth || maxMm, maxMm);
+    const widthFrac = Math.min(widthMm / maxMm, 1.0);
+    const widthPct = Math.round(widthFrac * 100);
+    // Use the anovaResults wrapper width as reference (always accessible)
+    const wrapper = document.querySelector('#anovaResults .anova-results-wrapper');
+    const refW = wrapper ? wrapper.clientWidth : (document.getElementById('anovaResults') || {clientWidth: 700}).clientWidth;
+    const chartW = Math.max(Math.round((refW || 600) * widthFrac), 200);
+    const newH = Math.max(Math.round(chartW / ratio), 120);
+    document.querySelectorAll('#anovaResults .anova-bar-chart-placeholder').forEach(div => {
+        div.style.width = widthPct + '%';
+        div.style.height = newH + 'px';
+    });
+}
+
+/** Re-render EVERY ANOVA chart across ALL variable tabs with current pubPlotSettings.
+ *  Uses the same temp-show trick as the export handler to handle hidden panes. */
+function reRenderAllAnovaCharts() {
+    // Apply aspect ratio to chart containers first (before Plotly measures them)
+    applyAspectRatioToCharts();
+
+    // Clear rendered markers and purge all Plotly instances
+    document.querySelectorAll('#anovaResults .anova-bar-chart-placeholder').forEach(div => {
+        div.classList.remove('anova-chart-rendered');
+        if (window.Plotly) { try { Plotly.purge(div); } catch(e) {} }
+    });
+
+    // Re-render ALL variable panes — not just the visible one.
+    // Temp-show each outer pane and inner chart sub-tab so Plotly gets a real width.
+    document.querySelectorAll('#anovaResults .anova-var-section').forEach(pane => {
+        const paneHidden = window.getComputedStyle(pane).display === 'none';
+        if (paneHidden) { pane.style.display = 'block'; pane.style.visibility = 'hidden'; }
+
+        const innerChart = pane.querySelector('.tab-pane[id$="_chart"]');
+        let innerHidden = false;
+        if (innerChart) {
+            innerHidden = window.getComputedStyle(innerChart).display === 'none';
+            if (innerHidden) { innerChart.style.display = 'block'; innerChart.style.visibility = 'hidden'; }
+        }
+
+        try { renderPendingAnovaCharts(pane); } catch(e) { console.error('reRender error', e); }
+
+        if (innerChart && innerHidden) { innerChart.style.display = ''; innerChart.style.visibility = ''; }
+        if (paneHidden) { pane.style.display = ''; pane.style.visibility = ''; }
+    });
+
+    // Resize any charts that are now visible so they fill their container correctly
+    document.querySelectorAll('#anovaResults .anova-bar-chart-placeholder.js-plotly-plot').forEach(div => {
+        if (window.Plotly) { try { Plotly.Plots.resize(div); } catch(e) {} }
+    });
+}
+
+// ── ANOVA Plotly chart — publication-quality, multi-type ─────────────────────
+/**
+ * Render an ANOVA chart using pubPlotSettings (bar / dot / box / violin / bar_dot).
  * containerId: id of the target div; letterGroups: [{group,mean,std,n,letter}];
  * res: the full ANOVA result object (for p, test name, variable name).
  */
@@ -2377,60 +2838,191 @@ function renderAnovaBarChart(containerId, letterGroups, res) {
     const el = document.getElementById(containerId);
     if (!el) return;
 
-    const groups = letterGroups.map(g => g.group);
-    const means  = letterGroups.map(g => g.mean);
-    const stds   = letterGroups.map(g => g.std);
-    const ns     = letterGroups.map(g => g.n);
-    const letters = letterGroups.map(g => g.letter);
-    const n = groups.length;
+    const s = pubPlotSettings;
+    const groups  = letterGroups.map(g => g.group);
+    const means   = letterGroups.map(g => g.mean);
+    const stds    = letterGroups.map(g => g.std);
+    const ns      = letterGroups.map(g => g.n);
+    const n       = groups.length;
 
-    // All bars use the same colour
-    const colors = groups.map(() => 'hsl(210, 65%, 55%)');
+    // Unified color: use unifyFillColor picker if set, else first palette color
+    const baseColors     = getPubColors(n, s.colorScheme, s.fillOpacity);
+    const baseSolids     = getPubSolidColors(n, s.colorScheme);
+    const singleFill     = s.unifyColor && s.unifyFillColor
+        ? hexToRgba(s.unifyFillColor, s.fillOpacity / 100)
+        : getPubColors(1, s.colorScheme, s.fillOpacity)[0];
+    const singleSolid    = s.unifyColor && s.unifyFillColor
+        ? s.unifyFillColor
+        : getPubSolidColors(1, s.colorScheme)[0];
+    const colors         = s.unifyColor ? Array(n).fill(singleFill)  : baseColors;
+    const solidColors    = s.unifyColor ? Array(n).fill(singleSolid) : baseSolids;
 
-    const trace = {
-        x: groups,
-        y: means,
-        error_y: { type: 'data', array: stds, visible: true, color: '#555', thickness: 1.5, width: 5 },
-        type: 'bar',
-        marker: { color: colors, line: { color: '#333', width: 0.5 } },
-        hovertemplate: groups.map((g, i) =>
-            `<b>${g}</b><br>Mean: ${means[i].toFixed(4)}<br>SD: ${stds[i].toFixed(4)}<br>N: ${ns[i]}<br>Letter: <b>${letters[i]}</b><extra></extra>`
-        ),
-    };
+    const plotType = s.plotType;
+    // Build rawGroups from embedded values (added by backend to each letter_group entry).
+    // Fall back to extractRawGroupValues for older cached results that lack the values field.
+    let rawGroups = null;
+    if (['box','violin','dot','bar_dot'].includes(plotType)) {
+        const hasEmbedded = letterGroups.every(g => Array.isArray(g.values));
+        if (hasEmbedded) {
+            rawGroups = Object.fromEntries(letterGroups.map(g => [g.group, g.values]));
+        } else {
+            rawGroups = extractRawGroupValues(res.variable, letterGroups) || {};
+        }
+    }
 
-    // Letter annotations positioned just above the top of the error bar
-    const yMax = Math.max(...means.map((m, i) => m + (stds[i] || 0)));
-    const yRange = yMax - Math.min(...means);
-    const offset = (yRange > 0 ? yRange : Math.abs(yMax)) * 0.04 + 0.001;
-    const annotations = letterGroups.map((g, i) => ({
-        x: g.group,
-        y: g.mean + (g.std || 0) + offset,
-        text: `<b>${g.letter}</b>`,
-        showarrow: false,
-        font: { size: 13, color: '#111' },
-        yanchor: 'bottom',
-    }));
+    const yRange           = computeYRange(letterGroups, rawGroups, s);
+    const letterAnnotations = buildPubLetterAnnotations(letterGroups, rawGroups, s);
+    const layout = buildPubLayout(res, groups, letterAnnotations, s, yRange);
+    let traces = [];
 
-    const overallP = res.overall_p !== null ? res.overall_p.toFixed(4) : '—';
-    const testInfo = `${res.test_used || ''} | p = ${overallP}` +
-        (res.effect_size != null ? ` | ${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}` : '');
+    if (plotType === 'bar') {
+        if (s.showLegend) {
+            // Per-group traces so each group gets a named legend entry
+            groups.forEach((group, i) => {
+                traces.push({
+                    x: [group], y: [means[i]],
+                    error_y: { type: 'data', array: [stds[i]], visible: true,
+                        color: s.errBarColor, thickness: s.errBarThickness, width: s.errBarCap },
+                    type: 'bar',
+                    name: group,
+                    marker: { color: colors[i], line: { color: s.barBorderColor, width: s.barBorderWidth } },
+                    showlegend: true,
+                    hovertemplate: `<b>${group}</b><br>Mean: ${means[i].toFixed(4)}<br>SD: ${stds[i].toFixed(4)}<br>N: ${ns[i]}<extra></extra>`,
+                });
+            });
+        } else {
+            traces = [{
+                x: groups, y: means,
+                error_y: { type: 'data', array: stds, visible: true,
+                    color: s.errBarColor, thickness: s.errBarThickness, width: s.errBarCap },
+                type: 'bar',
+                marker: { color: colors, line: { color: s.barBorderColor, width: s.barBorderWidth } },
+                hovertemplate: groups.map((g, i) =>
+                    `<b>${g}</b><br>Mean: ${means[i].toFixed(4)}<br>SD: ${stds[i].toFixed(4)}<br>N: ${ns[i]}<extra></extra>`
+                ),
+                showlegend: false,
+            }];
+        }
 
-    const layout = {
-        xaxis: { tickangle: groups.length > 6 ? -35 : 0, automargin: true },
-        yaxis: { title: res.variable || '', zeroline: true, zerolinewidth: 1, zerolinecolor: '#ccc' },
-        margin: { t: 28, b: 80, l: 60, r: 16 },
-        bargap: 0.3,
-        annotations: [
-            ...annotations,
-            { x: 0, y: 1.04, xref: 'paper', yref: 'paper', text: testInfo,
-              showarrow: false, font: { size: 9, color: '#555' }, xanchor: 'left' }
-        ],
-        autosize: true,
-        plot_bgcolor: 'white',
-        paper_bgcolor: 'white',
-    };
+    } else if (plotType === 'dot') {
+        // Strip chart: use hidden Plotly box to get built-in jitter, overlay mean±SD marker
+        const jitterW = s.jitter / 100;
+        groups.forEach((group, i) => {
+            const raw = rawGroups && rawGroups[group];
+            const vals = (raw && raw.length) ? raw : [];
+            if (vals.length > 0) {
+                // Jittered dots via Plotly box with invisible box
+                traces.push({
+                    type: 'box', name: group,
+                    y: vals,
+                    boxpoints: 'all', jitter: jitterW, pointpos: 0,
+                    fillcolor: 'rgba(0,0,0,0)',
+                    line: { color: 'rgba(0,0,0,0)', width: 0 },
+                    whiskerwidth: 0,
+                    marker: { color: solidColors[i], size: s.pointSize, symbol: s.pointSymbol,
+                              opacity: s.pointOpacity / 100, line: { color: solidColors[i], width: 0.5 } },
+                    showlegend: s.showLegend,
+                    hovertemplate: `<b>${group}</b><br>%{y:.4f}<extra></extra>`,
+                });
+            }
+            // Mean ± SD crossbar always shown (shows in legend only if no raw dots available)
+            traces.push({
+                type: 'scatter', mode: 'markers',
+                name: group,
+                x: [group], y: [means[i]],
+                error_y: { type: 'data', array: [stds[i]], visible: true,
+                    color: s.errBarColor, thickness: s.errBarThickness, width: s.errBarCap },
+                marker: { symbol: 'line-ew', size: 22, color: solidColors[i],
+                          line: { color: solidColors[i], width: 2.5 } },
+                showlegend: s.showLegend && vals.length === 0,
+                hovertemplate: `<b>${group}</b><br>Mean: ${means[i].toFixed(4)}<br>SD: ${stds[i].toFixed(4)}<br>N: ${ns[i]}<extra></extra>`,
+            });
+        });
 
-    Plotly.newPlot(containerId, [trace], layout, { responsive: true, displayModeBar: false });
+    } else if (plotType === 'box') {
+        groups.forEach((group, i) => {
+            const raw = rawGroups && rawGroups[group];
+            const vals = (raw && raw.length) ? raw : [means[i]];
+            traces.push({
+                type: 'box', name: group,
+                y: vals,
+                boxpoints: 'all', jitter: s.jitter / 100, pointpos: 0,
+                marker: { color: solidColors[i], size: s.pointSize, symbol: s.pointSymbol,
+                          opacity: s.pointOpacity / 100 },
+                line: { color: solidColors[i] },
+                fillcolor: colors[i],
+                showlegend: s.showLegend,
+                hovertemplate: `<b>${group}</b><br>%{y:.4f}<extra></extra>`,
+            });
+        });
+
+    } else if (plotType === 'violin') {
+        groups.forEach((group, i) => {
+            const raw = rawGroups && rawGroups[group];
+            const vals = (raw && raw.length) ? raw : [means[i]];
+            traces.push({
+                type: 'violin', name: group,
+                y: vals,
+                box: { visible: true },
+                meanline: { visible: true },
+                points: 'all', jitter: s.jitter / 100, pointpos: 0,
+                marker: { color: solidColors[i], size: s.pointSize, symbol: s.pointSymbol,
+                          opacity: s.pointOpacity / 100 },
+                line: { color: solidColors[i] },
+                fillcolor: colors[i],
+                opacity: s.fillOpacity / 100,
+                showlegend: s.showLegend,
+                hovertemplate: `<b>${group}</b><br>%{y:.4f}<extra></extra>`,
+            });
+        });
+
+    } else if (plotType === 'bar_dot') {
+        // Bars behind — per-group traces when legend needed, single trace otherwise
+        if (s.showLegend) {
+            groups.forEach((group, i) => {
+                traces.push({
+                    x: [group], y: [means[i]],
+                    error_y: { type: 'data', array: [stds[i]], visible: true,
+                        color: s.errBarColor, thickness: s.errBarThickness, width: s.errBarCap },
+                    type: 'bar', name: group,
+                    marker: { color: colors[i], line: { color: s.barBorderColor, width: s.barBorderWidth } },
+                    showlegend: true,
+                    hoverinfo: 'skip',
+                });
+            });
+        } else {
+            traces.push({
+                x: groups, y: means,
+                error_y: { type: 'data', array: stds, visible: true,
+                    color: s.errBarColor, thickness: s.errBarThickness, width: s.errBarCap },
+                type: 'bar',
+                marker: { color: colors, line: { color: s.barBorderColor, width: s.barBorderWidth } },
+                showlegend: false,
+                hoverinfo: 'skip',
+            });
+        }
+        // Individual dots overlaid
+        groups.forEach((group) => {
+            const rawDot = rawGroups && rawGroups[group];
+            const vals = (rawDot && rawDot.length) ? rawDot : [];
+            if (!vals.length) return;
+            traces.push({
+                type: 'box', name: group,
+                y: vals,
+                boxpoints: 'all', jitter: s.jitter / 100, pointpos: 0,
+                fillcolor: 'rgba(0,0,0,0)',
+                line: { color: 'rgba(0,0,0,0)', width: 0 },
+                whiskerwidth: 0,
+                marker: { color: s.pointColor, size: s.pointSize, symbol: s.pointSymbol,
+                          opacity: s.pointOpacity / 100,
+                          line: { color: 'rgba(0,0,0,0.3)', width: 0.5 } },
+                showlegend: false,
+                hovertemplate: `<b>${group}</b><br>%{y:.4f}<extra></extra>`,
+            });
+        });
+    }
+
+    Plotly.newPlot(containerId, traces, layout, { responsive: true, displayModeBar: false });
 }
 
 // ── Render all pending ANOVA bar charts inside a given pane element ───────────
@@ -2975,3 +3567,413 @@ document.addEventListener('click', function(e) {
         btn.classList.add('btn-outline-secondary');
     }
 });
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PUBLICATION PLOT SETTINGS UI + ZIP EXPORT
+// ══════════════════════════════════════════════════════════════════════════════
+
+function initPubPlotSettingsUI() {
+    // ── Load saved settings from localStorage ─────────────────────────────────
+    try {
+        const saved = localStorage.getItem('pubPlotSettings');
+        if (saved) pubPlotSettings = Object.assign({}, PUB_PLOT_DEFAULTS, JSON.parse(saved));
+    } catch(e) {}
+
+    // ── Helper: read all UI controls → pubPlotSettings ───────────────────────
+    function readSettings() {
+        const s = pubPlotSettings;
+        const g  = id => document.getElementById(id);
+        const val = id => { const el = g(id); return el ? el.value : null; };
+        const num = id => { const el = g(id); return el ? parseFloat(el.value) : null; };
+        const nt  = id => { const el = g(id); return el ? parseInt(el.value, 10) : null; };
+        const chk = id => { const el = g(id); return el ? el.checked : false; };
+        const radio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : null; };
+
+        s.plotType      = radio('pubPlotType') || 'bar';
+        s.sizePreset    = val('pubSizePreset') || 'single';
+        // Width from preset or custom input
+        const presetWidths = { single: 85, half: 120, double: 175 };
+        s.exportWidth   = presetWidths[s.sizePreset] ?? (num('pubExportWidth') || 85);
+        // Aspect ratio: from preset or custom number input
+        const ratioPresets = { '16:9': 16/9, '3:2': 1.5, '4:3': 4/3, '1:1': 1, '3:4': 0.75, '2:3': 2/3 };
+        const ratioSel = val('pubAspectRatioPreset') || '3:2';
+        s.aspectRatio   = ratioSel === 'custom'
+            ? (num('pubAspectRatioCustom') || 1.5)
+            : (ratioPresets[ratioSel] ?? 1.5);
+        s.exportDPI     = nt('pubExportDPI') || 300;
+        s.exportFormat  = val('pubExportFormat') || 'png';
+
+        s.fontFamily     = val('pubFontFamily') || 'Arial';
+        s.axisTitleSize  = nt('pubAxisTitleSize') || 12;
+        s.tickLabelSize  = nt('pubTickLabelSize') || 10;
+        s.annotationSize = nt('pubAnnotationSize') || 11;
+        s.legendSize     = nt('pubLegendSize') || 10;
+
+        s.showGridY     = chk('pubGridY');
+        s.showGridX     = chk('pubGridX');
+        s.gridStyle     = val('pubGridStyle') || 'solid';
+        s.gridColor     = val('pubGridColor') || '#e0e0e0';
+        s.tickPosition  = val('pubTickPosition') ?? 'outside';
+        s.tickLen       = nt('pubTickLen') || 5;
+        s.showAxisLine  = chk('pubShowAxisLine');
+        s.showPlotFrame = chk('pubShowPlotFrame');
+        s.showPaperBorder = chk('pubShowPaperBorder');
+
+        s.yStartZero    = chk('pubYStartZero');
+        s.yHeadroom     = nt('pubYHeadroom') ?? 15;
+
+        s.colorScheme    = val('pubColorScheme') || 'okabe';
+        s.fillOpacity    = nt('pubFillOpacity') || 85;
+        s.unifyColor     = chk('pubUnifyColor');
+        s.unifyFillColor = val('pubUnifyFillColor') || '#4DBBD5';
+        s.barBorderColor = val('pubBarBorderColor') || '#333333';
+        s.barBorderWidth = parseFloat(val('pubBarBorderWidth') || '1');
+        s.errBarColor    = val('pubErrBarColor') || '#333333';
+        s.errBarThickness = parseFloat(val('pubErrBarThickness') || '1.5');
+        s.errBarCap      = nt('pubErrBarCap') || 5;
+        s.pointSymbol    = val('pubPointSymbol') || 'circle';
+        s.pointSize      = nt('pubPointSize') || 7;
+        s.pointColor     = val('pubPointColor') || '#333333';
+        s.pointOpacity   = nt('pubPointOpacity') || 70;
+        s.jitter         = nt('pubJitter') || 20;
+
+        s.showLegend        = chk('pubShowLegend');
+        s.legendPosition    = val('pubLegendPosition') || 'top-right';
+        s.legendOrientation = val('pubLegendOrientation') || 'v';
+        s.showLetters       = chk('pubShowLetters');
+        s.letterBold        = chk('pubLetterBold');
+        s.letterOffset      = nt('pubLetterOffset') ?? 7;
+        s.letterPerBar      = chk('pubLetterPerBar');
+        s.showTestInfo      = chk('pubShowTestInfo');
+        s.bgColor           = val('pubBgColor') || '#ffffff';
+    }
+
+    // ── Helper: sync UI controls ← pubPlotSettings ───────────────────────────
+    function syncUI() {
+        const s = pubPlotSettings;
+        const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+        const setChk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = v; };
+        const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+        const typeEl = document.querySelector(`input[name="pubPlotType"][value="${s.plotType}"]`);
+        if (typeEl) {
+            typeEl.checked = true;
+            document.querySelectorAll('#pubPlotTypeGroup label').forEach(l => l.classList.remove('active'));
+            if (typeEl.parentElement && typeEl.parentElement.tagName === 'LABEL') {
+                typeEl.parentElement.classList.add('active');
+            }
+        }
+
+        setVal('pubSizePreset', s.sizePreset);
+        setVal('pubExportWidth', s.exportWidth);
+        setVal('pubExportDPI', s.exportDPI);
+        setVal('pubExportFormat', s.exportFormat);
+        // Show/hide custom width field
+        const cw = document.getElementById('pubCustomWidthWrap');
+        if (cw) cw.style.display = (s.sizePreset === 'custom') ? '' : 'none';
+        // Aspect ratio: find matching preset or fall back to custom
+        const ratioPresets = { '16:9': 16/9, '3:2': 1.5, '4:3': 4/3, '1:1': 1, '3:4': 0.75, '2:3': 2/3 };
+        const matchedKey = Object.keys(ratioPresets).find(k => Math.abs(ratioPresets[k] - s.aspectRatio) < 0.01);
+        setVal('pubAspectRatioPreset', matchedKey || 'custom');
+        const crw = document.getElementById('pubCustomRatioWrap');
+        if (crw) crw.style.display = matchedKey ? 'none' : '';
+        setVal('pubAspectRatioCustom', s.aspectRatio.toFixed(3));
+
+        setVal('pubFontFamily', s.fontFamily);
+        setVal('pubAxisTitleSize', s.axisTitleSize);
+        setVal('pubTickLabelSize', s.tickLabelSize);
+        setVal('pubAnnotationSize', s.annotationSize);
+        setVal('pubLegendSize', s.legendSize);
+
+        setChk('pubGridY', s.showGridY);
+        setChk('pubGridX', s.showGridX);
+        setVal('pubGridStyle', s.gridStyle);
+        setVal('pubGridColor', s.gridColor);
+        setVal('pubTickPosition', s.tickPosition);
+        setVal('pubTickLen', s.tickLen);
+        setChk('pubShowAxisLine', s.showAxisLine);
+        setChk('pubShowPlotFrame', s.showPlotFrame);
+        setChk('pubShowPaperBorder', s.showPaperBorder);
+
+        setChk('pubYStartZero', s.yStartZero);
+        setVal('pubYHeadroom', s.yHeadroom);
+
+        setVal('pubColorScheme', s.colorScheme);
+        setVal('pubFillOpacity', s.fillOpacity);
+        setTxt('pubFillOpacityVal', s.fillOpacity + '%');
+        setChk('pubUnifyColor', s.unifyColor);
+        setVal('pubUnifyFillColor', s.unifyFillColor || '#4DBBD5');
+        const ufcWrap = document.getElementById('pubUnifyFillColorWrap');
+        if (ufcWrap) ufcWrap.style.display = s.unifyColor ? '' : 'none';
+        setVal('pubBarBorderColor', s.barBorderColor);
+        setVal('pubBarBorderWidth', s.barBorderWidth);
+        setTxt('pubBarBorderWidthVal', s.barBorderWidth + 'px');
+        setVal('pubErrBarColor', s.errBarColor);
+        setVal('pubErrBarThickness', s.errBarThickness);
+        setVal('pubErrBarCap', s.errBarCap);
+        setVal('pubPointSymbol', s.pointSymbol);
+        setVal('pubPointSize', s.pointSize);
+        setVal('pubPointColor', s.pointColor);
+        setVal('pubPointOpacity', s.pointOpacity);
+        setTxt('pubPointOpacityVal', s.pointOpacity + '%');
+        setVal('pubJitter', s.jitter);
+        setTxt('pubJitterVal', (s.jitter / 100).toFixed(2));
+
+        setChk('pubShowLegend', s.showLegend);
+        setVal('pubLegendPosition', s.legendPosition);
+        setVal('pubLegendOrientation', s.legendOrientation);
+        setChk('pubShowLetters', s.showLetters);
+        setChk('pubLetterBold', s.letterBold);
+        setChk('pubLetterPerBar', s.letterPerBar);
+        setVal('pubLetterOffset', s.letterOffset);
+        setTxt('pubLetterOffsetVal', s.letterOffset + '%');
+        setChk('pubShowTestInfo', s.showTestInfo);
+        setVal('pubBgColor', s.bgColor);
+    }
+
+    // ── Helper: update live labels for range sliders ──────────────────────────
+    function updateRangeLabels() {
+        const fo = document.getElementById('pubFillOpacity');
+        const fv = document.getElementById('pubFillOpacityVal');
+        if (fo && fv) fv.textContent = fo.value + '%';
+
+        const bw = document.getElementById('pubBarBorderWidth');
+        const bwv = document.getElementById('pubBarBorderWidthVal');
+        if (bw && bwv) bwv.textContent = bw.value + 'px';
+
+        const po = document.getElementById('pubPointOpacity');
+        const pov = document.getElementById('pubPointOpacityVal');
+        if (po && pov) pov.textContent = po.value + '%';
+
+        const jt = document.getElementById('pubJitter');
+        const jtv = document.getElementById('pubJitterVal');
+        if (jt && jtv) jtv.textContent = (parseInt(jt.value, 10) / 100).toFixed(2);
+
+        const lo = document.getElementById('pubLetterOffset');
+        const lov = document.getElementById('pubLetterOffsetVal');
+        if (lo && lov) lov.textContent = lo.value + '%';
+    }
+
+    // ── Helper: update custom-badge visibility ────────────────────────────────
+    function updateBadge() {
+        const badge = document.getElementById('pubPlotActiveBadge');
+        if (!badge) return;
+        const isCustom = Object.keys(PUB_PLOT_DEFAULTS).some(k => pubPlotSettings[k] !== PUB_PLOT_DEFAULTS[k]);
+        badge.style.display = isCustom ? 'inline-block' : 'none';
+    }
+
+    // ── Persist & badge on any change ────────────────────────────────────────
+    let _reRenderDebounceTimer = null;
+    const _pubSpinner = document.getElementById('pubPlotApplySpinner');
+    function _showPubSpinner() { if (_pubSpinner) _pubSpinner.style.display = 'inline-flex'; }
+    function _hidePubSpinner() { if (_pubSpinner) _pubSpinner.style.display = 'none'; }
+
+    function onAnyChange() {
+        updateRangeLabels();
+        // Show/hide custom-width input based on size preset
+        const preset = document.getElementById('pubSizePreset');
+        const cw = document.getElementById('pubCustomWidthWrap');
+        if (preset && cw) cw.style.display = (preset.value === 'custom') ? '' : 'none';
+        // Show/hide custom ratio input based on aspect ratio preset
+        const ratioSel = document.getElementById('pubAspectRatioPreset');
+        const crw = document.getElementById('pubCustomRatioWrap');
+        if (ratioSel && crw) crw.style.display = (ratioSel.value === 'custom') ? '' : 'none';
+        // Show/hide unified fill color picker
+        const ucChk = document.getElementById('pubUnifyColor');
+        const ufcWrapOac = document.getElementById('pubUnifyFillColorWrap');
+        if (ucChk && ufcWrapOac) ufcWrapOac.style.display = ucChk.checked ? '' : 'none';
+        // Read & save
+        readSettings();
+        try { localStorage.setItem('pubPlotSettings', JSON.stringify(pubPlotSettings)); } catch(e) {}
+        updateBadge();
+        // Apply aspect ratio immediately to on-screen chart heights
+        applyAspectRatioToCharts();
+        // Show spinner and debounce re-render
+        _showPubSpinner();
+        clearTimeout(_reRenderDebounceTimer);
+        _reRenderDebounceTimer = setTimeout(() => {
+            // Two rAF so browser paints the spinner before the synchronous render blocks
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                reRenderAllAnovaCharts();
+                _hidePubSpinner();
+            }));
+        }, 500);
+    }
+
+    // Sync chevron rotation for the pub plot card collapse
+    const pubBody = document.getElementById('pubPlotStyleBody');
+    const pubChevron = document.getElementById('pubPlotChevron');
+    if (pubBody && pubChevron) {
+        $(pubBody).on('show.bs.collapse', () => { pubChevron.style.transform = 'rotate(180deg)'; });
+        $(pubBody).on('hide.bs.collapse', () => { pubChevron.style.transform = 'rotate(0deg)'; });
+    }
+
+    // Register listeners on all form controls inside the card
+    const card = document.getElementById('pubPlotStyleCard');
+    if (card) {
+        card.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('change', onAnyChange);
+            if (el.type === 'range') el.addEventListener('input', onAnyChange);
+        });
+        // Bootstrap 4 btn-group-toggle intercepts clicks on labels and may not fire
+        // a 'change' event on the underlying radio input — listen to label clicks too.
+        card.querySelectorAll('.btn-group-toggle label').forEach(label => {
+            label.addEventListener('click', () => setTimeout(onAnyChange, 0));
+        });
+    }
+
+    // Reset button → restore defaults
+    const resetBtn = document.getElementById('resetPubStyleBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            clearTimeout(_reRenderDebounceTimer);
+            pubPlotSettings = Object.assign({}, PUB_PLOT_DEFAULTS);
+            syncUI();
+            updateRangeLabels();
+            updateBadge();
+            try { localStorage.removeItem('pubPlotSettings'); } catch(e) {}
+            _showPubSpinner();
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                reRenderAllAnovaCharts();
+                _hidePubSpinner();
+            }));
+        });
+    }
+
+    // Apply saved settings to UI on load
+    syncUI();
+    updateRangeLabels();
+    updateBadge();
+}
+
+// ── Publication plots ZIP export ──────────────────────────────────────────────
+document.getElementById('exportPubPlotsBtn').addEventListener('click', async function () {
+    if (!lastAnovaResults) return;
+    if (typeof JSZip === 'undefined') { alert('JSZip not loaded — please refresh the page.'); return; }
+
+    const spinner = document.getElementById('pubExportSpinner');
+    const btn = this;
+    btn.disabled = true;
+    if (spinner) spinner.style.display = 'inline-flex';
+
+    try {
+        const s = pubPlotSettings;
+        const presetWidths = { single: 85, half: 120, double: 175 };
+        const widthMm  = presetWidths[s.sizePreset] ?? s.exportWidth;
+        const targetWidthPx = Math.round((widthMm / 25.4) * s.exportDPI);
+        const fmt      = s.exportFormat; // 'png' or 'svg'
+
+        const zip    = new JSZip();
+        const folder = zip.folder('publication_plots');
+
+        // Apply aspect ratio to chart heights first, then force re-render all panes.
+        // Record each chart's on-screen dimensions to preserve ratio + font scale in export.
+        applyAspectRatioToCharts();
+        document.querySelectorAll('#anovaResults .anova-bar-chart-placeholder').forEach(div => {
+            div.classList.remove('anova-chart-rendered');
+            if (window.Plotly) { try { Plotly.purge(div); } catch(e) {} }
+        });
+        const screenDims = new Map(); // div → { w, h }
+        document.querySelectorAll('#anovaResults .anova-var-section').forEach(pane => {
+            const hidden = window.getComputedStyle(pane).display === 'none';
+            if (hidden) { pane.style.display = 'block'; pane.style.visibility = 'hidden'; }
+            const innerChart = pane.querySelector('.tab-pane[id$="_chart"]');
+            let innerHidden = false;
+            if (innerChart) {
+                innerHidden = window.getComputedStyle(innerChart).display === 'none';
+                if (innerHidden) { innerChart.style.display = 'block'; innerChart.style.visibility = 'hidden'; }
+            }
+            renderPendingAnovaCharts(pane);
+            // Capture screen dimensions while pane is visible
+            pane.querySelectorAll('.anova-bar-chart-placeholder.js-plotly-plot').forEach(div => {
+                screenDims.set(div, { w: div.clientWidth || 600, h: div.clientHeight || 380 });
+            });
+            if (innerChart && innerHidden) { innerChart.style.display = ''; innerChart.style.visibility = ''; }
+            if (hidden) { pane.style.display = ''; pane.style.visibility = ''; }
+        });
+
+        const chartDivs = document.querySelectorAll(
+            '#anovaResults .anova-bar-chart-placeholder.js-plotly-plot'
+        );
+
+        let exported = 0;
+        for (const div of chartDivs) {
+            const rawVar = div.getAttribute('data-res-variable') || `plot_${exported}`;
+            let decoded = rawVar;
+            try { decoded = decodeURIComponent(rawVar); } catch(e) {}
+            const safeName = decoded.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
+            const fname = `${String(exported + 1).padStart(2, '0')}_${safeName}.${fmt}`;
+
+            try {
+                // Scale from on-screen size → target print size, preserving all proportions
+                // (aspect ratio, font sizes, margins — everything looks identical to screen, at high-res)
+                const dims  = screenDims.get(div) || { w: 600, h: 380 };
+                const scale = Math.max(targetWidthPx / dims.w, 1);
+                const dataUrl = await Plotly.toImage(div, { format: fmt, width: dims.w, height: dims.h, scale });
+
+                if (fmt === 'svg') {
+                    // Plotly returns SVG as a URL-encoded data URL (not base64)
+                    let svgText;
+                    if (dataUrl.startsWith('data:image/svg+xml;base64,')) {
+                        svgText = atob(dataUrl.replace('data:image/svg+xml;base64,', ''));
+                    } else {
+                        svgText = decodeURIComponent(dataUrl.replace(/^data:image\/svg\+xml,/, ''));
+                    }
+                    folder.file(fname, svgText); // store as plain text (UTF-8)
+                } else {
+                    // PNG: strip prefix, inject pHYs DPI metadata, store as binary
+                    let b64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+                    b64 = injectPngDpi(b64, s.exportDPI);
+                    folder.file(fname, b64, { base64: true });
+                }
+                exported++;
+            } catch(e) { console.warn('Could not export', fname, e); }
+        }
+
+        if (exported === 0) {
+            alert('No charts found to export. Run ANOVA Tests first.');
+            return;
+        }
+
+        // README
+        const readme = [
+            'Publication Plots Export',
+            '========================',
+            `Plot type     : ${s.plotType}`,
+            `Color scheme  : ${s.colorScheme}${s.unifyColor ? ' (unified single color)' : ''}`,
+            `Target width  : ${widthMm} mm  (${targetWidthPx} px at ${s.exportDPI} dpi)`,
+            `Aspect ratio  : ${s.aspectRatio.toFixed(3)} (w/h) — applied to on-screen size before capture`,
+            `Format        : ${fmt.toUpperCase()}`,
+            `Font          : ${s.fontFamily}, axis title ${s.axisTitleSize} pt`,
+            `Y-axis        : ${s.yStartZero ? 'start at 0' : 'auto min'}, ${s.yHeadroom}% headroom`,
+            `Gridlines     : Y=${s.showGridY ? 'on' : 'off'}  X=${s.showGridX ? 'on' : 'off'}  style=${s.gridStyle}`,
+            `Tick marks    : ${s.tickPosition || 'none'}`,
+            `Plot frame    : ${s.showPlotFrame ? 'yes' : 'no'}`,
+            `Letters shown : ${s.showLetters}${s.showLetters ? `, offset ${s.letterOffset}%` : ''}`,
+            '',
+            `Total plots   : ${exported}`,
+            `Exported      : ${new Date().toLocaleString()}`,
+        ].join('\n');
+        zip.file('README.txt', readme);
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url;
+        a.download = 'Publication_Plots.zip';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+    } catch(err) {
+        alert('Export error: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+    }
+});
+
+// Initialise publication plot settings UI on page load
+initPubPlotSettingsUI();

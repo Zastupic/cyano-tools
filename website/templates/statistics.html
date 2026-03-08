@@ -874,6 +874,7 @@
                                 </div>
                                 <br>
 
+
                                 <!-- Sort control removed - now per-variable inside results -->
 
                                 <div class="d-flex flex-wrap mb-4 align-items-center" style="gap: 1.25rem;">
@@ -883,9 +884,374 @@
                                     <button id="stopAnovaBtn" class="btn btn-danger btn-sm" style="display:none;">
                                         <i class="bi bi-stop-fill"></i> Stop
                                     </button>
+                                </div>
+
+                                <!-- ═══ Figure Style & Export Card ═══ -->
+                                <div class="card border-0 shadow-sm mb-3" id="pubPlotStyleCard" style="border:1px solid #c8d8f0 !important; border-left:4px solid #0d6efd !important; display:none;">
+                                    <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between"
+                                         style="background: linear-gradient(to right,#eef2ff,#e4ecf8); cursor:pointer;"
+                                         data-toggle="collapse" data-target="#pubPlotStyleBody"
+                                         aria-expanded="false" aria-controls="pubPlotStyleBody">
+                                        <div>
+                                            <p class="fw-bold mb-0 text-dark" style="font-size:0.85rem;">
+                                                <i class="bi bi-palette2 text-primary me-1"></i> Figure Style &amp; Export
+                                                <span id="pubPlotActiveBadge" class="badge bg-primary ms-1" style="display:none; font-size:0.60rem; vertical-align:middle;">
+                                                    <i class="bi bi-check-circle-fill me-1"></i> Custom
+                                                </span>
+                                            </p>
+                                            <p class="mb-0 mt-1 text-muted" style="font-size:0.70rem;">Configure chart type, colours and axis appearance for publication-quality figure export. Settings are saved automatically.</p>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 ms-3 flex-shrink-0">
+                                            <!-- Inline update indicator — shown while charts are being re-rendered -->
+                                            <span id="pubPlotApplySpinner" style="display:none; align-items:center; gap:0.35rem;
+                                                  font-size:0.75rem; font-weight:600; color:#0d6efd; white-space:nowrap;">
+                                                <span class="spinner-border spinner-border-sm"
+                                                      style="width:0.8rem;height:0.8rem;border-width:0.13em;" role="status"></span>
+                                                Updating&hellip;
+                                            </span>
+                                            <i class="bi bi-chevron-down text-muted" id="pubPlotChevron" style="font-size:1rem; transition:transform 0.2s;"></i>
+                                        </div>
+                                    </div>
+                                    <div id="pubPlotStyleBody" class="collapse">
+                                        <div class="card-body p-3">
+                                            <!-- Sub-tabs -->
+                                            <ul class="nav nav-tabs mb-3" id="pubStyleSubTabs" role="tablist" style="font-size:0.78rem;">
+                                                <li class="nav-item"><a class="nav-link active py-1 px-2" data-toggle="tab" href="#pubTabLayout" role="tab"><i class="bi bi-layout-wtf me-1"></i>Layout &amp; Export</a></li>
+                                                <li class="nav-item"><a class="nav-link py-1 px-2" data-toggle="tab" href="#pubTabTypo" role="tab"><i class="bi bi-type me-1"></i>Typography</a></li>
+                                                <li class="nav-item"><a class="nav-link py-1 px-2" data-toggle="tab" href="#pubTabStyle" role="tab"><i class="bi bi-palette me-1"></i>Colors &amp; Style</a></li>
+                                                <li class="nav-item"><a class="nav-link py-1 px-2" data-toggle="tab" href="#pubTabLegend" role="tab"><i class="bi bi-card-list me-1"></i>Legend &amp; Annotations</a></li>
+                                            </ul>
+                                            <div class="tab-content" id="pubStyleSubTabContent">
+
+                                                <!-- ── Layout & Export tab ── -->
+                                                <div class="tab-pane fade show active" id="pubTabLayout" role="tabpanel">
+                                                    <div class="row g-2" style="font-size:0.78rem;">
+                                                        <div class="col-12">
+                                                            <label class="fw-bold mb-1 d-block">Plot type <span class="text-muted fw-normal">(applied to all ANOVA charts)</span></label>
+                                                            <div class="btn-group btn-group-toggle flex-wrap" data-toggle="buttons" id="pubPlotTypeGroup">
+                                                                <label class="btn btn-outline-primary btn-sm active">
+                                                                    <input type="radio" name="pubPlotType" value="bar" autocomplete="off" checked> Bar
+                                                                </label>
+                                                                <label class="btn btn-outline-primary btn-sm">
+                                                                    <input type="radio" name="pubPlotType" value="dot" autocomplete="off"> Dot
+                                                                </label>
+                                                                <label class="btn btn-outline-primary btn-sm">
+                                                                    <input type="radio" name="pubPlotType" value="box" autocomplete="off"> Box
+                                                                </label>
+                                                                <label class="btn btn-outline-primary btn-sm">
+                                                                    <input type="radio" name="pubPlotType" value="violin" autocomplete="off"> Violin
+                                                                </label>
+                                                                <label class="btn btn-outline-primary btn-sm">
+                                                                    <input type="radio" name="pubPlotType" value="bar_dot" autocomplete="off"> Bar+Dots
+                                                                </label>
+                                                            </div>
+                                                            <small class="text-muted d-block mt-1">Dot / Box / Violin / Bar+Dots show individual data points. Fallback to Bar if raw data cannot be matched.</small>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label class="fw-bold mb-1 d-block">Figure width preset</label>
+                                                            <select class="form-select form-select-sm" id="pubSizePreset">
+                                                                <option value="single">Single column — 85 mm</option>
+                                                                <option value="half">1.5 column — 120 mm</option>
+                                                                <option value="double">Double column — 175 mm</option>
+                                                                <option value="custom">Custom…</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-6 col-md-2" id="pubCustomWidthWrap" style="display:none;">
+                                                            <label class="fw-bold mb-1 d-block">Width (mm)</label>
+                                                            <input type="number" class="form-control form-control-sm" id="pubExportWidth" value="85" min="30" max="300">
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <label class="fw-bold mb-1 d-block">Aspect ratio (w : h)</label>
+                                                            <select class="form-select form-select-sm" id="pubAspectRatioPreset">
+                                                                <option value="16:9">16 : 9 &nbsp;(wide)</option>
+                                                                <option value="3:2" selected>3 : 2 &nbsp;(standard)</option>
+                                                                <option value="4:3">4 : 3 &nbsp;(classic)</option>
+                                                                <option value="1:1">1 : 1 &nbsp;(square)</option>
+                                                                <option value="3:4">3 : 4 &nbsp;(portrait)</option>
+                                                                <option value="2:3">2 : 3 &nbsp;(tall)</option>
+                                                                <option value="custom">Custom…</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-auto" id="pubCustomRatioWrap" style="display:none;">
+                                                            <label class="fw-bold mb-1 d-block">Ratio (w/h)</label>
+                                                            <input type="number" class="form-control form-control-sm" id="pubAspectRatioCustom" value="1.500" min="0.2" max="5" step="0.05" style="width:80px;">
+                                                        </div>
+                                                        <div class="col-6 col-md-2">
+                                                            <label class="fw-bold mb-1 d-block">Resolution</label>
+                                                            <select class="form-select form-select-sm" id="pubExportDPI">
+                                                                <option value="150">150 dpi</option>
+                                                                <option value="300" selected>300 dpi</option>
+                                                                <option value="600">600 dpi</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-6 col-md-2">
+                                                            <label class="fw-bold mb-1 d-block">Format</label>
+                                                            <select class="form-select form-select-sm" id="pubExportFormat">
+                                                                <option value="png" selected>PNG (raster)</option>
+                                                                <option value="svg">SVG (vector)</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Y-axis scaling</strong></div>
+                                                        <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
+                                                            <div class="form-check form-check-inline mb-0">
+                                                                <input class="form-check-input" type="checkbox" id="pubYStartZero">
+                                                                <label class="form-check-label small" for="pubYStartZero">Start at zero</label>
+                                                            </div>
+                                                            <div class="d-flex align-items-center gap-1">
+                                                                <label class="small mb-0" for="pubYHeadroom">Y-axis headroom:</label>
+                                                                <input type="number" class="form-control form-control-sm" id="pubYHeadroom" value="15" min="0" max="100" style="width:62px;">
+                                                                <small class="text-muted">%</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Plot borders</strong></div>
+                                                        <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
+                                                            <div class="form-check form-check-inline mb-0">
+                                                                <input class="form-check-input" type="checkbox" id="pubShowPlotFrame">
+                                                                <label class="form-check-label small" for="pubShowPlotFrame">Plot area frame (box around axes)</label>
+                                                            </div>
+                                                            <div class="form-check form-check-inline mb-0">
+                                                                <input class="form-check-input" type="checkbox" id="pubShowPaperBorder">
+                                                                <label class="form-check-label small" for="pubShowPaperBorder">Figure border</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- ── Typography tab ── -->
+                                                <div class="tab-pane fade" id="pubTabTypo" role="tabpanel">
+                                                    <div class="row g-2" style="font-size:0.78rem;">
+                                                        <div class="col-12 col-md-5">
+                                                            <label class="fw-bold mb-1 d-block">Font family</label>
+                                                            <select class="form-select form-select-sm" id="pubFontFamily">
+                                                                <option value="Arial" selected>Arial</option>
+                                                                <option value="Helvetica">Helvetica</option>
+                                                                <option value="Times New Roman">Times New Roman</option>
+                                                                <option value="Calibri">Calibri</option>
+                                                                <option value="Courier New">Courier New</option>
+                                                                <option value="Verdana">Verdana</option>
+                                                                <option value="Georgia">Georgia</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Font sizes (pt)</strong></div>
+                                                        <div class="col-6 col-md-3">
+                                                            <label class="mb-1 d-block">Axis title</label>
+                                                            <input type="number" class="form-control form-control-sm" id="pubAxisTitleSize" value="12" min="6" max="28">
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <label class="mb-1 d-block">Tick labels</label>
+                                                            <input type="number" class="form-control form-control-sm" id="pubTickLabelSize" value="10" min="5" max="22">
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <label class="mb-1 d-block">Letter annotations</label>
+                                                            <input type="number" class="form-control form-control-sm" id="pubAnnotationSize" value="11" min="5" max="20">
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <label class="mb-1 d-block">Legend</label>
+                                                            <input type="number" class="form-control form-control-sm" id="pubLegendSize" value="10" min="5" max="18">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- ── Colors & Style tab ── -->
+                                                <div class="tab-pane fade" id="pubTabStyle" role="tabpanel">
+                                                    <div class="row g-2 align-items-end" style="font-size:0.78rem;">
+
+                                                        <!-- Color scheme row -->
+                                                        <div class="col-12 col-md-5">
+                                                            <label class="fw-bold mb-1 d-block">Color scheme</label>
+                                                            <select class="form-select form-select-sm" id="pubColorScheme">
+                                                                <option value="okabe" selected>Okabe-Ito (colorblind-safe)</option>
+                                                                <option value="nature">Nature palette</option>
+                                                                <option value="cell">Cell palette</option>
+                                                                <option value="gray">Grayscale</option>
+                                                                <option value="blue">Blue scale</option>
+                                                                <option value="pastel">Pastel</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <label class="fw-bold mb-1 d-block">Fill opacity</label>
+                                                            <div class="d-flex align-items-center gap-1">
+                                                                <input type="range" class="form-range" id="pubFillOpacity" min="10" max="100" value="85" style="width:80px;">
+                                                                <small id="pubFillOpacityVal" class="text-muted">85%</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-auto d-flex align-items-center gap-2 pb-1">
+                                                            <div class="form-check form-check-inline mb-0">
+                                                                <input class="form-check-input" type="checkbox" id="pubUnifyColor">
+                                                                <label class="form-check-label small" for="pubUnifyColor">Single color for all groups</label>
+                                                            </div>
+                                                            <div id="pubUnifyFillColorWrap" style="display:none;">
+                                                                <input type="color" class="form-control form-control-sm form-control-color" id="pubUnifyFillColor" value="#4DBBD5" style="width:36px;" title="Unified fill color">
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Bar border -->
+                                                        <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Bar border &amp; Error bars</strong></div>
+                                                        <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
+                                                            <div>
+                                                                <label class="small mb-0">Border color &amp; width</label>
+                                                                <div class="d-flex align-items-center gap-1 mt-1">
+                                                                    <input type="color" class="form-control form-control-sm form-control-color" id="pubBarBorderColor" value="#333333" style="width:36px;">
+                                                                    <input type="range" class="form-range" id="pubBarBorderWidth" min="0" max="3" step="0.5" value="1" style="width:70px;">
+                                                                    <small id="pubBarBorderWidthVal" class="text-muted">1px</small>
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <label class="small mb-0">Error bar color / thickness / cap</label>
+                                                                <div class="d-flex align-items-center gap-1 mt-1">
+                                                                    <input type="color" class="form-control form-control-sm form-control-color" id="pubErrBarColor" value="#333333" style="width:36px;" title="Error bar color">
+                                                                    <input type="number" class="form-control form-control-sm" id="pubErrBarThickness" value="1.5" min="0.5" max="5" step="0.5" style="width:55px;" title="Thickness">
+                                                                    <input type="number" class="form-control form-control-sm" id="pubErrBarCap" value="5" min="0" max="20" style="width:50px;" title="Cap width">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Gridlines -->
+                                                        <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Gridlines</strong></div>
+                                                        <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
+                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubGridY" checked><label class="form-check-label small" for="pubGridY">Y grid</label></div>
+                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubGridX"><label class="form-check-label small" for="pubGridX">X grid</label></div>
+                                                            <select class="form-select form-select-sm" id="pubGridStyle" style="width:auto;">
+                                                                <option value="solid" selected>Solid</option>
+                                                                <option value="dash">Dashed</option>
+                                                                <option value="dot">Dotted</option>
+                                                            </select>
+                                                            <input type="color" class="form-control form-control-sm form-control-color" id="pubGridColor" value="#e0e0e0" style="width:36px;" title="Grid color">
+                                                        </div>
+
+                                                        <!-- Tick marks -->
+                                                        <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Tick marks &amp; Axes</strong></div>
+                                                        <div class="col-auto d-flex align-items-center gap-2 flex-wrap">
+                                                            <select class="form-select form-select-sm" id="pubTickPosition" style="width:auto;">
+                                                                <option value="outside" selected>Outside</option>
+                                                                <option value="inside">Inside</option>
+                                                                <option value="both">Both sides</option>
+                                                                <option value="">None</option>
+                                                            </select>
+                                                            <div class="d-flex align-items-center gap-1">
+                                                                <small>Length:</small>
+                                                                <input type="number" class="form-control form-control-sm" id="pubTickLen" value="5" min="2" max="15" style="width:58px;">
+                                                            </div>
+                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubShowAxisLine" checked><label class="form-check-label small" for="pubShowAxisLine">Show axis lines</label></div>
+                                                        </div>
+
+                                                        <!-- Data points -->
+                                                        <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Data points — Dot / Box / Violin / Bar+Dots</strong></div>
+                                                        <div class="col-auto d-flex align-items-center gap-2 flex-wrap">
+                                                            <div>
+                                                                <label class="form-label small mb-0">Symbol</label>
+                                                                <select class="form-select form-select-sm" id="pubPointSymbol">
+                                                                    <option value="circle" selected>● Circle</option>
+                                                                    <option value="square">■ Square</option>
+                                                                    <option value="diamond">◆ Diamond</option>
+                                                                    <option value="triangle-up">▲ Triangle ▲</option>
+                                                                    <option value="triangle-down">▼ Triangle ▼</option>
+                                                                    <option value="cross">+ Cross</option>
+                                                                    <option value="x">× X mark</option>
+                                                                </select>
+                                                            </div>
+                                                            <div><label class="form-label small mb-0">Size</label><input type="number" class="form-control form-control-sm" id="pubPointSize" value="7" min="2" max="24" style="width:58px;"></div>
+                                                            <div><label class="form-label small mb-0">Color</label><input type="color" class="form-control form-control-sm form-control-color" id="pubPointColor" value="#333333" style="width:36px;"></div>
+                                                            <div>
+                                                                <label class="form-label small mb-0">Opacity</label>
+                                                                <div class="d-flex align-items-center gap-1">
+                                                                    <input type="range" class="form-range" id="pubPointOpacity" min="10" max="100" value="70" style="width:70px;">
+                                                                    <small id="pubPointOpacityVal" class="text-muted">70%</small>
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <label class="form-label small mb-0">Jitter</label>
+                                                                <div class="d-flex align-items-center gap-1">
+                                                                    <input type="range" class="form-range" id="pubJitter" min="0" max="50" value="20" style="width:70px;">
+                                                                    <small id="pubJitterVal" class="text-muted">0.20</small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- ── Legend & Annotations tab ── -->
+                                                <div class="tab-pane fade" id="pubTabLegend" role="tabpanel">
+                                                    <div class="row g-2" style="font-size:0.78rem;">
+
+                                                        <!-- Legend section -->
+                                                        <div class="col-12">
+                                                            <strong style="font-size:0.74rem;">Legend</strong>
+                                                        </div>
+                                                        <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
+                                                            <div class="form-check form-check-inline mb-0">
+                                                                <input class="form-check-input" type="checkbox" id="pubShowLegend">
+                                                                <label class="form-check-label small fw-bold" for="pubShowLegend">Show legend</label>
+                                                            </div>
+                                                            <div>
+                                                                <label class="small mb-0">Position</label>
+                                                                <select class="form-select form-select-sm" id="pubLegendPosition" style="width:auto;">
+                                                                    <option value="top-right" selected>Top right</option>
+                                                                    <option value="top-left">Top left</option>
+                                                                    <option value="bottom">Bottom center</option>
+                                                                </select>
+                                                            </div>
+                                                            <div>
+                                                                <label class="small mb-0">Orientation</label>
+                                                                <select class="form-select form-select-sm" id="pubLegendOrientation" style="width:auto;">
+                                                                    <option value="v" selected>Vertical</option>
+                                                                    <option value="h">Horizontal</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Significance letters section -->
+                                                        <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Significance Letters</strong></div>
+                                                        <div class="col-12 d-flex gap-3 flex-wrap">
+                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubShowLetters" checked><label class="form-check-label small" for="pubShowLetters">Show letter annotations</label></div>
+                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubLetterBold" checked><label class="form-check-label small" for="pubLetterBold">Bold</label></div>
+                                                            <div class="form-check form-check-inline mb-0">
+                                                                <input class="form-check-input" type="checkbox" id="pubLetterPerBar">
+                                                                <label class="form-check-label small" for="pubLetterPerBar">Per-bar position <span class="text-muted">(above each bar separately; offset = % of max)</span></label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-auto d-flex align-items-center gap-2">
+                                                            <label class="small mb-0" for="pubLetterOffset">Letter spacing above data:</label>
+                                                            <input type="range" class="form-range" id="pubLetterOffset" min="1" max="30" value="7" style="width:90px;">
+                                                            <small id="pubLetterOffsetVal" class="text-muted">7%</small>
+                                                        </div>
+
+                                                        <!-- Test info & background -->
+                                                        <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Other annotations</strong></div>
+                                                        <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
+                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubShowTestInfo" checked><label class="form-check-label small" for="pubShowTestInfo">Show test info (test, p, effect size)</label></div>
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <label class="small mb-0">Background color</label>
+                                                                <input type="color" class="form-control form-control-sm form-control-color" id="pubBgColor" value="#ffffff" style="width:36px;" title="Plot background color">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div><!-- /tab-content -->
+
+                                            <div class="d-flex flex-wrap gap-2 mt-3 pt-2 border-top">
+                                                <button id="resetPubStyleBtn" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="bi bi-x-circle me-1"></i> Reset Defaults
+                                                </button>
+                                            </div>
+
+                                        </div><!-- /card-body -->
+                                    </div><!-- /collapse -->
+                                </div>
+                                <!-- ══════════════════════════════════ -->
+
+                                <div class="mt-3 mb-4 d-flex flex-wrap align-items-center" style="gap: 0.75rem;">
+                                    <button id="exportPubPlotsBtn" class="btn btn-outline-primary btn-sm" style="display: none;">
+                                        <i class="bi bi-file-zip"></i> Export Plots in Publication Quality
+                                    </button>
                                     <button id="exportFullReportBtn" class="btn btn-outline-success btn-sm" style="display: none;">
                                         <i class="bi bi-file-earmark-excel"></i> Export Full Report
                                     </button>
+                                    <span id="pubExportSpinner" style="display:none;">
+                                        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                                        <span class="small text-muted ms-1">Exporting plots…</span>
+                                    </span>
                                     <span id="exportSpinner" style="display:none;">
                                         <span class="spinner-border spinner-border-sm text-success" role="status"></span>
                                         <span class="small text-muted ms-1">Generating report…</span>
@@ -941,6 +1307,7 @@
         </div>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script src="{{url_for('static', filename='js_statistics.js')}}"></script>
 
@@ -1008,4 +1375,5 @@ $(document).ready(function () {
         </div>
     </div>
 </div>
+
 {% endblock %}
