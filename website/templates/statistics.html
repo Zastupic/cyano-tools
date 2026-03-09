@@ -929,6 +929,9 @@
                                                         <div class="col-12">
                                                             <label class="fw-bold mb-1 d-block">Plot type <span class="text-muted fw-normal">(applied to all ANOVA charts)</span></label>
                                                             <div class="btn-group btn-group-toggle flex-wrap" data-toggle="buttons" id="pubPlotTypeGroup">
+                                                                <label class="btn btn-outline-primary btn-sm">
+                                                                    <input type="radio" name="pubPlotType" value="bar_dot" autocomplete="off"> Bar+Dots
+                                                                </label>
                                                                 <label class="btn btn-outline-primary btn-sm active">
                                                                     <input type="radio" name="pubPlotType" value="bar" autocomplete="off" checked> Bar
                                                                 </label>
@@ -941,9 +944,6 @@
                                                                 <label class="btn btn-outline-primary btn-sm">
                                                                     <input type="radio" name="pubPlotType" value="violin" autocomplete="off"> Violin
                                                                 </label>
-                                                                <label class="btn btn-outline-primary btn-sm">
-                                                                    <input type="radio" name="pubPlotType" value="bar_dot" autocomplete="off"> Bar+Dots
-                                                                </label>
                                                             </div>
                                                             <small class="text-muted d-block mt-1">Dot / Box / Violin / Bar+Dots show individual data points. Fallback to Bar if raw data cannot be matched.</small>
                                                         </div>
@@ -952,7 +952,7 @@
                                                             <select class="form-select form-select-sm" id="pubSizePreset">
                                                                 <option value="single">Single column — 85 mm</option>
                                                                 <option value="half">1.5 column — 120 mm</option>
-                                                                <option value="double">Double column — 175 mm</option>
+                                                                <option value="double" selected>Double column — 175 mm</option>
                                                                 <option value="custom">Custom…</option>
                                                             </select>
                                                         </div>
@@ -964,8 +964,8 @@
                                                             <label class="fw-bold mb-1 d-block">Aspect ratio (w : h)</label>
                                                             <select class="form-select form-select-sm" id="pubAspectRatioPreset">
                                                                 <option value="16:9">16 : 9 &nbsp;(wide)</option>
-                                                                <option value="3:2" selected>3 : 2 &nbsp;(standard)</option>
-                                                                <option value="4:3">4 : 3 &nbsp;(classic)</option>
+                                                                <option value="3:2">3 : 2 &nbsp;(standard)</option>
+                                                                <option value="4:3" selected>4 : 3 &nbsp;(classic)</option>
                                                                 <option value="1:1">1 : 1 &nbsp;(square)</option>
                                                                 <option value="3:4">3 : 4 &nbsp;(portrait)</option>
                                                                 <option value="2:3">2 : 3 &nbsp;(tall)</option>
@@ -974,7 +974,7 @@
                                                         </div>
                                                         <div class="col-auto" id="pubCustomRatioWrap" style="display:none;">
                                                             <label class="fw-bold mb-1 d-block">Ratio (w/h)</label>
-                                                            <input type="number" class="form-control form-control-sm" id="pubAspectRatioCustom" value="1.500" min="0.2" max="5" step="0.05" style="width:80px;">
+                                                            <input type="number" class="form-control form-control-sm" id="pubAspectRatioCustom" value="1.00" min="0.2" max="5" step="0.05" style="width:80px;">
                                                         </div>
                                                         <div class="col-6 col-md-2">
                                                             <label class="fw-bold mb-1 d-block">Resolution</label>
@@ -994,19 +994,19 @@
                                                         <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Y-axis scaling</strong></div>
                                                         <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
                                                             <div class="form-check form-check-inline mb-0">
-                                                                <input class="form-check-input" type="checkbox" id="pubYStartZero">
+                                                                <input class="form-check-input" type="checkbox" id="pubYStartZero" checked>
                                                                 <label class="form-check-label small" for="pubYStartZero">Start at zero</label>
                                                             </div>
                                                             <div class="d-flex align-items-center gap-1">
                                                                 <label class="small mb-0" for="pubYHeadroom">Y-axis headroom:</label>
-                                                                <input type="number" class="form-control form-control-sm" id="pubYHeadroom" value="15" min="0" max="100" style="width:62px;">
+                                                                <input type="number" class="form-control form-control-sm" id="pubYHeadroom" value="30" min="0" max="100" style="width:62px;">
                                                                 <small class="text-muted">%</small>
                                                             </div>
                                                         </div>
                                                         <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Plot borders</strong></div>
                                                         <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
                                                             <div class="form-check form-check-inline mb-0">
-                                                                <input class="form-check-input" type="checkbox" id="pubShowPlotFrame">
+                                                                <input class="form-check-input" type="checkbox" id="pubShowPlotFrame" checked>
                                                                 <label class="form-check-label small" for="pubShowPlotFrame">Plot area frame (box around axes)</label>
                                                             </div>
                                                             <div class="form-check form-check-inline mb-0">
@@ -1035,15 +1035,15 @@
                                                         <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Font sizes (pt)</strong></div>
                                                         <div class="col-6 col-md-3">
                                                             <label class="mb-1 d-block">Axis title</label>
-                                                            <input type="number" class="form-control form-control-sm" id="pubAxisTitleSize" value="12" min="6" max="28">
+                                                            <input type="number" class="form-control form-control-sm" id="pubAxisTitleSize" value="15" min="6" max="28">
                                                         </div>
                                                         <div class="col-6 col-md-3">
                                                             <label class="mb-1 d-block">Tick labels</label>
-                                                            <input type="number" class="form-control form-control-sm" id="pubTickLabelSize" value="10" min="5" max="22">
+                                                            <input type="number" class="form-control form-control-sm" id="pubTickLabelSize" value="15" min="5" max="22">
                                                         </div>
                                                         <div class="col-6 col-md-3">
                                                             <label class="mb-1 d-block">Letter annotations</label>
-                                                            <input type="number" class="form-control form-control-sm" id="pubAnnotationSize" value="11" min="5" max="20">
+                                                            <input type="number" class="form-control form-control-sm" id="pubAnnotationSize" value="15" min="5" max="20">
                                                         </div>
                                                         <div class="col-6 col-md-3">
                                                             <label class="mb-1 d-block">Legend</label>
@@ -1077,11 +1077,11 @@
                                                         </div>
                                                         <div class="col-auto d-flex align-items-center gap-2 pb-1">
                                                             <div class="form-check form-check-inline mb-0">
-                                                                <input class="form-check-input" type="checkbox" id="pubUnifyColor">
+                                                                <input class="form-check-input" type="checkbox" id="pubUnifyColor" checked>
                                                                 <label class="form-check-label small" for="pubUnifyColor">Single color for all groups</label>
                                                             </div>
                                                             <div id="pubUnifyFillColorWrap" style="display:none;">
-                                                                <input type="color" class="form-control form-control-sm form-control-color" id="pubUnifyFillColor" value="#4DBBD5" style="width:36px;" title="Unified fill color">
+                                                                <input type="color" class="form-control form-control-sm form-control-color" id="pubUnifyFillColor" value="#555555" style="width:36px;" title="Unified fill color">
                                                             </div>
                                                         </div>
 
@@ -1109,7 +1109,7 @@
                                                         <!-- Gridlines -->
                                                         <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Gridlines</strong></div>
                                                         <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
-                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubGridY" checked><label class="form-check-label small" for="pubGridY">Y grid</label></div>
+                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubGridY"><label class="form-check-label small" for="pubGridY">Y grid</label></div>
                                                             <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubGridX"><label class="form-check-label small" for="pubGridX">X grid</label></div>
                                                             <select class="form-select form-select-sm" id="pubGridStyle" style="width:auto;">
                                                                 <option value="solid" selected>Solid</option>
@@ -1150,7 +1150,7 @@
                                                                     <option value="x">× X mark</option>
                                                                 </select>
                                                             </div>
-                                                            <div><label class="form-label small mb-0">Size</label><input type="number" class="form-control form-control-sm" id="pubPointSize" value="7" min="2" max="24" style="width:58px;"></div>
+                                                            <div><label class="form-label small mb-0">Size</label><input type="number" class="form-control form-control-sm" id="pubPointSize" value="8" min="2" max="24" style="width:58px;"></div>
                                                             <div><label class="form-label small mb-0">Color</label><input type="color" class="form-control form-control-sm form-control-color" id="pubPointColor" value="#333333" style="width:36px;"></div>
                                                             <div>
                                                                 <label class="form-label small mb-0">Opacity</label>
@@ -1186,16 +1186,16 @@
                                                             <div>
                                                                 <label class="small mb-0">Position</label>
                                                                 <select class="form-select form-select-sm" id="pubLegendPosition" style="width:auto;">
-                                                                    <option value="top-right" selected>Top right</option>
+                                                                    <option value="top-right">Top right</option>
                                                                     <option value="top-left">Top left</option>
-                                                                    <option value="bottom">Bottom center</option>
+                                                                    <option value="bottom" selected>Bottom center</option>
                                                                 </select>
                                                             </div>
                                                             <div>
                                                                 <label class="small mb-0">Orientation</label>
                                                                 <select class="form-select form-select-sm" id="pubLegendOrientation" style="width:auto;">
-                                                                    <option value="v" selected>Vertical</option>
-                                                                    <option value="h">Horizontal</option>
+                                                                    <option value="v">Vertical</option>
+                                                                    <option value="h" selected>Horizontal</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -1206,20 +1206,20 @@
                                                             <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubShowLetters" checked><label class="form-check-label small" for="pubShowLetters">Show letter annotations</label></div>
                                                             <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubLetterBold" checked><label class="form-check-label small" for="pubLetterBold">Bold</label></div>
                                                             <div class="form-check form-check-inline mb-0">
-                                                                <input class="form-check-input" type="checkbox" id="pubLetterPerBar">
+                                                                <input class="form-check-input" type="checkbox" id="pubLetterPerBar" checked>
                                                                 <label class="form-check-label small" for="pubLetterPerBar">Per-bar position <span class="text-muted">(above each bar separately; offset = % of max)</span></label>
                                                             </div>
                                                         </div>
                                                         <div class="col-auto d-flex align-items-center gap-2">
                                                             <label class="small mb-0" for="pubLetterOffset">Letter spacing above data:</label>
-                                                            <input type="range" class="form-range" id="pubLetterOffset" min="1" max="30" value="7" style="width:90px;">
+                                                            <input type="range" class="form-range" id="pubLetterOffset" min="1" max="30" value="8" style="width:90px;">
                                                             <small id="pubLetterOffsetVal" class="text-muted">7%</small>
                                                         </div>
 
                                                         <!-- Test info & background -->
                                                         <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Other annotations</strong></div>
                                                         <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
-                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubShowTestInfo" checked><label class="form-check-label small" for="pubShowTestInfo">Show test info (test, p, effect size)</label></div>
+                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubShowTestInfo"><label class="form-check-label small" for="pubShowTestInfo">Show test info (test, p, effect size)</label></div>
                                                             <div class="d-flex align-items-center gap-2">
                                                                 <label class="small mb-0">Background color</label>
                                                                 <input type="color" class="form-control form-control-sm form-control-color" id="pubBgColor" value="#ffffff" style="width:36px;" title="Plot background color">
@@ -1269,13 +1269,58 @@
                             <div class="p-3">
                                 <h5 class="fw-bold mb-3">Principal Component Analysis</h5>
                                 <p class="text-muted small">PCA reduces the dimensionality of your data to show relationships between samples and variables.</p>
-                                <div class="bg-light p-3 rounded border mb-3">
-                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Data Preparation</h6>
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="pcaRemoveMissing" checked>
-                                        <label class="form-check-label small" for="pcaRemoveMissing">Remove rows with missing data (Required for PCA)</label>
+                                <div class="accordion mb-3" id="pcaInfoAccordion">
+                                    <div class="card shadow-sm" style="border: 1px solid #dee2e6;">
+                                        <div class="card-header py-2 px-3" id="pcaInfoHeading">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                        type="button" data-toggle="collapse" data-target="#pcaInfoBody"
+                                                        aria-expanded="false" aria-controls="pcaInfoBody">
+                                                    <i class="bi bi-info-circle mr-2"></i> How PCA works in this tool
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="pcaInfoBody" class="collapse" aria-labelledby="pcaInfoHeading" data-parent="#pcaInfoAccordion">
+                                            <div class="card-body small text-muted">
+                                                <p style="font-size:0.8rem;"><strong>What PCA does:</strong> PCA finds new axes (principal components, PC1 and PC2) that capture the largest sources of variation in your data. Each sample gets a score on these axes, and the resulting biplot shows both how samples cluster and which original variables drive the separation.</p>
+                                                <p style="font-size:0.8rem;" class="mb-1"><strong>Reading the biplot:</strong></p>
+                                                <ul style="font-size:0.8rem;" class="mb-2">
+                                                    <li><strong>Points</strong> represent individual samples (rows). Samples that are close together are more similar across all selected variables. Each point's horizontal position is its PC1 score, vertical is PC2.</li>
+                                                    <li><strong>Ellipses</strong> show the 95% confidence region for each group (defined by your factor). Drawn at 2 standard deviations of that group's bivariate PC score distribution. Groups whose ellipses overlap are not clearly separated by the selected variables.</li>
+                                                    <li><strong>Arrows (loadings)</strong> show how each original variable drives the components. The direction indicates which samples tend to have high values for that variable; the length reflects how strongly that variable contributes. Arrows pointing in similar directions indicate positively correlated variables; opposite directions indicate negative correlation.</li>
+                                                </ul>
+                                                <p style="font-size:0.8rem;"><strong>All variables are standardised</strong> before analysis (mean = 0, unit variance), so variables measured on very different scales contribute equally.</p>
+                                                <p style="font-size:0.8rem;"><strong>Wide datasets (more variables than samples):</strong> Classical PCA requires more samples than variables. This tool uses an SVD-based implementation (scikit-learn) that works correctly even when you have fewer samples than measured variables — the algorithm decomposes the data matrix directly rather than inverting the covariance matrix, so there is no numerical instability. The only hard requirement is at least 2 samples after any filtering.</p>
+                                                <p style="font-size:0.8rem;" class="mb-1"><strong>Missing data strategies</strong> — PCA cannot run with any missing values. Four strategies are available:</p>
+                                                <ul style="font-size:0.8rem;" class="mb-2">
+                                                    <li><strong>Hybrid (recommended):</strong> Variables with more than the threshold % of missing values are excluded from the analysis. The few remaining missing cells are filled with the mean of the same group (or the overall column mean if no factor is defined). No samples are lost.</li>
+                                                    <li><strong>Drop rows:</strong> Any sample (row) that has at least one missing value among the selected variables is removed. Simple and conservative, but can lose many samples if missing values are spread across rows.</li>
+                                                    <li><strong>Impute with group / column mean:</strong> Every missing value is replaced by the average of that variable within the same factor group (or the overall column mean if no factor is defined). All samples and variables are kept, but imputed values add no real information and slightly compress within-group variation.</li>
+                                                    <li><strong>Exclude variables:</strong> Any variable that exceeds the threshold % of missing values is dropped. The remaining variables are used as-is; any rows still missing a value after exclusion are dropped. Keeps all samples but may remove important variables.</li>
+                                                    <li><strong>KNN imputation:</strong> Missing values are estimated from the k most similar rows in the dataset. More statistically sophisticated than simple mean imputation, but harder to interpret with very small datasets.</li>
+                                                </ul>
+                                                <p style="font-size:0.8rem;"><strong>Loading arrows</strong> show how strongly each original variable contributes to PC1 and PC2. A long arrow pointing in a direction means that variable is a major driver of variation along that axis. Arrows pointing in similar directions indicate correlated variables.</p>
+                                                <p class="mb-0" style="font-size:0.8rem;"><strong>Explained variance</strong> (shown as % on each axis label) tells you how much of the total variability in your dataset is captured by that component. PC1 always captures the most, PC2 the second most.</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="form-check form-switch mb-2">
+                                </div>
+                                <div class="bg-light p-3 rounded border mb-3">
+                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Missing Data Strategy</h6>
+                                    <select class="form-control form-control-sm mb-2" id="pcaMissingStrategy">
+                                        <option value="hybrid" selected>Hybrid: exclude incomplete variables, impute sparse missing values (Recommended)</option>
+                                        <option value="drop_rows">Drop rows with any missing value</option>
+                                        <option value="impute_group_mean">Impute missing values with group / column mean</option>
+                                        <option value="exclude_vars">Exclude variables with too many missing values</option>
+                                        <option value="knn">KNN imputation (k-nearest neighbours)</option>
+                                    </select>
+                                    <div id="pcaThresholdRow" class="d-flex align-items-center small mb-2">
+                                        <label class="mb-0 mr-2 text-muted" for="pcaMissingThreshold">Exclude variable if missing &gt;</label>
+                                        <input type="number" class="form-control form-control-sm mr-1" id="pcaMissingThreshold"
+                                               value="30" min="1" max="99" style="width:58px;">
+                                        <span class="text-muted">% of rows</span>
+                                    </div>
+                                    <div class="form-check form-switch mb-0 mt-1">
                                         <input class="form-check-input" type="checkbox" id="pcaAverageByFactor">
                                         <label class="form-check-label small" for="pcaAverageByFactor">Average replicates by factor(s) before analysis</label>
                                     </div>
@@ -1284,15 +1329,146 @@
                                     <input class="form-check-input" type="checkbox" id="pcaShowLoadings" checked>
                                     <label class="form-check-label small fw-bold" for="pcaShowLoadings">Plot Variable Loadings (Arrows)</label>
                                 </div>
-                                <button id="runPCABtn" class="btn btn-primary btn-sm mb-4"><i class="bi bi-play-fill"></i> Run PCA Analysis</button>
+                                <div class="bg-light p-3 rounded border mb-3">
+                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Sample Labels</h6>
+                                    <div class="form-group mb-2">
+                                        <label class="small text-muted mb-1 d-block" for="pcaLabelCol">Label points using column</label>
+                                        <select class="form-control form-control-sm" id="pcaLabelCol">
+                                            <option value="">(None — use row index)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="pcaShowLabels">
+                                        <label class="form-check-label small" for="pcaShowLabels">Show labels on plot</label>
+                                    </div>
+                                </div>
+                                <button id="runPCABtn" class="btn btn-primary btn-sm mb-3"><i class="bi bi-play-fill"></i> Run PCA Analysis</button>
+
+                                <!-- Plot Style Controls (hidden until first result) -->
+                                <div id="pcaStyleCard" class="bg-light p-3 rounded border mb-3" style="display:none;">
+                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Plot Style</h6>
+                                    <div class="row no-gutters" style="gap:0.5rem 0;">
+                                        <!-- Symbol -->
+                                        <div class="col-12 col-sm-6 pr-sm-2">
+                                            <label class="small text-muted mb-1 d-block">Marker symbol</label>
+                                            <select class="form-control form-control-sm" id="pcaSymbol">
+                                                <option value="circle" selected>● Circle</option>
+                                                <option value="square">■ Square</option>
+                                                <option value="diamond">◆ Diamond</option>
+                                                <option value="triangle-up">▲ Triangle up</option>
+                                                <option value="triangle-down">▼ Triangle down</option>
+                                                <option value="star">★ Star</option>
+                                                <option value="cross">✚ Cross</option>
+                                                <option value="x">✖ X</option>
+                                                <option value="pentagon">⬠ Pentagon</option>
+                                                <option value="hexagram">⬡ Hexagram</option>
+                                            </select>
+                                        </div>
+                                        <!-- Vary symbol per group -->
+                                        <div class="col-12 col-sm-6 d-flex align-items-end pb-1">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" id="pcaVarySymbol">
+                                                <label class="form-check-label small" for="pcaVarySymbol">Different symbol per group</label>
+                                            </div>
+                                        </div>
+                                        <!-- Point size -->
+                                        <div class="col-12 col-sm-6 pr-sm-2 mt-2">
+                                            <label class="small text-muted mb-1 d-block">Point size: <span id="pcaPointSizeVal">10</span></label>
+                                            <input type="range" class="custom-range" id="pcaPointSize" min="4" max="30" value="10">
+                                        </div>
+                                        <!-- Opacity -->
+                                        <div class="col-12 col-sm-6 mt-2">
+                                            <label class="small text-muted mb-1 d-block">Opacity: <span id="pcaOpacityVal">90</span>%</label>
+                                            <input type="range" class="custom-range" id="pcaOpacity" min="10" max="100" value="90">
+                                        </div>
+                                        <!-- Ellipse toggle + std devs + opacity -->
+                                        <div class="col-12 mt-2 d-flex align-items-center flex-wrap" style="gap:0.5rem;">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" id="pcaShowEllipse" checked>
+                                                <label class="form-check-label small" for="pcaShowEllipse">Confidence ellipses</label>
+                                            </div>
+                                            <div class="d-flex align-items-center small" id="pcaEllipseStdRow">
+                                                <span class="text-muted mr-1">Std devs:</span>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-outline-secondary pca-std-btn" data-val="1">1σ</button>
+                                                    <button type="button" class="btn btn-outline-secondary pca-std-btn active" data-val="2">2σ</button>
+                                                    <button type="button" class="btn btn-outline-secondary pca-std-btn" data-val="3">3σ</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-sm-6 mt-2" id="pcaEllipseOpacityRow">
+                                            <label class="small text-muted mb-1 d-block">Ellipse fill opacity: <span id="pcaEllipseOpacityVal">15</span>%</label>
+                                            <input type="range" class="custom-range" id="pcaEllipseOpacity" min="0" max="80" value="15">
+                                        </div>
+                                        <!-- Color palette -->
+                                        <div class="col-12 mt-2">
+                                            <label class="small text-muted mb-1 d-block">Color palette</label>
+                                            <div class="btn-group btn-group-sm flex-wrap" role="group" id="pcaPaletteGroup">
+                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn active" data-palette="nipy_spectral">Spectral</button>
+                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Set1">Set1</button>
+                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="tab10">Tab10</button>
+                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Paired">Paired</button>
+                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Dark2">Dark2</button>
+                                            </div>
+                                        </div>
+                                        <!-- Plot Layout -->
+                                        <div class="col-12 mt-3">
+                                            <div class="text-uppercase text-muted mb-1 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Plot Layout</div>
+                                            <div class="d-flex flex-wrap" style="gap:0.5rem;">
+                                                <div class="form-check form-switch mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="pcaShowGrid" checked>
+                                                    <label class="form-check-label small" for="pcaShowGrid">Grid lines</label>
+                                                </div>
+                                                <div class="form-check form-switch mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="pcaShowBorder">
+                                                    <label class="form-check-label small" for="pcaShowBorder">Plot border</label>
+                                                </div>
+                                                <div class="form-check form-switch mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="pcaCenterAxes">
+                                                    <label class="form-check-label small" for="pcaCenterAxes">Center axes at zero</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Typography -->
+                                        <div class="col-12 mt-3">
+                                            <div class="text-uppercase text-muted mb-2 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Typography</div>
+                                            <div class="row no-gutters">
+                                                <div class="col-12 mb-2">
+                                                    <label class="small text-muted mb-1 d-block">Font family</label>
+                                                    <select class="form-control form-control-sm" id="pcaFontFamily">
+                                                        <option value="Arial, sans-serif" selected>Arial</option>
+                                                        <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                                                        <option value="'Times New Roman', serif">Times New Roman</option>
+                                                        <option value="Georgia, serif">Georgia</option>
+                                                        <option value="'Courier New', monospace">Courier New</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12 col-sm-4 pr-sm-2 mb-1">
+                                                    <label class="small text-muted mb-1 d-block">Axis titles: <span id="pcaTitleFontSizeVal">13</span> pt</label>
+                                                    <input type="range" class="custom-range" id="pcaTitleFontSize" min="8" max="24" value="13">
+                                                </div>
+                                                <div class="col-12 col-sm-4 px-sm-1 mb-1">
+                                                    <label class="small text-muted mb-1 d-block">Tick labels: <span id="pcaTickFontSizeVal">11</span> pt</label>
+                                                    <input type="range" class="custom-range" id="pcaTickFontSize" min="6" max="20" value="11">
+                                                </div>
+                                                <div class="col-12 col-sm-4 pl-sm-2 mb-1">
+                                                    <label class="small text-muted mb-1 d-block">Legend: <span id="pcaLegendFontSizeVal">11</span> pt</label>
+                                                    <input type="range" class="custom-range" id="pcaLegendFontSize" min="6" max="20" value="11">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div id="pcaResultsHeader" style="display: none;" class="justify-content-between align-items-center mb-3">
                                     <button id="downloadPCAExcelBtn" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Export PCA Report</button>
                                 </div>
                                 <div id="pcaSpinner" class="text-center py-4" style="display: none;">
                                     <div class="spinner-border text-primary" role="status"></div>
-                                    <p class="mt-2 text-muted small">Calculating Variance &amp; Generating Biplot...</p>
+                                    <p class="mt-2 text-muted small">Running PCA...</p>
                                 </div>
-                                <div id="pcaResults" class="text-center"></div>
+                                <div id="pcaResults"></div>
+                                <div id="pcaPlot" style="width:100%; min-height:500px; display:none;"></div>
                             </div>
                         </div>
                     </div>

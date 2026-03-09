@@ -424,34 +424,98 @@ def run_pca():
         selected_vars = request_data.get('variables', [])
 
         # Capture preferences
-        remove_missing = request_data.get('remove_missing', True)
+        missing_strategy  = request_data.get('missing_strategy', 'hybrid')
+        missing_threshold = float(request_data.get('missing_threshold', 30)) / 100.0
         average_by_factors = request_data.get('average_by_factors', False)
         plot_loadings = request_data.get('plot_loadings', True)
+        label_col = request_data.get('label_col', None) or None  # column to use as sample labels
 
         # 1. Robust Numeric Cleaning
         clean_df = df.copy()
         for var in selected_vars:
             clean_df[var] = pd.to_numeric(clean_df[var], errors='coerce')
 
-        # Option: Remove Missing Data
-        if remove_missing:
+        n_input_rows   = len(clean_df)
+        vars_excluded  = []
+        n_imputed_cells = 0
+        rows_dropped   = 0
+
+        # 2. Apply missing-data strategy
+        if missing_strategy == 'drop_rows':
+            before = len(clean_df)
             clean_df = clean_df.dropna(subset=selected_vars).copy()
+            rows_dropped = before - len(clean_df)
+
+        elif missing_strategy == 'impute_group_mean':
+            if factors:
+                for var in selected_vars:
+                    mask = clean_df[var].isna()
+                    if mask.any():
+                        group_means = clean_df.groupby(factors)[var].transform('mean')
+                        n_imputed_cells += int(mask.sum())
+                        clean_df.loc[mask, var] = group_means[mask]
+            # Fall back to overall column mean for any remaining NaN
+            for var in selected_vars:
+                mask = clean_df[var].isna()
+                if mask.any():
+                    n_imputed_cells += int(mask.sum())
+                    clean_df.loc[mask, var] = clean_df[var].mean()
+
+        elif missing_strategy == 'exclude_vars':
+            n_rows = len(clean_df)
+            for var in list(selected_vars):
+                frac = clean_df[var].isna().sum() / n_rows if n_rows > 0 else 0
+                if frac > missing_threshold:
+                    vars_excluded.append(var)
+            selected_vars = [v for v in selected_vars if v not in vars_excluded]
+            if len(selected_vars) < 2:
+                return jsonify({"error": f"Too many variables excluded by the missing-value threshold ({missing_threshold*100:.0f}%). Only {len(selected_vars)} variable(s) remain. Lower the threshold or choose a different strategy."}), 400
+            before = len(clean_df)
+            clean_df = clean_df.dropna(subset=selected_vars).copy()
+            rows_dropped = before - len(clean_df)
+
+        elif missing_strategy == 'knn':
+            from sklearn.impute import KNNImputer
+            n_neighbors = min(5, max(1, len(clean_df) - 1))
+            imputer = KNNImputer(n_neighbors=n_neighbors)
+            arr = clean_df[selected_vars].values
+            n_imputed_cells = int(np.isnan(arr).sum())
+            clean_df[selected_vars] = imputer.fit_transform(arr)
+
+        else:  # hybrid (default)
+            n_rows = len(clean_df)
+            for var in list(selected_vars):
+                frac = clean_df[var].isna().sum() / n_rows if n_rows > 0 else 0
+                if frac > missing_threshold:
+                    vars_excluded.append(var)
+            selected_vars = [v for v in selected_vars if v not in vars_excluded]
+            if len(selected_vars) < 2:
+                return jsonify({"error": f"Too many variables excluded by the missing-value threshold ({missing_threshold*100:.0f}%). Only {len(selected_vars)} variable(s) remain. Lower the threshold or choose a different strategy."}), 400
+            # Impute remaining sparse missing values: group mean → column mean fallback
+            if factors:
+                for var in selected_vars:
+                    mask = clean_df[var].isna()
+                    if mask.any():
+                        group_means = clean_df.groupby(factors)[var].transform('mean')
+                        n_imputed_cells += int(mask.sum())
+                        clean_df.loc[mask, var] = group_means[mask]
+            for var in selected_vars:
+                mask = clean_df[var].isna()
+                if mask.any():
+                    n_imputed_cells += int(mask.sum())
+                    clean_df.loc[mask, var] = clean_df[var].mean()
 
         # Option: Average replicates by factor values
         if average_by_factors and factors:
-            # Group by all factors and compute mean of selected variables
             clean_df = clean_df.groupby(factors)[selected_vars].mean().reset_index()
 
-        # Critical Check: Validate dataframe after preparation
-        if len(clean_df) < len(selected_vars):
-            return jsonify({"error": "Insufficient data points after filtering/averaging."}), 400
-
-        # Drop rows with missing values in the variables being analyzed
+        # Safety net: drop any rows still containing NaN (should be none after strategies above)
         clean_df = clean_df.dropna(subset=selected_vars).copy()
 
-        # Critical Check: Need more samples than variables for stable PCA
-        if len(clean_df) < len(selected_vars):
-            return jsonify({"error": f"Insufficient data: You need at least {len(selected_vars)} valid rows for this analysis."}), 400
+        if len(clean_df) < 2:
+            return jsonify({"error": "Insufficient data: PCA requires at least 2 valid samples after applying the missing-data strategy."}), 400
+        if len(selected_vars) < 2:
+            return jsonify({"error": "PCA requires at least 2 variables."}), 400
 
         # 2. Factor Handling
         if factors:
@@ -471,68 +535,36 @@ def run_pca():
         clean_df['PC1'] = pca_features[:, 0]
         clean_df['PC2'] = pca_features[:, 1]
 
-        # 4. Visualization
-        fig, ax = plt.subplots(figsize=(10, 7))
-
-        if hue_col:
-            unique_groups = sorted(clean_df[hue_col].unique())
-            palette_colors = sns.color_palette("nipy_spectral", len(unique_groups))
-            color_map = dict(zip(unique_groups, palette_colors))
-
-            sns.scatterplot(data=clean_df, x='PC1', y='PC2', hue=hue_col,
-                            palette=color_map, s=100, alpha=0.9, ax=ax, zorder=3, edgecolor='white')
-
-            for group in unique_groups:
-                group_data = clean_df[clean_df[hue_col] == group]
-                # Ensure we have enough points AND variance to draw an ellipse
-                if len(group_data) >= 3:
-                    try:
-                        # Check if points are not all in the exact same spot (zero variance)
-                        if group_data['PC1'].std() > 1e-6 and group_data['PC2'].std() > 1e-6:
-                            color = color_map[group]
-                            confidence_ellipse(
-                                group_data['PC1'], group_data['PC2'], ax,
-                                n_std=2.0, edgecolor=color, facecolor=color,
-                                alpha=0.12, linewidth=1.5, zorder=2
-                            )
-                    except Exception as ellipse_err:
-                        print(f"Skipping ellipse for {group}: {ellipse_err}")
-                        continue
-
-            ax.legend(title=hue_col, bbox_to_anchor=(1.05, 1), loc='upper left', frameon=False)
-        else:
-            sns.scatterplot(data=clean_df, x='PC1', y='PC2', s=100, ax=ax, color='#0984e3')
-
-        # 5. Variable Loadings (Arrows)
+        # 4. Loadings (arrows data — plotting now done in frontend)
         loadings = pca.components_.T * np.sqrt(pca.explained_variance_)
-
-        # Wrap the arrow-drawing logic in an IF statement
-        if plot_loadings:
-            for i, var in enumerate(selected_vars):
-                ax.arrow(0, 0, loadings[i, 0], loadings[i, 1],
-                         color='#2d3436', alpha=0.7, head_width=0.08, zorder=4)
-                ax.text(loadings[i, 0]*1.15, loadings[i, 1]*1.15, var,
-                        color='#d63031', weight='bold', fontsize=10,
-                        ha='center', va='center', zorder=5,
-                        bbox=dict(facecolor='white', alpha=0.8, edgecolor='none', pad=1))
-
-        # Aesthetics
-        ax.set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]:.1%})', fontsize=11, fontweight='bold')
-        ax.set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]:.1%})', fontsize=11, fontweight='bold')
-        ax.set_title('PCA Biplot: Multivariate Score Distribution', fontsize=14, pad=20)
-        ax.grid(True, linestyle='--', alpha=0.3)
-        ax.axhline(0, color='black', lw=1, alpha=0.2)
-        ax.axvline(0, color='black', lw=1, alpha=0.2)
-
         loadings_list = [{"Variable": var, "PC1_Loading": float(loadings[i, 0]), "PC2_Loading": float(loadings[i, 1])}
                          for i, var in enumerate(selected_vars)]
 
+        # Build per-row group label for frontend colouring
+        scores = clean_df[['PC1', 'PC2']].copy()
+        if hue_col:
+            scores['group'] = clean_df[hue_col].values
+        else:
+            scores['group'] = 'All samples'
+
+        # Sample labels column (optional)
+        if label_col and label_col in clean_df.columns:
+            scores['label'] = clean_df[label_col].astype(str).values
+        else:
+            scores['label'] = [str(i + 1) for i in range(len(clean_df))]
+
         return jsonify({
-            "plot_url": get_plot_base64(),
             "n_samples": len(clean_df),
+            "n_input_rows": n_input_rows,
             "explained_variance": pca.explained_variance_ratio_.tolist(),
             "loadings": loadings_list,
-            "pca_table": clean_df.to_dict(orient='records')
+            "scores": scores.to_dict(orient='records'),
+            "pca_table": clean_df.to_dict(orient='records'),
+            "vars_excluded": vars_excluded,
+            "n_imputed_cells": n_imputed_cells,
+            "rows_dropped": rows_dropped,
+            "vars_used": selected_vars,
+            "hue_col": hue_col,
         })
     except Exception as e:
         print(traceback.format_exc())

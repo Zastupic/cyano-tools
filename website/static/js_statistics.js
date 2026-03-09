@@ -1722,7 +1722,10 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
     if (!rawData) return alert("Please paste data from Excel.");
 
     const rows = rawData.split('\n');
-    const headers = rows[0].split(/\t| {2,}/).map(h => h.trim()).filter(h => h !== "");
+    // Use tab as separator if present (Excel paste), otherwise fall back to 2+ spaces.
+    // This prevents column names containing double spaces from being incorrectly split.
+    const sep = rows[0].includes('\t') ? /\t/ : / {2,}/;
+    const headers = rows[0].split(sep).map(h => h.trim()).filter(h => h !== "");
 
     if (headers.length === 0) return alert("Could not detect columns. Check your data format.");
 
@@ -1740,7 +1743,7 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
     const firstColumnName = headers[0];
 
     globalData = rows.slice(1).map((row, index) => {
-        const values = row.split(/\t| {2,}/).map(v => v.trim());
+        const values = row.split(sep).map(v => v.trim());
         let obj = { row_id: index + 1 }; // 1-based persistent row index
         headers.forEach((h, i) => {
             let val = (values[i] || "").replace(',', '.'); // Normalize decimal
@@ -1784,6 +1787,10 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
         const factorSel = document.getElementById('factorSelector');
         factorSel.innerHTML = '<option value="">-- Choose Factor --</option>';
         result.all_columns.forEach(c => factorSel.innerHTML += `<option value="${c}">${c}</option>`);
+
+        const labelSel = document.getElementById('pcaLabelCol');
+        labelSel.innerHTML = '<option value="">(None — use row index)</option>';
+        result.all_columns.forEach(c => labelSel.innerHTML += `<option value="${c}">${c}</option>`);
 
         const container = document.getElementById('checkboxContainer');
         container.innerHTML = "";
@@ -1847,6 +1854,11 @@ document.getElementById('clearDataBtn').addEventListener('click', function() {
     if (anovaResults) anovaResults.innerHTML = '';
     const pcaResults = document.getElementById('pcaResults');
     if (pcaResults) pcaResults.innerHTML = '';
+    const pcaPlotClear = document.getElementById('pcaPlot');
+    if (pcaPlotClear) { Plotly.purge(pcaPlotClear); pcaPlotClear.style.display = 'none'; }
+    const pcaStyleClear = document.getElementById('pcaStyleCard');
+    if (pcaStyleClear) pcaStyleClear.style.display = 'none';
+    document.getElementById('pcaLabelCol').innerHTML = '<option value="">(None — use row index)</option>';
     const assumptionsBoxPlots = document.getElementById('assumptionsBoxPlots');
     if (assumptionsBoxPlots) assumptionsBoxPlots.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
     const assumptionsResidualsContent = document.getElementById('assumptionsResidualsContent');
@@ -1935,6 +1947,10 @@ document.getElementById('updateAnalysisBtn').addEventListener('click', function(
     if (pcaResults) pcaResults.innerHTML = '';
     const pcaResultsHeader = document.getElementById('pcaResultsHeader');
     if (pcaResultsHeader) pcaResultsHeader.style.display = 'none';
+    const pcaPlotDiv = document.getElementById('pcaPlot');
+    if (pcaPlotDiv) { Plotly.purge(pcaPlotDiv); pcaPlotDiv.style.display = 'none'; }
+    const pcaStyleCard = document.getElementById('pcaStyleCard');
+    if (pcaStyleCard) pcaStyleCard.style.display = 'none';
     lastPCAResults = null;
     // ────────────────────────────────────────────────────────────────────────
 
@@ -2107,14 +2123,290 @@ document.getElementById('downloadExcelBtn').addEventListener('click', async func
 
 // --- 5. PCA Analysis Logic ---
 
-// 2. Updated runPCABtn Event Listener
+// ── Color palettes (matching matplotlib/seaborn names) ───────────────────────
+const PCA_PALETTES = {
+    nipy_spectral: ['#4B0082','#0000FF','#008CFF','#00BFFF','#00FF80','#80FF00',
+                    '#FFFF00','#FFA500','#FF4500','#FF0000','#8B0000','#FF69B4'],
+    Set1:    ['#E41A1C','#377EB8','#4DAF4A','#984EA3','#FF7F00','#A65628','#F781BF','#999999'],
+    tab10:   ['#1F77B4','#FF7F0E','#2CA02C','#D62728','#9467BD','#8C564B','#E377C2','#7F7F7F','#BCBD22','#17BECF'],
+    Paired:  ['#A6CEE3','#1F78B4','#B2DF8A','#33A02C','#FB9A99','#E31A1C','#FDBF6F','#FF7F00','#CAB2D6','#6A3D9A'],
+    Dark2:   ['#1B9E77','#D95F02','#7570B3','#E7298A','#66A61E','#E6AB02','#A6761D','#666666'],
+};
+
+const PCA_SYMBOLS = ['circle','square','diamond','triangle-up','triangle-down',
+                     'star','cross','x','pentagon','hexagram'];
+
+// ── Confidence ellipse — exact port of matplotlib's confidence_ellipse recipe ─
+// Uses Pearson correlation + 45° rotation + marginal std scaling, identical to
+// the Python backend that was previously used.
+function pcaComputeEllipse(x, y, nStd) {
+    const n = x.length;
+    if (n < 3) return null;
+    const mx  = x.reduce((a, b) => a + b, 0) / n;
+    const my  = y.reduce((a, b) => a + b, 0) / n;
+    const cxx = x.reduce((a, xi)     => a + (xi - mx) ** 2,          0) / (n - 1);
+    const cyy = y.reduce((a, yi)     => a + (yi - my) ** 2,          0) / (n - 1);
+    const cxy = x.reduce((a, xi, i)  => a + (xi - mx) * (y[i] - my), 0) / (n - 1);
+    if (cxx < 1e-12 || cyy < 1e-12) return null;
+    const pearson = cxy / Math.sqrt(cxx * cyy);
+    const rx = Math.sqrt(1 + pearson);                    // ellipse radius along 45° axis
+    const ry = Math.sqrt(Math.max(0, 1 - pearson));       // ellipse radius along 135° axis
+    const sx = Math.sqrt(cxx) * nStd;                     // x marginal scale
+    const sy = Math.sqrt(cyy) * nStd;                     // y marginal scale
+    const pts = 120;
+    const ex = [], ey = [];
+    for (let k = 0; k <= pts; k++) {
+        const t = 2 * Math.PI * k / pts;
+        // Rotate 45° then scale by marginal std devs (mirrors matplotlib Affine2D transform)
+        const xr = (rx * Math.cos(t) - ry * Math.sin(t)) / Math.SQRT2;
+        const yr = (rx * Math.cos(t) + ry * Math.sin(t)) / Math.SQRT2;
+        ex.push(mx + sx * xr);
+        ey.push(my + sy * yr);
+    }
+    return { x: ex, y: ey };
+}
+
+// ── Read current style controls ──────────────────────────────────────────────
+function pcaReadOptions() {
+    return {
+        symbol:         document.getElementById('pcaSymbol').value,
+        varySymbol:     document.getElementById('pcaVarySymbol').checked,
+        pointSize:      parseInt(document.getElementById('pcaPointSize').value),
+        opacity:        parseInt(document.getElementById('pcaOpacity').value) / 100,
+        showEllipse:    document.getElementById('pcaShowEllipse').checked,
+        ellipseOpacity: parseInt(document.getElementById('pcaEllipseOpacity').value) / 100,
+        nStd:           parseFloat(document.querySelector('.pca-std-btn.active')?.dataset.val || '2'),
+        showLoadings:   document.getElementById('pcaShowLoadings').checked,
+        palette:        document.querySelector('.pca-palette-btn.active')?.dataset.palette || 'nipy_spectral',
+        showLabels:     document.getElementById('pcaShowLabels').checked,
+        showGrid:       document.getElementById('pcaShowGrid').checked,
+        showBorder:     document.getElementById('pcaShowBorder').checked,
+        centerAxes:     document.getElementById('pcaCenterAxes').checked,
+        fontFamily:     document.getElementById('pcaFontFamily').value,
+        titleFontSize:  parseInt(document.getElementById('pcaTitleFontSize').value),
+        tickFontSize:   parseInt(document.getElementById('pcaTickFontSize').value),
+        legendFontSize: parseInt(document.getElementById('pcaLegendFontSize').value),
+    };
+}
+
+// ── Main Plotly rendering function ───────────────────────────────────────────
+function renderPCAPlot(result, opts) {
+    const plotDiv = document.getElementById('pcaPlot');
+    plotDiv.style.display = 'block';
+
+    const scores  = result.scores || [];
+    const groups  = [...new Set(scores.map(r => r.group))].sort();
+    const colors  = PCA_PALETTES[opts.palette] || PCA_PALETTES.nipy_spectral;
+    const ev      = result.explained_variance || [0, 0];
+    const traces  = [];
+
+    groups.forEach((grp, gi) => {
+        const pts   = scores.filter(r => r.group === grp);
+        const xs    = pts.map(r => r.PC1);
+        const ys    = pts.map(r => r.PC2);
+        const color = colors[gi % colors.length];
+        const sym   = opts.varySymbol ? PCA_SYMBOLS[gi % PCA_SYMBOLS.length] : opts.symbol;
+
+        // Confidence ellipse trace (drawn first so it sits behind points)
+        if (opts.showEllipse) {
+            const ell = pcaComputeEllipse(xs, ys, opts.nStd);
+            if (ell) {
+                traces.push({
+                    x: ell.x, y: ell.y,
+                    mode: 'lines',
+                    fill: 'toself',
+                    fillcolor: color,
+                    opacity: opts.ellipseOpacity,
+                    line: { color, width: 1.5 },
+                    hoverinfo: 'skip',
+                    showlegend: false,
+                    name: grp + ' ellipse',
+                });
+            }
+        }
+
+        // Scatter trace
+        const labels = pts.map(r => r.label || '');
+        traces.push({
+            x: xs, y: ys,
+            mode: opts.showLabels ? 'markers+text' : 'markers',
+            name: grp,
+            marker: { symbol: sym, size: opts.pointSize, color, opacity: opts.opacity,
+                      line: { color: 'white', width: 1 } },
+            text: labels,
+            textposition: 'top center',
+            textfont: { family: opts.fontFamily, size: opts.tickFontSize - 1, color: '#333' },
+            customdata: pts.map((_, i) => `${grp}<br>${labels[i]}<br>PC1: ${xs[i].toFixed(3)}<br>PC2: ${ys[i].toFixed(3)}`),
+            hovertemplate: '%{customdata}<extra></extra>',
+        });
+    });
+
+    // Loading arrows as annotations + invisible scatter for hover
+    const annotations = [];
+    const arrowX = [], arrowY = [], arrowText = [];
+    if (opts.showLoadings && result.loadings) {
+        result.loadings.forEach(l => {
+            annotations.push({
+                x: l.PC1_Loading, y: l.PC2_Loading,
+                ax: 0, ay: 0, xref: 'x', yref: 'y', axref: 'x', ayref: 'y',
+                showarrow: true, arrowhead: 3, arrowsize: 1.2,
+                arrowwidth: 1.8, arrowcolor: '#2d3436',
+            });
+            annotations.push({
+                x: l.PC1_Loading * 1.18, y: l.PC2_Loading * 1.18,
+                text: `<b>${l.Variable}</b>`,
+                showarrow: false, xref: 'x', yref: 'y',
+                font: { color: '#d63031', size: 11 },
+                bgcolor: 'rgba(255,255,255,0.75)', borderpad: 2,
+            });
+            arrowX.push(l.PC1_Loading);
+            arrowY.push(l.PC2_Loading);
+            arrowText.push(l.Variable);
+        });
+        traces.push({
+            x: arrowX, y: arrowY, text: arrowText,
+            mode: 'markers', marker: { opacity: 0, size: 8 },
+            hovertemplate: '<b>%{text}</b><br>PC1 loading: %{x:.3f}<br>PC2 loading: %{y:.3f}<extra></extra>',
+            showlegend: false, name: 'Loadings',
+        });
+    }
+
+    // Compute axis ranges from all trace data (scatter + ellipses + loadings)
+    // with 12% padding so ellipses and arrow labels are never clipped.
+    const allX = [], allY = [];
+    traces.forEach(tr => { allX.push(...(tr.x || [])); allY.push(...(tr.y || [])); });
+    if (opts.showLoadings && result.loadings) {
+        result.loadings.forEach(l => { allX.push(l.PC1_Loading * 1.25); allY.push(l.PC2_Loading * 1.25); });
+    }
+    const pad = (arr, frac = 0.12) => {
+        const mn = Math.min(...arr), mx = Math.max(...arr);
+        const span = mx - mn || 1;
+        return [mn - span * frac, mx + span * frac];
+    };
+    const xRange = allX.length ? pad(allX) : [-1, 1];
+    const yRange = allY.length ? pad(allY) : [-1, 1];
+
+    // Center axes: expand each range symmetrically around zero
+    let xRangeFinal = xRange, yRangeFinal = yRange;
+    if (opts.centerAxes) {
+        const xMax = Math.max(Math.abs(xRange[0]), Math.abs(xRange[1]));
+        const yMax = Math.max(Math.abs(yRange[0]), Math.abs(yRange[1]));
+        xRangeFinal = [-xMax, xMax];
+        yRangeFinal = [-yMax, yMax];
+    }
+
+    const axisFont   = { family: opts.fontFamily, size: opts.tickFontSize };
+    const titleFont  = { family: opts.fontFamily, size: opts.titleFontSize };
+    const borderLine = opts.showBorder ? { showline: true, mirror: true, linecolor: '#888', linewidth: 1 } : { showline: false, mirror: false };
+
+    const layout = {
+        xaxis: {
+            title: { text: `PC1 (${(ev[0]*100).toFixed(1)}%)`, font: titleFont },
+            tickfont: axisFont,
+            range: xRangeFinal,
+            zeroline: true, zerolinewidth: 1, zerolinecolor: '#aaa',
+            showgrid: opts.showGrid, gridcolor: '#eee',
+            ...borderLine,
+        },
+        yaxis: {
+            title: { text: `PC2 (${(ev[1]*100).toFixed(1)}%)`, font: titleFont },
+            tickfont: axisFont,
+            range: yRangeFinal,
+            zeroline: true, zerolinewidth: 1, zerolinecolor: '#aaa',
+            showgrid: opts.showGrid, gridcolor: '#eee',
+            ...borderLine,
+        },
+        annotations,
+        legend: {
+            bgcolor: 'rgba(255,255,255,0.8)', bordercolor: '#ddd', borderwidth: 1,
+            font: { family: opts.fontFamily, size: opts.legendFontSize },
+        },
+        margin: { l: 60, r: 30, t: 40, b: 60 },
+        plot_bgcolor: '#fff',
+        paper_bgcolor: '#fff',
+        autosize: true,
+    };
+
+    Plotly.react(plotDiv, traces, layout, { responsive: true, displayModeBar: true,
+        modeBarButtonsToRemove: ['select2d','lasso2d'], displaylogo: false });
+}
+
+// ── Style control event listeners (re-render on any change) ──────────────────
+['pcaSymbol','pcaVarySymbol','pcaPointSize','pcaOpacity','pcaShowEllipse','pcaShowLoadings']
+    .forEach(id => document.getElementById(id).addEventListener('input', () => {
+        if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+    }));
+['pcaSymbol','pcaVarySymbol','pcaShowEllipse','pcaShowLoadings']
+    .forEach(id => document.getElementById(id).addEventListener('change', () => {
+        if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+    }));
+
+document.getElementById('pcaPointSize').addEventListener('input', function() {
+    document.getElementById('pcaPointSizeVal').textContent = this.value;
+    if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+});
+document.getElementById('pcaOpacity').addEventListener('input', function() {
+    document.getElementById('pcaOpacityVal').textContent = this.value;
+    if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+});
+document.getElementById('pcaEllipseOpacity').addEventListener('input', function() {
+    document.getElementById('pcaEllipseOpacityVal').textContent = this.value;
+    if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+});
+
+// Sample label toggle (re-render only, no new fetch needed)
+document.getElementById('pcaShowLabels').addEventListener('change', () => {
+    if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+});
+
+// Layout & typography controls
+['pcaShowGrid','pcaShowBorder','pcaCenterAxes'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+        if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+    });
+});
+document.getElementById('pcaFontFamily').addEventListener('change', () => {
+    if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+});
+[['pcaTitleFontSize','pcaTitleFontSizeVal'],
+ ['pcaTickFontSize', 'pcaTickFontSizeVal'],
+ ['pcaLegendFontSize','pcaLegendFontSizeVal']].forEach(([sliderId, valId]) => {
+    document.getElementById(sliderId).addEventListener('input', function() {
+        document.getElementById(valId).textContent = this.value;
+        if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+    });
+});
+
+document.querySelectorAll('.pca-std-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.pca-std-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+    });
+});
+
+document.querySelectorAll('.pca-palette-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.pca-palette-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+    });
+});
+
+// Show/hide the threshold input depending on the selected strategy
+document.getElementById('pcaMissingStrategy').addEventListener('change', function() {
+    const needsThreshold = ['hybrid', 'exclude_vars'].includes(this.value);
+    document.getElementById('pcaThresholdRow').style.display = needsThreshold ? 'flex' : 'none';
+});
+
 document.getElementById('runPCABtn').addEventListener('click', function() {
     const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
         .filter(cb => !cb.disabled)
         .map(cb => cb.value);
-    const removeMissing = document.getElementById('pcaRemoveMissing').checked;
-    const averageByFactor = document.getElementById('pcaAverageByFactor').checked;
-    const showLoadings = document.getElementById('pcaShowLoadings').checked;
+    const missingStrategy  = document.getElementById('pcaMissingStrategy').value;
+    const missingThreshold = parseFloat(document.getElementById('pcaMissingThreshold').value) || 30;
+    const averageByFactor  = document.getElementById('pcaAverageByFactor').checked;
+    const labelCol         = document.getElementById('pcaLabelCol').value || null;
 
     if (selectedVars.length < 2) {
         return alert("PCA requires at least 2 variables to compare.");
@@ -2122,10 +2414,11 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
 
     const pcaResults = document.getElementById('pcaResults');
     const pcaSpinner = document.getElementById('pcaSpinner');
-    const pcaHeader = document.getElementById('pcaResultsHeader');
+    const pcaHeader  = document.getElementById('pcaResultsHeader');
+    const pcaPlot    = document.getElementById('pcaPlot');
 
-    // 1. CLEAR AND HIDE EVERYTHING AT START
     pcaResults.innerHTML = "";
+    pcaPlot.style.display = 'none';
     pcaHeader.style.display = 'none';
     pcaSpinner.style.display = 'block';
 
@@ -2136,9 +2429,10 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
             data: globalData,
             variables: selectedVars,
             factors: selectedFactors,
-            remove_missing: removeMissing,
+            missing_strategy: missingStrategy,
+            missing_threshold: missingThreshold,
             average_by_factors: averageByFactor,
-            plot_loadings: showLoadings
+            label_col: labelCol,
         })
     })
     .then(res => res.json())
@@ -2147,65 +2441,69 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
         if (result.error) throw new Error(result.error);
 
         lastPCAResults = result;
-
-        // 2. SHOW THE HEADER ONLY NOW
         pcaHeader.style.display = 'flex';
+        document.getElementById('pcaStyleCard').style.display = 'block';
+
+        const totalRows = result.n_input_rows || (globalData || []).length;
+        const nVarsUsed = (result.vars_used   || selectedVars).length;
+        const nVarsExcl = (result.vars_excluded || []).length;
+        const nImputed  = result.n_imputed_cells || 0;
+        const nDropped  = result.rows_dropped    || 0;
+
+        const strategyNotes = [];
+        if (nVarsExcl > 0) strategyNotes.push(`${nVarsExcl} variable${nVarsExcl > 1 ? 's' : ''} excluded (too many missing values)`);
+        if (nImputed  > 0) strategyNotes.push(`${nImputed} missing cell${nImputed > 1 ? 's' : ''} imputed`);
+        if (nDropped  > 0) strategyNotes.push(`${nDropped} row${nDropped > 1 ? 's' : ''} dropped (missing values)`);
+        const missingNote = strategyNotes.length > 0
+            ? `<br><span class="text-warning">${strategyNotes.join('; ')}</span>` : '';
 
         pcaResults.innerHTML = `
-            <div class="plot-card-wrapper bg-white p-3 rounded shadow-sm border mb-3 text-center">
-                <img src="data:image/png;base64,${result.plot_url}" class="img-fluid rounded shadow-sm">
-            </div>
-            <div class="alert alert-success py-2 small shadow-sm text-left">
-                <strong>PCA Success:</strong> ${result.n_samples} samples analyzed
-                    (${selectedVars.length} variables, ${selectedFactors.length} factors).
+            <div class="alert alert-success py-2 small shadow-sm text-left mb-2">
+                <strong>PCA Success:</strong> ${result.n_samples} of ${totalRows} samples analyzed
+                    (${nVarsUsed} variables, ${selectedFactors.length} factors).${missingNote}
                 <br>PC1 explains ${(result.explained_variance[0] * 100).toFixed(1)}% of variance.
                 <br>PC2 explains ${(result.explained_variance[1] * 100).toFixed(1)}% of variance.
-            </div>
-        `;
+            </div>`;
+
+        renderPCAPlot(result, pcaReadOptions());
     })
     .catch(err => {
         pcaSpinner.style.display = 'none';
-        pcaHeader.style.display = 'none'; // Keep hidden on error
+        pcaHeader.style.display = 'none';
         alert("PCA Error: " + err.message);
     });
 });
 
 // --- 6. PCA Export & UI Logic ---
 
-// This listener handles the actual Excel download for PCA
 document.getElementById('downloadPCAExcelBtn').addEventListener('click', function() {
-    // Keep this as a safety "guard clause," but the alert is unnecessary
-    // because the button is hidden until results are ready.
     if (!lastPCAResults) return;
+    const plotDiv = document.getElementById('pcaPlot');
 
-    // Use the coordinates/table already processed and returned by the server
-    // this includes the PC1 and PC2 scores we want in the Excel file.
-    fetch('/export-pca-excel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            pca_details: {
-                n_samples: lastPCAResults.n_samples,
-                variance: lastPCAResults.explained_variance,
-                plot_url: lastPCAResults.plot_url,
-                coordinates: lastPCAResults.pca_table, // This contains original data + scores
-                loadings: lastPCAResults.loadings      // This contains the arrow data
-            }
-        })
+    Plotly.toImage(plotDiv, { format: 'png', width: 1000, height: 750, scale: 2 })
+    .then(dataUrl => {
+        const base64 = dataUrl.replace('data:image/png;base64,', '');
+        return fetch('/export-pca-excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pca_details: {
+                    n_samples: lastPCAResults.n_samples,
+                    variance:  lastPCAResults.explained_variance,
+                    plot_url:  base64,
+                    coordinates: lastPCAResults.pca_table,
+                    loadings:    lastPCAResults.loadings,
+                }
+            })
+        });
     })
-    .then(res => {
-        if (!res.ok) throw new Error("Export failed");
-        return res.blob();
-    })
+    .then(res => { if (!res.ok) throw new Error("Export failed"); return res.blob(); })
     .then(blob => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = "PCA_Full_Analysis_Report.xlsx";
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        a.href = url; a.download = "PCA_Full_Analysis_Report.xlsx";
+        document.body.appendChild(a); a.click();
+        window.URL.revokeObjectURL(url); document.body.removeChild(a);
     })
     .catch(err => alert("Export Error: " + err.message));
 });
