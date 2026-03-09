@@ -1270,7 +1270,7 @@
                                 <h5 class="fw-bold mb-3">Principal Component Analysis</h5>
                                 <p class="text-muted small">PCA reduces the dimensionality of your data to show relationships between samples and variables.</p>
                                 <div class="accordion mb-3" id="pcaInfoAccordion">
-                                    <div class="card shadow-sm" style="border: 1px solid #dee2e6;">
+                                    <div class="card" style="border: 1px solid #dee2e6;">
                                         <div class="card-header py-2 px-3" id="pcaInfoHeading">
                                             <h6 class="mb-0">
                                                 <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
@@ -1305,155 +1305,197 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="bg-light p-3 rounded border mb-3">
-                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Missing Data Strategy</h6>
-                                    <select class="form-control form-control-sm mb-2" id="pcaMissingStrategy">
-                                        <option value="hybrid" selected>Hybrid: exclude incomplete variables, impute sparse missing values (Recommended)</option>
-                                        <option value="drop_rows">Drop rows with any missing value</option>
-                                        <option value="impute_group_mean">Impute missing values with group / column mean</option>
-                                        <option value="exclude_vars">Exclude variables with too many missing values</option>
-                                        <option value="knn">KNN imputation (k-nearest neighbours)</option>
-                                    </select>
-                                    <div id="pcaThresholdRow" class="d-flex align-items-center small mb-2">
-                                        <label class="mb-0 mr-2 text-muted" for="pcaMissingThreshold">Exclude variable if missing &gt;</label>
-                                        <input type="number" class="form-control form-control-sm mr-1" id="pcaMissingThreshold"
-                                               value="30" min="1" max="99" style="width:58px;">
-                                        <span class="text-muted">% of rows</span>
-                                    </div>
-                                    <div class="form-check form-switch mb-0 mt-1">
-                                        <input class="form-check-input" type="checkbox" id="pcaAverageByFactor">
-                                        <label class="form-check-label small" for="pcaAverageByFactor">Average replicates by factor(s) before analysis</label>
+                                <div class="accordion mb-3" id="pcaMissingAccordion">
+                                    <div class="card" style="border: 1px solid #dee2e6;">
+                                        <div class="card-header py-2 px-3" id="pcaMissingHeading">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                        type="button" data-toggle="collapse" data-target="#pcaMissingBody"
+                                                        aria-expanded="false" aria-controls="pcaMissingBody">
+                                                    <i class="bi bi-database-exclamation mr-2"></i> Missing Data Strategy
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="pcaMissingBody" class="collapse" aria-labelledby="pcaMissingHeading" data-parent="#pcaMissingAccordion">
+                                            <div class="card-body py-3">
+                                                <select class="form-control form-control-sm mb-2" id="pcaMissingStrategy">
+                                                    <option value="hybrid" selected>Hybrid: exclude incomplete variables, impute sparse missing values (Recommended)</option>
+                                                    <option value="drop_rows">Drop rows with any missing value</option>
+                                                    <option value="impute_group_mean">Impute missing values with group / column mean</option>
+                                                    <option value="exclude_vars">Exclude variables with too many missing values</option>
+                                                    <option value="knn">KNN imputation (k-nearest neighbours)</option>
+                                                </select>
+                                                <div id="pcaThresholdRow" class="d-flex align-items-center small mb-2">
+                                                    <label class="mb-0 mr-2 text-muted" for="pcaMissingThreshold">Exclude variable if missing &gt;</label>
+                                                    <input type="number" class="form-control form-control-sm mr-1" id="pcaMissingThreshold"
+                                                           value="30" min="1" max="99" style="width:58px;">
+                                                    <span class="text-muted">% of rows</span>
+                                                </div>
+                                                <div class="form-check form-switch mb-0 mt-1">
+                                                    <input class="form-check-input" type="checkbox" id="pcaAverageByFactor">
+                                                    <label class="form-check-label small" for="pcaAverageByFactor">Average replicates by factor(s) before analysis</label>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="pcaShowLoadings" checked>
-                                    <label class="form-check-label small fw-bold" for="pcaShowLoadings">Plot Variable Loadings (Arrows)</label>
-                                </div>
-                                <div class="bg-light p-3 rounded border mb-3">
-                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Sample Labels</h6>
-                                    <div class="form-group mb-2">
-                                        <label class="small text-muted mb-1 d-block" for="pcaLabelCol">Label points using column</label>
-                                        <select class="form-control form-control-sm" id="pcaLabelCol">
-                                            <option value="">(None — use row index)</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-check form-switch mb-0">
-                                        <input class="form-check-input" type="checkbox" id="pcaShowLabels">
-                                        <label class="form-check-label small" for="pcaShowLabels">Show labels on plot</label>
+                                <div class="accordion mb-3" id="pcaLabelsAccordion">
+                                    <div class="card" style="border: 1px solid #dee2e6;">
+                                        <div class="card-header py-2 px-3" id="pcaLabelsHeading">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                        type="button" data-toggle="collapse" data-target="#pcaLabelsBody"
+                                                        aria-expanded="false" aria-controls="pcaLabelsBody">
+                                                    <i class="bi bi-tag mr-2"></i> Labels &amp; Loadings
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="pcaLabelsBody" class="collapse" aria-labelledby="pcaLabelsHeading" data-parent="#pcaLabelsAccordion">
+                                            <div class="card-body py-3">
+                                                <div class="form-check form-switch mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="pcaShowLoadings" checked>
+                                                    <label class="form-check-label small" for="pcaShowLoadings">Show variable loadings (arrows)</label>
+                                                </div>
+                                                <div class="form-group mb-2">
+                                                    <label class="small text-muted mb-1 d-block" for="pcaLabelCol">Label points using column</label>
+                                                    <select class="form-control form-control-sm" id="pcaLabelCol">
+                                                        <option value="">(None — use row index)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-check form-switch mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="pcaShowLabels">
+                                                    <label class="form-check-label small" for="pcaShowLabels">Show labels on plot</label>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <button id="runPCABtn" class="btn btn-primary btn-sm mb-3"><i class="bi bi-play-fill"></i> Run PCA Analysis</button>
 
                                 <!-- Plot Style Controls (hidden until first result) -->
-                                <div id="pcaStyleCard" class="bg-light p-3 rounded border mb-3" style="display:none;">
-                                    <h6 class="fw-bold small mb-2 text-uppercase text-muted">Plot Style</h6>
-                                    <div class="row no-gutters" style="gap:0.5rem 0;">
-                                        <!-- Symbol -->
-                                        <div class="col-12 col-sm-6 pr-sm-2">
-                                            <label class="small text-muted mb-1 d-block">Marker symbol</label>
-                                            <select class="form-control form-control-sm" id="pcaSymbol">
-                                                <option value="circle" selected>● Circle</option>
-                                                <option value="square">■ Square</option>
-                                                <option value="diamond">◆ Diamond</option>
-                                                <option value="triangle-up">▲ Triangle up</option>
-                                                <option value="triangle-down">▼ Triangle down</option>
-                                                <option value="star">★ Star</option>
-                                                <option value="cross">✚ Cross</option>
-                                                <option value="x">✖ X</option>
-                                                <option value="pentagon">⬠ Pentagon</option>
-                                                <option value="hexagram">⬡ Hexagram</option>
-                                            </select>
+                                <div id="pcaStyleCard" class="accordion mb-3" style="display:none;">
+                                    <div class="card" style="border: 1px solid #dee2e6;">
+                                        <div class="card-header py-2 px-3" id="pcaStyleHeading">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                        type="button" data-toggle="collapse" data-target="#pcaStyleBody"
+                                                        aria-expanded="false" aria-controls="pcaStyleBody">
+                                                    <i class="bi bi-palette mr-2"></i> Plot Style
+                                                </button>
+                                            </h6>
                                         </div>
-                                        <!-- Vary symbol per group -->
-                                        <div class="col-12 col-sm-6 d-flex align-items-end pb-1">
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input" type="checkbox" id="pcaVarySymbol">
-                                                <label class="form-check-label small" for="pcaVarySymbol">Different symbol per group</label>
-                                            </div>
-                                        </div>
-                                        <!-- Point size -->
-                                        <div class="col-12 col-sm-6 pr-sm-2 mt-2">
-                                            <label class="small text-muted mb-1 d-block">Point size: <span id="pcaPointSizeVal">10</span></label>
-                                            <input type="range" class="custom-range" id="pcaPointSize" min="4" max="30" value="10">
-                                        </div>
-                                        <!-- Opacity -->
-                                        <div class="col-12 col-sm-6 mt-2">
-                                            <label class="small text-muted mb-1 d-block">Opacity: <span id="pcaOpacityVal">90</span>%</label>
-                                            <input type="range" class="custom-range" id="pcaOpacity" min="10" max="100" value="90">
-                                        </div>
-                                        <!-- Ellipse toggle + std devs + opacity -->
-                                        <div class="col-12 mt-2 d-flex align-items-center flex-wrap" style="gap:0.5rem;">
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input" type="checkbox" id="pcaShowEllipse" checked>
-                                                <label class="form-check-label small" for="pcaShowEllipse">Confidence ellipses</label>
-                                            </div>
-                                            <div class="d-flex align-items-center small" id="pcaEllipseStdRow">
-                                                <span class="text-muted mr-1">Std devs:</span>
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <button type="button" class="btn btn-outline-secondary pca-std-btn" data-val="1">1σ</button>
-                                                    <button type="button" class="btn btn-outline-secondary pca-std-btn active" data-val="2">2σ</button>
-                                                    <button type="button" class="btn btn-outline-secondary pca-std-btn" data-val="3">3σ</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-sm-6 mt-2" id="pcaEllipseOpacityRow">
-                                            <label class="small text-muted mb-1 d-block">Ellipse fill opacity: <span id="pcaEllipseOpacityVal">15</span>%</label>
-                                            <input type="range" class="custom-range" id="pcaEllipseOpacity" min="0" max="80" value="15">
-                                        </div>
-                                        <!-- Color palette -->
-                                        <div class="col-12 mt-2">
-                                            <label class="small text-muted mb-1 d-block">Color palette</label>
-                                            <div class="btn-group btn-group-sm flex-wrap" role="group" id="pcaPaletteGroup">
-                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn active" data-palette="nipy_spectral">Spectral</button>
-                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Set1">Set1</button>
-                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="tab10">Tab10</button>
-                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Paired">Paired</button>
-                                                <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Dark2">Dark2</button>
-                                            </div>
-                                        </div>
-                                        <!-- Plot Layout -->
-                                        <div class="col-12 mt-3">
-                                            <div class="text-uppercase text-muted mb-1 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Plot Layout</div>
-                                            <div class="d-flex flex-wrap" style="gap:0.5rem;">
-                                                <div class="form-check form-switch mb-0">
-                                                    <input class="form-check-input" type="checkbox" id="pcaShowGrid" checked>
-                                                    <label class="form-check-label small" for="pcaShowGrid">Grid lines</label>
-                                                </div>
-                                                <div class="form-check form-switch mb-0">
-                                                    <input class="form-check-input" type="checkbox" id="pcaShowBorder">
-                                                    <label class="form-check-label small" for="pcaShowBorder">Plot border</label>
-                                                </div>
-                                                <div class="form-check form-switch mb-0">
-                                                    <input class="form-check-input" type="checkbox" id="pcaCenterAxes">
-                                                    <label class="form-check-label small" for="pcaCenterAxes">Center axes at zero</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <!-- Typography -->
-                                        <div class="col-12 mt-3">
-                                            <div class="text-uppercase text-muted mb-2 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Typography</div>
-                                            <div class="row no-gutters">
-                                                <div class="col-12 mb-2">
-                                                    <label class="small text-muted mb-1 d-block">Font family</label>
-                                                    <select class="form-control form-control-sm" id="pcaFontFamily">
-                                                        <option value="Arial, sans-serif" selected>Arial</option>
-                                                        <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
-                                                        <option value="'Times New Roman', serif">Times New Roman</option>
-                                                        <option value="Georgia, serif">Georgia</option>
-                                                        <option value="'Courier New', monospace">Courier New</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-12 col-sm-4 pr-sm-2 mb-1">
-                                                    <label class="small text-muted mb-1 d-block">Axis titles: <span id="pcaTitleFontSizeVal">13</span> pt</label>
-                                                    <input type="range" class="custom-range" id="pcaTitleFontSize" min="8" max="24" value="13">
-                                                </div>
-                                                <div class="col-12 col-sm-4 px-sm-1 mb-1">
-                                                    <label class="small text-muted mb-1 d-block">Tick labels: <span id="pcaTickFontSizeVal">11</span> pt</label>
-                                                    <input type="range" class="custom-range" id="pcaTickFontSize" min="6" max="20" value="11">
-                                                </div>
-                                                <div class="col-12 col-sm-4 pl-sm-2 mb-1">
-                                                    <label class="small text-muted mb-1 d-block">Legend: <span id="pcaLegendFontSizeVal">11</span> pt</label>
-                                                    <input type="range" class="custom-range" id="pcaLegendFontSize" min="6" max="20" value="11">
+                                        <div id="pcaStyleBody" class="collapse" aria-labelledby="pcaStyleHeading">
+                                            <div class="card-body py-3">
+                                                <div class="row no-gutters" style="gap:0.5rem 0;">
+                                                    <!-- Symbol -->
+                                                    <div class="col-12 col-sm-6 pr-sm-2">
+                                                        <label class="small text-muted mb-1 d-block">Marker symbol</label>
+                                                        <select class="form-control form-control-sm" id="pcaSymbol">
+                                                            <option value="circle" selected>● Circle</option>
+                                                            <option value="square">■ Square</option>
+                                                            <option value="diamond">◆ Diamond</option>
+                                                            <option value="triangle-up">▲ Triangle up</option>
+                                                            <option value="triangle-down">▼ Triangle down</option>
+                                                            <option value="star">★ Star</option>
+                                                            <option value="cross">✚ Cross</option>
+                                                            <option value="x">✖ X</option>
+                                                            <option value="pentagon">⬠ Pentagon</option>
+                                                            <option value="hexagram">⬡ Hexagram</option>
+                                                        </select>
+                                                    </div>
+                                                    <!-- Vary symbol per group -->
+                                                    <div class="col-12 col-sm-6 d-flex align-items-end pb-1">
+                                                        <div class="form-check form-switch mb-0">
+                                                            <input class="form-check-input" type="checkbox" id="pcaVarySymbol">
+                                                            <label class="form-check-label small" for="pcaVarySymbol">Different symbol per group</label>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Point size -->
+                                                    <div class="col-12 col-sm-6 pr-sm-2 mt-2">
+                                                        <label class="small text-muted mb-1 d-block">Point size: <span id="pcaPointSizeVal">10</span></label>
+                                                        <input type="range" class="custom-range" id="pcaPointSize" min="4" max="30" value="10">
+                                                    </div>
+                                                    <!-- Opacity -->
+                                                    <div class="col-12 col-sm-6 mt-2">
+                                                        <label class="small text-muted mb-1 d-block">Opacity: <span id="pcaOpacityVal">90</span>%</label>
+                                                        <input type="range" class="custom-range" id="pcaOpacity" min="10" max="100" value="90">
+                                                    </div>
+                                                    <!-- Ellipse toggle + std devs + opacity -->
+                                                    <div class="col-12 mt-2 d-flex align-items-center flex-wrap" style="gap:0.5rem;">
+                                                        <div class="form-check form-switch mb-0">
+                                                            <input class="form-check-input" type="checkbox" id="pcaShowEllipse" checked>
+                                                            <label class="form-check-label small" for="pcaShowEllipse">Confidence ellipses</label>
+                                                        </div>
+                                                        <div class="d-flex align-items-center small" id="pcaEllipseStdRow">
+                                                            <span class="text-muted mr-1">Std devs:</span>
+                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                <button type="button" class="btn btn-outline-secondary pca-std-btn" data-val="1">1σ</button>
+                                                                <button type="button" class="btn btn-outline-secondary pca-std-btn active" data-val="2">2σ</button>
+                                                                <button type="button" class="btn btn-outline-secondary pca-std-btn" data-val="3">3σ</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12 col-sm-6 mt-2" id="pcaEllipseOpacityRow">
+                                                        <label class="small text-muted mb-1 d-block">Ellipse fill opacity: <span id="pcaEllipseOpacityVal">15</span>%</label>
+                                                        <input type="range" class="custom-range" id="pcaEllipseOpacity" min="0" max="80" value="15">
+                                                    </div>
+                                                    <!-- Color palette -->
+                                                    <div class="col-12 mt-2">
+                                                        <label class="small text-muted mb-1 d-block">Color palette</label>
+                                                        <div class="btn-group btn-group-sm flex-wrap" role="group" id="pcaPaletteGroup">
+                                                            <button type="button" class="btn btn-outline-secondary pca-palette-btn active" data-palette="nipy_spectral">Spectral</button>
+                                                            <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Set1">Set1</button>
+                                                            <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="tab10">Tab10</button>
+                                                            <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Paired">Paired</button>
+                                                            <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Dark2">Dark2</button>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Plot Layout -->
+                                                    <div class="col-12 mt-3">
+                                                        <div class="text-uppercase text-muted mb-1 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Plot Layout</div>
+                                                        <div class="d-flex flex-wrap" style="gap:0.5rem;">
+                                                            <div class="form-check form-switch mb-0">
+                                                                <input class="form-check-input" type="checkbox" id="pcaShowGrid" checked>
+                                                                <label class="form-check-label small" for="pcaShowGrid">Grid lines</label>
+                                                            </div>
+                                                            <div class="form-check form-switch mb-0">
+                                                                <input class="form-check-input" type="checkbox" id="pcaShowBorder">
+                                                                <label class="form-check-label small" for="pcaShowBorder">Plot border</label>
+                                                            </div>
+                                                            <div class="form-check form-switch mb-0">
+                                                                <input class="form-check-input" type="checkbox" id="pcaCenterAxes">
+                                                                <label class="form-check-label small" for="pcaCenterAxes">Center axes at zero</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Typography -->
+                                                    <div class="col-12 mt-3">
+                                                        <div class="text-uppercase text-muted mb-2 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Typography</div>
+                                                        <div class="row no-gutters">
+                                                            <div class="col-12 mb-2">
+                                                                <label class="small text-muted mb-1 d-block">Font family</label>
+                                                                <select class="form-control form-control-sm" id="pcaFontFamily">
+                                                                    <option value="Arial, sans-serif" selected>Arial</option>
+                                                                    <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                                                                    <option value="'Times New Roman', serif">Times New Roman</option>
+                                                                    <option value="Georgia, serif">Georgia</option>
+                                                                    <option value="'Courier New', monospace">Courier New</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-12 col-sm-4 pr-sm-2 mb-1">
+                                                                <label class="small text-muted mb-1 d-block">Axis titles: <span id="pcaTitleFontSizeVal">13</span> pt</label>
+                                                                <input type="range" class="custom-range" id="pcaTitleFontSize" min="8" max="24" value="13">
+                                                            </div>
+                                                            <div class="col-12 col-sm-4 px-sm-1 mb-1">
+                                                                <label class="small text-muted mb-1 d-block">Tick labels: <span id="pcaTickFontSizeVal">11</span> pt</label>
+                                                                <input type="range" class="custom-range" id="pcaTickFontSize" min="6" max="20" value="11">
+                                                            </div>
+                                                            <div class="col-12 col-sm-4 pl-sm-2 mb-1">
+                                                                <label class="small text-muted mb-1 d-block">Legend: <span id="pcaLegendFontSizeVal">11</span> pt</label>
+                                                                <input type="range" class="custom-range" id="pcaLegendFontSize" min="6" max="20" value="11">
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
