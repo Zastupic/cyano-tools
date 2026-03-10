@@ -389,7 +389,7 @@
                         Copy-paste date from an Excel file, or paste Tab-delimited data
                     </p>
                     <p class="small text-muted mb-2">
-                        <i class="bi bi-info-circle"></i> Maximum: 100 rows, 50 columns
+                        <i class="bi bi-info-circle"></i> Maximum: 100 rows, 100 columns
                     </p>
                     <textarea id="excelPasteBox" class="form-control mb-2" rows="6"
                               placeholder="Paste your Excel data with headers here..."></textarea>
@@ -1352,10 +1352,6 @@
                                         </div>
                                         <div id="pcaLabelsBody" class="collapse" aria-labelledby="pcaLabelsHeading" data-parent="#pcaLabelsAccordion">
                                             <div class="card-body py-3">
-                                                <div class="form-check form-switch mb-3">
-                                                    <input class="form-check-input" type="checkbox" id="pcaShowLoadings" checked>
-                                                    <label class="form-check-label small" for="pcaShowLoadings">Show variable loadings (arrows)</label>
-                                                </div>
                                                 <div class="form-group mb-2">
                                                     <label class="small text-muted mb-1 d-block" for="pcaLabelCol">Label points using column</label>
                                                     <select class="form-control form-control-sm" id="pcaLabelCol">
@@ -1406,7 +1402,7 @@
                                                     <!-- Vary symbol per group -->
                                                     <div class="col-12 col-sm-6 d-flex align-items-end pb-1">
                                                         <div class="form-check form-switch mb-0">
-                                                            <input class="form-check-input" type="checkbox" id="pcaVarySymbol">
+                                                            <input class="form-check-input" type="checkbox" id="pcaVarySymbol" checked>
                                                             <label class="form-check-label small" for="pcaVarySymbol">Different symbol per group</label>
                                                         </div>
                                                     </div>
@@ -1436,16 +1432,16 @@
                                                         </div>
                                                     </div>
                                                     <div class="col-12 col-sm-6 mt-2" id="pcaEllipseOpacityRow">
-                                                        <label class="small text-muted mb-1 d-block">Ellipse fill opacity: <span id="pcaEllipseOpacityVal">15</span>%</label>
-                                                        <input type="range" class="custom-range" id="pcaEllipseOpacity" min="0" max="80" value="15">
+                                                        <label class="small text-muted mb-1 d-block">Ellipse fill opacity: <span id="pcaEllipseOpacityVal">30</span>%</label>
+                                                        <input type="range" class="custom-range" id="pcaEllipseOpacity" min="0" max="80" value="30">
                                                     </div>
                                                     <!-- Color palette -->
                                                     <div class="col-12 mt-2">
                                                         <label class="small text-muted mb-1 d-block">Color palette</label>
                                                         <div class="btn-group btn-group-sm flex-wrap" role="group" id="pcaPaletteGroup">
-                                                            <button type="button" class="btn btn-outline-secondary pca-palette-btn active" data-palette="nipy_spectral">Spectral</button>
+                                                            <button type="button" class="btn btn-outline-secondary pca-palette-btn active" data-palette="tab10">Tab10</button>
+                                                            <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="nipy_spectral">Spectral</button>
                                                             <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Set1">Set1</button>
-                                                            <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="tab10">Tab10</button>
                                                             <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Paired">Paired</button>
                                                             <button type="button" class="btn btn-outline-secondary pca-palette-btn" data-palette="Dark2">Dark2</button>
                                                         </div>
@@ -1454,16 +1450,20 @@
                                                     <div class="col-12 mt-3">
                                                         <div class="text-uppercase text-muted mb-1 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Plot Layout</div>
                                                         <div class="d-flex flex-wrap" style="gap:0.5rem;">
+                                                            <div class="form-check form-switch mb-3">
+                                                                <input class="form-check-input" type="checkbox" id="pcaShowLoadings">
+                                                                <label class="form-check-label small" for="pcaShowLoadings">Show variable loadings (arrows)</label>
+                                                            </div>
                                                             <div class="form-check form-switch mb-0">
-                                                                <input class="form-check-input" type="checkbox" id="pcaShowGrid" checked>
+                                                                <input class="form-check-input" type="checkbox" id="pcaShowGrid">
                                                                 <label class="form-check-label small" for="pcaShowGrid">Grid lines</label>
                                                             </div>
                                                             <div class="form-check form-switch mb-0">
-                                                                <input class="form-check-input" type="checkbox" id="pcaShowBorder">
+                                                                <input class="form-check-input" type="checkbox" id="pcaShowBorder" checked>
                                                                 <label class="form-check-label small" for="pcaShowBorder">Plot border</label>
                                                             </div>
                                                             <div class="form-check form-switch mb-0">
-                                                                <input class="form-check-input" type="checkbox" id="pcaCenterAxes">
+                                                                <input class="form-check-input" type="checkbox" id="pcaCenterAxes" checked>
                                                                 <label class="form-check-label small" for="pcaCenterAxes">Center axes at zero</label>
                                                             </div>
                                                         </div>
@@ -1483,16 +1483,16 @@
                                                                 </select>
                                                             </div>
                                                             <div class="col-12 col-sm-4 pr-sm-2 mb-1">
-                                                                <label class="small text-muted mb-1 d-block">Axis titles: <span id="pcaTitleFontSizeVal">13</span> pt</label>
-                                                                <input type="range" class="custom-range" id="pcaTitleFontSize" min="8" max="24" value="13">
+                                                                <label class="small text-muted mb-1 d-block">Axis titles: <span id="pcaTitleFontSizeVal">15</span> pt</label>
+                                                                <input type="range" class="custom-range" id="pcaTitleFontSize" min="8" max="24" value="15">
                                                             </div>
                                                             <div class="col-12 col-sm-4 px-sm-1 mb-1">
-                                                                <label class="small text-muted mb-1 d-block">Tick labels: <span id="pcaTickFontSizeVal">11</span> pt</label>
-                                                                <input type="range" class="custom-range" id="pcaTickFontSize" min="6" max="20" value="11">
+                                                                <label class="small text-muted mb-1 d-block">Tick labels: <span id="pcaTickFontSizeVal">15</span> pt</label>
+                                                                <input type="range" class="custom-range" id="pcaTickFontSize" min="6" max="20" value="15">
                                                             </div>
                                                             <div class="col-12 col-sm-4 pl-sm-2 mb-1">
-                                                                <label class="small text-muted mb-1 d-block">Legend: <span id="pcaLegendFontSizeVal">11</span> pt</label>
-                                                                <input type="range" class="custom-range" id="pcaLegendFontSize" min="6" max="20" value="11">
+                                                                <label class="small text-muted mb-1 d-block">Legend: <span id="pcaLegendFontSizeVal">12</span> pt</label>
+                                                                <input type="range" class="custom-range" id="pcaLegendFontSize" min="6" max="20" value="12">
                                                             </div>
                                                         </div>
                                                     </div>

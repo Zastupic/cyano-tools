@@ -28,7 +28,7 @@ from typing import Any
 stats_bp = Blueprint('statistics', __name__)
 
 MAX_DATA_ROWS = 100
-MAX_DATA_COLUMNS = 50
+MAX_DATA_COLUMNS = 100
 
 def _validate_data_limits(data):
     """Validate data does not exceed row/column limits. Returns (True, None) or (False, error_message)."""
