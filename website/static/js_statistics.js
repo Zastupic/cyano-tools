@@ -2272,6 +2272,9 @@ function pcaReadOptions() {
         ellipseOpacity: parseInt(document.getElementById('pcaEllipseOpacity').value) / 100,
         nStd:           parseFloat(document.querySelector('.pca-std-btn.active')?.dataset.val || '2'),
         showLoadings:   document.getElementById('pcaShowLoadings').checked,
+        loadingsScale:  parseFloat(document.getElementById('pcaLoadingsScale').value),
+        loadingsThresh: parseFloat(document.getElementById('pcaLoadingsThresh').value),
+        loadingsTopN:   parseInt(document.getElementById('pcaLoadingsTopN').value) || 0,
         palette:        document.querySelector('.pca-palette-btn.active')?.dataset.palette || 'nipy_spectral',
         showLabels:     document.getElementById('pcaShowLabels').checked,
         showGrid:       document.getElementById('pcaShowGrid').checked,
@@ -2353,10 +2356,30 @@ function renderPCAPlot(result, opts) {
     // Loading arrows as annotations + invisible scatter for hover
     const annotations = [];
     const arrowX = [], arrowY = [], arrowText = [];
+    let visibleLoadings = [];
     if (opts.showLoadings && result.loadings) {
-        result.loadings.forEach(l => {
-            const lx = l[xLoadKey], ly = l[yLoadKey];
-            if (lx == null || ly == null) return;
+        // Compute 2D Euclidean magnitude on the visible axes (= arrow length on plot)
+        let filtered = result.loadings
+            .filter(l => l[xLoadKey] != null && l[yLoadKey] != null)
+            .map(l => ({ ...l, _mag: Math.sqrt(l[xLoadKey] ** 2 + l[yLoadKey] ** 2) }));
+
+        // Apply magnitude threshold
+        if (opts.loadingsThresh > 0) {
+            filtered = filtered.filter(l => l._mag >= opts.loadingsThresh);
+        }
+
+        // Apply Top-N (sort by magnitude desc, keep top N)
+        filtered.sort((a, b) => b._mag - a._mag);
+        if (opts.loadingsTopN > 0) {
+            filtered = filtered.slice(0, opts.loadingsTopN);
+        }
+
+        visibleLoadings = filtered;
+
+        const sc = opts.loadingsScale;
+        filtered.forEach(l => {
+            const lx = l[xLoadKey] * sc, ly = l[yLoadKey] * sc;
+            const rawLx = l[xLoadKey], rawLy = l[yLoadKey];
             annotations.push({
                 x: lx, y: ly,
                 ax: 0, ay: 0, xref: 'x', yref: 'y', axref: 'x', ayref: 'y',
@@ -2372,23 +2395,26 @@ function renderPCAPlot(result, opts) {
             });
             arrowX.push(lx);
             arrowY.push(ly);
-            arrowText.push(l.Variable);
+            arrowText.push(`${l.Variable}<br>(${xKey}: ${rawLx.toFixed(3)}, ${yKey}: ${rawLy.toFixed(3)})`);
         });
-        traces.push({
-            x: arrowX, y: arrowY, text: arrowText,
-            mode: 'markers', marker: { opacity: 0, size: 8 },
-            hovertemplate: `<b>%{text}</b><br>${xKey} loading: %{x:.3f}<br>${yKey} loading: %{y:.3f}<extra></extra>`,
-            showlegend: false, name: 'Loadings',
-        });
+        if (arrowX.length) {
+            traces.push({
+                x: arrowX, y: arrowY, text: arrowText,
+                mode: 'markers', marker: { opacity: 0, size: 8 },
+                hovertemplate: `<b>%{text}</b><extra></extra>`,
+                showlegend: false, name: 'Loadings',
+            });
+        }
     }
 
     // Compute axis ranges from all trace data (scatter + ellipses + loadings)
     // with 12% padding so ellipses and arrow labels are never clipped.
     const allX = [], allY = [];
     traces.forEach(tr => { allX.push(...(tr.x || [])); allY.push(...(tr.y || [])); });
-    if (opts.showLoadings && result.loadings) {
-        result.loadings.forEach(l => {
-            if (l[xLoadKey] != null) { allX.push(l[xLoadKey] * 1.25); allY.push(l[yLoadKey] * 1.25); }
+    if (opts.showLoadings && visibleLoadings.length) {
+        const sc = opts.loadingsScale;
+        visibleLoadings.forEach(l => {
+            allX.push(l[xLoadKey] * sc * 1.25); allY.push(l[yLoadKey] * sc * 1.25);
         });
     }
     const pad = (arr, frac = 0.12) => {
@@ -2444,6 +2470,99 @@ function renderPCAPlot(result, opts) {
 
     Plotly.react(plotDiv, traces, layout, { responsive: true, displayModeBar: true,
         modeBarButtonsToRemove: ['select2d','lasso2d'], displaylogo: false });
+
+    renderLoadingsTable(result, opts, visibleLoadings, xLoadKey, yLoadKey);
+}
+
+// ── PCA Loadings Table ────────────────────────────────────────────────────────
+let _loadingsSortCol = '_mag';
+let _loadingsSortAsc = false;
+
+function renderLoadingsTable(result, opts, visibleLoadings, xLoadKey, yLoadKey) {
+    const container = document.getElementById('pcaLoadingsTable');
+    if (!opts.showLoadings || !result.loadings || result.loadings.length === 0) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    const visibleVars = new Set(visibleLoadings.map(l => l.Variable));
+    const xKey = xLoadKey.replace('_Loading', '');
+    const yKey = yLoadKey.replace('_Loading', '');
+
+    // Build full list with magnitudes for table (all variables, not just visible)
+    const rows = result.loadings
+        .filter(l => l[xLoadKey] != null && l[yLoadKey] != null)
+        .map(l => ({ ...l, _mag: Math.sqrt(l[xLoadKey] ** 2 + l[yLoadKey] ** 2) }));
+
+    // Sort
+    rows.sort((a, b) => {
+        const va = a[_loadingsSortCol] ?? 0, vb = b[_loadingsSortCol] ?? 0;
+        return _loadingsSortAsc ? va - vb : vb - va;
+    });
+
+    const arrow = col => col === _loadingsSortCol ? (_loadingsSortAsc ? ' ▲' : ' ▼') : '';
+    const cols = [
+        { key: 'Variable', label: 'Variable',        numeric: false },
+        { key: xLoadKey,   label: `${xKey} loading`, numeric: true  },
+        { key: yLoadKey,   label: `${yKey} loading`, numeric: true  },
+        { key: '_mag',     label: 'Magnitude (2D)',   numeric: true  },
+    ];
+
+    const headerCells = cols.map(c =>
+        `<th scope="col" data-col="${c.key}" style="cursor:pointer;white-space:nowrap;">${c.label}${arrow(c.key)}</th>`
+    ).join('');
+
+    const bodyRows = rows.map(r => {
+        const highlighted = visibleVars.has(r.Variable);
+        const rowClass = highlighted ? 'table-primary font-weight-bold' : 'text-muted';
+        const cells = cols.map(c => {
+            const val = r[c.key];
+            if (!c.numeric) return `<td>${val}</td>`;
+            const formatted = typeof val === 'number' ? val.toFixed(3) : val;
+            const color = c.key !== '_mag' && typeof val === 'number'
+                ? (val > 0 ? 'style="color:#0984e3;"' : 'style="color:#d63031;"') : '';
+            return `<td ${color}>${formatted}</td>`;
+        }).join('');
+        return `<tr class="${rowClass}">${cells}</tr>`;
+    }).join('');
+
+    const nVisible = visibleVars.size;
+    const nTotal = rows.length;
+    const subtitle = nVisible < nTotal
+        ? `<span class="text-primary font-weight-bold">${nVisible} shown</span> / ${nTotal} total`
+        : `${nTotal} variables`;
+
+    container.style.display = 'block';
+    container.innerHTML = `
+        <div class="card">
+            <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center">
+                <span class="small font-weight-semibold">Variable Loadings — ${subtitle}</span>
+                <span class="small text-muted">Highlighted rows = visible arrows &nbsp;|&nbsp; Click column header to sort</span>
+            </div>
+            <div style="max-height:280px; overflow-y:auto;">
+                <table class="table table-sm table-bordered table-hover mb-0 small" id="pcaLoadingsTbl">
+                    <thead class="thead-light" style="position:sticky;top:0;">
+                        <tr>${headerCells}</tr>
+                    </thead>
+                    <tbody>${bodyRows}</tbody>
+                </table>
+            </div>
+        </div>`;
+
+    // Sort on header click
+    container.querySelectorAll('th[data-col]').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = th.dataset.col;
+            if (_loadingsSortCol === col) {
+                _loadingsSortAsc = !_loadingsSortAsc;
+            } else {
+                _loadingsSortCol = col;
+                _loadingsSortAsc = col === 'Variable';
+            }
+            if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+        });
+    });
 }
 
 // ── Style control event listeners (re-render on any change) ──────────────────
@@ -2455,6 +2574,28 @@ function renderPCAPlot(result, opts) {
     .forEach(id => document.getElementById(id).addEventListener('change', () => {
         if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
     }));
+
+// Show/hide loadings filter options panel
+document.getElementById('pcaShowLoadings').addEventListener('change', function() {
+    document.getElementById('pcaLoadingsOptions').style.display = this.checked ? 'block' : 'none';
+});
+
+// Loadings scale slider — update label + re-render
+document.getElementById('pcaLoadingsScale').addEventListener('input', function() {
+    document.getElementById('pcaLoadingsScaleVal').textContent = parseFloat(this.value).toFixed(1) + '×';
+    if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+});
+
+// Loadings threshold slider — update label + re-render
+document.getElementById('pcaLoadingsThresh').addEventListener('input', function() {
+    document.getElementById('pcaLoadingsThreshVal').textContent = parseFloat(this.value).toFixed(2);
+    if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+});
+
+// Top-N input — re-render
+document.getElementById('pcaLoadingsTopN').addEventListener('input', () => {
+    if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+});
 
 ['pcaXComp', 'pcaYComp'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {

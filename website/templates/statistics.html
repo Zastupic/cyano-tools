@@ -1469,7 +1469,8 @@
                                                     <li><strong>Exclude variables:</strong> Any variable that exceeds the threshold % of missing values is dropped. The remaining variables are used as-is; any rows still missing a value after exclusion are dropped. Keeps all samples but may remove important variables.</li>
                                                     <li><strong>KNN imputation:</strong> Missing values are estimated from the k most similar rows in the dataset. More statistically sophisticated than simple mean imputation, but harder to interpret with very small datasets.</li>
                                                 </ul>
-                                                <p style="font-size:0.8rem;"><strong>Loading arrows</strong> show how strongly each original variable contributes to PC1 and PC2. A long arrow pointing in a direction means that variable is a major driver of variation along that axis. Arrows pointing in similar directions indicate correlated variables.</p>
+                                                <p style="font-size:0.8rem;"><strong>Loading arrows</strong> show how strongly each original variable contributes to PC1 and PC2. Arrow length encodes the Euclidean magnitude of the loading in the displayed 2D plane — a long arrow means that variable is well-represented by the two visible components; a short arrow means most of its variance is captured by other PCs not currently shown. Arrows pointing in similar directions indicate correlated variables; opposite directions indicate negative correlation.</p>
+                                                <p style="font-size:0.8rem;"><strong>Loading arrow controls</strong> (available when "Show variable loadings" is checked): <em>Arrow scale</em> stretches or shrinks all arrows visually without changing the underlying values — useful when arrows cluster near the origin or extend beyond the plot. <em>Min. magnitude</em> hides arrows below a threshold (based on 2D Euclidean magnitude, so sign cancellation cannot occur); <em>Top N</em> keeps only the strongest N arrows. Both filters also highlight the corresponding rows in the loadings table shown below the plot.</p>
                                                 <p class="mb-0" style="font-size:0.8rem;"><strong>Explained variance</strong> (shown as % on each axis label) tells you how much of the total variability in your dataset is captured by that component. PC1 always captures the most, PC2 the second most.</p>
                                             </div>
                                         </div>
@@ -1532,9 +1533,26 @@
                                                     <input class="form-check-input" type="checkbox" id="pcaShowLabels">
                                                     <label class="form-check-label small" for="pcaShowLabels">Show labels on plot</label>
                                                 </div>
-                                                <div class="form-check form-switch mb-2">
+                                                <div class="form-check form-switch mb-1">
                                                     <input class="form-check-input" type="checkbox" id="pcaShowLoadings">
                                                     <label class="form-check-label small" for="pcaShowLoadings">Show variable loadings (arrows)</label>
+                                                </div>
+                                                <div id="pcaLoadingsOptions" style="display:none;" class="mb-2 pl-3" style="border-left:2px solid #dee2e6;">
+                                                    <div class="d-flex align-items-center mb-1" style="gap:0.5rem;">
+                                                        <label class="small mb-0 text-muted" for="pcaLoadingsScale" style="white-space:nowrap;">Arrow scale:</label>
+                                                        <input type="range" class="custom-range" id="pcaLoadingsScale" min="0.2" max="3" step="0.1" value="1" style="width:90px;">
+                                                        <span id="pcaLoadingsScaleVal" class="small text-muted" style="min-width:28px;">1.0×</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center mb-1" style="gap:0.5rem;">
+                                                        <label class="small mb-0 text-muted" for="pcaLoadingsThresh" style="white-space:nowrap;">Min. magnitude:</label>
+                                                        <input type="range" class="custom-range" id="pcaLoadingsThresh" min="0" max="1" step="0.05" value="0" style="width:90px;">
+                                                        <span id="pcaLoadingsThreshVal" class="small text-muted" style="min-width:28px;">0.00</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center" style="gap:0.5rem;">
+                                                        <label class="small mb-0 text-muted" for="pcaLoadingsTopN" style="white-space:nowrap;">Top N arrows:</label>
+                                                        <input type="number" class="form-control form-control-sm" id="pcaLoadingsTopN" min="0" value="0" style="width:60px;">
+                                                        <span class="small text-muted">(0 = all)</span>
+                                                    </div>
                                                 </div>
                                                 <div id="pcaCompRow" class="d-flex align-items-center flex-wrap mt-1" style="gap:0.5rem;">
                                                     <span class="small text-muted mr-2 font-weight-semibold">Plot axes:</span>
@@ -1714,6 +1732,7 @@
                                 </div>
                                 <div id="pcaResults"></div>
                                 <div id="pcaPlot" style="width:100%; min-height:500px; display:none;"></div>
+                                <div id="pcaLoadingsTable" style="display:none;" class="mt-3"></div>
                                 </div><!-- /mv-pca-content -->
 
                                 <!-- ── OPLS / OPLS-DA inner sub-tab ──────────────── -->
