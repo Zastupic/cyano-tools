@@ -15,8 +15,10 @@ from openpyxl import Workbook
 from openpyxl.drawing.image import Image as XLImage
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.worksheet import Worksheet
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from pyopls import OPLS as PYOPLS
 from scipy import stats
 from statsmodels.formula.api import ols
 import statsmodels.api as sm
@@ -72,6 +74,7 @@ def _box_stats_per_group(clean_df, group_col, value_col):
             upperfence = q3 + 1.5 * iqr
         out.append({
             "group": str(grp),
+            "n": int(len(vals)),
             "q1": q1,
             "q3": q3,
             "median": median,
@@ -529,19 +532,23 @@ def run_pca():
         # 3. PCA Calculation
         scaler = StandardScaler()
         scaled_data = scaler.fit_transform(clean_df[selected_vars])
-        pca = PCA(n_components=2)
+        n_comp = min(4, len(selected_vars), len(clean_df) - 1)
+        pca = PCA(n_components=n_comp)
         pca_features = pca.fit_transform(scaled_data)
 
-        clean_df['PC1'] = pca_features[:, 0]
-        clean_df['PC2'] = pca_features[:, 1]
+        for k in range(n_comp):
+            clean_df[f'PC{k + 1}'] = pca_features[:, k]
 
         # 4. Loadings (arrows data — plotting now done in frontend)
         loadings = pca.components_.T * np.sqrt(pca.explained_variance_)
-        loadings_list = [{"Variable": var, "PC1_Loading": float(loadings[i, 0]), "PC2_Loading": float(loadings[i, 1])}
-                         for i, var in enumerate(selected_vars)]
+        loadings_list = [
+            {**{"Variable": var}, **{f'PC{k + 1}_Loading': float(loadings[i, k]) for k in range(n_comp)}}
+            for i, var in enumerate(selected_vars)
+        ]
 
         # Build per-row group label for frontend colouring
-        scores = clean_df[['PC1', 'PC2']].copy()
+        pc_cols = [f'PC{k + 1}' for k in range(n_comp)]
+        scores = clean_df[pc_cols].copy()
         if hue_col:
             scores['group'] = clean_df[hue_col].values
         else:
@@ -556,6 +563,7 @@ def run_pca():
         return jsonify({
             "n_samples": len(clean_df),
             "n_input_rows": n_input_rows,
+            "n_components": n_comp,
             "explained_variance": pca.explained_variance_ratio_.tolist(),
             "loadings": loadings_list,
             "scores": scores.to_dict(orient='records'),
@@ -614,6 +622,641 @@ def export_pca_excel():
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             as_attachment=True,
             download_name='PCA_Full_Analysis.xlsx'
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@stats_bp.route('/run-opls', methods=['POST'])
+def run_opls():
+    try:
+        from sklearn.cross_decomposition import PLSRegression
+        from sklearn.preprocessing import LabelBinarizer
+        from sklearn.model_selection import KFold, LeaveOneOut
+        from sklearn.metrics import r2_score as sk_r2
+
+        request_data = request.get_json()
+        data = request_data.get('data', [])
+        ok, err = _validate_data_limits(data)
+        if not ok:
+            return jsonify({"error": err}), 400
+        df = pd.DataFrame(data)
+        factors = request_data.get('factors', [])
+        selected_vars = request_data.get('variables', [])
+        method = request_data.get('method', 'opls-da')  # 'opls-da' or 'opls'
+        y_col = request_data.get('y_col')
+        n_ortho = int(request_data.get('n_ortho', 1))
+        compute_cv = bool(request_data.get('compute_cv', True))
+
+        if not y_col:
+            return jsonify({"error": "Response variable (Y) is required."}), 400
+        if len(selected_vars) < 2:
+            return jsonify({"error": "OPLS requires at least 2 predictor variables."}), 400
+
+        # Prepare X
+        clean_df = df.copy()
+        for var in selected_vars:
+            clean_df[var] = pd.to_numeric(clean_df[var], errors='coerce')
+        clean_df = clean_df.dropna(subset=selected_vars).copy()
+
+        if len(clean_df) < 4:
+            return jsonify({"error": "Insufficient data: OPLS requires at least 4 valid samples."}), 400
+
+        # Group labels for colouring (use factors if available, else Y column)
+        if factors:
+            for f in factors:
+                clean_df[f] = clean_df[f].astype(str).replace(['nan', 'None'], 'N/A')
+            hue_col = ' & '.join(factors)
+            clean_df[hue_col] = clean_df[factors].agg(' | '.join, axis=1)
+            group_labels = clean_df[hue_col].tolist()
+        else:
+            group_labels = clean_df[y_col].astype(str).tolist()
+
+        # Standardise X
+        scaler = StandardScaler()
+        X = scaler.fit_transform(clean_df[selected_vars].values)
+
+        # Prepare Y
+        class_labels = None
+        if method == 'opls-da':
+            lb = LabelBinarizer()
+            Y_bin: np.ndarray = np.asarray(lb.fit_transform(clean_df[y_col].astype(str)))
+            y = (Y_bin.ravel() if Y_bin.shape[1] == 1 else Y_bin[:, 0]).astype(float)
+            class_labels = lb.classes_.tolist()
+        else:
+            y = pd.to_numeric(clean_df[y_col], errors='coerce').values
+            if np.isnan(y).any():
+                return jsonify({"error": f"Column '{y_col}' contains non-numeric or missing values."}), 400
+
+        n = len(clean_df)
+        n_ortho = max(1, min(n_ortho, min(n - 2, len(selected_vars) - 1)))
+
+        # Fit OPLS — removes orthogonal variance from X
+        opls = PYOPLS(n_ortho)
+        opls.fit(X, y)
+        X_filtered = opls.transform(X)
+
+        # Fit PLS on deflated X to get predictive scores
+        pls = PLSRegression(n_components=1)
+        pls.fit(X_filtered, y)
+        T_pred = pls.x_scores_.ravel()
+        T_ortho_arr = opls.T_ortho_[:, 0]  # type: ignore[index]
+
+        # S-plot: covariance and correlation of each X column with T_pred
+        cov_xT = np.array([np.cov(X[:, j], T_pred)[0, 1] for j in range(X.shape[1])])
+        corr_xT = np.array([np.corrcoef(X[:, j], T_pred)[0, 1] for j in range(X.shape[1])])
+
+        # VIP scores
+        W = pls.x_weights_          # (p, 1) predictive weights
+        T_mat = pls.x_scores_       # (n, 1)
+        Q = pls.y_loadings_         # (1, 1)
+        SS = float(np.sum(T_mat**2)) * float(np.sum(Q**2))
+        p_vars = X.shape[1]
+        if SS > 0:
+            W_norm = W / np.sqrt(np.sum(W**2, axis=0, keepdims=True))
+            VIP = np.sqrt(p_vars * np.sum((W_norm**2) * SS, axis=1) / SS)
+        else:
+            VIP = np.ones(p_vars)
+
+        # R²Y
+        y_pred_full = pls.predict(X_filtered).ravel()
+        r2y = float(sk_r2(y, y_pred_full))
+
+        # R²X (predictive + orthogonal reconstructed)
+        X_recon = T_pred[:, None] @ pls.x_loadings_.T + opls.T_ortho_ @ opls.P_ortho_.T  # type: ignore[union-attr]
+        ss_x_total = float(np.sum(X**2))
+        r2x = (float(np.sum(X_recon**2)) / ss_x_total) if ss_x_total > 0 else 0.0
+
+        # Q² via cross-validation
+        q2 = None
+        if compute_cv and n >= 4:
+            cv_iter = LeaveOneOut() if n <= 20 else KFold(n_splits=min(7, n), shuffle=True, random_state=42)
+            ss_total = float(np.sum((y - np.mean(y))**2))
+            press = 0.0
+            for train_idx, test_idx in cv_iter.split(X):
+                X_tr, X_te = X[train_idx], X[test_idx]
+                y_tr, y_te = y[train_idx], y[test_idx]
+                try:
+                    n_o = max(1, min(n_ortho, len(X_tr) - 2))
+                    opls_cv = PYOPLS(n_o)
+                    opls_cv.fit(X_tr, y_tr)
+                    X_filt_tr = opls_cv.transform(X_tr)
+                    X_filt_te = opls_cv.transform(X_te)
+                    pls_cv = PLSRegression(n_components=1)
+                    pls_cv.fit(X_filt_tr, y_tr)
+                    y_pred_cv = pls_cv.predict(X_filt_te).ravel()
+                    press += float(np.sum((y_te - y_pred_cv)**2))
+                except Exception:
+                    pass
+            q2 = float(1.0 - press / ss_total) if ss_total > 0 else None
+
+        def _jf(v):
+            """Return float safe for JSON serialisation; NaN / Inf → None."""
+            if v is None:
+                return None
+            f = float(v)
+            return None if (math.isnan(f) or math.isinf(f)) else f
+
+        scores = [
+            {'T': _jf(T_pred[i]), 'T_ortho': _jf(T_ortho_arr[i]),
+             'label': str(i + 1), 'group': str(group_labels[i])}
+            for i in range(n)
+        ]
+        splot = [
+            {'var': selected_vars[j], 'cov': _jf(cov_xT[j]), 'corr': _jf(corr_xT[j]),
+             'vip': _jf(VIP[j])}
+            for j in range(len(selected_vars))
+        ]
+        vip_sorted = sorted(
+            [{'var': selected_vars[j], 'vip': _jf(VIP[j])} for j in range(len(selected_vars))],
+            key=lambda x: (x['vip'] or 0), reverse=True
+        )
+
+        return jsonify({
+            'method': method,
+            'scores': scores,
+            'splot': splot,
+            'vip': vip_sorted,
+            'r2x': _jf(r2x),
+            'r2y': _jf(r2y),
+            'q2': _jf(q2),
+            'n_samples': int(n),
+            'n_ortho': int(n_ortho),
+            'y_col': y_col,
+            'class_labels': class_labels,
+            'vars_used': selected_vars,
+        })
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+@stats_bp.route('/export-opls-excel', methods=['POST'])
+def export_opls_excel():
+    try:
+        request_data = request.get_json()
+        result = request_data.get('result', {})
+        images = request_data.get('images', {})  # {score: base64, splot: base64, vip: base64}
+
+        output = io.BytesIO()
+        wb = Workbook()
+
+        # Sheet 1: Summary + scores
+        ws1: Worksheet = wb.active  # type: ignore[assignment]
+        ws1.title = 'OPLS Results'
+        method_str = 'OPLS-DA' if result.get('method') == 'opls-da' else 'OPLS'
+        ws1['A1'] = f'{method_str} Analysis Report'
+        ws1['A1'].font = Font(bold=True, size=13)
+        ws1['A2'] = f"Y variable: {result.get('y_col', '')}"
+        ws1['A3'] = f"Samples: {result.get('n_samples', '')}"
+        ws1['A4'] = f"Orthogonal components: {result.get('n_ortho', '')}"
+        r2x = result.get('r2x')
+        r2y = result.get('r2y')
+        q2 = result.get('q2')
+        ws1['A5'] = f"R\u00b2X = {r2x:.4f}  |  R\u00b2Y = {r2y:.4f}  |  Q\u00b2 = {q2:.4f if q2 is not None else 'N/A'}"
+
+        # Score table
+        header = ['Sample', 'Group', 'T (predictive)', 'T_orth (orthogonal)']
+        ws1.append([])
+        ws1.append(header)
+        hrow = ws1.max_row
+        for cell in ws1[hrow]:
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill('solid', fgColor='D9E1F2')
+        for s in result.get('scores', []):
+            ws1.append([s.get('label'), s.get('group'), s.get('T'), s.get('T_ortho')])
+
+        # Sheet 2: S-plot data
+        ws2 = wb.create_sheet('S-plot Data')
+        ws2.append(['Variable', 'Covariance (p)', 'Correlation (p_corr)', 'VIP'])
+        for cell in ws2[1]:
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill('solid', fgColor='D9E1F2')
+        for s in result.get('splot', []):
+            ws2.append([s.get('var'), s.get('cov'), s.get('corr'), s.get('vip')])
+
+        # Sheet 3: VIP data
+        ws3 = wb.create_sheet('VIP Scores')
+        ws3.append(['Variable', 'VIP Score'])
+        for cell in ws3[1]:
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill('solid', fgColor='D9E1F2')
+        vip_ref_row = None
+        for i, v in enumerate(result.get('vip', [])):
+            ws3.append([v.get('var'), v.get('vip')])
+            if v.get('vip', 0) >= 1.0 and vip_ref_row is None:
+                vip_ref_row = ws3.max_row
+
+        # Embed plot images
+        for sheet_name, img_key in [('Score Plot', 'score'), ('S-plot', 'splot'), ('VIP Plot', 'vip')]:
+            img_b64 = images.get(img_key)
+            if img_b64:
+                ws_img = wb.create_sheet(sheet_name)
+                img_data = base64.b64decode(img_b64)
+                img = XLImage(io.BytesIO(img_data))
+                ws_img.add_image(img, 'A1')
+
+        wb.save(output)
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='OPLS_Analysis.xlsx'
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@stats_bp.route('/run-pls', methods=['POST'])
+def run_pls():
+    try:
+        from sklearn.cross_decomposition import PLSRegression
+        from sklearn.preprocessing import LabelBinarizer
+        from sklearn.model_selection import KFold, LeaveOneOut
+        from sklearn.metrics import r2_score as sk_r2
+
+        request_data = request.get_json()
+        data = request_data.get('data', [])
+        ok, err = _validate_data_limits(data)
+        if not ok:
+            return jsonify({"error": err}), 400
+        df = pd.DataFrame(data)
+        factors = request_data.get('factors', [])
+        selected_vars = request_data.get('variables', [])
+        method = request_data.get('method', 'pls-da')   # 'pls-da' or 'pls'
+        y_col = request_data.get('y_col')
+        n_components = int(request_data.get('n_components', 2))
+        compute_cv = bool(request_data.get('compute_cv', True))
+
+        if not y_col:
+            return jsonify({"error": "Response variable (Y) is required."}), 400
+        if len(selected_vars) < 2:
+            return jsonify({"error": "PLS requires at least 2 predictor variables."}), 400
+
+        clean_df = df.copy()
+        for var in selected_vars:
+            clean_df[var] = pd.to_numeric(clean_df[var], errors='coerce')
+        clean_df = clean_df.dropna(subset=selected_vars).copy()
+
+        if len(clean_df) < 4:
+            return jsonify({"error": "Insufficient data: PLS requires at least 4 valid samples."}), 400
+
+        # Group labels for colouring (factors or Y column)
+        if factors:
+            for f in factors:
+                clean_df[f] = clean_df[f].astype(str).replace(['nan', 'None'], 'N/A')
+            hue_col = ' & '.join(factors)
+            clean_df[hue_col] = clean_df[factors].agg(' | '.join, axis=1)
+            group_labels = clean_df[hue_col].tolist()
+        else:
+            group_labels = clean_df[y_col].astype(str).tolist()
+
+        # Standardise X
+        scaler = StandardScaler()
+        X = scaler.fit_transform(clean_df[selected_vars].values)
+
+        # Prepare Y
+        class_labels = None
+        if method == 'pls-da':
+            lb = LabelBinarizer()
+            Y_bin: np.ndarray = np.asarray(lb.fit_transform(clean_df[y_col].astype(str)))
+            y = (Y_bin.ravel() if Y_bin.shape[1] == 1 else Y_bin[:, 0]).astype(float)
+            class_labels = lb.classes_.tolist()
+        else:
+            y = pd.to_numeric(clean_df[y_col], errors='coerce').values
+            if np.isnan(y).any():
+                return jsonify({"error": f"Column '{y_col}' contains non-numeric or missing values."}), 400
+
+        n, p = len(clean_df), X.shape[1]
+        n_components = max(1, min(n_components, min(n - 1, p)))
+
+        pls = PLSRegression(n_components=n_components)
+        pls.fit(X, y)
+
+        T = pls.x_scores_    # (n, n_comp) — LV scores
+        W = pls.x_weights_   # (p, n_comp) — weights for VIP + biplot
+        P = pls.x_loadings_  # (p, n_comp) — X loadings
+        Q = pls.y_loadings_  # (1, n_comp) — Y loadings
+
+        # VIP scores (all components)
+        T_sq = np.sum(T ** 2, axis=0)
+        Q_sq = np.sum(Q ** 2, axis=0)
+        SS = T_sq * Q_sq
+        SS_total = float(np.sum(SS))
+        if SS_total > 0:
+            W_norm = W / np.sqrt(np.sum(W ** 2, axis=0, keepdims=True))
+            VIP = np.sqrt(p * np.sum((W_norm ** 2) * SS, axis=1) / SS_total)
+        else:
+            VIP = np.ones(p)
+
+        # Cumulative R²X per component
+        x_var_total = float(np.sum(X ** 2))
+        X_rec = np.zeros_like(X)
+        r2x_per_comp = []
+        for k in range(n_components):
+            X_rec += T[:, k:k+1] @ P[:, k:k+1].T
+            r2x_per_comp.append(float(np.sum(X_rec ** 2) / x_var_total) if x_var_total > 0 else 0.0)
+
+        # R²Y
+        r2y = float(sk_r2(y, pls.predict(X).ravel()))
+
+        # Q²
+        q2 = None
+        if compute_cv and n >= 4:
+            cv_iter = LeaveOneOut() if n <= 20 else KFold(n_splits=min(7, n), shuffle=True, random_state=42)
+            ss_total = float(np.sum((y - np.mean(y)) ** 2))
+            press = 0.0
+            for train_idx, test_idx in cv_iter.split(X):
+                X_tr, X_te = X[train_idx], X[test_idx]
+                y_tr, y_te = y[train_idx], y[test_idx]
+                try:
+                    n_c = max(1, min(n_components, len(X_tr) - 1))
+                    pls_cv = PLSRegression(n_components=n_c)
+                    pls_cv.fit(X_tr, y_tr)
+                    press += float(np.sum((y_te - pls_cv.predict(X_te).ravel()) ** 2))
+                except Exception:
+                    pass
+            q2 = float(1.0 - press / ss_total) if ss_total > 0 else None
+
+        def _jf(v):
+            if v is None:
+                return None
+            f = float(v)
+            return None if (math.isnan(f) or math.isinf(f)) else f
+
+        scores = [
+            {'T1': _jf(T[i, 0]),
+             'T2': _jf(T[i, 1]) if n_components >= 2 else 0.0,
+             'label': str(i + 1), 'group': str(group_labels[i])}
+            for i in range(n)
+        ]
+        weights = [
+            {'var': selected_vars[j], 'vip': _jf(VIP[j]),
+             **{f'W{k+1}': _jf(W[j, k]) for k in range(n_components)}}
+            for j in range(p)
+        ]
+        vip_sorted = sorted(
+            [{'var': selected_vars[j], 'vip': _jf(VIP[j])} for j in range(p)],
+            key=lambda x: (x['vip'] or 0), reverse=True
+        )
+        return jsonify({
+            'method': method,
+            'n_components': n_components,
+            'scores': scores,
+            'weights': weights,
+            'vip': vip_sorted,
+            'r2x': _jf(r2x_per_comp[-1]),
+            'r2x_per_comp': [_jf(v) for v in r2x_per_comp],
+            'r2y': _jf(r2y),
+            'q2': _jf(q2),
+            'n_samples': int(n),
+            'y_col': y_col,
+            'class_labels': class_labels,
+            'vars_used': selected_vars,
+        })
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
+@stats_bp.route('/export-pls-excel', methods=['POST'])
+def export_pls_excel():
+    try:
+        request_data = request.get_json()
+        result = request_data.get('result', {})
+        images = request_data.get('images', {})
+
+        output = io.BytesIO()
+        wb = Workbook()
+
+        ws1: Worksheet = wb.active  # type: ignore[assignment]
+        ws1.title = 'PLS Results'
+        method_str = 'PLS-DA' if result.get('method') == 'pls-da' else 'PLS'
+        ws1['A1'] = f'{method_str} Analysis Report'
+        ws1['A1'].font = Font(bold=True, size=13)
+        ws1['A2'] = f"Y variable: {result.get('y_col', '')}"
+        ws1['A3'] = f"Samples: {result.get('n_samples', '')} | Components: {result.get('n_components', '')}"
+        r2x = result.get('r2x'); r2y = result.get('r2y'); q2 = result.get('q2')
+        ws1['A4'] = f"R\u00b2X = {r2x:.4f}  |  R\u00b2Y = {r2y:.4f}  |  Q\u00b2 = {f'{q2:.4f}' if q2 is not None else 'N/A'}"
+
+        ws1.append([])
+        header = ['Sample', 'Group', 'T1 (LV1 score)', 'T2 (LV2 score)']
+        ws1.append(header)
+        hrow = ws1.max_row
+        for cell in ws1[hrow]:
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill('solid', fgColor='D9E1F2')
+        for s in result.get('scores', []):
+            ws1.append([s.get('label'), s.get('group'), s.get('T1'), s.get('T2')])
+
+        n_comp = result.get('n_components', 2)
+        ws2 = wb.create_sheet('Weights')
+        ws2.append(['Variable'] + [f'W{k+1}' for k in range(n_comp)] + ['VIP'])
+        for cell in ws2[1]:
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill('solid', fgColor='D9E1F2')
+        for row in result.get('weights', []):
+            ws2.append([row.get('var')] + [row.get(f'W{k+1}') for k in range(n_comp)] + [row.get('vip')])
+
+        ws3 = wb.create_sheet('VIP Scores')
+        ws3.append(['Variable', 'VIP Score'])
+        for cell in ws3[1]:
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill('solid', fgColor='D9E1F2')
+        for v in result.get('vip', []):
+            ws3.append([v.get('var'), v.get('vip')])
+
+        for sheet_name, img_key in [('Score Plot', 'score'), ('Weights Plot', 'weights'), ('VIP Plot', 'vip')]:
+            img_b64 = images.get(img_key)
+            if img_b64:
+                ws_img = wb.create_sheet(sheet_name)
+                img_data = base64.b64decode(img_b64)
+                img = XLImage(io.BytesIO(img_data))
+                ws_img.add_image(img, 'A1')
+
+        wb.save(output)
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='PLS_Analysis.xlsx'
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@stats_bp.route('/run-regression', methods=['POST'])
+def run_regression():
+    try:
+        from scipy.stats import probplot
+        request_data = request.get_json()
+        data = request_data.get('data', [])
+        ok, err = _validate_data_limits(data)
+        if not ok:
+            return jsonify({"error": err}), 400
+        df = pd.DataFrame(data)
+        method = request_data.get('method', 'multiple')   # 'simple' | 'multiple'
+        y_col  = request_data.get('y_col')
+        x_cols = request_data.get('x_cols', [])
+
+        if not y_col:
+            return jsonify({"error": "Response variable (Y) is required."}), 400
+        if not x_cols:
+            return jsonify({"error": "At least one predictor (X) is required."}), 400
+
+        clean_df = df.copy()
+        for col in x_cols:
+            clean_df[col] = pd.to_numeric(clean_df[col], errors='coerce')
+
+        if method in ('simple', 'multiple'):
+            clean_df[y_col] = pd.to_numeric(clean_df[y_col], errors='coerce')
+            clean_df = clean_df.dropna(subset=x_cols + [y_col]).copy()
+        else:
+            clean_df = clean_df.dropna(subset=x_cols).copy()
+
+        # Drop predictors that are entirely NaN or constant after numeric conversion
+        x_cols = [c for c in x_cols
+                  if clean_df[c].notna().sum() >= 2 and clean_df[c].std() > 0]
+        if not x_cols:
+            return jsonify({"error": "No valid numeric predictor variables. Make sure the selected X columns contain numeric data."}), 400
+
+        n = len(clean_df)
+        if n < len(x_cols) + 2:
+            return jsonify({"error": f"Insufficient data: {n} samples but {len(x_cols)} predictors. "
+                                     f"OLS requires more samples than predictors. Deselect some predictors."}), 400
+
+        X_sm = sm.add_constant(clean_df[x_cols].values.astype(float), has_constant='add')
+        col_names = ['Intercept'] + list(x_cols)
+
+        def _diag(model, y_arr):
+            """Build diagnostic arrays from an OLS model."""
+            fitted     = model.fittedvalues.tolist()
+            residuals  = model.resid.tolist()
+            infl       = model.get_influence()
+            std_resid  = infl.resid_studentized_internal.tolist()
+            sqrt_std   = np.sqrt(np.abs(infl.resid_studentized_internal)).tolist()
+            cooks      = infl.cooks_distance[0].tolist()
+            qq_th, qq_s = probplot(model.resid, dist='norm')[0]
+            return {
+                'fitted': fitted, 'residuals': residuals,
+                'std_residuals': std_resid, 'sqrt_abs_std_resid': sqrt_std,
+                'qq_theoretical': qq_th.tolist(), 'qq_sample': qq_s.tolist(),
+                'cooks_d': cooks, 'obs_index': list(range(n)),
+            }
+
+        if method in ('simple', 'multiple'):
+            y = clean_df[y_col].values.astype(float)
+            model = sm.OLS(y, X_sm).fit()
+            ci = model.conf_int()
+            coefficients = [
+                {'name': col_names[i], 'coef': float(model.params[i]),
+                 'std_err': float(model.bse[i]), 't_stat': float(model.tvalues[i]),
+                 'p_value': float(model.pvalues[i]),
+                 'ci_lower': float(np.asarray(ci)[i, 0]), 'ci_upper': float(np.asarray(ci)[i, 1])}
+                for i in range(len(col_names))
+            ]
+            scatter_data = None
+            if method == 'simple':
+                x_vals = clean_df[x_cols[0]].values.astype(float)
+                x_sort_idx = np.argsort(x_vals)
+                x_sorted   = x_vals[x_sort_idx]
+                X_pred     = sm.add_constant(x_sorted, has_constant='add')
+                pred       = model.get_prediction(X_pred)
+                pred_ci    = pred.conf_int()
+                scatter_data = {
+                    'x': x_vals.tolist(), 'y': y.tolist(),
+                    'x_sorted': x_sorted.tolist(),
+                    'fit_line': pred.predicted_mean.tolist(),
+                    'ci_lower': pred_ci[:, 0].tolist(), 'ci_upper': pred_ci[:, 1].tolist(),
+                }
+            return jsonify({
+                'method': method, 'y_col': y_col, 'x_cols': x_cols,
+                'n': n, 'coefficients': coefficients,
+                'r_squared':     float(model.rsquared),
+                'adj_r_squared': float(model.rsquared_adj),
+                'f_stat':   float(model.fvalue)   if not np.isnan(float(model.fvalue))   else None,
+                'f_pvalue': float(model.f_pvalue) if not np.isnan(float(model.f_pvalue)) else None,
+                'aic': float(model.aic), 'bic': float(model.bic),
+                'scatter': scatter_data,
+                'diagnostics': _diag(model, y),
+            })
+
+        else:
+            return jsonify({"error": f"Unknown regression method: {method}"}), 400
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+@stats_bp.route('/export-regression-excel', methods=['POST'])
+def export_regression_excel():
+    try:
+        request_data = request.get_json()
+        result = request_data.get('result', {})
+        images = request_data.get('images', {})  # {scatter/coef/roc/cm/diag: base64}
+
+        output = io.BytesIO()
+        wb = Workbook()
+        method = result.get('method', 'regression')
+        method_str = {'simple': 'Simple Linear Regression', 'multiple': 'Multiple Linear Regression'}.get(method, 'Regression')
+
+        # Sheet 1: Model summary
+        ws1: Worksheet = wb.active  # type: ignore[assignment]
+        ws1.title = 'Model Summary'
+        ws1['A1'] = method_str
+        ws1['A1'].font = Font(bold=True, size=13)
+        ws1['A2'] = f"Y: {result.get('y_col', '')}   X: {', '.join(result.get('x_cols', []))}"
+        ws1['A3'] = f"n = {result.get('n', '')}"
+
+        if method in ('simple', 'multiple'):
+            ws1['A4'] = (f"R² = {result.get('r_squared', 0):.4f}   "
+                         f"Adj-R² = {result.get('adj_r_squared', 0):.4f}   "
+                         f"AIC = {result.get('aic', 0):.2f}   BIC = {result.get('bic', 0):.2f}")
+            if result.get('f_stat'):
+                ws1['A5'] = f"F-stat = {result['f_stat']:.4f}   F p-value = {result['f_pvalue']:.4g}"
+            coef_header = ['Variable', 'Coefficient', 'Std Error', 't-stat', 'p-value', 'CI Lower', 'CI Upper']
+        else:
+            ws1['A4'] = (f"McFadden R² = {result.get('pseudo_r2', 0):.4f}   "
+                         f"AUC = {result.get('roc', {}).get('auc', 0):.4f}   "
+                         f"Accuracy = {result.get('accuracy', 0):.4f}")
+            ws1['A5'] = f"AIC = {result.get('aic', 0):.2f}   BIC = {result.get('bic', 0):.2f}"
+            coef_header = ['Variable', 'Coefficient', 'Std Error', 'z-stat', 'p-value', 'Odds Ratio', 'OR CI Lower', 'OR CI Upper']
+
+        ws1.append([])
+        ws1.append(coef_header)
+        hrow = ws1.max_row
+        for cell in ws1[hrow]:
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill('solid', fgColor='D9E1F2')
+        sig_fill   = PatternFill('solid', fgColor='C6EFCE')
+        insig_fill = PatternFill('solid', fgColor='FFEB9C')
+
+        for coef in result.get('coefficients', []):
+            p = coef.get('p_value', 1)
+            if method in ('simple', 'multiple'):
+                row = [coef['name'], coef['coef'], coef['std_err'],
+                       coef['t_stat'], p, coef['ci_lower'], coef['ci_upper']]
+            else:
+                row = [coef['name'], coef['coef'], coef['std_err'],
+                       coef['z_stat'], p, coef['or'], coef['or_ci_lower'], coef['or_ci_upper']]
+            ws1.append(row)
+            for cell in ws1[ws1.max_row]:
+                cell.fill = sig_fill if p < 0.05 else insig_fill
+
+        # Embed main plot image
+        for key, sheet_name in [('main', 'Main Plot'), ('diag', 'Diagnostics')]:
+            img_b64 = images.get(key)
+            if img_b64:
+                ws_img = wb.create_sheet(sheet_name)
+                img_data = base64.b64decode(img_b64)
+                img = XLImage(io.BytesIO(img_data))
+                ws_img.add_image(img, 'A1')
+
+        wb.save(output)
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='Regression_Analysis.xlsx'
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1683,6 +2326,592 @@ def export_full_report():
         return send_file(
             output,
             download_name='Statistical_Analysis_Full_Report.xlsx',
+            as_attachment=True,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
+# ================== CLUSTERING ANALYSIS ==================
+
+@stats_bp.route('/run-clustering', methods=['POST'])
+def run_clustering():
+    try:
+        from sklearn.cluster import KMeans, DBSCAN
+        from sklearn.metrics import silhouette_score as sk_silhouette
+        from sklearn.neighbors import NearestNeighbors
+        from scipy.cluster.hierarchy import (
+            linkage as sp_linkage,
+            dendrogram as sp_dendrogram,
+            fcluster,
+        )
+
+        request_data = request.get_json()
+        data         = request_data.get('data', [])
+        ok, err = _validate_data_limits(data)
+        if not ok:
+            return jsonify({"error": err}), 400
+
+        df          = pd.DataFrame(data)
+        variables   = request_data.get('variables', [])
+        factors     = request_data.get('factors', [])
+        method      = request_data.get('method', 'hierarchical')
+        standardize = request_data.get('standardize', True)
+
+        if len(variables) < 2:
+            return jsonify({"error": "Clustering requires at least 2 variables."}), 400
+
+        for v in variables:
+            df[v] = pd.to_numeric(df[v], errors='coerce')
+        df_clean = df.dropna(subset=variables).copy()
+
+        if len(df_clean) < 3:
+            return jsonify({"error": "Need at least 3 rows after removing missing values."}), 400
+
+        X = df_clean[variables].values
+
+        # Build row labels
+        if factors:
+            row_labels = df_clean[factors].apply(
+                lambda r: ' | '.join(r.astype(str)), axis=1).tolist()
+        else:
+            row_labels = [str(i + 1) for i in range(len(df_clean))]
+
+        # Standardize
+        if standardize:
+            scaler = StandardScaler()
+            X_sc = scaler.fit_transform(X)
+        else:
+            X_sc = X.copy().astype(float)
+
+        # 2-component PCA for scatter visualisation (k-means / DBSCAN)
+        n_comp = min(2, X_sc.shape[0] - 1, X_sc.shape[1])
+        pca_vis = PCA(n_components=n_comp)
+        pca_xy  = pca_vis.fit_transform(X_sc)
+        pca_var = pca_vis.explained_variance_ratio_.tolist()
+        if pca_xy.shape[1] < 2:
+            pca_xy  = np.hstack([pca_xy, np.zeros((pca_xy.shape[0], 2 - pca_xy.shape[1]))])
+            pca_var += [0.0] * (2 - len(pca_var))
+
+        # ── HIERARCHICAL ─────────────────────────────────────────────────
+        if method == 'hierarchical':
+            linkage_method = request_data.get('linkage_method', 'ward')
+            metric         = request_data.get('metric', 'euclidean')
+            n_clusters     = int(request_data.get('n_clusters', 0))
+
+            if linkage_method == 'ward':
+                metric = 'euclidean'          # ward only works with euclidean
+
+            try:
+                Z_rows = sp_linkage(X_sc, method=linkage_method, metric=metric)
+            except Exception as le:
+                return jsonify({"error": f"Linkage computation failed: {le}"}), 400
+
+            # Color threshold = 70% of max distance (scipy default)
+            color_thresh = 0.7 * float(Z_rows[:, 2].max())
+
+            dend_rows = sp_dendrogram(Z_rows, labels=row_labels,
+                                      no_plot=True, color_threshold=color_thresh)
+
+            # Variable (column) clustering
+            Z_cols    = sp_linkage(X_sc.T, method='ward', metric='euclidean')
+            dend_cols = sp_dendrogram(Z_cols, labels=variables,
+                                      no_plot=True, color_threshold=-1)
+
+            row_order = dend_rows['leaves']
+            col_order = dend_cols['leaves']
+
+            # Reorder data matrix
+            z_mat             = X_sc[row_order, :][:, col_order]
+            row_lbls_ord      = [row_labels[i] for i in row_order]
+            col_lbls_ord      = [variables[i]  for i in col_order]
+
+            # Cluster labels
+            if n_clusters >= 2:
+                cluster_arr = fcluster(Z_rows, t=n_clusters, criterion='maxclust').tolist()
+            else:
+                cluster_arr = fcluster(Z_rows, t=color_thresh, criterion='distance').tolist()
+
+            cluster_at_order = [cluster_arr[i] for i in row_order]
+
+            return jsonify(_make_json_safe({
+                "method":        "hierarchical",
+                "n_samples":     len(df_clean),
+                "variables":     variables,
+                "row_labels":    row_labels,
+                "linkage_method": linkage_method,
+                "metric":        metric,
+                "color_threshold": color_thresh,
+                "dendrogram": {
+                    "icoord":     dend_rows['icoord'],
+                    "dcoord":     dend_rows['dcoord'],
+                    "color_list": dend_rows['color_list'],
+                    "ivl":        dend_rows['ivl'],
+                    "leaves":     dend_rows['leaves'],
+                },
+                "var_dendrogram": {
+                    "icoord":     dend_cols['icoord'],
+                    "dcoord":     dend_cols['dcoord'],
+                    "color_list": dend_cols['color_list'],
+                    "ivl":        dend_cols['ivl'],
+                    "leaves":     dend_cols['leaves'],
+                },
+                "heatmap": {
+                    "z":          z_mat.tolist(),
+                    "row_labels": row_lbls_ord,
+                    "col_labels": col_lbls_ord,
+                    "row_order":  row_order,
+                    "col_order":  col_order,
+                    "z_min":      float(np.percentile(X_sc, 2)),
+                    "z_max":      float(np.percentile(X_sc, 98)),
+                },
+                "cluster_labels":    cluster_arr,
+                "cluster_at_order":  cluster_at_order,
+                "n_detected_clusters": int(max(cluster_arr)),
+            }))
+
+        # ── K-MEANS ──────────────────────────────────────────────────────
+        elif method == 'kmeans':
+            k             = int(request_data.get('k', 3))
+            compute_elbow = bool(request_data.get('compute_elbow', False))
+            max_k         = int(request_data.get('max_k', 10))
+
+            if k < 2:
+                return jsonify({"error": "K-Means requires k ≥ 2."}), 400
+            if k >= len(df_clean):
+                return jsonify({"error": f"k ({k}) must be less than the number of samples ({len(df_clean)})."}), 400
+
+            elbow_data = []
+            if compute_elbow:
+                max_k_actual = min(max_k, len(df_clean) - 1)
+                for ki in range(2, max_k_actual + 1):
+                    km_e = KMeans(n_clusters=ki, random_state=42, n_init=10)
+                    km_e.fit(X_sc)
+                    sil_e = float(sk_silhouette(X_sc, km_e.labels_)) if len(set(km_e.labels_)) > 1 else None
+                    elbow_data.append({"k": ki, "inertia": float(km_e.inertia_), "silhouette": sil_e})
+
+            km = KMeans(n_clusters=k, random_state=42, n_init=10)
+            labels = km.fit_predict(X_sc).tolist()
+            sil = float(sk_silhouette(X_sc, km.labels_)) if len(set(labels)) > 1 else None
+
+            grp = df_clean[factors].apply(lambda r: ' | '.join(r.astype(str)), axis=1).tolist() if factors else []
+
+            pca_pts = [{"x": float(pca_xy[i, 0]), "y": float(pca_xy[i, 1]),
+                        "cluster": int(labels[i]), "label": row_labels[i],
+                        "group": grp[i] if grp else ""}
+                       for i in range(len(df_clean))]
+
+            return jsonify(_make_json_safe({
+                "method":       "kmeans",
+                "n_samples":    len(df_clean),
+                "k":            k,
+                "labels":       labels,
+                "pca_coords":   pca_pts,
+                "pca_variance": pca_var,
+                "silhouette":   sil,
+                "inertia":      float(km.inertia_),
+                "elbow":        elbow_data,
+            }))
+
+        # ── DBSCAN ───────────────────────────────────────────────────────
+        elif method == 'dbscan':
+            eps           = float(request_data.get('eps', 0.5))
+            min_samples   = int(request_data.get('min_samples', 5))
+            compute_kdist = bool(request_data.get('compute_kdist', False))
+            kdist_k       = int(request_data.get('kdist_k', 4))
+
+            kdist_data = []
+            if compute_kdist:
+                nbrs = NearestNeighbors(n_neighbors=kdist_k).fit(X_sc)
+                dists, _ = nbrs.kneighbors(X_sc)
+                kdist_data = np.sort(dists[:, -1])[::-1].tolist()
+
+            db     = DBSCAN(eps=eps, min_samples=min_samples)
+            labels = db.fit_predict(X_sc).tolist()
+
+            n_clusters = int(len(set(labels)) - (1 if -1 in labels else 0))
+            n_noise    = int(labels.count(-1))
+
+            grp = df_clean[factors].apply(lambda r: ' | '.join(r.astype(str)), axis=1).tolist() if factors else []
+
+            pca_pts = [{"x": float(pca_xy[i, 0]), "y": float(pca_xy[i, 1]),
+                        "cluster": int(labels[i]), "label": row_labels[i],
+                        "group": grp[i] if grp else ""}
+                       for i in range(len(df_clean))]
+
+            return jsonify(_make_json_safe({
+                "method":       "dbscan",
+                "n_samples":    len(df_clean),
+                "eps":          eps,
+                "min_samples":  min_samples,
+                "labels":       labels,
+                "n_clusters":   n_clusters,
+                "n_noise":      n_noise,
+                "pca_coords":   pca_pts,
+                "pca_variance": pca_var,
+                "kdist":        kdist_data,
+                "kdist_k":      kdist_k,
+            }))
+
+        else:
+            return jsonify({"error": f"Unknown method: {method}"}), 400
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
+@stats_bp.route('/export-clustering-excel', methods=['POST'])
+def export_clustering_excel():
+    try:
+        request_data  = request.get_json()
+        method        = request_data.get('method', 'hierarchical')
+        row_labels    = request_data.get('row_labels', [])
+        cluster_labels = request_data.get('cluster_labels', [])
+        variables     = request_data.get('variables', [])
+        plot_img      = request_data.get('plot_img', None)    # base64 PNG
+        plot2_img     = request_data.get('plot2_img', None)   # second plot (elbow / kdist)
+
+        wb = Workbook()
+
+        header_fill  = PatternFill("solid", fgColor="2F5496")
+        header_font  = Font(color="FFFFFF", bold=True, name='Calibri', size=11)
+        subhdr_fill  = PatternFill("solid", fgColor="D6E4F0")
+        subhdr_font  = Font(bold=True, name='Calibri', size=10)
+        center_align = Alignment(horizontal='center', vertical='center')
+        thin_border  = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin'))
+
+        # Cluster fill colors for up to 12 clusters
+        cluster_fills = [
+            "E3F2FD","E8F5E9","FFF9C4","FCE4D6","F3E5F5",
+            "E0F7FA","FBE9E7","EDE7F6","F1F8E9","FFF3E0",
+            "E8EAF6","EFEBE9",
+        ]
+
+        # ── Sheet 1: Membership ───────────────────────────────────────────
+        ws: Worksheet = wb.active  # type: ignore[assignment]
+        ws.title = 'Cluster Membership'
+
+        ws.merge_cells(start_row=1, start_column=1,
+                       end_row=1, end_column=3)
+        t = ws.cell(row=1, column=1,
+                    value=f"Cluster Membership — {method.capitalize()}")
+        t.font = Font(color="FFFFFF", bold=True, size=13, name='Calibri')
+        t.fill = header_fill; t.alignment = center_align
+
+        for col, hdr in enumerate(['Sample', 'Cluster', 'Variables used'], start=1):
+            c = ws.cell(row=2, column=col, value=hdr)
+            c.fill = subhdr_fill; c.font = subhdr_font
+            c.alignment = center_align; c.border = thin_border
+
+        ws.cell(row=2, column=3, value=', '.join(variables)).fill = subhdr_fill
+
+        for i, (lbl, cl) in enumerate(zip(row_labels, cluster_labels)):
+            fill_hex = cluster_fills[(cl - 1) % len(cluster_fills)] if cl > 0 else "F2F2F2"
+            fill_obj = PatternFill("solid", fgColor=fill_hex)
+            ws.cell(row=i + 3, column=1, value=lbl).border = thin_border
+            c = ws.cell(row=i + 3, column=2,
+                        value=f"Noise" if cl == -1 else f"Cluster {cl}")
+            c.fill = fill_obj; c.border = thin_border
+            c.alignment = center_align
+
+        ws.column_dimensions['A'].width = 28
+        ws.column_dimensions['B'].width = 14
+        ws.column_dimensions['C'].width = 40
+
+        # ── Sheet 2: Main plot ────────────────────────────────────────────
+        if plot_img:
+            ws2 = wb.create_sheet('Plot')
+            ws2.cell(row=1, column=1,
+                     value=f'Clustering Plot ({method})').font = Font(bold=True, size=13, name='Calibri')
+            img_xl = XLImage(io.BytesIO(base64.b64decode(plot_img)))
+            ws2.add_image(img_xl, 'A3')
+
+        # ── Sheet 3: Elbow / K-Distance plot ─────────────────────────────
+        if plot2_img:
+            ws3 = wb.create_sheet('Elbow / K-Distance')
+            ws3.cell(row=1, column=1, value='Elbow / K-Distance Plot').font = Font(bold=True, size=13, name='Calibri')
+            img_xl2 = XLImage(io.BytesIO(base64.b64decode(plot2_img)))
+            ws3.add_image(img_xl2, 'A3')
+
+        output = io.BytesIO()
+        wb.save(output); output.seek(0)
+        return send_file(output, download_name='Clustering_Analysis.xlsx',
+                         as_attachment=True,
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
+# ================== CORRELATION ANALYSIS ==================
+
+@stats_bp.route('/run-correlation', methods=['POST'])
+def run_correlation():
+    try:
+        request_data = request.get_json()
+        data = request_data.get('data', [])
+        ok, err = _validate_data_limits(data)
+        if not ok:
+            return jsonify({"error": err}), 400
+
+        df = pd.DataFrame(data)
+        variables = request_data.get('variables', [])
+        method = request_data.get('method', 'pearson')  # pearson | spearman | kendall
+
+        if len(variables) < 2:
+            return jsonify({"error": "Correlation requires at least 2 variables."}), 400
+
+        # Convert to numeric, coerce errors to NaN
+        for v in variables:
+            df[v] = pd.to_numeric(df[v], errors='coerce')
+
+        subset = df[variables]
+
+        # Compute correlation matrix and p-value matrix pairwise (handles NaN)
+        n_vars = len(variables)
+        corr_matrix: list = [[None] * n_vars for _ in range(n_vars)]
+        pval_matrix: list = [[None] * n_vars for _ in range(n_vars)]
+        n_pairs     = [[0]    * n_vars for _ in range(n_vars)]
+
+        method_fn = {
+            'pearson':  stats.pearsonr,
+            'spearman': stats.spearmanr,
+            'kendall':  stats.kendalltau,
+        }.get(method, stats.pearsonr)
+
+        for i in range(n_vars):
+            for j in range(n_vars):
+                if i == j:
+                    corr_matrix[i][j] = 1.0
+                    pval_matrix[i][j] = 0.0
+                    valid = subset[variables[i]].dropna()
+                    n_pairs[i][j] = int(valid.count())
+                else:
+                    xy = subset[[variables[i], variables[j]]].dropna()
+                    n = len(xy)
+                    n_pairs[i][j] = n
+                    if n < 3:
+                        corr_matrix[i][j] = None
+                        pval_matrix[i][j] = None
+                    else:
+                        r, p = method_fn(xy[variables[i]], xy[variables[j]])
+                        corr_matrix[i][j] = float(r)
+                        pval_matrix[i][j] = float(p)
+
+        # Hierarchical clustering order (Ward linkage on correlation distance)
+        hclust_dendrogram = None
+        hclust_error      = None
+        try:
+            from scipy.cluster.hierarchy import linkage, leaves_list, dendrogram as sp_dendrogram
+            from scipy.spatial.distance import squareform
+
+            # Check for variables with no valid pairs (all-None correlation row)
+            null_vars = [variables[i] for i in range(n_vars)
+                         if all(corr_matrix[i][j] is None for j in range(n_vars) if j != i)]
+            if null_vars:
+                raise ValueError(
+                    f"Cannot cluster: variable(s) {null_vars} have no valid correlations "
+                    f"(possibly non-numeric or constant data)."
+                )
+
+            # Build a complete correlation matrix with NaN → 0 for clustering
+            corr_np = np.array([[corr_matrix[i][j] if corr_matrix[i][j] is not None else 0.0
+                                  for j in range(n_vars)] for i in range(n_vars)])
+            np.fill_diagonal(corr_np, 1.0)
+            dist = 1.0 - np.abs(corr_np)
+            np.fill_diagonal(dist, 0.0)
+            dist = np.clip(dist, 0, None)
+            condensed = squareform(dist, checks=False)
+            Z = linkage(condensed, method='ward')
+            hclust_order = leaves_list(Z).tolist()
+            dend = sp_dendrogram(Z, labels=variables, no_plot=True, color_threshold=-1)
+            hclust_dendrogram = {
+                'icoord':     dend['icoord'],
+                'dcoord':     dend['dcoord'],
+                'color_list': dend['color_list'],
+                'ivl':        dend['ivl'],
+            }
+        except Exception as e:
+            hclust_order = list(range(n_vars))
+            hclust_error = str(e)
+
+        return jsonify(_make_json_safe({
+            "variables":         variables,
+            "method":            method,
+            "corr_matrix":       corr_matrix,
+            "pval_matrix":       pval_matrix,
+            "n_pairs":           n_pairs,
+            "hclust_order":      hclust_order,
+            "hclust_dendrogram": hclust_dendrogram,
+            "hclust_error":      hclust_error,
+        }))
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
+@stats_bp.route('/export-correlation-excel', methods=['POST'])
+def export_correlation_excel():
+    try:
+        request_data = request.get_json()
+        variables   = request_data.get('variables', [])
+        method      = request_data.get('method', 'pearson')
+        corr_matrix = request_data.get('corr_matrix', [])
+        pval_matrix = request_data.get('pval_matrix', [])
+        n_pairs     = request_data.get('n_pairs', [])
+        heatmap_img = request_data.get('heatmap_img', None)   # base64 PNG (optional)
+        scatter_img = request_data.get('scatter_img', None)   # base64 PNG (optional)
+
+        wb = Workbook()
+
+        # ── Sheet 1: Correlation Matrix ──────────────────────────────────────
+        ws_corr: Worksheet = wb.active  # type: ignore[assignment]
+        ws_corr.title = 'Correlation Matrix'
+
+        header_fill   = PatternFill("solid", fgColor="2F5496")
+        header_font   = Font(color="FFFFFF", bold=True, name='Calibri', size=11)
+        subhdr_fill   = PatternFill("solid", fgColor="D6E4F0")
+        subhdr_font   = Font(bold=True, name='Calibri', size=10)
+        center_align  = Alignment(horizontal='center', vertical='center')
+        thin_border   = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin'))
+
+        def _corr_fill(r):
+            """Blue-white-red fill for r in [-1, 1]."""
+            if r is None:
+                return PatternFill("solid", fgColor="F2F2F2")
+            r = max(-1.0, min(1.0, r))
+            if r >= 0:
+                intensity = int(r * 200)
+                return PatternFill("solid", fgColor=f"FF{255-intensity:02X}{255-intensity:02X}")
+            else:
+                intensity = int(-r * 200)
+                return PatternFill("solid", fgColor=f"{255-intensity:02X}{255-intensity:02X}FF")
+
+        # Title row
+        ws_corr.merge_cells(start_row=1, start_column=1,
+                            end_row=1, end_column=len(variables) + 1)
+        title_cell = ws_corr.cell(row=1, column=1,
+                                  value=f"Correlation Matrix ({method.capitalize()})")
+        title_cell.font   = Font(bold=True, size=13, name='Calibri')
+        title_cell.fill   = header_fill
+        title_cell.font   = Font(color="FFFFFF", bold=True, size=13, name='Calibri')
+        title_cell.alignment = center_align
+        ws_corr.row_dimensions[1].height = 20
+
+        # Header row (column labels)
+        ws_corr.cell(row=2, column=1, value='Variable').fill = subhdr_fill
+        ws_corr.cell(row=2, column=1).font = subhdr_font
+        ws_corr.cell(row=2, column=1).alignment = center_align
+        for j, var in enumerate(variables):
+            c = ws_corr.cell(row=2, column=j + 2, value=var)
+            c.fill = subhdr_fill; c.font = subhdr_font; c.alignment = center_align
+            c.border = thin_border
+
+        # Data rows
+        for i, var_i in enumerate(variables):
+            row_lbl = ws_corr.cell(row=i + 3, column=1, value=var_i)
+            row_lbl.fill = subhdr_fill; row_lbl.font = subhdr_font
+            row_lbl.alignment = center_align; row_lbl.border = thin_border
+            for j in range(len(variables)):
+                r_val = corr_matrix[i][j] if corr_matrix else None
+                p_val = pval_matrix[i][j] if pval_matrix else None
+                disp  = f"{r_val:.3f}" if r_val is not None else "—"
+                if p_val is not None and p_val < 0.001:
+                    disp += " ***"
+                elif p_val is not None and p_val < 0.01:
+                    disp += " **"
+                elif p_val is not None and p_val < 0.05:
+                    disp += " *"
+                c = ws_corr.cell(row=i + 3, column=j + 2, value=disp)
+                c.fill      = _corr_fill(r_val)
+                c.alignment = center_align
+                c.border    = thin_border
+                c.font      = Font(name='Calibri', size=10,
+                                   bold=(i == j))
+
+        # Column widths
+        ws_corr.column_dimensions[get_column_letter(1)].width = max(
+            len(v) for v in variables) + 2
+        for j in range(len(variables)):
+            ws_corr.column_dimensions[get_column_letter(j + 2)].width = max(
+                len(variables[j]) + 2, 12)
+
+        # Embed heatmap image if provided
+        if heatmap_img:
+            img_data = base64.b64decode(heatmap_img)
+            img_stream = io.BytesIO(img_data)
+            img_xl = XLImage(img_stream)
+            img_row = len(variables) + 5
+            ws_corr.add_image(img_xl, f'A{img_row}')
+
+        # ── Sheet 2: P-value Matrix ───────────────────────────────────────────
+        ws_pval = wb.create_sheet('P-value Matrix')
+        ws_pval.merge_cells(start_row=1, start_column=1,
+                            end_row=1, end_column=len(variables) + 1)
+        t2 = ws_pval.cell(row=1, column=1,
+                          value=f"P-value Matrix ({method.capitalize()})")
+        t2.font = Font(color="FFFFFF", bold=True, size=13, name='Calibri')
+        t2.fill = header_fill; t2.alignment = center_align
+
+        ws_pval.cell(row=2, column=1, value='Variable').fill = subhdr_fill
+        ws_pval.cell(row=2, column=1).font = subhdr_font
+        for j, var in enumerate(variables):
+            c = ws_pval.cell(row=2, column=j + 2, value=var)
+            c.fill = subhdr_fill; c.font = subhdr_font; c.alignment = center_align
+
+        sig_fill  = PatternFill("solid", fgColor="E2EFDA")   # green tint for sig
+        insig_fill = PatternFill("solid", fgColor="FCE4D6")  # red tint for non-sig
+
+        for i, var_i in enumerate(variables):
+            c0 = ws_pval.cell(row=i + 3, column=1, value=var_i)
+            c0.fill = subhdr_fill; c0.font = subhdr_font; c0.alignment = center_align
+            for j in range(len(variables)):
+                p_val = pval_matrix[i][j] if pval_matrix else None
+                n_val = n_pairs[i][j]   if n_pairs   else None
+                if i == j:
+                    disp = "—"; fill = PatternFill("solid", fgColor="F2F2F2")
+                elif p_val is None:
+                    disp = "n/a"; fill = PatternFill("solid", fgColor="F2F2F2")
+                else:
+                    disp = f"{p_val:.4f}"
+                    if n_val: disp += f" (n={n_val})"
+                    fill = sig_fill if p_val < 0.05 else insig_fill
+                c = ws_pval.cell(row=i + 3, column=j + 2, value=disp)
+                c.fill = fill; c.alignment = center_align
+                c.border = thin_border; c.font = Font(name='Calibri', size=10)
+
+        ws_pval.column_dimensions[get_column_letter(1)].width = max(
+            len(v) for v in variables) + 2
+        for j in range(len(variables)):
+            ws_pval.column_dimensions[get_column_letter(j + 2)].width = max(
+                len(variables[j]) + 2, 14)
+
+        # ── Sheet 3: Scatter Matrix image ─────────────────────────────────────
+        if scatter_img:
+            ws_scatter = wb.create_sheet('Scatter Matrix')
+            ws_scatter.cell(row=1, column=1,
+                            value='Scatter Matrix').font = Font(bold=True, size=13, name='Calibri')
+            img_data2   = base64.b64decode(scatter_img)
+            img_stream2 = io.BytesIO(img_data2)
+            img_xl2     = XLImage(img_stream2)
+            ws_scatter.add_image(img_xl2, 'A3')
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        return send_file(
+            output,
+            download_name='Correlation_Analysis.xlsx',
             as_attachment=True,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )

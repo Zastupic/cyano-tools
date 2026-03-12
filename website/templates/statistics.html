@@ -29,13 +29,15 @@
 
 {% block content %}
 <style>
-    /* Main tab rows: active tab light blue, spacing between row1 and row2 */
+    /* Main tab rows: active tab light blue, row2 connects flush to content */
     #statsTabRow1 .nav-link,
-    #statsTabRow2 .nav-link { border: 1px solid #dee2e6 !important; margin-right: 2px; }
+    #statsTabRow2 .nav-link { border: 1px solid #dee2e6 !important; margin-right: 2px; border-radius: 4px 4px 0 0 !important; }
+    #statsTabRow2 .nav-link { margin-bottom: -1px; }
     #statsTabRow1 .nav-link.active,
-    #statsTabRow2 .nav-link.active { background-color: #cce5ff !important; color: #004085; border-color: #b8daff !important; }
-    #statsTabRow1 { margin-bottom: 0.5rem; }
+    #statsTabRow2 .nav-link.active { background-color: #cce5ff !important; color: #004085; border-color: #b8daff #b8daff #fff !important; }
+    #statsTabRow1 { margin-bottom: 0; }
     #statsTabRow2 { margin-top: 0.5rem; margin-bottom: 0; padding-top: 0.25rem; border-top: 1px solid #dee2e6; }
+    #statsTabRow1 .nav-link { margin-bottom: -1px; }
     /* Significance Tests same style as other tabs (no green) */
     #anova-tab.text-success { color: #495057 !important; }
     #anova-tab.nav-link.active { color: #004085 !important; }
@@ -82,6 +84,134 @@
         opacity: 0.7;
     }
     #assumptionsSubTabs .nav-link.active .stab-icon { opacity: 1; }
+    /* ── Multivariate sub-tabs: same segmented-control style ── */
+    #mvSubTabs {
+        display: flex;
+        background: #e8edf2;
+        border-radius: 10px;
+        padding: 4px;
+        gap: 3px;
+        border: 1px solid #c8d3de;
+        width: fit-content;
+    }
+    #mvSubTabs .nav-item { flex: 1; }
+    #mvSubTabs .nav-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        border: none !important;
+        border-radius: 7px !important;
+        padding: 7px 18px !important;
+        font-size: 0.79rem !important;
+        font-weight: 600;
+        color: #5a6a7a;
+        text-align: center;
+        white-space: nowrap;
+        background: transparent;
+        transition: all 0.17s ease;
+        line-height: 1.2;
+    }
+    #mvSubTabs .nav-link:hover:not(.active) {
+        background: #d4dde7 !important;
+        color: #003566;
+    }
+    #mvSubTabs .nav-link.active {
+        background: #ffffff !important;
+        color: #004085 !important;
+        box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
+        border: none !important;
+    }
+    #mvSubTabs .nav-link .stab-icon { font-size: 1.05rem; opacity: 0.7; }
+    #mvSubTabs .nav-link.active .stab-icon { opacity: 1; }
+    /* ── Correlation method selector: same segmented-control style ── */
+    #corrMethodGroup {
+        display: flex;
+        background: #e8edf2;
+        border-radius: 10px;
+        padding: 4px;
+        gap: 3px;
+        border: 1px solid #c8d3de;
+        width: fit-content;
+    }
+    #corrMethodGroup .corr-method-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        border: none !important;
+        border-radius: 7px !important;
+        padding: 6px 14px !important;
+        font-size: 0.79rem !important;
+        font-weight: 600;
+        color: #5a6a7a;
+        text-align: center;
+        background: transparent;
+        transition: all 0.17s ease;
+        line-height: 1.2;
+    }
+    #corrMethodGroup .corr-method-btn:hover:not(.active) {
+        background: #d4dde7 !important;
+        color: #003566;
+    }
+    #corrMethodGroup .corr-method-btn.active {
+        background: #ffffff !important;
+        color: #004085 !important;
+        box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
+        border: none !important;
+    }
+    #corrMethodGroup .corr-method-btn .stab-icon { font-size: 1.0rem; opacity: 0.7; }
+    #corrMethodGroup .corr-method-btn.active .stab-icon { opacity: 1; }
+    #corrMethodGroup .corr-method-symbol {
+        font-size: 0.68rem;
+        font-style: italic;
+        opacity: 0.65;
+        font-family: Georgia, serif;
+    }
+    #corrMethodGroup .corr-method-btn.active .corr-method-symbol { opacity: 0.85; }
+    /* ── Regression sub-tabs: same segmented-control style ── */
+    #regrSubTabs {
+        display: flex;
+        background: #e8edf2;
+        border-radius: 10px;
+        padding: 4px;
+        gap: 3px;
+        border: 1px solid #c8d3de;
+        width: fit-content;
+    }
+    #regrSubTabs .nav-item { flex: 1; }
+    #regrSubTabs .nav-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        border: none !important;
+        border-radius: 7px !important;
+        padding: 7px 14px !important;
+        font-size: 0.79rem !important;
+        font-weight: 600;
+        color: #5a6a7a;
+        text-align: center;
+        white-space: nowrap;
+        background: transparent;
+        transition: all 0.17s ease;
+        line-height: 1.2;
+    }
+    #regrSubTabs .nav-link:hover:not(.active) {
+        background: #d4dde7 !important;
+        color: #003566;
+    }
+    #regrSubTabs .nav-link.active {
+        background: #ffffff !important;
+        color: #004085 !important;
+        box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
+        border: none !important;
+    }
+    #regrSubTabs .nav-link .stab-icon { font-size: 1.05rem; opacity: 0.7; }
+    #regrSubTabs .nav-link.active .stab-icon { opacity: 1; }
     /* Scope-row label */
     .scope-section-label {
         font-size: 0.65rem;
@@ -438,7 +568,7 @@
                 <!-- Results Area (hidden initially) -->
                 <div id="resultsArea" style="display: none;">
                     <!-- Row 1: Main analyses (Visualizations, Assumptions, Significance Tests) -->
-                    <ul class="nav nav-tabs border-bottom-0 mb-3" id="statsTabRow1" role="tablist">
+                    <ul class="nav nav-tabs" id="statsTabRow1" role="tablist">
                         <li class="nav-item">
                             <button class="nav-link active fw-bold border" id="viz-tab" data-toggle="tab" data-target="#viz-content" role="tab"><i class="bi bi-bar-chart-line"></i> Visualizations</button>
                         </li>
@@ -448,13 +578,25 @@
                         <li class="nav-item">
                             <button class="nav-link fw-bold border" id="anova-tab" data-toggle="tab" data-target="#anova-content" role="tab" style="display: none;"><i class="bi bi-list-check"></i> ANOVA Tests</button>
                         </li>
+                    </ul>
+
+                    <!-- Row 2: Extended analyses -->
+                    <ul class="nav nav-tabs" id="statsTabRow2" role="tablist">
                         <li class="nav-item">
-                            <button class="nav-link fw-bold border" id="pca-tab" data-toggle="tab" data-target="#pca-content" role="tab"><i class="bi bi-grid-3x3-gap"></i> Multivariate (PCA)</button>
+                            <button class="nav-link fw-bold border" id="corr-tab" data-toggle="tab" data-target="#corr-content" role="tab"><i class="bi bi-grid-3x3-gap-fill"></i> Correlation</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold border" id="pca-tab" data-toggle="tab" data-target="#pca-content" role="tab"><i class="bi bi-grid-3x3-gap"></i> Multivariate</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold border" id="clustering-tab" data-toggle="tab" data-target="#clustering-content" role="tab"><i class="bi bi-diagram-3"></i> Clustering</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold border" id="regression-tab" data-toggle="tab" data-target="#regression-content" role="tab"><i class="bi bi-graph-up-arrow"></i> Regression</button>
                         </li>
                     </ul>
 
-                    <hr class="my-2 border-secondary" style="opacity: 0.35;">
-                    <div class="tab-content border p-3 rounded-bottom rounded-top bg-white shadow-sm" id="statsTabContent">
+                    <div class="tab-content border border-top-0 p-3 rounded-bottom bg-white shadow-sm" id="statsTabContent">
                         <div class="tab-pane fade show active" id="viz-content" role="tabpanel">
                             <div class="p-3">
                                 <h5 class="fw-bold mb-3">Data Visualizations</h5>
@@ -1267,7 +1409,35 @@
                         </div>
                         <div class="tab-pane fade" id="pca-content" role="tabpanel">
                             <div class="p-3">
-                                <h5 class="fw-bold mb-3">Principal Component Analysis</h5>
+                                <h5 class="fw-bold mb-2">Multivariate Analysis</h5>
+                                <p class="text-muted small mb-2">Explore sample relationships and feature contributions using dimensionality reduction and latent-variable modelling.</p>
+
+                                <!-- Inner sub-tabs: PCA | OPLS/OPLS-DA -->
+                                <ul class="nav mb-3" id="mvSubTabs" role="tablist">
+                                    <li class="nav-item">
+                                        <button class="nav-link active" id="mv-pca-tab" data-toggle="tab" data-target="#mv-pca-content" role="tab">
+                                            <span class="stab-icon bi bi-grid-3x3-gap"></span>
+                                            PCA
+                                        </button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" id="mv-pls-tab" data-toggle="tab" data-target="#mv-pls-content" role="tab">
+                                            <span class="stab-icon bi bi-diagram-3"></span>
+                                            PLS / PLS-DA
+                                        </button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" id="mv-opls-tab" data-toggle="tab" data-target="#mv-opls-content" role="tab">
+                                            <span class="stab-icon bi bi-arrow-left-right"></span>
+                                            OPLS / OPLS-DA
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content">
+                                <!-- ── PCA inner sub-tab ───────────────────────── -->
+                                <div class="tab-pane fade show active" id="mv-pca-content" role="tabpanel">
+                                <h6 class="fw-semibold mb-2">Principal Component Analysis</h6>
                                 <p class="text-muted small">PCA reduces the dimensionality of your data to show relationships between samples and variables.</p>
                                 <div class="accordion mb-3" id="pcaInfoAccordion">
                                     <div class="card" style="border: 1px solid #dee2e6;">
@@ -1358,9 +1528,20 @@
                                                         <option value="">(None — use row index)</option>
                                                     </select>
                                                 </div>
-                                                <div class="form-check form-switch mb-0">
+                                                <div class="form-check form-switch mb-1">
                                                     <input class="form-check-input" type="checkbox" id="pcaShowLabels">
                                                     <label class="form-check-label small" for="pcaShowLabels">Show labels on plot</label>
+                                                </div>
+                                                <div class="form-check form-switch mb-2">
+                                                    <input class="form-check-input" type="checkbox" id="pcaShowLoadings">
+                                                    <label class="form-check-label small" for="pcaShowLoadings">Show variable loadings (arrows)</label>
+                                                </div>
+                                                <div id="pcaCompRow" class="d-flex align-items-center flex-wrap mt-1" style="gap:0.5rem;">
+                                                    <span class="small text-muted mr-2 font-weight-semibold">Plot axes:</span>
+                                                    <label class="small mb-0 mr-1" for="pcaXComp">X:</label>
+                                                    <select id="pcaXComp" class="form-control form-control-sm mr-3" style="width:82px;"></select>
+                                                    <label class="small mb-0 mr-1" for="pcaYComp">Y:</label>
+                                                    <select id="pcaYComp" class="form-control form-control-sm" style="width:82px;"></select>
                                                 </div>
                                             </div>
                                         </div>
@@ -1450,10 +1631,6 @@
                                                     <div class="col-12 mt-3">
                                                         <div class="text-uppercase text-muted mb-1 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Plot Layout</div>
                                                         <div class="d-flex flex-wrap" style="gap:0.5rem;">
-                                                            <div class="form-check form-switch mb-3">
-                                                                <input class="form-check-input" type="checkbox" id="pcaShowLoadings">
-                                                                <label class="form-check-label small" for="pcaShowLoadings">Show variable loadings (arrows)</label>
-                                                            </div>
                                                             <div class="form-check form-switch mb-0">
                                                                 <input class="form-check-input" type="checkbox" id="pcaShowGrid">
                                                                 <label class="form-check-label small" for="pcaShowGrid">Grid lines</label>
@@ -1497,6 +1674,32 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                <!-- Export plot section -->
+                                                <hr class="my-2">
+                                                <label class="small text-muted mb-2 d-block font-weight-semibold">Export plot for publication</label>
+                                                <div class="d-flex flex-wrap align-items-end" style="gap:0.75rem;">
+                                                    <div>
+                                                        <label class="small text-muted mb-1 d-block" for="pcaPlotFilename">File name</label>
+                                                        <input type="text" class="form-control form-control-sm" id="pcaPlotFilename" placeholder="PCA_plot" style="width:140px;">
+                                                    </div>
+                                                    <div>
+                                                        <label class="small text-muted mb-1 d-block" for="pcaExportDPI">Resolution</label>
+                                                        <select class="form-control form-control-sm" id="pcaExportDPI">
+                                                            <option value="150">150 dpi</option>
+                                                            <option value="300" selected>300 dpi</option>
+                                                            <option value="600">600 dpi</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label class="small text-muted mb-1 d-block" for="pcaExportFormat">Format</label>
+                                                        <select class="form-control form-control-sm" id="pcaExportFormat">
+                                                            <option value="png">PNG (raster)</option>
+                                                            <option value="svg">SVG (vector)</option>
+                                                        </select>
+                                                    </div>
+                                                    <button id="downloadPCAPlotBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-download"></i> Download plot</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1511,8 +1714,1424 @@
                                 </div>
                                 <div id="pcaResults"></div>
                                 <div id="pcaPlot" style="width:100%; min-height:500px; display:none;"></div>
+                                </div><!-- /mv-pca-content -->
+
+                                <!-- ── OPLS / OPLS-DA inner sub-tab ──────────────── -->
+                                <div class="tab-pane fade" id="mv-opls-content" role="tabpanel">
+                                    <h6 class="fw-semibold mb-1">Orthogonal Projections to Latent Structures (OPLS)</h6>
+                                    <p class="text-muted small mb-3">Orthogonal Projections to Latent Structures separates predictive variation (related to Y) from orthogonal variation (unrelated to Y), giving cleaner group discrimination and interpretable S-plots and VIP scores.</p>
+
+                                    <!-- ── Info accordion ──────────────────────────── -->
+                                    <div class="accordion mb-3" id="oplsInfoAccordion">
+                                        <div class="card" style="border: 1px solid #dee2e6;">
+                                            <div class="card-header py-2 px-3" id="oplsInfoHeading">
+                                                <h6 class="mb-0">
+                                                    <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                            type="button" data-toggle="collapse" data-target="#oplsInfoBody"
+                                                            aria-expanded="false" aria-controls="oplsInfoBody">
+                                                        <i class="bi bi-info-circle mr-2"></i> How OPLS and OPLS-DA work in this tool
+                                                    </button>
+                                                </h6>
+                                            </div>
+                                            <div id="oplsInfoBody" class="collapse" aria-labelledby="oplsInfoHeading" data-parent="#oplsInfoAccordion">
+                                                <div class="card-body small text-muted">
+                                                    <p style="font-size:0.8rem;"><strong>OPLS (Orthogonal PLS):</strong> a supervised method that decomposes X into two parts — <em>predictive variation</em> (correlated with Y) and <em>orthogonal variation</em> (unrelated to Y, i.e., structured noise). By removing the orthogonal part, the predictive component becomes much cleaner and easier to interpret than in standard PLS.</p>
+                                                    <p style="font-size:0.8rem;"><strong>OPLS-DA (Discriminant Analysis):</strong> uses a binary or multi-class group membership vector as Y. It is the most common use case — finding the directions in X that best discriminate between defined groups. Results are displayed as three complementary plots:</p>
+                                                    <ul style="font-size:0.8rem;" class="mb-2">
+                                                        <li><strong>Score plot (tp vs to):</strong> samples plotted on the predictive component (horizontal axis) and the first orthogonal component (vertical axis). Group separation is visible along the horizontal axis; vertical spread represents within-group structured variation that is unrelated to group membership.</li>
+                                                        <li><strong>S-plot:</strong> each variable is plotted as its covariance with tp (x-axis) against its correlation with tp (y-axis). Variables in the top-right corner (high covariance <em>and</em> high correlation) are both strongly contributing to group separation and doing so reliably. Variables near the origin contribute little.</li>
+                                                        <li><strong>VIP plot (Variable Importance in Projection):</strong> summarises each variable's contribution across all model components. VIP &gt; 1 is the conventional threshold for a variable being important for discrimination. VIP combines information from all predictive and orthogonal components.</li>
+                                                    </ul>
+                                                    <p style="font-size:0.8rem;" class="mb-1"><strong>Parameters:</strong></p>
+                                                    <ul style="font-size:0.8rem;" class="mb-2">
+                                                        <li><strong>Orthogonal components:</strong> the number of orthogonal (noise) components to remove. Start with 1; increase only if R²X increases substantially without improving Q².</li>
+                                                        <li><strong>Response variable (Y):</strong> for OPLS-DA, select a categorical column (group labels); for OPLS, select a continuous outcome variable.</li>
+                                                        <li><strong>Q² (cross-validation):</strong> computed by leave-one-out cross-validation. Q² &gt; 0.5 indicates a useful predictive model. A large gap between R²Y and Q² suggests overfitting. Q² close to R²Y is the ideal.</li>
+                                                    </ul>
+                                                    <p style="font-size:0.8rem;" class="mb-0"><strong>Model metrics — R²X:</strong> fraction of total X variance explained by the model. <strong>R²Y:</strong> fraction of Y variance explained (goodness of fit). <strong>Q²:</strong> cross-validated predictive ability — the most important metric for assessing whether the model is genuinely predictive rather than just fitting noise.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Controls row -->
+                                    <div class="d-flex flex-wrap align-items-start mb-3" style="gap:1rem;">
+                                        <div>
+                                            <label class="small fw-bold mb-1 d-block">Method</label>
+                                            <div class="btn-group btn-group-sm" id="oplsMethodGroup" role="group">
+                                                <button type="button" class="btn btn-outline-primary opls-method-btn active" data-method="opls-da">OPLS-DA</button>
+                                                <button type="button" class="btn btn-outline-primary opls-method-btn" data-method="opls">OPLS</button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="small fw-bold mb-1 d-block" for="oplsYCol">Response variable (Y)</label>
+                                            <select class="form-control form-control-sm" id="oplsYCol" style="min-width:160px;">
+                                                <option value="">— Select column —</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="small fw-bold mb-1 d-block" for="oplsNOrtho">Orthogonal components</label>
+                                            <input type="number" class="form-control form-control-sm" id="oplsNOrtho" value="1" min="1" max="5" style="width:70px;">
+                                        </div>
+                                        <div class="d-flex align-items-end pb-1">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" id="oplsComputeCV" checked>
+                                                <label class="form-check-label small" for="oplsComputeCV">Compute Q² (cross-validation)</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action buttons -->
+                                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:0.5rem;">
+                                        <button id="runOplsBtn" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-play-fill"></i> Run OPLS
+                                        </button>
+                                        <button id="stopOplsBtn" class="btn btn-danger btn-sm" style="display:none;">
+                                            <i class="bi bi-stop-fill"></i> Stop
+                                        </button>
+                                        <button id="downloadOplsBtn" class="btn btn-outline-success btn-sm" style="display:none;">
+                                            <i class="bi bi-file-earmark-excel"></i> Export Report
+                                        </button>
+                                        <span id="oplsExportSpinner" style="display:none;" class="ms-2">
+                                            <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                                            <span class="small text-muted ms-1">Generating…</span>
+                                        </span>
+                                    </div>
+
+                                    <!-- Run spinner -->
+                                    <div id="oplsSpinner" class="text-center py-4" style="display:none;">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                        <p class="mt-2 text-muted small">Running OPLS…</p>
+                                    </div>
+
+                                    <!-- Status message -->
+                                    <div id="oplsStatusMsg"></div>
+
+                                    <!-- Metrics badges (hidden until results) -->
+                                    <div id="oplsMetrics" class="mb-3" style="display:none;">
+                                        <div class="d-flex flex-wrap" style="gap:0.5rem;">
+                                            <span class="badge border text-dark px-3 py-2 small">R²X: <strong id="oplsR2X">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">R²Y: <strong id="oplsR2Y">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">Q²: <strong id="oplsQ2">—</strong></span>
+                                            <span class="text-muted small align-self-center" id="oplsNSamplesMsg"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Style accordion (hidden until results) -->
+                                    <div id="oplsStyleCard" class="accordion mb-3" style="display:none;">
+                                        <div class="card" style="border: 1px solid #dee2e6;">
+                                            <div class="card-header py-2 px-3" id="oplsStyleHeading">
+                                                <h6 class="mb-0">
+                                                    <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                            type="button" data-toggle="collapse" data-target="#oplsStyleBody"
+                                                            aria-expanded="false" aria-controls="oplsStyleBody">
+                                                        <i class="bi bi-palette mr-2"></i> Plot Style
+                                                    </button>
+                                                </h6>
+                                            </div>
+                                            <div id="oplsStyleBody" class="collapse" aria-labelledby="oplsStyleHeading">
+                                                <div class="card-body py-3">
+                                                    <div class="row no-gutters" style="gap:0.5rem 0;">
+                                                        <div class="col-12 mb-2">
+                                                            <label class="small text-muted mb-1 d-block">Color palette</label>
+                                                            <div class="btn-group btn-group-sm flex-wrap" role="group" id="oplsPaletteGroup">
+                                                                <button type="button" class="btn btn-outline-secondary opls-palette-btn active" data-palette="tab10">Tab10</button>
+                                                                <button type="button" class="btn btn-outline-secondary opls-palette-btn" data-palette="Set1">Set1</button>
+                                                                <button type="button" class="btn btn-outline-secondary opls-palette-btn" data-palette="nipy_spectral">Spectral</button>
+                                                                <button type="button" class="btn btn-outline-secondary opls-palette-btn" data-palette="Paired">Paired</button>
+                                                                <button type="button" class="btn btn-outline-secondary opls-palette-btn" data-palette="Dark2">Dark2</button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6 pr-sm-2">
+                                                            <label class="small text-muted mb-1 d-block">Point size: <span id="oplsPointSizeVal">10</span></label>
+                                                            <input type="range" class="custom-range" id="oplsPointSize" min="4" max="30" value="10">
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <label class="small text-muted mb-1 d-block">Opacity: <span id="oplsOpacityVal">90</span>%</label>
+                                                            <input type="range" class="custom-range" id="oplsOpacity" min="10" max="100" value="90">
+                                                        </div>
+                                                        <div class="col-12 mt-2">
+                                                            <div class="text-uppercase text-muted mb-1 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Typography</div>
+                                                            <div class="row no-gutters" style="gap:0.4rem 0;">
+                                                                <div class="col-12 mb-1">
+                                                                    <label class="small text-muted mb-1 d-block">Font family</label>
+                                                                    <select class="form-control form-control-sm" id="oplsFontFamily">
+                                                                        <option value="Arial, sans-serif" selected>Arial</option>
+                                                                        <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                                                                        <option value="'Times New Roman', serif">Times New Roman</option>
+                                                                        <option value="Georgia, serif">Georgia</option>
+                                                                        <option value="'Courier New', monospace">Courier New</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="col-12 col-sm-6 pr-sm-2">
+                                                                    <label class="small text-muted mb-1 d-block">Font size: <span id="oplsFontSizeVal">13</span> pt</label>
+                                                                    <input type="range" class="custom-range" id="oplsFontSize" min="8" max="22" value="13">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12 mt-2">
+                                                            <label class="small text-muted mb-1 d-block">Export scale</label>
+                                                            <select class="form-control form-control-sm" id="oplsExportScale" style="max-width:120px;">
+                                                                <option value="1">1× (screen)</option>
+                                                                <option value="2" selected>2× (HD)</option>
+                                                                <option value="3">3× (print)</option>
+                                                                <option value="4">4× (ultra)</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Individual plot PNG download row -->
+                                    <div id="oplsDownloadRow" class="mb-3" style="display:none;">
+                                        <div class="d-flex flex-wrap" style="gap:0.4rem;">
+                                            <button id="oplsDownloadScoreBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> Score Plot PNG</button>
+                                            <button id="oplsDownloadSplotBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> S-Plot PNG</button>
+                                            <button id="oplsDownloadVipBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> VIP Plot PNG</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Plot containers -->
+                                    <div id="oplsScorePlot" style="width:100%; min-height:450px; display:none;"></div>
+                                    <div id="oplsSplot"     style="width:100%; min-height:400px; display:none;"></div>
+                                    <div id="oplsVipPlot"   style="width:100%; min-height:350px; display:none;"></div>
+                                </div><!-- /mv-opls-content -->
+
+                                <!-- ── PLS / PLS-DA inner sub-tab ──────────────── -->
+                                <div class="tab-pane fade" id="mv-pls-content" role="tabpanel">
+                                    <h6 class="fw-semibold mb-1">Partial Least Squares (PLS)</h6>
+                                    <p class="text-muted small mb-3">Supervised dimensionality reduction that finds latent variables (LVs) maximising covariance between predictors (X) and a response (Y). PLS-DA uses a categorical Y for group discrimination; PLS uses a continuous Y for regression.</p>
+
+                                    <!-- Info accordion -->
+                                    <div class="accordion mb-3" id="plsInfoAccordion">
+                                        <div class="card" style="border: 1px solid #dee2e6;">
+                                            <div class="card-header py-2 px-3" id="plsInfoHeading">
+                                                <h6 class="mb-0">
+                                                    <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                            type="button" data-toggle="collapse" data-target="#plsInfoBody"
+                                                            aria-expanded="false" aria-controls="plsInfoBody">
+                                                        <i class="bi bi-info-circle mr-2"></i> How PLS and PLS-DA work in this tool
+                                                    </button>
+                                                </h6>
+                                            </div>
+                                            <div id="plsInfoBody" class="collapse" aria-labelledby="plsInfoHeading" data-parent="#plsInfoAccordion">
+                                                <div class="card-body small text-muted">
+                                                    <p style="font-size:0.8rem;"><strong>PLS (Partial Least Squares):</strong> finds a sequence of latent variables (LVs) that simultaneously decompose X and Y while maximising the covariance between the two. Unlike OPLS, PLS does not separate orthogonal variation — all components contain a mixture of predictive and non-predictive variation.</p>
+                                                    <p style="font-size:0.8rem;"><strong>PLS-DA (Discriminant Analysis):</strong> uses binary-encoded class membership as Y. It is directly comparable to OPLS-DA and often gives similar results. PLS-DA can be used with any categorical column.</p>
+                                                    <ul style="font-size:0.8rem;" class="mb-2">
+                                                        <li><strong>Score plot (T1 vs T2):</strong> samples projected onto the first two LV scores. Group separation along T1 indicates LV1 captures between-group variation. Axis labels show per-component R²X contributions.</li>
+                                                        <li><strong>Weights plot (W1 vs W2):</strong> each variable shown as an arrow from the origin to its weight coordinates. Variables pointing in similar directions are correlated; large distances from the origin indicate high importance. Arrow colour indicates VIP level (red ≥ 1.5, orange ≥ 1.0, grey &lt; 1.0).</li>
+                                                        <li><strong>VIP plot:</strong> Variable Importance in Projection, combining information from all LV components. VIP &gt; 1 is the conventional threshold for importance.</li>
+                                                    </ul>
+                                                    <p style="font-size:0.8rem;" class="mb-0"><strong>R²X:</strong> cumulative X variance explained. <strong>R²Y:</strong> Y variance explained (goodness of fit). <strong>Q²:</strong> cross-validated predictive ability — values &gt; 0.5 indicate a useful predictive model. A large R²Y–Q² gap suggests overfitting.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Controls row -->
+                                    <div class="d-flex flex-wrap align-items-start mb-3" style="gap:1rem;">
+                                        <div>
+                                            <label class="small fw-bold mb-1 d-block">Method</label>
+                                            <div class="btn-group btn-group-sm" id="plsMethodGroup" role="group">
+                                                <button type="button" class="btn btn-outline-primary pls-method-btn active" data-method="pls-da">PLS-DA</button>
+                                                <button type="button" class="btn btn-outline-primary pls-method-btn" data-method="pls">PLS</button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="small fw-bold mb-1 d-block" for="plsYCol">Response variable (Y)</label>
+                                            <select class="form-control form-control-sm" id="plsYCol" style="min-width:160px;">
+                                                <option value="">— Select column —</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="small fw-bold mb-1 d-block" for="plsNComponents">LV components</label>
+                                            <input type="number" class="form-control form-control-sm" id="plsNComponents" value="2" min="1" max="10" style="width:70px;">
+                                        </div>
+                                        <div class="d-flex align-items-end pb-1">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" id="plsComputeCV" checked>
+                                                <label class="form-check-label small" for="plsComputeCV">Compute Q² (cross-validation)</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action buttons -->
+                                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:0.5rem;">
+                                        <button id="runPlsBtn" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-play-fill"></i> Run PLS
+                                        </button>
+                                        <button id="stopPlsBtn" class="btn btn-danger btn-sm" style="display:none;">
+                                            <i class="bi bi-stop-fill"></i> Stop
+                                        </button>
+                                        <button id="downloadPlsBtn" class="btn btn-outline-success btn-sm" style="display:none;">
+                                            <i class="bi bi-file-earmark-excel"></i> Export Report
+                                        </button>
+                                        <span id="plsExportSpinner" style="display:none;" class="ms-2">
+                                            <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                                            <span class="small text-muted ms-1">Generating…</span>
+                                        </span>
+                                    </div>
+
+                                    <!-- Run spinner -->
+                                    <div id="plsSpinner" class="text-center py-4" style="display:none;">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                        <p class="mt-2 text-muted small">Running PLS…</p>
+                                    </div>
+
+                                    <!-- Status message -->
+                                    <div id="plsStatusMsg"></div>
+
+                                    <!-- Metrics badges -->
+                                    <div id="plsMetrics" class="mb-3" style="display:none;">
+                                        <div class="d-flex flex-wrap" style="gap:0.5rem;">
+                                            <span class="badge border text-dark px-3 py-2 small">R²X: <strong id="plsR2X">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">R²Y: <strong id="plsR2Y">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">Q²: <strong id="plsQ2">—</strong></span>
+                                            <span class="text-muted small align-self-center" id="plsNSamplesMsg"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Style accordion (hidden until results) -->
+                                    <div id="plsStyleCard" class="accordion mb-3" style="display:none;">
+                                        <div class="card" style="border: 1px solid #dee2e6;">
+                                            <div class="card-header py-2 px-3" id="plsStyleHeading">
+                                                <h6 class="mb-0">
+                                                    <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                            type="button" data-toggle="collapse" data-target="#plsStyleBody"
+                                                            aria-expanded="false" aria-controls="plsStyleBody">
+                                                        <i class="bi bi-palette mr-2"></i> Plot Style
+                                                    </button>
+                                                </h6>
+                                            </div>
+                                            <div id="plsStyleBody" class="collapse" aria-labelledby="plsStyleHeading">
+                                                <div class="card-body py-3">
+                                                    <div class="row no-gutters" style="gap:0.5rem 0;">
+                                                        <div class="col-12 mb-2">
+                                                            <label class="small text-muted mb-1 d-block">Color palette</label>
+                                                            <div class="btn-group btn-group-sm flex-wrap" role="group" id="plsPaletteGroup">
+                                                                <button type="button" class="btn btn-outline-secondary pls-palette-btn active" data-palette="tab10">Tab10</button>
+                                                                <button type="button" class="btn btn-outline-secondary pls-palette-btn" data-palette="Set1">Set1</button>
+                                                                <button type="button" class="btn btn-outline-secondary pls-palette-btn" data-palette="nipy_spectral">Spectral</button>
+                                                                <button type="button" class="btn btn-outline-secondary pls-palette-btn" data-palette="Paired">Paired</button>
+                                                                <button type="button" class="btn btn-outline-secondary pls-palette-btn" data-palette="Dark2">Dark2</button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6 pr-sm-2">
+                                                            <label class="small text-muted mb-1 d-block">Point size: <span id="plsPointSizeVal">10</span></label>
+                                                            <input type="range" class="custom-range" id="plsPointSize" min="4" max="30" value="10">
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <label class="small text-muted mb-1 d-block">Opacity: <span id="plsOpacityVal">90</span>%</label>
+                                                            <input type="range" class="custom-range" id="plsOpacity" min="10" max="100" value="90">
+                                                        </div>
+                                                        <div class="col-12 mt-2">
+                                                            <div class="text-uppercase text-muted mb-1 font-weight-bold" style="font-size:0.68rem; letter-spacing:0.05em;">Typography</div>
+                                                            <div class="row no-gutters" style="gap:0.4rem 0;">
+                                                                <div class="col-12 mb-1">
+                                                                    <label class="small text-muted mb-1 d-block">Font family</label>
+                                                                    <select class="form-control form-control-sm" id="plsFontFamily">
+                                                                        <option value="Arial, sans-serif" selected>Arial</option>
+                                                                        <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                                                                        <option value="'Times New Roman', serif">Times New Roman</option>
+                                                                        <option value="Georgia, serif">Georgia</option>
+                                                                        <option value="'Courier New', monospace">Courier New</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="col-12 col-sm-6 pr-sm-2">
+                                                                    <label class="small text-muted mb-1 d-block">Font size: <span id="plsFontSizeVal">13</span> pt</label>
+                                                                    <input type="range" class="custom-range" id="plsFontSize" min="8" max="22" value="13">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12 mt-2">
+                                                            <label class="small text-muted mb-1 d-block">Export scale</label>
+                                                            <select class="form-control form-control-sm" id="plsExportScale" style="max-width:120px;">
+                                                                <option value="1">1× (screen)</option>
+                                                                <option value="2" selected>2× (HD)</option>
+                                                                <option value="3">3× (print)</option>
+                                                                <option value="4">4× (ultra)</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- PNG download row -->
+                                    <div id="plsDownloadRow" class="mb-3" style="display:none;">
+                                        <div class="d-flex flex-wrap" style="gap:0.4rem;">
+                                            <button id="plsDownloadScoreBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> Score Plot PNG</button>
+                                            <button id="plsDownloadWeightsBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> Weights Plot PNG</button>
+                                            <button id="plsDownloadVipBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-image"></i> VIP Plot PNG</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Plot containers -->
+                                    <div id="plsScorePlot"   style="width:100%; min-height:450px; display:none;"></div>
+                                    <div id="plsWeightsPlot" style="width:100%; min-height:400px; display:none;"></div>
+                                    <div id="plsVipPlot"     style="width:100%; min-height:350px; display:none;"></div>
+                                </div><!-- /mv-pls-content -->
+
+                                </div><!-- /inner tab-content -->
+                            </div><!-- /p-3 -->
+                        </div><!-- /pca-content -->
+
+                        <!-- ═══════════════════════════════════════════════════════════ -->
+                        <!-- CORRELATION TAB                                             -->
+                        <!-- ═══════════════════════════════════════════════════════════ -->
+                        <div class="tab-pane fade" id="corr-content" role="tabpanel">
+                            <div class="p-3">
+                                <h5 class="fw-bold mb-2">Correlation Analysis</h5>
+                                <p class="text-muted small mb-3">Quantify pairwise linear (or rank) relationships between selected variables. Explore structure with a correlation heatmap and a scatter matrix.</p>
+
+                                <!-- ── Info accordion ───────────────────────────────── -->
+                                <div class="accordion mb-3" id="corrInfoAccordion">
+                                    <div class="card" style="border: 1px solid #dee2e6;">
+                                        <div class="card-header py-2 px-3" id="corrInfoHeading">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                        type="button" data-toggle="collapse" data-target="#corrInfoBody"
+                                                        aria-expanded="false" aria-controls="corrInfoBody">
+                                                    <i class="bi bi-info-circle mr-2"></i> About correlation methods and visualisations
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="corrInfoBody" class="collapse" aria-labelledby="corrInfoHeading" data-parent="#corrInfoAccordion">
+                                            <div class="card-body small text-muted">
+                                                <p style="font-size:0.8rem;" class="mb-1"><strong>Correlation coefficients</strong> quantify the strength and direction of the relationship between two variables. All coefficients range from −1 (perfect negative) to +1 (perfect positive), with 0 indicating no relationship.</p>
+                                                <ul style="font-size:0.8rem;" class="mb-2">
+                                                    <li><strong>Pearson (r):</strong> measures the <em>linear</em> relationship between two continuous variables. Assumes both variables are approximately normally distributed, the relationship is linear, and there are no major outliers. The most statistically powerful choice when its assumptions are met.</li>
+                                                    <li><strong>Spearman (ρ):</strong> a rank-based coefficient that measures any <em>monotonic</em> relationship (consistently increasing or decreasing, not necessarily linear). Robust to outliers and non-normal distributions. Use it when data are ordinal or clearly non-normal.</li>
+                                                    <li><strong>Kendall (τ):</strong> also rank-based, but counts concordant vs discordant pairs of observations. Slightly less powerful than Spearman in large samples, but more robust for small samples or data with many tied values. τ tends to be numerically smaller than ρ for the same data.</li>
+                                                </ul>
+                                                <p style="font-size:0.8rem;" class="mb-1"><strong>Heatmap:</strong> a colour-coded matrix of all pairwise correlation coefficients. Cells are annotated with significance stars: * p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001. Strong positive correlations appear in one colour extreme, strong negative in the other, making clusters of related variables immediately visible.</p>
+                                                <p style="font-size:0.8rem;" class="mb-0"><strong>Scatter matrix:</strong> a grid of all pairwise scatter plots. Each cell shows the raw data points for one pair of variables, making it easy to visually assess linearity, outliers, and whether Pearson's assumption of a linear relationship is appropriate. The correlation coefficient r is printed in each cell.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ── Method selector ──────────────────────────────── -->
+                                <div class="mb-2">
+                                    <label class="small fw-bold mb-1 d-block">Correlation method</label>
+                                    <div id="corrMethodGroup" role="group">
+                                        <button type="button" class="corr-method-btn active" data-method="pearson">
+                                            <span class="stab-icon bi bi-graph-up-arrow"></span>
+                                            Pearson
+                                            <span class="corr-method-symbol">r</span>
+                                        </button>
+                                        <button type="button" class="corr-method-btn" data-method="spearman">
+                                            <span class="stab-icon bi bi-bar-chart-steps"></span>
+                                            Spearman
+                                            <span class="corr-method-symbol">ρ</span>
+                                        </button>
+                                        <button type="button" class="corr-method-btn" data-method="kendall">
+                                            <span class="stab-icon bi bi-list-check"></span>
+                                            Kendall
+                                            <span class="corr-method-symbol">τ</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <br>
+                                <div class="d-flex align-items-center flex-wrap mb-3" style="gap:0.5rem;">
+                                    <button id="runCorrBtn" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-play-fill"></i> Run Correlation
+                                    </button>
+                                    <button id="stopCorrBtn" class="btn btn-danger btn-sm" style="display:none;">
+                                        <i class="bi bi-stop-fill"></i> Stop
+                                    </button>
+                                    <div id="corrResultsHeader" style="display:none; gap:0.5rem; align-items:center;">
+                                        <button id="downloadCorrExcelBtn" class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-file-earmark-excel"></i> Export Report
+                                        </button>
+                                        <span id="corrExportSpinner" style="display:none;" class="ms-2">
+                                            <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                                            <span class="small text-muted ms-1">Generating…</span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- ── Spinner ───────────────────────────────────────── -->
+                                <div id="corrSpinner" class="text-center py-4" style="display:none;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2 text-muted small">Computing correlations…</p>
+                                </div>
+
+                                <!-- ── Status / error message ────────────────────────── -->
+                                <div id="corrStatusMsg"></div>
+
+                                <!-- ── Sub-tabs: Heatmap / Scatter Matrix ────────────── -->
+                                <ul class="nav nav-tabs mb-0" id="corrSubTabs" role="tablist" style="font-size:0.85rem; display:none;">
+                                    <li class="nav-item">
+                                        <a class="nav-link active py-1 px-3" id="corrHeatmapTab" data-toggle="tab" href="#corrHeatmapPane" role="tab">
+                                            <i class="bi bi-grid-3x3-gap-fill me-1"></i>Heatmap
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-1 px-3" id="corrScatterTab" data-toggle="tab" href="#corrScatterPane" role="tab">
+                                            <i class="bi bi-scatter-chart me-1"></i>Scatter Matrix
+                                        </a>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content border border-top-0 p-3 rounded-bottom bg-white" id="corrSubTabContent" style="display:none;">
+
+                                    <!-- ════════ HEATMAP pane ════════ -->
+                                    <div class="tab-pane fade show active" id="corrHeatmapPane" role="tabpanel">
+
+                                        <!-- Style card -->
+                                        <div id="corrHeatmapStyleCard" class="accordion mb-3" style="display:none;">
+                                            <div class="card" style="border:1px solid #dee2e6;">
+                                                <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between"
+                                                     style="cursor:pointer;"
+                                                     data-toggle="collapse" data-target="#corrHeatmapStyleBody"
+                                                     aria-expanded="false">
+                                                    <span style="font-size:0.82rem; font-weight:600;">
+                                                        <i class="bi bi-palette me-1 text-primary"></i> Heatmap Style
+                                                    </span>
+                                                    <i class="bi bi-chevron-down text-muted" style="font-size:0.9rem; transition:transform 0.2s;"></i>
+                                                </div>
+                                                <div id="corrHeatmapStyleBody" class="collapse">
+                                                    <div class="card-body p-3">
+                                                        <div class="row g-2" style="font-size:0.8rem;">
+
+                                                            <!-- Color scheme -->
+                                                            <div class="col-12 col-md-5">
+                                                                <label class="fw-bold mb-1 d-block">Color scheme</label>
+                                                                <select class="form-select form-select-sm" id="corrColorScheme">
+                                                                    <option value="RdBu" selected>Blue–White–Red (RdBu)</option>
+                                                                    <option value="RdYlBu">Red–Yellow–Blue</option>
+                                                                    <option value="coolwarm">Coolwarm</option>
+                                                                    <option value="viridis">Viridis</option>
+                                                                    <option value="plasma">Plasma</option>
+                                                                    <option value="Greens">Greens</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <!-- Triangle -->
+                                                            <div class="col-12 col-md-4">
+                                                                <label class="fw-bold mb-1 d-block">Show triangle</label>
+                                                                <select class="form-select form-select-sm" id="corrTriangle">
+                                                                    <option value="full" selected>Full matrix</option>
+                                                                    <option value="upper">Upper triangle</option>
+                                                                    <option value="lower">Lower triangle</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <!-- Cluster toggle -->
+                                                            <div class="col-auto d-flex align-items-end pb-1">
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox" id="corrCluster" checked>
+                                                                    <label class="form-check-label small" for="corrCluster">Cluster rows &amp; cols (hclust order)</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Show dendrogram -->
+                                                            <div class="col-auto d-flex align-items-end pb-1">
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox" id="corrShowDendrogram" checked>
+                                                                    <label class="form-check-label small" for="corrShowDendrogram">Show dendrogram above heatmap</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Cell size -->
+                                                            <div class="col-auto d-flex align-items-end pb-1">
+                                                                <div>
+                                                                    <label class="small text-muted mb-1 d-block" for="corrCellSize">Cell size (px)</label>
+                                                                    <input type="number" class="form-control form-control-sm" id="corrCellSize"
+                                                                           value="40" min="1" max="200" step="1" style="width:80px;">
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Show values -->
+                                                            <div class="col-auto d-flex align-items-end pb-1">
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox" id="corrShowValues">
+                                                                    <label class="form-check-label small" for="corrShowValues">Show r values on cells</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Show significance stars -->
+                                                            <div class="col-auto d-flex align-items-end pb-1">
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox" id="corrShowStars" checked>
+                                                                    <label class="form-check-label small" for="corrShowStars">Show significance (*, **, ***)</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Grid lines -->
+                                                            <div class="col-auto d-flex align-items-end pb-1">
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox" id="corrHeatGridLines">
+                                                                    <label class="form-check-label small" for="corrHeatGridLines">Heatmap grid lines</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-auto d-flex align-items-end pb-1">
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox" id="corrDendGridLines">
+                                                                    <label class="form-check-label small" for="corrDendGridLines">Dendrogram grid lines</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Significance masking -->
+                                                            <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.75rem;">Significance masking</strong></div>
+                                                            <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox" id="corrMaskInsig">
+                                                                    <label class="form-check-label small" for="corrMaskInsig">Mask non-significant pairs</label>
+                                                                </div>
+                                                                <div class="d-flex align-items-center gap-1">
+                                                                    <label class="small mb-0">p threshold:</label>
+                                                                    <select class="form-select form-select-sm" id="corrPThresh" style="width:auto;">
+                                                                        <option value="0.05" selected>0.05</option>
+                                                                        <option value="0.01">0.01</option>
+                                                                        <option value="0.001">0.001</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div>
+                                                                    <label class="small mb-0">Mask style:</label>
+                                                                    <select class="form-select form-select-sm d-inline-block ms-1" id="corrMaskStyle" style="width:auto;">
+                                                                        <option value="blank" selected>Blank (hide)</option>
+                                                                        <option value="cross">Cross out</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Typography -->
+                                                            <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.75rem;">Typography</strong></div>
+                                                            <div class="col-12 col-md-4">
+                                                                <label class="mb-1 d-block">Font family</label>
+                                                                <select class="form-select form-select-sm" id="corrFontFamily">
+                                                                    <option value="Arial" selected>Arial</option>
+                                                                    <option value="Helvetica">Helvetica</option>
+                                                                    <option value="Times New Roman">Times New Roman</option>
+                                                                    <option value="Calibri">Calibri</option>
+                                                                    <option value="Georgia">Georgia</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block">Axis label size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="corrAxisFontSize" value="12" min="1" max="22" style="width:65px;">
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block">Cell text size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="corrCellFontSize" value="10" min="1" max="20" style="width:65px;">
+                                                            </div>
+
+                                                            <!-- Reset -->
+                                                            <div class="col-12 mt-1">
+                                                                <button id="corrResetStyleBtn" class="btn btn-sm btn-outline-secondary">
+                                                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset to defaults
+                                                                </button>
+                                                            </div>
+
+                                                            <!-- Export -->
+                                                            <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.75rem;">Export</strong></div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block">Format</label>
+                                                                <select class="form-select form-select-sm" id="corrExportFormat">
+                                                                    <option value="png" selected>PNG</option>
+                                                                    <option value="svg">SVG</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block">Scale</label>
+                                                                <select class="form-select form-select-sm" id="corrExportScale">
+                                                                    <option value="1">1×</option>
+                                                                    <option value="2" selected>2× (300 dpi)</option>
+                                                                    <option value="3">3× (600 dpi)</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-12 mt-2 d-flex gap-2">
+                                                                <button id="corrDownloadHeatmapBtn" class="btn btn-sm btn-outline-secondary" style="display:none;">
+                                                                    <i class="bi bi-download me-1"></i>Download Heatmap
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="corrDendrogramPlot" style="width:100%; height:140px; display:none;"></div>
+                                        <div id="corrHeatmapPlot" style="width:100%; min-height:480px; display:none;"></div>
+                                        <p id="corrHeatmapPlaceholder" class="text-muted small">Run Correlation to generate the heatmap.</p>
+                                    </div>
+
+                                    <!-- ════════ SCATTER MATRIX pane ════════ -->
+                                    <div class="tab-pane fade" id="corrScatterPane" role="tabpanel">
+
+                                        <!-- Style card -->
+                                        <div id="corrScatterStyleCard" class="accordion mb-3" style="display:none;">
+                                            <div class="card" style="border:1px solid #dee2e6;">
+                                                <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between"
+                                                     style="cursor:pointer;"
+                                                     data-toggle="collapse" data-target="#corrScatterStyleBody"
+                                                     aria-expanded="false">
+                                                    <span style="font-size:0.82rem; font-weight:600;">
+                                                        <i class="bi bi-palette me-1 text-primary"></i> Scatter Matrix Style
+                                                    </span>
+                                                    <i class="bi bi-chevron-down text-muted" style="font-size:0.9rem; transition:transform 0.2s;"></i>
+                                                </div>
+                                                <div id="corrScatterStyleBody" class="collapse">
+                                                    <div class="card-body p-3">
+                                                        <div class="row g-2" style="font-size:0.8rem;">
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block">Point size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="corrScatterPointSize" value="5" min="1" max="20" style="width:65px;">
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block">Point opacity</label>
+                                                                <div class="d-flex align-items-center gap-1">
+                                                                    <input type="range" class="form-range" id="corrScatterOpacity" min="10" max="100" value="70" style="width:80px;">
+                                                                    <small id="corrScatterOpacityVal" class="text-muted">70%</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block">Point color</label>
+                                                                <input type="color" class="form-control form-control-sm form-control-color" id="corrScatterColor" value="#1f77b4" style="width:40px;">
+                                                            </div>
+                                                            <div class="col-12 col-md-4">
+                                                                <label class="mb-1 d-block">Font family</label>
+                                                                <select class="form-select form-select-sm" id="corrScatterFont">
+                                                                    <option value="Arial" selected>Arial</option>
+                                                                    <option value="Helvetica">Helvetica</option>
+                                                                    <option value="Times New Roman">Times New Roman</option>
+                                                                    <option value="Calibri">Calibri</option>
+                                                                    <option value="Georgia">Georgia</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block">Label size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="corrScatterLabelSize" value="11" min="6" max="20" style="width:65px;">
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block">r value size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="corrScatterRSize" value="13" min="6" max="30" style="width:65px;">
+                                                            </div>
+                                                            <div class="col-12 mt-2 d-flex gap-2">
+                                                                <button id="corrDownloadScatterBtn" class="btn btn-sm btn-outline-secondary" style="display:none;">
+                                                                    <i class="bi bi-download me-1"></i>Download Scatter Matrix
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="corrScatterPlot" style="width:100%; display:none;"></div>
+                                        <p id="corrScatterPlaceholder" class="text-muted small">Run Correlation to generate the scatter matrix.</p>
+                                    </div>
+
+                                </div><!-- /corrSubTabContent -->
                             </div>
                         </div>
+                        <!-- ═══════════════════════════════════════════════════════════ -->
+
+                        <!-- ═══════════════════════════════════════════════════════════ -->
+                        <!-- CLUSTERING TAB                                              -->
+                        <!-- ═══════════════════════════════════════════════════════════ -->
+                        <div class="tab-pane fade" id="clustering-content" role="tabpanel">
+                            <div class="p-3">
+                                <h5 class="fw-bold mb-2">Clustering Analysis</h5>
+                                <p class="text-muted small mb-3">Discover sample groupings using hierarchical clustering, K-Means, or DBSCAN.</p>
+
+                                <!-- ── Info accordion ───────────────────────────────── -->
+                                <div class="accordion mb-3" id="clusterInfoAccordion">
+                                    <div class="card" style="border: 1px solid #dee2e6;">
+                                        <div class="card-header py-2 px-3" id="clusterInfoHeading">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                        type="button" data-toggle="collapse" data-target="#clusterInfoBody"
+                                                        aria-expanded="false" aria-controls="clusterInfoBody">
+                                                    <i class="bi bi-info-circle mr-2"></i> About clustering analysis
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="clusterInfoBody" class="collapse" aria-labelledby="clusterInfoHeading" data-parent="#clusterInfoAccordion">
+                                            <div class="card-body small text-muted">
+                                                <p style="font-size:0.8rem;">Clustering is an <em>unsupervised</em> technique — it finds natural groupings in your data without using any predefined labels. Samples that are similar across the selected variables end up in the same cluster.</p>
+                                                <p style="font-size:0.8rem;"><strong>Standardising variables (Z-score) is strongly recommended</strong> when variables are measured on different scales (e.g., µmol and OD). Without standardisation, variables with large numerical ranges dominate the distance calculation regardless of their biological relevance. Standardisation gives each variable equal weight.</p>
+                                                <p style="font-size:0.8rem;" class="mb-0">Three methods are available, each with different assumptions: <strong>Hierarchical clustering</strong> builds a tree of merges and does not require a pre-specified number of clusters; <strong>K-Means</strong> partitions samples into exactly k groups by minimising within-group variance; <strong>DBSCAN</strong> finds dense regions and explicitly labels low-density points as noise, making it the only method here that can detect outliers.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ── Shared top controls ───────────────────────────── -->
+                                <div class="d-flex align-items-center flex-wrap mb-3" style="gap:1rem;">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="clusterStandardize" checked>
+                                        <label class="form-check-label small" for="clusterStandardize">Standardize variables (Z-score) before clustering</label>
+                                    </div>
+                                </div>
+
+                                <!-- ── Method sub-tabs ────────────────────────────────── -->
+                                <ul class="nav nav-tabs mb-0" id="clusterSubTabs" role="tablist" style="font-size:0.85rem;">
+                                    <li class="nav-item">
+                                        <a class="nav-link active py-1 px-3" id="clusterHierTab" data-toggle="tab" href="#clusterHierPane" role="tab">
+                                            <i class="bi bi-diagram-3 me-1"></i>Hierarchical
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-1 px-3" id="clusterKmeansTab" data-toggle="tab" href="#clusterKmeansPane" role="tab">
+                                            <i class="bi bi-stars me-1"></i>K-Means
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link py-1 px-3" id="clusterDbscanTab" data-toggle="tab" href="#clusterDbscanPane" role="tab">
+                                            <i class="bi bi-bounding-box-circles me-1"></i>DBSCAN
+                                        </a>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content border border-top-0 p-3 rounded-bottom bg-white" id="clusterSubTabContent">
+
+                                    <!-- ════════ HIERARCHICAL pane ════════ -->
+                                    <div class="tab-pane fade show active" id="clusterHierPane" role="tabpanel">
+                                        <div class="row g-2 mb-3 align-items-end" style="font-size:0.82rem;">
+                                            <div class="col-auto">
+                                                <label class="fw-bold mb-1 d-block">Linkage method</label>
+                                                <select class="form-select form-select-sm" id="hierLinkage">
+                                                    <option value="ward" selected>Ward (minimises variance)</option>
+                                                    <option value="complete">Complete (maximum)</option>
+                                                    <option value="average">Average (UPGMA)</option>
+                                                    <option value="single">Single (minimum)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="fw-bold mb-1 d-block">Distance metric</label>
+                                                <select class="form-select form-select-sm" id="hierMetric">
+                                                    <option value="euclidean" selected>Euclidean</option>
+                                                    <option value="cityblock">Manhattan</option>
+                                                    <option value="cosine">Cosine</option>
+                                                    <option value="correlation">Correlation</option>
+                                                </select>
+                                                <small class="text-muted" id="hierMetricNote" style="font-size:0.68rem;">Ward requires Euclidean</small>
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="fw-bold mb-1 d-block">Cut tree at N clusters</label>
+                                                <input type="number" class="form-control form-control-sm" id="hierNClusters" value="0" min="0" max="50" style="width:80px;" title="0 = automatic (colour threshold)">
+                                                <small class="text-muted" style="font-size:0.68rem;">0 = auto</small>
+                                            </div>
+                                            <div class="col-auto d-flex align-items-end gap-2">
+                                                <button id="runHierBtn" class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-play-fill"></i> Run Hierarchical
+                                                </button>
+                                                <button id="stopHierBtn" class="btn btn-danger btn-sm" style="display:none;">
+                                                    <i class="bi bi-stop-fill"></i> Stop
+                                                </button>
+                                                <button id="downloadHierBtn" class="btn btn-outline-success btn-sm" style="display:none;">
+                                                    <i class="bi bi-file-earmark-excel"></i> Export
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- Info accordion -->
+                                        <div class="accordion mb-3" id="hierInfoAccordion">
+                                            <div class="card" style="border: 1px solid #dee2e6;">
+                                                <div class="card-header py-2 px-3" id="hierInfoHeading">
+                                                    <h6 class="mb-0">
+                                                        <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                                type="button" data-toggle="collapse" data-target="#hierInfoBody"
+                                                                aria-expanded="false" aria-controls="hierInfoBody">
+                                                            <i class="bi bi-info-circle mr-2"></i> Linkage methods and distance metrics
+                                                        </button>
+                                                    </h6>
+                                                </div>
+                                                <div id="hierInfoBody" class="collapse" aria-labelledby="hierInfoHeading" data-parent="#hierInfoAccordion">
+                                                    <div class="card-body small text-muted">
+                                                        <p style="font-size:0.8rem;">Hierarchical clustering builds a dendrogram by successively merging the two closest clusters. <strong>Linkage method</strong> defines how the distance between two clusters is computed; <strong>distance metric</strong> defines the distance between individual samples.</p>
+                                                        <p style="font-size:0.8rem;" class="mb-1"><strong>Linkage methods:</strong></p>
+                                                        <ul style="font-size:0.8rem;" class="mb-2">
+                                                            <li><strong>Ward:</strong> at each step merges the pair of clusters that produces the smallest increase in total within-cluster variance. Tends to create compact, roughly equal-sized clusters. The most common choice for biological data. Requires Euclidean distance.</li>
+                                                            <li><strong>Complete (maximum):</strong> distance between two clusters = distance between their two most dissimilar members. Produces tight, compact clusters and is resistant to outliers within a cluster, but can be sensitive to global outliers.</li>
+                                                            <li><strong>Average (UPGMA):</strong> distance = mean of all pairwise distances between members of the two clusters. A balanced compromise — less sensitive to outliers than Complete, less prone to chaining than Single.</li>
+                                                            <li><strong>Single (minimum):</strong> distance = distance between the two nearest members across clusters. Can form elongated "chain" clusters where distant samples are linked through a series of close intermediate points. Very sensitive to outliers.</li>
+                                                        </ul>
+                                                        <p style="font-size:0.8rem;" class="mb-1"><strong>Distance metrics:</strong></p>
+                                                        <ul style="font-size:0.8rem;" class="mb-0">
+                                                            <li><strong>Euclidean:</strong> straight-line distance in multidimensional space (√Σ(xᵢ−yᵢ)²). The standard choice; sensitive to differences in absolute values. Required for Ward linkage.</li>
+                                                            <li><strong>Manhattan (cityblock):</strong> sum of absolute differences along each dimension (Σ|xᵢ−yᵢ|). Less sensitive than Euclidean to large differences in individual variables; more robust to outliers.</li>
+                                                            <li><strong>Cosine:</strong> measures the angle between two sample vectors, ignoring their magnitude. Two samples are "close" if they have the same pattern of high/low values regardless of overall scale. Useful for compositional or spectral data.</li>
+                                                            <li><strong>Correlation:</strong> based on Pearson correlation between two sample vectors (distance = 1 − r). Two samples are close if they have a similar relative profile across all variables, irrespective of mean or scale. Useful for expression or physiological time-course data.</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="hierSpinner" class="text-center py-3" style="display:none;">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="mt-2 text-muted small">Computing hierarchical clustering…</p>
+                                        </div>
+                                        <div id="hierStatusMsg"></div>
+
+                                        <!-- Style card -->
+                                        <div id="hierStyleCard" class="accordion mb-3" style="display:none;">
+                                            <div class="card" style="border:1px solid #dee2e6;">
+                                                <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between" style="cursor:pointer;"
+                                                     data-toggle="collapse" data-target="#hierStyleBody" aria-expanded="false">
+                                                    <span style="font-size:0.82rem; font-weight:600;"><i class="bi bi-palette me-1 text-primary"></i> Plot Style</span>
+                                                    <i class="bi bi-chevron-down text-muted" style="font-size:0.9rem; transition:transform 0.2s;"></i>
+                                                </div>
+                                                <div id="hierStyleBody" class="collapse">
+                                                    <div class="card-body p-3">
+                                                        <div class="row g-2" style="font-size:0.8rem;">
+                                                            <div class="col-12 col-md-5">
+                                                                <label class="mb-1 d-block fw-bold">Heatmap color scheme</label>
+                                                                <select class="form-select form-select-sm" id="hierHeatColorScheme">
+                                                                    <option value="RdBu_r" selected>Blue–White–Red</option>
+                                                                    <option value="RdYlBu_r">Red–Yellow–Blue</option>
+                                                                    <option value="viridis">Viridis</option>
+                                                                    <option value="plasma">Plasma</option>
+                                                                    <option value="YlOrRd">Yellow–Orange–Red</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-12 col-md-3">
+                                                                <label class="mb-1 d-block fw-bold">Font family</label>
+                                                                <select class="form-select form-select-sm" id="hierFontFamily">
+                                                                    <option value="Arial" selected>Arial</option>
+                                                                    <option value="Helvetica">Helvetica</option>
+                                                                    <option value="Times New Roman">Times New Roman</option>
+                                                                    <option value="Calibri">Calibri</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Label size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="hierFontSize" value="11" min="6" max="20" style="width:65px;">
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Export scale</label>
+                                                                <select class="form-select form-select-sm" id="hierExportScale">
+                                                                    <option value="1">1×</option>
+                                                                    <option value="2" selected>2× (300 dpi)</option>
+                                                                    <option value="3">3×</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Format</label>
+                                                                <select class="form-select form-select-sm" id="hierExportFormat">
+                                                                    <option value="png" selected>PNG</option>
+                                                                    <option value="svg">SVG</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-12 mt-1 d-flex gap-2">
+                                                                <button id="hierDownloadDendBtn" class="btn btn-sm btn-outline-secondary" style="display:none;"><i class="bi bi-download me-1"></i>Dendrogram</button>
+                                                                <button id="hierDownloadHeatBtn" class="btn btn-sm btn-outline-secondary" style="display:none;"><i class="bi bi-download me-1"></i>Heatmap</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="hierDendPlot" style="width:100%; min-height:300px; display:none;"></div>
+                                        <div id="hierHeatPlot" style="width:100%; min-height:400px; display:none;"></div>
+                                        <p id="hierPlaceholder" class="text-muted small">Run Hierarchical Clustering to generate plots.</p>
+                                    </div>
+
+                                    <!-- ════════ K-MEANS pane ════════ -->
+                                    <div class="tab-pane fade" id="clusterKmeansPane" role="tabpanel">
+                                        <div class="row g-2 mb-3 align-items-end" style="font-size:0.82rem;">
+                                            <div class="col-auto">
+                                                <label class="fw-bold mb-1 d-block">Number of clusters (k)</label>
+                                                <input type="number" class="form-control form-control-sm" id="kmeansK" value="3" min="2" max="20" style="width:75px;">
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="fw-bold mb-1 d-block">Max k for elbow</label>
+                                                <input type="number" class="form-control form-control-sm" id="kmeansMaxK" value="10" min="2" max="20" style="width:75px;">
+                                            </div>
+                                            <div class="col-auto d-flex align-items-end gap-2">
+                                                <button id="runKmeansElbowBtn" class="btn btn-outline-primary btn-sm">
+                                                    <i class="bi bi-graph-up"></i> Elbow Plot
+                                                </button>
+                                                <button id="runKmeansBtn" class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-play-fill"></i> Run K-Means
+                                                </button>
+                                                <button id="stopKmeansBtn" class="btn btn-danger btn-sm" style="display:none;">
+                                                    <i class="bi bi-stop-fill"></i> Stop
+                                                </button>
+                                                <button id="downloadKmeansBtn" class="btn btn-outline-success btn-sm" style="display:none;">
+                                                    <i class="bi bi-file-earmark-excel"></i> Export
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- Info accordion -->
+                                        <div class="accordion mb-3" id="kmeansInfoAccordion">
+                                            <div class="card" style="border: 1px solid #dee2e6;">
+                                                <div class="card-header py-2 px-3" id="kmeansInfoHeading">
+                                                    <h6 class="mb-0">
+                                                        <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                                type="button" data-toggle="collapse" data-target="#kmeansInfoBody"
+                                                                aria-expanded="false" aria-controls="kmeansInfoBody">
+                                                            <i class="bi bi-info-circle mr-2"></i> How K-Means works and how to choose k
+                                                        </button>
+                                                    </h6>
+                                                </div>
+                                                <div id="kmeansInfoBody" class="collapse" aria-labelledby="kmeansInfoHeading" data-parent="#kmeansInfoAccordion">
+                                                    <div class="card-body small text-muted">
+                                                        <p style="font-size:0.8rem;">K-Means partitions all samples into exactly <em>k</em> non-overlapping groups by minimising the total within-cluster sum of squares (inertia). The algorithm: (1) randomly initialise k centroids, (2) assign each sample to its nearest centroid, (3) recompute each centroid as the mean of its assigned samples, (4) repeat steps 2–3 until assignments no longer change. The tool runs multiple random initialisations (k-means++) and keeps the best result.</p>
+                                                        <p style="font-size:0.8rem;" class="mb-1"><strong>Parameters:</strong></p>
+                                                        <ul style="font-size:0.8rem;" class="mb-2">
+                                                            <li><strong>Number of clusters (k):</strong> the number of groups to find. K-Means always produces exactly k clusters — it cannot detect noise or leave samples unclustered. Must be chosen in advance; use the elbow plot as a guide.</li>
+                                                            <li><strong>Max k for elbow:</strong> the maximum k evaluated in the elbow plot. The plot shows within-cluster inertia against k. The optimal k is at the "elbow" — the point where adding an extra cluster gives a much smaller reduction in inertia. Beyond that point, additional clusters capture noise rather than real structure.</li>
+                                                        </ul>
+                                                        <p style="font-size:0.8rem;" class="mb-0"><strong>Tip:</strong> K-Means assumes clusters are roughly spherical and of similar size. If your data has elongated or irregular clusters, hierarchical clustering or DBSCAN may be more appropriate.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="kmeansSpinner" class="text-center py-3" style="display:none;">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="mt-2 text-muted small">Running K-Means…</p>
+                                        </div>
+                                        <div id="kmeansStatusMsg"></div>
+
+                                        <!-- Style card -->
+                                        <div id="kmeansStyleCard" class="accordion mb-3" style="display:none;">
+                                            <div class="card" style="border:1px solid #dee2e6;">
+                                                <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between" style="cursor:pointer;"
+                                                     data-toggle="collapse" data-target="#kmeansStyleBody" aria-expanded="false">
+                                                    <span style="font-size:0.82rem; font-weight:600;"><i class="bi bi-palette me-1 text-primary"></i> Plot Style</span>
+                                                    <i class="bi bi-chevron-down text-muted" style="font-size:0.9rem; transition:transform 0.2s;"></i>
+                                                </div>
+                                                <div id="kmeansStyleBody" class="collapse">
+                                                    <div class="card-body p-3">
+                                                        <div class="row g-2" style="font-size:0.8rem;">
+                                                            <div class="col-12 col-md-4">
+                                                                <label class="mb-1 d-block fw-bold">Color palette</label>
+                                                                <select class="form-select form-select-sm" id="kmeansPalette">
+                                                                    <option value="tab10" selected>Tab10</option>
+                                                                    <option value="Set1">Set1</option>
+                                                                    <option value="Dark2">Dark2</option>
+                                                                    <option value="Paired">Paired</option>
+                                                                    <option value="nipy_spectral">Spectral</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Point size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="kmeansPointSize" value="8" min="2" max="24" style="width:65px;">
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Opacity</label>
+                                                                <div class="d-flex align-items-center gap-1">
+                                                                    <input type="range" class="form-range" id="kmeansOpacity" min="10" max="100" value="85" style="width:80px;">
+                                                                    <small id="kmeansOpacityVal" class="text-muted">85%</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12 col-md-3">
+                                                                <label class="mb-1 d-block fw-bold">Font</label>
+                                                                <select class="form-select form-select-sm" id="kmeansFontFamily">
+                                                                    <option value="Arial" selected>Arial</option>
+                                                                    <option value="Helvetica">Helvetica</option>
+                                                                    <option value="Times New Roman">Times New Roman</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Font size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="kmeansFontSize" value="12" min="6" max="20" style="width:65px;">
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Export scale</label>
+                                                                <select class="form-select form-select-sm" id="kmeansExportScale">
+                                                                    <option value="1">1×</option>
+                                                                    <option value="2" selected>2×</option>
+                                                                    <option value="3">3×</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-12 mt-1 d-flex gap-2">
+                                                                <button id="kmeansDownloadScatterBtn" class="btn btn-sm btn-outline-secondary" style="display:none;"><i class="bi bi-download me-1"></i>Scatter</button>
+                                                                <button id="kmeansDownloadElbowBtn" class="btn btn-sm btn-outline-secondary" style="display:none;"><i class="bi bi-download me-1"></i>Elbow</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="kmeansElbowPlot" style="width:100%; min-height:300px; display:none;"></div>
+                                        <div id="kmeansScatterPlot" style="width:100%; min-height:420px; display:none;"></div>
+                                        <p id="kmeansPlaceholder" class="text-muted small">Run K-Means or Elbow Plot to generate results.</p>
+                                    </div>
+
+                                    <!-- ════════ DBSCAN pane ════════ -->
+                                    <div class="tab-pane fade" id="clusterDbscanPane" role="tabpanel">
+                                        <div class="row g-2 mb-3 align-items-end" style="font-size:0.82rem;">
+                                            <div class="col-auto">
+                                                <label class="fw-bold mb-1 d-block">ε (epsilon)</label>
+                                                <input type="number" class="form-control form-control-sm" id="dbscanEps" value="0.5" min="0.01" step="0.05" style="width:80px;">
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="fw-bold mb-1 d-block">Min samples</label>
+                                                <input type="number" class="form-control form-control-sm" id="dbscanMinSamples" value="5" min="1" max="50" style="width:75px;">
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="fw-bold mb-1 d-block">k for k-distance</label>
+                                                <input type="number" class="form-control form-control-sm" id="dbscanKdistK" value="4" min="1" max="20" style="width:70px;">
+                                            </div>
+                                            <div class="col-auto d-flex align-items-end gap-2">
+                                                <button id="runDbscanKdistBtn" class="btn btn-outline-primary btn-sm">
+                                                    <i class="bi bi-graph-up"></i> K-Distance Plot
+                                                </button>
+                                                <button id="runDbscanBtn" class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-play-fill"></i> Run DBSCAN
+                                                </button>
+                                                <button id="stopDbscanBtn" class="btn btn-danger btn-sm" style="display:none;">
+                                                    <i class="bi bi-stop-fill"></i> Stop
+                                                </button>
+                                                <button id="downloadDbscanBtn" class="btn btn-outline-success btn-sm" style="display:none;">
+                                                    <i class="bi bi-file-earmark-excel"></i> Export
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- Info accordion -->
+                                        <div class="accordion mb-3" id="dbscanInfoAccordion">
+                                            <div class="card" style="border: 1px solid #dee2e6;">
+                                                <div class="card-header py-2 px-3" id="dbscanInfoHeading">
+                                                    <h6 class="mb-0">
+                                                        <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                                type="button" data-toggle="collapse" data-target="#dbscanInfoBody"
+                                                                aria-expanded="false" aria-controls="dbscanInfoBody">
+                                                            <i class="bi bi-info-circle mr-2"></i> How DBSCAN works and how to set its parameters
+                                                        </button>
+                                                    </h6>
+                                                </div>
+                                                <div id="dbscanInfoBody" class="collapse" aria-labelledby="dbscanInfoHeading" data-parent="#dbscanInfoAccordion">
+                                                    <div class="card-body small text-muted">
+                                                        <p style="font-size:0.8rem;">DBSCAN (Density-Based Spatial Clustering of Applications with Noise) defines clusters as dense regions of samples separated by low-density areas. Unlike K-Means, it does not require specifying the number of clusters in advance, and it explicitly labels low-density samples as <em>noise</em> (cluster label −1) — making it the only method here capable of detecting outliers.</p>
+                                                        <p style="font-size:0.8rem;">A sample is a <strong>core point</strong> if at least <em>min_samples</em> other samples lie within distance ε. Core points form the dense interiors of clusters. Samples reachable from a core point (but not themselves core points) are <strong>border points</strong>. All remaining samples are noise.</p>
+                                                        <p style="font-size:0.8rem;" class="mb-1"><strong>Parameters:</strong></p>
+                                                        <ul style="font-size:0.8rem;" class="mb-2">
+                                                            <li><strong>ε (epsilon):</strong> the neighbourhood radius. Two samples are considered neighbours if their (Euclidean) distance is ≤ ε. Smaller ε creates more, finer clusters and more noise; larger ε merges clusters together. <em>This is the most sensitive parameter.</em> Use the k-distance plot to choose it: set ε at the "knee" of the sorted k-distance curve.</li>
+                                                            <li><strong>Min samples:</strong> the minimum number of neighbours within ε for a sample to qualify as a core point. Higher values require denser cores and generally produce fewer but more robust clusters (with more noise points). A common rule of thumb is 2 × (number of variables); 5 is a safe default for general use.</li>
+                                                            <li><strong>k for k-distance:</strong> the neighbourhood size used to generate the k-distance plot. Each sample is plotted at its distance to its k-th nearest neighbour, sorted in descending order. The "knee" in this curve is a good starting value for ε. Typically set equal to <em>min_samples</em> − 1, or the same as <em>min_samples</em>.</li>
+                                                        </ul>
+                                                        <p style="font-size:0.8rem;" class="mb-0"><strong>Tip:</strong> start by generating the k-distance plot, identify the knee, and set ε accordingly. Then adjust min_samples to control how strictly cluster membership is defined.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="dbscanSpinner" class="text-center py-3" style="display:none;">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="mt-2 text-muted small">Running DBSCAN…</p>
+                                        </div>
+                                        <div id="dbscanStatusMsg"></div>
+
+                                        <!-- Style card -->
+                                        <div id="dbscanStyleCard" class="accordion mb-3" style="display:none;">
+                                            <div class="card" style="border:1px solid #dee2e6;">
+                                                <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between" style="cursor:pointer;"
+                                                     data-toggle="collapse" data-target="#dbscanStyleBody" aria-expanded="false">
+                                                    <span style="font-size:0.82rem; font-weight:600;"><i class="bi bi-palette me-1 text-primary"></i> Plot Style</span>
+                                                    <i class="bi bi-chevron-down text-muted" style="font-size:0.9rem; transition:transform 0.2s;"></i>
+                                                </div>
+                                                <div id="dbscanStyleBody" class="collapse">
+                                                    <div class="card-body p-3">
+                                                        <div class="row g-2" style="font-size:0.8rem;">
+                                                            <div class="col-12 col-md-4">
+                                                                <label class="mb-1 d-block fw-bold">Color palette</label>
+                                                                <select class="form-select form-select-sm" id="dbscanPalette">
+                                                                    <option value="tab10" selected>Tab10</option>
+                                                                    <option value="Set1">Set1</option>
+                                                                    <option value="Dark2">Dark2</option>
+                                                                    <option value="Paired">Paired</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Point size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="dbscanPointSize" value="8" min="2" max="24" style="width:65px;">
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Opacity</label>
+                                                                <div class="d-flex align-items-center gap-1">
+                                                                    <input type="range" class="form-range" id="dbscanOpacity" min="10" max="100" value="85" style="width:80px;">
+                                                                    <small id="dbscanOpacityVal" class="text-muted">85%</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12 col-md-3">
+                                                                <label class="mb-1 d-block fw-bold">Font</label>
+                                                                <select class="form-select form-select-sm" id="dbscanFontFamily">
+                                                                    <option value="Arial" selected>Arial</option>
+                                                                    <option value="Helvetica">Helvetica</option>
+                                                                    <option value="Times New Roman">Times New Roman</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Font size</label>
+                                                                <input type="number" class="form-control form-control-sm" id="dbscanFontSize" value="12" min="6" max="20" style="width:65px;">
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <label class="mb-1 d-block fw-bold">Export scale</label>
+                                                                <select class="form-select form-select-sm" id="dbscanExportScale">
+                                                                    <option value="1">1×</option>
+                                                                    <option value="2" selected>2×</option>
+                                                                    <option value="3">3×</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-12 mt-1 d-flex gap-2">
+                                                                <button id="dbscanDownloadScatterBtn" class="btn btn-sm btn-outline-secondary" style="display:none;"><i class="bi bi-download me-1"></i>Scatter</button>
+                                                                <button id="dbscanDownloadKdistBtn" class="btn btn-sm btn-outline-secondary" style="display:none;"><i class="bi bi-download me-1"></i>K-Distance</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div id="dbscanKdistPlot" style="width:100%; min-height:280px; display:none;"></div>
+                                        <div id="dbscanScatterPlot" style="width:100%; min-height:420px; display:none;"></div>
+                                        <p id="dbscanPlaceholder" class="text-muted small">Run K-Distance Plot or DBSCAN to generate results.</p>
+                                    </div>
+
+                                </div><!-- /clusterSubTabContent -->
+                            </div>
+                        </div>
+                        <!-- ═══════════════════════════════════════════════════════════ -->
+
+                        <!-- ═══════════════════════════════════════════════════════════ -->
+                        <!-- REGRESSION TAB                                              -->
+                        <!-- ═══════════════════════════════════════════════════════════ -->
+                        <div class="tab-pane fade" id="regression-content" role="tabpanel">
+                            <div class="p-3">
+                                <h5 class="fw-bold mb-2">Regression Analysis</h5>
+                                <p class="text-muted small mb-3">Fit and diagnose linear regression models. Predictor variables (X) are taken from the checked variables in the Data Input panel.</p>
+
+                                <!-- ── Info accordion ───────────────────────────────── -->
+                                <div class="accordion mb-3" id="regrInfoAccordion">
+                                    <div class="card" style="border: 1px solid #dee2e6;">
+                                        <div class="card-header py-2 px-3" id="regrInfoHeading">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                        type="button" data-toggle="collapse" data-target="#regrInfoBody"
+                                                        aria-expanded="false" aria-controls="regrInfoBody">
+                                                    <i class="bi bi-info-circle mr-2"></i> About regression methods and diagnostic plots
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="regrInfoBody" class="collapse" aria-labelledby="regrInfoHeading" data-parent="#regrInfoAccordion">
+                                            <div class="card-body small text-muted">
+                                                <p style="font-size:0.8rem;">Regression models the relationship between one or more predictor variables (X) and a response variable (Y), allowing you to quantify effect sizes, test significance, and make predictions. All linear regression methods here use ordinary least squares (OLS), minimising the sum of squared residuals.</p>
+                                                <p style="font-size:0.8rem;" class="mb-1"><strong>Simple linear regression:</strong> models Y = β₀ + β₁X + ε using a single predictor. Outputs a scatter plot with the fitted line and 95% confidence band. Reports R² (fraction of Y variance explained), the slope β₁ with its standard error and p-value, and four diagnostic plots.</p>
+                                                <p style="font-size:0.8rem;" class="mb-1"><strong>Multiple linear regression:</strong> extends to several predictors: Y = β₀ + β₁X₁ + … + βₚXₚ + ε. All checked variables are used. Reports Adjusted R² (penalised for adding extra predictors), the overall F-test p-value, individual coefficient estimates and their p-values, and VIF (Variance Inflation Factor) to flag multicollinearity. VIF &gt; 5–10 for a predictor indicates it is highly correlated with other predictors, making individual coefficients unreliable.</p>
+                                                <p style="font-size:0.8rem;" class="mb-1"><strong>Logistic regression:</strong> models a binary outcome (0/1) as a probability via the logit link: log(p/(1−p)) = β₀ + Σ βᵢXᵢ. Reports McFadden pseudo-R² (a goodness-of-fit analogue), AUC (area under the ROC curve — 0.5 = no better than chance, 1.0 = perfect discrimination), and a confusion matrix at the default 0.5 probability threshold. Coefficients are log-odds ratios; exponentiating a coefficient gives the odds ratio for a one-unit increase in that predictor.</p>
+                                                <p style="font-size:0.8rem;" class="mb-1"><strong>Diagnostic plots (linear regression):</strong></p>
+                                                <ul style="font-size:0.8rem;" class="mb-0">
+                                                    <li><strong>Residuals vs Fitted:</strong> checks for non-linearity and heteroscedasticity. Residuals should be randomly scattered around zero with no obvious pattern. A curved pattern suggests a non-linear relationship; a funnel shape suggests variance increases with fitted values.</li>
+                                                    <li><strong>Q-Q plot:</strong> checks whether residuals follow a normal distribution. Points should fall close to the diagonal reference line. Systematic deviations indicate non-normality.</li>
+                                                    <li><strong>Scale-Location (√|residuals| vs Fitted):</strong> another check for homoscedasticity. A roughly horizontal smoothing line indicates constant variance across the fitted range.</li>
+                                                    <li><strong>Residuals vs Leverage:</strong> identifies influential observations. Points outside the dashed Cook's distance lines have a disproportionate influence on the fitted model and are worth investigating individually.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Shared Y selector + sub-tab nav -->
+                                <div class="d-flex flex-wrap align-items-end mb-3" style="gap:1rem;">
+                                    <div>
+                                        <label class="small fw-bold mb-1 d-block" for="regrYCol">Response variable (Y)</label>
+                                        <select class="form-control form-control-sm" id="regrYCol" style="min-width:170px;">
+                                            <option value="">— Select column —</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Inner sub-tabs -->
+                                <ul class="nav mb-3" id="regrSubTabs" role="tablist">
+                                    <li class="nav-item">
+                                        <button class="nav-link active" id="regr-simple-tab" data-toggle="tab" data-target="#regr-simple-content" role="tab">
+                                            <span class="stab-icon bi bi-slash-lg"></span>
+                                            Simple Linear
+                                        </button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" id="regr-multiple-tab" data-toggle="tab" data-target="#regr-multiple-content" role="tab">
+                                            <span class="stab-icon bi bi-graph-up"></span>
+                                            Multiple Linear
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content">
+
+                                <!-- ── Simple Linear ────────────────────────────── -->
+                                <div class="tab-pane fade show active" id="regr-simple-content" role="tabpanel">
+                                    <p class="text-muted small mb-2">One predictor variable. Outputs a scatter plot with the fitted line and 95% confidence band, plus four diagnostic plots.</p>
+                                    <div class="d-flex flex-wrap align-items-end mb-3" style="gap:1rem;">
+                                        <div>
+                                            <label class="small fw-bold mb-1 d-block" for="regrSimpleXCol">Predictor (X)</label>
+                                            <select class="form-control form-control-sm" id="regrSimpleXCol" style="min-width:160px;">
+                                                <option value="">— Select column —</option>
+                                            </select>
+                                        </div>
+                                        <div class="d-flex align-items-end" style="gap:0.5rem;">
+                                            <button id="runSimpleRegrBtn" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run</button>
+                                            <button id="stopSimpleRegrBtn" class="btn btn-danger btn-sm" style="display:none;"><i class="bi bi-stop-fill"></i> Stop</button>
+                                            <button id="downloadSimpleRegrBtn" class="btn btn-outline-success btn-sm" style="display:none;"><i class="bi bi-file-earmark-excel"></i> Export</button>
+                                            <span id="simpleRegrExportSpinner" style="display:none;"><span class="spinner-border spinner-border-sm text-success" role="status"></span></span>
+                                        </div>
+                                    </div>
+                                    <div id="simpleRegrSpinner" class="text-center py-3" style="display:none;">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                    </div>
+                                    <div id="simpleRegrStatus"></div>
+                                    <div id="simpleRegrMetrics" class="mb-3" style="display:none;">
+                                        <div class="d-flex flex-wrap" style="gap:0.5rem;">
+                                            <span class="badge border text-dark px-3 py-2 small">R²: <strong id="simpleRegrR2">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">Adj-R²: <strong id="simpleRegrAdjR2">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">F p-val: <strong id="simpleRegrFp">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">n: <strong id="simpleRegrN">—</strong></span>
+                                        </div>
+                                    </div>
+                                    <div id="simpleRegrStyleCard" class="accordion mb-3" style="display:none;">
+                                        <div class="card" style="border:1px solid #dee2e6;">
+                                            <div class="card-header py-2 px-3">
+                                                <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold" type="button" data-toggle="collapse" data-target="#simpleRegrStyleBody"><i class="bi bi-palette mr-2"></i> Plot Style</button></h6>
+                                            </div>
+                                            <div id="simpleRegrStyleBody" class="collapse">
+                                                <div class="card-body py-3">
+                                                    <div class="row no-gutters" style="gap:0.4rem 0;">
+                                                        <div class="col-12 col-sm-6 pr-sm-2">
+                                                            <label class="small text-muted mb-1 d-block">Point size: <span id="simpleRegrPointSizeVal">7</span></label>
+                                                            <input type="range" class="custom-range" id="simpleRegrPointSize" min="3" max="20" value="7">
+                                                        </div>
+                                                        <div class="col-12 col-sm-6">
+                                                            <label class="small text-muted mb-1 d-block">Opacity: <span id="simpleRegrOpacityVal">80</span>%</label>
+                                                            <input type="range" class="custom-range" id="simpleRegrOpacity" min="10" max="100" value="80">
+                                                        </div>
+                                                        <div class="col-12 mt-1">
+                                                            <label class="small text-muted mb-1 d-block">Font family</label>
+                                                            <select class="form-control form-control-sm" id="simpleRegrFontFamily">
+                                                                <option value="Arial, sans-serif" selected>Arial</option>
+                                                                <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                                                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                                                <option value="Georgia, serif">Georgia</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6 pr-sm-2 mt-1">
+                                                            <label class="small text-muted mb-1 d-block">Font size: <span id="simpleRegrFontSizeVal">13</span> pt</label>
+                                                            <input type="range" class="custom-range" id="simpleRegrFontSize" min="8" max="22" value="13">
+                                                        </div>
+                                                        <div class="col-12 mt-1">
+                                                            <label class="small text-muted mb-1 d-block">Export scale</label>
+                                                            <select class="form-control form-control-sm" id="simpleRegrExportScale" style="max-width:120px;">
+                                                                <option value="1">1× (screen)</option>
+                                                                <option value="2" selected>2× (HD)</option>
+                                                                <option value="3">3× (print)</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="simpleRegrScatterPlot" style="width:100%; min-height:420px; display:none;"></div>
+                                    <div id="simpleRegrDiagPlot"   style="width:100%; min-height:520px; display:none;"></div>
+                                </div><!-- /regr-simple-content -->
+
+                                <!-- ── Multiple Linear ─────────────────────────── -->
+                                <div class="tab-pane fade" id="regr-multiple-content" role="tabpanel">
+                                    <p class="text-muted small mb-2">Select the predictor variables (X) to include. Outputs a coefficient plot with 95% CIs and four diagnostic plots.</p>
+                                    <div class="mb-3">
+                                        <div class="d-flex align-items-center mb-1" style="gap:0.6rem;">
+                                            <label class="small fw-bold mb-0">Predictor variables (X)</label>
+                                            <button type="button" class="btn btn-link p-0 text-primary" style="font-size:0.75rem;" id="multipleRegrSelectAll">Select all</button>
+                                            <button type="button" class="btn btn-link p-0 text-secondary" style="font-size:0.75rem;" id="multipleRegrSelectNone">None</button>
+                                        </div>
+                                        <div id="multipleRegrXList" class="border rounded p-2" style="min-height:60px; height:120px; max-height:720px; overflow-y:auto; resize:vertical; background:#fafafa; font-size:0.82rem;">
+                                            <span class="text-muted small">Select a response variable (Y) above to populate.</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:0.5rem;">
+                                        <button id="runMultipleRegrBtn" class="btn btn-primary btn-sm"><i class="bi bi-play-fill"></i> Run</button>
+                                        <button id="stopMultipleRegrBtn" class="btn btn-danger btn-sm" style="display:none;"><i class="bi bi-stop-fill"></i> Stop</button>
+                                        <button id="downloadMultipleRegrBtn" class="btn btn-outline-success btn-sm" style="display:none;"><i class="bi bi-file-earmark-excel"></i> Export</button>
+                                        <span id="multipleRegrExportSpinner" style="display:none;"><span class="spinner-border spinner-border-sm text-success" role="status"></span></span>
+                                    </div>
+                                    <div id="multipleRegrSpinner" class="text-center py-3" style="display:none;">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                    </div>
+                                    <div id="multipleRegrStatus"></div>
+                                    <div id="multipleRegrMetrics" class="mb-3" style="display:none;">
+                                        <div class="d-flex flex-wrap" style="gap:0.5rem;">
+                                            <span class="badge border text-dark px-3 py-2 small">R²: <strong id="multipleRegrR2">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">Adj-R²: <strong id="multipleRegrAdjR2">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">F p-val: <strong id="multipleRegrFp">—</strong></span>
+                                            <span class="badge border text-dark px-3 py-2 small">n: <strong id="multipleRegrN">—</strong></span>
+                                        </div>
+                                    </div>
+                                    <div id="multipleRegrInfoCard" class="accordion mb-3" style="display:none;">
+                                        <div class="card" style="border:1px solid #dee2e6;">
+                                            <div class="card-header py-2 px-3" id="multipleRegrInfoHeading">
+                                                <h6 class="mb-0">
+                                                    <button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold"
+                                                            type="button" data-toggle="collapse" data-target="#multipleRegrInfoBody"
+                                                            aria-expanded="false" aria-controls="multipleRegrInfoBody">
+                                                        <i class="bi bi-info-circle mr-2"></i> How to read the plots
+                                                    </button>
+                                                </h6>
+                                            </div>
+                                            <div id="multipleRegrInfoBody" class="collapse" aria-labelledby="multipleRegrInfoHeading">
+                                                <div class="card-body small text-muted">
+                                                    <p style="font-size:0.8rem;" class="mb-1"><strong>Coefficient plot (forest plot):</strong> each predictor is shown as a point estimate (β coefficient) with a horizontal 95% confidence interval. Points to the right of the dashed zero line indicate a positive effect on Y; points to the left indicate a negative effect. If the CI does not cross zero, the predictor is statistically significant at α = 0.05. Coefficients are on the original (unstandardised) scale — their magnitude is only comparable if variables were measured on the same scale.</p>
+                                                    <p style="font-size:0.8rem;" class="mb-1"><strong>Residuals vs Fitted:</strong> plots raw residuals (observed − predicted) against the fitted values. Ideally, points are scattered randomly around the horizontal zero line with no pattern. A curved trend suggests a non-linear relationship that the model misses; a funnel shape (variance increasing with fitted values) indicates heteroscedasticity, which violates OLS assumptions.</p>
+                                                    <p style="font-size:0.8rem;" class="mb-1"><strong>Normal Q-Q:</strong> ranks the standardised residuals and plots them against the theoretical quantiles of a normal distribution. Points should fall close to the diagonal reference line. Systematic S-curves or heavy tails indicate non-normality of residuals — a potential OLS assumption violation, though the model is quite robust to mild departures with n &gt; 30.</p>
+                                                    <p style="font-size:0.8rem;" class="mb-1"><strong>Scale-Location (√|residuals| vs Fitted):</strong> the square root of the absolute standardised residuals against fitted values. A roughly horizontal smoothing line indicates homoscedasticity (constant error variance). An upward slope means variance grows with fitted values; a downward slope means the opposite.</p>
+                                                    <p style="font-size:0.8rem;" class="mb-0"><strong>Residuals vs Leverage:</strong> identifies influential observations — those that have a disproportionate effect on the fitted model. Leverage measures how far a sample's X values are from the mean of X. Cook's distance contours (dashed lines) mark thresholds; points outside these lines (typically Cook's D &gt; 0.5 or 1) are worth investigating individually. High leverage alone is not a problem — it becomes one only when combined with a large residual.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="multipleRegrStyleCard" class="accordion mb-3" style="display:none;">
+                                        <div class="card" style="border:1px solid #dee2e6;">
+                                            <div class="card-header py-2 px-3">
+                                                <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed text-left w-100 p-0 text-secondary font-weight-semibold" type="button" data-toggle="collapse" data-target="#multipleRegrStyleBody"><i class="bi bi-palette mr-2"></i> Plot Style</button></h6>
+                                            </div>
+                                            <div id="multipleRegrStyleBody" class="collapse">
+                                                <div class="card-body py-3">
+                                                    <div class="row no-gutters" style="gap:0.4rem 0;">
+                                                        <div class="col-12 mt-1">
+                                                            <label class="small text-muted mb-1 d-block">Font family</label>
+                                                            <select class="form-control form-control-sm" id="multipleRegrFontFamily">
+                                                                <option value="Arial, sans-serif" selected>Arial</option>
+                                                                <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                                                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                                                <option value="Georgia, serif">Georgia</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6 pr-sm-2 mt-1">
+                                                            <label class="small text-muted mb-1 d-block">Font size: <span id="multipleRegrFontSizeVal">13</span> pt</label>
+                                                            <input type="range" class="custom-range" id="multipleRegrFontSize" min="8" max="22" value="13">
+                                                        </div>
+                                                        <div class="col-12 mt-1">
+                                                            <label class="small text-muted mb-1 d-block">Export scale</label>
+                                                            <select class="form-control form-control-sm" id="multipleRegrExportScale" style="max-width:120px;">
+                                                                <option value="1">1× (screen)</option>
+                                                                <option value="2" selected>2× (HD)</option>
+                                                                <option value="3">3× (print)</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="multipleRegrCoefPlot" style="width:100%; min-height:350px; display:none;"></div>
+                                    <div id="multipleRegrDiagPlot" style="width:100%; min-height:520px; display:none;"></div>
+                                </div><!-- /regr-multiple-content -->
+
+                                </div><!-- /inner tab-content -->
+                            </div><!-- /p-3 -->
+                        </div><!-- /regression-content -->
+                        <!-- ═══════════════════════════════════════════════════════════ -->
+
                     </div>
                 </div>
                 <!-- Placeholder (shown initially) -->

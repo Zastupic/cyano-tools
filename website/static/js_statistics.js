@@ -1,3 +1,17 @@
+// ── Cross-row tab coordination ─────────────────────────────────────────────
+// Bootstrap only deactivates siblings within the same <ul role="tablist">.
+// This listener clears .active from every button in both rows so that
+// selecting a tab in one row always deselects the active tab in the other.
+document.addEventListener('show.bs.tab', function(e) {
+    document.querySelectorAll('#statsTabRow1 .nav-link, #statsTabRow2 .nav-link')
+        .forEach(btn => btn.classList.remove('active'));
+});
+// Bootstrap 4 uses jQuery events, not show.bs.tab — cover both:
+$(document).on('show.bs.tab', '#statsTabRow1 .nav-link, #statsTabRow2 .nav-link', function() {
+    $('#statsTabRow1 .nav-link, #statsTabRow2 .nav-link').removeClass('active');
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
 const API_URL = '/run-statistics';
 const EXPORT_URL = '/export-excel';
 const MAX_DATA_ROWS = 100;
@@ -1031,25 +1045,31 @@ function renderPlotlyBoxSwarm(containerId, plotData, variableName, factorsLabel,
     const statsByGroup = {};
     if (boxStats && boxStats.length) boxStats.forEach(s => { statsByGroup[s.group] = s; });
 
-    let boxTrace;
-    if (groupOrder.length && groupOrder.every(g => statsByGroup[g])) {
-        boxTrace = {
-            x: groupOrder.map((_, i) => i),
-            q1: groupOrder.map(g => statsByGroup[g].q1),
-            median: groupOrder.map(g => statsByGroup[g].median),
-            q3: groupOrder.map(g => statsByGroup[g].q3),
-            lowerfence: groupOrder.map(g => statsByGroup[g].lowerfence),
-            upperfence: groupOrder.map(g => statsByGroup[g].upperfence),
+    // Count per group — groups with n<3 get points only (no box)
+    const countByGroup = {};
+    groupOrder.forEach(g => { countByGroup[g] = plotData.filter(p => p.group === g).length; });
+    const boxGroups = groupOrder.filter(g => countByGroup[g] >= 3);
+
+    let boxTraces;
+    if (boxGroups.length && boxGroups.every(g => statsByGroup[g])) {
+        boxTraces = [{
+            x: boxGroups.map(g => groupIndex[g]),
+            q1: boxGroups.map(g => statsByGroup[g].q1),
+            median: boxGroups.map(g => statsByGroup[g].median),
+            q3: boxGroups.map(g => statsByGroup[g].q3),
+            lowerfence: boxGroups.map(g => statsByGroup[g].lowerfence),
+            upperfence: boxGroups.map(g => statsByGroup[g].upperfence),
             type: 'box',
             boxpoints: false,
             showlegend: false,
             line: { width: 1.5 },
             fillcolor: 'rgba(128,128,128,0.2)',
-        };
-    } else {
-        boxTrace = {
-            x: xBox,
-            y: yBox,
+        }];
+    } else if (boxGroups.length) {
+        const bpts = plotData.filter(p => boxGroups.includes(p.group));
+        boxTraces = [{
+            x: bpts.map(p => groupIndex[p.group]),
+            y: bpts.map(p => p.value),
             type: 'box',
             boxpoints: 'outliers',
             marker: { opacity: 0 },
@@ -1057,7 +1077,9 @@ function renderPlotlyBoxSwarm(containerId, plotData, variableName, factorsLabel,
             showlegend: false,
             line: { width: 1.5 },
             fillcolor: 'rgba(128,128,128,0.2)',
-        };
+        }];
+    } else {
+        boxTraces = [];
     }
 
     const scatterTrace = {
@@ -1077,6 +1099,13 @@ function renderPlotlyBoxSwarm(containerId, plotData, variableName, factorsLabel,
         showlegend: false,
     };
 
+    const annotations = groupOrder.map(g => {
+        const vals = plotData.filter(p => p.group === g).map(p => p.value);
+        const maxY = statsByGroup[g] ? Math.max(statsByGroup[g].upperfence, ...vals) : Math.max(...vals);
+        return { x: groupIndex[g], y: maxY, text: `n=${countByGroup[g]}`,
+            showarrow: false, yanchor: 'bottom', font: { size: 10, color: '#555' }, xref: 'x', yref: 'y' };
+    });
+
     const layout = {
         title: { text: `Box Plots of ${variableName}`, font: { size: 13, color: '#333' } },
         xaxis: {
@@ -1089,11 +1118,12 @@ function renderPlotlyBoxSwarm(containerId, plotData, variableName, factorsLabel,
         hovermode: 'closest',
         height: 350,
         autosize: true,
+        annotations,
     };
 
     const plotDiv = document.getElementById(containerId);
     if (!plotDiv) return;
-    Plotly.newPlot(containerId, [boxTrace, scatterTrace], layout, { responsive: true });
+    Plotly.newPlot(containerId, [...boxTraces, scatterTrace], layout, { responsive: true });
 
     // Handle Outlier Removal on Click
     plotDiv.on('plotly_click', function(data) {
@@ -1157,43 +1187,58 @@ function renderPlotlyBoxSwarmAssumptions(containerId, plotData, variableName, fa
     const statsByGroup = {};
     if (boxStats && boxStats.length) boxStats.forEach(s => { statsByGroup[s.group] = s; });
 
+    // Count per group — groups with n<3 get points only (no box)
+    const countByGroup = {};
+    groupOrder.forEach(g => { countByGroup[g] = plotData.filter(p => p.group === g).length; });
+
     let boxTraces;
     if (groupOrder.length && groupOrder.every(g => statsByGroup[g])) {
-        boxTraces = groupOrder.map((grp, gi) => {
-            const s = statsByGroup[grp];
-            const isNormal = normalityByGroup && normalityByGroup[grp];
-            const fillColor = isNormal ? 'rgba(161,217,155,0.6)' : 'rgba(247,150,158,0.6)';
-            return {
-                x: [gi],
-                q1: [s.q1],
-                median: [s.median],
-                q3: [s.q3],
-                lowerfence: [s.lowerfence],
-                upperfence: [s.upperfence],
-                type: 'box',
-                boxpoints: false,
-                showlegend: false,
-                line: { width: 1.5, color: boxLineColor },
-                fillcolor: fillColor,
-            };
-        });
+        boxTraces = groupOrder
+            .filter(grp => countByGroup[grp] >= 3)
+            .map(grp => {
+                const s = statsByGroup[grp];
+                const isNormal = normalityByGroup && normalityByGroup[grp];
+                const fillColor = isNormal ? 'rgba(161,217,155,0.6)' : 'rgba(247,150,158,0.6)';
+                return {
+                    x: [groupIndex[grp]],
+                    q1: [s.q1],
+                    median: [s.median],
+                    q3: [s.q3],
+                    lowerfence: [s.lowerfence],
+                    upperfence: [s.upperfence],
+                    type: 'box',
+                    boxpoints: false,
+                    showlegend: false,
+                    line: { width: 1.5, color: boxLineColor },
+                    fillcolor: fillColor,
+                };
+            });
     } else {
-        boxTraces = groupOrder.map((grp, gi) => {
-            const pts = plotData.filter(p => p.group === grp);
-            const isNormal = normalityByGroup && normalityByGroup[grp] === true;
-            const fillColor = isNormal ? 'rgba(161,217,155,0.6)' : 'rgba(247,150,158,0.6)';
-            return {
-                x: pts.map(() => gi),
-                y: pts.map(p => p.value),
-                type: 'box',
-                boxpoints: 'outliers',
-                quartilemethod: 'linear',
-                showlegend: false,
-                line: { width: 1.5, color: boxLineColor },
-                fillcolor: fillColor,
-            };
-        });
+        boxTraces = groupOrder
+            .filter(grp => countByGroup[grp] >= 3)
+            .map(grp => {
+                const pts = plotData.filter(p => p.group === grp);
+                const isNormal = normalityByGroup && normalityByGroup[grp] === true;
+                const fillColor = isNormal ? 'rgba(161,217,155,0.6)' : 'rgba(247,150,158,0.6)';
+                return {
+                    x: pts.map(() => groupIndex[grp]),
+                    y: pts.map(p => p.value),
+                    type: 'box',
+                    boxpoints: 'outliers',
+                    quartilemethod: 'linear',
+                    showlegend: false,
+                    line: { width: 1.5, color: boxLineColor },
+                    fillcolor: fillColor,
+                };
+            });
     }
+
+    const annotations = groupOrder.map(g => {
+        const vals = plotData.filter(p => p.group === g).map(p => p.value);
+        const maxY = statsByGroup[g] ? Math.max(statsByGroup[g].upperfence, ...vals) : Math.max(...vals);
+        return { x: groupIndex[g], y: maxY, text: `n=${countByGroup[g]}`,
+            showarrow: false, yanchor: 'bottom', font: { size: 10, color: '#555' }, xref: 'x', yref: 'y' };
+    });
 
     const scatterTrace = {
         x: xScatter,
@@ -1215,6 +1260,7 @@ function renderPlotlyBoxSwarmAssumptions(containerId, plotData, variableName, fa
         hovermode: 'closest',
         autosize: true,
         height: 320,
+        annotations,
     };
 
     const plotDiv = document.getElementById(containerId);
@@ -1792,6 +1838,21 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
         labelSel.innerHTML = '<option value="">(None — use row index)</option>';
         result.all_columns.forEach(c => labelSel.innerHTML += `<option value="${c}">${c}</option>`);
 
+        const oplsYSel = document.getElementById('oplsYCol');
+        oplsYSel.innerHTML = '<option value="">— Select column —</option>';
+        result.all_columns.forEach(c => oplsYSel.innerHTML += `<option value="${c}">${c}</option>`);
+
+        const plsYSel = document.getElementById('plsYCol');
+        plsYSel.innerHTML = '<option value="">— Select column —</option>';
+        result.all_columns.forEach(c => plsYSel.innerHTML += `<option value="${c}">${c}</option>`);
+
+        // Regression selectors: initial population with all columns (overwritten after main analysis runs)
+        ['regrYCol','regrSimpleXCol'].forEach(id => {
+            const sel = document.getElementById(id);
+            sel.innerHTML = `<option value="">— Select column —</option>`;
+            result.all_columns.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+        });
+
         const container = document.getElementById('checkboxContainer');
         container.innerHTML = "";
         result.variables.forEach(v => {
@@ -1858,7 +1919,30 @@ document.getElementById('clearDataBtn').addEventListener('click', function() {
     if (pcaPlotClear) { Plotly.purge(pcaPlotClear); pcaPlotClear.style.display = 'none'; }
     const pcaStyleClear = document.getElementById('pcaStyleCard');
     if (pcaStyleClear) pcaStyleClear.style.display = 'none';
+    const pcaCompRowClear = document.getElementById('pcaCompRow');
+    if (pcaCompRowClear) pcaCompRowClear.style.display = 'none';
     document.getElementById('pcaLabelCol').innerHTML = '<option value="">(None — use row index)</option>';
+    document.getElementById('oplsYCol').innerHTML = '<option value="">— Select column —</option>';
+    ['regrYCol','regrSimpleXCol'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '<option value="">— Select column —</option>';
+    });
+    lastOplsResult = null;
+    lastSimpleRegrResult = null; lastMultipleRegrResult = null;
+    ['oplsStatusMsg','oplsMetrics','oplsStyleCard','oplsDownloadRow','downloadOplsBtn'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.style.display='none';
+    });
+    ['oplsScorePlot','oplsSplot','oplsVipPlot'].forEach(id=>{
+        const el=document.getElementById(id); if(el){Plotly.purge(el);el.style.display='none';}
+    });
+    lastPlsResult = null;
+    ['plsStatusMsg','plsMetrics','plsStyleCard','plsDownloadRow','downloadPlsBtn'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.style.display='none';
+    });
+    ['plsScorePlot','plsWeightsPlot','plsVipPlot'].forEach(id=>{
+        const el=document.getElementById(id); if(el){Plotly.purge(el);el.style.display='none';}
+    });
+    document.getElementById('plsYCol').innerHTML = '<option value="">— Select column —</option>';
     const assumptionsBoxPlots = document.getElementById('assumptionsBoxPlots');
     if (assumptionsBoxPlots) assumptionsBoxPlots.innerHTML = '<p class="text-muted small">Run Normality &amp; Variance Tests to generate plots.</p>';
     const assumptionsResidualsContent = document.getElementById('assumptionsResidualsContent');
@@ -1951,8 +2035,18 @@ document.getElementById('updateAnalysisBtn').addEventListener('click', function(
     if (pcaPlotDiv) { Plotly.purge(pcaPlotDiv); pcaPlotDiv.style.display = 'none'; }
     const pcaStyleCard = document.getElementById('pcaStyleCard');
     if (pcaStyleCard) pcaStyleCard.style.display = 'none';
+    const pcaCompRow = document.getElementById('pcaCompRow');
+    if (pcaCompRow) pcaCompRow.style.display = 'none';
     lastPCAResults = null;
     // ────────────────────────────────────────────────────────────────────────
+
+    // Restrict regression dropdowns to the user-selected variables
+    ['regrYCol','regrSimpleXCol'].forEach(id => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = `<option value="">— Select column —</option>`;
+        selectedVars.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+    });
+    populateRegrXList('multipleRegrXList', '', selectedVars);
 
     document.getElementById('resultsArea').style.display = 'block';
     document.getElementById('placeholderText').style.display = 'none';
@@ -1996,6 +2090,7 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
         if (result.error) throw new Error(result.error);
         lastResults = result;
 
+        // Restrict regression Y + X dropdowns to the user-selected variables
         // Show header with download button
         const dlBtn = document.getElementById('downloadExcelBtn');
         const vizHeader = document.getElementById('vizResultsHeader');
@@ -2186,6 +2281,8 @@ function pcaReadOptions() {
         titleFontSize:  parseInt(document.getElementById('pcaTitleFontSize').value),
         tickFontSize:   parseInt(document.getElementById('pcaTickFontSize').value),
         legendFontSize: parseInt(document.getElementById('pcaLegendFontSize').value),
+        xComp:          parseInt(document.getElementById('pcaXComp')?.value || '1'),
+        yComp:          parseInt(document.getElementById('pcaYComp')?.value || '2'),
     };
 }
 
@@ -2194,16 +2291,28 @@ function renderPCAPlot(result, opts) {
     const plotDiv = document.getElementById('pcaPlot');
     plotDiv.style.display = 'block';
 
+    const xC = opts.xComp || 1;   // 1-based PC index for X axis
+    const yC = opts.yComp || 2;   // 1-based PC index for Y axis
+    const xKey = `PC${xC}`;
+    const yKey = `PC${yC}`;
+    const xLoadKey = `PC${xC}_Loading`;
+    const yLoadKey = `PC${yC}_Loading`;
+
     const scores  = result.scores || [];
-    const groups  = [...new Set(scores.map(r => r.group))].sort();
+    // Preserve order of first appearance in data (= original row order from Excel)
+    const _seenG = new Set();
+    const groups = scores.reduce((acc, r) => {
+        if (!_seenG.has(r.group)) { _seenG.add(r.group); acc.push(r.group); }
+        return acc;
+    }, []);
     const colors  = PCA_PALETTES[opts.palette] || PCA_PALETTES.nipy_spectral;
-    const ev      = result.explained_variance || [0, 0];
+    const ev      = result.explained_variance || [];
     const traces  = [];
 
     groups.forEach((grp, gi) => {
         const pts   = scores.filter(r => r.group === grp);
-        const xs    = pts.map(r => r.PC1);
-        const ys    = pts.map(r => r.PC2);
+        const xs    = pts.map(r => r[xKey]);
+        const ys    = pts.map(r => r[yKey]);
         const color = colors[gi % colors.length];
         const sym   = opts.varySymbol ? PCA_SYMBOLS[gi % PCA_SYMBOLS.length] : opts.symbol;
 
@@ -2236,7 +2345,7 @@ function renderPCAPlot(result, opts) {
             text: labels,
             textposition: 'top center',
             textfont: { family: opts.fontFamily, size: opts.tickFontSize - 1, color: '#333' },
-            customdata: pts.map((_, i) => `${grp}<br>${labels[i]}<br>PC1: ${xs[i].toFixed(3)}<br>PC2: ${ys[i].toFixed(3)}`),
+            customdata: pts.map((_, i) => `${grp}<br>${labels[i]}<br>${xKey}: ${(xs[i]||0).toFixed(3)}<br>${yKey}: ${(ys[i]||0).toFixed(3)}`),
             hovertemplate: '%{customdata}<extra></extra>',
         });
     });
@@ -2246,27 +2355,29 @@ function renderPCAPlot(result, opts) {
     const arrowX = [], arrowY = [], arrowText = [];
     if (opts.showLoadings && result.loadings) {
         result.loadings.forEach(l => {
+            const lx = l[xLoadKey], ly = l[yLoadKey];
+            if (lx == null || ly == null) return;
             annotations.push({
-                x: l.PC1_Loading, y: l.PC2_Loading,
+                x: lx, y: ly,
                 ax: 0, ay: 0, xref: 'x', yref: 'y', axref: 'x', ayref: 'y',
                 showarrow: true, arrowhead: 3, arrowsize: 1.2,
                 arrowwidth: 1.8, arrowcolor: '#2d3436',
             });
             annotations.push({
-                x: l.PC1_Loading * 1.18, y: l.PC2_Loading * 1.18,
+                x: lx * 1.18, y: ly * 1.18,
                 text: `<b>${l.Variable}</b>`,
                 showarrow: false, xref: 'x', yref: 'y',
                 font: { color: '#d63031', size: 11 },
                 bgcolor: 'rgba(255,255,255,0.75)', borderpad: 2,
             });
-            arrowX.push(l.PC1_Loading);
-            arrowY.push(l.PC2_Loading);
+            arrowX.push(lx);
+            arrowY.push(ly);
             arrowText.push(l.Variable);
         });
         traces.push({
             x: arrowX, y: arrowY, text: arrowText,
             mode: 'markers', marker: { opacity: 0, size: 8 },
-            hovertemplate: '<b>%{text}</b><br>PC1 loading: %{x:.3f}<br>PC2 loading: %{y:.3f}<extra></extra>',
+            hovertemplate: `<b>%{text}</b><br>${xKey} loading: %{x:.3f}<br>${yKey} loading: %{y:.3f}<extra></extra>`,
             showlegend: false, name: 'Loadings',
         });
     }
@@ -2276,7 +2387,9 @@ function renderPCAPlot(result, opts) {
     const allX = [], allY = [];
     traces.forEach(tr => { allX.push(...(tr.x || [])); allY.push(...(tr.y || [])); });
     if (opts.showLoadings && result.loadings) {
-        result.loadings.forEach(l => { allX.push(l.PC1_Loading * 1.25); allY.push(l.PC2_Loading * 1.25); });
+        result.loadings.forEach(l => {
+            if (l[xLoadKey] != null) { allX.push(l[xLoadKey] * 1.25); allY.push(l[yLoadKey] * 1.25); }
+        });
     }
     const pad = (arr, frac = 0.12) => {
         const mn = Math.min(...arr), mx = Math.max(...arr);
@@ -2298,10 +2411,12 @@ function renderPCAPlot(result, opts) {
     const axisFont   = { family: opts.fontFamily, size: opts.tickFontSize };
     const titleFont  = { family: opts.fontFamily, size: opts.titleFontSize };
     const borderLine = opts.showBorder ? { showline: true, mirror: true, linecolor: '#888', linewidth: 1 } : { showline: false, mirror: false };
+    const evX = ev[xC - 1] != null ? ` (${(ev[xC - 1] * 100).toFixed(1)}%)` : '';
+    const evY = ev[yC - 1] != null ? ` (${(ev[yC - 1] * 100).toFixed(1)}%)` : '';
 
     const layout = {
         xaxis: {
-            title: { text: `PC1 (${(ev[0]*100).toFixed(1)}%)`, font: titleFont },
+            title: { text: `${xKey}${evX}`, font: titleFont },
             tickfont: axisFont,
             range: xRangeFinal,
             zeroline: true, zerolinewidth: 1, zerolinecolor: '#aaa',
@@ -2309,7 +2424,7 @@ function renderPCAPlot(result, opts) {
             ...borderLine,
         },
         yaxis: {
-            title: { text: `PC2 (${(ev[1]*100).toFixed(1)}%)`, font: titleFont },
+            title: { text: `${yKey}${evY}`, font: titleFont },
             tickfont: axisFont,
             range: yRangeFinal,
             zeroline: true, zerolinewidth: 1, zerolinecolor: '#aaa',
@@ -2340,6 +2455,12 @@ function renderPCAPlot(result, opts) {
     .forEach(id => document.getElementById(id).addEventListener('change', () => {
         if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
     }));
+
+['pcaXComp', 'pcaYComp'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+        if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
+    });
+});
 
 document.getElementById('pcaPointSize').addEventListener('input', function() {
     document.getElementById('pcaPointSizeVal').textContent = this.value;
@@ -2444,6 +2565,22 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
         pcaHeader.style.display = 'flex';
         document.getElementById('pcaStyleCard').style.display = 'block';
 
+        // Populate and show axis selectors
+        const nComp = result.n_components || result.explained_variance.length;
+        const xSel = document.getElementById('pcaXComp');
+        const ySel = document.getElementById('pcaYComp');
+        [xSel, ySel].forEach(sel => {
+            sel.innerHTML = '';
+            for (let k = 1; k <= nComp; k++) {
+                const o = document.createElement('option');
+                o.value = k; o.textContent = `PC${k}`;
+                sel.appendChild(o);
+            }
+        });
+        xSel.value = '1';
+        ySel.value = nComp >= 2 ? '2' : '1';
+        document.getElementById('pcaCompRow').style.display = nComp >= 2 ? 'flex' : 'none';
+
         const totalRows = result.n_input_rows || (globalData || []).length;
         const nVarsUsed = (result.vars_used   || selectedVars).length;
         const nVarsExcl = (result.vars_excluded || []).length;
@@ -2457,12 +2594,13 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
         const missingNote = strategyNotes.length > 0
             ? `<br><span class="text-warning">${strategyNotes.join('; ')}</span>` : '';
 
+        const evLines = result.explained_variance.map((v, i) =>
+            `<br>PC${i + 1} explains ${(v * 100).toFixed(1)}% of variance.`).join('');
         pcaResults.innerHTML = `
             <div class="alert alert-success py-2 small shadow-sm text-left mb-2">
                 <strong>PCA Success:</strong> ${result.n_samples} of ${totalRows} samples analyzed
                     (${nVarsUsed} variables, ${selectedFactors.length} factors).${missingNote}
-                <br>PC1 explains ${(result.explained_variance[0] * 100).toFixed(1)}% of variance.
-                <br>PC2 explains ${(result.explained_variance[1] * 100).toFixed(1)}% of variance.
+                ${evLines}
             </div>`;
 
         renderPCAPlot(result, pcaReadOptions());
@@ -2506,6 +2644,42 @@ document.getElementById('downloadPCAExcelBtn').addEventListener('click', functio
         window.URL.revokeObjectURL(url); document.body.removeChild(a);
     })
     .catch(err => alert("Export Error: " + err.message));
+});
+
+// Download PCA plot for publication (PNG with DPI metadata, or SVG)
+document.getElementById('downloadPCAPlotBtn').addEventListener('click', async function() {
+    if (!lastPCAResults) return;
+    const plotDiv = document.getElementById('pcaPlot');
+    const fmt     = document.getElementById('pcaExportFormat').value;
+    const dpi     = parseInt(document.getElementById('pcaExportDPI').value) || 300;
+    const w       = plotDiv.clientWidth  || 800;
+    const h       = plotDiv.clientHeight || 600;
+    const scale   = Math.max(dpi / 96, 1);
+
+    const baseName = (document.getElementById('pcaPlotFilename').value.trim() || 'PCA_plot')
+        .replace(/\.[^.]+$/, '');   // strip any extension the user may have typed
+
+    try {
+        const dataUrl = await Plotly.toImage(plotDiv, { format: fmt, width: w, height: h, scale });
+        const a = document.createElement('a');
+        if (fmt === 'svg') {
+            let svgText;
+            if (dataUrl.startsWith('data:image/svg+xml;base64,')) {
+                svgText = atob(dataUrl.replace('data:image/svg+xml;base64,', ''));
+            } else {
+                svgText = decodeURIComponent(dataUrl.replace(/^data:image\/svg\+xml,/, ''));
+            }
+            a.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
+            a.download = baseName + '.svg';
+        } else {
+            let b64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+            b64 = injectPngDpi(b64, dpi);
+            a.href = 'data:image/png;base64,' + b64;
+            a.download = baseName + '.png';
+        }
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+    } catch(e) { alert('Export error: ' + e.message); }
 });
 
 // Test assumptions
@@ -4294,3 +4468,2133 @@ document.getElementById('exportPubPlotsBtn').addEventListener('click', async fun
 
 // Initialise publication plot settings UI on page load
 initPubPlotSettingsUI();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CORRELATION ANALYSIS
+// ═══════════════════════════════════════════════════════════════════════════
+
+let lastCorrResults = null;
+let corrAbortController = null;
+
+// ── Plotly colorscale map ─────────────────────────────────────────────────
+const CORR_COLORSCALES = {
+    RdBu:    [[0,'#2166ac'],[0.25,'#92c5de'],[0.5,'#f7f7f7'],[0.75,'#f4a582'],[1,'#b2182b']],
+    RdYlBu:  [[0,'#313695'],[0.25,'#74add1'],[0.5,'#ffffbf'],[0.75,'#f46d43'],[1,'#a50026']],
+    coolwarm:[[0,'#3b4cc0'],[0.5,'#dddddd'],[1,'#b40426']],
+    viridis: 'Viridis',
+    plasma:  'Plasma',
+    Greens:  'Greens',
+};
+
+// ── Read heatmap style options ────────────────────────────────────────────
+function corrHeatmapReadOptions() {
+    return {
+        colorScheme:    document.getElementById('corrColorScheme').value,
+        triangle:       document.getElementById('corrTriangle').value,
+        cluster:        document.getElementById('corrCluster').checked,
+        showDendrogram: document.getElementById('corrShowDendrogram').checked,
+        cellSize:       parseInt(document.getElementById('corrCellSize').value) || 40,
+        showValues:     document.getElementById('corrShowValues').checked,
+        showStars:      document.getElementById('corrShowStars').checked,
+        heatGridLines:  document.getElementById('corrHeatGridLines').checked,
+        dendGridLines:  document.getElementById('corrDendGridLines').checked,
+        maskInsig:      document.getElementById('corrMaskInsig').checked,
+        pThresh:        parseFloat(document.getElementById('corrPThresh').value),
+        maskStyle:      document.getElementById('corrMaskStyle').value,
+        fontFamily:     document.getElementById('corrFontFamily').value,
+        axisFontSize:   parseInt(document.getElementById('corrAxisFontSize').value),
+        cellFontSize:   parseInt(document.getElementById('corrCellFontSize').value),
+    };
+}
+
+// ── Read scatter matrix style options ─────────────────────────────────────
+function corrScatterReadOptions() {
+    return {
+        pointSize:  parseInt(document.getElementById('corrScatterPointSize').value),
+        opacity:    parseInt(document.getElementById('corrScatterOpacity').value) / 100,
+        color:      document.getElementById('corrScatterColor').value,
+        fontFamily: document.getElementById('corrScatterFont').value,
+        labelSize:  parseInt(document.getElementById('corrScatterLabelSize').value),
+        rSize:      parseInt(document.getElementById('corrScatterRSize').value),
+    };
+}
+
+// ── Render heatmap ────────────────────────────────────────────────────────
+function renderCorrHeatmap(result, opts) {
+    const plotDiv = document.getElementById('corrHeatmapPlot');
+    const dendDiv = document.getElementById('corrDendrogramPlot');
+    const vars    = result.variables;
+    const n       = vars.length;
+
+    // Always hide the separate dendrogram div (combined into one figure now)
+    if (dendDiv._fullLayout) Plotly.purge(dendDiv);
+    dendDiv.style.display = 'none';
+
+    // Determine display order
+    const order = (opts.cluster && result.hclust_order && result.hclust_order.length === n)
+        ? result.hclust_order
+        : vars.map((_, i) => i);
+
+    const orderedVars = order.map(i => vars[i]);
+
+    // Build z and text grids in ordered space
+    const z        = [];
+    const textGrid = [];
+
+    for (let ri = 0; ri < n; ri++) {
+        const rowIdx = order[ri];
+        const zRow   = [];
+        const tRow   = [];
+        for (let ci = 0; ci < n; ci++) {
+            const colIdx = order[ci];
+            const rVal = result.corr_matrix[rowIdx][colIdx];
+            const pVal = result.pval_matrix[rowIdx][colIdx];
+
+            if (opts.triangle === 'upper' && ri > ci) { zRow.push(null); tRow.push(''); continue; }
+            if (opts.triangle === 'lower' && ri < ci) { zRow.push(null); tRow.push(''); continue; }
+
+            if (opts.maskInsig && pVal !== null && pVal >= opts.pThresh && ri !== ci) {
+                if (opts.maskStyle === 'blank') { zRow.push(null); tRow.push(''); continue; }
+            }
+
+            zRow.push(rVal !== null ? rVal : null);
+
+            if (ri === ci) {
+                tRow.push('');
+            } else if (rVal === null || (!opts.showValues && !opts.showStars)) {
+                tRow.push('');
+            } else {
+                let txt = opts.showValues ? rVal.toFixed(2) : '';
+                if (opts.showStars && pVal !== null) {
+                    const stars = pVal < 0.001 ? '***' : pVal < 0.01 ? '**' : pVal < 0.05 ? '*' : '';
+                    if (stars) txt = txt ? txt + '<br>' + stars : stars;
+                }
+                if (opts.maskInsig && pVal !== null && pVal >= opts.pThresh && opts.maskStyle === 'cross') {
+                    txt = '✕';
+                }
+                tRow.push(txt);
+            }
+        }
+        z.push(zRow);
+        textGrid.push(tRow);
+    }
+
+    const colorscale = CORR_COLORSCALES[opts.colorScheme] || CORR_COLORSCALES.RdBu;
+    const titleText  = `${result.method.charAt(0).toUpperCase() + result.method.slice(1)} Correlation Matrix`;
+    const useCombined = opts.showDendrogram && opts.cluster && result.hclust_dendrogram;
+
+    // Show/clear clustering warning
+    let clusterWarnEl = document.getElementById('corrClusterWarn');
+    if (opts.showDendrogram && !result.hclust_dendrogram && result.hclust_error) {
+        if (!clusterWarnEl) {
+            clusterWarnEl = document.createElement('div');
+            clusterWarnEl.id = 'corrClusterWarn';
+            clusterWarnEl.className = 'alert alert-warning py-2 small mt-2';
+            plotDiv.parentNode.insertBefore(clusterWarnEl, plotDiv);
+        }
+        clusterWarnEl.innerHTML =
+            '<strong>Dendrogram could not be computed.</strong> ' +
+            result.hclust_error +
+            ' Please check that all selected variables are numeric and not constant.';
+        clusterWarnEl.style.display = '';
+    } else if (clusterWarnEl) {
+        clusterWarnEl.style.display = 'none';
+    }
+
+    const margin      = { l: 120, r: 60, t: 40, b: 120 };
+    const COLORBAR_PX = 80; // colorbar + gap
+
+    // Use the user-specified cell size directly.
+    // Both width and height are set from it so cells are exactly square.
+    // The div's own width/height are also set so the background matches.
+    const cellSizePx = opts.cellSize;
+    const heatPx     = n * cellSizePx;
+    const figW       = margin.l + heatPx + margin.r + COLORBAR_PX;
+
+    plotDiv.style.display = 'block';
+    plotDiv.style.width   = figW + 'px';
+    document.getElementById('corrHeatmapPlaceholder').style.display = 'none';
+
+    if (useCombined) {
+        // ── Combined dendrogram + heatmap in one Plotly figure ────────────────
+        const dend = result.hclust_dendrogram;
+
+        const normIcoord = dend.icoord.map(arr => arr.map(v => v / 10 - 0.5));
+        const dendTraces = buildDendrogramTraces(normIcoord, dend.dcoord, dend.color_list, 'top');
+        // Dendrogram on yaxis2 (top); heatmap on yaxis (bottom). No gap — they share the boundary.
+        // Dendrogram leaves (distance=0) sit at the bottom of yaxis2, touching the heatmap top edge.
+        dendTraces.forEach(t => { t.xaxis = 'x'; t.yaxis = 'y2'; });
+
+        const heatX      = orderedVars.map((_, i) => i);
+        const customdata = z.map((row) => row.map((_, ci) => orderedVars[ci]));
+        const heatFrac = 0.76;
+        const dendFrac = 1.0 - heatFrac;   // 0.24 — no gap
+        const heatTrace  = {
+            type: 'heatmap',
+            z, x: heatX, y: orderedVars, customdata,
+            zmin: -1, zmax: 1, colorscale,
+            text: textGrid, texttemplate: '%{text}',
+            textfont: { family: opts.fontFamily, size: opts.cellFontSize, color: '#111' },
+            hovertemplate: 'r = %{z:.3f}<extra>%{y} vs %{customdata}</extra>',
+            showscale: true,
+            colorbar: {
+                title: { text: 'r', font: { family: opts.fontFamily, size: opts.axisFontSize } },
+                tickfont: { family: opts.fontFamily, size: opts.axisFontSize - 1 },
+                thickness: 14,
+                len: heatFrac * 0.9,
+                y: heatFrac / 2,      // middle of heatmap in paper coords
+                yanchor: 'middle',
+            },
+            xaxis: 'x', yaxis: 'y',
+        };
+
+        const dendPx      = Math.round(heatPx * dendFrac / heatFrac);
+        const totalHeight = heatPx + dendPx + margin.t + margin.b;
+        plotDiv.style.height = totalHeight + 'px';
+
+        const layout = {
+            width: figW, height: totalHeight,
+            xaxis: {
+                range: [-0.5, n - 0.5],
+                tickvals: heatX, ticktext: orderedVars,
+                tickfont: { family: opts.fontFamily, size: opts.axisFontSize },
+                tickangle: -45,
+                showgrid: opts.heatGridLines, gridcolor: '#ccc', zeroline: false,
+                // Anchors to yaxis (heatmap) by default → tick labels at bottom
+            },
+            yaxis: {
+                domain: [0, heatFrac],     // heatmap: bottom portion
+                tickfont: { family: opts.fontFamily, size: opts.axisFontSize },
+                autorange: 'reversed',
+                showgrid: opts.heatGridLines, gridcolor: '#ccc',
+            },
+            yaxis2: {
+                domain: [heatFrac, 1.0],   // dendrogram: top portion, no gap
+                tickfont: { family: opts.fontFamily, size: opts.axisFontSize - 2 },
+                showgrid: opts.dendGridLines, gridcolor: '#eee', zeroline: false,
+                title: { text: 'Distance', font: { family: opts.fontFamily, size: opts.axisFontSize - 1 } },
+            },
+            margin,
+            plot_bgcolor: '#fff', paper_bgcolor: '#fff', showlegend: false,
+            title: { text: titleText, font: { family: opts.fontFamily, size: opts.axisFontSize + 2 } },
+        };
+
+        Plotly.react(plotDiv, [...dendTraces, heatTrace], layout, {
+            responsive: false, displayModeBar: true,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'], displaylogo: false,
+        });
+    } else {
+        // ── Standalone heatmap ────────────────────────────────────────────────
+        const totalHeight = margin.t + heatPx + margin.b;
+        plotDiv.style.height = totalHeight + 'px';
+
+        const trace = {
+            type: 'heatmap',
+            z, x: orderedVars, y: orderedVars,
+            zmin: -1, zmax: 1, colorscale,
+            text: textGrid, texttemplate: '%{text}',
+            textfont: { family: opts.fontFamily, size: opts.cellFontSize, color: '#111' },
+            hovertemplate: 'r = %{z:.3f}<extra>%{y} vs %{x}</extra>',
+            showscale: true,
+            colorbar: {
+                title: { text: 'r', font: { family: opts.fontFamily, size: opts.axisFontSize } },
+                tickfont: { family: opts.fontFamily, size: opts.axisFontSize - 1 },
+                thickness: 14, len: 0.8,
+            },
+        };
+
+        const layout = {
+            width: figW, height: totalHeight,
+            xaxis: {
+                tickfont: { family: opts.fontFamily, size: opts.axisFontSize },
+                tickangle: -45, side: 'bottom',
+                showgrid: opts.heatGridLines, gridcolor: '#ccc',
+            },
+            yaxis: {
+                tickfont: { family: opts.fontFamily, size: opts.axisFontSize },
+                autorange: 'reversed',
+                showgrid: opts.heatGridLines, gridcolor: '#ccc',
+            },
+            margin,
+            plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+            title: { text: titleText, font: { family: opts.fontFamily, size: opts.axisFontSize + 2 } },
+        };
+
+        Plotly.react(plotDiv, [trace], layout, {
+            responsive: false, displayModeBar: true,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'], displaylogo: false,
+        });
+    }
+}
+
+// ── Render scatter matrix ─────────────────────────────────────────────────
+function renderCorrScatter(result, opts) {
+    const plotDiv = document.getElementById('corrScatterPlot');
+    const vars    = result.variables;
+    const n       = vars.length;
+
+    if (n > 15) {
+        plotDiv.style.display = 'block';
+        document.getElementById('corrScatterPlaceholder').style.display = 'none';
+        plotDiv.innerHTML = '<p class="text-muted small p-3">Scatter matrix is limited to 15 variables for readability. Please select fewer variables.</p>';
+        return;
+    }
+
+    // Dynamic height: each cell ~100 px, minimum 480
+    const cellPx   = Math.max(70, Math.min(110, 700 / n));
+    const plotSize = Math.round(n * cellPx + 80);
+    plotDiv.style.height = plotSize + 'px';
+
+    // Collect raw data per variable from the original globalData
+    const rawData = {};
+    vars.forEach(v => {
+        rawData[v] = (globalData || []).map(row => {
+            const val = parseFloat(row[v]);
+            return isNaN(val) ? null : val;
+        }).filter(x => x !== null);
+    });
+
+    const traces = [];
+    const annotations = [];
+
+    // Cell size in normalized domain
+    const cellW = 1 / n;
+    const cellH = 1 / n;
+    const pad   = 0.02;
+
+    for (let row = 0; row < n; row++) {
+        for (let col = 0; col < n; col++) {
+            const xDom = [col * cellW + pad, (col + 1) * cellW - pad];
+            const yDom = [1 - (row + 1) * cellH + pad, 1 - row * cellH - pad];
+            const xref = col === 0 ? 'x' : `x${col + 1}`;
+            const yref = row === 0 ? 'y' : `y${row + 1}`;
+            const axisIdxX = col + 1;
+            const axisIdxY = row * n + col + 1;
+
+            if (row === col) {
+                // Diagonal: histogram of variable
+                const vals = rawData[vars[row]];
+                traces.push({
+                    type: 'histogram',
+                    x: vals,
+                    xaxis: `x${axisIdxY}`,
+                    yaxis: `y${axisIdxY}`,
+                    marker: { color: 'rgba(100,149,237,0.6)', line: { color: '#4472C4', width: 0.5 } },
+                    showlegend: false,
+                    hoverinfo: 'skip',
+                    name: vars[row],
+                });
+            } else if (row < col) {
+                // Upper triangle: r value + stars
+                const rVal = result.corr_matrix[row][col];
+                const pVal = result.pval_matrix[row][col];
+                if (rVal !== null) {
+                    const absR = Math.abs(rVal);
+                    const fontSize = opts.rSize * (0.5 + 0.5 * absR);
+                    let stars = '';
+                    if (pVal !== null) {
+                        if (pVal < 0.001) stars = ' ***';
+                        else if (pVal < 0.01) stars = ' **';
+                        else if (pVal < 0.05) stars = ' *';
+                    }
+                    const rColor = rVal >= 0 ? '#b2182b' : '#2166ac';
+                    annotations.push({
+                        x: (xDom[0] + xDom[1]) / 2,
+                        y: (yDom[0] + yDom[1]) / 2,
+                        xref: 'paper', yref: 'paper',
+                        text: `<b>${rVal.toFixed(2)}</b><span style="color:#e41a1c">${stars}</span>`,
+                        showarrow: false,
+                        font: { family: opts.fontFamily, size: fontSize, color: rColor },
+                        align: 'center',
+                    });
+                }
+                // Invisible scatter for the axis to exist
+                traces.push({
+                    type: 'scatter', mode: 'markers',
+                    x: [0], y: [0],
+                    xaxis: `x${axisIdxY}`,
+                    yaxis: `y${axisIdxY}`,
+                    marker: { opacity: 0, size: 1 },
+                    showlegend: false, hoverinfo: 'skip',
+                });
+            } else {
+                // Lower triangle: scatter plot (WebGL + subsampled for large datasets)
+                const xv = vars[col];
+                const yv = vars[row];
+                let pts = (globalData || []).map(r => ({
+                    x: parseFloat(r[xv]), y: parseFloat(r[yv])
+                })).filter(p => !isNaN(p.x) && !isNaN(p.y));
+                // Subsample to max 600 points for performance
+                const MAX_PTS = 600;
+                if (pts.length > MAX_PTS) {
+                    const ratio = MAX_PTS / pts.length;
+                    pts = pts.filter(() => Math.random() < ratio);
+                }
+                traces.push({
+                    type: 'scattergl', mode: 'markers',
+                    x: pts.map(p => p.x),
+                    y: pts.map(p => p.y),
+                    xaxis: `x${axisIdxY}`,
+                    yaxis: `y${axisIdxY}`,
+                    marker: { size: opts.pointSize, color: opts.color, opacity: opts.opacity },
+                    showlegend: false,
+                    hovertemplate: `${xv}: %{x}<br>${yv}: %{y}<extra></extra>`,
+                });
+            }
+        }
+    }
+
+    // Build layout with grid of subplots
+    const layout = {
+        grid: { rows: n, columns: n, pattern: 'independent' },
+        annotations,
+        plot_bgcolor: '#fff',
+        paper_bgcolor: '#fff',
+        margin: { l: 60, r: 20, t: 40, b: 60 },
+        height: plotSize,
+        autosize: true,
+        title: {
+            text: `Scatter Matrix (${result.method})`,
+            font: { family: opts.fontFamily, size: opts.labelSize + 1 },
+        },
+        showlegend: false,
+    };
+
+    // Add axis labels along diagonal edges
+    vars.forEach((v, i) => {
+        const cellCenter = (i + 0.5) / n;
+        // Top labels (column names) via annotation
+        annotations.push({
+            x: cellCenter, y: 1.01,
+            xref: 'paper', yref: 'paper',
+            text: `<b>${v}</b>`,
+            showarrow: false, xanchor: 'center', yanchor: 'bottom',
+            font: { family: opts.fontFamily, size: opts.labelSize, color: '#333' },
+        });
+        // Right labels (row names)
+        annotations.push({
+            x: 1.01, y: 1 - cellCenter,
+            xref: 'paper', yref: 'paper',
+            text: `<b>${v}</b>`,
+            showarrow: false, xanchor: 'left', yanchor: 'middle', textangle: -90,
+            font: { family: opts.fontFamily, size: opts.labelSize, color: '#333' },
+        });
+    });
+
+    // Suppress all individual axis labels/ticks
+    for (let i = 1; i <= n * n; i++) {
+        const xKey = i === 1 ? 'xaxis' : `xaxis${i}`;
+        const yKey = i === 1 ? 'yaxis' : `yaxis${i}`;
+        layout[xKey] = { showticklabels: false, showgrid: false, zeroline: false };
+        layout[yKey] = { showticklabels: false, showgrid: false, zeroline: false };
+    }
+
+    plotDiv.style.display = 'block';
+    document.getElementById('corrScatterPlaceholder').style.display = 'none';
+    Plotly.react(plotDiv, traces, layout, {
+        responsive: true, displayModeBar: true,
+        modeBarButtonsToRemove: ['select2d','lasso2d'], displaylogo: false,
+    });
+}
+
+// ── Run Correlation button ────────────────────────────────────────────────
+document.getElementById('runCorrBtn').addEventListener('click', function () {
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled)
+        .map(cb => cb.value);
+
+    if (selectedVars.length < 2) {
+        return alert('Correlation requires at least 2 variables. Please select variables in the Data Input panel.');
+    }
+
+    const method = document.querySelector('.corr-method-btn.active')?.dataset.method || 'pearson';
+
+    const spinner    = document.getElementById('corrSpinner');
+    const statusMsg  = document.getElementById('corrStatusMsg');
+    const heatStyle  = document.getElementById('corrHeatmapStyleCard');
+    const scatStyle  = document.getElementById('corrScatterStyleCard');
+    const dlHeat     = document.getElementById('corrDownloadHeatmapBtn');
+    const dlScat     = document.getElementById('corrDownloadScatterBtn');
+    const header     = document.getElementById('corrResultsHeader');
+
+    statusMsg.innerHTML = '';
+    spinner.style.display = 'block';
+    document.getElementById('stopCorrBtn').style.display = 'inline-block';
+    header.style.display = 'none';
+
+    if (corrAbortController) corrAbortController.abort();
+    corrAbortController = new AbortController();
+
+    fetch('/run-correlation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            data: globalData,
+            variables: selectedVars,
+            method,
+        }),
+        signal: corrAbortController.signal,
+    })
+    .then(res => res.json())
+    .then(result => {
+        spinner.style.display = 'none';
+        document.getElementById('stopCorrBtn').style.display = 'none';
+        if (result.error) throw new Error(result.error);
+
+        lastCorrResults = result;
+        header.style.display = 'flex';
+
+        // Show success message
+        statusMsg.innerHTML = `
+            <div class="alert alert-success py-2 small shadow-sm mb-3">
+                <strong>Correlation complete:</strong>
+                ${result.variables.length} variables &times; ${result.variables.length} —
+                method: <strong>${result.method.charAt(0).toUpperCase() + result.method.slice(1)}</strong>.
+            </div>`;
+
+        // Show sub-tabs and content panel
+        document.getElementById('corrSubTabs').style.display = '';
+        document.getElementById('corrSubTabContent').style.display = '';
+
+        // Show style cards and download buttons
+        heatStyle.style.display = 'block';
+        scatStyle.style.display = 'block';
+        dlHeat.style.display    = 'inline-block';
+        dlScat.style.display    = 'inline-block';
+
+        // Auto-size cell size, axis labels, and cell text based on container width and n
+        const _heatDiv  = document.getElementById('corrHeatmapPlot');
+        const _n        = result.variables.length;
+        // Use parent container width — the plot div may already be shrunken from a prior render
+        const _contW    = (_heatDiv.parentElement || _heatDiv).offsetWidth || 700;
+        const _avail    = Math.max(_n, _contW - 120 - 60 - 80);
+        const _cellSize = Math.max(1, Math.floor(_avail / _n));
+        document.getElementById('corrCellSize').value     = _cellSize;
+        document.getElementById('corrAxisFontSize').value = Math.max(6, Math.min(14, Math.floor(_cellSize * 0.6)));
+        document.getElementById('corrCellFontSize').value = Math.max(5, Math.min(12, Math.floor(_cellSize * 0.45)));
+
+        renderCorrHeatmap(result, corrHeatmapReadOptions());
+        renderCorrScatter(result, corrScatterReadOptions());
+    })
+    .catch(err => {
+        if (err.name === 'AbortError') return;
+        spinner.style.display = 'none';
+        document.getElementById('stopCorrBtn').style.display = 'none';
+        statusMsg.innerHTML = `<div class="alert alert-danger py-2 small">${err.message}</div>`;
+    });
+});
+
+// ── Stop button ───────────────────────────────────────────────────────────
+document.getElementById('stopCorrBtn').addEventListener('click', function () {
+    if (corrAbortController) { corrAbortController.abort(); corrAbortController = null; }
+    document.getElementById('corrSpinner').style.display = 'none';
+    this.style.display = 'none';
+});
+
+// ── Method toggle ─────────────────────────────────────────────────────────
+document.querySelectorAll('.corr-method-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        document.querySelectorAll('.corr-method-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+// ── Reset heatmap style to defaults ──────────────────────────────────────
+document.getElementById('corrResetStyleBtn').addEventListener('click', function () {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+
+    set('corrColorScheme',  'RdBu');
+    set('corrTriangle',     'full');
+    chk('corrCluster',      true);
+    chk('corrShowDendrogram', false);
+    chk('corrShowValues',   false);
+    chk('corrShowStars',    true);
+    chk('corrHeatGridLines', false);
+    chk('corrDendGridLines', true);
+    chk('corrMaskInsig',    false);
+    set('corrPThresh',      '0.05');
+    set('corrMaskStyle',    'blank');
+    set('corrFontFamily',   'Arial');
+
+    // Re-derive cell/font sizes from data if available, otherwise use static defaults
+    if (lastCorrResults) {
+        const _n       = lastCorrResults.variables.length;
+        const _heatDiv = document.getElementById('corrHeatmapPlot');
+        // Use the parent container width — the plot div itself may already be shrunken
+        const _contW   = (_heatDiv.parentElement || _heatDiv).offsetWidth || 700;
+        const _avail   = Math.max(_n, _contW - 120 - 60 - 80);
+        const _cell    = Math.max(1, Math.floor(_avail / _n * 0.75));
+        set('corrCellSize',     _cell);
+        set('corrAxisFontSize', Math.max(6, Math.min(14, Math.floor(_cell * 0.6))));
+        set('corrCellFontSize', Math.max(5, Math.min(12, Math.floor(_cell * 0.45))));
+        renderCorrHeatmap(lastCorrResults, corrHeatmapReadOptions());
+    } else {
+        set('corrCellSize',     '40');
+        set('corrAxisFontSize', '12');
+        set('corrCellFontSize', '10');
+    }
+
+    // Re-enable dendrogram toggle in case it was disabled
+    const dendEl = document.getElementById('corrShowDendrogram');
+    if (dendEl) dendEl.disabled = false;
+});
+
+// ── Live re-render on heatmap style changes ───────────────────────────────
+['corrColorScheme','corrTriangle','corrCluster','corrShowDendrogram','corrCellSize',
+ 'corrShowValues','corrShowStars','corrHeatGridLines','corrDendGridLines',
+ 'corrMaskInsig','corrPThresh','corrMaskStyle',
+ 'corrFontFamily','corrAxisFontSize','corrCellFontSize'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => {
+        if (lastCorrResults) renderCorrHeatmap(lastCorrResults, corrHeatmapReadOptions());
+    });
+    el.addEventListener('input', () => {
+        if (lastCorrResults) renderCorrHeatmap(lastCorrResults, corrHeatmapReadOptions());
+    });
+});
+// Disable dendrogram toggle when clustering is off
+document.getElementById('corrCluster').addEventListener('change', function () {
+    const dendEl = document.getElementById('corrShowDendrogram');
+    if (!this.checked) { dendEl.checked = false; dendEl.disabled = true; }
+    else { dendEl.disabled = false; }
+});
+
+// ── Live re-render on scatter style changes ───────────────────────────────
+['corrScatterPointSize','corrScatterOpacity','corrScatterColor',
+ 'corrScatterFont','corrScatterLabelSize','corrScatterRSize'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => {
+        if (lastCorrResults) renderCorrScatter(lastCorrResults, corrScatterReadOptions());
+    });
+    el.addEventListener('input', function () {
+        if (id === 'corrScatterOpacity') {
+            document.getElementById('corrScatterOpacityVal').textContent = this.value + '%';
+        }
+        if (lastCorrResults) renderCorrScatter(lastCorrResults, corrScatterReadOptions());
+    });
+});
+
+// ── Download individual plots ─────────────────────────────────────────────
+document.getElementById('corrDownloadHeatmapBtn').addEventListener('click', function () {
+    const plotDiv = document.getElementById('corrHeatmapPlot');
+    const fmt   = document.getElementById('corrExportFormat').value;
+    const scale = parseInt(document.getElementById('corrExportScale').value);
+    Plotly.downloadImage(plotDiv, {
+        format: fmt, filename: 'Correlation_Heatmap', scale,
+        width: plotDiv.offsetWidth || 800, height: plotDiv.offsetHeight || 700,
+    });
+});
+
+document.getElementById('corrDownloadScatterBtn').addEventListener('click', function () {
+    const plotDiv = document.getElementById('corrScatterPlot');
+    const fmt   = document.getElementById('corrExportFormat').value;
+    const scale = parseInt(document.getElementById('corrExportScale').value);
+    Plotly.downloadImage(plotDiv, {
+        format: fmt, filename: 'Correlation_ScatterMatrix', scale,
+        width: plotDiv.offsetWidth || 900, height: plotDiv.offsetHeight || 900,
+    });
+});
+
+// ── Export Excel ──────────────────────────────────────────────────────────
+document.getElementById('downloadCorrExcelBtn').addEventListener('click', async function () {
+    if (!lastCorrResults) return;
+
+    const btn     = this;
+    const spinner = document.getElementById('corrExportSpinner');
+    btn.disabled  = true;
+    if (spinner) spinner.style.display = 'inline-flex';
+
+    try {
+        const heatDiv   = document.getElementById('corrHeatmapPlot');
+        const scatDiv   = document.getElementById('corrScatterPlot');
+        const scale     = parseInt(document.getElementById('corrExportScale').value);
+
+        let heatmapImg = null, scatterImg = null;
+        try {
+            const url = await Plotly.toImage(heatDiv,
+                { format: 'png', scale, width: heatDiv.offsetWidth || 800, height: heatDiv.offsetHeight || 700 });
+            heatmapImg = url.split(',')[1];
+        } catch(e) { /* heatmap not rendered */ }
+
+        try {
+            const url = await Plotly.toImage(scatDiv,
+                { format: 'png', scale, width: scatDiv.offsetWidth || 900, height: scatDiv.offsetHeight || 900 });
+            scatterImg = url.split(',')[1];
+        } catch(e) { /* scatter not rendered */ }
+
+        const res = await fetch('/export-correlation-excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                variables:   lastCorrResults.variables,
+                method:      lastCorrResults.method,
+                corr_matrix: lastCorrResults.corr_matrix,
+                pval_matrix: lastCorrResults.pval_matrix,
+                n_pairs:     lastCorrResults.n_pairs,
+                heatmap_img: heatmapImg,
+                scatter_img: scatterImg,
+            }),
+        });
+        if (!res.ok) throw new Error('Export failed');
+        const blob = await res.blob();
+        const url  = window.URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = 'Correlation_Analysis.xlsx';
+        document.body.appendChild(a); a.click();
+        window.URL.revokeObjectURL(url); document.body.removeChild(a);
+    } catch(err) {
+        alert('Export Error: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CLUSTERING ANALYSIS
+// ═══════════════════════════════════════════════════════════════════════════
+
+let lastHierResult   = null;
+let lastKmeansResult = null;
+let lastDbscanResult = null;
+let clusterAbortController = null;
+
+const CLUSTER_PALETTES = PCA_PALETTES;
+
+// ── Dendrogram: scipy icoord/dcoord → Plotly line traces ─────────────────
+function buildDendrogramTraces(icoord, dcoord, colorList, orientation) {
+    const groups = {};
+    icoord.forEach((ix, k) => {
+        const col = colorList[k] || 'black';
+        if (!groups[col]) groups[col] = { x: [], y: [] };
+        for (let p = 0; p < 4; p++) {
+            if (orientation === 'top') {
+                groups[col].x.push(ix[p]); groups[col].y.push(dcoord[k][p]);
+            } else {
+                groups[col].x.push(dcoord[k][p]); groups[col].y.push(ix[p]);
+            }
+        }
+        groups[col].x.push(null); groups[col].y.push(null);
+    });
+    return Object.entries(groups).map(([col, pts]) => ({
+        type: 'scatter', mode: 'lines',
+        x: pts.x, y: pts.y,
+        line: { color: col, width: 1.5 },
+        showlegend: false, hoverinfo: 'skip',
+    }));
+}
+
+function hierReadOpts() {
+    return { colorScheme: document.getElementById('hierHeatColorScheme').value,
+             fontFamily:  document.getElementById('hierFontFamily').value,
+             fontSize:    parseInt(document.getElementById('hierFontSize').value) };
+}
+
+function renderHierDendrogram(result, opts) {
+    const div    = document.getElementById('hierDendPlot');
+    const dend   = result.dendrogram;
+    const traces = buildDendrogramTraces(dend.icoord, dend.dcoord, dend.color_list, 'top');
+    const tickVals = dend.ivl.map((_, i) => (2 * i + 1) * 5);
+    const layout = {
+        xaxis: { tickvals: tickVals, ticktext: dend.ivl,
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 tickangle: -45, showgrid: false, zeroline: false },
+        yaxis: { title: { text: 'Distance', font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 showgrid: true, gridcolor: '#eee', zeroline: false },
+        title: { text: `Dendrogram (${result.linkage_method} / ${result.metric})`,
+                 font: { family: opts.fontFamily, size: opts.fontSize + 1 } },
+        margin: { l: 60, r: 20, t: 50, b: 110 },
+        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
+    };
+    div.style.display = 'block';
+    Plotly.react(div, traces, layout, { responsive: true, displayModeBar: true, displaylogo: false,
+        modeBarButtonsToRemove: ['select2d','lasso2d'] });
+}
+
+const HIER_COLORSCALES = {
+    'RdBu_r':   [[0,'#b2182b'],[0.25,'#f4a582'],[0.5,'#f7f7f7'],[0.75,'#92c5de'],[1,'#2166ac']],
+    'RdYlBu_r': [[0,'#a50026'],[0.25,'#f46d43'],[0.5,'#ffffbf'],[0.75,'#74add1'],[1,'#313695']],
+    'viridis': 'Viridis', 'plasma': 'Plasma', 'YlOrRd': 'YlOrRd',
+};
+
+function renderHierHeatmap(result, opts) {
+    const div  = document.getElementById('hierHeatPlot');
+    const hm   = result.heatmap;
+    const cs   = HIER_COLORSCALES[opts.colorScheme] || HIER_COLORSCALES['RdBu_r'];
+    const rowLabelsAnnotated = hm.row_labels.map((lbl, i) => {
+        const cl = (result.cluster_at_order || [])[i];
+        return cl ? `C${cl} | ${lbl}` : lbl;
+    });
+    const trace = {
+        type: 'heatmap', z: hm.z, x: hm.col_labels, y: rowLabelsAnnotated,
+        zmin: hm.z_min, zmax: hm.z_max, colorscale: cs,
+        hovertemplate: '%{y} × %{x}: %{z:.2f}<extra></extra>',
+        colorbar: { title: { text: 'Z-score', font: { family: opts.fontFamily, size: opts.fontSize } },
+                    tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 }, thickness: 14 },
+    };
+    const layout = {
+        xaxis: { tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 }, tickangle: -45 },
+        yaxis: { tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 }, autorange: 'reversed' },
+        title: { text: 'Clustered Heatmap (Z-scored)', font: { family: opts.fontFamily, size: opts.fontSize + 1 } },
+        margin: { l: 160, r: 60, t: 50, b: 120 },
+        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
+    };
+    div.style.display = 'block';
+    Plotly.react(div, [trace], layout, { responsive: true, displayModeBar: true, displaylogo: false,
+        modeBarButtonsToRemove: ['select2d','lasso2d'] });
+}
+
+function renderClusterScatter(result, plotDivId, opts) {
+    const div     = document.getElementById(plotDivId);
+    const pts     = result.pca_coords;
+    const pv      = result.pca_variance || [0,0];
+    const clusters = [...new Set(pts.map(p => p.cluster))].sort((a,b) => {
+        if (a===-1) return 1; if (b===-1) return -1; return a-b;
+    });
+    const colors = CLUSTER_PALETTES[opts.palette] || CLUSTER_PALETTES.tab10;
+    const traces = clusters.map((cl, gi) => {
+        const ptsCl  = pts.filter(p => p.cluster === cl);
+        const isNoise = cl === -1;
+        const color  = isNoise ? '#aaaaaa' : colors[gi % colors.length];
+        const name   = isNoise ? 'Noise' : `Cluster ${cl + 1}`;
+        return {
+            type: 'scatter', mode: 'markers', name,
+            x: ptsCl.map(p => p.x), y: ptsCl.map(p => p.y),
+            marker: { symbol: PCA_SYMBOLS[gi % PCA_SYMBOLS.length],
+                      size: opts.pointSize, color, opacity: opts.opacity,
+                      line: { color: 'white', width: 0.5 } },
+            customdata: ptsCl.map(p => `${name}<br>${p.label}${p.group ? '<br>Group: '+p.group : ''}`),
+            hovertemplate: '%{customdata}<br>PC1: %{x:.3f}<br>PC2: %{y:.3f}<extra></extra>',
+        };
+    });
+    const titleText = result.method === 'kmeans'
+        ? `K-Means (k=${result.k}${result.silhouette!==null ? ', sil='+result.silhouette.toFixed(3) : ''})`
+        : `DBSCAN ε=${result.eps}, min_samples=${result.min_samples} — ${result.n_clusters} cluster(s), ${result.n_noise} noise`;
+    const layout = {
+        title: { text: titleText, font: { family: opts.fontFamily, size: opts.fontSize + 1 } },
+        xaxis: { title: { text: `PC1 (${(pv[0]*100).toFixed(1)}%)`, font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize-1 },
+                 zeroline: true, zerolinecolor: '#ccc', showgrid: true, gridcolor: '#eee' },
+        yaxis: { title: { text: `PC2 (${(pv[1]*100).toFixed(1)}%)`, font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize-1 },
+                 zeroline: true, zerolinecolor: '#ccc', showgrid: true, gridcolor: '#eee' },
+        legend: { font: { family: opts.fontFamily, size: opts.fontSize-1 } },
+        margin: { l: 60, r: 30, t: 60, b: 60 },
+        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
+    };
+    div.style.display = 'block';
+    Plotly.react(div, traces, layout, { responsive: true, displayModeBar: true, displaylogo: false,
+        modeBarButtonsToRemove: ['select2d','lasso2d'] });
+}
+
+function renderKmeansElbow(elbow, fontFamily, fontSize) {
+    const div = document.getElementById('kmeansElbowPlot');
+    const ks  = elbow.map(e => e.k);
+    const layout = {
+        title: { text: 'Elbow Plot — choose k', font: { family: fontFamily, size: fontSize+1 } },
+        xaxis: { title: { text: 'k', font: { family: fontFamily, size: fontSize } },
+                 tickfont: { family: fontFamily, size: fontSize-1 }, tickmode: 'linear', dtick: 1 },
+        yaxis: { title: { text: 'Inertia (WCSS)', font: { family: fontFamily, size: fontSize, color: '#2166ac' } },
+                 tickfont: { family: fontFamily, size: fontSize-1, color: '#2166ac' },
+                 showgrid: true, gridcolor: '#eee' },
+        yaxis2: { title: { text: 'Silhouette', font: { family: fontFamily, size: fontSize, color: '#e31a1c' } },
+                  tickfont: { family: fontFamily, size: fontSize-1, color: '#e31a1c' },
+                  overlaying: 'y', side: 'right', showgrid: false },
+        legend: { font: { family: fontFamily, size: fontSize-1 } },
+        margin: { l: 70, r: 70, t: 50, b: 60 },
+        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
+    };
+    div.style.display = 'block';
+    Plotly.react(div, [
+        { type:'scatter', mode:'lines+markers', name:'Inertia', yaxis:'y',
+          x: ks, y: elbow.map(e=>e.inertia),
+          line:{color:'#2166ac',width:2}, marker:{size:7,color:'#2166ac'},
+          hovertemplate:'k=%{x}<br>Inertia=%{y:.1f}<extra></extra>' },
+        { type:'scatter', mode:'lines+markers', name:'Silhouette', yaxis:'y2',
+          x: ks, y: elbow.map(e=>e.silhouette),
+          line:{color:'#e31a1c',width:2,dash:'dot'}, marker:{size:7,color:'#e31a1c'},
+          hovertemplate:'k=%{x}<br>Silhouette=%{y:.3f}<extra></extra>' },
+    ], layout, { responsive:true, displayModeBar:true, displaylogo:false,
+        modeBarButtonsToRemove:['select2d','lasso2d'] });
+}
+
+function renderDbscanKdist(kdist, kdistK, fontFamily, fontSize) {
+    const div = document.getElementById('dbscanKdistPlot');
+    const layout = {
+        title: { text: `${kdistK}-NN Distance (sorted) — choose ε at the elbow`,
+                 font: { family: fontFamily, size: fontSize+1 } },
+        xaxis: { title: { text: 'Points (sorted descending)', font: { family: fontFamily, size: fontSize } },
+                 tickfont: { family: fontFamily, size: fontSize-1 } },
+        yaxis: { title: { text: `${kdistK}-NN Distance`, font: { family: fontFamily, size: fontSize } },
+                 tickfont: { family: fontFamily, size: fontSize-1 },
+                 showgrid: true, gridcolor: '#eee' },
+        margin: { l: 70, r: 20, t: 60, b: 60 },
+        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
+    };
+    div.style.display = 'block';
+    Plotly.react(div, [
+        { type:'scatter', mode:'lines', name:`${kdistK}-NN distance`,
+          x: kdist.map((_,i)=>i+1), y: kdist,
+          line:{color:'#2166ac',width:1.5},
+          hovertemplate:'Point %{x}<br>Distance: %{y:.4f}<extra></extra>' },
+    ], layout, { responsive:true, displayModeBar:true, displaylogo:false,
+        modeBarButtonsToRemove:['select2d','lasso2d'] });
+}
+
+function clusterGetVars() {
+    return Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb=>!cb.disabled).map(cb=>cb.value);
+}
+function clusterGetStd() { return document.getElementById('clusterStandardize').checked; }
+
+function clusterFetch(payload, onSuccess, spinnerEl, stopBtnEl, statusEl) {
+    if (clusterAbortController) clusterAbortController.abort();
+    clusterAbortController = new AbortController();
+    spinnerEl.style.display = 'block';
+    if (stopBtnEl) stopBtnEl.style.display = 'inline-block';
+    statusEl.innerHTML = '';
+    fetch('/run-clustering', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, data: globalData, factors: selectedFactors }),
+        signal: clusterAbortController.signal,
+    })
+    .then(r => r.json())
+    .then(result => {
+        spinnerEl.style.display = 'none';
+        if (stopBtnEl) stopBtnEl.style.display = 'none';
+        if (result.error) throw new Error(result.error);
+        onSuccess(result);
+    })
+    .catch(err => {
+        spinnerEl.style.display = 'none';
+        if (stopBtnEl) stopBtnEl.style.display = 'none';
+        if (err.name === 'AbortError') return;
+        statusEl.innerHTML = `<div class="alert alert-danger py-2 small">${err.message}</div>`;
+    });
+}
+
+async function clusterExport(method, rowLabels, clusterLabels, variables, plotDivId, plot2DivId) {
+    const scaleId = method==='hierarchical' ? 'hierExportScale'
+                  : method==='kmeans'        ? 'kmeansExportScale' : 'dbscanExportScale';
+    const scale = parseInt(document.getElementById(scaleId).value);
+    let plotImg=null, plot2Img=null;
+    try { const d1=document.getElementById(plotDivId);
+          const u1=await Plotly.toImage(d1,{format:'png',scale,width:d1.offsetWidth||900,height:d1.offsetHeight||500});
+          plotImg=u1.split(',')[1]; } catch(e){}
+    if (plot2DivId) {
+        try { const d2=document.getElementById(plot2DivId);
+              if (d2.style.display!=='none') {
+                  const u2=await Plotly.toImage(d2,{format:'png',scale,width:d2.offsetWidth||700,height:d2.offsetHeight||350});
+                  plot2Img=u2.split(',')[1]; } } catch(e){} }
+    const res = await fetch('/export-clustering-excel', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({method, row_labels:rowLabels, cluster_labels:clusterLabels,
+            variables, plot_img:plotImg, plot2_img:plot2Img}),
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob=await res.blob(); const url=window.URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='Clustering_Analysis.xlsx';
+    document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); document.body.removeChild(a);
+}
+
+// ── Hierarchical ──────────────────────────────────────────────────────────
+document.getElementById('hierLinkage').addEventListener('change', function () {
+    const noteEl=document.getElementById('hierMetricNote'), metricEl=document.getElementById('hierMetric');
+    if (this.value==='ward') { noteEl.style.display='block'; metricEl.value='euclidean'; metricEl.disabled=true; }
+    else { noteEl.style.display='none'; metricEl.disabled=false; }
+});
+
+document.getElementById('runHierBtn').addEventListener('click', function () {
+    const vars = clusterGetVars();
+    if (vars.length < 2) return alert('Select at least 2 variables in the Data Input panel.');
+    const spinner=document.getElementById('hierSpinner'), stopBtn=document.getElementById('stopHierBtn');
+    const statusMsg=document.getElementById('hierStatusMsg');
+    document.getElementById('hierPlaceholder').style.display='none';
+    document.getElementById('downloadHierBtn').style.display='none';
+    clusterFetch({
+        variables:vars, standardize:clusterGetStd(), method:'hierarchical',
+        linkage_method: document.getElementById('hierLinkage').value,
+        metric:         document.getElementById('hierMetric').value,
+        n_clusters:     parseInt(document.getElementById('hierNClusters').value)||0,
+    }, result => {
+        lastHierResult=result;
+        document.getElementById('downloadHierBtn').style.display='inline-block';
+        document.getElementById('hierStyleCard').style.display='block';
+        document.getElementById('hierDownloadDendBtn').style.display='inline-block';
+        document.getElementById('hierDownloadHeatBtn').style.display='inline-block';
+        statusMsg.innerHTML=`<div class="alert alert-success py-2 small shadow-sm mb-3">
+            Hierarchical clustering complete: ${result.n_samples} samples,
+            linkage: <strong>${result.linkage_method}</strong>,
+            metric: <strong>${result.metric}</strong>,
+            ${result.n_detected_clusters} cluster(s).</div>`;
+        const opts=hierReadOpts();
+        renderHierDendrogram(result,opts); renderHierHeatmap(result,opts);
+    }, spinner, stopBtn, statusMsg);
+});
+document.getElementById('stopHierBtn').addEventListener('click', function () {
+    if (clusterAbortController) clusterAbortController.abort();
+    document.getElementById('hierSpinner').style.display='none'; this.style.display='none';
+});
+document.getElementById('downloadHierBtn').addEventListener('click', async function () {
+    if (!lastHierResult) return; this.disabled=true;
+    try { await clusterExport('hierarchical', lastHierResult.row_labels,
+            lastHierResult.cluster_labels, lastHierResult.variables, 'hierHeatPlot','hierDendPlot');
+    } catch(e){alert('Export error: '+e.message);} finally{this.disabled=false;}
+});
+['hierHeatColorScheme','hierFontFamily','hierFontSize'].forEach(id =>
+    ['change','input'].forEach(ev => document.getElementById(id).addEventListener(ev, ()=>{
+        if (lastHierResult){const o=hierReadOpts(); renderHierDendrogram(lastHierResult,o); renderHierHeatmap(lastHierResult,o);}
+    })));
+document.getElementById('hierDownloadDendBtn').addEventListener('click', ()=>{
+    const div=document.getElementById('hierDendPlot');
+    Plotly.downloadImage(div,{format:document.getElementById('hierExportFormat').value,
+        filename:'Dendrogram',scale:parseInt(document.getElementById('hierExportScale').value),
+        width:div.offsetWidth||900,height:div.offsetHeight||400});});
+document.getElementById('hierDownloadHeatBtn').addEventListener('click', ()=>{
+    const div=document.getElementById('hierHeatPlot');
+    Plotly.downloadImage(div,{format:document.getElementById('hierExportFormat').value,
+        filename:'Clustered_Heatmap',scale:parseInt(document.getElementById('hierExportScale').value),
+        width:div.offsetWidth||900,height:div.offsetHeight||600});});
+
+// ── K-Means ───────────────────────────────────────────────────────────────
+function kmeansReadOpts() {
+    return { palette:document.getElementById('kmeansPalette').value,
+             pointSize:parseInt(document.getElementById('kmeansPointSize').value),
+             opacity:parseInt(document.getElementById('kmeansOpacity').value)/100,
+             fontFamily:document.getElementById('kmeansFontFamily').value,
+             fontSize:parseInt(document.getElementById('kmeansFontSize').value) }; }
+
+document.getElementById('runKmeansElbowBtn').addEventListener('click', function () {
+    const vars=clusterGetVars();
+    if (vars.length<2) return alert('Select at least 2 variables in the Data Input panel.');
+    document.getElementById('kmeansPlaceholder').style.display='none';
+    clusterFetch({ variables:vars, standardize:clusterGetStd(), method:'kmeans', compute_elbow:true,
+        k:parseInt(document.getElementById('kmeansK').value)||3,
+        max_k:parseInt(document.getElementById('kmeansMaxK').value)||10,
+    }, result=>{
+        lastKmeansResult=result;
+        document.getElementById('kmeansStyleCard').style.display='block';
+        document.getElementById('kmeansDownloadElbowBtn').style.display='inline-block';
+        document.getElementById('kmeansStatusMsg').innerHTML=
+            `<div class="alert alert-success py-2 small shadow-sm mb-2">Elbow computed for k=2…${result.elbow.length+1}.</div>`;
+        const opts=kmeansReadOpts();
+        if (result.elbow&&result.elbow.length) renderKmeansElbow(result.elbow,opts.fontFamily,opts.fontSize);
+        if (result.pca_coords&&result.pca_coords.length){
+            renderClusterScatter(result,'kmeansScatterPlot',opts);
+            document.getElementById('kmeansDownloadScatterBtn').style.display='inline-block';
+            document.getElementById('downloadKmeansBtn').style.display='inline-block';
+        }
+    }, document.getElementById('kmeansSpinner'), document.getElementById('stopKmeansBtn'),
+       document.getElementById('kmeansStatusMsg'));
+});
+
+document.getElementById('runKmeansBtn').addEventListener('click', function () {
+    const vars=clusterGetVars();
+    if (vars.length<2) return alert('Select at least 2 variables in the Data Input panel.');
+    const k=parseInt(document.getElementById('kmeansK').value)||3;
+    document.getElementById('kmeansPlaceholder').style.display='none';
+    clusterFetch({ variables:vars, standardize:clusterGetStd(), method:'kmeans',
+        compute_elbow:false, k,
+    }, result=>{
+        lastKmeansResult=result; const sil=result.silhouette!==null?result.silhouette.toFixed(3):'n/a';
+        document.getElementById('kmeansStyleCard').style.display='block';
+        document.getElementById('kmeansDownloadScatterBtn').style.display='inline-block';
+        document.getElementById('downloadKmeansBtn').style.display='inline-block';
+        document.getElementById('kmeansStatusMsg').innerHTML=
+            `<div class="alert alert-success py-2 small shadow-sm mb-2">K-Means: k=${result.k}, silhouette=${sil}, inertia=${result.inertia.toFixed(1)}.</div>`;
+        renderClusterScatter(result,'kmeansScatterPlot',kmeansReadOpts());
+    }, document.getElementById('kmeansSpinner'), document.getElementById('stopKmeansBtn'),
+       document.getElementById('kmeansStatusMsg'));
+});
+document.getElementById('stopKmeansBtn').addEventListener('click', function () {
+    if (clusterAbortController) clusterAbortController.abort();
+    document.getElementById('kmeansSpinner').style.display='none'; this.style.display='none';
+});
+document.getElementById('downloadKmeansBtn').addEventListener('click', async function () {
+    if (!lastKmeansResult) return; this.disabled=true;
+    try { const hasElbow=lastKmeansResult.elbow&&lastKmeansResult.elbow.length;
+          await clusterExport('kmeans', lastKmeansResult.pca_coords.map(p=>p.label),
+            lastKmeansResult.labels.map(l=>l+1), clusterGetVars(),
+            'kmeansScatterPlot', hasElbow?'kmeansElbowPlot':null);
+    } catch(e){alert('Export error: '+e.message);} finally{this.disabled=false;}
+});
+['kmeansPalette','kmeansPointSize','kmeansOpacity','kmeansFontFamily','kmeansFontSize'].forEach(id=>{
+    const el=document.getElementById(id);
+    ['change','input'].forEach(ev=>el.addEventListener(ev,function(){
+        if (id==='kmeansOpacity') document.getElementById('kmeansOpacityVal').textContent=this.value+'%';
+        if (lastKmeansResult) renderClusterScatter(lastKmeansResult,'kmeansScatterPlot',kmeansReadOpts());
+    }));});
+document.getElementById('kmeansDownloadScatterBtn').addEventListener('click',()=>{
+    const div=document.getElementById('kmeansScatterPlot');
+    Plotly.downloadImage(div,{format:'png',filename:'KMeans_Scatter',
+        scale:parseInt(document.getElementById('kmeansExportScale').value),
+        width:div.offsetWidth||800,height:div.offsetHeight||600});});
+document.getElementById('kmeansDownloadElbowBtn').addEventListener('click',()=>{
+    const div=document.getElementById('kmeansElbowPlot');
+    Plotly.downloadImage(div,{format:'png',filename:'KMeans_Elbow',
+        scale:parseInt(document.getElementById('kmeansExportScale').value),
+        width:div.offsetWidth||700,height:div.offsetHeight||400});});
+
+// ── DBSCAN ────────────────────────────────────────────────────────────────
+function dbscanReadOpts() {
+    return { palette:document.getElementById('dbscanPalette').value,
+             pointSize:parseInt(document.getElementById('dbscanPointSize').value),
+             opacity:parseInt(document.getElementById('dbscanOpacity').value)/100,
+             fontFamily:document.getElementById('dbscanFontFamily').value,
+             fontSize:parseInt(document.getElementById('dbscanFontSize').value) }; }
+
+document.getElementById('runDbscanKdistBtn').addEventListener('click', function () {
+    const vars=clusterGetVars();
+    if (vars.length<2) return alert('Select at least 2 variables in the Data Input panel.');
+    document.getElementById('dbscanPlaceholder').style.display='none';
+    clusterFetch({ variables:vars, standardize:clusterGetStd(), method:'dbscan', compute_kdist:true,
+        eps:parseFloat(document.getElementById('dbscanEps').value)||0.5,
+        min_samples:parseInt(document.getElementById('dbscanMinSamples').value)||5,
+        kdist_k:parseInt(document.getElementById('dbscanKdistK').value)||4,
+    }, result=>{
+        lastDbscanResult=result;
+        document.getElementById('dbscanStyleCard').style.display='block';
+        document.getElementById('dbscanDownloadKdistBtn').style.display='inline-block';
+        document.getElementById('dbscanStatusMsg').innerHTML=
+            `<div class="alert alert-success py-2 small shadow-sm mb-2">K-Distance ready. Find the elbow to choose ε.</div>`;
+        const opts=dbscanReadOpts();
+        if (result.kdist&&result.kdist.length) renderDbscanKdist(result.kdist,result.kdist_k,opts.fontFamily,opts.fontSize);
+        if (result.n_clusters!==undefined){
+            renderClusterScatter(result,'dbscanScatterPlot',opts);
+            document.getElementById('dbscanDownloadScatterBtn').style.display='inline-block';
+            document.getElementById('downloadDbscanBtn').style.display='inline-block';
+        }
+    }, document.getElementById('dbscanSpinner'), document.getElementById('stopDbscanBtn'),
+       document.getElementById('dbscanStatusMsg'));
+});
+
+document.getElementById('runDbscanBtn').addEventListener('click', function () {
+    const vars=clusterGetVars();
+    if (vars.length<2) return alert('Select at least 2 variables in the Data Input panel.');
+    const eps=parseFloat(document.getElementById('dbscanEps').value)||0.5;
+    const min_samples=parseInt(document.getElementById('dbscanMinSamples').value)||5;
+    document.getElementById('dbscanPlaceholder').style.display='none';
+    clusterFetch({ variables:vars, standardize:clusterGetStd(), method:'dbscan',
+        compute_kdist:false, eps, min_samples,
+    }, result=>{
+        lastDbscanResult=result;
+        document.getElementById('dbscanStyleCard').style.display='block';
+        document.getElementById('dbscanDownloadScatterBtn').style.display='inline-block';
+        document.getElementById('downloadDbscanBtn').style.display='inline-block';
+        document.getElementById('dbscanStatusMsg').innerHTML=
+            `<div class="alert alert-success py-2 small shadow-sm mb-2">
+                DBSCAN: ${result.n_clusters} cluster(s), ${result.n_noise} noise — ε=${result.eps}, min_samples=${result.min_samples}.</div>`;
+        renderClusterScatter(result,'dbscanScatterPlot',dbscanReadOpts());
+    }, document.getElementById('dbscanSpinner'), document.getElementById('stopDbscanBtn'),
+       document.getElementById('dbscanStatusMsg'));
+});
+document.getElementById('stopDbscanBtn').addEventListener('click', function () {
+    if (clusterAbortController) clusterAbortController.abort();
+    document.getElementById('dbscanSpinner').style.display='none'; this.style.display='none';
+});
+document.getElementById('downloadDbscanBtn').addEventListener('click', async function () {
+    if (!lastDbscanResult) return; this.disabled=true;
+    try { const labels=lastDbscanResult.labels.map(l=>l===-1?-1:l+1);
+          const hasKdist=lastDbscanResult.kdist&&lastDbscanResult.kdist.length;
+          await clusterExport('dbscan', lastDbscanResult.pca_coords.map(p=>p.label),
+            labels, clusterGetVars(), 'dbscanScatterPlot', hasKdist?'dbscanKdistPlot':null);
+    } catch(e){alert('Export error: '+e.message);} finally{this.disabled=false;}
+});
+['dbscanPalette','dbscanPointSize','dbscanOpacity','dbscanFontFamily','dbscanFontSize'].forEach(id=>{
+    const el=document.getElementById(id);
+    ['change','input'].forEach(ev=>el.addEventListener(ev,function(){
+        if (id==='dbscanOpacity') document.getElementById('dbscanOpacityVal').textContent=this.value+'%';
+        if (lastDbscanResult) renderClusterScatter(lastDbscanResult,'dbscanScatterPlot',dbscanReadOpts());
+    }));});
+document.getElementById('dbscanDownloadScatterBtn').addEventListener('click',()=>{
+    const div=document.getElementById('dbscanScatterPlot');
+    Plotly.downloadImage(div,{format:'png',filename:'DBSCAN_Scatter',
+        scale:parseInt(document.getElementById('dbscanExportScale').value),
+        width:div.offsetWidth||800,height:div.offsetHeight||600});});
+document.getElementById('dbscanDownloadKdistBtn').addEventListener('click',()=>{
+    const div=document.getElementById('dbscanKdistPlot');
+    Plotly.downloadImage(div,{format:'png',filename:'DBSCAN_KDistance',
+        scale:parseInt(document.getElementById('dbscanExportScale').value),
+        width:div.offsetWidth||700,height:div.offsetHeight||350});});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 8. OPLS / OPLS-DA Analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let lastOplsResult = null;
+let oplsAbortController = null;
+let lastPlsResult = null;
+let plsAbortController = null;
+
+function oplsReadOpts() {
+    return {
+        palette:    document.querySelector('.opls-palette-btn.active')?.dataset.palette || 'tab10',
+        pointSize:  parseInt(document.getElementById('oplsPointSize').value) || 10,
+        opacity:    parseInt(document.getElementById('oplsOpacity').value) / 100,
+        fontFamily: document.getElementById('oplsFontFamily').value,
+        fontSize:   parseInt(document.getElementById('oplsFontSize').value) || 13,
+    };
+}
+
+function oplsGetMethod() {
+    return document.querySelector('.opls-method-btn.active')?.dataset.method || 'opls-da';
+}
+
+// ── Score plot: T (predictive) vs T_ortho (orthogonal) ───────────────────────
+function renderOplsScores(result, opts) {
+    const div = document.getElementById('oplsScorePlot');
+    div.style.display = 'block';
+    const colors = PCA_PALETTES[opts.palette] || PCA_PALETTES.tab10;
+    const groups = [...new Set(result.scores.map(s => s.group))];
+    const traces = groups.map((g, gi) => {
+        const pts = result.scores.filter(s => s.group === g);
+        return {
+            type: 'scatter', mode: 'markers+text',
+            name: g,
+            x: pts.map(p => p.T), y: pts.map(p => p.T_ortho),
+            text: pts.map(p => p.label), textposition: 'top center',
+            textfont: { size: opts.fontSize * 0.72, family: opts.fontFamily },
+            marker: {
+                color: colors[gi % colors.length], size: opts.pointSize,
+                opacity: opts.opacity, line: { width: 0.5, color: 'white' }
+            },
+            hovertemplate: '<b>%{text}</b><br>T: %{x:.3f}<br>T_orth: %{y:.3f}<extra>' + g + '</extra>',
+        };
+    });
+    // Zero lines
+    traces.push({type:'scatter',mode:'lines',x:[null],y:[null],showlegend:false,hoverinfo:'skip'});
+    const method = result.method === 'opls-da' ? 'OPLS-DA' : 'OPLS';
+    const layout = {
+        title: { text: `${method} Score Plot — Y: ${result.y_col}`, font: { family: opts.fontFamily, size: opts.fontSize + 2 } },
+        xaxis: { title: { text: 'T (predictive)', font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 zeroline: true, zerolinecolor: '#aaa', zerolinewidth: 1 },
+        yaxis: { title: { text: 'T_orth (orthogonal)', font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 zeroline: true, zerolinecolor: '#aaa', zerolinewidth: 1 },
+        legend: { font: { family: opts.fontFamily, size: opts.fontSize - 1 } },
+        plot_bgcolor: '#fafafa', paper_bgcolor: 'white',
+        margin: { l: 60, r: 30, t: 60, b: 60 },
+    };
+    Plotly.react(div, traces, layout, { responsive: true });
+}
+
+// ── S-plot: covariance vs correlation with T_pred ────────────────────────────
+function renderOplsSplot(result, opts) {
+    const div = document.getElementById('oplsSplot');
+    div.style.display = 'block';
+    const pts = result.splot;
+    const vipVals = pts.map(p => p.vip);
+    const maxVip = Math.max(...vipVals, 1);
+    // Color by VIP: high VIP → dark blue/red, low → grey
+    const markerColors = pts.map(p => {
+        const v = p.vip || 0;
+        if (v >= 1.5) return '#c0392b';
+        if (v >= 1.0) return '#e67e22';
+        return '#95a5a6';
+    });
+    const trace = {
+        type: 'scatter', mode: 'markers+text',
+        x: pts.map(p => p.cov), y: pts.map(p => p.corr),
+        text: pts.map(p => p.var),
+        textposition: pts.map((p, i) => p.corr >= 0 ? 'top center' : 'bottom center'),
+        textfont: { size: opts.fontSize * 0.72, family: opts.fontFamily, color: '#333' },
+        marker: { color: markerColors, size: opts.pointSize, opacity: opts.opacity,
+                  line: { width: 0.5, color: 'white' } },
+        customdata: pts.map(p => p.vip),
+        hovertemplate: '<b>%{text}</b><br>p (cov): %{x:.4f}<br>p_corr: %{y:.4f}<br>VIP: %{customdata:.3f}<extra></extra>',
+        showlegend: false,
+    };
+    // VIP=1 reference ellipse hint via annotation is complex; add a legend proxy trace
+    const legendTraces = [
+        { type: 'scatter', mode: 'markers', name: 'VIP ≥ 1.5',
+          x: [null], y: [null], marker: { color: '#c0392b', size: 10 }, showlegend: true },
+        { type: 'scatter', mode: 'markers', name: '1.0 ≤ VIP < 1.5',
+          x: [null], y: [null], marker: { color: '#e67e22', size: 10 }, showlegend: true },
+        { type: 'scatter', mode: 'markers', name: 'VIP < 1.0',
+          x: [null], y: [null], marker: { color: '#95a5a6', size: 10 }, showlegend: true },
+    ];
+    const method = result.method === 'opls-da' ? 'OPLS-DA' : 'OPLS';
+    const layout = {
+        title: { text: `${method} S-plot`, font: { family: opts.fontFamily, size: opts.fontSize + 2 } },
+        xaxis: { title: { text: 'p (covariance with T)', font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1 },
+        yaxis: { title: { text: 'p* (correlation with T)', font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1, range: [-1.1, 1.1] },
+        legend: { font: { family: opts.fontFamily, size: opts.fontSize - 1 } },
+        plot_bgcolor: '#fafafa', paper_bgcolor: 'white',
+        margin: { l: 60, r: 30, t: 60, b: 60 },
+    };
+    Plotly.react(div, [trace, ...legendTraces], layout, { responsive: true });
+}
+
+// ── VIP bar chart ─────────────────────────────────────────────────────────────
+function renderOplsVip(result, opts) {
+    const div = document.getElementById('oplsVipPlot');
+    div.style.display = 'block';
+    const vip = result.vip;  // already sorted descending
+    const barColors = vip.map(v => v.vip >= 1.0 ? '#2980b9' : '#bdc3c7');
+    const trace = {
+        type: 'bar', orientation: 'h',
+        x: vip.map(v => v.vip), y: vip.map(v => v.var),
+        marker: { color: barColors },
+        hovertemplate: '<b>%{y}</b><br>VIP: %{x:.3f}<extra></extra>',
+        showlegend: false,
+    };
+    const method = result.method === 'opls-da' ? 'OPLS-DA' : 'OPLS';
+    const layout = {
+        title: { text: `${method} VIP Scores`, font: { family: opts.fontFamily, size: opts.fontSize + 2 } },
+        xaxis: { title: { text: 'VIP Score', font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 } },
+        yaxis: { tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 }, autorange: 'reversed' },
+        shapes: [{ type: 'line', x0: 1, x1: 1, y0: -0.5, y1: vip.length - 0.5,
+                   line: { color: '#e74c3c', width: 1.5, dash: 'dash' } }],
+        annotations: [{ x: 1.02, y: 0, xanchor: 'left', yanchor: 'top', xref: 'x', yref: 'paper',
+                        text: 'VIP=1', font: { color: '#e74c3c', size: opts.fontSize - 1 }, showarrow: false }],
+        plot_bgcolor: '#fafafa', paper_bgcolor: 'white',
+        margin: { l: Math.max(80, Math.max(...vip.map(v => v.var.length)) * 6), r: 30, t: 60, b: 50 },
+        height: Math.max(300, vip.length * 26 + 80),
+    };
+    Plotly.react(div, [trace], layout, { responsive: true });
+}
+
+// ── Event listeners ───────────────────────────────────────────────────────────
+document.querySelectorAll('.opls-method-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        document.querySelectorAll('.opls-method-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+document.getElementById('runOplsBtn').addEventListener('click', function () {
+    const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    if (vars.length < 2) return alert('Select at least 2 variables in the Data Input panel.');
+    const yCol = document.getElementById('oplsYCol').value;
+    if (!yCol) return alert('Please select a response variable (Y).');
+
+    const method = oplsGetMethod();
+    const nOrtho = parseInt(document.getElementById('oplsNOrtho').value) || 1;
+    const computeCV = document.getElementById('oplsComputeCV').checked;
+
+    document.getElementById('oplsStatusMsg').innerHTML = '';
+    document.getElementById('oplsSpinner').style.display = 'block';
+    document.getElementById('stopOplsBtn').style.display = 'inline-block';
+    document.getElementById('runOplsBtn').disabled = true;
+
+    oplsAbortController = new AbortController();
+    fetch('/run-opls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: oplsAbortController.signal,
+        body: JSON.stringify({
+            data: globalData, variables: vars, factors: selectedFactors,
+            method, y_col: yCol, n_ortho: nOrtho, compute_cv: computeCV,
+        })
+    })
+    .then(r => r.json())
+    .then(result => {
+        document.getElementById('oplsSpinner').style.display = 'none';
+        document.getElementById('stopOplsBtn').style.display = 'none';
+        document.getElementById('runOplsBtn').disabled = false;
+        if (result.error) {
+            document.getElementById('oplsStatusMsg').innerHTML =
+                `<div class="alert alert-danger py-2 small shadow-sm mb-2">${result.error}</div>`;
+            return;
+        }
+        lastOplsResult = result;
+        const opts = oplsReadOpts();
+        const methodStr = result.method === 'opls-da' ? 'OPLS-DA' : 'OPLS';
+
+        // Show metrics
+        document.getElementById('oplsMetrics').style.display = 'block';
+        document.getElementById('oplsR2X').textContent = (result.r2x * 100).toFixed(1) + '%';
+        document.getElementById('oplsR2Y').textContent = (result.r2y * 100).toFixed(1) + '%';
+        document.getElementById('oplsQ2').textContent  = result.q2 !== null ? (result.q2 * 100).toFixed(1) + '%' : 'N/A';
+        document.getElementById('oplsNSamplesMsg').textContent = `n=${result.n_samples}, ${result.n_ortho} orthogonal component(s)`;
+
+        document.getElementById('oplsStatusMsg').innerHTML =
+            `<div class="alert alert-success py-2 small shadow-sm mb-2">
+                <strong>${methodStr} complete:</strong> ${result.n_samples} samples, ${vars.length} variables.
+                R²X=${(result.r2x*100).toFixed(1)}%, R²Y=${(result.r2y*100).toFixed(1)}%${result.q2!==null?`, Q²=${(result.q2*100).toFixed(1)}%`:''}.</div>`;
+
+        document.getElementById('oplsStyleCard').style.display = 'block';
+        document.getElementById('oplsDownloadRow').style.display = 'block';
+        document.getElementById('downloadOplsBtn').style.display = 'inline-block';
+
+        renderOplsScores(result, opts);
+        renderOplsSplot(result, opts);
+        renderOplsVip(result, opts);
+    })
+    .catch(err => {
+        if (err.name === 'AbortError') return;
+        document.getElementById('oplsSpinner').style.display = 'none';
+        document.getElementById('stopOplsBtn').style.display = 'none';
+        document.getElementById('runOplsBtn').disabled = false;
+        document.getElementById('oplsStatusMsg').innerHTML =
+            `<div class="alert alert-danger py-2 small shadow-sm mb-2">OPLS Error: ${err.message}</div>`;
+    });
+});
+
+document.getElementById('stopOplsBtn').addEventListener('click', function () {
+    if (oplsAbortController) oplsAbortController.abort();
+    document.getElementById('oplsSpinner').style.display = 'none';
+    document.getElementById('runOplsBtn').disabled = false;
+    this.style.display = 'none';
+});
+
+// ── Style live re-renders ─────────────────────────────────────────────────────
+document.querySelectorAll('.opls-palette-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        document.querySelectorAll('.opls-palette-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        if (lastOplsResult) { const o=oplsReadOpts(); renderOplsScores(lastOplsResult,o); renderOplsSplot(lastOplsResult,o); }
+    });
+});
+['oplsPointSize','oplsOpacity'].forEach(id => {
+    const el = document.getElementById(id);
+    ['change','input'].forEach(ev => el.addEventListener(ev, function () {
+        if (id==='oplsOpacity') document.getElementById('oplsOpacityVal').textContent = this.value + '%';
+        if (id==='oplsPointSize') document.getElementById('oplsPointSizeVal').textContent = this.value;
+        if (lastOplsResult) { const o=oplsReadOpts(); renderOplsScores(lastOplsResult,o); renderOplsSplot(lastOplsResult,o); }
+    }));
+});
+['oplsFontFamily','oplsFontSize'].forEach(id => {
+    const el = document.getElementById(id);
+    ['change','input'].forEach(ev => el.addEventListener(ev, function () {
+        if (id==='oplsFontSize') document.getElementById('oplsFontSizeVal').textContent = this.value;
+        if (lastOplsResult) { const o=oplsReadOpts(); renderOplsScores(lastOplsResult,o); renderOplsSplot(lastOplsResult,o); renderOplsVip(lastOplsResult,o); }
+    }));
+});
+
+// ── PNG download buttons ──────────────────────────────────────────────────────
+document.getElementById('oplsDownloadScoreBtn').addEventListener('click', () => {
+    const div = document.getElementById('oplsScorePlot'); const sc=parseInt(document.getElementById('oplsExportScale').value);
+    Plotly.downloadImage(div,{format:'png',filename:'OPLS_Score_Plot',scale:sc,width:div.offsetWidth||700,height:div.offsetHeight||500});
+});
+document.getElementById('oplsDownloadSplotBtn').addEventListener('click', () => {
+    const div = document.getElementById('oplsSplot'); const sc=parseInt(document.getElementById('oplsExportScale').value);
+    Plotly.downloadImage(div,{format:'png',filename:'OPLS_S_Plot',scale:sc,width:div.offsetWidth||700,height:div.offsetHeight||500});
+});
+document.getElementById('oplsDownloadVipBtn').addEventListener('click', () => {
+    const div = document.getElementById('oplsVipPlot'); const sc=parseInt(document.getElementById('oplsExportScale').value);
+    Plotly.downloadImage(div,{format:'png',filename:'OPLS_VIP_Plot',scale:sc,width:div.offsetWidth||700,height:div.offsetHeight||400});
+});
+
+// ── Excel export ──────────────────────────────────────────────────────────────
+document.getElementById('downloadOplsBtn').addEventListener('click', async function () {
+    if (!lastOplsResult) return;
+    this.disabled = true;
+    const spinner = document.getElementById('oplsExportSpinner');
+    spinner.style.display = 'inline-block';
+    try {
+        const sc = parseInt(document.getElementById('oplsExportScale').value) || 2;
+        const toImg = async (id, w, h) => {
+            const d = document.getElementById(id);
+            if (!d || d.style.display === 'none') return null;
+            const b64 = await Plotly.toImage(d, { format: 'png', scale: sc, width: w || d.offsetWidth || 700, height: h || d.offsetHeight || 500 });
+            return b64.split(',')[1];
+        };
+        const [scoreImg, splotImg, vipImg] = await Promise.all([
+            toImg('oplsScorePlot', 700, 500),
+            toImg('oplsSplot', 700, 500),
+            toImg('oplsVipPlot', 700, Math.max(350, lastOplsResult.vip.length * 26 + 80)),
+        ]);
+        const payload = {
+            result: lastOplsResult,
+            images: { score: scoreImg, splot: splotImg, vip: vipImg },
+        };
+        const res = await fetch('/export-opls-excel', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) { const j = await res.json(); throw new Error(j.error || 'Export failed'); }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'OPLS_Analysis.xlsx';
+        document.body.appendChild(a); a.click();
+        window.URL.revokeObjectURL(url); document.body.removeChild(a);
+    } catch (err) {
+        alert('Export error: ' + err.message);
+    } finally {
+        this.disabled = false;
+        spinner.style.display = 'none';
+    }
+});
+// ═══════════════════════════════════════════════════════════════════════════════
+// 9. PLS / PLS-DA Analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function plsReadOpts() {
+    return {
+        palette:    document.querySelector('.pls-palette-btn.active')?.dataset.palette || 'tab10',
+        pointSize:  parseInt(document.getElementById('plsPointSize').value) || 10,
+        opacity:    parseInt(document.getElementById('plsOpacity').value) / 100,
+        fontFamily: document.getElementById('plsFontFamily').value,
+        fontSize:   parseInt(document.getElementById('plsFontSize').value) || 13,
+    };
+}
+
+function plsGetMethod() {
+    return document.querySelector('.pls-method-btn.active')?.dataset.method || 'pls-da';
+}
+
+// ── Score plot: T1 (LV1) vs T2 (LV2) ────────────────────────────────────────
+function renderPlsScores(result, opts) {
+    const div = document.getElementById('plsScorePlot');
+    div.style.display = 'block';
+    const colors = PCA_PALETTES[opts.palette] || PCA_PALETTES.tab10;
+    const groups = [...new Set(result.scores.map(s => s.group))];
+    const r2xC = result.r2x_per_comp || [];
+    const lv1Label = r2xC[0] != null ? `LV1 (R²X: ${(r2xC[0]*100).toFixed(1)}%)` : 'LV1';
+    const lv2Label = r2xC[1] != null ? `LV2 (R²X: ${((r2xC[1]-(r2xC[0]||0))*100).toFixed(1)}%)` : 'LV2';
+    const traces = groups.map((g, gi) => {
+        const pts = result.scores.filter(s => s.group === g);
+        return {
+            type: 'scatter', mode: 'markers+text',
+            name: g,
+            x: pts.map(p => p.T1), y: pts.map(p => p.T2),
+            text: pts.map(p => p.label), textposition: 'top center',
+            textfont: { size: opts.fontSize * 0.72, family: opts.fontFamily },
+            marker: { color: colors[gi % colors.length], size: opts.pointSize,
+                      opacity: opts.opacity, line: { width: 0.5, color: 'white' } },
+            hovertemplate: '<b>%{text}</b><br>LV1: %{x:.3f}<br>LV2: %{y:.3f}<extra>' + g + '</extra>',
+        };
+    });
+    const methodStr = result.method === 'pls-da' ? 'PLS-DA' : 'PLS';
+    const layout = {
+        title: { text: `${methodStr} Score Plot — Y: ${result.y_col}`, font: { family: opts.fontFamily, size: opts.fontSize + 2 } },
+        xaxis: { title: { text: lv1Label, font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 zeroline: true, zerolinecolor: '#aaa', zerolinewidth: 1 },
+        yaxis: { title: { text: lv2Label, font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 zeroline: true, zerolinecolor: '#aaa', zerolinewidth: 1 },
+        legend: { font: { family: opts.fontFamily, size: opts.fontSize - 1 } },
+        plot_bgcolor: '#fafafa', paper_bgcolor: 'white',
+        margin: { l: 60, r: 30, t: 60, b: 60 },
+    };
+    Plotly.react(div, traces, layout, { responsive: true });
+}
+
+// ── Weights biplot: variable arrows in W1/W2 space ───────────────────────────
+function renderPlsWeights(result, opts) {
+    const div = document.getElementById('plsWeightsPlot');
+    div.style.display = 'block';
+    const pts = result.weights;
+    const annotations = [];
+    const arrowX = [], arrowY = [], arrowText = [], arrowVip = [];
+    pts.forEach(w => {
+        const wx = w.W1 ?? 0, wy = w.W2 ?? 0;
+        if (wx === 0 && wy === 0) return;
+        const vip = w.vip || 0;
+        const arrowColor = vip >= 1.5 ? '#c0392b' : vip >= 1.0 ? '#e67e22' : '#7f8c8d';
+        annotations.push({
+            x: wx, y: wy, ax: 0, ay: 0,
+            xref: 'x', yref: 'y', axref: 'x', ayref: 'y',
+            showarrow: true, arrowhead: 3, arrowsize: 1.2,
+            arrowwidth: 1.8, arrowcolor: arrowColor,
+        });
+        annotations.push({
+            x: wx * 1.18, y: wy * 1.18,
+            text: `<b>${w.var}</b>`,
+            showarrow: false, xref: 'x', yref: 'y',
+            font: { color: arrowColor, size: opts.fontSize * 0.85 },
+            bgcolor: 'rgba(255,255,255,0.75)', borderpad: 2,
+        });
+        arrowX.push(wx); arrowY.push(wy);
+        arrowText.push(w.var); arrowVip.push(vip);
+    });
+    // Invisible scatter for hover
+    const hoverTrace = {
+        x: arrowX, y: arrowY, text: arrowText, customdata: arrowVip,
+        mode: 'markers', marker: { opacity: 0, size: 10 },
+        hovertemplate: '<b>%{text}</b><br>W1: %{x:.4f}<br>W2: %{y:.4f}<br>VIP: %{customdata:.3f}<extra></extra>',
+        showlegend: false,
+    };
+    // Legend proxies for VIP colour scale
+    const legendTraces = [
+        { type:'scatter', mode:'markers', name:'VIP ≥ 1.5', x:[null], y:[null], marker:{color:'#c0392b',size:10}, showlegend:true },
+        { type:'scatter', mode:'markers', name:'1.0 ≤ VIP < 1.5', x:[null], y:[null], marker:{color:'#e67e22',size:10}, showlegend:true },
+        { type:'scatter', mode:'markers', name:'VIP < 1.0', x:[null], y:[null], marker:{color:'#7f8c8d',size:10}, showlegend:true },
+    ];
+    const axMax = Math.max(...arrowX.map(Math.abs), ...arrowY.map(Math.abs), 0.01) * 1.4;
+    const methodStr = result.method === 'pls-da' ? 'PLS-DA' : 'PLS';
+    const layout = {
+        title: { text: `${methodStr} Weights Plot (W1 vs W2)`, font: { family: opts.fontFamily, size: opts.fontSize + 2 } },
+        xaxis: { title: { text: 'W1 (LV1 weight)', font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1, range: [-axMax, axMax] },
+        yaxis: { title: { text: 'W2 (LV2 weight)', font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
+                 zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1, range: [-axMax, axMax] },
+        annotations,
+        legend: { font: { family: opts.fontFamily, size: opts.fontSize - 1 } },
+        plot_bgcolor: '#fafafa', paper_bgcolor: 'white',
+        margin: { l: 60, r: 30, t: 60, b: 60 },
+    };
+    Plotly.react(div, [hoverTrace, ...legendTraces], layout, { responsive: true });
+}
+
+// ── VIP bar chart ─────────────────────────────────────────────────────────────
+function renderPlsVip(result, opts) {
+    const div = document.getElementById('plsVipPlot');
+    div.style.display = 'block';
+    const vip = result.vip;
+    const barColors = vip.map(v => v.vip >= 1.0 ? '#2980b9' : '#bdc3c7');
+    const trace = {
+        type: 'bar', orientation: 'h',
+        x: vip.map(v => v.vip), y: vip.map(v => v.var),
+        marker: { color: barColors },
+        hovertemplate: '<b>%{y}</b><br>VIP: %{x:.3f}<extra></extra>',
+        showlegend: false,
+    };
+    const methodStr = result.method === 'pls-da' ? 'PLS-DA' : 'PLS';
+    const layout = {
+        title: { text: `${methodStr} VIP Scores`, font: { family: opts.fontFamily, size: opts.fontSize + 2 } },
+        xaxis: { title: { text: 'VIP Score', font: { family: opts.fontFamily, size: opts.fontSize } },
+                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 } },
+        yaxis: { tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 }, autorange: 'reversed' },
+        shapes: [{ type: 'line', x0: 1, x1: 1, y0: -0.5, y1: vip.length - 0.5,
+                   line: { color: '#e74c3c', width: 1.5, dash: 'dash' } }],
+        annotations: [{ x: 1.02, y: 0, xanchor: 'left', yanchor: 'top', xref: 'x', yref: 'paper',
+                        text: 'VIP=1', font: { color: '#e74c3c', size: opts.fontSize - 1 }, showarrow: false }],
+        plot_bgcolor: '#fafafa', paper_bgcolor: 'white',
+        margin: { l: Math.max(80, Math.max(...vip.map(v => v.var.length)) * 6), r: 30, t: 60, b: 50 },
+        height: Math.max(300, vip.length * 26 + 80),
+    };
+    Plotly.react(div, [trace], layout, { responsive: true });
+}
+
+// ── Event listeners ───────────────────────────────────────────────────────────
+document.querySelectorAll('.pls-method-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        document.querySelectorAll('.pls-method-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+document.getElementById('runPlsBtn').addEventListener('click', function () {
+    const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    if (vars.length < 2) return alert('Select at least 2 variables in the Data Input panel.');
+    const yCol = document.getElementById('plsYCol').value;
+    if (!yCol) return alert('Please select a response variable (Y).');
+
+    const method = plsGetMethod();
+    const nComponents = parseInt(document.getElementById('plsNComponents').value) || 2;
+    const computeCV = document.getElementById('plsComputeCV').checked;
+
+    document.getElementById('plsStatusMsg').innerHTML = '';
+    document.getElementById('plsSpinner').style.display = 'block';
+    document.getElementById('stopPlsBtn').style.display = 'inline-block';
+    document.getElementById('runPlsBtn').disabled = true;
+
+    plsAbortController = new AbortController();
+    fetch('/run-pls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: plsAbortController.signal,
+        body: JSON.stringify({
+            data: globalData, variables: vars, factors: selectedFactors,
+            method, y_col: yCol, n_components: nComponents, compute_cv: computeCV,
+        })
+    })
+    .then(r => r.json())
+    .then(result => {
+        document.getElementById('plsSpinner').style.display = 'none';
+        document.getElementById('stopPlsBtn').style.display = 'none';
+        document.getElementById('runPlsBtn').disabled = false;
+        if (result.error) {
+            document.getElementById('plsStatusMsg').innerHTML =
+                `<div class="alert alert-danger py-2 small shadow-sm mb-2">${result.error}</div>`;
+            return;
+        }
+        lastPlsResult = result;
+        const opts = plsReadOpts();
+        const methodStr = result.method === 'pls-da' ? 'PLS-DA' : 'PLS';
+
+        document.getElementById('plsMetrics').style.display = 'block';
+        document.getElementById('plsR2X').textContent = (result.r2x * 100).toFixed(1) + '%';
+        document.getElementById('plsR2Y').textContent = (result.r2y * 100).toFixed(1) + '%';
+        document.getElementById('plsQ2').textContent  = result.q2 !== null ? (result.q2 * 100).toFixed(1) + '%' : 'N/A';
+        document.getElementById('plsNSamplesMsg').textContent = `n=${result.n_samples}, ${result.n_components} component(s)`;
+
+        document.getElementById('plsStatusMsg').innerHTML =
+            `<div class="alert alert-success py-2 small shadow-sm mb-2">
+                <strong>${methodStr} complete:</strong> ${result.n_samples} samples, ${vars.length} variables, ${result.n_components} component(s).
+                R²X=${(result.r2x*100).toFixed(1)}%, R²Y=${(result.r2y*100).toFixed(1)}%${result.q2!==null?`, Q²=${(result.q2*100).toFixed(1)}%`:''}.</div>`;
+
+        document.getElementById('plsStyleCard').style.display = 'block';
+        document.getElementById('plsDownloadRow').style.display = 'block';
+        document.getElementById('downloadPlsBtn').style.display = 'inline-block';
+
+        renderPlsScores(result, opts);
+        renderPlsWeights(result, opts);
+        renderPlsVip(result, opts);
+    })
+    .catch(err => {
+        if (err.name === 'AbortError') return;
+        document.getElementById('plsSpinner').style.display = 'none';
+        document.getElementById('stopPlsBtn').style.display = 'none';
+        document.getElementById('runPlsBtn').disabled = false;
+        document.getElementById('plsStatusMsg').innerHTML =
+            `<div class="alert alert-danger py-2 small shadow-sm mb-2">PLS Error: ${err.message}</div>`;
+    });
+});
+
+document.getElementById('stopPlsBtn').addEventListener('click', function () {
+    if (plsAbortController) plsAbortController.abort();
+    document.getElementById('plsSpinner').style.display = 'none';
+    document.getElementById('runPlsBtn').disabled = false;
+    this.style.display = 'none';
+});
+
+// ── Style live re-renders ─────────────────────────────────────────────────────
+document.querySelectorAll('.pls-palette-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        document.querySelectorAll('.pls-palette-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        if (lastPlsResult) { const o=plsReadOpts(); renderPlsScores(lastPlsResult,o); }
+    });
+});
+['plsPointSize','plsOpacity'].forEach(id => {
+    const el = document.getElementById(id);
+    ['change','input'].forEach(ev => el.addEventListener(ev, function () {
+        if (id==='plsOpacity') document.getElementById('plsOpacityVal').textContent = this.value + '%';
+        if (id==='plsPointSize') document.getElementById('plsPointSizeVal').textContent = this.value;
+        if (lastPlsResult) { const o=plsReadOpts(); renderPlsScores(lastPlsResult,o); }
+    }));
+});
+['plsFontFamily','plsFontSize'].forEach(id => {
+    const el = document.getElementById(id);
+    ['change','input'].forEach(ev => el.addEventListener(ev, function () {
+        if (id==='plsFontSize') document.getElementById('plsFontSizeVal').textContent = this.value;
+        if (lastPlsResult) { const o=plsReadOpts(); renderPlsScores(lastPlsResult,o); renderPlsWeights(lastPlsResult,o); renderPlsVip(lastPlsResult,o); }
+    }));
+});
+
+// ── PNG download buttons ──────────────────────────────────────────────────────
+document.getElementById('plsDownloadScoreBtn').addEventListener('click', () => {
+    const div = document.getElementById('plsScorePlot'); const sc=parseInt(document.getElementById('plsExportScale').value);
+    Plotly.downloadImage(div,{format:'png',filename:'PLS_Score_Plot',scale:sc,width:div.offsetWidth||700,height:div.offsetHeight||500});
+});
+document.getElementById('plsDownloadWeightsBtn').addEventListener('click', () => {
+    const div = document.getElementById('plsWeightsPlot'); const sc=parseInt(document.getElementById('plsExportScale').value);
+    Plotly.downloadImage(div,{format:'png',filename:'PLS_Weights_Plot',scale:sc,width:div.offsetWidth||700,height:div.offsetHeight||500});
+});
+document.getElementById('plsDownloadVipBtn').addEventListener('click', () => {
+    const div = document.getElementById('plsVipPlot'); const sc=parseInt(document.getElementById('plsExportScale').value);
+    Plotly.downloadImage(div,{format:'png',filename:'PLS_VIP_Plot',scale:sc,width:div.offsetWidth||700,height:div.offsetHeight||400});
+});
+
+// ── Excel export ──────────────────────────────────────────────────────────────
+document.getElementById('downloadPlsBtn').addEventListener('click', async function () {
+    if (!lastPlsResult) return;
+    this.disabled = true;
+    const spinner = document.getElementById('plsExportSpinner');
+    spinner.style.display = 'inline-block';
+    try {
+        const sc = parseInt(document.getElementById('plsExportScale').value) || 2;
+        const toImg = async (id, w, h) => {
+            const d = document.getElementById(id);
+            if (!d || d.style.display === 'none') return null;
+            const b64 = await Plotly.toImage(d, { format: 'png', scale: sc, width: w || d.offsetWidth || 700, height: h || d.offsetHeight || 500 });
+            return b64.split(',')[1];
+        };
+        const [scoreImg, weightsImg, vipImg] = await Promise.all([
+            toImg('plsScorePlot', 700, 500),
+            toImg('plsWeightsPlot', 700, 500),
+            toImg('plsVipPlot', 700, Math.max(350, lastPlsResult.vip.length * 26 + 80)),
+        ]);
+        const payload = { result: lastPlsResult, images: { score: scoreImg, weights: weightsImg, vip: vipImg } };
+        const res = await fetch('/export-pls-excel', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) { const j = await res.json(); throw new Error(j.error || 'Export failed'); }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'PLS_Analysis.xlsx';
+        document.body.appendChild(a); a.click();
+        window.URL.revokeObjectURL(url); document.body.removeChild(a);
+    } catch (err) {
+        alert('Export error: ' + err.message);
+    } finally {
+        this.disabled = false;
+        spinner.style.display = 'none';
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 10. Regression Analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let lastSimpleRegrResult   = null;
+let lastMultipleRegrResult = null;
+let regrAbortController    = null;
+
+function regrGetVars() {
+    return Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+}
+
+function populateRegrXList(listId, yCol, vars) {
+    const container = document.getElementById(listId);
+    if (!container) return;
+    // Use supplied vars list, or fall back to currently checked variables
+    const candidates = (vars || regrGetVars()).filter(c => c !== yCol);
+    if (!candidates.length) {
+        container.innerHTML = '<span class="text-muted small">Select a response variable (Y) above to populate.</span>';
+        return;
+    }
+    container.innerHTML = candidates.map(c => {
+        const safeId = listId + '_' + c.replace(/\W/g, '_');
+        return `<div class="form-check form-check-inline mr-2 mb-1">
+            <input class="form-check-input" type="checkbox" id="${safeId}" value="${c}" checked>
+            <label class="form-check-label" for="${safeId}">${c}</label>
+        </div>`;
+    }).join('');
+}
+
+document.getElementById('regrYCol').addEventListener('change', function() {
+    populateRegrXList('multipleRegrXList', this.value);
+});
+
+document.getElementById('multipleRegrSelectAll').addEventListener('click', function() {
+    document.querySelectorAll('#multipleRegrXList input[type=checkbox]').forEach(cb => cb.checked = true);
+});
+document.getElementById('multipleRegrSelectNone').addEventListener('click', function() {
+    document.querySelectorAll('#multipleRegrXList input[type=checkbox]').forEach(cb => cb.checked = false);
+});
+
+// ── Shared: 4-panel diagnostics (Residuals vs Fitted, Q-Q, Scale-Loc, Cook's) ─
+function renderDiagnostics(diagData, divId, opts) {
+    const div = document.getElementById(divId);
+    div.style.display = 'block';
+    const { fitted, residuals, std_residuals, sqrt_abs_std_resid,
+            qq_theoretical, qq_sample, cooks_d, obs_index } = diagData;
+    const ff = opts.fontFamily, fs = opts.fontSize;
+
+    // 1: Residuals vs Fitted
+    const t1 = { type:'scatter', mode:'markers', x: fitted, y: residuals,
+        marker:{ color:'#3498db', size:5, opacity:0.7 }, showlegend:false,
+        hovertemplate:'Fitted: %{x:.3f}<br>Residual: %{y:.3f}<extra></extra>',
+        xaxis:'x1', yaxis:'y1' };
+    const sorted1 = fitted.map((v,i)=>[v,residuals[i]]).sort((a,b)=>a[0]-b[0]);
+    const tLine1  = { type:'scatter', mode:'lines',
+        x: sorted1.map(p=>p[0]), y: sorted1.map(p=>p[1]),
+        line:{color:'#e74c3c',width:1.5}, showlegend:false, hoverinfo:'skip', xaxis:'x1', yaxis:'y1' };
+
+    // 2: Normal Q-Q
+    const t2 = { type:'scatter', mode:'markers', x: qq_theoretical, y: qq_sample,
+        marker:{ color:'#3498db', size:5, opacity:0.7 }, showlegend:false,
+        hovertemplate:'Theoretical: %{x:.3f}<br>Sample: %{y:.3f}<extra></extra>',
+        xaxis:'x2', yaxis:'y2' };
+    const qqMin = Math.min(...qq_theoretical), qqMax = Math.max(...qq_theoretical);
+    const tLine2 = { type:'scatter', mode:'lines', x:[qqMin,qqMax], y:[qqMin,qqMax],
+        line:{color:'#e74c3c',width:1.5,dash:'dot'}, showlegend:false, hoverinfo:'skip', xaxis:'x2', yaxis:'y2' };
+
+    // 3: Scale-Location
+    const t3 = { type:'scatter', mode:'markers', x: fitted, y: sqrt_abs_std_resid,
+        marker:{ color:'#3498db', size:5, opacity:0.7 }, showlegend:false,
+        hovertemplate:'Fitted: %{x:.3f}<br>\u221a|Std.Res|: %{y:.3f}<extra></extra>',
+        xaxis:'x3', yaxis:'y3' };
+
+    // 4: Cook's Distance
+    const cookThresh = 4 / obs_index.length;
+    const cookColors = cooks_d.map(d => d > cookThresh ? '#e74c3c' : '#95a5a6');
+    const t4 = { type:'bar', x: obs_index, y: cooks_d,
+        marker:{ color: cookColors }, showlegend:false,
+        hovertemplate:"Obs %{x}<br>Cook's D: %{y:.4f}<extra></extra>",
+        xaxis:'x4', yaxis:'y4' };
+    const t4thresh = { type:'scatter', mode:'lines',
+        x:[0, obs_index.length - 1], y:[cookThresh, cookThresh],
+        line:{color:'#e74c3c',width:1,dash:'dash'}, showlegend:false, hoverinfo:'skip',
+        xaxis:'x4', yaxis:'y4' };
+
+    const layout = {
+        grid: { rows:2, columns:2, pattern:'independent', roworder:'top to bottom' },
+        xaxis:  { title:{text:'Fitted values',            font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff}, zeroline:false },
+        yaxis:  { title:{text:'Residuals',                font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff}, zeroline:true, zerolinecolor:'#ccc' },
+        xaxis2: { title:{text:'Theoretical quantiles',    font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
+        yaxis2: { title:{text:'Sample quantiles',         font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
+        xaxis3: { title:{text:'Fitted values',            font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
+        yaxis3: { title:{text:'\u221a|Standardised Residuals|', font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
+        xaxis4: { title:{text:'Observation index',        font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
+        yaxis4: { title:{text:"Cook's Distance",          font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
+        annotations: [
+            { text:'Residuals vs Fitted', xref:'paper', yref:'paper', x:0.22, y:1.02,
+              showarrow:false, font:{size:fs, family:ff, color:'#444'} },
+            { text:'Normal Q-Q',          xref:'paper', yref:'paper', x:0.78, y:1.02,
+              showarrow:false, font:{size:fs, family:ff, color:'#444'} },
+            { text:'Scale-Location',      xref:'paper', yref:'paper', x:0.22, y:0.47,
+              showarrow:false, font:{size:fs, family:ff, color:'#444'} },
+            { text:"Cook's Distance",     xref:'paper', yref:'paper', x:0.78, y:0.47,
+              showarrow:false, font:{size:fs, family:ff, color:'#444'} },
+        ],
+        plot_bgcolor:'#fafafa', paper_bgcolor:'white',
+        margin:{l:60, r:20, t:40, b:60}, height:520,
+    };
+    Plotly.react(div, [t1, tLine1, t2, tLine2, t3, t4, t4thresh], layout, { responsive:true });
+}
+
+// ── Coefficient forest plot (Multiple Linear) ─────────────────────────────────
+function renderCoefForest(result, divId, opts) {
+    const div = document.getElementById(divId);
+    div.style.display = 'block';
+    const coefs = result.coefficients.filter(c => c.name !== 'Intercept');
+    const ff = opts.fontFamily, fs = opts.fontSize;
+    const colors = coefs.map(c => c.p_value < 0.05 ? '#2980b9' : '#bdc3c7');
+    const traces = [
+        { type:'scatter', mode:'markers', x: coefs.map(c=>c.coef), y: coefs.map(c=>c.name),
+          error_x:{ type:'data', symmetric:false,
+              array:      coefs.map(c=>c.ci_upper - c.coef),
+              arrayminus: coefs.map(c=>c.coef - c.ci_lower),
+              color:'#666', thickness:1.5, width:5 },
+          marker:{ color: colors, size:10 },
+          hovertemplate:'<b>%{y}</b><br>\u03b2 = %{x:.4f}<br>p = %{customdata:.4g}<extra></extra>',
+          customdata: coefs.map(c=>c.p_value), showlegend:false },
+        { type:'scatter', mode:'lines', x:[0,0], y:[-0.5, coefs.length - 0.5],
+          line:{color:'#e74c3c',width:1.5,dash:'dash'}, showlegend:false, hoverinfo:'skip' },
+    ];
+    const layout = {
+        title:{ text:'Coefficients \u2014 ' + result.y_col, font:{family:ff, size:fs+2} },
+        xaxis:{ title:{text:'Coefficient (95% CI)', font:{family:ff, size:fs}}, tickfont:{family:ff, size:fs-1}, zeroline:false },
+        yaxis:{ tickfont:{family:ff, size:fs-1}, autorange:'reversed' },
+        plot_bgcolor:'#fafafa', paper_bgcolor:'white',
+        margin:{ l: Math.max(80, Math.max(...coefs.map(c=>c.name.length)) * 6), r:30, t:50, b:50 },
+        height: Math.max(300, coefs.length * 32 + 80),
+    };
+    Plotly.react(div, traces, layout, { responsive:true });
+}
+
+// ── Simple linear scatter + fit line ─────────────────────────────────────────
+function renderSimpleScatter(result, opts) {
+    const div = document.getElementById('simpleRegrScatterPlot');
+    div.style.display = 'block';
+    const sc = result.scatter, ff = opts.fontFamily, fs = opts.fontSize;
+    const slope = result.coefficients.find(c => c.name !== 'Intercept');
+    const pStr  = slope ? 'p=' + (slope.p_value < 0.0001
+        ? slope.p_value.toExponential(2) : slope.p_value.toFixed(4)) : '';
+    const traces = [
+        { type:'scatter', mode:'markers', name:'Data',
+          x: sc.x, y: sc.y,
+          marker:{ color:'#3498db', size:opts.pointSize, opacity:opts.opacity, line:{width:0.5,color:'white'} },
+          hovertemplate: result.x_cols[0] + ': %{x:.3f}<br>' + result.y_col + ': %{y:.3f}<extra></extra>' },
+        { type:'scatter', mode:'lines', name:'Fit', x: sc.x_sorted, y: sc.fit_line,
+          line:{color:'#e74c3c', width:2}, hoverinfo:'skip' },
+        { type:'scatter', mode:'lines', name:'95% CI', x: sc.x_sorted, y: sc.ci_upper,
+          line:{width:0}, showlegend:false, hoverinfo:'skip' },
+        { type:'scatter', mode:'lines', name:'95% CI', x: sc.x_sorted, y: sc.ci_lower,
+          fill:'tonexty', fillcolor:'rgba(231,76,60,0.12)', line:{width:0}, hoverinfo:'skip' },
+    ];
+    const layout = {
+        title:{ text: result.y_col + ' ~ ' + result.x_cols[0]
+                      + '  (R\u00b2=' + result.r_squared.toFixed(3) + ', ' + pStr + ')',
+                font:{family:ff, size:fs+2} },
+        xaxis:{ title:{text:result.x_cols[0], font:{family:ff,size:fs}}, tickfont:{family:ff,size:fs-1} },
+        yaxis:{ title:{text:result.y_col,     font:{family:ff,size:fs}}, tickfont:{family:ff,size:fs-1} },
+        legend:{font:{family:ff,size:fs-1}},
+        plot_bgcolor:'#fafafa', paper_bgcolor:'white',
+        margin:{l:60,r:20,t:55,b:55},
+    };
+    Plotly.react(div, traces, layout, { responsive:true });
+}
+
+
+// ── Generic fetch wrapper ────────────────────────────────────────────────────
+function regrFetch(payload, onSuccess, spinnerEl, stopBtnEl, statusEl, runBtnEl) {
+    spinnerEl.style.display = 'block';
+    stopBtnEl.style.display = 'inline-block';
+    runBtnEl.disabled = true;
+    statusEl.innerHTML = '';
+    regrAbortController = new AbortController();
+    fetch('/run-regression', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        signal: regrAbortController.signal,
+        body: JSON.stringify(Object.assign({}, payload, { data: globalData, factors: selectedFactors })),
+    })
+    .then(r => r.json())
+    .then(result => {
+        spinnerEl.style.display = 'none';
+        stopBtnEl.style.display = 'none';
+        runBtnEl.disabled = false;
+        if (result.error) {
+            statusEl.innerHTML = '<div class="alert alert-danger py-2 small shadow-sm mb-2">' + result.error + '</div>';
+            return;
+        }
+        onSuccess(result);
+    })
+    .catch(err => {
+        if (err.name === 'AbortError') return;
+        spinnerEl.style.display = 'none';
+        stopBtnEl.style.display = 'none';
+        runBtnEl.disabled = false;
+        statusEl.innerHTML = '<div class="alert alert-danger py-2 small shadow-sm mb-2">Error: ' + err.message + '</div>';
+    });
+}
+
+// ── Generic Excel export ──────────────────────────────────────────────────────
+async function regrExport(result, mainDivId, diagDivId, exportScaleId, spinnerEl, btnEl) {
+    btnEl.disabled = true; spinnerEl.style.display = 'inline-block';
+    try {
+        const sc = parseInt(document.getElementById(exportScaleId).value) || 2;
+        const toImg = async (id, w, h) => {
+            const d = document.getElementById(id);
+            if (!d || d.style.display === 'none') return null;
+            const b64 = await Plotly.toImage(d, { format:'png', scale:sc, width:w||d.offsetWidth||700, height:h||d.offsetHeight||500 });
+            return b64.split(',')[1];
+        };
+        const mainImg = await toImg(mainDivId, 700, 500);
+        const diagImg = diagDivId ? await toImg(diagDivId, 900, 540) : null;
+        const res = await fetch('/export-regression-excel', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ result: result, images:{ main: mainImg, diag: diagImg } }),
+        });
+        if (!res.ok) { const j = await res.json(); throw new Error(j.error || 'Export failed'); }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'Regression_Analysis.xlsx';
+        document.body.appendChild(a); a.click();
+        window.URL.revokeObjectURL(url); document.body.removeChild(a);
+    } catch(e) { alert('Export error: ' + e.message); }
+    finally { btnEl.disabled = false; spinnerEl.style.display = 'none'; }
+}
+
+// ── Event listeners ───────────────────────────────────────────────────────────
+
+// Simple Linear
+document.getElementById('runSimpleRegrBtn').addEventListener('click', function() {
+    const yCol = document.getElementById('regrYCol').value;
+    const xCol = document.getElementById('regrSimpleXCol').value;
+    if (!yCol) return alert('Select a response variable (Y).');
+    if (!xCol) return alert('Select a predictor variable (X).');
+    if (yCol === xCol) return alert('Y and X must be different columns.');
+    const getOpts = () => ({
+        fontFamily: document.getElementById('simpleRegrFontFamily').value,
+        fontSize:   parseInt(document.getElementById('simpleRegrFontSize').value) || 13,
+        pointSize:  parseInt(document.getElementById('simpleRegrPointSize').value) || 7,
+        opacity:    parseInt(document.getElementById('simpleRegrOpacity').value) / 100,
+    });
+    regrFetch({ method:'simple', y_col: yCol, x_cols:[xCol] }, result => {
+        lastSimpleRegrResult = result;
+        const opts = getOpts();
+        const slope = result.coefficients.find(c => c.name !== 'Intercept');
+        document.getElementById('simpleRegrMetrics').style.display = 'block';
+        document.getElementById('simpleRegrR2').textContent    = result.r_squared.toFixed(4);
+        document.getElementById('simpleRegrAdjR2').textContent = result.adj_r_squared.toFixed(4);
+        document.getElementById('simpleRegrFp').textContent    = result.f_pvalue !== null
+            ? (result.f_pvalue < 0.0001 ? result.f_pvalue.toExponential(2) : result.f_pvalue.toFixed(4)) : 'N/A';
+        document.getElementById('simpleRegrN').textContent = result.n;
+        document.getElementById('simpleRegrStyleCard').style.display = 'block';
+        document.getElementById('downloadSimpleRegrBtn').style.display = 'inline-block';
+        const pFmt = slope ? (slope.p_value < 0.0001 ? slope.p_value.toExponential(2) : slope.p_value.toFixed(4)) : '';
+        document.getElementById('simpleRegrStatus').innerHTML =
+            '<div class="alert alert-success py-2 small shadow-sm mb-2"><strong>Simple LR complete:</strong> ' +
+            result.y_col + ' ~ ' + result.x_cols[0] +
+            ' — R\u00b2=' + result.r_squared.toFixed(3) +
+            (slope ? ', \u03b2=' + slope.coef.toFixed(4) + ', p=' + pFmt : '') +
+            ', n=' + result.n + '</div>';
+        renderSimpleScatter(result, opts);
+        renderDiagnostics(result.diagnostics, 'simpleRegrDiagPlot', opts);
+    },
+    document.getElementById('simpleRegrSpinner'),
+    document.getElementById('stopSimpleRegrBtn'),
+    document.getElementById('simpleRegrStatus'),
+    this);
+});
+document.getElementById('stopSimpleRegrBtn').addEventListener('click', function() {
+    if (regrAbortController) regrAbortController.abort();
+    document.getElementById('simpleRegrSpinner').style.display = 'none';
+    document.getElementById('runSimpleRegrBtn').disabled = false;
+    this.style.display = 'none';
+});
+['simpleRegrPointSize','simpleRegrOpacity','simpleRegrFontSize','simpleRegrFontFamily'].forEach(function(id) {
+    const el = document.getElementById(id);
+    ['change','input'].forEach(function(ev) { el.addEventListener(ev, function() {
+        if (id==='simpleRegrPointSize') document.getElementById('simpleRegrPointSizeVal').textContent = this.value;
+        if (id==='simpleRegrOpacity')   document.getElementById('simpleRegrOpacityVal').textContent  = this.value + '%';
+        if (id==='simpleRegrFontSize')  document.getElementById('simpleRegrFontSizeVal').textContent = this.value;
+        if (!lastSimpleRegrResult) return;
+        const opts = { fontFamily: document.getElementById('simpleRegrFontFamily').value,
+                       fontSize:   parseInt(document.getElementById('simpleRegrFontSize').value) || 13,
+                       pointSize:  parseInt(document.getElementById('simpleRegrPointSize').value) || 7,
+                       opacity:    parseInt(document.getElementById('simpleRegrOpacity').value) / 100 };
+        renderSimpleScatter(lastSimpleRegrResult, opts);
+        renderDiagnostics(lastSimpleRegrResult.diagnostics, 'simpleRegrDiagPlot', opts);
+    }); });
+});
+document.getElementById('downloadSimpleRegrBtn').addEventListener('click', async function() {
+    if (!lastSimpleRegrResult) return;
+    await regrExport(lastSimpleRegrResult, 'simpleRegrScatterPlot', 'simpleRegrDiagPlot',
+        'simpleRegrExportScale', document.getElementById('simpleRegrExportSpinner'), this);
+});
+
+// Multiple Linear
+document.getElementById('runMultipleRegrBtn').addEventListener('click', function() {
+    const yCol  = document.getElementById('regrYCol').value;
+    const xCols = Array.from(document.querySelectorAll('#multipleRegrXList input[type=checkbox]:checked')).map(cb => cb.value);
+    if (!yCol)          return alert('Select a response variable (Y).');
+    if (xCols.length < 1) return alert('Tick at least one predictor variable (X).');
+    const getOpts = () => ({
+        fontFamily: document.getElementById('multipleRegrFontFamily').value,
+        fontSize:   parseInt(document.getElementById('multipleRegrFontSize').value) || 13,
+    });
+    regrFetch({ method:'multiple', y_col: yCol, x_cols: xCols }, result => {
+        lastMultipleRegrResult = result;
+        const opts = getOpts();
+        document.getElementById('multipleRegrMetrics').style.display = 'block';
+        document.getElementById('multipleRegrR2').textContent    = result.r_squared.toFixed(4);
+        document.getElementById('multipleRegrAdjR2').textContent = result.adj_r_squared.toFixed(4);
+        document.getElementById('multipleRegrFp').textContent    = result.f_pvalue !== null
+            ? (result.f_pvalue < 0.0001 ? result.f_pvalue.toExponential(2) : result.f_pvalue.toFixed(4)) : 'N/A';
+        document.getElementById('multipleRegrN').textContent = result.n;
+        document.getElementById('multipleRegrInfoCard').style.display = 'block';
+        document.getElementById('multipleRegrStyleCard').style.display = 'block';
+        document.getElementById('downloadMultipleRegrBtn').style.display = 'inline-block';
+        document.getElementById('multipleRegrStatus').innerHTML =
+            '<div class="alert alert-success py-2 small shadow-sm mb-2"><strong>Multiple LR complete:</strong> ' +
+            result.y_col + ' ~ ' + result.x_cols.join(' + ') +
+            ' — R\u00b2=' + result.r_squared.toFixed(3) +
+            ', Adj-R\u00b2=' + result.adj_r_squared.toFixed(3) + ', n=' + result.n + '</div>';
+        renderCoefForest(result, 'multipleRegrCoefPlot', opts);
+        renderDiagnostics(result.diagnostics, 'multipleRegrDiagPlot', opts);
+    },
+    document.getElementById('multipleRegrSpinner'),
+    document.getElementById('stopMultipleRegrBtn'),
+    document.getElementById('multipleRegrStatus'),
+    this);
+});
+document.getElementById('stopMultipleRegrBtn').addEventListener('click', function() {
+    if (regrAbortController) regrAbortController.abort();
+    document.getElementById('multipleRegrSpinner').style.display = 'none';
+    document.getElementById('runMultipleRegrBtn').disabled = false;
+    this.style.display = 'none';
+});
+['multipleRegrFontSize','multipleRegrFontFamily'].forEach(function(id) {
+    const el = document.getElementById(id);
+    ['change','input'].forEach(function(ev) { el.addEventListener(ev, function() {
+        if (id==='multipleRegrFontSize') document.getElementById('multipleRegrFontSizeVal').textContent = this.value;
+        if (!lastMultipleRegrResult) return;
+        const opts = { fontFamily: document.getElementById('multipleRegrFontFamily').value,
+                       fontSize:   parseInt(document.getElementById('multipleRegrFontSize').value) || 13 };
+        renderCoefForest(lastMultipleRegrResult, 'multipleRegrCoefPlot', opts);
+        renderDiagnostics(lastMultipleRegrResult.diagnostics, 'multipleRegrDiagPlot', opts);
+    }); });
+});
+document.getElementById('downloadMultipleRegrBtn').addEventListener('click', async function() {
+    if (!lastMultipleRegrResult) return;
+    await regrExport(lastMultipleRegrResult, 'multipleRegrCoefPlot', 'multipleRegrDiagPlot',
+        'multipleRegrExportScale', document.getElementById('multipleRegrExportSpinner'), this);
+});
+
