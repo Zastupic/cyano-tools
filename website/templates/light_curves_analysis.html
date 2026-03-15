@@ -1,377 +1,545 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
-{% block title %}
-    Rapid Light Curve (RLC) Analyzer & ETR Calculator | CyanoTools
-{% endblock %}
+{% block title %}Rapid Light Curve (RLC) Analyzer & ETR Calculator | CyanoTools{% endblock %}
 
 {% block description %}
-    Analyze Photosynthesis-Irradiance (P-I) curves online. Fit data to Platt models to calculate ETRmax, Alpha, and Ik. Compatible with Walz, AquaPen, and FluorPen data.
+  Analyze Photosynthesis-Irradiance (P-I) curves online. Fit data to the Platt model to calculate ETRmax, Alpha, and Ik. Compatible with AquaPen and FluorPen data.
 {% endblock %}
 
 {% block keywords %}
-    rapid light curves, RLC analysis, ETRmax calculator, photosynthetic efficiency, Platt 1980 model, rETR calculation, PAM fluorometry, photoinhibition analysis, plant stress physiology, Platt model, Eilers-Peeters model fitting, photosynthesis-irradiance curve, photoinhibition index, dynamic photosynthetic capacity, light saturation point
+  rapid light curves, RLC analysis, ETRmax calculator, photosynthetic efficiency, Platt 1980 model, rETR calculation, PAM fluorometry, photoinhibition analysis, plant stress physiology, Platt model, photosynthesis-irradiance curve, photoinhibition index, dynamic photosynthetic capacity, light saturation point
 {% endblock %}
 
 {% block extra_schema %}
-    <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          "name": "CyanoTools Rapid Light Curve Analyzer",
-          "operatingSystem": "Web",
-          "applicationCategory": "ScientificSoftware",
-          "description": "Fit Photosynthesis-Irradiance (P-I) curves using Platt or Eilers-Peeters models to calculate ETRmax and Alpha.",
-          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-          "featureList": "Non-linear regression fitting, Photoinhibition analysis, Electron transport rate calculation"
-        }
-    </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "CyanoTools Rapid Light Curve Analyzer",
+  "operatingSystem": "Web",
+  "applicationCategory": "ScientificSoftware",
+  "description": "Fit Photosynthesis-Irradiance (P-I) curves using the Platt model to calculate ETRmax and Alpha.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": "Non-linear regression fitting, Photoinhibition analysis, Electron transport rate calculation"
+}
+</script>
 {% endblock %}
 
 {% block content %}
+<style>
+  /* ── Light Curves main tabs → category-button style (matches OJIP) ── */
+  #lcTabs { border-bottom: 2px solid #dee2e6; margin-bottom: 0; padding-bottom: 0; }
+  #lcTabs .nav-link {
+    border: 1px solid #dee2e6; border-bottom: none; background: #f8f9fa;
+    padding: 0.35rem 1.1rem; font-weight: 600; font-size: 0.85rem;
+    border-radius: 6px 6px 0 0; color: #495057;
+    margin-right: 3px; margin-bottom: -2px;
+    transition: background 0.12s, color 0.12s;
+  }
+  #lcTabs .nav-link:hover:not(.active) { background: #e2e6ea; color: #212529; }
+  #lcTabs .nav-link.active {
+    background: #004085; color: #fff; border-color: #004085;
+    border-bottom: 2px solid #004085;
+  }
+  /* ── Segmented-control pill toggles ── */
+  .ojip-seg-ctrl {
+    display: inline-flex; background: #e8edf2; border-radius: 10px;
+    padding: 4px; gap: 3px; border: 1px solid #c8d3de;
+  }
+  .ojip-seg-ctrl .btn {
+    border: none !important; border-radius: 7px !important;
+    padding: 5px 13px !important; font-size: 0.79rem !important;
+    font-weight: 600; line-height: 1.3; transition: all 0.17s ease;
+  }
+  .ojip-seg-ctrl .btn-outline-primary {
+    background: transparent !important; color: #5a6a7a !important;
+    box-shadow: none !important;
+  }
+  .ojip-seg-ctrl .btn-outline-primary:hover {
+    background: #d4dde7 !important; color: #003566 !important;
+  }
+  .ojip-seg-ctrl .btn-primary {
+    background: #ffffff !important; color: #004085 !important;
+    box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
+  }
+</style>
+
 <!-- Banner -->
 <div id="banner-content">
-    <div class="banner-desktop"><!-- Desktop banner -->
-        <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
-             alt="CyanoTools analytical tools for algae and cyanobacteria"
-             style="width: 100%;">
-    </div>
-    <div class="banner-mobile"><!-- Mobile banner -->
-        <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
-             alt="CyanoTools mobile banner"
-             style="width: 100%;">
-    </div>
+  <div class="banner-desktop">
+    <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
+         alt="CyanoTools analytical tools for algae and cyanobacteria" style="width:100%;">
+  </div>
+  <div class="banner-mobile">
+    <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
+         alt="CyanoTools mobile banner" style="width:100%;">
+  </div>
 </div>
-<br>
-<h1>Analysis of rapid light curves
-    <br>(Photosynthesis-Irradiance curves)</h1>
-<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
-    <strong>At a glance:</strong> Upload rapid light curve data from your PAM fluorometer to plot electron transport rate (rETR) vs. irradiance and extract key photosynthetic parameters — including ETR<sub>max</sub>, photosynthetic efficiency (α), saturation irradiance (I<sub>k</sub>), and the photoinhibition coefficient (β). No software installation needed; results download as a formatted .xlsx file. Supports batch processing of up to 50 files.
+
+<!-- ══════════════════════════════════════════════════════════════════
+     INTRO CARD
+═══════════════════════════════════════════════════════════════════ -->
+<div class="p-4 border rounded shadow-sm bg-white mb-4">
+  <h2 class="font-weight-bold mb-3">
+    <i class="fa fa-line-chart text-primary mr-2"></i>Rapid Light Curve Analyzer
+    <small class="text-muted" style="font-size:0.65em;">(Photosynthesis-Irradiance curves)</small>
+  </h2>
+  <div class="alert alert-info mb-3" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload rapid light curve data from your PAM fluorometer to plot
+    electron transport rate (rETR) vs. irradiance and extract key photosynthetic parameters —
+    including ETR<sub>max</sub>, photosynthetic efficiency (α), saturation irradiance (I<sub>k</sub>),
+    and the photoinhibition coefficient (β). Supports batch processing of up to 50 files with interactive
+    charts, replicate grouping, and export to .xlsx.
+  </div>
+  <p class="mb-3">Welcome to the rapid light curves analyzing tool! Rapid light curves
+    (also called photosynthesis-irradiance curves) are a widely used method for assessing photosynthetic
+    performance under varying light intensities. By analyzing how chlorophyll fluorescence changes in
+    response to stepwise increases in actinic light, this method provides insights into photosynthetic
+    efficiency, photoprotection mechanisms, and the functional state of photosystem II (PSII).
+    The rapid light curves can be measured in plants, algae, cyanobacteria and in some photosynthetic bacteria.
+  </p>
+  <p class="mb-3">The curves are fitted by the model described by
+    <a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank" rel="noopener">Platt et al. (1980)</a>:
+  </p>
+  <p>
+    $$\begin{multline}\shoveleft rETR = rETR_{mPot} (1 - e^\frac{\alpha \cdot PAR}{rETR_{mPot}}) e^{-\frac{\beta \cdot PAR}{rETR_{mPot}}}\end{multline}$$
+  </p>
+
+  <div class="accordion" id="lcInfoAccordion">
+
+    <!-- Parameter table -->
+    <div class="card">
+      <div class="card-header py-2" id="headingParamTable">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseParamTable"
+                  aria-expanded="false" aria-controls="collapseParamTable">
+            <i class="fa fa-table mr-2"></i>Parameter reference table
+          </button>
+        </h6>
+      </div>
+      <div id="collapseParamTable" class="collapse" aria-labelledby="headingParamTable" data-parent="#lcInfoAccordion">
+        <div class="card-body p-2">
+          <table style="width:95%; font-size:90%; margin-top:0.5em;">
+            <colgroup>
+              <col style="width:8%"><col style="width:22%"><col style="width:10%"><col style="width:60%">
+            </colgroup>
+            <tr><td><u>Parameter</u></td><td><u>Formula</u></td><td><u>Unit</u></td><td><u>Meaning</u></td></tr>
+            <tr><td colspan="4"><i>Technical parameters</i></td></tr>
+            <tr><td>PAR</td><td></td><td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Photosynthetically active radiation</td></tr>
+            <tr><td>F<sub>O</sub>'</td><td></td><td></td><td>Minimum fluorescence yield of the measured culture</td></tr>
+            <tr><td>F<sub>t</sub>, F<sub>M</sub>'</td><td></td><td></td><td>Steady-state and maximum fluorescence yield under each tested PAR level, respectively</td></tr>
+            <tr><td>F<sub>M</sub>'<sub> (max)</sub></td><td></td><td></td><td>Maximum fluorescence yield across all tested PAR levels</td></tr>
+            <tr><td colspan="4"><i>&nbsp;</i></td></tr>
+            <tr><td colspan="4"><i>Efficiencies, quantum yields and quenching</i></td></tr>
+            <tr><td>Q<sub>y</sub></td><td>(F<sub>M</sub>' - F<sub>t</sub>) / F<sub>M</sub>'</td><td></td><td>Effective quantum yield of electron transport through PSII</td></tr>
+            <tr><td>rETR</td><td>Q<sub>y</sub> × PAR</td><td>µmol<sub>e⁻</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Relative electron transport rate</td></tr>
+            <tr><td>qP</td><td>(F<sub>M</sub>' - F<sub>t</sub>) / (F<sub>M</sub>' - F<sub>O</sub>)</td><td></td><td>Coefficient of photochemical quenching</td></tr>
+            <tr><td>qN</td><td>(F<sub>M</sub>'<sub>(max)</sub> - F<sub>M</sub>') / (F<sub>M</sub>'<sub>(max)</sub> - F<sub>O</sub>)</td><td></td><td>Coefficient of non-photochemical quenching</td></tr>
+            <tr><td>NPQ</td><td>(F<sub>M</sub>'<sub>(max)</sub> - F<sub>M</sub>') / F<sub>M</sub>'</td><td></td><td>Non-photochemical quenching</td></tr>
+            <tr><td colspan="4"><i>&nbsp;</i></td></tr>
+            <tr><td colspan="4"><i>Parameters based on light curve fitting</i></td></tr>
+            <tr><td>α</td><td></td><td>e⁻ photons<sup>-1</sup></td><td>Initial slope of the light curve; related to quantum efficiency of photosynthesis</td></tr>
+            <tr><td>β</td><td></td><td>e⁻ photons<sup>-1</sup></td><td>Slope of the light curve under highest irradiances; related to photoinhibition</td></tr>
+            <tr><td>ETR<sub>mPot</sub></td><td></td><td>µmol<sub>e⁻</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Potential maximum ETR without photoinhibition</td></tr>
+            <tr><td>ETR<sub>max</sub></td><td>ETR [α / (α+β)] [β / (α+β)]<sup>(β/α)</sup></td><td>µmol<sub>e⁻</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Maximum electron transport rate</td></tr>
+            <tr><td>I<sub>k</sub></td><td>ETR<sub>max</sub> / α</td><td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Irradiance required to saturate ETR<sub>max</sub></td></tr>
+            <tr><td>I<sub>b</sub></td><td>ETR<sub>max</sub> / β</td><td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Photoinhibition irradiance index</td></tr>
+          </table>
+          <p style="font-size:75%; line-height:1.3; margin-top:0.5em;">
+            References:
+            Ralph &amp; Gademann (2005) Aquatic Botany 82, 222–237 ·
+            White &amp; Critchley (1999) Photosynthesis Research 59, 63–72 ·
+            Platt et al. (1980) Journal of Marine Research 38, 687–701
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- How to use -->
+    <div class="card">
+      <div class="card-header py-2" id="headingHowTo">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseHowTo"
+                  aria-expanded="false" aria-controls="collapseHowTo">
+            <i class="fa fa-question-circle mr-2"></i>How to use this tool
+          </button>
+        </h6>
+      </div>
+      <div id="collapseHowTo" class="collapse" aria-labelledby="headingHowTo" data-parent="#lcInfoAccordion">
+        <div class="card-body">
+          <ol class="mt-2">
+            <li>Select the light curves protocol that matches your measurement</li>
+            <li>Optionally adjust the ETR<sub>max</sub> factor (controls the upper fitting boundary)</li>
+            <li>Upload one or more .txt files exported from AquaPen or FluorPen (up to 50 files)</li>
+            <li>Click <em>Upload &amp; Analyze</em></li>
+            <li>Explore raw fluorescence, Ft/Fm, ETR curves, and derived parameters in the interactive tabs</li>
+            <li>Optionally assign files to groups to compare replicates with mean ± SD</li>
+            <li>Download results as .xlsx</li>
+          </ol>
+          <p style="font-size:90%;">
+            <i class="fa fa-info-circle mr-1 text-info"></i>
+            Accepted file format: <strong>.txt</strong> files exported by
+            <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener">AquaPen</a> /
+            <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener">FluorPen</a>
+            (Photon Systems Instruments), with parameter export enabled.
+          </p>
+          <div class="gallery_6_img mt-2">
+            <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--1">
+              <i style="font-size:80%">AquaPen &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+              <img src="static/images/aquapen.jpg" alt="Aquapen Photon System Instruments" class="gallery__item--3">
+            </a>
+            <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--2">
+              <i style="font-size:80%">FluorPen &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+              <img src="static/images/fluorpen.jpg" alt="FluorPen Photon System Instruments" class="gallery__item--4">
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /accordion -->
 </div>
-<p>Welcome to the rapid light curves analyzing tool! Rapid light curves 
-    (also called photosynthesis-irradiance curves) are a widely used method for assessing photosynthetic performance 
-    under varying light intensities. By analyzing how chlorophyll fluorescence changes in response to stepwise increases in actinic light, 
-    this method provides insights into photosynthetic efficiency, photoprotection mechanisms, and the functional state of photosystem II (PSII).
-    The rapid light curves can be measured in plants, algae, cyanobacteria and in some photosynthetic bacteria. 
-</p>
-<p>This tool allows visualization and quantitative analysis of rapid ligth curves recorded with various PAM fluorometers, including 
-    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
-    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">DUAL-PAM</a>, 
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">AquaPen</a>, 
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">FluorPen</a> or
-    <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" rel="noopener" class="gallery__item--5">FL 6000</a>.
-    Up to 50 files can be uploaded simultaneously for batch processing. The tool generates multiple visualizations for each file precessed, including:
-<ul style="font-size:95%">
-    <li>Raw fluorescence signal under stepwise increased actinic light</li>
-    <li>Technical parameters of the fluorescence signal, such as <i>F<sub>t</sub></i> or <i>F<sub>M</sub></i></li>
-    <li>Derived parameters (for details, see the summary table below):
-        <ul>
-            <li><i>Q<sub>Y</sub></i>, <i>rETR</i>, <i>qP</i>, <i>qN</i> and <i>NPQ</i></li>
-            <li>Parameters of ETR fitting: <i>α</i>, <i>β</i>, <i>ETR<sub>max</sub></i>, I<sub>k</sub>, I<sub>b</sub></li>
-        </ul>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     UPLOAD CARD
+═══════════════════════════════════════════════════════════════════ -->
+<div class="card mb-4 shadow-sm" id="upload-card">
+  <div class="card-header font-weight-bold">
+    <i class="fa fa-upload text-primary mr-2"></i>Upload &amp; Analyze Light Curve Files
+  </div>
+  <div class="card-body">
+
+    <!-- Step 1: Fluorometer (informational only — AquaPen/FluorPen is the only option) -->
+    <div class="form-group mb-3">
+      <label><span class="badge badge-primary mr-1">1</span> Fluorometer</label>
+      <select id="fluorometer" class="form-control" style="width:100%" disabled>
+        <option value="AquaPen">AquaPen / FluorPen (Photon Systems Instruments)</option>
+      </select>
+      <small class="text-muted">Currently only AquaPen / FluorPen .txt files are supported.</small>
+    </div>
+
+    <!-- Step 2: Protocol selection -->
+    <div class="form-group mb-3">
+      <label class="font-weight-bold"><span class="badge badge-primary mr-1">2</span> Select light curves protocol (AquaPen / FluorPen)</label>
+      <div class="mt-1">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="lc_protocol" id="proto_LC1" value="LC1">
+          <label class="form-check-label" for="proto_LC1">
+            <i>Light curve 1:
+              <span style="font-size:90%;">phases: <b>6</b>, intensities:
+              <b>10; 20; 50; 100; 300; 500 µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></b></span>
+            </i>
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="lc_protocol" id="proto_LC2" value="LC2">
+          <label class="form-check-label" for="proto_LC2">
+            <i>Light curve 2:
+              <span style="font-size:90%;">phases: <b>5</b>, intensities:
+              <b>100; 200; 300; 500; 1000 µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></b></span>
+            </i>
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="lc_protocol" id="proto_LC3" value="LC3" checked>
+          <label class="form-check-label" for="proto_LC3">
+            <i>Light curve 3:
+              <span style="font-size:90%;">phases: <b>7</b>, intensities:
+              <b>10; 20; 50; 100; 300; 500; 1000 µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></b></span>
+            </i>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Additional parameters (collapsible) -->
+    <div class="card mb-3" style="border:1px solid #dee2e6;">
+      <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between"
+           data-toggle="collapse" data-target="#advancedParams"
+           aria-expanded="false" aria-controls="advancedParams"
+           style="cursor:pointer; background:#f8f9fa; user-select:none;">
+        <span>
+          <span class="badge badge-primary mr-1">3</span> Additional fitting parameter
+          <span class="text-muted ml-2" style="font-size:0.85rem;">ETR<sub>max</sub> factor</span>
+        </span>
+        <i class="fa fa-chevron-down text-muted" id="advancedParamsChevron" style="transition:transform 0.2s;"></i>
+      </div>
+      <div id="advancedParams" class="collapse">
+        <div class="card-body py-3">
+          <div class="form-group mb-0">
+            <label for="etr_max_factor" class="font-weight-bold mb-1">
+              ETR<sub>max</sub> factor
+            </label>
+            <div class="form-row align-items-center">
+              <div class="col-auto">
+                <input type="number" id="etr_max_factor" class="form-control form-control-sm"
+                       value="10" min="1" max="100" step="1" style="width:80px">
+              </div>
+              <div class="col-auto">
+                <small class="text-muted ml-1">
+                  Defines the upper ETR<sub>mPot</sub> fitting boundary as:
+                  ETR<sub>mPot,max</sub> = ETR<sub>max,measured</sub> × factor.
+                  Increase if the fit fails.
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: File drop zone -->
+    <label><span class="badge badge-primary mr-1">4</span> Select files (up to 50; .txt from AquaPen / FluorPen)</label>
+    <div id="drop-zone" class="border rounded p-4 text-center mb-2"
+         style="border-style:dashed !important; cursor:pointer; background:#f8f9fa; transition:background 0.2s;">
+      <i class="fa fa-upload fa-2x text-muted mb-2"></i>
+      <p class="mb-1 text-muted">Drag &amp; drop files here, or click to browse</p>
+      <small class="text-muted" id="file-count-label">No files selected</small>
+      <input type="file" id="lc-files" multiple accept=".txt" style="display:none">
+    </div>
+    <div id="file-list" class="mb-3" style="max-height:120px; overflow-y:auto; font-size:0.85em;"></div>
+
+    <!-- Buttons -->
+    <div class="d-flex flex-wrap align-items-center">
+      <button id="analyze-btn" class="btn btn-primary mr-2" disabled>
+        <span id="analyze-spinner" class="spinner-border spinner-border-sm mr-1" role="status" style="display:none"></span>
+        Upload &amp; Analyze
+      </button>
+      <a href="{{ url_for('static', filename='files/Light_curve_3_example_files.zip') }}" download="Light_curve_3_example_files">
+        <button type="button" class="btn btn-outline-secondary btn-sm">Download example files</button>
+      </a>
+      <div id="upload-error" class="alert alert-danger mt-2 mb-0 py-1 px-2 w-100" style="display:none; font-size:0.9em;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     RESULTS SECTION
+═══════════════════════════════════════════════════════════════════ -->
+<div id="results-section" style="display:none">
+
+  <div class="alert alert-success mb-3 py-2" id="results-summary"></div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="lcTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" id="tab-raw-link" data-toggle="tab" href="#tab-raw" role="tab">
+        <i class="fa fa-area-chart"></i> Raw Fluorescence
+      </a>
     </li>
-</ul>
-<br>
-The curves are fitted by a model described by 
-<a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank" rel="noopener">Platt et al. (1980)</a>:  
-</p>
-<p>$$
-    \begin{multline}
-    \shoveleft rETR = rETR_{mPot} (1 - e^\frac{\alpha PAR}{rETR_{mPot}}) e^{-\frac{\beta PAR}{rETR_{mPot}}},
-    \end{multline}
-    $$
-</p>
-<p>This allows to derive additional paramters such as photosynthesis efficiency under low irradiance (<i>α</i>), 
-    photoinhibition coefficient under high irradiance (<i>β</i>), maximum potential electron transport rate (<i>ETR<sub>max</sub></i>), 
-    or irradiance required to reach maximal rETR in theoretical scenario where 
-    photoinhibition would be absent. The full list of parameters is summarized below.
-    After analysis, all curves, calculated values, and summary statistics are compiled into a downloadable .xlsx file for further use.
-</p>
-<br>
-<div class="container">
-    <img src="static/images/light_curve_orig.jpg" alt="Light curve example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%;">
-</div>
-<table style="width:95%">
-    <colgroup>
-        <col style="width:2%">
-        <col style="width:4%">
-        <col style="width:2%">
-        <col style="width:12%">
-    </colgroup>  
-    <tr>
-        <td><u>Parameter</u></td>
-        <td><u>Formula</u></td>
-        <td><u>Unit</u></td>
-        <td><u>Meaning</u></td>
-    </tr>
-    <tr>
-        <td colspan="4"><i>Technical parameters</i></td>
-    </tr>
-    <tr>
-        <td>PAR</td>
-        <td></td>
-        <td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
-        <td>Photosynthetically active radiation</td>
-    </tr>
-    <tr>
-        <td>F<sub>O</sub>'</td>
-        <td></td>
-        <td></td>   
-        <td>Minimum fluorescence yield of the measured culture</td>
-    </tr>
-    <tr>
-        <td>F<sub>t</sub>, F<sub>M</sub>'</td>
-        <td></td>
-        <td></td>
-        <td>Steady-state and maximum fluorescence yield under each tested PAR level, respectively</td>
-    </tr>
-    <tr>
-        <td>F<sub>M</sub>'<sub> (max)</sub></td>
-        <td></td>
-        <td></td>
-        <td>Maximum fluorescence yield through all tested PAR levels</td>
-    </tr>
-    <tr>
-        <td colspan="4"><i>&nbsp</i></td>
-    </tr>
-    <tr>
-        <td colspan="4"><i>Efficiencies, quantum yields and quenching</i></td>
-    </tr>
-    <tr>
-        <td>Q<sub>y</sub></td>
-        <td>(F<sub>M</sub>' - F<sub>t</sub>) / F<sub>M</sub>'</td>
-        <td></td>
-        <td>Effective quantum yield of electron transport through PSII</td>
-    </tr>
-    <tr>
-        <td>rETR</td>
-        <td>Q<sub>y</sub> * PAR</td>
-        <td>µmol<sub>electrons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
-        <td>Relative electron transport rate; assuming that
-            <a href="https://aquation.com.au/wp-content/uploads/2017/08/How-to-Analyse-a-Rapid-Light-Curve.pdf" target="blank" rel="noopener">
-                the value of photons absorptance by PSII is unknown</a></td>
-    </tr>
-    <tr>
-        <td>qP</td>
-        <td>(F<sub>M</sub>' - F<sub>t</sub>) / (F<sub>M</sub>' - F<sub>O</sub>)</td>
-        <td></td>
-        <td>Coefficient of photochemical quenching (flow of the captured light energy into photochemical reactions)</td>
-    </tr>
-    <tr>
-        <td>qN</td>
-        <td>(F<sub>M</sub>'<sub> (max)</sub> - F<sub>M</sub>') / (F<sub>M</sub>'<sub> (max)</sub> - F<sub>O</sub>)</td>
-        <td></td>
-        <td>Coefficient of non-photochemical quenching (flow of the captured light energy into heat)</td>
-    </tr>
-    <tr>
-        <td>NPQ</td>
-        <td>(F<sub>M</sub>'<sub> (max)</sub> - F<sub>M</sub>') / F<sub>M</sub>'</td>
-        <td></td>
-        <td>Non-photochemical quenching (flow of the captured light energy into heat)</td>
-    </tr>
-        <tr>
-        <td colspan="4"><i>&nbsp</i></td>
-    </tr>
-    <tr>
-        <td colspan="4"><i>Parameters based on the light curves fitting</i></td>
-    </tr>
-    <tr>
-        <td>α</td>
-        <td></td>
-        <td>electrons photons<sup>-1</sup></td>
-        <td>Initial slope of the light curve, related to quantum efficiency of photosynthesis</td>
-    </tr>
-    <tr>
-        <td>β</td>
-        <td></td>
-        <td>electrons photons<sup>-1</sup></td>
-        <td>Slope of the light curve under the highest intensities, related to photoinhibition</td>
-    </tr>
-    <tr>
-        <td>ETR<sub>mPot</sub></td>
-        <td></td>
-        <td>µmol<sub>electrons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
-        <td>Potential maximum ETR without photoinhibition considered</td>
-    </tr>
-    <tr>
-        <td>ETR<sub>max</sub></td>
-        <td>ETR [α / (α + β)] [β / (α + β)]<sup>(β/α)</sup></td>
-        <td>µmol<sub>electrons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
-        <td>Maximum electron transport rate</td>
-    </tr>
-    <tr>
-        <td>I<sub>k</sub></td>
-        <td>ETR<sub>max</sub> / α</td>
-        <td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
-        <td>Irradiance required to saturate ETR<sub>max</sub></td>
-    </tr>
-    <tr>
-        <td>I<sub>b</sub></td>
-        <td>ETR<sub>max</sub> / β</td>
-        <td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td>
-        <td>Irradiance required to photoinhibit ETR<sub>mPot</sub>, also known as photoinhibition index</td>
-    </tr>
-</table>
-<p style="line-height: 0.9">
-    <b style="font-size:70%"><i>References:</i></b>
-    <br>
-    <i style="font-size:70%">Ralph P., Gademann R. (2005):
-        Aquatic Botany 82, 222–237, DOI: 
-    <a href="https://doi.org/10.1016/j.aquabot.2005.02.006" target="_blank" rel="noopener">10.1016/j.aquabot.2005.02.006</a></i>
-    <br>
-    <i style="font-size:70%">White A. J., Critchley C. (1999):
-        Photosynthesis Research, 59, 63–72, DOI:
-    <a href=" https://doi.org/10.1023/A:1006188004189" target="_blank" rel="noopener">10.1023/A:1006188004189</a></i>
-    <br>
-    <i style="font-size:70%">Platt T., Gallegos C. L., Harrison W. G (1980):
-        Journal of Marine Research, 38, 687-701:
-    <a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank" rel="noopener">1525</a></i>
-</p>
-<br>
-<u>How to use this tool:</u>
-<br>
-<ol>
-    <li>Select your fluorometer</li>
-    <li>Select the measured ligth curves protocol</li>
-    <li>Adjust parameters related to rapid light curves fitting (by the equation shown above)</li>
-    <li>Upload and analyze light curve files (up to 50 files)</li>
-    <li>Review the light curves and the calculated parameters</li>
-    <li>Download the processed results in a summary .xlsx file</li>
-</ol>
-<br>
-<a style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .txt files, as obtained by <i>AquaPen / FluorPen</i> fluorometers:</i></a>
-<div class="gallery_6_img">
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--1">
-        <i style="font-size:80%">AquaPen</i>
-        <img src="static/images/aquapen.jpg" 
-        alt="Aquapen Photon System Instruments" class="gallery__item--3">
-    </a>
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--2">
-        <i style="font-size:80%">FluorPen</i>
-        <img src="static/images/fluorpen.jpg" 
-        alt="FluorPen Photon System Instruments" class="gallery__item--4">
-    </a>
-</div>
-<br>
-<form method="POST" enctype="multipart/form-data" action="{{ url_for('light_curves_analysis.analyze_light_curves', _anchor='results') }}">
-    <div class="form-group">
-        <label for="fluorometer"><p class="font-weight-bold">{{ '1. Select fluorometer' }}</p></label>
-            <select name="fluorometer" class="form-control"  aria-label="fluorometer" style="width:100%">
-                <option selected="Aquapen">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
-            </select>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-ftfm-link" data-toggle="tab" href="#tab-ftfm" role="tab">
+        <i class="fa fa-line-chart"></i> Ft &amp; Fm
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-etr-link" data-toggle="tab" href="#tab-etr" role="tab">
+        <i class="fa fa-bolt"></i> ETR
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-derived-link" data-toggle="tab" href="#tab-derived" role="tab">
+        <i class="fa fa-bar-chart"></i> Derived
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-params-link" data-toggle="tab" href="#tab-params" role="tab">
+        <i class="fa fa-table"></i> Parameters
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-groups-link" data-toggle="tab" href="#tab-groups" role="tab">
+        <i class="fa fa-object-group"></i> Groups &amp; Averages
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white" id="lcTabContent">
+
+    <!-- ── Raw Fluorescence tab ──────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="tab-raw" role="tabpanel">
+      <p class="text-muted small mb-2">Raw fluorescence signal over time for each uploaded file. The stepwise increases correspond to successive light intensity phases.</p>
+      <div style="position:relative; height:360px;">
+        <canvas id="raw-chart"></canvas>
+      </div>
     </div>
-    <br>
-    <label class="form-label"><p class="font-weight-bold">2. Select light curves protocol (Aquapen)</p></label>
-    <div class="form-check">
-        <input class="form-check-input" type="radio" name="checkbox_LC" id="checkbox_LC1" value="checkbox_LC1">
-        <label class="form-check-label" for="checkbox_LC">
-            <i> &nbspLight curve 1: <font size="2">Number of phases: <b>6</b>, Duration of each phase: <b>60 s</b>, Light intensities: <b>10; 20; 50; 100; 300; 500 μmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></font></b></i>
-        </label>
-        <br>
-        <input class="form-check-input" type="radio" name="checkbox_LC" id="checkbox_LC2" value="checkbox_LC2">
-        <label class="form-check-label" for="checkbox_LC"></label>
-            <i>Light curve 2: <font size="2">Number of phases: <b>5</b>, Duration of each phase: <b>30 s</b>, light intensities: <b>100; 200; 300; 500; 1000 μmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></font></i></b>
-        </label>
-        <br>
-        <input class="form-check-input" type="radio" name="checkbox_LC" id="checkbox_LC3" value="checkbox_LC3" checked>
-        <label class="form-check-label" for="checkbox_LC"></label>
-            <i>Light curve 3: <font size="2">Number of phases: <b>7</b>, Duration of each phase: <b>60 s</b>, light intensities: <b>10; 20; 50; 100; 300; 500; 1000 μmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></font></i></b>
-        </label>
+
+    <!-- ── Ft & Fm tab ──────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-ftfm" role="tabpanel">
+      <p class="text-muted small mb-2">
+        Steady-state fluorescence F<sub>t</sub> (solid lines) and maximum fluorescence F<sub>m</sub>' (dashed lines) at each PAR step.
+      </p>
+      <div style="position:relative; height:360px;">
+        <canvas id="ftfm-chart"></canvas>
+      </div>
     </div>
-    <br>
-    <br>
-    <p><b>3. Adjust additional parameters</b></p>
-    <div class="gallery_sliders_cell_count">
-        <span STYLE="font-size:9.5pt">1</span>
-        <div class="slidecontainer">
-            <input type="range" 
-                    min="1" max="100" 
-                    value="10" 
-                    class="slider" 
-                    name="ETR_max_multiplication_factor_range"
-                    id="ETR_max_multiplication_factor_range"/>
+
+    <!-- ── ETR tab ──────────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-etr" role="tabpanel">
+      <p class="text-muted small mb-2">
+        Relative electron transport rate (rETR): measured values (scatter points) and Platt model fit (lines).
+      </p>
+      <div style="position:relative; height:360px;">
+        <canvas id="etr-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- ── Derived tab ──────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-derived" role="tabpanel">
+      <div class="d-flex flex-wrap align-items-center mb-2">
+        <span class="mr-2 font-weight-bold">Metric:</span>
+        <div class="ojip-seg-ctrl" id="derived-btns">
+          <button class="btn btn-primary"         data-metric="qy">QY</button>
+          <button class="btn btn-outline-primary" data-metric="npq">NPQ</button>
+          <button class="btn btn-outline-primary" data-metric="qp">qP</button>
+          <button class="btn btn-outline-primary" data-metric="qn">qN</button>
         </div>
-        <span STYLE="font-size:9.5pt">100</span>
-        <a>ETR<sub>max factor</sub>: <b><span id="ETR_max_multiplication_factor"></span></b>. The factor defines upper <i>ETR<sub>mPot</sub></i> limit as: <i>ETR<sub>mPot</sub> = ETR<sub>max measured</sub> * ETR<sub>max factor</sub></i></a>
+      </div>
+      <div style="position:relative; height:360px;">
+        <canvas id="derived-chart"></canvas>
+      </div>
     </div>
-    <p class="font-weight-bold">4. Select files</p>
-    <div class="custom-file">
-        <input 
-            type="file" 
-            class="custom-file-input" 
-            type="file"
-            name="light_curve_files"
-            id="light_curve_files"
-            multiple=""
-            accept=".csv, .CSV, .txt, .ASCII"
-            style="width:100%">
-        <label class="custom-file-label" for="customFile">Select files</label>
-    </div>
-    <br> <br>
-    <button id="show-image-button" type="submit" class="btn btn-primary">Upload and analyze light curves</button>
-    <a href="{{url_for('static', filename='files/Light_curve_3_example_files.zip')}}" download="Light_curve_3_example_files">
-        <button type="button" class="btn btn-outline-primary" >Download example light curve files</button>
-    </a>
-</form>
-<br>
-<div class="container">
-    <img id="loadingimage" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
-</div>
 
-{% if plot_from_memory %}
-    <section id="results"></section>   
-    <br> <br>
-    <h6><b>Light curves: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ plot_from_memory }}" alt="Fluorescence rapid light curves analyzed-fluorescence kinetics"/>
-    <br> <br>
-
-    <h6><b>Calculated parameters: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ parameters_from_memory }}" alt="Fluorescence rapid light curves analyzed-parameters"/>
-    <br> <br>
-
-    <details style="margin-bottom:1em;">
-        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
-        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-            <ul class="mb-0">
-                <li><strong>ETR<sub>max</sub></strong> — maximum relative electron transport rate. Typical unstressed cyanobacteria/algae: <strong>50–200 μmol e⁻ m⁻² s⁻¹</strong>; higher values = greater photosynthetic capacity.</li>
-                <li><strong>α</strong> — initial slope of the light curve; photosynthetic efficiency under weak light. Higher α = better use of dim light. Typical range: 0.2–0.8.</li>
-                <li><strong>I<sub>k</sub></strong> — saturation irradiance (light level where ETR saturates). Low-light adapted: 50–200 μmol photons m⁻² s⁻¹; high-light adapted: 200–600+ μmol photons m⁻² s⁻¹.</li>
-                <li><strong>β</strong> — photoinhibition coefficient. β &gt; 0 indicates a measurable decline in ETR at high irradiance (photoinhibition); β ≈ 0 means no significant photoinhibition was detected.</li>
-                <li><strong>NPQ</strong> — non-photochemical quenching; a measure of photoprotective thermal dissipation. Values &gt; 1 indicate active photoprotection; &gt; 3 suggests strong dissipation under stress.</li>
-            </ul>
+    <!-- ── Parameters tab ───────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-params" role="tabpanel">
+      <div class="d-flex flex-wrap align-items-center mb-2">
+        <span class="mr-2 font-weight-bold">Parameter group:</span>
+        <div class="ojip-seg-ctrl" id="param-group-btns">
+          <button class="btn btn-primary"         data-pgroup="efficiencies">Efficiencies (α, β)</button>
+          <button class="btn btn-outline-primary" data-pgroup="rates">Rates &amp; Irradiances</button>
         </div>
-    </details>
-    <form>
-        <h6><b>Download results:</b></h6>
-        <ol>
-            <li>Plots (as shown above)</li>
-            <li>Raw fluorescence signals</li>
-            <li>Technical parameters (F<sub>t</sub>, F<sub>m</sub>') </li>
-            <li>Calculated parameters (qP, NPQ, Q<sub>y</sub>, ETR<sub>measured</sub>)</li>
-            <li>Parameters based on the light curves fitting (ETR<sub>fitted</sub>, α, β, I<sub>k</sub>, I<sub>b</sub>, ETR<sub>max</sub>, ETR<sub>mPot</sub>)</li>
-        </ol>
-        <br>
-        <a href="{{ url_for('static', filename=xlsx_file_path)}}">
-            <button type="button" class="btn btn-success">Download summary .xlsx file</button>
-        </a>
-
-    </form>
-
-{% elif raw_data_from_memory %}
-    <section id="exactlocation"></section>   
-    <br> <br>
-    <div class="alert alert-danger fade show" role="alert">
-        <strong>Some light curves contain either zero or oversaturated fluorescence signal. Please inspect the measured data and select only rapid light curves suitable for fitting.</strong>
+      </div>
+      <div style="position:relative; height:340px;">
+        <canvas id="params-chart"></canvas>
+      </div>
+      <div style="overflow-x:auto; font-size:0.82em; margin-top:0.75rem;">
+        <table class="table table-sm table-hover table-bordered mb-0" id="params-table"></table>
+      </div>
     </div>
-    <br>     
-    <h6><b>Raw fluorescence signals: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ raw_data_from_memory }}" alt="Fluorescence rapid light curves analyzed-fluorescnce signal"/>
 
-{% else %}
-<br><br><br><br><br><br><br>
+    <!-- ── Groups & Averages tab ────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-groups" role="tabpanel">
 
-{% endif %}
-<br><br><br><br><br><br><br>
+      <!-- Assignment panel -->
+      <div class="card mb-3">
+        <div class="card-header py-2 font-weight-bold">Assign files to groups</div>
+        <div class="card-body py-2">
+          <div class="d-flex flex-wrap align-items-center mb-2">
+            <button class="btn btn-sm btn-outline-secondary mr-1" id="sort-asc-btn">Sort A→Z</button>
+            <button class="btn btn-sm btn-outline-secondary mr-2" id="sort-desc-btn">Sort Z→A</button>
+            <button class="btn btn-sm btn-outline-secondary mr-2" id="auto-detect-btn">
+              Auto-detect from filename prefix
+            </button>
+            <button class="btn btn-sm btn-outline-danger mr-2" id="clear-groups-btn">Clear all groups</button>
+          </div>
+          <div style="overflow-x:auto; font-size:0.85em;">
+            <table class="table table-sm table-bordered mb-2" id="group-assign-table">
+              <thead class="thead-light">
+                <tr>
+                  <th style="width:40px"><input type="checkbox" id="select-all-check"></th>
+                  <th>Sample name</th>
+                  <th>Current group</th>
+                  <th>Remove</th>
+                </tr>
+              </thead>
+              <tbody id="group-assign-body"></tbody>
+            </table>
+          </div>
+          <div class="input-group input-group-sm" style="max-width:400px;">
+            <input type="text" id="group-name-input" class="form-control" placeholder="Group name (e.g. Control)">
+            <div class="input-group-append">
+              <button class="btn btn-primary" id="assign-group-btn">Assign selected</button>
+            </div>
+          </div>
+          <div id="groups-summary" class="mt-2"></div>
+        </div>
+      </div>
 
-<script src="{{url_for('static', filename='js_light_curves.js')}}"></script>
+      <!-- Group results (visible only after ≥2 groups defined) -->
+      <div id="group-results" style="display:none">
+        <h6 class="font-weight-bold">Mean ± SD ETR curves</h6>
+        <p class="text-muted small mb-2">
+          Mean ± SD rETR (shaded band) with individual Platt-fitted curves (thin lines) per group.
+        </p>
+        <div style="position:relative; height:360px;">
+          <canvas id="group-etr-chart"></canvas>
+        </div>
+
+        <h6 class="font-weight-bold mt-4">Parameters by group (mean ± SD)</h6>
+        <div class="d-flex flex-wrap align-items-center mb-2">
+          <div class="ojip-seg-ctrl" id="group-param-btns">
+            <button class="btn btn-primary"         data-gpgroup="efficiencies">Efficiencies (α, β)</button>
+            <button class="btn btn-outline-primary" data-gpgroup="rates">Rates &amp; Irradiances</button>
+          </div>
+        </div>
+        <div style="position:relative; height:360px;">
+          <canvas id="group-params-chart"></canvas>
+        </div>
+
+        <div class="mt-2">
+          <button class="btn btn-outline-primary btn-sm mr-2" id="export-stats-btn">
+            <i class="fa fa-external-link"></i> Export to Statistics page
+          </button>
+          <small class="text-muted">Opens the Statistics tool with light curve parameters pre-loaded for ANOVA / Kruskal-Wallis analysis.</small>
+        </div>
+      </div>
+
+    </div><!-- /tab-groups -->
+
+  </div><!-- /tab-content -->
+
+  <!-- Download bar -->
+  <div class="d-flex flex-wrap align-items-center mt-3 mb-4">
+    <a id="xlsx-summary-link" href="#" class="btn btn-success mr-2" style="display:none">
+      <i class="fa fa-file-excel-o"></i> Download summary .xlsx
+    </a>
+    <a id="xlsx-full-link" href="#" class="btn btn-outline-success mr-3" style="display:none">
+      <i class="fa fa-file-excel-o"></i> Download full data .xlsx
+    </a>
+    <small class="text-muted">
+      <strong>Summary</strong>: Parameters + charts (compact, server-side).<br>
+      <strong>Full data</strong>: all step-data arrays + raw fluorescence (client-side, large file).
+    </small>
+  </div>
+
+  <!-- Result interpretation accordion -->
+  <div class="accordion mb-3" id="interpretAccordion">
+    <div class="card">
+      <div class="card-header py-2" id="headingInterpret">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseInterpret"
+                  aria-expanded="false" aria-controls="collapseInterpret">
+            <i class="fa fa-book mr-2"></i>How to interpret your results
+          </button>
+        </h6>
+      </div>
+      <div id="collapseInterpret" class="collapse" aria-labelledby="headingInterpret" data-parent="#interpretAccordion">
+        <div class="card-body" style="font-size:0.92em; background:#f8f9fa;">
+          <ul class="mb-0">
+            <li><strong>ETR<sub>max</sub></strong> — maximum relative electron transport rate. Typical unstressed cyanobacteria/algae: <strong>50–200 µmol e⁻ m⁻² s⁻¹</strong>; higher values indicate greater photosynthetic capacity.</li>
+            <li><strong>α</strong> — initial slope of the light curve; photosynthetic efficiency under weak light. Higher α = better use of dim light. Typical range: 0.2–0.8.</li>
+            <li><strong>I<sub>k</sub></strong> — saturation irradiance (light level where ETR saturates). Low-light adapted: 50–200 µmol photons m⁻² s⁻¹; high-light adapted: 200–600+ µmol photons m⁻² s⁻¹.</li>
+            <li><strong>β</strong> — photoinhibition coefficient. β &gt; 0 indicates a measurable decline in ETR at high irradiance (photoinhibition); β ≈ 0 means no significant photoinhibition was detected.</li>
+            <li><strong>NPQ</strong> — non-photochemical quenching; a measure of photoprotective thermal dissipation. Values &gt; 1 indicate active photoprotection; &gt; 3 suggests strong dissipation under stress.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /results-section -->
+
+<br><br><br>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.4.3/build/index.umd.min.js"></script>
+<!-- SheetJS for client-side xlsx export -->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="{{ url_for('static', filename='js_light_curves.js') }}"></script>
 
 {% endblock %}

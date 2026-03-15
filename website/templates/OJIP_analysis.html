@@ -27,6 +27,43 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  /* ── OJIP main tabs → category-button style (matches statistics) ── */
+  #ojipTabs { border-bottom: 2px solid #dee2e6; margin-bottom: 0; padding-bottom: 0; }
+  #ojipTabs .nav-link {
+    border: 1px solid #dee2e6; border-bottom: none; background: #f8f9fa;
+    padding: 0.35rem 1.1rem; font-weight: 600; font-size: 0.85rem;
+    border-radius: 6px 6px 0 0; color: #495057;
+    margin-right: 3px; margin-bottom: -2px;
+    transition: background 0.12s, color 0.12s;
+  }
+  #ojipTabs .nav-link:hover:not(.active) { background: #e2e6ea; color: #212529; }
+  #ojipTabs .nav-link.active {
+    background: #004085; color: #fff; border-color: #004085;
+    border-bottom: 2px solid #004085;
+  }
+  /* ── Segmented-control pill toggles (norm / param-group buttons) ── */
+  .ojip-seg-ctrl {
+    display: inline-flex; background: #e8edf2; border-radius: 10px;
+    padding: 4px; gap: 3px; border: 1px solid #c8d3de;
+  }
+  .ojip-seg-ctrl .btn {
+    border: none !important; border-radius: 7px !important;
+    padding: 5px 13px !important; font-size: 0.79rem !important;
+    font-weight: 600; line-height: 1.3; transition: all 0.17s ease;
+  }
+  .ojip-seg-ctrl .btn-outline-primary {
+    background: transparent !important; color: #5a6a7a !important;
+    box-shadow: none !important;
+  }
+  .ojip-seg-ctrl .btn-outline-primary:hover {
+    background: #d4dde7 !important; color: #003566 !important;
+  }
+  .ojip-seg-ctrl .btn-primary {
+    background: #ffffff !important; color: #004085 !important;
+    box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
+  }
+</style>
 <!-- Banner -->
 <div id="banner-content">
   <div class="banner-desktop">
@@ -38,84 +75,107 @@
          alt="CyanoTools mobile banner" style="width:100%;">
   </div>
 </div>
-<br>
-<h1>OJIP Analyzer: Online Chlorophyll Fluorescence Transient Analysis</h1>
-<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
-  <strong>At a glance:</strong> Upload raw data files from your PAM fluorometer to instantly visualize OJIP
-  fluorescence curves and calculate photosystem II efficiency parameters — including Fv/Fm, PI<sub>abs</sub>,
-  and the full JIP-test parameter set. Supports batch processing of up to 100 files with interactive charts,
-  replicate grouping, and export to .xlsx.
-</div>
-<p>Welcome to the tool analyzing fast chlorophyll fluorescence induction kinetics! Fast chlorophyll fluorescence
-  induction kinetics, known also as OJIP transient, provides a rapid and sensitive method for assessing the
-  efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain.
-  Analysis of the OJIP transient allows to determine bottlenecks in the e<sup>-</sup> transport chain at various
-  sites — including charge separation at photosystem II (PSII), the plastoquinon (PQ) pool, or at the site of
-  photosystem I (PSI).
-</p>
-
-<!-- Parameter reference table (collapsed) -->
-<details>
-  <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.3em 0;">
-    JIP-test parameter reference table (click to expand)
-  </summary>
-  <table style="width:95%; font-size:90%; margin-top:0.5em;">
-    <colgroup><col style="width:8%"><col style="width:30%"><col style="width:62%"></colgroup>
-    <tr><td><u>Parameter</u></td><td><u>Formula</u></td><td><u>Meaning</u></td></tr>
-    <tr><td colspan="3"><i>Technical parameters</i></td></tr>
-    <tr><td>F<sub>O</sub>, F<sub>M</sub></td><td></td><td>Initial and maximal fluorescence intensity</td></tr>
-    <tr><td>F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub></td><td></td><td>Fluorescence at 300 μs, 2 ms and 30 ms, respectively</td></tr>
-    <tr><td>V<sub>J</sub></td><td>(F<sub>J</sub>–F<sub>O</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Relative variable fluorescence at J point</td></tr>
-    <tr><td>V<sub>I</sub></td><td>(F<sub>I</sub>–F<sub>O</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Relative variable fluorescence at I point</td></tr>
-    <tr><td>M<sub>0</sub></td><td>4(F<sub>0.3ms</sub>–F<sub>0.05ms</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Initial slope of O-J rise (ms<sup>–1</sup>)</td></tr>
-    <tr><td colspan="3"><i>Efficiencies</i></td></tr>
-    <tr><td>ψE<sub>0</sub></td><td>1–V<sub>J</sub></td><td>Efficiency of QA<sup>−</sup> → PQ electron transfer</td></tr>
-    <tr><td>ψR<sub>0</sub></td><td>1–V<sub>I</sub></td><td>Efficiency of electron transfer to final PSI acceptors</td></tr>
-    <tr><td>δR<sub>0</sub></td><td>ψR<sub>0</sub>/ψE<sub>0</sub></td><td>Efficiency of electron transfer from Q<sub>A</sub><sup>−</sup>→PQ to final PSI acceptors</td></tr>
-    <tr><td>φP<sub>0</sub></td><td>F<sub>V</sub>/F<sub>M</sub></td><td>Maximum quantum yield of PSII photochemistry</td></tr>
-    <tr><td>φE<sub>0</sub></td><td>φP<sub>0</sub>×ψE<sub>0</sub></td><td>Quantum yield of electron transport Q<sub>A</sub><sup>−</sup>→PQ</td></tr>
-    <tr><td>φR<sub>0</sub></td><td>φP<sub>0</sub>×ψR<sub>0</sub></td><td>Quantum yield of electron transport to final PSI acceptors</td></tr>
-    <tr><td colspan="3"><i>Specific energy fluxes per active PSII</i></td></tr>
-    <tr><td>ABS/RC</td><td>(M<sub>0</sub>/V<sub>J</sub>)/φP<sub>0</sub></td><td>Apparent antenna size of active PSII</td></tr>
-    <tr><td>TR<sub>0</sub>/RC</td><td>M<sub>0</sub>/V<sub>J</sub></td><td>Maximum trapped exciton flux per active PSII</td></tr>
-    <tr><td>ET<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψE<sub>0</sub></td><td>Electron flux QA<sup>−</sup>→PQ per active PSII</td></tr>
-    <tr><td>RE<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψR<sub>0</sub></td><td>Electron flux to final PSI acceptors per active PSII</td></tr>
-    <tr><td>DI<sub>0</sub>/RC</td><td>ABS/RC – TR<sub>0</sub>/RC</td><td>Dissipated energy per active PSII</td></tr>
-    <tr><td>N</td><td>S<sub>m</sub>×M<sub>0</sub>/V<sub>J</sub></td><td>Q<sub>A</sub> turnover number</td></tr>
-  </table>
-  <p style="font-size:75%; line-height:1.3;">
-    References: Tsimilli-Michael (2020) Photosynthetica 58:275–292 · Stirbet et al. (2018) Photosynthetica 56:86–104 ·
-    Strasser et al. (2000) Probing Photosynthesis 445–483
+<div class="p-4 border rounded shadow-sm bg-white mb-4">
+  <h2 class="font-weight-bold mb-3">
+    <i class="fa fa-line-chart text-primary mr-2"></i>OJIP Analyzer: Chlorophyll Fluorescence Transient Analysis
+  </h2>
+  <div class="alert alert-info mb-3" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload raw data files from your PAM fluorometer to instantly visualize OJIP
+    fluorescence curves and calculate photosystem II efficiency parameters — including Fv/Fm, PI<sub>abs</sub>,
+    and the full JIP-test parameter set. Supports batch processing of up to 100 files with interactive charts,
+    replicate grouping, and export to .xlsx.
+  </div>
+  <p class="mb-3">Welcome to the tool analyzing fast chlorophyll fluorescence induction kinetics! Fast chlorophyll fluorescence
+    induction kinetics, known also as OJIP transient, provides a rapid and sensitive method for assessing the
+    efficiency of electron (e<sup>-</sup>) transport within the photosynthetic electron transport chain.
+    Analysis of the OJIP transient allows to determine bottlenecks in the e<sup>-</sup> transport chain at various
+    sites — including charge separation at photosystem II (PSII), the plastoquinon (PQ) pool, or at the site of
+    photosystem I (PSI).
   </p>
-</details>
 
-
-<details>
-  <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.3em 0;">
-    How to use this tool (click to expand)
-  </summary>
-  <ol class="mt-2">
-    <li>Select your fluorometer from the dropdown</li>
-    <li>Upload OJIP files (up to 100) and click <em>Analyze</em></li>
-    <li>Optionally adjust analysis parameters (F<sub>J</sub>/F<sub>I</sub> timing, spline smoothing, data reduction)</li>
-    <li>Explore curves, parameters, and diagnostics in the interactive tabs</li>
-    <li>Optionally assign files to groups to compare replicates with mean ± SD</li>
-    <li>Download results as .xlsx</li>
-  </ol>
-</details>
-<br>
+  <div class="accordion" id="ojipInfoAccordion">
+    <!-- Parameter reference table -->
+    <div class="card">
+      <div class="card-header py-2" id="headingJipTable">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseJipTable"
+                  aria-expanded="false" aria-controls="collapseJipTable">
+            <i class="fa fa-table mr-2"></i>JIP-test parameter reference table
+          </button>
+        </h6>
+      </div>
+      <div id="collapseJipTable" class="collapse" aria-labelledby="headingJipTable" data-parent="#ojipInfoAccordion">
+        <div class="card-body p-2">
+          <table style="width:95%; font-size:90%; margin-top:0.5em;">
+            <colgroup><col style="width:8%"><col style="width:30%"><col style="width:62%"></colgroup>
+            <tr><td><u>Parameter</u></td><td><u>Formula</u></td><td><u>Meaning</u></td></tr>
+            <tr><td colspan="3"><i>Technical parameters</i></td></tr>
+            <tr><td>F<sub>O</sub>, F<sub>M</sub></td><td></td><td>Initial and maximal fluorescence intensity</td></tr>
+            <tr><td>F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub></td><td></td><td>Fluorescence at 300 μs, 2 ms and 30 ms, respectively</td></tr>
+            <tr><td>V<sub>J</sub></td><td>(F<sub>J</sub>–F<sub>O</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Relative variable fluorescence at J point</td></tr>
+            <tr><td>V<sub>I</sub></td><td>(F<sub>I</sub>–F<sub>O</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Relative variable fluorescence at I point</td></tr>
+            <tr><td>M<sub>0</sub></td><td>4(F<sub>0.3ms</sub>–F<sub>0.05ms</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Initial slope of O-J rise (ms<sup>–1</sup>)</td></tr>
+            <tr><td colspan="3"><i>Efficiencies</i></td></tr>
+            <tr><td>ψE<sub>0</sub></td><td>1–V<sub>J</sub></td><td>Efficiency of QA<sup>−</sup> → PQ electron transfer</td></tr>
+            <tr><td>ψR<sub>0</sub></td><td>1–V<sub>I</sub></td><td>Efficiency of electron transfer to final PSI acceptors</td></tr>
+            <tr><td>δR<sub>0</sub></td><td>ψR<sub>0</sub>/ψE<sub>0</sub></td><td>Efficiency of electron transfer from Q<sub>A</sub><sup>−</sup>→PQ to final PSI acceptors</td></tr>
+            <tr><td>φP<sub>0</sub></td><td>F<sub>V</sub>/F<sub>M</sub></td><td>Maximum quantum yield of PSII photochemistry</td></tr>
+            <tr><td>φE<sub>0</sub></td><td>φP<sub>0</sub>×ψE<sub>0</sub></td><td>Quantum yield of electron transport Q<sub>A</sub><sup>−</sup>→PQ</td></tr>
+            <tr><td>φR<sub>0</sub></td><td>φP<sub>0</sub>×ψR<sub>0</sub></td><td>Quantum yield of electron transport to final PSI acceptors</td></tr>
+            <tr><td colspan="3"><i>Specific energy fluxes per active PSII</i></td></tr>
+            <tr><td>ABS/RC</td><td>(M<sub>0</sub>/V<sub>J</sub>)/φP<sub>0</sub></td><td>Apparent antenna size of active PSII</td></tr>
+            <tr><td>TR<sub>0</sub>/RC</td><td>M<sub>0</sub>/V<sub>J</sub></td><td>Maximum trapped exciton flux per active PSII</td></tr>
+            <tr><td>ET<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψE<sub>0</sub></td><td>Electron flux QA<sup>−</sup>→PQ per active PSII</td></tr>
+            <tr><td>RE<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψR<sub>0</sub></td><td>Electron flux to final PSI acceptors per active PSII</td></tr>
+            <tr><td>DI<sub>0</sub>/RC</td><td>ABS/RC – TR<sub>0</sub>/RC</td><td>Dissipated energy per active PSII</td></tr>
+            <tr><td>N</td><td>S<sub>m</sub>×M<sub>0</sub>/V<sub>J</sub></td><td>Q<sub>A</sub> turnover number</td></tr>
+          </table>
+          <p style="font-size:75%; line-height:1.3;">
+            References: Tsimilli-Michael (2020) Photosynthetica 58:275–292 · Stirbet et al. (2018) Photosynthetica 56:86–104 ·
+            Strasser et al. (2000) Probing Photosynthesis 445–483
+          </p>
+        </div>
+      </div>
+    </div>
+    <!-- How to use -->
+    <div class="card">
+      <div class="card-header py-2" id="headingHowTo">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseHowTo"
+                  aria-expanded="false" aria-controls="collapseHowTo">
+            <i class="fa fa-question-circle mr-2"></i>How to use this tool
+          </button>
+        </h6>
+      </div>
+      <div id="collapseHowTo" class="collapse" aria-labelledby="headingHowTo" data-parent="#ojipInfoAccordion">
+        <div class="card-body">
+          <ol class="mt-2">
+            <li>Select your fluorometer from the dropdown</li>
+            <li>Upload OJIP files (up to 100) and click <em>Analyze</em></li>
+            <li>Optionally adjust analysis parameters (F<sub>J</sub>/F<sub>I</sub> timing, spline smoothing, data reduction)</li>
+            <li>Explore curves, parameters, and diagnostics in the interactive tabs</li>
+            <li>Optionally assign files to groups to compare replicates with mean ± SD</li>
+            <li>Download results as .xlsx</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- ══════════════════════════════════════════════════════════════════
      UPLOAD CARD
 ═══════════════════════════════════════════════════════════════════ -->
 <div class="card mb-4 shadow-sm" id="upload-card">
-  <div class="card-header bg-primary text-white font-weight-bold">
-    Upload &amp; Analyze OJIP Files
+  <div class="card-header font-weight-bold">
+    <i class="fa fa-upload text-primary mr-2"></i>Upload &amp; Analyze OJIP Files
   </div>
   <div class="card-body">
 
     <!-- Step 1: Select fluorometer -->
     <div class="form-group mb-2">
-      <label for="fluorometer"><strong>1. Select fluorometer</strong></label>
+      <label for="fluorometer"><span class="badge badge-primary mr-1">1</span> Select fluorometer</label>
       <select id="fluorometer" class="form-control" style="width:100%">
         <option value="MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
         <option value="Aquapen">AquaPen / FluorPen (Photon Systems Instruments)</option>
@@ -159,7 +219,7 @@
            aria-expanded="false" aria-controls="advancedParams"
            style="cursor:pointer; background:#f8f9fa; user-select:none;">
         <span>
-          <strong>2. Additional analysis parameters</strong>
+          <span class="badge badge-primary mr-1">2</span> Additional analysis parameters
           <span class="text-muted ml-2" style="font-size:0.85rem;">F<sub>J</sub>/F<sub>I</sub> timing &middot; spline smoothing &middot; data reduction</span>
         </span>
         <i class="fa fa-chevron-down text-muted" id="advancedParamsChevron" style="transition:transform 0.2s;"></i>
@@ -217,7 +277,7 @@
     </div>
 
     <!-- Step 3: Select files -->
-    <label><strong>3. Select files</strong> (up to 100; .csv for MULTI-COLOR-PAM, .txt for AquaPen/FluorPen/FL6000)</label>
+    <label><span class="badge badge-primary mr-1">3</span> Select files (up to 100; .csv for MULTI-COLOR-PAM, .txt for AquaPen/FluorPen/FL6000)</label>
     <div id="drop-zone" class="border rounded p-4 text-center mb-2"
          style="border-style:dashed !important; cursor:pointer; background:#f8f9fa; transition:background 0.2s;">
       <i class="fa fa-upload fa-2x text-muted mb-2"></i>
@@ -278,7 +338,7 @@
     <div class="tab-pane fade show active" id="tab-curves" role="tabpanel">
       <div class="d-flex flex-wrap align-items-center mb-2">
         <span class="mr-2 font-weight-bold">Normalization:</span>
-        <div class="btn-group btn-group-sm" id="norm-btns">
+        <div class="ojip-seg-ctrl" id="norm-btns">
           <button class="btn btn-primary" data-norm="raw">Raw</button>
           <button class="btn btn-outline-primary" data-norm="shifted_F0">Shifted to F<sub>O</sub></button>
           <button class="btn btn-outline-primary" data-norm="shifted_FM">Shifted to F<sub>M</sub></button>
@@ -329,7 +389,7 @@
     <div class="tab-pane fade" id="tab-params" role="tabpanel">
       <div class="d-flex flex-wrap align-items-center mb-2">
         <span class="mr-2 font-weight-bold">Parameter group:</span>
-        <div class="btn-group btn-group-sm" id="param-group-btns">
+        <div class="ojip-seg-ctrl" id="param-group-btns">
           <button class="btn btn-primary"         data-pgroup="yields">Quantum yields</button>
           <button class="btn btn-outline-primary" data-pgroup="fluxes">Energy fluxes</button>
           <button class="btn btn-outline-primary" data-pgroup="areas">Areas &amp; indices</button>
@@ -397,7 +457,7 @@
         <h6 class="font-weight-bold">Mean ± SD curves</h6>
         <div class="d-flex flex-wrap align-items-center mb-2">
           <span class="mr-2">Normalization:</span>
-          <div class="btn-group btn-group-sm" id="group-norm-btns">
+          <div class="ojip-seg-ctrl" id="group-norm-btns">
             <button class="btn btn-primary"         data-gnorm="raw">Raw</button>
             <button class="btn btn-outline-primary" data-gnorm="shifted_F0">→F<sub>O</sub></button>
             <button class="btn btn-outline-primary" data-gnorm="shifted_FM">→F<sub>M</sub></button>
@@ -414,7 +474,7 @@
 
         <h6 class="font-weight-bold mt-4">Parameters by group (mean ± SD)</h6>
         <div class="d-flex flex-wrap align-items-center mb-2">
-          <div class="btn-group btn-group-sm" id="group-param-btns">
+          <div class="ojip-seg-ctrl" id="group-param-btns">
             <button class="btn btn-primary"         data-gpgroup="yields">Quantum yields</button>
             <button class="btn btn-outline-primary" data-gpgroup="fluxes">Energy fluxes</button>
             <button class="btn btn-outline-primary" data-gpgroup="areas">Areas &amp; indices</button>
@@ -525,17 +585,29 @@
   </div>
 
   <!-- Result interpretation -->
-  <details class="mb-3">
-    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results (for plants and algae)</summary>
-    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-      <ul class="mb-0">
-        <li><strong>Fv/Fm</strong> — max PSII efficiency. Unstressed: 0.75–0.82; mild stress: 0.60–0.74; severe: &lt;0.55.</li>
-        <li><strong>ABS/RC</strong> — effective antenna per active RC. Values &gt;3–4 may indicate photoinhibition.</li>
-        <li><strong>ET₀/RC and TR₀/RC</strong> — electron transport and energy trapping per RC. Declining relative to ABS/RC indicates downstream blockage.</li>
-        <li><strong>ψE₀</strong> — efficiency of QA<sup>−</sup>→PQ electron transfer; decreases with PQ pool over-reduction.</li>
-      </ul>
+  <div class="accordion mb-3" id="interpretAccordion">
+    <div class="card">
+      <div class="card-header py-2" id="headingInterpret">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseInterpret"
+                  aria-expanded="false" aria-controls="collapseInterpret">
+            <i class="fa fa-book mr-2"></i>How to interpret your results (for plants and algae)
+          </button>
+        </h6>
+      </div>
+      <div id="collapseInterpret" class="collapse" aria-labelledby="headingInterpret" data-parent="#interpretAccordion">
+        <div class="card-body" style="font-size:0.92em; background:#f8f9fa;">
+          <ul class="mb-0">
+            <li><strong>Fv/Fm</strong> — max PSII efficiency. Unstressed: 0.75–0.82; mild stress: 0.60–0.74; severe: &lt;0.55.</li>
+            <li><strong>ABS/RC</strong> — effective antenna per active RC. Values &gt;3–4 may indicate photoinhibition.</li>
+            <li><strong>ET₀/RC and TR₀/RC</strong> — electron transport and energy trapping per RC. Declining relative to ABS/RC indicates downstream blockage.</li>
+            <li><strong>ψE₀</strong> — efficiency of QA<sup>−</sup>→PQ electron transfer; decreases with PQ pool over-reduction.</li>
+          </ul>
+        </div>
+      </div>
     </div>
-  </details>
+  </div>
 
 </div><!-- /results-section -->
 

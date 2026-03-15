@@ -1,593 +1,438 @@
-from flask import Blueprint, render_template, request, flash
-import os, base64, io, time, openpyxl
-import pandas as pd
+from flask import Blueprint, render_template, request, jsonify
+import os, base64, io, time
 import numpy as np
-import matplotlib.pyplot as plt
+from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from scipy.optimize import curve_fit
 from scipy import stats
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
-#from flask_login import current_user
 
 light_curves_analysis = Blueprint('light_curves_analysis', __name__)
 
-@light_curves_analysis.route('/light_curves_analysis', methods=['GET', 'POST'])
+# ── protocol definitions ─────────────────────────────────────────────────────
+# To add new protocols: append to LC_PROTOCOLS and add a radio button in the template.
+LC_PROTOCOLS = {
+    'LC1': {'name': 'LC1', 'n_steps': 6,  'par': [10, 20, 50, 100, 300, 500]},
+    'LC2': {'name': 'LC2', 'n_steps': 5,  'par': [100, 200, 300, 500, 1000]},
+    'LC3': {'name': 'LC3', 'n_steps': 7,  'par': [10, 20, 50, 100, 300, 500, 1000]},
+}
+
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+def _safe(v):
+    """Convert to float, returning None for NaN/inf. Rounds to 8 decimal places."""
+    try:
+        f = float(v)
+        if np.isnan(f) or np.isinf(f):
+            return None
+        return round(f, 8)
+    except Exception:
+        return None
+
+
+def _cleanup_old_files(upload_folder, max_age_s=1200):
+    """Delete files older than max_age_s seconds from upload_folder."""
+    try:
+        current_time = time.time()
+        for fname in os.listdir(upload_folder):
+            fpath = os.path.join(upload_folder, fname).replace('\\', '/')
+            try:
+                if os.stat(fpath).st_mtime < current_time - max_age_s:
+                    os.remove(fpath)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+# ── routes ───────────────────────────────────────────────────────────────────
+
+@light_curves_analysis.route('/light_curves_analysis', methods=['GET'])
 def analyze_light_curves():
-#    if current_user.is_authenticated:
-    if request.method == "POST": 
-        # Define global variables
-        max_number_of_files = 50
-        file_Aquapen = Summary_file = param_all = QYALL = ETRALL = FTALL = FMALL = FITALL = QP = QN = pd.DataFrame()   
-        F0 = FM = ETRMPOT = ALPHA = BETA = ETRMAX = IK = IB = ETRMAX_FROM_ALPHA_BETA = pd.Series()
-        ALLOWED_EXTENSIONS_AQUAPEN = set(['.txt']) 
-        files_extensions = set()
-        upload_folder = UPLOAD_FOLDER
-        raw_data_from_memory = plot_from_memory = parameters_from_memory = fluorescence = ()   
-        light_intensities = []
-        xlsx_file_path = x_axis_unit = y_axis_unit = file_name_without_extension = str('')  
-        # create upload directory, if there is not any
-        if os.path.isdir(upload_folder) == False: 
-            os.mkdir(upload_folder) 
-        ##################
-        ### Load files ###
-        ##################
-        # check if some file is selected
-        if 'light_curve_files' in request.files:
-            # get list of files
-            files = request.files.getlist("light_curve_files")
-            # check if at least one file is selected
-            if secure_filename(files[0].filename) == '': # type: ignore
-                flash('Please select one or more files to analyze.', category='error') 
-            else:
-                # get info on fluorometer
-                fluorometer = (request.form.get('fluorometer'))
-                ETR_max_factor = int(request.form["ETR_max_multiplication_factor_range"])
-                # Define fluorometer-dependent variables
-                if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)':
-                    x_axis_unit = "Time (μs)"
-                    y_axis_unit = "Fluorescence intensity (a.u.)"
-                # limit number of uploaded files
-                if len(files) <= max_number_of_files:
-                    file_number = 0
-                    # do for each file
-                    for file in files:
-                        # get image names and extension
-                        file_name_without_extension = str.lower(os.path.splitext(file.filename)[0]) # type: ignore # for single image: image = (request.files['image']) 
-                        file_extension = str.lower(os.path.splitext(file.filename)[1]) # type: ignore
-                        file_name_full = secure_filename(file.filename) # type: ignore
-                        # append all extensions to a set
-                        files_extensions.add(file_extension)
-                        #####################
-                        ### AQUAPEN FILES ###
-                        ##################### 
-                        # Do for AquaPen / FluorPen files
-                        if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)':
-                            # Check if each file is of allowed type
-                            if file_extension in ALLOWED_EXTENSIONS_AQUAPEN:
-                                # to read .txt files, the files need to be first uploaded to server
-                                file.save(os.path.join(upload_folder, file_name_full).replace("\\","/"))
-                                # read .txt files
-                                with open(upload_folder+file_name_full, "r") as temp_variable:
-                                    # read the txt file 
-                                    file_Aquapen = temp_variable.readlines() # reading without header: add [9:]
-                                    file_Aquapen =  pd.DataFrame(file_Aquapen)
-                                    file_Aquapen = file_Aquapen[0].str.split('\t', expand=True)
-                                    # Merge all data in the final dataframe
-                                    if file_number == 0:
-                                        # initiate final dataframe + drop the last column win '\n' only
-                                        Summary_file = file_Aquapen[file_Aquapen.columns[:-1]]
-                                        # rename column with fluorescence values according to file name
-                                        Summary_file.rename(columns = {Summary_file.columns[1]: file_name_without_extension}, inplace = True)
-                                        # rename first column
-                                        Summary_file.rename(columns = {Summary_file.columns[0]: 'time_us'}, inplace = True)
-                                    else:
-                                        # read fluorescence, as 2nd column in all other files
-                                        fluorescence = file_Aquapen.iloc[:,1:2]
-                                        # merge the fluorescence column with the final dataframe
-                                        Summary_file = pd.concat([Summary_file, fluorescence], axis = 1)
-                                        # rename the newly added column
-                                        Summary_file.rename(columns = {Summary_file.columns[file_number+1]: file_name_without_extension}, inplace = True)                                          
-                                # Delete the uploaded file
-                                os.remove(os.path.join(upload_folder, file_name_full).replace("\\","/"))
-                        file_number = file_number + 1
-                    ### check if correct file types were selected ###
-                    if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and '.txt' in files_extensions:
-                        ######################################################################
-                        ### Remove parameters calculated by Aquapen and keep only F values ###
-                        ######################################################################
-                        if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)':
-                            # Delete lines without numbers within the final dataframe
-                            check = pd.DataFrame(Summary_file.time_us.str.isnumeric())
-                            check.rename(columns={check.columns[0]: "A"}, inplace = True)
-                            # Check if parameters were exported
-                            if Summary_file['time_us'].str.contains('Fo').any():
-                                ###################################################
-                                ### Put all values as exported by AquaPen to DF ###
-                                ###################################################
-                                # values applied for all settings
-                                F0 = ((Summary_file[Summary_file["time_us"].str.contains("Fo")]).iloc[: , 1:]) # find F0
-                                FM = ((Summary_file[Summary_file["time_us"].str.contains("Fm")]).iloc[: , 1:]) # selet all values, including Fm_L1-L7
-                                FM = pd.DataFrame(FM.iloc[0,:]).T # select only Fm
-                                # get indexes
-                                index_FtL1 = Summary_file.index[Summary_file['time_us'] == 'Ft_L1'].tolist()
-                                index_FtL5 = Summary_file.index[Summary_file['time_us'] == 'Ft_L5'].tolist()
-                                index_FML1 = Summary_file.index[Summary_file['time_us'] == 'Fm_L1'].tolist()
-                                index_FML5 = Summary_file.index[Summary_file['time_us'] == 'Fm_L5'].tolist()
-                                # Settings for LC2
-                                if request.form["checkbox_LC"] == 'checkbox_LC2':
-                                    if not (Summary_file['time_us'].str.contains('Fm_L6').any()):
-                                        light_intensities = [100, 200, 300, 500, 1000] 
-                                        # get DF with all values
-                                        FTALL = Summary_file.iloc[index_FtL1[0]:(index_FtL5[0]+1)]
-                                        FMALL = Summary_file.iloc[index_FML1[0]:(index_FML5[0]+1)]
-                                    else:
-                                        flash('Please select correct type of light curves (LC1 / LC2 / LC3).', category='error')
-                                # Settings for LC1
-                                elif request.form["checkbox_LC"] == 'checkbox_LC1':
-                                    if (Summary_file['time_us'].str.contains('Fm_L6').any()) and not (Summary_file['time_us'].str.contains('Fm_L7').any()):
-                                        light_intensities = [10, 20, 50, 100, 300, 500]
-                                        index_FtL6 = Summary_file.index[Summary_file['time_us'] == 'Ft_L6'].tolist()
-                                        index_FML6 = Summary_file.index[Summary_file['time_us'] == 'Fm_L6'].tolist()
-                                        FTALL = Summary_file.iloc[index_FtL1[0]:(index_FtL6[0]+1)]
-                                        FMALL = Summary_file.iloc[index_FML1[0]:(index_FML6[0]+1)]
-                                    else:
-                                        flash('Please select correct type of light curves (LC1 / LC2 / LC3).', category='error')
-                                # Settings for LC3
-                                elif request.form["checkbox_LC"] == 'checkbox_LC3':
-                                    if Summary_file['time_us'].str.contains('Fm_L7').any():
-                                        light_intensities = [10, 20, 50, 100, 300, 500, 1000]
-                                        index_FtL7 = Summary_file.index[Summary_file['time_us'] == 'Ft_L7'].tolist()
-                                        index_FML7 = Summary_file.index[Summary_file['time_us'] == 'Fm_L7'].tolist()
-                                        FTALL = Summary_file.iloc[index_FtL1[0]:(index_FtL7[0]+1)]
-                                        FMALL = Summary_file.iloc[index_FML1[0]:(index_FML7[0]+1)]
-                                    else:
-                                        flash('Please select correct type of light curves (LC1 / LC2 / LC3).', category='error')
-                                # Remove all rows in 'Summary_file' according to 'False' values in 'check' DF
-                                Summary_file = Summary_file[check.A]
-                                # convert df to numeric
-                                Summary_file = Summary_file.astype(int) # type: ignore
-                                #####################
-                                ### PLOT RAW DATA ###
-                                #####################  
-                                # Select color map, according to number of lines (files)
-                                colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number+1)) # type: ignore
-                                # Initialise the subplot function using number of rows and columns 
-                                fig = plt.figure(figsize=(20,12))
-                                fig.tight_layout() # Shrink to fit the canvas together with legend  
-                                fig.subplots_adjust(hspace=0.3) # add horizontal space to read the x-axis and titles well
-                                plt.rcParams['mathtext.default'] = 'regular' # Prevent subscripts in axes titles in italics
-                                # plot raw data
-                                fig_0 = fig.add_subplot(2, 3, 1)
-                                for i in range(len(Summary_file.columns)):
-                                    # do not plot time axis
-                                        if i > 0:
-                                            fig_0.plot(
-                                                Summary_file.iloc[:, 0], # x-axis data: 1st column
-                                                Summary_file.iloc[:, i], # y-axis data
-                                                linewidth=2,
-                                                label = Summary_file.columns[i], #legend
-                                                color=colors[i-1]
-                                                )
-                                # Decorate plot
-                                fig_0.set_title("Raw fluorescence signal") 
-                                fig_0.grid() # use: which='both' for minor grid
-                                fig_0.set_xlabel(x_axis_unit) 
-                                fig_0.set_ylabel(y_axis_unit)   
-                                fig_0.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02)) 
-                                # saving scatter plot to memory
-                                memory_for_raw_data = io.BytesIO()
-                                plt.savefig(memory_for_raw_data, bbox_inches='tight', format='JPEG')
-                                raw_data_in_memory = base64.b64encode(memory_for_raw_data.getvalue())
-                                raw_data_from_memory = raw_data_in_memory.decode('ascii')
-                                # Clearing the plot
-                                plt.clf()
-                                plt.cla()
-                                plt.close()                                   
-                                ###################################
-                                ### GET FM, FT, QY, ETR and NPQ ###
-                                ###################################
-                                # reset indexes in DFs
-                                FTALL = (FTALL.reset_index(drop=True))
-                                FMALL = (FMALL.reset_index(drop=True))
-                                F0 = (F0.reset_index(drop=True))
-                                FM = (FM.reset_index(drop=True))
-                                # convert the DF values to numeric
-                                FTALL = FTALL.iloc[:, 1:].apply(pd.to_numeric)
-                                FMALL = FMALL.iloc[:, 1:].apply(pd.to_numeric)
-                                F0 = F0.iloc[0:,].apply(pd.to_numeric)
-                                FM = FM.iloc[0:,].apply(pd.to_numeric)
-                                # Calculate parameters
-                                FMMAX = pd.DataFrame(FMALL.max()).T # Get maximal Fm 
-                                FMMAX2 = pd.DataFrame(np.repeat(FMMAX.values, len(light_intensities), axis=0), columns=FMMAX.columns) # Replicate FMM to all columns according to length of the final DF
-                                F02 = pd.DataFrame(np.repeat(F0.values, len(light_intensities), axis=0), columns=F0.columns) # Replicate F0 to all columns according to length of the final DF
-                                FM2 = pd.DataFrame(np.repeat(FM.values, len(light_intensities), axis=0), columns=FM.columns) # Replicate FMM to all columns according to length of the final DF
-                                QYALL = (FMALL - FTALL) / FMALL # calculate QY = (FM - FT) / FM
-                                NPQALLFMM = (FMMAX2 - FMALL) / FMALL # Calculate NPQ = (FMmax - FM')/FM'
-                                NPQALLFM = (FM2 - FMALL) / FMALL # Calculate NPQ = (FM - FM')/FM'
-                                QP = (FMALL - FTALL) / (FMALL - F02) # calculate qP = (FM' - FT) / (FM' - F0)
-                                QN = (FMMAX2 - FMALL) / (FMMAX2 - F02) # calculate qN = (Fmax - Fm') / (Fmax - F0)
-                                # append light intensities
-                                FTALL.insert(loc=0, column='Light intensity', value=light_intensities)
-                                FMALL.insert(loc=0, column='Light intensity', value=light_intensities)
-                                QYALL.insert(loc=0, column='Light intensity', value=light_intensities)
-                                NPQALLFMM.insert(loc=0, column='Light intensity', value=light_intensities)
-                                NPQALLFM.insert(loc=0, column='Light intensity', value=light_intensities)
-                                QP.insert(loc=0, column='Light intensity', value=light_intensities)
-                                QN.insert(loc=0, column='Light intensity', value=light_intensities)
-                                # Calculate ETR
-                                ETRALL = QYALL.iloc[:, 1:].mul(pd.Series(light_intensities), axis = 0) # calculate 𝑟𝐸𝑇𝑅 = 𝛟𝑷𝑺𝑰𝑰 x PAR
-                                ETRALL.insert(loc=0, column='Light intensity', value=light_intensities)
-                                ########################
-                                #### Fit ETR curves ####
-                                ######################## 
-                                # define the model of Platt function
-                                def model_platt(x, ETRmPot, alpha, beta):
-                                    return ETRmPot * (1-np.exp(-(alpha*x/ETRmPot))) * np.exp(-(beta*x/ETRmPot))                     
-                                # Find ETR max for each file
-                                ETRMAX = pd.Series(ETRALL.max()).iloc[1:]
-                                # check if the light curve is not out of fitting 
-                                if (min(ETRMAX) == 0) or (min(ETRMAX) < 0):
-                                    return render_template("light_curves_analysis.html",
-                                        raw_data_from_memory = raw_data_from_memory,
-                                        )
-                                else:    
-                                    # Find parameters for ETR curve fit for all light curves
-                                    for i in range(len(ETRALL.columns)):
-                                        if i > 0:
-                                            # Set boundaries
-                                            ETRmax_boundary = ETR_max_factor * ETRMAX.iloc[i-1] # set ETR_max to initial condidions AND boundaries 
-                                            # Find the parameters
-                                            parameters, covariance = curve_fit(model_platt, ETRALL.iloc[:,0], ETRALL.iloc[:,i], p0=np.asarray([ETRmax_boundary,0.05,0.05]), bounds=((0, 0, 0), (ETRmax_boundary, 25, 25)), maxfev=2000) # p0: initial conditions / bounds: boundaries min, max / maxfev: number of iterations
-                                            ETRmPot = parameters[0]
-                                            alpha = parameters[1]
-                                            beta = parameters[2]
-                                            fit_ETR = pd.DataFrame(model_platt(ETRALL.iloc[:,0], ETRmPot, alpha, beta))
-                                            ETR_max_from_alpha_beta = ETRmPot * (alpha / (alpha + beta)) * (beta / (alpha + beta)) ** (beta / alpha) # 𝐸𝑇𝑅𝑚𝑎𝑥 = 𝐸𝑇𝑅𝑠 [ 𝛼 / (𝛼+𝛽)] * [ 𝛽 / (𝛼+𝛽) ]^(𝛽/𝛼)
-                                            ETRMAX_FROM_ALPHA_BETA = pd.concat([ETRMAX_FROM_ALPHA_BETA,pd.Series(ETR_max_from_alpha_beta)])
-                                            #### calculate alpha and beta from the ETR slope of first and last points of the fitted curve 
-                                            slope1, intercept1, r1, p1, se1 = stats.linregress(ETRALL.iloc[0:3,0], fit_ETR.iloc[0:3,0]) # linregress(x, y)
-                                            slope2, intercept2, r2, p2, se2 = stats.linregress(ETRALL.iloc[-2:,0], fit_ETR.iloc[-2:,0]) # linregress(x, y)
-                                            alpha = slope1
-                                            beta = slope2
-                                            beta_abs = abs(slope2) # type: ignore
-                                            # Calculate the additional parameters
-                                            Ik = ETRMAX.iloc[i-1] / alpha # Ik = ETRmax/alpha
-                                            Ib = ETRMAX.iloc[i-1] / beta_abs # Calculate Ib = ETRmax/beta
+    return render_template('light_curves_analysis.html')
 
-                                            ETRMPOT = pd.concat([ETRMPOT,pd.Series(ETRmPot)])
-                                            ALPHA = pd.concat([ALPHA,pd.Series(alpha)])
-                                            BETA = pd.concat([BETA,pd.Series(beta)])
-                                            IK = pd.concat([IK,pd.Series(Ik)])
-                                            IB = pd.concat([IB,pd.Series(Ib)])
-                                            FITALL = pd.concat([FITALL,fit_ETR], axis=1)
-                                    # rename column names according to file names in FITALL df        
-                                    FITALL.columns = list(ETRALL.columns[1:len(ETRALL.columns)])
-                                    # append light intensity to FITALL df 
-                                    FITALL.insert(loc=0, column='Light intensity', value=light_intensities)
-                                    ###################
-                                    ### Plot curves ###
-                                    ###################                          
-                                    # Initialise the subplot function using number of rows and columns 
-                                    fig = plt.figure(figsize=(19,12))
-                                    fig.tight_layout() # Shrink to fit the canvas together with legend  
-                                    fig.subplots_adjust(hspace=0.4) # add horizontal space to read the x-axis and titles well
-                                    plt.rcParams['mathtext.default'] = 'regular' # Prevent subscripts in axes titles in italics
-                                    ########## Sub-plot light curves - raw data ##########
-                                    fig_1 = fig.add_subplot(3, 4, 1) # https://stackoverflow.com/questions/3584805/what-does-the-argument-mean-in-fig-add-subplot111
-                                    # Read OJIP curves throughout the datafrmae for the plot
-                                    for i in range(len(Summary_file.columns)):
-                                        # do not plot time axis
-                                            if i > 0:
-                                                fig_1.plot(
-                                                    Summary_file.iloc[:, 0], # x-axis data: 1st column
-                                                    Summary_file.iloc[:, i], # y-axis data
-                                                    linewidth=2,
-                                                    color=colors[i-1]
-                                                    )
-                                    # Decorate fig 1
-                                    fig_1.set_title("Raw fluorescence signal") 
-                                    fig_1.grid() # use: which='both' for minor grid
-                                    fig_1.set_xlabel(x_axis_unit) 
-                                    fig_1.set_ylabel(y_axis_unit) 
-                                    ########## Sub-plot Ft ##########
-                                    fig_2 = fig.add_subplot(3, 4, 2) 
-                                    # Read NPQ throughout the datafrmae for the plot
-                                    for i in range(len(FTALL.columns)):
-                                        # do not plot time axis
-                                            if i > 0:
-                                                fig_2.plot(
-                                                    FTALL.iloc[:, 0], # x-axis data: 1st column
-                                                    FTALL.iloc[:, i], # y-axis data
-                                                    linewidth=1,
-                                                    color=colors[i]
-                                                    )
-                                                fig_2.scatter(
-                                                    FTALL.iloc[:, 0], # x-axis data: 1st column
-                                                    FTALL.iloc[:, i], # y-axis data
-                                                    color=colors[i-1]
-                                                    )
-                                    # Decorate fig
-                                    fig_2.set_title("Steady-state fluorescence, F$_{t}$") 
-                                    fig_2.grid() # use: which='both' for minor grid
-                                    fig_2.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)') 
-                                    ########## Sub-plot FM ##########
-                                    fig_3 = fig.add_subplot(3, 4, 3) # https://stackoverflow.com/questions/3584805/what-does-the-argument-mean-in-fig-add-subplot111
-                                    # Read OJIP curves throughout the datafrmae for the plot
-                                    for i in range(len(FMALL.columns)):
-                                        # do not plot time axis
-                                            if i > 0:
-                                                fig_3.plot(
-                                                    FMALL.iloc[:, 0], # x-axis data: 1st column
-                                                    FMALL.iloc[:, i], # y-axis data
-                                                    label = FMALL.columns[i], # Column names for legend
-                                                    linewidth=1,
-                                                    color=colors[i-1]
-                                                    )
-                                    # Decorate fig 1
-                                    fig_3.set_title("Maximum fluorescence, F$_{m}$'") 
-                                    fig_3.grid() # use: which='both' for minor grid
-                                    fig_3.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)')
-                                    fig_3.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02)) 
-                                    for i in range(len(FMALL.columns)):
-                                        # do not plot time axis
-                                            if i > 0:
-                                                fig_3.scatter(
-                                                    FMALL.iloc[:, 0], # x-axis data: 1st column
-                                                    FMALL.iloc[:, i], # y-axis data
-                                                    color=colors[i-1]
-                                                    )
-                                    ########## Sub-plot QY ##########
-                                    fig_4 = fig.add_subplot(3, 4, 9) 
-                                    # Read QY throughout the datafrmae for the plot
-                                    for i in range(len(QYALL.columns)):
-                                        # do not plot time axis
-                                            if i > 0:
-                                                fig_4.plot(
-                                                    QYALL.iloc[:, 0], # x-axis data: 1st column
-                                                    QYALL.iloc[:, i], # y-axis data
-                                                    linewidth=1,
-                                                    color=colors[i-1]
-                                                    )
-                                                fig_4.scatter(
-                                                    QYALL.iloc[:, 0], # x-axis data: 1st column
-                                                    QYALL.iloc[:, i], # y-axis data
-                                                    color=colors[i-1]
-                                                    )
-                                    # Decorate fig
-                                    fig_4.set_title("Quantum Yield, Qy") 
-                                    fig_4.grid() # use: which='both' for minor grid
-                                    fig_4.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)') 
-                                    fig_4.set_ylabel('r.u.') 
-                                    ########## Sub-plot ETR ##########
-                                    fig_5 = fig.add_subplot(3, 4, 10) 
-                                    # Read ETR throughout the datafrmae for the plot
-                                    for i in range(len(ETRALL.columns)):
-                                        # do not plot time axis
-                                            if i > 0:
-                                                fig_5.scatter(
-                                                    ETRALL.iloc[:, 0], # x-axis data: 1st column
-                                                    ETRALL.iloc[:, i], # y-axis data
-                                                    color=colors[i-1]
-                                                    )
-                                                fig_5.plot(
-                                                    FITALL.iloc[:,0], # x-axis data
-                                                    FITALL.iloc[:,i], # y-axis data
-                                                    linestyle='dashdot',
-                                                    linewidth=2,
-                                                    color=colors[i-1]
-                                                    ) 
-                                    # Decorate fig  
-                                    fig_5.set_title("Electron Transport Rate, rETR \n + Curve fit for parameters calculation") 
-                                    fig_5.grid() # use: which='both' for minor grid
-                                    fig_5.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)') 
-                                    fig_5.set_ylabel('µmol e$^{-}$ m$^{-2}$ s$^{-1}$') 
-                                    ########## Sub-plot qP ##########
-                                    fig_7 = fig.add_subplot(3, 4, 5) 
-                                    # Read NPQ throughout the datafrmae for the plot
-                                    for i in range(len(QP.columns)):
-                                        # do not plot time axis
-                                            if i > 0:
-                                                fig_7.scatter(
-                                                    QP.iloc[:, 0], # x-axis data: 1st column
-                                                    QP.iloc[:, i], # y-axis data
-                                                    linewidth=1,
-                                                    color=colors[i-1]
-                                                    )
-                                                fig_7.plot(
-                                                    QP.iloc[:, 0], # x-axis data: 1st column
-                                                    QP.iloc[:, i], # y-axis data
-                                                    color=colors[i-1]
-                                                    )
-                                    # Decorate fig
-                                    fig_7.set_title("qP") 
-                                    fig_7.grid() # use: which='both' for minor grid
-                                    fig_7.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)') 
-                                    fig_7.set_ylabel('r.u.') 
-                                    ########## Sub-plot NPQ 2 ##########
-                                    fig_6 = fig.add_subplot(3, 4, 6) 
-                                    # Read NPQ throughout the datafrmae for the plot
-                                    for i in range(len(NPQALLFMM.columns)):
-                                        # do not plot time axis
-                                            if i > 0:
-                                                fig_6.scatter(
-                                                    NPQALLFMM.iloc[:, 0], # x-axis data: 1st column
-                                                    NPQALLFMM.iloc[:, i], # y-axis data
-                                                    linewidth=1,
-                                                    color=colors[i-1]
-                                                    )
-                                                fig_6.plot(
-                                                    NPQALLFMM.iloc[:, 0], # x-axis data: 1st column
-                                                    NPQALLFMM.iloc[:, i], # y-axis data
-                                                    color=colors[i-1]
-                                                    )
-                                    # Decorate fig
-                                    fig_6.set_title("Non-photochemical quneching, NPQ ") 
-                                    fig_6.grid() # use: which='both' for minor grid
-                                    fig_6.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)') 
-                                    ########## Sub-plot qN ##########
-                                    fig_8 = fig.add_subplot(3, 4, 7) 
-                                    # Read NPQ throughout the datafrmae for the plot
-                                    for i in range(len(QN.columns)):
-                                        # do not plot time axis
-                                            if i > 0:
-                                                fig_8.scatter(
-                                                    QN.iloc[:, 0], # x-axis data: 1st column
-                                                    QN.iloc[:, i], # y-axis data
-                                                    linewidth=1,
-                                                    color=colors[i-1]
-                                                    )
-                                                fig_8.plot(
-                                                    QN.iloc[:, 0], # x-axis data: 1st column
-                                                    QN.iloc[:, i], # y-axis data
-                                                    color=colors[i-1]
-                                                    )
-                                    # Decorate fig
-                                    fig_8.set_title("Non-photochemical quneching, qN ") 
-                                    fig_8.grid() # use: which='both' for minor grid
-                                    fig_8.set_xlabel('Light intensity (µmol photons m$^{-2}$ s$^{-1}$)') 
-                                    # saving scatter plot to memory
-                                    memory_for_plot = io.BytesIO()
-                                    plt.savefig(memory_for_plot, bbox_inches='tight', format='JPEG')
-                                    plot_in_memory = base64.b64encode(memory_for_plot.getvalue())
-                                    plot_from_memory = plot_in_memory.decode('ascii')
-                                    # Clearing the plot
-                                    plt.clf()
-                                    plt.cla()
-                                    plt.close()
-                                    #######################
-                                    ### Plot parameters ###
-                                    #######################
-                                    # Initialise the subplot function using number of rows and columns 
-                                    fig = plt.figure(figsize=(20,12)) 
-                                    fig.tight_layout() # Shrink to fit the canvas together with legend   
-                                    # Sub-plot ALPHA 
-                                    fig_1 = fig.add_subplot(3, 4, 1)                  
-                                    ALPHA.plot.bar(xticks=[], color=colors)
-                                    fig_1.set_title("α")
-                                    fig_1.set_ylabel('e$^{-}$ photons$^{-1}$') 
-                                    # Sub-plot BETA 
-                                    fig_2 = fig.add_subplot(3, 4, 2)                  
-                                    BETA.plot.bar(xticks=[], color=colors)
-                                    fig_2.set_title("β")
-                                    # Sub-plot ETRm MAX
-                                    fig_3 = fig.add_subplot(3, 4, 3)    
-                                    ETRmax_list = pd.DataFrame([ETRMAX])# FM to df, needed for legend
-                                    for i in range(len(ETRmax_list.columns)):
-                                        # do not plot time axis
-                                        plt.bar(
-                                            ETRmax_list.columns[i], # x-axis data
-                                            ETRmax_list.iloc[:, i], # y-axis data
-                                            label = ETRmax_list.columns[i], # Column names for legend
-                                            color=colors[i],
-                                            width = 0.5 # width of the columns
-                                            )     
-                                    fig_3.margins(x=0.5**len(ETRmax_list.columns)) # space between the axes and the first and last bar
-                                    fig_3.set_xticks([]) # no X-axis values
-                                    fig_3.legend(loc='upper left', bbox_to_anchor=(1.1, 1.02)) # legend    
-                                    fig_3.set_title("ETR$_{max}$")
-                                    fig_3.set_ylabel('µmol e$^{-}$ m$^{-2}$ s$^{-1}$')  
-                                    # Sub-plot 
-                                    fig_4 = fig.add_subplot(3, 4, 5)                  
-                                    IK.plot.bar(xticks=[], color=colors)
-                                    fig_4.set_title("I$_{k}$")
-                                    fig_4.set_ylabel('µmol photons m$^{-2}$ s$^{-1}$') 
-                                    # Sub-plot 
-                                    fig_5 = fig.add_subplot(3, 4, 6)                  
-                                    IB.plot.bar(xticks=[], color=colors)
-                                    fig_5.set_title("I$_{b}$")
-                                    # Sub-plot 
-                                    fig_6 = fig.add_subplot(3, 4, 7)                  
-                                    ETRMPOT.plot.bar(xticks=[], color=colors)
-                                    fig_6.set_title("ETR$_{mPot}$")
-                                    fig_6.set_ylabel('µmol e$^{-}$ m$^{-2}$ s$^{-1}$') 
-                                    # saving scatter plot to memory
-                                    memory_for_parameters = io.BytesIO()
-                                    plt.savefig(memory_for_parameters, bbox_inches='tight', format='JPEG')
-                                    parameters_in_memory = base64.b64encode(memory_for_parameters.getvalue())
-                                    parameters_from_memory = parameters_in_memory.decode('ascii')
-                                    # Clearing the plot
-                                    plt.clf()
-                                    plt.cla()
-                                    plt.close()            
-                                    ######################
-                                    ## Export to excel ###
-                                    ###################### 
-                                    # prepare DF with parameters F02
-                                    param_all = pd.concat([param_all, ALPHA], axis = 1)
-                                    param_all = pd.concat([param_all, BETA], axis = 1)
-                                    param_all = pd.concat([param_all, IK], axis = 1)
-                                    param_all = pd.concat([param_all, IB], axis = 1)
-                                    param_all = pd.concat([param_all, ETRMAX_FROM_ALPHA_BETA], axis = 1)
-                                    param_all = pd.concat([param_all, ETRMPOT], axis = 1)
-                                    # Set file names as index
-                                    file_names_list = pd.Series(ETRMAX.index.values) #get file names
-                                    param_all.set_index(file_names_list, inplace=True)
-                                    # name columns
-                                    param_all.columns = ['Aplha', 'Beta', 'Ik', 'Ib', 'ETR max', 'ETRmPot'] 
-                                    # write all parameters to excel
-                                    writer = pd.ExcelWriter(f'{upload_folder}/{file_name_without_extension}_results.xlsx', engine='openpyxl')
-                                    param_all.to_excel(writer, sheet_name = 'Parameters', index=True)
-                                    ETRALL.to_excel(writer, sheet_name = 'ETR', index=False)
-                                    FITALL.to_excel(writer, sheet_name = 'ETR_fit', index=False)
-                                    FTALL.to_excel(writer, sheet_name = 'Ft', index=False)
-                                    FMALL.to_excel(writer, sheet_name = 'Fm', index=False)
-                                    QP.to_excel(writer, sheet_name = 'qP', index=False)
-                                    QN.to_excel(writer, sheet_name = 'qN', index=False)
-                                    NPQALLFMM.to_excel(writer, sheet_name = 'NPQ', index=False)
-                                    QYALL.to_excel(writer, sheet_name = 'Qy', index=False)
-                                    Summary_file.to_excel(writer, sheet_name = 'Raw fluorescence data', index=False)
-                                    writer.close()
-                                    # Save images
-                                    wb = openpyxl.load_workbook(f'{upload_folder}/{file_name_without_extension}_results.xlsx')
-                                    wb.create_sheet(title='Images')
-                                    wb.move_sheet('Images', -(len(wb.sheetnames)-1))
-                                    ws = wb['Images']
-                                    img_data_raw = Image(memory_for_plot)
-                                    img_parameters = Image(memory_for_parameters)
-                                    img_data_raw.anchor = 'A1'
-                                    img_parameters.anchor = 'A54'
-                                    ws.add_image(img_parameters)
-                                    ws.add_image(img_data_raw)
-                                    wb.save(f'{upload_folder}/{file_name_without_extension}_results.xlsx')                                       
 
-                                    xlsx_file_path = f'uploads/{file_name_without_extension}_results.xlsx'
+@light_curves_analysis.route('/api/lc_process', methods=['POST'])
+def lc_process():
+    upload_folder = UPLOAD_FOLDER
+    if not os.path.isdir(upload_folder):
+        os.mkdir(upload_folder)
 
-                                    ######################################
-                                    ### Delete files older than 20 min ###
-                                    ######################################
-                                    # List all files
-                                    list_of_files_in_upload_folder = os.listdir(upload_folder)
-                                    # get the current time
-                                    current_time = time.time()
-                                    # get number of seconds to reset
-                                    seconds = 1200
-                                    # scan for old files
-                                    for i in list_of_files_in_upload_folder:
-                                        # get the location of each file
-                                        file_location = os.path.join(upload_folder, str(i)).replace("\\","/")
-                                        # get time when the file was modified
-                                        file_time = os.stat(file_location).st_mtime
-                                        # if a file is modified before 20 min then delete it
-                                        if(file_time < current_time - seconds):
-                                            os.remove(os.path.join(upload_folder, str(i)).replace("\\","/")) 
-                            else:
-                                flash('There seems to be a problem with the uploaded data. Please revise the uploaded files.', category='error')  
-                    else:
-                        flash('Please select correct file types for analysis (.txt files for AquaPen / FluorPen).', category='error')    
-                else:
-                    flash(f'Please select up to {max_number_of_files} files.', category='error')                
+    if 'light_curve_files' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No files received.'}), 400
+
+    files = request.files.getlist('light_curve_files')
+    if not files or secure_filename(files[0].filename or '') == '':
+        return jsonify({'status': 'error', 'message': 'Please select one or more files.'}), 400
+
+    fluorometer    = request.form.get('fluorometer', 'AquaPen')
+    protocol_key   = request.form.get('protocol', 'LC3')
+    etr_max_factor = int(request.form.get('etr_max_factor', 10))
+
+    if len(files) > 50:
+        return jsonify({'status': 'error', 'message': 'Maximum 50 files allowed.'}), 400
+
+    if protocol_key not in LC_PROTOCOLS:
+        return jsonify({'status': 'error', 'message': f'Unknown protocol: {protocol_key}'}), 400
+
+    protocol     = LC_PROTOCOLS[protocol_key]
+    n_steps      = protocol['n_steps']
+    PAR          = protocol['par']
+
+    # ── parse files ───────────────────────────────────────────────────────────
+    # Merged dataframe structure:
+    #   rows: all rows from first file (time_us column + fluorescence column)
+    #   additional columns: fluorescence from subsequent files
+
+    import pandas as pd
+
+    Summary_file  = pd.DataFrame()
+    file_names    = []
+    last_stem     = 'lc'
+
+    for file_number, file in enumerate(files):
+        fname_no_ext  = str.lower(os.path.splitext(file.filename or '')[0])
+        ext           = str.lower(os.path.splitext(file.filename or '')[1])
+        fname_full    = secure_filename(file.filename or '')
+        last_stem     = fname_no_ext
+
+        if ext != '.txt':
+            return jsonify({'status': 'error',
+                            'message': f'Wrong file type for {fname_full}. Expected .txt'}), 400
+
+        raw = file.read().decode('utf-8', errors='replace').splitlines(keepends=True)
+        df  = pd.DataFrame(raw)
+        df  = df[0].str.split('\t', expand=True).iloc[:, :2]
+
+        # Validate AquaPen/FluorPen file
+        if not df[0].astype(str).str.strip().str.contains('FluorPen|AquaPen', case=False).any():
+            return jsonify({'status': 'error',
+                            'message': f'{fname_full}: not a valid AquaPen/FluorPen file.'}), 400
+
+        if file_number == 0:
+            Summary_file = df.rename(columns={df.columns[0]: 'time_us', df.columns[1]: fname_no_ext})
         else:
-            flash('Please select .txt (AquaPen / FluorPen) files.', category='error')
-        return render_template("light_curves_analysis.html",
-                        raw_data_from_memory = raw_data_from_memory,
-                        plot_from_memory = plot_from_memory,
-                        parameters_from_memory = parameters_from_memory,
-                        xlsx_file_path = xlsx_file_path
-                            )
-    
-    return render_template("light_curves_analysis.html")
-#    else:
-#        flash('Please login', category='error')
-#        return redirect("/login")
-    
+            Summary_file[fname_no_ext] = df.iloc[:, 1].values
+
+        file_names.append(fname_no_ext)
+
+    if Summary_file.empty:
+        return jsonify({'status': 'error', 'message': 'No valid data found in uploaded files.'}), 400
+
+    # ── validate protocol ─────────────────────────────────────────────────────
+    # Count Fm_L* rows to determine actual n_steps in the data
+    fm_rows = Summary_file['time_us'].astype(str).str.strip().str.match(r'^Fm_L\d+$').sum()
+    if fm_rows != n_steps:
+        return jsonify({
+            'status': 'error',
+            'message': (f'Protocol mismatch: found {fm_rows} Fm_L* rows in the data, '
+                        f'but protocol {protocol_key} expects {n_steps}. '
+                        f'Please select the correct protocol.')
+        }), 400
+
+    # Check Fo row present (parameter export)
+    if not Summary_file['time_us'].astype(str).str.strip().str.contains('^Fo$', regex=True).any():
+        return jsonify({'status': 'error',
+                        'message': 'File does not contain exported parameters (Fo row missing). '
+                                   'Please export with parameters from AquaPen/FluorPen software.'}), 400
+
+    # ── extract F values ──────────────────────────────────────────────────────
+    def _row(label_regex):
+        """Return numeric row matching label_regex as DataFrame with file columns."""
+        mask = Summary_file['time_us'].astype(str).str.strip().str.match(label_regex)
+        return Summary_file[mask].iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+
+    F0_df  = _row(r'^Fo$').reset_index(drop=True)   # shape (1, n_files)
+    FM_df  = _row(r'^Fm$').reset_index(drop=True)   # shape (1, n_files)  — max FM overall
+
+    # Ft_L1..Ft_Ln and Fm_L1..Fm_Ln
+    ft_rows, fm_rows_list = [], []
+    for k in range(1, n_steps + 1):
+        ft_rows.append(_row(rf'^Ft_L{k}$').reset_index(drop=True))
+        fm_rows_list.append(_row(rf'^Fm_L{k}$').reset_index(drop=True))
+
+    FTALL = pd.concat(ft_rows, ignore_index=True)   # shape (n_steps, n_files)
+    FMALL = pd.concat(fm_rows_list, ignore_index=True)
+
+    # ── raw fluorescence signal (numeric rows only) ───────────────────────────
+    good = Summary_file['time_us'].astype(str).str.isnumeric()
+    raw_df = Summary_file[good].astype(int).reset_index(drop=True)
+    raw_time_us  = raw_df['time_us'].tolist()
+    raw_curves   = {fname: raw_df[fname].tolist() for fname in file_names}
+
+    # ── calculate derived parameters ─────────────────────────────────────────
+    F0_row   = F0_df.iloc[0]   # Series indexed by file names
+    FM_row   = FM_df.iloc[0]   # overall Fm (first Fm row = pre-LC max)
+
+    FMMAX    = FMALL.max()     # max Fm' across steps per file
+    FMMAX_df = pd.DataFrame(
+        np.repeat(FMMAX.values.reshape(1, -1), n_steps, axis=0), columns=FMALL.columns)
+    F0_df2   = pd.DataFrame(
+        np.repeat(F0_row.values.reshape(1, -1), n_steps, axis=0), columns=FTALL.columns)
+
+    # Ensure column names are consistent
+    FTALL.columns = file_names
+    FMALL.columns = file_names
+    FMMAX_df.columns = file_names
+    F0_df2.columns   = file_names
+
+    QYALL   = (FMALL - FTALL) / FMALL                        # QY = (FM' - Ft) / FM'
+    NPQALL  = (FMMAX_df - FMALL) / FMALL                     # NPQ = (FMmax - FM') / FM'
+    QP      = (FMALL - FTALL) / (FMALL - F0_df2)             # qP = (FM' - Ft) / (FM' - F0)
+    QN      = (FMMAX_df - FMALL) / (FMMAX_df - F0_df2)       # qN = (FMmax - FM') / (FMmax - F0)
+    ETRALL  = QYALL.mul(pd.Series(PAR), axis=0)              # rETR = QY * PAR
+
+    # ── fit Platt curves ──────────────────────────────────────────────────────
+    def model_platt(x, ETRmPot, alpha, beta):
+        return ETRmPot * (1 - np.exp(-(alpha * x / ETRmPot))) * np.exp(-(beta * x / ETRmPot))
+
+    ETRMAX_measured = ETRALL.max()   # max measured ETR per file
+
+    # Check for zero or negative ETR (unfittable data)
+    if (ETRMAX_measured <= 0).any():
+        bad = ETRMAX_measured[ETRMAX_measured <= 0].index.tolist()
+        return jsonify({
+            'status': 'error',
+            'message': ('Some light curves contain zero or negative ETR values, '
+                        f'which cannot be fitted: {bad}. '
+                        'Please check the data and select only valid rapid light curves.')
+        }), 400
+
+    step_data = {fname: {
+        'ft': [], 'fm': [], 'qy': [], 'etr_measured': [],
+        'etr_fitted': [], 'npq': [], 'qp': [], 'qn': []
+    } for fname in file_names}
+
+    params_out = {}
+    par_arr    = np.array(PAR, dtype=float)
+
+    for fname in file_names:
+        etr_measured = ETRALL[fname].values.astype(float)
+        etr_max_obs  = float(ETRMAX_measured[fname])
+        etrmPot_init = etr_max_factor * etr_max_obs
+
+        try:
+            popt, _ = curve_fit(
+                model_platt, par_arr, etr_measured,
+                p0=np.array([etrmPot_init, 0.05, 0.05]),
+                bounds=((0, 0, 0), (etrmPot_init, 25, 25)),
+                maxfev=2000
+            )
+        except Exception as e:
+            return jsonify({'status': 'error',
+                            'message': f'Curve fitting failed for {fname}: {e}'}), 400
+
+        ETRmPot_fit, _, _ = popt
+        fit_etr = model_platt(par_arr, *popt)
+
+        # Re-derive alpha and beta from slopes of fitted curve
+        slope1, _, _, _, _ = stats.linregress(par_arr[:3],   fit_etr[:3])
+        slope2, _, _, _, _ = stats.linregress(par_arr[-2:],  fit_etr[-2:])
+        alpha     = slope1
+        beta      = slope2
+        beta_abs  = abs(slope2)
+
+        # ETRmax from alpha/beta formula
+        if (alpha + beta) > 0 and alpha > 0:
+            etr_max_from_ab = ETRmPot_fit * (alpha / (alpha + beta)) * (beta / (alpha + beta)) ** (beta / alpha)
+        else:
+            etr_max_from_ab = float('nan')
+
+        Ik = etr_max_obs / alpha    if alpha    != 0 else float('nan')
+        Ib = etr_max_obs / beta_abs if beta_abs != 0 else float('nan')
+
+        params_out[fname] = {
+            'alpha':              _safe(alpha),
+            'beta':               _safe(beta),
+            'etr_max_measured':   _safe(etr_max_obs),
+            'etr_max_from_ab':    _safe(etr_max_from_ab),
+            'etr_mpot':           _safe(ETRmPot_fit),
+            'ik':                 _safe(Ik),
+            'ib':                 _safe(Ib),
+        }
+
+        step_data[fname] = {
+            'ft':           [_safe(v) for v in FTALL[fname].values],
+            'fm':           [_safe(v) for v in FMALL[fname].values],
+            'qy':           [_safe(v) for v in QYALL[fname].values],
+            'etr_measured': [_safe(v) for v in etr_measured],
+            'etr_fitted':   [_safe(v) for v in fit_etr],
+            'npq':          [_safe(v) for v in NPQALL[fname].values],
+            'qp':           [_safe(v) for v in QP[fname].values],
+            'qn':           [_safe(v) for v in QN[fname].values],
+        }
+
+    _cleanup_old_files(upload_folder)
+
+    return jsonify({
+        'status':           'success',
+        'fluorometer':      fluorometer,
+        'protocol':         protocol_key,
+        'light_intensities': PAR,
+        'files':            file_names,
+        'file_stem':        last_stem,
+        'raw_time_us':      raw_time_us,
+        'raw_curves':       raw_curves,
+        'step_data':        step_data,
+        'params':           params_out,
+    })
+
+
+@light_curves_analysis.route('/api/lc_export', methods=['POST'])
+def lc_export():
+    """
+    Build summary xlsx from client-supplied JSON.
+    Receives: {files, step_data, params, raw_curves, light_intensities,
+               raw_time_us, file_stem, group_export, charts}
+    Returns:  {status, xlsx_path}
+    """
+    data             = request.get_json(force=True)
+    files            = data.get('files', [])
+    step_data        = data.get('step_data', {})
+    params           = data.get('params', {})
+    raw_curves       = data.get('raw_curves', {})
+    light_intensities = data.get('light_intensities', [])
+    raw_time_us      = data.get('raw_time_us', [])
+    file_stem        = secure_filename(data.get('file_stem', 'lc') or 'lc')
+    group_export     = data.get('group_export')
+    charts           = data.get('charts', [])
+
+    if not file_stem:
+        file_stem = 'lc'
+
+    out_fname  = f'{file_stem}_lc_results.xlsx'
+    out_path   = os.path.join(UPLOAD_FOLDER, out_fname).replace('\\', '/')
+    out_static = f'uploads/{out_fname}'
+
+    try:
+        wb = Workbook()
+
+        # ── Parameters sheet ──────────────────────────────────────────────────
+        ws_params = wb.worksheets[0]
+        ws_params.title = 'Parameters'
+        param_keys    = ['alpha', 'beta', 'etr_max_measured', 'etr_max_from_ab',
+                         'etr_mpot', 'ik', 'ib']
+        param_labels  = {
+            'alpha': 'Alpha', 'beta': 'Beta',
+            'etr_max_measured': 'ETRmax (measured)',
+            'etr_max_from_ab':  'ETRmax (alpha/beta)',
+            'etr_mpot':         'ETRmPot',
+            'ik':               'Ik', 'ib': 'Ib',
+        }
+        ws_params.append(['Sample'] + [param_labels.get(k, k) for k in param_keys])
+        for fname in files:
+            p = params.get(fname, {})
+            ws_params.append([fname] + [p.get(k) for k in param_keys])
+
+        # ── Step-data sheets ──────────────────────────────────────────────────
+        metric_sheets = [
+            ('ETR_measured', 'etr_measured'),
+            ('ETR_fitted',   'etr_fitted'),
+            ('Ft',           'ft'),
+            ('Fm',           'fm'),
+            ('QY',           'qy'),
+            ('NPQ',          'npq'),
+            ('qP',           'qp'),
+            ('qN',           'qn'),
+        ]
+        for sheet_name, key in metric_sheets:
+            ws = wb.create_sheet(sheet_name)
+            ws.append(['Light_intensity'] + files)
+            n_steps = len(light_intensities)
+            for i, par in enumerate(light_intensities):
+                row = [par]
+                for fname in files:
+                    vals = (step_data.get(fname) or {}).get(key, [])
+                    row.append(vals[i] if i < len(vals) else None)
+                ws.append(row)
+
+        # ── Raw fluorescence sheet ────────────────────────────────────────────
+        ws_raw = wb.create_sheet('Raw_fluorescence')
+        ws_raw.append(['time_us'] + files)
+        for i, t in enumerate(raw_time_us):
+            row = [t]
+            for fname in files:
+                vals = raw_curves.get(fname, [])
+                row.append(vals[i] if i < len(vals) else None)
+            ws_raw.append(row)
+
+        # ── Charts sheet ──────────────────────────────────────────────────────
+        ws_charts = wb.create_sheet('Charts')
+        row = 1
+        for c in charts:
+            url = c.get('data_url', '')
+            if not url or ',' not in url:
+                continue
+            b64 = url.split(',', 1)[1]
+            if not b64:
+                continue
+            try:
+                img_bytes = base64.b64decode(b64)
+            except Exception:
+                continue
+            if len(img_bytes) < 8:
+                continue
+            img_buf = io.BytesIO(img_bytes)
+            try:
+                xl_img = Image(img_buf)
+            except Exception:
+                continue
+            img_buf.seek(0)
+            TARGET_W = 700
+            orig_w, orig_h = xl_img.width, xl_img.height
+            if orig_w > 0:
+                scale = TARGET_W / orig_w
+                xl_img.width  = TARGET_W
+                xl_img.height = round(orig_h * scale)
+            else:
+                xl_img.width, xl_img.height = TARGET_W, 400
+            title = c.get('title', '')
+            if title:
+                ws_charts.cell(row=row, column=1, value=title)
+                row += 1
+            xl_img.anchor = f'A{row}'
+            ws_charts.add_image(xl_img)
+            row += round(xl_img.height / 20) + 2
+
+        # ── Group statistics sheets ───────────────────────────────────────────
+        if group_export:
+            grp_stats    = group_export.get('stats', {})
+            samples      = group_export.get('samples', [])
+            param_order  = group_export.get('param_order', param_keys)
+            grp_labels   = group_export.get('param_labels', param_labels)
+            grp_names    = list(grp_stats.keys())
+
+            if grp_stats and param_order:
+                ws_st = wb.create_sheet('Group_Statistics')
+                hdr   = ['Parameter']
+                for g in grp_names:
+                    hdr += [f'{g} mean', f'{g} SD', f'{g} N']
+                ws_st.append(hdr)
+                for p in param_order:
+                    stat_row = [grp_labels.get(p, p)]
+                    for g in grp_names:
+                        s = (grp_stats.get(g) or {}).get('params', {}).get(p)
+                        if s:
+                            stat_row += [round(s['mean'], 6), round(s['sd'], 6), s.get('n')]
+                        else:
+                            stat_row += [None, None, None]
+                    ws_st.append(stat_row)
+
+            if samples and param_order:
+                ws_sp = wb.create_sheet('Group_Samples')
+                ws_sp.append(['Sample', 'Group'] + [grp_labels.get(p, p) for p in param_order])
+                for sr in samples:
+                    sample_row = [sr.get('sample'), sr.get('group')]
+                    for p in param_order:
+                        v = sr.get(p)
+                        sample_row.append(round(v, 6) if v is not None else None)
+                    ws_sp.append(sample_row)
+
+        wb.save(out_path)
+        _cleanup_old_files(UPLOAD_FOLDER)
+        return jsonify({'status': 'success', 'xlsx_path': out_static})
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
