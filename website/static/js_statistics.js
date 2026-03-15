@@ -1,14 +1,59 @@
-// ── Cross-row tab coordination ─────────────────────────────────────────────
-// Bootstrap only deactivates siblings within the same <ul role="tablist">.
-// This listener clears .active from every button in both rows so that
-// selecting a tab in one row always deselects the active tab in the other.
-document.addEventListener('show.bs.tab', function(e) {
-    document.querySelectorAll('#statsTabRow1 .nav-link, #statsTabRow2 .nav-link')
-        .forEach(btn => btn.classList.remove('active'));
+// ── Two-level tab navigation ──────────────────────────────────────────────────
+// Category buttons (Visualise / Compare / Multivariate) switch
+// which group of sub-tabs is visible in #statsSubTabRow.
+// Sub-tabs with data-mv-subtab also activate the corresponding inner pane.
+
+function _switchCategory(cat) {
+    // Update category button states
+    document.querySelectorAll('.stats-cat-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === cat);
+    });
+    // Show only the matching sub-tab group
+    ['visualise', 'compare', 'multivariate'].forEach(c => {
+        document.querySelectorAll('.stats-subtab-' + c).forEach(li => {
+            li.style.display = c === cat ? '' : 'none';
+        });
+    });
+    // Activate first non-disabled sub-tab in the new category
+    const firstLink = document.querySelector('.stats-subtab-' + cat + ' .nav-link:not([disabled])');
+    if (firstLink && !firstLink.classList.contains('active')) firstLink.click();
+}
+
+/** Enable a locked sub-tab in #statsSubTabRow by id and restore its icon. */
+function _unlockSubTab(tabId, newTitle) {
+    const btn = document.getElementById(tabId);
+    if (!btn) return;
+    btn.disabled = false;
+    btn.title = newTitle || '';
+    btn.classList.remove('subtab-locked');
+    // Replace the lock icon with the original icon
+    const lockIcon = btn.querySelector('.fa-lock');
+    if (lockIcon) {
+        const iconMap = {
+            'anova-tab':   'fa-check-square-o',
+            'pca-tab':     'fa-dot-circle-o',
+            'pls-subtab':  'fa-sitemap',
+            'opls-subtab': 'fa-arrows-h',
+        };
+        lockIcon.classList.remove('fa-lock');
+        lockIcon.classList.add(iconMap[tabId] || 'fa-unlock');
+    }
+}
+
+document.querySelectorAll('.stats-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => _switchCategory(btn.dataset.cat));
 });
-// Bootstrap 4 uses jQuery events, not show.bs.tab — cover both:
-$(document).on('show.bs.tab', '#statsTabRow1 .nav-link, #statsTabRow2 .nav-link', function() {
-    $('#statsTabRow1 .nav-link, #statsTabRow2 .nav-link').removeClass('active');
+
+// Sub-tabs targeting #pca-content also activate the correct inner pane
+$(document).on('shown.bs.tab', '#statsSubTabRow [data-mv-subtab]', function() {
+    const innerTabId = this.dataset.mvSubtab;
+    const innerTab = document.getElementById(innerTabId);
+    if (innerTab) $(innerTab).tab('show');
+});
+
+// Bootstrap 4: clear active from all sub-tabs when a new one activates
+$(document).on('show.bs.tab', '#statsSubTabRow .nav-link', function() {
+    $('#statsSubTabRow .nav-link').removeClass('active');
 });
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -28,10 +73,827 @@ let testsAbortController = null;
 let anovaAbortController = null;
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Pipeline state (Correlation → PCA pipeline) ───────────────────────────────
+let currentNormTransform = 'none';
+let corrThreshold = 0.80;
+let excludedVarsFromCorr = new Set();
+let pcaVarsFromCorr = new Set();  // vars that arrived via "Send to PCA"
+let lastCorrResults = null;
+let pipelineStep = 1; // 1-5
+let nzvThreshold = 0; // CV% threshold for near-zero variance filter
+let pcaPreviewZoom = 1.0;
+
+// Per-variable transform state
+let perVarTransforms = {};   // { varName: 'none'|'log10'|'ln'|'sqrt'|'zscore'|'minmax' }
+let usePerVarMode = false;   // false = single global transform; true = per-variable
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Transformation state ──────────────────────────────────────────────────────
 let appliedTransformations = {};  // { varName: { type: 'ln1p'|'sqrt'|'power'|'reciprocal'|'arcsin', power: Number } }
 let lastTestResults = null;       // Cached after each run-tests call
 let lastOriginalTestResults = null;  // When transforms active: results on original data
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Data Preprocessing: Coverage / Missing-data Diagnostic ───────────────────
+const _missingTableZoom = { cov: 1.0, pls: 1.0, opls: 1.0 };
+
+function _applyMissingTableZoom(uid) {
+    const tbl = document.querySelector(`#${uid}TableWrap table`);
+    if (tbl) tbl.style.zoom = _missingTableZoom[uid];
+}
+
+function _getMinRowCoverage() {
+    const el = document.getElementById('minRowCoverage');
+    return el ? parseInt(el.value, 10) : 20;
+}
+
+// Generic Excel-like missing-data table.
+// containerId  — id of the <div> to populate
+// selectedVarNames — X variable columns
+// yColName     — optional Y column (null for PCA/Correlation)
+// uid          — short key for unique element IDs ('cov', 'pls', 'opls')
+function _renderMissingDataTable(containerId, selectedVarNames, yColName, uid) {
+    const container = document.getElementById(containerId);
+    if (!container || !globalData || selectedVarNames.length === 0) {
+        if (container) container.style.display = 'none';
+        return;
+    }
+    const threshold = _getMinRowCoverage() / 100;
+    const n = globalData.length;
+    const nVars = selectedVarNames.length;
+    const isMissing = v => v === undefined || v === null || v === 'N/A' || v === '';
+
+    const rowsWithCov = globalData.map((row, idx) => {
+        const observed = selectedVarNames.filter(v => !isMissing(row[v])).length;
+        const cov      = observed / nVars;
+        const excCov   = cov < threshold;
+        const missingY = yColName ? isMissing(row[yColName]) : false;
+        return { row, idx, cov, excCov, missingY, excluded: excCov || missingY };
+    });
+
+    const nExcCov   = rowsWithCov.filter(r => r.excCov).length;
+    const nExcY     = rowsWithCov.filter(r => !r.excCov && r.missingY).length;
+    const nExcluded = rowsWithCov.filter(r => r.excluded).length;
+    const complete  = rowsWithCov.filter(r => !r.excluded && r.cov >= 1.0).length;
+    const partial   = n - complete - nExcluded;
+
+    const warnHtml = nExcluded > 0 && (nExcluded / n) > 0.3
+        ? `<div class="alert alert-warning py-1 px-2 mb-2 small">
+               <i class="fa fa-exclamation-triangle mr-1"></i>
+               <strong>${Math.round(nExcluded / n * 100)}% of samples would be excluded.</strong>
+               To retain more samples, lower the row coverage threshold.
+           </div>`
+        : '';
+
+    const summaryHtml = `
+        <div class="d-flex flex-wrap small text-muted mb-2" style="gap:6px 14px;">
+            <span><span class="badge text-white" style="background:#343a40;">${n}</span> total</span>
+            <span><span class="badge" style="background:#28a745;color:#fff;">${complete}</span> complete</span>
+            <span><span class="badge" style="background:#17a2b8;color:#fff;">${partial}</span> partial</span>
+            ${nExcCov > 0 ? `<span><span class="badge" style="background:#dc3545;color:#fff;">${nExcCov}</span> excluded (&lt;${_getMinRowCoverage()}%)</span>` : ''}
+            ${nExcY   > 0 ? `<span><span class="badge" style="background:#fd7e14;color:#fff;">${nExcY}</span> excluded (missing Y)</span>` : ''}
+        </div>${warnHtml}`;
+
+    const factorCols = selectedFactors.length ? selectedFactors : [];
+    const allCols    = [...new Set([...factorCols, ...selectedVarNames, ...(yColName ? [yColName] : [])])];
+
+    const FS       = '0.62rem';
+    const thStyle  = `font-size:${FS}; white-space:nowrap; padding:1px 4px; background:#f0f4ff; border:1px solid #c8d0e0; position:sticky; top:0; z-index:1; font-weight:600;`;
+    const thYStyle = `font-size:${FS}; white-space:nowrap; padding:1px 4px; background:#dbeeff; border:1px solid #7ab8f5; position:sticky; top:0; z-index:1; font-weight:600; color:#0056b3;`;
+    const tdBase   = `font-size:${FS}; padding:1px 4px; border:1px solid #dee2e6; white-space:nowrap; max-width:80px; overflow:hidden; text-overflow:ellipsis;`;
+
+    const headerCells = ['#', ...allCols].map(c => {
+        const isY  = c === yColName;
+        const lbl  = c.length > 11 ? c.slice(0, 10) + '…' : c;
+        return `<th style="${isY ? thYStyle : thStyle}" title="${isY ? c + ' (Y — response)' : c}">${lbl}${isY ? ' <span style="color:#0056b3;font-size:0.55rem;">▲Y</span>' : ''}</th>`;
+    }).join('');
+
+    const bodyRows = rowsWithCov.map(({ row, idx, cov, excCov, missingY, excluded: isExcluded }) => {
+        const rowBg    = isExcluded ? 'background:#fff0f0;' : (cov < 1.0 ? 'background:#fffbf0;' : 'background:#fff;');
+        const rowTitle = excCov    ? `Excluded — only ${Math.round(cov * 100)}% coverage (threshold: ${_getMinRowCoverage()}%)`
+                       : missingY  ? `Excluded — Y variable (${yColName}) is missing`
+                       : `${Math.round(cov * 100)}% coverage`;
+
+        const cells = allCols.map(col => {
+            const val      = row[col];
+            const isEmpty  = isMissing(val);
+            const isVarCol = selectedVarNames.includes(col);
+            const isYCol   = col === yColName;
+            const cellBg   = isEmpty && isYCol   ? 'background:#ffe0b2;'
+                           : isEmpty && isVarCol ? 'background:#ffd4d4;' : '';
+            const display  = isEmpty ? '' : String(val);
+            return `<td style="${tdBase}${cellBg}" title="${display}">${display}</td>`;
+        }).join('');
+
+        const excStyle = excCov   ? 'font-weight:700; color:#c00; background:#ffcccc;'
+                       : missingY ? 'font-weight:700; color:#a04000; background:#ffe5cc;' : '';
+        const icon     = excCov   ? '<i class="fa fa-times-circle" style="margin-right:2px;"></i>'
+                       : missingY ? '<i class="fa fa-minus-circle" style="margin-right:2px;color:#fd7e14;"></i>' : '';
+        const rowNumStyle = `font-size:${FS}; padding:1px 4px; border:1px solid #dee2e6; text-align:right; color:#aaa; ${rowBg} ${excStyle}`;
+        const rowNum  = `<td style="${rowNumStyle}" title="${rowTitle}">${icon}${idx + 2}</td>`;
+
+        return `<tr style="${rowBg}" title="${rowTitle}">${rowNum}${cells}</tr>`;
+    }).join('');
+
+    const existingWrap = document.getElementById(`${uid}TableWrap`);
+    const savedHeight  = existingWrap ? existingWrap.style.height : null;
+    const COLLAPSED_H  = '140px';
+
+    const legendY = yColName
+        ? `<span style="display:inline-block;width:9px;height:9px;background:#ffe0b2;border:1px solid #fb8c00;border-radius:2px;vertical-align:middle;margin-right:2px;"></span>missing Y &nbsp;`
+        : '';
+
+    const tableHtml = `
+        <div id="${uid}TableWrap" style="height:${COLLAPSED_H}; overflow:auto; resize:vertical; border:1px solid #c8d0e0; border-radius:4px; margin-top:4px;">
+            <table style="border-collapse:collapse; width:max-content; min-width:100%;">
+                <thead><tr>${headerCells}</tr></thead>
+                <tbody>${bodyRows}</tbody>
+            </table>
+        </div>
+        <div class="d-flex align-items-center justify-content-between mt-1">
+            <div class="text-muted" style="font-size:0.6rem;">
+                <span style="display:inline-block;width:9px;height:9px;background:#ffcccc;border:1px solid #c00;border-radius:2px;vertical-align:middle;margin-right:2px;"></span>excluded &nbsp;
+                <span style="display:inline-block;width:9px;height:9px;background:#ffd4d4;border:1px solid #ffaaaa;border-radius:2px;vertical-align:middle;margin-right:2px;"></span>missing X &nbsp;
+                ${legendY}<span style="display:inline-block;width:9px;height:9px;background:#fffbf0;border:1px solid #ffe082;border-radius:2px;vertical-align:middle;margin-right:2px;"></span>partial (kept)
+            </div>
+            <div class="d-flex align-items-center" style="gap:3px;">
+                <span class="text-muted" style="font-size:0.6rem;">zoom</span>
+                <button id="${uid}ZoomOut" class="btn btn-outline-secondary" style="padding:0 5px; font-size:0.65rem; line-height:1.4; border-radius:3px;">−</button>
+                <button id="${uid}ZoomIn"  class="btn btn-outline-secondary" style="padding:0 5px; font-size:0.65rem; line-height:1.4; border-radius:3px;">+</button>
+            </div>
+        </div>`;
+
+    container.style.display = 'block';
+    container.innerHTML = summaryHtml + tableHtml;
+
+    if (savedHeight) document.getElementById(`${uid}TableWrap`).style.height = savedHeight;
+    _applyMissingTableZoom(uid);
+
+    document.getElementById(`${uid}ZoomOut`).addEventListener('click', () => {
+        _missingTableZoom[uid] = Math.max(0.5, parseFloat((_missingTableZoom[uid] - 0.1).toFixed(2)));
+        _applyMissingTableZoom(uid);
+    });
+    document.getElementById(`${uid}ZoomIn`).addEventListener('click', () => {
+        _missingTableZoom[uid] = Math.min(2.0, parseFloat((_missingTableZoom[uid] + 0.1).toFixed(2)));
+        _applyMissingTableZoom(uid);
+    });
+}
+
+function _renderCoverageDiagnostic(selectedVarNames) {
+    _renderMissingDataTable('coverageDiagnostic', selectedVarNames, null, 'cov');
+}
+
+function _renderPlsMissingData() {
+    const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    const yCol = document.getElementById('plsYCol')?.value || null;
+    _renderMissingDataTable('plsCoverageDiagnostic', vars, yCol || null, 'pls');
+}
+
+function _renderOplsMissingData() {
+    const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    const yCol = document.getElementById('oplsYCol')?.value || null;
+    _renderMissingDataTable('oplsCoverageDiagnostic', vars, yCol || null, 'opls');
+}
+
+function _renderCorrMissingData() {
+    const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    _renderMissingDataTable('corrCoverageDiagnostic', vars, null, 'corr');
+}
+
+document.getElementById('minRowCoverage').addEventListener('input', function () {
+    document.getElementById('minRowCoverageVal').textContent = this.value + '%';
+    const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    _renderCoverageDiagnostic(vars);
+    _renderPCADataPreview();
+    _renderPlsMissingData();
+    _renderOplsMissingData();
+    _renderCorrMissingData();
+    _updatePipelineStepper();
+    _updateCorrStepper();
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── PCA Data Preview ──────────────────────────────────────────────────────────
+function _applyZoomToPcaPreview() {
+    const tbl = document.querySelector('#pcaPreviewWrap table');
+    if (tbl) tbl.style.zoom = pcaPreviewZoom;
+}
+
+function _renderPCADataPreview() {
+    const container = document.getElementById('pcaDataPreview');
+    if (!container || !globalData || globalData.length === 0) {
+        if (container) container.style.display = 'none';
+        return;
+    }
+    const vars = _currentSelectedVars();
+    if (vars.length === 0) { container.style.display = 'none'; return; }
+
+    const methodEl   = document.getElementById('pcaMethod');
+    const stratEl    = document.getElementById('pcaMissingStrategy');
+    const threshEl   = document.getElementById('pcaMissingThreshold');
+    const avgEl      = document.getElementById('pcaAverageByFactor');
+    if (!methodEl || !stratEl) { container.style.display = 'none'; return; }
+
+    const method         = methodEl.value;
+    const nativeMethod   = method === 'nipals' || method === 'em_pca';
+    const strategy       = stratEl.value;
+    const missingThresh  = parseFloat(threshEl ? threshEl.value : 30) || 30;
+    const coverageThresh = _getMinRowCoverage() / 100;
+    const avgByFactor    = avgEl ? avgEl.checked : false;
+    const factorCols     = selectedFactors.length ? selectedFactors : [];
+    const n              = globalData.length;
+    const nVars          = vars.length;
+
+    // ── Per-row coverage ─────────────────────────────────────────────────────
+    const rowCoverage = globalData.map(row => {
+        const obs = vars.filter(v => { const val = row[v]; return val !== undefined && val !== null && val !== 'N/A' && val !== ''; }).length;
+        return obs / nVars;
+    });
+
+    // ── Per-variable missing % ───────────────────────────────────────────────
+    const varMissingPct = {};
+    vars.forEach(v => {
+        const missing = globalData.filter(row => { const val = row[v]; return val === undefined || val === null || val === 'N/A' || val === ''; }).length;
+        varMissingPct[v] = (missing / n) * 100;
+    });
+
+    // ── Excluded variables ───────────────────────────────────────────────────
+    const excludedVars = new Set();
+    if (['hybrid', 'exclude_vars'].includes(strategy)) {
+        vars.forEach(v => { if (varMissingPct[v] > missingThresh) excludedVars.add(v); });
+    }
+
+    // ── Row status ───────────────────────────────────────────────────────────
+    const rowStatus = globalData.map((row, i) => {
+        if (rowCoverage[i] < coverageThresh) return 'excluded_coverage';
+        if (strategy === 'drop_rows' && !nativeMethod) {
+            const activeVars = vars.filter(v => !excludedVars.has(v));
+            const hasMissing = activeVars.some(v => { const val = row[v]; return val === undefined || val === null || val === 'N/A' || val === ''; });
+            if (hasMissing) return 'excluded_drop';
+        }
+        return 'ok';
+    });
+
+    // ── Average-replicates grouping ──────────────────────────────────────────
+    let avgGroupMap = null;
+    if (avgByFactor && factorCols.length > 0) {
+        avgGroupMap = {};
+        const groupRows = {};
+        globalData.forEach((row, i) => {
+            if (rowStatus[i] !== 'ok') return;
+            const key = factorCols.map(f => row[f] ?? '').join('|');
+            if (!groupRows[key]) groupRows[key] = [];
+            groupRows[key].push(i);
+        });
+        Object.entries(groupRows).forEach(([key, indices]) => {
+            if (indices.length > 1) indices.forEach(i => { avgGroupMap[i] = key; });
+        });
+    }
+
+    // ── Table styles ─────────────────────────────────────────────────────────
+    const FS      = '0.62rem';
+    const thBase  = `font-size:${FS}; white-space:nowrap; padding:1px 4px; position:sticky; top:0; z-index:1; font-weight:600; border:1px solid #c8d0e0;`;
+    const tdBase  = `font-size:${FS}; padding:1px 4px; border:1px solid #dee2e6; white-space:nowrap; max-width:80px; overflow:hidden; text-overflow:ellipsis;`;
+
+    // ── Header ───────────────────────────────────────────────────────────────
+    const headerCells = [
+        `<th style="${thBase} background:#f8f9fa; color:#aaa; text-align:right;">#</th>`,
+        ...factorCols.map(f => `<th style="${thBase} background:#e8f0fe;" title="${f}">${f.length > 11 ? f.slice(0,10)+'…' : f}</th>`),
+        ...vars.map(v => {
+            const excl     = excludedVars.has(v);
+            const fromCorr = pcaVarsFromCorr.has(v);
+            const pct      = varMissingPct[v].toFixed(0);
+            const label    = (v.length > 10 ? v.slice(0,9)+'…' : v) + (excl ? ' ✕' : fromCorr ? ' ◆' : '');
+            const title    = v + (excl ? ` — excluded (${pct}% missing > ${missingThresh}% threshold)` : ` — ${pct}% missing` + (fromCorr ? ' [from Correlation tab]' : ''));
+            const bg       = excl ? 'background:#f0f0f0; color:#999; text-decoration:line-through;' : 'background:#f0f4ff;';
+            return `<th style="${thBase} ${bg}" title="${title}">${label}</th>`;
+        })
+    ].join('');
+
+    // ── Body rows ────────────────────────────────────────────────────────────
+    const seenGroups = new Set();
+    const bodyRows = globalData.map((row, i) => {
+        const status     = rowStatus[i];
+        const isExcCov   = status === 'excluded_coverage';
+        const isExcDrop  = status === 'excluded_drop';
+        const isExcluded = isExcCov || isExcDrop;
+
+        const rowBg = isExcCov ? 'background:#fff0f0;' : isExcDrop ? 'background:#fff5e6;' : 'background:#fff;';
+
+        // Average-replicate marker
+        let avgBadge = '';
+        const isAveraged = avgGroupMap && avgGroupMap[i] !== undefined;
+        if (isAveraged) {
+            if (!seenGroups.has(avgGroupMap[i])) {
+                seenGroups.add(avgGroupMap[i]);
+                avgBadge = '<span style="font-size:0.55rem;background:#28a745;color:#fff;border-radius:2px;padding:0 2px;margin-left:2px;">avg</span>';
+            } else {
+                avgBadge = '<span style="font-size:0.55rem;background:#adb5bd;color:#fff;border-radius:2px;padding:0 2px;margin-left:2px;">↑</span>';
+            }
+        }
+
+        // Row number cell
+        let numStyle = `${tdBase} text-align:right; `;
+        let numIcon  = '';
+        if      (isExcCov)  { numStyle += 'background:#ffcccc; font-weight:700; color:#c00;'; numIcon = '<i class="fa fa-times-circle" style="margin-right:2px;color:#dc3545;"></i>'; }
+        else if (isExcDrop) { numStyle += 'background:#ffe5cc; font-weight:700; color:#a04000;'; numIcon = '<i class="fa fa-minus-circle" style="margin-right:2px;color:#fd7e14;"></i>'; }
+        else                { numStyle += 'background:#f8f9fa; color:#aaa;'; }
+
+        const rowTitle = isExcCov
+            ? `Excluded: ${Math.round(rowCoverage[i]*100)}% coverage < ${_getMinRowCoverage()}% threshold`
+            : isExcDrop ? 'Excluded: missing value(s) in active variables (drop rows strategy)'
+            : `${Math.round(rowCoverage[i]*100)}% coverage`;
+
+        const numTd = `<td style="${numStyle}" title="${rowTitle}">${numIcon}${i+2}${avgBadge}</td>`;
+
+        // Factor cells
+        const factorTds = factorCols.map(f => {
+            const val = String(row[f] ?? '');
+            return `<td style="${tdBase} background:#eef3fc;" title="${val}">${val.length>12?val.slice(0,11)+'…':val}</td>`;
+        }).join('');
+
+        // Variable cells
+        const varTds = vars.map(v => {
+            const val     = row[v];
+            const isEmpty = val === undefined || val === null || val === 'N/A' || val === '';
+            const isExclV = excludedVars.has(v);
+            let cellBg;
+            if (isExclV)                        cellBg = 'background:#f0f0f0;';
+            else if (isExcluded)                cellBg = rowBg;
+            else if (isEmpty && nativeMethod)   cellBg = 'background:#e8f5e9;';
+            else if (isEmpty)                   cellBg = 'background:#fffde7;';
+            else                                cellBg = rowBg;
+            const display  = isEmpty ? '' : String(val);
+            const cellTitle = isExclV ? `${v} — variable excluded`
+                : isEmpty ? (nativeMethod ? `${v} — missing (handled natively by ${method})` : `${v} — missing (will be imputed)`)
+                : `${v}: ${display}`;
+            return `<td style="${tdBase} ${cellBg}" title="${cellTitle}">${display}</td>`;
+        }).join('');
+
+        return `<tr title="${rowTitle}">${numTd}${factorTds}${varTds}</tr>`;
+    }).join('');
+
+    // ── Summary badges ───────────────────────────────────────────────────────
+    const nExcCov   = rowStatus.filter(s => s === 'excluded_coverage').length;
+    const nExcDrop  = rowStatus.filter(s => s === 'excluded_drop').length;
+    const nKept     = n - nExcCov - nExcDrop;
+    const nExclVars = excludedVars.size;
+    const nUsedVars = vars.length - nExclVars;
+
+    const strategyLabel = nativeMethod
+        ? `missing handled natively by ${method.toUpperCase()}`
+        : { hybrid: 'hybrid imputation', drop_rows: 'drop rows', impute_group_mean: 'group mean imputation', exclude_vars: 'exclude variables', knn: 'KNN imputation' }[strategy] || strategy;
+
+    const summaryHtml = `
+        <div class="d-flex flex-wrap small text-muted mb-2" style="gap:6px 14px; font-size:0.72rem;">
+            <span><span class="badge text-white" style="background:#343a40;">${n}</span> samples total</span>
+            <span><span class="badge text-white" style="background:#28a745;">${nKept}</span> used in PCA</span>
+            ${nExcCov  > 0 ? `<span><span class="badge text-white" style="background:#dc3545;">${nExcCov}</span> excluded (coverage &lt;${_getMinRowCoverage()}%)</span>` : ''}
+            ${nExcDrop > 0 ? `<span><span class="badge text-white" style="background:#fd7e14;">${nExcDrop}</span> excluded (missing, drop strategy)</span>` : ''}
+            ${nExclVars > 0 ? `<span><span class="badge text-white" style="background:#6c757d;">${nExclVars}</span> var${nExclVars>1?'s':''} excluded</span>` : ''}
+            <span><span class="badge text-white" style="background:#17a2b8;">${nUsedVars}</span> var${nUsedVars!==1?'s':''} used</span>
+            <span class="text-muted" style="font-style:italic;">${strategyLabel}</span>
+        </div>
+        <p class="text-muted mb-1" style="font-size:0.67rem;"><i class="fa fa-info-circle mr-1"></i>Preview only — imputed cell values are computed server-side. ◆ = sent from Correlation tab.</p>`;
+
+    // ── Table wrapper ────────────────────────────────────────────────────────
+    const existingWrap = document.getElementById('pcaPreviewWrap');
+    const savedH       = existingWrap ? existingWrap.style.height : null;
+    const COLLAPSED_H  = '160px';
+
+    const avgLegend = avgByFactor
+        ? `<span style="display:inline-block;background:#28a745;color:#fff;border-radius:2px;padding:0 3px;font-size:0.58rem;vertical-align:middle;margin-right:2px;">avg</span>group first row &nbsp;
+           <span style="display:inline-block;background:#adb5bd;color:#fff;border-radius:2px;padding:0 3px;font-size:0.58rem;vertical-align:middle;margin-right:2px;">↑</span>merged into group &nbsp;`
+        : '';
+
+    const tableHtml = `
+        <div id="pcaPreviewWrap" style="height:${COLLAPSED_H}; overflow:auto; resize:vertical; border:1px solid #c8d0e0; border-radius:4px; margin-top:4px;">
+            <table style="border-collapse:collapse; width:max-content; min-width:100%;">
+                <thead><tr>${headerCells}</tr></thead>
+                <tbody>${bodyRows}</tbody>
+            </table>
+        </div>
+        <div class="d-flex align-items-center justify-content-between mt-1">
+            <div class="text-muted" style="font-size:0.6rem; line-height:1.8;">
+                <span style="display:inline-block;width:9px;height:9px;background:#ffcccc;border:1px solid #c00;border-radius:2px;vertical-align:middle;margin-right:2px;"></span>excluded (coverage) &nbsp;
+                <span style="display:inline-block;width:9px;height:9px;background:#ffe5cc;border:1px solid #fd7e14;border-radius:2px;vertical-align:middle;margin-right:2px;"></span>excluded (drop rows) &nbsp;
+                <span style="display:inline-block;width:9px;height:9px;background:#fffde7;border:1px solid #ffe082;border-radius:2px;vertical-align:middle;margin-right:2px;"></span>will be imputed &nbsp;
+                <span style="display:inline-block;width:9px;height:9px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:2px;vertical-align:middle;margin-right:2px;"></span>handled natively &nbsp;
+                <span style="display:inline-block;width:9px;height:9px;background:#f0f0f0;border:1px solid #ccc;border-radius:2px;vertical-align:middle;margin-right:2px;"></span>var excluded &nbsp;
+                ${avgLegend}
+            </div>
+            <div class="d-flex align-items-center" style="gap:3px;">
+                <span class="text-muted" style="font-size:0.6rem;">zoom</span>
+                <button id="pcaPreviewZoomOut" class="btn btn-outline-secondary" style="padding:0 5px; font-size:0.65rem; line-height:1.4; border-radius:3px;">−</button>
+                <button id="pcaPreviewZoomIn"  class="btn btn-outline-secondary" style="padding:0 5px; font-size:0.65rem; line-height:1.4; border-radius:3px;">+</button>
+            </div>
+        </div>`;
+
+    container.style.display = 'block';
+    container.innerHTML = summaryHtml + tableHtml;
+
+    if (savedH) document.getElementById('pcaPreviewWrap').style.height = savedH;
+    _applyZoomToPcaPreview();
+
+    document.getElementById('pcaPreviewZoomOut').addEventListener('click', () => {
+        pcaPreviewZoom = Math.max(0.5, parseFloat((pcaPreviewZoom - 0.1).toFixed(2)));
+        _applyZoomToPcaPreview();
+    });
+    document.getElementById('pcaPreviewZoomIn').addEventListener('click', () => {
+        pcaPreviewZoom = Math.min(2.0, parseFloat((pcaPreviewZoom + 0.1).toFixed(2)));
+        _applyZoomToPcaPreview();
+    });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Distribution Preview ──────────────────────────────────────────────────────
+function _applyTransform(values, method) {
+    // Returns transformed array; NaN/null inputs stay null.
+    return values.map(v => {
+        if (v === null || v === undefined || v === '' || v === 'N/A') return null;
+        const x = parseFloat(v);
+        if (isNaN(x)) return null;
+        if (method === 'log10') return x > 0 ? Math.log10(x) : null;
+        if (method === 'ln')    return x > 0 ? Math.log(x)    : null;
+        if (method === 'sqrt')  return x >= 0 ? Math.sqrt(x)  : null;
+        return x; // none / zscore / minmax: raw for histogram, z/mm applied below
+    });
+}
+
+function _zscoreArr(arr) {
+    const valid = arr.filter(v => v !== null);
+    if (!valid.length) return arr;
+    const mean = valid.reduce((a, b) => a + b, 0) / valid.length;
+    const sd   = Math.sqrt(valid.reduce((a, b) => a + (b - mean) ** 2, 0) / valid.length);
+    return sd === 0 ? arr.map(v => v === null ? null : 0)
+                    : arr.map(v => v === null ? null : (v - mean) / sd);
+}
+
+function _minmaxArr(arr) {
+    const valid = arr.filter(v => v !== null);
+    if (!valid.length) return arr;
+    const mn = Math.min(...valid), mx = Math.max(...valid);
+    return mx === mn ? arr.map(v => v === null ? null : 0)
+                     : arr.map(v => v === null ? null : (v - mn) / (mx - mn));
+}
+
+function _skewness(vals) {
+    // Returns Fisher's moment coefficient of skewness (g1).
+    const n = vals.length;
+    if (n < 3) return null;
+    const mean = vals.reduce((a, b) => a + b, 0) / n;
+    const sd   = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / n);
+    if (sd === 0) return 0;
+    const g1 = vals.reduce((a, b) => a + ((b - mean) / sd) ** 3, 0) / n;
+    return g1;
+}
+
+function _skewColor(g1) {
+    if (g1 === null) return '#aaa';
+    const abs = Math.abs(g1);
+    if (abs < 0.5)  return '#28a745'; // near-normal
+    if (abs < 1.0)  return '#fd7e14'; // moderate
+    return '#dc3545';                 // strong
+}
+
+function _drawDistCanvas(canvas, rawValues, transformedValues, varName, transform) {
+    const W = canvas.width, H = canvas.height;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    // Layout: top label row | histogram | x-axis ticks | skewness row
+    const PAD = { t: 18, b: 38, l: 28, r: 8 };
+    const cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
+
+    // Draw both panels: left = raw, right = transformed (only if transform != none)
+    const panels = transform === 'none'
+        ? [{ vals: rawValues, label: 'Raw', x0: PAD.l, w: cW, col: '#4e9af1' }]
+        : [
+            { vals: rawValues,         label: 'Raw',                  x0: PAD.l,                        w: Math.floor(cW * 0.48), col: '#888' },
+            { vals: transformedValues, label: transform.toUpperCase(), x0: PAD.l + Math.floor(cW * 0.52), w: Math.floor(cW * 0.48), col: '#4e9af1' },
+          ];
+
+    panels.forEach(panel => {
+        const vals = panel.vals.filter(v => v !== null && isFinite(v));
+        if (!vals.length) {
+            ctx.fillStyle = '#aaa'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('no data', panel.x0 + panel.w / 2, PAD.t + cH / 2);
+            return;
+        }
+        const mn = Math.min(...vals), mx = Math.max(...vals);
+        const BINS = Math.min(20, Math.max(5, Math.ceil(vals.length / 3)));
+        const step = (mx - mn) / BINS || 1;
+        const bins = Array(BINS).fill(0);
+        vals.forEach(v => {
+            const bi = Math.min(BINS - 1, Math.floor((v - mn) / step));
+            bins[bi]++;
+        });
+        const maxBin = Math.max(...bins);
+
+        // Bars
+        const barW = panel.w / BINS;
+        bins.forEach((cnt, i) => {
+            const bh = cnt / maxBin * cH;
+            ctx.fillStyle = panel.col + 'cc';
+            ctx.fillRect(panel.x0 + i * barW, PAD.t + cH - bh, barW - 1, bh);
+        });
+
+        // Normal curve overlay (both panels)
+        const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+        const sd   = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length);
+        if (sd > 0) {
+            const norm = x => Math.exp(-0.5 * ((x - mean) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI));
+            ctx.beginPath();
+            ctx.strokeStyle = '#d9534f';
+            ctx.lineWidth = 1.5;
+            for (let px = 0; px <= panel.w; px++) {
+                const x = mn + (px / panel.w) * (mx - mn);
+                const y = PAD.t + cH - norm(x) * vals.length * step * cH / maxBin;
+                px === 0 ? ctx.moveTo(panel.x0 + px, y) : ctx.lineTo(panel.x0 + px, y);
+            }
+            ctx.stroke();
+        }
+
+        // Panel label (top centre)
+        ctx.fillStyle = '#555'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(panel.label, panel.x0 + panel.w / 2, PAD.t - 6);
+
+        // x-axis ticks (min / max)
+        ctx.fillStyle = '#999'; ctx.font = '7px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(mn.toPrecision(3), panel.x0, PAD.t + cH + 9);
+        ctx.textAlign = 'right';
+        ctx.fillText(mx.toPrecision(3), panel.x0 + panel.w, PAD.t + cH + 9);
+
+        // Skewness badge (bottom centre)
+        const g1 = _skewness(vals);
+        const skewLabel = g1 === null ? 'n/a' : (g1 >= 0 ? '+' : '') + g1.toFixed(2);
+        const skewColor = _skewColor(g1);
+        const bx = panel.x0 + panel.w / 2;
+        const by = PAD.t + cH + 22;
+        // pill background
+        const tw = ctx.measureText('skew ' + skewLabel).width + 6;
+        ctx.fillStyle = skewColor + '22';
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(bx - tw / 2, by - 9, tw, 11, 3)
+                      : ctx.rect(bx - tw / 2, by - 9, tw, 11);
+        ctx.fill();
+        // text
+        ctx.fillStyle = '#666'; ctx.font = '7px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('skew ', bx - ctx.measureText(skewLabel).width / 2 - 1, by);
+        ctx.fillStyle = skewColor; ctx.font = 'bold 7px sans-serif';
+        ctx.fillText(skewLabel, bx + ctx.measureText('skew ').width / 2, by);
+    });
+
+    // Variable name top-left
+    ctx.fillStyle = '#333'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(varName.length > 18 ? varName.slice(0, 17) + '…' : varName, 2, 11);
+}
+
+// Returns the effective transform for a variable (per-var override or global fallback).
+function _getVarTransform(varName) {
+    if (usePerVarMode && perVarTransforms[varName] !== undefined) return perVarTransforms[varName];
+    return currentNormTransform || 'none';
+}
+
+// Suggests the best shape-correcting transform for an array of numeric values.
+// Tests none / log10 / ln / sqrt and picks the one minimising |skewness|,
+// penalising transforms that produce many nulls (invalid domain).
+function _suggestTransform(vals) {
+    const rawValid = vals.filter(v => v !== null && isFinite(v));
+    if (rawValid.length < 3) return 'none';
+
+    const candidates = ['none', 'log10', 'ln', 'sqrt'];
+    let best = 'none', bestScore = Infinity;
+
+    candidates.forEach(t => {
+        const transformed = _applyTransform(rawValid.map(v => v), t);
+        const valid = transformed.filter(v => v !== null && isFinite(v));
+        if (valid.length < 3) return;
+        const lossFraction = (rawValid.length - valid.length) / rawValid.length;
+        const absSkew = Math.abs(_skewness(valid) ?? 0);
+        // Penalise data loss heavily (each lost point is worth 2 skewness units)
+        const score = absSkew + lossFraction * 2;
+        if (score < bestScore - 0.05) { bestScore = score; best = t; } // 0.05 hysteresis → prefer simpler
+    });
+    return best;
+}
+
+// Like applyColumnNorm but reads from perVarTransforms (falls back to globalMethod).
+function applyPerVarNorm(data, varNames, pvTransforms, globalMethod) {
+    const colStats = {};
+    varNames.forEach(v => {
+        const method = pvTransforms[v] ?? globalMethod;
+        if (method !== 'zscore' && method !== 'minmax') return;
+        const vals = data.map(r => parseFloat(r[v])).filter(x => !isNaN(x));
+        if (!vals.length) { colStats[v] = { mean: 0, std: 1, min: 0, max: 1 }; return; }
+        const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+        const std  = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length) || 1;
+        colStats[v] = { mean, std, min: Math.min(...vals), max: Math.max(...vals) };
+    });
+    return data.map(row => {
+        const newRow = Object.assign({}, row);
+        varNames.forEach(v => {
+            const method = pvTransforms[v] ?? globalMethod;
+            if (!method || method === 'none') return;
+            const val = parseFloat(row[v]);
+            if (isNaN(val)) { newRow[v] = null; return; }
+            const s = colStats[v] || {};
+            if      (method === 'zscore')  newRow[v] = s.std > 0 ? (val - s.mean) / s.std : 0;
+            else if (method === 'minmax')  newRow[v] = (s.max - s.min) > 0 ? (val - s.min) / (s.max - s.min) : 0;
+            else if (method === 'log10')   newRow[v] = val > 0  ? Math.log10(val) : null;
+            else if (method === 'ln')      newRow[v] = val > 0  ? Math.log(val)   : null;
+            else if (method === 'sqrt')    newRow[v] = val >= 0 ? Math.sqrt(val)  : null;
+        });
+        return newRow;
+    });
+}
+
+function _renderDistributions() {
+    const container = document.getElementById('distChartsContainer');
+    const statusMsg = document.getElementById('distStatusMsg');
+    if (!container) return;
+    if (!globalData || !globalData.length) {
+        container.innerHTML = '<span class="text-muted small">Upload data first.</span>';
+        return;
+    }
+    const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    if (!vars.length) {
+        container.innerHTML = '<span class="text-muted small">Select at least one variable.</span>';
+        return;
+    }
+
+    container.innerHTML = '';
+    let skippedCount = 0;
+    const TRANSFORM_OPTS = [
+        { v: 'none',   label: 'None' },
+        { v: 'log10',  label: 'Log₁₀' },
+        { v: 'ln',     label: 'Ln' },
+        { v: 'sqrt',   label: '√' },
+        { v: 'zscore', label: 'Z' },
+    ];
+
+    vars.forEach(varName => {
+        const rawVals = _applyTransform(globalData.map(r => r[varName]), 'none');
+        const validRaw = rawVals.filter(v => v !== null && isFinite(v));
+        if (!validRaw.length) { skippedCount++; return; }
+
+        const varTransform = _getVarTransform(varName);
+        let transVals = _applyTransform(globalData.map(r => r[varName]), varTransform);
+        if (varTransform === 'zscore')  transVals = _zscoreArr(transVals);
+        if (varTransform === 'minmax')  transVals = _minmaxArr(transVals);
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center; margin-bottom:2px;';
+
+        const cvs = document.createElement('canvas');
+        cvs.width  = varTransform === 'none' ? 140 : 240;
+        cvs.height = 102;
+        cvs.style.cssText = 'border:1px solid #dee2e6; border-radius:4px 4px 0 0; background:#fff;';
+        cvs.title = varName;
+        wrapper.appendChild(cvs);
+        _drawDistCanvas(cvs, rawVals, transVals, varName, varTransform);
+
+        // Per-variable selector strip (always shown; active button highlighted)
+        if (usePerVarMode) {
+            const strip = document.createElement('div');
+            strip.style.cssText = 'display:flex; gap:1px; width:100%; border:1px solid #dee2e6; border-top:none; border-radius:0 0 4px 4px; overflow:hidden;';
+            TRANSFORM_OPTS.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = opt.label;
+                const isActive = varTransform === opt.v;
+                btn.style.cssText = `flex:1; font-size:9px; padding:2px 0; border:none; cursor:pointer; background:${isActive ? '#0d6efd' : '#f8f9fa'}; color:${isActive ? '#fff' : '#555'}; font-weight:${isActive ? '700' : '400'};`;
+                btn.title = opt.v;
+                btn.addEventListener('click', () => {
+                    perVarTransforms[varName] = opt.v;
+                    _renderDistributions();
+                });
+                strip.appendChild(btn);
+            });
+            // ⚡ Auto button
+            const autoBtn = document.createElement('button');
+            autoBtn.type = 'button';
+            autoBtn.textContent = '⚡';
+            autoBtn.title = 'Auto-suggest best transform for this variable';
+            autoBtn.style.cssText = 'flex:1; font-size:9px; padding:2px 0; border:none; cursor:pointer; background:#fff3cd; color:#856404;';
+            autoBtn.addEventListener('click', () => {
+                perVarTransforms[varName] = _suggestTransform(rawVals);
+                _renderDistributions();
+            });
+            strip.appendChild(autoBtn);
+            wrapper.appendChild(strip);
+        }
+
+        container.appendChild(wrapper);
+    });
+
+    if (statusMsg) {
+        const nShown = vars.length - skippedCount;
+        if (usePerVarMode) {
+            const transformCounts = {};
+            vars.filter(v => globalData.some(r => r[v] !== null && r[v] !== '')).forEach(v => {
+                const t = _getVarTransform(v);
+                transformCounts[t] = (transformCounts[t] || 0) + 1;
+            });
+            const summary = Object.entries(transformCounts)
+                .map(([t, n]) => `${t === 'none' ? 'None' : t.toUpperCase()}×${n}`)
+                .join(', ');
+            statusMsg.textContent = `${nShown} variables · per-variable mode · ${summary}${skippedCount ? ` · ${skippedCount} skipped` : ''}`;
+        } else {
+            const label = currentNormTransform === 'none' ? 'No transformation' : currentNormTransform.toUpperCase();
+            statusMsg.textContent = `${nShown} variable${nShown !== 1 ? 's' : ''} · ${label}${skippedCount ? ` · ${skippedCount} skipped (non-numeric)` : ''}`;
+        }
+    }
+}
+
+// Preview / Hide toggle button
+document.getElementById('refreshDistBtn').addEventListener('click', function () {
+    const charts = document.getElementById('distChartsContainer');
+    const icon   = this.querySelector('i');
+    if (charts.style.display === 'none') {
+        charts.style.display = 'flex';
+        this.innerHTML = '<i class="fa fa-eye-slash mr-1"></i>Hide distributions';
+        _renderDistributions();
+    } else if (charts.children.length === 0) {
+        // Visible but empty — render for the first time
+        this.innerHTML = '<i class="fa fa-eye-slash mr-1"></i>Hide distributions';
+        _renderDistributions();
+    } else {
+        charts.style.display = 'none';
+        this.innerHTML = '<i class="fa fa-bar-chart mr-1"></i>Preview distributions';
+    }
+});
+
+// Auto-refresh when panel is opened — only if histograms are already visible
+function _refreshDistIfVisible() {
+    const charts = document.getElementById('distChartsContainer');
+    if (charts && charts.style.display !== 'none' && charts.children.length > 0) {
+        _renderDistributions();
+    }
+}
+document.getElementById('distBody').addEventListener('show.bs.collapse', _refreshDistIfVisible);
+document.getElementById('distBody').addEventListener('show', _refreshDistIfVisible); // Bootstrap 4
+
+// ── Per-variable mode toggle ──────────────────────────────────────────────────
+document.getElementById('perVarModeBtn').addEventListener('click', function () {
+    usePerVarMode = !usePerVarMode;
+    this.classList.toggle('active', usePerVarMode);
+    this.classList.toggle('btn-outline-secondary', !usePerVarMode);
+    this.classList.toggle('btn-primary', usePerVarMode);
+    document.getElementById('resetPerVarBtn').style.display = usePerVarMode ? '' : 'none';
+    _renderDistributions();
+});
+
+// ── Auto-suggest all ──────────────────────────────────────────────────────────
+document.getElementById('autoSuggestAllBtn').addEventListener('click', function () {
+    const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    if (!globalData || !vars.length) return;
+    vars.forEach(varName => {
+        const rawVals = _applyTransform(globalData.map(r => r[varName]), 'none');
+        perVarTransforms[varName] = _suggestTransform(rawVals);
+    });
+    // Switch to per-var mode automatically so the user sees the per-var selectors
+    if (!usePerVarMode) {
+        usePerVarMode = true;
+        const btn = document.getElementById('perVarModeBtn');
+        btn.classList.add('active', 'btn-primary'); btn.classList.remove('btn-outline-secondary');
+        document.getElementById('resetPerVarBtn').style.display = '';
+    }
+    _renderDistributions();
+});
+
+// ── Reset per-variable transforms ────────────────────────────────────────────
+document.getElementById('resetPerVarBtn').addEventListener('click', function () {
+    perVarTransforms = {};
+    usePerVarMode = false;
+    const perBtn = document.getElementById('perVarModeBtn');
+    perBtn.classList.remove('active', 'btn-primary'); perBtn.classList.add('btn-outline-secondary');
+    this.style.display = 'none';
+    _renderDistributions();
+});
+
+// ── Apply global transform to all variables ───────────────────────────────────
+// Copies currentNormTransform into perVarTransforms for every selected variable,
+// then switches to per-variable mode so each can be adjusted individually.
+document.getElementById('applyGlobalToAllBtn').addEventListener('click', function () {
+    const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    if (!vars.length) return;
+    vars.forEach(v => { perVarTransforms[v] = currentNormTransform || 'none'; });
+    if (!usePerVarMode) {
+        usePerVarMode = true;
+        const perBtn = document.getElementById('perVarModeBtn');
+        perBtn.classList.add('active', 'btn-primary'); perBtn.classList.remove('btn-outline-secondary');
+        document.getElementById('resetPerVarBtn').style.display = '';
+    }
+    _renderDistributions();
+});
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Publication plot settings ─────────────────────────────────────────────────
@@ -130,10 +992,10 @@ function renderAssumptionScopeTabs(scopes, activeKey) {
     let row1 = `
         <div class="scope-row" id="scopeRowData">
             <span class="scope-row-label">
-                <i class="bi bi-funnel-fill me-1"></i>Data scope
+                <i class="fa fa-filter mr-1"></i>Data scope
                 <span class="scope-row-hint"
                       title="Filter which rows are included in the analysis below">
-                    <i class="bi bi-question-circle"></i>
+                    <i class="fa fa-question-circle"></i>
                 </span>
             </span>
             <div class="scope-row-pills">`;
@@ -159,10 +1021,10 @@ function renderAssumptionScopeTabs(scopes, activeKey) {
         }
 
         const btnCls  = isActive ? 'btn-primary' : 'btn-outline-secondary';
-        const badgeCls = isActive ? 'bg-white text-primary' : 'bg-secondary text-white';
-        const badge   = `<span class="badge ms-1 ${badgeCls}" style="font-size:0.60rem;">${scope.n}</span>`;
+        const badgeCls = isActive ? 'badge-light text-primary' : 'badge-secondary';
+        const badge   = `<span class="badge ml-1 ${badgeCls}" style="font-size:0.60rem;">${scope.n}</span>`;
         const lazy    = (!isCached && !isActive)
-            ? ` <i class="bi bi-cloud-download" style="font-size:0.60rem;opacity:0.6;"></i>`
+            ? ` <i class="fa fa-cloud-download" style="font-size:0.60rem;opacity:0.6;"></i>`
             : '';
 
         row1 += `<button type="button"
@@ -182,10 +1044,10 @@ function renderAssumptionScopeTabs(scopes, activeKey) {
         row2 = `
         <div class="scope-row scope-row-vars" id="scopeRowVars">
             <span class="scope-row-label">
-                <i class="bi bi-bar-chart-line me-1"></i>Variable focus
+                <i class="fa fa-bar-chart mr-1"></i>Variable focus
                 <span class="scope-row-hint"
                       title="Keep all rows but show only one variable at a time">
-                    <i class="bi bi-question-circle"></i>
+                    <i class="fa fa-question-circle"></i>
                 </span>
             </span>
             <div class="scope-row-pills">`;
@@ -313,9 +1175,9 @@ function renderAssumptionScopeContent(scopeKey) {
                 <div style="height: 0.5em;"></div>
                 <div class="alert alert-success border-0 py-2 px-3 mb-2"
                      style="border-left:4px solid #198754 !important; font-size:0.78rem;">
-                    <i class="bi bi-bar-chart-line me-1"></i>
+                    <i class="fa fa-bar-chart mr-1"></i>
                     <strong>Variable focus:</strong> ${scope.label}
-                    <span class="text-muted ms-2" style="font-size:0.72rem;">
+                    <span class="text-muted ml-2" style="font-size:0.72rem;">
                         All ${scope.n} rows included — only this variable shown across all groups.
                     </span>
                 </div>`;
@@ -325,10 +1187,10 @@ function renderAssumptionScopeContent(scopeKey) {
                 <div style="height: 0.5em;"></div>
                 <div class="alert alert-primary border-0 py-2 px-3 mb-2"
                      style="border-left:4px solid #0d6efd !important; font-size:0.78rem;">
-                    <i class="bi bi-funnel-fill me-1"></i>
+                    <i class="fa fa-filter mr-1"></i>
                     <strong>Subset:</strong> ${scope.label}
-                    <span class="badge bg-primary ms-1" style="font-size:0.65rem;">${scope.n} rows</span>
-                    <span class="text-muted ms-2" style="font-size:0.72rem;">
+                    <span class="badge badge-primary ml-1" style="font-size:0.65rem;">${scope.n} rows</span>
+                    <span class="text-muted ml-2" style="font-size:0.72rem;">
                         Groups below are the remaining factor combinations within this subset.
                     </span>
                 </div>`;
@@ -347,7 +1209,7 @@ function renderAssumptionScopeContent(scopeKey) {
         const banner = document.createElement('div');
         banner.className = 'alert alert-info py-2 px-3 mb-3 small';
         banner.style.fontSize = '0.78rem';
-        banner.innerHTML = `<i class="bi bi-arrow-left-right me-1 text-warning"></i>
+        banner.innerHTML = `<i class="fa fa-arrows-h mr-1 text-warning"></i>
             <strong>Tests run on transformed data.</strong> Active: ${activeList}.
             Use <em>Reset to Original Data</em> above to revert.`;
         testResults.appendChild(banner);
@@ -362,8 +1224,8 @@ function renderAssumptionScopeContent(scopeKey) {
         const bodyHtml = origRes ? renderSideBySideAssumptionBlock(origRes, res) : renderOneAssumptionBlock(res, null);
         section.innerHTML = `
             <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-                <h5 class="fw-bold text-primary mb-0">Variable: ${res.variable}</h5>
-                ${hasTransformForVar ? `<span class="badge bg-warning text-dark" style="font-size:0.72rem;"><i class="bi bi-arrow-left-right me-1"></i>${getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power)}</span>` : ''}
+                <h5 class="font-weight-bold text-primary mb-0">Variable: ${res.variable}</h5>
+                ${hasTransformForVar ? `<span class="badge badge-warning" style="font-size:0.72rem;"><i class="fa fa-arrows-h mr-1"></i>${getTransformLabel(appliedTransformations[res.variable].type, appliedTransformations[res.variable].power)}</span>` : ''}
             </div>
             ${bodyHtml}`;
         testResults.appendChild(section);
@@ -389,14 +1251,14 @@ function renderAssumptionScopeContent(scopeKey) {
             const plotIdOrig = plotId + '-orig';
 
             card.innerHTML = `
-                <h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6>
+                <h6 class="font-weight-bold border-bottom pb-2 mb-3">${res.variable}</h6>
                 ${hasTransformForVar && origRes ? `
                     <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
-                        <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>${transformLabel}</span>
+                        <span class="badge badge-warning" style="font-size:0.70rem;"><i class="fa fa-arrows-h mr-1"></i>${transformLabel}</span>
                         <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
                                 style="font-size:0.70rem; padding:2px 8px;"
                                 data-transformed="${plotId}" data-original="${plotIdOrig}" data-showing="transformed">
-                            <i class="bi bi-eye me-1"></i> Show Original
+                            <i class="fa fa-eye mr-1"></i> Show Original
                         </button>
                     </div>` : ''}
                 <div id="${plotId}" class="assumptions-plot-container"></div>
@@ -438,14 +1300,14 @@ function renderAssumptionScopeContent(scopeKey) {
                 const hasOrigPlotData = hasTransformForVar && origRes && origRes.plot_data && origRes.plot_data.length;
 
                 card.innerHTML = `
-                    <h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6>
+                    <h6 class="font-weight-bold border-bottom pb-2 mb-3">${res.variable}</h6>
                     ${hasOrigPlotData ? `
                         <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
-                            <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>${transformLabel}</span>
+                            <span class="badge badge-warning" style="font-size:0.70rem;"><i class="fa fa-arrows-h mr-1"></i>${transformLabel}</span>
                             <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
                                     style="font-size:0.70rem; padding:2px 8px;"
                                     data-transformed="${divId}" data-original="${divIdOrig}" data-showing="transformed">
-                                <i class="bi bi-eye me-1"></i> Show Original
+                                <i class="fa fa-eye mr-1"></i> Show Original
                             </button>
                         </div>` : ''}
                     <div id="${divId}" class="assumptions-plot-container" style="min-height:400px; width:100%;"></div>
@@ -484,14 +1346,14 @@ function renderAssumptionScopeContent(scopeKey) {
                 const hasOrigPlotData = hasTransformForVar && origRes && origRes.plot_data && origRes.plot_data.length;
 
                 card.innerHTML = `
-                    <h6 class="fw-bold border-bottom pb-2 mb-3">${res.variable}</h6>
+                    <h6 class="font-weight-bold border-bottom pb-2 mb-3">${res.variable}</h6>
                     ${hasOrigPlotData ? `
                         <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.75rem;">
-                            <span class="badge bg-warning text-dark" style="font-size:0.70rem;"><i class="bi bi-arrow-left-right me-1"></i>${transformLabel}</span>
+                            <span class="badge badge-warning" style="font-size:0.70rem;"><i class="fa fa-arrows-h mr-1"></i>${transformLabel}</span>
                             <button type="button" class="btn btn-xs btn-outline-secondary btn-toggle-plot"
                                     style="font-size:0.70rem; padding:2px 8px;"
                                     data-transformed="${divId}" data-original="${divIdOrig}" data-showing="transformed">
-                                <i class="bi bi-eye me-1"></i> Show Original
+                                <i class="fa fa-eye mr-1"></i> Show Original
                             </button>
                         </div>` : ''}
                     <div id="${divId}" class="assumptions-plot-container" style="min-height:400px; width:100%;"></div>
@@ -611,11 +1473,11 @@ function renderOneAssumptionBlock(res, blockLabel) {
 
     return `
         <div class="mb-3 ${blockLabel ? 'ps-2 border-start border-3 border-primary' : ''}">
-            ${blockLabel ? `<div class="fw-bold text-primary mb-2 small">${blockLabel}</div>` : ''}
+            ${blockLabel ? `<div class="font-weight-bold text-primary mb-2 small">${blockLabel}</div>` : ''}
             Homogeneity of variance (Levene's test):<br>
-            <span class="badge bg-${leveneClass}">Variance is ${leveneText} (${leveneDetail})</span><br><br>
+            <span class="badge badge-${leveneClass}">Variance is ${leveneText} (${leveneDetail})</span><br><br>
             Data normality (Shapiro-Wilk test):<br>
-            <span class="badge bg-${normBadgeCls} mb-2">${normText}</span>
+            <span class="badge badge-${normBadgeCls} mb-2">${normText}</span>
             <div class="table-responsive">
                 <table class="table table-sm extra-small">
                     <thead class="table-light"><tr><th>Group</th><th>p-val</th><th>Res.</th></tr></thead>
@@ -646,7 +1508,7 @@ function renderSideBySideAssumptionBlock(origRes, transRes) {
     function normBadge(count, total, allNorm) {
         const cls = allNorm ? 'success' : (count > 0 ? 'warning' : 'danger');
         const txt = allNorm ? `All groups normal (${count}/${total})` : count > 0 ? `${count}/${total} groups normal` : `Not met (0/${total})`;
-        return `<span class="badge bg-${cls}">${txt}</span>`;
+        return `<span class="badge badge-${cls}">${txt}</span>`;
     }
 
     const groups      = origRes.shapiro.map(s => s.group);
@@ -671,8 +1533,8 @@ function renderSideBySideAssumptionBlock(origRes, transRes) {
         <div class="mb-3">
             Homogeneity of variance (Levene's test):<br>
             <div class="d-flex gap-2 flex-wrap mt-1 mb-2">
-                <div><small class="text-muted">Original:</small><br><span class="badge bg-${o.cls}">Variance ${o.txt} (${o.p})</span></div>
-                <div><small class="text-muted">Transformed:</small><br><span class="badge bg-${t.cls}">Variance ${t.txt} (${t.p})</span></div>
+                <div><small class="text-muted">Original:</small><br><span class="badge badge-${o.cls}">Variance ${o.txt} (${o.p})</span></div>
+                <div><small class="text-muted">Transformed:</small><br><span class="badge badge-${t.cls}">Variance ${t.txt} (${t.p})</span></div>
             </div>
             Data normality (Shapiro-Wilk test):<br>
             <div class="d-flex gap-2 flex-wrap mt-1 mb-2">
@@ -736,13 +1598,13 @@ function renderFactorTags() {
 
     selectedFactors.forEach((factor, index) => {
         const tag = document.createElement('span');
-        tag.className = "badge bg-primary d-flex align-items-center gap-2 p-2 mb-1 cursor-pointer animate__animated animate__fadeIn";
+        tag.className = "badge badge-primary d-flex align-items-center gap-2 p-2 mb-1 cursor-pointer animate__animated animate__fadeIn";
         tag.style.fontSize = "0.85rem";
         tag.style.borderRadius = "8px";
 
         tag.innerHTML = `
             <span>${index + 1}. ${factor}</span>
-            <i class="bi bi-x-circle-fill text-white-50 hover-white"></i>
+            <i class="fa fa-times-circle text-white-50 hover-white"></i>
         `;
 
         tag.onclick = function() { removeFactor(factor); };
@@ -970,7 +1832,7 @@ function showNiceMessage(message, type, containerId = 'selectionCard') {
     alertDiv.role = "alert";
 
     alertDiv.innerHTML = `
-        <i class="bi bi-info-circle-fill me-2"></i> ${message}
+        <i class="fa fa-info-circle mr-2"></i> ${message}
         <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="padding: 0.5rem 0.5rem;">
             <span aria-hidden="true">&times;</span>
         </button>
@@ -1575,19 +2437,19 @@ function populateTransformationPanel(testResults, selectedVars) {
     if (candidates.length === 0) {
         candidatesDiv.innerHTML = `
             <div class="alert alert-success py-2 px-3 mb-0 small">
-                <i class="bi bi-check-circle-fill me-2"></i>
+                <i class="fa fa-check-circle mr-2"></i>
                 <strong>All variables passed</strong> normality and homogeneity tests.
                 Transformations are optional and may not improve results.
             </div>`;
     } else {
         const rows = candidates.map(c => `
             <div class="d-flex align-items-center flex-wrap gap-1 mb-1" style="font-size:0.78rem;">
-                <span class="fw-semibold" style="min-width:90px; flex-shrink:0;">${c.varName}</span>
+                <span class="font-weight-bold" style="min-width:90px; flex-shrink:0;">${c.varName}</span>
                 ${c.issues.map(issue => `
                     <span class="badge" style="background:${issue.includes('normality') ? '#dc3545' : '#fd7e14'}; font-size:0.63rem;">
                         ${issue}
                     </span>`).join('')}
-                <span class="text-muted ms-1">→ suggested:
+                <span class="text-muted ml-1">→ suggested:
                     <strong>${getTransformLabel(c.suggestion)}</strong>
                 </span>
             </div>`).join('');
@@ -1595,7 +2457,7 @@ function populateTransformationPanel(testResults, selectedVars) {
         const whenToUseGuide = `
             <details class="mt-2 mb-0">
                 <summary style="font-size:0.70rem; cursor:pointer; color:#856404; font-weight:600;">
-                    <i class="bi bi-info-circle me-1"></i> When to use which transformation
+                    <i class="fa fa-info-circle mr-1"></i> When to use which transformation
                 </summary>
                 <div class="mt-2 p-2 rounded" style="background:#fffbf0; border:1px solid #ffe082; font-size:0.68rem; line-height:1.5;">
                     <div class="mb-1"><strong>ln(x+1)</strong> — Best for right-skewed, count-like data with zeros. Compresses large values and handles zero safely. Use when both normality and homogeneity fail.</div>
@@ -1608,8 +2470,8 @@ function populateTransformationPanel(testResults, selectedVars) {
 
         candidatesDiv.innerHTML = `
             <div class="alert alert-warning py-2 px-3 mb-0" style="font-size:0.78rem;">
-                <div class="fw-bold mb-2">
-                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <div class="font-weight-bold mb-2">
+                    <i class="fa fa-exclamation-triangle mr-1"></i>
                     Transformation Candidates (${candidates.length} variable${candidates.length > 1 ? 's' : ''})
                 </div>
                 ${rows}
@@ -1631,25 +2493,25 @@ function populateTransformationPanel(testResults, selectedVars) {
         // Status icon
         let statusIcon;
         if (!res) {
-            statusIcon = `<span class="text-muted" title="No data"><i class="bi bi-dash-circle"></i> No data</span>`;
+            statusIcon = `<span class="text-muted" title="No data"><i class="fa fa-minus-circle"></i> No data</span>`;
         } else if (!failedNorm && !failedHomo) {
-            statusIcon = `<span class="text-success" title="All tests passed"><i class="bi bi-check-circle-fill"></i> Both passed</span>`;
+            statusIcon = `<span class="text-success" title="All tests passed"><i class="fa fa-check-circle"></i> Both passed</span>`;
         } else {
             const parts = [];
             if (failedNorm) parts.push('Normality not met');
             if (failedHomo) parts.push('Homogeneity not met');
             statusIcon = `<span class="text-danger" title="Failed: ${parts.join(', ')}">
-                            <i class="bi bi-x-circle-fill"></i> ${parts.join('<br>')}</span>`;
+                            <i class="fa fa-times-circle"></i> ${parts.join('<br>')}</span>`;
         }
 
         // Suggested action column — static text only, no click
         let suggestCell;
         if (isActive) {
-            suggestCell = `<span class="text-success extra-small fw-semibold">
-                            <i class="bi bi-check-circle-fill me-1"></i>${getTransformLabel(currentTf.type, currentTf.power)}
+            suggestCell = `<span class="text-success extra-small font-weight-bold">
+                            <i class="fa fa-check-circle mr-1"></i>${getTransformLabel(currentTf.type, currentTf.power)}
                            </span>`;
         } else if (suggestion) {
-            suggestCell = `<span class="extra-small text-warning fw-semibold">${getTransformLabel(suggestion)}</span>`;
+            suggestCell = `<span class="extra-small text-warning font-weight-bold">${getTransformLabel(suggestion)}</span>`;
         } else {
             suggestCell = `<span class="extra-small text-muted">—</span>`;
         }
@@ -1659,8 +2521,8 @@ function populateTransformationPanel(testResults, selectedVars) {
         const usedActive = usedTf && usedTf.type && usedTf.type !== 'none';
         let usedCell;
         if (usedActive) {
-            usedCell = `<span class="extra-small fw-semibold" style="color:#0a6640;">
-                            <i class="bi bi-check-circle-fill me-1"></i>${getTransformLabel(usedTf.type, usedTf.power)}
+            usedCell = `<span class="extra-small font-weight-bold" style="color:#0a6640;">
+                            <i class="fa fa-check-circle mr-1"></i>${getTransformLabel(usedTf.type, usedTf.power)}
                         </span>`;
         } else {
             usedCell = `<span class="extra-small text-muted">—</span>`;
@@ -1669,7 +2531,7 @@ function populateTransformationPanel(testResults, selectedVars) {
         return `
         <div class="row g-0 align-items-center py-2 px-2 border-bottom"
              style="font-size:0.8rem; ${rowBg}">
-            <div class="col-3 fw-semibold text-truncate pe-2" title="${varName}">${varName}</div>
+            <div class="col-3 font-weight-bold text-truncate pr-2" title="${varName}">${varName}</div>
             <div class="col-3 d-flex align-items-center gap-1" style="min-width:0; overflow:hidden;">
                 <select class="form-select form-select-sm transform-type-select"
                         data-var="${varName}"
@@ -1846,12 +2708,6 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
         plsYSel.innerHTML = '<option value="">— Select column —</option>';
         result.all_columns.forEach(c => plsYSel.innerHTML += `<option value="${c}">${c}</option>`);
 
-        // Regression selectors: initial population with all columns (overwritten after main analysis runs)
-        ['regrYCol','regrSimpleXCol'].forEach(id => {
-            const sel = document.getElementById(id);
-            sel.innerHTML = `<option value="">— Select column —</option>`;
-            result.all_columns.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
-        });
 
         const container = document.getElementById('checkboxContainer');
         container.innerHTML = "";
@@ -1863,9 +2719,23 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
                 </div>`;
         });
 
-        // Add change listeners to variable checkboxes for responsive "Select All"
+        // Add change listeners to variable checkboxes for responsive "Select All" + coverage diagnostic + distribution preview
         document.querySelectorAll('.var-check').forEach(cb => {
-            cb.addEventListener('change', updateSelectAllState);
+            cb.addEventListener('change', function () {
+                updateSelectAllState();
+                const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+                    .filter(c => !c.disabled).map(c => c.value);
+                _renderCoverageDiagnostic(vars);
+                _renderPlsMissingData();
+                _renderOplsMissingData();
+                _renderCorrMissingData();
+                _updatePipelineStepper();
+                _updateCorrStepper();
+                _updatePlsStepper();
+                _updateOplsStepper();
+                const distBody = document.getElementById('distBody');
+                if (distBody && distBody.classList.contains('show')) _refreshDistIfVisible();
+            });
         });
 
         // AUTO-SELECT FIRST COLUMN
@@ -1878,6 +2748,13 @@ document.getElementById('processDataBtn').addEventListener('click', function() {
         document.getElementById('placeholderText').style.display = 'none';
         document.getElementById('downloadExcelBtn').style.display = 'none';
         hideDataLimitError();
+        _renderPlsMissingData();
+        _renderOplsMissingData();
+        _renderCorrMissingData();
+        _updatePipelineStepper();
+        _updateCorrStepper();
+        _updatePlsStepper();
+        _updateOplsStepper();
     })
     .catch(err => alert("Loading Error: " + err.message));
 });
@@ -1923,12 +2800,7 @@ document.getElementById('clearDataBtn').addEventListener('click', function() {
     if (pcaCompRowClear) pcaCompRowClear.style.display = 'none';
     document.getElementById('pcaLabelCol').innerHTML = '<option value="">(None — use row index)</option>';
     document.getElementById('oplsYCol').innerHTML = '<option value="">— Select column —</option>';
-    ['regrYCol','regrSimpleXCol'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = '<option value="">— Select column —</option>';
-    });
     lastOplsResult = null;
-    lastSimpleRegrResult = null; lastMultipleRegrResult = null;
     ['oplsStatusMsg','oplsMetrics','oplsStyleCard','oplsDownloadRow','downloadOplsBtn'].forEach(id=>{
         const el=document.getElementById(id); if(el) el.style.display='none';
     });
@@ -1955,8 +2827,7 @@ document.getElementById('clearDataBtn').addEventListener('click', function() {
     if (vizResultsHeader) vizResultsHeader.style.display = 'none';
     const assumptionsResultsArea = document.getElementById('assumptionsResultsArea');
     if (assumptionsResultsArea) assumptionsResultsArea.style.display = 'none';
-    const anovaTab = document.getElementById('anova-tab');
-    if (anovaTab) anovaTab.style.display = 'none';
+    // anova-tab is always visible in the Compare group — no need to hide
     const exportFullReportBtn = document.getElementById('exportFullReportBtn');
     if (exportFullReportBtn) exportFullReportBtn.style.display = 'none';
     const exportPubPlotsBtn = document.getElementById('exportPubPlotsBtn');
@@ -1990,6 +2861,26 @@ document.getElementById('updateAnalysisBtn').addEventListener('click', function(
     if (selectedFactors.length === 0) return alert("Select at least one factor.");
     if (selectedVars.length === 0) return alert("Select at least one variable.");
 
+    // ── Hide correlation analysis results (stale after variable set changes) ──
+    document.getElementById('corrSubTabs').style.display       = 'none';
+    document.getElementById('corrSubTabContent').style.display = 'none';
+    const _corrHeatStyle = document.getElementById('corrHeatmapStyleCard');
+    if (_corrHeatStyle) _corrHeatStyle.style.display = 'none';
+    const _corrDlHeat = document.getElementById('corrDownloadHeatmapBtn');
+    if (_corrDlHeat) _corrDlHeat.style.display = 'none';
+    const _corrHeader = document.getElementById('corrResultsHeader');
+    if (_corrHeader) _corrHeader.style.display = 'none';
+    const _corrStatus = document.getElementById('corrStatusMsg');
+    if (_corrStatus) _corrStatus.innerHTML = '';
+    const _corrStep4 = document.getElementById('pipelineStep4');
+    if (_corrStep4) { _corrStep4.style.display = 'none'; _corrStep4.classList.add('pipeline-locked'); }
+    const _corrStep4Bar = document.getElementById('step4ActionBar');
+    if (_corrStep4Bar) _corrStep4Bar.style.cssText = 'display:none!important;';
+    const _corrToStep4 = document.getElementById('toStep4Btn');
+    if (_corrToStep4) _corrToStep4.classList.add('d-none');
+    lastCorrResults = null;
+    excludedVarsFromCorr.clear();
+
     // ── Clear all previously computed results ────────────────────────────────
     // Visualizations
     const statsContent = document.getElementById('statsContent');
@@ -2020,8 +2911,7 @@ document.getElementById('updateAnalysisBtn').addEventListener('click', function(
     // ANOVA / Significance Tests
     const anovaResults = document.getElementById('anovaResults');
     if (anovaResults) anovaResults.innerHTML = '';
-    const anovaTab = document.getElementById('anova-tab');
-    if (anovaTab) anovaTab.style.display = 'none';
+    // anova-tab is always visible in the Compare group — no need to hide
     const downloadAnovaExcelBtn = document.getElementById('downloadAnovaExcelBtn');
     if (downloadAnovaExcelBtn) downloadAnovaExcelBtn.style.display = 'none';
     lastAnovaResults = null;
@@ -2040,16 +2930,16 @@ document.getElementById('updateAnalysisBtn').addEventListener('click', function(
     lastPCAResults = null;
     // ────────────────────────────────────────────────────────────────────────
 
-    // Restrict regression dropdowns to the user-selected variables
-    ['regrYCol','regrSimpleXCol'].forEach(id => {
-        const sel = document.getElementById(id);
-        sel.innerHTML = `<option value="">— Select column —</option>`;
-        selectedVars.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
-    });
-    populateRegrXList('multipleRegrXList', '', selectedVars);
-
     document.getElementById('resultsArea').style.display = 'block';
     document.getElementById('placeholderText').style.display = 'none';
+
+    // Initial coverage diagnostic once data is loaded
+    const initialVars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    _renderCoverageDiagnostic(initialVars);
+    _renderPlsMissingData();
+    _renderOplsMissingData();
+    _renderCorrMissingData();
 });
 
 document.getElementById('runVizBtn').addEventListener('click', function() {
@@ -2107,12 +2997,12 @@ document.getElementById('runVizBtn').addEventListener('click', function() {
                 : `<div class="text-center overflow-auto"><img src="data:image/png;base64,${res.plot_url}" class="img-fluid rounded mb-3"></div>`;
             card.innerHTML = `
                 <div class="plot-card-wrapper text-dark bg-white p-3 rounded shadow-sm border">
-                    <h6 class="fw-bold border-bottom pb-2">${res.variable}</h6>
+                    <h6 class="font-weight-bold border-bottom pb-2">${res.variable}</h6>
                     <div class="text-center overflow-auto">
                         ${plotBlock}
                     </div>
                     <details>
-                        <summary class="small text-primary cursor-pointer fw-bold">View Data Table</summary>
+                        <summary class="small text-primary cursor-pointer font-weight-bold">View Data Table</summary>
                         <table class="table table-sm extra-small mt-2">
                             <thead><tr>${headers}<th>N</th><th>Mean</th><th>SD</th></tr></thead>
                             <tbody>
@@ -2599,6 +3489,7 @@ document.getElementById('pcaLoadingsTopN').addEventListener('input', () => {
 
 ['pcaXComp', 'pcaYComp'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
+        _updatePipelineStepper();
         if (lastPCAResults) renderPCAPlot(lastPCAResults, pcaReadOptions());
     });
 });
@@ -2655,16 +3546,174 @@ document.querySelectorAll('.pca-palette-btn').forEach(btn => {
     });
 });
 
-// Show/hide the threshold input depending on the selected strategy
+// ── Correlation pipeline stepper — live values ───────────────────────────────
+function _updateCorrStepper() {
+    const checkedVars = Array.from(document.querySelectorAll('.var-check:checked')).filter(cb => !cb.disabled);
+    const nVars = checkedVars.length;
+    const p1 = document.getElementById('corrPipe1Val');
+    if (p1) p1.textContent = nVars === 0 ? 'None selected' : `${nVars} var${nVars !== 1 ? 's' : ''} selected`;
+
+    const minCov = parseInt(document.getElementById('minRowCoverage')?.value || 0);
+    const p2 = document.getElementById('corrPipe2Val');
+    if (p2) p2.textContent = minCov > 0 ? `Coverage ≥ ${minCov}%` : 'No row filter';
+
+    const method = document.querySelector('.corr-method-btn.active')?.dataset.method || 'pearson';
+    const methodLabels = { pearson: 'Pearson', spearman: 'Spearman', kendall: 'Kendall' };
+    const p3 = document.getElementById('corrPipe3Val');
+    if (p3) p3.textContent = methodLabels[method] || method;
+
+    const pThresh = document.getElementById('corrPThresh')?.value || '0.05';
+    const p4 = document.getElementById('corrPipe4Val');
+    if (p4) p4.textContent = `|r| ≥ ${corrThreshold.toFixed(2)} · p ≤ ${pThresh}`;
+
+    const p5 = document.getElementById('corrPipe5Val');
+    if (p5) p5.textContent = pcaVarsFromCorr.size > 0
+        ? `${pcaVarsFromCorr.size} var${pcaVarsFromCorr.size !== 1 ? 's' : ''} sent`
+        : 'Not sent yet';
+}
+
+// ── PLS pipeline stepper — live values ───────────────────────────────────────
+function _updatePlsStepper() {
+    const checkedVars = Array.from(document.querySelectorAll('.var-check:checked')).filter(cb => !cb.disabled);
+    const nVars = checkedVars.length;
+    const p1 = document.getElementById('plsPipe1Val');
+    if (p1) p1.textContent = nVars === 0 ? 'None selected' : `${nVars} var${nVars !== 1 ? 's' : ''} selected`;
+
+    const yCol = document.getElementById('plsYCol')?.value || '';
+    const p2 = document.getElementById('plsPipe2Val');
+    if (p2) p2.textContent = yCol || 'Not set';
+
+    const method = document.querySelector('.pls-method-btn.active')?.dataset.method || 'pls-da';
+    const p3 = document.getElementById('plsPipe3Val');
+    if (p3) p3.textContent = method === 'pls-da' ? 'PLS-DA' : 'PLS';
+
+    const nComp = document.getElementById('plsNComponents')?.value || '2';
+    const p4 = document.getElementById('plsPipe4Val');
+    if (p4) p4.textContent = `${nComp} LV${parseInt(nComp) !== 1 ? 's' : ''}`;
+
+    const p5 = document.getElementById('plsPipe5Val');
+    if (p5) {
+        if (lastPlsResult) {
+            const r2y = `R²Y = ${(lastPlsResult.r2y * 100).toFixed(1)}%`;
+            const q2  = lastPlsResult.q2 != null ? ` · Q² = ${(lastPlsResult.q2 * 100).toFixed(1)}%` : '';
+            p5.textContent = r2y + q2;
+        } else { p5.textContent = 'Awaiting run'; }
+    }
+}
+
+// ── OPLS pipeline stepper — live values ──────────────────────────────────────
+function _updateOplsStepper() {
+    const checkedVars = Array.from(document.querySelectorAll('.var-check:checked')).filter(cb => !cb.disabled);
+    const nVars = checkedVars.length;
+    const p1 = document.getElementById('oplsPipe1Val');
+    if (p1) p1.textContent = nVars === 0 ? 'None selected' : `${nVars} var${nVars !== 1 ? 's' : ''} selected`;
+
+    const yCol = document.getElementById('oplsYCol')?.value || '';
+    const p2 = document.getElementById('oplsPipe2Val');
+    if (p2) p2.textContent = yCol || 'Not set';
+
+    const method = document.querySelector('.opls-method-btn.active')?.dataset.method || 'opls-da';
+    const p3 = document.getElementById('oplsPipe3Val');
+    if (p3) p3.textContent = method === 'opls-da' ? 'OPLS-DA' : 'OPLS';
+
+    const nOrtho = document.getElementById('oplsNOrtho')?.value || '1';
+    const p4 = document.getElementById('oplsPipe4Val');
+    if (p4) p4.textContent = `${nOrtho} ortho. comp.`;
+
+    const p5 = document.getElementById('oplsPipe5Val');
+    if (p5) {
+        if (lastOplsResult) {
+            const r2y = `R²Y = ${(lastOplsResult.r2y * 100).toFixed(1)}%`;
+            const q2  = lastOplsResult.q2 != null ? ` · Q² = ${(lastOplsResult.q2 * 100).toFixed(1)}%` : '';
+            p5.textContent = r2y + q2;
+        } else { p5.textContent = 'Awaiting run'; }
+    }
+}
+
+// ── PCA pipeline stepper — live values ───────────────────────────────────────
+function _updatePipelineStepper() {
+    // Step 1: Variables
+    const checkedVars = Array.from(document.querySelectorAll('.var-check:checked')).filter(cb => !cb.disabled);
+    const nVars = checkedVars.length;
+    const nFromCorr = checkedVars.filter(cb => pcaVarsFromCorr.has(cb.value)).length;
+    const pipe1 = document.getElementById('pipe1Val');
+    if (pipe1) {
+        if      (nVars === 0)            pipe1.textContent = 'None selected';
+        else if (nFromCorr === nVars)    pipe1.textContent = `${nVars} var${nVars !== 1 ? 's' : ''} from Corr.`;
+        else if (nFromCorr > 0)          pipe1.textContent = `${nVars} vars (${nFromCorr} from Corr.)`;
+        else                             pipe1.textContent = `${nVars} var${nVars !== 1 ? 's' : ''} selected`;
+    }
+
+    // Step 2: Preprocessing
+    const minCov = parseInt(document.getElementById('minRowCoverage')?.value || 0);
+    const pipe2  = document.getElementById('pipe2Val');
+    if (pipe2) pipe2.textContent = minCov > 0 ? `Coverage ≥ ${minCov}%` : 'No row filter';
+
+    // Step 3: Missing data
+    const method   = document.getElementById('pcaMethod')?.value || 'svd';
+    const strategy = document.getElementById('pcaMissingStrategy')?.value || 'hybrid';
+    const thresh   = document.getElementById('pcaMissingThreshold')?.value || '30';
+    const pipe3    = document.getElementById('pipe3Val');
+    if (pipe3) {
+        if (method === 'nipals' || method === 'em_pca') {
+            pipe3.textContent = 'Handled natively';
+        } else {
+            const labels = { hybrid: 'Hybrid', drop_rows: 'Drop rows', impute_group_mean: 'Group mean', knn: 'KNN', exclude_vars: 'Excl. vars' };
+            const label  = labels[strategy] || strategy;
+            pipe3.textContent = ['hybrid', 'exclude_vars'].includes(strategy) ? `${label} · ≤${thresh}%` : label;
+        }
+    }
+
+    // Step 4: Algorithm
+    const algLabels = { svd: 'SVD', nipals: 'NIPALS', em_pca: 'EM-PCA' };
+    const pipe4 = document.getElementById('pipe4Val');
+    if (pipe4) pipe4.textContent = algLabels[method] || method;
+
+    // Step 5: Biplot
+    const pipe5 = document.getElementById('pipe5Val');
+    if (pipe5) {
+        if (lastPCAResults) {
+            const x = document.getElementById('pcaXComp')?.value || '1';
+            const y = document.getElementById('pcaYComp')?.value || '2';
+            pipe5.textContent = `PC${x} vs PC${y} · ${lastPCAResults.n_samples} samples`;
+        } else {
+            pipe5.textContent = 'Awaiting run';
+        }
+    }
+}
+
+// Update labels / notes when the PCA algorithm changes
+function _pcaMethodChanged() {
+    const method = document.getElementById('pcaMethod').value;
+    const native = method === 'nipals' || method === 'em_pca';
+    document.getElementById('pcaNativeNote').style.display = native ? 'block' : 'none';
+    document.getElementById('pcaMissingAccordionLabel').textContent =
+        native ? 'Algorithm & Variable Exclusion' : 'Algorithm & Missing Data Strategy';
+    // Disable (but keep visible) the imputation strategy for native-missing methods
+    const stratSel = document.getElementById('pcaMissingStrategy');
+    stratSel.disabled = native;
+    stratSel.style.opacity = native ? '0.45' : '1';
+    stratSel.style.pointerEvents = native ? 'none' : '';
+    _renderPCADataPreview();
+    _updatePipelineStepper();
+}
+document.getElementById('pcaMethod').addEventListener('change', _pcaMethodChanged);
+
+// Show/hide the threshold input depending on the selected imputation strategy
 document.getElementById('pcaMissingStrategy').addEventListener('change', function() {
     const needsThreshold = ['hybrid', 'exclude_vars'].includes(this.value);
     document.getElementById('pcaThresholdRow').style.display = needsThreshold ? 'flex' : 'none';
+    _renderPCADataPreview();
+    _updatePipelineStepper();
 });
+document.getElementById('pcaMissingThreshold').addEventListener('input', () => { _renderPCADataPreview(); _updatePipelineStepper(); });
+document.getElementById('pcaAverageByFactor').addEventListener('change', _renderPCADataPreview);
 
 document.getElementById('runPCABtn').addEventListener('click', function() {
     const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
         .filter(cb => !cb.disabled)
         .map(cb => cb.value);
+    const pcaMethod        = document.getElementById('pcaMethod').value;
     const missingStrategy  = document.getElementById('pcaMissingStrategy').value;
     const missingThreshold = parseFloat(document.getElementById('pcaMissingThreshold').value) || 30;
     const averageByFactor  = document.getElementById('pcaAverageByFactor').checked;
@@ -2691,20 +3740,56 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
             data: globalData,
             variables: selectedVars,
             factors: selectedFactors,
+            pca_method: pcaMethod,
             missing_strategy: missingStrategy,
             missing_threshold: missingThreshold,
+            min_row_coverage: _getMinRowCoverage(),
             average_by_factors: averageByFactor,
             label_col: labelCol,
+            per_var_transforms: usePerVarMode
+                ? Object.fromEntries(selectedVars.map(v => [v, _getVarTransform(v)]))
+                : (currentNormTransform !== 'none'
+                    ? Object.fromEntries(selectedVars.map(v => [v, currentNormTransform]))
+                    : {}),
         })
     })
-    .then(res => res.json())
+    .then(res => res.text().then(text => {
+        try { return JSON.parse(text); }
+        catch(e) {
+            console.error("PCA: server returned non-JSON response (first 2000 chars):", text.substring(0, 2000));
+            // Locate bare NaN tokens; distinguish NaN in loadings (real failure)
+            // from NaN in pca_table (serialisation issue — original missing values).
+            const nanInLoadings = [];
+            const nanInTable    = [];
+            const nanRe = /\bNaN\b/g;
+            let nm;
+            while ((nm = nanRe.exec(text)) !== null) {
+                const before   = text.substring(Math.max(0, nm.index - 600), nm.index);
+                const inLoad   = /\b(loadings|explained_variance|scores)\b/.test(before.substring(before.length - 200));
+                const varM     = before.match(/[\s\S]*"Variable"\s*:\s*"([^"]+)"/);
+                const fieldM   = before.match(/[\s\S]*"([^"]+)"\s*:\s*$/);
+                const label    = varM ? varM[1] : (fieldM ? fieldM[1] : null);
+                if (inLoad) { if (label && !nanInLoadings.includes(label)) nanInLoadings.push(label); }
+                else        { if (label && !nanInTable.includes(label))    nanInTable.push(label); }
+            }
+            throw Object.assign(new Error('nan_in_response'), { nanInLoadings, nanInTable });
+        }
+    }))
     .then(result => {
         pcaSpinner.style.display = 'none';
-        if (result.error) throw new Error(result.error);
+        if (result.error) throw Object.assign(new Error(result.error), { isServerError: true });
 
         lastPCAResults = result;
+        _updatePipelineStepper();
         pcaHeader.style.display = 'flex';
-        document.getElementById('pcaStyleCard').style.display = 'block';
+
+        // Move Plot Style card just before #pcaPlot (once, if not already there)
+        const _styleCard = document.getElementById('pcaStyleCard');
+        const _pcaPlot   = document.getElementById('pcaPlot');
+        if (_styleCard && _pcaPlot && _pcaPlot.previousElementSibling !== _styleCard) {
+            _pcaPlot.parentNode.insertBefore(_styleCard, _pcaPlot);
+        }
+        _styleCard.style.display = 'block';
 
         // Populate and show axis selectors
         const nComp = result.n_components || result.explained_variance.length;
@@ -2725,22 +3810,27 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
         const totalRows = result.n_input_rows || (globalData || []).length;
         const nVarsUsed = (result.vars_used   || selectedVars).length;
         const nVarsExcl = (result.vars_excluded || []).length;
-        const nImputed  = result.n_imputed_cells || 0;
-        const nDropped  = result.rows_dropped    || 0;
+        const nImputed      = result.n_imputed_cells    || 0;
+        const nDropped      = result.rows_dropped       || 0;
+        const nSparseDropped = result.rows_sparse_dropped || 0;
 
         const strategyNotes = [];
-        if (nVarsExcl > 0) strategyNotes.push(`${nVarsExcl} variable${nVarsExcl > 1 ? 's' : ''} excluded (too many missing values)`);
-        if (nImputed  > 0) strategyNotes.push(`${nImputed} missing cell${nImputed > 1 ? 's' : ''} imputed`);
-        if (nDropped  > 0) strategyNotes.push(`${nDropped} row${nDropped > 1 ? 's' : ''} dropped (missing values)`);
+        if (nVarsExcl     > 0) strategyNotes.push(`${nVarsExcl} variable${nVarsExcl > 1 ? 's' : ''} excluded (too many missing values)`);
+        if (nImputed      > 0) strategyNotes.push(`${nImputed} missing cell${nImputed > 1 ? 's' : ''} imputed`);
+        if (nDropped      > 0) strategyNotes.push(`${nDropped} row${nDropped > 1 ? 's' : ''} dropped (missing values)`);
+        if (nSparseDropped > 0) strategyNotes.push(`${nSparseDropped} sample${nSparseDropped > 1 ? 's' : ''} excluded (coverage &lt; ${_getMinRowCoverage()}%)`);
         const missingNote = strategyNotes.length > 0
-            ? `<br><span class="text-warning">${strategyNotes.join('; ')}</span>` : '';
+            ? `<br><span style="color:#155724; font-weight:600;">${strategyNotes.join('; ')}</span>` : '';
 
         const evLines = result.explained_variance.map((v, i) =>
             `<br>PC${i + 1} explains ${(v * 100).toFixed(1)}% of variance.`).join('');
+        const methodLabels = { svd: 'SVD', nipals: 'NIPALS', em_pca: 'EM-PCA' };
+        const methodTag = methodLabels[result.pca_method || 'svd'] || result.pca_method;
         pcaResults.innerHTML = `
             <div class="alert alert-success py-2 small shadow-sm text-left mb-2">
-                <strong>PCA Success:</strong> ${result.n_samples} of ${totalRows} samples analyzed
-                    (${nVarsUsed} variables, ${selectedFactors.length} factors).${missingNote}
+                <strong>PCA Success</strong> <span class="badge badge-secondary ml-1">${methodTag}</span>
+                — ${result.n_samples} of ${totalRows} samples analyzed
+                (${nVarsUsed} variables, ${selectedFactors.length} factors).${missingNote}
                 ${evLines}
             </div>`;
 
@@ -2749,42 +3839,481 @@ document.getElementById('runPCABtn').addEventListener('click', function() {
     .catch(err => {
         pcaSpinner.style.display = 'none';
         pcaHeader.style.display = 'none';
-        alert("PCA Error: " + err.message);
+
+        const strategyTips = `
+            <div class="mt-2">
+                <strong>Suggestions — try a different <em>Missing data strategy</em>:</strong>
+                <ul class="mb-1 mt-1 pl-3">
+                    <li><strong>Impute group / column mean</strong> — fills each missing cell with the
+                        mean of its factor group (or the column mean as fallback).
+                        Best when only a few values are missing within a group.</li>
+                    <li><strong>Hybrid (recommended)</strong> — excludes variables that are mostly
+                        missing, then imputes the remaining sparse gaps.</li>
+                    <li><strong>KNN imputation</strong> — estimates missing values from the
+                        k nearest neighbours; works well when missingness is scattered.</li>
+                    <li><strong>Exclude variables &gt; threshold</strong> — raise the threshold
+                        so the offending variable is automatically dropped.</li>
+                    <li><strong>Drop rows</strong> — removes any row that has a missing value
+                        in a selected variable; keeps only fully-observed samples.</li>
+                </ul>
+                You can also <strong>deselect the problematic variable(s)</strong> in the
+                variable list above.
+            </div>`;
+
+        let body;
+        if (err.message === 'nan_in_response') {
+            if (err.nanInLoadings && err.nanInLoadings.length) {
+                // NaN in scores/loadings — genuine computation failure
+                const varList = `<br><strong>Affected variable(s):</strong> ${err.nanInLoadings.map(v => `<code>${v}</code>`).join(', ')}`;
+                body = `<strong>PCA Error — NaN in computed result.</strong>
+                    One or more variables could not be decomposed, likely because all values
+                    within a factor group are missing or the variable has near-zero variance.${varList}
+                    ${strategyTips}`;
+            } else {
+                // NaN only in raw data table — serialisation issue (should be fixed, but report if it recurs)
+                body = `<strong>PCA Error — NaN serialisation issue.</strong>
+                    The server response contained unserialised NaN values in the raw data table.
+                    This is a known serialisation bug — please report it. As a workaround, try
+                    <strong>Standard SVD</strong> with an imputation strategy.`;
+            }
+        } else if (err.isServerError) {
+            body = `<strong>PCA Error:</strong> ${err.message}${strategyTips}`;
+        } else {
+            body = `<strong>PCA Error:</strong> ${err.message}`;
+        }
+
+        pcaResults.innerHTML = `
+            <div class="alert alert-danger py-2 px-3 small shadow-sm text-left mb-2">
+                ${body}
+            </div>`;
     });
 });
 
 // --- 6. PCA Export & UI Logic ---
 
-document.getElementById('downloadPCAExcelBtn').addEventListener('click', function() {
-    if (!lastPCAResults) return;
-    const plotDiv = document.getElementById('pcaPlot');
+// ── Methods-section HTML generator ────────────────────────────────────────────
+function _buildMethodsHTML() {
+    const selectedVars = Array.from(document.querySelectorAll('.var-check:checked'))
+        .filter(cb => !cb.disabled).map(cb => cb.value);
+    const nVars    = selectedVars.length;
+    const nSamples = globalData ? globalData.length : '?';
+    const factors  = selectedFactors || [];
+    const minCov   = _getMinRowCoverage();
+    const nzvThr   = nzvThreshold || 0;
+    const pct      = v => (v * 100).toFixed(1);
 
-    Plotly.toImage(plotDiv, { format: 'png', width: 1000, height: 750, scale: 2 })
-    .then(dataUrl => {
-        const base64 = dataUrl.replace('data:image/png;base64,', '');
-        return fetch('/export-pca-excel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                pca_details: {
-                    n_samples: lastPCAResults.n_samples,
-                    variance:  lastPCAResults.explained_variance,
-                    plot_url:  base64,
-                    coordinates: lastPCAResults.pca_table,
-                    loadings:    lastPCAResults.loadings,
-                }
-            })
+    const _transformLabel = t => ({
+        log10: 'log₁₀(<em>x</em>)',
+        ln:    'ln(<em>x</em>)',
+        sqrt:  '√<em>x</em>',
+        zscore: 'Z-score standardisation (zero mean, unit variance)',
+        minmax: 'min–max normalisation to [0, 1]'
+    }[t] || t);
+
+    const _missingText = (strategy, threshold) => ({
+        hybrid:            `Variables with &gt;${threshold}% missing values were excluded; remaining gaps were filled by group mean (or column mean when group information was unavailable).`,
+        drop_rows:         `Samples containing any missing value across the selected variables were excluded prior to analysis.`,
+        impute_group_mean: `All missing values were replaced by the group mean (or column mean when no group assignment was available).`,
+        exclude_vars:      `Variables with &gt;${threshold}% missing values were excluded; rows with any remaining missing values were then dropped.`,
+        knn:               `Missing values were estimated by <em>k</em>-nearest-neighbour (KNN) imputation (<em>k</em>&nbsp;=&nbsp;5), using Euclidean distance in the variable space.`
+    }[strategy] || `Missing values were handled using the "${strategy}" strategy.`);
+
+    const _pcaAlgoName  = m => ({ svd: 'singular value decomposition (SVD)', nipals: 'NIPALS (Nonlinear Iterative Partial Least Squares)', em_pca: 'Expectation–Maximisation PCA (EM-PCA)' }[m] || m);
+    const _corrName     = m => ({ pearson: 'Pearson', spearman: 'Spearman rank', kendall: 'Kendall rank' }[m] || m);
+    const _plsName      = m => ({ 'pls-da': 'PLS-DA (Partial Least Squares Discriminant Analysis)', 'pls': 'PLS (Partial Least Squares regression)' }[m] || m);
+    const _oplsName     = m => ({ 'opls-da': 'OPLS-DA (Orthogonal Projections to Latent Structures Discriminant Analysis)', 'opls': 'OPLS (Orthogonal Projections to Latent Structures)' }[m] || m);
+
+    const sections = [];
+
+    // ── 1. Data and variable selection ────────────────────────────────────────
+    let s1 = `<p>The dataset comprised <strong>${nSamples}</strong> samples and <strong>${nVars}</strong> numeric variable${nVars !== 1 ? 's' : ''} selected for multivariate analysis`;
+    if (factors.length) s1 += `, with <strong>${factors.join(', ')}</strong> used as grouping factor${factors.length > 1 ? 's' : ''}`;
+    s1 += '.';
+    if (minCov > 0) s1 += ` Samples with fewer than <strong>${minCov}%</strong> observed values across the selected variables were excluded prior to analysis.`;
+    if (nzvThr > 0) s1 += ` Variables with a coefficient of variation (CV) below <strong>${nzvThr}%</strong> were removed by a near-zero variance filter.`;
+    s1 += '</p>';
+    sections.push({ heading: 'Data and variable selection', body: s1 });
+
+    // ── 2. Transformation ─────────────────────────────────────────────────────
+    if (usePerVarMode && perVarTransforms && Object.keys(perVarTransforms).length) {
+        const groups = {};
+        Object.entries(perVarTransforms).forEach(([v, t]) => {
+            if (t && t !== 'none') { if (!groups[t]) groups[t] = []; groups[t].push(v); }
         });
-    })
-    .then(res => { if (!res.ok) throw new Error("Export failed"); return res.blob(); })
-    .then(blob => {
-        const url = window.URL.createObjectURL(blob);
+        const lines = Object.entries(groups).map(([t, vars]) =>
+            `${_transformLabel(t)} was applied to: <em>${vars.join(', ')}</em>.`);
+        if (lines.length) sections.push({ heading: 'Data transformation', body: `<p>Variables were transformed individually prior to analysis. ${lines.join(' ')}</p>` });
+    } else if (currentNormTransform && currentNormTransform !== 'none') {
+        sections.push({ heading: 'Data transformation', body: `<p>All selected variables were subjected to ${_transformLabel(currentNormTransform)} transformation prior to analysis to reduce skewness and stabilise variance.</p>` });
+    }
+
+    // ── 3. Correlation analysis ───────────────────────────────────────────────
+    if (lastCorrResults) {
+        const corrMethod = _corrName(lastCorrResults.method || 'pearson');
+        const nCorrVars  = lastCorrResults.variables ? lastCorrResults.variables.length : nVars;
+        const nExcl      = excludedVarsFromCorr ? excludedVarsFromCorr.size : 0;
+        const nRetained  = nCorrVars - nExcl;
+        const cThr       = (corrThreshold || 0.80).toFixed(2);
+        const pThr       = document.getElementById('corrPThresh')?.value || '0.05';
+
+        let s3 = `<p>Pairwise ${corrMethod} correlations were computed among the <strong>${nCorrVars}</strong> selected variables`;
+        if (lastCorrResults.n_samples) s3 += ` using <strong>${lastCorrResults.n_samples}</strong> sample${lastCorrResults.n_samples !== 1 ? 's' : ''}`;
+        s3 += `. Variable pairs with |<em>r</em>|&nbsp;≥&nbsp;<strong>${cThr}</strong> and <em>p</em>&nbsp;≤&nbsp;<strong>${pThr}</strong> were considered redundant.`;
+        if (nExcl > 0) {
+            s3 += ` A total of <strong>${nExcl}</strong> variable${nExcl !== 1 ? 's were' : ' was'} excluded to reduce collinearity, retaining <strong>${nRetained}</strong> variable${nRetained !== 1 ? 's' : ''} for subsequent analysis.`;
+        } else {
+            s3 += ` No variables were excluded on the basis of collinearity.`;
+        }
+        s3 += '</p>';
+        sections.push({ heading: 'Correlation analysis', body: s3 });
+    }
+
+    // ── 4. PCA ────────────────────────────────────────────────────────────────
+    if (lastPCAResults) {
+        const r          = lastPCAResults;
+        const method     = r.method || document.getElementById('pcaMethod')?.value || 'svd';
+        const strategy   = r.missing_strategy || document.getElementById('pcaMissingStrategy')?.value || 'hybrid';
+        const missThr    = r.missing_threshold ?? parseFloat(document.getElementById('pcaMissingThreshold')?.value ?? 30);
+        const nativeAlgo = method === 'nipals' || method === 'em_pca';
+        const evr        = r.explained_variance_ratio || [];
+        const nComp      = evr.length;
+        const cumVar     = evr.reduce((a, b) => a + b, 0);
+        const nPCAvars   = r.vars_used ? r.vars_used.length : nVars;
+        const nPCAsamp   = r.n_samples || '?';
+        const avgByFac   = document.getElementById('pcaAverageByFactor')?.checked;
+
+        let s4 = `<p>Principal component analysis (PCA) was performed on <strong>${nPCAvars}</strong> variable${nPCAvars !== 1 ? 's' : ''} across <strong>${nPCAsamp}</strong> sample${nPCAsamp !== 1 ? 's' : ''} using the <strong>${_pcaAlgoName(method)}</strong> algorithm. `;
+        if (nativeAlgo) {
+            s4 += `The ${method === 'nipals' ? 'NIPALS' : 'EM-PCA'} algorithm handles missing values natively without prior imputation, making it suitable for datasets with structured or extensive missingness. `;
+        } else {
+            s4 += `Prior to PCA, missing values were addressed as follows: ${_missingText(strategy, missThr)} `;
+        }
+        if (avgByFac && factors.length) s4 += `Replicate samples sharing the same <em>${factors.join('/')}</em> group were averaged prior to PCA. `;
+        if (nComp >= 1) {
+            const varParts = evr.slice(0, 3).map((v, i) => `PC${i + 1}: <strong>${pct(v)}%</strong>`).join(', ');
+            s4 += `The first <strong>${nComp}</strong> principal component${nComp !== 1 ? 's were' : ' was'} retained, collectively accounting for <strong>${pct(cumVar)}%</strong> of total variance (${varParts}).`;
+        }
+        s4 += '</p>';
+        sections.push({ heading: 'Principal component analysis (PCA)', body: s4 });
+    }
+
+    // ── 5. PLS ────────────────────────────────────────────────────────────────
+    if (lastPlsResult) {
+        const r      = lastPlsResult;
+        const method = _plsName(r.method || 'pls-da');
+        const yCol   = r.y_col || '?';
+        const nLV    = r.n_components || '?';
+        const r2y    = r.r2y != null ? `<strong>${pct(r.r2y)}%</strong>` : '—';
+        const q2     = r.q2  != null ? `<strong>${pct(r.q2)}%</strong>`  : '—';
+        const r2x    = r.r2x != null ? `<strong>${pct(r.r2x)}%</strong>` : '—';
+        sections.push({ heading: r.method === 'pls' ? 'Partial Least Squares (PLS)' : 'PLS Discriminant Analysis (PLS-DA)',
+            body: `<p>${method} was applied with <strong>${yCol}</strong> as the response variable (Y) and <strong>${r.vars_used ? r.vars_used.length : nVars}</strong> predictor variable${nVars !== 1 ? 's' : ''} (X), using <strong>${nLV}</strong> latent variable${nLV !== 1 ? 's' : ''}. The model explained ${r2x} of X variance (R²X) and ${r2y} of Y variance (R²Y); cross-validated predictive ability was Q²&nbsp;=&nbsp;${q2}. Variable importance in projection (VIP) scores were computed to rank predictor variables by their contribution to the model.</p>` });
+    }
+
+    // ── 6. OPLS ───────────────────────────────────────────────────────────────
+    if (lastOplsResult) {
+        const r      = lastOplsResult;
+        const method = _oplsName(r.method || 'opls-da');
+        const yCol   = r.y_col || '?';
+        const nOrtho = r.n_ortho || '?';
+        const r2y    = r.r2y != null ? `<strong>${pct(r.r2y)}%</strong>` : '—';
+        const q2     = r.q2  != null ? `<strong>${pct(r.q2)}%</strong>`  : '—';
+        const r2x    = r.r2x != null ? `<strong>${pct(r.r2x)}%</strong>` : '—';
+        sections.push({ heading: r.method === 'opls' ? 'Orthogonal PLS (OPLS)' : 'Orthogonal PLS-DA (OPLS-DA)',
+            body: `<p>${method} was applied with <strong>${yCol}</strong> as the response variable (Y), using <strong>${r.vars_used ? r.vars_used.length : nVars}</strong> predictor variable${nVars !== 1 ? 's' : ''} and <strong>${nOrtho}</strong> orthogonal component${nOrtho !== 1 ? 's' : ''}. Orthogonal variation — systematic X variance unrelated to Y — was separated from the predictive component to improve model interpretability. The model explained ${r2x} of X variance (R²X) and ${r2y} of Y variance (R²Y); cross-validated Q²&nbsp;=&nbsp;${q2}. S-plot and VIP analyses were used to identify variables driving the separation.</p>` });
+    }
+
+    // ── 7. Software ───────────────────────────────────────────────────────────
+    sections.push({ heading: 'Software', body: `<p>All statistical analyses were performed using CyanoTools, a web application for analysis of cyanobacterial and algal data (Python/Flask back-end, JavaScript front-end). Multivariate analyses (PCA, PLS, OPLS) were implemented using scikit-learn (Pedregosa <em>et al.</em>, 2011, <em>Journal of Machine Learning Research</em>, 12, 2825–2830). Visualisations were generated using Plotly.js. This methods section was auto-generated from the analysis settings active at the time of export and should be reviewed and adapted before submission.</p>` });
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    const sectionHtml = sections.map(({ heading, body }) =>
+        `<h2>${heading}</h2>${body}`).join('\n');
+
+    const dateStr = new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Methods Section — CyanoTools</title>
+<style>
+  body { font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.7;
+         max-width: 740px; margin: 48px auto; color: #111; }
+  h1   { font-size: 1.25rem; margin-bottom: 0.15em; }
+  h2   { font-size: 1.0rem; margin-top: 1.6em; margin-bottom: 0.3em;
+         border-bottom: 1px solid #bbb; padding-bottom: 2px; }
+  p    { margin: 0.4em 0 0.9em; text-align: justify; }
+  .meta { color: #555; font-size: 0.82rem; font-family: Arial, sans-serif;
+          border-bottom: 2px solid #333; padding-bottom: 0.5em; margin-bottom: 1.4em; }
+  .note { background: #fffbe6; border-left: 4px solid #f0ad4e; padding: 7px 12px;
+          font-size: 0.82rem; font-family: Arial, sans-serif; margin-top: 2.2em; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h1>Statistical Methods</h1>
+<div class="meta">Generated by CyanoTools &nbsp;·&nbsp; ${dateStr}</div>
+${sectionHtml}
+<div class="note"><strong>Note:</strong> This section was auto-generated from the active analysis settings at the time of export. Please verify all numerical values and method descriptions before submission, and adapt the wording to the conventions of your target journal.</div>
+</body>
+</html>`;
+}
+
+async function _exportPCAReport() {
+    if (!lastPCAResults) return alert('Run PCA first before exporting.');
+
+    const btn = document.getElementById('downloadPCAExcelBtn');
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> Building report…';
+
+    try {
+        const wb = XLSX.utils.book_new();
+        const addSheet = (name, rows) => {
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), name);
+        };
+
+        const varsUsed     = lastPCAResults.vars_used     || [];
+        const varsExcluded = lastPCAResults.vars_excluded  || [];
+        const allPcaVars   = [...varsUsed, ...varsExcluded];
+        const factors      = selectedFactors || [];
+        const nComp        = lastPCAResults.n_components || (lastPCAResults.explained_variance || []).length;
+        const evArr        = lastPCAResults.explained_variance || [];
+        const missingStrat = document.getElementById('pcaMissingStrategy').value;
+        const missingThresh = document.getElementById('pcaMissingThreshold').value;
+        const minRowCov    = document.getElementById('minRowCoverage')?.value || '0';
+        const avgByFactor  = document.getElementById('pcaAverageByFactor').checked;
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+        const _v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+        const _c = id => { const el = document.getElementById(id); return el ? (el.checked ? 'Yes' : 'No') : ''; };
+
+        // ── Sheet 1: Parameters ───────────────────────────────────────────────
+        const params = [
+            ['Section', 'Parameter', 'Value'],
+            ['Data Input', 'Total rows in dataset', (globalData || []).length],
+            ['Data Input', 'Factor columns', factors.join(', ') || '(none)'],
+            ['Data Input', 'Label column', _v('pcaLabelCol') || '(none)'],
+            ['Data Input', 'Variables sent to PCA', allPcaVars.length],
+            ['', '', ''],
+            ['Transformation', 'Normalization method', currentNormTransform === 'none' ? 'None' : currentNormTransform.toUpperCase()],
+        ];
+        const activeTransforms = Object.entries(appliedTransformations || {})
+            .filter(([, cfg]) => cfg && cfg.type && cfg.type !== 'none')
+            .map(([v, cfg]) => `${v}: ${cfg.type}`);
+        params.push(['Transformation', 'Per-variable transforms', activeTransforms.length ? activeTransforms.join('; ') : '(none)']);
+        params.push(['', '', '']);
+        params.push(['Variable Selection', 'NZV threshold (CV%)', nzvThreshold || 0]);
+        params.push(['Variable Selection', 'Variables selected', allPcaVars.join(', ')]);
+        params.push(['', '', '']);
+        params.push(['Correlation', 'Analysis run', lastCorrResults ? 'Yes' : 'No']);
+        if (lastCorrResults) {
+            params.push(['Correlation', 'Method', lastCorrResults.method || '']);
+            params.push(['Correlation', 'r threshold', corrThreshold]);
+            params.push(['Correlation', 'p threshold', _v('corrPThresh') || '0.05']);
+            params.push(['Correlation', 'Variables excluded', excludedVarsFromCorr.size ? [...excludedVarsFromCorr].join(', ') : '(none)']);
+            params.push(['Correlation', 'Variables sent to PCA', pcaVarsFromCorr.size ? [...pcaVarsFromCorr].join(', ') : '(none)']);
+        }
+        params.push(['', '', '']);
+        params.push(['PCA Algorithm', 'Method', lastPCAResults.pca_method || _v('pcaMethod')]);
+        params.push(['PCA Algorithm', 'Missing data strategy', missingStrat]);
+        params.push(['PCA Algorithm', 'Variable exclusion threshold (%)', missingThresh]);
+        params.push(['PCA Algorithm', 'Min. row coverage (%)', minRowCov]);
+        params.push(['PCA Algorithm', 'Average replicates by factors', avgByFactor ? 'Yes' : 'No']);
+        params.push(['PCA Algorithm', 'Components computed', nComp]);
+        params.push(['PCA Algorithm', 'Samples analyzed', lastPCAResults.n_samples]);
+        params.push(['PCA Algorithm', 'Total input rows', lastPCAResults.n_input_rows || (globalData || []).length]);
+        params.push(['PCA Algorithm', 'Variables used', varsUsed.join(', ')]);
+        params.push(['PCA Algorithm', 'Variables excluded', varsExcluded.length ? varsExcluded.join(', ') : '(none)']);
+        params.push(['PCA Algorithm', 'Imputed cells', lastPCAResults.n_imputed_cells || 0]);
+        params.push(['PCA Algorithm', 'Rows dropped (missing)', lastPCAResults.rows_dropped || 0]);
+        params.push(['PCA Algorithm', 'Rows excluded (coverage)', lastPCAResults.rows_sparse_dropped || 0]);
+        params.push(['', '', '']);
+        params.push(['Plot Style', 'X axis', 'PC' + _v('pcaXComp')]);
+        params.push(['Plot Style', 'Y axis', 'PC' + _v('pcaYComp')]);
+        params.push(['Plot Style', 'Marker symbol', _v('pcaSymbol')]);
+        params.push(['Plot Style', 'Vary symbol by group', _c('pcaVarySymbol')]);
+        params.push(['Plot Style', 'Point size', _v('pcaPointSize')]);
+        params.push(['Plot Style', 'Opacity (%)', _v('pcaOpacity')]);
+        params.push(['Plot Style', 'Color palette', document.querySelector('.pca-palette-btn.active')?.dataset.palette || '']);
+        params.push(['Plot Style', 'Confidence ellipses', _c('pcaShowEllipse')]);
+        params.push(['Plot Style', 'Ellipse std multiplier', document.querySelector('.pca-std-btn.active')?.dataset.val || '']);
+        params.push(['Plot Style', 'Ellipse fill opacity (%)', _v('pcaEllipseOpacity')]);
+        params.push(['Plot Style', 'Show sample labels', _c('pcaShowLabels')]);
+        params.push(['Plot Style', 'Show loadings', _c('pcaShowLoadings')]);
+        params.push(['Plot Style', 'Grid lines', _c('pcaShowGrid')]);
+        params.push(['Plot Style', 'Plot border', _c('pcaShowBorder')]);
+        params.push(['Plot Style', 'Center axes at zero', _c('pcaCenterAxes')]);
+        params.push(['Plot Style', 'Font family', _v('pcaFontFamily')]);
+        addSheet('Parameters', params);
+
+        // ── Sheet 2: Input Data ───────────────────────────────────────────────
+        if (globalData && globalData.length > 0) {
+            const inputCols = [...factors, ...allPcaVars];
+            addSheet('Input Data', [inputCols, ...globalData.map(row => inputCols.map(c => row[c] ?? ''))]);
+        }
+
+        // ── Sheet 3: Sample Summary ───────────────────────────────────────────
+        if (globalData && globalData.length > 0) {
+            const coverageThresh = parseFloat(minRowCov) / 100;
+            const sRows = [['Row', ...factors, 'Missing count', 'Missing %', 'Coverage %', 'PCA Status']];
+            globalData.forEach((row, i) => {
+                const tot = allPcaVars.length;
+                const miss = allPcaVars.filter(v => { const val = row[v]; return val === undefined || val === null || val === '' || val === 'N/A'; }).length;
+                const missPct  = tot > 0 ? parseFloat(((miss / tot) * 100).toFixed(1)) : 0;
+                const covPct   = tot > 0 ? parseFloat((((tot - miss) / tot) * 100).toFixed(1)) : 0;
+                let status = 'Used in PCA';
+                if (coverageThresh > 0 && covPct / 100 < coverageThresh) status = 'Excluded (coverage)';
+                else if (missingStrat === 'drop_rows' && miss > 0)        status = 'Excluded (missing values)';
+                sRows.push([i + 1, ...factors.map(f => row[f] ?? ''), miss, missPct, covPct, status]);
+            });
+            addSheet('Sample Summary', sRows);
+        }
+
+        // ── Sheet 4: Variable Summary ─────────────────────────────────────────
+        if (globalData && globalData.length > 0) {
+            const vRows = [['Variable', 'Used in PCA', 'Exclusion Reason', 'Missing count', 'Missing %', 'Mean', 'SD', 'Transform', 'From Correlation tab', 'Excluded by Correlation']];
+            allPcaVars.forEach(v => {
+                const vals = globalData
+                    .map(row => { const val = row[v]; return (val !== undefined && val !== null && val !== '' && val !== 'N/A') ? parseFloat(val) : NaN; })
+                    .filter(x => !isNaN(x));
+                const totalN   = globalData.length;
+                const missN    = totalN - vals.length;
+                const missPct  = parseFloat(((missN / totalN) * 100).toFixed(1));
+                const mean     = vals.length > 0 ? parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(4)) : '';
+                const sd       = vals.length > 1 ? parseFloat(Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / (vals.length - 1)).toFixed(4)) : '';
+                const isExcl   = varsExcluded.includes(v);
+                const transform = (appliedTransformations?.[v]?.type && appliedTransformations[v].type !== 'none')
+                    ? appliedTransformations[v].type
+                    : (currentNormTransform !== 'none' ? currentNormTransform : 'None');
+                vRows.push([
+                    v,
+                    isExcl ? 'No' : 'Yes',
+                    isExcl ? `Too many missing values (>${missingThresh}%)` : '',
+                    missN, missPct, mean, sd,
+                    transform,
+                    pcaVarsFromCorr.has(v)      ? 'Yes' : 'No',
+                    excludedVarsFromCorr.has(v) ? 'Yes' : 'No',
+                ]);
+            });
+            addSheet('Variable Summary', vRows);
+        }
+
+        // ── Sheet 5: Correlation Matrix (lower triangle) ──────────────────────
+        if (lastCorrResults?.corr_matrix && lastCorrResults.variables) {
+            const cvars = lastCorrResults.variables;
+            const n = cvars.length;
+            const cRows = [['', ...cvars]];
+            for (let i = 0; i < n; i++) {
+                const row = [cvars[i]];
+                for (let j = 0; j < n; j++) {
+                    if (j < i)      row.push(parseFloat(lastCorrResults.corr_matrix[i][j].toFixed(4)));
+                    else if (j === i) row.push(1);
+                    else              row.push('');
+                }
+                cRows.push(row);
+            }
+            addSheet('Correlation Matrix', cRows);
+
+            // ── Sheet 6: Correlated Pairs ─────────────────────────────────────
+            const pThresh = parseFloat(_v('corrPThresh') || '0.05');
+            const pairRows = [['Variable A', 'Variable B', 'r', 'p-value', 'Significant', 'Action']];
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < i; j++) {
+                    const r   = lastCorrResults.corr_matrix[i][j];
+                    const p   = lastCorrResults.pval_matrix?.[i]?.[j];
+                    const sig = Math.abs(r) >= corrThreshold && (p === undefined || p <= pThresh);
+                    if (sig) {
+                        const vA = cvars[i], vB = cvars[j];
+                        let action = 'Kept both';
+                        if (excludedVarsFromCorr.has(vA))      action = `${vA} excluded`;
+                        else if (excludedVarsFromCorr.has(vB)) action = `${vB} excluded`;
+                        pairRows.push([vA, vB,
+                            parseFloat(r.toFixed(4)),
+                            p !== undefined ? parseFloat(p.toFixed(4)) : '',
+                            'Yes', action]);
+                    }
+                }
+            }
+            if (pairRows.length > 1) addSheet('Correlated Pairs', pairRows);
+        }
+
+        // ── Sheet 7: Final PCA Matrix (post-imputation) ───────────────────────
+        if (lastPCAResults.pca_table?.length > 0) {
+            const finalCols = [...factors, ...varsUsed];
+            addSheet('Final PCA Matrix', [
+                finalCols,
+                ...lastPCAResults.pca_table.map(row => finalCols.map(c => row[c] ?? ''))
+            ]);
+        }
+
+        // ── Sheet 8: PCA Variance Explained ───────────────────────────────────
+        const nVarsForEig = varsUsed.length;
+        const vExpRows = [['PC', 'Eigenvalue (approx.)', '% Variance', 'Cumulative %', 'Kaiser criterion (>1)']];
+        let cumPct = 0;
+        evArr.forEach((ev, i) => {
+            const pct   = parseFloat((ev * 100).toFixed(2));
+            cumPct += pct;
+            const eig   = parseFloat((ev * nVarsForEig).toFixed(4));
+            vExpRows.push([`PC${i + 1}`, eig, pct, parseFloat(cumPct.toFixed(2)), eig >= 1 ? 'Yes' : 'No']);
+        });
+        addSheet('PCA Variance', vExpRows);
+
+        // ── Sheet 9: PCA Scores ───────────────────────────────────────────────
+        if (lastPCAResults.scores?.length > 0) {
+            const pcCols = evArr.map((_, i) => `PC${i + 1}`);
+            addSheet('PCA Scores', [
+                ['Sample', 'Group', ...pcCols],
+                ...lastPCAResults.scores.map((s, i) => [
+                    s.label || (i + 1),
+                    s.group || 'All samples',
+                    ...pcCols.map(pc => s[pc] !== undefined ? parseFloat((+s[pc]).toFixed(6)) : '')
+                ])
+            ]);
+        }
+
+        // ── Sheet 10: PCA Loadings ────────────────────────────────────────────
+        if (lastPCAResults.loadings?.length > 0) {
+            const pcLoadCols = evArr.map((_, i) => `PC${i + 1}`);
+            addSheet('PCA Loadings', [
+                ['Variable', ...pcLoadCols, 'Magnitude'],
+                ...lastPCAResults.loadings.map(l => {
+                    const vals = pcLoadCols.map(pc => l[`${pc}_Loading`] !== undefined ? parseFloat((+l[`${pc}_Loading`]).toFixed(6)) : 0);
+                    const mag  = parseFloat(Math.sqrt(vals.reduce((s, v) => s + v * v, 0)).toFixed(6));
+                    return [l.Variable, ...vals, mag];
+                })
+            ]);
+        }
+
+        // ── Capture PCA plot as PNG ───────────────────────────────────────────
+        let plotPngBase64 = null;
+        try {
+            const dataUrl = await Plotly.toImage(document.getElementById('pcaPlot'),
+                { format: 'png', width: 1200, height: 900, scale: 2 });
+            plotPngBase64 = dataUrl.replace('data:image/png;base64,', '');
+        } catch(e) { console.warn('Could not capture PCA plot:', e); }
+
+        // ── Build ZIP ─────────────────────────────────────────────────────────
+        const zip = new JSZip();
+        zip.file('PCA_Full_Report.xlsx', XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+        if (plotPngBase64) zip.file('PCA_plot.png', plotPngBase64, { base64: true });
+        zip.file('Methods_section.html', _buildMethodsHTML());
+
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
-        a.href = url; a.download = "PCA_Full_Analysis_Report.xlsx";
+        a.href = url; a.download = 'PCA_Full_Report.zip';
         document.body.appendChild(a); a.click();
-        window.URL.revokeObjectURL(url); document.body.removeChild(a);
-    })
-    .catch(err => alert("Export Error: " + err.message));
+        URL.revokeObjectURL(url); document.body.removeChild(a);
+
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+    }
+}
+
+document.getElementById('downloadPCAExcelBtn').addEventListener('click', function() {
+    _exportPCAReport().catch(err => alert('Export error: ' + err.message));
 });
 
 // Download PCA plot for publication (PNG with DPI metadata, or SVG)
@@ -2915,10 +4444,15 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
         renderAssumptionScopeTabs(scopes, 'all');
         renderAssumptionScopeContent('all');
 
-        // Unhide the ANOVA tab
-        const anovaTab = document.getElementById('anova-tab');
-        anovaTab.style.display = 'block';
-        anovaTab.classList.add('animate__animated', 'animate__fadeIn');
+        // Unlock the ANOVA Tests tab now that normality results are available
+        _unlockSubTab('anova-tab');
+
+        // Switch to Compare category and activate ANOVA Tests tab
+        _switchCategory('compare');
+        setTimeout(() => {
+            const anovaTab = document.getElementById('anova-tab');
+            if (anovaTab) anovaTab.click();
+        }, 50);
     })
     .catch(err => {
         testSpinner.style.display = 'none';
@@ -3684,7 +5218,7 @@ function buildVariableChartHTML(varResults, varName, varIdx) {
     let sliceIdx = 0;
     varResults.forEach(res => {
         const sliceInfo = res.slice_label && res.slice_label !== 'All'
-            ? `<span class="badge bg-light text-dark border me-2">${res.slice_label}</span>` : '';
+            ? `<span class="badge badge-light border mr-2">${res.slice_label}</span>` : '';
         const sortedGroups = sortLetterGroups(res.letter_groups, 'data_order');
         // Use the numeric varIdx (not the variable name) to avoid ID collisions
         // when different variable names map to the same sanitised string (e.g. φE₀ vs ψE₀)
@@ -3708,9 +5242,9 @@ function buildVariableChartHTML(varResults, varName, varIdx) {
                         <span class="badge ${isSig ? 'bg-success' : 'bg-secondary'}">
                             p = ${pVal}${isSig ? ' ✓ Significant' : ' n.s.'}
                         </span>
-                        <span class="badge bg-primary">${res.test_used || ''}</span>
+                        <span class="badge badge-primary">${res.test_used || ''}</span>
                         ${res.effect_size != null
-                            ? `<span class="badge bg-light text-dark border">${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}</span>`
+                            ? `<span class="badge badge-light border">${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}</span>`
                             : ''}
                         <span class="text-muted" style="font-size:0.72rem;">
                             Normality: ${res.assumptions && res.assumptions.all_normal ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>'}
@@ -3745,13 +5279,13 @@ function buildVariableGroupsHTML(varResults, sortMode, varName) {
         </button>`).join('');
     html += `
         <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
-            <span class="small fw-bold text-muted"><i class="bi bi-sort-down me-1"></i>Sort groups by:</span>
+            <span class="small font-weight-bold text-muted"><i class="fa fa-sort-amount-desc mr-1"></i>Sort groups by:</span>
             <div class="btn-group btn-group-sm" role="group">${btns}</div>
         </div>`;
 
     varResults.forEach(res => {
         const sliceInfo = res.slice_label && res.slice_label !== 'All'
-            ? `<span class="badge bg-light text-dark border me-2">${res.slice_label}</span>` : '';
+            ? `<span class="badge badge-light border mr-2">${res.slice_label}</span>` : '';
         const sortedGroups = sortLetterGroups(res.letter_groups, sortMode || 'data_order');
         if (sortedGroups && sortedGroups.length > 0) {
             const pVal = res.overall_p !== null ? res.overall_p.toFixed(4) : '—';
@@ -3761,7 +5295,7 @@ function buildVariableGroupsHTML(varResults, sortMode, varName) {
                     ${sliceInfo ? `<div class="mb-2">${sliceInfo}</div>` : ''}
                     <div class="d-flex align-items-center gap-2 mb-2" style="font-size:0.78rem;">
                         <span class="badge ${isSig ? 'bg-success' : 'bg-secondary'}">p = ${pVal}${isSig ? ' ✓' : ' n.s.'}</span>
-                        <span class="badge bg-primary">${res.test_used || ''}</span>
+                        <span class="badge badge-primary">${res.test_used || ''}</span>
                         ${res.posthoc_method ? `<span class="text-muted">Post-hoc: ${res.posthoc_method}</span>` : ''}
                     </div>
                     <table class="table table-sm table-bordered text-center">
@@ -3771,7 +5305,7 @@ function buildVariableGroupsHTML(varResults, sortMode, varName) {
                         <tbody>
                             ${sortedGroups.map(lg => `
                                 <tr>
-                                    <td class="text-left fw-bold">${lg.group}</td>
+                                    <td class="text-left font-weight-bold">${lg.group}</td>
                                     <td>${lg.mean.toFixed(4)}</td>
                                     <td>${lg.std.toFixed(4)}</td>
                                     <td>${lg.n}</td>
@@ -3800,14 +5334,14 @@ function buildVariablePairwiseHTML(varResults) {
     let hasAny = false;
     varResults.forEach(res => {
         const sliceInfo = res.slice_label && res.slice_label !== 'All'
-            ? `<div class="mb-1"><span class="badge bg-light text-dark border">${res.slice_label}</span></div>` : '';
+            ? `<div class="mb-1"><span class="badge badge-light border">${res.slice_label}</span></div>` : '';
         if (res.posthoc && res.posthoc.length > 0) {
             hasAny = true;
             html += `
                 <div class="mb-4">
                     ${sliceInfo}
                     <div class="d-flex gap-2 align-items-center mb-2" style="font-size:0.78rem;">
-                        <span class="badge bg-primary">${res.test_used}</span>
+                        <span class="badge badge-primary">${res.test_used}</span>
                         ${res.posthoc_method ? `<span class="text-muted">Post-hoc: ${res.posthoc_method}</span>` : ''}
                         <strong>p = ${res.overall_p !== null ? res.overall_p.toFixed(4) : '—'}</strong>
                     </div>
@@ -3821,8 +5355,8 @@ function buildVariablePairwiseHTML(varResults) {
                                     <td><strong>${ph.group1}</strong> vs <strong>${ph.group2}</strong></td>
                                     <td>${ph.p_adj.toFixed(4)}</td>
                                     <td>${ph.significant
-                                        ? '<span class="badge bg-success">Significant</span>'
-                                        : '<span class="badge bg-secondary">n.s.</span>'}</td>
+                                        ? '<span class="badge badge-success">Significant</span>'
+                                        : '<span class="badge badge-secondary">n.s.</span>'}</td>
                                 </tr>`).join('')}
                         </tbody>
                     </table>
@@ -3860,10 +5394,10 @@ function buildAnovaOverviewHTML(byVariable, varOrder) {
 
         rows += `
             <tr>
-                <td class="fw-bold">${varName}</td>
-                <td><span class="badge bg-primary" style="font-size:0.68rem;">${res.test_used || '—'}</span></td>
+                <td class="font-weight-bold">${varName}</td>
+                <td><span class="badge badge-primary" style="font-size:0.68rem;">${res.test_used || '—'}</span></td>
                 <td>
-                    <span class="fw-bold ${isSig ? 'text-success' : 'text-secondary'}">${pFormatted}</span>
+                    <span class="font-weight-bold ${isSig ? 'text-success' : 'text-secondary'}">${pFormatted}</span>
                 </td>
                 <td>${res.effect_size != null
                     ? `<span style="font-size:0.80rem;">${res.effect_size_label || 'η²'} = ${res.effect_size.toFixed(3)}</span>`
@@ -3883,8 +5417,8 @@ function buildAnovaOverviewHTML(byVariable, varOrder) {
 
     return `
         <div class="mb-2 pb-1 d-flex align-items-center gap-2">
-            <i class="bi bi-grid-3x3-gap-fill text-success"></i>
-            <span class="fw-bold" style="font-size:0.9rem;">All Variables at a Glance</span>
+            <i class="fa fa-th text-success"></i>
+            <span class="font-weight-bold" style="font-size:0.9rem;">All Variables at a Glance</span>
             <span class="text-muted small">— click a variable tab above to explore its chart and groups</span>
         </div>
         <div class="table-responsive">
@@ -3904,7 +5438,7 @@ function buildAnovaOverviewHTML(byVariable, varOrder) {
             </table>
         </div>
         <p class="extra-small text-muted mt-1 mb-0">
-            <i class="bi bi-info-circle me-1"></i>
+            <i class="fa fa-info-circle mr-1"></i>
             Assumptions column: left = Normality (Shapiro-Wilk), right = Homogeneity (Levene's). ✅ = passed (p &gt; 0.05).
         </p>`;
 }
@@ -3923,7 +5457,7 @@ function renderAnovaResults(data) {
     if (data.test_rationale) {
         const rationale = document.createElement('div');
         rationale.className = 'alert alert-info border-0 shadow-sm mb-3 py-2 px-3 small';
-        rationale.innerHTML = `<i class="bi bi-cpu-fill me-2"></i><strong>Test Selected:</strong> ${data.test_rationale}`;
+        rationale.innerHTML = `<i class="fa fa-cog mr-2"></i><strong>Test Selected:</strong> ${data.test_rationale}`;
         anovaResults.appendChild(rationale);
     }
 
@@ -3946,8 +5480,8 @@ function renderAnovaResults(data) {
     const navId = 'anovaOuterNav';
     let navHTML = `<ul class="nav custom-anova-tabs mb-0" id="${navId}" role="tablist">
         <li class="nav-item">
-            <button class="nav-link active small fw-bold" data-toggle="tab" data-target="#anova_overview">
-                <i class="bi bi-grid-3x3-gap me-1"></i>Overview
+            <button class="nav-link active small font-weight-bold" data-toggle="tab" data-target="#anova_overview">
+                <i class="fa fa-th mr-1"></i>Overview
             </button>
         </li>`;
 
@@ -3957,7 +5491,7 @@ function renderAnovaResults(data) {
         const isSig = firstRes.overall_p !== null && firstRes.overall_p < 0.05;
         navHTML += `
         <li class="nav-item">
-            <button class="nav-link small fw-bold" data-toggle="tab" data-target="#${varId}"
+            <button class="nav-link small font-weight-bold" data-toggle="tab" data-target="#${varId}"
                     style="position:relative;">
                 ${varName}
                 <span class="anova-var-sig-dot ${isSig ? 'sig' : 'ns'}" title="${isSig ? 'Significant' : 'Not significant'}"></span>
@@ -3984,24 +5518,24 @@ function renderAnovaResults(data) {
         <!-- Variable tab: ${varName} -->
         <div class="tab-pane fade anova-var-section" id="${varId}" role="tabpanel" data-var-name="${varName}">
             <div class="d-flex align-items-center justify-content-between mb-2">
-                <h6 class="fw-bold text-success mb-0">${varName}</h6>
+                <h6 class="font-weight-bold text-success mb-0">${varName}</h6>
             </div>
 
             <!-- Inner pill sub-tabs: Chart | Groups | Pairwise -->
             <ul class="nav anova-var-subtabs mb-3" id="${subNavId}" role="tablist">
                 <li class="nav-item">
                     <button class="nav-link active" data-toggle="tab" data-target="#${varId}_chart">
-                        <i class="bi bi-bar-chart-line me-1"></i>Chart
+                        <i class="fa fa-bar-chart mr-1"></i>Chart
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" data-toggle="tab" data-target="#${varId}_groups">
-                        <i class="bi bi-table me-1"></i>Groups
+                        <i class="fa fa-table mr-1"></i>Groups
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" data-toggle="tab" data-target="#${varId}_pairwise">
-                        <i class="bi bi-list-check me-1"></i>Pairwise
+                        <i class="fa fa-list-ul mr-1"></i>Pairwise
                     </button>
                 </li>
             </ul>
@@ -4185,7 +5719,7 @@ document.addEventListener('click', function(e) {
         // Resize Plotly if needed
         if (originalEl.classList.contains('js-plotly-plot')) Plotly.Plots.resize(originalEl);
         btn.setAttribute('data-showing', 'original');
-        btn.innerHTML = '<i class="bi bi-eye-slash me-1"></i> Show Transformed';
+        btn.innerHTML = '<i class="fa fa-eye-slash mr-1"></i> Show Transformed';
         btn.classList.remove('btn-outline-secondary');
         btn.classList.add('btn-outline-warning');
     } else {
@@ -4194,7 +5728,7 @@ document.addEventListener('click', function(e) {
         originalEl.style.display = 'none';
         if (transformedEl.classList.contains('js-plotly-plot')) Plotly.Plots.resize(transformedEl);
         btn.setAttribute('data-showing', 'transformed');
-        btn.innerHTML = '<i class="bi bi-eye me-1"></i> Show Original';
+        btn.innerHTML = '<i class="fa fa-eye mr-1"></i> Show Original';
         btn.classList.remove('btn-outline-warning');
         btn.classList.add('btn-outline-secondary');
     }
@@ -4614,7 +6148,6 @@ initPubPlotSettingsUI();
 // CORRELATION ANALYSIS
 // ═══════════════════════════════════════════════════════════════════════════
 
-let lastCorrResults = null;
 let corrAbortController = null;
 
 // ── Plotly colorscale map ─────────────────────────────────────────────────
@@ -4648,16 +6181,26 @@ function corrHeatmapReadOptions() {
     };
 }
 
-// ── Read scatter matrix style options ─────────────────────────────────────
-function corrScatterReadOptions() {
-    return {
-        pointSize:  parseInt(document.getElementById('corrScatterPointSize').value),
-        opacity:    parseInt(document.getElementById('corrScatterOpacity').value) / 100,
-        color:      document.getElementById('corrScatterColor').value,
-        fontFamily: document.getElementById('corrScatterFont').value,
-        labelSize:  parseInt(document.getElementById('corrScatterLabelSize').value),
-        rSize:      parseInt(document.getElementById('corrScatterRSize').value),
-    };
+function buildDendrogramTraces(icoord, dcoord, colorList, orientation) {
+    const groups = {};
+    icoord.forEach((ix, k) => {
+        const col = colorList[k] || 'black';
+        if (!groups[col]) groups[col] = { x: [], y: [] };
+        for (let p = 0; p < 4; p++) {
+            if (orientation === 'top') {
+                groups[col].x.push(ix[p]); groups[col].y.push(dcoord[k][p]);
+            } else {
+                groups[col].x.push(dcoord[k][p]); groups[col].y.push(ix[p]);
+            }
+        }
+        groups[col].x.push(null); groups[col].y.push(null);
+    });
+    return Object.entries(groups).map(([col, pts]) => ({
+        type: 'scatter', mode: 'lines',
+        x: pts.x, y: pts.y,
+        line: { color: col, width: 1.5 },
+        showlegend: false, hoverinfo: 'skip',
+    }));
 }
 
 // ── Render heatmap ────────────────────────────────────────────────────────
@@ -4868,175 +6411,6 @@ function renderCorrHeatmap(result, opts) {
     }
 }
 
-// ── Render scatter matrix ─────────────────────────────────────────────────
-function renderCorrScatter(result, opts) {
-    const plotDiv = document.getElementById('corrScatterPlot');
-    const vars    = result.variables;
-    const n       = vars.length;
-
-    if (n > 15) {
-        plotDiv.style.display = 'block';
-        document.getElementById('corrScatterPlaceholder').style.display = 'none';
-        plotDiv.innerHTML = '<p class="text-muted small p-3">Scatter matrix is limited to 15 variables for readability. Please select fewer variables.</p>';
-        return;
-    }
-
-    // Dynamic height: each cell ~100 px, minimum 480
-    const cellPx   = Math.max(70, Math.min(110, 700 / n));
-    const plotSize = Math.round(n * cellPx + 80);
-    plotDiv.style.height = plotSize + 'px';
-
-    // Collect raw data per variable from the original globalData
-    const rawData = {};
-    vars.forEach(v => {
-        rawData[v] = (globalData || []).map(row => {
-            const val = parseFloat(row[v]);
-            return isNaN(val) ? null : val;
-        }).filter(x => x !== null);
-    });
-
-    const traces = [];
-    const annotations = [];
-
-    // Cell size in normalized domain
-    const cellW = 1 / n;
-    const cellH = 1 / n;
-    const pad   = 0.02;
-
-    for (let row = 0; row < n; row++) {
-        for (let col = 0; col < n; col++) {
-            const xDom = [col * cellW + pad, (col + 1) * cellW - pad];
-            const yDom = [1 - (row + 1) * cellH + pad, 1 - row * cellH - pad];
-            const xref = col === 0 ? 'x' : `x${col + 1}`;
-            const yref = row === 0 ? 'y' : `y${row + 1}`;
-            const axisIdxX = col + 1;
-            const axisIdxY = row * n + col + 1;
-
-            if (row === col) {
-                // Diagonal: histogram of variable
-                const vals = rawData[vars[row]];
-                traces.push({
-                    type: 'histogram',
-                    x: vals,
-                    xaxis: `x${axisIdxY}`,
-                    yaxis: `y${axisIdxY}`,
-                    marker: { color: 'rgba(100,149,237,0.6)', line: { color: '#4472C4', width: 0.5 } },
-                    showlegend: false,
-                    hoverinfo: 'skip',
-                    name: vars[row],
-                });
-            } else if (row < col) {
-                // Upper triangle: r value + stars
-                const rVal = result.corr_matrix[row][col];
-                const pVal = result.pval_matrix[row][col];
-                if (rVal !== null) {
-                    const absR = Math.abs(rVal);
-                    const fontSize = opts.rSize * (0.5 + 0.5 * absR);
-                    let stars = '';
-                    if (pVal !== null) {
-                        if (pVal < 0.001) stars = ' ***';
-                        else if (pVal < 0.01) stars = ' **';
-                        else if (pVal < 0.05) stars = ' *';
-                    }
-                    const rColor = rVal >= 0 ? '#b2182b' : '#2166ac';
-                    annotations.push({
-                        x: (xDom[0] + xDom[1]) / 2,
-                        y: (yDom[0] + yDom[1]) / 2,
-                        xref: 'paper', yref: 'paper',
-                        text: `<b>${rVal.toFixed(2)}</b><span style="color:#e41a1c">${stars}</span>`,
-                        showarrow: false,
-                        font: { family: opts.fontFamily, size: fontSize, color: rColor },
-                        align: 'center',
-                    });
-                }
-                // Invisible scatter for the axis to exist
-                traces.push({
-                    type: 'scatter', mode: 'markers',
-                    x: [0], y: [0],
-                    xaxis: `x${axisIdxY}`,
-                    yaxis: `y${axisIdxY}`,
-                    marker: { opacity: 0, size: 1 },
-                    showlegend: false, hoverinfo: 'skip',
-                });
-            } else {
-                // Lower triangle: scatter plot (WebGL + subsampled for large datasets)
-                const xv = vars[col];
-                const yv = vars[row];
-                let pts = (globalData || []).map(r => ({
-                    x: parseFloat(r[xv]), y: parseFloat(r[yv])
-                })).filter(p => !isNaN(p.x) && !isNaN(p.y));
-                // Subsample to max 600 points for performance
-                const MAX_PTS = 600;
-                if (pts.length > MAX_PTS) {
-                    const ratio = MAX_PTS / pts.length;
-                    pts = pts.filter(() => Math.random() < ratio);
-                }
-                traces.push({
-                    type: 'scattergl', mode: 'markers',
-                    x: pts.map(p => p.x),
-                    y: pts.map(p => p.y),
-                    xaxis: `x${axisIdxY}`,
-                    yaxis: `y${axisIdxY}`,
-                    marker: { size: opts.pointSize, color: opts.color, opacity: opts.opacity },
-                    showlegend: false,
-                    hovertemplate: `${xv}: %{x}<br>${yv}: %{y}<extra></extra>`,
-                });
-            }
-        }
-    }
-
-    // Build layout with grid of subplots
-    const layout = {
-        grid: { rows: n, columns: n, pattern: 'independent' },
-        annotations,
-        plot_bgcolor: '#fff',
-        paper_bgcolor: '#fff',
-        margin: { l: 60, r: 20, t: 40, b: 60 },
-        height: plotSize,
-        autosize: true,
-        title: {
-            text: `Scatter Matrix (${result.method})`,
-            font: { family: opts.fontFamily, size: opts.labelSize + 1 },
-        },
-        showlegend: false,
-    };
-
-    // Add axis labels along diagonal edges
-    vars.forEach((v, i) => {
-        const cellCenter = (i + 0.5) / n;
-        // Top labels (column names) via annotation
-        annotations.push({
-            x: cellCenter, y: 1.01,
-            xref: 'paper', yref: 'paper',
-            text: `<b>${v}</b>`,
-            showarrow: false, xanchor: 'center', yanchor: 'bottom',
-            font: { family: opts.fontFamily, size: opts.labelSize, color: '#333' },
-        });
-        // Right labels (row names)
-        annotations.push({
-            x: 1.01, y: 1 - cellCenter,
-            xref: 'paper', yref: 'paper',
-            text: `<b>${v}</b>`,
-            showarrow: false, xanchor: 'left', yanchor: 'middle', textangle: -90,
-            font: { family: opts.fontFamily, size: opts.labelSize, color: '#333' },
-        });
-    });
-
-    // Suppress all individual axis labels/ticks
-    for (let i = 1; i <= n * n; i++) {
-        const xKey = i === 1 ? 'xaxis' : `xaxis${i}`;
-        const yKey = i === 1 ? 'yaxis' : `yaxis${i}`;
-        layout[xKey] = { showticklabels: false, showgrid: false, zeroline: false };
-        layout[yKey] = { showticklabels: false, showgrid: false, zeroline: false };
-    }
-
-    plotDiv.style.display = 'block';
-    document.getElementById('corrScatterPlaceholder').style.display = 'none';
-    Plotly.react(plotDiv, traces, layout, {
-        responsive: true, displayModeBar: true,
-        modeBarButtonsToRemove: ['select2d','lasso2d'], displaylogo: false,
-    });
-}
 
 // ── Run Correlation button ────────────────────────────────────────────────
 document.getElementById('runCorrBtn').addEventListener('click', function () {
@@ -5053,9 +6427,7 @@ document.getElementById('runCorrBtn').addEventListener('click', function () {
     const spinner    = document.getElementById('corrSpinner');
     const statusMsg  = document.getElementById('corrStatusMsg');
     const heatStyle  = document.getElementById('corrHeatmapStyleCard');
-    const scatStyle  = document.getElementById('corrScatterStyleCard');
     const dlHeat     = document.getElementById('corrDownloadHeatmapBtn');
-    const dlScat     = document.getElementById('corrDownloadScatterBtn');
     const header     = document.getElementById('corrResultsHeader');
 
     statusMsg.innerHTML = '';
@@ -5063,16 +6435,44 @@ document.getElementById('runCorrBtn').addEventListener('click', function () {
     document.getElementById('stopCorrBtn').style.display = 'inline-block';
     header.style.display = 'none';
 
+    // Hide previous results so stale content is not shown during a new run
+    document.getElementById('corrSubTabs').style.display         = 'none';
+    document.getElementById('corrSubTabContent').style.display   = 'none';
+    heatStyle.style.display = 'none';
+    dlHeat.style.display    = 'none';
+    const _step4Panel = document.getElementById('pipelineStep4');
+    if (_step4Panel) { _step4Panel.style.display = 'none'; _step4Panel.classList.add('pipeline-locked'); }
+    const _step4Bar = document.getElementById('step4ActionBar');
+    if (_step4Bar) _step4Bar.style.cssText = 'display:none!important;';
+    const _toStep4 = document.getElementById('toStep4Btn');
+    if (_toStep4) _toStep4.classList.add('d-none');
+    lastCorrResults = null;
+    excludedVarsFromCorr.clear();
+
     if (corrAbortController) corrAbortController.abort();
     corrAbortController = new AbortController();
+
+    // Apply NZV filter and normalization transform before sending
+    const filteredVars = filterNearZeroVariance(selectedVars, globalData, nzvThreshold);
+    const transformedData = usePerVarMode
+        ? applyPerVarNorm(globalData, filteredVars, perVarTransforms, currentNormTransform)
+        : applyColumnNorm(globalData, filteredVars, currentNormTransform);
+
+    if (filteredVars.length < 2) {
+        spinner.style.display = 'none';
+        document.getElementById('stopCorrBtn').style.display = 'none';
+        statusMsg.innerHTML = '<div class="alert alert-warning">Near-zero variance filter removed too many variables — fewer than 2 remain. Lower the CV threshold.</div>';
+        return;
+    }
 
     fetch('/run-correlation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            data: globalData,
-            variables: selectedVars,
+            data: transformedData,
+            variables: filteredVars,
             method,
+            min_row_coverage: _getMinRowCoverage(),
         }),
         signal: corrAbortController.signal,
     })
@@ -5086,22 +6486,22 @@ document.getElementById('runCorrBtn').addEventListener('click', function () {
         header.style.display = 'flex';
 
         // Show success message
+        const corrSparseNote = (result.rows_sparse_dropped || 0) > 0
+            ? ` <span style="color:#1a5c1a; font-weight:600;">${result.rows_sparse_dropped} sample${result.rows_sparse_dropped > 1 ? 's' : ''} excluded (coverage &lt; ${_getMinRowCoverage()}%).</span>` : '';
         statusMsg.innerHTML = `
             <div class="alert alert-success py-2 small shadow-sm mb-3">
                 <strong>Correlation complete:</strong>
                 ${result.variables.length} variables &times; ${result.variables.length} —
-                method: <strong>${result.method.charAt(0).toUpperCase() + result.method.slice(1)}</strong>.
+                method: <strong>${result.method.charAt(0).toUpperCase() + result.method.slice(1)}</strong>.${corrSparseNote}
             </div>`;
 
         // Show sub-tabs and content panel
         document.getElementById('corrSubTabs').style.display = '';
         document.getElementById('corrSubTabContent').style.display = '';
 
-        // Show style cards and download buttons
+        // Show heatmap style card and download button
         heatStyle.style.display = 'block';
-        scatStyle.style.display = 'block';
         dlHeat.style.display    = 'inline-block';
-        dlScat.style.display    = 'inline-block';
 
         // Auto-size cell size, axis labels, and cell text based on container width and n
         const _heatDiv  = document.getElementById('corrHeatmapPlot');
@@ -5115,7 +6515,6 @@ document.getElementById('runCorrBtn').addEventListener('click', function () {
         document.getElementById('corrCellFontSize').value = Math.max(5, Math.min(12, Math.floor(_cellSize * 0.45)));
 
         renderCorrHeatmap(result, corrHeatmapReadOptions());
-        renderCorrScatter(result, corrScatterReadOptions());
     })
     .catch(err => {
         if (err.name === 'AbortError') return;
@@ -5124,6 +6523,7 @@ document.getElementById('runCorrBtn').addEventListener('click', function () {
         statusMsg.innerHTML = `<div class="alert alert-danger py-2 small">${err.message}</div>`;
     });
 });
+
 
 // ── Stop button ───────────────────────────────────────────────────────────
 document.getElementById('stopCorrBtn').addEventListener('click', function () {
@@ -5137,8 +6537,10 @@ document.querySelectorAll('.corr-method-btn').forEach(btn => {
     btn.addEventListener('click', function () {
         document.querySelectorAll('.corr-method-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
+        _updateCorrStepper();
     });
 });
+document.getElementById('corrPThresh')?.addEventListener('change', _updateCorrStepper);
 
 // ── Reset heatmap style to defaults ──────────────────────────────────────
 document.getElementById('corrResetStyleBtn').addEventListener('click', function () {
@@ -5188,12 +6590,22 @@ document.getElementById('corrResetStyleBtn').addEventListener('click', function 
  'corrFontFamily','corrAxisFontSize','corrCellFontSize'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.addEventListener('change', () => {
+    const handler = () => {
         if (lastCorrResults) renderCorrHeatmap(lastCorrResults, corrHeatmapReadOptions());
-    });
-    el.addEventListener('input', () => {
-        if (lastCorrResults) renderCorrHeatmap(lastCorrResults, corrHeatmapReadOptions());
-    });
+        // Keep overlay and cluster sub-heatmaps in sync with color scheme
+        if (id === 'corrColorScheme') {
+            _renderCorrelationOverlay(_currentOverlayMode);
+            _clusterData.forEach((comp, ci) => {
+                const div = document.getElementById(`clusterHeatmap_${ci}`);
+                if (div && div.offsetWidth > 0 && lastCorrResults) {
+                    _renderClusterSubHeatmap(`clusterHeatmap_${ci}`, comp,
+                        lastCorrResults.corr_matrix, lastCorrResults.variables);
+                }
+            });
+        }
+    };
+    el.addEventListener('change', handler);
+    el.addEventListener('input',  handler);
 });
 // Disable dendrogram toggle when clustering is off
 document.getElementById('corrCluster').addEventListener('change', function () {
@@ -5202,21 +6614,6 @@ document.getElementById('corrCluster').addEventListener('change', function () {
     else { dendEl.disabled = false; }
 });
 
-// ── Live re-render on scatter style changes ───────────────────────────────
-['corrScatterPointSize','corrScatterOpacity','corrScatterColor',
- 'corrScatterFont','corrScatterLabelSize','corrScatterRSize'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('change', () => {
-        if (lastCorrResults) renderCorrScatter(lastCorrResults, corrScatterReadOptions());
-    });
-    el.addEventListener('input', function () {
-        if (id === 'corrScatterOpacity') {
-            document.getElementById('corrScatterOpacityVal').textContent = this.value + '%';
-        }
-        if (lastCorrResults) renderCorrScatter(lastCorrResults, corrScatterReadOptions());
-    });
-});
 
 // ── Download individual plots ─────────────────────────────────────────────
 document.getElementById('corrDownloadHeatmapBtn').addEventListener('click', function () {
@@ -5226,16 +6623,6 @@ document.getElementById('corrDownloadHeatmapBtn').addEventListener('click', func
     Plotly.downloadImage(plotDiv, {
         format: fmt, filename: 'Correlation_Heatmap', scale,
         width: plotDiv.offsetWidth || 800, height: plotDiv.offsetHeight || 700,
-    });
-});
-
-document.getElementById('corrDownloadScatterBtn').addEventListener('click', function () {
-    const plotDiv = document.getElementById('corrScatterPlot');
-    const fmt   = document.getElementById('corrExportFormat').value;
-    const scale = parseInt(document.getElementById('corrExportScale').value);
-    Plotly.downloadImage(plotDiv, {
-        format: fmt, filename: 'Correlation_ScatterMatrix', scale,
-        width: plotDiv.offsetWidth || 900, height: plotDiv.offsetHeight || 900,
     });
 });
 
@@ -5250,21 +6637,14 @@ document.getElementById('downloadCorrExcelBtn').addEventListener('click', async 
 
     try {
         const heatDiv   = document.getElementById('corrHeatmapPlot');
-        const scatDiv   = document.getElementById('corrScatterPlot');
         const scale     = parseInt(document.getElementById('corrExportScale').value);
 
-        let heatmapImg = null, scatterImg = null;
+        let heatmapImg = null;
         try {
             const url = await Plotly.toImage(heatDiv,
                 { format: 'png', scale, width: heatDiv.offsetWidth || 800, height: heatDiv.offsetHeight || 700 });
             heatmapImg = url.split(',')[1];
         } catch(e) { /* heatmap not rendered */ }
-
-        try {
-            const url = await Plotly.toImage(scatDiv,
-                { format: 'png', scale, width: scatDiv.offsetWidth || 900, height: scatDiv.offsetHeight || 900 });
-            scatterImg = url.split(',')[1];
-        } catch(e) { /* scatter not rendered */ }
 
         const res = await fetch('/export-correlation-excel', {
             method: 'POST',
@@ -5276,7 +6656,6 @@ document.getElementById('downloadCorrExcelBtn').addEventListener('click', async 
                 pval_matrix: lastCorrResults.pval_matrix,
                 n_pairs:     lastCorrResults.n_pairs,
                 heatmap_img: heatmapImg,
-                scatter_img: scatterImg,
             }),
         });
         if (!res.ok) throw new Error('Export failed');
@@ -5293,474 +6672,6 @@ document.getElementById('downloadCorrExcelBtn').addEventListener('click', async 
         if (spinner) spinner.style.display = 'none';
     }
 });
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CLUSTERING ANALYSIS
-// ═══════════════════════════════════════════════════════════════════════════
-
-let lastHierResult   = null;
-let lastKmeansResult = null;
-let lastDbscanResult = null;
-let clusterAbortController = null;
-
-const CLUSTER_PALETTES = PCA_PALETTES;
-
-// ── Dendrogram: scipy icoord/dcoord → Plotly line traces ─────────────────
-function buildDendrogramTraces(icoord, dcoord, colorList, orientation) {
-    const groups = {};
-    icoord.forEach((ix, k) => {
-        const col = colorList[k] || 'black';
-        if (!groups[col]) groups[col] = { x: [], y: [] };
-        for (let p = 0; p < 4; p++) {
-            if (orientation === 'top') {
-                groups[col].x.push(ix[p]); groups[col].y.push(dcoord[k][p]);
-            } else {
-                groups[col].x.push(dcoord[k][p]); groups[col].y.push(ix[p]);
-            }
-        }
-        groups[col].x.push(null); groups[col].y.push(null);
-    });
-    return Object.entries(groups).map(([col, pts]) => ({
-        type: 'scatter', mode: 'lines',
-        x: pts.x, y: pts.y,
-        line: { color: col, width: 1.5 },
-        showlegend: false, hoverinfo: 'skip',
-    }));
-}
-
-function hierReadOpts() {
-    return { colorScheme: document.getElementById('hierHeatColorScheme').value,
-             fontFamily:  document.getElementById('hierFontFamily').value,
-             fontSize:    parseInt(document.getElementById('hierFontSize').value) };
-}
-
-function renderHierDendrogram(result, opts) {
-    const div    = document.getElementById('hierDendPlot');
-    const dend   = result.dendrogram;
-    const traces = buildDendrogramTraces(dend.icoord, dend.dcoord, dend.color_list, 'top');
-    const tickVals = dend.ivl.map((_, i) => (2 * i + 1) * 5);
-    const layout = {
-        xaxis: { tickvals: tickVals, ticktext: dend.ivl,
-                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
-                 tickangle: -45, showgrid: false, zeroline: false },
-        yaxis: { title: { text: 'Distance', font: { family: opts.fontFamily, size: opts.fontSize } },
-                 tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 },
-                 showgrid: true, gridcolor: '#eee', zeroline: false },
-        title: { text: `Dendrogram (${result.linkage_method} / ${result.metric})`,
-                 font: { family: opts.fontFamily, size: opts.fontSize + 1 } },
-        margin: { l: 60, r: 20, t: 50, b: 110 },
-        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
-    };
-    div.style.display = 'block';
-    Plotly.react(div, traces, layout, { responsive: true, displayModeBar: true, displaylogo: false,
-        modeBarButtonsToRemove: ['select2d','lasso2d'] });
-}
-
-const HIER_COLORSCALES = {
-    'RdBu_r':   [[0,'#b2182b'],[0.25,'#f4a582'],[0.5,'#f7f7f7'],[0.75,'#92c5de'],[1,'#2166ac']],
-    'RdYlBu_r': [[0,'#a50026'],[0.25,'#f46d43'],[0.5,'#ffffbf'],[0.75,'#74add1'],[1,'#313695']],
-    'viridis': 'Viridis', 'plasma': 'Plasma', 'YlOrRd': 'YlOrRd',
-};
-
-function renderHierHeatmap(result, opts) {
-    const div  = document.getElementById('hierHeatPlot');
-    const hm   = result.heatmap;
-    const cs   = HIER_COLORSCALES[opts.colorScheme] || HIER_COLORSCALES['RdBu_r'];
-    const rowLabelsAnnotated = hm.row_labels.map((lbl, i) => {
-        const cl = (result.cluster_at_order || [])[i];
-        return cl ? `C${cl} | ${lbl}` : lbl;
-    });
-    const trace = {
-        type: 'heatmap', z: hm.z, x: hm.col_labels, y: rowLabelsAnnotated,
-        zmin: hm.z_min, zmax: hm.z_max, colorscale: cs,
-        hovertemplate: '%{y} × %{x}: %{z:.2f}<extra></extra>',
-        colorbar: { title: { text: 'Z-score', font: { family: opts.fontFamily, size: opts.fontSize } },
-                    tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 }, thickness: 14 },
-    };
-    const layout = {
-        xaxis: { tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 }, tickangle: -45 },
-        yaxis: { tickfont: { family: opts.fontFamily, size: opts.fontSize - 1 }, autorange: 'reversed' },
-        title: { text: 'Clustered Heatmap (Z-scored)', font: { family: opts.fontFamily, size: opts.fontSize + 1 } },
-        margin: { l: 160, r: 60, t: 50, b: 120 },
-        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
-    };
-    div.style.display = 'block';
-    Plotly.react(div, [trace], layout, { responsive: true, displayModeBar: true, displaylogo: false,
-        modeBarButtonsToRemove: ['select2d','lasso2d'] });
-}
-
-function renderClusterScatter(result, plotDivId, opts) {
-    const div     = document.getElementById(plotDivId);
-    const pts     = result.pca_coords;
-    const pv      = result.pca_variance || [0,0];
-    const clusters = [...new Set(pts.map(p => p.cluster))].sort((a,b) => {
-        if (a===-1) return 1; if (b===-1) return -1; return a-b;
-    });
-    const colors = CLUSTER_PALETTES[opts.palette] || CLUSTER_PALETTES.tab10;
-    const traces = clusters.map((cl, gi) => {
-        const ptsCl  = pts.filter(p => p.cluster === cl);
-        const isNoise = cl === -1;
-        const color  = isNoise ? '#aaaaaa' : colors[gi % colors.length];
-        const name   = isNoise ? 'Noise' : `Cluster ${cl + 1}`;
-        return {
-            type: 'scatter', mode: 'markers', name,
-            x: ptsCl.map(p => p.x), y: ptsCl.map(p => p.y),
-            marker: { symbol: PCA_SYMBOLS[gi % PCA_SYMBOLS.length],
-                      size: opts.pointSize, color, opacity: opts.opacity,
-                      line: { color: 'white', width: 0.5 } },
-            customdata: ptsCl.map(p => `${name}<br>${p.label}${p.group ? '<br>Group: '+p.group : ''}`),
-            hovertemplate: '%{customdata}<br>PC1: %{x:.3f}<br>PC2: %{y:.3f}<extra></extra>',
-        };
-    });
-    const titleText = result.method === 'kmeans'
-        ? `K-Means (k=${result.k}${result.silhouette!==null ? ', sil='+result.silhouette.toFixed(3) : ''})`
-        : `DBSCAN ε=${result.eps}, min_samples=${result.min_samples} — ${result.n_clusters} cluster(s), ${result.n_noise} noise`;
-    const layout = {
-        title: { text: titleText, font: { family: opts.fontFamily, size: opts.fontSize + 1 } },
-        xaxis: { title: { text: `PC1 (${(pv[0]*100).toFixed(1)}%)`, font: { family: opts.fontFamily, size: opts.fontSize } },
-                 tickfont: { family: opts.fontFamily, size: opts.fontSize-1 },
-                 zeroline: true, zerolinecolor: '#ccc', showgrid: true, gridcolor: '#eee' },
-        yaxis: { title: { text: `PC2 (${(pv[1]*100).toFixed(1)}%)`, font: { family: opts.fontFamily, size: opts.fontSize } },
-                 tickfont: { family: opts.fontFamily, size: opts.fontSize-1 },
-                 zeroline: true, zerolinecolor: '#ccc', showgrid: true, gridcolor: '#eee' },
-        legend: { font: { family: opts.fontFamily, size: opts.fontSize-1 } },
-        margin: { l: 60, r: 30, t: 60, b: 60 },
-        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
-    };
-    div.style.display = 'block';
-    Plotly.react(div, traces, layout, { responsive: true, displayModeBar: true, displaylogo: false,
-        modeBarButtonsToRemove: ['select2d','lasso2d'] });
-}
-
-function renderKmeansElbow(elbow, fontFamily, fontSize) {
-    const div = document.getElementById('kmeansElbowPlot');
-    const ks  = elbow.map(e => e.k);
-    const layout = {
-        title: { text: 'Elbow Plot — choose k', font: { family: fontFamily, size: fontSize+1 } },
-        xaxis: { title: { text: 'k', font: { family: fontFamily, size: fontSize } },
-                 tickfont: { family: fontFamily, size: fontSize-1 }, tickmode: 'linear', dtick: 1 },
-        yaxis: { title: { text: 'Inertia (WCSS)', font: { family: fontFamily, size: fontSize, color: '#2166ac' } },
-                 tickfont: { family: fontFamily, size: fontSize-1, color: '#2166ac' },
-                 showgrid: true, gridcolor: '#eee' },
-        yaxis2: { title: { text: 'Silhouette', font: { family: fontFamily, size: fontSize, color: '#e31a1c' } },
-                  tickfont: { family: fontFamily, size: fontSize-1, color: '#e31a1c' },
-                  overlaying: 'y', side: 'right', showgrid: false },
-        legend: { font: { family: fontFamily, size: fontSize-1 } },
-        margin: { l: 70, r: 70, t: 50, b: 60 },
-        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
-    };
-    div.style.display = 'block';
-    Plotly.react(div, [
-        { type:'scatter', mode:'lines+markers', name:'Inertia', yaxis:'y',
-          x: ks, y: elbow.map(e=>e.inertia),
-          line:{color:'#2166ac',width:2}, marker:{size:7,color:'#2166ac'},
-          hovertemplate:'k=%{x}<br>Inertia=%{y:.1f}<extra></extra>' },
-        { type:'scatter', mode:'lines+markers', name:'Silhouette', yaxis:'y2',
-          x: ks, y: elbow.map(e=>e.silhouette),
-          line:{color:'#e31a1c',width:2,dash:'dot'}, marker:{size:7,color:'#e31a1c'},
-          hovertemplate:'k=%{x}<br>Silhouette=%{y:.3f}<extra></extra>' },
-    ], layout, { responsive:true, displayModeBar:true, displaylogo:false,
-        modeBarButtonsToRemove:['select2d','lasso2d'] });
-}
-
-function renderDbscanKdist(kdist, kdistK, fontFamily, fontSize) {
-    const div = document.getElementById('dbscanKdistPlot');
-    const layout = {
-        title: { text: `${kdistK}-NN Distance (sorted) — choose ε at the elbow`,
-                 font: { family: fontFamily, size: fontSize+1 } },
-        xaxis: { title: { text: 'Points (sorted descending)', font: { family: fontFamily, size: fontSize } },
-                 tickfont: { family: fontFamily, size: fontSize-1 } },
-        yaxis: { title: { text: `${kdistK}-NN Distance`, font: { family: fontFamily, size: fontSize } },
-                 tickfont: { family: fontFamily, size: fontSize-1 },
-                 showgrid: true, gridcolor: '#eee' },
-        margin: { l: 70, r: 20, t: 60, b: 60 },
-        plot_bgcolor: '#fff', paper_bgcolor: '#fff', autosize: true,
-    };
-    div.style.display = 'block';
-    Plotly.react(div, [
-        { type:'scatter', mode:'lines', name:`${kdistK}-NN distance`,
-          x: kdist.map((_,i)=>i+1), y: kdist,
-          line:{color:'#2166ac',width:1.5},
-          hovertemplate:'Point %{x}<br>Distance: %{y:.4f}<extra></extra>' },
-    ], layout, { responsive:true, displayModeBar:true, displaylogo:false,
-        modeBarButtonsToRemove:['select2d','lasso2d'] });
-}
-
-function clusterGetVars() {
-    return Array.from(document.querySelectorAll('.var-check:checked'))
-        .filter(cb=>!cb.disabled).map(cb=>cb.value);
-}
-function clusterGetStd() { return document.getElementById('clusterStandardize').checked; }
-
-function clusterFetch(payload, onSuccess, spinnerEl, stopBtnEl, statusEl) {
-    if (clusterAbortController) clusterAbortController.abort();
-    clusterAbortController = new AbortController();
-    spinnerEl.style.display = 'block';
-    if (stopBtnEl) stopBtnEl.style.display = 'inline-block';
-    statusEl.innerHTML = '';
-    fetch('/run-clustering', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, data: globalData, factors: selectedFactors }),
-        signal: clusterAbortController.signal,
-    })
-    .then(r => r.json())
-    .then(result => {
-        spinnerEl.style.display = 'none';
-        if (stopBtnEl) stopBtnEl.style.display = 'none';
-        if (result.error) throw new Error(result.error);
-        onSuccess(result);
-    })
-    .catch(err => {
-        spinnerEl.style.display = 'none';
-        if (stopBtnEl) stopBtnEl.style.display = 'none';
-        if (err.name === 'AbortError') return;
-        statusEl.innerHTML = `<div class="alert alert-danger py-2 small">${err.message}</div>`;
-    });
-}
-
-async function clusterExport(method, rowLabels, clusterLabels, variables, plotDivId, plot2DivId) {
-    const scaleId = method==='hierarchical' ? 'hierExportScale'
-                  : method==='kmeans'        ? 'kmeansExportScale' : 'dbscanExportScale';
-    const scale = parseInt(document.getElementById(scaleId).value);
-    let plotImg=null, plot2Img=null;
-    try { const d1=document.getElementById(plotDivId);
-          const u1=await Plotly.toImage(d1,{format:'png',scale,width:d1.offsetWidth||900,height:d1.offsetHeight||500});
-          plotImg=u1.split(',')[1]; } catch(e){}
-    if (plot2DivId) {
-        try { const d2=document.getElementById(plot2DivId);
-              if (d2.style.display!=='none') {
-                  const u2=await Plotly.toImage(d2,{format:'png',scale,width:d2.offsetWidth||700,height:d2.offsetHeight||350});
-                  plot2Img=u2.split(',')[1]; } } catch(e){} }
-    const res = await fetch('/export-clustering-excel', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({method, row_labels:rowLabels, cluster_labels:clusterLabels,
-            variables, plot_img:plotImg, plot2_img:plot2Img}),
-    });
-    if (!res.ok) throw new Error('Export failed');
-    const blob=await res.blob(); const url=window.URL.createObjectURL(blob);
-    const a=document.createElement('a'); a.href=url; a.download='Clustering_Analysis.xlsx';
-    document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); document.body.removeChild(a);
-}
-
-// ── Hierarchical ──────────────────────────────────────────────────────────
-document.getElementById('hierLinkage').addEventListener('change', function () {
-    const noteEl=document.getElementById('hierMetricNote'), metricEl=document.getElementById('hierMetric');
-    if (this.value==='ward') { noteEl.style.display='block'; metricEl.value='euclidean'; metricEl.disabled=true; }
-    else { noteEl.style.display='none'; metricEl.disabled=false; }
-});
-
-document.getElementById('runHierBtn').addEventListener('click', function () {
-    const vars = clusterGetVars();
-    if (vars.length < 2) return alert('Select at least 2 variables in the Data Input panel.');
-    const spinner=document.getElementById('hierSpinner'), stopBtn=document.getElementById('stopHierBtn');
-    const statusMsg=document.getElementById('hierStatusMsg');
-    document.getElementById('hierPlaceholder').style.display='none';
-    document.getElementById('downloadHierBtn').style.display='none';
-    clusterFetch({
-        variables:vars, standardize:clusterGetStd(), method:'hierarchical',
-        linkage_method: document.getElementById('hierLinkage').value,
-        metric:         document.getElementById('hierMetric').value,
-        n_clusters:     parseInt(document.getElementById('hierNClusters').value)||0,
-    }, result => {
-        lastHierResult=result;
-        document.getElementById('downloadHierBtn').style.display='inline-block';
-        document.getElementById('hierStyleCard').style.display='block';
-        document.getElementById('hierDownloadDendBtn').style.display='inline-block';
-        document.getElementById('hierDownloadHeatBtn').style.display='inline-block';
-        statusMsg.innerHTML=`<div class="alert alert-success py-2 small shadow-sm mb-3">
-            Hierarchical clustering complete: ${result.n_samples} samples,
-            linkage: <strong>${result.linkage_method}</strong>,
-            metric: <strong>${result.metric}</strong>,
-            ${result.n_detected_clusters} cluster(s).</div>`;
-        const opts=hierReadOpts();
-        renderHierDendrogram(result,opts); renderHierHeatmap(result,opts);
-    }, spinner, stopBtn, statusMsg);
-});
-document.getElementById('stopHierBtn').addEventListener('click', function () {
-    if (clusterAbortController) clusterAbortController.abort();
-    document.getElementById('hierSpinner').style.display='none'; this.style.display='none';
-});
-document.getElementById('downloadHierBtn').addEventListener('click', async function () {
-    if (!lastHierResult) return; this.disabled=true;
-    try { await clusterExport('hierarchical', lastHierResult.row_labels,
-            lastHierResult.cluster_labels, lastHierResult.variables, 'hierHeatPlot','hierDendPlot');
-    } catch(e){alert('Export error: '+e.message);} finally{this.disabled=false;}
-});
-['hierHeatColorScheme','hierFontFamily','hierFontSize'].forEach(id =>
-    ['change','input'].forEach(ev => document.getElementById(id).addEventListener(ev, ()=>{
-        if (lastHierResult){const o=hierReadOpts(); renderHierDendrogram(lastHierResult,o); renderHierHeatmap(lastHierResult,o);}
-    })));
-document.getElementById('hierDownloadDendBtn').addEventListener('click', ()=>{
-    const div=document.getElementById('hierDendPlot');
-    Plotly.downloadImage(div,{format:document.getElementById('hierExportFormat').value,
-        filename:'Dendrogram',scale:parseInt(document.getElementById('hierExportScale').value),
-        width:div.offsetWidth||900,height:div.offsetHeight||400});});
-document.getElementById('hierDownloadHeatBtn').addEventListener('click', ()=>{
-    const div=document.getElementById('hierHeatPlot');
-    Plotly.downloadImage(div,{format:document.getElementById('hierExportFormat').value,
-        filename:'Clustered_Heatmap',scale:parseInt(document.getElementById('hierExportScale').value),
-        width:div.offsetWidth||900,height:div.offsetHeight||600});});
-
-// ── K-Means ───────────────────────────────────────────────────────────────
-function kmeansReadOpts() {
-    return { palette:document.getElementById('kmeansPalette').value,
-             pointSize:parseInt(document.getElementById('kmeansPointSize').value),
-             opacity:parseInt(document.getElementById('kmeansOpacity').value)/100,
-             fontFamily:document.getElementById('kmeansFontFamily').value,
-             fontSize:parseInt(document.getElementById('kmeansFontSize').value) }; }
-
-document.getElementById('runKmeansElbowBtn').addEventListener('click', function () {
-    const vars=clusterGetVars();
-    if (vars.length<2) return alert('Select at least 2 variables in the Data Input panel.');
-    document.getElementById('kmeansPlaceholder').style.display='none';
-    clusterFetch({ variables:vars, standardize:clusterGetStd(), method:'kmeans', compute_elbow:true,
-        k:parseInt(document.getElementById('kmeansK').value)||3,
-        max_k:parseInt(document.getElementById('kmeansMaxK').value)||10,
-    }, result=>{
-        lastKmeansResult=result;
-        document.getElementById('kmeansStyleCard').style.display='block';
-        document.getElementById('kmeansDownloadElbowBtn').style.display='inline-block';
-        document.getElementById('kmeansStatusMsg').innerHTML=
-            `<div class="alert alert-success py-2 small shadow-sm mb-2">Elbow computed for k=2…${result.elbow.length+1}.</div>`;
-        const opts=kmeansReadOpts();
-        if (result.elbow&&result.elbow.length) renderKmeansElbow(result.elbow,opts.fontFamily,opts.fontSize);
-        if (result.pca_coords&&result.pca_coords.length){
-            renderClusterScatter(result,'kmeansScatterPlot',opts);
-            document.getElementById('kmeansDownloadScatterBtn').style.display='inline-block';
-            document.getElementById('downloadKmeansBtn').style.display='inline-block';
-        }
-    }, document.getElementById('kmeansSpinner'), document.getElementById('stopKmeansBtn'),
-       document.getElementById('kmeansStatusMsg'));
-});
-
-document.getElementById('runKmeansBtn').addEventListener('click', function () {
-    const vars=clusterGetVars();
-    if (vars.length<2) return alert('Select at least 2 variables in the Data Input panel.');
-    const k=parseInt(document.getElementById('kmeansK').value)||3;
-    document.getElementById('kmeansPlaceholder').style.display='none';
-    clusterFetch({ variables:vars, standardize:clusterGetStd(), method:'kmeans',
-        compute_elbow:false, k,
-    }, result=>{
-        lastKmeansResult=result; const sil=result.silhouette!==null?result.silhouette.toFixed(3):'n/a';
-        document.getElementById('kmeansStyleCard').style.display='block';
-        document.getElementById('kmeansDownloadScatterBtn').style.display='inline-block';
-        document.getElementById('downloadKmeansBtn').style.display='inline-block';
-        document.getElementById('kmeansStatusMsg').innerHTML=
-            `<div class="alert alert-success py-2 small shadow-sm mb-2">K-Means: k=${result.k}, silhouette=${sil}, inertia=${result.inertia.toFixed(1)}.</div>`;
-        renderClusterScatter(result,'kmeansScatterPlot',kmeansReadOpts());
-    }, document.getElementById('kmeansSpinner'), document.getElementById('stopKmeansBtn'),
-       document.getElementById('kmeansStatusMsg'));
-});
-document.getElementById('stopKmeansBtn').addEventListener('click', function () {
-    if (clusterAbortController) clusterAbortController.abort();
-    document.getElementById('kmeansSpinner').style.display='none'; this.style.display='none';
-});
-document.getElementById('downloadKmeansBtn').addEventListener('click', async function () {
-    if (!lastKmeansResult) return; this.disabled=true;
-    try { const hasElbow=lastKmeansResult.elbow&&lastKmeansResult.elbow.length;
-          await clusterExport('kmeans', lastKmeansResult.pca_coords.map(p=>p.label),
-            lastKmeansResult.labels.map(l=>l+1), clusterGetVars(),
-            'kmeansScatterPlot', hasElbow?'kmeansElbowPlot':null);
-    } catch(e){alert('Export error: '+e.message);} finally{this.disabled=false;}
-});
-['kmeansPalette','kmeansPointSize','kmeansOpacity','kmeansFontFamily','kmeansFontSize'].forEach(id=>{
-    const el=document.getElementById(id);
-    ['change','input'].forEach(ev=>el.addEventListener(ev,function(){
-        if (id==='kmeansOpacity') document.getElementById('kmeansOpacityVal').textContent=this.value+'%';
-        if (lastKmeansResult) renderClusterScatter(lastKmeansResult,'kmeansScatterPlot',kmeansReadOpts());
-    }));});
-document.getElementById('kmeansDownloadScatterBtn').addEventListener('click',()=>{
-    const div=document.getElementById('kmeansScatterPlot');
-    Plotly.downloadImage(div,{format:'png',filename:'KMeans_Scatter',
-        scale:parseInt(document.getElementById('kmeansExportScale').value),
-        width:div.offsetWidth||800,height:div.offsetHeight||600});});
-document.getElementById('kmeansDownloadElbowBtn').addEventListener('click',()=>{
-    const div=document.getElementById('kmeansElbowPlot');
-    Plotly.downloadImage(div,{format:'png',filename:'KMeans_Elbow',
-        scale:parseInt(document.getElementById('kmeansExportScale').value),
-        width:div.offsetWidth||700,height:div.offsetHeight||400});});
-
-// ── DBSCAN ────────────────────────────────────────────────────────────────
-function dbscanReadOpts() {
-    return { palette:document.getElementById('dbscanPalette').value,
-             pointSize:parseInt(document.getElementById('dbscanPointSize').value),
-             opacity:parseInt(document.getElementById('dbscanOpacity').value)/100,
-             fontFamily:document.getElementById('dbscanFontFamily').value,
-             fontSize:parseInt(document.getElementById('dbscanFontSize').value) }; }
-
-document.getElementById('runDbscanKdistBtn').addEventListener('click', function () {
-    const vars=clusterGetVars();
-    if (vars.length<2) return alert('Select at least 2 variables in the Data Input panel.');
-    document.getElementById('dbscanPlaceholder').style.display='none';
-    clusterFetch({ variables:vars, standardize:clusterGetStd(), method:'dbscan', compute_kdist:true,
-        eps:parseFloat(document.getElementById('dbscanEps').value)||0.5,
-        min_samples:parseInt(document.getElementById('dbscanMinSamples').value)||5,
-        kdist_k:parseInt(document.getElementById('dbscanKdistK').value)||4,
-    }, result=>{
-        lastDbscanResult=result;
-        document.getElementById('dbscanStyleCard').style.display='block';
-        document.getElementById('dbscanDownloadKdistBtn').style.display='inline-block';
-        document.getElementById('dbscanStatusMsg').innerHTML=
-            `<div class="alert alert-success py-2 small shadow-sm mb-2">K-Distance ready. Find the elbow to choose ε.</div>`;
-        const opts=dbscanReadOpts();
-        if (result.kdist&&result.kdist.length) renderDbscanKdist(result.kdist,result.kdist_k,opts.fontFamily,opts.fontSize);
-        if (result.n_clusters!==undefined){
-            renderClusterScatter(result,'dbscanScatterPlot',opts);
-            document.getElementById('dbscanDownloadScatterBtn').style.display='inline-block';
-            document.getElementById('downloadDbscanBtn').style.display='inline-block';
-        }
-    }, document.getElementById('dbscanSpinner'), document.getElementById('stopDbscanBtn'),
-       document.getElementById('dbscanStatusMsg'));
-});
-
-document.getElementById('runDbscanBtn').addEventListener('click', function () {
-    const vars=clusterGetVars();
-    if (vars.length<2) return alert('Select at least 2 variables in the Data Input panel.');
-    const eps=parseFloat(document.getElementById('dbscanEps').value)||0.5;
-    const min_samples=parseInt(document.getElementById('dbscanMinSamples').value)||5;
-    document.getElementById('dbscanPlaceholder').style.display='none';
-    clusterFetch({ variables:vars, standardize:clusterGetStd(), method:'dbscan',
-        compute_kdist:false, eps, min_samples,
-    }, result=>{
-        lastDbscanResult=result;
-        document.getElementById('dbscanStyleCard').style.display='block';
-        document.getElementById('dbscanDownloadScatterBtn').style.display='inline-block';
-        document.getElementById('downloadDbscanBtn').style.display='inline-block';
-        document.getElementById('dbscanStatusMsg').innerHTML=
-            `<div class="alert alert-success py-2 small shadow-sm mb-2">
-                DBSCAN: ${result.n_clusters} cluster(s), ${result.n_noise} noise — ε=${result.eps}, min_samples=${result.min_samples}.</div>`;
-        renderClusterScatter(result,'dbscanScatterPlot',dbscanReadOpts());
-    }, document.getElementById('dbscanSpinner'), document.getElementById('stopDbscanBtn'),
-       document.getElementById('dbscanStatusMsg'));
-});
-document.getElementById('stopDbscanBtn').addEventListener('click', function () {
-    if (clusterAbortController) clusterAbortController.abort();
-    document.getElementById('dbscanSpinner').style.display='none'; this.style.display='none';
-});
-document.getElementById('downloadDbscanBtn').addEventListener('click', async function () {
-    if (!lastDbscanResult) return; this.disabled=true;
-    try { const labels=lastDbscanResult.labels.map(l=>l===-1?-1:l+1);
-          const hasKdist=lastDbscanResult.kdist&&lastDbscanResult.kdist.length;
-          await clusterExport('dbscan', lastDbscanResult.pca_coords.map(p=>p.label),
-            labels, clusterGetVars(), 'dbscanScatterPlot', hasKdist?'dbscanKdistPlot':null);
-    } catch(e){alert('Export error: '+e.message);} finally{this.disabled=false;}
-});
-['dbscanPalette','dbscanPointSize','dbscanOpacity','dbscanFontFamily','dbscanFontSize'].forEach(id=>{
-    const el=document.getElementById(id);
-    ['change','input'].forEach(ev=>el.addEventListener(ev,function(){
-        if (id==='dbscanOpacity') document.getElementById('dbscanOpacityVal').textContent=this.value+'%';
-        if (lastDbscanResult) renderClusterScatter(lastDbscanResult,'dbscanScatterPlot',dbscanReadOpts());
-    }));});
-document.getElementById('dbscanDownloadScatterBtn').addEventListener('click',()=>{
-    const div=document.getElementById('dbscanScatterPlot');
-    Plotly.downloadImage(div,{format:'png',filename:'DBSCAN_Scatter',
-        scale:parseInt(document.getElementById('dbscanExportScale').value),
-        width:div.offsetWidth||800,height:div.offsetHeight||600});});
-document.getElementById('dbscanDownloadKdistBtn').addEventListener('click',()=>{
-    const div=document.getElementById('dbscanKdistPlot');
-    Plotly.downloadImage(div,{format:'png',filename:'DBSCAN_KDistance',
-        scale:parseInt(document.getElementById('dbscanExportScale').value),
-        width:div.offsetWidth||700,height:div.offsetHeight||350});});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 8. OPLS / OPLS-DA Analysis
@@ -5910,8 +6821,11 @@ document.querySelectorAll('.opls-method-btn').forEach(btn => {
     btn.addEventListener('click', function () {
         document.querySelectorAll('.opls-method-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
+        _updateOplsStepper();
     });
 });
+document.getElementById('oplsYCol')?.addEventListener('change', () => { _updateOplsStepper(); _renderOplsMissingData(); });
+document.getElementById('oplsNOrtho')?.addEventListener('input', _updateOplsStepper);
 
 document.getElementById('runOplsBtn').addEventListener('click', function () {
     const vars = Array.from(document.querySelectorAll('.var-check:checked'))
@@ -5950,6 +6864,7 @@ document.getElementById('runOplsBtn').addEventListener('click', function () {
             return;
         }
         lastOplsResult = result;
+        _updateOplsStepper();
         const opts = oplsReadOpts();
         const methodStr = result.method === 'opls-da' ? 'OPLS-DA' : 'OPLS';
 
@@ -6028,14 +6943,55 @@ document.getElementById('oplsDownloadVipBtn').addEventListener('click', () => {
     Plotly.downloadImage(div,{format:'png',filename:'OPLS_VIP_Plot',scale:sc,width:div.offsetWidth||700,height:div.offsetHeight||400});
 });
 
-// ── Excel export ──────────────────────────────────────────────────────────────
-document.getElementById('downloadOplsBtn').addEventListener('click', async function () {
-    if (!lastOplsResult) return;
-    this.disabled = true;
+// ── ZIP export (client-side) ──────────────────────────────────────────────────
+async function _exportOplsReport() {
+    if (!lastOplsResult) return alert('Run OPLS first before exporting.');
+    const r = lastOplsResult;
+    const btn = document.getElementById('downloadOplsBtn');
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> Building…';
     const spinner = document.getElementById('oplsExportSpinner');
-    spinner.style.display = 'inline-block';
+    if (spinner) spinner.style.display = 'inline-block';
     try {
-        const sc = parseInt(document.getElementById('oplsExportScale').value) || 2;
+        const wb = XLSX.utils.book_new();
+        const addSheet = (name, rows) =>
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), name);
+        const pct = v => v != null ? parseFloat((v * 100).toFixed(4)) : null;
+        const methodStr = r.method === 'opls-da' ? 'OPLS-DA' : 'OPLS';
+
+        // Sheet 1: Parameters
+        addSheet('Parameters', [
+            ['Parameter', 'Value'],
+            ['Method', methodStr],
+            ['Response variable (Y)', r.y_col || ''],
+            ['Orthogonal components', r.n_ortho || ''],
+            ['Samples', r.n_samples || ''],
+            ['Variables used', r.vars_used ? r.vars_used.length : ''],
+            ['Variable list', r.vars_used ? r.vars_used.join(', ') : ''],
+            ['R²X (%)', pct(r.r2x)],
+            ['R²Y (%)', pct(r.r2y)],
+            ['Q² (%)', pct(r.q2)],
+            ['Export date', new Date().toLocaleDateString('en-GB')],
+        ]);
+
+        // Sheet 2: Scores
+        const scoreRows = [['Sample', 'Group', 'T (predictive)', 'T_orth (orthogonal)']];
+        (r.scores || []).forEach(s => scoreRows.push([s.label, s.group, s.T, s.T_ortho]));
+        addSheet('OPLS Scores', scoreRows);
+
+        // Sheet 3: S-plot data
+        const splotRows = [['Variable', 'Covariance (p)', 'Correlation (p_corr)', 'VIP']];
+        (r.splot || []).forEach(s => splotRows.push([s.var, s.cov, s.corr, s.vip]));
+        addSheet('S-plot Data', splotRows);
+
+        // Sheet 4: VIP scores
+        const vipRows = [['Variable', 'VIP Score', 'VIP \u2265 1.0']];
+        (r.vip || []).forEach(v => vipRows.push([v.var, v.vip, v.vip >= 1.0 ? 'Yes' : 'No']));
+        addSheet('VIP Scores', vipRows);
+
+        // Capture plots
+        const sc = parseInt(document.getElementById('oplsExportScale')?.value) || 2;
         const toImg = async (id, w, h) => {
             const d = document.getElementById(id);
             if (!d || d.style.display === 'none') return null;
@@ -6045,30 +7001,33 @@ document.getElementById('downloadOplsBtn').addEventListener('click', async funct
         const [scoreImg, splotImg, vipImg] = await Promise.all([
             toImg('oplsScorePlot', 700, 500),
             toImg('oplsSplot', 700, 500),
-            toImg('oplsVipPlot', 700, Math.max(350, lastOplsResult.vip.length * 26 + 80)),
+            toImg('oplsVipPlot', 700, Math.max(350, (r.vip || []).length * 26 + 80)),
         ]);
-        const payload = {
-            result: lastOplsResult,
-            images: { score: scoreImg, splot: splotImg, vip: vipImg },
-        };
-        const res = await fetch('/export-opls-excel', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) { const j = await res.json(); throw new Error(j.error || 'Export failed'); }
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
+
+        // Bundle ZIP
+        const zip = new JSZip();
+        zip.file('OPLS_Analysis.xlsx', XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+        if (scoreImg) zip.file('OPLS_Score_Plot.png', scoreImg, { base64: true });
+        if (splotImg) zip.file('OPLS_S-plot.png',    splotImg, { base64: true });
+        if (vipImg)   zip.file('OPLS_VIP_Plot.png',  vipImg,   { base64: true });
+        zip.file('Methods_section.html', _buildMethodsHTML());
+
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'OPLS_Analysis.xlsx';
+        a.href = url; a.download = 'OPLS_Report.zip';
         document.body.appendChild(a); a.click();
-        window.URL.revokeObjectURL(url); document.body.removeChild(a);
+        URL.revokeObjectURL(url); document.body.removeChild(a);
     } catch (err) {
         alert('Export error: ' + err.message);
     } finally {
-        this.disabled = false;
-        spinner.style.display = 'none';
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+        if (spinner) spinner.style.display = 'none';
     }
-});
+}
+document.getElementById('downloadOplsBtn').addEventListener('click', () =>
+    _exportOplsReport().catch(err => alert('Export error: ' + err.message)));
 // ═══════════════════════════════════════════════════════════════════════════════
 // 9. PLS / PLS-DA Analysis
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -6219,8 +7178,11 @@ document.querySelectorAll('.pls-method-btn').forEach(btn => {
     btn.addEventListener('click', function () {
         document.querySelectorAll('.pls-method-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
+        _updatePlsStepper();
     });
 });
+document.getElementById('plsYCol')?.addEventListener('change', () => { _updatePlsStepper(); _renderPlsMissingData(); });
+document.getElementById('plsNComponents')?.addEventListener('input', _updatePlsStepper);
 
 document.getElementById('runPlsBtn').addEventListener('click', function () {
     const vars = Array.from(document.querySelectorAll('.var-check:checked'))
@@ -6259,6 +7221,7 @@ document.getElementById('runPlsBtn').addEventListener('click', function () {
             return;
         }
         lastPlsResult = result;
+        _updatePlsStepper();
         const opts = plsReadOpts();
         const methodStr = result.method === 'pls-da' ? 'PLS-DA' : 'PLS';
 
@@ -6336,14 +7299,59 @@ document.getElementById('plsDownloadVipBtn').addEventListener('click', () => {
     Plotly.downloadImage(div,{format:'png',filename:'PLS_VIP_Plot',scale:sc,width:div.offsetWidth||700,height:div.offsetHeight||400});
 });
 
-// ── Excel export ──────────────────────────────────────────────────────────────
-document.getElementById('downloadPlsBtn').addEventListener('click', async function () {
-    if (!lastPlsResult) return;
-    this.disabled = true;
+// ── ZIP export (client-side) ──────────────────────────────────────────────────
+async function _exportPlsReport() {
+    if (!lastPlsResult) return alert('Run PLS first before exporting.');
+    const r = lastPlsResult;
+    const btn = document.getElementById('downloadPlsBtn');
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> Building…';
     const spinner = document.getElementById('plsExportSpinner');
-    spinner.style.display = 'inline-block';
+    if (spinner) spinner.style.display = 'inline-block';
     try {
-        const sc = parseInt(document.getElementById('plsExportScale').value) || 2;
+        const wb = XLSX.utils.book_new();
+        const addSheet = (name, rows) =>
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), name);
+        const pct = v => v != null ? parseFloat((v * 100).toFixed(4)) : null;
+        const methodStr = r.method === 'pls-da' ? 'PLS-DA' : 'PLS';
+        const nComp = r.n_components || 2;
+
+        // Sheet 1: Parameters
+        addSheet('Parameters', [
+            ['Parameter', 'Value'],
+            ['Method', methodStr],
+            ['Response variable (Y)', r.y_col || ''],
+            ['LV components', nComp],
+            ['Samples', r.n_samples || ''],
+            ['Variables used', r.vars_used ? r.vars_used.length : ''],
+            ['Variable list', r.vars_used ? r.vars_used.join(', ') : ''],
+            ['R²X (%)', pct(r.r2x)],
+            ['R²Y (%)', pct(r.r2y)],
+            ['Q² (%)', pct(r.q2)],
+            ['Export date', new Date().toLocaleDateString('en-GB')],
+        ]);
+
+        // Sheet 2: Scores
+        const scoreRows = [['Sample', 'Group', 'T1 (LV1 score)', 'T2 (LV2 score)']];
+        (r.scores || []).forEach(s => scoreRows.push([s.label, s.group, s.T1, s.T2]));
+        addSheet('PLS Scores', scoreRows);
+
+        // Sheet 3: Weights
+        const wHeaders = ['Variable', ...Array.from({ length: nComp }, (_, i) => `W${i + 1}`), 'VIP'];
+        const weightRows = [wHeaders];
+        (r.weights || []).forEach(w => weightRows.push(
+            [w.var, ...Array.from({ length: nComp }, (_, i) => w[`W${i + 1}`]), w.vip]
+        ));
+        addSheet('Weights', weightRows);
+
+        // Sheet 4: VIP scores
+        const vipRows = [['Variable', 'VIP Score', 'VIP \u2265 1.0']];
+        (r.vip || []).forEach(v => vipRows.push([v.var, v.vip, v.vip >= 1.0 ? 'Yes' : 'No']));
+        addSheet('VIP Scores', vipRows);
+
+        // Capture plots
+        const sc = parseInt(document.getElementById('plsExportScale')?.value) || 2;
         const toImg = async (id, w, h) => {
             const d = document.getElementById(id);
             if (!d || d.style.display === 'none') return null;
@@ -6351,391 +7359,842 @@ document.getElementById('downloadPlsBtn').addEventListener('click', async functi
             return b64.split(',')[1];
         };
         const [scoreImg, weightsImg, vipImg] = await Promise.all([
-            toImg('plsScorePlot', 700, 500),
+            toImg('plsScorePlot',   700, 500),
             toImg('plsWeightsPlot', 700, 500),
-            toImg('plsVipPlot', 700, Math.max(350, lastPlsResult.vip.length * 26 + 80)),
+            toImg('plsVipPlot',     700, Math.max(350, (r.vip || []).length * 26 + 80)),
         ]);
-        const payload = { result: lastPlsResult, images: { score: scoreImg, weights: weightsImg, vip: vipImg } };
-        const res = await fetch('/export-pls-excel', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) { const j = await res.json(); throw new Error(j.error || 'Export failed'); }
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
+
+        // Bundle ZIP
+        const zip = new JSZip();
+        zip.file('PLS_Analysis.xlsx', XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+        if (scoreImg)   zip.file('PLS_Score_Plot.png',   scoreImg,   { base64: true });
+        if (weightsImg) zip.file('PLS_Weights_Plot.png', weightsImg, { base64: true });
+        if (vipImg)     zip.file('PLS_VIP_Plot.png',     vipImg,     { base64: true });
+        zip.file('Methods_section.html', _buildMethodsHTML());
+
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'PLS_Analysis.xlsx';
+        a.href = url; a.download = 'PLS_Report.zip';
         document.body.appendChild(a); a.click();
-        window.URL.revokeObjectURL(url); document.body.removeChild(a);
+        URL.revokeObjectURL(url); document.body.removeChild(a);
     } catch (err) {
         alert('Export error: ' + err.message);
     } finally {
-        this.disabled = false;
-        spinner.style.display = 'none';
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+        if (spinner) spinner.style.display = 'none';
     }
-});
+}
+document.getElementById('downloadPlsBtn').addEventListener('click', () =>
+    _exportPlsReport().catch(err => alert('Export error: ' + err.message)));
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 10. Regression Analysis
+// 9. CORRELATION → PCA PIPELINE  (Steps 2-5)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-let lastSimpleRegrResult   = null;
-let lastMultipleRegrResult = null;
-let regrAbortController    = null;
-
-function regrGetVars() {
+// ── Helper: get currently-selected variable names ─────────────────────────────
+function _currentSelectedVars() {
     return Array.from(document.querySelectorAll('.var-check:checked'))
         .filter(cb => !cb.disabled).map(cb => cb.value);
 }
 
-function populateRegrXList(listId, yCol, vars) {
-    const container = document.getElementById(listId);
+// ── Normalization transform (column-wise, client-side) ────────────────────────
+function applyColumnNorm(data, varNames, method) {
+    if (!method || method === 'none') return data;
+    const colStats = {};
+    varNames.forEach(v => {
+        const vals = data.map(r => parseFloat(r[v])).filter(x => !isNaN(x));
+        if (!vals.length) { colStats[v] = { mean: 0, std: 1, min: 0, max: 1 }; return; }
+        const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+        const std = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length) || 1;
+        const min = Math.min(...vals), max = Math.max(...vals);
+        colStats[v] = { mean, std, min, max };
+    });
+    return data.map(row => {
+        const newRow = Object.assign({}, row);
+        varNames.forEach(v => {
+            const val = parseFloat(row[v]);
+            if (isNaN(val)) { newRow[v] = null; return; }
+            const s = colStats[v];
+            if (method === 'zscore') newRow[v] = s.std > 0 ? (val - s.mean) / s.std : 0;
+            else if (method === 'minmax') newRow[v] = (s.max - s.min) > 0 ? (val - s.min) / (s.max - s.min) : 0;
+            else if (method === 'log10') newRow[v] = val > 0 ? Math.log10(val) : null;
+            else if (method === 'ln') newRow[v] = val > 0 ? Math.log(val) : null;
+            else if (method === 'sqrt') newRow[v] = val >= 0 ? Math.sqrt(val) : null;
+        });
+        return newRow;
+    });
+}
+
+// ── Near-zero variance filter ─────────────────────────────────────────────────
+function filterNearZeroVariance(varNames, data, cvThreshold) {
+    if (!cvThreshold || cvThreshold <= 0) return varNames;
+    return varNames.filter(v => {
+        const vals = data.map(r => parseFloat(r[v])).filter(x => !isNaN(x));
+        if (vals.length < 2) return false;
+        const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+        const std = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length);
+        const cv = mean !== 0 ? (std / Math.abs(mean)) * 100 : 0;
+        return cv > cvThreshold;
+    });
+}
+
+// ── NZV diagnostic renderer ───────────────────────────────────────────────────
+function renderNzvDiagnostic(varNames, data, cvThreshold) {
+    const container = document.getElementById('nzvDiagnostic');
     if (!container) return;
-    // Use supplied vars list, or fall back to currently checked variables
-    const candidates = (vars || regrGetVars()).filter(c => c !== yCol);
-    if (!candidates.length) {
-        container.innerHTML = '<span class="text-muted small">Select a response variable (Y) above to populate.</span>';
+    if (!cvThreshold || cvThreshold <= 0 || !varNames.length || !data) {
+        container.innerHTML = '';
         return;
     }
-    container.innerHTML = candidates.map(c => {
-        const safeId = listId + '_' + c.replace(/\W/g, '_');
-        return `<div class="form-check form-check-inline mr-2 mb-1">
-            <input class="form-check-input" type="checkbox" id="${safeId}" value="${c}" checked>
-            <label class="form-check-label" for="${safeId}">${c}</label>
-        </div>`;
-    }).join('');
+    const passing = filterNearZeroVariance(varNames, data, cvThreshold);
+    const removed = varNames.filter(v => !passing.includes(v));
+    if (!removed.length) {
+        container.innerHTML = `<small class="text-success">All ${varNames.length} variables pass (CV &gt; ${cvThreshold}%).</small>`;
+    } else {
+        const chips = removed.map(v => `<span class="badge badge-warning text-dark mr-1">${v}</span>`).join('');
+        container.innerHTML = `<small class="text-muted">${removed.length} variable${removed.length > 1 ? 's' : ''} would be removed (CV &le; ${cvThreshold}%): ${chips}</small>`;
+    }
 }
 
-document.getElementById('regrYCol').addEventListener('change', function() {
-    populateRegrXList('multipleRegrXList', this.value);
-});
-
-document.getElementById('multipleRegrSelectAll').addEventListener('click', function() {
-    document.querySelectorAll('#multipleRegrXList input[type=checkbox]').forEach(cb => cb.checked = true);
-});
-document.getElementById('multipleRegrSelectNone').addEventListener('click', function() {
-    document.querySelectorAll('#multipleRegrXList input[type=checkbox]').forEach(cb => cb.checked = false);
-});
-
-// ── Shared: 4-panel diagnostics (Residuals vs Fitted, Q-Q, Scale-Loc, Cook's) ─
-function renderDiagnostics(diagData, divId, opts) {
-    const div = document.getElementById(divId);
-    div.style.display = 'block';
-    const { fitted, residuals, std_residuals, sqrt_abs_std_resid,
-            qq_theoretical, qq_sample, cooks_d, obs_index } = diagData;
-    const ff = opts.fontFamily, fs = opts.fontSize;
-
-    // 1: Residuals vs Fitted
-    const t1 = { type:'scatter', mode:'markers', x: fitted, y: residuals,
-        marker:{ color:'#3498db', size:5, opacity:0.7 }, showlegend:false,
-        hovertemplate:'Fitted: %{x:.3f}<br>Residual: %{y:.3f}<extra></extra>',
-        xaxis:'x1', yaxis:'y1' };
-    const sorted1 = fitted.map((v,i)=>[v,residuals[i]]).sort((a,b)=>a[0]-b[0]);
-    const tLine1  = { type:'scatter', mode:'lines',
-        x: sorted1.map(p=>p[0]), y: sorted1.map(p=>p[1]),
-        line:{color:'#e74c3c',width:1.5}, showlegend:false, hoverinfo:'skip', xaxis:'x1', yaxis:'y1' };
-
-    // 2: Normal Q-Q
-    const t2 = { type:'scatter', mode:'markers', x: qq_theoretical, y: qq_sample,
-        marker:{ color:'#3498db', size:5, opacity:0.7 }, showlegend:false,
-        hovertemplate:'Theoretical: %{x:.3f}<br>Sample: %{y:.3f}<extra></extra>',
-        xaxis:'x2', yaxis:'y2' };
-    const qqMin = Math.min(...qq_theoretical), qqMax = Math.max(...qq_theoretical);
-    const tLine2 = { type:'scatter', mode:'lines', x:[qqMin,qqMax], y:[qqMin,qqMax],
-        line:{color:'#e74c3c',width:1.5,dash:'dot'}, showlegend:false, hoverinfo:'skip', xaxis:'x2', yaxis:'y2' };
-
-    // 3: Scale-Location
-    const t3 = { type:'scatter', mode:'markers', x: fitted, y: sqrt_abs_std_resid,
-        marker:{ color:'#3498db', size:5, opacity:0.7 }, showlegend:false,
-        hovertemplate:'Fitted: %{x:.3f}<br>\u221a|Std.Res|: %{y:.3f}<extra></extra>',
-        xaxis:'x3', yaxis:'y3' };
-
-    // 4: Cook's Distance
-    const cookThresh = 4 / obs_index.length;
-    const cookColors = cooks_d.map(d => d > cookThresh ? '#e74c3c' : '#95a5a6');
-    const t4 = { type:'bar', x: obs_index, y: cooks_d,
-        marker:{ color: cookColors }, showlegend:false,
-        hovertemplate:"Obs %{x}<br>Cook's D: %{y:.4f}<extra></extra>",
-        xaxis:'x4', yaxis:'y4' };
-    const t4thresh = { type:'scatter', mode:'lines',
-        x:[0, obs_index.length - 1], y:[cookThresh, cookThresh],
-        line:{color:'#e74c3c',width:1,dash:'dash'}, showlegend:false, hoverinfo:'skip',
-        xaxis:'x4', yaxis:'y4' };
-
-    const layout = {
-        grid: { rows:2, columns:2, pattern:'independent', roworder:'top to bottom' },
-        xaxis:  { title:{text:'Fitted values',            font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff}, zeroline:false },
-        yaxis:  { title:{text:'Residuals',                font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff}, zeroline:true, zerolinecolor:'#ccc' },
-        xaxis2: { title:{text:'Theoretical quantiles',    font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
-        yaxis2: { title:{text:'Sample quantiles',         font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
-        xaxis3: { title:{text:'Fitted values',            font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
-        yaxis3: { title:{text:'\u221a|Standardised Residuals|', font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
-        xaxis4: { title:{text:'Observation index',        font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
-        yaxis4: { title:{text:"Cook's Distance",          font:{size:fs-1,family:ff}}, tickfont:{size:fs-2,family:ff} },
-        annotations: [
-            { text:'Residuals vs Fitted', xref:'paper', yref:'paper', x:0.22, y:1.02,
-              showarrow:false, font:{size:fs, family:ff, color:'#444'} },
-            { text:'Normal Q-Q',          xref:'paper', yref:'paper', x:0.78, y:1.02,
-              showarrow:false, font:{size:fs, family:ff, color:'#444'} },
-            { text:'Scale-Location',      xref:'paper', yref:'paper', x:0.22, y:0.47,
-              showarrow:false, font:{size:fs, family:ff, color:'#444'} },
-            { text:"Cook's Distance",     xref:'paper', yref:'paper', x:0.78, y:0.47,
-              showarrow:false, font:{size:fs, family:ff, color:'#444'} },
-        ],
-        plot_bgcolor:'#fafafa', paper_bgcolor:'white',
-        margin:{l:60, r:20, t:40, b:60}, height:520,
-    };
-    Plotly.react(div, [t1, tLine1, t2, tLine2, t3, t4, t4thresh], layout, { responsive:true });
-}
-
-// ── Coefficient forest plot (Multiple Linear) ─────────────────────────────────
-function renderCoefForest(result, divId, opts) {
-    const div = document.getElementById(divId);
-    div.style.display = 'block';
-    const coefs = result.coefficients.filter(c => c.name !== 'Intercept');
-    const ff = opts.fontFamily, fs = opts.fontSize;
-    const colors = coefs.map(c => c.p_value < 0.05 ? '#2980b9' : '#bdc3c7');
-    const traces = [
-        { type:'scatter', mode:'markers', x: coefs.map(c=>c.coef), y: coefs.map(c=>c.name),
-          error_x:{ type:'data', symmetric:false,
-              array:      coefs.map(c=>c.ci_upper - c.coef),
-              arrayminus: coefs.map(c=>c.coef - c.ci_lower),
-              color:'#666', thickness:1.5, width:5 },
-          marker:{ color: colors, size:10 },
-          hovertemplate:'<b>%{y}</b><br>\u03b2 = %{x:.4f}<br>p = %{customdata:.4g}<extra></extra>',
-          customdata: coefs.map(c=>c.p_value), showlegend:false },
-        { type:'scatter', mode:'lines', x:[0,0], y:[-0.5, coefs.length - 0.5],
-          line:{color:'#e74c3c',width:1.5,dash:'dash'}, showlegend:false, hoverinfo:'skip' },
-    ];
-    const layout = {
-        title:{ text:'Coefficients \u2014 ' + result.y_col, font:{family:ff, size:fs+2} },
-        xaxis:{ title:{text:'Coefficient (95% CI)', font:{family:ff, size:fs}}, tickfont:{family:ff, size:fs-1}, zeroline:false },
-        yaxis:{ tickfont:{family:ff, size:fs-1}, autorange:'reversed' },
-        plot_bgcolor:'#fafafa', paper_bgcolor:'white',
-        margin:{ l: Math.max(80, Math.max(...coefs.map(c=>c.name.length)) * 6), r:30, t:50, b:50 },
-        height: Math.max(300, coefs.length * 32 + 80),
-    };
-    Plotly.react(div, traces, layout, { responsive:true });
-}
-
-// ── Simple linear scatter + fit line ─────────────────────────────────────────
-function renderSimpleScatter(result, opts) {
-    const div = document.getElementById('simpleRegrScatterPlot');
-    div.style.display = 'block';
-    const sc = result.scatter, ff = opts.fontFamily, fs = opts.fontSize;
-    const slope = result.coefficients.find(c => c.name !== 'Intercept');
-    const pStr  = slope ? 'p=' + (slope.p_value < 0.0001
-        ? slope.p_value.toExponential(2) : slope.p_value.toFixed(4)) : '';
-    const traces = [
-        { type:'scatter', mode:'markers', name:'Data',
-          x: sc.x, y: sc.y,
-          marker:{ color:'#3498db', size:opts.pointSize, opacity:opts.opacity, line:{width:0.5,color:'white'} },
-          hovertemplate: result.x_cols[0] + ': %{x:.3f}<br>' + result.y_col + ': %{y:.3f}<extra></extra>' },
-        { type:'scatter', mode:'lines', name:'Fit', x: sc.x_sorted, y: sc.fit_line,
-          line:{color:'#e74c3c', width:2}, hoverinfo:'skip' },
-        { type:'scatter', mode:'lines', name:'95% CI', x: sc.x_sorted, y: sc.ci_upper,
-          line:{width:0}, showlegend:false, hoverinfo:'skip' },
-        { type:'scatter', mode:'lines', name:'95% CI', x: sc.x_sorted, y: sc.ci_lower,
-          fill:'tonexty', fillcolor:'rgba(231,76,60,0.12)', line:{width:0}, hoverinfo:'skip' },
-    ];
-    const layout = {
-        title:{ text: result.y_col + ' ~ ' + result.x_cols[0]
-                      + '  (R\u00b2=' + result.r_squared.toFixed(3) + ', ' + pStr + ')',
-                font:{family:ff, size:fs+2} },
-        xaxis:{ title:{text:result.x_cols[0], font:{family:ff,size:fs}}, tickfont:{family:ff,size:fs-1} },
-        yaxis:{ title:{text:result.y_col,     font:{family:ff,size:fs}}, tickfont:{family:ff,size:fs-1} },
-        legend:{font:{family:ff,size:fs-1}},
-        plot_bgcolor:'#fafafa', paper_bgcolor:'white',
-        margin:{l:60,r:20,t:55,b:55},
-    };
-    Plotly.react(div, traces, layout, { responsive:true });
-}
-
-
-// ── Generic fetch wrapper ────────────────────────────────────────────────────
-function regrFetch(payload, onSuccess, spinnerEl, stopBtnEl, statusEl, runBtnEl) {
-    spinnerEl.style.display = 'block';
-    stopBtnEl.style.display = 'inline-block';
-    runBtnEl.disabled = true;
-    statusEl.innerHTML = '';
-    regrAbortController = new AbortController();
-    fetch('/run-regression', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        signal: regrAbortController.signal,
-        body: JSON.stringify(Object.assign({}, payload, { data: globalData, factors: selectedFactors })),
-    })
-    .then(r => r.json())
-    .then(result => {
-        spinnerEl.style.display = 'none';
-        stopBtnEl.style.display = 'none';
-        runBtnEl.disabled = false;
-        if (result.error) {
-            statusEl.innerHTML = '<div class="alert alert-danger py-2 small shadow-sm mb-2">' + result.error + '</div>';
-            return;
+// ── NZV slider event ──────────────────────────────────────────────────────────
+(function () {
+    const slider = document.getElementById('nzvThreshold');
+    const label = document.getElementById('nzvThresholdVal');
+    if (!slider || !label) return;
+    slider.addEventListener('input', function () {
+        nzvThreshold = parseInt(this.value, 10);
+        label.textContent = nzvThreshold > 0 ? nzvThreshold + '%' : 'Off';
+        label.className = 'badge ' + (nzvThreshold > 0 ? 'badge-info' : 'badge-secondary');
+        if (globalData) {
+            const vars = _currentSelectedVars();
+            renderNzvDiagnostic(vars, globalData, nzvThreshold);
         }
-        onSuccess(result);
-    })
-    .catch(err => {
-        if (err.name === 'AbortError') return;
-        spinnerEl.style.display = 'none';
-        stopBtnEl.style.display = 'none';
-        runBtnEl.disabled = false;
-        statusEl.innerHTML = '<div class="alert alert-danger py-2 small shadow-sm mb-2">Error: ' + err.message + '</div>';
     });
+})();
+
+// ── Normalization transform button group ──────────────────────────────────────
+(function () {
+    const group = document.getElementById('normTransformGroup');
+    if (!group) return;
+    group.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-norm]');
+        if (!btn) return;
+        group.querySelectorAll('[data-norm]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentNormTransform = btn.dataset.norm;
+        const note = document.getElementById('normTransformNote');
+        if (note) note.classList.toggle('d-none', currentNormTransform === 'none');
+        // Refresh distribution preview if panel is open
+        const distBody = document.getElementById('distBody');
+        if (distBody && distBody.classList.contains('show')) _refreshDistIfVisible();
+    });
+})();
+
+// ── "Run Correlation Analysis" button in preprocessing panel ──────────────────
+(function () {
+    const btn = document.getElementById('runCorrelationBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        const runBtn = document.getElementById('runCorrBtn');
+        if (runBtn) runBtn.click();
+    });
+})();
+
+// ── Connected components for redundancy clustering ────────────────────────────
+function connectedComponents(corrMatrix, varNames, threshold) {
+    const adj = {};
+    varNames.forEach(v => { adj[v] = new Set(); });
+    for (let i = 0; i < varNames.length; i++) {
+        for (let j = i + 1; j < varNames.length; j++) {
+            const r = corrMatrix[i] && corrMatrix[i][j] !== undefined ? corrMatrix[i][j] : null;
+            if (r !== null && r !== undefined && Math.abs(r) >= threshold) {
+                adj[varNames[i]].add(varNames[j]);
+                adj[varNames[j]].add(varNames[i]);
+            }
+        }
+    }
+    const visited = new Set();
+    const components = [];
+    varNames.forEach(v => {
+        if (visited.has(v) || adj[v].size === 0) return;
+        const comp = [];
+        const queue = [v];
+        while (queue.length) {
+            const node = queue.shift();
+            if (visited.has(node)) continue;
+            visited.add(node);
+            comp.push(node);
+            adj[node].forEach(n => { if (!visited.has(n)) queue.push(n); });
+        }
+        if (comp.length > 1) components.push(comp);
+    });
+    return components;
 }
 
-// ── Generic Excel export ──────────────────────────────────────────────────────
-async function regrExport(result, mainDivId, diagDivId, exportScaleId, spinnerEl, btnEl) {
-    btnEl.disabled = true; spinnerEl.style.display = 'inline-block';
-    try {
-        const sc = parseInt(document.getElementById(exportScaleId).value) || 2;
-        const toImg = async (id, w, h) => {
-            const d = document.getElementById(id);
-            if (!d || d.style.display === 'none') return null;
-            const b64 = await Plotly.toImage(d, { format:'png', scale:sc, width:w||d.offsetWidth||700, height:h||d.offsetHeight||500 });
-            return b64.split(',')[1];
-        };
-        const mainImg = await toImg(mainDivId, 700, 500);
-        const diagImg = diagDivId ? await toImg(diagDivId, 900, 540) : null;
-        const res = await fetch('/export-regression-excel', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ result: result, images:{ main: mainImg, diag: diagImg } }),
+// ── Hub scores ────────────────────────────────────────────────────────────────
+function computeHubScores(corrMatrix, varNames, threshold) {
+    const scores = {};
+    varNames.forEach((v, i) => {
+        scores[v] = 0;
+        varNames.forEach((u, j) => {
+            if (u === v) return;
+            const r = Array.isArray(corrMatrix[i]) ? corrMatrix[i][j] : 0;
+            if (r !== null && r !== undefined && Math.abs(r) >= threshold) {
+                scores[v] += Math.abs(r);
+            }
         });
-        if (!res.ok) { const j = await res.json(); throw new Error(j.error || 'Export failed'); }
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'Regression_Analysis.xlsx';
-        document.body.appendChild(a); a.click();
-        window.URL.revokeObjectURL(url); document.body.removeChild(a);
-    } catch(e) { alert('Export error: ' + e.message); }
-    finally { btnEl.disabled = false; spinnerEl.style.display = 'none'; }
+    });
+    return scores;
 }
 
-// ── Event listeners ───────────────────────────────────────────────────────────
+// ── Initialize excluded set — checkboxes default all to kept ──────────────────
+function initExcludedFromClusters() {
+    excludedVarsFromCorr.clear();
+    // All variables start as kept; user unchecks to exclude
+}
 
-// Simple Linear
-document.getElementById('runSimpleRegrBtn').addEventListener('click', function() {
-    const yCol = document.getElementById('regrYCol').value;
-    const xCol = document.getElementById('regrSimpleXCol').value;
-    if (!yCol) return alert('Select a response variable (Y).');
-    if (!xCol) return alert('Select a predictor variable (X).');
-    if (yCol === xCol) return alert('Y and X must be different columns.');
-    const getOpts = () => ({
-        fontFamily: document.getElementById('simpleRegrFontFamily').value,
-        fontSize:   parseInt(document.getElementById('simpleRegrFontSize').value) || 13,
-        pointSize:  parseInt(document.getElementById('simpleRegrPointSize').value) || 7,
-        opacity:    parseInt(document.getElementById('simpleRegrOpacity').value) / 100,
+// ── Update Step 4 keep-count badge ───────────────────────────────────────────
+function updateStep4KeepCount() {
+    const badge = document.getElementById('step4KeepCount');
+    if (!badge || !lastCorrResults) return;
+    const allVars = lastCorrResults.variables || [];
+    const kept = allVars.filter(v => !excludedVarsFromCorr.has(v));
+    badge.textContent = `${kept.length} variable${kept.length !== 1 ? 's' : ''} will be sent to PCA`;
+}
+
+
+let _currentOverlayMode = 'all';
+// Stores cluster variable arrays indexed by cluster index — avoids inline JSON escaping
+let _clusterData = [];
+
+// ── Render a mini sub-heatmap for a cluster ───────────────────────────────────
+function _renderClusterSubHeatmap(divId, clusterVars, corrMatrix, allVars) {
+    const div = document.getElementById(divId);
+    if (!div) return;
+    const n = clusterVars.length;
+    if (n < 2) { div.style.display = 'none'; return; }
+
+    const indices = clusterVars.map(v => allVars.indexOf(v));
+    const z = clusterVars.map((_, ri) =>
+        clusterVars.map((_, ci) => {
+            const r = corrMatrix[indices[ri]]?.[indices[ci]];
+            return (r !== null && r !== undefined) ? r : null;
+        })
+    );
+    const text = z.map(row => row.map(v => v !== null ? v.toFixed(2) : ''));
+
+    const maxLen = clusterVars.reduce((m, v) => Math.max(m, v.length), 0);
+    const ml = Math.min(140, Math.max(50, maxLen * 6));
+    const mb = Math.min(140, Math.max(50, maxLen * 6));
+    const mt = 8; const mr = 20; const CB = 65;
+    const contW  = div.offsetWidth || div.parentElement?.offsetWidth || 400;
+    const cellPx = Math.max(1, Math.floor((contW - ml - mr - CB) / n));
+    const figW   = ml + n * cellPx + mr + CB;
+    const figH   = mt + n * cellPx + mb;
+    const axFont  = Math.max(7, Math.min(12, Math.floor(cellPx * 0.55)));
+    const celFont = Math.max(6, Math.min(11, Math.floor(cellPx * 0.38)));
+
+    div.style.width  = figW + 'px';
+    div.style.height = figH + 'px';
+
+    const trace = {
+        type: 'heatmap',
+        z, x: clusterVars, y: clusterVars,
+        colorscale: CORR_COLORSCALES[document.getElementById('corrColorScheme')?.value] || CORR_COLORSCALES.RdBu,
+        reversescale: true,
+        zmin: -1, zmax: 1,
+        showscale: true,
+        text, texttemplate: '%{text}',
+        textfont: { size: celFont },
+        hovertemplate: '%{y} × %{x}: %{z:.3f}<extra></extra>'
+    };
+    const layout = {
+        width: figW, height: figH,
+        margin: { t: mt, b: mb, l: ml, r: mr + CB },
+        xaxis: { tickangle: -45, tickfont: { size: axFont }, automargin: true },
+        yaxis: { autorange: 'reversed', tickfont: { size: axFont }, automargin: true },
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent'
+    };
+    Plotly.newPlot(div, [trace], layout, { responsive: false, displayModeBar: false });
+}
+
+// ── Reset a cluster — re-check all variables (keep all) ──────────────────────
+function _resetClusterSelection(ci) {
+    const clusterVars = _clusterData[ci] || [];
+    clusterVars.forEach(v => {
+        excludedVarsFromCorr.delete(v);
+        const cb = document.querySelector(
+            `input.cluster-var-cb[data-cluster-idx="${ci}"][value="${CSS.escape(v)}"]`);
+        if (cb) {
+            cb.checked = true;
+            const badge = cb.closest('tr')?.querySelector('.cb-badge');
+            if (badge) { badge.textContent = 'Keep'; badge.className = 'badge badge-success cb-badge'; }
+        }
     });
-    regrFetch({ method:'simple', y_col: yCol, x_cols:[xCol] }, result => {
-        lastSimpleRegrResult = result;
-        const opts = getOpts();
-        const slope = result.coefficients.find(c => c.name !== 'Intercept');
-        document.getElementById('simpleRegrMetrics').style.display = 'block';
-        document.getElementById('simpleRegrR2').textContent    = result.r_squared.toFixed(4);
-        document.getElementById('simpleRegrAdjR2').textContent = result.adj_r_squared.toFixed(4);
-        document.getElementById('simpleRegrFp').textContent    = result.f_pvalue !== null
-            ? (result.f_pvalue < 0.0001 ? result.f_pvalue.toExponential(2) : result.f_pvalue.toFixed(4)) : 'N/A';
-        document.getElementById('simpleRegrN').textContent = result.n;
-        document.getElementById('simpleRegrStyleCard').style.display = 'block';
-        document.getElementById('downloadSimpleRegrBtn').style.display = 'inline-block';
-        const pFmt = slope ? (slope.p_value < 0.0001 ? slope.p_value.toExponential(2) : slope.p_value.toFixed(4)) : '';
-        document.getElementById('simpleRegrStatus').innerHTML =
-            '<div class="alert alert-success py-2 small shadow-sm mb-2"><strong>Simple LR complete:</strong> ' +
-            result.y_col + ' ~ ' + result.x_cols[0] +
-            ' — R\u00b2=' + result.r_squared.toFixed(3) +
-            (slope ? ', \u03b2=' + slope.coef.toFixed(4) + ', p=' + pFmt : '') +
-            ', n=' + result.n + '</div>';
-        renderSimpleScatter(result, opts);
-        renderDiagnostics(result.diagnostics, 'simpleRegrDiagPlot', opts);
-    },
-    document.getElementById('simpleRegrSpinner'),
-    document.getElementById('stopSimpleRegrBtn'),
-    document.getElementById('simpleRegrStatus'),
-    this);
-});
-document.getElementById('stopSimpleRegrBtn').addEventListener('click', function() {
-    if (regrAbortController) regrAbortController.abort();
-    document.getElementById('simpleRegrSpinner').style.display = 'none';
-    document.getElementById('runSimpleRegrBtn').disabled = false;
-    this.style.display = 'none';
-});
-['simpleRegrPointSize','simpleRegrOpacity','simpleRegrFontSize','simpleRegrFontFamily'].forEach(function(id) {
-    const el = document.getElementById(id);
-    ['change','input'].forEach(function(ev) { el.addEventListener(ev, function() {
-        if (id==='simpleRegrPointSize') document.getElementById('simpleRegrPointSizeVal').textContent = this.value;
-        if (id==='simpleRegrOpacity')   document.getElementById('simpleRegrOpacityVal').textContent  = this.value + '%';
-        if (id==='simpleRegrFontSize')  document.getElementById('simpleRegrFontSizeVal').textContent = this.value;
-        if (!lastSimpleRegrResult) return;
-        const opts = { fontFamily: document.getElementById('simpleRegrFontFamily').value,
-                       fontSize:   parseInt(document.getElementById('simpleRegrFontSize').value) || 13,
-                       pointSize:  parseInt(document.getElementById('simpleRegrPointSize').value) || 7,
-                       opacity:    parseInt(document.getElementById('simpleRegrOpacity').value) / 100 };
-        renderSimpleScatter(lastSimpleRegrResult, opts);
-        renderDiagnostics(lastSimpleRegrResult.diagnostics, 'simpleRegrDiagPlot', opts);
-    }); });
-});
-document.getElementById('downloadSimpleRegrBtn').addEventListener('click', async function() {
-    if (!lastSimpleRegrResult) return;
-    await regrExport(lastSimpleRegrResult, 'simpleRegrScatterPlot', 'simpleRegrDiagPlot',
-        'simpleRegrExportScale', document.getElementById('simpleRegrExportSpinner'), this);
-});
+    const label = document.getElementById(`clusterKeepLabel_${ci}`);
+    if (label) { label.textContent = 'all kept'; label.className = 'text-success font-weight-bold small'; }
+    updateStep4KeepCount();
+    _renderCorrelationOverlay(_currentOverlayMode);
+}
 
-// Multiple Linear
-document.getElementById('runMultipleRegrBtn').addEventListener('click', function() {
-    const yCol  = document.getElementById('regrYCol').value;
-    const xCols = Array.from(document.querySelectorAll('#multipleRegrXList input[type=checkbox]:checked')).map(cb => cb.value);
-    if (!yCol)          return alert('Select a response variable (Y).');
-    if (xCols.length < 1) return alert('Tick at least one predictor variable (X).');
-    const getOpts = () => ({
-        fontFamily: document.getElementById('multipleRegrFontFamily').value,
-        fontSize:   parseInt(document.getElementById('multipleRegrFontSize').value) || 13,
+// ── Auto-select a single variable per cluster (lowest hub score = least redundant) ──
+function _applyClusterAutoSelect(ci) {
+    const clusterVars = _clusterData[ci] || [];
+    if (!clusterVars.length || !lastCorrResults) return;
+    const threshold = parseFloat(document.getElementById('step4Threshold')?.value) || 0.80;
+    const hubScores = computeHubScores(lastCorrResults.corr_matrix, lastCorrResults.variables, threshold);
+
+    // Keep the variable with the LOWEST hub score (least redundant — standard approach)
+    const toKeep = clusterVars.reduce((best, v) =>
+        (hubScores[v] || 0) < (hubScores[best] || 0) ? v : best, clusterVars[0]);
+
+    clusterVars.forEach(v => {
+        const keep = v === toKeep;
+        const cb = document.querySelector(
+            `input.cluster-var-cb[data-cluster-idx="${ci}"][value="${CSS.escape(v)}"]`);
+        if (cb) {
+            cb.checked = keep;
+            const badge = cb.closest('tr')?.querySelector('.cb-badge');
+            if (badge) {
+                badge.textContent = keep ? 'Keep' : 'Exclude';
+                badge.className   = keep ? 'badge badge-success cb-badge' : 'badge badge-secondary cb-badge';
+            }
+        }
+        if (keep) excludedVarsFromCorr.delete(v);
+        else      excludedVarsFromCorr.add(v);
     });
-    regrFetch({ method:'multiple', y_col: yCol, x_cols: xCols }, result => {
-        lastMultipleRegrResult = result;
-        const opts = getOpts();
-        document.getElementById('multipleRegrMetrics').style.display = 'block';
-        document.getElementById('multipleRegrR2').textContent    = result.r_squared.toFixed(4);
-        document.getElementById('multipleRegrAdjR2').textContent = result.adj_r_squared.toFixed(4);
-        document.getElementById('multipleRegrFp').textContent    = result.f_pvalue !== null
-            ? (result.f_pvalue < 0.0001 ? result.f_pvalue.toExponential(2) : result.f_pvalue.toFixed(4)) : 'N/A';
-        document.getElementById('multipleRegrN').textContent = result.n;
-        document.getElementById('multipleRegrInfoCard').style.display = 'block';
-        document.getElementById('multipleRegrStyleCard').style.display = 'block';
-        document.getElementById('downloadMultipleRegrBtn').style.display = 'inline-block';
-        document.getElementById('multipleRegrStatus').innerHTML =
-            '<div class="alert alert-success py-2 small shadow-sm mb-2"><strong>Multiple LR complete:</strong> ' +
-            result.y_col + ' ~ ' + result.x_cols.join(' + ') +
-            ' — R\u00b2=' + result.r_squared.toFixed(3) +
-            ', Adj-R\u00b2=' + result.adj_r_squared.toFixed(3) + ', n=' + result.n + '</div>';
-        renderCoefForest(result, 'multipleRegrCoefPlot', opts);
-        renderDiagnostics(result.diagnostics, 'multipleRegrDiagPlot', opts);
-    },
-    document.getElementById('multipleRegrSpinner'),
-    document.getElementById('stopMultipleRegrBtn'),
-    document.getElementById('multipleRegrStatus'),
-    this);
-});
-document.getElementById('stopMultipleRegrBtn').addEventListener('click', function() {
-    if (regrAbortController) regrAbortController.abort();
-    document.getElementById('multipleRegrSpinner').style.display = 'none';
-    document.getElementById('runMultipleRegrBtn').disabled = false;
-    this.style.display = 'none';
-});
-['multipleRegrFontSize','multipleRegrFontFamily'].forEach(function(id) {
-    const el = document.getElementById(id);
-    ['change','input'].forEach(function(ev) { el.addEventListener(ev, function() {
-        if (id==='multipleRegrFontSize') document.getElementById('multipleRegrFontSizeVal').textContent = this.value;
-        if (!lastMultipleRegrResult) return;
-        const opts = { fontFamily: document.getElementById('multipleRegrFontFamily').value,
-                       fontSize:   parseInt(document.getElementById('multipleRegrFontSize').value) || 13 };
-        renderCoefForest(lastMultipleRegrResult, 'multipleRegrCoefPlot', opts);
-        renderDiagnostics(lastMultipleRegrResult.diagnostics, 'multipleRegrDiagPlot', opts);
-    }); });
-});
-document.getElementById('downloadMultipleRegrBtn').addEventListener('click', async function() {
-    if (!lastMultipleRegrResult) return;
-    await regrExport(lastMultipleRegrResult, 'multipleRegrCoefPlot', 'multipleRegrDiagPlot',
-        'multipleRegrExportScale', document.getElementById('multipleRegrExportSpinner'), this);
-});
 
+    const excluded = clusterVars.filter(v => excludedVarsFromCorr.has(v));
+    const label = document.getElementById(`clusterKeepLabel_${ci}`);
+    if (label) {
+        label.textContent = excluded.length > 0 ? `${excluded.length} excluded` : 'all kept';
+        label.className   = excluded.length > 0
+            ? 'text-warning font-weight-bold small'
+            : 'text-success font-weight-bold small';
+    }
+
+    updateStep4KeepCount();
+    _renderCorrelationOverlay(_currentOverlayMode);
+}
+
+// ── Render redundancy cluster cards ──────────────────────────────────────────
+function renderRedundancyClusters(clusters, hubScores, corrMatrix, varNames) {
+    const container = document.getElementById('redundancyClusters');
+    if (!container) return;
+
+    _clusterData = clusters;
+
+    if (!clusters.length) {
+        container.innerHTML = '<div class="alert alert-success py-2 small">No redundant variable pairs found at the current threshold. All variables are suitable for PCA.</div>';
+        updateStep4KeepCount();
+        return;
+    }
+
+    // Global auto-select + reset buttons
+    const globalBtn = `<div class="d-flex justify-content-end mb-2" style="gap:0.4rem;">
+        <button id="autoSelectAllBtn" class="btn btn-sm btn-outline-primary">
+            <i class="fa fa-magic mr-1"></i>Keep least redundant in all clusters
+        </button>
+        <button id="resetAllClustersBtn" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-undo mr-1"></i>Reset all
+        </button>
+    </div>`;
+
+    // Sort variables within each cluster by hub score descending (most redundant first)
+    const clusterCards = clusters.map((comp, ci) => {
+        const sorted = [...comp].sort((a, b) => (hubScores[b] || 0) - (hubScores[a] || 0));
+        const rows = sorted.map(v => {
+            const vEsc  = v.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+            const vAttr = v.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+            return `<tr>
+                <td class="py-1 px-2 small">
+                    <label class="mb-0 d-flex align-items-center" style="gap:0.35rem;">
+                        <input type="checkbox" class="cluster-var-cb" value="${vAttr}"
+                            data-cluster-idx="${ci}" checked>
+                        ${vEsc}
+                    </label>
+                </td>
+                <td class="py-1 px-2 small text-center text-muted">${(hubScores[v] || 0).toFixed(2)}</td>
+                <td class="py-1 px-2 small text-center">
+                    <span class="badge badge-success cb-badge">Keep</span>
+                </td>
+            </tr>`;
+        }).join('');
+
+        // Short variable list preview shown in collapsed header
+        const preview = sorted.map(v => v.replace(/&/g, '&amp;').replace(/</g, '&lt;')).join(' · ');
+
+        return `<div class="card mb-2 border-warning">
+            <div class="card-header py-1 px-2 d-flex justify-content-between align-items-center"
+                 style="background:#fff8e1;">
+                <span class="d-flex align-items-center flex-grow-1 mr-2"
+                      style="cursor:pointer; min-width:0;"
+                      data-toggle="collapse" data-target="#clusterBody_${ci}" aria-expanded="false">
+                    <i class="fa fa-chevron-right mr-1 small cluster-chevron" style="transition:transform 0.2s; flex-shrink:0;"></i>
+                    <span class="font-weight-bold small mr-1">Cluster ${ci + 1}</span>
+                    <small class="text-muted mr-2">(${comp.length} variables)</small>
+                    <small class="text-muted text-truncate" style="font-size:0.75em;">${preview}</small>
+                </span>
+                <div class="d-flex align-items-center flex-shrink-0" style="gap:0.3rem;">
+                    <small id="clusterKeepLabel_${ci}" class="text-success font-weight-bold mr-1">all kept</small>
+                    <button class="btn btn-sm btn-outline-primary cluster-auto-btn py-0 px-1"
+                            data-cluster-idx="${ci}" style="font-size:0.72rem;">
+                        <i class="fa fa-magic mr-1"></i>Keep least redundant
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary cluster-reset-btn py-0 px-1"
+                            data-cluster-idx="${ci}" style="font-size:0.72rem;">
+                        <i class="fa fa-undo mr-1"></i>Reset
+                    </button>
+                </div>
+            </div>
+            <div id="clusterBody_${ci}" class="collapse">
+                <div class="card-body p-2">
+                    <table class="table table-sm mb-2" style="font-size:0.82rem;">
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="py-1">Variable</th>
+                                <th class="py-1 text-center"
+                                    title="Sum of |r| with all other cluster members — higher = more redundant, consider removing">
+                                    Hub Score <i class="fa fa-info-circle text-muted" style="font-size:0.8em;"></i>
+                                </th>
+                                <th class="py-1 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <div id="clusterHeatmap_${ci}" style="width:100%; overflow:hidden;"></div>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    container.innerHTML = globalBtn + clusterCards.join('');
+
+    // Render mini sub-heatmaps for each cluster (deferred so collapse div exists in DOM)
+    clusters.forEach((comp, ci) => {
+        // Wait for Bootstrap collapse to attach, then render on first open
+        const collapseEl = document.getElementById(`clusterBody_${ci}`);
+        if (collapseEl) {
+            let rendered = false;
+            $(collapseEl)
+            .on('show.bs.collapse', function () {
+                const chevron = collapseEl.closest('.card')?.querySelector('.cluster-chevron');
+                if (chevron) chevron.style.transform = 'rotate(90deg)';
+            })
+            .on('shown.bs.collapse', function () {
+                if (!rendered) {
+                    rendered = true;
+                    _renderClusterSubHeatmap(`clusterHeatmap_${ci}`, comp, corrMatrix, varNames);
+                }
+            })
+            .on('hide.bs.collapse', function () {
+                const chevron = collapseEl.closest('.card')?.querySelector('.cluster-chevron');
+                if (chevron) chevron.style.transform = '';
+            });
+        }
+    });
+
+    // Event delegation — set up only once
+    if (!container._clusterListenerAttached) {
+        container._clusterListenerAttached = true;
+
+        container.addEventListener('click', function(e) {
+            // Per-cluster "Keep least redundant" button
+            const perAutoBtn = e.target.closest('button.cluster-auto-btn');
+            if (perAutoBtn) {
+                _applyClusterAutoSelect(parseInt(perAutoBtn.dataset.clusterIdx, 10));
+                return;
+            }
+            // Per-cluster "Reset" button
+            const perResetBtn = e.target.closest('button.cluster-reset-btn');
+            if (perResetBtn) {
+                _resetClusterSelection(parseInt(perResetBtn.dataset.clusterIdx, 10));
+                return;
+            }
+            // Global "Keep least redundant in all clusters"
+            if (e.target.closest('#autoSelectAllBtn')) {
+                _clusterData.forEach((_, ci) => _applyClusterAutoSelect(ci));
+                return;
+            }
+            // Global "Reset all clusters"
+            if (e.target.closest('#resetAllClustersBtn')) {
+                _clusterData.forEach((_, ci) => _resetClusterSelection(ci));
+            }
+        });
+
+        container.addEventListener('change', function(e) {
+            const cb = e.target.closest('input.cluster-var-cb');
+            if (!cb) return;
+            const ci = parseInt(cb.dataset.clusterIdx, 10);
+            const v  = cb.value;
+            if (cb.checked) excludedVarsFromCorr.delete(v);
+            else            excludedVarsFromCorr.add(v);
+            // Update badge in same row
+            const badge = cb.closest('tr')?.querySelector('.cb-badge');
+            if (badge) {
+                badge.textContent = cb.checked ? 'Keep' : 'Exclude';
+                badge.className   = cb.checked ? 'badge badge-success cb-badge' : 'badge badge-secondary cb-badge';
+            }
+            // Update cluster header label
+            const clusterVars = _clusterData[ci] || [];
+            const excluded = clusterVars.filter(v2 => excludedVarsFromCorr.has(v2));
+            const label = document.getElementById(`clusterKeepLabel_${ci}`);
+            if (label) {
+                if (excluded.length === 0) {
+                    label.textContent = 'all kept';
+                    label.className = 'text-success font-weight-bold small';
+                } else {
+                    label.textContent = `${excluded.length} excluded`;
+                    label.className = 'text-warning font-weight-bold small';
+                }
+            }
+            updateStep4KeepCount();
+            _renderCorrelationOverlay(_currentOverlayMode);
+        });
+    }
+
+    initExcludedFromClusters();
+    updateStep4KeepCount();
+}
+
+// ── Correlation overlay heatmap ───────────────────────────────────────────────
+function _renderCorrelationOverlay(mode) {
+    mode = mode || 'all';
+    _currentOverlayMode = mode;
+
+    const overlayDiv = document.getElementById('corrHeatmapOverlay');
+    if (!overlayDiv || !lastCorrResults) return;
+
+    const { variables, corr_matrix } = lastCorrResults;
+    if (!variables || !corr_matrix) return;
+
+    const excluded = [...excludedVarsFromCorr];
+    const displayVars = mode === 'hide'
+        ? variables.filter(v => !excludedVarsFromCorr.has(v))
+        : variables;
+
+    const displayMatrix = displayVars.map(rv => {
+        const ri = variables.indexOf(rv);
+        return displayVars.map(cv => {
+            const ci = variables.indexOf(cv);
+            return corr_matrix[ri] !== undefined ? (corr_matrix[ri][ci] !== undefined ? corr_matrix[ri][ci] : null) : null;
+        });
+    });
+
+    const colorSchemeEl = document.getElementById('corrColorScheme');
+    const colorscale = CORR_COLORSCALES[colorSchemeEl?.value] || CORR_COLORSCALES.RdBu;
+
+    const trace = {
+        type: 'heatmap',
+        z: displayMatrix,
+        x: displayVars,
+        y: displayVars,
+        colorscale,
+        zmin: -1, zmax: 1,
+        showscale: true,
+        hovertemplate: '<b>%{y}</b> vs <b>%{x}</b>: %{z:.3f}<extra></extra>',
+    };
+
+    const shapes = [];
+    if (mode === 'all') {
+        excluded.forEach(ev => {
+            const idx = displayVars.indexOf(ev);
+            if (idx < 0) return;
+            shapes.push({ type: 'rect', xref: 'x', yref: 'y',
+                x0: idx - 0.5, x1: idx + 0.5,
+                y0: -0.5, y1: displayVars.length - 0.5,
+                fillcolor: 'rgba(80,80,80,0.55)', line: { width: 0 } });
+            shapes.push({ type: 'rect', xref: 'x', yref: 'y',
+                x0: -0.5, x1: displayVars.length - 0.5,
+                y0: idx - 0.5, y1: idx + 0.5,
+                fillcolor: 'rgba(80,80,80,0.55)', line: { width: 0 } });
+        });
+    }
+
+    const n = displayVars.length;
+    const contW  = (overlayDiv.parentElement || overlayDiv).offsetWidth || 600;
+    const maxLen = displayVars.reduce((m, v) => Math.max(m, v.length), 0);
+    const ml = Math.min(140, Math.max(50, maxLen * 6));
+    const mb = Math.min(140, Math.max(50, maxLen * 6));
+    const mt = 20; const mr = 20; const CB = 65; // colorbar space
+    const cellPx  = Math.max(1, Math.floor((contW - ml - mr - CB) / n));
+    const figW    = ml + n * cellPx + mr + CB;
+    const figH    = mt + n * cellPx + mb;
+    const axFont = Math.max(7, Math.min(12, Math.floor(cellPx * 0.55)));
+    overlayDiv.style.width = figW + 'px';
+
+    Plotly.react(overlayDiv, [trace], {
+        width: figW, height: figH,
+        margin: { l: ml, r: mr + CB, t: mt, b: mb },
+        shapes,
+        xaxis: { tickangle: -45, tickfont: { size: axFont }, automargin: true },
+        yaxis: { autorange: 'reversed', tickfont: { size: axFont }, automargin: true },
+    }, { responsive: false });
+}
+
+// ── Overlay toggle buttons ────────────────────────────────────────────────────
+(function () {
+    ['overlayShowAll', 'overlayHideExcluded'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            ['overlayShowAll', 'overlayHideExcluded'].forEach(b => {
+                const el = document.getElementById(b);
+                if (el) el.classList.remove('active');
+            });
+            this.classList.add('active');
+            const modeMap = { overlayShowAll: 'all', overlayHideExcluded: 'hide' };
+            _renderCorrelationOverlay(modeMap[id]);
+        });
+    });
+})();
+
+// ── Reset reduction selections ────────────────────────────────────────────────
+(function () {
+    const btn = document.getElementById('resetReductionBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        if (!lastCorrResults) return;
+        const { variables, corr_matrix } = lastCorrResults;
+        const threshold = parseFloat(document.getElementById('step4Threshold').value) || 0.80;
+        const clusters = connectedComponents(corr_matrix, variables, threshold);
+        const hubScores = computeHubScores(corr_matrix, variables, threshold);
+        renderRedundancyClusters(clusters, hubScores, corr_matrix, variables);
+        _renderCorrelationOverlay(_currentOverlayMode);
+    });
+})();
+
+// ── Send to PCA button (Step 4 → Step 5) ─────────────────────────────────────
+(function () {
+    const btn = document.getElementById('sendToPcaBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        const selectedVars = _currentSelectedVars();
+        const toSend = selectedVars.filter(v => !excludedVarsFromCorr.has(v));
+
+        // Uncheck excluded vars in sidebar
+        document.querySelectorAll('.var-check').forEach(cb => {
+            if (excludedVarsFromCorr.has(cb.value)) cb.checked = false;
+        });
+
+        // Unlock PCA / PLS / OPLS sub-tabs now that variables are confirmed
+        _unlockSubTab('pca-tab');
+        _unlockSubTab('pls-subtab');
+        _unlockSubTab('opls-subtab');
+
+        // Switch to Multivariate category then activate PCA sub-tab
+        _switchCategory('multivariate');
+        const pcaTab = document.getElementById('pca-tab');
+        if (pcaTab) pcaTab.click();
+
+        // Show notification in PCA panel
+        const pcaResults = document.getElementById('pcaResults');
+        if (pcaResults) {
+            pcaResults.innerHTML = `
+                <div class="alert alert-success fade show py-2 small mb-2" role="alert">
+                    <i class="fa fa-check-circle mr-1"></i>
+                    <strong>${toSend.length} variable${toSend.length !== 1 ? 's' : ''} received from Correlation analysis</strong>
+                    (${excludedVarsFromCorr.size} excluded as redundant from Step 4).
+                    Review the variable list above — you can re-check any variable.
+                    <a href="#" class="ml-2 small" id="backToVarReductionLink">
+                        <i class="fa fa-arrow-left mr-1"></i>Back to variable selection
+                    </a>
+                </div>`;
+            // Wire up back-link: switch to Correlation tab and scroll to Step 4
+            const backLink = document.getElementById('backToVarReductionLink');
+            if (backLink) {
+                backLink.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    _switchCategory('multivariate');
+                    const corrTab = document.getElementById('corr-tab');
+                    if (corrTab) corrTab.click();
+                    setTimeout(() => {
+                        const step4 = document.getElementById('pipelineStep4');
+                        if (step4 && step4.style.display !== 'none') {
+                            step4.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 150);
+                });
+            }
+        }
+
+        // Track which vars came from correlation
+        pcaVarsFromCorr = new Set(toSend);
+        _updateCorrStepper();
+
+        // Update coverage diagnostic and PCA preview
+        const vars = Array.from(document.querySelectorAll('.var-check:checked'))
+            .filter(cb => !cb.disabled).map(cb => cb.value);
+        _renderCoverageDiagnostic(vars);
+        _renderPCADataPreview();
+    });
+})();
+
+// ── "Proceed to Variable Reduction" button (Step 3 → Step 4) ─────────────────
+(function () {
+    const btn = document.getElementById('toStep4Btn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        if (!lastCorrResults) return;
+        const { variables, corr_matrix } = lastCorrResults;
+        const threshold = parseFloat(document.getElementById('step4Threshold').value) || 0.80;
+
+        const clusters = connectedComponents(corr_matrix, variables, threshold);
+        const hubScores = computeHubScores(corr_matrix, variables, threshold);
+
+        const step4Panel = document.getElementById('pipelineStep4');
+        if (step4Panel) {
+            step4Panel.style.display = 'block';
+            step4Panel.classList.remove('pipeline-locked');
+            const summary = document.getElementById('step4Summary');
+            if (summary) {
+                summary.textContent = clusters.length > 0
+                    ? `${clusters.length} redundancy cluster${clusters.length !== 1 ? 's' : ''} found`
+                    : 'No redundant clusters at this threshold';
+            }
+        }
+
+        // Show action bar below accordion; hide this button
+        const actionBar = document.getElementById('step4ActionBar');
+        if (actionBar) actionBar.style.cssText = 'display:flex!important; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem;';
+        btn.classList.add('d-none');
+
+        renderRedundancyClusters(clusters, hubScores, corr_matrix, variables);
+        _renderCorrelationOverlay('all');
+
+        if (step4Panel) step4Panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+})();
+
+// ── Re-render Step 4 when threshold input changes ─────────────────────────────
+(function () {
+    const input = document.getElementById('step4Threshold');
+    if (!input) return;
+    function _recomputeStep4() {
+        if (!lastCorrResults) return;
+        const { variables, corr_matrix } = lastCorrResults;
+        const threshold = parseFloat(input.value) || 0.80;
+        const clusters  = connectedComponents(corr_matrix, variables, threshold);
+        const hubScores = computeHubScores(corr_matrix, variables, threshold);
+        const summary   = document.getElementById('step4Summary');
+        if (summary) {
+            summary.textContent = clusters.length > 0
+                ? `${clusters.length} redundancy cluster${clusters.length !== 1 ? 's' : ''} found`
+                : 'No redundant clusters at this threshold';
+        }
+        renderRedundancyClusters(clusters, hubScores, corr_matrix, variables);
+        _renderCorrelationOverlay(_currentOverlayMode);
+    }
+    input.addEventListener('change', _recomputeStep4);
+    input.addEventListener('input',  _recomputeStep4);
+})();
+
+// ── Extend runCorrBtn to also reveal toStep4Btn after results arrive ──────────
+(function () {
+    const statusMsg = document.getElementById('corrStatusMsg');
+    if (!statusMsg) return;
+    const observer = new MutationObserver(() => {
+        if (lastCorrResults && lastCorrResults.variables && lastCorrResults.variables.length >= 2) {
+            const btn = document.getElementById('toStep4Btn');
+            if (btn) btn.classList.remove('d-none');
+        }
+    });
+    observer.observe(statusMsg, { childList: true, subtree: true });
+})();
+
+// ── Kaiser criterion renderer ─────────────────────────────────────────────────
+function renderKaiserCriterion(explainedVariance) {
+    const kaiserEl = document.getElementById('kaiserCriterion');
+    const kaiserText = document.getElementById('kaiserText');
+    if (!kaiserEl || !kaiserText) return;
+    if (!explainedVariance || !explainedVariance.length) { kaiserEl.classList.add('d-none'); return; }
+    const nVars = explainedVariance.length;
+    const threshold = 1 / nVars;
+    const retained = explainedVariance.filter(ev => ev !== null && ev > threshold).length;
+    kaiserEl.classList.remove('d-none');
+    kaiserText.textContent = `Retain ${retained} component${retained !== 1 ? 's' : ''} `
+        + `(eigenvalue > 1 rule: components explaining > ${(threshold * 100).toFixed(1)}% variance each)`;
+}
+
+// ── Confidence ellipses ───────────────────────────────────────────────────────
+function computeEllipse(xs, ys, nStd) {
+    nStd = nStd || 2;
+    if (xs.length < 3) return null;
+    const n = xs.length;
+    const mx = xs.reduce((a, b) => a + b, 0) / n;
+    const my = ys.reduce((a, b) => a + b, 0) / n;
+    const covXX = xs.reduce((a, x) => a + (x - mx) ** 2, 0) / n;
+    const covYY = ys.reduce((a, y) => a + (y - my) ** 2, 0) / n;
+    const covXY = xs.reduce((a, x, i) => a + (x - mx) * (ys[i] - my), 0) / n;
+    const tr = covXX + covYY;
+    const det = covXX * covYY - covXY * covXY;
+    const disc = Math.max(0, tr ** 2 / 4 - det);
+    const l1 = tr / 2 + Math.sqrt(disc);
+    const l2 = tr / 2 - Math.sqrt(disc);
+    const angle = Math.atan2(l1 - covXX, covXY);
+    const t = Array.from({ length: 100 }, (_, i) => (i / 99) * 2 * Math.PI);
+    const ellX = t.map(a =>
+        mx + nStd * Math.sqrt(Math.max(0, l1)) * Math.cos(a) * Math.cos(angle)
+           - nStd * Math.sqrt(Math.max(0, l2)) * Math.sin(a) * Math.sin(angle));
+    const ellY = t.map(a =>
+        my + nStd * Math.sqrt(Math.max(0, l1)) * Math.cos(a) * Math.sin(angle)
+           + nStd * Math.sqrt(Math.max(0, l2)) * Math.sin(a) * Math.cos(angle));
+    return { x: ellX, y: ellY };
+}
+
+
+function _renderPcaEllipsesToggle(pcaResults, showEllipses) {
+    const plotDiv = document.getElementById('pcaPlot');
+    if (!plotDiv || !pcaResults || !pcaResults.scores) return;
+
+    const scores = pcaResults.scores;
+    const groups = [...new Set(scores.map(s => s.group))];
+    const gd = plotDiv;
+    if (!gd.data) return;
+
+    const existingTraces = gd.data.filter(t => !t._isEllipse);
+
+    if (!showEllipses) {
+        Plotly.react(plotDiv, existingTraces, gd.layout, { responsive: true });
+        return;
+    }
+
+    const ellipseTraces = [];
+    groups.forEach(grp => {
+        const pts = scores.filter(s => s.group === grp);
+        const xs = pts.map(p => p.PC1).filter(v => v !== null && v !== undefined);
+        const ys = pts.map(p => p.PC2).filter(v => v !== null && v !== undefined);
+        const ell = computeEllipse(xs, ys, 2);
+        if (!ell) return;
+        const baseTrace = existingTraces.find(t => t.name === grp);
+        const color = baseTrace && baseTrace.marker ? baseTrace.marker.color : '#aaaaaa';
+        ellipseTraces.push({
+            type: 'scatter', mode: 'lines',
+            x: [...ell.x, ell.x[0]], y: [...ell.y, ell.y[0]],
+            name: grp + ' (95% CI)',
+            showlegend: false,
+            _isEllipse: true,
+            line: { color, width: 1.5, dash: 'dash' },
+            hoverinfo: 'skip',
+        });
+    });
+
+    Plotly.react(plotDiv, [...existingTraces, ...ellipseTraces], gd.layout, { responsive: true });
+}
+
+// ── Hook Kaiser criterion display into PCA results rendering ──────────────────
+(function () {
+    const pcaResultsEl = document.getElementById('pcaResults');
+    if (!pcaResultsEl) return;
+    const observer = new MutationObserver(() => {
+        if (lastPCAResults && lastPCAResults.explained_variance) {
+            renderKaiserCriterion(lastPCAResults.explained_variance);
+        }
+    });
+    observer.observe(pcaResultsEl, { childList: true, subtree: true });
+})();
+
+// ─────────────────────────────────────────────────────────────────────────────

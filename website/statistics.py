@@ -414,6 +414,144 @@ def confidence_ellipse(x, y, ax, n_std=2.0, facecolor: Any = 'none', **kwargs):
     ellipse.set_transform(transf + ax.transData)
     return ax.add_patch(ellipse)
 
+def _nipals_pca(X, n_components, max_iter=500, tol=1e-6):
+    """
+    NIPALS PCA — handles missing data (NaN) natively without any imputation.
+    X must be standardised (nanmean≈0, nanstd≈1 per column) but may contain NaN.
+    Returns: T (n×k scores), P (p×k loadings), eigenvalues (k,), evr (k,).
+    """
+    X = X.copy().astype(float)
+    n, p = X.shape
+    T = np.zeros((n, n_components))
+    P = np.zeros((p, n_components))
+    total_ss = float(np.nansum(X ** 2))
+    # Save the original observed mask before any deflation — needed for correct
+    # explained-variance calculation (we measure SS only at originally-observed positions).
+    obs_orig = ~np.isnan(X)
+
+    for k in range(n_components):
+        # Initialise score vector with the column that has the most observed values
+        best_col = int(np.argmax(np.sum(~np.isnan(X), axis=0)))
+        t = np.where(np.isnan(X[:, best_col]), 0.0, X[:, best_col])
+        p_vec = np.zeros(p)  # initialised here so it is always bound after the loop
+
+        for _ in range(max_iter):
+            # Loading step: p_j = X[:,j]' t / t' t  (only observed rows of col j)
+            p_vec = np.zeros(p)
+            for j in range(p):
+                obs = ~np.isnan(X[:, j])
+                if obs.sum() > 0:
+                    denom = float(np.dot(t[obs], t[obs]))
+                    if denom > 0:
+                        p_vec[j] = float(np.dot(X[obs, j], t[obs])) / denom
+
+            p_norm = float(np.linalg.norm(p_vec))
+            if p_norm < 1e-12:
+                break
+            p_vec /= p_norm
+
+            # Score step: t_i = X[i,:] p / p' p  (only observed cols of row i)
+            t_new = np.zeros(n)
+            for i in range(n):
+                obs = ~np.isnan(X[i, :])
+                if obs.sum() > 0:
+                    denom = float(np.dot(p_vec[obs], p_vec[obs]))
+                    if denom > 0:
+                        t_new[i] = float(np.dot(X[i, obs], p_vec[obs])) / denom
+
+            t_norm = float(np.linalg.norm(t))
+            if t_norm > 0 and float(np.linalg.norm(t_new - t)) / t_norm < tol:
+                t = t_new
+                break
+            t = t_new
+
+        T[:, k] = t
+        P[:, k] = p_vec
+
+        # Deflate: subtract the rank-1 contribution from observed positions only
+        outer = np.outer(t, p_vec)
+        X[obs_orig] -= outer[obs_orig]
+
+    # Explained variance: SS of each rank-1 reconstruction at originally-observed
+    # positions divided by total SS of the original standardised matrix.
+    # Using ||t||² would be wrong with missing data — rows with more observed
+    # variables get higher scores, inflating the estimate above 100%.
+    ss_comp = np.array([
+        float(np.sum(np.outer(T[:, k], P[:, k])[obs_orig] ** 2))
+        for k in range(n_components)
+    ])
+    eigenvalues = ss_comp / max(n - 1, 1)
+    evr = ss_comp / total_ss if total_ss > 0 else np.zeros(n_components)
+    return T, P, eigenvalues, evr
+
+
+def _em_pca(X, n_components, max_iter=200, tol=1e-5):
+    """
+    EM-PCA (iterative SVD / PPCA-lite) — handles missing data natively.
+    Iteratively reconstructs missing values from the current PCA model until convergence.
+    No imputation bias: missing values are constrained only by the low-rank structure.
+    X must be standardised (nanmean≈0, nanstd≈1 per column) but may contain NaN.
+    Returns: T (n×k scores), P (p×k loadings), eigenvalues (k,), evr (k,).
+    """
+    X = X.copy().astype(float)
+    n, p = X.shape
+    missing_mask = np.isnan(X)
+    # Save the original observed mask and observed SS before any imputation.
+    # We measure explained variance relative to the original observed data only,
+    # consistent with the NIPALS fix — using the full imputed matrix as denominator
+    # would underestimate evr by roughly the fraction of missing cells.
+    obs_orig    = ~missing_mask
+    total_ss    = float(np.nansum(X ** 2))
+
+    # Initialise missing positions with column means (observed only)
+    col_means = np.nanmean(X, axis=0)
+    col_means = np.where(np.isnan(col_means), 0.0, col_means)
+    X_imp = X.copy()
+    for j in range(p):
+        X_imp[missing_mask[:, j], j] = col_means[j]
+
+    prev_vals = X_imp[missing_mask].copy() if missing_mask.any() else np.array([])
+
+    for _ in range(max_iter):
+        try:
+            U, S, Vt = np.linalg.svd(X_imp, full_matrices=False)
+        except np.linalg.LinAlgError:
+            break
+
+        k = n_components
+        X_recon = (U[:, :k] * S[:k]) @ Vt[:k, :]
+
+        if missing_mask.any():
+            X_imp[missing_mask] = X_recon[missing_mask]
+
+            curr_vals = X_imp[missing_mask]
+            if prev_vals.size > 0:
+                scale = float(np.linalg.norm(prev_vals)) + 1e-10
+                if float(np.linalg.norm(curr_vals - prev_vals)) / scale < tol:
+                    break
+            prev_vals = curr_vals.copy()
+        else:
+            break  # No missing data — one pass is sufficient
+
+    # Final decomposition on converged matrix
+    U, S, Vt = np.linalg.svd(X_imp, full_matrices=False)
+    k = n_components
+    T = U[:, :k] * S[:k]           # n × k scores
+    P = Vt[:k, :].T                 # p × k loadings (unit-length columns)
+
+    # Explained variance: SS of each rank-1 reconstruction at originally-observed
+    # positions only, divided by the original observed SS — same basis as NIPALS.
+    # X_imp[obs_orig] == X_original[obs_orig] exactly (EM only fills missing cells),
+    # so the sum of all components' ss at obs_orig equals total_ss, bounding evr ≤ 1.
+    ss_comp = np.array([
+        float(np.sum(np.outer(T[:, k_], P[:, k_])[obs_orig] ** 2))
+        for k_ in range(n_components)
+    ])
+    eigenvalues = ss_comp / max(n - 1, 1)
+    evr = ss_comp / total_ss if total_ss > 0 else np.zeros(k)
+    return T, P, eigenvalues, evr
+
+
 @stats_bp.route('/run-pca', methods=['POST'])
 def run_pca():
     try:
@@ -423,28 +561,63 @@ def run_pca():
         if not ok:
             return jsonify({"error": err}), 400
         df = pd.DataFrame(data)
-        factors = request_data.get('factors', [])
-        selected_vars = request_data.get('variables', [])
-
-        # Capture preferences
+        factors        = request_data.get('factors', [])
+        selected_vars  = list(request_data.get('variables', []))
+        pca_method     = request_data.get('pca_method', 'svd')          # 'svd' | 'nipals' | 'em_pca'
         missing_strategy  = request_data.get('missing_strategy', 'hybrid')
         missing_threshold = float(request_data.get('missing_threshold', 30)) / 100.0
+        min_row_coverage  = float(request_data.get('min_row_coverage', 0)) / 100.0
         average_by_factors = request_data.get('average_by_factors', False)
-        plot_loadings = request_data.get('plot_loadings', True)
-        label_col = request_data.get('label_col', None) or None  # column to use as sample labels
+        label_col = request_data.get('label_col', None) or None
 
-        # 1. Robust Numeric Cleaning
+        # ── 1. Numeric coercion ──────────────────────────────────────────────
         clean_df = df.copy()
         for var in selected_vars:
             clean_df[var] = pd.to_numeric(clean_df[var], errors='coerce')
 
-        n_input_rows   = len(clean_df)
-        vars_excluded  = []
+        n_input_rows    = len(clean_df)
+        vars_excluded   = []
         n_imputed_cells = 0
-        rows_dropped   = 0
+        rows_dropped    = 0
+        rows_sparse_dropped = 0
 
-        # 2. Apply missing-data strategy
-        if missing_strategy == 'drop_rows':
+        # ── 1c. Per-variable transforms (applied before imputation) ──────────
+        per_var_transforms: dict = request_data.get('per_var_transforms') or {}
+        if per_var_transforms:
+            clean_df = _apply_per_var_transforms(clean_df, per_var_transforms, selected_vars)
+
+        # ── 1b. Row sparsity filter (shared with correlation) ────────────────
+        if min_row_coverage > 0 and selected_vars:
+            n_sel = len(selected_vars)
+            coverage = clean_df[selected_vars].notna().sum(axis=1) / n_sel
+            before_sparse = len(clean_df)
+            clean_df = clean_df[coverage >= min_row_coverage].copy()
+            rows_sparse_dropped = before_sparse - len(clean_df)
+
+        # ── 2. Missing-data handling ─────────────────────────────────────────
+        native_missing = pca_method in ('nipals', 'em_pca')
+
+        if native_missing:
+            # NIPALS / EM-PCA handle NaN natively — only apply variable exclusion
+            # to drop columns that are almost entirely missing (>threshold).
+            n_rows = len(clean_df)
+            for var in list(selected_vars):
+                frac = clean_df[var].isna().sum() / n_rows if n_rows > 0 else 0
+                if frac > missing_threshold:
+                    vars_excluded.append(var)
+            selected_vars = [v for v in selected_vars if v not in vars_excluded]
+            if len(selected_vars) < 2:
+                return jsonify({"error": (
+                    f"Too many variables excluded by the missing-value threshold "
+                    f"({missing_threshold*100:.0f}%). Only {len(selected_vars)} variable(s) "
+                    "remain. Lower the threshold or deselect sparse variables."
+                )}), 400
+            # Drop rows where ALL selected variables are missing (uninformative rows)
+            before = len(clean_df)
+            clean_df = clean_df[clean_df[selected_vars].notna().any(axis=1)].copy()
+            rows_dropped = before - len(clean_df)
+
+        elif missing_strategy == 'drop_rows':
             before = len(clean_df)
             clean_df = clean_df.dropna(subset=selected_vars).copy()
             rows_dropped = before - len(clean_df)
@@ -457,7 +630,6 @@ def run_pca():
                         group_means = clean_df.groupby(factors)[var].transform('mean')
                         n_imputed_cells += int(mask.sum())
                         clean_df.loc[mask, var] = group_means[mask]
-            # Fall back to overall column mean for any remaining NaN
             for var in selected_vars:
                 mask = clean_df[var].isna()
                 if mask.any():
@@ -472,7 +644,11 @@ def run_pca():
                     vars_excluded.append(var)
             selected_vars = [v for v in selected_vars if v not in vars_excluded]
             if len(selected_vars) < 2:
-                return jsonify({"error": f"Too many variables excluded by the missing-value threshold ({missing_threshold*100:.0f}%). Only {len(selected_vars)} variable(s) remain. Lower the threshold or choose a different strategy."}), 400
+                return jsonify({"error": (
+                    f"Too many variables excluded by the missing-value threshold "
+                    f"({missing_threshold*100:.0f}%). Only {len(selected_vars)} variable(s) "
+                    "remain. Lower the threshold or choose a different strategy."
+                )}), 400
             before = len(clean_df)
             clean_df = clean_df.dropna(subset=selected_vars).copy()
             rows_dropped = before - len(clean_df)
@@ -493,8 +669,11 @@ def run_pca():
                     vars_excluded.append(var)
             selected_vars = [v for v in selected_vars if v not in vars_excluded]
             if len(selected_vars) < 2:
-                return jsonify({"error": f"Too many variables excluded by the missing-value threshold ({missing_threshold*100:.0f}%). Only {len(selected_vars)} variable(s) remain. Lower the threshold or choose a different strategy."}), 400
-            # Impute remaining sparse missing values: group mean → column mean fallback
+                return jsonify({"error": (
+                    f"Too many variables excluded by the missing-value threshold "
+                    f"({missing_threshold*100:.0f}%). Only {len(selected_vars)} variable(s) "
+                    "remain. Lower the threshold or choose a different strategy."
+                )}), 400
             if factors:
                 for var in selected_vars:
                     mask = clean_df[var].isna()
@@ -508,19 +687,36 @@ def run_pca():
                     n_imputed_cells += int(mask.sum())
                     clean_df.loc[mask, var] = clean_df[var].mean()
 
-        # Option: Average replicates by factor values
+        # Average replicates before PCA if requested
         if average_by_factors and factors:
             clean_df = clean_df.groupby(factors)[selected_vars].mean().reset_index()
 
-        # Safety net: drop any rows still containing NaN (should be none after strategies above)
-        clean_df = clean_df.dropna(subset=selected_vars).copy()
+        # For SVD path: drop rows still containing NaN after strategy
+        if not native_missing:
+            clean_df = clean_df.dropna(subset=selected_vars).copy()
 
         if len(clean_df) < 2:
             return jsonify({"error": "Insufficient data: PCA requires at least 2 valid samples after applying the missing-data strategy."}), 400
         if len(selected_vars) < 2:
             return jsonify({"error": "PCA requires at least 2 variables."}), 400
 
-        # 2. Factor Handling
+        # SVD-path diagnostics (not needed for native-missing methods)
+        if not native_missing:
+            still_nan = [v for v in selected_vars if clean_df[v].isna().any()]
+            if still_nan:
+                return jsonify({"error": (
+                    f"Variable(s) still contain missing values after imputation — "
+                    f"likely all values in a factor group are missing: {', '.join(still_nan)}. "
+                    "Try a different strategy or increase the exclusion threshold."
+                )}), 400
+            zero_var = [v for v in selected_vars if clean_df[v].std() == 0]
+            if zero_var:
+                return jsonify({"error": (
+                    f"Variable(s) have zero variance (all identical values): "
+                    f"{', '.join(zero_var)}. Please exclude them from PCA."
+                )}), 400
+
+        # ── 3. Factor labels ─────────────────────────────────────────────────
         if factors:
             for f in factors:
                 clean_df[f] = clean_df[f].astype(str).replace(['nan', 'None'], "N/A")
@@ -529,51 +725,91 @@ def run_pca():
         else:
             hue_col = None
 
-        # 3. PCA Calculation
-        scaler = StandardScaler()
-        scaled_data = scaler.fit_transform(clean_df[selected_vars])
+        # ── 4. PCA decomposition ─────────────────────────────────────────────
         n_comp = min(4, len(selected_vars), len(clean_df) - 1)
-        pca = PCA(n_components=n_comp)
-        pca_features = pca.fit_transform(scaled_data)
+
+        def _safe_f(x):
+            f = float(x)
+            return None if (f != f or f == float('inf') or f == float('-inf')) else f
+
+        if pca_method == 'nipals':
+            # Standardise using observed values only (nanmean / nanstd)
+            col_means = np.nanmean(clean_df[selected_vars].values, axis=0)
+            col_stds  = np.nanstd(clean_df[selected_vars].values, axis=0, ddof=1)
+            col_stds  = np.where(col_stds < 1e-10, 1.0, col_stds)
+            X_sc = (clean_df[selected_vars].values.astype(float) - col_means) / col_stds
+            T_mat, P_mat, eigenvalues, evr = _nipals_pca(X_sc, n_comp)
+            loadings = P_mat * np.sqrt(np.maximum(eigenvalues, 0))
+            pca_features = T_mat
+
+        elif pca_method == 'em_pca':
+            col_means = np.nanmean(clean_df[selected_vars].values, axis=0)
+            col_stds  = np.nanstd(clean_df[selected_vars].values, axis=0, ddof=1)
+            col_stds  = np.where(col_stds < 1e-10, 1.0, col_stds)
+            X_sc = (clean_df[selected_vars].values.astype(float) - col_means) / col_stds
+            T_mat, P_mat, eigenvalues, evr = _em_pca(X_sc, n_comp)
+            loadings = P_mat * np.sqrt(np.maximum(eigenvalues, 0))
+            pca_features = T_mat
+
+        else:  # svd (sklearn)
+            scaler = StandardScaler()
+            scaled_data = scaler.fit_transform(clean_df[selected_vars])
+            pca = PCA(n_components=n_comp)
+            pca_features = pca.fit_transform(scaled_data)
+            loadings = pca.components_.T * np.sqrt(pca.explained_variance_)
+            evr = pca.explained_variance_ratio_
 
         for k in range(n_comp):
             clean_df[f'PC{k + 1}'] = pca_features[:, k]
 
-        # 4. Loadings (arrows data — plotting now done in frontend)
-        loadings = pca.components_.T * np.sqrt(pca.explained_variance_)
+        # ── 5. NaN guard on loadings ─────────────────────────────────────────
+        nan_loading_vars = [
+            var for i, var in enumerate(selected_vars)
+            if any(np.isnan(loadings[i, k]) for k in range(n_comp))
+        ]
+        if nan_loading_vars:
+            return jsonify({"error": (
+                f"PCA produced NaN loadings for: {', '.join(nan_loading_vars)}. "
+                "These variables likely have near-zero variance or are fully collinear. "
+                "Try excluding them or use a different algorithm."
+            ), "nan_variables": nan_loading_vars}), 400
+
         loadings_list = [
-            {**{"Variable": var}, **{f'PC{k + 1}_Loading': float(loadings[i, k]) for k in range(n_comp)}}
+            {**{"Variable": var},
+             **{f'PC{k + 1}_Loading': _safe_f(loadings[i, k]) for k in range(n_comp)}}
             for i, var in enumerate(selected_vars)
         ]
 
-        # Build per-row group label for frontend colouring
+        # ── 6. Scores & response ─────────────────────────────────────────────
         pc_cols = [f'PC{k + 1}' for k in range(n_comp)]
         scores = clean_df[pc_cols].copy()
-        if hue_col:
-            scores['group'] = clean_df[hue_col].values
-        else:
-            scores['group'] = 'All samples'
-
-        # Sample labels column (optional)
+        scores['group'] = clean_df[hue_col].values if hue_col else 'All samples'
         if label_col and label_col in clean_df.columns:
             scores['label'] = clean_df[label_col].astype(str).values
         else:
             scores['label'] = [str(i + 1) for i in range(len(clean_df))]
 
-        return jsonify({
-            "n_samples": len(clean_df),
-            "n_input_rows": n_input_rows,
-            "n_components": n_comp,
-            "explained_variance": pca.explained_variance_ratio_.tolist(),
-            "loadings": loadings_list,
-            "scores": scores.to_dict(orient='records'),
-            "pca_table": clean_df.to_dict(orient='records'),
-            "vars_excluded": vars_excluded,
-            "n_imputed_cells": n_imputed_cells,
-            "rows_dropped": rows_dropped,
-            "vars_used": selected_vars,
-            "hue_col": hue_col,
-        })
+        # Cast to object dtype first so that pandas does not silently convert
+        # Python None back to float NaN (which would produce bare NaN in JSON).
+        scores_records    = scores.astype(object).mask(pd.isnull(scores)).to_dict(orient='records')
+        pca_table_records = clean_df.astype(object).mask(pd.isnull(clean_df)).to_dict(orient='records')
+
+        return jsonify(_make_json_safe({
+            "n_samples":        len(clean_df),
+            "n_input_rows":     n_input_rows,
+            "n_components":     n_comp,
+            "pca_method":       pca_method,
+            "explained_variance": [_safe_f(v) for v in evr.tolist()],
+            "loadings":         loadings_list,
+            "scores":           scores_records,
+            "pca_table":        pca_table_records,
+            "vars_excluded":    vars_excluded,
+            "n_imputed_cells":  n_imputed_cells,
+            "rows_dropped":        rows_dropped,
+            "rows_sparse_dropped": rows_sparse_dropped,
+            "vars_used":           selected_vars,
+            "hue_col":             hue_col,
+        }))
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
@@ -811,7 +1047,7 @@ def export_opls_excel():
         r2x = result.get('r2x')
         r2y = result.get('r2y')
         q2 = result.get('q2')
-        ws1['A5'] = f"R\u00b2X = {r2x:.4f}  |  R\u00b2Y = {r2y:.4f}  |  Q\u00b2 = {q2:.4f if q2 is not None else 'N/A'}"
+        ws1['A5'] = f"R\u00b2X = {r2x:.4f}  |  R\u00b2Y = {r2y:.4f}  |  Q\u00b2 = {f'{q2:.4f}' if q2 is not None else 'N/A'}"
 
         # Score table
         header = ['Sample', 'Group', 'T (predictive)', 'T_orth (orthogonal)']
@@ -953,7 +1189,7 @@ def run_pls():
         r2x_per_comp = []
         for k in range(n_components):
             X_rec += T[:, k:k+1] @ P[:, k:k+1].T
-            r2x_per_comp.append(float(np.sum(X_rec ** 2) / x_var_total) if x_var_total > 0 else 0.0)
+            r2x_per_comp.append(float(np.sum(X_rec ** 2)) / float(x_var_total) if x_var_total > 0 else 0.0)
 
         # R²Y
         r2y = float(sk_r2(y, pls.predict(X).ravel()))
@@ -1083,183 +1319,6 @@ def export_pls_excel():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-@stats_bp.route('/run-regression', methods=['POST'])
-def run_regression():
-    try:
-        from scipy.stats import probplot
-        request_data = request.get_json()
-        data = request_data.get('data', [])
-        ok, err = _validate_data_limits(data)
-        if not ok:
-            return jsonify({"error": err}), 400
-        df = pd.DataFrame(data)
-        method = request_data.get('method', 'multiple')   # 'simple' | 'multiple'
-        y_col  = request_data.get('y_col')
-        x_cols = request_data.get('x_cols', [])
-
-        if not y_col:
-            return jsonify({"error": "Response variable (Y) is required."}), 400
-        if not x_cols:
-            return jsonify({"error": "At least one predictor (X) is required."}), 400
-
-        clean_df = df.copy()
-        for col in x_cols:
-            clean_df[col] = pd.to_numeric(clean_df[col], errors='coerce')
-
-        if method in ('simple', 'multiple'):
-            clean_df[y_col] = pd.to_numeric(clean_df[y_col], errors='coerce')
-            clean_df = clean_df.dropna(subset=x_cols + [y_col]).copy()
-        else:
-            clean_df = clean_df.dropna(subset=x_cols).copy()
-
-        # Drop predictors that are entirely NaN or constant after numeric conversion
-        x_cols = [c for c in x_cols
-                  if clean_df[c].notna().sum() >= 2 and clean_df[c].std() > 0]
-        if not x_cols:
-            return jsonify({"error": "No valid numeric predictor variables. Make sure the selected X columns contain numeric data."}), 400
-
-        n = len(clean_df)
-        if n < len(x_cols) + 2:
-            return jsonify({"error": f"Insufficient data: {n} samples but {len(x_cols)} predictors. "
-                                     f"OLS requires more samples than predictors. Deselect some predictors."}), 400
-
-        X_sm = sm.add_constant(clean_df[x_cols].values.astype(float), has_constant='add')
-        col_names = ['Intercept'] + list(x_cols)
-
-        def _diag(model, y_arr):
-            """Build diagnostic arrays from an OLS model."""
-            fitted     = model.fittedvalues.tolist()
-            residuals  = model.resid.tolist()
-            infl       = model.get_influence()
-            std_resid  = infl.resid_studentized_internal.tolist()
-            sqrt_std   = np.sqrt(np.abs(infl.resid_studentized_internal)).tolist()
-            cooks      = infl.cooks_distance[0].tolist()
-            qq_th, qq_s = probplot(model.resid, dist='norm')[0]
-            return {
-                'fitted': fitted, 'residuals': residuals,
-                'std_residuals': std_resid, 'sqrt_abs_std_resid': sqrt_std,
-                'qq_theoretical': qq_th.tolist(), 'qq_sample': qq_s.tolist(),
-                'cooks_d': cooks, 'obs_index': list(range(n)),
-            }
-
-        if method in ('simple', 'multiple'):
-            y = clean_df[y_col].values.astype(float)
-            model = sm.OLS(y, X_sm).fit()
-            ci = model.conf_int()
-            coefficients = [
-                {'name': col_names[i], 'coef': float(model.params[i]),
-                 'std_err': float(model.bse[i]), 't_stat': float(model.tvalues[i]),
-                 'p_value': float(model.pvalues[i]),
-                 'ci_lower': float(np.asarray(ci)[i, 0]), 'ci_upper': float(np.asarray(ci)[i, 1])}
-                for i in range(len(col_names))
-            ]
-            scatter_data = None
-            if method == 'simple':
-                x_vals = clean_df[x_cols[0]].values.astype(float)
-                x_sort_idx = np.argsort(x_vals)
-                x_sorted   = x_vals[x_sort_idx]
-                X_pred     = sm.add_constant(x_sorted, has_constant='add')
-                pred       = model.get_prediction(X_pred)
-                pred_ci    = pred.conf_int()
-                scatter_data = {
-                    'x': x_vals.tolist(), 'y': y.tolist(),
-                    'x_sorted': x_sorted.tolist(),
-                    'fit_line': pred.predicted_mean.tolist(),
-                    'ci_lower': pred_ci[:, 0].tolist(), 'ci_upper': pred_ci[:, 1].tolist(),
-                }
-            return jsonify({
-                'method': method, 'y_col': y_col, 'x_cols': x_cols,
-                'n': n, 'coefficients': coefficients,
-                'r_squared':     float(model.rsquared),
-                'adj_r_squared': float(model.rsquared_adj),
-                'f_stat':   float(model.fvalue)   if not np.isnan(float(model.fvalue))   else None,
-                'f_pvalue': float(model.f_pvalue) if not np.isnan(float(model.f_pvalue)) else None,
-                'aic': float(model.aic), 'bic': float(model.bic),
-                'scatter': scatter_data,
-                'diagnostics': _diag(model, y),
-            })
-
-        else:
-            return jsonify({"error": f"Unknown regression method: {method}"}), 400
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
-
-@stats_bp.route('/export-regression-excel', methods=['POST'])
-def export_regression_excel():
-    try:
-        request_data = request.get_json()
-        result = request_data.get('result', {})
-        images = request_data.get('images', {})  # {scatter/coef/roc/cm/diag: base64}
-
-        output = io.BytesIO()
-        wb = Workbook()
-        method = result.get('method', 'regression')
-        method_str = {'simple': 'Simple Linear Regression', 'multiple': 'Multiple Linear Regression'}.get(method, 'Regression')
-
-        # Sheet 1: Model summary
-        ws1: Worksheet = wb.active  # type: ignore[assignment]
-        ws1.title = 'Model Summary'
-        ws1['A1'] = method_str
-        ws1['A1'].font = Font(bold=True, size=13)
-        ws1['A2'] = f"Y: {result.get('y_col', '')}   X: {', '.join(result.get('x_cols', []))}"
-        ws1['A3'] = f"n = {result.get('n', '')}"
-
-        if method in ('simple', 'multiple'):
-            ws1['A4'] = (f"R² = {result.get('r_squared', 0):.4f}   "
-                         f"Adj-R² = {result.get('adj_r_squared', 0):.4f}   "
-                         f"AIC = {result.get('aic', 0):.2f}   BIC = {result.get('bic', 0):.2f}")
-            if result.get('f_stat'):
-                ws1['A5'] = f"F-stat = {result['f_stat']:.4f}   F p-value = {result['f_pvalue']:.4g}"
-            coef_header = ['Variable', 'Coefficient', 'Std Error', 't-stat', 'p-value', 'CI Lower', 'CI Upper']
-        else:
-            ws1['A4'] = (f"McFadden R² = {result.get('pseudo_r2', 0):.4f}   "
-                         f"AUC = {result.get('roc', {}).get('auc', 0):.4f}   "
-                         f"Accuracy = {result.get('accuracy', 0):.4f}")
-            ws1['A5'] = f"AIC = {result.get('aic', 0):.2f}   BIC = {result.get('bic', 0):.2f}"
-            coef_header = ['Variable', 'Coefficient', 'Std Error', 'z-stat', 'p-value', 'Odds Ratio', 'OR CI Lower', 'OR CI Upper']
-
-        ws1.append([])
-        ws1.append(coef_header)
-        hrow = ws1.max_row
-        for cell in ws1[hrow]:
-            cell.font = Font(bold=True)
-            cell.fill = PatternFill('solid', fgColor='D9E1F2')
-        sig_fill   = PatternFill('solid', fgColor='C6EFCE')
-        insig_fill = PatternFill('solid', fgColor='FFEB9C')
-
-        for coef in result.get('coefficients', []):
-            p = coef.get('p_value', 1)
-            if method in ('simple', 'multiple'):
-                row = [coef['name'], coef['coef'], coef['std_err'],
-                       coef['t_stat'], p, coef['ci_lower'], coef['ci_upper']]
-            else:
-                row = [coef['name'], coef['coef'], coef['std_err'],
-                       coef['z_stat'], p, coef['or'], coef['or_ci_lower'], coef['or_ci_upper']]
-            ws1.append(row)
-            for cell in ws1[ws1.max_row]:
-                cell.fill = sig_fill if p < 0.05 else insig_fill
-
-        # Embed main plot image
-        for key, sheet_name in [('main', 'Main Plot'), ('diag', 'Diagnostics')]:
-            img_b64 = images.get(key)
-            if img_b64:
-                ws_img = wb.create_sheet(sheet_name)
-                img_data = base64.b64decode(img_b64)
-                img = XLImage(io.BytesIO(img_data))
-                ws_img.add_image(img, 'A1')
-
-        wb.save(output)
-        output.seek(0)
-        return send_file(
-            output,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            as_attachment=True,
-            download_name='Regression_Analysis.xlsx'
-        )
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @stats_bp.route('/run-anova', methods=['POST'])
 def run_anova():
@@ -2335,321 +2394,6 @@ def export_full_report():
         return jsonify({"error": str(e)}), 500
 
 
-# ================== CLUSTERING ANALYSIS ==================
-
-@stats_bp.route('/run-clustering', methods=['POST'])
-def run_clustering():
-    try:
-        from sklearn.cluster import KMeans, DBSCAN
-        from sklearn.metrics import silhouette_score as sk_silhouette
-        from sklearn.neighbors import NearestNeighbors
-        from scipy.cluster.hierarchy import (
-            linkage as sp_linkage,
-            dendrogram as sp_dendrogram,
-            fcluster,
-        )
-
-        request_data = request.get_json()
-        data         = request_data.get('data', [])
-        ok, err = _validate_data_limits(data)
-        if not ok:
-            return jsonify({"error": err}), 400
-
-        df          = pd.DataFrame(data)
-        variables   = request_data.get('variables', [])
-        factors     = request_data.get('factors', [])
-        method      = request_data.get('method', 'hierarchical')
-        standardize = request_data.get('standardize', True)
-
-        if len(variables) < 2:
-            return jsonify({"error": "Clustering requires at least 2 variables."}), 400
-
-        for v in variables:
-            df[v] = pd.to_numeric(df[v], errors='coerce')
-        df_clean = df.dropna(subset=variables).copy()
-
-        if len(df_clean) < 3:
-            return jsonify({"error": "Need at least 3 rows after removing missing values."}), 400
-
-        X = df_clean[variables].values
-
-        # Build row labels
-        if factors:
-            row_labels = df_clean[factors].apply(
-                lambda r: ' | '.join(r.astype(str)), axis=1).tolist()
-        else:
-            row_labels = [str(i + 1) for i in range(len(df_clean))]
-
-        # Standardize
-        if standardize:
-            scaler = StandardScaler()
-            X_sc = scaler.fit_transform(X)
-        else:
-            X_sc = X.copy().astype(float)
-
-        # 2-component PCA for scatter visualisation (k-means / DBSCAN)
-        n_comp = min(2, X_sc.shape[0] - 1, X_sc.shape[1])
-        pca_vis = PCA(n_components=n_comp)
-        pca_xy  = pca_vis.fit_transform(X_sc)
-        pca_var = pca_vis.explained_variance_ratio_.tolist()
-        if pca_xy.shape[1] < 2:
-            pca_xy  = np.hstack([pca_xy, np.zeros((pca_xy.shape[0], 2 - pca_xy.shape[1]))])
-            pca_var += [0.0] * (2 - len(pca_var))
-
-        # ── HIERARCHICAL ─────────────────────────────────────────────────
-        if method == 'hierarchical':
-            linkage_method = request_data.get('linkage_method', 'ward')
-            metric         = request_data.get('metric', 'euclidean')
-            n_clusters     = int(request_data.get('n_clusters', 0))
-
-            if linkage_method == 'ward':
-                metric = 'euclidean'          # ward only works with euclidean
-
-            try:
-                Z_rows = sp_linkage(X_sc, method=linkage_method, metric=metric)
-            except Exception as le:
-                return jsonify({"error": f"Linkage computation failed: {le}"}), 400
-
-            # Color threshold = 70% of max distance (scipy default)
-            color_thresh = 0.7 * float(Z_rows[:, 2].max())
-
-            dend_rows = sp_dendrogram(Z_rows, labels=row_labels,
-                                      no_plot=True, color_threshold=color_thresh)
-
-            # Variable (column) clustering
-            Z_cols    = sp_linkage(X_sc.T, method='ward', metric='euclidean')
-            dend_cols = sp_dendrogram(Z_cols, labels=variables,
-                                      no_plot=True, color_threshold=-1)
-
-            row_order = dend_rows['leaves']
-            col_order = dend_cols['leaves']
-
-            # Reorder data matrix
-            z_mat             = X_sc[row_order, :][:, col_order]
-            row_lbls_ord      = [row_labels[i] for i in row_order]
-            col_lbls_ord      = [variables[i]  for i in col_order]
-
-            # Cluster labels
-            if n_clusters >= 2:
-                cluster_arr = fcluster(Z_rows, t=n_clusters, criterion='maxclust').tolist()
-            else:
-                cluster_arr = fcluster(Z_rows, t=color_thresh, criterion='distance').tolist()
-
-            cluster_at_order = [cluster_arr[i] for i in row_order]
-
-            return jsonify(_make_json_safe({
-                "method":        "hierarchical",
-                "n_samples":     len(df_clean),
-                "variables":     variables,
-                "row_labels":    row_labels,
-                "linkage_method": linkage_method,
-                "metric":        metric,
-                "color_threshold": color_thresh,
-                "dendrogram": {
-                    "icoord":     dend_rows['icoord'],
-                    "dcoord":     dend_rows['dcoord'],
-                    "color_list": dend_rows['color_list'],
-                    "ivl":        dend_rows['ivl'],
-                    "leaves":     dend_rows['leaves'],
-                },
-                "var_dendrogram": {
-                    "icoord":     dend_cols['icoord'],
-                    "dcoord":     dend_cols['dcoord'],
-                    "color_list": dend_cols['color_list'],
-                    "ivl":        dend_cols['ivl'],
-                    "leaves":     dend_cols['leaves'],
-                },
-                "heatmap": {
-                    "z":          z_mat.tolist(),
-                    "row_labels": row_lbls_ord,
-                    "col_labels": col_lbls_ord,
-                    "row_order":  row_order,
-                    "col_order":  col_order,
-                    "z_min":      float(np.percentile(X_sc, 2)),
-                    "z_max":      float(np.percentile(X_sc, 98)),
-                },
-                "cluster_labels":    cluster_arr,
-                "cluster_at_order":  cluster_at_order,
-                "n_detected_clusters": int(max(cluster_arr)),
-            }))
-
-        # ── K-MEANS ──────────────────────────────────────────────────────
-        elif method == 'kmeans':
-            k             = int(request_data.get('k', 3))
-            compute_elbow = bool(request_data.get('compute_elbow', False))
-            max_k         = int(request_data.get('max_k', 10))
-
-            if k < 2:
-                return jsonify({"error": "K-Means requires k ≥ 2."}), 400
-            if k >= len(df_clean):
-                return jsonify({"error": f"k ({k}) must be less than the number of samples ({len(df_clean)})."}), 400
-
-            elbow_data = []
-            if compute_elbow:
-                max_k_actual = min(max_k, len(df_clean) - 1)
-                for ki in range(2, max_k_actual + 1):
-                    km_e = KMeans(n_clusters=ki, random_state=42, n_init=10)
-                    km_e.fit(X_sc)
-                    sil_e = float(sk_silhouette(X_sc, km_e.labels_)) if len(set(km_e.labels_)) > 1 else None
-                    elbow_data.append({"k": ki, "inertia": float(km_e.inertia_), "silhouette": sil_e})
-
-            km = KMeans(n_clusters=k, random_state=42, n_init=10)
-            labels = km.fit_predict(X_sc).tolist()
-            sil = float(sk_silhouette(X_sc, km.labels_)) if len(set(labels)) > 1 else None
-
-            grp = df_clean[factors].apply(lambda r: ' | '.join(r.astype(str)), axis=1).tolist() if factors else []
-
-            pca_pts = [{"x": float(pca_xy[i, 0]), "y": float(pca_xy[i, 1]),
-                        "cluster": int(labels[i]), "label": row_labels[i],
-                        "group": grp[i] if grp else ""}
-                       for i in range(len(df_clean))]
-
-            return jsonify(_make_json_safe({
-                "method":       "kmeans",
-                "n_samples":    len(df_clean),
-                "k":            k,
-                "labels":       labels,
-                "pca_coords":   pca_pts,
-                "pca_variance": pca_var,
-                "silhouette":   sil,
-                "inertia":      float(km.inertia_),
-                "elbow":        elbow_data,
-            }))
-
-        # ── DBSCAN ───────────────────────────────────────────────────────
-        elif method == 'dbscan':
-            eps           = float(request_data.get('eps', 0.5))
-            min_samples   = int(request_data.get('min_samples', 5))
-            compute_kdist = bool(request_data.get('compute_kdist', False))
-            kdist_k       = int(request_data.get('kdist_k', 4))
-
-            kdist_data = []
-            if compute_kdist:
-                nbrs = NearestNeighbors(n_neighbors=kdist_k).fit(X_sc)
-                dists, _ = nbrs.kneighbors(X_sc)
-                kdist_data = np.sort(dists[:, -1])[::-1].tolist()
-
-            db     = DBSCAN(eps=eps, min_samples=min_samples)
-            labels = db.fit_predict(X_sc).tolist()
-
-            n_clusters = int(len(set(labels)) - (1 if -1 in labels else 0))
-            n_noise    = int(labels.count(-1))
-
-            grp = df_clean[factors].apply(lambda r: ' | '.join(r.astype(str)), axis=1).tolist() if factors else []
-
-            pca_pts = [{"x": float(pca_xy[i, 0]), "y": float(pca_xy[i, 1]),
-                        "cluster": int(labels[i]), "label": row_labels[i],
-                        "group": grp[i] if grp else ""}
-                       for i in range(len(df_clean))]
-
-            return jsonify(_make_json_safe({
-                "method":       "dbscan",
-                "n_samples":    len(df_clean),
-                "eps":          eps,
-                "min_samples":  min_samples,
-                "labels":       labels,
-                "n_clusters":   n_clusters,
-                "n_noise":      n_noise,
-                "pca_coords":   pca_pts,
-                "pca_variance": pca_var,
-                "kdist":        kdist_data,
-                "kdist_k":      kdist_k,
-            }))
-
-        else:
-            return jsonify({"error": f"Unknown method: {method}"}), 400
-
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
-
-
-@stats_bp.route('/export-clustering-excel', methods=['POST'])
-def export_clustering_excel():
-    try:
-        request_data  = request.get_json()
-        method        = request_data.get('method', 'hierarchical')
-        row_labels    = request_data.get('row_labels', [])
-        cluster_labels = request_data.get('cluster_labels', [])
-        variables     = request_data.get('variables', [])
-        plot_img      = request_data.get('plot_img', None)    # base64 PNG
-        plot2_img     = request_data.get('plot2_img', None)   # second plot (elbow / kdist)
-
-        wb = Workbook()
-
-        header_fill  = PatternFill("solid", fgColor="2F5496")
-        header_font  = Font(color="FFFFFF", bold=True, name='Calibri', size=11)
-        subhdr_fill  = PatternFill("solid", fgColor="D6E4F0")
-        subhdr_font  = Font(bold=True, name='Calibri', size=10)
-        center_align = Alignment(horizontal='center', vertical='center')
-        thin_border  = Border(
-            left=Side(style='thin'), right=Side(style='thin'),
-            top=Side(style='thin'), bottom=Side(style='thin'))
-
-        # Cluster fill colors for up to 12 clusters
-        cluster_fills = [
-            "E3F2FD","E8F5E9","FFF9C4","FCE4D6","F3E5F5",
-            "E0F7FA","FBE9E7","EDE7F6","F1F8E9","FFF3E0",
-            "E8EAF6","EFEBE9",
-        ]
-
-        # ── Sheet 1: Membership ───────────────────────────────────────────
-        ws: Worksheet = wb.active  # type: ignore[assignment]
-        ws.title = 'Cluster Membership'
-
-        ws.merge_cells(start_row=1, start_column=1,
-                       end_row=1, end_column=3)
-        t = ws.cell(row=1, column=1,
-                    value=f"Cluster Membership — {method.capitalize()}")
-        t.font = Font(color="FFFFFF", bold=True, size=13, name='Calibri')
-        t.fill = header_fill; t.alignment = center_align
-
-        for col, hdr in enumerate(['Sample', 'Cluster', 'Variables used'], start=1):
-            c = ws.cell(row=2, column=col, value=hdr)
-            c.fill = subhdr_fill; c.font = subhdr_font
-            c.alignment = center_align; c.border = thin_border
-
-        ws.cell(row=2, column=3, value=', '.join(variables)).fill = subhdr_fill
-
-        for i, (lbl, cl) in enumerate(zip(row_labels, cluster_labels)):
-            fill_hex = cluster_fills[(cl - 1) % len(cluster_fills)] if cl > 0 else "F2F2F2"
-            fill_obj = PatternFill("solid", fgColor=fill_hex)
-            ws.cell(row=i + 3, column=1, value=lbl).border = thin_border
-            c = ws.cell(row=i + 3, column=2,
-                        value=f"Noise" if cl == -1 else f"Cluster {cl}")
-            c.fill = fill_obj; c.border = thin_border
-            c.alignment = center_align
-
-        ws.column_dimensions['A'].width = 28
-        ws.column_dimensions['B'].width = 14
-        ws.column_dimensions['C'].width = 40
-
-        # ── Sheet 2: Main plot ────────────────────────────────────────────
-        if plot_img:
-            ws2 = wb.create_sheet('Plot')
-            ws2.cell(row=1, column=1,
-                     value=f'Clustering Plot ({method})').font = Font(bold=True, size=13, name='Calibri')
-            img_xl = XLImage(io.BytesIO(base64.b64decode(plot_img)))
-            ws2.add_image(img_xl, 'A3')
-
-        # ── Sheet 3: Elbow / K-Distance plot ─────────────────────────────
-        if plot2_img:
-            ws3 = wb.create_sheet('Elbow / K-Distance')
-            ws3.cell(row=1, column=1, value='Elbow / K-Distance Plot').font = Font(bold=True, size=13, name='Calibri')
-            img_xl2 = XLImage(io.BytesIO(base64.b64decode(plot2_img)))
-            ws3.add_image(img_xl2, 'A3')
-
-        output = io.BytesIO()
-        wb.save(output); output.seek(0)
-        return send_file(output, download_name='Clustering_Analysis.xlsx',
-                         as_attachment=True,
-                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
-
-
 # ================== CORRELATION ANALYSIS ==================
 
 @stats_bp.route('/run-correlation', methods=['POST'])
@@ -2664,6 +2408,7 @@ def run_correlation():
         df = pd.DataFrame(data)
         variables = request_data.get('variables', [])
         method = request_data.get('method', 'pearson')  # pearson | spearman | kendall
+        min_row_coverage = float(request_data.get('min_row_coverage', 0)) / 100.0
 
         if len(variables) < 2:
             return jsonify({"error": "Correlation requires at least 2 variables."}), 400
@@ -2671,6 +2416,15 @@ def run_correlation():
         # Convert to numeric, coerce errors to NaN
         for v in variables:
             df[v] = pd.to_numeric(df[v], errors='coerce')
+
+        # Row sparsity filter (shared with PCA)
+        rows_sparse_dropped = 0
+        if min_row_coverage > 0 and variables:
+            n_sel = len(variables)
+            coverage = df[variables].notna().sum(axis=1) / n_sel
+            before_sparse = len(df)
+            df = df[coverage >= min_row_coverage].copy()
+            rows_sparse_dropped = before_sparse - len(df)
 
         subset = df[variables]
 
@@ -2742,17 +2496,99 @@ def run_correlation():
             hclust_order = list(range(n_vars))
             hclust_error = str(e)
 
+        # Compute redundant pairs for Step 4 (variable reduction)
+        corr_threshold = float(request_data.get('corr_threshold', 0.80))
+        ordered_vars = variables  # already ordered from input
+        n = len(ordered_vars)
+        redundant_pairs = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                r = corr_matrix[i][j]
+                if r is not None and abs(r) >= corr_threshold:
+                    redundant_pairs.append({
+                        'var_a': ordered_vars[i],
+                        'var_b': ordered_vars[j],
+                        'r': round(r, 4),
+                        'p': round(pval_matrix[i][j], 4) if pval_matrix[i][j] is not None else None,
+                        'abs_r': round(abs(r), 4)
+                    })
+
         return jsonify(_make_json_safe({
             "variables":         variables,
             "method":            method,
             "corr_matrix":       corr_matrix,
             "pval_matrix":       pval_matrix,
             "n_pairs":           n_pairs,
-            "hclust_order":      hclust_order,
-            "hclust_dendrogram": hclust_dendrogram,
-            "hclust_error":      hclust_error,
+            "hclust_order":        hclust_order,
+            "hclust_dendrogram":   hclust_dendrogram,
+            "hclust_error":        hclust_error,
+            "rows_sparse_dropped": rows_sparse_dropped,
+            "redundant_pairs":     redundant_pairs,
+            "corr_threshold":      corr_threshold,
         }))
 
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
+@stats_bp.route('/run-normalization', methods=['POST'])
+def run_normalization():
+    """Server-side normalization endpoint (for logging/export purposes).
+    Most normalization is done client-side in JS; this route provides a
+    server-side equivalent for validation and audit.
+    Accepts: { data, variables, method }
+    Returns: { normalized_data, method, variables }
+    """
+    try:
+        request_data = request.get_json()
+        data = request_data.get('data', [])
+        variables = request_data.get('variables', [])
+        method = request_data.get('method', 'none')
+
+        if not data or not variables:
+            return jsonify({"error": "data and variables are required"}), 400
+
+        df = pd.DataFrame(data)
+        for v in variables:
+            df[v] = pd.to_numeric(df[v], errors='coerce')
+
+        if method == 'none':
+            pass  # no transformation
+        elif method == 'log10':
+            for v in variables:
+                df[v] = df[v].apply(lambda x: float(np.log10(x)) if x is not None and not np.isnan(x) and x > 0 else None)
+        elif method == 'ln':
+            for v in variables:
+                df[v] = df[v].apply(lambda x: float(np.log(x)) if x is not None and not np.isnan(x) and x > 0 else None)
+        elif method == 'sqrt':
+            for v in variables:
+                df[v] = df[v].apply(lambda x: float(np.sqrt(x)) if x is not None and not np.isnan(x) and x >= 0 else None)
+        elif method == 'zscore':
+            for v in variables:
+                col = df[v].dropna()
+                if len(col) > 1:
+                    m, s = col.mean(), col.std(ddof=1)
+                    if s > 0:
+                        df[v] = (df[v] - m) / s
+                    else:
+                        df[v] = 0.0
+        elif method == 'minmax':
+            for v in variables:
+                col = df[v].dropna()
+                if len(col) > 1:
+                    lo, hi = col.min(), col.max()
+                    if hi > lo:
+                        df[v] = (df[v] - lo) / (hi - lo)
+                    else:
+                        df[v] = 0.0
+
+        normalized = df.astype(object).mask(pd.isnull(df)).to_dict(orient='records')
+        return jsonify(_make_json_safe({
+            "normalized_data": normalized,
+            "method": method,
+            "variables": variables,
+        }))
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
@@ -2806,7 +2642,7 @@ def export_correlation_excel():
         title_cell.fill   = header_fill
         title_cell.font   = Font(color="FFFFFF", bold=True, size=13, name='Calibri')
         title_cell.alignment = center_align
-        ws_corr.row_dimensions[1].height = 20
+        ws_corr.row_dimensions[1].height = 20  # type: ignore[index]
 
         # Header row (column labels)
         ws_corr.cell(row=2, column=1, value='Variable').fill = subhdr_fill
@@ -2922,6 +2758,39 @@ def export_correlation_excel():
 
 
 # ================== HELPER FUNCTIONS ==================
+
+def _apply_per_var_transforms(df: pd.DataFrame, transform_map: dict, variables: list) -> pd.DataFrame:
+    """Apply per-variable transformations in-place on a copy of df.
+
+    transform_map: { varName: 'none'|'log10'|'ln'|'sqrt'|'zscore'|'minmax' }
+    Variables not in transform_map are left untouched.
+    Invalid transform results (e.g. log of non-positive) become NaN so the
+    downstream imputation step can fill them.
+    """
+    df = df.copy()
+    for v in variables:
+        method = transform_map.get(v, 'none')
+        if not method or method == 'none':
+            continue
+        col = pd.to_numeric(df[v], errors='coerce')
+        if method == 'log10':
+            df[v] = col.apply(lambda x: float(np.log10(x)) if pd.notna(x) and x > 0 else np.nan)
+        elif method == 'ln':
+            df[v] = col.apply(lambda x: float(np.log(x)) if pd.notna(x) and x > 0 else np.nan)
+        elif method == 'sqrt':
+            df[v] = col.apply(lambda x: float(np.sqrt(x)) if pd.notna(x) and x >= 0 else np.nan)
+        elif method == 'zscore':
+            valid = col.dropna()
+            if len(valid) > 1:
+                m, s = valid.mean(), valid.std(ddof=1)
+                df[v] = (col - m) / s if s > 0 else 0.0
+        elif method == 'minmax':
+            valid = col.dropna()
+            if len(valid) > 1:
+                lo, hi = valid.min(), valid.max()
+                df[v] = (col - lo) / (hi - lo) if hi > lo else 0.0
+    return df
+
 
 def _make_json_safe(obj):
     """Convert numpy types (bool_, float64, int64, etc.) to native Python types and sanitize NaN/Inf"""
