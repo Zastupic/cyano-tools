@@ -1715,14 +1715,19 @@ def _run_one_factor_tests(df, selected_vars, factors, grouping_mode,
                 effect_size = None
 
             else:  # kruskal_wallis
-                _, overall_p = stats.kruskal(*[np.array(v) for v in groups_dict.values()])
-                overall_p = float(overall_p)
-                posthoc = _dunns_test_bh(groups_dict) if overall_p < 0.05 else []
-                n_total = sum(len(v) for v in groups_dict.values())
-                k = len(groups_dict)
-                kw_stat, _ = stats.kruskal(*[np.array(v) for v in groups_dict.values()])
-                eta2_kw = max(0.0, float((kw_stat - k + 1) / (n_total - k))) if n_total > k else 0.0
-                effect_size = eta2_kw
+                try:
+                    kw_stat, overall_p = stats.kruskal(*[np.array(v) for v in groups_dict.values()])
+                    overall_p = float(overall_p)
+                    posthoc = _dunns_test_bh(groups_dict) if overall_p < 0.05 else []
+                    n_total = sum(len(v) for v in groups_dict.values())
+                    k = len(groups_dict)
+                    eta2_kw = max(0.0, float((kw_stat - k + 1) / (n_total - k))) if n_total > k else 0.0
+                    effect_size = eta2_kw
+                except ValueError:
+                    # All values identical — no variance to test
+                    overall_p = 1.0
+                    posthoc = []
+                    effect_size = 0.0
 
             letter_groups = _letter_groups_from_posthoc(groups_dict, posthoc)
 

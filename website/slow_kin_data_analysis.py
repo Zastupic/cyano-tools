@@ -2,6 +2,11 @@ from flask import Blueprint, render_template, request, jsonify
 import os, io, time
 import pandas as pd
 import numpy as np
+try:
+    from scipy.optimize import curve_fit as _scipy_curve_fit
+    _SCIPY_OK = True
+except ImportError:
+    _SCIPY_OK = False
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from . import UPLOAD_FOLDER
@@ -113,6 +118,126 @@ def _cleanup_old_files(folder, seconds=1200):
             os.remove(fpath)
 
 
+# ─── state-transition helpers ────────────────────────────────────────────────
+
+def _fit_single_exp(t_arr, y_arr):
+    """
+    Fit y = A·exp(-k·(t-t0)) + C where t0 = t_arr[0].
+    t_arr and y_arr must be in consistent units (seconds for t, a.u. for y).
+    Returns a result dict.
+    """
+    t = np.asarray([v for v in t_arr if v is not None], dtype=float)
+    y = np.asarray([v for v in y_arr if v is not None], dtype=float)
+    valid = np.isfinite(t) & np.isfinite(y)
+    t, y = t[valid], y[valid]
+    n = int(len(t))
+
+    delta_pct = _safe(float((y[-1] - y[0]) / abs(y[0]) * 100)) if n >= 2 and y[0] != 0 else None
+    base = dict(n_points=n, delta_fm_pct=delta_pct,
+                tau=None, k=None, half_time=None, r_sq=None,
+                fit_t=[], fit_y=[], fit_ok=False,
+                low_confidence=False, insufficient_data=(n < 4))
+    if n < 4 or not _SCIPY_OK:
+        return base
+
+    t0  = float(t[0])
+    tn  = t - t0
+    A0  = float(y[0] - y[-1])
+    C0  = float(y[-1])
+    k0  = max(1.5 / max(float(tn[-1]), 1e-6), 1e-8)
+
+    def _f(x, A, k, C):
+        return A * np.exp(-k * x) + C
+
+    try:
+        popt, _ = _scipy_curve_fit(
+            _f, tn, y, p0=[A0, k0, C0],
+            bounds=([-np.inf, 1e-8, -np.inf], [np.inf, np.inf, np.inf]),
+            maxfev=10000,
+        )
+        A_fit, k_fit, C_fit = popt
+        tau       = float(1.0 / k_fit)
+        half_time = float(tau * np.log(2))
+        y_pred    = _f(tn, *popt)
+        ss_res    = float(np.sum((y - y_pred) ** 2))
+        ss_tot    = float(np.sum((y - float(np.mean(y))) ** 2))
+        r_sq      = float(1.0 - ss_res / ss_tot) if ss_tot > 1e-12 else None
+        t_dense   = np.linspace(0.0, float(tn[-1]), 120)
+        y_dense   = _f(t_dense, *popt)
+        return dict(
+            n_points=n, delta_fm_pct=delta_pct,
+            tau=_safe(tau), k=_safe(float(k_fit)), half_time=_safe(half_time),
+            r_sq=_safe(r_sq),
+            fit_t=[_safe(float(v)) for v in (t_dense + t0).tolist()],
+            fit_y=[_safe(float(v)) for v in y_dense.tolist()],
+            fit_ok=True, low_confidence=(n < 6), insufficient_data=False,
+        )
+    except Exception:
+        return {**base, 'insufficient_data': False}
+
+
+def _detect_par_phases(par_vals):
+    """
+    Segment a PAR array into contiguous constant-PAR phases.
+    Light phases → AL1, AL2 …; dark phases → D1, D2 …
+    Returns list[dict] with keys: label, type, par, start_idx, end_idx.
+    """
+    phases, n = [], len(par_vals)
+    if not n:
+        return phases
+    cur   = float(round(par_vals[0]))
+    start = 0
+    li = di = 0
+    for i in range(1, n + 1):
+        nxt = float(round(par_vals[i])) if i < n else None
+        if nxt != cur:
+            if cur == 0:
+                di += 1; label, ptype = f'D{di}', 'dark'
+            else:
+                li += 1; label, ptype = f'AL{li}', 'light'
+            phases.append(dict(label=label, type=ptype, par=cur,
+                               start_idx=start, end_idx=i - 1))
+            if i < n:
+                cur = nxt; start = i
+    return phases
+
+
+def _calc_st_phases(file_stems, fm_data, t_data_s, phases, include_d1=False):
+    """
+    Fit a single exponential to Fm' in each phase for every sample.
+    fm_data   : {stem: list[float|None]} – Fm' per sample (same length as t_data_s)
+    t_data_s  : list[float]              – time in SECONDS
+    phases    : list[dict] from _detect_par_phases or built for AquaPen
+    include_d1: if False, skip first data point of every dark phase
+    Returns   : {stem: [phase_result_dict, …]}
+    """
+    results = {}
+    for stem in file_stems:
+        fm = fm_data.get(stem, [])
+        file_phases = []
+        for ph in phases:
+            s = int(ph['start_idx'])
+            e = min(int(ph['end_idx']), len(fm) - 1)
+            t_seg = list(t_data_s[s: e + 1])
+            y_seg = list(fm[s: e + 1])
+            if ph['type'] == 'dark' and not include_d1:
+                t_seg = t_seg[1:]; y_seg = y_seg[1:]
+            pairs = [(tv, yv) for tv, yv in zip(t_seg, y_seg)
+                     if tv is not None and yv is not None]
+            if not pairs:
+                continue
+            tv, yv = zip(*pairs)
+            fit = _fit_single_exp(list(tv), list(yv))
+            file_phases.append(dict(
+                label=ph['label'], type=ph['type'], par=ph.get('par'),
+                fm_vals=[_safe(v) for v in yv],
+                t_vals=[_safe(v) for v in tv],
+                **fit,
+            ))
+        results[stem] = file_phases
+    return results
+
+
 # ─── processing branches ─────────────────────────────────────────────────────
 
 def _process_mcpam_raw(files, reduce_data):
@@ -165,6 +290,10 @@ def _process_mcpam_raw(files, reduce_data):
         'params': {},
         'has_summary': False,
         'summary': {},
+        'has_state_transitions': False,
+        'st_include_d1': False,
+        'st_phases_meta': [],
+        'state_transitions': {},
     }
 
 
@@ -217,9 +346,9 @@ def _process_mcpam_params(files):
 
     fv_all = fm_all.iloc[:, 1:] - ft_all.iloc[:, 1:]
     qp_all = (fm_all.iloc[:, 1:] - ft_all.iloc[:, 1:]) / (fm_all.iloc[:, 1:] - f0.values)
-    qn_all = (fm.values - fm_all.iloc[:, 1:]) / fm.values
-    npq_fm = (fm.values - fm_all.iloc[:, 1:]) / fm_all.iloc[:, 1:]
-    npq_fm_max = (fm_max.values - fm_all.iloc[:, 1:]) / fm_all.iloc[:, 1:]
+    qn_all = (fm - fm_all.iloc[:, 1:]) / fm
+    npq_fm = (fm - fm_all.iloc[:, 1:]) / fm_all.iloc[:, 1:]
+    npq_fm_max = (fm_max - fm_all.iloc[:, 1:]) / fm_all.iloc[:, 1:]
 
     params = {}
     for stem in file_stems:
@@ -246,6 +375,24 @@ def _process_mcpam_params(files):
             'npq_max': _safe(float(npq_fm[stem].max())) if stem in npq_fm.columns else None,
         }
 
+    # ── State transitions ───────────────────────────────────────────────────
+    st_result, st_phases_meta, has_st = {}, [], False
+    try:
+        par_first = par_all.iloc[:, 1].fillna(0).astype(float).tolist() \
+                    if par_all.shape[1] > 1 else []
+        phases    = _detect_par_phases(par_first)
+        fm_dict   = {stem: params[stem]['fm'] for stem in file_stems if stem in params}
+        st_phases_meta = [
+            dict(label=ph['label'], type=ph['type'], par=ph['par'],
+                 t_start=_safe(time_s[int(ph['start_idx'])] if int(ph['start_idx']) < len(time_s) else None),
+                 t_end  =_safe(time_s[int(ph['end_idx'])]   if int(ph['end_idx'])   < len(time_s) else None))
+            for ph in phases
+        ]
+        st_result = _calc_st_phases(file_stems, fm_dict, time_s, phases, include_d1=False)
+        has_st    = bool(st_result)
+    except Exception:
+        pass
+
     return {
         'fluorometer': 'MC-PAM',
         'mode': 'parameters',
@@ -260,6 +407,10 @@ def _process_mcpam_params(files):
         'params': params,
         'has_summary': True,
         'summary': summary_params,
+        'has_state_transitions': has_st,
+        'st_include_d1': False,
+        'st_phases_meta': st_phases_meta,
+        'state_transitions': st_result,
     }
 
 
@@ -418,7 +569,8 @@ def _process_aquapen(files, protocol_key, upload_folder):
             'qp':  _series_to_list(pd.to_numeric(qp_data.iloc[:, j], errors='coerce')),
             'qy':  _series_to_list(pd.to_numeric(qy_data.iloc[:, j], errors='coerce')),
             'etr': _series_to_list(pd.to_numeric(qy_data.iloc[:, j], errors='coerce') *
-                                   float(actinic_row.iloc[0, j]) if not actinic_row.empty and j < actinic_row.shape[1] else
+                                   float(actinic_row.iloc[0, j])  # type: ignore[arg-type]
+                                   if not actinic_row.empty and j < actinic_row.shape[1] else
                                    pd.Series([0.0] * len(qy_data))),
             'par': None,
         }
@@ -430,20 +582,20 @@ def _process_aquapen(files, protocol_key, upload_folder):
         rfd_val = None
         actinic_val = None
         try:
-            fm0 = float(fm_prime_data.iloc[0, j])
-            ft0 = float(ft_lookup.iloc[0, j])
+            fm0 = float(fm_prime_data.iloc[0, j])  # type: ignore[arg-type]
+            ft0 = float(ft_lookup.iloc[0, j])  # type: ignore[arg-type]
             if fm0 > 0:
                 fv_fm = _safe((fm0 - ft0) / fm0)
         except Exception:
             pass
         try:
             if not actinic_row.empty and j < actinic_row.shape[1]:
-                actinic_val = _safe(float(actinic_row.iloc[0, j]))
+                actinic_val = _safe(float(actinic_row.iloc[0, j]))  # type: ignore[arg-type]
         except Exception:
             pass
         try:
-            fp_val = float(raw_num.iloc[:, j + 1].max())
-            fs_val = float(raw_num.iloc[-1, j + 1])
+            fp_val = float(raw_num.iloc[:, j + 1].max())  # type: ignore[arg-type]
+            fs_val = float(raw_num.iloc[-1, j + 1])  # type: ignore[arg-type]
             if fs_val > 0:
                 rfd_val = _safe((fp_val - fs_val) / fs_val)
         except Exception:
@@ -459,6 +611,40 @@ def _process_aquapen(files, protocol_key, upload_folder):
     raw_traces = {}
     for j, stem in enumerate(file_stems):
         raw_traces[stem] = _series_to_list(raw_num.iloc[:, j + 1].astype(float))
+
+    # ── State transitions ───────────────────────────────────────────────────
+    st_result, st_phases_meta, has_st = {}, [], False
+    try:
+        # n_light = count of Fm_L* labels (excludes initial Fm and Fm_D*)
+        n_light    = sum(1 for l in proto['fm_labels'] if l.startswith('Fm_L'))
+        n_fm_total = len(timing_fm)
+        # Times in seconds (for fitting and reporting)
+        t_s = [float(t) / 1e6 for t in timing_fm]
+
+        dark_start = n_light + 1          # index of Fm_D1
+        ap_phases  = [
+            dict(label='AL1', type='light', par=None,
+                 start_idx=1, end_idx=n_light),
+        ]
+        if dark_start < n_fm_total:
+            ap_phases.append(dict(label='D1', type='dark', par=0,
+                                  start_idx=dark_start, end_idx=n_fm_total - 1))
+
+        fm_dict = {}
+        for j2, stem in enumerate(file_stems):
+            if j2 < fm_prime_data.shape[1]:
+                fm_dict[stem] = list(fm_prime_data.iloc[:, j2].astype(float))
+
+        st_phases_meta = [
+            dict(label=ph['label'], type=ph['type'], par=ph.get('par'),
+                 t_start=_safe(t_s[int(ph['start_idx'])] if ph['start_idx'] is not None and int(ph['start_idx']) < len(t_s) else None),  # type: ignore[arg-type]
+                 t_end  =_safe(t_s[int(ph['end_idx'])]   if ph['end_idx']   is not None and int(ph['end_idx'])   < len(t_s) else None))  # type: ignore[arg-type]
+            for ph in ap_phases
+        ]
+        st_result = _calc_st_phases(file_stems, fm_dict, t_s, ap_phases, include_d1=False)
+        has_st    = bool(st_result)
+    except Exception:
+        pass
 
     return {
         'fluorometer': 'AquaPen',
@@ -484,6 +670,10 @@ def _process_aquapen(files, protocol_key, upload_folder):
         'params': params,
         'has_summary': True,
         'summary': summary_scalars,
+        'has_state_transitions': has_st,
+        'st_include_d1': False,
+        'st_phases_meta': st_phases_meta,
+        'state_transitions': st_result,
     }
 
 
@@ -541,6 +731,68 @@ def slow_kin_process():
     return jsonify(payload)
 
 
+@slow_kin_data_analysis.route('/api/slow_kin_st_refit', methods=['POST'])
+def slow_kin_st_refit():
+    """
+    Refit state transitions with user-supplied phase windows or updated include_d1.
+    Body JSON:
+      { include_d1: bool,
+        phases: [{label, type, par,
+                  files_data: {stem: {t: [s…], fm: [a.u.…]}}}] }
+    Response JSON:
+      { status, state_transitions: {…}, st_phases_meta: […] }
+    """
+    try:
+        data = request.get_json(force=True)
+        if not data:
+            return jsonify({'status': 'error', 'message': 'No data.'}), 400
+
+        include_d1   = bool(data.get('include_d1', False))
+        phases_input = data.get('phases', [])
+
+        all_stems = []
+        for ph in phases_input:
+            for s in ph.get('files_data', {}).keys():
+                if s not in all_stems:
+                    all_stems.append(s)
+
+        st_result      = {stem: [] for stem in all_stems}
+        st_phases_meta = []
+
+        for ph in phases_input:
+            label      = ph.get('label', '')
+            ph_type    = ph.get('type', 'light')
+            par        = ph.get('par')
+            files_data = ph.get('files_data', {})
+
+            all_t = [v for fd in files_data.values() for v in fd.get('t', [])]
+            st_phases_meta.append(dict(
+                label=label, type=ph_type, par=par,
+                t_start=_safe(min(all_t)) if all_t else None,
+                t_end  =_safe(max(all_t)) if all_t else None,
+            ))
+
+            for stem in all_stems:
+                fd    = files_data.get(stem, {})
+                t_seg = list(fd.get('t', []))
+                y_seg = list(fd.get('fm', []))
+                if ph_type == 'dark' and not include_d1:
+                    t_seg = t_seg[1:]; y_seg = y_seg[1:]
+                fit = _fit_single_exp(t_seg, y_seg)
+                st_result[stem].append(dict(
+                    label=label, type=ph_type, par=par,
+                    fm_vals=[_safe(v) for v in y_seg],
+                    t_vals =[_safe(v) for v in t_seg],
+                    **fit,
+                ))
+
+        return jsonify({'status': 'success',
+                        'state_transitions': st_result,
+                        'st_phases_meta': st_phases_meta})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @slow_kin_data_analysis.route('/api/slow_kin_export', methods=['POST'])
 def slow_kin_export():
     """
@@ -571,7 +823,8 @@ def slow_kin_export():
         param_labels = data.get('param_labels', {})
 
         wb = Workbook()
-        wb.remove(wb.active)  # remove default sheet
+        if wb.active is not None:
+            wb.remove(wb.active)  # remove default sheet
 
         def _write_sheet(wb, title, time_list, series_dict, time_label='Time', labels=None):
             ws = wb.create_sheet(title=title[:31])
@@ -627,6 +880,29 @@ def slow_kin_export():
             for fname, vals in summary.items():
                 row = [fname] + [vals.get(k) for k in sorted(all_keys)]
                 ws.append(row)
+
+        # State-transition sheet
+        st_data = data.get('state_transitions', {})
+        if st_data:
+            ws_st = wb.create_sheet(title='State Transitions')
+            ws_st.append(['Sample', 'Phase', 'PAR (µmol m⁻² s⁻¹)', 'n points',
+                          'ΔFm\' (%)', 'τ (s)', 't½ (s)', 'R²', 'Notes'])
+            for fname, ph_list in st_data.items():
+                for ph in (ph_list or []):
+                    note = ('low confidence' if ph.get('low_confidence') else
+                            'insufficient data' if ph.get('insufficient_data') else
+                            'fit failed' if not ph.get('fit_ok') and not ph.get('insufficient_data') else '')
+                    ws_st.append([
+                        fname,
+                        ph.get('label'),
+                        ph.get('par'),
+                        ph.get('n_points'),
+                        ph.get('delta_fm_pct'),
+                        ph.get('tau'),
+                        ph.get('half_time'),
+                        ph.get('r_sq'),
+                        note,
+                    ])
 
         out_path = os.path.join(upload_folder, f'{file_stem}_results.xlsx').replace('\\', '/')
         wb.save(out_path)

@@ -4,10 +4,11 @@
 // ============================================================
 
 // ── state ─────────────────────────────────────────────────────────────────
-let skData    = null;   // full JSON from /api/slow_kin_process
-let groups    = {};     // {filename: groupName}
-let chartInst = {};     // {chartId: Chart instance}
-let dirtyTabs = new Set();
+let skData      = null;   // full JSON from /api/slow_kin_process
+let groups      = {};     // {filename: groupName}
+let chartInst   = {};     // {chartId: Chart instance}
+let dirtyTabs   = new Set();
+let stIncludeD1 = false;  // checkbox: include first dark-recovery point
 
 // ── parameter metadata ────────────────────────────────────────────────────
 const SK_SUMMARY_KEYS   = ['fv_fm', 'rfd', 'npq_max', 'actinic_intensity'];
@@ -46,6 +47,10 @@ function makeChart(id, cfg) {
   destroyChart(id);
   const el = document.getElementById(id);
   if (!el) return null;
+  // Fallback: destroy any orphaned Chart.js instance on this canvas
+  // (can happen when a previous render threw before storing in chartInst)
+  const orphan = Chart.getChart(el);
+  if (orphan) orphan.destroy();
   chartInst[id] = new Chart(el, cfg);
   return chartInst[id];
 }
@@ -142,6 +147,7 @@ function renderDirtyTab(tabId) {
     renderDerivedChart((m && m.derived) || 'npq'); return;
   }
   if (tabId === 'sk-tab-params')  { renderParamsChart(); renderParamsTable(); return; }
+  if (tabId === 'sk-tab-st')      { renderStTab(); return; }
   if (tabId === 'sk-tab-groups')  {
     refreshGroupSummary();
     if (hasGroups()) {
@@ -153,8 +159,12 @@ function renderDirtyTab(tabId) {
         renderGroupDerivedChart((gdb && gdb.dataset && gdb.dataset.gderived) || 'npq');
       }
       if (skData.has_summary) renderGroupParamsChart();
+      if (skData.has_state_transitions) {
+        var gsb = document.querySelector('#sk-group-st-btns .btn-primary');
+        renderGroupStChart((gsb && gsb.dataset && gsb.dataset.gst) || 'delta_fm_pct');
+      }
       setTimeout(function() {
-        ['sk-group-traces-chart', 'sk-group-derived-chart', 'sk-group-params-chart'].forEach(function(id) {
+        ['sk-group-traces-chart', 'sk-group-derived-chart', 'sk-group-params-chart', 'sk-group-st-chart'].forEach(function(id) {
           if (chartInst[id]) chartInst[id].resize();
         });
       }, 0);
@@ -219,6 +229,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Group ST segmented control
+  var gStBtns = document.getElementById('sk-group-st-btns');
+  if (gStBtns) {
+    gStBtns.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-gst]'); if (!btn) return;
+      setActiveBtn('sk-group-st-btns', btn);
+      renderGroupStChart(btn.dataset.gst);
+    });
+  }
+
   // Group derived segmented control
   var gDerivedBtns = document.getElementById('sk-group-derived-btns');
   if (gDerivedBtns) {
@@ -261,6 +281,25 @@ document.addEventListener('DOMContentLoaded', function() {
   var exportBtn = document.getElementById('sk-export-stats-btn');
   if (exportBtn) exportBtn.addEventListener('click', exportToStatistics);
 
+  // State Transitions controls
+  var stD1Check = document.getElementById('sk-st-include-d1-check');
+  if (stD1Check) stD1Check.addEventListener('change', function() {
+    stIncludeD1 = stD1Check.checked;
+    if (skData && skData.has_state_transitions) refitStateTransitions();
+  });
+  var stWinBtn = document.getElementById('sk-st-windows-toggle-btn');
+  if (stWinBtn) stWinBtn.addEventListener('click', function() {
+    var panel = document.getElementById('sk-st-windows-panel');
+    if (!panel) return;
+    var showing = panel.style.display !== 'none';
+    panel.style.display = showing ? 'none' : '';
+    if (!showing) buildStWindowsPanel();
+  });
+  var stRefitBtn = document.getElementById('sk-st-refit-btn');
+  if (stRefitBtn) stRefitBtn.addEventListener('click', function() {
+    refitStateTransitions(true);  // true = use custom windows from panel
+  });
+
   // Export modal (event delegation, wired once)
   _initExportModalEvents();
 
@@ -276,7 +315,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'sk-tab-ftfm':    ['sk-ftfm-chart'],
         'sk-tab-derived': ['sk-derived-chart'],
         'sk-tab-params':  ['sk-params-chart'],
-        'sk-tab-groups':  ['sk-group-traces-chart', 'sk-group-derived-chart', 'sk-group-params-chart'],
+        'sk-tab-groups':  ['sk-group-traces-chart', 'sk-group-derived-chart', 'sk-group-params-chart', 'sk-group-st-chart'],
+        'sk-tab-st':      ['sk-st-chart'],
       };
       (resizeMap[tabId] || []).forEach(function(id) { if (chartInst[id]) chartInst[id].resize(); });
     });
@@ -422,6 +462,8 @@ function renderResults() {
   if (gds) gds.style.display = isRawOnly ? 'none' : '';
   var gps = document.getElementById('sk-group-params-section');
   if (gps) gps.style.display = skData.has_summary ? '' : 'none';
+  var gss = document.getElementById('sk-group-st-section');
+  if (gss) gss.style.display = skData.has_state_transitions ? '' : 'none';
 
   // Wire download buttons
   var xlsxLink    = document.getElementById('sk-xlsx-download-link');
@@ -449,6 +491,24 @@ function renderResults() {
   // Groups tab is lazy
   buildGroupAssignTable();
   markTabsDirty('sk-tab-groups');
+
+  // State Transitions tab
+  stIncludeD1 = false;
+  var stCheck = document.getElementById('sk-st-include-d1-check');
+  if (stCheck) stCheck.checked = false;
+  var stLink = document.getElementById('sk-tab-st-link');
+  if (stLink) {
+    if (skData.has_state_transitions) {
+      stLink.classList.remove('disabled');
+      stLink.style.pointerEvents = '';
+      stLink.style.color = '';
+      _withPaneVisible('sk-tab-st', function() { renderStTab(); });
+    } else {
+      stLink.classList.add('disabled');
+      stLink.style.pointerEvents = 'none';
+      stLink.style.color = '#adb5bd';
+    }
+  }
 }
 
 // ── traces chart ──────────────────────────────────────────────────────────
@@ -686,8 +746,12 @@ function checkGroupsReady() {
         renderGroupDerivedChart((gdb && gdb.dataset && gdb.dataset.gderived) || 'npq');
       }
       if (skData && skData.has_summary) renderGroupParamsChart();
+      if (skData && skData.has_state_transitions) {
+        var gsb2 = document.querySelector('#sk-group-st-btns .btn-primary');
+        renderGroupStChart((gsb2 && gsb2.dataset && gsb2.dataset.gst) || 'delta_fm_pct');
+      }
       setTimeout(function() {
-        ['sk-group-traces-chart', 'sk-group-derived-chart', 'sk-group-params-chart'].forEach(function(id) {
+        ['sk-group-traces-chart', 'sk-group-derived-chart', 'sk-group-params-chart', 'sk-group-st-chart'].forEach(function(id) {
           if (chartInst[id]) chartInst[id].resize();
         });
       }, 0);
@@ -702,6 +766,10 @@ function checkGroupsReady() {
           renderGroupDerivedChart((gdb2 && gdb2.dataset && gdb2.dataset.gderived) || 'npq');
         }
         if (skData && skData.has_summary) renderGroupParamsChart();
+        if (skData && skData.has_state_transitions) {
+          var gsb3 = document.querySelector('#sk-group-st-btns .btn-primary');
+          renderGroupStChart((gsb3 && gsb3.dataset && gsb3.dataset.gst) || 'delta_fm_pct');
+        }
       });
       // sk-group-results remains visible (inline display:none was cleared inside fn above)
     }
@@ -910,6 +978,78 @@ function renderGroupParamsChart() {
   });
 }
 
+// ── group state-transition chart ──────────────────────────────────────────
+
+var _ST_METRIC_LABELS = { delta_fm_pct: "\u0394Fm\u2032 (%)", tau: '\u03c4 (s)', half_time: 't\u00bd (s)' };
+
+function calcGroupStStats(metric) {
+  var grpFilesMap = _grpFiles();
+  var grpNames    = Object.keys(grpFilesMap);
+  var phaseLabels = [];
+  grpNames.forEach(function(grp) {
+    grpFilesMap[grp].forEach(function(fname) {
+      var phases = skData.state_transitions && skData.state_transitions[fname] || [];
+      phases.forEach(function(ph) {
+        if (phaseLabels.indexOf(ph.label) < 0) phaseLabels.push(ph.label);
+      });
+    });
+  });
+  var stats = {};
+  grpNames.forEach(function(grp) {
+    stats[grp] = {};
+    phaseLabels.forEach(function(phLabel) {
+      var vals = grpFilesMap[grp].map(function(fname) {
+        var phases = skData.state_transitions && skData.state_transitions[fname] || [];
+        for (var i = 0; i < phases.length; i++) {
+          if (phases[i].label === phLabel) {
+            var v = phases[i][metric];
+            return (v != null && isFinite(v) && phases[i].fit_ok) ? v : null;
+          }
+        }
+        return null;
+      }).filter(function(v) { return v != null; });
+      if (!vals.length) return;
+      var mu = vals.reduce(function(s, v) { return s + v; }, 0) / vals.length;
+      var sd = Math.sqrt(vals.reduce(function(s, v) { return s + (v - mu) * (v - mu); }, 0) / vals.length);
+      stats[grp][phLabel] = { mean: mu, sd: sd, n: vals.length };
+    });
+  });
+  return { stats: stats, phases: phaseLabels };
+}
+
+function renderGroupStChart(metric) {
+  if (!skData || !skData.has_state_transitions) return;
+  metric = metric || 'delta_fm_pct';
+  var result   = calcGroupStStats(metric);
+  var stats    = result.stats;
+  var phases   = result.phases;
+  var grpNames = Object.keys(stats);
+
+  var datasets = grpNames.map(function(grp, gi) {
+    return {
+      label: grp,
+      data: phases.map(function(pl) {
+        var s = stats[grp][pl];
+        return s ? { y: s.mean, yMin: s.mean - s.sd, yMax: s.mean + s.sd }
+                 : { y: NaN, yMin: NaN, yMax: NaN };
+      }),
+      backgroundColor:      groupColor(gi, grpNames.length, 0.65),
+      borderColor:          groupColor(gi, grpNames.length),
+      borderWidth:          1,
+      errorBarColor:        groupColor(gi, grpNames.length),
+      errorBarWhiskerColor: groupColor(gi, grpNames.length),
+      errorBarLineWidth:    2,
+      errorBarWhiskerSize:  8,
+    };
+  });
+
+  makeChart('sk-group-st-chart', {
+    type: 'barWithErrorBars',
+    data: { labels: phases, datasets: datasets },
+    options: barOpts(_ST_METRIC_LABELS[metric] || metric),
+  });
+}
+
 // ── export to statistics page ─────────────────────────────────────────────
 
 var _NPQ_METRICS_SET = ['npq', 'npq_fmmax', 'qp', 'qn'];
@@ -980,6 +1120,37 @@ function _buildExportSummaryCheckGroup(assignedFiles) {
   if (sec) sec.style.display = '';
 }
 
+function _buildExportStCheckGroup(assignedFiles) {
+  var el  = document.getElementById('sk-export-st-checks');
+  var sec = document.getElementById('sk-export-st-section');
+  if (!el || !skData || !skData.has_state_transitions) { if (sec) sec.style.display = 'none'; return; }
+
+  // Collect phase labels from assigned files
+  var phaseLabels = [];
+  assignedFiles.forEach(function(fname) {
+    var phases = skData.state_transitions && skData.state_transitions[fname] || [];
+    phases.forEach(function(ph) { if (phaseLabels.indexOf(ph.label) < 0) phaseLabels.push(ph.label); });
+  });
+  if (!phaseLabels.length) { if (sec) sec.style.display = 'none'; return; }
+
+  var stMetrics = [
+    { key: 'delta_fm_pct', label: '\u0394Fm\u2032 (%)' },
+    { key: 'tau',          label: '\u03c4 (s)' },
+    { key: 'half_time',    label: 't\u00bd (s)' },
+  ];
+  el.innerHTML = phaseLabels.map(function(phLabel) {
+    return '<div class="mb-1"><strong style="font-size:0.88em">' + phLabel + ':</strong> ' +
+      stMetrics.map(function(m) {
+        var id = 'sk-expchk-st-' + phLabel + '-' + m.key;
+        return '<span class="form-check form-check-inline mr-2">' +
+          '<input class="form-check-input sk-export-st-check" type="checkbox" id="' + id + '"' +
+          ' data-stlabel="' + phLabel + '" data-stmet="' + m.key + '" checked>' +
+          '<label class="form-check-label" for="' + id + '">' + m.label + '</label></span>';
+      }).join('') + '</div>';
+  }).join('');
+  if (sec) sec.style.display = '';
+}
+
 function _updateTpCountBadge(metric) {
   var tpList = document.getElementById('sk-exptp-' + metric);
   var badge  = document.getElementById('sk-tp-count-' + metric);
@@ -1006,6 +1177,7 @@ function _updateExportColCount() {
   var total = 2; // Group + Sample
   document.querySelectorAll('#sk-export-modal .sk-export-tp-check:checked').forEach(function() { total++; });
   document.querySelectorAll('#sk-export-modal .sk-export-summary-check:checked').forEach(function() { total++; });
+  document.querySelectorAll('#sk-export-modal .sk-export-st-check:checked').forEach(function() { total++; });
   var over  = total > 100;
   var msgEl = document.getElementById('sk-export-col-msg');
   var btnEl = document.getElementById('sk-export-confirm-btn');
@@ -1021,9 +1193,12 @@ function _initExportModalEvents() {
   var modal = document.getElementById('sk-export-modal');
   if (!modal) return;
 
-  // Change delegation: metric toggles time points; time point updates badge + indeterminate
+  // Change delegation: metric toggles time points; time point updates badge + indeterminate; ST updates count
   modal.addEventListener('change', function(e) {
     var cb = e.target;
+    if (cb.classList.contains('sk-export-st-check')) {
+      _updateExportColCount(); return;
+    }
     if (cb.classList.contains('sk-export-metric-check')) {
       var metric = cb.dataset.metric;
       var tpList = document.getElementById('sk-exptp-' + metric);
@@ -1055,14 +1230,14 @@ function _initExportModalEvents() {
   var selAll  = document.getElementById('sk-export-sel-all');
   var selNone = document.getElementById('sk-export-sel-none');
   if (selAll) selAll.addEventListener('click', function() {
-    modal.querySelectorAll('.sk-export-tp-check, .sk-export-summary-check').forEach(function(cb) { cb.checked = true; });
+    modal.querySelectorAll('.sk-export-tp-check, .sk-export-summary-check, .sk-export-st-check').forEach(function(cb) { cb.checked = true; });
     modal.querySelectorAll('.sk-export-metric-check').forEach(function(cb) {
       cb.checked = true; cb.indeterminate = false; _updateTpCountBadge(cb.dataset.metric);
     });
     _updateExportColCount();
   });
   if (selNone) selNone.addEventListener('click', function() {
-    modal.querySelectorAll('.sk-export-tp-check, .sk-export-summary-check').forEach(function(cb) { cb.checked = false; });
+    modal.querySelectorAll('.sk-export-tp-check, .sk-export-summary-check, .sk-export-st-check').forEach(function(cb) { cb.checked = false; });
     modal.querySelectorAll('.sk-export-metric-check').forEach(function(cb) {
       cb.checked = false; cb.indeterminate = false; _updateTpCountBadge(cb.dataset.metric);
     });
@@ -1121,6 +1296,7 @@ function exportToStatistics() {
   _buildExportCheckGroup('sk-export-ftfm-checks',    _EXPORT_METRIC_DEFS.ftfm);
   _buildExportCheckGroup('sk-export-derived-checks', _EXPORT_METRIC_DEFS.derived);
   _buildExportSummaryCheckGroup(assignedFiles);
+  _buildExportStCheckGroup(assignedFiles);
 
   // Populate step dropdown from param_time labels (ft labels cover all steps incl. Dark)
   var tpSel = document.getElementById('sk-export-tp-select');
@@ -1188,6 +1364,28 @@ function _confirmExportToStatistics() {
     });
   }
 
+  // State transition scalars (checkbox-gated)
+  document.querySelectorAll('#sk-export-modal .sk-export-st-check:checked').forEach(function(cb) {
+    var phLabel = cb.dataset.stlabel;
+    var mKey    = cb.dataset.stmet;
+    var stHdr   = { delta_fm_pct: 'dFm%', tau: 'tau_s', half_time: 'thalf_s' };
+    cols.push({
+      header: 'ST_' + phLabel + '_' + (stHdr[mKey] || mKey),
+      get: (function(pl, mk) {
+        return function(fname) {
+          var phases = skData.state_transitions && skData.state_transitions[fname] || [];
+          for (var i = 0; i < phases.length; i++) {
+            if (phases[i].label === pl) {
+              var v = phases[i][mk];
+              return (v != null && isFinite(v)) ? Number(v).toFixed(4) : '';
+            }
+          }
+          return '';
+        };
+      }(phLabel, mKey)),
+    });
+  });
+
   if (!cols.length) { alert('No parameters selected.'); return; }
 
   var header = ['Group', 'Sample'].concat(cols.map(function(c) { return c.header; })).join('\t');
@@ -1236,5 +1434,199 @@ async function downloadXlsx() {
     if (statusEl) statusEl.textContent = 'Export error: ' + err.message;
   } finally {
     if (xlsxLink) xlsxLink.style.pointerEvents = '';
+  }
+}
+
+// ── state transitions ─────────────────────────────────────────────────────
+
+// Convert param_time to seconds (AquaPen times are in µs)
+function _stTimeToS(t) {
+  if (!skData) return t;
+  return skData.time_unit === 'us' ? t / 1e6 : t;
+}
+
+function renderStTab() {
+  if (!skData || !skData.has_state_transitions) return;
+  buildStWindowsPanel();
+  renderStChart();
+  renderStTable();
+}
+
+function renderStChart() {
+  if (!skData || !skData.has_state_transitions) return;
+  var files = skData.files;
+  var n = files.length;
+  var st = skData.state_transitions || {};
+  var datasets = [];
+
+  // Full Fm' time series as scatter points
+  var t_s = (skData.param_time || []).map(_stTimeToS);
+  files.forEach(function(fname, i) {
+    var c  = sampleColor(i, n);
+    var fm = skData.params && skData.params[fname] && skData.params[fname]['fm'] || [];
+    datasets.push({
+      label: fname,
+      data:  fm.map(function(y, j) { return { x: t_s[j], y: y }; }),
+      borderColor: c, backgroundColor: c,
+      borderWidth: 1.5, pointRadius: 4, showLine: false,
+    });
+
+    // Fitted curves (dashed) per phase
+    var phases = st[fname] || [];
+    phases.forEach(function(ph) {
+      if (!ph.fit_ok || !ph.fit_t || !ph.fit_t.length) return;
+      datasets.push({
+        label: '',
+        data: ph.fit_t.map(function(tv, j) { return { x: tv, y: ph.fit_y[j] }; }),
+        borderColor: c, backgroundColor: 'transparent',
+        borderWidth: 2, pointRadius: 0, showLine: true,
+        borderDash: [6, 3],
+      });
+    });
+  });
+
+  var opts = linearScatterOpts('Time (s)', "Fm\u2032 (a.u.)");
+  opts.plugins.legend.labels.filter = function(item) { return item.text !== ''; };
+  makeChart('sk-st-chart', { type: 'scatter', data: { datasets: datasets }, options: opts });
+}
+
+function renderStTable() {
+  if (!skData || !skData.has_state_transitions) return;
+  var headRow = document.getElementById('sk-st-table-head');
+  var body    = document.getElementById('sk-st-table-body');
+  if (!headRow || !body) return;
+
+  headRow.innerHTML =
+    '<th>Sample</th><th>Phase</th><th>PAR</th><th>n pts</th>' +
+    '<th>&#916;Fm&prime; (%)</th><th>&#964; (s)</th><th>t&#189; (s)</th><th>R&#178;</th><th></th>';
+
+  var rows = [];
+  var files = skData.files || [];
+  var st    = skData.state_transitions || {};
+
+  files.forEach(function(fname) {
+    var phases = st[fname] || [];
+    phases.forEach(function(ph, pi) {
+      var note  = ph.insufficient_data ? '<span class="text-muted">n/a (few pts)</span>'
+                : !ph.fit_ok            ? '<span class="text-warning">fit failed</span>'
+                : ph.low_confidence     ? '<i class="fa fa-exclamation-triangle text-warning" title="Low confidence (< 6 pts)"></i>'
+                : '';
+      var parLbl = ph.par != null ? ph.par : '—';
+      var r2cls  = ph.r_sq == null ? '' : ph.r_sq >= 0.9 ? 'text-success' : ph.r_sq >= 0.7 ? 'text-warning' : 'text-danger';
+      rows.push(
+        '<tr>' +
+        '<td>' + fname + '</td>' +
+        '<td><strong>' + ph.label + '</strong></td>' +
+        '<td>' + parLbl + '</td>' +
+        '<td>' + ph.n_points + '</td>' +
+        '<td>' + fmt(ph.delta_fm_pct, 1) + '</td>' +
+        '<td>' + fmt(ph.tau, 1) + '</td>' +
+        '<td>' + fmt(ph.half_time, 1) + '</td>' +
+        '<td class="' + r2cls + '">' + fmt(ph.r_sq, 3) + '</td>' +
+        '<td>' + note + '</td>' +
+        '</tr>'
+      );
+    });
+  });
+  body.innerHTML = rows.join('');
+}
+
+// ── phase window adjustment panel ─────────────────────────────────────────
+
+function buildStWindowsPanel() {
+  var el = document.getElementById('sk-st-windows-body');
+  if (!el || !skData || !skData.st_phases_meta) return;
+  var html = '<div class="row" style="font-size:0.85em;">';
+  (skData.st_phases_meta || []).forEach(function(ph, i) {
+    var badge = ph.type === 'light'
+      ? '<span class="badge badge-warning mr-1">light</span>'
+      : '<span class="badge badge-secondary mr-1">dark</span>';
+    var parLbl = ph.par != null ? ' PAR ' + ph.par : '';
+    html +=
+      '<div class="col-12 col-md-6 mb-2">' +
+        '<div class="d-flex align-items-center">' +
+          badge +
+          '<strong class="mr-2">' + ph.label + '</strong>' +
+          '<small class="text-muted mr-2">' + parLbl + '</small>' +
+        '</div>' +
+        '<div class="input-group input-group-sm mt-1">' +
+          '<div class="input-group-prepend"><span class="input-group-text">Start (s)</span></div>' +
+          '<input type="number" class="form-control sk-st-win-start" data-idx="' + i + '"' +
+          ' value="' + fmt(ph.t_start, 2) + '" step="0.1">' +
+          '<div class="input-group-prepend"><span class="input-group-text">End (s)</span></div>' +
+          '<input type="number" class="form-control sk-st-win-end" data-idx="' + i + '"' +
+          ' value="' + fmt(ph.t_end, 2) + '" step="0.1">' +
+        '</div>' +
+      '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── refit ──────────────────────────────────────────────────────────────────
+
+async function refitStateTransitions(useCustomWindows) {
+  if (!skData || !skData.has_state_transitions) return;
+  var spinner = document.getElementById('sk-st-refit-spinner');
+  var status  = document.getElementById('sk-st-refit-status');
+  if (spinner) spinner.style.display = '';
+  if (status)  status.textContent = '';
+
+  // Param time in seconds (convert if AquaPen)
+  var t_s = (skData.param_time || []).map(_stTimeToS);
+
+  // Build phases from current meta (or user-adjusted windows)
+  var phaseMeta = (skData.st_phases_meta || []).map(function(ph, i) {
+    var tStart = ph.t_start;
+    var tEnd   = ph.t_end;
+    if (useCustomWindows) {
+      var startEl = document.querySelector('.sk-st-win-start[data-idx="' + i + '"]');
+      var endEl   = document.querySelector('.sk-st-win-end[data-idx="' + i + '"]');
+      if (startEl && endEl) {
+        tStart = parseFloat(startEl.value);
+        tEnd   = parseFloat(endEl.value);
+      }
+    }
+    return { label: ph.label, type: ph.type, par: ph.par, t_start: tStart, t_end: tEnd };
+  });
+
+  // Build files_data per phase
+  var files = skData.files || [];
+  var phases = phaseMeta.map(function(ph) {
+    var files_data = {};
+    files.forEach(function(fname) {
+      var fm = skData.params && skData.params[fname] && skData.params[fname]['fm'] || [];
+      var t_seg = [], fm_seg = [];
+      t_s.forEach(function(tv, j) {
+        if (tv >= ph.t_start - 1e-9 && tv <= ph.t_end + 1e-9 && fm[j] != null) {
+          t_seg.push(tv); fm_seg.push(fm[j]);
+        }
+      });
+      files_data[fname] = { t: t_seg, fm: fm_seg };
+    });
+    return { label: ph.label, type: ph.type, par: ph.par, files_data: files_data };
+  });
+
+  try {
+    var resp = await fetch('/api/slow_kin_st_refit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ include_d1: stIncludeD1, phases: phases }),
+    });
+    var result = await resp.json();
+    if (result.status !== 'success') {
+      if (status) status.textContent = 'Error: ' + result.message;
+      return;
+    }
+    skData.state_transitions = result.state_transitions;
+    skData.st_phases_meta    = result.st_phases_meta;
+    skData.st_include_d1     = stIncludeD1;
+    renderStChart();
+    renderStTable();
+    buildStWindowsPanel();
+  } catch (err) {
+    if (status) status.textContent = 'Network error: ' + err.message;
+  } finally {
+    if (spinner) spinner.style.display = 'none';
   }
 }
