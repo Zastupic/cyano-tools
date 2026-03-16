@@ -1,760 +1,639 @@
-from flask import Blueprint, render_template, request, flash, redirect
-import os, base64, io, time, openpyxl
+from flask import Blueprint, render_template, request, jsonify
+import os, io, time
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt  
-from openpyxl.drawing.image import Image
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
 
 slow_kin_data_analysis = Blueprint('slow_kin_data_analysis', __name__)
 
-@slow_kin_data_analysis.route('/slow_kin_data_analysis', methods=['GET', 'POST'])
-def analyze_slow_kin_data():
-    # Define variables 
-    plot_from_memory = fluorescence = fig = PAR_ALL = plots_MC_PAM_raw_data = plots_MC_PAM_parameters = plots_AquaPen = ()
-    xlsx_file_path = str('')
-    if request.method == "POST": 
-        max_number_of_files = 50
-        upload_folder = UPLOAD_FOLDER
-        file_Aquapen = Summary_file = Summary_file_incl_str = check = File_MULTI_COLOR_PAM = pd.DataFrame()
-        ALLOWED_EXTENSIONS_MULTI_COLOR_PAM = set(['.csv', '.CSV'])
-        ALLOWED_EXTENSIONS_AQUAPEN = set(['.txt']) 
-        F0 = FM = QY_MAX = ACTINIC_INTENSITY = FP = FS = RFD = pd.DataFrame()
-        Timing_Fm = Timing_Ft = FM_points = Ft_points = Fv_points = Timing_NPQ = NPQ_points = QP_points = QY_points = ETR_points = pd.DataFrame() 
-        FM_PRIME_LIGHT_ALL = FM_PRIME_DARK_ALL = FM_PRIME_ALL = FM_MAX = FT_ALL = FV_ALL = PAR_ALL = pd.DataFrame() 
-        FP_ALL = FS_ALL = FD_ALL = FM_PRIME_D1_ALL = FM_PRIME_D5_ALL = FM_PRIME_D20_ALL = RFD_ALL = pd.DataFrame() 
-        NPQ_LIGHT_ALL = NPQ_DARK_ALL = NPQ_ALL_FM = NPQ_ALL_FM_MAX = QN_ALL_FM = QN_ALL_FM_MAX = QE_ALL = QT_ALL = QI_ALL = pd.DataFrame()
-        QP_LIGHT_ALL = QP_DARK_ALL = QP_ALL = pd.DataFrame()
-        QY_LIGHT_ALL = QY_DARK_ALL = QY_ALL = pd.DataFrame()
-        ETR_LIGHT_ALL = ETR_DARK_ALL = ETR_ALL = ETR_FM = pd.DataFrame()
-        files_extensions = set()
-        file_extension = x_axis_unit = y_axis_unit = file_name_without_extension = str('') 
-        # create upload directory, if there is not any
-        if os.path.isdir(upload_folder) == False:
-            os.mkdir(upload_folder)
-        ##################
-        ### Load files ###
-        ##################
-        if 'NPQ_files' in request.files: # check if some file is selected
-            current_time = time.time() # get the current time
-            files = request.files.getlist("NPQ_files") # get list of files
-            if secure_filename(files[0].filename) == '': # type: ignore # check if at least one file is selected
-                flash('Please select one or more files to analyze.', category='error') 
-            else:
-                fluorometer = (request.form.get('fluorometer')) # get info on fluorometer
-                # Define fluorometer-dependent variables
-                if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
-                    x_axis_unit = "Time (s)"
-                    y_axis_unit = "Fluorescence intensity (V)"
-                elif fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)':
-                    x_axis_unit = "Time (ms)"
-                    y_axis_unit = "Fluorescence intensity (a.u.)"
-                if len(files) <= max_number_of_files: # Check if number of selected files is within the set limit
-                    file_number = 0
-                    for file in files: # do for each file 
-                        # get image names and extension
-                        file_name_without_extension = str.lower(os.path.splitext(file.filename)[0]) # type: ignore # for single image: image = (request.files['image']) 
-                        file_extension = str.lower(os.path.splitext(file.filename)[1]) # type: ignore
-                        file_name_full = secure_filename(file.filename) # type: ignore
-                        files_extensions.add(file_extension) # append all extensions to a set
-                        ##################################
-                        ### READ MULTI-COLOR PAM FILES ###
-                        ##################################
-                        if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' and file_extension in ALLOWED_EXTENSIONS_MULTI_COLOR_PAM:     
-                            File_MULTI_COLOR_PAM = pd.read_csv(files[(file_number)], sep=';', engine='python')  # type: ignore # read csv file directly, without uploading to server                    
-                            #### Read RAW DATA FILES + process into a single dataframe #####
-                            if request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_raw_data': 
-                                if len(File_MULTI_COLOR_PAM.columns) < 4 and 'ETR' not in File_MULTI_COLOR_PAM: # Check if RAW DATA files was selected
-                                    if file_number == 0: # Merge all data in the final dataframe
-                                        Summary_file = File_MULTI_COLOR_PAM.iloc[:,0:2] # initiate final dataframe
-                                        Summary_file.rename(columns = {Summary_file.columns[1]: file_name_without_extension}, inplace = True) # rename column with fluorescence values as file name
-                                    elif file_number > 0:
-                                        File_MULTI_COLOR_PAM = File_MULTI_COLOR_PAM.iloc[:,1:2] # read fluorescence, as 2nd column in all other files
-                                        Summary_file = pd.concat([Summary_file, File_MULTI_COLOR_PAM], axis = 1) # merge the fluorescence column with the final dataframe
-                                        Summary_file.rename(columns = {Summary_file.columns[file_number+1]: file_name_without_extension}, inplace = True) # rename the newly added column
-                            ##### Read PARAMETER FILES + process into a single dataframe #####
-                            elif request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_parameters': 
-                                if len(File_MULTI_COLOR_PAM.columns) > 3 and 'ETR' in File_MULTI_COLOR_PAM: # Check if PARAMETER data files was selected
-                                    if file_number == 0: 
-                                        # Initiate dataframes with parameters
-                                        PAR_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
-                                        FT_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
-                                        FM_PRIME_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
-                                        QY_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
-                                        ETR_ALL = File_MULTI_COLOR_PAM.iloc[:,0]
-                                                                                # merge columns of particular names with the final dataframe
-                                        PAR_ALL = pd.concat([PAR_ALL,File_MULTI_COLOR_PAM['PAR']], axis = 1)
-                                        FT_ALL = pd.concat([FT_ALL,File_MULTI_COLOR_PAM['F']], axis = 1) 
-                                        FM_PRIME_ALL = pd.concat([FM_PRIME_ALL,File_MULTI_COLOR_PAM['Fm\'']], axis = 1)  
-                                        QY_ALL = pd.concat([QY_ALL,File_MULTI_COLOR_PAM['Y(II)']], axis = 1)
-                                        ETR_ALL = pd.concat([ETR_ALL,File_MULTI_COLOR_PAM['ETR']], axis = 1)
-                                        # rename column with fluorescence values as file name
-                                        PAR_ALL.rename(columns = {PAR_ALL.columns[1]: file_name_without_extension}, inplace = True)
-                                        FT_ALL.rename(columns = {FT_ALL.columns[1]: file_name_without_extension}, inplace = True) 
-                                        FM_PRIME_ALL.rename(columns = {FM_PRIME_ALL.columns[1]: file_name_without_extension}, inplace = True)
-                                        QY_ALL.rename(columns = {QY_ALL.columns[1]: file_name_without_extension}, inplace = True)
-                                        ETR_ALL.rename(columns = {ETR_ALL.columns[1]: file_name_without_extension}, inplace = True)
-                                    elif file_number > 0:
-                                        # merge the fluorescence column with the final dataframe
-                                        PAR_ALL = pd.concat([PAR_ALL,File_MULTI_COLOR_PAM['PAR']], axis = 1)
-                                        FT_ALL = pd.concat([FT_ALL,File_MULTI_COLOR_PAM['F']], axis = 1)
-                                        FM_PRIME_ALL = pd.concat([FM_PRIME_ALL,File_MULTI_COLOR_PAM['Fm\'']], axis = 1)
-                                        QY_ALL = pd.concat([QY_ALL,File_MULTI_COLOR_PAM['Y(II)']], axis = 1)
-                                        ETR_ALL = pd.concat([ETR_ALL,File_MULTI_COLOR_PAM['ETR']], axis = 1)
-                                        # rename the newly added column
-                                        PAR_ALL.rename(columns = {PAR_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True)
-                                        FT_ALL.rename(columns = {FT_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True) 
-                                        FM_PRIME_ALL.rename(columns = {FM_PRIME_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True) 
-                                        QY_ALL.rename(columns = {QY_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True)  
-                                        ETR_ALL.rename(columns = {ETR_ALL.columns[file_number+1]: file_name_without_extension}, inplace = True)     
-                        ##########################
-                        ### READ AQUAPEN FILES ###
-                        ##########################
-                        if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and file_extension in ALLOWED_EXTENSIONS_AQUAPEN:
-                            file.save(os.path.join(upload_folder, file_name_full).replace("\\","/")) # to read .txt files, the files need to be first uploaded to server
-                            with open(upload_folder+file_name_full, "r") as temp_variable: # read .txt files
-                                # read the txt file     
-                                file_Aquapen = temp_variable.readlines() # reading without header
-                                file_Aquapen = pd.DataFrame(file_Aquapen)
-                                file_Aquapen = file_Aquapen[0].str.split('\t', expand=True)
-                                # Merge all data in the final dataframe
-                                if file_number == 0:
-                                    Summary_file = file_Aquapen[file_Aquapen.columns[:-1]] # initiate final dataframe + drop the last column win '\n' only
-                                    Summary_file.rename(columns = {Summary_file.columns[1]: file_name_without_extension}, inplace = True) # rename column with fluorescence values according to file name
-                                    Summary_file.rename(columns = {Summary_file.columns[0]: 'time_us'}, inplace = True) # rename first column
-                                else:
-                                    fluorescence = file_Aquapen.iloc[:,1:2] # read fluorescence, as 2nd column in all other files
-                                    Summary_file = pd.concat([Summary_file, fluorescence], axis = 1) # merge the fluorescence column with the final dataframe
-                                    Summary_file.rename(columns = {Summary_file.columns[file_number+1]: file_name_without_extension}, inplace = True) # rename the newly added column                                  
-                            os.remove(os.path.join(upload_folder, file_name_full).replace("\\","/")) # Delete the uploaded file
-                        file_number = file_number + 1               
-                    #####################################
-                    ### PROCESS MULTI-COLOR PAM FILES ###
-                    #####################################
-                    if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' and file_extension in ALLOWED_EXTENSIONS_MULTI_COLOR_PAM:
-                        ### reduce size of RAW MULTI-COLOR PAM FILES ####
-                        if request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_raw_data' and request.form.get("checkbox_reduce_file_size") == 'checked': 
-                            if not Summary_file.empty: 
-                                if len(Summary_file.index) > 10000:
-                                    reduction_factor = int(len(Summary_file.index) / 10000) # calculate factor for data reduction - to keep around 10000 lines in the final df
-                                    Summary_file = Summary_file[::reduction_factor] # Exclude every nth row starting from 0
-                                    Summary_file.reset_index(inplace = True) # Reset index
-                                    Summary_file = Summary_file.drop('index', axis=1)  # Drop old index
-                            else:
-                                flash(f'There seems to be a problem with selected type of analysis (MULTI-COLOR-PAM / Dual PAM, raw data), or with the uploaded files. Please revise the uploaded files and analysis type.', category='error')
-                        ### CALCULATE ADDITIONAL PARAMETERS ####
-                        if request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_parameters':
-                            if not PAR_ALL.empty: 
-                                # rename first column as "Time (s)"
-                                PAR_ALL = PAR_ALL.rename(columns={PAR_ALL.columns[0]: "Time (s)" })
-                                FT_ALL = FT_ALL.rename(columns={FT_ALL.columns[0]: "Time (s)" })
-                                FM_PRIME_ALL = FM_PRIME_ALL.rename(columns={FM_PRIME_ALL.columns[0]: "Time (s)" })
-                                QY_ALL = QY_ALL.rename(columns={QY_ALL.columns[0]: "Time (s)" })
-                                ETR_ALL = ETR_ALL.rename(columns={ETR_ALL.columns[0]: "Time (s)" })
-                                # Delete rows with NaN 
-                                PAR_ALL = PAR_ALL.iloc[pd.notna(PAR_ALL.iloc[:, 0]).to_numpy()] # delete first rows with NaN also in the first column ('t')
-                                PAR_ALL = PAR_ALL[PAR_ALL.iloc[:, 1:].notna().any(axis=1)] # delete rows with NaN in all other columns that 't'
-                                FT_ALL = FT_ALL.iloc[pd.notna(FT_ALL.iloc[:, 0]).to_numpy()] # delete first rows with NaN also in the first column ('t')
-                                FT_ALL = FT_ALL[FT_ALL.iloc[:, 1:].notna().any(axis=1)] # delete rows with NaN in all other columns that 't'
-                                FM_PRIME_ALL = FM_PRIME_ALL.iloc[pd.notna(FM_PRIME_ALL.iloc[:, 0]).to_numpy()] # delete first rows with NaN also in the first column ('t')
-                                FM_PRIME_ALL = FM_PRIME_ALL[FM_PRIME_ALL.iloc[:, 1:].notna().any(axis=1)] # delete rows with NaN in all other columns that 't'
-                                QY_ALL = QY_ALL.iloc[pd.notna(QY_ALL.iloc[:, 0]).to_numpy()] # delete first rows with NaN also in the first column ('t')
-                                QY_ALL = QY_ALL[QY_ALL.iloc[:, 1:].notna().any(axis=1)] # delete rows with NaN in all other columns that 't'
-                                ETR_ALL = ETR_ALL.iloc[pd.notna(ETR_ALL.iloc[:, 0]).to_numpy()] # delete first rows with NaN also in the first column ('t')
-                                ETR_ALL = ETR_ALL[ETR_ALL.iloc[:, 1:].notna().any(axis=1)] # delete rows with NaN in all other columns that 't'
-                                # Get F0, Fm, Fm'(max)
-                                FM_MAX = FM_PRIME_ALL.max()
-                                F0 = FT_ALL.iloc[0]
-                                FM = FM_PRIME_ALL.iloc[0]
-                                # Calculate Fv
-                                FV_ALL = (FM_PRIME_ALL.iloc[:, 1:] - FT_ALL.iloc[:, 1:])
-                                FV_ALL = pd.concat([FM_PRIME_ALL.iloc[:, 0], FV_ALL], axis = 1) # Add the time column
-                                # Calculate QP
-                                QP_ALL = (FM_PRIME_ALL.iloc[:, 1:]  - FT_ALL.iloc[:, 1:]) / (FM_PRIME_ALL.iloc[:, 1:] - F0.iloc[1:])
-                                QP_ALL = pd.concat([FM_PRIME_ALL.iloc[:, 0], QP_ALL], axis = 1) # Add the time column
-                                # calculate QN
-                                QN_ALL_FM = (FM.iloc[1:] - FM_PRIME_ALL.iloc[:, 1:]) / FM.iloc[1:]
-                                QN_ALL_FM_MAX = (FM_MAX.iloc[1:] - FM_PRIME_ALL.iloc[:, 1:]) / FM.iloc[1:]
-                                QN_ALL_FM = pd.concat([FM_PRIME_ALL.iloc[:, 0], QN_ALL_FM], axis = 1) # Add the time column
-                                QN_ALL_FM_MAX = pd.concat([FM_PRIME_ALL.iloc[:, 0], QN_ALL_FM_MAX], axis = 1) # Add the time column
-                                # calculate NPQ
-                                NPQ_ALL_FM = (FM.iloc[1:] - FM_PRIME_ALL.iloc[:, 1:]) / FM.iloc[1:]
-                                NPQ_ALL_FM_MAX = (FM_MAX.iloc[1:] - FM_PRIME_ALL.iloc[:, 1:]) / FM_MAX.iloc[1:]
-                                NPQ_ALL_FM = pd.concat([FM_PRIME_ALL.iloc[:, 0], NPQ_ALL_FM], axis = 1) # Add the time column
-                                NPQ_ALL_FM_MAX = pd.concat([FM_PRIME_ALL.iloc[:, 0], NPQ_ALL_FM_MAX], axis = 1) # Add the time column
-                    #############################
-                    ### PROCESS AQUAPEN FILES ###
-                    #############################
-                    elif fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and file_extension in ALLOWED_EXTENSIONS_AQUAPEN:
-                        if Summary_file['time_us'].str.contains('NPQ').any(): # Check if parameters were exported
-                            ###################################################
-                            ### Put all values as exported by AquaPen to DF ###
-                            ###################################################
-                            # values measured for all settings
-                            if not Summary_file["time_us"].isnull().any():
-                                F0 = ((Summary_file[Summary_file["time_us"].str.contains("Fo")]).iloc[: , 1:]) # find F0
-                                FP = ((Summary_file[Summary_file["time_us"].str.contains("Fp")]).iloc[: , 1:]) # find Fp
-                                RFD = ((Summary_file[Summary_file["time_us"].str.contains("Rfd")]).iloc[: , 1:]) # find Rfd
-                                FM = ((Summary_file[Summary_file["time_us"].str.contains("Fm")]).iloc[: , 1:]) # select all values, including Fm_L1-L4/Fm_L1-L9
-                                FM = pd.DataFrame(FM.iloc[0,:]).T # select only Fm
-                                QY_MAX = ((Summary_file[Summary_file["time_us"].str.contains("QY_max")]).iloc[: , 1:]) # find QY_max
+# ─── AquaPen protocol definitions ────────────────────────────────────────────
 
-                                ACTINIC_INTENSITY = ((Summary_file[Summary_file["time_us"].str.contains("ACTINIC-Intensity")]).iloc[: , 1:]).reset_index(drop=True) # find intensity of actinic light
-                                # get indexes common for all NPQ files
-                                index_Fm_L1 = Summary_file.index[Summary_file['time_us'] == 'Fm_L1'].tolist()
-                                index_Fm_Lss = Summary_file.index[Summary_file['time_us'] == 'Fm_Lss'].tolist()
-                                index_Fm_D1 = Summary_file.index[Summary_file['time_us'] == 'Fm_D1'].tolist()
-                                index_NPQ_L1 = Summary_file.index[Summary_file['time_us'] == 'NPQ_L1'].tolist()
-                                index_NPQ_Lss = Summary_file.index[Summary_file['time_us'] == 'NPQ_Lss'].tolist()
-                                index_NPQ_D1 = Summary_file.index[Summary_file['time_us'] == 'NPQ_D1'].tolist()  
-                                index_Qp_L1 = Summary_file.index[Summary_file['time_us'] == 'Qp_L1'].tolist()
-                                index_Qp_Lss = Summary_file.index[Summary_file['time_us'] == 'Qp_Lss'].tolist()  
-                                index_Qp_D1 = Summary_file.index[Summary_file['time_us'] == 'Qp_D1'].tolist()
-                                index_QY_L1 = Summary_file.index[Summary_file['time_us'] == 'QY_L1'].tolist()
-                                index_QY_Lss = Summary_file.index[Summary_file['time_us'] == 'QY_Lss'].tolist()  
-                                index_QY_D1 = Summary_file.index[Summary_file['time_us'] == 'QY_D1'].tolist()
-                                ####### NPQ 1 settings #######
-                                if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and request.form["checkbox_NPQ_Aquapen"] == 'checkbox_NPQ1':
-                                    if (Summary_file['time_us'].str.contains('NPQ_L4').any()) and not (Summary_file['time_us'].str.contains('NPQ_L9').any()):
-                                        Timing_Fm = pd.DataFrame({'time_us':[1422801,19364701,31261001,43157301,55053601,66949901,83876601,109879301,135882001]}).astype(int)
-                                        Timing_Ft = pd.DataFrame({'time_us':[207601,18564701,30461001,42357301,54253601,66149901,83076601,109079301,135082001]}).astype(int)
-                                        Timing_NPQ = pd.DataFrame({'time_us':[19364701,31261001,43157301,55053601,66949901,83876601,109879301,135882001]}).astype(int)
-                                        FM_points = pd.DataFrame({'FM points':['Fm','Fm_L1','Fm_L2','Fm_L3','Fm_L4','Fm_Lss','Fm_D1','Fm_D2','Fm_D3']})
-                                        Ft_points = pd.DataFrame({'Ft points':['F0','Ft_L1','Ft_L2','Ft_L3','Ft_L4','Ft_Lss','Ft_D1','Ft_D2','Ft_D3']})
-                                        Fv_points = pd.DataFrame({'Fv points':['Fv','Fv_L1','Fv_L2','Fv_L3','Fv_L4','Fv_Lss','Fv_D1','Fv_D2','Fv_D3']})
-                                        NPQ_points = pd.DataFrame({'NPQ points':['NPQ_L1','NPQ_L2','NPQ_L3','NPQ_L4','NPQ_Lss','NPQ_D1','NPQ_D2','NPQ_D3']})
-                                        QP_points = pd.DataFrame({'QP points':['QP_L1','QP_L2','QP_L3','QP_L4','QP_Lss','QP_D1','QP_D2','QP_D3']})
-                                        QY_points = pd.DataFrame({'QY points':['QY_max (Fv/Fm)','QY_L1','QY_L2','QY_L3','QY_L4','QY_Lss','QY_D1','QY_D2','QY_D3']})
-                                        ETR_points = pd.DataFrame({'ETR points':['ETR_Fv/Fm','ETR_L1','ETR_L2','ETR_L3','ETR_L4','ETR_Lss','ETR_D1','ETR_D2','ETR_D3']})
-                                        # get indexes specific for NPQ1 files
-                                        index_Fm_D3 = Summary_file.index[Summary_file['time_us'] == 'Fm_D3'].tolist()
-                                        index_NPQ_D3 = Summary_file.index[Summary_file['time_us'] == 'NPQ_D3'].tolist()
-                                        index_Qp_D3 = Summary_file.index[Summary_file['time_us'] == 'Qp_D3'].tolist()
-                                        index_QY_D3 = Summary_file.index[Summary_file['time_us'] == 'QY_D3'].tolist()
-                                        FM_PRIME_LIGHT_ALL = Summary_file.iloc[index_Fm_L1[0]:(index_Fm_Lss[0]+1)]
-                                        FM_PRIME_DARK_ALL = Summary_file.iloc[index_Fm_D1[0]:(index_Fm_D3[0]+1)]
-                                        NPQ_LIGHT_ALL = Summary_file.iloc[index_NPQ_L1[0]:(index_NPQ_Lss[0]+1)]
-                                        NPQ_DARK_ALL = Summary_file.iloc[index_NPQ_D1[0]:(index_NPQ_D3[0]+1)]
-                                        QP_LIGHT_ALL = Summary_file.iloc[index_Qp_L1[0]:(index_Qp_Lss[0]+1)]
-                                        QP_DARK_ALL = Summary_file.iloc[index_Qp_D1[0]:(index_Qp_D3[0]+1)]
-                                        QY_LIGHT_ALL = Summary_file.iloc[index_QY_L1[0]:(index_QY_Lss[0]+1)]
-                                        QY_DARK_ALL = Summary_file.iloc[index_QY_D1[0]:(index_QY_D3[0]+1)]
-                                    else:
-                                        flash('Please select correct type of the NPQ protocol and/or files to analyze (currently, NPQ1 protocol was seltected, but other file type seems to be uploaded).', category='error')
-                                ####### NPQ 2 settings #######
-                                elif fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and request.form["checkbox_NPQ_Aquapen"] == 'checkbox_NPQ2':
-                                    if (Summary_file['time_us'].str.contains('NPQ_L9').any()) and (Summary_file['time_us'].str.contains('NPQ_D7').any()):
-                                        # get series info specific for NPQ2 files
-                                        Timing_Fm = pd.DataFrame({'time (us)':[1422801,32425501,53314201,74202901,95091601,115980301,136869001,157757701,178646401,199535101,220423801,243327701,304174001,365020301,425866601,486712901,547559201,608405501]}).astype(int)
-                                        Timing_Ft = pd.DataFrame({'time_us':[207601,31625501,52514201,73402901,94291601,115180301,136069001,156957701,177846401,198735101,219623801,242527701,303374001,364220301,425066601,485912901,546759201,607605501]}).astype(int)
-                                        Timing_NPQ = pd.DataFrame({'time_us':[32425501,53314201,74202901,95091601,115980301,136869001,157757701,178646401,199535101,220423801,243327701,304174001,365020301,425866601,486712901,547559201,608405501]})
-                                        FM_points = pd.DataFrame({'FM points':['Fm','Fm_L1','Fm_L2','Fm_L3','Fm_L4','Fm_L5','Fm_L6','Fm_L7','Fm_L8','Fm_L9','Fm_Lss','Fm_D1','Fm_D2','Fm_D3','Fm_D4','Fm_D5','Fm_D6','Fm_D7']})
-                                        Ft_points = pd.DataFrame({'Ft points':['Ft','Ft_L1','Ft_L2','Ft_L3','Ft_L4','Ft_L5','Ft_L6','Ft_L7','Ft_L8','Ft_L9','Ft_Lss','Ft_D1','Ft_D2','Ft_D3','Ft_D4','Ft_D5','Ft_D6','Ft_D7']})
-                                        Fv_points = pd.DataFrame({'Fv points':['Fv','Fv_L1','Fv_L2','Fv_L3','Fv_L4','Fv_L5','Fv_L6','Fv_L7','Fv_L8','Fv_L9','Fv_Lss','Fv_D1','Fv_D2','Fv_D3','Fv_D4','Fv_D5','Fv_D6','Fv_D7']})
-                                        NPQ_points = pd.DataFrame({'NPQ points':['NPQ_L1','NPQ_L2','NPQ_L3','NPQ_L4','NPQ_L5','NPQ_L6','NPQ_L7','NPQ_L8','NPQ_L9','NPQ_Lss','NPQ_D1','NPQ_D2','NPQ_D3','NPQ_D4','NPQ_D5','NPQ_D6','NPQ_D7']})
-                                        QP_points = pd.DataFrame({'QP points':['QP_L1','QP_L2','QP_L3','QP_L4','QP_L5','QP_L6','QP_L7','QP_L8','QP_L9','QP_Lss','QP_D1','QP_D2','QP_D3','QP_D4','QP_D5','QP_D6','QP_D7']})
-                                        QY_points = pd.DataFrame({'QY points':['QY_max (Fv/Fm)','QY_L1','QY_L2','QY_L3','QY_L4','QY_L5','QY_L6','QY_L7','QY_L8','QY_L9','QY_Lss','QY_D1','QY_D2','QY_D3','QY_D4','QY_D5','QY_D6','QY_D7']})
-                                        ETR_points = pd.DataFrame({'ETR points':['ETR_Fv/Fm','ETR_L1','ETR_L2','ETR_L3','ETR_L4','ETR_L5','ETR_L6','ETR_L7','ETR_L8','ETR_L9','ETR_Lss','ETR_D1','ETR_D2','ETR_D3','ETR_D4','ETR_D5','ETR_D6','ETR_D7']})
-                                        # get indexes specific for NPQ2 files
-                                        index_Fm_D7 = Summary_file.index[Summary_file['time_us'] == 'Fm_D7'].tolist()
-                                        index_NPQ_D7 = Summary_file.index[Summary_file['time_us'] == 'NPQ_D7'].tolist()
-                                        index_Qp_D7 = Summary_file.index[Summary_file['time_us'] == 'Qp_D7'].tolist()
-                                        index_QY_D7 = Summary_file.index[Summary_file['time_us'] == 'QY_D7'].tolist()
-                                        FM_PRIME_LIGHT_ALL = Summary_file.iloc[index_Fm_L1[0]:(index_Fm_Lss[0]+1)]
-                                        FM_PRIME_DARK_ALL = Summary_file.iloc[index_Fm_D1[0]:(index_Fm_D7[0]+1)]
-                                        NPQ_LIGHT_ALL = Summary_file.iloc[index_NPQ_L1[0]:(index_NPQ_Lss[0]+1)]
-                                        NPQ_DARK_ALL = Summary_file.iloc[index_NPQ_D1[0]:(index_NPQ_D7[0]+1)]
-                                        QP_LIGHT_ALL = Summary_file.iloc[index_Qp_L1[0]:(index_Qp_Lss[0]+1)]
-                                        QP_DARK_ALL = Summary_file.iloc[index_Qp_D1[0]:(index_Qp_D7[0]+1)]
-                                        QY_LIGHT_ALL = Summary_file.iloc[index_QY_L1[0]:(index_QY_Lss[0]+1)]
-                                        QY_DARK_ALL = Summary_file.iloc[index_QY_D1[0]:(index_QY_D7[0]+1)]
-                                    else:
-                                        flash('Please select correct type of the NPQ protocol and/or files to analyze (currently, NPQ2 protocol was seltected, but other file type seems to be uploaded).', category='error')
-                                ####### NPQ 3 settings #######
-                                elif fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and request.form["checkbox_NPQ_Aquapen"] == 'checkbox_NPQ3':
-                                    if (Summary_file['time_us'].str.contains('NPQ_L9').any()) and not (Summary_file['time_us'].str.contains('NPQ_D7').any()):
-                                        Timing_Fm = pd.DataFrame({'time_us':[1422801,32425501,53314201,74202901,95091601,115980301,136869001,157757701,178646401,199535101,220423801,243327701,264224001]}).astype(int)
-                                        Timing_Ft = pd.DataFrame({'time_us':[207601,31625501,52514201,73402901,94291601,115180301,136069001,156957701,177846401,198735101,219623801,242527701,263424001]}).astype(int)
-                                        Timing_NPQ = pd.DataFrame({'time_us':[32425501,53314201,74202901,95091601,115980301,136869001,157757701,178646401,199535101,220423801,243327701,264224001]}).astype(int)
-                                        FM_points = pd.DataFrame({'FM points':['Fm','Fm_L1','Fm_L2','Fm_L3','Fm_L4','Fm_L5','Fm_L6','Fm_L7','Fm_L8','Fm_L9','Fm_Lss','Fm_D1','Fm_D2']})
-                                        Ft_points = pd.DataFrame({'Ft points':['Ft','Ft_L1','Ft_L2','Ft_L3','Ft_L4','Ft_L5','Ft_L6','Ft_L7','Ft_L8','Ft_L9','Ft_Lss','Ft_D1','Ft_D2']})
-                                        Fv_points = pd.DataFrame({'Fv points':['Fv','Fv_L1','Fv_L2','Fv_L3','Fv_L4','Fv_L5','Fv_L6','Fv_L7','Fv_L8','Fv_L9','Fv_Lss','Fv_D1','Fv_D2']})
-                                        NPQ_points = pd.DataFrame({'NPQ points':['NPQ_L1','NPQ_L2','NPQ_L3','NPQ_L4','NPQ_L5','NPQ_L6','NPQ_L7','NPQ_L8','NPQ_L9','NPQ_Lss','NPQ_D1','NPQ_D2']})
-                                        QP_points = pd.DataFrame({'QP points':['QP_L1','QP_L2','QP_L3','QP_L4','QP_L5','QP_L6','QP_L7','QP_L8','QP_L9','QP_Lss','QP_D1','QP_D2']})
-                                        QY_points = pd.DataFrame({'QY points':['QY_max (Fv/Fm)','QY_L1','QY_L2','QY_L3','QY_L4','QY_L5','QY_L6','QY_L7','QY_L8','QY_L9','QY_Lss','QY_D1','QY_D2']})
-                                        ETR_points = pd.DataFrame({'ETR points':['ETR_Fv/Fm','ETR_L1','ETR_L2','ETR_L3','ETR_L4','ETR_L5','ETR_L6','ETR_L7','ETR_L8','ETR_L9','ETR_Lss','ETR_D1','ETR_D2']})
-                                        # get indexes specific for NPQ3 files
-                                        index_Fm_D2 = Summary_file.index[Summary_file['time_us'] == 'Fm_D2'].tolist()
-                                        index_NPQ_D2 = Summary_file.index[Summary_file['time_us'] == 'NPQ_D2'].tolist()
-                                        index_Qp_D2 = Summary_file.index[Summary_file['time_us'] == 'Qp_D2'].tolist()
-                                        index_QY_D2 = Summary_file.index[Summary_file['time_us'] == 'QY_D2'].tolist()
-                                        FM_PRIME_LIGHT_ALL = Summary_file.iloc[index_Fm_L1[0]:(index_Fm_Lss[0]+1)]
-                                        FM_PRIME_DARK_ALL = Summary_file.iloc[index_Fm_D1[0]:(index_Fm_D2[0]+1)]
-                                        NPQ_LIGHT_ALL = Summary_file.iloc[index_NPQ_L1[0]:(index_NPQ_Lss[0]+1)]
-                                        NPQ_DARK_ALL = Summary_file.iloc[index_NPQ_D1[0]:(index_NPQ_D2[0]+1)]
-                                        QP_LIGHT_ALL = Summary_file.iloc[index_Qp_L1[0]:(index_Qp_Lss[0]+1)]
-                                        QP_DARK_ALL = Summary_file.iloc[index_Qp_D1[0]:(index_Qp_D2[0]+1)]
-                                        QY_LIGHT_ALL = Summary_file.iloc[index_QY_L1[0]:(index_QY_Lss[0]+1)]
-                                        QY_DARK_ALL = Summary_file.iloc[index_QY_D1[0]:(index_QY_D2[0]+1)]
-                                    else:
-                                        flash('Please select correct type of the NPQ protocol and/or files to analyze (currently, NPQ3 protocol was seltected, but other file type seems to be uploaded).', category='error')
-                                        # Stop processing this file and redirect
-                                        return redirect(request.url)                          
-                            else:
-                                    flash('Please select correct type of the NPQ protocol and/or files to analyze.', category='error')
-                                    # Stop processing this file and redirect
-                                    return redirect(request.url)                          
-                        else:
-                            flash(f'There seems to be a problem with the uploaded data. Please revise the uploaded files.', category='error')
-                            # Stop processing this file and redirect
-                            return redirect(request.url)      
-                    else:
-                        flash(f'For Aquapen/PlantPen, .txt files are required, for MULTI-COLOR-PAM/Dual PAM .csv files are required. Please revise the uploaded files.', category='error')
-                        # Stop processing this file and redirect
-                        return redirect(request.url)      
-                    #############################################################
-                    ### PROCESS THE IDENTIFIED VALUES FROM AQUAPEN / PLANTPEN ###
-                    #############################################################
-                    if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and QY_LIGHT_ALL.empty: # check if DF has some values
-                        return redirect(request.url)   
-                    else: # check if DF has some values AND if the values are not NaN                        
-                        if fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)':
-                            ##################################################
-                            ### KEEP ONLY NUMERICAL VALUES IN SUMMARY FILE ###
-                            ##################################################
-                            # Identify lines without numerical values in the final dataframe
-                            check = pd.DataFrame(Summary_file.time_us.str.isnumeric())
-                            check.rename(columns={check.columns[0]: "A"}, inplace = True)  
-                            Summary_file_incl_str = Summary_file # make copy of summary file, for the conditions
-                            Summary_file = Summary_file[check.A] # Delete lines without numerical values in the final dataframe, according to 'False' values in 'check' DF
-                            Summary_file = Summary_file.astype(int) # type: ignore # convert df to numeric
-                            ##############################
-                            ### CALCUALTE ETR, qN, RFD ###
-                            ##############################
-                            ETR_FM = QY_MAX.iloc[: , 0:].astype(float) * 0
-                            ETR_LIGHT_ALL = QY_LIGHT_ALL.iloc[: , 1:].astype(float) * ACTINIC_INTENSITY.values.astype(float)
-                            ETR_DARK_ALL = QY_DARK_ALL.iloc[: , 1:].astype(float) * 0
-                            ##################################################
-                            ### MERGE THE MEASURED DATA TO FINAL DATAFRAME ###
-                            ##################################################
-                            # Merge FM data 
-                            FM_PRIME_ALL = pd.concat([FM_PRIME_LIGHT_ALL, FM_PRIME_DARK_ALL]).iloc[: , 1:]
-                            FM_PRIME_ALL = pd.concat([FM, FM_PRIME_ALL]).reset_index(drop=True) # type: ignore
-                            FM_PRIME_ALL = pd.concat([Timing_Fm, FM_PRIME_ALL], axis=1).astype(int)
-                            FM_PRIME_ALL = pd.concat([FM_points, FM_PRIME_ALL], axis=1)
-                            # Get Fm(max)
-                            FM_MAX = FM_PRIME_ALL.max()
-                            # Merge NPQ data 
-                            NPQ_ALL_FM = pd.concat([NPQ_LIGHT_ALL, NPQ_DARK_ALL]).iloc[: , 1:].reset_index(drop=True)
-                            NPQ_ALL_FM = pd.concat([Timing_NPQ, NPQ_ALL_FM], axis=1).astype(float)
-                            NPQ_ALL_FM = pd.concat([NPQ_points, NPQ_ALL_FM], axis=1)
-                            # Merge QP data
-                            QP_ALL = pd.concat([QP_LIGHT_ALL, QP_DARK_ALL]).iloc[: , 1:].reset_index(drop=True)
-                            QP_ALL = pd.concat([Timing_NPQ, QP_ALL], axis=1).astype(float)
-                            QP_ALL = pd.concat([QP_points, QP_ALL], axis=1)
-                            # Merge QY data
-                            QY_ALL = pd.concat([QY_LIGHT_ALL, QY_DARK_ALL]).iloc[: , 1:]
-                            QY_ALL = pd.concat([QY_MAX, QY_ALL]).reset_index(drop=True)
-                            QY_ALL = pd.concat([Timing_Fm, QY_ALL], axis=1).astype(float)
-                            QY_ALL = pd.concat([QY_points, QY_ALL], axis=1)
-                            # Merge ETR data
-                            ETR_ALL = pd.concat([ETR_LIGHT_ALL, ETR_DARK_ALL]) 
-                            ETR_ALL = pd.concat([ETR_FM, ETR_ALL]).reset_index(drop=True)
-                            ETR_ALL = pd.concat([Timing_Fm, ETR_ALL], axis=1).astype(float)
-                            ETR_ALL = pd.concat([ETR_points, ETR_ALL], axis=1)
-                            # Merge Rfd data
-                            RFD_ALL =  RFD.T # transpose
-                            RFD_ALL.rename(columns={RFD_ALL.columns[0]: "Rfd"}, inplace = True) # rename the column with values
-                            # Get Ft
-                            FT_ALL = pd.merge_asof(Timing_Ft, Summary_file, left_on='time_us', right_on='time_us', direction='nearest')
-                            FT_ALL = pd.concat([Ft_points, FT_ALL], axis=1)
-                            # Calculate Fv
-                            FV_ALL = FM_PRIME_ALL.iloc[:, 2:] - FT_ALL.iloc[:, 2:]
-                            FV_ALL = pd.concat([Timing_Fm, FV_ALL], axis=1).astype(int)
-                            FV_ALL = pd.concat([Fv_points, FV_ALL], axis=1)
-                            # Calculate qN
-                            QN_ALL_FM = (FM_PRIME_ALL.iloc[0, 2:] - FM_PRIME_ALL.iloc[:, 2:]) / FM_PRIME_ALL.iloc[0, 2:]
-                            QN_ALL_FM = pd.concat([Timing_Fm, QN_ALL_FM], axis=1).astype(float)
-                            QN_ALL_FM = pd.concat([FM_points, QN_ALL_FM], axis=1)
-                            # Calculate NPQ using Fm(max)
-                            NPQ_ALL_FM_MAX = (FM_MAX.iloc[2:] - FM_PRIME_ALL.iloc[:, 2:]) / FM_PRIME_ALL.iloc[:, 2:]
-                            NPQ_ALL_FM_MAX = pd.concat([Timing_Fm.astype(int), NPQ_ALL_FM_MAX], axis=1)
-                            NPQ_ALL_FM_MAX = pd.concat([NPQ_points, NPQ_ALL_FM_MAX], axis=1)
-                    #####################################
-                    ### PLOT MC-PAM FILES - RAW DATA  ###
-                    #####################################
-                    # Check if correct file type was selected
-                    if "MULTI-COLOR-PAM" in fluorometer and \
-                        ((request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_raw_data' and (len(File_MULTI_COLOR_PAM.columns) < 4 and 'ETR' not in File_MULTI_COLOR_PAM) or \
-                        (request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_parameters' and not PAR_ALL.empty))) or \
-                        'time_us' in Summary_file.columns and (fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)' and \
-                        ((request.form["checkbox_NPQ_Aquapen"] == 'checkbox_NPQ1' and Summary_file_incl_str['time_us'].astype(str).str.contains('NPQ_L4').any() and not Summary_file_incl_str['time_us'].astype(str).str.contains('NPQ_L9').any()) or \
-                        (request.form["checkbox_NPQ_Aquapen"] == 'checkbox_NPQ2' and Summary_file_incl_str['time_us'].astype(str).str.contains('NPQ_L9').any() and Summary_file_incl_str['time_us'].astype(str).str.contains('NPQ_D7').any()) or \
-                        (request.form["checkbox_NPQ_Aquapen"] == 'checkbox_NPQ3' and Summary_file_incl_str['time_us'].astype(str).str.contains('NPQ_L9').any() and not Summary_file_incl_str['time_us'].astype(str).str.contains('NPQ_D7').any()))):
-                        # Initialise the subplot function using number of rows and columns 
-                        fig = plt.figure(figsize=(17,11))
-                        fig.tight_layout() # Shrink to fit the canvas together with legend  
-                        fig.subplots_adjust(hspace=0.4, wspace=0.3) # add horizontal space to read the x-axis and titles well
-                        plt.rcParams['mathtext.default'] = 'regular' # Prevent subscripts in axes titles in italics
-                        if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
-                            if request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_raw_data':
-                                # Select color map, according to number of lines (files)
-                                colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number+1)) # type: ignore                           
-                                gs = fig.add_gridspec(nrows=3, ncols=5) # https://how2matplotlib.com/gridspec_kw.html
-                                ########## Sub-plot ##########
-                                subplot = fig.add_subplot(gs[:2, :4])
-                                for i in range(len(Summary_file.columns)): # Read dataframe for the plot
-                                    if i > 0: # do not plot time axis
-                                        subplot.plot(
-                                            Summary_file.iloc[:, 0], # x-axis data: 1st column
-                                            Summary_file.iloc[:, i], # y-axis data
-                                            linewidth=2,
-                                            label = Summary_file.columns[i], #legend
-                                            color=colors[i-1]
-                                            )
-                                subplot.set_title("Raw fluorescence signal") 
-                                subplot.grid() # use: which='both' for minor grid
-                                subplot.set_xlabel(x_axis_unit) 
-                                subplot.set_ylabel(y_axis_unit)
-                                subplot.legend(loc='upper left', bbox_to_anchor=(1.02, 1.02))
-                                plots_MC_PAM_raw_data = subplot # only to check if plotting has been performed
-                            #######################################
-                            ### PLOT MC-PAM FILES - PARAMETERS  ###
-                            #######################################
-                            elif request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_parameters':
-                                # Initialise the subplot function using number of rows and columns 
-                                fig = plt.figure(figsize=(17,11))
-                                fig.tight_layout() # Shrink to fit the canvas together with legend  
-                                fig.subplots_adjust(hspace=0.4, wspace=0.3) # add horizontal space to read the x-axis and titles well
-                                plt.rcParams['mathtext.default'] = 'regular' # Prevent subscripts in axes titles in italics
-                                # Select color map, according to number of lines (files)
-                                colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number+1)) # type: ignore     
-                                if not PAR_ALL.empty: 
-                                    gs = fig.add_gridspec(nrows=3, ncols=5) # https://how2matplotlib.com/gridspec_kw.html
-                                    ########## Sub-plot ##########
-                                    subplot = fig.add_subplot(gs[1, 0]) 
-                                    for i in range(len(FT_ALL.columns)): # Read dataframe for the plot
-                                        if i > 0: # do not plot time axis
-                                            subplot.scatter(
-                                                FT_ALL.iloc[:, 0], # x-axis data: 1st column
-                                                FT_ALL.iloc[:, i], # y-axis data
-                                                color=colors[i-1]
-                                                )
-                                    subplot.set_title("Steady-state flurescence") 
-                                    subplot.grid() # use: which='both' for minor grid
-                                    subplot.set_xlabel(x_axis_unit) 
-                                    subplot.set_ylabel('Ft (V)')
-                                    ########## Sub-plot ##########
-                                    subplot = fig.add_subplot(gs[1, 1])
-                                    for i in range(len(FM_PRIME_ALL.columns)): # Read dataframe for the plot
-                                        if i > 0: # do not plot time axis
-                                            subplot.scatter(
-                                                FM_PRIME_ALL.iloc[:, 0], # x-axis data: 1st column
-                                                FM_PRIME_ALL.iloc[:, i], # y-axis data
-                                                color=colors[i-1]
-                                                )
-                                    subplot.set_title("Maximum fluorescence") 
-                                    subplot.grid() # use: which='both' for minor grid
-                                    subplot.set_xlabel(x_axis_unit) 
-                                    subplot.set_ylabel('Fm (V)')
-                                    ########## Sub-plot ##########
-                                    subplot = fig.add_subplot(gs[1, 2]) 
-                                    for i in range(len(FV_ALL.columns)): # Read dataframe for the plot
-                                        if i > 0: # do not plot time axis
-                                            subplot.scatter(
-                                                FV_ALL.iloc[:, 0], # x-axis data: 1st column
-                                                FV_ALL.iloc[:, i], # y-axis data
-                                                color=colors[i-1]
-                                                )
-                                    subplot.set_title("Variable fluorescence") 
-                                    subplot.grid() # use: which='both' for minor grid
-                                    subplot.set_xlabel(x_axis_unit) 
-                                    subplot.set_ylabel('Fv (V)')
-                                    ########## Sub-plot ##########
-                                    subplot = fig.add_subplot(gs[1, 3]) 
-                                    for i in range(len(NPQ_ALL_FM.columns)): # Read dataframe for the plot
-                                        if i > 0: # do not plot time axis
-                                            subplot.scatter(
-                                                NPQ_ALL_FM.iloc[:, 0], # x-axis data: 1st column
-                                                NPQ_ALL_FM.iloc[:, i], # y-axis data
-                                                label = NPQ_ALL_FM.columns[i], #legend
-                                                color=colors[i-1]
-                                                )
-                                    subplot.set_title("Non-photochemical quenching") 
-                                    subplot.grid() # use: which='both' for minor grid
-                                    subplot.set_xlabel(x_axis_unit) 
-                                    subplot.set_ylabel('NPQ') 
-                                    subplot.legend(loc='upper left', bbox_to_anchor=(1.02, 1.02))
-                                    ########## Sub-plot ##########
-                                    subplot = fig.add_subplot(gs[2, 0])
-                                    for i in range(len(QN_ALL_FM.columns)): # Read dataframe for the plot
-                                        if i > 0:# do not plot time axis
-                                            subplot.scatter(
-                                                QN_ALL_FM.iloc[:, 0], # x-axis data: 1st column
-                                                QN_ALL_FM.iloc[:, i], # y-axis data
-                                                color=colors[i-1]
-                                                )
-                                    subplot.set_title("Coefficient of NPQ") 
-                                    subplot.grid() # use: which='both' for minor grid
-                                    subplot.set_xlabel(x_axis_unit) 
-                                    subplot.set_ylabel('qN') 
-                                    ########## Sub-plot ##########
-                                    subplot = fig.add_subplot(gs[2, 1])
-                                    for i in range(len(QP_ALL.columns)): # Read dataframe for the plot
-                                        if i > 0:# do not plot time axis
-                                            subplot.scatter(
-                                                QP_ALL.iloc[:, 0], # x-axis data: 1st column
-                                                QP_ALL.iloc[:, i], # y-axis data
-                                                color=colors[i-1]
-                                                )
-                                    subplot.set_title("Photochemical quenching") 
-                                    subplot.grid() # use: which='both' for minor grid
-                                    subplot.set_xlabel(x_axis_unit) 
-                                    subplot.set_ylabel('qP') 
-                                    ########## Sub-plot ##########
-                                    subplot = fig.add_subplot(gs[2, 2])
-                                    for i in range(len(QY_ALL.columns)): # Read dataframe for the plot
-                                            if i > 0: # do not plot time axis
-                                                subplot.scatter(
-                                                    QY_ALL.iloc[:, 0], # x-axis data: 1st column
-                                                    QY_ALL.iloc[:, i], # y-axis data
-                                                    color=colors[i-1]
-                                                    )
-                                    subplot.set_title("Quantum yield") 
-                                    subplot.grid() # use: which='both' for minor grid
-                                    subplot.set_xlabel(x_axis_unit) 
-                                    subplot.set_ylabel('Qy') 
-                                    ########## Sub-plot ##########
-                                    subplot = fig.add_subplot(gs[2, 3])
-                                    for i in range(len(ETR_ALL.columns)): # Read dataframe for the plot
-                                            if i > 0: # do not plot time axis
-                                                subplot.scatter(
-                                                    ETR_ALL.iloc[:, 0], # x-axis data: 1st column
-                                                    ETR_ALL.iloc[:, i], # y-axis data
-                                                    color=colors[i-1]
-                                                    )
-                                    subplot.set_title("Electron transport rate") 
-                                    subplot.grid() # use: which='both' for minor grid
-                                    subplot.set_xlabel(x_axis_unit) 
-                                    subplot.set_ylabel('ETR (µmol e$^{-}$ m$^{-2}$ s$^{-1}$)') 
-                                    plots_MC_PAM_parameters = subplot # only to check if plotting has been performed
-                        ######################################
-                        ### PLOT AQUAPEN / PLANTPEN FILES  ###
-                        ######################################
-                        elif fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)':
-                            # Initialise the subplot function using number of rows and columns 
-                            fig = plt.figure(figsize=(20,11))
-                            fig.tight_layout() # Shrink to fit the canvas together with legend  
-                            fig.subplots_adjust(hspace=0.4, wspace=0.3) # add horizontal space to read the x-axis and titles well
-                            plt.rcParams['mathtext.default'] = 'regular' # Prevent subscripts in axes titles in italics
-                            # Select color map, according to number of lines (files)
-                            colors = plt.cm.nipy_spectral(np.linspace(0, 1, file_number+1)) # type: ignore  
-                            ########## Sub-plot ##########
-                            gs = fig.add_gridspec(nrows=3, ncols=5) # https://how2matplotlib.com/gridspec_kw.html
-                            subplot = fig.add_subplot(gs[0, :5])
-                            for i in range(len(Summary_file.columns)): # Read dataframe for the plot
-                                if i > 0: # do not plot time axis
-                                    subplot.plot(
-                                        Summary_file.iloc[:, 0], # x-axis data: 1st column
-                                        Summary_file.iloc[:, i], # y-axis data
-                                        linewidth=2,
-                                        label = Summary_file.columns[i], #legend
-                                        color=colors[i-1]
-                                        )
-                            subplot.set_title("Raw fluorescence signal") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel(y_axis_unit)
-                            subplot.legend(loc='upper left', bbox_to_anchor=(1.02, 1.02))  
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(gs[1, 0]) 
-                            for i in range(len(FT_ALL.columns)): # Read dataframe for the plot
-                                if i > 1: # do not plot time axis
-                                    subplot.scatter(
-                                        FT_ALL.iloc[:, 1], # x-axis data: 1st column
-                                        FT_ALL.iloc[:, i], # y-axis data
-                                        color=colors[i-2]
-                                        )
-                            subplot.set_title("Steady-state flurescence") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit)
-                            subplot.set_ylabel('Ft (a.u.)')
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(gs[1, 1])
-                            for i in range(len(FM_PRIME_ALL.columns)): # Read dataframe for the plot
-                                if i > 1: # do not plot time point names and time axis 
-                                    subplot.scatter(
-                                        FM_PRIME_ALL.iloc[:, 1], # x-axis data: 1st column
-                                        FM_PRIME_ALL.iloc[:, i], # y-axis data
-                                        color=colors[i-2]
-                                        )
-                            subplot.set_title("Maximum fluorescence") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel('Fm (a.u.)')
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(gs[1, 2]) 
-                            for i in range(len(FV_ALL.columns)): # Read dataframe for the plot
-                                if i > 1: # do not plot time point names and time axis 
-                                    subplot.scatter(
-                                        FV_ALL.iloc[:, 1], # x-axis data: 1st column
-                                        FV_ALL.iloc[:, i], # y-axis data
-                                        color=colors[i-2]
-                                        )
-                            subplot.set_title("Variable fluorescence") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel('Fv (a.u.)')
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(gs[1, 3]) 
-                            for i in range(len(NPQ_ALL_FM.columns)): # Read dataframe for the plot
-                                if i > 1: # do not plot time point names and time axis 
-                                    subplot.scatter(
-                                        NPQ_ALL_FM.iloc[:, 1], # x-axis data: 1st column
-                                        NPQ_ALL_FM.iloc[:, i], # y-axis data
-                                        color=colors[i-2]
-                                        )
-                            subplot.set_title("NPQ, using F$_{m}$ value") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel('NPQ (using F$_{m}$)') 
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(gs[1, 4]) 
-                            for i in range(len(NPQ_ALL_FM_MAX.columns)): # Read dataframe for the plot
-                                if i > 1: # do not plot time point names and time axis 
-                                    subplot.scatter(
-                                        NPQ_ALL_FM_MAX.iloc[:, 1], # x-axis data: 1st column
-                                        NPQ_ALL_FM_MAX.iloc[:, i], # y-axis data
-                                        color=colors[i-2]
-                                        )
-                            subplot.set_title("NPQ, using F$_{m(max)}$ value") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel('NPQ (using F$_{m(max)}$)') 
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(gs[2, 0])
-                            for i in range(len(QN_ALL_FM.columns)): # Read dataframe for the plot
-                                if i > 1: # do not plot time point names and time axis 
-                                    subplot.scatter(
-                                        QN_ALL_FM.iloc[:, 1], # x-axis data: 1st column
-                                        QN_ALL_FM.iloc[:, i], # y-axis data
-                                        color=colors[i-2]
-                                        )
-                            subplot.set_title("Coefficient of NPQ") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel('qN') 
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(gs[2, 1])
-                            for i in range(len(QP_ALL.columns)): # Read dataframe for the plot
-                                if i > 1: # do not plot time point names and time axis 
-                                    subplot.scatter(
-                                        QP_ALL.iloc[:, 1], # x-axis data: 1st column
-                                        QP_ALL.iloc[:, i], # y-axis data
-                                        color=colors[i-2]
-                                        )
-                            subplot.set_title("Photochemical quenching") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel('qP') 
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(gs[2, 2])
-                            for i in range(len(QY_ALL.columns)): # Read dataframe for the plot
-                                    if i > 1: # do not plot time point names and time axis 
-                                        subplot.scatter(
-                                            QY_ALL.iloc[:, 1], # x-axis data: 1st column
-                                            QY_ALL.iloc[:, i], # y-axis data
-                                            color=colors[i-2]
-                                            )
-                            subplot.set_title("Quantum yield") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel('Qy') 
-                            ########## Sub-plot ##########
-                            subplot = fig.add_subplot(gs[2, 3])
-                            for i in range(len(ETR_ALL.columns)): # Read dataframe for the plot
-                                    if i > 1: # do not plot time point names and time axis 
-                                        subplot.scatter(
-                                            ETR_ALL.iloc[:, 1], # x-axis data: 1st column
-                                            ETR_ALL.iloc[:, i], # y-axis data
-                                            color=colors[i-2]
-                                            )
-                            subplot.set_title("Electron transport rate") 
-                            subplot.grid() # use: which='both' for minor grid
-                            subplot.set_xlabel(x_axis_unit) 
-                            subplot.set_ylabel('ETR (µmol e$^{-}$ m$^{-2}$ s$^{-1}$)') 
-                            plots_AquaPen = subplot # only to check if plotting has been performed
-                        # saving scatter plot to memory
-                        memory_for_plot = io.BytesIO()
-                        plt.savefig(memory_for_plot, bbox_inches='tight', format='JPEG')
-                        plot_in_memory = base64.b64encode(memory_for_plot.getvalue())
-                        plot_from_memory = plot_in_memory.decode('ascii')
-                        # Clearing the plot
-                        plt.clf()
-                        plt.cla()
-                        plt.close() 
-                        ######################
-                        ## Export to excel ###
-                        ###################### 
-                        # write all parameters to excel
-                        writer = pd.ExcelWriter(f'{upload_folder}/{file_name_without_extension}_results.xlsx', engine='openpyxl')
-                        if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' and request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_raw_data':
-                            Summary_file.to_excel(writer, sheet_name = 'Raw fluorescence data', index=False)
-                        elif fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)' and request.form["checkbox_NPQ_MC_PAM"] == 'checkbox_file_parameters':
-                            FM_PRIME_ALL.to_excel(writer, sheet_name = 'Fm', index=False)
-                            FT_ALL.to_excel(writer, sheet_name = 'Ft', index=False)
-                            FV_ALL.to_excel(writer, sheet_name = 'Fv', index=False)
-                            NPQ_ALL_FM.to_excel(writer, sheet_name = 'NPQ', index=False)
-                            QN_ALL_FM.to_excel(writer, sheet_name = 'qN', index=False)
-                            QP_ALL.to_excel(writer, sheet_name = 'qP', index=False)
-                            QY_ALL.to_excel(writer, sheet_name = 'Qy', index=False)
-                            ETR_ALL.to_excel(writer, sheet_name = 'ETR', index=False)
-                        elif fluorometer == 'AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)':
-                            FM_PRIME_ALL.to_excel(writer, sheet_name = 'Fm', index=False)
-                            FT_ALL.to_excel(writer, sheet_name = 'Ft', index=False)
-                            FV_ALL.to_excel(writer, sheet_name = 'Fv', index=False)
-                            NPQ_ALL_FM.to_excel(writer, sheet_name = 'NPQ', index=False)
-                            QN_ALL_FM.to_excel(writer, sheet_name = 'qN', index=False)
-                            QP_ALL.to_excel(writer, sheet_name = 'qP', index=False)
-                            QY_ALL.to_excel(writer, sheet_name = 'Qy', index=False)
-                            ETR_ALL.to_excel(writer, sheet_name = 'ETR', index=False)
-                            Summary_file.to_excel(writer, sheet_name = 'Raw fluorescence data', index=False)
-                        writer.close()
-                        # Save images
-                        wb = openpyxl.load_workbook(f'{upload_folder}/{file_name_without_extension}_results.xlsx')
-                        wb.create_sheet(title='Images')
-                        wb.move_sheet('Images', -(len(wb.sheetnames)-1))
-                        ws = wb['Images']
-                        img_data_raw = Image(memory_for_plot)
-                        img_data_raw.anchor = 'A1'
-                        ws.add_image(img_data_raw)
-                        wb.save(f'{upload_folder}/{file_name_without_extension}_results.xlsx')  
-                        xlsx_file_path = f'uploads/{file_name_without_extension}_results.xlsx'
-                    ######################################
-                    ### Delete files older than 20 min ###
-                    ######################################
-                    # List all files
-                    list_of_files_in_upload_folder = os.listdir(upload_folder)
-                    # get the current time
-                    current_time = time.time()
-                    # get number of seconds to reset
-                    seconds = 1200
-                    # scan for old files
-                    for i in list_of_files_in_upload_folder:
-                        # get the location of each file
-                        file_location = os.path.join(upload_folder, str(i)).replace("\\","/")
-                        # get time when the file was modified
-                        file_time = os.stat(file_location).st_mtime
-                        # if a file is modified before 20 min then delete it
-                        if(file_time < current_time - seconds):
-                            os.remove(os.path.join(upload_folder, str(i)).replace("\\","/")) 
-                else:
-                    flash(f'Please select up to {max_number_of_files} files.', category='error')   
-    return render_template("slow_kin_data_analysis.html",
-                        plot_from_memory = plot_from_memory,
-                        xlsx_file_path = xlsx_file_path, 
-                        PAR_ALL = PAR_ALL,
-                        plots_MC_PAM_raw_data = plots_MC_PAM_raw_data,
-                        plots_MC_PAM_parameters = plots_MC_PAM_parameters,
-                        plots_AquaPen = plots_AquaPen)
+# Timing arrays for each protocol (microseconds)
+# Each protocol: dict with keys 'fm_time', 'ft_time', 'npq_time', 'fm_labels', 'ft_labels',
+#                'fv_labels', 'npq_labels', 'qp_labels', 'qy_labels', 'etr_labels',
+#                'n_light', 'n_dark', 'detect_fn'
+
+AQUAPEN_PROTOCOLS = {
+    'NPQ1': {
+        # 5 light steps (L1–L4, Lss) + 3 dark recovery (D1–D3)
+        'fm_time':   [1422801,19364701,31261001,43157301,55053601,66949901,83876601,109879301,135882001],
+        'ft_time':   [207601,18564701,30461001,42357301,54253601,66149901,83076601,109079301,135082001],
+        'npq_time':  [19364701,31261001,43157301,55053601,66949901,83876601,109879301,135882001],
+        'fm_labels': ['Fm','Fm_L1','Fm_L2','Fm_L3','Fm_L4','Fm_Lss','Fm_D1','Fm_D2','Fm_D3'],
+        'ft_labels': ['F0','Ft_L1','Ft_L2','Ft_L3','Ft_L4','Ft_Lss','Ft_D1','Ft_D2','Ft_D3'],
+        'fv_labels': ['Fv','Fv_L1','Fv_L2','Fv_L3','Fv_L4','Fv_Lss','Fv_D1','Fv_D2','Fv_D3'],
+        'npq_labels':['NPQ_L1','NPQ_L2','NPQ_L3','NPQ_L4','NPQ_Lss','NPQ_D1','NPQ_D2','NPQ_D3'],
+        'qp_labels': ['QP_L1','QP_L2','QP_L3','QP_L4','QP_Lss','QP_D1','QP_D2','QP_D3'],
+        'qy_labels': ['QY_max (Fv/Fm)','QY_L1','QY_L2','QY_L3','QY_L4','QY_Lss','QY_D1','QY_D2','QY_D3'],
+        'etr_labels':['ETR_Fv/Fm','ETR_L1','ETR_L2','ETR_L3','ETR_L4','ETR_Lss','ETR_D1','ETR_D2','ETR_D3'],
+        'last_fm_dark': 'Fm_D3',
+        'last_npq_dark': 'NPQ_D3',
+        'last_qp_dark': 'Qp_D3',
+        'last_qy_dark': 'QY_D3',
+        'detect': lambda s: (
+            s.astype(str).str.contains('NPQ_L4').any() and
+            not s.astype(str).str.contains('NPQ_L9').any()
+        ),
+    },
+    'NPQ2': {
+        # 10 light steps (L1–L9, Lss) + 7 dark (D1–D7)
+        'fm_time':   [1422801,32425501,53314201,74202901,95091601,115980301,136869001,157757701,178646401,199535101,220423801,243327701,304174001,365020301,425866601,486712901,547559201,608405501],
+        'ft_time':   [207601,31625501,52514201,73402901,94291601,115180301,136069001,156957701,177846401,198735101,219623801,242527701,303374001,364220301,425066601,485912901,546759201,607605501],
+        'npq_time':  [32425501,53314201,74202901,95091601,115980301,136869001,157757701,178646401,199535101,220423801,243327701,304174001,365020301,425866601,486712901,547559201,608405501],
+        'fm_labels': ['Fm','Fm_L1','Fm_L2','Fm_L3','Fm_L4','Fm_L5','Fm_L6','Fm_L7','Fm_L8','Fm_L9','Fm_Lss','Fm_D1','Fm_D2','Fm_D3','Fm_D4','Fm_D5','Fm_D6','Fm_D7'],
+        'ft_labels': ['Ft','Ft_L1','Ft_L2','Ft_L3','Ft_L4','Ft_L5','Ft_L6','Ft_L7','Ft_L8','Ft_L9','Ft_Lss','Ft_D1','Ft_D2','Ft_D3','Ft_D4','Ft_D5','Ft_D6','Ft_D7'],
+        'fv_labels': ['Fv','Fv_L1','Fv_L2','Fv_L3','Fv_L4','Fv_L5','Fv_L6','Fv_L7','Fv_L8','Fv_L9','Fv_Lss','Fv_D1','Fv_D2','Fv_D3','Fv_D4','Fv_D5','Fv_D6','Fv_D7'],
+        'npq_labels':['NPQ_L1','NPQ_L2','NPQ_L3','NPQ_L4','NPQ_L5','NPQ_L6','NPQ_L7','NPQ_L8','NPQ_L9','NPQ_Lss','NPQ_D1','NPQ_D2','NPQ_D3','NPQ_D4','NPQ_D5','NPQ_D6','NPQ_D7'],
+        'qp_labels': ['QP_L1','QP_L2','QP_L3','QP_L4','QP_L5','QP_L6','QP_L7','QP_L8','QP_L9','QP_Lss','QP_D1','QP_D2','QP_D3','QP_D4','QP_D5','QP_D6','QP_D7'],
+        'qy_labels': ['QY_max (Fv/Fm)','QY_L1','QY_L2','QY_L3','QY_L4','QY_L5','QY_L6','QY_L7','QY_L8','QY_L9','QY_Lss','QY_D1','QY_D2','QY_D3','QY_D4','QY_D5','QY_D6','QY_D7'],
+        'etr_labels':['ETR_Fv/Fm','ETR_L1','ETR_L2','ETR_L3','ETR_L4','ETR_L5','ETR_L6','ETR_L7','ETR_L8','ETR_L9','ETR_Lss','ETR_D1','ETR_D2','ETR_D3','ETR_D4','ETR_D5','ETR_D6','ETR_D7'],
+        'last_fm_dark': 'Fm_D7',
+        'last_npq_dark': 'NPQ_D7',
+        'last_qp_dark': 'Qp_D7',
+        'last_qy_dark': 'QY_D7',
+        'detect': lambda s: (
+            s.astype(str).str.contains('NPQ_L9').any() and
+            s.astype(str).str.contains('NPQ_D7').any()
+        ),
+    },
+    'NPQ3': {
+        # 10 light steps (L1–L9, Lss) + 2 dark (D1–D2)
+        'fm_time':   [1422801,32425501,53314201,74202901,95091601,115980301,136869001,157757701,178646401,199535101,220423801,243327701,264224001],
+        'ft_time':   [207601,31625501,52514201,73402901,94291601,115180301,136069001,156957701,177846401,198735101,219623801,242527701,263424001],
+        'npq_time':  [32425501,53314201,74202901,95091601,115980301,136869001,157757701,178646401,199535101,220423801,243327701,264224001],
+        'fm_labels': ['Fm','Fm_L1','Fm_L2','Fm_L3','Fm_L4','Fm_L5','Fm_L6','Fm_L7','Fm_L8','Fm_L9','Fm_Lss','Fm_D1','Fm_D2'],
+        'ft_labels': ['Ft','Ft_L1','Ft_L2','Ft_L3','Ft_L4','Ft_L5','Ft_L6','Ft_L7','Ft_L8','Ft_L9','Ft_Lss','Ft_D1','Ft_D2'],
+        'fv_labels': ['Fv','Fv_L1','Fv_L2','Fv_L3','Fv_L4','Fv_L5','Fv_L6','Fv_L7','Fv_L8','Fv_L9','Fv_Lss','Fv_D1','Fv_D2'],
+        'npq_labels':['NPQ_L1','NPQ_L2','NPQ_L3','NPQ_L4','NPQ_L5','NPQ_L6','NPQ_L7','NPQ_L8','NPQ_L9','NPQ_Lss','NPQ_D1','NPQ_D2'],
+        'qp_labels': ['QP_L1','QP_L2','QP_L3','QP_L4','QP_L5','QP_L6','QP_L7','QP_L8','QP_L9','QP_Lss','QP_D1','QP_D2'],
+        'qy_labels': ['QY_max (Fv/Fm)','QY_L1','QY_L2','QY_L3','QY_L4','QY_L5','QY_L6','QY_L7','QY_L8','QY_L9','QY_Lss','QY_D1','QY_D2'],
+        'etr_labels':['ETR_Fv/Fm','ETR_L1','ETR_L2','ETR_L3','ETR_L4','ETR_L5','ETR_L6','ETR_L7','ETR_L8','ETR_L9','ETR_Lss','ETR_D1','ETR_D2'],
+        'last_fm_dark': 'Fm_D2',
+        'last_npq_dark': 'NPQ_D2',
+        'last_qp_dark': 'Qp_D2',
+        'last_qy_dark': 'QY_D2',
+        'detect': lambda s: (
+            s.astype(str).str.contains('NPQ_L9').any() and
+            not s.astype(str).str.contains('NPQ_D7').any()
+        ),
+    },
+}
+
+
+# ─── helpers ─────────────────────────────────────────────────────────────────
+
+def _safe(v):
+    """Convert numpy scalars / NaN to JSON-safe Python types."""
+    if v is None:
+        return None
+    try:
+        if np.isnan(v):
+            return None
+    except Exception:
+        pass
+    if isinstance(v, (np.integer,)):
+        return int(v)
+    if isinstance(v, (np.floating,)):
+        return float(v)
+    return v
+
+
+def _series_to_list(s):
+    return [_safe(x) for x in s]
+
+
+def _cleanup_old_files(folder, seconds=1200):
+    now = time.time()
+    for fname in os.listdir(folder):
+        fpath = os.path.join(folder, fname).replace('\\', '/')
+        if os.stat(fpath).st_mtime < now - seconds:
+            os.remove(fpath)
+
+
+# ─── processing branches ─────────────────────────────────────────────────────
+
+def _process_mcpam_raw(files, reduce_data):
+    """
+    Read MC-PAM raw data CSV files (2 columns: time;fluorescence).
+    Returns unified JSON payload or raises ValueError.
+    """
+    summary = pd.DataFrame()
+    file_stems = []
+    for i, file in enumerate(files):
+        df = pd.read_csv(file.stream, sep=';', engine='python')
+        if len(df.columns) < 2 or 'ETR' in df.columns:
+            raise ValueError(
+                f'File {secure_filename(file.filename or "")} does not look like a raw data file '
+                '(expected 2 columns without ETR column).'
+            )
+        stem = str.lower(os.path.splitext(file.filename or '')[0])
+        file_stems.append(stem)
+        if i == 0:
+            summary = df.iloc[:, 0:2].copy()
+            summary.rename(columns={summary.columns[1]: stem}, inplace=True)
+        else:
+            col = df.iloc[:, 1:2].copy()
+            col.rename(columns={col.columns[0]: stem}, inplace=True)
+            summary = pd.concat([summary, col], axis=1)
+
+    if summary.empty:
+        raise ValueError('No valid raw data found.')
+
+    if reduce_data and len(summary) > 10000:
+        factor = int(len(summary) / 10000)
+        summary = summary.iloc[::factor].reset_index(drop=True)
+
+    time_col = summary.iloc[:, 0]
+    traces = {}
+    for stem in file_stems:
+        traces[stem] = _series_to_list(summary[stem].astype(float))
+
+    return {
+        'fluorometer': 'MC-PAM',
+        'mode': 'raw_data',
+        'protocol': None,
+        'files': file_stems,
+        'file_stem': file_stems[0] if file_stems else '',
+        'time_unit': 's',
+        'raw_time': _series_to_list(time_col.astype(float)),
+        'raw_traces': traces,
+        'has_params': False,
+        'param_time': [],
+        'params': {},
+        'has_summary': False,
+        'summary': {},
+    }
+
+
+def _process_mcpam_params(files):
+    """
+    Read MC-PAM parameter CSV files (columns: time, F, Fm', Y(II), ETR, PAR).
+    Returns unified JSON payload or raises ValueError.
+    """
+    ft_all = fm_all = qy_all = etr_all = par_all = pd.DataFrame()
+    file_stems = []
+
+    for i, file in enumerate(files):
+        df = pd.read_csv(file.stream, sep=';', engine='python')
+        if 'ETR' not in df.columns:
+            raise ValueError(
+                f'File {secure_filename(file.filename or "")} does not look like a parameter file '
+                '(ETR column missing).'
+            )
+        stem = str.lower(os.path.splitext(file.filename or '')[0])
+        file_stems.append(stem)
+        if i == 0:
+            time_s = df.iloc[:, 0]
+            ft_all  = pd.concat([time_s, df['F'].rename(stem)], axis=1)
+            fm_all  = pd.concat([time_s, df["Fm'"].rename(stem)], axis=1)
+            qy_all  = pd.concat([time_s, df['Y(II)'].rename(stem)], axis=1)
+            etr_all = pd.concat([time_s, df['ETR'].rename(stem)], axis=1)
+            par_all = pd.concat([time_s, df['PAR'].rename(stem)], axis=1)
+            ft_all.rename(columns={ft_all.columns[0]: 'Time (s)'}, inplace=True)
+            fm_all.rename(columns={fm_all.columns[0]: 'Time (s)'}, inplace=True)
+            qy_all.rename(columns={qy_all.columns[0]: 'Time (s)'}, inplace=True)
+            etr_all.rename(columns={etr_all.columns[0]: 'Time (s)'}, inplace=True)
+            par_all.rename(columns={par_all.columns[0]: 'Time (s)'}, inplace=True)
+        else:
+            ft_all  = pd.concat([ft_all,  df['F'].rename(stem)], axis=1)
+            fm_all  = pd.concat([fm_all,  df["Fm'"].rename(stem)], axis=1)
+            qy_all  = pd.concat([qy_all,  df['Y(II)'].rename(stem)], axis=1)
+            etr_all = pd.concat([etr_all, df['ETR'].rename(stem)], axis=1)
+            par_all = pd.concat([par_all, df['PAR'].rename(stem)], axis=1)
+
+    # Drop rows with NaN in time or all samples
+    for df in [ft_all, fm_all, qy_all, etr_all, par_all]:
+        df.dropna(subset=[df.columns[0]], inplace=True)
+
+    time_s = _series_to_list(ft_all.iloc[:, 0].astype(float))
+
+    # Compute derived: Fv, QP, qN, NPQ (using Fm), NPQ (using Fm_max)
+    f0 = ft_all.iloc[0, 1:]    # first Ft row per sample
+    fm = fm_all.iloc[0, 1:]    # first Fm' row per sample
+    fm_max = fm_all.iloc[:, 1:].max()
+
+    fv_all = fm_all.iloc[:, 1:] - ft_all.iloc[:, 1:]
+    qp_all = (fm_all.iloc[:, 1:] - ft_all.iloc[:, 1:]) / (fm_all.iloc[:, 1:] - f0.values)
+    qn_all = (fm.values - fm_all.iloc[:, 1:]) / fm.values
+    npq_fm = (fm.values - fm_all.iloc[:, 1:]) / fm_all.iloc[:, 1:]
+    npq_fm_max = (fm_max.values - fm_all.iloc[:, 1:]) / fm_all.iloc[:, 1:]
+
+    params = {}
+    for stem in file_stems:
+        if stem in ft_all.columns:
+            params[stem] = {
+                'ft':        _series_to_list(ft_all[stem].astype(float)),
+                'fm':        _series_to_list(fm_all[stem].astype(float)),
+                'fv':        _series_to_list(fv_all[stem].astype(float)),
+                'npq':       _series_to_list(npq_fm[stem].astype(float)),
+                'npq_fmmax': _series_to_list(npq_fm_max[stem].astype(float)),
+                'qn':        _series_to_list(qn_all[stem].astype(float)),
+                'qp':        _series_to_list(qp_all[stem].astype(float)),
+                'qy':        _series_to_list(qy_all[stem].astype(float)),
+                'etr':       _series_to_list(etr_all[stem].astype(float)),
+                'par':       _series_to_list(par_all[stem].astype(float)),
+            }
+
+    # Summary scalar params: Fv/Fm at t=0, Rfd = (Fp-Fs)/Fs computed from raw trace max/last
+    summary_params = {}
+    for stem in file_stems:
+        fv_fm = _safe(float(fv_all[stem].iloc[0]) / float(fm_all[stem].iloc[0])) if stem in fv_all.columns else None
+        summary_params[stem] = {
+            'fv_fm': fv_fm,
+            'npq_max': _safe(float(npq_fm[stem].max())) if stem in npq_fm.columns else None,
+        }
+
+    return {
+        'fluorometer': 'MC-PAM',
+        'mode': 'parameters',
+        'protocol': None,
+        'files': file_stems,
+        'file_stem': file_stems[0] if file_stems else '',
+        'time_unit': 's',
+        'raw_time': time_s,
+        'raw_traces': {stem: params[stem]['ft'] for stem in file_stems if stem in params},
+        'has_params': True,
+        'param_time': time_s,
+        'params': params,
+        'has_summary': True,
+        'summary': summary_params,
+    }
+
+
+def _process_aquapen(files, protocol_key, upload_folder):
+    """
+    Read AquaPen NPQ .txt files and compute all fluorescence parameters.
+    Returns unified JSON payload or raises ValueError.
+    """
+    proto = AQUAPEN_PROTOCOLS[protocol_key]
+    summary_combined = pd.DataFrame()
+    file_stems = []
+
+    for i, file in enumerate(files):
+        fname_full = secure_filename(file.filename or '')
+        fpath = os.path.join(upload_folder, fname_full).replace('\\', '/')
+        file.save(fpath)
+        try:
+            with open(fpath, 'r') as fh:
+                lines = fh.readlines()
+        finally:
+            os.remove(fpath)
+
+        df = pd.DataFrame(lines)
+        df = df[0].str.split('\t', expand=True)
+        # Drop last column (contains '\n')
+        df = df.iloc[:, :-1] if df.shape[1] > 1 else df
+
+        stem = str.lower(os.path.splitext(file.filename or '')[0])
+        file_stems.append(stem)
+
+        if i == 0:
+            summary_combined = df.copy()
+            summary_combined.rename(columns={
+                summary_combined.columns[0]: 'time_us',
+                summary_combined.columns[1]: stem,
+            }, inplace=True)
+            # Drop extra columns beyond 2
+            summary_combined = summary_combined.iloc[:, :2]
+        else:
+            col = df.iloc[:, 1:2].copy()
+            col.rename(columns={col.columns[0]: stem}, inplace=True)
+            summary_combined = pd.concat([summary_combined, col.reset_index(drop=True)], axis=1)
+
+    if summary_combined.empty:
+        raise ValueError('No valid AquaPen data found.')
+
+    if not summary_combined['time_us'].astype(str).str.contains('NPQ').any():
+        raise ValueError('Files do not contain exported parameters (NPQ rows missing). '
+                         'Please re-export from AquaPen with parameters enabled.')
+
+    # Detect protocol
+    detected_proto = None
+    for pkey, pdef in AQUAPEN_PROTOCOLS.items():
+        if pdef['detect'](summary_combined['time_us']):
+            detected_proto = pkey
+            break
+
+    if detected_proto is None:
+        raise ValueError('Could not auto-detect NPQ protocol from file content.')
+
+    if detected_proto != protocol_key:
+        raise ValueError(
+            f'Protocol mismatch: you selected {protocol_key} but file matches {detected_proto}.'
+        )
+
+    proto = AQUAPEN_PROTOCOLS[protocol_key]
+
+    # ── Extract scalar parameter rows ────────────────────────────────────────
+    def _get_row(label_re, exact=True):
+        if exact:
+            mask = summary_combined['time_us'].astype(str).str.strip() == label_re
+        else:
+            mask = summary_combined['time_us'].astype(str).str.contains(label_re)
+        return summary_combined[mask].iloc[:, 1:] if mask.any() else pd.DataFrame()
+
+    fo_row      = _get_row('Fo')
+    fm_row      = _get_row('Fm', exact=True)
+    qy_max_row  = _get_row('QY_max')
+    actinic_row = _get_row('ACTINIC-Intensity', exact=False)
+    actinic_row = actinic_row.reset_index(drop=True)
+
+    # Indexes for light/dark range slicing
+    idx = {}
+    for lbl in ['Fm_L1', 'Fm_Lss', 'Fm_D1', proto['last_fm_dark'],
+                'NPQ_L1', 'NPQ_Lss', 'NPQ_D1', proto['last_npq_dark'],
+                'Qp_L1', 'Qp_Lss', 'Qp_D1', proto['last_qp_dark'],
+                'QY_L1', 'QY_Lss', 'QY_D1', proto['last_qy_dark']]:
+        rows = summary_combined.index[summary_combined['time_us'].astype(str).str.strip() == lbl].tolist()
+        idx[lbl] = rows[0] if rows else None
+
+    def _safe_slice(start_lbl, end_lbl):
+        s, e = idx.get(start_lbl), idx.get(end_lbl)
+        if s is None or e is None:
+            return pd.DataFrame()
+        return summary_combined.iloc[s:e+1]
+
+    fm_light = _safe_slice('Fm_L1', 'Fm_Lss')
+    fm_dark  = _safe_slice('Fm_D1', proto['last_fm_dark'])
+    npq_light = _safe_slice('NPQ_L1', 'NPQ_Lss')
+    npq_dark  = _safe_slice('NPQ_D1', proto['last_npq_dark'])
+    qp_light  = _safe_slice('Qp_L1', 'Qp_Lss')
+    qp_dark   = _safe_slice('Qp_D1', proto['last_qp_dark'])
+    qy_light  = _safe_slice('QY_L1', 'QY_Lss')
+    qy_dark   = _safe_slice('QY_D1', proto['last_qy_dark'])
+
+    # ── Build Fm_prime timeseries ──────────────────────────────────────────
+    timing_fm  = pd.Series(proto['fm_time'], dtype='int64')
+    timing_ft  = pd.Series(proto['ft_time'], dtype='int64')
+    timing_npq = pd.Series(proto['npq_time'], dtype='int64')
+
+    fm_prime_data = pd.concat([fm_light, fm_dark]).iloc[:, 1:].reset_index(drop=True)
+    fm_prime_data = pd.concat([fm_row.reset_index(drop=True), fm_prime_data]).reset_index(drop=True)
+    fm_prime_data = fm_prime_data.astype(float)
+
+    fm_max = fm_prime_data.max()
+    fm_first = fm_prime_data.iloc[0]
+
+    # ── Compute all parameters per sample ──────────────────────────────────
+    # Numeric-only rows for raw trace
+    is_numeric = summary_combined['time_us'].str.strip().str.isnumeric()
+    raw_num = summary_combined[is_numeric].astype('int64')
+
+    # Ft (nearest time lookup)
+    ft_lookup = pd.merge_asof(
+        pd.DataFrame({'time_us': proto['ft_time']}, dtype='int64'),
+        raw_num,
+        on='time_us',
+        direction='nearest'
+    ).iloc[:, 1:]
+
+    qy_data = pd.concat([qy_light, qy_dark]).iloc[:, 1:]
+    qy_data = pd.concat([qy_max_row.reset_index(drop=True), qy_data]).reset_index(drop=True)
+    qy_data = qy_data.astype(float)
+
+    qp_data = pd.concat([qp_light, qp_dark]).iloc[:, 1:].reset_index(drop=True).astype(float)
+
+    npq_fm_data = pd.concat([npq_light, npq_dark]).iloc[:, 1:].reset_index(drop=True).astype(float)
+
+    # Fv = Fm' - Ft
+    fv_data = fm_prime_data.values - ft_lookup.values
+    # qN = (Fm - Fm') / Fm
+    qn_data = (fm_first.values - fm_prime_data.values) / fm_first.values
+    # NPQ using Fm_max = (Fm_max - Fm') / Fm'
+    npq_fmmax_data = (fm_max.values - fm_prime_data.values) / fm_prime_data.values
+
+    params = {}
+    for j, stem in enumerate(file_stems):
+        col_name = summary_combined.columns[j + 1] if j + 1 < len(summary_combined.columns) else stem
+        params[stem] = {
+            'ft':  _series_to_list(pd.to_numeric(ft_lookup.iloc[:, j], errors='coerce')),
+            'fm':  _series_to_list(pd.to_numeric(fm_prime_data.iloc[:, j], errors='coerce')),
+            'fv':  _series_to_list(pd.to_numeric(pd.Series(fv_data[:, j]), errors='coerce')),
+            'npq': _series_to_list(pd.to_numeric(npq_fm_data.iloc[:, j], errors='coerce')),
+            'npq_fmmax': _series_to_list(pd.to_numeric(pd.Series(npq_fmmax_data[:, j]), errors='coerce')),
+            'qn':  _series_to_list(pd.to_numeric(pd.Series(qn_data[:, j]), errors='coerce')),
+            'qp':  _series_to_list(pd.to_numeric(qp_data.iloc[:, j], errors='coerce')),
+            'qy':  _series_to_list(pd.to_numeric(qy_data.iloc[:, j], errors='coerce')),
+            'etr': _series_to_list(pd.to_numeric(qy_data.iloc[:, j], errors='coerce') *
+                                   float(actinic_row.iloc[0, j]) if not actinic_row.empty and j < actinic_row.shape[1] else
+                                   pd.Series([0.0] * len(qy_data))),
+            'par': None,
+        }
+
+    # Scalar summaries (used for Export to Statistics)
+    summary_scalars = {}
+    for j, stem in enumerate(file_stems):
+        fv_fm = None
+        rfd_val = None
+        actinic_val = None
+        try:
+            fm0 = float(fm_prime_data.iloc[0, j])
+            ft0 = float(ft_lookup.iloc[0, j])
+            if fm0 > 0:
+                fv_fm = _safe((fm0 - ft0) / fm0)
+        except Exception:
+            pass
+        try:
+            if not actinic_row.empty and j < actinic_row.shape[1]:
+                actinic_val = _safe(float(actinic_row.iloc[0, j]))
+        except Exception:
+            pass
+        try:
+            fp_val = float(raw_num.iloc[:, j + 1].max())
+            fs_val = float(raw_num.iloc[-1, j + 1])
+            if fs_val > 0:
+                rfd_val = _safe((fp_val - fs_val) / fs_val)
+        except Exception:
+            pass
+        summary_scalars[stem] = {
+            'fv_fm': fv_fm,
+            'rfd':   rfd_val,
+            'actinic_intensity': actinic_val,
+        }
+
+    # Raw fluorescence trace (numeric only)
+    raw_time = _series_to_list(raw_num['time_us'].astype(float))
+    raw_traces = {}
+    for j, stem in enumerate(file_stems):
+        raw_traces[stem] = _series_to_list(raw_num.iloc[:, j + 1].astype(float))
+
+    return {
+        'fluorometer': 'AquaPen',
+        'mode': 'parameters',
+        'protocol': protocol_key,
+        'files': file_stems,
+        'file_stem': file_stems[0] if file_stems else '',
+        'time_unit': 'us',
+        'raw_time': raw_time,
+        'raw_traces': raw_traces,
+        'has_params': True,
+        'param_time': _series_to_list(timing_fm.astype(float)),
+        'param_time_npq': _series_to_list(timing_npq.astype(float)),
+        'param_labels': {
+            'fm': proto['fm_labels'],
+            'ft': proto['ft_labels'],
+            'fv': proto['fv_labels'],
+            'npq': proto['npq_labels'],
+            'qp': proto['qp_labels'],
+            'qy': proto['qy_labels'],
+            'etr': proto['etr_labels'],
+        },
+        'params': params,
+        'has_summary': True,
+        'summary': summary_scalars,
+    }
+
+
+# ─── routes ──────────────────────────────────────────────────────────────────
+
+@slow_kin_data_analysis.route('/slow_kin_data_analysis', methods=['GET'])
+def analyze_slow_kin_data():
+    return render_template('slow_kin_data_analysis.html')
+
+
+@slow_kin_data_analysis.route('/api/slow_kin_process', methods=['POST'])
+def slow_kin_process():
+    upload_folder = UPLOAD_FOLDER
+    if not os.path.isdir(upload_folder):
+        os.mkdir(upload_folder)
+
+    if 'NPQ_files' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No files received.'}), 400
+
+    files = request.files.getlist('NPQ_files')
+    if not files or secure_filename(files[0].filename or '') == '':
+        return jsonify({'status': 'error', 'message': 'Please select one or more files.'}), 400
+
+    if len(files) > 50:
+        return jsonify({'status': 'error', 'message': 'Maximum 50 files allowed.'}), 400
+
+    fluorometer = request.form.get('fluorometer', '')
+    reduce_data = request.form.get('reduce_data') == 'true'
+
+    try:
+        if fluorometer == 'MC-PAM':
+            file_type = request.form.get('mc_pam_file_type', 'raw_data')
+            if file_type == 'raw_data':
+                payload = _process_mcpam_raw(files, reduce_data)
+            else:
+                payload = _process_mcpam_params(files)
+
+        elif fluorometer == 'AquaPen':
+            protocol_key = request.form.get('aquapen_protocol', 'NPQ1')
+            if protocol_key not in AQUAPEN_PROTOCOLS:
+                return jsonify({'status': 'error', 'message': f'Unknown protocol: {protocol_key}'}), 400
+            payload = _process_aquapen(files, protocol_key, upload_folder)
+
+        else:
+            return jsonify({'status': 'error', 'message': f'Unknown fluorometer: {fluorometer}'}), 400
+
+    except ValueError as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Processing error: {e}'}), 500
+
+    _cleanup_old_files(upload_folder)
+
+    payload['status'] = 'success'
+    return jsonify(payload)
+
+
+@slow_kin_data_analysis.route('/api/slow_kin_export', methods=['POST'])
+def slow_kin_export():
+    """
+    Build and return an .xlsx file from the JSON result payload.
+    Receives the full analysis result as JSON body.
+    """
+    upload_folder = UPLOAD_FOLDER
+    if not os.path.isdir(upload_folder):
+        os.mkdir(upload_folder)
+
+    try:
+        data = request.get_json(force=True)
+        if not data:
+            return jsonify({'status': 'error', 'message': 'No data received.'}), 400
+
+        fluorometer = data.get('fluorometer', 'unknown')
+        mode        = data.get('mode', '')
+        files       = data.get('files', [])
+        file_stem   = data.get('file_stem', 'slow_kin') or 'slow_kin'
+        raw_time    = data.get('raw_time', [])
+        raw_traces  = data.get('raw_traces', {})
+        has_params  = data.get('has_params', False)
+        param_time  = data.get('param_time', [])
+        param_time_npq = data.get('param_time_npq', param_time)
+        params      = data.get('params', {})
+        has_summary = data.get('has_summary', False)
+        summary     = data.get('summary', {})
+        param_labels = data.get('param_labels', {})
+
+        wb = Workbook()
+        wb.remove(wb.active)  # remove default sheet
+
+        def _write_sheet(wb, title, time_list, series_dict, time_label='Time', labels=None):
+            ws = wb.create_sheet(title=title[:31])
+            header = [time_label] + list(series_dict.keys())
+            ws.append(header)
+            n = max(len(v) for v in series_dict.values()) if series_dict else len(time_list)
+            for row_i in range(n):
+                t_val = time_list[row_i] if row_i < len(time_list) else None
+                row = [t_val]
+                for vals in series_dict.values():
+                    row.append(vals[row_i] if row_i < len(vals) else None)
+                ws.append(row)
+            # Optionally add label column
+            if labels:
+                ws.insert_cols(1)
+                ws.cell(1, 1, 'Label')
+                for ri, lbl in enumerate(labels, start=2):
+                    ws.cell(ri, 1, lbl)
+
+        # Raw fluorescence
+        _write_sheet(wb, 'Raw fluorescence',
+                     raw_time,
+                     {f: raw_traces[f] for f in files if f in raw_traces},
+                     time_label='Time')
+
+        if has_params and params:
+            param_keys = [
+                ('ft', 'Ft', param_time, param_labels.get('ft')),
+                ('fm', "Fm'", param_time, param_labels.get('fm')),
+                ('fv', 'Fv', param_time, param_labels.get('fv')),
+                ('npq', 'NPQ (Fm)', param_time_npq, param_labels.get('npq')),
+                ('npq_fmmax', 'NPQ (Fm_max)', param_time, param_labels.get('npq')),
+                ('qn', 'qN', param_time, param_labels.get('fm')),
+                ('qp', 'qP', param_time_npq, param_labels.get('qp')),
+                ('qy', 'Y(II)', param_time, param_labels.get('qy')),
+                ('etr', 'ETR', param_time, param_labels.get('etr')),
+            ]
+            for pkey, sheet_name, t_list, lbls in param_keys:
+                series = {f: params[f][pkey] for f in files
+                          if f in params and pkey in params[f] and params[f][pkey] is not None}
+                if series:
+                    _write_sheet(wb, sheet_name, t_list or [], series,
+                                 time_label='Time', labels=lbls)
+
+        if has_summary and summary:
+            ws = wb.create_sheet(title='Summary')
+            # Collect all scalar keys
+            all_keys = set()
+            for v in summary.values():
+                all_keys.update(v.keys())
+            header = ['Sample'] + sorted(all_keys)
+            ws.append(header)
+            for fname, vals in summary.items():
+                row = [fname] + [vals.get(k) for k in sorted(all_keys)]
+                ws.append(row)
+
+        out_path = os.path.join(upload_folder, f'{file_stem}_results.xlsx').replace('\\', '/')
+        wb.save(out_path)
+
+        _cleanup_old_files(upload_folder)
+
+        return jsonify({'status': 'success', 'xlsx_path': f'uploads/{file_stem}_results.xlsx'})
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500

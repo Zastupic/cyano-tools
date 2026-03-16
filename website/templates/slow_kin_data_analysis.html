@@ -1,4 +1,4 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
 {% block title %}
     Slow Fluorescence Transients (Kautsky Effect) Analysis | PAM Data Analyzer | CyanoTools
@@ -30,475 +30,554 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  /* ── Slow kinetics main tabs ── */
+  #skTabs { border-bottom: 2px solid #dee2e6; margin-bottom: 0; padding-bottom: 0; }
+  #skTabs .nav-link {
+    border: 1px solid #dee2e6; border-bottom: none; background: #f8f9fa;
+    padding: 0.35rem 1.1rem; font-weight: 600; font-size: 0.85rem;
+    border-radius: 6px 6px 0 0; color: #495057;
+    margin-right: 3px; margin-bottom: -2px;
+    transition: background 0.12s, color 0.12s;
+  }
+  #skTabs .nav-link:hover:not(.active) { background: #e2e6ea; color: #212529; }
+  #skTabs .nav-link.active {
+    background: #004085; color: #fff; border-color: #004085;
+    border-bottom: 2px solid #004085;
+  }
+  /* ── Segmented-control pill toggles ── */
+  .ojip-seg-ctrl {
+    display: inline-flex; background: #e8edf2; border-radius: 10px;
+    padding: 4px; gap: 3px; border: 1px solid #c8d3de;
+  }
+  .ojip-seg-ctrl .btn {
+    border: none !important; border-radius: 7px !important;
+    padding: 5px 13px !important; font-size: 0.79rem !important;
+    font-weight: 600; line-height: 1.3; transition: all 0.17s ease;
+  }
+  .ojip-seg-ctrl .btn-outline-primary {
+    background: transparent !important; color: #5a6a7a !important;
+    box-shadow: none !important;
+  }
+  .ojip-seg-ctrl .btn-outline-primary:hover {
+    background: #d4dde7 !important; color: #003566 !important;
+  }
+  .ojip-seg-ctrl .btn-primary {
+    background: #ffffff !important; color: #004085 !important;
+    box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
+  }
+</style>
 <!-- Banner -->
 <div id="banner-content">
-    <div class="banner-desktop"><!-- Desktop banner -->
+    <div class="banner-desktop">
         <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
-             alt="CyanoTools analytical tools for algae and cyanobacteria"
-             style="width: 100%;">
+             alt="CyanoTools analytical tools for algae and cyanobacteria" style="width:100%;">
     </div>
-    <div class="banner-mobile"><!-- Mobile banner -->
+    <div class="banner-mobile">
         <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
-             alt="CyanoTools mobile banner"
-             style="width: 100%;">
+             alt="CyanoTools mobile banner" style="width:100%;">
     </div>
 </div>
 <br>
 <h1>Analysis of slow chlorophyll fluorescence transients</h1>
 <div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
-    <strong>At a glance:</strong> Upload PAM fluorometer files from light/dark induction protocols to visualize and quantify time-dependent chlorophyll fluorescence changes — including non-photochemical quenching (NPQ), state transitions, photochemical quenching (qP/qL), and quantum yield. No software installation needed; results download as a formatted .xlsx file. Supports batch processing of up to 50 files.
+  <strong>At a glance:</strong> Upload PAM fluorometer files from NPQ / slow kinetics protocols to visualize and
+  quantify time-dependent fluorescence changes — including non-photochemical quenching (NPQ), state transitions,
+  photochemical quenching (qP), and quantum yield. No software installation needed; results download as a
+  formatted .xlsx file. Supports batch processing of up to 50 files.
 </div>
-<p>Welcome to tool analyzing slow chlorophyll fluorescence induction kinetics! 
-This tool enables visualization and analysis of fluorescence traces acquired by several common PAM fluorometers, including 
-    <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">MULTI-COLOR-PAM</a>, 
-    <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">DUAL-PAM</a>, 
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">AquaPen</a> or 
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">FluorPen</a>.
-    Up to 50 files can be uploaded simultaneously for batch processing. 
-    The tool generates multiple visualizations for the precessed files, including: 
-    <ul style="font-size:95%">
-        <li>AquaPen / FluorPen:
-            <ul>
-                <li>Raw fluorescence signals</li>
-                <li>Technical parameters of the fluorescence signal, such as <i>F<sub>t</sub></i>, <i>F<sub>M</sub></i> or <i>F<sub>v</sub></i></li>
-                <li>Derived parameters: <i>Q<sub>Y</sub></i>, <i>rETR</i>, <i>qP</i>, <i>qN</i> and <i>NPQ</i>
-            </ul>
-        </li>
-        <li>Multi-Color PAM / Dual PAM
-            <ul>
-                <li>Raw data files
-                    <ul>
-                        <li>Raw fluorescence signals</li>
-                    </ul>
-                </li>
-                <li>Files with calculated parameters
-                    <ul>
-                        <li>Technical parameters of the fluorescence signal, such as <i>F<sub>t</sub></i>, <i>F<sub>M</sub></i> or <i>F<sub>v</sub></i></li>
-                        <li>Calculated parameters: <i>Q<sub>Y</sub></i>, <i>rETR</i>, <i>qP</i>, <i>qN</i> and <i>NPQ</i></li>
-                    </ul>
-                </li>
-            </ul>
-        </li>
-    </ul>
-    <br>
-    The tool is well suited for the analysis of ETR efficiency, NPQ relaxation, state transitions, 
-    and other long-term fluorescence responses of cyanobacteria, algae, and higher plants.
-    After analysis, all curves and calculated values are compiled into a downloadable .xlsx file for further use. 
-    The figure and table below summarizes parameters that can be obtained from the fluorescence kinetics traces.
-    For furhter info, see the references provided below, or 
-    <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank" rel="noopener">NPQ protocols</a>
-    available for 
-    <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener">AquaPen</a> or
-    <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener">FluorPen</a> fluorometers.
-</p>
-<br>  
-<div class="container">
-    <div class="images-side-by-side">
-        <img src="static/images/NPQ_protocol_examples.jpg" 
-        alt="Slow Kautsky chlorophyll kinetic protocol example" class="gallery__img" data-enlargeable width="50%" style="cursor: zoom-in; width: 25%">
-    </div>
-</div>
-<div style="font-size:70%">
-    <i>
-        <b>Example protocol modified from:</b>
-        Roháček, K. et al., (2008):  Plant cell compartments: selected topics: 41-104. ISBN: 
-        <a href="https://faculty.ksu.edu.sa/sites/default/files/CHLOROPHYLL%20FLOURESCENCE.PDF" target="_blank" rel="noopener">978-81-308-0104-9</a>
-        </i>
-</div>  
-<br> 
-<table style="width:100%">
-    <colgroup>
-        <col style="width:1%">
-        <col style="width:5%">
-        <col style="width:6%">
-        <col style="width:18%">
-    </colgroup>   
-    <tr>
-        <td><u>Parameter</u></td>
-        <td><u>Formula</u></td>
-        <td><u>Alternative formula</u></td>
-        <td><u>Meaning</u></td>
-    </tr>
-    <tr>
-        <td colspan="4"><i>Technical parameters</i></td>
-    </tr>
-    <tr>
-        <td>F<sub>0</sub></td>
-        <td></td>
-        <td></td>
-        <td>Minimum fluorescence yield in dark-acclimted state</td>
-    </tr>
-        <tr>
-        <td>F<sub>0</sub>'</td>
-        <td>F<sub>0</sub> / (F<sub>v</sub> / F<sub>m</sub> + F<sub>0</sub> / F<sub>m</sub>')</td>
-        <td></td>
-        <td>Minimum fluorescence yield in light-acclimted state (measured in dark, right after the light period)</td>
-    </tr>
-    <tr>
-        <td>F<sub>m</sub></td>
-        <td></td>
-        <td></td>
-        <td>Maximum fluorescence yield in dark-acclimted state, measured during the first saturation flash after dark adaptation</td>
-    </tr>
-        <td>F<sub>m</sub>'</td>
-        <td></td>
-        <td></td>
-        <td>Maximum fluorescence yields during the course of slow kinetics measurement</td>
-    </tr>
-    <tr>
-        <td>F<sub>m</sub>'<sub> (max)</sub></td>
-        <td></td>
-        <td></td>
-        <td>Maximum fluorescence yield throughout the course of slow kinetics measurement</td>
-    </tr>
-    <tr>
-        <td>F<sub>m</sub>'<sub>D1</sub></td>
-        <td></td>
-        <td></td>
-        <td>Maximum fluorescence yield measured within 1 min after turning of actinic light</td>
-    </tr>
-    <tr>
-        <td>F<sub>m</sub>'<sub>D5</sub></td>
-        <td></td>
-        <td></td>
-        <td>Maximum fluorescence yield measured within 5 min after turning of actinic light</td>
-    </tr>
-    <tr>
-        <td>F<sub>m</sub>'<sub>D20</sub></td>
-        <td></td>
-        <td></td>
-        <td>Maximum fluorescence yield measured within 5 min after turning of actinic light</td>
-    </tr>
-    <tr>
-        <td>F<sub>t</sub></td>
-        <td></td>
-        <td></td>
-        <td>Fluorescence yields during the course of slow kinetics measurement</td>
-    </tr>
-    <tr>
-        <td>F<sub>s</sub></td>
-        <td></td>
-        <td></td>
-        <td>Steady-state fluorescence yield in the light-acclimated state. Also denominated <i>F<sub>s</sub></i></td>
-    </tr>
-    <tr>
-        <td>F<sub>p</sub></td>
-        <td></td>
-        <td></td>
-        <td>Maximum fluorescence yield measured when actinic radiation is switched on</td>
-    </tr>
-    <tr>
-        <td>F<sub>d</sub></td>
-        <td>F<sub>p</sub> - F<sub>s</sub></td>
-        <td></td>
-        <td>Fluorescence decrease from F<sub>p</sub> to F<sub>s</sub></td>
-    </tr>
-    <tr>
-        <td>PAR</td>
-        <td></td>
-        <td></td>
-        <td>Photosynthetically active radiation (units: µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup>)</td>
-    </tr>
-    <tr>
-        <td>F<sub>v</sub></td>
-        <td>F<sub>m</sub> - F<sub>0</sub></td>
-        <td></td>
-        <td>Variable fluorescence yield in dark-acclimated state with all PSII centers open</td>
-    </tr>
-     <tr>
-        <td>F<sub>v</sub>'</td>
-        <td>F<sub>m</sub>' - F<sub>t</td>
-        <td></td>
-        <td>Variable fluorescence yields during the course of slow kinetics measurement</td>
-    </tr>
-    <tr>
-        <td colspan="4"><i>&nbsp</i></td>
-    </tr>
-    <tr>
-        <td colspan="4"><i>Efficiencies, quantum yields and quenching</i></td>
-    </tr>
-    <tr>
-        <td>F<sub>v</sub> / F<sub>m</sub> (φ<sub>P0</sub>)</td>
-        <td>(F<sub>m</sub> - F<sub>0</sub>) / F<sub>m</sub></td>
-        <td></td>
-        <td>Maximum quantum yield of primary PSII photochemistry, measured in dark-acclimated state</td>
-    </tr>
-    <tr>
-        <td>φ<sub>N0</sub></td>
-        <td>F<sub>0</sub> / F<sub>m</sub></td>
-        <td></td>
-        <td>Basal yield of non-photochemical processes in PSII, measured in dark-acclimated state</td>
-    </tr>
-    <tr>
-        <td>Q<sub>y</sub></td>
-        <td>(F<sub>m</sub>' - F<sub>t</sub>) / F<sub>m</sub>'</td>
-        <td></td>
-        <td>Effective quantum yield of PSII during the course of slow kinetics measurement. 
-            Also denominated <i>φ<sub>P</sub></i> or <i>φ<sub>PSII</sub> (PSII operating efficiency)</i>
-        </td>
-    </tr>
-    <tr>
-        <td>rETR</td>
-        <td>Q<sub>y</sub> * PAR</td>
-        <td></td>
-        <td>Relative electron transport rate during the course of slow kinetics measurement</td>
-    </tr>
-    <tr>
-        <td>NPQ</td>
-        <td>(F<sub>m</sub> - F<sub>m</sub>') / F<sub>m</sub>'</td>
-        <td>(F<sub>m</sub>'<sub> (max)</sub> - F<sub>m</sub>') / F<sub>m</sub>'</td>
-        <td>Non-photochemical quenching during the course of slow kinetics measurement</td>
-    </tr>
-    <tr>
-        <td>q<sub>CN</sub></td>
-        <td>(F<sub>m</sub> - F<sub>m</sub>') / F<sub>m</sub></td>
-        <td>(F<sub>m</sub>'<sub> (max)</sub> - F<sub>m</sub>') / F<sub>m</sub>'<sub> (max)</sub></td>
-        <td>complete non-photochemical quenching.
-           Also denominated <i>q<sub>N</sub> (coefficient of non-photochemical quenching)</i>
-        </td>
-    </tr>
-    <tr>
-        <td>q<sub>E</sub></td>
-        <td>(F<sub>m</sub>'<sub>D1</sub> - F<sub>m</sub>'<sub>D5</sub>) / F<sub>v</sub></td>
-        <td></td>
-        <td>Fast (1–5 min) relaxing component of non-photochemical quenching</td>
-    </tr>
-        <tr>
-        <td>q<sub>T</sub></td>
-        <td>(F<sub>m</sub>'<sub>D5</sub> - F<sub>m</sub>'<sub>D20</sub>) / F<sub>v</sub></td>
-        <td></td>
-        <td>Intermediate (10-20 min) relaxing component of non-photochemical quenching</td>
-    </tr>
-    <tr>
-        <td>q<sub>I</sub></td>
-        <td>F<sub>m</sub>'<sub>D20</sub> / F<sub>v</sub></td>
-        <td></td>
-        <td>Very slow (> 20 min) relaxing component of non-photochemical quenching</td>
-    </tr>
-    <tr>
-        <td>q<sub>P</sub></td>
-        <td>(F<sub>m</sub>' - F<sub>t</sub>) / (F<sub>m</sub>' - F<sub>0</sub>')</td>
-        <td></td>
-        <td>Coefficient of photochemical quenching, an estimate of open PSII reaction centers. Also called <i>PSII efficiency factor</i></td>
-    </tr>
-    <tr>
-        <td>R<sub>fd</sub></td>
-        <td>F<sub>d</sub> / F<sub>s</sub></td>
-        <td></td>
-        <td>Variable chlorophyll fluorescence decrease ratio</td>
-    </tr>
-</table>
-<p style="font-size:70%">
-    <i>
-        <b>References:</b>
-        <br>
-        Ruban, A. V. (2016): Plant Physiology, 170(4):1903–1916. DOI:
-        <a href="https://academic.oup.com/plphys/article/170/4/1903/6114162" target="_blank" rel="noopener">10.1104/pp.15.01935</a>
-        <br>
-        Baker, N. R. (2008): The Annual Review of Plant Biology: 89-113. DOI:
-        <a href="https://www.annualreviews.org/content/journals/10.1146/annurev.arplant.59.032607.092759" target="_blank" rel="noopener">10.1146/annurev.arplant.59.032607.092759</a>
-        <br>
-        Lichtenthaler, H. K. et al., (2005): Photosynthetica, 43(3):379-393. DOI:
-        <a href="https://ps.ueb.cas.cz/artkey/phs-200503-0009_how-to-correctly-determine-the-different-chlorophyll-fluorescence-parameters-and-the-chlorophyll-fluorescence-d.php" target="_blank">10.1007/s11099-005-0062-6</a>
-        <br>
-        Roháček, K. (2002): Photosynthetica, 40:13-29. DOI: 
-        <a href="https://link.springer.com/article/10.1023/A:1020125719386" target="_blank" rel="noopener">10.1023/A:1020125719386</a>
-        <br>
-        Oxborough, K., Baker, N. R. (1997): Photosynthesis Research, 54:135–142. DOI:
-        <a href="https://link.springer.com/article/10.1023/A:1005936823310" target="_blank" rel="noopener">10.1023/A:1005936823310</a>
-    </i>
-</p>
-<br>
-<u>How to use this tool:</u>
-<br>
-<ol>
-    <li>Select your fluorometer</li>
-    <li>Select type of the fluorescence kinetics measurement protocol</li>
-    <li>Upload and analyze fluorescence kinetic files (up to 50 files)</li>
-    <li>Review the results</li>
-    <li>Download the processed results in a summary .xlsx file</li>
-</ol>
-<br>
-<form method="POST" enctype="multipart/form-data" action="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data', _anchor='results') }}">
-    <a style="line-height: 0.9"> <i style="font-size:80%">Accepted file formats include .CSV and .txt files, as obtained by the following fluorometers:</i></a>
-    <div class="gallery_6_img">
-        <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">
-            <i style="font-size:80%">MULTI-COLOR-PAM</i>
-            <img src="static/images/MC_PAM.jpg"
-            alt="MULTI-COLOR PAM Walz" class="gallery__item--1">
-        </a>
-        <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">
-            <i style="font-size:80%">DUAL-PAM</i>
-            <img src="static/images/dualpam.jpg" alt="Dual PAM Walz" class="gallery__item--2">
-        </a>
-        <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">
-            <i style="font-size:80%">AquaPen</i>
-            <img src="static/images/aquapen.jpg" alt="Aquapen Photon System Instruments" class="gallery__item--3">
-        </a>
-        <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">
-            <i style="font-size:80%">FluorPen</i>
-            <img src="static/images/fluorpen.jpg" alt="FluorPen Aquapen Photon System Instruments" class="gallery__item--4">
-        </a>
-    </div>
-    <br>
-    <div class="form-group">
-        <label for="fluorometer" ><p><b>1. Select fluorometer</b></p></label>
-            <select name="fluorometer" id="fluorometer" class="form-control"  aria-label="fluorometer" style="width:100%">
-                <option value="MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
-                <option value="AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)">AquaPen / FluorPen (Photon Systems Instruments spol. s r.o.)</option>
-            </select>
-    </div>
-    <br>
-    <label class="form-label"><p class="font-weight-bold">2a. For AquaPen/FluorPen, select type of the
-        <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="blank" rel="noopener"> NPQ protocol</a>:</p></label>
-    <div class="form-check">
-        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ1" value="checkbox_NPQ1" checked>
-        <label class="form-check-label" for="checkbox_NPQ_Aquapen">
-            <i> &nbspNPQ protocol 1: <font size="2">Duration: <b>144 s</b>; <b>1</b> pulse in dark; </b><b>5</b> pulses at light (interval: <b>12 s</b>); <b>3</b> pulses in dark (interval: <b>26 s</b>) </i></font>
-        </label>
-        <br>
-        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ2" value="checkbox_NPQ2">
-        <label class="form-check-label" for="checkbox_NPQ_Aquapen">
-            <i> &nbspNPQ protocol 2: <font size="2">Duration: <b>590 s</b>; <b>1</b> pulse in dark; </b><b>10</b> pulses at light (interval: <b>20 s</b>); <b>7</b> pulses in dark (interval: <b>60 s</b>) </i></font>
-        </label>
-        <br>
-        <input class="form-check-input" type="radio" name="checkbox_NPQ_Aquapen" id="checkbox_NPQ3" value="checkbox_NPQ3">
-        <label class="form-check-label" for="checkbox_NPQ_Aquapen">
-            <i> &nbspNPQ protocol 3: <font size="2">Duration: <b>260 s</b>; <b>1</b> pulse in dark; </b><b>10</b> pulses at light (interval: <b>21 s</b>); <b>2</b> pulses in dark (interval: <b>21 s</b>) </i></font>
-        </label>
-    </div>
-    <label class="form-label"><p class="font-weight-bold">2b. For MULTI-COLOR PAM, select type of the analyzed file:</p></label>
-    <div class="form-check">
-        <input class="form-check-input" type="radio" name="checkbox_NPQ_MC_PAM" id="checkbox_file_parameters" value="checkbox_file_parameters" checked>
-        <label class="form-check-label" for="checkbox_NPQ_MC_PAM">
-            <i> &nbspFile with calculated parameters <font size="2">(.csv file with F<sub>t</sub> and F<sub>m</sub>' values, and derived parameters)</i></font>
-        </label>
-        <br>
-    </div>
-    <div class="form-check">
-        <input class="form-check-input" type="radio" name="checkbox_NPQ_MC_PAM" id="checkbox_file_raw_data" value="checkbox_file_raw_data">
-        <label class="form-check-label" for="checkbox_NPQ_MC_PAM">
-            <i> &nbspRaw data file <font size="2">(.csv file with time and raw fluorescence values only)</i></font>
-        </label>
-        <br>
-    </div>
-    <br>
-    <div class="form-check">
-        <label>
-            <input class="form-check-input" type="checkbox" name="checkbox_reduce_file_size" value="checked" checked>
-        Reduce size of MULTI-COLOR PAM raw data files
-        </label>
-    </div>
-    <p style="line-height: 0.9"><i style="font-size:80%">
-        Please note that MULTI-COLOR PAM files typically contain large data and may take longer time to process.
-        For faster processing, it is recommended to reduce size of the MULTI-COLOR PAM files.
-        This will also allow to export reduced data to the summary .xlsx file for further processing. Reduced files will contain about 10000 data points.
-        <br>If you wish to work with raw data, uncheck the box below. For AquaPen / PlantPen, data reduction is not necessary.
-        <br>Please note that it is only possible to work with one file type at a time, although up to 50 files can be processed within a single analysis. 
-        The AquaPen/FluorPen files have identical length, due to defined NPQ protocols by the manufacturer. 
-        For the MULTI-COLOR PAM files, it is recommended to process only files measured by identical protocols, as defined by the user/experimenter.
-        </i>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     INTRO / INFO ACCORDION
+═══════════════════════════════════════════════════════════════════ -->
+<div class="card mb-4 shadow-sm" id="info-card">
+  <div class="card-header font-weight-bold">
+    <i class="fa fa-info-circle text-info mr-2"></i>About this tool
+  </div>
+  <div class="card-body pb-2">
+    <p>
+      This tool enables visualization and analysis of fluorescence traces acquired by several common PAM
+      fluorometers, including
+      <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener">MULTI-COLOR-PAM</a>,
+      <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener">DUAL-PAM</a>,
+      <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener">AquaPen</a> and
+      <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener">FluorPen</a>.
+      It is well suited for the analysis of NPQ induction and relaxation, ETR efficiency, state transitions,
+      and other long-term fluorescence responses of cyanobacteria, algae, and higher plants.
     </p>
-    <table style="width:80%">
-        <colgroup>
-            <col style="width:1%">
-            <col style="width:20%">
-            <col style="width:5%">
-        </colgroup>  
-        <tr>
-            <td colspan="3"><u><i>For the MULTI-COLOR PAM files with parameters, following timing is considered for F<sub>0</sub> and F<sub>m</sub></td>
-        </tr>
-        <tr>
-            <td><i>F<sub>0</sub></i></td>
-            <td><i>0 s (the first measured F<sub>t</sub> point)</i></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td><i>F<sub>m</sub></i></td>
-            <td><i>0 s (the first measured F<sub>m</sub> point)</i></td>
-            <td></td>
-        </tr>
-    </table>
-    <br>
-    <p><b>3. Select files</b></p>
-    <div class="custom-file">
-        <input 
-            type="file" 
-            class="custom-file-input" 
-            type="file"
-            name="NPQ_files"
-            id="NPQ_files"
-            multiple=""
-            accept=".csv, .CSV, .txt, .ASCII"
-            style="width:100%">
-        <label class="custom-file-label" for="customFile">Select files</label>
-    </div>
-    <br>
-    <p><b>4. Analyze slow kinetic files</b></p>
-    <br>
-    <button id="show-image-button" type="submit" class="btn btn-primary" >Upload and analyze slow kinetic files </button>   
-    <a href="{{url_for('static', filename='files/Slow_kin_example_files.zip')}}" download="Slow_kin_example_files">
-        <button type="button" class="btn btn-outline-primary">Download example slow kinetic files</button>
-    </a>
-</form>
-<br>
-<div class="container">
-    <img id="loadingimage" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
+
+    <div class="accordion" id="skInfoAccordion">
+
+      <!-- Parameter reference table -->
+      <div class="card">
+        <div class="card-header py-2" id="headingParamTable">
+          <h6 class="mb-0">
+            <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                    data-toggle="collapse" data-target="#collapseParamTable"
+                    aria-expanded="false" aria-controls="collapseParamTable">
+              <i class="fa fa-table mr-2"></i>Parameter reference table
+            </button>
+          </h6>
+        </div>
+        <div id="collapseParamTable" class="collapse" aria-labelledby="headingParamTable" data-parent="#skInfoAccordion">
+          <div class="card-body p-2">
+            <table style="width:100%; font-size:88%; margin-top:0.5em;">
+              <colgroup><col style="width:10%"><col style="width:22%"><col style="width:22%"><col style="width:46%"></colgroup>
+              <tr><td><u>Parameter</u></td><td><u>Formula</u></td><td><u>Alternative formula</u></td><td><u>Meaning</u></td></tr>
+              <tr><td colspan="4"><i>Technical parameters</i></td></tr>
+              <tr><td>F<sub>0</sub></td><td></td><td></td><td>Minimum fluorescence yield in dark-acclimated state</td></tr>
+              <tr><td>F<sub>m</sub></td><td></td><td></td><td>Maximum fluorescence yield in dark-acclimated state (first saturation flash)</td></tr>
+              <tr><td>F<sub>m</sub>'</td><td></td><td></td><td>Maximum fluorescence yields during slow kinetics</td></tr>
+              <tr><td>F<sub>m</sub>'<sub>(max)</sub></td><td></td><td></td><td>Maximum Fm' throughout the measurement</td></tr>
+              <tr><td>F<sub>t</sub></td><td></td><td></td><td>Steady-state fluorescence yields during slow kinetics</td></tr>
+              <tr><td>F<sub>v</sub>'</td><td>F<sub>m</sub>' − F<sub>t</sub></td><td></td><td>Variable fluorescence yields during slow kinetics</td></tr>
+              <tr><td>PAR</td><td></td><td></td><td>Photosynthetically active radiation (µmol<sub>photons</sub> m<sup>−2</sup> s<sup>−1</sup>)</td></tr>
+              <tr><td colspan="4"><i>&nbsp;</i></td></tr>
+              <tr><td colspan="4"><i>Efficiencies, quantum yields and quenching</i></td></tr>
+              <tr><td>F<sub>v</sub>/F<sub>m</sub></td><td>(F<sub>m</sub>−F<sub>0</sub>)/F<sub>m</sub></td><td></td><td>Maximum quantum yield of PSII (dark-adapted). Healthy: 0.75–0.82</td></tr>
+              <tr><td>Y(II) / Q<sub>y</sub></td><td>(F<sub>m</sub>'−F<sub>t</sub>)/F<sub>m</sub>'</td><td></td><td>Effective quantum yield of PSII during measurement (also φ<sub>PSII</sub>)</td></tr>
+              <tr><td>rETR</td><td>Q<sub>y</sub> × PAR</td><td></td><td>Relative electron transport rate</td></tr>
+              <tr><td>NPQ</td><td>(F<sub>m</sub>−F<sub>m</sub>')/F<sub>m</sub>'</td><td>(F<sub>m</sub>'<sub>(max)</sub>−F<sub>m</sub>')/F<sub>m</sub>'</td><td>Non-photochemical quenching</td></tr>
+              <tr><td>q<sub>N</sub></td><td>(F<sub>m</sub>−F<sub>m</sub>')/F<sub>m</sub></td><td></td><td>Coefficient of non-photochemical quenching</td></tr>
+              <tr><td>q<sub>P</sub></td><td>(F<sub>m</sub>'−F<sub>t</sub>)/(F<sub>m</sub>'−F<sub>0</sub>')</td><td></td><td>Coefficient of photochemical quenching; fraction of open PSII centers</td></tr>
+              <tr><td>R<sub>fd</sub></td><td>(F<sub>p</sub>−F<sub>s</sub>)/F<sub>s</sub></td><td></td><td>Fluorescence decrease ratio (vitality index)</td></tr>
+            </table>
+            <p style="font-size:78%; margin-top:1em;">
+              <i>References:</i><br>
+              Ruban (2016) Plant Physiology 170:1903–1916 &nbsp;·&nbsp;
+              Baker (2008) Annu. Rev. Plant Biol. 59:89–113 &nbsp;·&nbsp;
+              Lichtenthaler et al. (2005) Photosynthetica 43:379–393 &nbsp;·&nbsp;
+              Roháček (2002) Photosynthetica 40:13–29
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- How to use -->
+      <div class="card">
+        <div class="card-header py-2" id="headingHowTo">
+          <h6 class="mb-0">
+            <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                    data-toggle="collapse" data-target="#collapseHowTo"
+                    aria-expanded="false" aria-controls="collapseHowTo">
+              <i class="fa fa-question-circle mr-2"></i>How to use this tool
+            </button>
+          </h6>
+        </div>
+        <div id="collapseHowTo" class="collapse" aria-labelledby="headingHowTo" data-parent="#skInfoAccordion">
+          <div class="card-body">
+            <ol class="mt-2">
+              <li>Select your fluorometer from the dropdown</li>
+              <li>For <strong>AquaPen/FluorPen</strong>: choose the NPQ protocol used during the measurement</li>
+              <li>For <strong>MC-PAM/Dual PAM</strong>: choose whether you are uploading raw data or parameter files</li>
+              <li>Upload up to 50 files and click <em>Upload &amp; Analyze</em></li>
+              <li>Explore traces, derived parameters, and group statistics in the interactive tabs</li>
+              <li>Optionally assign files to groups to compare replicates with mean ± SD</li>
+              <li>Download results as .xlsx; export scalar parameters to the Statistics page</li>
+            </ol>
+            <p style="font-size:90%;">
+              <i class="fa fa-info-circle mr-1 text-info"></i>
+              Accepted file formats: <strong>.csv</strong> (MC-PAM / Dual PAM) and
+              <strong>.txt</strong> (AquaPen / FluorPen, with parameter export enabled).
+            </p>
+            <div class="gallery_6_img mt-2">
+              <a href="https://www.walz.com/products/chl_p700/multi-color-pam/introduction.html" target="_blank" rel="noopener" class="gallery__item--1">
+                <i style="font-size:80%">MULTI-COLOR-PAM &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+                <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM Walz" class="gallery__item--1">
+              </a>
+              <a href="https://www.walz.com/products/chl_p700/dual-pam-100/introduction.html" target="_blank" rel="noopener" class="gallery__item--2">
+                <i style="font-size:80%">DUAL-PAM &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+                <img src="static/images/dualpam.jpg" alt="Dual PAM Walz" class="gallery__item--2">
+              </a>
+              <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/#info" target="_blank" rel="noopener" class="gallery__item--3">
+                <i style="font-size:80%">AquaPen &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+                <img src="static/images/aquapen.jpg" alt="Aquapen PSI" class="gallery__item--3">
+              </a>
+              <a href="https://handheld.psi.cz/products/fluorpen-and-par-fluorpen/#info" target="_blank" rel="noopener" class="gallery__item--4">
+                <i style="font-size:80%">FluorPen &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+                <img src="static/images/fluorpen.jpg" alt="FluorPen PSI" class="gallery__item--4">
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Protocol overview -->
+      <div class="card">
+        <div class="card-header py-2" id="headingProtocol">
+          <h6 class="mb-0">
+            <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                    data-toggle="collapse" data-target="#collapseProtocol"
+                    aria-expanded="false" aria-controls="collapseProtocol">
+              <i class="fa fa-image mr-2"></i>Protocol overview
+            </button>
+          </h6>
+        </div>
+        <div id="collapseProtocol" class="collapse" aria-labelledby="headingProtocol" data-parent="#skInfoAccordion">
+          <div class="card-body text-center">
+            <img src="static/images/NPQ_protocol_examples.jpg"
+                 alt="Slow Kautsky chlorophyll kinetic protocol example" class="img-fluid" style="max-width:700px;">
+            <p class="text-muted mt-2 mb-0" style="font-size:0.85em;">
+              Example NPQ protocol illustrating the typical sequence of dark adaptation, actinic light pulses (L1–Lss),
+              and dark recovery pulses (D1–D3). Adapted from: Roháček et al. (2008) Plant cell compartments — selected topics, ISBN 978-81-308-0104-9.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /accordion -->
+  </div>
 </div>
 
-{% if plot_from_memory %}
-    <section id="results"></section>   
-    <br> <br>
-    <h6><b>Measured data: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ plot_from_memory }}" alt="Slow Kautsky chlorophyll fluorescence kinetics analyzed"/>
-    <br> <br>
-    <details style="margin-bottom:1em;">
-        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
-        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-            <ul class="mb-0">
-                <li><strong>Fv/Fm</strong> — measured on dark-adapted samples. Healthy, unstressed: <strong>0.75–0.82</strong>; mild stress: 0.60–0.74; severe photoinhibition or damage: &lt; 0.55.</li>
-                <li><strong>NPQ</strong> — non-photochemical quenching; thermal dissipation of excess absorbed light energy. Typical range: 0–4. Values &gt; 3 indicate strong photoprotective activation. Near-zero under low light is normal.</li>
-                <li><strong>qP</strong> — photochemical quenching (Stern–Volmer model); fraction of PSII reaction centers in the open (functional) state. Range 0–1; values close to 1 mean most centers are open and active.</li>
-                <li><strong>qL</strong> — photochemical quenching based on the lake model of antenna connectivity; typically slightly lower than qP under the same conditions.</li>
-                <li><strong>State transitions</strong> — a slow change in baseline fluorescence during illumination reflects movement of phycobilisomes or LHCII between PSII (state 1, higher Fm) and PSI (state 2, lower Fm).</li>
-            </ul>
+<!-- ══════════════════════════════════════════════════════════════════
+     UPLOAD CARD
+═══════════════════════════════════════════════════════════════════ -->
+<div class="card mb-4 shadow-sm" id="upload-card">
+  <div class="card-header font-weight-bold">
+    <i class="fa fa-upload text-primary mr-2"></i>Upload &amp; Analyze
+  </div>
+  <div class="card-body">
+
+    <!-- Step 1: Select fluorometer -->
+    <div class="form-group mb-3">
+      <label for="sk-fluorometer"><span class="badge badge-primary mr-1">1</span> Select fluorometer</label>
+      <select id="sk-fluorometer" class="form-control" style="width:100%">
+        <option value="MC-PAM">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
+        <option value="AquaPen">AquaPen / FluorPen (Photon Systems Instruments)</option>
+      </select>
+    </div>
+
+    <!-- Step 2a: AquaPen protocol -->
+    <div class="form-group mb-3" id="aquapen-options">
+      <label class="font-weight-bold"><span class="badge badge-primary mr-1">2</span>
+        AquaPen / FluorPen — select
+        <a href="https://handheld.psi.cz/documents/AquaPen_Manual-verze_02_2021.pdf" target="_blank" rel="noopener">NPQ protocol</a>:</label>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="aquapen_protocol" id="npq1" value="NPQ1" checked>
+        <label class="form-check-label" for="npq1">
+          <i>NPQ protocol 1</i> — <small>Duration: <strong>144 s</strong>; 1 dark pulse; <strong>5</strong> light pulses (Δ12 s); <strong>3</strong> dark recovery (Δ26 s)</small>
+        </label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="aquapen_protocol" id="npq2" value="NPQ2">
+        <label class="form-check-label" for="npq2">
+          <i>NPQ protocol 2</i> — <small>Duration: <strong>590 s</strong>; 1 dark pulse; <strong>10</strong> light pulses (Δ20 s); <strong>7</strong> dark recovery (Δ60 s)</small>
+        </label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="aquapen_protocol" id="npq3" value="NPQ3">
+        <label class="form-check-label" for="npq3">
+          <i>NPQ protocol 3</i> — <small>Duration: <strong>260 s</strong>; 1 dark pulse; <strong>10</strong> light pulses (Δ21 s); <strong>2</strong> dark recovery (Δ21 s)</small>
+        </label>
+      </div>
+    </div>
+
+    <!-- Step 2b: MC-PAM file type -->
+    <div class="form-group mb-3" id="mcpam-options" style="display:none">
+      <label class="font-weight-bold"><span class="badge badge-primary mr-1">2</span> MC-PAM / Dual PAM — select file type:</label>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="mc_pam_file_type" id="mc-params" value="parameters" checked>
+        <label class="form-check-label" for="mc-params">
+          <i>File with calculated parameters</i> <small class="text-muted">(.csv with F<sub>t</sub>, F<sub>m</sub>', Y(II), ETR, PAR columns)</small>
+        </label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="mc_pam_file_type" id="mc-raw" value="raw_data">
+        <label class="form-check-label" for="mc-raw">
+          <i>Raw data file</i> <small class="text-muted">(.csv with time and raw fluorescence only)</small>
+        </label>
+      </div>
+      <div class="form-check mt-2" id="reduce-option">
+        <input class="form-check-input" type="checkbox" id="reduce-data" checked>
+        <label class="form-check-label" for="reduce-data">
+          <strong>Reduce raw data size</strong>
+          <span class="text-muted">(recommended — downsamples to ~10 000 points for faster export)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Step 3: Drop zone -->
+    <label><span class="badge badge-primary mr-1">3</span> Select files (up to 50; .csv for MC-PAM, .txt for AquaPen/FluorPen)</label>
+    <div id="sk-drop-zone" class="border rounded p-4 text-center mb-2"
+         style="border-style:dashed !important; cursor:pointer; background:#f8f9fa; transition:background 0.2s;">
+      <i class="fa fa-upload fa-2x text-muted mb-2"></i>
+      <p class="mb-1 text-muted">Drag &amp; drop files here, or click to browse</p>
+      <small class="text-muted" id="sk-file-count-label">No files selected</small>
+      <input type="file" id="sk-files" multiple accept=".csv,.CSV,.txt" style="display:none">
+    </div>
+    <div id="sk-file-list" class="mb-3" style="max-height:120px; overflow-y:auto; font-size:0.85em;"></div>
+
+    <!-- Buttons -->
+    <div class="d-flex flex-wrap align-items-center">
+      <button id="sk-analyze-btn" class="btn btn-primary mr-2" disabled>
+        <span id="sk-spinner" class="spinner-border spinner-border-sm mr-1" role="status" style="display:none"></span>
+        Upload &amp; Analyze
+      </button>
+      <a href="{{ url_for('static', filename='files/Slow_kin_example_files.zip') }}" download="Slow_kin_example_files">
+        <button type="button" class="btn btn-outline-secondary btn-sm">Download example files</button>
+      </a>
+      <div id="sk-upload-error" class="alert alert-danger mt-2 mb-0 py-1 px-2 w-100" style="display:none; font-size:0.9em;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     RESULTS SECTION
+═══════════════════════════════════════════════════════════════════ -->
+<div id="sk-results-section" style="display:none">
+
+  <div class="alert alert-success mb-3 py-2" id="sk-results-summary"></div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="skTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" id="sk-tab-traces-link" data-toggle="tab" href="#sk-tab-traces" role="tab">
+        <i class="fa fa-line-chart"></i> Traces
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="sk-tab-ftfm-link" data-toggle="tab" href="#sk-tab-ftfm" role="tab">
+        <i class="fa fa-area-chart"></i> F<sub>t</sub> &amp; F<sub>m</sub>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="sk-tab-derived-link" data-toggle="tab" href="#sk-tab-derived" role="tab">
+        <i class="fa fa-line-chart"></i> Derived — time series
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="sk-tab-params-link" data-toggle="tab" href="#sk-tab-params" role="tab">
+        <i class="fa fa-bar-chart"></i> Derived — scalar
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="sk-tab-groups-link" data-toggle="tab" href="#sk-tab-groups" role="tab">
+        <i class="fa fa-object-group"></i> Groups &amp; Averages
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white" id="skTabContent">
+
+    <!-- ── Traces tab ────────────────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="sk-tab-traces" role="tabpanel">
+      <div class="d-flex flex-wrap align-items-center mb-2">
+        <span class="mr-2 font-weight-bold">Raw fluorescence traces</span>
+        <small class="text-muted ml-2">Click a trace in the legend to hide/show</small>
+      </div>
+      <div style="position:relative; height:380px;">
+        <canvas id="sk-traces-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- ── Ft & Fm tab ───────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="sk-tab-ftfm" role="tabpanel">
+      <div id="sk-ftfm-unavail" class="alert alert-secondary" style="display:none">
+        <i class="fa fa-info-circle mr-1"></i>Not available for MC-PAM raw data files — upload parameter files to view F<sub>t</sub> &amp; F<sub>m</sub>' time series.
+      </div>
+      <div id="sk-ftfm-content">
+        <div class="d-flex flex-wrap align-items-center mb-2">
+          <span class="mr-2 font-weight-bold">Metric:</span>
+          <div class="ojip-seg-ctrl" id="sk-ftfm-btns">
+            <button class="btn btn-primary" data-ftfm="ft">F<sub>t</sub></button>
+            <button class="btn btn-outline-primary" data-ftfm="fm">F<sub>m</sub>'</button>
+            <button class="btn btn-outline-primary" data-ftfm="fv">F<sub>v</sub>'</button>
+          </div>
         </div>
-    </details>
-    <form>
-        {% if plots_MC_PAM_raw_data %}
-            <h6><b>Download results - Multi-Color PAM / Dual PAM, raw data:</b></h6>
-            <ul>
-                <li>Plots (as shown above)</li>
-                <li>Raw fluorescence signals</li>
-            </ul>
-        {% elif plots_MC_PAM_parameters %}
-            <h6><b>Download results - Multi-Color PAM / Dual PAM, parameters:</b></h6>
-            <ul>
-                <li>Plots (as shown above)</li>
-                <li>Calculated parameters</li>
-            </ul>
-        {% elif plots_AquaPen %}
-            <h6><b>Download results - AquaPen / PlantPen:</b></h6>
-            <u>AquaPen / PlantPen</u>
-            <ul>
-                <li>Plots (as shown above)</li>
-                <li>Raw fluorescence signals</li>
-                <li>Calculated parameters</li>
-            </ul>
-        </ul>
-        {% endif %}
-        <br><br>
-        <a href="{{ url_for('static', filename=xlsx_file_path)}}">
-            <button type="button" class="btn btn-success">Download the summary .xlsx file</button>
-        </a>
-    </form>
+        <div style="position:relative; height:380px;">
+          <canvas id="sk-ftfm-chart"></canvas>
+        </div>
+      </div>
+    </div>
 
-{% else %}
-<br><br><br><br><br><br><br>
+    <!-- ── Derived tab ───────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="sk-tab-derived" role="tabpanel">
+      <div id="sk-derived-unavail" class="alert alert-secondary" style="display:none">
+        <i class="fa fa-info-circle mr-1"></i>Not available for MC-PAM raw data files — upload parameter files to view derived time series.
+      </div>
+      <div id="sk-derived-content">
+        <div class="d-flex flex-wrap align-items-center mb-2">
+          <span class="mr-2 font-weight-bold">Metric:</span>
+          <div class="ojip-seg-ctrl" id="sk-derived-btns">
+            <button class="btn btn-primary" data-derived="npq">NPQ (F<sub>m</sub>)</button>
+            <button class="btn btn-outline-primary" data-derived="npq_fmmax">NPQ (F<sub>m,max</sub>)</button>
+            <button class="btn btn-outline-primary" data-derived="qn">q<sub>N</sub></button>
+            <button class="btn btn-outline-primary" data-derived="qp">q<sub>P</sub></button>
+            <button class="btn btn-outline-primary" data-derived="qy">Y(II)</button>
+            <button class="btn btn-outline-primary" data-derived="etr">rETR</button>
+          </div>
+        </div>
+        <div style="position:relative; height:380px;">
+          <canvas id="sk-derived-chart"></canvas>
+        </div>
+      </div>
+    </div>
 
-{% endif %}
-<br><br><br><br><br><br><br>
+    <!-- ── Parameters tab ───────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="sk-tab-params" role="tabpanel">
+      <div id="sk-params-unavail" class="alert alert-secondary" style="display:none">
+        <i class="fa fa-info-circle mr-1"></i>Not available for MC-PAM raw data files — no scalar parameters are derived from raw data.
+      </div>
+      <div id="sk-params-content">
+        <div class="d-flex flex-wrap align-items-center mb-2">
+          <span class="mr-2 font-weight-bold">Parameter summary</span>
+          <button class="btn btn-outline-secondary btn-sm ml-auto" id="sk-copy-params-btn">
+            <i class="fa fa-clipboard mr-1"></i>Copy table
+          </button>
+        </div>
+        <div style="position:relative; height:300px;">
+          <canvas id="sk-params-chart"></canvas>
+        </div>
+        <div style="overflow-x:auto; font-size:0.82em; margin-top:0.75rem;">
+          <table class="table table-sm table-hover table-bordered mb-0" id="sk-params-table">
+            <thead class="thead-light"><tr id="sk-params-table-head"></tr></thead>
+            <tbody id="sk-params-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
+    <!-- ── Groups tab ────────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="sk-tab-groups" role="tabpanel">
+
+      <!-- Assignment panel -->
+      <div class="card mb-3">
+        <div class="card-header py-2 font-weight-bold">Assign files to groups</div>
+        <div class="card-body py-2">
+          <div class="d-flex flex-wrap align-items-center mb-2">
+            <button class="btn btn-sm btn-outline-secondary mr-1" id="sk-sort-asc-btn">Sort A→Z</button>
+            <button class="btn btn-sm btn-outline-secondary mr-2" id="sk-sort-desc-btn">Sort Z→A</button>
+            <button class="btn btn-sm btn-outline-secondary mr-2" id="sk-auto-detect-btn">Auto-detect from prefix</button>
+            <button class="btn btn-sm btn-outline-danger mr-2" id="sk-clear-groups-btn">Clear all groups</button>
+          </div>
+          <div style="overflow-x:auto; font-size:0.85em;">
+            <table class="table table-sm table-bordered mb-2" id="sk-group-assign-table">
+              <thead class="thead-light">
+                <tr>
+                  <th style="width:40px"><input type="checkbox" id="sk-select-all-check"></th>
+                  <th>Sample name</th>
+                  <th>Current group</th>
+                  <th>Remove</th>
+                </tr>
+              </thead>
+              <tbody id="sk-group-assign-body"></tbody>
+            </table>
+          </div>
+          <div class="input-group input-group-sm" style="max-width:400px;">
+            <input type="text" id="sk-group-name-input" class="form-control" placeholder="Group name (e.g. Control)">
+            <div class="input-group-append">
+              <button class="btn btn-primary" id="sk-assign-group-btn">Assign selected</button>
+            </div>
+          </div>
+          <div id="sk-groups-summary" class="mt-2"></div>
+        </div>
+      </div>
+
+      <!-- Group results -->
+      <div id="sk-group-results" style="display:none">
+        <h6 class="font-weight-bold">Mean ± SD — raw fluorescence traces</h6>
+        <div class="form-check form-check-inline mb-2">
+          <input class="form-check-input" type="checkbox" id="sk-show-individual-check" checked>
+          <label class="form-check-label" for="sk-show-individual-check">Show individual traces</label>
+        </div>
+        <div style="position:relative; height:360px;">
+          <canvas id="sk-group-traces-chart"></canvas>
+        </div>
+
+        <div id="sk-group-derived-section">
+          <h6 class="font-weight-bold mt-4">Mean ± SD — derived parameters by group</h6>
+          <div class="d-flex flex-wrap align-items-center mb-2">
+            <div class="ojip-seg-ctrl" id="sk-group-derived-btns">
+              <button class="btn btn-primary" data-gderived="npq">NPQ</button>
+              <button class="btn btn-outline-primary" data-gderived="qy">Y(II)</button>
+              <button class="btn btn-outline-primary" data-gderived="qp">q<sub>P</sub></button>
+              <button class="btn btn-outline-primary" data-gderived="etr">rETR</button>
+            </div>
+          </div>
+          <div style="position:relative; height:360px;">
+            <canvas id="sk-group-derived-chart"></canvas>
+          </div>
+        </div>
+
+        <div id="sk-group-params-section" class="mt-4">
+          <h6 class="font-weight-bold">Scalar parameters by group (mean ± SD)</h6>
+          <div style="position:relative; height:300px;">
+            <canvas id="sk-group-params-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <button class="btn btn-outline-primary btn-sm mr-2" id="sk-export-stats-btn">
+            <i class="fa fa-external-link"></i> Export to Statistics page
+          </button>
+          <small class="text-muted">Opens the Statistics tool with scalar parameters pre-loaded for comparison analysis.</small>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-content -->
+
+  <!-- Download bar -->
+  <div class="d-flex flex-wrap align-items-center mt-3 mb-4">
+    <a id="sk-xlsx-download-link" href="#" class="btn btn-success mr-2" style="display:none">
+      <i class="fa fa-file-excel-o"></i> Download summary .xlsx
+    </a>
+    <button id="sk-xlsx-fulldata-btn" class="btn btn-outline-success mr-3" style="display:none">
+      <i class="fa fa-file-excel-o"></i> Download full data .xlsx
+    </button>
+    <small class="text-muted" id="sk-download-status"></small>
+  </div>
+
+</div><!-- /results-section -->
+
+<br><br><br>
+
+<!-- ── Export to Statistics modal ─────────────────────────────────────────── -->
+<div class="modal fade" id="sk-export-modal" tabindex="-1" role="dialog" aria-labelledby="skExportModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title font-weight-bold" id="skExportModalLabel">
+          <i class="fa fa-external-link mr-2"></i>Export to Statistics — select parameters
+        </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body py-2" style="font-size:0.9em; max-height:70vh; overflow-y:auto;">
+        <p class="text-muted mb-2">Choose which parameters and time points to include. Maximum 100 columns (Group + Sample counted).</p>
+        <div class="mb-2 d-flex flex-wrap align-items-center">
+          <button type="button" class="btn btn-outline-secondary btn-sm mr-1" id="sk-export-sel-all">Select all</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm mr-3" id="sk-export-sel-none">Select none</button>
+          <small class="text-muted mr-1">Apply single step to all:</small>
+          <select id="sk-export-tp-select" class="form-control form-control-sm mr-1" style="width:auto"></select>
+          <button type="button" class="btn btn-outline-primary btn-sm" id="sk-export-tp-apply">Apply</button>
+        </div>
+
+        <div class="mb-2">
+          <strong>F<sub>t</sub> &amp; F<sub>m</sub></strong>
+          <div id="sk-export-ftfm-checks" class="ml-2 mt-1"></div>
+        </div>
+        <div class="mb-2">
+          <strong>Derived — time series</strong>
+          <div id="sk-export-derived-checks" class="ml-2 mt-1"></div>
+        </div>
+        <div class="mb-2" id="sk-export-summary-section" style="display:none">
+          <strong>Derived — scalar</strong>
+          <div id="sk-export-summary-checks" class="ml-2 mt-1"></div>
+        </div>
+
+        <div id="sk-export-col-msg" class="mt-2 font-weight-bold"></div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary btn-sm" id="sk-export-confirm-btn">Export</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.4.3/build/index.umd.min.js"></script>
 <script src="{{url_for('static', filename='js_slow_kin_analysis.js')}}"></script>
-
 {% endblock %}
