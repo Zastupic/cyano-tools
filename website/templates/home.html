@@ -72,9 +72,9 @@
                         </p>
 
                         <p style="margin-bottom: 0.6rem;">
-                            <strong>&#127752; 77K fluorescence spectroscopy</strong> —
-                            <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">77K fluorescence spectroscopy</a> enables
-                            excitation-emission analysis of pigment-protein complexes at cryogenic temperature, supporting quantification of
+                            <strong>&#127752; Fluorescence spectroscopy</strong> —
+                            <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">Fluorescence Spectra &amp; EEM Analyzer</a> enables
+                            excitation-emission analysis of pigment-protein complexes at cryogenic (77 K) and room temperatures, supporting quantification of
                             PSII/PSI antenna stoichiometry and energy-coupling states.
                             Compatible instruments: Jasco spectrofluorometers.
                         </p>
@@ -169,7 +169,7 @@
                     <a class="feature" href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
                         <img src="{{ url_for('static', filename='images/Ex_em_spectra_example_4.jpg') }}" alt="77K fluorescence spectroscopy" class="feature-thumb">
                         <div class="feature-text">
-                            <h3><b>77K fluorescence</b>{% if updated_tools.get('ex_em') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('ex_em') }}">Updated</span>{% endif %}</h3>
+                            <h3><b>Fluorescence Spectra &amp; EEM</b>{% if updated_tools.get('ex_em') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('ex_em') }}">Updated</span>{% endif %}</h3>
                             <p>Content, ratio and interactions of pigment-protein complexes.</p>
                         </div>
                     </a>
@@ -405,7 +405,7 @@
             <br>
             <strong>Spectrofluorometry</strong>:
             <br>- For details on <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">
-            Low temperature (77K) excitation-emission pigment fluorescence spectra</a>, please see the tool with detailed explanation.
+            Fluorescence Spectra &amp; EEM Analyzer</a> (77 K and room temperature excitation-emission spectra), please see the tool with detailed explanation.
             <br><strong> Membrane inlet mass spectrometry</strong> (<a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">MIMS</a>):
             <br>- Visualize dynamics of dissolved or gaseous-phase analytes (e.g., O<sub>2</sub>, CO<sub>2</sub>, H<sub>2</sub>, CH<sub>4</sub> etc.)
             <br>- Normalize signals to compensate for MIMS system drift, baseline shift, or external disturbances.
@@ -437,7 +437,7 @@
         </div>
         <div id="faq3" class="collapse" aria-labelledby="faq3-heading" data-parent="#faqAccordion">
           <div class="card-body">
-            <strong>Chlorophyll fluorescence</strong> and <strong>Spectrofluorometry</strong> support batch uploads and can analyze up to 50 datasets simultaneously.
+            <strong>Chlorophyll fluorescence</strong> and <strong>Spectrofluorometry</strong> support batch uploads and can analyze up to 100 datasets simultaneously.
             <br><strong>MIMS</strong>, <strong>Photobioreactors</strong> and <strong>Image Analysis</strong> tools are designed for single-file analysis.
           </div>
         </div>

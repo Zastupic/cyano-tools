@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 
 {% block title %}
-    77K Fluorescence Spectra & EEM Analyzer | CyanoTools
+    Fluorescence Spectra & EEM Analyzer | CyanoTools
 {% endblock %}
 
+
 {% block description %}
-    Analyze low-temperature (77K) excitation-emission matrices. Visualize thylakoid pigment complexes, PSII/PSI ratios, and states of PBS excitonic coupling to PSII or PSI online.
+    Analyze excitation-emission fluorescence matrices at 77K and room temperature. Visualize thylakoid pigment complexes, PSII/PSI ratios, and states of PBS excitonic coupling to PSII or PSI online.
 {% endblock %}
 
 {% block keywords %}
@@ -17,10 +18,10 @@
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      "name": "CyanoTools 77K EEM Analyzer",
+      "name": "CyanoTools Fluorescence Spectra & EEM Analyzer",
       "operatingSystem": "Web",
       "applicationCategory": "ScientificSoftware",
-      "description": "Analysis of 3D excitation-emission fluorescence matrices at 77K to identify pigment-protein complexes.",
+      "description": "Analysis of 3D excitation-emission fluorescence matrices at 77K and room temperature to identify pigment-protein complexes.",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
       "featureList": "2D/3D fluorescence maps, PSII/PSI ratio estimation, Phycobilisome coupling analysis"
     }
@@ -28,605 +29,806 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  /* ── EEM main tabs ── */
+  #eemTabs { border-bottom: 2px solid #dee2e6; margin-bottom: 0; padding-bottom: 0; }
+  #eemTabs .nav-link {
+    border: 1px solid #dee2e6; border-bottom: none; background: #f8f9fa;
+    padding: 0.35rem 1.1rem; font-weight: 600; font-size: 0.85rem;
+    border-radius: 6px 6px 0 0; color: #495057;
+    margin-right: 3px; margin-bottom: -2px;
+    transition: background 0.12s, color 0.12s;
+  }
+  #eemTabs .nav-link:hover:not(.active) { background: #e2e6ea; color: #212529; }
+  #eemTabs .nav-link.active {
+    background: #004085; color: #fff; border-color: #004085;
+    border-bottom: 2px solid #004085;
+  }
+  /* ── Segmented-control pill toggles ── */
+  .ojip-seg-ctrl {
+    display: inline-flex; background: #e8edf2; border-radius: 10px;
+    padding: 4px; gap: 3px; border: 1px solid #c8d3de;
+  }
+  .ojip-seg-ctrl .btn {
+    border: none !important; border-radius: 7px !important;
+    padding: 5px 13px !important; font-size: 0.79rem !important;
+    font-weight: 600; line-height: 1.3; transition: all 0.17s ease;
+  }
+  .ojip-seg-ctrl .btn-outline-primary {
+    background: transparent !important; color: #5a6a7a !important;
+    box-shadow: none !important;
+  }
+  .ojip-seg-ctrl .btn-outline-primary:hover {
+    background: #d4dde7 !important; color: #003566 !important;
+  }
+  .ojip-seg-ctrl .btn-primary {
+    background: #ffffff !important; color: #004085 !important;
+    box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
+  }
+</style>
+
 <!-- Banner -->
 <div id="banner-content">
-    <div class="banner-desktop"><!-- Desktop banner -->
+    <div class="banner-desktop">
         <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
-             alt="CyanoTools analytical tools for algae and cyanobacteria"
-             style="width: 100%;">
+             alt="CyanoTools analytical tools for algae and cyanobacteria" style="width:100%;">
     </div>
-    <div class="banner-mobile"><!-- Mobile banner -->
+    <div class="banner-mobile">
         <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
-             alt="CyanoTools mobile banner"
-             style="width: 100%;">
+             alt="CyanoTools mobile banner" style="width:100%;">
     </div>
 </div>
-<br>
-<h1>Analysis of excitation-emission fluorescence maps</h1>
-<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
-    <strong>At a glance:</strong> Upload 3D excitation-emission fluorescence maps measured at 77K from your spectrofluorometer to visualize pigment-protein complex composition and calculate fluorescence intensities and ratios for photosystem I (PSI), photosystem II (PSII), and phycobilisomes. Supports batch processing of up to 50 files.
-</div>
-<p>
-Welcome to the excitation-emission spectra analysis tool! Excitation-emission matrix (EEM) fluorescence spectroscopy is an advanced approach 
-for analyzing the pigment composition and energy transfer dynamics in photosynthetic organisms. 
-By acquiring full 3D fluorescence maps at low temperature (77 K), this method enables highly sensitive assessment of content, ratios
-and interactions of pigment-protein complexes, such as photosystems (PSI, PSII), phycobilisomes, and their accessory pigments.
-</p>
 
-<p>
-At 77 K, biochemical and physiological modulation of fluorescence is suppressed, allowing clear and direct discrimination of spectral 
-signatures from individual complexes. The technique thus provides rapid insight into the structural and functional state of the photosynthetic 
-apparatus — essential for assessing stress responses, physiological adaptation, or genetic diversity in cyanobacteria, algae, and higher plants.
-</p>
-    
-<p>
-This tool supports visualization and qualitative analysis of 3D excitation-emission fluorescence maps generated by common spectrofluorometers,
-including <a href="https://jascoinc.com/products/spectroscopy/fluorometer/spectrofluorometer-models/" target="_blank" rel="noopener">Jasco spectrofluorometers</a>. 
-Up to 50 files can be uploaded simultaneously for batch processing. The tool generates multiple visualizations for each file processed, including:
-</p>
-
-<ul style="font-size:95%">
-    <li>Excitation and emission spectra:
-        <ul>
-            <li>Decomposed EEM maps into excitation and emission spectra
-                <ul>
-                    <li>Up to 6 excitation and 6 emission wavelengths can be defined for normalization</li>
-                    <li>Up to 12 plots are generated with normalized excitation and emission spectra</li>
-                </ul>
-            </li>
-        </ul>
-    </li>
-    <li>Derived parameters:
-        <ul>
-            <li>Intensity of chlorophyll fluorescence at PSII and PSI centers</li>
-            <li>Intensity of phycobilisome fluorescence at PSII and PSI centers</li>
-            <li>Intensity of phycobilisome fluorescence functionally uncoupled from both PSII and PSI</li>
-            <li>Ratios (depending on pigment composition):
-                <ul>
-                    <li>PSII/PSI</li>
-                    <li>PBS-PSII/PBS-PSI</li>
-                    <li>Phycocyanin/Phycoerythrin</li>
-                </ul>
-            </li>
-        </ul>
-    </li>
-</ul>
-
-<p>
-For further details about the EEM fluorescence spectra analysis and recommended protocols, see the summary table below and the references therein.
-After processing, all spectra, derived parameters, and summary statistics are compiled into a downloadable .xlsx file.
-</p>
-
-<div class="container">
-    <img src="static/images/Ex_em_spectra_example.jpg" alt="Excitation-emission spectra example" class="gallery__img" data-enlargeable style="cursor: zoom-in; width: 25%">
-</div>
-
-<table style="width:95%">
-    <colgroup>
-        <col style="width:18%">
-        <col style="width:9%">
-        <col style="width:9%">
-        <col style="width:12%">
-        <col style="width:18%">
-    </colgroup>  
-    <tr>
-        <td><i><u>Ex/Em combinations considered for the analysis</u></i></td>
-        <td><i><u>Strains with Chl only</u></i></td>
-        <td><i><u>Strains with Chl+PC</u></i></td>
-        <td><i><u>Strains with Chl+PE</u></i></td>
-        <td><i><u>Strains with Chl+PE+PC</u></i></td>
-    </tr>
-    <tr>
-        <td>Ex: Chlorophyll / Em: PSII</td>
-        <td>Ex440/Em689</td>
-        <td>Ex440/Em689</td>
-        <td>Ex440/Em689</td>
-        <td>Ex440/Em689</td>
-    </tr>
-    <tr>
-        <td>Ex: Chlorophyll / Em: PSI</td>
-        <td>Ex440/Em724</td>
-        <td>Ex440/Em724</td>
-        <td>Ex440/Em724</td>
-        <td>Ex440/Em724</td>
-    </tr>
-    <tr>
-        <td>Ex: Phycoerythrin / Em: Phycoerythrin</td>
-        <td></td>
-        <td></td>
-        <td>Ex560/Em580</td>
-        <td>Ex560/Em580</td>
-    </tr>
-    <tr>
-        <td>Ex: Phycoerythrin / Em: (Allo)Phycocyanin</td>
-        <td></td>
-        <td></td>
-        <td>Ex560/Em662</td>
-        <td>Ex560/Em662</td>
-    </tr>
-    <tr>
-        <td>Ex: Phycoerythrin / Em: PSII</td>
-        <td></td>
-        <td></td>
-        <td>Ex560/Em689</td>
-        <td>Ex560/Em689</td>
-    </tr>
-    <tr>
-        <td>Ex: Phycoerythrin / Em: PSI</td>
-        <td></td>
-        <td></td>
-        <td>Ex560/Em724</td>
-        <td>Ex560/Em724</td>
-    </tr>
-    <tr>
-        <td>Ex: Phycocyanin / Em: (Allo)Phycocyanin</td>
-        <td></td>
-        <td>Ex620/Em662</td>
-        <td></td>
-        <td>Ex620/Em662</td>
-    </tr>
-    <tr>
-        <td>Ex: Phycocyanin / Em: PSII</td>
-        <td></td>
-        <td>Ex620/Em689</td>
-        <td></td>
-        <td>Ex620/Em689</td>
-    </tr>
-    <tr>
-        <td>Ex: Phycocyanin / Em: PSI</td>
-        <td></td>
-        <td>Ex620/Em724</td>
-        <td></td>
-        <td>Ex620/Em724</td>
-    </tr>
-    <tr>
-        <td colspan="5">&nbsp</td>
-    </tr>
-    <tr>
-        <td colspan="5"><i><u>Derived parameters</u></i></td>
-    </tr>
-    <tr>
-        <td>Chl-PSII: Chlorophyll at PSII</td>
-        <td>Ex440/Em689</td>
-        <td>Ex440/Em689</td>
-        <td>Ex440/Em689</td>
-        <td>Ex440/Em689</td>
-    </tr>
-    <tr>
-        <td>Chl-PSI: Chlorophyll at PSI</td>
-        <td>Ex440/Em724</td>
-        <td>Ex440/Em724</td>
-        <td>Ex440/Em724</td>
-        <td>Ex440/Em724</td>
-    </tr>
-    <tr>
-        <td>PBS-free: Phycobilisomes uncoupled</td>
-        <td></td>
-        <td>Ex620/Em662</td>
-        <td>Ex560/Em580 + Ex560/Em662</td>
-        <td>Ex560/Em580 + Ex560/Em662 + Ex620/Em662</td>
-    </tr>
-    <tr>
-        <td>PBS-PSII: Phycobilisomes coupled to PSII</td>
-        <td></td>
-        <td>Ex620/Em689</td>
-        <td>Ex560/Em689</td>
-        <td>Ex560/Em689 + Ex620/Em689</td>
-    </tr>
-    <tr>
-        <td>PBS-PSI: Phycobilisomes coupled to PSI</td>
-        <td></td>
-        <td>Ex620/Em724</td>
-        <td>Ex560/Em724</td>
-        <td>Ex560/Em724 + Ex620/Em724</td>
-    </tr>
-    <tr>
-        <td colspan="5">&nbsp</td>
-    </tr>
-    <tr>
-        <td colspan="5"><i><u>Normalized parameters</u></i></td>
-    </tr>
-    <tr>
-        <td>Chl-PSII normalized</td>
-        <td>Chl-PSII/Chl-tot</td>
-        <td>Chl-PSII/Chl-tot</td>
-        <td>Chl-PSII/Chl-tot</td>
-        <td>Chl-PSII/Chl-tot</td>
-    </tr>
-    <tr>
-        <td>Chl-PSI normalized</td>
-        <td>Chl-PSI/Chl-tot</td>
-        <td>Chl-PSI/Chl-tot</td>
-        <td>Chl-PSI/Chl-tot</td>
-        <td>Chl-PSI/Chl-tot</td>
-    </tr>
-    <tr>
-        <td>Phycobilisomes uncoupled normalized</td>
-        <td></td>
-        <td>PBS-free/PBS-tot</td>
-        <td>PBS-free/PBS-tot</td>
-        <td>PBS-free/PBS-tot</td>
-    </tr>
-    <tr>
-        <td>Phycobilisomes coupled to PSII normalized</td>
-        <td></td>
-        <td>PBS-PSII/PBS-tot</td>
-        <td>PBS-PSII/PBS-tot</td>
-        <td>PBS-PSII/PBS-tot</td>
-    </tr>
-    <tr>
-        <td>Phycobilisomes coupled to PSI normalized</td>
-        <td></td>
-        <td>PBS-PSI/PBS-tot</td>
-        <td>PBS-PSI/PBS-tot</td>
-        <td>PBS-PSI/PBS-tot</td>
-    </tr>
-    <tr>
-        <td colspan="5">&nbsp</td>
-    </tr>
-    <tr>
-        <td colspan="5"><i><u>Parameters for normalization</u></i></td>
-    </tr>
-    <tr>
-        <td colspan="5">PBS-tot: Phycobilisomes free + Phycobilisomes at PSII + Phycobilisomes at PSI</td>
-    </tr>
-    <tr>
-        <td colspan="5">Chl-tot: Chlorophyll at PSII + Chlorophyll at PSI</td>
-    </tr>
-</table>
-<br>
-<p>This tool is developed for data analysis obtained by the following spectrofluorometers:
-<div class="container">
-    <div class="gallery_4">
-        <a href="https://jascoinc.com/products/spectroscopy/fluorometer/spectrofluorometer-models/" target="_blank" rel="noopener" class="gallery__img gallery__item--1">
-            <i style="font-size:80%">Jasco spectrofluorometers</i>
-            <img src="static/images/jasco.png" alt="Spectrofluorometer for excitation-emission spectra analysis" class="gallery__img gallery__item--1">
-        </a>
+<div class="p-4 border rounded shadow-sm bg-white mb-4">
+    <h2 class="font-weight-bold mb-3" id="eem-page-title">
+        <i class="fa fa-th text-primary mr-2"></i>Fluorescence Spectra &amp; EEM Analyzer
+    </h2>
+    <div class="alert alert-info mb-3" id="eem-page-alert" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+        <strong>At a glance:</strong> Upload 3D excitation-emission fluorescence maps measured at 77 K or room temperature to visualize
+        pigment-protein complex composition and calculate PSII/PSI ratios and phycobilisome coupling states.
+        Supports batch processing of up to 100 files with interactive charts, replicate grouping, and export to .xlsx.
     </div>
+    <p class="mb-3">
+        Excitation-emission matrix (EEM) fluorescence spectroscopy enables highly sensitive assessment
+        of content, ratios, and interactions of pigment-protein complexes — photosystems (PSI, PSII),
+        phycobilisomes (PBS), and their accessory pigments. At 77 K, biochemical modulation of fluorescence
+        is suppressed, allowing clear discrimination of spectral signatures from individual complexes — essential
+        for assessing stress responses, physiological adaptation, or genetic diversity in cyanobacteria, algae,
+        and higher plants. Room-temperature (RT) EEM measurements provide complementary information on
+        PBS coupling states and PSII:PSI ratios under physiologically relevant conditions.
+    </p>
+
+    <div class="accordion" id="eemInfoAccordion">
+
+        <!-- How to use -->
+        <div class="card">
+            <div class="card-header py-2" id="headingHowTo">
+                <h6 class="mb-0">
+                    <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                            data-toggle="collapse" data-target="#collapseHowTo"
+                            aria-expanded="false" aria-controls="collapseHowTo">
+                        <i class="fa fa-question-circle mr-2"></i>How to use this tool
+                    </button>
+                </h6>
+            </div>
+            <div id="collapseHowTo" class="collapse" aria-labelledby="headingHowTo" data-parent="#eemInfoAccordion">
+                <div class="card-body">
+                    <ol class="mt-2">
+                        <li>Select your spectrofluorometer, upload up to 50 .csv files, and click <em>Analyze</em></li>
+                        <li><strong>Spectra</strong> tab — adjust excitation/emission wavelengths to plot and normalization mode; click <em>Re-extract spectra</em> to update without re-uploading</li>
+                        <li><strong>2D Map</strong> tab — view full EEM maps for all samples; select colorscale and optionally crop the display range</li>
+                        <li><strong>Derived Parameters</strong> tab — select analysis mode (77K / RT) and pigmentation type; parameters update instantly</li>
+                        <li><strong>Groups</strong> tab — assign samples to groups to compute mean ± SD and compare conditions</li>
+                        <li>Download results as .xlsx or export scalar parameters to the Statistics page</li>
+                    </ol>
+                    <p style="font-size:90%;"><i class="fa fa-info-circle mr-1 text-info"></i>
+                        Accepted file formats:
+                        <strong>.csv</strong> (Jasco FP-8050/8550 or AMINCO-Bowman Series 2 Jasco-compatible export) and
+                        <strong>.spc</strong> (Horiba FluoroMax-P, Galactic SPC K-format — upload all files per sample together; files with the same name prefix are combined into one EEM).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parameter reference (77K + RT merged) -->
+        <div class="card">
+            <div class="card-header py-2" id="headingParamRef">
+                <h6 class="mb-0">
+                    <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                            data-toggle="collapse" data-target="#collapseParamRef"
+                            aria-expanded="false" aria-controls="collapseParamRef">
+                        <i class="fa fa-table mr-2"></i>Parameter reference — Ex/Em combinations &amp; emission bands
+                    </button>
+                </h6>
+            </div>
+            <div id="collapseParamRef" class="collapse" aria-labelledby="headingParamRef" data-parent="#eemInfoAccordion">
+                <div class="card-body p-2" style="font-size:0.91em;">
+
+                    <!-- 77K section -->
+                    <p class="font-weight-bold mb-1 mt-1">
+                        <span class="badge badge-info mr-1">77 K</span> Ex/Em combinations and derived parameters
+                    </p>
+                    <table style="width:100%;">
+                        <colgroup>
+                            <col style="width:28%"><col style="width:10%"><col style="width:10%"><col style="width:13%"><col style="width:20%">
+                        </colgroup>
+                        <tr>
+                            <td></td>
+                            <td><i><u>Chl only</u></i></td>
+                            <td><i><u>Chl+PC</u></i></td>
+                            <td><i><u>Chl+PE</u></i></td>
+                            <td><i><u>Chl+PC+PE</u></i></td>
+                        </tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Measured intensities</em></td></tr>
+                        <tr><td>Ex: Chl / Em: PSII</td><td>Ex440/Em689</td><td>Ex440/Em689</td><td>Ex440/Em689</td><td>Ex440/Em689</td></tr>
+                        <tr><td>Ex: Chl / Em: PSI</td><td>Ex440/Em724</td><td>Ex440/Em724</td><td>Ex440/Em724</td><td>Ex440/Em724</td></tr>
+                        <tr><td>Ex: PE / Em: PE</td><td></td><td></td><td>Ex560/Em580</td><td>Ex560/Em580</td></tr>
+                        <tr><td>Ex: PE / Em: (Allo)PC</td><td></td><td></td><td>Ex560/Em662</td><td>Ex560/Em662</td></tr>
+                        <tr><td>Ex: PE / Em: PSII</td><td></td><td></td><td>Ex560/Em689</td><td>Ex560/Em689</td></tr>
+                        <tr><td>Ex: PE / Em: PSI</td><td></td><td></td><td>Ex560/Em724</td><td>Ex560/Em724</td></tr>
+                        <tr><td>Ex: PC / Em: (Allo)PC</td><td></td><td>Ex620/Em662</td><td></td><td>Ex620/Em662</td></tr>
+                        <tr><td>Ex: PC / Em: PSII</td><td></td><td>Ex620/Em689</td><td></td><td>Ex620/Em689</td></tr>
+                        <tr><td>Ex: PC / Em: PSI</td><td></td><td>Ex620/Em724</td><td></td><td>Ex620/Em724</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters</em></td></tr>
+                        <tr><td>Chl-PSII</td><td>Ex440/Em689</td><td>Ex440/Em689</td><td>Ex440/Em689</td><td>Ex440/Em689</td></tr>
+                        <tr><td>Chl-PSI</td><td>Ex440/Em724</td><td>Ex440/Em724</td><td>Ex440/Em724</td><td>Ex440/Em724</td></tr>
+                        <tr><td>PBS-free</td><td></td><td>Ex620/Em662</td><td>Ex560/Em580+662</td><td>Ex560/Em580+662 + Ex620/Em662</td></tr>
+                        <tr><td>PBS-PSII</td><td></td><td>Ex620/Em689</td><td>Ex560/Em689</td><td>Ex560+620/Em689</td></tr>
+                        <tr><td>PBS-PSI</td><td></td><td>Ex620/Em724</td><td>Ex560/Em724</td><td>Ex560+620/Em724</td></tr>
+                    </table>
+
+                    <p class="font-weight-bold mb-1 mt-2">
+                        <span class="badge badge-info mr-1" style="font-size:0.85em;">77 K</span> References
+                    </p>
+                    <p class="mb-1 text-muted" style="font-size:0.88em;"><em>Core methodology:</em></p>
+                    <ol class="mb-1" style="padding-left:1.4rem; font-size:0.9em;">
+                        <li>Murata N et al. (1966) <em>Biochim Biophys Acta</em> 126:234–243. — Band assignments (F685, F695, F730)</li>
+                        <li>Glazer AN (1985) <em>Annu Rev Biophys Biophys Chem</em> 14:47–77. — PBS / phycobiliprotein fluorescence</li>
+                        <li>Andrizhiyevskaya EG et al. (2005) <em>Biochim Biophys Acta</em> 1708:198–208. — Origin of F685 / F695</li>
+                        <li>Murakami A (1997) <em>Photosynth Res</em> 53:141–148. — PSII/PSI stoichiometry by 77 K fluorescence</li>
+                        <li>Mullineaux CW, Allen JF (1990) <em>Photosynth Res</em> 23:297–311. — State 1–State 2 transitions in <em>Synechococcus</em> characterized by 77 K emission spectroscopy (F697/F654 ratio as state-transition indicator)</li>
+                    </ol>
+                    <p class="mb-1 text-muted" style="font-size:0.88em;"><em>Application examples:</em></p>
+                    <ol start="6" class="mb-2" style="padding-left:1.4rem; font-size:0.9em;">
+                        <li>Luimstra VM et al. (2020) <em>J Exp Bot</em> 71:3650–3660. — 77 K tracking of PS remodelling under blue light in <em>Synechocystis</em></li>
+                        <li>Zavřel T et al. (2024) <em>Plant Cell Physiol</em> 65:1082–1097. — 77 K in light-quality acclimation in <em>Synechocystis</em></li>
+                    </ol>
+
+                    <hr class="my-2">
+
+                    <!-- RT section -->
+                    <p class="font-weight-bold mb-1">
+                        <span class="badge badge-warning mr-1">RT</span> Emission bands and derived parameters
+                    </p>
+                    <p class="mb-1">All measurements use Ex 440 nm (Chl excitation) and optionally Ex 620 nm (PC/PBS excitation).</p>
+                    <table style="width:100%; margin-bottom:0.6rem;">
+                        <tr>
+                            <th style="width:18%;">Band / parameter</th>
+                            <th style="width:18%;">Measurement</th>
+                            <th>Origin / interpretation</th>
+                        </tr>
+                        <tr><td colspan="3" class="text-muted pt-1"><em>Chl a excitation (Ex 440 nm)</em></td></tr>
+                        <tr><td>F685</td><td>Ex440/Em685</td><td>PSII core (CP43/CP47)</td></tr>
+                        <tr><td>F695</td><td>Ex440/Em695</td><td>CP47 inner antenna — elevated F695/F685 indicates PSII structural changes</td></tr>
+                        <tr><td>F730</td><td>Ex440/Em730</td><td>PSI "red" chlorophylls — dominant direct Chl→PSI emission at RT</td></tr>
+                        <tr><td colspan="3" class="text-muted pt-1"><em>PBS excitation (Ex 620 nm — PC absorption)</em></td></tr>
+                        <tr><td>PBS-free</td><td>Ex620/Em657</td><td>Uncoupled phycobilisomes — free PBS not transferring energy to photosystems (~657 nm)</td></tr>
+                        <tr><td>PBS-PSII</td><td>Ex620/Em685</td><td>PBS→PSII energy transfer; coupled PBS emission via PSII</td></tr>
+                        <tr><td>PBS-PSI</td><td>Ex620/Em705</td><td>PBS→PSI energy transfer; coupled PBS emission via PSI (~705 nm)</td></tr>
+                        <tr><td>PBS-F730</td><td>Ex620/Em730</td><td>Direct Chl→PSI emission under PBS excitation (Chl reabsorption / red-shifted PSI Chls)</td></tr>
+                        <tr><td colspan="3" class="text-muted pt-1"><em>Derived parameters:</em></td></tr>
+                        <tr><td>PBS-free norm</td><td>PBS-free / PBS-tot</td><td>Fraction of uncoupled PBS (State 1 ↔ State 2 indicator)</td></tr>
+                        <tr><td>PBS-PSII norm</td><td>PBS-PSII / PBS-tot</td><td>Fraction of PBS coupled to PSII (high → State 1)</td></tr>
+                        <tr><td>PBS-PSI norm</td><td>PBS-PSI / PBS-tot</td><td>Fraction of PBS coupled to PSI (high → State 2)</td></tr>
+                        <tr><td>PBS F685/F705</td><td>PBS-PSII / PBS-PSI</td><td>State-transition ratio (high → State 1 / PBS–PSII; low → State 2 / PBS–PSI)</td></tr>
+                        <tr><td colspan="3" class="text-muted pt-1"><em>PBS-tot = PBS-free + PBS-PSII + PBS-PSI (Ex 620 nm sum). Methodology: Zavřel et al. (2021).</em></td></tr>
+                    </table>
+
+                    <p class="font-weight-bold mb-1">
+                        <span class="badge badge-warning mr-1" style="font-size:0.85em;">RT</span> References
+                    </p>
+                    <ol class="mb-1" style="padding-left:1.4rem; font-size:0.9em;">
+                        <li>Zavřel T et al. (2021) <em>Algal Res</em> 58:102328. — Direct source for PBS-free (~657 nm), PBS-PSII (~685 nm), PBS-PSI (~705 nm) emission bands and PBS coupling fractions from RT EEM spectra</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Protocol overview -->
+        <div class="card">
+            <div class="card-header py-2" id="headingProtocol">
+                <h6 class="mb-0">
+                    <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                            data-toggle="collapse" data-target="#collapseProtocol"
+                            aria-expanded="false" aria-controls="collapseProtocol">
+                        <i class="fa fa-image mr-2"></i>Protocol overview
+                    </button>
+                </h6>
+            </div>
+            <div id="collapseProtocol" class="collapse" aria-labelledby="headingProtocol" data-parent="#eemInfoAccordion">
+                <div class="card-body text-center">
+                    <img src="{{ url_for('static', filename='images/Ex_em_spectra_example.jpg') }}" alt="Excitation-emission fluorescence spectrum example" class="img-fluid" style="max-width:600px;">
+                    <p class="text-muted mt-2 mb-0" style="font-size:0.85em;">
+                        Example excitation-emission matrix (EEM) fluorescence spectrum at 77 K. Characteristic
+                        emission bands at ~689 nm (PSII) and ~724 nm (PSI) are visible under chlorophyll excitation
+                        (440 nm), while phycobilisome excitation (560/620 nm) reveals PBS coupling states.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /accordion -->
 </div>
-</p>
-<br>
-<u>How to use this tool:</u>
-<br>
-<ol>
-    <li>Select spectrofluorometer model</li>
-    <li>Specify pigment type or organism category</li>
-    <li>Define excitation and emission wavelengths of interest for your analysis</li>
-    <li>Upload and analyze spectra files (up to 50 files)</li>
-    <li>Visualize and review the results</li>
-    <li>Download the processed results in a summary .xlsx file</li>
-</ol>
-<br>
-<form method="POST" enctype="multipart/form-data" action="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra', _anchor='results') }}">
-    <div class="container">
-        <div class="form-group">    
-            <p><b>1. Select spectrofluorometer</b><p>
-            <select name="spectrofluorometer" class="form-control"  aria-label="spectrofluorometer">
-                <option selected="FP-8050">FP-8050 Series Spectrofluorometers (Jasco Inc.)</option>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     UPLOAD CARD
+═══════════════════════════════════════════════════════════════════ -->
+<div class="card mb-4 shadow-sm" id="eem-upload-card">
+    <div class="card-header font-weight-bold">
+        <i class="fa fa-upload text-primary mr-2"></i>Upload &amp; Analyze
+    </div>
+    <div class="card-body">
+
+        <!-- Step 1: Spectrofluorometer -->
+        <div class="form-group mb-3">
+            <label for="eem-spectrofluorometer"><span class="badge badge-primary mr-1">1</span> Select spectrofluorometer</label>
+            <select id="eem-spectrofluorometer" class="form-control" onchange="updateSpectrofluorometerHint()">
+                <option value="jasco">FP-8050 / FP-8550 Series (Jasco Inc.) — .csv</option>
+                <option value="aminco">AMINCO-Bowman Series 2 (Jasco-compatible export) — .csv</option>
+                <option value="horiba">Horiba FluoroMax-P — .spc</option>
             </select>
+            <small id="eem-spectrofluorometer-hint" class="d-block text-muted mt-1" style="font-size:0.82rem;"></small>
         </div>
-        <br>
-        <p><b>2. Select pigmentation type of your strain</b></p>
-        <div class="form-check">
-            <input class="form-check-input" type="radio" name="checkbox_pigmentation" id="checkbox_chl_only" value="checkbox_chl_only" checked>
-            <label class="form-check-label" for="checkbox_pigmentation"> &nbspStrain with <i>chlorophyll</i> only</label>
-            <br>
-            <input class="form-check-input" type="radio" name="checkbox_pigmentation" id="checkbox_chl_PC" value="checkbox_chl_PC">
-            <label class="form-check-label" for="checkbox_pigmentation"></label>&nbspStrain with <i>chlorophyll</i> and <i>phycocyanin</i></label>
-            <br>
-            <input class="form-check-input" type="radio" name="checkbox_pigmentation" id="checkbox_chl_PE" value="checkbox_chl_PE">
-            <label class="form-check-label" for="checkbox_pigmentation"></label>&nbspStrain with <i>chlorophyll</i> and <i>phycoerythrin</i></label>
-            <br>
-            <input class="form-check-input" type="radio" name="checkbox_pigmentation" id="checkbox_chl_PC_PE" value="checkbox_chl_PC_PE">
-            <label class="form-check-label" for="checkbox_pigmentation"></label>&nbspStrain with <i>chlorophyll</i> and <i>phycocyanin</i> and <i>phycoerythrin</i></label>
+
+        <!-- FluoroMax EX scan override (shown only for Horiba .spc) -->
+        <div id="spc-ex-params" class="form-group mb-3" style="display:none">
+            <div class="border rounded px-3 pt-2 pb-2" style="background:#f0f4f8; border-color:#b8cfe8 !important;">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="font-weight-bold" style="font-size:0.9rem;">
+                        <i class="fa fa-sliders text-primary mr-1"></i>EX scan parameters
+                    </span>
+                    <span class="badge badge-danger ml-2" style="font-size:0.72rem; font-weight:700; letter-spacing:0.02em;">Required</span>
+                </div>
+                <div class="d-flex flex-wrap align-items-center" style="gap:0.6rem;">
+                    <div style="display:inline-flex; align-items:stretch;">
+                        <span style="display:flex; align-items:center; background:#dce6f0; border:1px solid #b0c4d8; border-right:none; border-radius:4px 0 0 4px; padding:0.25rem 0.5rem; font-size:0.82rem; white-space:nowrap;">Start</span>
+                        <input type="number" id="spc-ex-start" class="form-control form-control-sm" placeholder="e.g. 360" min="200" max="900" step="1" style="width:80px; border-radius:0; border-color:#b0c4d8;">
+                        <span style="display:flex; align-items:center; background:#dce6f0; border:1px solid #b0c4d8; border-left:none; border-radius:0 4px 4px 0; padding:0.25rem 0.5rem; font-size:0.82rem;">nm</span>
+                    </div>
+                    <div style="display:inline-flex; align-items:stretch;">
+                        <span style="display:flex; align-items:center; background:#dce6f0; border:1px solid #b0c4d8; border-right:none; border-radius:4px 0 0 4px; padding:0.25rem 0.5rem; font-size:0.82rem; white-space:nowrap;">Increment</span>
+                        <input type="number" id="spc-ex-increment" class="form-control form-control-sm" placeholder="e.g. 10" min="1" max="50" step="1" style="width:70px; border-radius:0; border-color:#b0c4d8;">
+                        <span style="display:flex; align-items:center; background:#dce6f0; border:1px solid #b0c4d8; border-left:none; border-radius:0 4px 4px 0; padding:0.25rem 0.5rem; font-size:0.82rem;">nm</span>
+                    </div>
+                </div>
+                <div class="mt-2" style="font-size:0.8rem; color:#4a6278; line-height:1.45;">
+                    <i class="fa fa-info-circle mr-1" style="color:#5a8ab0;"></i>The .spc log block stores a Scout Program scan (290–850 nm) — not the actual EEM parameters.
+                    Enter the EX <strong>start</strong> and <strong>step</strong> used for your EEM acquisition (e.g. 360 nm, 10 nm).
+                </div>
+            </div>
         </div>
-        <br>    
-        <p><b>3. Select <i>excitation</i> wavelengths to plot and analyze</b></p>
-        <div class="gallery_6">
-            <div class="gallery__item--1">
-                <div class="form-inline">
-                    <div class="input-group">
-                        <input             
-                            type="number"
-                            id="ex_1" 
-                            name="ex_1"
-                            class="form-control"
-                            value="360"
-                            step="1"
-                            onkeypress="return isNumberKey(event)">
-                        &nbsp nm
+
+        <!-- Supported devices gallery -->
+        <div class="mb-3">
+            <p class="text-muted small mb-1">
+                <i class="fa fa-info-circle mr-1"></i>Supported devices — click an image to visit the manufacturer's website:
+            </p>
+            <div class="gallery_6_img">
+                <a href="https://jascoinc.com/products/spectroscopy/fluorometer/spectrofluorometer-models/fp-8550-spectrofluorometer/" target="_blank" rel="noopener" class="gallery__item--1">
+                    <i style="font-size:80%">Jasco FP-8050/8550 &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+                    <img src="{{ url_for('static', filename='images/jasco.jpg') }}" alt="Jasco FP-8550 spectrofluorometer" class="gallery__item--1">
+                </a>
+                <a href="https://www.chromspec.cz/produkty/spektrofluorimetr-aminco-bowman" target="_blank" rel="noopener" class="gallery__item--2">
+                    <i style="font-size:80%">AMINCO-Bowman &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+                    <img src="{{ url_for('static', filename='images/Aminco.jpg') }}" alt="AMINCO-Bowman Series 2" class="gallery__item--2">
+                </a>
+                <a href="https://www.horiba.com/cze/scientific/products/detail/action/show/Product/fluoromax-1576/" target="_blank" rel="noopener" class="gallery__item--3">
+                    <i style="font-size:80%">Horiba FluoroMax-P &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+                    <img src="{{ url_for('static', filename='images/Fluoromax.jpg') }}" alt="Horiba FluoroMax-P spectrofluorometer" class="gallery__item--3">
+                </a>
+            </div>
+        </div>
+
+        <!-- Step 2: Drop zone -->
+        <label id="eem-files-label"><span class="badge badge-primary mr-1">2</span> Select files (up to 100 files)</label>
+        <div id="eem-drop-zone" class="border rounded p-4 text-center mb-2"
+             style="border-style:dashed !important; cursor:pointer; background:#f8f9fa; transition:background 0.2s;">
+            <i class="fa fa-upload fa-2x text-muted mb-2"></i>
+            <p class="mb-1 text-muted">Drag &amp; drop files here, or click to browse</p>
+            <small class="text-muted" id="eem-file-count-label">No files selected</small>
+            <input type="file" id="eem-files" multiple accept=".csv,.CSV,.spc,.SPC" style="display:none">
+        </div>
+        <div id="eem-file-list" class="mb-3" style="max-height:120px; overflow-y:auto; font-size:0.85em;"></div>
+
+        <!-- Buttons -->
+        <div class="d-flex flex-wrap align-items-center">
+            <button id="eem-analyze-btn" class="btn btn-primary mr-2" disabled onclick="uploadAndAnalyze()">
+                <span id="eem-spinner" class="spinner-border spinner-border-sm mr-1" role="status" style="display:none"></span>
+                <i class="fa fa-upload"></i> Analyze
+            </button>
+            <a href="{{ url_for('static', filename='files/77K_spectra_example_files.zip') }}"
+               download="77K_spectra_example_files">
+                <button type="button" class="btn btn-outline-secondary btn-sm">
+                    <i class="fa fa-download"></i> Download example files
+                </button>
+            </a>
+        </div>
+        <div id="eem-upload-error" class="alert alert-danger mt-2 mb-0 py-1 px-2" style="display:none; font-size:0.9em;"></div>
+
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     RESULTS SECTION
+═══════════════════════════════════════════════════════════════════ -->
+<div id="eem-results-section" style="display:none">
+
+    <div class="alert alert-success mb-3 py-2" id="eem-results-summary"></div>
+
+    <!-- Tab navigation -->
+    <ul class="nav nav-tabs" id="eemTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="eem-spectra-tab" data-toggle="tab"
+               href="#eem-spectra" role="tab">
+                <i class="fa fa-line-chart"></i> Spectra
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="eem-map-tab" data-toggle="tab"
+               href="#eem-map" role="tab">
+                <i class="fa fa-th"></i> 2D Map
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="eem-derived-tab" data-toggle="tab"
+               href="#eem-derived" role="tab">
+                <i class="fa fa-bar-chart"></i> Derived Parameters
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="eem-groups-tab" data-toggle="tab"
+               href="#eem-groups" role="tab">
+                <i class="fa fa-users"></i> Groups
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="eem-deconv-tab" data-toggle="tab"
+               href="#eem-deconv" role="tab">
+                <i class="fa fa-area-chart"></i> Deconvolution
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white mb-3" id="eemTabContent">
+
+        <!-- ── SPECTRA TAB ── -->
+        <div class="tab-pane fade show active" id="eem-spectra" role="tabpanel">
+
+            <!-- Wavelength & normalization controls -->
+            <div class="card card-body bg-light py-2 px-3 mb-3">
+                <div class="row">
+                    <div class="col-md-7">
+                        <p class="mb-1"><b>Excitation wavelengths to plot</b> <small class="text-muted">(nm, up to 6)</small></p>
+                        <div class="row no-gutters mb-2" style="gap:4px 0;">
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-ex-1" value="360" step="1" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-ex-2" value="440" step="1" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-ex-3" value="560" step="1" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-ex-4" value="620" step="1" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-ex-5" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-ex-6" placeholder="nm" style="min-width:0;"></div>
+                        </div>
+                        <p class="mb-1"><b>Emission wavelengths to plot</b> <small class="text-muted">(nm, up to 6)</small></p>
+                        <div class="row no-gutters mb-0" style="gap:4px 0;">
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-em-1" value="662" step="1" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-em-2" value="689" step="1" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-em-3" value="724" step="1" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-em-4" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-em-5" placeholder="nm" style="min-width:0;"></div>
+                            <div class="col" style="padding:0 2px;"><input type="number" class="form-control form-control-sm" id="eem-em-6" placeholder="nm" style="min-width:0;"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <p class="mb-1"><b>Ref. λ mode:</b></p>
+                        <div class="ojip-seg-ctrl mb-2" id="ref-norm-mode-btns">
+                            <button class="btn btn-primary"         data-refmode="fixed"  onclick="switchRefNormMode('fixed')">Fixed λ</button>
+                            <button class="btn btn-outline-primary" data-refmode="window" onclick="switchRefNormMode('window')">Window</button>
+                        </div>
+                        <!-- Fixed λ inputs -->
+                        <div id="ref-norm-fixed-inputs">
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <p class="mb-1 small"><b>Excitation ref.</b></p>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="eem-ex-norm" value="620" step="1">
+                                        <div class="input-group-append"><span class="input-group-text">nm</span></div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <p class="mb-1 small"><b>Emission ref.</b></p>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="eem-em-norm" value="724" step="1">
+                                        <div class="input-group-append"><span class="input-group-text">nm</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Window inputs -->
+                        <div id="ref-norm-window-inputs" style="display:none;">
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <p class="mb-1 small"><b>Ex. window (nm)</b></p>
+                                    <div class="d-flex align-items-center" style="gap:3px;">
+                                        <input type="number" class="form-control form-control-sm" id="eem-ex-norm-min" value="610" step="1" placeholder="min" style="min-width:0;">
+                                        <span class="text-muted">–</span>
+                                        <input type="number" class="form-control form-control-sm" id="eem-ex-norm-max" value="630" step="1" placeholder="max" style="min-width:0;">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <p class="mb-1 small"><b>Em. window (nm)</b></p>
+                                    <div class="d-flex align-items-center" style="gap:3px;">
+                                        <input type="number" class="form-control form-control-sm" id="eem-em-norm-min" value="715" step="1" placeholder="min" style="min-width:0;">
+                                        <span class="text-muted">–</span>
+                                        <input type="number" class="form-control form-control-sm" id="eem-em-norm-max" value="735" step="1" placeholder="max" style="min-width:0;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="reExtractSpectraFromMaps()">
+                            <i class="fa fa-refresh mr-1"></i>Re-extract spectra
+                        </button>
+                        <small class="d-block text-muted mt-1" style="font-size:0.78rem;">Updates charts without re-uploading</small>
                     </div>
                 </div>
             </div>
-            <div class="gallery__item--2">
-                <div class='form-inline'>
-                    <div class="input-group">
-                        <input             
-                            type="number"
-                            id="ex_2" 
-                            name="ex_2"
-                            class="form-control"
-                            value="440"
-                            step="1"
-                            onkeypress="return isNumberKey(event)">
-                        &nbsp nm
+
+            <div class="d-flex align-items-center mb-1 flex-wrap" style="gap:0.75rem;">
+                <span class="font-weight-bold">Normalization:</span>
+                <div class="ojip-seg-ctrl" id="spectra-norm-btns">
+                    <button class="btn btn-outline-primary" data-norm="raw">Raw</button>
+                    <button class="btn btn-primary"         data-norm="peak">Peak</button>
+                    <button class="btn btn-outline-primary" data-norm="area">Area</button>
+                    <button class="btn btn-outline-primary" data-norm="ref">Ref. λ</button>
+                </div>
+                <span class="font-weight-bold ml-2">Palette:</span>
+                <select id="spectra-palette-select" class="form-control form-control-sm" style="width:auto;"
+                        onchange="setSpectraPalette(this.value)">
+                    <option value="default">Default</option>
+                    <option value="spectral">Spectral</option>
+                    <option value="warm">Warm</option>
+                    <option value="cool">Cool</option>
+                    <option value="qualitative">Qualitative</option>
+                </select>
+            </div>
+            <div class="mb-2" style="font-size:0.8rem; color:#6c757d; line-height:1.5;">
+                <b>Peak</b> — divides each spectrum by its own maximum (max&nbsp;=&nbsp;1). &nbsp;
+                <b>Area</b> — divides by spectral area (sum of all intensity values; equivalent to the area under the curve assuming equal wavelength steps). &nbsp;
+                <b>Ref.&nbsp;λ</b> — divides by a reference intensity; <b>Fixed λ</b>: uses the exact specified wavelength; <b>Window</b>: finds the peak maximum within the specified nm range (robust to inter-sample peak shifts). Set values in the controls card above and click <em>Re-extract spectra</em>.
+            </div>
+            <!-- Single-ex badge + focus selector (populated by JS) -->
+            <div class="d-flex align-items-center mb-3 flex-wrap" style="gap:0.6rem; min-height:1.8rem;">
+                <div id="eem-single-ex-info" style="display:none;"></div>
+                <div id="eem-focus-ex-row" class="d-flex align-items-center" style="display:none; gap:0.4rem;">
+                    <span style="font-size:0.88rem; font-weight:600;">Focus on:</span>
+                    <select id="eem-focus-ex-select" class="form-control form-control-sm" style="width:auto;"
+                            onchange="setFocusEx(this.value)">
+                        <option value="">All</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Emission / Excitation toggle -->
+            <div class="d-flex align-items-center mb-3" id="spectra-section-toggle">
+                <div class="ojip-seg-ctrl" id="spectra-section-btns">
+                    <button class="btn btn-primary" data-section="emission"
+                            onclick="switchSpectraSection('emission')">Emission spectra</button>
+                    <button class="btn btn-outline-primary" data-section="excitation"
+                            onclick="switchSpectraSection('excitation')">Excitation spectra</button>
+                </div>
+            </div>
+            <div id="spectra-emission-section">
+                <div class="row" id="spectra-emission-charts"></div>
+            </div>
+            <div id="spectra-excitation-section" style="display:none;">
+                <div class="row" id="spectra-excitation-charts"></div>
+            </div>
+
+
+        </div>
+
+        <!-- ── 2D MAP TAB ── -->
+        <div class="tab-pane fade" id="eem-map" role="tabpanel">
+            <div id="eem-map-single-ex-note" class="alert alert-info py-2 mb-2" style="display:none; font-size:0.9em;">
+                <i class="fa fa-info-circle mr-1"></i>Single excitation data — map shows the emission intensity strip at the measured excitation wavelength.
+            </div>
+            <div class="d-flex align-items-center flex-wrap mb-3" style="gap:1.2rem;">
+                <div>
+                    <label class="mb-1 font-weight-bold d-block">Color scale</label>
+                    <select id="map-colorscale" class="form-control form-control-sm" style="width:auto;">
+                        <option value="blackjet" selected>Jet (black)</option>
+                        <option value="viridis">Viridis</option>
+                        <option value="hot">Hot</option>
+                        <option value="greens">Greens</option>
+                    </select>
+                </div>
+                <div class="form-check" style="margin-top:1.6rem;">
+                    <input class="form-check-input" type="checkbox" id="map-log-scale">
+                    <label class="form-check-label" for="map-log-scale">Log scale</label>
+                </div>
+                <div>
+                    <label class="mb-1 font-weight-bold d-block">Display range <small class="text-muted font-weight-normal">(nm, optional)</small></label>
+                    <div class="d-flex align-items-center" style="gap:4px; font-size:0.85rem;">
+                        <span class="text-muted font-weight-bold">Ex</span>
+                        <input type="number" class="form-control form-control-sm" id="eem-ex-map-min" placeholder="Min" style="width:66px;" onchange="renderMapTab()">
+                        <span class="text-muted">–</span>
+                        <input type="number" class="form-control form-control-sm" id="eem-ex-map-max" placeholder="Max" style="width:66px;" onchange="renderMapTab()">
+                        <span class="text-muted font-weight-bold ml-1">Em</span>
+                        <input type="number" class="form-control form-control-sm" id="eem-em-map-min" placeholder="Min" style="width:66px;" onchange="renderMapTab()">
+                        <span class="text-muted">–</span>
+                        <input type="number" class="form-control form-control-sm" id="eem-em-map-max" placeholder="Max" style="width:66px;" onchange="renderMapTab()">
                     </div>
                 </div>
             </div>
-            <div class="gallery__item--3">
-                <div class='form-inline'>
-                    <div class="input-group">
-                        <input             
-                            type="number"
-                            id="ex_3" 
-                            name="ex_3"
-                            class="form-control"
-                            value="560"
-                            step="1"
-                            onkeypress="return isNumberKey(event)">
-                        <span class="input-group-label">
-                        &nbsp nm
-                        </span>
+            <div class="row" id="eem-maps-grid"></div>
+            <div id="eem-map-tooltip"
+                 style="position:fixed; background:rgba(0,0,0,0.72); color:#fff;
+                        padding:3px 8px; border-radius:4px; font-size:0.78rem;
+                        pointer-events:none; display:none; white-space:nowrap; z-index:9999;"></div>
+        </div>
+
+        <!-- ── DERIVED TAB ── -->
+        <div class="tab-pane fade" id="eem-derived" role="tabpanel">
+
+            <!-- Analysis mode + pigmentation card -->
+            <div class="card card-body bg-light py-2 px-3 mb-3">
+                <!-- Row 1: Analysis mode -->
+                <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.75rem;">
+                    <span class="font-weight-bold">
+                        <i class="fa fa-thermometer-half text-primary mr-1"></i>Analysis mode:
+                    </span>
+                    <div class="ojip-seg-ctrl" id="eem-mode-btns">
+                        <button class="btn btn-primary" data-mode="77K" onclick="switchAnalysisMode('77K')">
+                            77 K
+                        </button>
+                        <button class="btn btn-outline-primary" data-mode="RT" onclick="switchAnalysisMode('RT')">
+                            RT (room temperature)
+                        </button>
                     </div>
+                    <small class="eem-mode-hint text-muted">Low-temperature EEM — photosystem stoichiometry &amp; PBS coupling</small>
                 </div>
-            </div>
-            <div class="gallery__item--4">
-                <div class='form-inline input-group'>
-                    <input             
-                        type="number"
-                        id="ex_4" 
-                        name="ex_4"
-                        class="form-control"
-                        value="620"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp nm
-                </div>
-            </div>
-            <div class="gallery__item--5">
-                <div class='form-inline input-group'>
-                    <input             
-                        type="number"
-                        id="ex_5" 
-                        name="ex_5"
-                        class="form-control"
-                        value=""
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp nm
-                </div>
-            </div>
-            <div class="gallery__item--6">
-                <div class='form-inline input-group'>
-                    <input             
-                        type="number"
-                        id="ex_6" 
-                        name="ex_6"
-                        class="form-control"
-                        value=""
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp nm
-                </div>
-            </div>
-        </div>
-        <br>
-        <p><b>4. Select <i>emission</i> wavelengths to plot and analyze</b></p>
-        <div class="gallery_6">
-            <div class="gallery__item--1">
-                <div class='form-inline input-group'>
-                    <input             
-                        type="number"
-                        id="em_1" 
-                        name="em_1"
-                        class="form-control"
-                        value="662"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp nm
-                </div>
-            </div>
-            <div class="gallery__item--2">
-                <div class='form-inline input-group'>
-                    <input             
-                        type="number"
-                        id="em_2" 
-                        name="em_2"
-                        class="form-control"
-                        value="689"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp nm
-                </div>
-            </div>
-            <div class="gallery__item--3">
-                <div class='form-inline input-group'>
-                    <input             
-                        type="number"
-                        id="em_3" 
-                        name="em_3"
-                        class="form-control"
-                        value="724"
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp nm
-                </div>
-            </div>
-            <div class="gallery__item--4">
-                <div class='form-inline input-group'>
-                    <input             
-                        type="number"
-                        id="em_4" 
-                        name="em_4"
-                        class="form-control"
-                        value=""
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp nm
-                </div>
-            </div>
-            <div class="gallery__item--5">
-                <div class='form-inline input-group'>
-                    <input             
-                        type="number"
-                        id="em_5" 
-                        name="em_5"
-                        class="form-control"
-                        value=""
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp nm
-                </div>
-            </div>
-            <div class="gallery__item--6">
-                <div class='form-inline input-group'>
-                    <input             
-                        type="number"
-                        id="em_6" 
-                        name="em_6"
-                        class="form-control"
-                        value=""
-                        step="1"
-                        onkeypress="return isNumberKey(event)">
-                    &nbsp nm
-                </div>
-            </div>
-        </div>
-        <br>
-        <p><b>5. Select the <i>excitation</i> wavelength to normalize the <i>excitation</i> spectra</b><p>
-        <div class="gallery_6">
-            <div class="gallery__img gallery__item--1">
-                <div class="form-inline">
-                    <div class="input-group">
-                        <input             
-                            type="number"
-                            id="ex_for_norm" 
-                            name="ex_for_norm"
-                            class="form-control"
-                            value="620"
-                            step="1"
-                            onkeypress="return isNumberKey(event)">
-                        &nbsp nm
-                    </div>
-                </div>
-            </div>
-        </div>
-        <br>
-        <p><b>6. Select the <i>emission</i> wavelength to normalize the <i>emission</i> spectra</b><p>
-            <div class="gallery_6">
-                <div class="gallery__img gallery__item--1">
-                    <div class="form-inline">
-                        <div class="input-group">
-                            <input             
-                                type="number"
-                                id="em_for_norm" 
-                                name="em_for_norm"
-                                class="form-control"
-                                value="724"
-                                step="1"
-                                onkeypress="return isNumberKey(event)">
-                            &nbsp nm
+                <!-- Row 2: Pigmentation (77K only) -->
+                <div id="eem-pigm-step">
+                    <span class="font-weight-bold d-block mb-1">Pigmentation:</span>
+                    <div class="d-flex flex-column" style="gap:0.35rem;">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="radio" name="checkbox_pigmentation"
+                                   id="pigm_chl_only" value="checkbox_chl_only"
+                                   onchange="recomputeParamsFromMaps()">
+                            <label class="form-check-label" for="pigm_chl_only">
+                                <strong>Chl only</strong>
+                                <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
+                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI)
+                                </small>
+                            </label>
+                        </div>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="radio" name="checkbox_pigmentation"
+                                   id="pigm_chl_PC" value="checkbox_chl_PC" checked
+                                   onchange="recomputeParamsFromMaps()">
+                            <label class="form-check-label" for="pigm_chl_PC">
+                                <strong>Chl + PC</strong>
+                                <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
+                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp;
+                                    Ex620/Em662 (PBS-free) &nbsp;·&nbsp; Ex620/Em689 (PBS-PSII) &nbsp;·&nbsp; Ex620/Em724 (PBS-PSI)
+                                </small>
+                            </label>
+                        </div>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="radio" name="checkbox_pigmentation"
+                                   id="pigm_chl_PE" value="checkbox_chl_PE"
+                                   onchange="recomputeParamsFromMaps()">
+                            <label class="form-check-label" for="pigm_chl_PE">
+                                <strong>Chl + PE</strong>
+                                <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
+                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp;
+                                    Ex560/Em580 (PE) &nbsp;·&nbsp; Ex560/Em662 (PBS-free) &nbsp;·&nbsp; Ex560/Em689 (PBS-PSII) &nbsp;·&nbsp; Ex560/Em724 (PBS-PSI)
+                                </small>
+                            </label>
+                        </div>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="radio" name="checkbox_pigmentation"
+                                   id="pigm_chl_PC_PE" value="checkbox_chl_PC_PE"
+                                   onchange="recomputeParamsFromMaps()">
+                            <label class="form-check-label" for="pigm_chl_PC_PE">
+                                <strong>Chl + PC + PE</strong>
+                                <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
+                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp;
+                                    Ex560/Em580 (PE) &nbsp;·&nbsp; Ex560/Em662 (PBS-free, PE) &nbsp;·&nbsp; Ex560/Em689 (PBS-PSII, PE) &nbsp;·&nbsp; Ex560/Em724 (PBS-PSI, PE) &nbsp;·&nbsp;
+                                    Ex620/Em662 (PBS-free, PC) &nbsp;·&nbsp; Ex620/Em689 (PBS-PSII, PC) &nbsp;·&nbsp; Ex620/Em724 (PBS-PSI, PC)
+                                </small>
+                            </label>
                         </div>
                     </div>
                 </div>
+                <!-- Row 3: Active Ex/Em hint -->
+                <div id="derived-param-hint" class="mt-2" style="font-size:0.8rem; color:#555;"></div>
             </div>
-        <br>
-        <p><b>7. Define 2D Map Display Range (Optional)</b></p>
-        <div class="row">
-            <div class="col-md-6">
-                <label>Excitation Range for 2D maps plotting (nm):</label>
-                <div class="input-group">
-                    <input type="number" name="ex_map_min" class="form-control" placeholder="Min (e.g. 300)">
-                    <div class="input-group-append"><span class="input-group-text">to</span></div>
-                    <input type="number" name="ex_map_max" class="form-control" placeholder="Max (e.g. 700)">
+
+            <div id="eem-77k-state-note" class="alert alert-info py-2 mb-2" style="font-size:0.9em;">
+                <i class="fa fa-info-circle mr-1"></i><strong>77K mode:</strong> Ex440/Em689 (Chl-PSII) and Ex440/Em724 (Chl-PSI) report PSII and PSI chlorophyll fluorescence; their ratio is the primary PSII/PSI stoichiometry indicator. PBS excitation bands (Ex560 for PE, Ex620 for PC) report PBS coupling state: PBS-PSII/PBS-PSI ratio reflects State 1 (PBS coupled to PSII) vs State 2 (PBS coupled to PSI). Absolute thresholds are species- and condition-specific.
+            </div>
+            <div id="eem-rt-state-note" class="alert alert-warning py-2 mb-2" style="display:none; font-size:0.9em;">
+                <i class="fa fa-info-circle mr-1"></i><strong>RT mode:</strong> PBS-PSII norm and PBS-PSI norm (fractions of total PBS signal at Ex620) are the primary state-transition indicators. F685/F730 (Ex440) reports the overall PSII:PSI Chl ratio. Absolute thresholds are species- and condition-specific.
+            </div>
+            <div class="d-flex align-items-center mb-2" style="gap:0.5rem;">
+                <h6 class="mb-0 text-muted">Derived parameters per sample</h6>
+                <button class="btn btn-sm btn-outline-secondary" onclick="copyParamsTable(this)">
+                    <i class="fa fa-clipboard"></i> Copy table
+                </button>
+            </div>
+            <div class="row mb-4" id="params-charts-container"></div>
+            <div id="params-table-container" style="overflow-x:auto;"></div>
+        </div>
+
+        <!-- ── GROUPS TAB ── -->
+        <div class="tab-pane fade" id="eem-groups" role="tabpanel">
+            <p class="text-muted mb-2" style="font-size:0.92em;">
+                Assign samples to groups — mean ± SD will be calculated and visualised automatically once two or more groups are defined.
+            </p>
+
+            <!-- Assignment toolbar -->
+            <div class="d-flex flex-wrap align-items-center mb-2" style="gap:0.4rem;">
+                <button class="btn btn-sm btn-outline-secondary" onclick="sortGroupsAZ()">
+                    <i class="fa fa-sort-alpha-asc"></i> Sort A→Z
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="sortGroupsZA()">
+                    <i class="fa fa-sort-alpha-desc"></i> Sort Z→A
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="autoDetectGroupsFromPrefix()">
+                    <i class="fa fa-magic"></i> Auto-detect groups
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="clearAllGroups()">
+                    <i class="fa fa-times"></i> Clear all
+                </button>
+                <div class="ml-auto d-flex align-items-center" style="gap:0.4rem;">
+                    <input type="text" id="eem-group-name-input" class="form-control form-control-sm"
+                           placeholder="Group name" style="width:140px;">
+                    <button class="btn btn-sm btn-primary" onclick="assignSelectedToGroup()">
+                        <i class="fa fa-check"></i> Assign selected
+                    </button>
                 </div>
             </div>
-            <div class="col-md-6">
-                <label>Emission Range for 2D maps plotting (nm):</label>
-                <div class="input-group">
-                    <input type="number" name="em_map_min" class="form-control" placeholder="Min (e.g. 500)">
-                    <div class="input-group-append"><span class="input-group-text">to</span></div>
-                    <input type="number" name="em_map_max" class="form-control" placeholder="Max (e.g. 800)">
+
+            <!-- Checkbox table -->
+            <div style="overflow-x:auto; max-height:320px; overflow-y:auto;" class="mb-3">
+                <table class="table table-sm table-bordered table-hover mb-0" id="eem-group-assign-table" style="font-size:0.87em;">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:32px;">
+                                <input type="checkbox" id="eem-select-all-check" title="Select all"
+                                       onchange="toggleSelectAll(this)">
+                            </th>
+                            <th>Sample</th>
+                            <th>Group</th>
+                            <th style="width:32px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="eem-group-assign-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Groups summary badges -->
+            <div id="eem-groups-summary" class="mb-3"></div>
+
+            <!-- Group results — auto-shown when ≥2 groups defined -->
+            <div id="eem-group-results" style="display:none;">
+                <hr>
+                <h6 class="font-weight-bold mb-2">Group statistics (mean ± SD)</h6>
+                <div id="group-table-container" style="overflow-x:auto;" class="mb-3"></div>
+                <div class="row" id="group-charts-container"></div>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportToStatistics()">
+                        <i class="fa fa-share"></i> Export to Statistics
+                    </button>
                 </div>
             </div>
         </div>
-        <small class="text-muted">Ranges outside of the original data range will be filled with zeros.</small>
-        <br>
-        <p><b>8. Select files</b></p>
-        <div class="custom-file">
-            <input 
-                type="file" 
-                class="custom-file-input" 
-                name="77K_files"
-                id="77K_file"
-                multiple=""
-                style="width:100%"
-                accept=".csv, .CSV, .xlsx, .XLSX">
-            <label class="custom-file-label" for="customFile">Select files</label>
+
+        <!-- ── DECONVOLUTION TAB ── -->
+        <div class="tab-pane fade" id="eem-deconv" role="tabpanel">
+            <div class="card card-body bg-light py-3 mb-3">
+                <div class="row mb-2">
+                    <div class="col-md-3">
+                        <label class="mb-1" style="font-size:0.87rem; font-weight:600;">Sample</label>
+                        <select id="deconv-sample-select" class="form-control form-control-sm"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="mb-1" style="font-size:0.87rem; font-weight:600;">Excitation (nm)</label>
+                        <select id="deconv-ex-select" class="form-control form-control-sm"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="mb-1" style="font-size:0.87rem; font-weight:600;">Peak preset</label>
+                        <select id="deconv-preset-select" class="form-control form-control-sm"
+                                onchange="applyDeconvPreset()">
+                            <option value="ex440">Ex 440 nm — Chl (4 peaks)</option>
+                            <option value="ex620">Ex 620 nm — PC (3 peaks)</option>
+                            <option value="ex560">Ex 560 nm — PE (4 peaks)</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-sm btn-primary w-100" onclick="runDeconvolution()">
+                            <i class="fa fa-calculator"></i> Fit Gaussians
+                        </button>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center flex-wrap" style="gap:4px;">
+                    <small class="text-muted font-weight-bold mr-1">Initial peak positions (nm):</small>
+                    <span id="deconv-peaks-editor" class="d-inline-flex flex-wrap align-items-center"
+                          style="gap:4px;"></span>
+                    <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+                            style="font-size:0.8rem;" onclick="addDeconvPeak()">
+                        <i class="fa fa-plus"></i> Add peak
+                    </button>
+                </div>
+            </div>
+            <div style="position:relative; height:340px;" class="mb-3">
+                <canvas id="deconv-chart"></canvas>
+            </div>
+            <div id="deconv-sliders" class="mb-3"></div>
+            <div id="deconv-results" style="font-size:0.87em;"></div>
         </div>
-        <br> <br>
-        <button id="show-image-button" type="submit" class="btn btn-primary">Upload and analyze Ex-Em spectra files</button>
-        <a href="{{url_for('static', filename='files/77K_spectra_example_files.zip')}}" download="77K_spectra_example_files">
-            <button type="button" class="btn btn-outline-primary" >Download example Ex-Em spectra files</button>
-        </a>
+
+    </div><!-- /tab-content -->
+
+    <!-- Export row -->
+    <div class="d-flex align-items-center flex-wrap mb-5" style="gap:0.5rem;">
+        <button class="btn btn-success" onclick="downloadZIP(this)">
+            <i class="fa fa-download"></i> Download .zip
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="downloadXLSX()">
+            <i class="fa fa-file-excel-o"></i> .xlsx only
+        </button>
+        <button class="btn btn-outline-info btn-sm" onclick="showMethodsModal()">
+            <i class="fa fa-file-text-o mr-1"></i> Methods text
+        </button>
     </div>
-</form>
-<br>
-<div class="container">
-    <img id="loadingimage" src="{{url_for('static', filename='images/loadingimage.gif')}}" style="display: none;">
+
+</div><!-- /eem-results-section -->
+
+<!-- CDN libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.4.3/build/index.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+<script src="{{ url_for('static', filename='js_ex_em_spectra_analysis.js') }}"></script>
+
+<!-- ── Methods section text modal ── -->
+<div class="modal fade" id="eem-methods-modal" tabindex="-1" role="dialog" aria-labelledby="eemMethodsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title font-weight-bold" id="eemMethodsModalLabel">
+          <i class="fa fa-file-text-o mr-2"></i>Methods section text
+        </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body py-3">
+        <p class="text-muted small mb-2">
+          Ready-to-use methods paragraph generated from your current analysis settings.
+          Edit as needed before pasting into your manuscript — add your specific instrument model,
+          measurement conditions (temperature ramp, dark-adaptation time, etc.), and adjust citations to your reference style.
+        </p>
+        <textarea id="eem-methods-text-area" class="form-control" rows="14"
+                  style="font-size:0.86em; font-family:Georgia, serif; line-height:1.6;"></textarea>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="eem-methods-copy-btn" onclick="copyMethodsText()">
+          <i class="fa fa-clipboard mr-1"></i> Copy to clipboard
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
-<br>
-
-{% if spectra_plot_from_memory %}
-<section id="results"></section>
-<div class="container">
-    <br><br>
-    <h6><b>2D fluorescence maps: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ map_2d_plot_from_memory }}" alt="3D fluorescence excitation-emission maps"/>
-    <br><br>
-    <h6><b>Excitations and emission spectra - raw data: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ spectra_plot_from_memory }}" alt="Fluorescence emission spectra"/>
-    <br><br>
-    <h6><b>Excitations and emission spectra - normalized: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ normalized_spectra_plot_from_memory }}" alt="Normalized fluorescence emission spectra"/>
-    <br><br>
-    <h6><b>Photosystems and phycobilisomes: </b></h6>
-    <img data-enlargeable width="50%" style="cursor: zoom-in" src="data:image/jpeg;base64,{{ bar_plot_from_memory }}" alt="Fluorescence excitation-emission parameters"/>
-    <br><br> 
-    <details style="margin-bottom:1em;">
-        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">How to interpret your results</summary>
-        <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-            <ul class="mb-0">
-                <li>Under <strong>435 nm excitation</strong>: chlorophyll emission at ~685 nm = PSII; ~730 nm = PSI. The 685/730 ratio reflects the relative PSII:PSI balance.</li>
-                <li>Under <strong>580 nm excitation</strong>: dominant emission at ~660–685 nm reflects phycobilisome content (phycocyanin/APC). Strong energy transfer to ~685 nm indicates functional coupling of phycobilisomes to PSII.</li>
-                <li>A <strong>high 660/685 nm ratio</strong> (under 580 nm excitation) suggests uncoupled or detached phycobilisomes — common under stress or during state transitions.</li>
-                <li>An <strong>elevated PSI:PSII ratio</strong> is typical of low-light acclimation; a <strong>reduced PSII signal</strong> may indicate photoinhibition or active state 2 transition toward PSI.</li>
-                <li>All 77K spectra are acquired on ice-frozen samples — compare measurements only between samples prepared under identical conditions.</li>
-            </ul>
-        </div>
-    </details>
-    <form>
-        <h6><b>Download results:</b></h6>
-        <ol>
-            <li>Plots (as shown above)</li>
-            <li>Raw excitation and emission spectra</li>
-            <li>Normalized excitation and emission spectra</li>
-            <li>Calcualted parameters</li>
-        </ol>
-        <br>
-        <a href="{{ url_for('static', filename=xlsx_file_path)}}">
-            <button type="button" class="btn btn-success">Download the summary .xlsx file</button>
-        </a>
-    </form>  
-</div> 
-
-{% else %}
-<br><br><br><br><br><br><br>
-
-{% endif %}
-<br><br><br><br><br><br><br>
-
-<script src="{{url_for('static', filename='js_ex_em_spectra_analysis.js')}}"></script>
-
 
 {% endblock %}

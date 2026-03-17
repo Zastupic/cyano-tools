@@ -516,11 +516,14 @@
   <!-- Download bar -->
   <div class="d-flex flex-wrap align-items-center mt-3 mb-4">
     <a id="xlsx-summary-link" href="#" class="btn btn-success mr-2" style="display:none">
-      <i class="fa fa-file-excel-o"></i> Download summary .xlsx
+      <i class="fa fa-download"></i> Download .zip
     </a>
     <a id="xlsx-full-link" href="#" class="btn btn-outline-success mr-3" style="display:none">
       <i class="fa fa-file-excel-o"></i> Download full data .xlsx
     </a>
+    <button class="btn btn-outline-info btn-sm mr-3" onclick="showLCMethodsModal()">
+      <i class="fa fa-file-text-o mr-1"></i> Methods text
+    </button>
     <small class="text-muted">
       <strong>Summary</strong>: Parameters + charts (compact, server-side).<br>
       <strong>Full data</strong>: all step-data arrays + raw fluorescence (client-side, large file).
@@ -560,8 +563,39 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.4.3/build/index.umd.min.js"></script>
+<!-- JSZip for client-side ZIP bundling -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <!-- SheetJS for client-side xlsx export -->
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="{{ url_for('static', filename='js_light_curves.js') }}"></script>
+
+<!-- ── Methods section text modal ── -->
+<div class="modal fade" id="lc-methods-modal" tabindex="-1" role="dialog" aria-labelledby="lcMethodsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title font-weight-bold" id="lcMethodsModalLabel">
+          <i class="fa fa-file-text-o mr-2"></i>Methods section text
+        </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body py-3">
+        <p class="text-muted small mb-2">
+          Ready-to-use methods paragraph generated from your current analysis settings.
+          Edit as needed — add your specific instrument model, measurement conditions (dark-adaptation time,
+          actinic light step duration, temperature), and adjust citations to your reference style.
+        </p>
+        <textarea id="lc-methods-text-area" class="form-control" rows="14"
+                  style="font-size:0.86em; font-family:Georgia, serif; line-height:1.6;"></textarea>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="lc-methods-copy-btn" onclick="copyLCMethodsText()">
+          <i class="fa fa-clipboard mr-1"></i> Copy to clipboard
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
