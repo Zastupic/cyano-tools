@@ -123,7 +123,8 @@
                     </ol>
                     <p style="font-size:90%;"><i class="fa fa-info-circle mr-1 text-info"></i>
                         Accepted file formats:
-                        <strong>.csv</strong> (Jasco FP-8050/8550 or AMINCO-Bowman Series 2 Jasco-compatible export) and
+                        <strong>.csv</strong> (Jasco FP-8050/8550),
+                        <strong>.txt</strong> (AMINCO-Bowman Series 2 native EEM export), and
                         <strong>.spc</strong> (Horiba FluoroMax-P, Galactic SPC K-format — upload all files per sample together; files with the same name prefix are combined into one EEM).
                     </p>
                 </div>
@@ -274,7 +275,7 @@
             <label for="eem-spectrofluorometer"><span class="badge badge-primary mr-1">1</span> Select spectrofluorometer</label>
             <select id="eem-spectrofluorometer" class="form-control" onchange="updateSpectrofluorometerHint()">
                 <option value="jasco">FP-8050 / FP-8550 Series (Jasco Inc.) — .csv</option>
-                <option value="aminco">AMINCO-Bowman Series 2 (Jasco-compatible export) — .csv</option>
+                <option value="aminco">AMINCO-Bowman Series 2 (native .txt export)</option>
                 <option value="horiba">Horiba FluoroMax-P — .spc</option>
             </select>
             <small id="eem-spectrofluorometer-hint" class="d-block text-muted mt-1" style="font-size:0.82rem;"></small>
@@ -336,7 +337,7 @@
             <i class="fa fa-upload fa-2x text-muted mb-2"></i>
             <p class="mb-1 text-muted">Drag &amp; drop files here, or click to browse</p>
             <small class="text-muted" id="eem-file-count-label">No files selected</small>
-            <input type="file" id="eem-files" multiple accept=".csv,.CSV,.spc,.SPC" style="display:none">
+            <input type="file" id="eem-files" multiple accept=".csv,.CSV,.spc,.SPC,.txt,.TXT" style="display:none">
         </div>
         <div id="eem-file-list" class="mb-3" style="max-height:120px; overflow-y:auto; font-size:0.85em;"></div>
 
@@ -770,8 +771,15 @@
                     </button>
                 </div>
             </div>
-            <div style="position:relative; height:340px;" class="mb-3">
+            <div style="position:relative; height:340px;" class="mb-1">
                 <canvas id="deconv-chart"></canvas>
+            </div>
+            <div class="text-muted mb-3" style="font-size:0.78rem; line-height:1.8;">
+                <i class="fa fa-info-circle mr-1"></i>
+                <strong>Apex ●</strong> drag ↔ position &nbsp;/&nbsp; drag ↕ amplitude &nbsp;·&nbsp;
+                <strong>Side handles ●</strong> drag ↔ width &nbsp;·&nbsp;
+                <strong>Double-click</strong> empty area: add peak &nbsp;·&nbsp;
+                <strong>Double-click apex</strong>: remove peak
             </div>
             <div id="deconv-sliders" class="mb-3"></div>
             <div id="deconv-results" style="font-size:0.87em;"></div>
@@ -801,6 +809,56 @@
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 <script src="{{ url_for('static', filename='js_ex_em_spectra_analysis.js') }}"></script>
+
+<!-- ── Enlarged chart modal ── -->
+<div class="modal fade" id="eem-chart-enlarge-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document" style="max-width:960px;">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title font-weight-bold" id="eem-chart-modal-title"></h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body p-2 text-center">
+        <img id="eem-chart-modal-img" src="" alt=""
+             style="max-width:100%; display:inline-block; cursor:pointer;"
+             title="Click to close"
+             data-dismiss="modal">
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+                onclick="var a=document.createElement('a');a.href=document.getElementById('eem-chart-modal-img').src;a.download=(document.getElementById('eem-chart-modal-title').textContent||'chart')+'.png';a.click();">
+          <i class="fa fa-download mr-1"></i>Download PNG
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Enlarged map modal ── -->
+<div class="modal fade" id="eem-map-enlarge-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document" style="max-width:960px;">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title font-weight-bold" id="eem-map-modal-title"></h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body p-2 text-center">
+        <canvas id="eem-map-modal-canvas"
+                style="max-width:100%; display:inline-block; cursor:pointer;"
+                title="Click to close"
+                data-dismiss="modal"></canvas>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+                onclick="var c=document.getElementById('eem-map-modal-canvas');var a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=(document.getElementById('eem-map-modal-title').textContent||'EEM')+'_EEM.png';a.click();">
+          <i class="fa fa-download mr-1"></i>Download PNG
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── Methods section text modal ── -->
 <div class="modal fade" id="eem-methods-modal" tabindex="-1" role="dialog" aria-labelledby="eemMethodsModalLabel" aria-hidden="true">

@@ -83,6 +83,76 @@ def parse_jasco_csv(file_obj):
     return ex_wl_arr, em_wl_arr, intensity
 
 
+def parse_aminco_txt(file_obj):
+    """
+    Parse AMINCO-Bowman Series 2 EEM export (.txt).
+    Format: one file contains multiple emission scans (e.g. 620-800 nm @ 1 nm step)
+    at successive excitation wavelengths.  Each scan block is introduced by a
+    sub-header that contains a line of the form  'Z-axis:  <float>'  giving the
+    excitation wavelength.  Data lines are two whitespace-separated values:
+        <emission_nm>  <intensity>
+    Blank lines and all other header/annotation lines are skipped.
+    Returns (ex_wl_arr, em_wl_arr, intensity) as float numpy arrays.
+    intensity shape: [n_em x n_ex]
+    """
+    raw = file_obj.read()
+    content = raw.decode('utf-8', errors='replace') if isinstance(raw, bytes) else raw
+    lines = content.splitlines()
+
+    scans = []          # list of (ex_wl, dict{em_wl: intensity})
+    current_ex = None
+    current_data = {}
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Detect excitation wavelength marker: 'Z-axis:  <number>'
+        if re.match(r'Z-axis\s*:', stripped, re.IGNORECASE):
+            val_str = re.split(r':', stripped, maxsplit=1)[1].strip()
+            try:
+                ex_wl = float(val_str)
+                # Save previous scan if any
+                if current_ex is not None and current_data:
+                    scans.append((current_ex, current_data))
+                current_ex = ex_wl
+                current_data = {}
+            except ValueError:
+                pass  # e.g. 'Z-Axis: Excitation (nm)' global header line
+            continue
+
+        # Data lines: exactly two numeric tokens
+        if stripped == '' or current_ex is None:
+            continue
+        parts = stripped.split()
+        if len(parts) == 2:
+            try:
+                em_wl = float(parts[0])
+                intensity_val = float(parts[1])
+                current_data[em_wl] = intensity_val
+            except ValueError:
+                pass  # header / annotation line
+
+    # Flush last scan
+    if current_ex is not None and current_data:
+        scans.append((current_ex, current_data))
+
+    if not scans:
+        raise ValueError("No excitation/emission data blocks found in AMINCO file")
+
+    # Build arrays — use emission grid from first scan (all should match)
+    ex_wl_arr = np.array([s[0] for s in scans], dtype=float)
+    em_wls_sorted = sorted(scans[0][1].keys())
+    em_wl_arr = np.array(em_wls_sorted, dtype=float)
+    n_ex = len(ex_wl_arr)
+    n_em = len(em_wl_arr)
+    intensity = np.zeros((n_em, n_ex), dtype=float)
+    for j, (_, data) in enumerate(scans):
+        for i, em in enumerate(em_wl_arr):
+            intensity[i, j] = data.get(em, 0.0)
+
+    return ex_wl_arr, em_wl_arr, intensity
+
+
 def parse_horiba_spc(file_obj, filename='', ex_start_override=None, ex_inc_override=None):
     """
     Parse Horiba FluoroMax-P Galactic SPC binary file (K-format, fversn=75).
@@ -429,13 +499,16 @@ def eem_process():
         fname     = str.lower(os.path.splitext(fname_raw)[0])
         fext      = str.lower(os.path.splitext(fname_raw)[1])
 
-        if fext not in ('.csv', '.spc'):
-            result['warnings'].append(f'{fname_raw}: unsupported extension (expected .csv or .spc), skipped')
+        if fext not in ('.csv', '.spc', '.txt'):
+            result['warnings'].append(f'{fname_raw}: unsupported extension (expected .csv, .txt or .spc), skipped')
             continue
 
-        if fext == '.csv':
+        if fext in ('.csv', '.txt'):
             try:
-                ex_wl_arr, em_wl_arr, intensity = parse_jasco_csv(file)
+                if fext == '.txt':
+                    ex_wl_arr, em_wl_arr, intensity = parse_aminco_txt(file)
+                else:
+                    ex_wl_arr, em_wl_arr, intensity = parse_jasco_csv(file)
                 ex_wl_arr = np.asarray(ex_wl_arr, dtype=np.float64)
                 em_wl_arr = np.asarray(em_wl_arr, dtype=np.float64)
                 intensity = np.asarray(intensity,  dtype=np.float64)

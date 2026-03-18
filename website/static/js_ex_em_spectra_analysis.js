@@ -138,7 +138,7 @@ var MODE_DEFAULTS = {
 function handleFiles(files) {
     selectedFiles = Array.from(files).filter(function(f) {
         var n = f.name.toLowerCase();
-        return n.endsWith('.csv') || n.endsWith('.spc');
+        return n.endsWith('.csv') || n.endsWith('.spc') || n.endsWith('.txt');
     });
     var label = document.getElementById('eem-file-count-label');
     var listEl = document.getElementById('eem-file-list');
@@ -165,7 +165,7 @@ function handleFiles(files) {
 // ============================================================
 var SPECTROFLUOROMETER_HINTS = {
     'jasco':  'Upload one .csv file per sample (full EEM exported from Jasco FP-8050/8550 EEM mode).',
-    'aminco': 'Upload one .csv file per sample (Jasco-compatible semicolon-delimited EEM export from AMINCO-Bowman Series 2).',
+    'aminco': 'Upload one .txt file per sample (native AMINCO-Bowman Series 2 EEM export — whitespace-delimited, multiple emission scans at successive excitation wavelengths).',
     'horiba': 'Upload all .spc files for each sample together (Galactic SPC K-format). Each file = one emission scan at one excitation wavelength. Files with the same name prefix (e.g. DISC_00.spc … DISC_50.spc) are automatically combined into one 2D EEM. Multiple sample sets can be uploaded at once.'
 };
 function updateSpectrofluorometerHint() {
@@ -288,7 +288,7 @@ function uploadAndAnalyze() {
 
             document.getElementById('eem-results-section').style.display = '';
             detectSingleEx();
-            initDeconvUI();
+            initDeconvUI(true);
 
             document.getElementById('eem-spectra-tab').click();
             renderSpectraTab();
@@ -355,7 +355,7 @@ function setFocusEx(val) {
 // ============================================================
 // Chart helper
 // ============================================================
-function makeChartCanvas(containerId, chartKey, colClass) {
+function makeChartCanvas(containerId, chartKey, colClass, titleText) {
     if (chartInst[chartKey]) {
         chartInst[chartKey].destroy();
         delete chartInst[chartKey];
@@ -365,9 +365,23 @@ function makeChartCanvas(containerId, chartKey, colClass) {
     var canvas = document.createElement('canvas');
     canvas.id = 'chart-' + chartKey;
     canvas.height = 260;
+    canvas.style.cursor = 'pointer';
+    canvas.title = 'Click to enlarge';
+    canvas.addEventListener('click', function() {
+        openEnlargedChart(canvas, titleText || '');
+    });
     div.appendChild(canvas);
     document.getElementById(containerId).appendChild(div);
     return canvas;
+}
+
+function openEnlargedChart(canvasEl, titleText) {
+    var img = document.getElementById('eem-chart-modal-img');
+    var titleEl = document.getElementById('eem-chart-modal-title');
+    if (!img || !canvasEl) return;
+    img.src = canvasEl.toDataURL('image/png');
+    if (titleEl) titleEl.textContent = titleText || '';
+    $('#eem-chart-enlarge-modal').modal('show');
 }
 
 // ============================================================
@@ -418,7 +432,7 @@ function renderSpectraTab() {
     exList.forEach(function(exWl) {
         var spec = eemData.emission_spectra[String(exWl)];
         if (!spec || !spec.wl.length) return;
-        var canvas = makeChartCanvas('spectra-emission-charts', 'em-ex-' + exWl, emColClass);
+        var canvas = makeChartCanvas('spectra-emission-charts', 'em-ex-' + exWl, emColClass, 'Emission @ Ex ' + exWl + ' nm');
         chartInst['em-ex-' + exWl] = buildSpectraChart(
             canvas, spec, 'Emission @ Ex ' + exWl + ' nm', 'Emission (nm)'
         );
@@ -432,7 +446,7 @@ function renderSpectraTab() {
     emList.forEach(function(emWl) {
         var spec = eemData.excitation_spectra[String(emWl)];
         if (!spec || !spec.wl.length) return;
-        var canvas = makeChartCanvas('spectra-excitation-charts', 'ex-em-' + emWl, exColClass);
+        var canvas = makeChartCanvas('spectra-excitation-charts', 'ex-em-' + emWl, exColClass, 'Excitation @ Em ' + emWl + ' nm');
         chartInst['ex-em-' + emWl] = buildSpectraChart(
             canvas, spec, 'Excitation @ Em ' + emWl + ' nm', 'Excitation (nm)'
         );
@@ -650,7 +664,9 @@ function renderMapTab() {
                 '</div>' +
                 '<div style="position:relative;">' +
                     '<canvas id="' + canvasId + '" width="600" height="400" ' +
-                        'style="border:1px solid #dee2e6; max-width:100%; display:block;"></canvas>' +
+                        'title="Click to enlarge" ' +
+                        'style="border:1px solid #dee2e6; max-width:100%; display:block; cursor:pointer;"' +
+                        'onclick="openEnlargedMap(\'' + fname.replace(/'/g, "\\'") + '\',' + idx + ')"></canvas>' +
                 '</div>';
             grid.appendChild(col);
         });
@@ -706,11 +722,12 @@ function downloadMapPng(canvasId, fname) {
     a.click();
 }
 
-function drawHeatmap(canvasId, exWl, emWl, intensity, colorName, useLog) {
+function drawHeatmap(canvasId, exWl, emWl, intensity, colorName, useLog, fontScale) {
     var canvas = document.getElementById(canvasId);
     if (!canvas) return;
     var nEx = exWl.length, nEm = emWl.length;
     if (!nEx || !nEm) return;
+    var fs = fontScale || 1.0;
 
     var maxVal = -Infinity, minVal = Infinity;
     for (var i = 0; i < nEm; i++)
@@ -739,7 +756,12 @@ function drawHeatmap(canvasId, exWl, emWl, intensity, colorName, useLog) {
         }
     offCtx.putImageData(imageData, 0, 0);
 
-    var margin = {top: 20, right: 90, bottom: 52, left: 68};
+    var margin = {
+        top:    Math.round(22  * fs),
+        right:  Math.round(100 * fs),
+        bottom: Math.round(62  * fs),
+        left:   Math.round(78  * fs)
+    };
     var cw = canvas.width, ch = canvas.height;
     var pw = cw - margin.left - margin.right;
     var ph = ch - margin.top - margin.bottom;
@@ -751,35 +773,43 @@ function drawHeatmap(canvasId, exWl, emWl, intensity, colorName, useLog) {
     ctx.strokeStyle = '#666'; ctx.lineWidth = 1;
     ctx.strokeRect(margin.left, margin.top, pw, ph);
 
-    ctx.fillStyle = '#333'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    // X-axis ticks & labels
+    var tickFontSize  = Math.round(13 * fs);
+    var titleFontSize = Math.round(15 * fs);
+    ctx.fillStyle = '#333'; ctx.font = tickFontSize + 'px sans-serif'; ctx.textAlign = 'center';
     var nXticks = Math.min(8, nEx);
     for (var k = 0; k <= nXticks; k++) {
         var xFrac = k / nXticks;
         var xPx = margin.left + xFrac * pw;
-        ctx.fillText(Math.round(exWl[Math.round(xFrac * (nEx - 1))]), xPx, ch - margin.bottom + 15);
+        ctx.fillText(Math.round(exWl[Math.round(xFrac * (nEx - 1))]), xPx, ch - margin.bottom + Math.round(17 * fs));
         ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5;
         ctx.beginPath(); ctx.moveTo(xPx, margin.top); ctx.lineTo(xPx, margin.top + ph); ctx.stroke();
     }
-    ctx.fillStyle = '#333'; ctx.font = '12px sans-serif';
-    ctx.fillText('Excitation (nm)', margin.left + pw / 2, ch - 6);
+    ctx.fillStyle = '#333'; ctx.font = 'bold ' + titleFontSize + 'px sans-serif';
+    ctx.fillText('Excitation (nm)', margin.left + pw / 2, ch - Math.round(6 * fs));
 
+    // Y-axis ticks & labels
     ctx.textAlign = 'right';
+    ctx.font = tickFontSize + 'px sans-serif';
     var nYticks = Math.min(8, nEm);
     for (var k = 0; k <= nYticks; k++) {
         var yFrac = k / nYticks;
         var yPx = margin.top + yFrac * ph;
-        ctx.fillText(Math.round(emWl[Math.round((1 - yFrac) * (nEm - 1))]), margin.left - 5, yPx + 4);
+        ctx.fillText(Math.round(emWl[Math.round((1 - yFrac) * (nEm - 1))]), margin.left - Math.round(6 * fs), yPx + 4);
         ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5;
         ctx.beginPath(); ctx.moveTo(margin.left, yPx); ctx.lineTo(margin.left + pw, yPx); ctx.stroke();
     }
     ctx.save();
-    ctx.translate(14, margin.top + ph / 2);
+    ctx.translate(Math.round(15 * fs), margin.top + ph / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = 'center'; ctx.font = '12px sans-serif'; ctx.fillStyle = '#333';
+    ctx.textAlign = 'center'; ctx.font = 'bold ' + titleFontSize + 'px sans-serif'; ctx.fillStyle = '#333';
     ctx.fillText('Emission (nm)', 0, 0);
     ctx.restore();
 
-    var csX = cw - margin.right + 15, csW = 18, csH = ph;
+    // Colorscale bar
+    var csX = cw - margin.right + Math.round(15 * fs);
+    var csW = Math.round(18 * fs);
+    var csH = ph;
     var csGrad = ctx.createLinearGradient(0, margin.top, 0, margin.top + csH);
     var cmap = COLORMAPS[colorName] || COLORMAPS.viridis;
     cmap.slice().reverse().forEach(function(rgb, i) {
@@ -787,14 +817,33 @@ function drawHeatmap(canvasId, exWl, emWl, intensity, colorName, useLog) {
     });
     ctx.fillStyle = csGrad; ctx.fillRect(csX, margin.top, csW, csH);
     ctx.strokeStyle = '#666'; ctx.lineWidth = 1; ctx.strokeRect(csX, margin.top, csW, csH);
-    ctx.textAlign = 'left'; ctx.font = '10px sans-serif'; ctx.fillStyle = '#333';
+    ctx.textAlign = 'left'; ctx.font = Math.round(11 * fs) + 'px sans-serif'; ctx.fillStyle = '#333';
     ctx.fillText(useLog ? maxVal.toExponential(1) : (maxVal > 9999 ? maxVal.toExponential(1) : maxVal.toFixed(0)),
-                 csX + csW + 3, margin.top + 10);
+                 csX + csW + Math.round(4 * fs), margin.top + Math.round(11 * fs));
     ctx.fillText(useLog ? minVal.toExponential(1) : (minVal > 9999 ? minVal.toExponential(1) : minVal.toFixed(0)),
-                 csX + csW + 3, margin.top + csH);
-    ctx.fillText('Int.', csX + csW + 3, margin.top + csH / 2);
+                 csX + csW + Math.round(4 * fs), margin.top + csH);
 
     mapMetaStore[canvasId] = { exWl: exWl, emWl: emWl, intensity: intensity, margin: margin, pw: pw, ph: ph };
+}
+
+function openEnlargedMap(fname, idx) {
+    var mapData = eemData && eemData.maps[fname];
+    if (!mapData) return;
+    var colorName = document.getElementById('map-colorscale').value;
+    var useLog    = document.getElementById('map-log-scale').checked;
+    var d = applyClientMapRange(mapData.ex_wl, mapData.em_wl, mapData.intensity);
+
+    var titleEl = document.getElementById('eem-map-modal-title');
+    if (titleEl) titleEl.textContent = fname;
+
+    // Size the modal canvas to fill up to 900×600, keeping 3:2 ratio
+    var mc = document.getElementById('eem-map-modal-canvas');
+    if (!mc) return;
+    mc.width  = 900;
+    mc.height = 600;
+    drawHeatmap('eem-map-modal-canvas', d.exWl, d.emWl, d.intensity, colorName, useLog, 900 / 600);
+
+    $('#eem-map-enlarge-modal').modal('show');
 }
 
 
@@ -856,7 +905,7 @@ function renderParamsChart() {
     var container = document.getElementById('params-charts-container');
     container.innerHTML = '';
     paramsToPlot.forEach(function(paramKey) {
-        var canvas = makeChartCanvas('params-charts-container', 'param-' + paramKey, 'col-md-4');
+        var canvas = makeChartCanvas('params-charts-container', 'param-' + paramKey, 'col-md-4', getParamLabel(paramKey));
         var values = files.map(function(f) {
             var v = (eemData.params[f] || {})[paramKey];
             return v !== null && v !== undefined ? v : 0;
@@ -1069,7 +1118,7 @@ function renderGroupCharts(groupStats, groupNames, avail) {
     var container = document.getElementById('group-charts-container');
     container.innerHTML = '';
     paramsToPlot.forEach(function(paramKey) {
-        var canvas = makeChartCanvas('group-charts-container', 'grp-' + paramKey, 'col-md-4');
+        var canvas = makeChartCanvas('group-charts-container', 'grp-' + paramKey, 'col-md-4', getParamLabel(paramKey));
         var means = groupNames.map(function(g) { return (groupStats[g][paramKey] || {}).mean || 0; });
         var sds   = groupNames.map(function(g) { return (groupStats[g][paramKey] || {}).sd   || 0; });
         chartInst['grp-' + paramKey] = new Chart(canvas, {
@@ -1386,7 +1435,80 @@ var DECONV_PRESETS = {
     'custom': [689, 724]
 };
 
-function initDeconvUI() {
+var deconvDragState   = null;
+var deconvDragAttached = false;
+
+// Chart.js per-instance plugin — draws draggable handles at each peak apex
+var deconvHandlePlugin = {
+    id: 'deconvHandles',
+    afterDraw: function(chart) {
+        if (!deconvFitParams) return;
+        var xs = chart.scales && chart.scales.x;
+        var ys = chart.scales && chart.scales.y;
+        if (!xs || !ys) return;
+        var ctx = chart.ctx;
+        var nPeaks = deconvFitParams.length / 3;
+        for (var i = 0; i < nPeaks; i++) {
+            var A   = deconvFitParams[i * 3];
+            var mu  = deconvFitParams[i * 3 + 1];
+            var sig = Math.abs(deconvFitParams[i * 3 + 2]);
+            var halfFwhm = sig * 1.1775;            // = FWHM/2 = σ × 2.355/2
+            var color = PEAK_COLORS[i % PEAK_COLORS.length];
+
+            var apexPx = xs.getPixelForValue(mu);
+            var apexPy = ys.getPixelForValue(A);
+            var halfPy = ys.getPixelForValue(A / 2);
+            var leftPx = xs.getPixelForValue(mu - halfFwhm);
+            var rightPx = xs.getPixelForValue(mu + halfFwhm);
+
+            // ── FWHM span line at half-amplitude ──────────────────────────
+            ctx.save();
+            ctx.setLineDash([4, 3]);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.2;
+            ctx.globalAlpha = 0.55;
+            ctx.beginPath();
+            ctx.moveTo(leftPx, halfPy);
+            ctx.lineTo(rightPx, halfPy);
+            ctx.stroke();
+            ctx.restore();
+
+            // ── FWHM side handles (small circles, ew-resize style) ────────
+            [leftPx, rightPx].forEach(function(hpx) {
+                ctx.beginPath();
+                ctx.arc(hpx, halfPy, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                // Horizontal arrows ← → to signal horizontal-only drag
+                ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(hpx - 3, halfPy); ctx.lineTo(hpx + 3, halfPy);
+                ctx.stroke();
+            });
+
+            // ── Apex handle (filled circle + crosshair) ───────────────────
+            ctx.beginPath();
+            ctx.arc(apexPx, apexPy, 9, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(apexPx - 4, apexPy); ctx.lineTo(apexPx + 4, apexPy);
+            ctx.moveTo(apexPx, apexPy - 4); ctx.lineTo(apexPx, apexPy + 4);
+            ctx.stroke();
+        }
+    }
+};
+
+function initDeconvUI(autoRun) {
     if (!eemData) return;
     var sampSel = document.getElementById('deconv-sample-select');
     sampSel.innerHTML = '';
@@ -1400,7 +1522,34 @@ function initDeconvUI() {
         var opt = document.createElement('option'); opt.value = String(ex); opt.textContent = ex + ' nm';
         exSel.appendChild(opt);
     });
-    applyDeconvPreset();
+
+    if (autoRun) {
+        // Pick the preset whose target excitation is closest to any available ex wavelength
+        var PRESET_EX = { 'ex440': 440, 'ex560': 560, 'ex620': 620 };
+        var presetSel = document.getElementById('deconv-preset-select');
+        var bestPreset = 'ex440', bestDist = Infinity;
+        Object.keys(PRESET_EX).forEach(function(p) {
+            eemData.ex_wls.forEach(function(ex) {
+                var d = Math.abs(ex - PRESET_EX[p]);
+                if (d < bestDist) { bestDist = d; bestPreset = p; }
+            });
+        });
+        presetSel.value = bestPreset;
+        applyDeconvPreset();
+
+        // Select the excitation wavelength in the dropdown that matches the preset's target
+        var targetEx = PRESET_EX[bestPreset];
+        var bestExIdx = 0, bestExDist = Infinity;
+        eemData.ex_wls.forEach(function(ex, i) {
+            var d = Math.abs(ex - targetEx);
+            if (d < bestExDist) { bestExDist = d; bestExIdx = i; }
+        });
+        exSel.selectedIndex = bestExIdx;
+
+        runDeconvolution(true);   // true = silent (no alert on missing data)
+    } else {
+        applyDeconvPreset();
+    }
 }
 
 function applyDeconvPreset() {
@@ -1440,13 +1589,13 @@ function removeDeconvPeak(idx) {
     rebuildPeaksEditor();
 }
 
-function runDeconvolution() {
-    if (!eemData || !deconvPeakMus.length) { alert('Please add at least one peak position.'); return; }
+function runDeconvolution(silent) {
+    if (!eemData || !deconvPeakMus.length) { if (!silent) alert('Please add at least one peak position.'); return; }
     var fname  = document.getElementById('deconv-sample-select').value;
     var exWlStr = document.getElementById('deconv-ex-select').value;
     var spec = eemData.emission_spectra[exWlStr];
     if (!spec || !spec.wl.length || !spec.raw[fname]) {
-        alert('No emission spectrum available for this sample / excitation combination.');
+        if (!silent) alert('No emission spectrum available for this sample / excitation combination.');
         return;
     }
     var xArr = spec.wl, yArr = spec.raw[fname];
@@ -1503,6 +1652,9 @@ function renderDeconvChart(xArr, yArr, fitParams, fname, exWl) {
     // Full rebuild on first call or when peak count changes
     if (existingChart) { existingChart.destroy(); delete chartInst['deconv']; }
     var canvas = document.getElementById('deconv-chart');
+    // Destroy any orphaned Chart.js instance not tracked in chartInst
+    var orphan = Chart.getChart(canvas);
+    if (orphan) orphan.destroy();
 
     var datasets = [
         {
@@ -1538,12 +1690,14 @@ function renderDeconvChart(xArr, yArr, fitParams, fname, exWl) {
 
     chartInst['deconv'] = new Chart(canvas, {
         type: 'scatter',
+        plugins: [deconvHandlePlugin],
         data: { datasets: datasets },
         options: {
             animation: false, responsive: true, maintainAspectRatio: false,
             plugins: {
                 title: { display: true, text: 'Gaussian deconvolution — Em @ Ex ' + exWl + ' nm' },
-                legend: { display: true, labels: { boxWidth: 12, font: { size: 10 } } }
+                legend: { display: true, labels: { boxWidth: 12, font: { size: 10 } } },
+                tooltip: { enabled: false }
             },
             scales: {
                 x: { title: { display: true, text: 'Emission (nm)' } },
@@ -1551,6 +1705,18 @@ function renderDeconvChart(xArr, yArr, fitParams, fname, exWl) {
             }
         }
     });
+}
+
+function deconvPeakLabel(mu) {
+    if (mu < 592) return 'PE ~580';
+    if (mu < 655) return 'Chl ant.';
+    if (mu < 672) return 'APC ~662';
+    if (mu < 682) return 'Chl ant. ~677';
+    if (mu < 692) return 'F685 (CP43)';
+    if (mu < 703) return 'F695 (CP47)';
+    if (mu < 718) return 'F707';
+    if (mu < 738) return 'F724 (PSI)';
+    return 'F735 (PSI)';
 }
 
 function renderDeconvResults(fitParams, xArr, yArr) {
@@ -1567,18 +1733,74 @@ function renderDeconvResults(fitParams, xArr, yArr) {
         areas.push(Math.abs(fitParams[i*3]) * Math.abs(fitParams[i*3+2]) * Math.sqrt(2 * Math.PI));
     var totalArea = areas.reduce(function(a, b) { return a + b; }, 0);
 
+    // ── Fit results table ──────────────────────────────────────────────────
     var html = '<p class="text-muted mb-1"><small>Goodness of fit: R² = <strong>' + r2.toFixed(4) +
                '</strong></small></p>' +
-        '<table class="table table-sm table-bordered" style="font-size:0.85em; max-width:560px;">' +
-        '<thead class="thead-light"><tr><th>Peak</th><th>Position (nm)</th>' +
-        '<th>FWHM (nm)</th><th>Amplitude (a.u.)</th><th>Area (%)</th></tr></thead><tbody>';
+        '<div style="overflow-x:auto;">' +
+        '<table class="table table-sm table-bordered mb-2" style="font-size:0.84em; max-width:720px;">' +
+        '<thead class="thead-light"><tr>' +
+        '<th>Peak</th><th>Assignment</th><th>Position (nm)</th>' +
+        '<th>FWHM (nm)</th><th>Amplitude (a.u.)</th><th>Area (a.u.)</th><th>Area (%)</th>' +
+        '</tr></thead><tbody>';
     for (var i = 0; i < nPeaks; i++) {
-        var A = fitParams[i*3], mu = fitParams[i*3+1], sig = Math.abs(fitParams[i*3+2]);
-        html += '<tr><td>P' + (i+1) + '</td><td>' + mu.toFixed(1) + '</td><td>' +
-                (2.355 * sig).toFixed(1) + '</td><td>' + A.toFixed(0) + '</td><td>' +
-                (totalArea > 0 ? (areas[i] / totalArea * 100).toFixed(1) : '—') + '%</td></tr>';
+        var A   = fitParams[i*3];
+        var mu  = fitParams[i*3+1];
+        var sig = Math.abs(fitParams[i*3+2]);
+        var color = PEAK_COLORS[i % PEAK_COLORS.length];
+        html += '<tr>' +
+            '<td><span class="font-weight-bold" style="color:' + color + ';">P' + (i+1) + '</span></td>' +
+            '<td class="text-muted" style="font-size:0.81em; white-space:nowrap;">' + deconvPeakLabel(mu) + '</td>' +
+            '<td>' + mu.toFixed(1) + '</td>' +
+            '<td>' + (2.355 * sig).toFixed(1) + '</td>' +
+            '<td>' + A.toFixed(0) + '</td>' +
+            '<td>' + areas[i].toFixed(0) + '</td>' +
+            '<td>' + (totalArea > 0 ? (areas[i] / totalArea * 100).toFixed(1) : '—') + '%</td>' +
+        '</tr>';
     }
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
+
+    // ── Derived biological ratios ──────────────────────────────────────────
+    var psiiArea = 0, psiArea = 0, cp43Area = 0, cp47Area = 0, pbsFreeArea = 0;
+    for (var i = 0; i < nPeaks; i++) {
+        var mu = fitParams[i*3+1];
+        if (mu >= 682 && mu < 692) { cp43Area  += areas[i]; psiiArea += areas[i]; }
+        if (mu >= 692 && mu < 703) { cp47Area  += areas[i]; psiiArea += areas[i]; }
+        if (mu >= 718 && mu < 800) psiArea   += areas[i];
+        if (mu >= 655 && mu < 672) pbsFreeArea += areas[i];
+    }
+    var ratios = [];
+    if (psiiArea > 0 && psiArea > 0)
+        ratios.push(['PSII : PSI (area)',
+                     (psiiArea / psiArea).toFixed(3),
+                     'Σ F685+F695 / Σ F724 area — overlap-corrected PSII/PSI stoichiometry']);
+    if (cp43Area > 0 && cp47Area > 0)
+        ratios.push(['F695 / F685 (area)',
+                     (cp47Area / cp43Area).toFixed(3),
+                     'CP47 / CP43 — elevated ratio indicates PSII structural changes or excitation pressure']);
+    var psiiPsiSum = psiiArea + psiArea;
+    if (pbsFreeArea > 0 && psiiPsiSum > 0)
+        ratios.push(['PBS-free / (PSII+PSI)',
+                     (pbsFreeArea / psiiPsiSum).toFixed(3),
+                     'APC ~662 / (F685+F695+F724) — uncoupled PBS relative to PS-coupled PBS']);
+    if (psiiArea > 0 && psiiPsiSum > 0)
+        ratios.push(['PSII / (PSII+PSI)',
+                     (psiiArea / psiiPsiSum).toFixed(3),
+                     'PSII fraction of total Chl fluorescence (overlap-corrected)']);
+
+    if (ratios.length) {
+        html += '<p class="font-weight-bold mb-1 mt-1" style="font-size:0.84em;">' +
+                '<i class="fa fa-bar-chart mr-1 text-muted"></i>Derived biological parameters:</p>' +
+                '<table class="table table-sm table-borderless mb-0" style="font-size:0.83em; max-width:720px;"><tbody>';
+        ratios.forEach(function(r) {
+            html += '<tr>' +
+                '<td class="font-weight-bold py-0" style="width:190px; vertical-align:top;">' + r[0] + '</td>' +
+                '<td class="py-0" style="width:70px; vertical-align:top;">' + r[1] + '</td>' +
+                '<td class="text-muted py-0" style="font-size:0.95em; vertical-align:top;">' + r[2] + '</td>' +
+            '</tr>';
+        });
+        html += '</tbody></table>';
+    }
+
     document.getElementById('deconv-results').innerHTML = html;
 }
 
@@ -1863,9 +2085,155 @@ function updateDeconvFromSliders() {
         document.getElementById('dslider-fwhm-val-' + i).textContent = fwhm.toFixed(1) + ' nm';
     }
 
+    deconvFitParams = newParams;
     var d = deconvCurrentData;
-    renderDeconvChart(d.xArr, d.yArr, newParams, d.fname, d.exWl);
-    renderDeconvResults(newParams, d.xArr, d.yArr);
+    renderDeconvChart(d.xArr, d.yArr, deconvFitParams, d.fname, d.exWl);
+    renderDeconvResults(deconvFitParams, d.xArr, d.yArr);
+}
+
+// ============================================================
+// Deconvolution — drag handles on chart
+// ============================================================
+function updateSlidersFromParams(params) {
+    var nPeaks = params.length / 3;
+    for (var i = 0; i < nPeaks; i++) {
+        var A    = params[i * 3];
+        var mu   = params[i * 3 + 1];
+        var fwhm = 2.355 * Math.abs(params[i * 3 + 2]);
+        var muEl    = document.getElementById('dslider-mu-'      + i);
+        var aEl     = document.getElementById('dslider-a-'       + i);
+        var fwhmEl  = document.getElementById('dslider-fwhm-'    + i);
+        var muValEl   = document.getElementById('dslider-mu-val-'   + i);
+        var aValEl    = document.getElementById('dslider-a-val-'    + i);
+        var fwhmValEl = document.getElementById('dslider-fwhm-val-' + i);
+        if (muEl)    { muEl.value    = mu.toFixed(1);   if (muValEl)    muValEl.textContent    = mu.toFixed(1)   + ' nm'; }
+        if (aEl)     { aEl.value     = A.toFixed(0);    if (aValEl)     aValEl.textContent     = A.toFixed(0); }
+        if (fwhmEl)  { fwhmEl.value  = fwhm.toFixed(1); if (fwhmValEl)  fwhmValEl.textContent  = fwhm.toFixed(1) + ' nm'; }
+    }
+}
+
+function attachDeconvDrag() {
+    if (deconvDragAttached) return;
+    deconvDragAttached = true;
+    var canvas = document.getElementById('deconv-chart');
+    if (!canvas) return;
+
+    function getLogicalPos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var src  = e.touches ? e.touches[0] : e;
+        return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+    }
+
+    // Returns {pi, type} where type = 'apex' | 'fwhm', or null if nothing is near
+    function nearestHandle(pos) {
+        var chart = chartInst['deconv'];
+        if (!chart || !deconvFitParams || !chart.scales || !chart.scales.x) return null;
+        var xs = chart.scales.x, ys = chart.scales.y;
+        var nPeaks = deconvFitParams.length / 3;
+        var best = null, bestDist = Infinity;
+        for (var i = 0; i < nPeaks; i++) {
+            var A        = deconvFitParams[i * 3];
+            var mu       = deconvFitParams[i * 3 + 1];
+            var sig      = Math.abs(deconvFitParams[i * 3 + 2]);
+            var halfFwhm = sig * 1.1775;
+            var apexPx = xs.getPixelForValue(mu);
+            var apexPy = ys.getPixelForValue(A);
+            var dApex  = Math.sqrt(Math.pow(pos.x - apexPx, 2) + Math.pow(pos.y - apexPy, 2));
+            if (dApex < 14 && dApex < bestDist) { bestDist = dApex; best = { pi: i, type: 'apex' }; }
+            var halfPy = ys.getPixelForValue(A / 2);
+            [xs.getPixelForValue(mu - halfFwhm), xs.getPixelForValue(mu + halfFwhm)].forEach(function(hpx) {
+                var dH = Math.sqrt(Math.pow(pos.x - hpx, 2) + Math.pow(pos.y - halfPy, 2));
+                if (dH < 10 && dH < bestDist) { bestDist = dH; best = { pi: i, type: 'fwhm' }; }
+            });
+        }
+        return best;
+    }
+
+    canvas.addEventListener('mousedown', function(e) {
+        var pos = getLogicalPos(e);
+        var h   = nearestHandle(pos);
+        if (!h) return;
+        e.preventDefault();
+        deconvDragState = { peakIdx: h.pi, type: h.type, origMu: deconvFitParams[h.pi * 3 + 1] };
+        canvas.style.cursor = h.type === 'fwhm' ? 'ew-resize' : 'grabbing';
+    });
+
+    canvas.addEventListener('mousemove', function(e) {
+        var pos = getLogicalPos(e);
+        if (!deconvDragState) {
+            var h = nearestHandle(pos);
+            canvas.style.cursor = !h ? (deconvCurrentData ? 'crosshair' : 'default')
+                                     : h.type === 'fwhm' ? 'ew-resize' : 'grab';
+            return;
+        }
+        e.preventDefault();
+        var chart = chartInst['deconv'];
+        if (!chart || !chart.scales || !chart.scales.x || !deconvCurrentData) return;
+        var pi = deconvDragState.peakIdx;
+        var d  = deconvCurrentData;
+        if (deconvDragState.type === 'apex') {
+            var newMu = chart.scales.x.getValueForPixel(pos.x);
+            var newA  = chart.scales.y.getValueForPixel(pos.y);
+            newMu = Math.max(d.xArr[0], Math.min(d.xArr[d.xArr.length - 1], newMu));
+            newA  = Math.max(0, newA);
+            deconvFitParams[pi * 3]     = newA;
+            deconvFitParams[pi * 3 + 1] = newMu;
+        } else {
+            var mu       = deconvFitParams[pi * 3 + 1];
+            var newX     = chart.scales.x.getValueForPixel(pos.x);
+            var halfFwhm = Math.abs(newX - mu);
+            deconvFitParams[pi * 3 + 2] = Math.max(0.5, halfFwhm * 2 / 2.355);
+        }
+        renderDeconvChart(d.xArr, d.yArr, deconvFitParams, d.fname, d.exWl);
+        updateSlidersFromParams(deconvFitParams);
+        renderDeconvResults(deconvFitParams, d.xArr, d.yArr);
+    });
+
+    canvas.addEventListener('dblclick', function(e) {
+        // Prevent dblclick from firing if a real drag just ended
+        if (!deconvCurrentData) return;
+        var pos   = getLogicalPos(e);
+        var h     = nearestHandle(pos);
+        var chart = chartInst['deconv'];
+        var d     = deconvCurrentData;
+
+        if (h && h.type === 'apex') {
+            // ── Remove peak ──────────────────────────────────────────────
+            deconvFitParams.splice(h.pi * 3, 3);
+            deconvPeakMus.splice(h.pi, 1);
+            if (deconvFitParams.length > 0) {
+                renderDeconvChart(d.xArr, d.yArr, deconvFitParams, d.fname, d.exWl);
+                renderDeconvResults(deconvFitParams, d.xArr, d.yArr);
+                renderDeconvSliders(deconvFitParams, d.xArr, d.yArr);
+            } else {
+                if (chartInst['deconv']) { chartInst['deconv'].destroy(); delete chartInst['deconv']; }
+                document.getElementById('deconv-sliders').innerHTML = '';
+                document.getElementById('deconv-results').innerHTML = '';
+            }
+            rebuildPeaksEditor();
+
+        } else if (!h) {
+            // ── Add peak at click position ────────────────────────────────
+            if (!chart || !chart.scales || !chart.scales.x) return;
+            var mu = chart.scales.x.getValueForPixel(pos.x);
+            var A  = chart.scales.y.getValueForPixel(pos.y);
+            mu = Math.max(d.xArr[0], Math.min(d.xArr[d.xArr.length - 1], mu));
+            A  = Math.max(0, A);
+            deconvFitParams.push(A, mu, 8);          // σ₀ = 8 nm (FWHM ≈ 19 nm)
+            deconvPeakMus.push(Math.round(mu));
+            renderDeconvChart(d.xArr, d.yArr, deconvFitParams, d.fname, d.exWl);
+            renderDeconvResults(deconvFitParams, d.xArr, d.yArr);
+            renderDeconvSliders(deconvFitParams, d.xArr, d.yArr);
+            rebuildPeaksEditor();
+        }
+        // dblclick on FWHM handle: no action
+    });
+
+    function stopDrag() {
+        if (deconvDragState) { deconvDragState = null; canvas.style.cursor = 'default'; }
+    }
+    canvas.addEventListener('mouseup',    stopDrag);
+    canvas.addEventListener('mouseleave', stopDrag);
 }
 
 // ============================================================
@@ -2044,5 +2412,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Map controls
     document.getElementById('map-colorscale').addEventListener('change', renderMapTab);
     document.getElementById('map-log-scale').addEventListener('change', renderMapTab);
+
+    // Deconvolution drag handles (canvas is always in DOM)
+    attachDeconvDrag();
 
 });
