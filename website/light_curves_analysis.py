@@ -168,9 +168,9 @@ def lc_process():
 
     FMMAX    = FMALL.max()     # max Fm' across steps per file
     FMMAX_df = pd.DataFrame(
-        np.repeat(FMMAX.values.reshape(1, -1), n_steps, axis=0), columns=FMALL.columns)
+        np.repeat(np.asarray(FMMAX.values, dtype=float).reshape(1, -1), n_steps, axis=0), columns=FMALL.columns)
     F0_df2   = pd.DataFrame(
-        np.repeat(F0_row.values.reshape(1, -1), n_steps, axis=0), columns=FTALL.columns)
+        np.repeat(np.asarray(F0_row.values, dtype=float).reshape(1, -1), n_steps, axis=0), columns=FTALL.columns)
 
     # Ensure column names are consistent
     FTALL.columns = file_names
@@ -210,7 +210,7 @@ def lc_process():
 
     for fname in file_names:
         etr_measured = ETRALL[fname].values.astype(float)
-        etr_max_obs  = float(ETRMAX_measured[fname])
+        etr_max_obs  = float(ETRMAX_measured.at[fname])
         etrmPot_init = etr_max_factor * etr_max_obs
 
         try:
@@ -381,20 +381,20 @@ def lc_export():
                 continue
             img_buf.seek(0)
             TARGET_W = 700
-            orig_w, orig_h = xl_img.width, xl_img.height
+            orig_w, orig_h = xl_img.width, xl_img.height  # type: ignore[attr-defined]
             if orig_w > 0:
                 scale = TARGET_W / orig_w
-                xl_img.width  = TARGET_W
-                xl_img.height = round(orig_h * scale)
+                xl_img.width  = TARGET_W                  # type: ignore[attr-defined]
+                xl_img.height = round(orig_h * scale)     # type: ignore[attr-defined]
             else:
-                xl_img.width, xl_img.height = TARGET_W, 400
+                xl_img.width, xl_img.height = TARGET_W, 400  # type: ignore[attr-defined]
             title = c.get('title', '')
             if title:
                 ws_charts.cell(row=row, column=1, value=title)
                 row += 1
             xl_img.anchor = f'A{row}'
             ws_charts.add_image(xl_img)
-            row += round(xl_img.height / 20) + 2
+            row += round(xl_img.height / 20) + 2  # type: ignore[attr-defined]
 
         # ── Group statistics sheets ───────────────────────────────────────────
         if group_export:

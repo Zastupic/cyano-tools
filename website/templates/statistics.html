@@ -3222,6 +3222,11 @@
                                         <p class="text-muted mb-2" style="font-size:0.75rem;">
                                             Coefficients range from <strong>−1</strong> (perfect negative) to <strong>+1</strong> (perfect positive); <strong>0</strong> = no relationship.
                                             Colour-coded matrix annotated with significance stars: * p&lt;0.05 &nbsp;** p&lt;0.01 &nbsp;*** p&lt;0.001.
+                                            <br>
+                                            The p-value tests the null hypothesis that there is no real correlation in the underlying population (r&nbsp;=&nbsp;0).
+                                            The p-value is derived from r and sample size n via t&nbsp;=&nbsp;r&nbsp;√(n−2)&nbsp;/&nbsp;√(1−r²)
+                                            (two-tailed t-distribution, df&nbsp;=&nbsp;n−2), so the same r yields a smaller p with larger n —
+                                            a weak r can be statistically significant in large datasets, while a strong r may not reach significance with few replicates.
                                         </p>
                                         <div id="corrDendrogramPlot" style="width:100%; height:140px; display:none;"></div>
                                         <div id="corrHeatmapPlot" style="width:100%; min-height:480px; display:none;"></div>

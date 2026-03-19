@@ -82,8 +82,8 @@ def _fit_splines(double_norm_df: pd.DataFrame, x_col: str, kr: int) -> tuple:
     # Residuals (interpolate reconstructed→raw time axis)
     Resid_list = []
     for i in range(1, n_files + 1):
-        interp = np.interp(dn.iloc[:, 0].values, log_time.values, Raw_recon_DF.iloc[:, i].values)
-        Resid_list.append(pd.Series(dn.iloc[:, i].values - interp, name=cols[i]))
+        interp = np.interp(np.array(dn.iloc[:, 0], dtype=float), np.array(log_time, dtype=float), np.array(Raw_recon_DF.iloc[:, i], dtype=float))
+        Resid_list.append(pd.Series(np.array(dn.iloc[:, i], dtype=float) - interp, name=cols[i]))
     Resid_DF = pd.concat([dn.iloc[:, 0].reset_index(drop=True)] + Resid_list, axis=1)
     Resid_DF.columns = cols
 
@@ -109,7 +109,7 @@ def _fit_oj_polynomial(double_norm_df: pd.DataFrame, x_col: str, ms_factor: floa
     result: dict[str, dict] = {}
     for i in range(1, n_files + 1):
         fname = cols[i]
-        y_all = pd.to_numeric(dn.iloc[:, i], errors='coerce').values
+        y_all = np.array(pd.to_numeric(dn.iloc[:, i], errors='coerce'), dtype=float)
 
         mask  = (x_all >= oj_lo) & (x_all <= oj_hi) & np.isfinite(y_all)
         x_oj  = x_all[mask]
@@ -447,6 +447,8 @@ def ojip_process():
         F50us_idx  = tidx(5e-5);  FK_idx     = tidx(3e-4)
         F50ms_idx  = tidx(0.05);  F100ms_idx = tidx(0.1)
         F200ms_idx = tidx(0.2);   F300ms_idx = tidx(0.3)
+    else:
+        raise ValueError(f'Unknown fluorometer: {fluorometer}')
 
     FJ_idx = tidx(FJ_time)
     FI_idx = tidx(FI_time)
@@ -687,13 +689,13 @@ def ojip_add_charts():
                 continue
             img_buf.seek(0)
             TARGET_W = 700
-            orig_w, orig_h = xl_img.width, xl_img.height
+            orig_w, orig_h = xl_img.width, xl_img.height  # type: ignore[attr-defined]
             if orig_w > 0:
                 scale = TARGET_W / orig_w
-                xl_img.width  = TARGET_W
-                xl_img.height = round(orig_h * scale)
+                xl_img.width  = TARGET_W                      # type: ignore[attr-defined]
+                xl_img.height = round(orig_h * scale)         # type: ignore[attr-defined]
             else:
-                xl_img.width, xl_img.height = TARGET_W, 400
+                xl_img.width, xl_img.height = TARGET_W, 400  # type: ignore[attr-defined]
 
             title = c.get('title', '')
             if title:
@@ -702,7 +704,7 @@ def ojip_add_charts():
 
             xl_img.anchor = f'A{row}'
             ws_charts.add_image(xl_img)
-            row += round(xl_img.height / 20) + 2
+            row += round(xl_img.height / 20) + 2  # type: ignore[attr-defined]
 
         # ── 3. Group statistics sheets ─────────────────────────────────────────
         if group_export:

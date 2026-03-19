@@ -180,11 +180,89 @@ function updateSpectrofluorometerHint() {
 // ============================================================
 // Analysis mode switch (77K / RT)
 // ============================================================
+// ── Pigmentation helpers ──────────────────────────────────────────────────────
+
+function getPigmentation() {
+    var sel = document.getElementById('global-pigm-select');
+    if (sel) return sel.value;
+    var el = document.querySelector('input[name="checkbox_pigmentation"]:checked');
+    return el ? el.value : 'checkbox_chl_PC';
+}
+
+function switchPigmentation(val) {
+    // Sync global select
+    var sel = document.getElementById('global-pigm-select');
+    if (sel && sel.value !== val) sel.value = val;
+    // Sync radio buttons in Derived Parameters tab
+    document.querySelectorAll('input[name="checkbox_pigmentation"]').forEach(function(r) {
+        r.checked = (r.value === val);
+    });
+    recomputeParamsFromMaps();
+    // Re-annotate PARAFAC components client-side (no re-fit needed)
+    if (parafacResults) _reAnnotateParafacComponents(val);
+}
+
+// Client-side fluorophore table (mirrors backend _FLUOROPHORE_TABLE)
+var _JS_FLUOROPHORE_TABLE = [
+    {ex: 440, em: 689, label: 'Chl-PSII',      pigm: ['checkbox_chl_only','checkbox_chl_PC','checkbox_chl_PE','checkbox_chl_PC_PE']},
+    {ex: 440, em: 724, label: 'Chl-PSI',        pigm: ['checkbox_chl_only','checkbox_chl_PC','checkbox_chl_PE','checkbox_chl_PC_PE']},
+    {ex: 620, em: 662, label: 'PBS-free (PC)',   pigm: ['checkbox_chl_PC','checkbox_chl_PC_PE']},
+    {ex: 620, em: 689, label: 'PBS\u2192PSII',  pigm: ['checkbox_chl_PC','checkbox_chl_PC_PE']},
+    {ex: 620, em: 724, label: 'PBS\u2192PSI',   pigm: ['checkbox_chl_PC','checkbox_chl_PC_PE']},
+    {ex: 560, em: 580, label: 'PE direct',       pigm: ['checkbox_chl_PE','checkbox_chl_PC_PE']},
+    {ex: 560, em: 662, label: 'PE\u2192PC',      pigm: ['checkbox_chl_PE','checkbox_chl_PC_PE']},
+    {ex: 560, em: 689, label: 'PE\u2192PSII',   pigm: ['checkbox_chl_PE','checkbox_chl_PC_PE']},
+    {ex: 560, em: 724, label: 'PE\u2192PSI',    pigm: ['checkbox_chl_PE','checkbox_chl_PC_PE']}
+];
+
+function _jsAnnotateComponent(exWl, emWl, exLoading, emLoading, pigm, tol) {
+    tol = tol || 15;
+    var exPeak = exWl[exLoading.indexOf(Math.max.apply(null, exLoading))];
+    var emPeak = emWl[emLoading.indexOf(Math.max.apply(null, emLoading))];
+    var bestLabel = null, bestD = Infinity;
+    _JS_FLUOROPHORE_TABLE.forEach(function(f) {
+        if (f.pigm.indexOf(pigm) === -1) return;
+        var dx = Math.abs(exPeak - f.ex), de = Math.abs(emPeak - f.em);
+        if (dx <= tol && de <= tol) {
+            var d = Math.sqrt(dx*dx + de*de);
+            if (d < bestD) { bestD = d; bestLabel = f.label; }
+        }
+    });
+    return (bestLabel || 'Unknown') + ' (Ex' + Math.round(exPeak) + '/Em' + Math.round(emPeak) + ')';
+}
+
+function _reAnnotateParafacComponents(pigm) {
+    if (!parafacResults) return;
+    var data = parafacResults;
+    for (var r = 0; r < data.n_components; r++) {
+        var annot = _jsAnnotateComponent(data.ex_wl, data.em_wl,
+                                         data.ex_loadings[r], data.em_loadings[r], pigm);
+        parafacAnnotations[r] = annot;
+        // Update the editable input in the component card
+        var inp = document.getElementById('par-annot-' + r);
+        if (inp) inp.value = annot;
+    }
+    // Refresh scores chart and comp map labels with new annotations
+    _renderParafacScoresChart(data);
+    _refreshParafacCompMapLabels(data);
+}
+
+function _refreshParafacCompMapLabels(data) {
+    for (var r = 0; r < data.n_components; r++) {
+        var lbl = document.querySelector('#parafac-comp-map-' + r +
+                  ' .font-weight-bold.text-truncate');
+        if (lbl) lbl.textContent =
+            'C' + (r+1) + ': ' + (parafacAnnotations[r] || 'Component '+(r+1));
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function switchAnalysisMode(mode) {
     analysisMode = mode;
 
-    // Update segmented control appearance (upload card + derived tab)
-    document.querySelectorAll('#eem-mode-btns .btn, #eem-mode-btns-upload .btn').forEach(function(btn) {
+    // Update segmented control appearance (all mode button groups)
+    document.querySelectorAll('#eem-mode-btns .btn, #eem-mode-btns-upload .btn, #eem-mode-btns-global .btn').forEach(function(btn) {
         var isActive = btn.dataset.mode === mode;
         btn.classList.toggle('btn-primary', isActive);
         btn.classList.toggle('btn-outline-primary', !isActive);
@@ -201,12 +279,16 @@ function switchAnalysisMode(mode) {
         // Show/hide pigmentation step — not used at RT
         var pigmGroup = document.getElementById('eem-pigm-step');
         if (pigmGroup) pigmGroup.style.display = 'none';
+        var globalPigm = document.getElementById('global-pigm-group');
+        if (globalPigm) globalPigm.style.display = 'none';
     } else {
         if (title) title.innerHTML = '<i class="fa fa-th text-primary mr-2"></i>77K Fluorescence Spectra &amp; EEM Analyzer';
         if (alertEl) alertEl.innerHTML = '<strong>At a glance:</strong> Upload 3D excitation-emission fluorescence maps measured at 77 K to visualize pigment-protein complex composition and calculate PSII/PSI ratios and phycobilisome coupling states. Supports batch processing of up to 100 files with interactive charts, replicate grouping, and export to .xlsx.';
         hints.forEach(function(h) { h.textContent = 'Low-temperature EEM — photosystem stoichiometry & PBS coupling'; });
         var pigmGroup = document.getElementById('eem-pigm-step');
         if (pigmGroup) pigmGroup.style.display = '';
+        var globalPigm = document.getElementById('global-pigm-group');
+        if (globalPigm) globalPigm.style.display = '';
     }
 
     // Update default Ex/Em wavelengths and norm values if inputs are untouched
@@ -240,8 +322,7 @@ function uploadAndAnalyze() {
     var fd = new FormData();
     fd.append('analysis_mode', analysisMode);
     fd.append('spectrofluorometer', document.getElementById('eem-spectrofluorometer').value);
-    var pigm = document.querySelector('input[name="checkbox_pigmentation"]:checked');
-    fd.append('checkbox_pigmentation', pigm ? pigm.value : 'checkbox_chl_PC');
+    fd.append('checkbox_pigmentation', getPigmentation());
     for (var i = 1; i <= 6; i++) {
         fd.append('ex_' + i, (document.getElementById('eem-ex-' + i) || {}).value || '');
         fd.append('em_' + i, (document.getElementById('eem-em-' + i) || {}).value || '');
@@ -270,6 +351,8 @@ function uploadAndAnalyze() {
             groups = {};
             chartInst = {};
             dirtyTabs = new Set(['spectra', 'map', 'derived', 'groups']);
+            parafacResults = null;
+            parafacDiagResults = null;
             groupFileOrder = data.files.slice();
             focusExWl = null;
             deconvFitParams = null;
@@ -520,8 +603,7 @@ function updateDerivedParamHint() {
             'Ex620/Em730 <span class="text-muted">(PBS-F730)</span>'
         ];
     } else {
-        var pigmEl = document.querySelector('input[name="checkbox_pigmentation"]:checked');
-        var pigm = pigmEl ? pigmEl.value : 'checkbox_chl_only';
+        var pigm = getPigmentation();
         items = [
             'Ex440/Em689 <span class="text-muted">(Chl-PSII)</span>',
             'Ex440/Em724 <span class="text-muted">(Chl-PSI)</span>'
@@ -582,6 +664,11 @@ function setSpectraPalette(val) {
 // 2D Map Tab
 // ============================================================
 var COLORMAPS = {
+    rdbu: [                                         // diverging: blue→white→red
+        [5,48,97],[33,102,172],[67,147,195],[146,197,222],[209,229,240],
+        [247,247,247],                              // white = midpoint (zero)
+        [253,219,199],[244,165,130],[214,96,77],[178,24,43],[103,0,31]
+    ],
     blackjet: [
         [0,0,0],[0,0,80],[0,0,160],[0,60,210],[0,150,225],[0,215,215],
         [0,220,140],[0,205,55],[60,210,0],[155,215,0],[240,220,0],
@@ -615,6 +702,106 @@ function applyColormap(t, name) {
     var frac = idx - lo;
     if (lo === hi) return cmap[lo];
     return cmap[lo].map(function(v, i) { return Math.round(v + frac * (cmap[hi][i] - v)); });
+}
+
+function drawHeatmapDiverging(canvasId, exWl, emWl, intensity, fontScale) {
+    /* Like drawHeatmap but with symmetric normalization centred at 0.
+       Positive residuals → red, negative → blue, zero → white. */
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    var nEx = exWl.length, nEm = emWl.length;
+    if (!nEx || !nEm) return;
+    var fs = fontScale || 1.0;
+
+    var maxAbs = 0;
+    for (var i = 0; i < nEm; i++)
+        for (var j = 0; j < nEx; j++) {
+            var v = Math.abs(intensity[i][j]);
+            if (v > maxAbs) maxAbs = v;
+        }
+    if (maxAbs === 0) maxAbs = 1;
+
+    var offscreen = document.createElement('canvas');
+    offscreen.width = nEx; offscreen.height = nEm;
+    var offCtx = offscreen.getContext('2d');
+    var imageData = offCtx.createImageData(nEx, nEm);
+    var px = imageData.data;
+    for (var i = 0; i < nEm; i++)
+        for (var j = 0; j < nEx; j++) {
+            var t = (intensity[i][j] / maxAbs + 1) / 2;   // map [-maxAbs, maxAbs] → [0, 1]
+            var rgb = applyColormap(t, 'rdbu');
+            var idx = ((nEm - 1 - i) * nEx + j) * 4;
+            px[idx] = rgb[0]; px[idx+1] = rgb[1]; px[idx+2] = rgb[2]; px[idx+3] = 255;
+        }
+    offCtx.putImageData(imageData, 0, 0);
+
+    var margin = {
+        top:    Math.round(22  * fs),
+        right:  Math.round(100 * fs),
+        bottom: Math.round(62  * fs),
+        left:   Math.round(78  * fs)
+    };
+    var cw = canvas.width, ch = canvas.height;
+    var pw = cw - margin.left - margin.right;
+    var ph = ch - margin.top - margin.bottom;
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, cw, ch);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch);
+    ctx.drawImage(offscreen, margin.left, margin.top, pw, ph);
+    ctx.strokeStyle = '#666'; ctx.lineWidth = 1;
+    ctx.strokeRect(margin.left, margin.top, pw, ph);
+
+    var tickFontSize  = Math.round(13 * fs);
+    var titleFontSize = Math.round(15 * fs);
+    ctx.fillStyle = '#333'; ctx.font = tickFontSize + 'px sans-serif'; ctx.textAlign = 'center';
+    var nXticks = Math.min(8, nEx);
+    for (var k = 0; k <= nXticks; k++) {
+        var xFrac = k / nXticks;
+        var xPx = margin.left + xFrac * pw;
+        ctx.fillText(Math.round(exWl[Math.round(xFrac * (nEx - 1))]), xPx, ch - margin.bottom + Math.round(17 * fs));
+    }
+    ctx.fillStyle = '#333'; ctx.font = 'bold ' + titleFontSize + 'px sans-serif';
+    ctx.fillText('Excitation (nm)', margin.left + pw / 2, ch - Math.round(6 * fs));
+
+    ctx.textAlign = 'right'; ctx.font = tickFontSize + 'px sans-serif';
+    var nYticks = Math.min(8, nEm);
+    for (var k = 0; k <= nYticks; k++) {
+        var yFrac = k / nYticks;
+        var yPx = margin.top + yFrac * ph;
+        ctx.fillText(Math.round(emWl[Math.round((1 - yFrac) * (nEm - 1))]), margin.left - Math.round(6 * fs), yPx + 4);
+    }
+    ctx.save();
+    ctx.translate(Math.round(15 * fs), margin.top + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.font = 'bold ' + titleFontSize + 'px sans-serif'; ctx.fillStyle = '#333';
+    ctx.fillText('Emission (nm)', 0, 0);
+    ctx.restore();
+
+    // Colorbar with RdBu
+    var csX = cw - margin.right + Math.round(15 * fs);
+    var csW = Math.round(18 * fs);
+    var cmap = COLORMAPS.rdbu;
+    var csGrad = ctx.createLinearGradient(0, margin.top, 0, margin.top + ph);
+    cmap.slice().reverse().forEach(function(rgb, i) {
+        csGrad.addColorStop(i / (cmap.length - 1), 'rgb(' + rgb.join(',') + ')');
+    });
+    ctx.fillStyle = csGrad;
+    ctx.fillRect(csX, margin.top, csW, ph);
+    ctx.strokeStyle = '#999'; ctx.lineWidth = 0.5;
+    ctx.strokeRect(csX, margin.top, csW, ph);
+
+    // Colorbar labels: +max, 0, -max
+    ctx.fillStyle = '#333'; ctx.font = (tickFontSize * 0.9) + 'px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('+' + maxAbs.toFixed(0), csX + csW + 3, margin.top + 4);
+    ctx.fillText('0', csX + csW + 3, margin.top + ph / 2 + 4);
+    ctx.fillText('\u2212' + maxAbs.toFixed(0), csX + csW + 3, margin.top + ph);
+
+    // Zero line on colorbar
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(csX, margin.top + ph / 2);
+    ctx.lineTo(csX + csW, margin.top + ph / 2);
+    ctx.stroke();
 }
 
 function applyClientMapRange(exWl, emWl, intensity) {
@@ -1224,10 +1411,9 @@ function downloadZIP(btn) {
     zip.file('EEM_analysis.xlsx', XLSX.write(buildWorkbook(), {bookType: 'xlsx', type: 'array'}));
 
     // ── Settings JSON ─────────────────────────────────────────────────────────
-    var pigmEl = document.querySelector('input[name="checkbox_pigmentation"]:checked');
     zip.file('settings.json', JSON.stringify({
         analysis_mode:  eemData.analysis_mode || '77K',
-        pigmentation:   pigmEl ? pigmEl.value : 'n/a',
+        pigmentation:   getPigmentation(),
         normalization:  normMode,
         ref_norm_mode:  refNormMode,
         ex_wavelengths: eemData.ex_wls,
@@ -1810,8 +1996,7 @@ function renderDeconvResults(fitParams, xArr, yArr) {
 function recomputeParamsFromMaps() {
     if (!eemData) return;
 
-    var pigmEl = document.querySelector('input[name="checkbox_pigmentation"]:checked');
-    var pigmVal = pigmEl ? pigmEl.value : 'checkbox_chl_PC';
+    var pigmVal = getPigmentation();
     eemData.pigmentation = pigmVal;
     updateDerivedParamHint();
 
@@ -2267,8 +2452,7 @@ function generateMethodsText() {
     var mode    = eemData.analysis_mode || '77K';
     var n       = eemData.files.length;
     var fList   = n <= 8 ? eemData.files.join(', ') : n + ' files';
-    var pigmEl  = document.querySelector('input[name="checkbox_pigmentation"]:checked');
-    var pigmVal = pigmEl ? pigmEl.value : 'checkbox_chl_PC';
+    var pigmVal = getPigmentation();
     var exWls   = (eemData.ex_wls || []).join(', ');
     var emWls   = (eemData.em_wls || []).join(', ');
 
@@ -2407,6 +2591,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (target === '#eem-derived' && dirtyTabs.has('derived')) renderDerivedTab();
         if (target === '#eem-groups'  && dirtyTabs.has('groups'))  renderGroupsTab();
         if (target === '#eem-deconv'  && chartInst['deconv'])      chartInst['deconv'].resize();
+        if (target === '#eem-parafac') updateParafacTabState();
     });
 
     // Map controls
@@ -2416,4 +2601,508 @@ document.addEventListener('DOMContentLoaded', function() {
     // Deconvolution drag handles (canvas is always in DOM)
     attachDeconvDrag();
 
+    // Bootstrap tooltips (used by PARAFAC controls)
+    $('[data-toggle="tooltip"]').tooltip({ trigger: 'hover', container: 'body' });
+
 });
+
+
+// ============================================================
+// PARAFAC
+// ============================================================
+var parafacResults = null;
+var parafacDiagResults = null;
+var parafacAnnotations = [];   // user-editable per-component labels
+
+// Component colours (one per component, up to 8)
+var PARAFAC_COLORS = ['#4472C4','#ED7D31','#A9D18E','#FF0000',
+                      '#7030A0','#00B0F0','#FFC000','#70AD47'];
+
+function _parafacValidate() {
+    if (!eemData || !eemData.files || eemData.files.length < 3)
+        return 'At least 3 samples are needed for PARAFAC analysis.';
+    var keys = Object.keys(eemData.maps);
+    if (!keys.length) return 'No EEM maps available.';
+    var ref = eemData.maps[keys[0]];
+    for (var i = 1; i < keys.length; i++) {
+        var m = eemData.maps[keys[i]];
+        if (m.ex_wl.length !== ref.ex_wl.length || m.em_wl.length !== ref.em_wl.length)
+            return 'Grid mismatch: all samples must have identical Ex/Em grids for PARAFAC. ' +
+                   'Try uploading only files from one instrument type.';
+    }
+    return null;
+}
+
+function updateParafacTabState() {
+    var err = _parafacValidate();
+    var notReady = document.getElementById('parafac-not-ready');
+    var controls = document.getElementById('parafac-controls');
+    if (!notReady) return;
+    if (err) {
+        document.getElementById('parafac-not-ready-msg').textContent = err;
+        notReady.style.display = '';
+        controls.style.display = 'none';
+    } else {
+        notReady.style.display = 'none';
+        controls.style.display = '';
+    }
+}
+
+function updateParafacScatterUI() {
+    ['r1','r2','ram'].forEach(function(id) {
+        var checked = document.getElementById('par-' + id + '-check').checked;
+        document.getElementById('par-' + id + '-row').style.display = checked ? '' : 'none';
+    });
+}
+
+function _buildParafacPayload(extra) {
+    var scatter = {
+        rayleigh1_width: document.getElementById('par-r1-check').checked
+            ? parseFloat(document.getElementById('par-r1-slider').value) : 0,
+        rayleigh2_width: document.getElementById('par-r2-check').checked
+            ? parseFloat(document.getElementById('par-r2-slider').value) : 0,
+        raman_width: document.getElementById('par-ram-check').checked
+            ? parseFloat(document.getElementById('par-ram-slider').value) : 0,
+        interpolate: document.getElementById('par-interp-check').checked
+    };
+    var crop = {
+        ex_min: parseFloat(document.getElementById('par-ex-min').value) || null,
+        ex_max: parseFloat(document.getElementById('par-ex-max').value) || null,
+        em_min: parseFloat(document.getElementById('par-em-min').value) || null,
+        em_max: parseFloat(document.getElementById('par-em-max').value) || null
+    };
+    return Object.assign({
+        maps:        eemData.maps,
+        scatter:     scatter,
+        crop:        crop,
+        pigmentation: getPigmentation()
+    }, extra || {});
+}
+
+function _parafacShowError(msg) {
+    var el = document.getElementById('parafac-error');
+    el.textContent = msg;
+    el.style.display = '';
+}
+function _parafacHideError() {
+    document.getElementById('parafac-error').style.display = 'none';
+}
+
+// ── Step 1: Diagnostic (CORCONDIA) ───────────────────────────────────────────
+function runParafacDiagnostic() {
+    var err = _parafacValidate();
+    if (err) { _parafacShowError(err); return; }
+    _parafacHideError();
+
+    var spinner = document.getElementById('par-diag-spinner');
+    spinner.style.display = '';
+
+    var payload = _buildParafacPayload({
+        f_max: parseInt(document.getElementById('par-fmax-slider').value)
+    });
+
+    fetch('/api/eem_parafac_diagnostic', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        spinner.style.display = 'none';
+        if (data.error) { _parafacShowError(data.error); return; }
+        parafacDiagResults = data.results;
+        renderParafacDiagnostic(data.results);
+    })
+    .catch(function(e) {
+        spinner.style.display = 'none';
+        _parafacShowError('Request failed: ' + e);
+    });
+}
+
+function renderParafacDiagnostic(results) {
+    document.getElementById('parafac-diag-section').style.display = '';
+
+    var fs = results.map(function(r) { return r.f; });
+    var ccs = results.map(function(r) { return r.corcondia; });
+    var evs = results.map(function(r) { return r.explained_variance; });
+
+    function makeChart(canvasId, label, values, color, refLine) {
+        if (chartInst[canvasId]) chartInst[canvasId].destroy();
+        var ctx = document.getElementById(canvasId).getContext('2d');
+        var datasets = [{
+            label: label,
+            data: values,
+            borderColor: color,
+            backgroundColor: color + '33',
+            fill: false,
+            tension: 0.3,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        }];
+        if (refLine !== undefined) {
+            datasets.push({
+                label: 'Threshold (80%)',
+                data: fs.map(function() { return refLine; }),
+                borderColor: '#dc3545',
+                borderDash: [5, 4],
+                borderWidth: 1.5,
+                pointRadius: 0,
+                fill: false
+            });
+        }
+        chartInst[canvasId] = new Chart(ctx, {
+            type: 'line',
+            data: { labels: fs, datasets: datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, position: 'bottom',
+                    labels: { boxWidth: 12, font: { size: 11 } } } },
+                scales: {
+                    x: { title: { display: true, text: 'Number of components (F)',
+                                  font: { size: 11 } } },
+                    y: { title: { display: true, text: label, font: { size: 11 } } }
+                }
+            }
+        });
+    }
+
+    makeChart('parafac-corcondia-chart', 'CORCONDIA (%)', ccs, '#4472C4', 80);
+    makeChart('parafac-expvar-chart', 'Explained variance (%)', evs, '#70AD47');
+}
+
+// ── Step 2: Full PARAFAC fit ──────────────────────────────────────────────────
+function runParafac() {
+    var err = _parafacValidate();
+    if (err) { _parafacShowError(err); return; }
+    _parafacHideError();
+
+    var spinner = document.getElementById('par-fit-spinner');
+    spinner.style.display = '';
+
+    var rank = parseInt(document.getElementById('par-rank-slider').value);
+    var payload = _buildParafacPayload({
+        rank:       rank,
+        n_restarts: parseInt(document.getElementById('par-restarts-slider').value),
+        max_iter:   500,
+        tol:        parseFloat(document.getElementById('par-tol-select').value)
+    });
+
+    fetch('/api/eem_parafac', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        spinner.style.display = 'none';
+        if (data.error) { _parafacShowError(data.error); return; }
+        parafacResults = data;
+        parafacAnnotations = data.annotations.slice();
+        renderParafacResults(data);
+    })
+    .catch(function(e) {
+        spinner.style.display = 'none';
+        _parafacShowError('Request failed: ' + e);
+    });
+}
+
+function renderParafacResults(data) {
+    var section = document.getElementById('parafac-results-section');
+    section.style.display = '';
+
+    // Quality badge
+    var badge = document.getElementById('parafac-quality-badge');
+    var cls = data.explained_variance >= 90 ? 'badge-success' :
+              data.explained_variance >= 70 ? 'badge-warning' : 'badge-danger';
+    badge.className = 'badge ' + cls;
+    badge.textContent = 'Explained variance: ' + data.explained_variance + '%  |  RMSE: ' + data.rmse;
+
+    // Per-component cards
+    var row = document.getElementById('parafac-components-row');
+    row.innerHTML = '';
+    for (var r = 0; r < data.n_components; r++) {
+        row.appendChild(_buildComponentCard(r, data));
+    }
+
+    // Scores chart
+    _renderParafacScoresChart(data);
+
+    // Scores table
+    _renderParafacScoresTable(data);
+
+    // 2D maps: component fingerprints + reconstructed/residuals
+    renderParafacCompMaps(data);
+    _initParafacReconSelect(data);
+    renderParafacReconMaps();
+}
+
+function _buildComponentCard(r, data) {
+    var col = document.createElement('div');
+    col.className = 'col-md-6 mb-3';
+    col.id = 'parafac-comp-card-' + r;
+
+    var color = PARAFAC_COLORS[r % PARAFAC_COLORS.length];
+    var annot = parafacAnnotations[r] || ('Component ' + (r + 1));
+
+    col.innerHTML =
+        '<div class="card h-100">' +
+          '<div class="card-header py-1 d-flex align-items-center" style="background:' + color + '22; border-left:4px solid ' + color + ';">' +
+            '<span class="font-weight-bold mr-2" style="font-size:0.9rem;">Component ' + (r + 1) + '</span>' +
+            '<input type="text" class="form-control form-control-sm" style="max-width:260px; font-size:0.82rem;" ' +
+              'id="par-annot-' + r + '" value="' + annot + '" ' +
+              'onchange="parafacAnnotations[' + r + ']=this.value">' +
+          '</div>' +
+          '<div class="card-body p-2">' +
+            '<div class="row no-gutters">' +
+              '<div class="col-6" style="position:relative;height:140px;">' +
+                '<canvas id="par-ex-chart-' + r + '"></canvas>' +
+              '</div>' +
+              '<div class="col-6" style="position:relative;height:140px;">' +
+                '<canvas id="par-em-chart-' + r + '"></canvas>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+    // Draw charts after inserting into DOM
+    setTimeout(function() {
+        _drawLoadingChart('par-ex-chart-' + r, 'Excitation loading',
+            data.ex_wl, data.ex_loadings[r], 'Excitation (nm)', color);
+        _drawLoadingChart('par-em-chart-' + r, 'Emission loading',
+            data.em_wl, data.em_loadings[r], 'Emission (nm)', color);
+    }, 0);
+
+    return col;
+}
+
+function _drawLoadingChart(canvasId, label, wl, values, xLabel, color) {
+    if (chartInst[canvasId]) chartInst[canvasId].destroy();
+    var ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    chartInst[canvasId] = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: wl,
+            datasets: [{
+                label: label,
+                data: values,
+                borderColor: color,
+                backgroundColor: color + '22',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+                borderWidth: 1.5
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { title: { display: true, text: xLabel, font: { size: 10 } },
+                     ticks: { maxTicksLimit: 5, font: { size: 9 } } },
+                y: { min: 0, max: 1.05,
+                     title: { display: true, text: 'Loading (norm.)', font: { size: 10 } },
+                     ticks: { maxTicksLimit: 4, font: { size: 9 } } }
+            }
+        }
+    });
+}
+
+function _renderParafacScoresChart(data) {
+    if (chartInst['parafac-scores']) chartInst['parafac-scores'].destroy();
+    var ctx = document.getElementById('parafac-scores-chart').getContext('2d');
+
+    // Use group colors if assigned, else per-component grouped bar
+    var datasets = [];
+    for (var r = 0; r < data.n_components; r++) {
+        var color = PARAFAC_COLORS[r % PARAFAC_COLORS.length];
+        var label = parafacAnnotations[r] || ('Component ' + (r + 1));
+        datasets.push({
+            label: label,
+            data: data.scores_by_component[r],
+            backgroundColor: color + 'BB',
+            borderColor: color,
+            borderWidth: 1
+        });
+    }
+
+    chartInst['parafac-scores'] = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: data.sample_names, datasets: datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 14, font: { size: 11 } } }
+            },
+            scales: {
+                x: { ticks: { maxRotation: 45, font: { size: 10 } } },
+                y: { title: { display: true, text: 'Score (a.u.)', font: { size: 11 } },
+                     beginAtZero: true }
+            }
+        }
+    });
+}
+
+function _renderParafacScoresTable(data) {
+    var container = document.getElementById('parafac-scores-table-container');
+    var headers = ['Sample'].concat(data.annotations.map(function(a, i) {
+        return 'C' + (i + 1) + ': ' + a;
+    }));
+
+    var rows = data.sample_names.map(function(name, i) {
+        return [name].concat(data.scores[i].map(function(v) {
+            return v.toFixed(4);
+        }));
+    });
+
+    var html = '<table class="table table-sm table-bordered" style="font-size:0.83em;"><thead class="thead-light"><tr>' +
+        headers.map(function(h) { return '<th>' + h + '</th>'; }).join('') +
+        '</tr></thead><tbody>' +
+        rows.map(function(r) {
+            return '<tr>' + r.map(function(c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
+        }).join('') +
+        '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// ── 2D component maps ─────────────────────────────────────────────────────────
+
+function _outerProduct(emLoading, exLoading) {
+    // Returns intensity[n_em][n_ex] = emLoading[i] * exLoading[j]
+    return emLoading.map(function(em) {
+        return exLoading.map(function(ex) { return em * ex; });
+    });
+}
+
+function renderParafacCompMaps(data) {
+    var row = document.getElementById('parafac-comp-maps-row');
+    row.innerHTML = '';
+    var colorName = document.getElementById('map-colorscale').value;
+    var colClass = data.n_components <= 2 ? 'col-md-6' :
+                   data.n_components <= 4 ? 'col-md-6' : 'col-md-4';
+
+    for (var r = 0; r < data.n_components; r++) {
+        var intensity = _outerProduct(data.em_loadings[r], data.ex_loadings[r]);
+        var col = document.createElement('div');
+        col.className = colClass + ' mb-3';
+        var canvasId = 'parafac-comp-map-' + r;
+        var color = PARAFAC_COLORS[r % PARAFAC_COLORS.length];
+        col.innerHTML =
+            '<div class="d-flex align-items-center mb-1" style="border-left:3px solid ' + color + '; padding-left:5px;">' +
+              '<small class="font-weight-bold text-truncate">' +
+                'C' + (r + 1) + ': ' + (parafacAnnotations[r] || 'Component ' + (r + 1)) +
+              '</small>' +
+            '</div>' +
+            '<canvas id="' + canvasId + '" width="460" height="320" ' +
+              'style="max-width:100%; border:1px solid #dee2e6; display:block;"></canvas>';
+        row.appendChild(col);
+        // capture r in closure
+        (function(id, intens) {
+            setTimeout(function() {
+                drawHeatmap(id, data.ex_wl, data.em_wl, intens, colorName, false, 0.82);
+            }, 0);
+        })(canvasId, intensity);
+    }
+}
+
+function _initParafacReconSelect(data) {
+    var sel = document.getElementById('parafac-recon-sample-select');
+    sel.innerHTML = '';
+    data.sample_names.forEach(function(name, i) {
+        var opt = document.createElement('option');
+        opt.value = i; opt.textContent = name;
+        sel.appendChild(opt);
+    });
+}
+
+function renderParafacReconMaps() {
+    if (!parafacResults) return;
+    var data = parafacResults;
+    var colorName = document.getElementById('map-colorscale').value;
+    var sampleIdx = parseInt(document.getElementById('parafac-recon-sample-select').value) || 0;
+
+    var nEm = data.em_wl.length, nEx = data.ex_wl.length;
+    var scores_i = data.scores[sampleIdx];
+
+    // Reconstructed = Σ_r score[r] * outer(em_loading[r], ex_loading[r])
+    var recon = [];
+    for (var ei = 0; ei < nEm; ei++) {
+        recon.push([]);
+        for (var xi = 0; xi < nEx; xi++) {
+            var v = 0;
+            for (var r = 0; r < data.n_components; r++)
+                v += scores_i[r] * data.em_loadings[r][ei] * data.ex_loadings[r][xi];
+            recon[ei].push(v);
+        }
+    }
+
+    // Original map (may have different intensity grid if map_range was applied)
+    var sampleName = data.sample_names[sampleIdx];
+    var origMap = eemData && eemData.maps && eemData.maps[sampleName];
+
+    // Residual: original − reconstructed (only if grids match exactly)
+    var residual = null;
+    if (origMap && origMap.em_wl.length === nEm && origMap.ex_wl.length === nEx) {
+        residual = origMap.intensity.map(function(row, ei) {
+            return row.map(function(v, xi) { return v - recon[ei][xi]; });
+        });
+    }
+
+    // Per-sample explained variance
+    if (origMap) {
+        var ssRes = 0, ssTot = 0;
+        for (var ei = 0; ei < nEm; ei++)
+            for (var xi = 0; xi < nEx; xi++) {
+                var diff = (origMap.intensity[ei] ? origMap.intensity[ei][xi] : 0) - recon[ei][xi];
+                ssRes += diff * diff;
+                var ov = origMap.intensity[ei] ? origMap.intensity[ei][xi] : 0;
+                ssTot += ov * ov;
+            }
+        var evSample = ssTot > 0 ? (100 * (1 - ssRes / ssTot)).toFixed(1) : '—';
+        document.getElementById('parafac-recon-expvar-badge').textContent =
+            'Sample fit: ' + evSample + '%';
+    }
+
+    // Build / refresh map canvases
+    var row = document.getElementById('parafac-recon-maps-row');
+    row.innerHTML = '';
+
+    var addMap = function(id, label, colClass) {
+        var col = document.createElement('div');
+        col.className = colClass + ' mb-3';
+        col.innerHTML = '<small class="font-weight-bold d-block mb-1">' + label + '</small>' +
+                        '<canvas id="' + id + '" width="500" height="340" ' +
+                          'style="max-width:100%; border:1px solid #dee2e6; display:block;"></canvas>';
+        row.appendChild(col);
+    };
+
+    var colClass = residual ? 'col-md-4' : 'col-md-6';
+
+    if (origMap) addMap('par-orig-canvas',  'Original', colClass);
+    addMap('par-recon-canvas', 'Reconstructed (PARAFAC)', colClass);
+    if (residual) addMap('par-resid-canvas', 'Residuals (Original \u2212 Reconstructed)', colClass);
+
+    setTimeout(function() {
+        if (origMap)  drawHeatmap('par-orig-canvas',  data.ex_wl, data.em_wl, origMap.intensity, colorName, false, 0.85);
+        drawHeatmap('par-recon-canvas', data.ex_wl, data.em_wl, recon, colorName, false, 0.85);
+        if (residual) drawHeatmapDiverging('par-resid-canvas', data.ex_wl, data.em_wl, residual, 0.85);
+    }, 0);
+}
+
+function copyParafacTable() {
+    if (!parafacResults) return;
+    var data = parafacResults;
+    var headers = ['Sample'].concat(parafacAnnotations.map(function(a, i) {
+        return 'Component ' + (i + 1) + ': ' + a;
+    }));
+    var lines = [headers.join('\t')];
+    data.sample_names.forEach(function(name, i) {
+        lines.push([name].concat(data.scores[i].map(function(v) { return v.toFixed(6); })).join('\t'));
+    });
+    navigator.clipboard.writeText(lines.join('\n')).catch(function() {
+        var ta = document.createElement('textarea');
+        ta.value = lines.join('\n');
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+    });
+}

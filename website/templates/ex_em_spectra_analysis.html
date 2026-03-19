@@ -30,6 +30,8 @@
 
 {% block content %}
 <style>
+  /* Tooltip icon */
+  .par-tip { cursor:help; color:#6c9bbf; font-size:0.82em; vertical-align:middle; margin-left:3px; }
   /* ── EEM main tabs ── */
   #eemTabs { border-bottom: 2px solid #dee2e6; margin-bottom: 0; padding-bottom: 0; }
   #eemTabs .nav-link {
@@ -366,6 +368,48 @@
 
     <div class="alert alert-success mb-3 py-2" id="eem-results-summary"></div>
 
+    <!-- ── Global settings bar — always visible above all tabs ── -->
+    <div id="eem-global-settings-bar"
+         style="background:linear-gradient(135deg,#0a3c58 0%,#004085 100%);
+                border-radius:8px; padding:0.55rem 1.1rem; margin-bottom:0.75rem;
+                display:flex; align-items:center; flex-wrap:wrap; gap:1.4rem;
+                box-shadow:0 3px 10px rgba(0,40,100,0.22);">
+
+        <!-- Analysis mode -->
+        <div class="d-flex align-items-center" style="gap:0.5rem;">
+            <span style="color:#b8d4ee; font-size:0.78rem; font-weight:700;
+                         letter-spacing:0.04em; white-space:nowrap;">MODE</span>
+            <div class="ojip-seg-ctrl" id="eem-mode-btns-global"
+                 style="background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.2);">
+                <button class="btn btn-primary" data-mode="77K" onclick="switchAnalysisMode('77K')"
+                        style="font-size:0.8rem;">77 K</button>
+                <button class="btn btn-outline-primary" data-mode="RT" onclick="switchAnalysisMode('RT')"
+                        style="font-size:0.8rem;">RT</button>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="width:1px; height:28px; background:rgba(255,255,255,0.2);"></div>
+
+        <!-- Pigmentation (77K only) -->
+        <div class="d-flex align-items-center" id="global-pigm-group" style="gap:0.6rem;">
+            <span style="color:#b8d4ee; font-size:0.78rem; font-weight:700;
+                         letter-spacing:0.04em; white-space:nowrap;">PIGMENTATION</span>
+            <select id="global-pigm-select" class="form-control form-control-sm"
+                    style="width:auto; background:#1a5a80; color:#fff; border-color:rgba(255,255,255,0.3);
+                           font-size:0.82rem; font-weight:600;"
+                    onchange="switchPigmentation(this.value)">
+                <option value="checkbox_chl_only">Chl only</option>
+                <option value="checkbox_chl_PC" selected>Chl + PC</option>
+                <option value="checkbox_chl_PE">Chl + PE</option>
+                <option value="checkbox_chl_PC_PE">Chl + PC + PE</option>
+            </select>
+            <span style="color:rgba(255,255,255,0.55); font-size:0.75rem;">
+                updates Derived Parameters &amp; PARAFAC
+            </span>
+        </div>
+    </div>
+
     <!-- Tab navigation -->
     <ul class="nav nav-tabs" id="eemTabs" role="tablist">
         <li class="nav-item">
@@ -396,6 +440,12 @@
             <a class="nav-link" id="eem-deconv-tab" data-toggle="tab"
                href="#eem-deconv" role="tab">
                 <i class="fa fa-area-chart"></i> Deconvolution
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="eem-parafac-tab" data-toggle="tab"
+               href="#eem-parafac" role="tab" onclick="updateParafacTabState()">
+                <i class="fa fa-cube"></i> PARAFAC
             </a>
         </li>
     </ul>
@@ -602,7 +652,7 @@
                         <div class="form-check mb-0">
                             <input class="form-check-input" type="radio" name="checkbox_pigmentation"
                                    id="pigm_chl_only" value="checkbox_chl_only"
-                                   onchange="recomputeParamsFromMaps()">
+                                   onchange="switchPigmentation(this.value)">
                             <label class="form-check-label" for="pigm_chl_only">
                                 <strong>Chl only</strong>
                                 <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
@@ -613,7 +663,7 @@
                         <div class="form-check mb-0">
                             <input class="form-check-input" type="radio" name="checkbox_pigmentation"
                                    id="pigm_chl_PC" value="checkbox_chl_PC" checked
-                                   onchange="recomputeParamsFromMaps()">
+                                   onchange="switchPigmentation(this.value)">
                             <label class="form-check-label" for="pigm_chl_PC">
                                 <strong>Chl + PC</strong>
                                 <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
@@ -625,7 +675,7 @@
                         <div class="form-check mb-0">
                             <input class="form-check-input" type="radio" name="checkbox_pigmentation"
                                    id="pigm_chl_PE" value="checkbox_chl_PE"
-                                   onchange="recomputeParamsFromMaps()">
+                                   onchange="switchPigmentation(this.value)">
                             <label class="form-check-label" for="pigm_chl_PE">
                                 <strong>Chl + PE</strong>
                                 <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
@@ -637,7 +687,7 @@
                         <div class="form-check mb-0">
                             <input class="form-check-input" type="radio" name="checkbox_pigmentation"
                                    id="pigm_chl_PC_PE" value="checkbox_chl_PC_PE"
-                                   onchange="recomputeParamsFromMaps()">
+                                   onchange="switchPigmentation(this.value)">
                             <label class="form-check-label" for="pigm_chl_PC_PE">
                                 <strong>Chl + PC + PE</strong>
                                 <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
@@ -784,6 +834,232 @@
             <div id="deconv-sliders" class="mb-3"></div>
             <div id="deconv-results" style="font-size:0.87em;"></div>
         </div>
+
+        <!-- ── PARAFAC TAB ── -->
+        <div class="tab-pane fade" id="eem-parafac" role="tabpanel">
+
+            <!-- Not-ready banner (shown when <3 samples or grid mismatch) -->
+            <div id="parafac-not-ready" class="alert alert-info py-2 mb-3" style="font-size:0.92em;">
+                <i class="fa fa-info-circle mr-1"></i>
+                <span id="parafac-not-ready-msg">Upload at least 3 samples to enable PARAFAC analysis.</span>
+            </div>
+
+            <!-- Controls (hidden until ready) -->
+            <div id="parafac-controls" style="display:none;">
+
+                <!-- Scatter removal card -->
+                <div class="card card-body bg-light py-2 px-3 mb-3">
+                    <div class="font-weight-bold mb-2">
+                        <i class="fa fa-eraser text-primary mr-1"></i>Scatter removal
+                        <small class="text-muted font-weight-normal ml-1">(optional — applied before fitting)</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="par-r1-check" onchange="updateParafacScatterUI()">
+                                <label class="form-check-label small font-weight-bold" for="par-r1-check">
+                                    Rayleigh 1st order
+                                    <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
+                                       title="Removes the bright elastic-scatter diagonal where λ_em ≈ λ_ex. Enable when excitation and emission ranges overlap. Typical width: 10–20 nm."></i>
+                                </label>
+                            </div>
+                            <div id="par-r1-row" style="display:none; padding-left:1.4rem;">
+                                <label class="small text-muted">Band half-width ±<span id="par-r1-val">15</span> nm</label>
+                                <input type="range" class="custom-range" id="par-r1-slider" min="5" max="50" value="15" step="1"
+                                       oninput="document.getElementById('par-r1-val').textContent=this.value">
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="par-r2-check" onchange="updateParafacScatterUI()">
+                                <label class="form-check-label small font-weight-bold" for="par-r2-check">
+                                    Rayleigh 2nd order
+                                    <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
+                                       title="Removes second-harmonic scatter at λ_em ≈ 2×λ_ex (e.g. Ex 330 nm produces a band at Em 660 nm). Less common in 77 K EEM; relevant when Ex starts below 350 nm. Typical width: 10–15 nm."></i>
+                                </label>
+                            </div>
+                            <div id="par-r2-row" style="display:none; padding-left:1.4rem;">
+                                <label class="small text-muted">Band half-width ±<span id="par-r2-val">15</span> nm</label>
+                                <input type="range" class="custom-range" id="par-r2-slider" min="5" max="50" value="15" step="1"
+                                       oninput="document.getElementById('par-r2-val').textContent=this.value">
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="par-ram-check" onchange="updateParafacScatterUI()">
+                                <label class="form-check-label small font-weight-bold" for="par-ram-check">
+                                    Raman (water, ~3400 cm⁻¹)
+                                    <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
+                                       title="Removes inelastic water Raman scatter (O-H stretch, ~3400 cm⁻¹ shift). Band position depends on λ_ex. Most important in dilute liquid samples at RT; minimal in frozen 77 K samples. Typical width: 5–15 nm."></i>
+                                </label>
+                            </div>
+                            <div id="par-ram-row" style="display:none; padding-left:1.4rem;">
+                                <label class="small text-muted">Band half-width ±<span id="par-ram-val">10</span> nm</label>
+                                <input type="range" class="custom-range" id="par-ram-slider" min="5" max="30" value="10" step="1"
+                                       oninput="document.getElementById('par-ram-val').textContent=this.value">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="par-interp-check" checked>
+                        <label class="form-check-label small" for="par-interp-check">
+                            Interpolate removed bands (linear)
+                            <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
+                               title="After zeroing the scatter regions, fills them by linear interpolation from the nearest valid emission wavelengths. Strongly recommended — prevents PARAFAC from modelling the zeros as if they were real signal, which would otherwise distort components."></i>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- PARAFAC parameters card -->
+                <div class="card card-body bg-light py-2 px-3 mb-3">
+                    <div class="font-weight-bold mb-2"><i class="fa fa-sliders text-primary mr-1"></i>Model parameters</div>
+                    <div class="row align-items-end">
+                        <div class="col-sm-6 col-md-3 mb-2">
+                            <label class="small font-weight-bold d-block">
+                                Max components (diagnostic)
+                                <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
+                                   title="Number of F values tested during the CORCONDIA diagnostic (F = 1 … this value). Does NOT affect the actual fit — it only determines the range of the model-selection plots. Set to 1–2 more than you expect the true number of components to be."></i>
+                            </label>
+                            <div class="d-flex align-items-center" style="gap:6px;">
+                                <input type="range" class="custom-range flex-grow-1" id="par-fmax-slider" min="2" max="8" value="6" step="1"
+                                       oninput="document.getElementById('par-fmax-val').textContent=this.value">
+                                <span class="badge badge-secondary" id="par-fmax-val" style="min-width:1.8rem;">6</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3 mb-2">
+                            <label class="small font-weight-bold d-block">
+                                Components to fit
+                                <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
+                                   title="Number of PARAFAC components to extract. Set this based on the CORCONDIA diagnostic: choose the highest F where CORCONDIA stays ≥ 80–90%. More components = more spectral detail but risk of overfitting. For 77 K cyanobacteria EEM: typically 2–4."></i>
+                            </label>
+                            <div class="d-flex align-items-center" style="gap:6px;">
+                                <input type="range" class="custom-range flex-grow-1" id="par-rank-slider" min="1" max="8" value="2" step="1"
+                                       oninput="document.getElementById('par-rank-val').textContent=this.value">
+                                <span class="badge badge-primary" id="par-rank-val" style="min-width:1.8rem;">2</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3 mb-2">
+                            <label class="small font-weight-bold d-block">
+                                Random restarts
+                                <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
+                                   title="The ALS algorithm can converge to local minima. Each restart uses a different random initialisation; the best solution (lowest reconstruction error) is kept. 10 is sufficient for most datasets. Increase to 20–30 if scores look unstable between runs or if components swap order."></i>
+                            </label>
+                            <div class="d-flex align-items-center" style="gap:6px;">
+                                <input type="range" class="custom-range flex-grow-1" id="par-restarts-slider" min="3" max="30" value="10" step="1"
+                                       oninput="document.getElementById('par-restarts-val').textContent=this.value">
+                                <span class="badge badge-secondary" id="par-restarts-val" style="min-width:1.8rem;">10</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3 mb-2">
+                            <label class="small font-weight-bold d-block">
+                                Convergence tolerance
+                                <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
+                                   title="ALS iterations stop when the change in fit error per iteration falls below this threshold. Looser (1e-4) = faster but less precise. Default (1e-6) is appropriate for most analyses. Use 1e-8 for final publication-quality fits, especially when comparing runs."></i>
+                            </label>
+                            <select id="par-tol-select" class="form-control form-control-sm">
+                                <option value="1e-4">1e-4 (fast)</option>
+                                <option value="1e-6" selected>1e-6 (default)</option>
+                                <option value="1e-8">1e-8 (tight)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Crop range card -->
+                <div class="card card-body bg-light py-2 px-3 mb-3">
+                    <div class="font-weight-bold mb-1" style="font-size:0.9rem;">
+                        <i class="fa fa-crop text-primary mr-1"></i>Ex/Em crop range
+                        <small class="text-muted font-weight-normal ml-1">(optional — restricts the tensor before fitting; focuses PARAFAC on the relevant spectral window and excludes noisy edges)</small>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center" style="gap:0.5rem; font-size:0.85rem;">
+                        <span class="text-muted font-weight-bold">Ex</span>
+                        <input type="number" class="form-control form-control-sm" id="par-ex-min" placeholder="Min nm" style="width:80px;">
+                        <span class="text-muted">–</span>
+                        <input type="number" class="form-control form-control-sm" id="par-ex-max" placeholder="Max nm" style="width:80px;">
+                        <span class="text-muted font-weight-bold ml-2">Em</span>
+                        <input type="number" class="form-control form-control-sm" id="par-em-min" placeholder="Min nm" style="width:80px;">
+                        <span class="text-muted">–</span>
+                        <input type="number" class="form-control form-control-sm" id="par-em-max" placeholder="Max nm" style="width:80px;">
+                        <small class="text-muted ml-1">Leave blank to use the full measured range.</small>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="d-flex flex-wrap mb-3" style="gap:0.5rem;">
+                    <button class="btn btn-outline-primary" onclick="runParafacDiagnostic()">
+                        <span id="par-diag-spinner" class="spinner-border spinner-border-sm mr-1" style="display:none;" role="status"></span>
+                        <i class="fa fa-bar-chart mr-1"></i>Step 1: Run diagnostic (CORCONDIA)
+                    </button>
+                    <button class="btn btn-primary" onclick="runParafac()">
+                        <span id="par-fit-spinner" class="spinner-border spinner-border-sm mr-1" style="display:none;" role="status"></span>
+                        <i class="fa fa-cogs mr-1"></i>Step 2: Run PARAFAC
+                    </button>
+                </div>
+                <div id="parafac-error" class="alert alert-danger py-1 px-2 mb-2" style="display:none; font-size:0.88em;"></div>
+
+                <!-- Diagnostic results -->
+                <div id="parafac-diag-section" style="display:none;">
+                    <h6 class="font-weight-bold mb-1">Model selection diagnostic</h6>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <div style="position:relative; height:200px;">
+                                <canvas id="parafac-corcondia-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="position:relative; height:200px;">
+                                <canvas id="parafac-expvar-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-light py-1 px-2 mb-3" style="font-size:0.82rem; border:1px solid #dee2e6;">
+                        <b>CORCONDIA ≥ 80–90%</b>: model is trilinear — choose the highest F where it stays above this threshold. &nbsp;
+                        <b>Explained variance</b>: look for the elbow where gains diminish. &nbsp;
+                        Set <em>Components to fit</em> accordingly, then click <em>Run PARAFAC</em>.
+                    </div>
+                </div>
+
+                <!-- Fit results -->
+                <div id="parafac-results-section" style="display:none;">
+                    <hr>
+                    <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem;">
+                        <h6 class="font-weight-bold mb-0">PARAFAC components</h6>
+                        <span id="parafac-quality-badge"></span>
+                        <button class="btn btn-sm btn-outline-secondary ml-auto" onclick="copyParafacTable()">
+                            <i class="fa fa-clipboard"></i> Copy scores table
+                        </button>
+                    </div>
+                    <div id="parafac-components-row" class="row mb-3"></div>
+
+                    <h6 class="font-weight-bold">Scores per sample</h6>
+                    <p class="small text-muted mb-1">
+                        Component scores = relative abundance of each component per sample (arbitrary units, proportional to fluorescence contribution).
+                    </p>
+                    <div style="position:relative; height:320px;" class="mb-2">
+                        <canvas id="parafac-scores-chart"></canvas>
+                    </div>
+                    <div id="parafac-scores-table-container" style="overflow-x:auto;" class="mb-3"></div>
+
+                    <!-- 2D component maps -->
+                    <h6 class="font-weight-bold mt-2">2D component maps</h6>
+                    <p class="small text-muted mb-2">
+                        Each map is the outer product of excitation × emission loadings — the spectral fingerprint of that component in EEM space.
+                    </p>
+                    <div class="row" id="parafac-comp-maps-row"></div>
+
+                    <!-- Reconstructed + residuals -->
+                    <h6 class="font-weight-bold mt-1">Reconstructed EEM &amp; residuals</h6>
+                    <div class="d-flex align-items-center mb-2" style="gap:0.5rem;">
+                        <label class="mb-0 small font-weight-bold">Sample:</label>
+                        <select id="parafac-recon-sample-select" class="form-control form-control-sm"
+                                style="width:auto;" onchange="renderParafacReconMaps()"></select>
+                        <span class="badge badge-secondary" id="parafac-recon-expvar-badge"></span>
+                    </div>
+                    <div class="row" id="parafac-recon-maps-row"></div>
+                </div>
+
+            </div><!-- /parafac-controls -->
+        </div><!-- /eem-parafac tab-pane -->
 
     </div><!-- /tab-content -->
 
