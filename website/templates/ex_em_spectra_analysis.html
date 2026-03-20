@@ -165,6 +165,8 @@
                         <tr><td colspan="5" class="text-muted pt-1"><em>Measured intensities</em></td></tr>
                         <tr><td>Ex: Chl / Em: PSII</td><td>Ex440/Em689</td><td>Ex440/Em689</td><td>Ex440/Em689</td><td>Ex440/Em689</td></tr>
                         <tr><td>Ex: Chl / Em: PSI</td><td>Ex440/Em724</td><td>Ex440/Em724</td><td>Ex440/Em724</td><td>Ex440/Em724</td></tr>
+                        <tr><td>Ex: Chl / Em: CP43</td><td>Ex440/Em685</td><td>Ex440/Em685</td><td>Ex440/Em685</td><td>Ex440/Em685</td></tr>
+                        <tr><td>Ex: Chl / Em: CP47</td><td>Ex440/Em695</td><td>Ex440/Em695</td><td>Ex440/Em695</td><td>Ex440/Em695</td></tr>
                         <tr><td>Ex: PE / Em: PE</td><td></td><td></td><td>Ex560/Em580</td><td>Ex560/Em580</td></tr>
                         <tr><td>Ex: PE / Em: (Allo)PC</td><td></td><td></td><td>Ex560/Em662</td><td>Ex560/Em662</td></tr>
                         <tr><td>Ex: PE / Em: PSII</td><td></td><td></td><td>Ex560/Em689</td><td>Ex560/Em689</td></tr>
@@ -172,12 +174,16 @@
                         <tr><td>Ex: PC / Em: (Allo)PC</td><td></td><td>Ex620/Em662</td><td></td><td>Ex620/Em662</td></tr>
                         <tr><td>Ex: PC / Em: PSII</td><td></td><td>Ex620/Em689</td><td></td><td>Ex620/Em689</td></tr>
                         <tr><td>Ex: PC / Em: PSI</td><td></td><td>Ex620/Em724</td><td></td><td>Ex620/Em724</td></tr>
-                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters</em></td></tr>
-                        <tr><td>Chl-PSII</td><td>Ex440/Em689</td><td>Ex440/Em689</td><td>Ex440/Em689</td><td>Ex440/Em689</td></tr>
-                        <tr><td>Chl-PSI</td><td>Ex440/Em724</td><td>Ex440/Em724</td><td>Ex440/Em724</td><td>Ex440/Em724</td></tr>
-                        <tr><td>PBS-free</td><td></td><td>Ex620/Em662</td><td>Ex560/Em580+662</td><td>Ex560/Em580+662 + Ex620/Em662</td></tr>
-                        <tr><td>PBS-PSII</td><td></td><td>Ex620/Em689</td><td>Ex560/Em689</td><td>Ex560+620/Em689</td></tr>
-                        <tr><td>PBS-PSI</td><td></td><td>Ex620/Em724</td><td>Ex560/Em724</td><td>Ex560+620/Em724</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios)</em></td></tr>
+                        <tr><td>PSII : PSI</td><td>Em689/Em724</td><td>Em689/Em724</td><td>Em689/Em724</td><td>Em689/Em724</td></tr>
+                        <tr><td>CP43 / CP47</td><td>Em685/Em695</td><td>Em685/Em695</td><td>Em685/Em695</td><td>Em685/Em695</td></tr>
+                        <tr><td>Chl-PSII / Chl-tot</td><td>Em689/(Em689+Em724)</td><td>Em689/(Em689+Em724)</td><td>Em689/(Em689+Em724)</td><td>Em689/(Em689+Em724)</td></tr>
+                        <tr><td>Chl-PSI / Chl-tot</td><td>Em724/(Em689+Em724)</td><td>Em724/(Em689+Em724)</td><td>Em724/(Em689+Em724)</td><td>Em724/(Em689+Em724)</td></tr>
+                        <tr><td>PBS-free / PBS-tot</td><td></td><td>Ex620/Em662 ÷ PBS-tot</td><td>Ex560/(Em580+662) ÷ PBS-tot</td><td>(Ex560+620)/Em662+580 ÷ PBS-tot</td></tr>
+                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>Ex620/Em689 ÷ PBS-tot</td><td>Ex560/Em689 ÷ PBS-tot</td><td>(Ex560+620)/Em689 ÷ PBS-tot</td></tr>
+                        <tr><td>PBS-PSI / PBS-tot</td><td></td><td>Ex620/Em724 ÷ PBS-tot</td><td>Ex560/Em724 ÷ PBS-tot</td><td>(Ex560+620)/Em724 ÷ PBS-tot</td></tr>
+                        <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>Ex620/Em689÷Em724</td><td>Ex560/Em689÷Em724</td><td>(Ex560+620)/Em689÷Em724</td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PBS-tot = PBS-free + PBS-PSII + PBS-PSI (Ex560 and/or Ex620 sum, depending on pigmentation)</em></td></tr>
                     </table>
 
                     <p class="font-weight-bold mb-1 mt-2">
@@ -448,6 +454,13 @@
                 <i class="fa fa-cube"></i> PARAFAC
             </a>
         </li>
+        <li class="nav-item" id="eem-comparison-tab-li">
+            <a class="nav-link disabled" id="eem-comparison-tab" data-toggle="tab"
+               href="#eem-comparison" role="tab"
+               title="Run Gaussian batch fit (Deconvolution tab) to enable">
+                <i class="fa fa-balance-scale"></i> Comparison
+            </a>
+        </li>
     </ul>
 
     <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white mb-3" id="eemTabContent">
@@ -536,9 +549,9 @@
                 <span class="font-weight-bold">Normalization:</span>
                 <div class="ojip-seg-ctrl" id="spectra-norm-btns">
                     <button class="btn btn-outline-primary" data-norm="raw">Raw</button>
-                    <button class="btn btn-primary"         data-norm="peak">Peak</button>
-                    <button class="btn btn-outline-primary" data-norm="area">Area</button>
                     <button class="btn btn-outline-primary" data-norm="ref">Ref. λ</button>
+                    <button class="btn btn-primary"         data-norm="peak">Max</button>
+                    <button class="btn btn-outline-primary" data-norm="area">Area</button>
                 </div>
                 <span class="font-weight-bold ml-2">Palette:</span>
                 <select id="spectra-palette-select" class="form-control form-control-sm" style="width:auto;"
@@ -551,9 +564,9 @@
                 </select>
             </div>
             <div class="mb-2" style="font-size:0.8rem; color:#6c757d; line-height:1.5;">
-                <b>Peak</b> — divides each spectrum by its own maximum (max&nbsp;=&nbsp;1). &nbsp;
-                <b>Area</b> — divides by spectral area (sum of all intensity values; equivalent to the area under the curve assuming equal wavelength steps). &nbsp;
                 <b>Ref.&nbsp;λ</b> — divides by a reference intensity; <b>Fixed λ</b>: uses the exact specified wavelength; <b>Window</b>: finds the peak maximum within the specified nm range (robust to inter-sample peak shifts). Set values in the controls card above and click <em>Re-extract spectra</em>.
+                <b>Max</b> — divides each spectrum by its own maximum (max&nbsp;=&nbsp;1). &nbsp;
+                <b>Area</b> — divides by spectral area (sum of all intensity values; equivalent to the area under the curve assuming equal wavelength steps). &nbsp;
             </div>
             <!-- Single-ex badge + focus selector (populated by JS) -->
             <div class="d-flex align-items-center mb-3 flex-wrap" style="gap:0.6rem; min-height:1.8rem;">
@@ -656,7 +669,7 @@
                             <label class="form-check-label" for="pigm_chl_only">
                                 <strong>Chl only</strong>
                                 <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
-                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI)
+                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp; Ex440/Em685 (CP43) &nbsp;·&nbsp; Ex440/Em695 (CP47)
                                 </small>
                             </label>
                         </div>
@@ -667,7 +680,7 @@
                             <label class="form-check-label" for="pigm_chl_PC">
                                 <strong>Chl + PC</strong>
                                 <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
-                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp;
+                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp; Ex440/Em685 (CP43) &nbsp;·&nbsp; Ex440/Em695 (CP47) &nbsp;·&nbsp;
                                     Ex620/Em662 (PBS-free) &nbsp;·&nbsp; Ex620/Em689 (PBS-PSII) &nbsp;·&nbsp; Ex620/Em724 (PBS-PSI)
                                 </small>
                             </label>
@@ -679,7 +692,7 @@
                             <label class="form-check-label" for="pigm_chl_PE">
                                 <strong>Chl + PE</strong>
                                 <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
-                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp;
+                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp; Ex440/Em685 (CP43) &nbsp;·&nbsp; Ex440/Em695 (CP47) &nbsp;·&nbsp;
                                     Ex560/Em580 (PE) &nbsp;·&nbsp; Ex560/Em662 (PBS-free) &nbsp;·&nbsp; Ex560/Em689 (PBS-PSII) &nbsp;·&nbsp; Ex560/Em724 (PBS-PSI)
                                 </small>
                             </label>
@@ -691,7 +704,7 @@
                             <label class="form-check-label" for="pigm_chl_PC_PE">
                                 <strong>Chl + PC + PE</strong>
                                 <small class="text-muted d-block" style="font-size:0.8rem; line-height:1.4;">
-                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp;
+                                    Ex440/Em689 (Chl-PSII) &nbsp;·&nbsp; Ex440/Em724 (Chl-PSI) &nbsp;·&nbsp; Ex440/Em685 (CP43) &nbsp;·&nbsp; Ex440/Em695 (CP47) &nbsp;·&nbsp;
                                     Ex560/Em580 (PE) &nbsp;·&nbsp; Ex560/Em662 (PBS-free, PE) &nbsp;·&nbsp; Ex560/Em689 (PBS-PSII, PE) &nbsp;·&nbsp; Ex560/Em724 (PBS-PSI, PE) &nbsp;·&nbsp;
                                     Ex620/Em662 (PBS-free, PC) &nbsp;·&nbsp; Ex620/Em689 (PBS-PSII, PC) &nbsp;·&nbsp; Ex620/Em724 (PBS-PSI, PC)
                                 </small>
@@ -703,8 +716,127 @@
                 <div id="derived-param-hint" class="mt-2" style="font-size:0.8rem; color:#555;"></div>
             </div>
 
+            <!-- Wavelength settings (collapsible) -->
+            <div class="mb-2 mt-1">
+                <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button"
+                        data-toggle="collapse" data-target="#wl-settings-panel"
+                        style="font-size:0.79rem;">
+                    <i class="fa fa-sliders"></i> Wavelength settings
+                </button>
+                <div class="collapse" id="wl-settings-panel">
+                    <div class="card card-body bg-light py-2 px-3 mt-1" style="font-size:0.81rem;">
+
+                        <!-- 77K wavelengths -->
+                        <div id="wl-77k-settings">
+                            <div class="font-weight-bold mb-1 text-muted" style="font-size:0.75rem; letter-spacing:0.05em;">77 K — EXCITATION (nm)</div>
+                            <div class="row mb-2" style="row-gap:0.35rem;">
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">Chl (Ex)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-k77-ex-chl" value="440" min="420" max="470" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PC (Ex)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-k77-ex-pc" value="620" min="600" max="640" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PE (Ex)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-k77-ex-pe" value="560" min="540" max="580" onchange="updateWlConfig()">
+                                </div>
+                            </div>
+                            <div class="font-weight-bold mb-1 text-muted" style="font-size:0.75rem; letter-spacing:0.05em;">77 K — EMISSION (nm)</div>
+                            <div class="row" style="row-gap:0.35rem;">
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PSII / PBS-PSII</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-k77-em-psii" value="689" min="660" max="710" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PSI / PBS-PSI</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-k77-em-psi" value="724" min="700" max="760" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">CP43</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-k77-em-cp43" value="685" min="675" max="695" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">CP47</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-k77-em-cp47" value="695" min="685" max="710" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PBS-free</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-k77-em-pbs-free" value="662" min="645" max="680" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PE direct</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-k77-em-pe" value="580" min="565" max="600" onchange="updateWlConfig()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RT wavelengths -->
+                        <div id="wl-rt-settings" style="display:none;">
+                            <div class="font-weight-bold mb-1 text-muted" style="font-size:0.75rem; letter-spacing:0.05em;">RT — EXCITATION (nm)</div>
+                            <div class="row mb-2" style="row-gap:0.35rem;">
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">Chl (Ex)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-rt-ex-chl" value="440" min="420" max="470" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PBS (Ex)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-rt-ex-pbs" value="620" min="600" max="640" onchange="updateWlConfig()">
+                                </div>
+                            </div>
+                            <div class="font-weight-bold mb-1 text-muted" style="font-size:0.75rem; letter-spacing:0.05em;">RT — EMISSION (nm)</div>
+                            <div class="row" style="row-gap:0.35rem;">
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">F685 (PSII)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-rt-em-f685" value="685" min="675" max="695" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">F695 (CP47)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-rt-em-f695" value="695" min="685" max="710" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">F730 (PSI)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-rt-em-f730" value="730" min="710" max="750" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PBS-free (Em)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-rt-em-pbs-free" value="657" min="640" max="675" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PBS→PSII (Em)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-rt-em-pbs-psii" value="685" min="675" max="695" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PBS→PSI (Em)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-rt-em-pbs-psi" value="705" min="690" max="720" onchange="updateWlConfig()">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">PBS F730 (Em)</label>
+                                    <input type="number" class="form-control form-control-sm" id="wl-rt-em-pbs-f730" value="730" min="710" max="750" onchange="updateWlConfig()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-muted" style="font-size:0.74rem;">
+                            <i class="fa fa-info-circle"></i> Changes apply instantly. Adjust to match your spectrometer calibration or organism-specific peak positions.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="eem-77k-state-note" class="alert alert-info py-2 mb-2" style="font-size:0.9em;">
                 <i class="fa fa-info-circle mr-1"></i><strong>77K mode:</strong> Ex440/Em689 (Chl-PSII) and Ex440/Em724 (Chl-PSI) report PSII and PSI chlorophyll fluorescence; their ratio is the primary PSII/PSI stoichiometry indicator. PBS excitation bands (Ex560 for PE, Ex620 for PC) report PBS coupling state: PBS-PSII/PBS-PSI ratio reflects State 1 (PBS coupled to PSII) vs State 2 (PBS coupled to PSI). Absolute thresholds are species- and condition-specific.
+            </div>
+            <div id="eem-cp43cp47-note" class="alert alert-secondary py-2 mb-2" style="font-size:0.87em; border-left:3px solid #6c757d;">
+                <i class="fa fa-info-circle mr-1"></i><strong>CP43 / CP47 ratio</strong> — both are inner chlorophyll antenna proteins of PSII, resolvable at 77K.
+                CP43 emits at ~685 nm, CP47 at ~695 nm (both excited at 440 nm).
+                The ratio is computed as <strong>Em<sub>685</sub> / Em<sub>695</sub></strong> from direct intensity readings
+                (configurable in Wavelength settings), or from Gaussian peak areas in the Deconvolution tab.
+                A ratio &gt;1 (more CP43 than CP47 emission) is typical in healthy cells;
+                deviations reflect changes in PSII antenna stoichiometry or assembly state.
+                Note: at 77K the two peaks partially overlap (~10 nm apart), so the Gaussian deconvolution approach
+                separates their contributions more accurately than direct point readings.
             </div>
             <div id="eem-rt-state-note" class="alert alert-warning py-2 mb-2" style="display:none; font-size:0.9em;">
                 <i class="fa fa-info-circle mr-1"></i><strong>RT mode:</strong> PBS-PSII norm and PBS-PSI norm (fractions of total PBS signal at Ex620) are the primary state-transition indicators. F685/F730 (Ex440) reports the overall PSII:PSI Chl ratio. Absolute thresholds are species- and condition-specific.
@@ -785,55 +917,226 @@
 
         <!-- ── DECONVOLUTION TAB ── -->
         <div class="tab-pane fade" id="eem-deconv" role="tabpanel">
-            <div class="card card-body bg-light py-3 mb-3">
-                <div class="row mb-2">
-                    <div class="col-md-3">
-                        <label class="mb-1" style="font-size:0.87rem; font-weight:600;">Sample</label>
-                        <select id="deconv-sample-select" class="form-control form-control-sm"></select>
+
+            <div class="d-flex align-items-center mb-2" style="gap:0.5rem;">
+                <div class="alert alert-info py-2 mb-0 flex-grow-1" style="font-size:0.87em;">
+                    <i class="fa fa-info-circle mr-1"></i>
+                    All uploaded samples are assumed to share the same pigmentation selected above.
+                    Sub-tabs and peak presets update automatically when pigmentation changes.
+                </div>
+                <button class="btn btn-success btn-sm text-nowrap" id="deconv-fitall-all"
+                        onclick="runDeconvBatchAll()" style="white-space:nowrap;">
+                    <i class="fa fa-play-circle mr-1"></i> Fit all excitations
+                </button>
+                <span id="deconv-fitall-all-progress" class="text-muted text-nowrap"
+                      style="font-size:0.83rem;"></span>
+            </div>
+
+            <!-- Deconvolution sub-tab navigation -->
+            <ul class="nav nav-tabs mb-0" id="deconv-subtabs" role="tablist"
+                style="border-bottom:2px solid #dee2e6;">
+                <li class="nav-item">
+                    <a class="nav-link active" id="dcsub-440-tab" data-toggle="tab"
+                       href="#dcsub-440" role="tab">
+                        <i class="fa fa-leaf" style="color:#27ae60; margin-right:3px;"></i>
+                        <strong>Ex 440 nm</strong>
+                        <small class="d-block text-muted" style="font-size:0.72rem; line-height:1.2;">Chl · PSII / PSI</small>
+                    </a>
+                </li>
+                <li class="nav-item" id="dcsub-620-li" style="display:none;">
+                    <a class="nav-link" id="dcsub-620-tab" data-toggle="tab" href="#dcsub-620" role="tab">
+                        <strong>Ex 620 nm</strong>
+                        <small class="d-block text-muted" style="font-size:0.72rem; line-height:1.2;">PC · PBS→PSII/PSI</small>
+                    </a>
+                </li>
+                <li class="nav-item" id="dcsub-560-li" style="display:none;">
+                    <a class="nav-link" id="dcsub-560-tab" data-toggle="tab" href="#dcsub-560" role="tab">
+                        <strong>Ex 560 nm</strong>
+                        <small class="d-block text-muted" style="font-size:0.72rem; line-height:1.2;">PE · PBS→PSII/PSI</small>
+                    </a>
+                </li>
+                <li class="nav-item" style="margin-left:auto;">
+                    <a class="nav-link" id="dcsub-custom-tab" data-toggle="tab" href="#dcsub-custom" role="tab">
+                        <i class="fa fa-wrench"></i> Custom
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content border border-top-0 rounded-bottom p-3">
+
+                <!-- Ex 440 nm pane -->
+                <div class="tab-pane fade show active" id="dcsub-440" role="tabpanel">
+                    <div class="alert alert-secondary py-2 mb-3"
+                         style="font-size:0.87em; border-left:3px solid #27ae60; background:#f6faf6;">
+                        <strong>Chl Soret excitation (Ex 440 nm)</strong> — Resolves PSII inner antenna:
+                        CP43 (~685 nm), CP47 (~695 nm), and PSI long-wavelength Chl (~724 nm).
+                        Used for PSII:PSI stoichiometry and CP43/CP47 ratio.
                     </div>
-                    <div class="col-md-3">
-                        <label class="mb-1" style="font-size:0.87rem; font-weight:600;">Excitation (nm)</label>
-                        <select id="deconv-ex-select" class="form-control form-control-sm"></select>
+                    <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem;">
+                        <label class="mb-0 font-weight-bold" style="font-size:0.85rem;">Excitation:</label>
+                        <select id="deconv-ex-ex440" class="form-control form-control-sm" style="width:auto;"></select>
+                        <button class="btn btn-primary btn-sm" id="deconv-fitall-ex440"
+                                onclick="runDeconvBatch('ex440')">
+                            <i class="fa fa-play"></i> Fit all samples
+                        </button>
+                        <span id="deconv-batch-progress-ex440" class="text-muted" style="font-size:0.83rem;"></span>
                     </div>
-                    <div class="col-md-3">
-                        <label class="mb-1" style="font-size:0.87rem; font-weight:600;">Peak preset</label>
-                        <select id="deconv-preset-select" class="form-control form-control-sm"
-                                onchange="applyDeconvPreset()">
-                            <option value="ex440">Ex 440 nm — Chl (4 peaks)</option>
-                            <option value="ex620">Ex 620 nm — PC (3 peaks)</option>
-                            <option value="ex560">Ex 560 nm — PE (4 peaks)</option>
-                            <option value="custom">Custom</option>
-                        </select>
+                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:0.4rem; font-size:0.82rem;">
+                        <span class="text-muted">Em fit range:</span>
+                        <input type="number" id="deconv-em-min-ex440" class="form-control form-control-sm"
+                               value="650" min="400" max="780" style="width:68px;" title="Minimum emission wavelength for fitting (nm)">
+                        <span class="text-muted">–</span>
+                        <input type="number" id="deconv-em-max-ex440" class="form-control form-control-sm"
+                               value="750" min="400" max="780" style="width:68px;" title="Maximum emission wavelength for fitting (nm)">
+                        <span class="text-muted">nm</span>
+                        <small class="text-muted ml-1">(restricts fitting to the relevant emission window; avoids Rayleigh scatter at low wavelengths)</small>
                     </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <button class="btn btn-sm btn-primary w-100" onclick="runDeconvolution()">
-                            <i class="fa fa-calculator"></i> Fit Gaussians
+                    <div id="deconv-batch-table-ex440">
+                        <p class="text-muted" style="font-size:0.88em;">
+                            Click <strong>Fit all samples</strong> to run batch Gaussian deconvolution.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Ex 620 nm pane -->
+                <div class="tab-pane fade" id="dcsub-620" role="tabpanel">
+                    <div class="alert alert-secondary py-2 mb-3"
+                         style="font-size:0.87em; border-left:3px solid #5b9bd5; background:#f5f8fd;">
+                        <strong>Phycocyanin excitation (Ex 620 nm)</strong> — Reveals PBS coupling state:
+                        free APC (~662 nm), PBS→PSII (~689 nm), PBS→PSI (~724 nm).
+                        Used for PBS-PSII/PBS-PSI ratio and PBS coupling efficiency.
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem;">
+                        <label class="mb-0 font-weight-bold" style="font-size:0.85rem;">Excitation:</label>
+                        <select id="deconv-ex-ex620" class="form-control form-control-sm" style="width:auto;"></select>
+                        <button class="btn btn-primary btn-sm" id="deconv-fitall-ex620"
+                                onclick="runDeconvBatch('ex620')">
+                            <i class="fa fa-play"></i> Fit all samples
+                        </button>
+                        <span id="deconv-batch-progress-ex620" class="text-muted" style="font-size:0.83rem;"></span>
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:0.4rem; font-size:0.82rem;">
+                        <span class="text-muted">Em fit range:</span>
+                        <input type="number" id="deconv-em-min-ex620" class="form-control form-control-sm"
+                               value="640" min="400" max="780" style="width:68px;" title="Minimum emission wavelength for fitting (nm)">
+                        <span class="text-muted">–</span>
+                        <input type="number" id="deconv-em-max-ex620" class="form-control form-control-sm"
+                               value="750" min="400" max="780" style="width:68px;" title="Maximum emission wavelength for fitting (nm)">
+                        <span class="text-muted">nm</span>
+                        <label class="mb-0 ml-2 d-flex align-items-center" style="gap:0.25rem; cursor:pointer;" title="Automatically detect the emission start from the spectral edge (longpass filter cutoff)">
+                            <input type="checkbox" id="deconv-em-autodetect-ex620" checked onchange="autoDetectEmEdge('ex620')">
+                            <span>Auto-detect start</span>
+                        </label>
+                    </div>
+                    <div id="deconv-batch-table-ex620">
+                        <p class="text-muted" style="font-size:0.88em;">
+                            Click <strong>Fit all samples</strong> to run batch Gaussian deconvolution.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Ex 560 nm pane -->
+                <div class="tab-pane fade" id="dcsub-560" role="tabpanel">
+                    <div class="alert alert-secondary py-2 mb-3"
+                         style="font-size:0.87em; border-left:3px solid #e8a838; background:#fdf9f0;">
+                        <strong>Phycoerythrin excitation (Ex 560 nm)</strong> — Reveals PE emission
+                        (~580 nm) and PBS energy transfer:
+                        PBS-free (~662 nm), PBS→PSII (~689 nm), PBS→PSI (~724 nm).
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem;">
+                        <label class="mb-0 font-weight-bold" style="font-size:0.85rem;">Excitation:</label>
+                        <select id="deconv-ex-ex560" class="form-control form-control-sm" style="width:auto;"></select>
+                        <button class="btn btn-primary btn-sm" id="deconv-fitall-ex560"
+                                onclick="runDeconvBatch('ex560')">
+                            <i class="fa fa-play"></i> Fit all samples
+                        </button>
+                        <span id="deconv-batch-progress-ex560" class="text-muted" style="font-size:0.83rem;"></span>
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:0.4rem; font-size:0.82rem;">
+                        <span class="text-muted">Em fit range:</span>
+                        <input type="number" id="deconv-em-min-ex560" class="form-control form-control-sm"
+                               value="565" min="400" max="780" style="width:68px;" title="Minimum emission wavelength for fitting (nm)">
+                        <span class="text-muted">–</span>
+                        <input type="number" id="deconv-em-max-ex560" class="form-control form-control-sm"
+                               value="750" min="400" max="780" style="width:68px;" title="Maximum emission wavelength for fitting (nm)">
+                        <span class="text-muted">nm</span>
+                        <label class="mb-0 ml-2 d-flex align-items-center" style="gap:0.25rem; cursor:pointer;" title="Automatically detect the emission start from the spectral edge (longpass filter cutoff)">
+                            <input type="checkbox" id="deconv-em-autodetect-ex560" checked onchange="autoDetectEmEdge('ex560')">
+                            <span>Auto-detect start</span>
+                        </label>
+                    </div>
+                    <div id="deconv-batch-table-ex560">
+                        <p class="text-muted" style="font-size:0.88em;">
+                            Click <strong>Fit all samples</strong> to run batch Gaussian deconvolution.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Custom pane — existing interactive single-sample UI preserved -->
+                <div class="tab-pane fade" id="dcsub-custom" role="tabpanel">
+                    <!-- Navigation bar shown only when opened from a preset Adjust button -->
+                    <div id="deconv-custom-nav" class="align-items-center px-1 py-2 mb-2 rounded"
+                         style="display:none; background:#f0f4ff; border:1px solid #c5d0e8;">
+                        <button class="btn btn-sm btn-outline-secondary mr-2" onclick="backToPresetTab()">
+                            <i class="fa fa-arrow-left"></i> Back to summary
+                        </button>
+                        <span id="deconv-custom-nav-label" class="text-muted" style="font-size:0.85rem;"></span>
+                        <button class="btn btn-sm btn-success ml-auto" onclick="saveAdjustedFit()">
+                            <i class="fa fa-check"></i> Save fit &amp; return
                         </button>
                     </div>
+                    <div class="card card-body bg-light py-3 mb-3">
+                        <div class="row mb-2">
+                            <div class="col-md-3">
+                                <label class="mb-1" style="font-size:0.87rem; font-weight:600;">Sample</label>
+                                <select id="deconv-sample-select" class="form-control form-control-sm"></select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="mb-1" style="font-size:0.87rem; font-weight:600;">Excitation (nm)</label>
+                                <select id="deconv-ex-select" class="form-control form-control-sm"></select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="mb-1" style="font-size:0.87rem; font-weight:600;">Peak preset</label>
+                                <select id="deconv-preset-select" class="form-control form-control-sm"
+                                        onchange="applyDeconvPreset()">
+                                    <option value="ex440">Ex 440 nm — Chl (4 peaks)</option>
+                                    <option value="ex620">Ex 620 nm — PC (3 peaks)</option>
+                                    <option value="ex560">Ex 560 nm — PE (4 peaks)</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button class="btn btn-sm btn-primary w-100" onclick="runDeconvolution()">
+                                    <i class="fa fa-calculator"></i> Fit Gaussians
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center flex-wrap" style="gap:4px;">
+                            <small class="text-muted font-weight-bold mr-1">Initial peak positions (nm):</small>
+                            <span id="deconv-peaks-editor" class="d-inline-flex flex-wrap align-items-center"
+                                  style="gap:4px;"></span>
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                    style="font-size:0.8rem;" onclick="addDeconvPeak()">
+                                <i class="fa fa-plus"></i> Add peak
+                            </button>
+                        </div>
+                    </div>
+                    <div style="position:relative; height:340px;" class="mb-1">
+                        <canvas id="deconv-chart"></canvas>
+                    </div>
+                    <div class="text-muted mb-3" style="font-size:0.78rem; line-height:1.8;">
+                        <i class="fa fa-info-circle mr-1"></i>
+                        <strong>Apex ●</strong> drag ↔ position &nbsp;/&nbsp; drag ↕ amplitude &nbsp;·&nbsp;
+                        <strong>Side handles ●</strong> drag ↔ width &nbsp;·&nbsp;
+                        <strong>Double-click</strong> empty area: add peak &nbsp;·&nbsp;
+                        <strong>Double-click apex</strong>: remove peak
+                    </div>
+                    <div id="deconv-sliders" class="mb-3"></div>
+                    <div id="deconv-results" style="font-size:0.87em;"></div>
                 </div>
-                <div class="d-flex align-items-center flex-wrap" style="gap:4px;">
-                    <small class="text-muted font-weight-bold mr-1">Initial peak positions (nm):</small>
-                    <span id="deconv-peaks-editor" class="d-inline-flex flex-wrap align-items-center"
-                          style="gap:4px;"></span>
-                    <button class="btn btn-sm btn-outline-secondary py-0 px-2"
-                            style="font-size:0.8rem;" onclick="addDeconvPeak()">
-                        <i class="fa fa-plus"></i> Add peak
-                    </button>
-                </div>
-            </div>
-            <div style="position:relative; height:340px;" class="mb-1">
-                <canvas id="deconv-chart"></canvas>
-            </div>
-            <div class="text-muted mb-3" style="font-size:0.78rem; line-height:1.8;">
-                <i class="fa fa-info-circle mr-1"></i>
-                <strong>Apex ●</strong> drag ↔ position &nbsp;/&nbsp; drag ↕ amplitude &nbsp;·&nbsp;
-                <strong>Side handles ●</strong> drag ↔ width &nbsp;·&nbsp;
-                <strong>Double-click</strong> empty area: add peak &nbsp;·&nbsp;
-                <strong>Double-click apex</strong>: remove peak
-            </div>
-            <div id="deconv-sliders" class="mb-3"></div>
-            <div id="deconv-results" style="font-size:0.87em;"></div>
-        </div>
+
+            </div><!-- /.tab-content -->
+        </div><!-- /#eem-deconv -->
 
         <!-- ── PARAFAC TAB ── -->
         <div class="tab-pane fade" id="eem-parafac" role="tabpanel">
@@ -922,7 +1225,7 @@
                             </label>
                             <div class="d-flex align-items-center" style="gap:6px;">
                                 <input type="range" class="custom-range flex-grow-1" id="par-fmax-slider" min="2" max="8" value="6" step="1"
-                                       oninput="document.getElementById('par-fmax-val').textContent=this.value">
+                                       oninput="this._userSet=true; document.getElementById('par-fmax-val').textContent=this.value">
                                 <span class="badge badge-secondary" id="par-fmax-val" style="min-width:1.8rem;">6</span>
                             </div>
                         </div>
@@ -930,13 +1233,14 @@
                             <label class="small font-weight-bold d-block">
                                 Components to fit
                                 <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
-                                   title="Number of PARAFAC components to extract. Set this based on the CORCONDIA diagnostic: choose the highest F where CORCONDIA stays ≥ 80–90%. More components = more spectral detail but risk of overfitting. For 77 K cyanobacteria EEM: typically 2–4."></i>
+                                   title="Number of PARAFAC components to extract. Set this based on the CORCONDIA diagnostic: choose the highest F where CORCONDIA stays ≥ 80–90%. More components = more spectral detail but risk of overfitting."></i>
                             </label>
                             <div class="d-flex align-items-center" style="gap:6px;">
                                 <input type="range" class="custom-range flex-grow-1" id="par-rank-slider" min="1" max="8" value="2" step="1"
-                                       oninput="document.getElementById('par-rank-val').textContent=this.value">
+                                       oninput="this._userSet=true; document.getElementById('par-rank-val').textContent=this.value">
                                 <span class="badge badge-primary" id="par-rank-val" style="min-width:1.8rem;">2</span>
                             </div>
+                            <div id="par-rank-pigm-hint" class="text-muted mt-1" style="font-size:0.76rem;"></div>
                         </div>
                         <div class="col-sm-6 col-md-3 mb-2">
                             <label class="small font-weight-bold d-block">
@@ -1060,6 +1364,58 @@
 
             </div><!-- /parafac-controls -->
         </div><!-- /eem-parafac tab-pane -->
+
+        <!-- ── PARAMETERS COMPARISON TAB ── -->
+        <div class="tab-pane fade" id="eem-comparison" role="tabpanel">
+
+            <!-- Placeholder shown before any batch data exists -->
+            <div id="comparison-placeholder" class="text-center py-5 text-muted">
+                <i class="fa fa-balance-scale fa-3x mb-3 d-block" style="opacity:0.3;"></i>
+                <p class="mb-1">Run <strong>Gaussian batch fit</strong> (Deconvolution tab) to enable this tab.</p>
+                <p style="font-size:0.87em;">PARAFAC results will also be included when available.</p>
+            </div>
+
+            <!-- Main content shown once batch data is ready -->
+            <div id="comparison-content" style="display:none;">
+
+                <!-- Toolbar -->
+                <div class="d-flex align-items-center mb-3" style="gap:0.5rem; flex-wrap:wrap;">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="renderComparisonTab()">
+                        <i class="fa fa-refresh mr-1"></i> Refresh
+                    </button>
+                    <span id="comparison-status" class="text-muted" style="font-size:0.85rem; flex:1;"></span>
+                    <button class="btn btn-sm btn-success" onclick="exportComparisonToStatistics()">
+                        <i class="fa fa-send mr-1"></i> Export to Statistics
+                    </button>
+                </div>
+
+                <!-- Chl / PSII·PSI table -->
+                <h6 class="font-weight-bold mb-1" style="font-size:0.9rem;">
+                    <i class="fa fa-leaf mr-1" style="color:#27ae60;"></i>
+                    Chlorophyll / PSII · PSI &nbsp;<small class="text-muted font-weight-normal">(Ex 440 nm)</small>
+                </h6>
+                <div class="mb-3" style="overflow-x:auto;">
+                    <div id="comparison-table-chl" style="font-size:0.82em;"></div>
+                </div>
+
+                <!-- PBS table -->
+                <h6 class="font-weight-bold mb-1" style="font-size:0.9rem;">
+                    <i class="fa fa-circle mr-1" style="color:#5b9bd5;"></i>
+                    Phycobilisome coupling &nbsp;<small class="text-muted font-weight-normal">(Ex 620 nm)</small>
+                </h6>
+                <div class="mb-4" style="overflow-x:auto;">
+                    <div id="comparison-table-pbs" style="font-size:0.82em;"></div>
+                </div>
+
+                <!-- Method agreement scatter plots -->
+                <h6 class="font-weight-bold mb-2" style="font-size:0.9rem;">
+                    <i class="fa fa-dot-circle-o mr-1"></i>
+                    Method agreement &nbsp;<small class="text-muted font-weight-normal">Fixed-wavelength vs Gaussian (each point = one sample)</small>
+                </h6>
+                <div id="comparison-scatter-grid" class="row" style="margin:0 -6px;"></div>
+
+            </div><!-- /comparison-content -->
+        </div><!-- /eem-comparison tab-pane -->
 
     </div><!-- /tab-content -->
 

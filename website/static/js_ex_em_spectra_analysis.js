@@ -52,7 +52,7 @@ var FILE_COLORS = PALETTES.default;
 // ---- Parameter config ----
 var PARAM_KEYS = [
     'Chl_PSII','Chl_PSI','Chl_tot',
-    'Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI',
+    'Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI','CP43_to_CP47',
     'PBS_free','PBS_PSII','PBS_PSI','PBS_tot',
     'PBS_free_norm','PBS_PSII_norm','PBS_PSI_norm',
     'PBS_PSII_to_PBS_PSI','PC_to_PE'
@@ -64,6 +64,7 @@ var PARAM_LABELS = {
     'Chl_PSII_norm':        'Chl-PSII / Chl-tot',
     'Chl_PSI_norm':         'Chl-PSI / Chl-tot',
     'PSII_to_PSI':          'PSII : PSI',
+    'CP43_to_CP47':         'CP43 / CP47  (F685/F695, Ex440)',
     'PBS_free':             'PBS-free (a.u.)',
     'PBS_PSII':             'PBS-PSII (a.u.)',
     'PBS_PSI':              'PBS-PSI (a.u.)',
@@ -75,16 +76,40 @@ var PARAM_LABELS = {
     'PC_to_PE':             'PC : PE'
 };
 var PIGM_PARAMS = {
-    'checkbox_chl_only':   ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI'],
-    'checkbox_chl_PC':     ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI',
+    'checkbox_chl_only':   ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI','CP43_to_CP47'],
+    'checkbox_chl_PC':     ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI','CP43_to_CP47',
                             'PBS_free','PBS_PSII','PBS_PSI','PBS_tot','PBS_free_norm','PBS_PSII_norm','PBS_PSI_norm','PBS_PSII_to_PBS_PSI'],
-    'checkbox_chl_PE':     ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI',
+    'checkbox_chl_PE':     ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI','CP43_to_CP47',
                             'PBS_free','PBS_PSII','PBS_PSI','PBS_tot','PBS_free_norm','PBS_PSII_norm','PBS_PSI_norm','PBS_PSII_to_PBS_PSI'],
-    'checkbox_chl_PC_PE':  ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI',
+    'checkbox_chl_PC_PE':  ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI','CP43_to_CP47',
                             'PBS_free','PBS_PSII','PBS_PSI','PBS_tot','PBS_free_norm','PBS_PSII_norm','PBS_PSI_norm','PBS_PSII_to_PBS_PSI','PC_to_PE']
 };
-var RATIO_PARAMS = ['PSII_to_PSI','Chl_PSII_norm','Chl_PSI_norm',
+var RATIO_PARAMS = ['PSII_to_PSI','CP43_to_CP47','Chl_PSII_norm','Chl_PSI_norm',
                     'PBS_PSII_to_PBS_PSI','PBS_free_norm','PBS_PSII_norm','PBS_PSI_norm','PC_to_PE'];
+
+// ---- Configurable wavelength settings ----
+var WL_CONFIG = {
+    // 77 K mode
+    k77_ex_chl:      440,   // Chl Soret excitation
+    k77_ex_pc:       620,   // PC / PBS excitation
+    k77_ex_pe:       560,   // PE excitation
+    k77_em_psii:     689,   // Chl-PSII and PBS-PSII emission
+    k77_em_psi:      724,   // Chl-PSI and PBS-PSI emission
+    k77_em_cp43:     685,   // CP43 emission (for CP43/CP47 ratio)
+    k77_em_cp47:     695,   // CP47 emission (for CP43/CP47 ratio)
+    k77_em_pbs_free: 662,   // PBS-free (APC terminal) emission
+    k77_em_pe:       580,   // PE direct emission
+    // RT mode
+    rt_ex_chl:       440,
+    rt_ex_pbs:       620,
+    rt_em_f685:      685,   // PSII core
+    rt_em_f695:      695,   // CP47
+    rt_em_f730:      730,   // PSI
+    rt_em_pbs_free:  657,   // uncoupled PBS
+    rt_em_pbs_psii:  685,   // PBS→PSII
+    rt_em_pbs_psi:   705,   // PBS→PSI
+    rt_em_pbs_f730:  730    // direct Chl→PSI under PBS excitation
+};
 
 // ---- RT fluorescence param config ----
 var RT_PARAM_KEYS = [
@@ -198,8 +223,12 @@ function switchPigmentation(val) {
         r.checked = (r.value === val);
     });
     recomputeParamsFromMaps();
+    // Update deconvolution sub-tabs visibility for new pigmentation
+    updateDeconvSubTabs();
     // Re-annotate PARAFAC components client-side (no re-fit needed)
     if (parafacResults) _reAnnotateParafacComponents(val);
+    // Update PARAFAC rank suggestion for this pigmentation
+    updateParafacRankSuggestion(val);
 }
 
 // Client-side fluorophore table (mirrors backend _FLUOROPHORE_TABLE)
@@ -281,6 +310,11 @@ function switchAnalysisMode(mode) {
         if (pigmGroup) pigmGroup.style.display = 'none';
         var globalPigm = document.getElementById('global-pigm-group');
         if (globalPigm) globalPigm.style.display = 'none';
+        // Wavelength settings panel: show RT, hide 77K
+        var wl77 = document.getElementById('wl-77k-settings');
+        var wlRT = document.getElementById('wl-rt-settings');
+        if (wl77) wl77.style.display = 'none';
+        if (wlRT) wlRT.style.display = '';
     } else {
         if (title) title.innerHTML = '<i class="fa fa-th text-primary mr-2"></i>77K Fluorescence Spectra &amp; EEM Analyzer';
         if (alertEl) alertEl.innerHTML = '<strong>At a glance:</strong> Upload 3D excitation-emission fluorescence maps measured at 77 K to visualize pigment-protein complex composition and calculate PSII/PSI ratios and phycobilisome coupling states. Supports batch processing of up to 100 files with interactive charts, replicate grouping, and export to .xlsx.';
@@ -289,6 +323,11 @@ function switchAnalysisMode(mode) {
         if (pigmGroup) pigmGroup.style.display = '';
         var globalPigm = document.getElementById('global-pigm-group');
         if (globalPigm) globalPigm.style.display = '';
+        // Wavelength settings panel: show 77K, hide RT
+        var wl77 = document.getElementById('wl-77k-settings');
+        var wlRT = document.getElementById('wl-rt-settings');
+        if (wl77) wl77.style.display = '';
+        if (wlRT) wlRT.style.display = 'none';
     }
 
     // Update default Ex/Em wavelengths and norm values if inputs are untouched
@@ -357,6 +396,7 @@ function uploadAndAnalyze() {
             focusExWl = null;
             deconvFitParams = null;
             deconvCurrentData = null;
+            deconvBatchResults = { 'ex440': {}, 'ex620': {}, 'ex560': {} };
 
             var summary = document.getElementById('eem-results-summary');
             summary.innerHTML = '<strong>' + data.files.length + ' file(s) processed:</strong> ' +
@@ -371,7 +411,10 @@ function uploadAndAnalyze() {
 
             document.getElementById('eem-results-section').style.display = '';
             detectSingleEx();
+            recomputeParamsFromMaps();
             initDeconvUI(true);
+            autoDetectAllEmEdges();
+            updateParafacRankSuggestion(getPigmentation());
 
             document.getElementById('eem-spectra-tab').click();
             renderSpectraTab();
@@ -704,7 +747,9 @@ function applyColormap(t, name) {
     return cmap[lo].map(function(v, i) { return Math.round(v + frac * (cmap[hi][i] - v)); });
 }
 
-function drawHeatmapDiverging(canvasId, exWl, emWl, intensity, fontScale) {
+// fixedMaxAbs: optional — if supplied, uses this as the symmetric range instead of auto-scaling.
+// Pass max(original) to keep residual map on the same scale as the original EEM.
+function drawHeatmapDiverging(canvasId, exWl, emWl, intensity, fontScale, fixedMaxAbs) {
     /* Like drawHeatmap but with symmetric normalization centred at 0.
        Positive residuals → red, negative → blue, zero → white. */
     var canvas = document.getElementById(canvasId);
@@ -713,12 +758,14 @@ function drawHeatmapDiverging(canvasId, exWl, emWl, intensity, fontScale) {
     if (!nEx || !nEm) return;
     var fs = fontScale || 1.0;
 
-    var maxAbs = 0;
-    for (var i = 0; i < nEm; i++)
-        for (var j = 0; j < nEx; j++) {
-            var v = Math.abs(intensity[i][j]);
-            if (v > maxAbs) maxAbs = v;
-        }
+    var maxAbs = fixedMaxAbs || 0;
+    if (!fixedMaxAbs) {
+        for (var i = 0; i < nEm; i++)
+            for (var j = 0; j < nEx; j++) {
+                var v = Math.abs(intensity[i][j]);
+                if (v > maxAbs) maxAbs = v;
+            }
+    }
     if (maxAbs === 0) maxAbs = 1;
 
     var offscreen = document.createElement('canvas');
@@ -1040,19 +1087,26 @@ function openEnlargedMap(fname, idx) {
 function renderDerivedTab() {
     if (!eemData) return;
     dirtyTabs.delete('derived');
+    var is77K = eemData.analysis_mode === '77K';
     var rtNote = document.getElementById('eem-rt-state-note');
-    if (rtNote) rtNote.style.display = (eemData.analysis_mode === 'RT') ? '' : 'none';
+    if (rtNote) rtNote.style.display = is77K ? 'none' : '';
     var k77Note = document.getElementById('eem-77k-state-note');
-    if (k77Note) k77Note.style.display = (eemData.analysis_mode === '77K') ? '' : 'none';
+    if (k77Note) k77Note.style.display = is77K ? '' : 'none';
+    var cp43Note = document.getElementById('eem-cp43cp47-note');
+    if (cp43Note) cp43Note.style.display = is77K ? '' : 'none';
     renderParamsChart();
     renderParamsTable();
 }
 
 function getAvailParams() {
-    var allKeys = (eemData.analysis_mode === 'RT')
-        ? RT_PARAM_KEYS
-        : (PIGM_PARAMS[eemData.pigmentation] || PIGM_PARAMS['checkbox_chl_only']);
+    var isRT = eemData.analysis_mode === 'RT';
+    var allKeys = isRT ? RT_PARAM_KEYS
+                       : (PIGM_PARAMS[eemData.pigmentation] || PIGM_PARAMS['checkbox_chl_only']);
+    var ratioList = isRT ? RT_RATIO_PARAMS : RATIO_PARAMS;
     return allKeys.filter(function(p) {
+        // Ratio params are always shown (show 0 if not computable for this dataset)
+        if (ratioList.indexOf(p) !== -1) return true;
+        // Raw intensity params: only show if at least one sample has a value
         return eemData.files.some(function(f) {
             var v = (eemData.params[f] || {})[p];
             return v !== null && v !== undefined;
@@ -1522,6 +1576,359 @@ function exportToStatistics() {
 }
 
 // ============================================================
+// Parameters Comparison tab
+// ============================================================
+
+// Parameter groups for the comparison tab
+// fixedKey: key in eemData.params; gaussKey: key from computeGaussianParamsFromBatch()
+var COMPARISON_GROUPS = [
+    {
+        id: 'chl',
+        label: 'Chlorophyll / PSII·PSI (Ex 440 nm)',
+        params: [
+            { key: 'PSII_to_PSI',   label: 'PSII : PSI',          fixedKey: 'PSII_to_PSI',   gaussKey: 'PSII_to_PSI_gauss',   parafacKey: 'PSII_to_PSI_parafac' },
+            { key: 'CP43_to_CP47',  label: 'CP43 / CP47',         fixedKey: 'CP43_to_CP47',  gaussKey: 'CP43_to_CP47_gauss',  parafacKey: 'CP43_to_CP47_parafac' },
+            { key: 'Chl_PSII_norm', label: 'Chl-PSII / Chl-tot', fixedKey: 'Chl_PSII_norm', gaussKey: 'Chl_PSII_norm_gauss', parafacKey: 'Chl_PSII_norm_parafac' },
+            { key: 'Chl_PSI_norm',  label: 'Chl-PSI / Chl-tot',  fixedKey: 'Chl_PSI_norm',  gaussKey: 'Chl_PSI_norm_gauss',  parafacKey: 'Chl_PSI_norm_parafac' }
+        ]
+    },
+    {
+        id: 'pbs',
+        label: 'Phycobilisome coupling (Ex 620 nm)',
+        params: [
+            { key: 'PBS_PSII_to_PBS_PSI', label: 'PBS-PSII : PBS-PSI', fixedKey: 'PBS_PSII_to_PBS_PSI', gaussKey: 'PBS_PSII_to_PBS_PSI_gauss', parafacKey: 'PBS_PSII_to_PBS_PSI_parafac' },
+            { key: 'PBS_free_norm',       label: 'PBS-free / PBS-tot', fixedKey: 'PBS_free_norm',       gaussKey: 'PBS_free_norm_gauss',       parafacKey: 'PBS_free_norm_parafac' },
+            { key: 'PBS_PSII_norm',       label: 'PBS-PSII / PBS-tot', fixedKey: 'PBS_PSII_norm',       gaussKey: 'PBS_PSII_norm_gauss',       parafacKey: 'PBS_PSII_norm_parafac' },
+            { key: 'PBS_PSI_norm',        label: 'PBS-PSI / PBS-tot',  fixedKey: 'PBS_PSI_norm',        gaussKey: 'PBS_PSI_norm_gauss',        parafacKey: 'PBS_PSI_norm_parafac' }
+        ]
+    }
+];
+
+// Compute peak area = |A| × |σ| × √(2π) for each Gaussian component
+function _peakArea(fitParams, i) {
+    return Math.abs(fitParams[i * 3]) * Math.abs(fitParams[i * 3 + 2]) * Math.sqrt(2 * Math.PI);
+}
+
+// Derive biological parameters from deconvBatchResults using peak areas
+function computeGaussianParamsFromBatch() {
+    if (!eemData) return {};
+    var out = {};
+    eemData.files.forEach(function(fname) {
+        var p = {};
+
+        // ── Ex 440: Chl / PSII / PSI peaks ──
+        var r440 = deconvBatchResults.ex440 && deconvBatchResults.ex440[fname];
+        if (r440 && r440.fitParams) {
+            var fp = r440.fitParams, n = fp.length / 3;
+            var aChl = 0, aCP43 = 0, aCP47 = 0, aPSI = 0;
+            for (var i = 0; i < n; i++) {
+                var mu = fp[i * 3 + 1], area = _peakArea(fp, i);
+                if      (mu < 680)  aChl  += area;
+                else if (mu < 690)  aCP43 += area;
+                else if (mu < 710)  aCP47 += area;
+                else                aPSI  += area;
+            }
+            var aPSII = aCP43 + aCP47;
+            var aTot  = aChl + aPSII + aPSI;
+            if (aPSII > 0 && aPSI  > 0) p.PSII_to_PSI_gauss    = aPSII / aPSI;
+            if (aCP43 > 0 && aCP47 > 0) p.CP43_to_CP47_gauss    = aCP43 / aCP47;
+            if (aTot  > 0 && aPSII > 0) p.Chl_PSII_norm_gauss   = aPSII / aTot;
+            if (aTot  > 0 && aPSI  > 0) p.Chl_PSI_norm_gauss    = aPSI  / aTot;
+        }
+
+        // ── Ex 620: PBS-free / PBS→PSII / PBS→PSI peaks ──
+        var r620 = deconvBatchResults.ex620 && deconvBatchResults.ex620[fname];
+        if (r620 && r620.fitParams) {
+            var fp2 = r620.fitParams, n2 = fp2.length / 3;
+            var aFree = 0, aPBSpsii = 0, aPBSpsi = 0;
+            for (var j = 0; j < n2; j++) {
+                var mu2 = fp2[j * 3 + 1], area2 = _peakArea(fp2, j);
+                if      (mu2 < 675) aFree    += area2;
+                else if (mu2 < 710) aPBSpsii += area2;
+                else                aPBSpsi  += area2;
+            }
+            var aTot2 = aFree + aPBSpsii + aPBSpsi;
+            if (aTot2 > 0) {
+                if (aFree    > 0) p.PBS_free_norm_gauss       = aFree    / aTot2;
+                if (aPBSpsii > 0) p.PBS_PSII_norm_gauss       = aPBSpsii / aTot2;
+                if (aPBSpsi  > 0) p.PBS_PSI_norm_gauss        = aPBSpsi  / aTot2;
+                if (aPBSpsii > 0 && aPBSpsi > 0)
+                    p.PBS_PSII_to_PBS_PSI_gauss = aPBSpsii / aPBSpsi;
+            }
+        }
+
+        out[fname] = p;
+    });
+    return out;
+}
+
+// Enable / disable the Comparison tab based on available batch data
+function updateComparisonTabState() {
+    var hasData = eemData && eemData.files.length &&
+        deconvBatchResults.ex440 && Object.keys(deconvBatchResults.ex440).length > 0;
+    var tabLink = document.getElementById('eem-comparison-tab');
+    if (!tabLink) return;
+    if (hasData) {
+        tabLink.classList.remove('disabled');
+        tabLink.removeAttribute('title');
+    } else {
+        if (!tabLink.classList.contains('disabled')) tabLink.classList.add('disabled');
+        tabLink.title = 'Run Gaussian batch fit (Deconvolution tab) to enable';
+    }
+}
+
+// Build one comparison table (one COMPARISON_GROUPS entry)
+// parafacParams: optional — pass null/undefined to hide PARAFAC column
+function _buildComparisonTable(group, files, fixedParams, gaussParams, parafacParams) {
+    var params = group.params;
+    var hasPF = !!parafacParams;
+    var nCols = hasPF ? 3 : 2;
+
+    var thead1 = '<tr><th style="min-width:140px;">Sample</th>';
+    var thead2 = '<tr><th></th>';
+    params.forEach(function(p) {
+        thead1 += '<th colspan="' + nCols + '" class="text-center" style="border-left:2px solid #dee2e6; white-space:nowrap;">' + p.label + '</th>';
+        thead2 += '<th class="text-center text-muted" style="font-size:0.78rem; border-left:2px solid #dee2e6; white-space:nowrap;">Fixed-WL</th>' +
+                  '<th class="text-center text-muted" style="font-size:0.78rem; white-space:nowrap;">Gaussian</th>';
+        if (hasPF) thead2 += '<th class="text-center text-muted" style="font-size:0.78rem; white-space:nowrap;">PARAFAC</th>';
+    });
+    thead1 += '</tr>'; thead2 += '</tr>';
+
+    var tbody = '';
+    files.forEach(function(fname) {
+        var grpLabel = groups[fname] || '';
+        var fp = fixedParams[fname] || {};
+        var gp = gaussParams[fname] || {};
+        var pp = hasPF ? (parafacParams[fname] || {}) : {};
+        tbody += '<tr><td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + fname + '">' +
+            (grpLabel ? '<span class="badge badge-light mr-1">' + grpLabel + '</span>' : '') + fname + '</td>';
+        params.forEach(function(p) {
+            var fv = fp[p.fixedKey], gv = gp[p.gaussKey], pv = hasPF ? pp[p.parafacKey] : undefined;
+            var fmt = function(v) { return (v != null && isFinite(v)) ? v.toFixed(3) : '<span class="text-muted">—</span>'; };
+            // Flag >20% relative discrepancy vs fixed-WL
+            var disc = function(v) {
+                if (fv == null || v == null || !isFinite(fv) || !isFinite(v)) return '';
+                var d = (Math.abs(fv) + Math.abs(v)) / 2;
+                return d > 0 && Math.abs(fv - v) / d > 0.20 ? ' style="color:#c0392b;"' : '';
+            };
+            tbody += '<td class="text-center" style="border-left:2px solid #dee2e6;">' + fmt(fv) + '</td>' +
+                     '<td class="text-center"' + disc(gv) + '>' + fmt(gv) + '</td>';
+            if (hasPF) tbody += '<td class="text-center"' + disc(pv) + '>' + fmt(pv) + '</td>';
+        });
+        tbody += '</tr>';
+    });
+
+    return '<table class="table table-sm table-bordered table-hover mb-0" style="font-size:0.82em;">' +
+        '<thead class="thead-light">' + thead1 + thead2 + '</thead>' +
+        '<tbody>' + tbody + '</tbody></table>';
+}
+
+// Compute linear regression y = a*x + b, returns {a, b, r2}
+function _linReg(xs, ys) {
+    var n = xs.length;
+    if (n < 2) return null;
+    var mx = xs.reduce(function(s, v) { return s + v; }, 0) / n;
+    var my = ys.reduce(function(s, v) { return s + v; }, 0) / n;
+    var ssxy = 0, ssxx = 0, ssyy = 0;
+    for (var i = 0; i < n; i++) {
+        ssxy += (xs[i] - mx) * (ys[i] - my);
+        ssxx += (xs[i] - mx) * (xs[i] - mx);
+        ssyy += (ys[i] - my) * (ys[i] - my);
+    }
+    if (ssxx === 0) return null;
+    var a = ssxy / ssxx, b = my - a * mx;
+    var r2 = (ssxx > 0 && ssyy > 0) ? (ssxy * ssxy) / (ssxx * ssyy) : 0;
+    return { a: a, b: b, r2: r2 };
+}
+
+// Render all method-agreement scatter plots into #comparison-scatter-grid
+function _renderComparisonScatter(files, fixedParams, gaussParams, parafacParams) {
+    var container = document.getElementById('comparison-scatter-grid');
+    if (!container) return;
+
+    // Destroy any existing charts
+    Object.keys(chartInst).filter(function(k) { return k.indexOf('cmp-') === 0; }).forEach(function(k) {
+        chartInst[k].destroy(); delete chartInst[k];
+    });
+    container.innerHTML = '';
+
+    // Color by group
+    var palette = ['#2980b9','#27ae60','#e74c3c','#f39c12','#8e44ad','#16a085','#d35400','#2c3e50'];
+    var groupList = Object.keys(groups).map(function(f) { return groups[f]; })
+        .filter(function(g, i, a) { return g && a.indexOf(g) === i; }).sort();
+
+    COMPARISON_GROUPS.forEach(function(grp) {
+        grp.params.forEach(function(p) {
+            var xs = [], ys = [], pxs = [], pys = [], colors = [];
+            files.forEach(function(fname) {
+                var fv = (fixedParams[fname] || {})[p.fixedKey];
+                var gv = (gaussParams[fname] || {})[p.gaussKey];
+                var gi = groupList.indexOf(groups[fname] || '');
+                var col = palette[Math.max(gi, 0) % palette.length];
+                if (fv != null && gv != null && isFinite(fv) && isFinite(gv)) {
+                    xs.push(fv); ys.push(gv); colors.push(col);
+                }
+                if (parafacParams && fv != null && isFinite(fv)) {
+                    var pv = (parafacParams[fname] || {})[p.parafacKey];
+                    if (pv != null && isFinite(pv)) { pxs.push(fv); pys.push(pv); }
+                }
+            });
+            if (xs.length < 2 && pxs.length < 2) return;
+
+            var reg  = xs.length  >= 2 ? _linReg(xs,  ys)  : null;
+            var regP = pxs.length >= 2 ? _linReg(pxs, pys) : null;
+            var allVals = xs.concat(ys).concat(pxs).concat(pys);
+            var vMin = Math.min.apply(null, allVals), vMax = Math.max.apply(null, allVals);
+            var pad  = (vMax - vMin) * 0.1 || 0.05;
+            vMin -= pad; vMax += pad;
+
+            // R² summary line
+            var r2line = '';
+            if (reg)  r2line += 'Gauss R²=' + reg.r2.toFixed(3)  + (reg.r2  < 0.90 ? '⚠' : '');
+            if (regP) r2line += (r2line ? '  ' : '') + 'PF R²=' + regP.r2.toFixed(3) + (regP.r2 < 0.90 ? '⚠' : '');
+
+            var col = document.createElement('div');
+            col.className = 'col-md-3 col-sm-6 mb-3 px-1';
+            col.innerHTML = '<div class="card border"><div class="card-body p-1">' +
+                '<div style="font-size:0.75rem; font-weight:600; text-align:center; margin-bottom:2px;">' + p.label + '</div>' +
+                '<div style="position:relative; height:180px;"><canvas id="cmp-scatter-' + p.key + '"></canvas></div>' +
+                (r2line ? '<div style="font-size:0.70rem; text-align:center; color:#555; margin-top:2px;">' + r2line + '</div>' : '') +
+                '</div></div>';
+            container.appendChild(col);
+
+            var canvas  = document.getElementById('cmp-scatter-' + p.key);
+            var idLine  = [{ x: vMin, y: vMin }, { x: vMax, y: vMax }];
+            var mkRegLine = function(r) { return r ? [{ x: vMin, y: r.a*vMin+r.b }, { x: vMax, y: r.a*vMax+r.b }] : []; };
+
+            var datasets = [
+                { label: 'Gaussian', data: xs.map(function(x, i) { return { x: x, y: ys[i] }; }),
+                  pointBackgroundColor: colors, pointRadius: 5, pointHoverRadius: 7, pointStyle: 'circle' },
+                { label: 'Identity', data: idLine, type: 'line',
+                  borderColor: '#aaa', borderDash: [4,4], borderWidth: 1, pointRadius: 0, fill: false }
+            ];
+            if (reg)  datasets.push({ label: 'Reg (Gauss)', data: mkRegLine(reg),  type: 'line', borderColor: '#e74c3c', borderWidth: 1.5, pointRadius: 0, fill: false });
+            if (pxs.length >= 2) datasets.push(
+                { label: 'PARAFAC', data: pxs.map(function(x, i) { return { x: x, y: pys[i] }; }),
+                  pointBackgroundColor: '#8e44ad', pointBorderColor: '#fff', pointBorderWidth: 1,
+                  pointRadius: 6, pointHoverRadius: 8, pointStyle: 'rect' }
+            );
+            if (regP) datasets.push({ label: 'Reg (PF)', data: mkRegLine(regP), type: 'line', borderColor: '#8e44ad', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, fill: false });
+
+            chartInst['cmp-' + p.key] = new Chart(canvas, {
+                type: 'scatter',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    legend: { display: pxs.length >= 2, labels: { fontSize: 9, boxWidth: 10 } },
+                    scales: {
+                        xAxes: [{ type: 'linear', scaleLabel: { display: true, labelString: 'Fixed-WL', fontSize: 10 },
+                            ticks: { fontSize: 9, min: vMin, max: vMax } }],
+                        yAxes: [{ scaleLabel: { display: true, labelString: 'Gauss / PARAFAC', fontSize: 10 },
+                            ticks: { fontSize: 9, min: vMin, max: vMax } }]
+                    },
+                    tooltips: { callbacks: { label: function(item) {
+                        return item.datasetIndex <= 1 ? null :
+                            '(' + Number(item.xLabel).toFixed(3) + ', ' + Number(item.yLabel).toFixed(3) + ')';
+                    }}}
+                }
+            });
+        });
+    });
+}
+
+// Main render function for the Comparison tab
+function renderComparisonTab() {
+    if (!eemData) return;
+    var placeholder = document.getElementById('comparison-placeholder');
+    var content = document.getElementById('comparison-content');
+    var hasData = deconvBatchResults.ex440 && Object.keys(deconvBatchResults.ex440).length > 0;
+
+    if (!hasData) {
+        if (placeholder) placeholder.style.display = '';
+        if (content) content.style.display = 'none';
+        return;
+    }
+    if (placeholder) placeholder.style.display = 'none';
+    if (content) content.style.display = '';
+
+    var files = eemData.files;
+    var fixedParams  = eemData.params;
+    var gaussParams  = computeGaussianParamsFromBatch();
+    var hasPF = parafacResults && parafacPigmAssign.some(function(a) { return a && a !== '' && a !== 'other'; });
+    var parafacParams = hasPF ? computeParafacParams() : null;
+
+    // Status line
+    var has620 = deconvBatchResults.ex620 && Object.keys(deconvBatchResults.ex620).length > 0;
+    var has560 = deconvBatchResults.ex560 && Object.keys(deconvBatchResults.ex560).length > 0;
+    var methods = ['Fixed-wavelength', 'Gaussian (Ex 440)'];
+    if (has620) methods.push('Gaussian (Ex 620)');
+    if (has560) methods.push('Gaussian (Ex 560)');
+    if (hasPF)  methods.push('PARAFAC');
+    var statusEl = document.getElementById('comparison-status');
+    if (statusEl) statusEl.textContent = files.length + ' samples · Methods: ' + methods.join(', ') +
+        '  ·  Red values differ >20% between methods.';
+
+    // Tables
+    COMPARISON_GROUPS.forEach(function(grp) {
+        var targetDiv = document.getElementById('comparison-table-' + grp.id);
+        if (targetDiv) targetDiv.innerHTML = _buildComparisonTable(grp, files, fixedParams, gaussParams, parafacParams);
+    });
+
+    // Scatter plots
+    _renderComparisonScatter(files, fixedParams, gaussParams, parafacParams);
+}
+
+// Export merged Fixed-WL + Gaussian-derived parameters to Statistics page
+function exportComparisonToStatistics() {
+    if (!eemData) return;
+    var assignedFiles = eemData.files.filter(function(f) { return groups[f]; });
+    if (!assignedFiles.length) { alert('Please assign groups in the Groups tab first.'); return; }
+
+    var gaussParams   = computeGaussianParamsFromBatch();
+    var hasPF         = parafacResults && parafacPigmAssign.some(function(a) { return a && a !== '' && a !== 'other'; });
+    var parafacParams = hasPF ? computeParafacParams() : null;
+    var fixedAvail    = getAvailParams();
+
+    // Label maps and active keys per method
+    var gaussLabelMap = {}, pfLabelMap = {};
+    var gaussKeys = [], pfKeys = [];
+    COMPARISON_GROUPS.forEach(function(grp) {
+        grp.params.forEach(function(p) {
+            gaussLabelMap[p.gaussKey]   = p.label + ' (Gauss)';
+            pfLabelMap[p.parafacKey]    = p.label + ' (PARAFAC)';
+            if (gaussKeys.indexOf(p.gaussKey) === -1 &&
+                assignedFiles.some(function(f) { var v=(gaussParams[f]||{})[p.gaussKey]; return v!=null&&isFinite(v); }))
+                gaussKeys.push(p.gaussKey);
+            if (hasPF && pfKeys.indexOf(p.parafacKey) === -1 &&
+                assignedFiles.some(function(f) { var v=(parafacParams[f]||{})[p.parafacKey]; return v!=null&&isFinite(v); }))
+                pfKeys.push(p.parafacKey);
+        });
+    });
+
+    var header = ['Group', 'Sample']
+        .concat(fixedAvail.map(function(k) { return getParamLabel(k) + ' (Fixed-WL)'; }))
+        .concat(gaussKeys.map(function(k) { return gaussLabelMap[k]; }))
+        .concat(pfKeys.map(function(k)    { return pfLabelMap[k]; }))
+        .join('\t');
+
+    var rows = assignedFiles.map(function(fname) {
+        var fp = eemData.params[fname] || {};
+        var gp = gaussParams[fname]    || {};
+        var pp = parafacParams ? (parafacParams[fname] || {}) : {};
+        var fVals = fixedAvail.map(function(k) { var v=fp[k]; return (v!=null&&isFinite(v))?v.toFixed(6):''; });
+        var gVals = gaussKeys.map(function(k)  { var v=gp[k]; return (v!=null&&isFinite(v))?v.toFixed(6):''; });
+        var pVals = pfKeys.map(function(k)     { var v=pp[k]; return (v!=null&&isFinite(v))?v.toFixed(6):''; });
+        return [groups[fname], fname].concat(fVals).concat(gVals).concat(pVals).join('\t');
+    });
+
+    sessionStorage.setItem('ojip_export', JSON.stringify({
+        tsv: [header].concat(rows).join('\n'),
+        source: 'EEM Analyzer'
+    }));
+    window.open('/statistics', '_blank');
+}
+
+// ============================================================
 // Gaussian Deconvolution — LM solver
 // ============================================================
 function gaussianSum(params, x) {
@@ -1621,6 +2028,501 @@ var DECONV_PRESETS = {
     'custom': [689, 724]
 };
 
+// ── Batch deconvolution state ──────────────────────────────────────────────
+var deconvBatchResults = { 'ex440': {}, 'ex620': {}, 'ex560': {} };
+
+// ── Preset configuration (uses WL_CONFIG for pigmentation-aware peaks) ─────
+var DECONV_PRESET_CONFIG = {
+    'ex440': {
+        targetEx: 440,
+        getPeaks: function() {
+            var W = WL_CONFIG;
+            return [675, W.k77_em_cp43, W.k77_em_cp47, W.k77_em_psi];
+        },
+        pigmAll: true,
+        emMin: 650, emMax: 750, autoDetect: false
+    },
+    'ex620': {
+        targetEx: 620,
+        getPeaks: function() {
+            var W = WL_CONFIG;
+            return [W.k77_em_pbs_free, W.k77_em_psii, W.k77_em_psi];
+        },
+        pigmFilter: ['checkbox_chl_PC', 'checkbox_chl_PC_PE'],
+        emMin: 640, emMax: 750, autoDetect: true
+    },
+    'ex560': {
+        targetEx: 560,
+        getPeaks: function() {
+            var W = WL_CONFIG;
+            return [W.k77_em_pe, W.k77_em_pbs_free, W.k77_em_psii, W.k77_em_psi];
+        },
+        pigmFilter: ['checkbox_chl_PE', 'checkbox_chl_PC_PE'],
+        emMin: 565, emMax: 750, autoDetect: true
+    }
+};
+
+// Suggested PARAFAC component counts per pigmentation type
+var PIGM_SUGGESTED_RANK = {
+    'checkbox_chl_only':   2,
+    'checkbox_chl_PC':     5,
+    'checkbox_chl_PE':     6,
+    'checkbox_chl_PC_PE':  8
+};
+
+// Update PARAFAC rank slider suggestion when pigmentation changes
+function updateParafacRankSuggestion(pigm) {
+    var suggested = PIGM_SUGGESTED_RANK[pigm] || 3;
+    var hint = document.getElementById('par-rank-pigm-hint');
+    if (hint) hint.textContent = 'Suggested for this pigmentation: ' + suggested + ' component' + (suggested > 1 ? 's' : '');
+    var slider = document.getElementById('par-rank-slider');
+    var valDisplay = document.getElementById('par-rank-val');
+    if (slider && !slider._userSet) {
+        slider.value = Math.min(suggested, parseInt(slider.max));
+        if (valDisplay) valDisplay.textContent = slider.value;
+    }
+    // Set diagnostic range to suggested + 2 so the scree plot shows the drop-off
+    var fmaxSlider = document.getElementById('par-fmax-slider');
+    var fmaxVal = document.getElementById('par-fmax-val');
+    if (fmaxSlider && !fmaxSlider._userSet) {
+        var fmax = Math.min(suggested + 2, parseInt(fmaxSlider.max));
+        fmaxSlider.value = fmax;
+        if (fmaxVal) fmaxVal.textContent = fmax;
+    }
+}
+
+// Auto-detect spectral emission edge (longpass filter cutoff) for one preset
+// Sets the Em min input based on where signal rises above 3% of max
+function autoDetectEmEdge(preset) {
+    var autoEl = document.getElementById('deconv-em-autodetect-' + preset);
+    if (autoEl && !autoEl.checked) return;
+    if (!eemData || !eemData.files.length) return;
+    var cfg = DECONV_PRESET_CONFIG[preset];
+    if (!cfg) return;
+
+    var fname = eemData.files[0];
+    var mapData = eemData.maps[fname];
+    if (!mapData) return;
+
+    // Find nearest excitation index to preset target
+    var xi = -1, bestDx = Infinity;
+    mapData.ex_wl.forEach(function(v, i) {
+        var d = Math.abs(v - cfg.targetEx);
+        if (d < bestDx) { bestDx = d; xi = i; }
+    });
+    if (xi === -1) return;
+
+    var emWl = mapData.em_wl;
+    var yArr = mapData.intensity.map(function(row) { return row[xi]; });
+    var yMax = Math.max.apply(null, yArr.map(Math.abs));
+    if (yMax === 0) return;
+
+    // Find first point exceeding 3% of max
+    var threshold = 0.03 * yMax;
+    var edgeIdx = 0;
+    for (var i = 0; i < yArr.length; i++) {
+        if (Math.abs(yArr[i]) > threshold) { edgeIdx = i; break; }
+    }
+
+    // Add 5 nm buffer and round to nearest 5 nm
+    var edgeWl = Math.round((emWl[edgeIdx] + 5) / 5) * 5;
+    var emMinEl = document.getElementById('deconv-em-min-' + preset);
+    if (emMinEl) emMinEl.value = edgeWl;
+}
+
+// Auto-detect edges for all presets that have autoDetect enabled
+function autoDetectAllEmEdges() {
+    ['ex620', 'ex560'].forEach(function(preset) {
+        var cfg = DECONV_PRESET_CONFIG[preset];
+        if (cfg && cfg.autoDetect) autoDetectEmEdge(preset);
+    });
+}
+
+// Show/hide Ex 620 and Ex 560 sub-tabs based on current pigmentation
+function updateDeconvSubTabs() {
+    var pigm = getPigmentation();
+    var mode = (eemData && eemData.analysis_mode) || analysisMode;
+    var show620 = mode === '77K' && (pigm === 'checkbox_chl_PC' || pigm === 'checkbox_chl_PC_PE');
+    var show560 = mode === '77K' && (pigm === 'checkbox_chl_PE' || pigm === 'checkbox_chl_PC_PE');
+
+    var li620 = document.getElementById('dcsub-620-li');
+    var li560 = document.getElementById('dcsub-560-li');
+    if (li620) li620.style.display = show620 ? '' : 'none';
+    if (li560) li560.style.display = show560 ? '' : 'none';
+
+    // If the currently-active tab is now hidden, fall back to Ex 440
+    ['dcsub-620-tab', 'dcsub-560-tab'].forEach(function(tabId) {
+        var tab = document.getElementById(tabId);
+        if (tab && tab.classList.contains('active')) {
+            var li = tab.closest('li');
+            if (li && li.style.display === 'none') {
+                var t440 = document.getElementById('dcsub-440-tab');
+                if (t440) $(t440).tab('show');
+            }
+        }
+    });
+
+    // Populate excitation dropdowns for all preset tabs
+    if (eemData) {
+        ['ex440', 'ex620', 'ex560'].forEach(updateDeconvExDropdown);
+    }
+}
+
+// Populate the excitation dropdown for one preset tab with available EEM wavelengths
+function updateDeconvExDropdown(preset) {
+    var sel = document.getElementById('deconv-ex-' + preset);
+    if (!sel || !eemData) return;
+    var targetEx = DECONV_PRESET_CONFIG[preset].targetEx;
+
+    // Collect available excitation wavelengths from first map
+    var exWls = [];
+    if (eemData.files.length) {
+        var firstMap = eemData.maps[eemData.files[0]];
+        if (firstMap) exWls = firstMap.ex_wl.slice();
+    }
+    if (!exWls.length) return;
+
+    // Sort by proximity to target excitation
+    exWls = exWls.slice().sort(function(a, b) {
+        return Math.abs(a - targetEx) - Math.abs(b - targetEx);
+    });
+
+    var prev = sel.value;
+    sel.innerHTML = '';
+    exWls.slice(0, 12).forEach(function(ex, i) {
+        var opt = document.createElement('option');
+        opt.value = ex;
+        opt.textContent = ex + ' nm' + (i === 0 ? ' (nearest)' : '');
+        sel.appendChild(opt);
+    });
+    // Restore previous selection if still valid
+    if (prev && exWls.indexOf(parseFloat(prev)) !== -1) sel.value = prev;
+}
+
+// Run batch Gaussian deconvolution for all samples in one preset tab
+// onDone: optional callback invoked when all samples in this preset are fitted
+function runDeconvBatch(preset, onDone) {
+    if (!eemData || !eemData.files.length) { if (onDone) onDone(); return; }
+    var cfg = DECONV_PRESET_CONFIG[preset];
+    var exWl = parseFloat((document.getElementById('deconv-ex-' + preset) || {}).value);
+    if (isNaN(exWl)) { if (onDone) onDone(); return; }
+
+    var emMinEl = document.getElementById('deconv-em-min-' + preset);
+    var emMaxEl = document.getElementById('deconv-em-max-' + preset);
+    var emMin = emMinEl ? parseFloat(emMinEl.value) : cfg.emMin;
+    var emMax = emMaxEl ? parseFloat(emMaxEl.value) : cfg.emMax;
+    if (isNaN(emMin)) emMin = cfg.emMin;
+    if (isNaN(emMax)) emMax = cfg.emMax;
+
+    var peaks = cfg.getPeaks();
+    var files = eemData.files.slice();
+    var btn = document.getElementById('deconv-fitall-' + preset);
+    var progress = document.getElementById('deconv-batch-progress-' + preset);
+
+    deconvBatchResults[preset] = {};
+    if (btn) btn.disabled = true;
+    if (progress) progress.textContent = '';
+
+    var idx = 0;
+    function fitNext() {
+        if (idx >= files.length) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-play"></i> Fit all samples';
+            }
+            var nFlagged = files.filter(function(f) {
+                return deconvBatchResults[preset][f] && deconvBatchResults[preset][f].flagged;
+            }).length;
+            if (progress) progress.textContent = 'Done — ' + files.length + ' fitted' +
+                (nFlagged ? ', ' + nFlagged + ' flagged' : '') + '.';
+            renderDeconvBatchTable(preset, files);
+            updateComparisonTabState();
+            if (onDone) onDone();
+            return;
+        }
+        var fname = files[idx];
+        if (btn) btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (idx + 1) + ' / ' + files.length;
+        if (progress) progress.textContent = fname;
+
+        var result = fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax);
+        if (result) deconvBatchResults[preset][fname] = result;
+        idx++;
+        setTimeout(fitNext, 0);
+    }
+    fitNext();
+}
+
+// Run batch deconvolution for all visible preset tabs sequentially
+function runDeconvBatchAll() {
+    if (!eemData || !eemData.files.length) return;
+
+    // Collect active presets in order (ex440 always; ex620/ex560 only if visible)
+    var presets = ['ex440'];
+    if (document.getElementById('dcsub-620-li') &&
+        document.getElementById('dcsub-620-li').style.display !== 'none') presets.push('ex620');
+    if (document.getElementById('dcsub-560-li') &&
+        document.getElementById('dcsub-560-li').style.display !== 'none') presets.push('ex560');
+
+    var btn = document.getElementById('deconv-fitall-all');
+    var prog = document.getElementById('deconv-fitall-all-progress');
+    if (btn) btn.disabled = true;
+
+    var step = 0;
+    function runNext() {
+        if (step >= presets.length) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-play-circle mr-1"></i> Fit all excitations';
+            }
+            if (prog) prog.textContent = 'All done (' + presets.length + ' excitation' +
+                (presets.length > 1 ? 's' : '') + ').';
+            return;
+        }
+        var preset = presets[step];
+        var labels = { ex440: 'Ex 440', ex620: 'Ex 620', ex560: 'Ex 560' };
+        if (btn) btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> ' +
+            labels[preset] + ' (' + (step + 1) + '/' + presets.length + ')';
+        if (prog) prog.textContent = labels[preset] + ' nm…';
+        step++;
+        runDeconvBatch(preset, runNext);
+    }
+    runNext();
+}
+
+// Fit one sample at a given excitation wavelength with given initial peak positions
+function fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax) {
+    var mapData = eemData && eemData.maps[fname];
+    if (!mapData) return null;
+
+    // Find nearest available excitation index
+    var xi = -1, bestDx = Infinity;
+    mapData.ex_wl.forEach(function(v, i) {
+        var d = Math.abs(v - exWl);
+        if (d < bestDx) { bestDx = d; xi = i; }
+    });
+    if (xi === -1) return null;
+
+    var xArr = mapData.em_wl.slice();
+    var yArr = mapData.intensity.map(function(row) { return row[xi]; });
+
+    // Apply Em range crop if specified
+    if (emMin != null || emMax != null) {
+        var xFilt = [], yFilt = [];
+        xArr.forEach(function(em, i) {
+            if ((emMin == null || em >= emMin) && (emMax == null || em <= emMax)) {
+                xFilt.push(em);
+                yFilt.push(yArr[i]);
+            }
+        });
+        if (xFilt.length >= 3) { xArr = xFilt; yArr = yFilt; }
+    }
+
+    // Build LM initial params [A, mu, sigma] per peak
+    var sig0 = 8, initParams = [], minB = [], maxB = [];
+    peaks.forEach(function(mu) {
+        var bestIdx = 0, bestDist = Infinity;
+        for (var i = 0; i < xArr.length; i++) {
+            var d = Math.abs(xArr[i] - mu);
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
+        }
+        var A0 = Math.max(0, yArr[bestIdx] || 0);
+        initParams.push(A0, mu, sig0);
+        minB.push(0, mu - 20, 1);
+        maxB.push(Infinity, mu + 30, 45);
+    });
+
+    var fitParams = fitGaussians(xArr, yArr, initParams, 300, { min: minB, max: maxB });
+
+    // Compute R²
+    var yMean = yArr.reduce(function(a, b) { return a + b; }, 0) / yArr.length;
+    var ssTot = 0, ssRes = 0;
+    for (var i = 0; i < xArr.length; i++) {
+        ssTot += Math.pow(yArr[i] - yMean, 2);
+        var yfit = 0;
+        for (var p = 0; p < fitParams.length; p += 3) {
+            var A = fitParams[p], mu2 = fitParams[p + 1], sig = Math.abs(fitParams[p + 2]);
+            if (sig > 0) yfit += A * Math.exp(-0.5 * Math.pow((xArr[i] - mu2) / sig, 2));
+        }
+        ssRes += Math.pow(yArr[i] - yfit, 2);
+    }
+    var r2 = ssTot > 0 ? Math.max(0, Math.min(1, 1 - ssRes / ssTot)) : 0;
+
+    return {
+        fitParams: fitParams,
+        r2: r2,
+        exWl: mapData.ex_wl[xi],
+        xArr: xArr,
+        yArr: yArr,
+        peaks: peaks.slice(),
+        flagged: r2 < 0.90
+    };
+}
+
+// Render the batch results table for one preset
+function renderDeconvBatchTable(preset, files) {
+    var container = document.getElementById('deconv-batch-table-' + preset);
+    if (!container) return;
+    if (!files || !files.length) {
+        container.innerHTML = '<p class="text-muted" style="font-size:0.88em;">Click <strong>Fit all samples</strong> to run batch Gaussian deconvolution.</p>';
+        return;
+    }
+
+    var results = deconvBatchResults[preset];
+    var nFlagged = files.filter(function(f) { return results[f] && results[f].flagged; }).length;
+
+    var html = '';
+    if (nFlagged > 0) {
+        html += '<div class="alert alert-warning py-2 mb-2" style="font-size:0.85em;">' +
+            '<i class="fa fa-exclamation-triangle mr-1"></i>' + nFlagged + ' sample' +
+            (nFlagged > 1 ? 's' : '') + ' flagged (R² &lt; 0.90) — click <strong>Adjust</strong> to manually review.</div>';
+    }
+
+    html += '<div style="overflow-x:auto;">' +
+        '<table class="table table-sm table-bordered table-hover mb-2" style="font-size:0.83em;">' +
+        '<thead class="thead-light"><tr>' +
+        '<th>Sample</th><th style="width:70px;">R²</th>' +
+        '<th>Peak positions (nm)</th><th style="width:80px;">Status</th><th style="width:64px;"></th>' +
+        '</tr></thead><tbody>';
+
+    files.forEach(function(fname) {
+        var res = results[fname];
+        if (!res) {
+            html += '<tr><td colspan="5" class="text-muted">' + fname + ' — not fitted</td></tr>';
+            return;
+        }
+        var r2cls = res.r2 >= 0.95 ? 'badge-success' : res.r2 >= 0.90 ? 'badge-warning text-dark' : 'badge-danger';
+        var r2badge = '<span class="badge ' + r2cls + '">' + res.r2.toFixed(3) + '</span>';
+        var nPeaks = res.fitParams.length / 3;
+        var peaks = [];
+        for (var i = 0; i < nPeaks; i++) peaks.push(res.fitParams[i * 3 + 1].toFixed(1));
+        var statusBadge = res.flagged
+            ? '<span class="badge badge-warning text-dark"><i class="fa fa-exclamation-triangle"></i> Check</span>'
+            : '<span class="badge badge-success"><i class="fa fa-check"></i> OK</span>';
+        if (res.adjusted) statusBadge += ' <span class="badge badge-info" title="Manually adjusted">adj</span>';
+        var safeName = fname.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        html += '<tr>' +
+            '<td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + fname + '">' + fname + '</td>' +
+            '<td class="text-center">' + r2badge + '</td>' +
+            '<td>' + peaks.join(' &middot; ') + '</td>' +
+            '<td class="text-center">' + statusBadge + '</td>' +
+            '<td><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.78rem;"' +
+            ' onclick="openCustomTabForAdjust(\'' + preset + '\',\'' + safeName + '\')">Adjust</button></td>' +
+            '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// Tracks which preset/sample opened the Custom tab via Adjust (null = opened directly)
+var deconvAdjustSource = null;
+
+// Switch to Custom tab pre-loaded with a specific sample and preset for manual adjustment
+function openCustomTabForAdjust(preset, fname) {
+    deconvAdjustSource = { preset: preset, fname: fname };
+
+    // Show the navigation bar with label
+    var nav = document.getElementById('deconv-custom-nav');
+    if (nav) nav.style.display = 'flex';
+    var presetLabels = { 'ex440': 'Ex 440 nm / Chl · PSII/PSI', 'ex620': 'Ex 620 nm / PC', 'ex560': 'Ex 560 nm / PE' };
+    var lbl = document.getElementById('deconv-custom-nav-label');
+    if (lbl) lbl.textContent = 'Adjusting: ' + fname + '  ·  ' + (presetLabels[preset] || preset) + ' batch';
+
+    var customTab = document.getElementById('dcsub-custom-tab');
+    if (customTab) $(customTab).tab('show');
+
+    var sampSel = document.getElementById('deconv-sample-select');
+    if (sampSel) sampSel.value = fname;
+
+    // Set excitation closest to preset target
+    var cfg = DECONV_PRESET_CONFIG[preset];
+    var exSel = document.getElementById('deconv-ex-select');
+    if (exSel && cfg) {
+        var bestOpt = null, bestDist = Infinity;
+        Array.from(exSel.options).forEach(function(opt) {
+            var d = Math.abs(parseFloat(opt.value) - cfg.targetEx);
+            if (d < bestDist) { bestDist = d; bestOpt = opt; }
+        });
+        if (bestOpt) exSel.value = bestOpt.value;
+    }
+
+    // Restore exact saved fit, or re-fit from preset defaults if no result yet
+    var res = deconvBatchResults[preset] && deconvBatchResults[preset][fname];
+    if (res && res.fitParams && res.xArr) {
+        // Exact restoration — skip re-optimization entirely
+        var nPeaks = res.fitParams.length / 3;
+        deconvPeakMus = [];
+        for (var i = 0; i < nPeaks; i++) deconvPeakMus.push(Math.round(res.fitParams[i * 3 + 1]));
+        rebuildPeaksEditor();
+        // Set ex selector to match actual fitted wavelength
+        if (exSel) {
+            var bestOpt2 = null, bestDist2 = Infinity;
+            Array.from(exSel.options).forEach(function(opt) {
+                var d = Math.abs(parseFloat(opt.value) - res.exWl);
+                if (d < bestDist2) { bestDist2 = d; bestOpt2 = opt; }
+            });
+            if (bestOpt2) exSel.value = bestOpt2.value;
+        }
+        deconvFitParams = res.fitParams.slice();
+        deconvCurrentData = { xArr: res.xArr, yArr: res.yArr, fname: fname, exWl: res.exWl };
+        setTimeout(function() {
+            renderDeconvChart(res.xArr, res.yArr, deconvFitParams, fname, res.exWl);
+            renderDeconvResults(deconvFitParams, res.xArr, res.yArr);
+            renderDeconvSliders(deconvFitParams, res.xArr, res.yArr);
+        }, 80);
+    } else {
+        deconvPeakMus = cfg ? cfg.getPeaks().slice() : [689, 724];
+        rebuildPeaksEditor();
+        setTimeout(function() { runDeconvolution(true); }, 80);
+    }
+}
+
+// Hide the nav bar and return to the originating preset sub-tab
+function backToPresetTab() {
+    var src = deconvAdjustSource;
+    deconvAdjustSource = null;
+    var nav = document.getElementById('deconv-custom-nav');
+    if (nav) nav.style.display = 'none';
+    if (src) {
+        var tab = document.getElementById('dcsub-' + src.preset.replace('ex', '') + '-tab');
+        if (tab) $(tab).tab('show');
+    }
+}
+
+// Save current custom fit back into deconvBatchResults and return to the preset sub-tab
+function saveAdjustedFit() {
+    var src = deconvAdjustSource;
+    if (!src || !deconvFitParams || !deconvCurrentData) { backToPresetTab(); return; }
+
+    // Recompute R² from current fit
+    var xArr = deconvCurrentData.xArr, yArr = deconvCurrentData.yArr;
+    var yMean = yArr.reduce(function(a, b) { return a + b; }, 0) / yArr.length;
+    var ssTot = yArr.reduce(function(a, v) { return a + Math.pow(v - yMean, 2); }, 0);
+    var ssRes = xArr.reduce(function(s, x, i) {
+        return s + Math.pow(yArr[i] - gaussianSum(deconvFitParams, x), 2);
+    }, 0);
+    var r2 = ssTot > 0 ? Math.max(0, Math.min(1, 1 - ssRes / ssTot)) : 0;
+
+    // Overwrite batch result entry
+    if (!deconvBatchResults[src.preset]) deconvBatchResults[src.preset] = {};
+    deconvBatchResults[src.preset][src.fname] = {
+        fitParams: deconvFitParams.slice(),
+        r2: r2,
+        exWl: deconvCurrentData.exWl,
+        xArr: xArr,
+        yArr: yArr,
+        peaks: deconvPeakMus.slice(),
+        flagged: r2 < 0.90,
+        adjusted: true
+    };
+
+    // Refresh the batch table for this preset
+    var files = eemData ? eemData.files : [];
+    renderDeconvBatchTable(src.preset, files);
+
+    backToPresetTab();
+}
+
 var deconvDragState   = null;
 var deconvDragAttached = false;
 
@@ -1696,20 +2598,29 @@ var deconvHandlePlugin = {
 
 function initDeconvUI(autoRun) {
     if (!eemData) return;
-    var sampSel = document.getElementById('deconv-sample-select');
-    sampSel.innerHTML = '';
-    eemData.files.forEach(function(f) {
-        var opt = document.createElement('option'); opt.value = f; opt.textContent = f;
-        sampSel.appendChild(opt);
-    });
-    var exSel = document.getElementById('deconv-ex-select');
-    exSel.innerHTML = '';
-    eemData.ex_wls.forEach(function(ex) {
-        var opt = document.createElement('option'); opt.value = String(ex); opt.textContent = ex + ' nm';
-        exSel.appendChild(opt);
-    });
 
-    if (autoRun) {
+    // Custom tab: populate sample and excitation selectors
+    var sampSel = document.getElementById('deconv-sample-select');
+    if (sampSel) {
+        sampSel.innerHTML = '';
+        eemData.files.forEach(function(f) {
+            var opt = document.createElement('option'); opt.value = f; opt.textContent = f;
+            sampSel.appendChild(opt);
+        });
+    }
+    var exSel = document.getElementById('deconv-ex-select');
+    if (exSel) {
+        exSel.innerHTML = '';
+        eemData.ex_wls.forEach(function(ex) {
+            var opt = document.createElement('option'); opt.value = String(ex); opt.textContent = ex + ' nm';
+            exSel.appendChild(opt);
+        });
+    }
+
+    // Batch tabs: show/hide based on pigmentation + populate excitation dropdowns
+    updateDeconvSubTabs();
+
+    if (autoRun && exSel) {
         // Pick the preset whose target excitation is closest to any available ex wavelength
         var PRESET_EX = { 'ex440': 440, 'ex560': 560, 'ex620': 620 };
         var presetSel = document.getElementById('deconv-preset-select');
@@ -1720,10 +2631,9 @@ function initDeconvUI(autoRun) {
                 if (d < bestDist) { bestDist = d; bestPreset = p; }
             });
         });
-        presetSel.value = bestPreset;
+        if (presetSel) presetSel.value = bestPreset;
         applyDeconvPreset();
 
-        // Select the excitation wavelength in the dropdown that matches the preset's target
         var targetEx = PRESET_EX[bestPreset];
         var bestExIdx = 0, bestExDist = Infinity;
         eemData.ex_wls.forEach(function(ex, i) {
@@ -1732,7 +2642,7 @@ function initDeconvUI(autoRun) {
         });
         exSel.selectedIndex = bestExIdx;
 
-        runDeconvolution(true);   // true = silent (no alert on missing data)
+        runDeconvolution(true);
     } else {
         applyDeconvPreset();
     }
@@ -2005,15 +2915,18 @@ function recomputeParamsFromMaps() {
         if (!mapData) return;
 
         function getPoint(ex, em) {
-            var xi = -1, ei = -1, bestDx = 0.5, bestDe = 0.5;
+            var xi = -1, ei = -1, bestDx = 6, bestDe = 6;
             mapData.ex_wl.forEach(function(v, i) { var d = Math.abs(v - ex); if (d < bestDx) { bestDx = d; xi = i; } });
             mapData.em_wl.forEach(function(v, i) { var d = Math.abs(v - em); if (d < bestDe) { bestDe = d; ei = i; } });
             return (xi === -1 || ei === -1) ? null : mapData.intensity[ei][xi];
         }
 
         var params;
+        var W = WL_CONFIG;
         if (eemData.analysis_mode === 'RT') {
-            var f685 = getPoint(440, 685), f695 = getPoint(440, 695), f730 = getPoint(440, 730);
+            var f685 = getPoint(W.rt_ex_chl, W.rt_em_f685),
+                f695 = getPoint(W.rt_ex_chl, W.rt_em_f695),
+                f730 = getPoint(W.rt_ex_chl, W.rt_em_f730);
             params = {F685: f685, F695: f695, F730: f730,
                       F685_to_F730: null, F695_to_F730: null, F695_to_F685: null,
                       PBS_F657: null, PBS_F685: null, PBS_F705: null, PBS_F730: null, PBS_tot: null,
@@ -2022,8 +2935,10 @@ function recomputeParamsFromMaps() {
             if (f685 != null && f730 != null && f730 > 0) params.F685_to_F730 = f685 / f730;
             if (f695 != null && f730 != null && f730 > 0) params.F695_to_F730 = f695 / f730;
             if (f695 != null && f685 != null && f685 > 0) params.F695_to_F685 = f695 / f685;
-            var pbsF657 = getPoint(620, 657), pbsF685 = getPoint(620, 685),
-                pbsF705 = getPoint(620, 705), pbsF730 = getPoint(620, 730);
+            var pbsF657 = getPoint(W.rt_ex_pbs, W.rt_em_pbs_free),
+                pbsF685 = getPoint(W.rt_ex_pbs, W.rt_em_pbs_psii),
+                pbsF705 = getPoint(W.rt_ex_pbs, W.rt_em_pbs_psi),
+                pbsF730 = getPoint(W.rt_ex_pbs, W.rt_em_pbs_f730);
             params.PBS_F657 = pbsF657; params.PBS_F685 = pbsF685;
             params.PBS_F705 = pbsF705; params.PBS_F730 = pbsF730;
             if (pbsF657 != null && pbsF685 != null && pbsF705 != null) {
@@ -2038,9 +2953,12 @@ function recomputeParamsFromMaps() {
             if (pbsF685 != null && pbsF705 != null && pbsF705 > 0) params.PBS_F685_to_F705 = pbsF685 / pbsF705;
             if (pbsF685 != null && pbsF730 != null && pbsF730 > 0) params.PBS_F685_to_F730 = pbsF685 / pbsF730;
         } else {
-            var chlPSII = getPoint(440, 689), chlPSI = getPoint(440, 724);
+            var chlPSII = getPoint(W.k77_ex_chl, W.k77_em_psii),
+                chlPSI  = getPoint(W.k77_ex_chl, W.k77_em_psi),
+                fCp43   = getPoint(W.k77_ex_chl, W.k77_em_cp43),
+                fCp47   = getPoint(W.k77_ex_chl, W.k77_em_cp47);
             params = {Chl_PSII: chlPSII, Chl_PSI: chlPSI, Chl_tot: null,
-                      Chl_PSII_norm: null, Chl_PSI_norm: null, PSII_to_PSI: null,
+                      Chl_PSII_norm: null, Chl_PSI_norm: null, PSII_to_PSI: null, CP43_to_CP47: null,
                       PBS_free: null, PBS_PSII: null, PBS_PSI: null, PBS_tot: null,
                       PBS_free_norm: null, PBS_PSII_norm: null, PBS_PSI_norm: null,
                       PBS_PSII_to_PBS_PSI: null, PC_to_PE: null};
@@ -2050,27 +2968,40 @@ function recomputeParamsFromMaps() {
                 if (tot > 0) { params.Chl_PSII_norm = chlPSII / tot; params.Chl_PSI_norm = chlPSI / tot; }
                 if (chlPSI > 0) params.PSII_to_PSI = chlPSII / chlPSI;
             }
+            if (fCp43 != null && fCp47 != null && fCp47 > 0) params.CP43_to_CP47 = fCp43 / fCp47;
             if (pigmVal !== 'checkbox_chl_only') {
                 var pbsFree = null, pbsPSII = null, pbsPSI = null;
                 if (pigmVal === 'checkbox_chl_PC') {
-                    pbsFree = getPoint(620, 662); pbsPSII = getPoint(620, 689); pbsPSI = getPoint(620, 724);
+                    pbsFree = getPoint(W.k77_ex_pc, W.k77_em_pbs_free);
+                    pbsPSII = getPoint(W.k77_ex_pc, W.k77_em_psii);
+                    pbsPSI  = getPoint(W.k77_ex_pc, W.k77_em_psi);
                 } else if (pigmVal === 'checkbox_chl_PE') {
-                    var p562 = getPoint(560, 662), p558 = getPoint(560, 580);
+                    var p562 = getPoint(W.k77_ex_pe, W.k77_em_pbs_free),
+                        p558 = getPoint(W.k77_ex_pe, W.k77_em_pe);
                     if (p562 != null && p558 != null) pbsFree = p562 + p558;
-                    pbsPSII = getPoint(560, 689); pbsPSI = getPoint(560, 724);
+                    pbsPSII = getPoint(W.k77_ex_pe, W.k77_em_psii);
+                    pbsPSI  = getPoint(W.k77_ex_pe, W.k77_em_psi);
                 } else if (pigmVal === 'checkbox_chl_PC_PE') {
-                    var has560 = mapData.ex_wl.some(function(v) { return Math.abs(v - 560) < 0.5; });
+                    var has560 = mapData.ex_wl.some(function(v) { return Math.abs(v - W.k77_ex_pe) < 0.5; });
                     if (has560) {
-                        pbsFree  = (getPoint(620, 662) || 0) + (getPoint(560, 662) || 0) + (getPoint(560, 580) || 0);
-                        pbsPSII  = (getPoint(620, 689) || 0) + (getPoint(560, 689) || 0);
-                        pbsPSI   = (getPoint(620, 724) || 0) + (getPoint(560, 724) || 0);
-                        var pc = getPoint(620, 662), pe662 = getPoint(560, 662), pe580 = getPoint(560, 580);
+                        pbsFree = (getPoint(W.k77_ex_pc, W.k77_em_pbs_free) || 0) +
+                                  (getPoint(W.k77_ex_pe, W.k77_em_pbs_free) || 0) +
+                                  (getPoint(W.k77_ex_pe, W.k77_em_pe) || 0);
+                        pbsPSII = (getPoint(W.k77_ex_pc, W.k77_em_psii) || 0) +
+                                  (getPoint(W.k77_ex_pe, W.k77_em_psii) || 0);
+                        pbsPSI  = (getPoint(W.k77_ex_pc, W.k77_em_psi) || 0) +
+                                  (getPoint(W.k77_ex_pe, W.k77_em_psi) || 0);
+                        var pc = getPoint(W.k77_ex_pc, W.k77_em_pbs_free),
+                            pe662 = getPoint(W.k77_ex_pe, W.k77_em_pbs_free),
+                            pe580 = getPoint(W.k77_ex_pe, W.k77_em_pe);
                         if (pc != null && pe662 != null && pe580 != null) {
                             var pe = pe662 + pe580;
                             params.PC_to_PE = pe > 0 ? pc / pe : null;
                         }
                     } else {
-                        pbsFree = getPoint(620, 662); pbsPSII = getPoint(620, 689); pbsPSI = getPoint(620, 724);
+                        pbsFree = getPoint(W.k77_ex_pc, W.k77_em_pbs_free);
+                        pbsPSII = getPoint(W.k77_ex_pc, W.k77_em_psii);
+                        pbsPSI  = getPoint(W.k77_ex_pc, W.k77_em_psi);
                     }
                 }
                 params.PBS_free = pbsFree; params.PBS_PSII = pbsPSII; params.PBS_PSI = pbsPSI;
@@ -2090,6 +3021,36 @@ function recomputeParamsFromMaps() {
     });
 
     renderDerivedTab();
+}
+
+// ============================================================
+// Wavelength settings panel — read inputs → update WL_CONFIG → recompute
+// ============================================================
+function updateWlConfig() {
+    function v(id, fallback) {
+        var el = document.getElementById(id);
+        var n = el ? parseFloat(el.value) : NaN;
+        return isNaN(n) ? fallback : n;
+    }
+    WL_CONFIG.k77_ex_chl      = v('wl-k77-ex-chl',      WL_CONFIG.k77_ex_chl);
+    WL_CONFIG.k77_ex_pc       = v('wl-k77-ex-pc',       WL_CONFIG.k77_ex_pc);
+    WL_CONFIG.k77_ex_pe       = v('wl-k77-ex-pe',       WL_CONFIG.k77_ex_pe);
+    WL_CONFIG.k77_em_psii     = v('wl-k77-em-psii',     WL_CONFIG.k77_em_psii);
+    WL_CONFIG.k77_em_psi      = v('wl-k77-em-psi',      WL_CONFIG.k77_em_psi);
+    WL_CONFIG.k77_em_cp43     = v('wl-k77-em-cp43',     WL_CONFIG.k77_em_cp43);
+    WL_CONFIG.k77_em_cp47     = v('wl-k77-em-cp47',     WL_CONFIG.k77_em_cp47);
+    WL_CONFIG.k77_em_pbs_free = v('wl-k77-em-pbs-free', WL_CONFIG.k77_em_pbs_free);
+    WL_CONFIG.k77_em_pe       = v('wl-k77-em-pe',       WL_CONFIG.k77_em_pe);
+    WL_CONFIG.rt_ex_chl       = v('wl-rt-ex-chl',       WL_CONFIG.rt_ex_chl);
+    WL_CONFIG.rt_ex_pbs       = v('wl-rt-ex-pbs',       WL_CONFIG.rt_ex_pbs);
+    WL_CONFIG.rt_em_f685      = v('wl-rt-em-f685',      WL_CONFIG.rt_em_f685);
+    WL_CONFIG.rt_em_f695      = v('wl-rt-em-f695',      WL_CONFIG.rt_em_f695);
+    WL_CONFIG.rt_em_f730      = v('wl-rt-em-f730',      WL_CONFIG.rt_em_f730);
+    WL_CONFIG.rt_em_pbs_free  = v('wl-rt-em-pbs-free',  WL_CONFIG.rt_em_pbs_free);
+    WL_CONFIG.rt_em_pbs_psii  = v('wl-rt-em-pbs-psii',  WL_CONFIG.rt_em_pbs_psii);
+    WL_CONFIG.rt_em_pbs_psi   = v('wl-rt-em-pbs-psi',   WL_CONFIG.rt_em_pbs_psi);
+    WL_CONFIG.rt_em_pbs_f730  = v('wl-rt-em-pbs-f730',  WL_CONFIG.rt_em_pbs_f730);
+    recomputeParamsFromMaps();
 }
 
 // ============================================================
@@ -2583,6 +3544,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Hide Custom tab nav bar when the Custom sub-tab is opened directly (not via Adjust button)
+    $('#dcsub-custom-tab').on('show.bs.tab', function() {
+        if (!deconvAdjustSource) {
+            var nav = document.getElementById('deconv-custom-nav');
+            if (nav) nav.style.display = 'none';
+        }
+    });
+
     // Tab shown events (jQuery required — Bootstrap 4 fires via jQuery event system)
     $('#eemTabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
         var target = $(e.target).attr('href');
@@ -2590,8 +3559,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (target === '#eem-map'     && dirtyTabs.has('map'))     renderMapTab();
         if (target === '#eem-derived' && dirtyTabs.has('derived')) renderDerivedTab();
         if (target === '#eem-groups'  && dirtyTabs.has('groups'))  renderGroupsTab();
-        if (target === '#eem-deconv'  && chartInst['deconv'])      chartInst['deconv'].resize();
-        if (target === '#eem-parafac') updateParafacTabState();
+        if (target === '#eem-deconv'     && chartInst['deconv'])  chartInst['deconv'].resize();
+        if (target === '#eem-parafac')    updateParafacTabState();
+        if (target === '#eem-comparison') renderComparisonTab();
     });
 
     // Map controls
@@ -2612,7 +3582,22 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================================
 var parafacResults = null;
 var parafacDiagResults = null;
-var parafacAnnotations = [];   // user-editable per-component labels
+var parafacAnnotations = [];   // user-editable per-component text labels
+var parafacPigmAssign = [];    // biological pigment assignment per component
+var parafacRejected   = [];    // boolean: exclude component from export/comparison
+
+// Pigment assignment options: [value, display label]
+var PIGM_ASSIGN_OPTIONS = [
+    ['',         '— unassigned —'],
+    ['CP43',     'CP43  (Em ~685 nm)'],
+    ['CP47',     'CP47  (Em ~695 nm)'],
+    ['PSI',      'PSI  (Em ~724 nm)'],
+    ['PBS_free', 'PBS-free  (Em ~662 nm)'],
+    ['PBS_PSII', 'PBS→PSII  (Em ~689 nm)'],
+    ['PBS_PSI',  'PBS→PSI  (Em ~724 nm)'],
+    ['Chl675',   'Chl a 675 nm background'],
+    ['other',    'Other / unresolved']
+];
 
 // Component colours (one per component, up to 8)
 var PARAFAC_COLORS = ['#4472C4','#ED7D31','#A9D18E','#FF0000',
@@ -2726,6 +3711,26 @@ function renderParafacDiagnostic(results) {
     var ccs = results.map(function(r) { return r.corcondia; });
     var evs = results.map(function(r) { return r.explained_variance; });
 
+    function setRankFromDiag(f) {
+        var slider = document.getElementById('par-rank-slider');
+        var valDisplay = document.getElementById('par-rank-val');
+        if (slider) {
+            slider.value = Math.min(f, parseInt(slider.max));
+            slider._userSet = true;
+            if (valDisplay) valDisplay.textContent = slider.value;
+        }
+        // Flash the rank slider to draw attention
+        var badge = document.getElementById('par-rank-val');
+        if (badge) {
+            badge.classList.remove('badge-primary');
+            badge.classList.add('badge-success');
+            setTimeout(function() {
+                badge.classList.remove('badge-success');
+                badge.classList.add('badge-primary');
+            }, 1200);
+        }
+    }
+
     function makeChart(canvasId, label, values, color, refLine) {
         if (chartInst[canvasId]) chartInst[canvasId].destroy();
         var ctx = document.getElementById(canvasId).getContext('2d');
@@ -2736,8 +3741,11 @@ function renderParafacDiagnostic(results) {
             backgroundColor: color + '33',
             fill: false,
             tension: 0.3,
-            pointRadius: 5,
-            pointHoverRadius: 7
+            pointRadius: 6,
+            pointHoverRadius: 9,
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: color,
+            pointHoverBorderWidth: 2.5
         }];
         if (refLine !== undefined) {
             datasets.push({
@@ -2755,8 +3763,29 @@ function renderParafacDiagnostic(results) {
             data: { labels: fs, datasets: datasets },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: true, position: 'bottom',
-                    labels: { boxWidth: 12, font: { size: 11 } } } },
+                onClick: function(_event, elements) {
+                    if (elements.length > 0 && elements[0].datasetIndex === 0) {
+                        setRankFromDiag(fs[elements[0].index]);
+                    }
+                },
+                onHover: function(event, elements) {
+                    var hasPoint = elements.length > 0 && elements[0].datasetIndex === 0;
+                    event.native.target.style.cursor = hasPoint ? 'pointer' : 'default';
+                },
+                plugins: {
+                    legend: { display: true, position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11 } } },
+                    tooltip: {
+                        callbacks: {
+                            afterBody: function(items) {
+                                if (items[0] && items[0].datasetIndex === 0) {
+                                    return ['Click to use F = ' + fs[items[0].dataIndex] + ' as rank'];
+                                }
+                                return [];
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: { title: { display: true, text: 'Number of components (F)',
                                   font: { size: 11 } } },
@@ -2798,7 +3827,12 @@ function runParafac() {
         if (data.error) { _parafacShowError(data.error); return; }
         parafacResults = data;
         parafacAnnotations = data.annotations.slice();
+        parafacRejected   = data.annotations.map(function() { return false; });
+        parafacPigmAssign = data.em_loadings.map(function(emLoad, r) {
+            return _suggestPigmAssign(data.ex_wl, data.em_wl, data.ex_loadings[r], emLoad);
+        });
         renderParafacResults(data);
+        updateComparisonTabState();
     })
     .catch(function(e) {
         spinner.style.display = 'none';
@@ -2836,21 +3870,55 @@ function renderParafacResults(data) {
     renderParafacReconMaps();
 }
 
+// Auto-suggest pigment assignment from excitation + emission loading peaks
+function _suggestPigmAssign(exWl, emWl, exLoading, emLoading) {
+    var emPeak = emWl[emLoading.indexOf(Math.max.apply(null, emLoading))];
+    var exPeak = exWl[exLoading.indexOf(Math.max.apply(null, exLoading))];
+    var isPBS  = exPeak > 560 && exPeak < 660;   // Ex > 560 = PBS excitation
+    if (emPeak < 670)  return isPBS ? 'PBS_free' : 'Chl675';
+    if (emPeak < 680)  return isPBS ? 'PBS_free' : 'Chl675';
+    if (emPeak < 692)  return isPBS ? 'PBS_PSII' : 'CP43';
+    if (emPeak < 710)  return 'CP47';
+    return 'PSI';
+}
+
 function _buildComponentCard(r, data) {
     var col = document.createElement('div');
     col.className = 'col-md-6 mb-3';
     col.id = 'parafac-comp-card-' + r;
 
-    var color = PARAFAC_COLORS[r % PARAFAC_COLORS.length];
-    var annot = parafacAnnotations[r] || ('Component ' + (r + 1));
+    var color  = PARAFAC_COLORS[r % PARAFAC_COLORS.length];
+    var annot  = parafacAnnotations[r] || ('Component ' + (r + 1));
+    var assign = parafacPigmAssign[r] || '';
+    var rejected = parafacRejected[r] || false;
+
+    // Build pigment assignment <select> options
+    var pigmOpts = PIGM_ASSIGN_OPTIONS.map(function(o) {
+        return '<option value="' + o[0] + '"' + (o[0] === assign ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
 
     col.innerHTML =
-        '<div class="card h-100">' +
-          '<div class="card-header py-1 d-flex align-items-center" style="background:' + color + '22; border-left:4px solid ' + color + ';">' +
-            '<span class="font-weight-bold mr-2" style="font-size:0.9rem;">Component ' + (r + 1) + '</span>' +
-            '<input type="text" class="form-control form-control-sm" style="max-width:260px; font-size:0.82rem;" ' +
-              'id="par-annot-' + r + '" value="' + annot + '" ' +
-              'onchange="parafacAnnotations[' + r + ']=this.value">' +
+        '<div class="card h-100" id="par-card-inner-' + r + '" style="' + (rejected ? 'opacity:0.45;' : '') + '">' +
+          '<div class="card-header py-1" style="background:' + color + '22; border-left:4px solid ' + color + ';">' +
+            '<div class="d-flex align-items-center" style="gap:4px;">' +
+              '<span class="font-weight-bold" style="font-size:0.9rem; white-space:nowrap;">C' + (r + 1) + '</span>' +
+              '<input type="text" class="form-control form-control-sm" style="min-width:0; flex:1; font-size:0.82rem;" ' +
+                'id="par-annot-' + r + '" value="' + annot + '" ' +
+                'onchange="parafacAnnotations[' + r + ']=this.value; _reAnnotateParafacComponents(getPigmentation());">' +
+              '<select class="form-control form-control-sm" style="width:auto; font-size:0.78rem;" ' +
+                'id="par-pigm-' + r + '" ' +
+                'onchange="parafacPigmAssign[' + r + ']=this.value; updateComparisonTabState();">' +
+                pigmOpts +
+              '</select>' +
+              '<label class="mb-0 ml-1 d-flex align-items-center" style="gap:3px; font-size:0.78rem; white-space:nowrap; cursor:pointer;" ' +
+                'title="Exclude this component from export and comparison">' +
+                '<input type="checkbox" id="par-reject-' + r + '"' + (rejected ? ' checked' : '') + ' ' +
+                  'onchange="parafacRejected[' + r + ']=this.checked; ' +
+                    'document.getElementById(\'par-card-inner-' + r + '\').style.opacity=this.checked?\'0.45\':\'\'; ' +
+                    'updateComparisonTabState();">' +
+                ' Reject' +
+              '</label>' +
+            '</div>' +
           '</div>' +
           '<div class="card-body p-2">' +
             '<div class="row no-gutters">' +
@@ -3082,22 +4150,73 @@ function renderParafacReconMaps() {
     addMap('par-recon-canvas', 'Reconstructed (PARAFAC)', colClass);
     if (residual) addMap('par-resid-canvas', 'Residuals (Original \u2212 Reconstructed)', colClass);
 
+    // Compute original max for residual scale anchoring
+    var origMaxVal = 0;
+    if (origMap) {
+        for (var ei2 = 0; ei2 < origMap.intensity.length; ei2++)
+            for (var xi2 = 0; xi2 < (origMap.intensity[ei2] || []).length; xi2++) {
+                var ov2 = origMap.intensity[ei2][xi2];
+                if (ov2 > origMaxVal) origMaxVal = ov2;
+            }
+    }
+
     setTimeout(function() {
         if (origMap)  drawHeatmap('par-orig-canvas',  data.ex_wl, data.em_wl, origMap.intensity, colorName, false, 0.85);
         drawHeatmap('par-recon-canvas', data.ex_wl, data.em_wl, recon, colorName, false, 0.85);
-        if (residual) drawHeatmapDiverging('par-resid-canvas', data.ex_wl, data.em_wl, residual, 0.85);
+        if (residual) drawHeatmapDiverging('par-resid-canvas', data.ex_wl, data.em_wl, residual, 0.85, origMaxVal || undefined);
     }, 0);
+}
+
+// Derive ratio parameters from PARAFAC scores using pigment assignments
+function computeParafacParams() {
+    if (!parafacResults) return {};
+    var data = parafacResults;
+    var out = {};
+    data.sample_names.forEach(function(fname, si) {
+        var scores = data.scores[si];
+        var sm = {};   // pigment label → summed score
+        for (var r = 0; r < data.n_components; r++) {
+            if (parafacRejected[r]) continue;
+            var a = parafacPigmAssign[r];
+            if (a && a !== 'other' && a !== '') {
+                sm[a] = (sm[a] || 0) + scores[r];
+            }
+        }
+        var p = {};
+        var sPSII = (sm['CP43'] || 0) + (sm['CP47'] || 0);
+        var sPSI  = sm['PSI'] || 0;
+        var sChl  = sm['Chl675'] || 0;
+        var sTotChl = sPSII + sPSI + sChl;
+        var sFree   = sm['PBS_free'] || 0;
+        var sPBSpsii = sm['PBS_PSII'] || 0;
+        var sPBSpsi  = sm['PBS_PSI'] || 0;
+        var sTotPBS  = sFree + sPBSpsii + sPBSpsi;
+
+        if (sPSII > 0 && sPSI  > 0) p.PSII_to_PSI_parafac        = sPSII / sPSI;
+        if (sm['CP43'] > 0 && sm['CP47'] > 0) p.CP43_to_CP47_parafac = sm['CP43'] / sm['CP47'];
+        if (sTotChl > 0 && sPSII > 0) p.Chl_PSII_norm_parafac     = sPSII / sTotChl;
+        if (sTotChl > 0 && sPSI  > 0) p.Chl_PSI_norm_parafac      = sPSI  / sTotChl;
+        if (sTotPBS > 0 && sFree    > 0) p.PBS_free_norm_parafac   = sFree    / sTotPBS;
+        if (sTotPBS > 0 && sPBSpsii > 0) p.PBS_PSII_norm_parafac   = sPBSpsii / sTotPBS;
+        if (sTotPBS > 0 && sPBSpsi  > 0) p.PBS_PSI_norm_parafac    = sPBSpsi  / sTotPBS;
+        if (sPBSpsii > 0 && sPBSpsi > 0) p.PBS_PSII_to_PBS_PSI_parafac = sPBSpsii / sPBSpsi;
+        out[fname] = p;
+    });
+    return out;
 }
 
 function copyParafacTable() {
     if (!parafacResults) return;
     var data = parafacResults;
-    var headers = ['Sample'].concat(parafacAnnotations.map(function(a, i) {
-        return 'Component ' + (i + 1) + ': ' + a;
+    // Only include non-rejected components
+    var activeIdx = [];
+    for (var r = 0; r < data.n_components; r++) { if (!parafacRejected[r]) activeIdx.push(r); }
+    var headers = ['Sample'].concat(activeIdx.map(function(r) {
+        return 'Component ' + (r + 1) + ': ' + (parafacAnnotations[r] || '');
     }));
     var lines = [headers.join('\t')];
     data.sample_names.forEach(function(name, i) {
-        lines.push([name].concat(data.scores[i].map(function(v) { return v.toFixed(6); })).join('\t'));
+        lines.push([name].concat(activeIdx.map(function(r) { return data.scores[i][r].toFixed(6); })).join('\t'));
     });
     navigator.clipboard.writeText(lines.join('\n')).catch(function() {
         var ta = document.createElement('textarea');
