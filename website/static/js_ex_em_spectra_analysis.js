@@ -102,8 +102,7 @@ var WL_CONFIG = {
     // RT mode
     rt_ex_chl:       440,
     rt_ex_pbs:       620,
-    rt_em_f685:      685,   // PSII core
-    rt_em_f695:      695,   // CP47
+    rt_em_f685:      685,   // PSII pool (CP43+CP47 unresolved at RT)
     rt_em_f730:      730,   // PSI
     rt_em_pbs_free:  657,   // uncoupled PBS
     rt_em_pbs_psii:  685,   // PBS→PSII
@@ -113,19 +112,16 @@ var WL_CONFIG = {
 
 // ---- RT fluorescence param config ----
 var RT_PARAM_KEYS = [
-    'F685', 'F695', 'F730',
-    'F685_to_F730', 'F695_to_F730', 'F695_to_F685',
+    'F685', 'F730',
+    'F685_to_F730',
     'PBS_F657', 'PBS_F685', 'PBS_F705', 'PBS_F730', 'PBS_tot',
     'PBS_free_norm', 'PBS_PSII_norm', 'PBS_PSI_norm',
     'PBS_F685_to_F705', 'PBS_F685_to_F730'
 ];
 var RT_PARAM_LABELS = {
-    'F685':             'F685 – PSII core (a.u.)',
-    'F695':             'F695 – CP47 (a.u.)',
+    'F685':             'F685 – PSII pool, CP43+CP47 (a.u.)',
     'F730':             'F730 – PSI (a.u.)',
-    'F685_to_F730':     'F685 / F730  (PSII:PSI, Ex440)',
-    'F695_to_F730':     'F695 / F730  (CP47:PSI, Ex440)',
-    'F695_to_F685':     'F695 / F685  (CP47:PSII core)',
+    'F685_to_F730':     'F685 / F730  (PSII pool : PSI, Ex440) †',
     'PBS_F657':         'PBS free (a.u., Ex620/Em657)',
     'PBS_F685':         'PBS→PSII (a.u., Ex620/Em685)',
     'PBS_F705':         'PBS→PSI (a.u., Ex620/Em705)',
@@ -133,12 +129,29 @@ var RT_PARAM_LABELS = {
     'PBS_tot':          'PBS total (a.u., Ex620)',
     'PBS_free_norm':    'PBS free / PBS total  (uncoupled fraction)',
     'PBS_PSII_norm':    'PBS-PSII / PBS total  (PSII coupling fraction)',
-    'PBS_PSI_norm':     'PBS-PSI / PBS total  (PSI coupling fraction)',
-    'PBS_F685_to_F705': 'PBS F685 / F705  (state transitions, Ex620)',
+    'PBS_PSI_norm':     'PBS-PSI / PBS total  (PSI coupling fraction) †',
+    'PBS_F685_to_F705': 'PBS F685 / F705  (state transitions, Ex620) †',
     'PBS_F685_to_F730': 'PBS F685 / F730  (Ex620)'
 };
+// RT params flagged as unreliable due to spectral overlap at RT
+var RT_UNRELIABLE_PARAMS = ['F685_to_F730', 'PBS_PSI_norm', 'PBS_F685_to_F705'];
+var rtShowUnreliable = true;
+
+function setRtShowUnreliable(val) {
+    rtShowUnreliable = val;
+    // Sync both checkboxes
+    var cb1 = document.getElementById('rt-show-unreliable');
+    if (cb1) cb1.checked = val;
+    var cb2 = document.getElementById('cmp-rt-show-unreliable');
+    if (cb2) cb2.checked = val;
+    if (eemData) {
+        renderDerivedTab();
+        renderComparisonTab();
+    }
+}
+
 var RT_RATIO_PARAMS = [
-    'F685_to_F730', 'F695_to_F730', 'F695_to_F685',
+    'F685_to_F730',
     'PBS_free_norm', 'PBS_PSII_norm', 'PBS_PSI_norm',
     'PBS_F685_to_F705', 'PBS_F685_to_F730'
 ];
@@ -152,7 +165,7 @@ var MODE_DEFAULTS = {
     },
     'RT': {
         ex: [440, 620, '', '', '', ''],
-        em: [650, 660, 685, 695, 730, ''],
+        em: [657, 685, 705, 730, '', ''],
         ex_norm: 440, em_norm: 685
     }
 };
@@ -215,9 +228,16 @@ function getPigmentation() {
 }
 
 function switchPigmentation(val) {
-    // Sync global select
+    // Sync hidden select
     var sel = document.getElementById('global-pigm-select');
     if (sel && sel.value !== val) sel.value = val;
+    // Sync navbar button group
+    document.querySelectorAll('#global-pigm-btns button').forEach(function(btn) {
+        var active = btn.getAttribute('data-pigm') === val;
+        btn.classList.toggle('btn-primary', active);
+        btn.classList.toggle('btn-outline-primary', !active);
+        btn.style.setProperty('color', active ? '#004085' : 'rgba(255,255,255,0.7)', 'important');
+    });
     // Sync radio buttons in Derived Parameters tab
     document.querySelectorAll('input[name="checkbox_pigmentation"]').forEach(function(r) {
         r.checked = (r.value === val);
@@ -258,6 +278,17 @@ function _jsAnnotateComponent(exWl, emWl, exLoading, emLoading, pigm, tol) {
         }
     });
     return (bestLabel || 'Unknown') + ' (Ex' + Math.round(exPeak) + '/Em' + Math.round(emPeak) + ')';
+}
+
+// Show "Copy scores" button when any component is rejected or reassigned from auto-suggestion
+function _updateCopyScoresBtn() {
+    var btn = document.getElementById('parafac-copy-scores-btn');
+    if (!btn) return;
+    var anyRejected = parafacRejected.some(function(r) { return r; });
+    var anyReassigned = parafacPigmAssign.some(function(a, i) {
+        return a !== parafacPigmAssignDefault[i];
+    });
+    btn.style.display = (anyRejected || anyReassigned) ? '' : 'none';
 }
 
 function _reAnnotateParafacComponents(pigm) {
@@ -302,9 +333,11 @@ function switchAnalysisMode(mode) {
     var alertEl = document.getElementById('eem-page-alert');
     var hints = document.querySelectorAll('.eem-mode-hint');
     if (mode === 'RT') {
+        var desc440 = document.getElementById('dcsub-440-desc');
+        if (desc440) desc440.innerHTML = 'At RT, CP43 (~685\u202fnm) and CP47 (~695\u202fnm) are not spectrally resolved \u2014 PSII appears as a single broad ~685\u202fnm peak (PSII pool). Used for PSII pool\u202f:\u202fPSI ratio (~685/~730\u202fnm). CP43/CP47 ratio is not available at RT.';
         if (title) title.innerHTML = '<i class="fa fa-th text-primary mr-2"></i>RT Fluorescence Spectra &amp; EEM Analyzer';
-        if (alertEl) alertEl.innerHTML = '<strong>At a glance:</strong> Upload excitation-emission fluorescence maps measured at room temperature to assess PSII/PSI energy distribution and state transitions (F685/F730 ratio). Supports batch processing of up to 100 files with interactive charts, replicate grouping, and export to .xlsx.';
-        hints.forEach(function(h) { h.textContent = 'Room-temperature fluorescence — PSII/PSI balance, state transitions (F685/F730)'; });
+        if (alertEl) alertEl.innerHTML = '<strong>At a glance:</strong> Upload excitation-emission fluorescence maps measured at room temperature to assess PSII/PSI energy distribution and PBS coupling states. Supports batch processing of up to 100 files with interactive charts, replicate grouping, and export to .xlsx.';
+        hints.forEach(function(h) { h.textContent = 'Room-temperature fluorescence — PSII pool : PSI, PBS coupling states'; });
         // Show/hide pigmentation step — not used at RT
         var pigmGroup = document.getElementById('eem-pigm-step');
         if (pigmGroup) pigmGroup.style.display = 'none';
@@ -316,6 +349,8 @@ function switchAnalysisMode(mode) {
         if (wl77) wl77.style.display = 'none';
         if (wlRT) wlRT.style.display = '';
     } else {
+        var desc440 = document.getElementById('dcsub-440-desc');
+        if (desc440) desc440.innerHTML = 'Resolves PSII inner antenna: CP43 (~685\u202fnm), CP47 (~695\u202fnm), and PSI long-wavelength Chl (~724\u202fnm). Used for PSII:PSI stoichiometry and CP43/CP47 ratio.';
         if (title) title.innerHTML = '<i class="fa fa-th text-primary mr-2"></i>77K Fluorescence Spectra &amp; EEM Analyzer';
         if (alertEl) alertEl.innerHTML = '<strong>At a glance:</strong> Upload 3D excitation-emission fluorescence maps measured at 77 K to visualize pigment-protein complex composition and calculate PSII/PSI ratios and phycobilisome coupling states. Supports batch processing of up to 100 files with interactive charts, replicate grouping, and export to .xlsx.';
         hints.forEach(function(h) { h.textContent = 'Low-temperature EEM — photosystem stoichiometry & PBS coupling'; });
@@ -344,6 +379,14 @@ function switchAnalysisMode(mode) {
     if (emNorm) emNorm.value = defs.em_norm;
 
     updateDerivedParamHint();
+
+    // Sync RT-unreliable checkboxes and comparison toolbar visibility
+    var rtCb = document.getElementById('rt-show-unreliable');
+    if (rtCb) rtCb.checked = rtShowUnreliable;
+    var cmpCb = document.getElementById('cmp-rt-show-unreliable');
+    if (cmpCb) cmpCb.checked = rtShowUnreliable;
+    var cmpWrap = document.getElementById('cmp-rt-unreliable-wrap');
+    if (cmpWrap) cmpWrap.style.display = (mode === 'RT') ? '' : 'none';
 
     // If data already loaded, sync and recompute derived parameters client-side
     if (eemData) {
@@ -637,9 +680,8 @@ function updateDerivedParamHint() {
     var items;
     if (analysisMode === 'RT') {
         items = [
-            'Ex440/Em685 <span class="text-muted">(F685)</span>',
-            'Ex440/Em695 <span class="text-muted">(F695)</span>',
-            'Ex440/Em730 <span class="text-muted">(F730)</span>',
+            'Ex440/Em685 <span class="text-muted">(PSII pool)</span>',
+            'Ex440/Em730 <span class="text-muted">(PSI)</span>',
             'Ex620/Em657 <span class="text-muted">(PBS-free)</span>',
             'Ex620/Em685 <span class="text-muted">(PBS-PSII)</span>',
             'Ex620/Em705 <span class="text-muted">(PBS-PSI)</span>',
@@ -1104,6 +1146,8 @@ function getAvailParams() {
                        : (PIGM_PARAMS[eemData.pigmentation] || PIGM_PARAMS['checkbox_chl_only']);
     var ratioList = isRT ? RT_RATIO_PARAMS : RATIO_PARAMS;
     return allKeys.filter(function(p) {
+        // Hide unreliable RT params when checkbox is off
+        if (isRT && !rtShowUnreliable && RT_UNRELIABLE_PARAMS.indexOf(p) !== -1) return false;
         // Ratio params are always shown (show 0 if not computable for this dataset)
         if (ratioList.indexOf(p) !== -1) return true;
         // Raw intensity params: only show if at least one sample has a value
@@ -1354,8 +1398,12 @@ function renderGroupTable(groupStats, groupNames, avail) {
 }
 
 function renderGroupCharts(groupStats, groupNames, avail) {
-    var ratioList = (eemData && eemData.analysis_mode === 'RT') ? RT_RATIO_PARAMS : RATIO_PARAMS;
-    var paramsToPlot = ratioList.filter(function(p) { return avail.indexOf(p) !== -1; });
+    var isRT = eemData && eemData.analysis_mode === 'RT';
+    var ratioList = isRT ? RT_RATIO_PARAMS : RATIO_PARAMS;
+    var paramsToPlot = ratioList.filter(function(p) {
+        if (isRT && !rtShowUnreliable && RT_UNRELIABLE_PARAMS.indexOf(p) !== -1) return false;
+        return avail.indexOf(p) !== -1;
+    });
     var container = document.getElementById('group-charts-container');
     container.innerHTML = '';
     paramsToPlot.forEach(function(paramKey) {
@@ -1579,6 +1627,84 @@ function exportToStatistics() {
 // Parameters Comparison tab
 // ============================================================
 
+// Samples excluded from comparison (fname → true). Reset via "Restore all".
+var cmpExcluded = {};
+
+// ── Scatter point popup helpers ───────────────────────────────────────────────
+function _cmpHidePopup() {
+    var p = document.getElementById('cmp-pt-popup');
+    if (p) p.style.display = 'none';
+}
+
+// Navigate to Deconvolution tab → appropriate sub-tab → highlight sample row
+function _cmpInspect(fname, grpId) {
+    _cmpHidePopup();
+    var presetMap = { chl: 'ex440', pbs: 'ex620', ex560: 'ex560' };
+    var subTabMap = { chl: 'dcsub-440-tab', pbs: 'dcsub-620-tab', ex560: 'dcsub-560-tab' };
+    var preset    = presetMap[grpId] || 'ex440';
+    var subTabId  = subTabMap[grpId] || 'dcsub-440-tab';
+
+    // Switch to Deconvolution main tab
+    var deconvTab = document.getElementById('eem-deconv-tab');
+    if (deconvTab) deconvTab.click();
+
+    setTimeout(function() {
+        // Switch to correct sub-tab
+        var subTab = document.getElementById(subTabId);
+        if (subTab && !subTab.classList.contains('active')) subTab.click();
+
+        setTimeout(function() {
+            // Find the sample row by title attribute and flash-highlight it
+            var tableDiv = document.getElementById('deconv-batch-table-' + preset);
+            if (!tableDiv) return;
+            var rows = tableDiv.querySelectorAll('tbody tr');
+            for (var i = 0; i < rows.length; i++) {
+                var td = rows[i].querySelector('td[title]');
+                if (td && td.getAttribute('title') === fname) {
+                    rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    rows[i].style.transition = 'background-color 0.3s';
+                    rows[i].style.backgroundColor = '#fff3cd';
+                    setTimeout(function(row) {
+                        row.style.backgroundColor = '';
+                    }, 2200, rows[i]);
+                    break;
+                }
+            }
+        }, 160);
+    }, 120);
+}
+
+function _cmpShowPopup(fname, grpId, evt) {
+    var popup = document.getElementById('cmp-pt-popup');
+    if (!popup) return;
+
+    document.getElementById('cmp-popup-name').textContent = fname;
+    document.getElementById('cmp-popup-inspect').onclick = function() { _cmpInspect(fname, grpId); };
+    document.getElementById('cmp-popup-remove').onclick  = function() {
+        cmpExcluded[fname] = true;
+        _cmpHidePopup();
+        renderComparisonTab();
+    };
+
+    // Position near cursor (keep inside viewport)
+    var pw = 230, ph = 80;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var cx = evt.clientX + 10, cy = evt.clientY - 20;
+    if (cx + pw > vw) cx = evt.clientX - pw - 10;
+    if (cy + ph > vh) cy = evt.clientY - ph - 10;
+    popup.style.left = cx + 'px';
+    popup.style.top  = cy + 'px';
+    popup.style.display = '';
+
+    // Close on next click outside
+    setTimeout(function() {
+        function outsideClick(e) {
+            if (!popup.contains(e.target)) { _cmpHidePopup(); document.removeEventListener('click', outsideClick); }
+        }
+        document.addEventListener('click', outsideClick);
+    }, 50);
+}
+
 // Parameter groups for the comparison tab
 // fixedKey: key in eemData.params; gaussKey: key from computeGaussianParamsFromBatch()
 var COMPARISON_GROUPS = [
@@ -1600,6 +1726,27 @@ var COMPARISON_GROUPS = [
             { key: 'PBS_free_norm',       label: 'PBS-free / PBS-tot', fixedKey: 'PBS_free_norm',       gaussKey: 'PBS_free_norm_gauss',       parafacKey: 'PBS_free_norm_parafac' },
             { key: 'PBS_PSII_norm',       label: 'PBS-PSII / PBS-tot', fixedKey: 'PBS_PSII_norm',       gaussKey: 'PBS_PSII_norm_gauss',       parafacKey: 'PBS_PSII_norm_parafac' },
             { key: 'PBS_PSI_norm',        label: 'PBS-PSI / PBS-tot',  fixedKey: 'PBS_PSI_norm',        gaussKey: 'PBS_PSI_norm_gauss',        parafacKey: 'PBS_PSI_norm_parafac' }
+        ]
+    }
+];
+
+// RT-specific comparison groups (fixed-WL keys differ from 77K)
+var RT_COMPARISON_GROUPS = [
+    {
+        id: 'chl',
+        label: 'PSII pool : PSI (Ex 440 nm)',
+        params: [
+            { key: 'F685_to_F730', label: 'PSII pool : PSI', fixedKey: 'F685_to_F730', gaussKey: 'PSII_to_PSI_gauss', parafacKey: 'PSII_to_PSI_parafac' }
+        ]
+    },
+    {
+        id: 'pbs',
+        label: 'Phycobilisome coupling (Ex 620 nm)',
+        params: [
+            { key: 'PBS_F685_to_F705', label: 'PBS-PSII : PBS-PSI', fixedKey: 'PBS_F685_to_F705', gaussKey: 'PBS_PSII_to_PBS_PSI_gauss', parafacKey: 'PBS_PSII_to_PBS_PSI_parafac' },
+            { key: 'PBS_free_norm',    label: 'PBS-free / PBS-tot', fixedKey: 'PBS_free_norm',    gaussKey: 'PBS_free_norm_gauss',          parafacKey: 'PBS_free_norm_parafac' },
+            { key: 'PBS_PSII_norm',    label: 'PBS-PSII / PBS-tot', fixedKey: 'PBS_PSII_norm',    gaussKey: 'PBS_PSII_norm_gauss',          parafacKey: 'PBS_PSII_norm_parafac' },
+            { key: 'PBS_PSI_norm',     label: 'PBS-PSI / PBS-tot',  fixedKey: 'PBS_PSI_norm',     gaussKey: 'PBS_PSI_norm_gauss',           parafacKey: 'PBS_PSI_norm_parafac' }
         ]
     }
 ];
@@ -1684,13 +1831,17 @@ function _buildComparisonTable(group, files, fixedParams, gaussParams, parafacPa
     var hasPF = !!parafacParams;
     var nCols = hasPF ? 3 : 2;
 
+    var TIP_FIXED  = 'Direct fluorescence intensity read at a single emission wavelength — fast but sensitive to spectral overlap between CP43 (685 nm) and CP47 (695 nm).';
+    var TIP_GAUSS  = 'Peak area (|A|·|σ|·√2π) from Gaussian deconvolution — separates overlapping peaks and integrates the full photon contribution of each pigment pool.';
+    var TIP_PARAFAC = 'Component score from PARAFAC tensor decomposition — pigment-pool abundance derived from the full excitation–emission map, independent of peak overlap.';
+
     var thead1 = '<tr><th style="min-width:140px;">Sample</th>';
     var thead2 = '<tr><th></th>';
     params.forEach(function(p) {
         thead1 += '<th colspan="' + nCols + '" class="text-center" style="border-left:2px solid #dee2e6; white-space:nowrap;">' + p.label + '</th>';
-        thead2 += '<th class="text-center text-muted" style="font-size:0.78rem; border-left:2px solid #dee2e6; white-space:nowrap;">Fixed-WL</th>' +
-                  '<th class="text-center text-muted" style="font-size:0.78rem; white-space:nowrap;">Gaussian</th>';
-        if (hasPF) thead2 += '<th class="text-center text-muted" style="font-size:0.78rem; white-space:nowrap;">PARAFAC</th>';
+        thead2 += '<th class="text-center text-muted" style="font-size:0.78rem; border-left:2px solid #dee2e6; white-space:nowrap; cursor:help;" title="' + TIP_FIXED + '">Fixed-WL <span style="color:#6c757d;">ⓘ</span></th>' +
+                  '<th class="text-center text-muted" style="font-size:0.78rem; white-space:nowrap; cursor:help;" title="' + TIP_GAUSS + '">Gaussian <span style="color:#6c757d;">ⓘ</span></th>';
+        if (hasPF) thead2 += '<th class="text-center text-muted" style="font-size:0.78rem; white-space:nowrap; cursor:help;" title="' + TIP_PARAFAC + '">PARAFAC <span style="color:#6c757d;">ⓘ</span></th>';
     });
     thead1 += '</tr>'; thead2 += '</tr>';
 
@@ -1742,7 +1893,8 @@ function _linReg(xs, ys) {
 }
 
 // Render all method-agreement scatter plots into #comparison-scatter-grid
-function _renderComparisonScatter(files, fixedParams, gaussParams, parafacParams) {
+function _renderComparisonScatter(files, fixedParams, gaussParams, parafacParams, compGroups) {
+    compGroups = compGroups || COMPARISON_GROUPS;
     var container = document.getElementById('comparison-scatter-grid');
     if (!container) return;
 
@@ -1752,25 +1904,138 @@ function _renderComparisonScatter(files, fixedParams, gaussParams, parafacParams
     });
     container.innerHTML = '';
 
-    // Color by group
+    // Color by sample group
     var palette = ['#2980b9','#27ae60','#e74c3c','#f39c12','#8e44ad','#16a085','#d35400','#2c3e50'];
     var groupList = Object.keys(groups).map(function(f) { return groups[f]; })
         .filter(function(g, i, a) { return g && a.indexOf(g) === i; }).sort();
 
-    COMPARISON_GROUPS.forEach(function(grp) {
+    // Helper: build and mount one Chart.js v4 scatter chart
+    // onPointClick(fname, grpId, evt) — called when a data point is clicked
+    function _makeScatter(canvasId, datasets, vMin, vMax, xTitle, yTitle, showLegend, onPointClick) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        var idLine = [{ x: vMin, y: vMin }, { x: vMax, y: vMax }];
+        // prepend identity line as dataset 0
+        datasets.unshift({ label: 'Identity', data: idLine, type: 'line',
+            borderColor: '#bbb', borderDash: [4,4], borderWidth: 1, pointRadius: 0, fill: false });
+
+        chartInst['cmp-' + canvasId] = new Chart(canvas, {
+            type: 'scatter',
+            data: { datasets: datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                animation: false,
+                onClick: function(evt, elements) {
+                    if (!onPointClick || !elements.length) return;
+                    var el = elements[0];
+                    var pt = this.data.datasets[el.datasetIndex].data[el.index];
+                    if (pt && pt._fname) onPointClick(pt._fname, pt._grpId || '', evt.native || evt);
+                },
+                scales: {
+                    x: {
+                        type: 'linear', min: vMin, max: vMax,
+                        title: { display: true, text: xTitle, font: { size: 10 } },
+                        ticks: { font: { size: 9 } }
+                    },
+                    y: {
+                        min: vMin, max: vMax,
+                        title: { display: true, text: yTitle, font: { size: 10 } },
+                        ticks: { font: { size: 9 } }
+                    }
+                },
+                plugins: {
+                    legend: { display: showLegend, labels: { font: { size: 9 }, boxWidth: 10 } },
+                    tooltip: { callbacks: { label: function(ctx) {
+                        if (ctx.datasetIndex === 0) return null;
+                        var extra = ctx.raw && ctx.raw._fname ? ('  ' + ctx.raw._fname) : '';
+                        return '(' + ctx.parsed.x.toFixed(3) + ', ' + ctx.parsed.y.toFixed(3) + ')' + extra;
+                    }}}
+                }
+            }
+        });
+    }
+
+    // ── Per-excitation group summary scatter plots ──────────────────────────────
+    // One plot per COMPARISON_GROUPS entry: pools all parameters (normalized to
+    // their own range) so the overall fixed-WL vs Gauss agreement per excitation
+    // wavelength is visible in a single view with one regression line.
+    var paramColors440 = ['#2980b9','#27ae60','#e74c3c','#f39c12'];
+    var paramColors620 = ['#16a085','#d35400','#8e44ad','#2c3e50'];
+
+    compGroups.forEach(function(grp, grpIdx) {
+        var paramPalette = grpIdx === 0 ? paramColors440 : paramColors620;
+
+        // Collect (fixedNorm, gaussNorm) pairs per parameter, normalized to [0,1]
+        var allXs = [], allYs = [];
+        var paramDatasets = [];
+
+        grp.params.forEach(function(p, pi) {
+            var fvs = [], gvs = [], fnames = [];
+            files.forEach(function(fname) {
+                var fv = (fixedParams[fname] || {})[p.fixedKey];
+                var gv = (gaussParams[fname] || {})[p.gaussKey];
+                if (fv != null && gv != null && isFinite(fv) && isFinite(gv)) {
+                    fvs.push(fv); gvs.push(gv); fnames.push(fname);
+                }
+            });
+            if (fvs.length < 2) return;
+
+            // Normalize to [0,1] using combined range
+            var combined = fvs.concat(gvs);
+            var lo = Math.min.apply(null, combined), hi = Math.max.apply(null, combined);
+            var rng = hi - lo || 1;
+            var xNorm = fvs.map(function(v) { return (v - lo) / rng; });
+            var yNorm = gvs.map(function(v) { return (v - lo) / rng; });
+
+            xNorm.forEach(function(x, i) { allXs.push(x); allYs.push(yNorm[i]); });
+
+            paramDatasets.push({
+                label: p.label,
+                data: xNorm.map(function(x, i) { return { x: x, y: yNorm[i], _fname: fnames[i], _grpId: grp.id }; }),
+                pointBackgroundColor: paramPalette[pi % paramPalette.length],
+                pointRadius: 5, pointHoverRadius: 7, pointStyle: 'circle', showLine: false
+            });
+        });
+
+        if (allXs.length < 2) return;
+
+        var pad = 0.06;
+        var vMin = 0 - pad, vMax = 1 + pad;
+
+        var colDiv = document.createElement('div');
+        colDiv.className = 'col-md-6 mb-2 px-1';
+        colDiv.innerHTML = '<div class="card border"><div class="card-body p-2">' +
+            '<div style="font-size:0.78rem; font-weight:600; text-align:center; margin-bottom:3px;">' +
+            grp.label + ' — method agreement (normalised)</div>' +
+            '<div style="position:relative; height:200px;"><canvas id="cmp-sum-' + grp.id + '"></canvas></div>' +
+            '</div></div>';
+        container.appendChild(colDiv);
+
+        _makeScatter('cmp-sum-' + grp.id, paramDatasets, vMin, vMax,
+            'Fixed-wavelength (normalised)', 'Gaussian (normalised)', true,
+            _cmpShowPopup);
+    });
+
+    // Row break + spacing before detail charts
+    var breakDiv = document.createElement('div');
+    breakDiv.className = 'w-100 mb-2';
+    container.appendChild(breakDiv);
+
+    // ── Per-parameter detail scatter plots ──────────────────────────────────────
+    compGroups.forEach(function(grp) {
         grp.params.forEach(function(p) {
-            var xs = [], ys = [], pxs = [], pys = [], colors = [];
+            var xs = [], ys = [], xfn = [], pxs = [], pys = [], pxfn = [], colors = [];
             files.forEach(function(fname) {
                 var fv = (fixedParams[fname] || {})[p.fixedKey];
                 var gv = (gaussParams[fname] || {})[p.gaussKey];
                 var gi = groupList.indexOf(groups[fname] || '');
                 var col = palette[Math.max(gi, 0) % palette.length];
                 if (fv != null && gv != null && isFinite(fv) && isFinite(gv)) {
-                    xs.push(fv); ys.push(gv); colors.push(col);
+                    xs.push(fv); ys.push(gv); xfn.push(fname); colors.push(col);
                 }
                 if (parafacParams && fv != null && isFinite(fv)) {
                     var pv = (parafacParams[fname] || {})[p.parafacKey];
-                    if (pv != null && isFinite(pv)) { pxs.push(fv); pys.push(pv); }
+                    if (pv != null && isFinite(pv)) { pxs.push(fv); pys.push(pv); pxfn.push(fname); }
                 }
             });
             if (xs.length < 2 && pxs.length < 2) return;
@@ -1784,54 +2049,36 @@ function _renderComparisonScatter(files, fixedParams, gaussParams, parafacParams
 
             // R² summary line
             var r2line = '';
-            if (reg)  r2line += 'Gauss R²=' + reg.r2.toFixed(3)  + (reg.r2  < 0.90 ? '⚠' : '');
-            if (regP) r2line += (r2line ? '  ' : '') + 'PF R²=' + regP.r2.toFixed(3) + (regP.r2 < 0.90 ? '⚠' : '');
+            if (reg)  r2line += 'Gauss R²=' + reg.r2.toFixed(3) + (reg.r2  < 0.90 ? ' ⚠' : '');
+            if (regP) r2line += (r2line ? '  ' : '') + 'PF R²=' + regP.r2.toFixed(3) + (regP.r2 < 0.90 ? ' ⚠' : '');
 
-            var col = document.createElement('div');
-            col.className = 'col-md-3 col-sm-6 mb-3 px-1';
-            col.innerHTML = '<div class="card border"><div class="card-body p-1">' +
+            var colDiv = document.createElement('div');
+            colDiv.className = 'col-md-3 col-sm-6 mb-3 px-1';
+            colDiv.innerHTML = '<div class="card border"><div class="card-body p-1">' +
                 '<div style="font-size:0.75rem; font-weight:600; text-align:center; margin-bottom:2px;">' + p.label + '</div>' +
                 '<div style="position:relative; height:180px;"><canvas id="cmp-scatter-' + p.key + '"></canvas></div>' +
                 (r2line ? '<div style="font-size:0.70rem; text-align:center; color:#555; margin-top:2px;">' + r2line + '</div>' : '') +
                 '</div></div>';
-            container.appendChild(col);
+            container.appendChild(colDiv);
 
-            var canvas  = document.getElementById('cmp-scatter-' + p.key);
-            var idLine  = [{ x: vMin, y: vMin }, { x: vMax, y: vMax }];
             var mkRegLine = function(r) { return r ? [{ x: vMin, y: r.a*vMin+r.b }, { x: vMax, y: r.a*vMax+r.b }] : []; };
 
             var datasets = [
-                { label: 'Gaussian', data: xs.map(function(x, i) { return { x: x, y: ys[i] }; }),
-                  pointBackgroundColor: colors, pointRadius: 5, pointHoverRadius: 7, pointStyle: 'circle' },
-                { label: 'Identity', data: idLine, type: 'line',
-                  borderColor: '#aaa', borderDash: [4,4], borderWidth: 1, pointRadius: 0, fill: false }
+                { label: 'Gaussian', data: xs.map(function(x, i) { return { x: x, y: ys[i], _fname: xfn[i], _grpId: grp.id }; }),
+                  pointBackgroundColor: colors,
+                  pointRadius: 5, pointHoverRadius: 7, pointStyle: 'circle', showLine: false }
             ];
             if (reg)  datasets.push({ label: 'Reg (Gauss)', data: mkRegLine(reg),  type: 'line', borderColor: '#e74c3c', borderWidth: 1.5, pointRadius: 0, fill: false });
             if (pxs.length >= 2) datasets.push(
-                { label: 'PARAFAC', data: pxs.map(function(x, i) { return { x: x, y: pys[i] }; }),
+                { label: 'PARAFAC', data: pxs.map(function(x, i) { return { x: x, y: pys[i], _fname: pxfn[i], _grpId: grp.id }; }),
                   pointBackgroundColor: '#8e44ad', pointBorderColor: '#fff', pointBorderWidth: 1,
-                  pointRadius: 6, pointHoverRadius: 8, pointStyle: 'rect' }
+                  pointRadius: 6, pointHoverRadius: 8, pointStyle: 'rect', showLine: false }
             );
             if (regP) datasets.push({ label: 'Reg (PF)', data: mkRegLine(regP), type: 'line', borderColor: '#8e44ad', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, fill: false });
 
-            chartInst['cmp-' + p.key] = new Chart(canvas, {
-                type: 'scatter',
-                data: { datasets: datasets },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    legend: { display: pxs.length >= 2, labels: { fontSize: 9, boxWidth: 10 } },
-                    scales: {
-                        xAxes: [{ type: 'linear', scaleLabel: { display: true, labelString: 'Fixed-WL', fontSize: 10 },
-                            ticks: { fontSize: 9, min: vMin, max: vMax } }],
-                        yAxes: [{ scaleLabel: { display: true, labelString: 'Gauss / PARAFAC', fontSize: 10 },
-                            ticks: { fontSize: 9, min: vMin, max: vMax } }]
-                    },
-                    tooltips: { callbacks: { label: function(item) {
-                        return item.datasetIndex <= 1 ? null :
-                            '(' + Number(item.xLabel).toFixed(3) + ', ' + Number(item.yLabel).toFixed(3) + ')';
-                    }}}
-                }
-            });
+            _makeScatter('cmp-scatter-' + p.key, datasets, vMin, vMax,
+                'Fixed-wavelength', 'Gauss / PARAFAC', pxs.length >= 2,
+                _cmpShowPopup);
         });
     });
 }
@@ -1851,11 +2098,43 @@ function renderComparisonTab() {
     if (placeholder) placeholder.style.display = 'none';
     if (content) content.style.display = '';
 
-    var files = eemData.files;
+    // Filter out excluded samples
+    var allFiles = eemData.files;
+    var files = allFiles.filter(function(f) { return !cmpExcluded[f]; });
+    var nExcluded = allFiles.length - files.length;
+    var excludedBar = document.getElementById('cmp-excluded-bar');
+    var excludedCount = document.getElementById('cmp-excluded-count');
+    if (excludedBar) excludedBar.style.display = nExcluded > 0 ? '' : 'none';
+    if (excludedCount) excludedCount.textContent = nExcluded;
+
     var fixedParams  = eemData.params;
     var gaussParams  = computeGaussianParamsFromBatch();
     var hasPF = parafacResults && parafacPigmAssign.some(function(a) { return a && a !== '' && a !== 'other'; });
     var parafacParams = hasPF ? computeParafacParams() : null;
+
+    // Select comparison groups based on analysis mode
+    var isRT = eemData.analysis_mode === 'RT';
+    var compGroups = isRT ? RT_COMPARISON_GROUPS : COMPARISON_GROUPS;
+    // Filter unreliable params from RT groups when checkbox is off
+    if (isRT && !rtShowUnreliable) {
+        compGroups = compGroups.map(function(grp) {
+            return {
+                id: grp.id, label: grp.label,
+                params: grp.params.filter(function(p) {
+                    return RT_UNRELIABLE_PARAMS.indexOf(p.key) === -1;
+                })
+            };
+        }).filter(function(grp) { return grp.params.length > 0; });
+    }
+    // Show/hide comparison tab unreliable checkbox (RT mode only)
+    var cmpWrap = document.getElementById('cmp-rt-unreliable-wrap');
+    if (cmpWrap) cmpWrap.style.display = isRT ? '' : 'none';
+
+    // Update section headings
+    var chlHeadEl = document.getElementById('cmp-section-chl');
+    var pbsHeadEl = document.getElementById('cmp-section-pbs');
+    if (chlHeadEl && compGroups[0]) chlHeadEl.innerHTML = compGroups[0].label;
+    if (pbsHeadEl && compGroups[1]) pbsHeadEl.innerHTML = compGroups[1].label;
 
     // Status line
     var has620 = deconvBatchResults.ex620 && Object.keys(deconvBatchResults.ex620).length > 0;
@@ -1865,17 +2144,19 @@ function renderComparisonTab() {
     if (has560) methods.push('Gaussian (Ex 560)');
     if (hasPF)  methods.push('PARAFAC');
     var statusEl = document.getElementById('comparison-status');
-    if (statusEl) statusEl.textContent = files.length + ' samples · Methods: ' + methods.join(', ') +
+    if (statusEl) statusEl.textContent = files.length + ' samples' +
+        (nExcluded > 0 ? ' (' + nExcluded + ' hidden)' : '') +
+        ' · Methods: ' + methods.join(', ') +
         '  ·  Red values differ >20% between methods.';
 
     // Tables
-    COMPARISON_GROUPS.forEach(function(grp) {
+    compGroups.forEach(function(grp) {
         var targetDiv = document.getElementById('comparison-table-' + grp.id);
         if (targetDiv) targetDiv.innerHTML = _buildComparisonTable(grp, files, fixedParams, gaussParams, parafacParams);
     });
 
     // Scatter plots
-    _renderComparisonScatter(files, fixedParams, gaussParams, parafacParams);
+    _renderComparisonScatter(files, fixedParams, gaussParams, parafacParams, compGroups);
 }
 
 // Export merged Fixed-WL + Gaussian-derived parameters to Statistics page
@@ -2021,23 +2302,20 @@ function fitGaussians(xArr, yArr, initParams, maxIter, bounds) {
 // ============================================================
 // Gaussian Deconvolution — UI
 // ============================================================
-var DECONV_PRESETS = {
-    'ex440': [680, 689, 695, 724],
-    'ex620': [662, 689, 724],
-    'ex560': [577, 662, 689, 724],
-    'custom': [689, 724]
-};
-
 // ── Batch deconvolution state ──────────────────────────────────────────────
 var deconvBatchResults = { 'ex440': {}, 'ex620': {}, 'ex560': {} };
 
 // ── Preset configuration (uses WL_CONFIG for pigmentation-aware peaks) ─────
+// getPeaks(pigm) — pigm is optional; defaults to current pigmentation setting.
+// Ex 440: 3 peaks (CP43 ~685, CP47 ~695, PSI ~724) for all pigmentation types — no free Chl peak.
+// Ex 620: 3 peaks — PC/APC ~662 (PBS-free), PBS→PSII ~689, PBS→PSI ~724.
+// Ex 560: 4 peaks — PE ~580 (PBS-free via PE), APC via PE ~662 (PBS-free via APC), PBS→PSII ~689, PBS→PSI ~724.
 var DECONV_PRESET_CONFIG = {
     'ex440': {
         targetEx: 440,
         getPeaks: function() {
             var W = WL_CONFIG;
-            return [675, W.k77_em_cp43, W.k77_em_cp47, W.k77_em_psi];
+            return [W.k77_em_cp43, W.k77_em_cp47, W.k77_em_psi];
         },
         pigmAll: true,
         emMin: 650, emMax: 750, autoDetect: false
@@ -2059,6 +2337,9 @@ var DECONV_PRESET_CONFIG = {
         },
         pigmFilter: ['checkbox_chl_PE', 'checkbox_chl_PC_PE'],
         emMin: 565, emMax: 750, autoDetect: true
+    },
+    'custom': {
+        getPeaks: function() { return [WL_CONFIG.k77_em_psii, WL_CONFIG.k77_em_psi]; }
     }
 };
 
@@ -2650,7 +2931,8 @@ function initDeconvUI(autoRun) {
 
 function applyDeconvPreset() {
     var preset = document.getElementById('deconv-preset-select').value;
-    deconvPeakMus = (DECONV_PRESETS[preset] || [689, 724]).slice();
+    var cfg = DECONV_PRESET_CONFIG[preset];
+    deconvPeakMus = cfg ? cfg.getPeaks().slice() : [WL_CONFIG.k77_em_psii, WL_CONFIG.k77_em_psi];
     rebuildPeaksEditor();
 }
 
@@ -2925,16 +3207,13 @@ function recomputeParamsFromMaps() {
         var W = WL_CONFIG;
         if (eemData.analysis_mode === 'RT') {
             var f685 = getPoint(W.rt_ex_chl, W.rt_em_f685),
-                f695 = getPoint(W.rt_ex_chl, W.rt_em_f695),
                 f730 = getPoint(W.rt_ex_chl, W.rt_em_f730);
-            params = {F685: f685, F695: f695, F730: f730,
-                      F685_to_F730: null, F695_to_F730: null, F695_to_F685: null,
+            params = {F685: f685, F730: f730,
+                      F685_to_F730: null,
                       PBS_F657: null, PBS_F685: null, PBS_F705: null, PBS_F730: null, PBS_tot: null,
                       PBS_free_norm: null, PBS_PSII_norm: null, PBS_PSI_norm: null,
                       PBS_F685_to_F705: null, PBS_F685_to_F730: null};
             if (f685 != null && f730 != null && f730 > 0) params.F685_to_F730 = f685 / f730;
-            if (f695 != null && f730 != null && f730 > 0) params.F695_to_F730 = f695 / f730;
-            if (f695 != null && f685 != null && f685 > 0) params.F695_to_F685 = f695 / f685;
             var pbsF657 = getPoint(W.rt_ex_pbs, W.rt_em_pbs_free),
                 pbsF685 = getPoint(W.rt_ex_pbs, W.rt_em_pbs_psii),
                 pbsF705 = getPoint(W.rt_ex_pbs, W.rt_em_pbs_psi),
@@ -3044,7 +3323,6 @@ function updateWlConfig() {
     WL_CONFIG.rt_ex_chl       = v('wl-rt-ex-chl',       WL_CONFIG.rt_ex_chl);
     WL_CONFIG.rt_ex_pbs       = v('wl-rt-ex-pbs',       WL_CONFIG.rt_ex_pbs);
     WL_CONFIG.rt_em_f685      = v('wl-rt-em-f685',      WL_CONFIG.rt_em_f685);
-    WL_CONFIG.rt_em_f695      = v('wl-rt-em-f695',      WL_CONFIG.rt_em_f695);
     WL_CONFIG.rt_em_f730      = v('wl-rt-em-f730',      WL_CONFIG.rt_em_f730);
     WL_CONFIG.rt_em_pbs_free  = v('wl-rt-em-pbs-free',  WL_CONFIG.rt_em_pbs_free);
     WL_CONFIG.rt_em_pbs_psii  = v('wl-rt-em-pbs-psii',  WL_CONFIG.rt_em_pbs_psii);
@@ -3485,9 +3763,10 @@ function generateMethodsText() {
 
         lines.push(
             'Room-temperature fluorescence parameters were derived from: Ex\u202f440/Em\u202f685\u202fnm ' +
-            '(F685; PSII core, CP43/CP47), Ex\u202f440/Em\u202f695\u202fnm (F695; CP47 inner antenna), ' +
+            '(F685; PSII pool \u2014 CP43 and CP47 are spectrally unresolved at RT), ' +
             'Ex\u202f440/Em\u202f730\u202fnm (F730; PSI red-shifted chlorophylls). The F685/F730 ratio ' +
-            '(Ex\u202f440\u202fnm) was used as a relative PSII:PSI indicator. PBS coupling was assessed ' +
+            '(Ex\u202f440\u202fnm) was used as a relative PSII pool\u202f:\u202fPSI indicator; note that PSI ' +
+            'emission tail overlap introduces uncertainty in this ratio at RT (Remelli & Santabarbara, 2018). PBS coupling was assessed ' +
             'under Ex\u202f620\u202fnm excitation: Em\u202f657\u202fnm (PBS-free; uncoupled phycobilisomes), ' +
             'Em\u202f685\u202fnm (PBS-PSII; PBS coupled to PSII), Em\u202f705\u202fnm (PBS-PSI; PBS coupled to PSI), ' +
             'and Em\u202f730\u202fnm (PBS-F730). PBS coupling fractions (PBS-free\u202fnorm, PBS-PSII\u202fnorm, ' +
@@ -3585,6 +3864,7 @@ var parafacDiagResults = null;
 var parafacAnnotations = [];   // user-editable per-component text labels
 var parafacPigmAssign = [];    // biological pigment assignment per component
 var parafacRejected   = [];    // boolean: exclude component from export/comparison
+var parafacPigmAssignDefault = [];  // auto-suggested assignments at run time (for change detection)
 
 // Pigment assignment options: [value, display label]
 var PIGM_ASSIGN_OPTIONS = [
@@ -3608,13 +3888,6 @@ function _parafacValidate() {
         return 'At least 3 samples are needed for PARAFAC analysis.';
     var keys = Object.keys(eemData.maps);
     if (!keys.length) return 'No EEM maps available.';
-    var ref = eemData.maps[keys[0]];
-    for (var i = 1; i < keys.length; i++) {
-        var m = eemData.maps[keys[i]];
-        if (m.ex_wl.length !== ref.ex_wl.length || m.em_wl.length !== ref.em_wl.length)
-            return 'Grid mismatch: all samples must have identical Ex/Em grids for PARAFAC. ' +
-                   'Try uploading only files from one instrument type.';
-    }
     return null;
 }
 
@@ -3638,6 +3911,8 @@ function updateParafacScatterUI() {
         var checked = document.getElementById('par-' + id + '-check').checked;
         document.getElementById('par-' + id + '-row').style.display = checked ? '' : 'none';
     });
+    var diagChecked = document.getElementById('par-diag-mask-check').checked;
+    document.getElementById('par-diag-mask-row').style.display = diagChecked ? '' : 'none';
 }
 
 function _buildParafacPayload(extra) {
@@ -3648,7 +3923,9 @@ function _buildParafacPayload(extra) {
             ? parseFloat(document.getElementById('par-r2-slider').value) : 0,
         raman_width: document.getElementById('par-ram-check').checked
             ? parseFloat(document.getElementById('par-ram-slider').value) : 0,
-        interpolate: document.getElementById('par-interp-check').checked
+        interpolate: document.getElementById('par-interp-check').checked,
+        diag_mask_enabled: document.getElementById('par-diag-mask-check').checked,
+        diag_mask_buffer: parseFloat(document.getElementById('par-diag-mask-buffer').value) || 10
     };
     var crop = {
         ex_min: parseFloat(document.getElementById('par-ex-min').value) || null,
@@ -3673,35 +3950,145 @@ function _parafacHideError() {
     document.getElementById('parafac-error').style.display = 'none';
 }
 
+// ── SSE fetch helper ─────────────────────────────────────────────────────────
+// Streams Server-Sent Events from a POST endpoint.
+// onEvent(data) — called for each non-done event
+// onDone(data)  — called on {done:true} event (data may be null for diagnostic)
+// onError(err)  — called on network or parse error
+function _fetchSSE(url, payload, onEvent, onDone, onError, signal) {
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: signal
+    })
+    .then(function(resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var reader = resp.body.getReader();
+        var decoder = new TextDecoder();
+        var buf = '';
+        var doneCalled = false;
+        function pump() {
+            return reader.read().then(function(chunk) {
+                if (chunk.done) { if (!doneCalled) onDone(null); return; }
+                buf += decoder.decode(chunk.value, { stream: true });
+                var lines = buf.split('\n');
+                buf = lines.pop();
+                lines.forEach(function(line) {
+                    if (line.indexOf('data: ') !== 0) return;
+                    try {
+                        var data = JSON.parse(line.slice(6));
+                        if (data.done) { doneCalled = true; onDone(data); }
+                        else           { onEvent(data); }
+                    } catch (e) {}
+                });
+                return pump();
+            });
+        }
+        return pump();
+    })
+    .catch(function(e) { onError(e); });
+}
+
+// ── Elapsed-time ticker ───────────────────────────────────────────────────────
+function _startElapsed(elId) {
+    var el = document.getElementById(elId);
+    if (!el) return null;
+    var t0 = Date.now();
+    el.textContent = '0s';
+    var tid = setInterval(function() {
+        var s = Math.round((Date.now() - t0) / 1000);
+        el.textContent = s < 60 ? s + 's' : Math.floor(s / 60) + 'm ' + (s % 60) + 's';
+    }, 1000);
+    return tid;
+}
+function _stopElapsed(tid) { if (tid) clearInterval(tid); }
+
 // ── Step 1: Diagnostic (CORCONDIA) ───────────────────────────────────────────
+var _parafacDiagController = null;
+
+function stopParafacDiagnostic() {
+    if (_parafacDiagController) { _parafacDiagController.abort(); _parafacDiagController = null; }
+}
+
 function runParafacDiagnostic() {
     var err = _parafacValidate();
     if (err) { _parafacShowError(err); return; }
     _parafacHideError();
 
-    var spinner = document.getElementById('par-diag-spinner');
-    spinner.style.display = '';
+    _parafacDiagController = new AbortController();
+    var spinner  = document.getElementById('par-diag-spinner');
+    var stopBtn  = document.getElementById('par-diag-stop');
+    var runBtn   = document.getElementById('par-diag-btn');
+    var progWrap = document.getElementById('par-diag-progress-wrap');
+    var progBar  = document.getElementById('par-diag-progress-bar');
+    var statusEl = document.getElementById('par-diag-status');
+
+    if (spinner)  spinner.style.display = '';
+    if (stopBtn)  stopBtn.style.display = '';
+    if (runBtn)   runBtn.disabled = true;
+    if (progWrap) progWrap.style.display = '';
+    if (progBar)  progBar.style.width = '0%';
+    if (statusEl) statusEl.textContent = 'Starting…';
+
+    var elapsedTid = _startElapsed('par-diag-elapsed');
+    var accumulated = [];
+
+    function _diagReset() {
+        _stopElapsed(elapsedTid);
+        if (spinner)  spinner.style.display = 'none';
+        if (stopBtn)  stopBtn.style.display = 'none';
+        if (runBtn)   runBtn.disabled = false;
+        if (progWrap) progWrap.style.display = 'none';
+        _parafacDiagController = null;
+    }
 
     var payload = _buildParafacPayload({
         f_max: parseInt(document.getElementById('par-fmax-slider').value)
     });
 
-    fetch('/api/eem_parafac_diagnostic', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        spinner.style.display = 'none';
-        if (data.error) { _parafacShowError(data.error); return; }
-        parafacDiagResults = data.results;
-        renderParafacDiagnostic(data.results);
-    })
-    .catch(function(e) {
-        spinner.style.display = 'none';
-        _parafacShowError('Request failed: ' + e);
-    });
+    _fetchSSE('/api/eem_parafac_diagnostic', payload,
+        function onEvent(data) {  // one rank result arrives
+            if (data.error) { _diagReset(); _parafacShowError(data.error); return; }
+            accumulated.push(data);
+            // Update progress bar
+            var pct = data.f_total > 0 ? Math.round(data.f * 100 / data.f_total) : 0;
+            if (progBar)  progBar.style.width = pct + '%';
+            if (statusEl) statusEl.textContent =
+                'Rank ' + data.f + ' / ' + data.f_total +
+                '  ·  CORCONDIA: ' + (data.corcondia != null ? data.corcondia + '%' : '—') +
+                '  ·  Var: ' + (data.explained_variance != null ? data.explained_variance + '%' : '—');
+            // Re-render chart incrementally with whatever we have so far
+            parafacDiagResults = accumulated.slice();
+            renderParafacDiagnostic(accumulated);
+        },
+        function onDone() {  // {done:true} sentinel
+            _diagReset();
+        },
+        function onError(e) {
+            _diagReset();
+            if (e.name !== 'AbortError') _parafacShowError('Request failed: ' + e);
+        },
+        _parafacDiagController.signal
+    );
+}
+
+function _setParafacRank(f) {
+    var slider = document.getElementById('par-rank-slider');
+    var valDisplay = document.getElementById('par-rank-val');
+    if (!slider) return;
+    slider.value = Math.min(f, parseInt(slider.max));
+    slider._userSet = true;
+    if (valDisplay) valDisplay.textContent = slider.value;
+    var badge = document.getElementById('par-rank-val');
+    if (badge) {
+        badge.classList.remove('badge-primary');
+        badge.classList.add('badge-success');
+        setTimeout(function() {
+            badge.classList.remove('badge-success');
+            badge.classList.add('badge-primary');
+        }, 1200);
+    }
 }
 
 function renderParafacDiagnostic(results) {
@@ -3712,23 +4099,7 @@ function renderParafacDiagnostic(results) {
     var evs = results.map(function(r) { return r.explained_variance; });
 
     function setRankFromDiag(f) {
-        var slider = document.getElementById('par-rank-slider');
-        var valDisplay = document.getElementById('par-rank-val');
-        if (slider) {
-            slider.value = Math.min(f, parseInt(slider.max));
-            slider._userSet = true;
-            if (valDisplay) valDisplay.textContent = slider.value;
-        }
-        // Flash the rank slider to draw attention
-        var badge = document.getElementById('par-rank-val');
-        if (badge) {
-            badge.classList.remove('badge-primary');
-            badge.classList.add('badge-success');
-            setTimeout(function() {
-                badge.classList.remove('badge-success');
-                badge.classList.add('badge-primary');
-            }, 1200);
-        }
+        _setParafacRank(f);
     }
 
     function makeChart(canvasId, label, values, color, refLine) {
@@ -3797,16 +4168,71 @@ function renderParafacDiagnostic(results) {
 
     makeChart('parafac-corcondia-chart', 'CORCONDIA (%)', ccs, '#4472C4', 80);
     makeChart('parafac-expvar-chart', 'Explained variance (%)', evs, '#70AD47');
+
+    // CORCONDIA recommendation: highest F where CORCONDIA >= 80
+    var ccHint = document.getElementById('par-rank-cc-hint');
+    if (ccHint && results.length > 0) {
+        var recommended = null;
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].corcondia != null && results[i].corcondia >= 80) {
+                recommended = results[i].f;
+            }
+        }
+        if (recommended !== null) {
+            ccHint.innerHTML =
+                '<i class="fa fa-check-circle text-success mr-1"></i>' +
+                'CORCONDIA suggests <strong>F&nbsp;=&nbsp;' + recommended + '</strong> ' +
+                '(last rank with CORCONDIA&nbsp;&ge;&nbsp;80%)&nbsp;&nbsp;' +
+                '<button class="btn btn-xs btn-outline-success py-0 px-1" ' +
+                    'style="font-size:0.72rem; line-height:1.3;" ' +
+                    'onclick="_setParafacRank(' + recommended + ')">Use</button>';
+        } else {
+            ccHint.innerHTML =
+                '<i class="fa fa-exclamation-triangle text-warning mr-1"></i>' +
+                '<span class="text-warning">No rank with CORCONDIA&nbsp;&ge;&nbsp;80% found. ' +
+                'Try reducing scatter or increasing max components.</span>';
+        }
+        ccHint.style.display = '';
+    }
 }
 
 // ── Step 2: Full PARAFAC fit ──────────────────────────────────────────────────
+var _parafacFitController = null;
+
+function stopParafac() {
+    if (_parafacFitController) { _parafacFitController.abort(); _parafacFitController = null; }
+}
+
 function runParafac() {
     var err = _parafacValidate();
     if (err) { _parafacShowError(err); return; }
     _parafacHideError();
 
-    var spinner = document.getElementById('par-fit-spinner');
-    spinner.style.display = '';
+    _parafacFitController = new AbortController();
+    var spinner  = document.getElementById('par-fit-spinner');
+    var stopBtn  = document.getElementById('par-fit-stop');
+    var runBtn   = document.getElementById('par-fit-btn');
+    var progWrap = document.getElementById('par-fit-progress-wrap');
+    var progBar  = document.getElementById('par-fit-progress-bar');
+    var statusEl = document.getElementById('par-fit-status');
+
+    if (spinner)  spinner.style.display = '';
+    if (stopBtn)  stopBtn.style.display = '';
+    if (runBtn)   runBtn.disabled = true;
+    if (progWrap) progWrap.style.display = '';
+    if (progBar)  progBar.style.width = '0%';
+    if (statusEl) statusEl.textContent = 'Starting…';
+
+    var elapsedTid = _startElapsed('par-fit-elapsed');
+
+    function _fitReset() {
+        _stopElapsed(elapsedTid);
+        if (spinner)  spinner.style.display = 'none';
+        if (stopBtn)  stopBtn.style.display = 'none';
+        if (runBtn)   runBtn.disabled = false;
+        if (progWrap) progWrap.style.display = 'none';
+        _parafacFitController = null;
+    }
 
     var rank = parseInt(document.getElementById('par-rank-slider').value);
     var payload = _buildParafacPayload({
@@ -3816,28 +4242,50 @@ function runParafac() {
         tol:        parseFloat(document.getElementById('par-tol-select').value)
     });
 
-    fetch('/api/eem_parafac', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        spinner.style.display = 'none';
-        if (data.error) { _parafacShowError(data.error); return; }
-        parafacResults = data;
-        parafacAnnotations = data.annotations.slice();
-        parafacRejected   = data.annotations.map(function() { return false; });
-        parafacPigmAssign = data.em_loadings.map(function(emLoad, r) {
-            return _suggestPigmAssign(data.ex_wl, data.em_wl, data.ex_loadings[r], emLoad);
-        });
-        renderParafacResults(data);
-        updateComparisonTabState();
-    })
-    .catch(function(e) {
-        spinner.style.display = 'none';
-        _parafacShowError('Request failed: ' + e);
-    });
+    _fetchSSE('/api/eem_parafac', payload,
+        function onEvent(data) {  // one restart progress event
+            if (data.error) { _fitReset(); _parafacShowError(data.error); return; }
+            var pct = data.total > 0 ? Math.round(data.restart * 100 / data.total) : 0;
+            if (progBar)  progBar.style.width = pct + '%';
+            if (statusEl) statusEl.textContent =
+                'Restart ' + data.restart + ' / ' + data.total +
+                '  ·  this err: ' + data.err.toFixed(4) +
+                '  ·  best: ' + data.best_err.toFixed(4);
+        },
+        function onDone(data) {  // final result with {done:true, ...}
+            _fitReset();
+            if (!data || data.error) {
+                var msg = (data && data.error) || 'Unknown error';
+                if (data && data.traceback) console.error('PARAFAC server traceback:\n' + data.traceback);
+                _parafacShowError(msg);
+                return;
+            }
+            try {
+                parafacResults = data;
+                parafacAnnotations = data.annotations.slice();
+                parafacRejected   = data.annotations.map(function() { return false; });
+                parafacPigmAssign = data.em_loadings.map(function(emLoad, r) {
+                    return _suggestPigmAssign(data.ex_wl, data.em_wl, data.ex_loadings[r], emLoad);
+                });
+                parafacPigmAssignDefault = parafacPigmAssign.slice();
+                renderParafacResults(data);
+                _updateCopyScoresBtn();
+                updateComparisonTabState();
+                // Auto-refresh comparison tab if Gaussian data is already present
+                var hasGauss = deconvBatchResults.ex440 &&
+                               Object.keys(deconvBatchResults.ex440).length > 0;
+                if (hasGauss) renderComparisonTab();
+            } catch (e) {
+                _parafacShowError('Rendering error: ' + e.message);
+                console.error('PARAFAC render error:', e);
+            }
+        },
+        function onError(e) {
+            _fitReset();
+            if (e.name !== 'AbortError') _parafacShowError('Request failed: ' + e);
+        },
+        _parafacFitController.signal
+    );
 }
 
 function renderParafacResults(data) {
@@ -3907,7 +4355,7 @@ function _buildComponentCard(r, data) {
                 'onchange="parafacAnnotations[' + r + ']=this.value; _reAnnotateParafacComponents(getPigmentation());">' +
               '<select class="form-control form-control-sm" style="width:auto; font-size:0.78rem;" ' +
                 'id="par-pigm-' + r + '" ' +
-                'onchange="parafacPigmAssign[' + r + ']=this.value; updateComparisonTabState();">' +
+                'onchange="parafacPigmAssign[' + r + ']=this.value; _updateCopyScoresBtn(); updateComparisonTabState();">' +
                 pigmOpts +
               '</select>' +
               '<label class="mb-0 ml-1 d-flex align-items-center" style="gap:3px; font-size:0.78rem; white-space:nowrap; cursor:pointer;" ' +
@@ -3915,7 +4363,7 @@ function _buildComponentCard(r, data) {
                 '<input type="checkbox" id="par-reject-' + r + '"' + (rejected ? ' checked' : '') + ' ' +
                   'onchange="parafacRejected[' + r + ']=this.checked; ' +
                     'document.getElementById(\'par-card-inner-' + r + '\').style.opacity=this.checked?\'0.45\':\'\'; ' +
-                    'updateComparisonTabState();">' +
+                    '_updateCopyScoresBtn(); updateComparisonTabState();">' +
                 ' Reject' +
               '</label>' +
             '</div>' +
@@ -3934,42 +4382,125 @@ function _buildComponentCard(r, data) {
 
     // Draw charts after inserting into DOM
     setTimeout(function() {
+        // Find peak indices in loadings to pick the right EEM slice for raw-data overlay
+        var exPeakIdx = data.ex_loadings[r].indexOf(Math.max.apply(null, data.ex_loadings[r]));
+        var emPeakIdx = data.em_loadings[r].indexOf(Math.max.apply(null, data.em_loadings[r]));
+        var exMeanSd = _computeLoadingMeanSd('em', exPeakIdx);  // emission slice at peak Ex
+        var emMeanSd = _computeLoadingMeanSd('ex', emPeakIdx);  // excitation slice at peak Em
         _drawLoadingChart('par-ex-chart-' + r, 'Excitation loading',
-            data.ex_wl, data.ex_loadings[r], 'Excitation (nm)', color);
+            data.ex_wl, data.ex_loadings[r], 'Excitation (nm)', color, emMeanSd);
         _drawLoadingChart('par-em-chart-' + r, 'Emission loading',
-            data.em_wl, data.em_loadings[r], 'Emission (nm)', color);
+            data.em_wl, data.em_loadings[r], 'Emission (nm)', color, exMeanSd);
     }, 0);
 
     return col;
 }
 
-function _drawLoadingChart(canvasId, label, wl, values, xLabel, color) {
+// Compute mean ± SD of normalised EEM spectra sliced at a given index.
+// axis='em': slice emission dimension at excitation index peakIdx (gives emission spectra)
+// axis='ex': slice excitation dimension at emission index peakIdx (gives excitation spectra)
+function _computeLoadingMeanSd(axis, peakIdx) {
+    if (!eemData || !eemData.files.length) return null;
+    var allSpectra = [];
+    eemData.files.forEach(function(fname) {
+        var m = eemData.maps[fname];
+        if (!m) return;
+        var spectrum;
+        if (axis === 'em') {
+            spectrum = m.intensity.map(function(row) { return row[peakIdx] || 0; });
+        } else {
+            var row = m.intensity[peakIdx];
+            spectrum = row ? row.slice() : [];
+        }
+        if (!spectrum.length) return;
+        var peak = Math.max.apply(null, spectrum.map(Math.abs));
+        if (peak > 0) spectrum = spectrum.map(function(v) { return v / peak; });
+        allSpectra.push(spectrum);
+    });
+    if (!allSpectra.length) return null;
+    var n = allSpectra[0].length;
+    var mean = [], sdPlus = [], sdMinus = [];
+    for (var i = 0; i < n; i++) {
+        var vals = allSpectra.map(function(s) { return s[i] || 0; });
+        var mu = vals.reduce(function(a, b) { return a + b; }, 0) / vals.length;
+        var sd = Math.sqrt(vals.reduce(function(a, v) { return a + (v - mu) * (v - mu); }, 0) / vals.length);
+        mean.push(mu);
+        sdPlus.push(mu + sd);
+        sdMinus.push(mu - sd);
+    }
+    return { mean: mean, sdPlus: sdPlus, sdMinus: sdMinus };
+}
+
+function _drawLoadingChart(canvasId, label, wl, values, xLabel, color, meanSd) {
     if (chartInst[canvasId]) chartInst[canvasId].destroy();
     var ctx = document.getElementById(canvasId);
     if (!ctx) return;
+
+    var datasets = [];
+
+    // Mean ± SD band from raw EEM data (grey, shown behind the component loading)
+    if (meanSd) {
+        // SD+ boundary (fills down to SD-)
+        datasets.push({
+            label: 'Mean+SD',
+            data: meanSd.sdPlus,
+            borderColor: 'rgba(0,0,0,0)',
+            backgroundColor: 'rgba(150,150,150,0.18)',
+            fill: '+1',
+            tension: 0.3, pointRadius: 0, borderWidth: 0
+        });
+        // SD- boundary
+        datasets.push({
+            label: 'Mean−SD',
+            data: meanSd.sdMinus,
+            borderColor: 'rgba(0,0,0,0)',
+            backgroundColor: 'rgba(150,150,150,0.18)',
+            fill: false,
+            tension: 0.3, pointRadius: 0, borderWidth: 0
+        });
+        // Mean line
+        datasets.push({
+            label: 'Mean (raw)',
+            data: meanSd.mean,
+            borderColor: '#999',
+            backgroundColor: 'transparent',
+            fill: false,
+            tension: 0.3, pointRadius: 0, borderWidth: 1,
+            borderDash: [4, 3]
+        });
+    }
+
+    // Component loading (colored, on top)
+    datasets.push({
+        label: label,
+        data: values,
+        borderColor: color,
+        backgroundColor: color + '22',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        borderWidth: 2
+    });
+
     chartInst[canvasId] = new Chart(ctx.getContext('2d'), {
         type: 'line',
-        data: {
-            labels: wl,
-            datasets: [{
-                label: label,
-                data: values,
-                borderColor: color,
-                backgroundColor: color + '22',
-                fill: true,
-                tension: 0.3,
-                pointRadius: 0,
-                borderWidth: 1.5
-            }]
-        },
+        data: { labels: wl, datasets: datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: {
+                    display: !!meanSd,
+                    position: 'bottom',
+                    labels: { boxWidth: 10, font: { size: 8 }, filter: function(item) {
+                        return item.text !== 'Mean+SD' && item.text !== 'Mean−SD';
+                    }}
+                }
+            },
             scales: {
                 x: { title: { display: true, text: xLabel, font: { size: 10 } },
                      ticks: { maxTicksLimit: 5, font: { size: 9 } } },
                 y: { min: 0, max: 1.05,
-                     title: { display: true, text: 'Loading (norm.)', font: { size: 10 } },
+                     title: { display: true, text: 'Norm. intensity', font: { size: 10 } },
                      ticks: { maxTicksLimit: 4, font: { size: 9 } } }
             }
         }

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, Response, stream_with_context
 import os
 import re
 import struct
@@ -296,6 +296,38 @@ def _khatri_rao(A, B):
     return (A[:, np.newaxis, :] * B[np.newaxis, :, :]).reshape(-1, r)
 
 
+def _parafac_als_one_restart(X, rank, rng, max_iter, tol, X1, X2, X3, X_norm):
+    """Run one ALS restart from a random initialisation. Returns (A, B, C, err)."""
+    I, J, K = X.shape
+    A = rng.random((I, rank)) + 0.1
+    B = rng.random((J, rank)) + 0.1
+    C = rng.random((K, rank)) + 0.1
+    prev_err = np.inf
+    err = np.inf
+    for __ in range(max_iter):
+        kr = _khatri_rao(B, C)
+        gram = (B.T @ B) * (C.T @ C) + 1e-10 * np.eye(rank)
+        A = np.linalg.solve(gram, (X1 @ kr).T).T
+        A = np.maximum(A, 1e-10)
+
+        kr = _khatri_rao(A, C)
+        gram = (A.T @ A) * (C.T @ C) + 1e-10 * np.eye(rank)
+        B = np.linalg.solve(gram, (X2 @ kr).T).T
+        B = np.maximum(B, 1e-10)
+
+        kr = _khatri_rao(A, B)
+        gram = (A.T @ A) * (B.T @ B) + 1e-10 * np.eye(rank)
+        C = np.linalg.solve(gram, (X3 @ kr).T).T
+        C = np.maximum(C, 1e-10)
+
+        X_rec = np.einsum('ir,jr,kr->ijk', A, B, C)
+        err = float(np.linalg.norm(X - X_rec)) / float(X_norm)
+        if abs(prev_err - err) < tol:
+            break
+        prev_err = err
+    return A, B, C, err
+
+
 def _parafac_als(X, rank, n_restarts=10, max_iter=500, tol=1e-6):
     """
     Non-negative PARAFAC via Alternating Least Squares.
@@ -306,9 +338,9 @@ def _parafac_als(X, rank, n_restarts=10, max_iter=500, tol=1e-6):
         C (n_em, rank)      — emission loadings
     """
     I, J, K = X.shape
-    X1 = X.reshape(I, J * K)                           # mode-1: (I, J*K)
-    X2 = X.transpose(1, 0, 2).reshape(J, I * K)       # mode-2: (J, I*K)
-    X3 = X.transpose(2, 0, 1).reshape(K, I * J)       # mode-3: (K, I*J)
+    X1 = X.reshape(I, J * K)
+    X2 = X.transpose(1, 0, 2).reshape(J, I * K)
+    X3 = X.transpose(2, 0, 1).reshape(K, I * J)
     X_norm = np.linalg.norm(X)
     if X_norm == 0:
         raise ValueError('Tensor is all-zero')
@@ -318,37 +350,7 @@ def _parafac_als(X, rank, n_restarts=10, max_iter=500, tol=1e-6):
     best_factors = None
 
     for _ in range(n_restarts):
-        A = rng.random((I, rank)) + 0.1
-        B = rng.random((J, rank)) + 0.1
-        C = rng.random((K, rank)) + 0.1
-        prev_err = np.inf
-        err = np.inf
-
-        for __ in range(max_iter):
-            # Update A (samples)
-            kr = _khatri_rao(B, C)                     # (J*K, rank)
-            gram = (B.T @ B) * (C.T @ C) + 1e-10 * np.eye(rank)
-            A = np.linalg.solve(gram, (X1 @ kr).T).T
-            A = np.maximum(A, 1e-10)
-
-            # Update B (excitation)
-            kr = _khatri_rao(A, C)                     # (I*K, rank)
-            gram = (A.T @ A) * (C.T @ C) + 1e-10 * np.eye(rank)
-            B = np.linalg.solve(gram, (X2 @ kr).T).T
-            B = np.maximum(B, 1e-10)
-
-            # Update C (emission)
-            kr = _khatri_rao(A, B)                     # (I*J, rank)
-            gram = (A.T @ A) * (B.T @ B) + 1e-10 * np.eye(rank)
-            C = np.linalg.solve(gram, (X3 @ kr).T).T
-            C = np.maximum(C, 1e-10)
-
-            X_rec = np.einsum('ir,jr,kr->ijk', A, B, C)
-            err = float(np.linalg.norm(X - X_rec)) / float(X_norm)
-            if abs(prev_err - err) < tol:
-                break
-            prev_err = err
-
+        A, B, C, err = _parafac_als_one_restart(X, rank, rng, max_iter, tol, X1, X2, X3, X_norm)
         if err < best_err:
             best_err = err
             best_factors = (A.copy(), B.copy(), C.copy())
@@ -416,25 +418,60 @@ def _build_tensor(maps_dict, crop=None):
     crop: optional dict {ex_min, ex_max, em_min, em_max} (any value may be None).
     Returns (X, ex_wl, em_wl, sample_names).
     X shape: (n_samples, n_ex, n_em).
-    Raises ValueError on grid mismatch.
+
+    Files with different scan ranges are handled by finding the common
+    wavelength intersection and resampling onto the reference (first file) grid.
     """
     names = list(maps_dict.keys())
     if not names:
         raise ValueError('No maps provided')
+
+    # Find the common Ex/Em range across all files (intersection)
+    com_ex_min = max(min(maps_dict[n]['ex_wl']) for n in names)
+    com_ex_max = min(max(maps_dict[n]['ex_wl']) for n in names)
+    com_em_min = max(min(maps_dict[n]['em_wl']) for n in names)
+    com_em_max = min(max(maps_dict[n]['em_wl']) for n in names)
+
+    if com_ex_min >= com_ex_max or com_em_min >= com_em_max:
+        raise ValueError(
+            'The uploaded files have no overlapping Ex/Em wavelength range. '
+            'Check that all files cover a common spectral window.')
+
+    # Use first file as the reference grid, clipped to common range
     ref = maps_dict[names[0]]
-    ex_wl = np.array(ref['ex_wl'], dtype=float)
-    em_wl = np.array(ref['em_wl'], dtype=float)
-    for n in names[1:]:
-        m = maps_dict[n]
-        if len(m['ex_wl']) != len(ex_wl) or len(m['em_wl']) != len(em_wl):
-            raise ValueError(
-                f"Grid mismatch: '{n}' has a different Ex/Em grid size than '{names[0]}'. "
-                "All samples must share an identical Ex/Em grid for PARAFAC.")
+    ex_wl_ref = np.array(ref['ex_wl'], dtype=float)
+    em_wl_ref = np.array(ref['em_wl'], dtype=float)
+    ex_wl = ex_wl_ref[(ex_wl_ref >= com_ex_min - 1e-4) & (ex_wl_ref <= com_ex_max + 1e-4)]
+    em_wl = em_wl_ref[(em_wl_ref >= com_em_min - 1e-4) & (em_wl_ref <= com_em_max + 1e-4)]
+
+    if len(ex_wl) == 0 or len(em_wl) == 0:
+        raise ValueError('No common Ex/Em wavelengths found across all samples.')
+
     n_s, n_ex, n_em = len(names), len(ex_wl), len(em_wl)
     X = np.zeros((n_s, n_ex, n_em), dtype=float)
+
     for i, n in enumerate(names):
-        arr = np.array(maps_dict[n]['intensity'], dtype=float)  # (n_em, n_ex)
-        X[i] = arr.T                                             # → (n_ex, n_em)
+        m = maps_dict[n]
+        ex_s = np.array(m['ex_wl'], dtype=float)
+        em_s = np.array(m['em_wl'], dtype=float)
+        arr  = np.array(m['intensity'], dtype=float)  # (n_em_s, n_ex_s)
+
+        # Fast path: grid already matches
+        if (len(ex_s) == n_ex and len(em_s) == n_em and
+                np.allclose(ex_s, ex_wl, atol=0.01) and
+                np.allclose(em_s, em_wl, atol=0.01)):
+            X[i] = arr.T
+        else:
+            # Separable bilinear resampling onto common grid:
+            # 1) interpolate along Ex axis for every Em row
+            tmp = np.zeros((len(em_s), n_ex), dtype=float)
+            for j in range(len(em_s)):
+                tmp[j] = np.interp(ex_wl, ex_s, arr[j])
+            # 2) interpolate along Em axis for every Ex column
+            out = np.zeros((n_em, n_ex), dtype=float)
+            for j in range(n_ex):
+                out[:, j] = np.interp(em_wl, em_s, tmp[:, j])
+            X[i] = out.T  # → (n_ex, n_em)
 
     # Apply Ex/Em crop
     if crop:
@@ -450,7 +487,7 @@ def _build_tensor(maps_dict, crop=None):
             em_mask &= em_wl <= crop['em_max']
         if not np.any(ex_mask) or not np.any(em_mask):
             raise ValueError('Crop range excludes all Ex or Em wavelengths.')
-        X    = X[:, ex_mask, :][:, :, em_mask]
+        X     = X[:, ex_mask, :][:, :, em_mask]
         ex_wl = ex_wl[ex_mask]
         em_wl = em_wl[em_mask]
 
@@ -789,24 +826,46 @@ def _scatter_params_from_payload(scatter):
         float(scatter.get('rayleigh2_width', 0) or 0),
         float(scatter.get('raman_width',     0) or 0),
         bool(scatter.get('interpolate', True)),
+        bool(scatter.get('diag_mask_enabled', False)),
+        float(scatter.get('diag_mask_buffer', 10) or 0),
     )
 
 
-def _apply_scatter_to_tensor(X, em_wl, ex_wl, r1_w, r2_w, ram_w, do_interp):
+def _apply_scatter_to_tensor(X, em_wl, ex_wl, r1_w, r2_w, ram_w, do_interp,
+                              diag_mask=False, diag_buffer=10.0):
     X_clean = X.copy()
     if r1_w > 0 or r2_w > 0 or ram_w > 0:
         for i in range(X_clean.shape[0]):
             X_clean[i] = _remove_scatter(
                 em_wl, ex_wl, X_clean[i].T, r1_w, r2_w, ram_w, do_interp).T
+    if diag_mask:
+        # Zero all (ex, em) pairs where em <= ex + buffer
+        for j, ex in enumerate(ex_wl):
+            threshold = ex + diag_buffer
+            mask_em = em_wl <= threshold
+            X_clean[:, j, mask_em] = 0.0
+        if do_interp:
+            # Linear interpolation over zeroed diagonal region along emission axis
+            for i in range(X_clean.shape[0]):
+                for j in range(X_clean.shape[1]):
+                    col = X_clean[i, j, :]
+                    zeros = col == 0.0
+                    if not np.any(zeros) or np.all(zeros):
+                        continue
+                    valid_idx = np.where(~zeros)[0]
+                    zero_idx  = np.where(zeros)[0]
+                    col[zero_idx] = np.interp(zero_idx, valid_idx, col[valid_idx])
+                    X_clean[i, j, :] = col
     return X_clean
 
 
 @ex_em_spectra_analysis.route('/api/eem_parafac_diagnostic', methods=['POST'])
 def eem_parafac_diagnostic():
+    import json as _json
     payload = request.get_json(silent=True) or {}
     maps_dict = payload.get('maps', {})
     f_max = max(2, min(int(payload.get('f_max', 6) or 6), 8))
-    r1_w, r2_w, ram_w, do_interp = _scatter_params_from_payload(payload.get('scatter', {}))
+    r1_w, r2_w, ram_w, do_interp, diag_mask, diag_buf = _scatter_params_from_payload(payload.get('scatter', {}))
     crop = payload.get('crop') or {}
 
     try:
@@ -817,29 +876,33 @@ def eem_parafac_diagnostic():
     if len(names) < 3:
         return jsonify({'error': 'At least 3 samples are required for PARAFAC.'}), 400
 
-    X = _apply_scatter_to_tensor(X, em_wl, ex_wl, r1_w, r2_w, ram_w, do_interp)
+    X = _apply_scatter_to_tensor(X, em_wl, ex_wl, r1_w, r2_w, ram_w, do_interp, diag_mask, diag_buf)
+    f_total = min(f_max, len(names) - 1)
 
-    results = []
-    for f in range(1, f_max + 1):
-        if f >= len(names):
-            break
-        try:
-            A, B, C, rel_err = _parafac_als(X, f, n_restarts=5, max_iter=300, tol=1e-5)
-            X_rec = np.einsum('ir,jr,kr->ijk', A, B, C)
-            ss_res = float(np.sum((X - X_rec) ** 2))
-            ss_tot = float(np.sum(X ** 2))
-            exp_var = round(100.0 * (1.0 - ss_res / (ss_tot + 1e-12)), 1)
-            cc = round(_corcondia(X, A, B, C), 1)
-            results.append({'f': f, 'corcondia': cc, 'explained_variance': exp_var})
-        except Exception as e:
-            results.append({'f': f, 'corcondia': None, 'explained_variance': None,
-                            'error': str(e)})
+    def generate():
+        for f in range(1, f_total + 1):
+            try:
+                A, B, C, rel_err = _parafac_als(X, f, n_restarts=5, max_iter=300, tol=1e-5)
+                X_rec = np.einsum('ir,jr,kr->ijk', A, B, C)
+                ss_res = float(np.sum((X - X_rec) ** 2))
+                ss_tot = float(np.sum(X ** 2))
+                exp_var = round(100.0 * (1.0 - ss_res / (ss_tot + 1e-12)), 1)
+                cc = round(_corcondia(X, A, B, C), 1)
+                result = {'f': f, 'f_total': f_total,
+                          'corcondia': cc, 'explained_variance': exp_var}
+            except Exception as e:
+                result = {'f': f, 'f_total': f_total,
+                          'corcondia': None, 'explained_variance': None, 'error': str(e)}
+            yield f"data: {_json.dumps(result)}\n\n"
+        yield 'data: {"done": true}\n\n'
 
-    return jsonify({'results': results})
+    return Response(stream_with_context(generate()), mimetype='text/event-stream',
+                    headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
 
 
 @ex_em_spectra_analysis.route('/api/eem_parafac', methods=['POST'])
 def eem_parafac():
+    import json as _json
     payload = request.get_json(silent=True) or {}
     maps_dict = payload.get('maps', {})
     rank = max(1, min(int(payload.get('rank', 2) or 2), 8))
@@ -847,7 +910,7 @@ def eem_parafac():
     max_iter = max(100, min(int(payload.get('max_iter', 500) or 500), 2000))
     tol = float(payload.get('tol', 1e-6) or 1e-6)
     pigmentation = payload.get('pigmentation', 'checkbox_chl_PC_PE')
-    r1_w, r2_w, ram_w, do_interp = _scatter_params_from_payload(payload.get('scatter', {}))
+    r1_w, r2_w, ram_w, do_interp, diag_mask, diag_buf = _scatter_params_from_payload(payload.get('scatter', {}))
     crop = payload.get('crop') or {}
 
     try:
@@ -860,42 +923,61 @@ def eem_parafac():
             f'Need at least {rank + 1} samples for {rank} components '
             f'(currently {len(names)}).'}), 400
 
-    X_clean = _apply_scatter_to_tensor(X, em_wl, ex_wl, r1_w, r2_w, ram_w, do_interp)
+    X_clean = _apply_scatter_to_tensor(X, em_wl, ex_wl, r1_w, r2_w, ram_w, do_interp, diag_mask, diag_buf)
 
-    try:
-        A, B, C, rel_err = _parafac_als(X_clean, rank, n_restarts, max_iter, tol)
-    except Exception as e:
-        return jsonify({'error': f'PARAFAC fitting failed: {e}'}), 500
+    def generate():
+        try:
+            I, J, K = X_clean.shape
+            X1 = X_clean.reshape(I, J * K)
+            X2 = X_clean.transpose(1, 0, 2).reshape(J, I * K)
+            X3 = X_clean.transpose(2, 0, 1).reshape(K, I * J)
+            X_norm = np.linalg.norm(X_clean)
+            if X_norm == 0:
+                yield f"data: {_json.dumps({'error': 'Tensor is all-zero after scatter removal. Check scatter settings.'})}\n\n"
+                return
 
-    X_rec = np.einsum('ir,jr,kr->ijk', A, B, C)
-    ss_res = float(np.sum((X_clean - X_rec) ** 2))
-    ss_tot = float(np.sum(X_clean ** 2))
-    exp_var = round(100.0 * (1.0 - ss_res / (ss_tot + 1e-12)), 1)
-    rmse = round(float(np.sqrt(np.mean((X_clean - X_rec) ** 2))), 6)
+            rng = np.random.default_rng(42)
+            best_err = np.inf
+            best_factors = None
 
-    # Normalise loadings so each peaks at 1; absorb scale into scores
-    ex_loadings, em_loadings, scores, annotations = [], [], [], []
-    for r in range(rank):
-        b_scale = max(float(np.max(B[:, r])), 1e-12)
-        c_scale = max(float(np.max(C[:, r])), 1e-12)
-        ex_loadings.append((B[:, r] / b_scale).tolist())
-        em_loadings.append((C[:, r] / c_scale).tolist())
-        scores.append((A[:, r] * b_scale * c_scale).tolist())
-        annotations.append(_annotate_component(ex_wl, em_wl, B[:, r], C[:, r], pigmentation))
+            for restart_i in range(n_restarts):
+                try:
+                    A, B, C, err = _parafac_als_one_restart(
+                        X_clean, rank, rng, max_iter, tol, X1, X2, X3, X_norm)
+                except Exception as e:
+                    yield f"data: {_json.dumps({'error': 'ALS error: ' + str(e)})}\n\n"
+                    return
+                if err < best_err:
+                    best_err = err
+                    best_factors = (A.copy(), B.copy(), C.copy())
+                yield f"data: {_json.dumps({'restart': restart_i + 1, 'total': n_restarts, 'err': round(err, 6), 'best_err': round(best_err, 6)})}\n\n"
 
-    # scores_by_sample[i][r] = score of sample i for component r
-    scores_by_sample = [[scores[r][i] for r in range(rank)] for i in range(len(names))]
+            if best_factors is None:
+                yield f"data: {_json.dumps({'error': 'PARAFAC failed to converge.'})}\n\n"
+                return
 
-    return jsonify({
-        'ex_wl':           ex_wl.tolist(),
-        'em_wl':           em_wl.tolist(),
-        'sample_names':    names,
-        'ex_loadings':     ex_loadings,       # rank × n_ex
-        'em_loadings':     em_loadings,       # rank × n_em
-        'scores':          scores_by_sample,  # n_samples × rank
-        'scores_by_component': scores,        # rank × n_samples
-        'explained_variance': exp_var,
-        'rmse':            rmse,
-        'annotations':     annotations,
-        'n_components':    rank,
-    })
+            A_out, B_out, C_out = best_factors
+            X_rec = np.einsum('ir,jr,kr->ijk', A_out, B_out, C_out)
+            ss_res = float(np.sum((X_clean - X_rec) ** 2))
+            ss_tot = float(np.sum(X_clean ** 2))
+            exp_var = round(100.0 * (1.0 - ss_res / (ss_tot + 1e-12)), 1)
+            rmse = round(float(np.sqrt(np.mean((X_clean - X_rec) ** 2))), 6)
+
+            ex_loadings, em_loadings, scores, annotations = [], [], [], []
+            for r in range(rank):
+                b_scale = max(float(np.max(B_out[:, r])), 1e-12)
+                c_scale = max(float(np.max(C_out[:, r])), 1e-12)
+                ex_loadings.append((B_out[:, r] / b_scale).tolist())
+                em_loadings.append((C_out[:, r] / c_scale).tolist())
+                scores.append((A_out[:, r] * b_scale * c_scale).tolist())
+                annotations.append(_annotate_component(ex_wl, em_wl, B_out[:, r], C_out[:, r], pigmentation))
+
+            scores_by_sample = [[scores[r][i] for r in range(rank)] for i in range(len(names))]
+
+            yield f"data: {_json.dumps({'done': True, 'ex_wl': ex_wl.tolist(), 'em_wl': em_wl.tolist(), 'sample_names': names, 'ex_loadings': ex_loadings, 'em_loadings': em_loadings, 'scores': scores_by_sample, 'scores_by_component': scores, 'explained_variance': exp_var, 'rmse': rmse, 'annotations': annotations, 'n_components': rank})}\n\n"
+        except Exception as e:
+            import traceback
+            yield f"data: {_json.dumps({'error': 'Server error: ' + str(e), 'traceback': traceback.format_exc()})}\n\n"
+
+    return Response(stream_with_context(generate()), mimetype='text/event-stream',
+                    headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})

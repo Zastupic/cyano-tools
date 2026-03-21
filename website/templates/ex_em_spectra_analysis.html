@@ -147,10 +147,23 @@
             <div id="collapseParamRef" class="collapse" aria-labelledby="headingParamRef" data-parent="#eemInfoAccordion">
                 <div class="card-body p-2" style="font-size:0.91em;">
 
-                    <!-- 77K section -->
-                    <p class="font-weight-bold mb-1 mt-1">
-                        <span class="badge badge-info mr-1">77 K</span> Ex/Em combinations and derived parameters
-                    </p>
+                    <!-- ── 77K section header ── -->
+                    <div class="mb-1" style="border-left:3px; padding-left:0.5rem;">
+                        <span class="font-weight-bold" style="color:#0a6070; font-size:0.95rem;">Measurement at liquid nitrogen temperature (77 K)</span>
+                    </div>
+
+                    <!-- ── Sub-accordion: 77K Fixed-WL ── -->
+                    <div class="accordion mb-1" id="accordionFW77K">
+                    <div class="card" style="border:1px solid #b8dce8; border-left:3px solid #17a2b8;">
+                    <div class="card-header py-1 px-2" id="headingFW77K" style="background:#f0f5fa;">
+                        <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed p-0 text-left font-weight-bold" style="color:#0a3c58; font-size:0.9rem;"
+                                data-toggle="collapse" data-target="#collapseFW77K" aria-expanded="false" aria-controls="collapseFW77K">
+                            <span class="badge badge-info mr-1">77 K</span> Ex/Em combinations and derived parameters — fixed-wavelength method
+                        </button></h6>
+                    </div>
+                    <div id="collapseFW77K" class="collapse" aria-labelledby="headingFW77K">
+                    <div class="card-body p-2">
+                    <!-- 77K fixed-WL table content starts -->
                     <table style="width:100%;">
                         <colgroup>
                             <col style="width:28%"><col style="width:10%"><col style="width:10%"><col style="width:13%"><col style="width:20%">
@@ -179,16 +192,172 @@
                         <tr><td>CP43 / CP47</td><td>Em685/Em695</td><td>Em685/Em695</td><td>Em685/Em695</td><td>Em685/Em695</td></tr>
                         <tr><td>Chl-PSII / Chl-tot</td><td>Em689/(Em689+Em724)</td><td>Em689/(Em689+Em724)</td><td>Em689/(Em689+Em724)</td><td>Em689/(Em689+Em724)</td></tr>
                         <tr><td>Chl-PSI / Chl-tot</td><td>Em724/(Em689+Em724)</td><td>Em724/(Em689+Em724)</td><td>Em724/(Em689+Em724)</td><td>Em724/(Em689+Em724)</td></tr>
-                        <tr><td>PBS-free / PBS-tot</td><td></td><td>Ex620/Em662 ÷ PBS-tot</td><td>Ex560/(Em580+662) ÷ PBS-tot</td><td>(Ex560+620)/Em662+580 ÷ PBS-tot</td></tr>
-                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>Ex620/Em689 ÷ PBS-tot</td><td>Ex560/Em689 ÷ PBS-tot</td><td>(Ex560+620)/Em689 ÷ PBS-tot</td></tr>
-                        <tr><td>PBS-PSI / PBS-tot</td><td></td><td>Ex620/Em724 ÷ PBS-tot</td><td>Ex560/Em724 ÷ PBS-tot</td><td>(Ex560+620)/Em724 ÷ PBS-tot</td></tr>
-                        <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>Ex620/Em689÷Em724</td><td>Ex560/Em689÷Em724</td><td>(Ex560+620)/Em689÷Em724</td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PBS-tot = PBS-free + PBS-PSII + PBS-PSI (Ex560 and/or Ex620 sum, depending on pigmentation)</em></td></tr>
+                        <tr><td>PBS-free / PBS-tot</td><td></td><td>Ex620/Em662 / PBS-tot</td><td>(Ex560/Em580 + Ex560/Em662) / PBS-tot</td><td>(Ex560/Em580 + Ex560/Em662 + Ex620/Em662) / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>Ex620/Em689 / PBS-tot</td><td>Ex560/Em689 / PBS-tot</td><td>(Ex560/Em689 + Ex620/Em689) / PBS-tot</td></tr>
+                        <tr><td>PBS-PSI / PBS-tot</td><td></td><td>Ex620/Em724 / PBS-tot</td><td>Ex560/Em724 / PBS-tot</td><td>(Ex560/Em724 + Ex620/Em724) / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>Ex620/Em689 / Ex620/Em724</td><td>Ex560/Em689 / Ex560/Em724</td><td>(Ex560/Em689 + Ex620/Em689) / (Ex560/Em724 + Ex620/Em724)</td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>Chl-tot = Ex440/Em689 + Ex440/Em724.</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PBS-tot = Ex560/Em580 + Ex560/Em662 + Ex620/Em662 + Ex560/Em689 + Ex620/Em689 + Ex560/Em724 + Ex620/Em724 (zero for absent pigments).</em></td></tr>
                     </table>
 
+                    <!-- /fixed-WL table content ends -->
+                    </div></div></div></div><!-- /accordionFW77K -->
+
+                    <!-- ── Sub-accordion: 77K Gaussian ── -->
+                    <div class="accordion mb-1" id="accordionGauss77K">
+                    <div class="card" style="border:1px solid #b8dce8; border-left:3px solid #17a2b8;">
+                    <div class="card-header py-1 px-2" id="headingGauss77K" style="background:#f0f5fa;">
+                        <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed p-0 text-left font-weight-bold" style="color:#0a3c58; font-size:0.9rem;"
+                                data-toggle="collapse" data-target="#collapseGauss77K" aria-expanded="false" aria-controls="collapseGauss77K">
+                            <span class="badge badge-info mr-1">77 K</span> Gaussian deconvolution — peak areas by pigmentation type
+                        </button></h6>
+                    </div>
+                    <div id="collapseGauss77K" class="collapse" aria-labelledby="headingGauss77K">
+                    <div class="card-body p-2">
+                    <!-- Method concept accordion (closed by default) -->
+                    <div class="accordion mb-2 mt-3" id="accordionMethodConcepts">
+                        <div class="card" style="border:1px solid #dee2e6;">
+                            <div class="card-header py-1 px-2" id="headingMethodConcepts" style="background:#f8f9fa;">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link btn-sm collapsed p-0 text-left" style="color:#0a3c58; font-size:0.82rem;"
+                                            data-toggle="collapse" data-target="#collapseMethodConcepts"
+                                            aria-expanded="false" aria-controls="collapseMethodConcepts">
+                                        <i class="fa fa-info-circle mr-1"></i> How are Gaussian and PARAFAC values calculated?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="collapseMethodConcepts" class="collapse" aria-labelledby="headingMethodConcepts">
+                                <div class="card-body py-2 px-2">
+                                    <div class="row" style="font-size:0.83em;">
+                                        <div class="col-md-6 mb-2">
+                                            <div class="card card-body py-2 px-2 h-100" style="background:#f8f9ff; border-color:#c8d4f0;">
+                                                <p class="font-weight-bold mb-1">Gaussian deconvolution</p>
+                                                <p class="mb-1">The emission spectrum is fitted as a sum of bell-shaped (Gaussian) curves, one per pigment–protein complex.
+                                                Each curve is described by three numbers: its <strong>height</strong> (amplitude), <strong>position</strong> (emission maximum, in nm), and <strong>width</strong> (standard deviation, in nm).
+                                                The <strong>area</strong> under each curve — height × width × √(2π) — represents the total fluorescence contribution of that complex and is used for all ratio calculations.
+                                                Using areas rather than peak heights accounts for any differences in peak width between samples or conditions.</p>
+                                                <p class="mb-0 text-muted">Each Gaussian component is assigned to a pigment–protein complex based on its fitted emission maximum (see table below).</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <div class="card card-body py-2 px-2 h-100" style="background:#f8fff8; border-color:#b2ddb2;">
+                                                <p class="font-weight-bold mb-1">PARAFAC (Parallel Factor Analysis)</p>
+                                                <p class="mb-1">PARAFAC decomposes the full three-dimensional excitation–emission fluorescence map (EEM) into a set of independent spectral components.
+                                                Each component has a characteristic excitation spectrum, emission spectrum, and a <strong>score</strong> (relative abundance) per sample.
+                                                Components are assigned to pigment–protein complexes in the PARAFAC tab based on their excitation and emission peak positions.
+                                                Ratios are then computed from the scores of the assigned components.</p>
+                                                <p class="mb-0 text-muted">PARAFAC uses the full EEM and is therefore less sensitive to spectral overlap than single-excitation methods.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gaussian deconvolution table -->
                     <p class="font-weight-bold mb-1 mt-2">
-                        <span class="badge badge-info mr-1" style="font-size:0.85em;">77 K</span> References
+                        <span class="badge badge-info mr-1">77 K</span> Gaussian deconvolution — peak areas by pigmentation type
                     </p>
+                    <table style="width:100%;">
+                        <colgroup>
+                            <col style="width:26%"><col style="width:18.5%"><col style="width:18.5%"><col style="width:18.5%"><col style="width:18.5%">
+                        </colgroup>
+                        <tr>
+                            <td></td>
+                            <td><i><u>Chl only</u></i></td>
+                            <td><i><u>Chl+PC</u></i></td>
+                            <td><i><u>Chl+PE</u></i></td>
+                            <td><i><u>Chl+PC+PE</u></i></td>
+                        </tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Measured peaks (Ex 440 nm)</em></td></tr>
+                        <tr><td>CP43</td><td>Ex440 / area 680–690 nm</td><td>Ex440 / area 680–690 nm</td><td>Ex440 / area 680–690 nm</td><td>Ex440 / area 680–690 nm</td></tr>
+                        <tr><td>CP47</td><td>Ex440 / area 690–710 nm</td><td>Ex440 / area 690–710 nm</td><td>Ex440 / area 690–710 nm</td><td>Ex440 / area 690–710 nm</td></tr>
+                        <tr><td>PSI</td><td>Ex440 / area &gt;710 nm</td><td>Ex440 / area &gt;710 nm</td><td>Ex440 / area &gt;710 nm</td><td>Ex440 / area &gt;710 nm</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Measured peaks (Ex 560 / 620 nm)</em></td></tr>
+                        <tr><td>PE</td><td></td><td></td><td>Ex560 / area ~580 nm</td><td>Ex560 / area ~580 nm</td></tr>
+                        <tr><td>PC/APC</td><td></td><td>Ex620 / area ~662 nm</td><td></td><td>Ex620 / area ~662 nm</td></tr>
+                        <tr><td>APC via PE</td><td></td><td></td><td>Ex560 / area ~662 nm</td><td>Ex560 / area ~662 nm</td></tr>
+                        <tr><td>PBS→PSII</td><td></td><td>Ex620 / area ~689 nm</td><td>Ex560 / area ~689 nm</td><td>(Ex560 + Ex620) / area ~689 nm</td></tr>
+                        <tr><td>PBS→PSI</td><td></td><td>Ex620 / area ~724 nm</td><td>Ex560 / area ~724 nm</td><td>(Ex560 + Ex620) / area ~724 nm</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios)</em></td></tr>
+                        <tr><td>PBS-free</td><td></td><td>PC/APC area</td><td>PE + APC via PE area</td><td>PE + APC via PE + PC/APC area</td></tr>
+                        <tr><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td></tr>
+                        <tr><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td></tr>
+                        <tr><td>Chl-PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td></tr>
+                        <tr><td>Chl-PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td></tr>
+                        <tr><td>PBS-free / PBS-tot</td><td></td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td></tr>
+                        <tr><td>PBS-PSI / PBS-tot</td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PSII = CP43 + CP47. Chl-tot = CP43 + CP47 + PSI.</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PBS-tot = PBS-free + PBS→PSII + PBS→PSI (all contributing areas summed; zero for absent pigments).</em></td></tr>
+                    </table>
+
+                    <!-- /Gaussian table ends -->
+                    </div></div></div></div><!-- /accordionGauss77K -->
+
+                    <!-- ── Sub-accordion: 77K PARAFAC ── -->
+                    <div class="accordion mb-1" id="accordionPARAFAC77K">
+                    <div class="card" style="border:1px solid #b8dce8; border-left:3px solid #17a2b8;">
+                    <div class="card-header py-1 px-2" id="headingPARAFAC77K" style="background:#f0f5fa;">
+                        <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed p-0 text-left font-weight-bold" style="color:#0a3c58; font-size:0.9rem;"
+                                data-toggle="collapse" data-target="#collapsePARAFAC77K" aria-expanded="false" aria-controls="collapsePARAFAC77K">
+                            <span class="badge badge-info mr-1">77 K</span> PARAFAC — component scores by pigmentation type
+                        </button></h6>
+                    </div>
+                    <div id="collapsePARAFAC77K" class="collapse" aria-labelledby="headingPARAFAC77K">
+                    <div class="card-body p-2">
+                    <!-- PARAFAC table -->
+                    <table style="width:100%; margin-bottom:0.6rem;">
+                        <colgroup>
+                            <col style="width:28%"><col style="width:18%"><col style="width:18%"><col style="width:18%"><col style="width:18%">
+                        </colgroup>
+                        <tr>
+                            <td></td>
+                            <td><i><u>Chl only</u></i></td>
+                            <td><i><u>Chl+PC</u></i></td>
+                            <td><i><u>Chl+PE</u></i></td>
+                            <td><i><u>Chl+PC+PE</u></i></td>
+                        </tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Suggested rank (number of components)</em></td></tr>
+                        <tr><td>F</td><td>2–3</td><td>4–5</td><td>5–6</td><td>7–8</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Chl-related components (scores)</em></td></tr>
+                        <tr><td>CP43</td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
+                        <tr><td>CP47</td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
+                        <tr><td>PSI</td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>PBS-related components (scores); dominant excitation loading shown</em></td></tr>
+                        <tr><td>PE</td><td></td><td></td><td>score (Ex560/Em580)</td><td>score (Ex560/Em580)</td></tr>
+                        <tr><td>PC/APC (PBS-free)</td><td></td><td>score (Ex620/Em662)</td><td>score (Ex560/Em662)</td><td>score (Ex560+620/Em662)</td></tr>
+                        <tr><td>PBS→PSII</td><td></td><td>score (Ex620/Em689)</td><td>score (Ex560/Em689)</td><td>score (Ex560+620/Em689)</td></tr>
+                        <tr><td>PBS→PSI</td><td></td><td>score (Ex620/Em724)</td><td>score (Ex560/Em724)</td><td>score (Ex560+620/Em724)</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios) — same formula as Gaussian, using scores instead of areas</em></td></tr>
+                        <tr><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td></tr>
+                        <tr><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td></tr>
+                        <tr><td>Chl-PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td></tr>
+                        <tr><td>Chl-PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td></tr>
+                        <tr><td>PBS-free / PBS-tot</td><td></td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td></tr>
+                        <tr><td>PBS-PSI / PBS-tot</td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PSII = CP43 + CP47. Chl-tot = CP43 + CP47 + PSI.</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PBS-free = PE + PC/APC components (scores summed per pigmentation). PBS-tot = PBS-free + PBS→PSII + PBS→PSI.</em></td></tr>
+                    </table>
+
+                    <!-- /PARAFAC table ends -->
+                    </div></div></div></div><!-- /accordionPARAFAC77K -->
+
+                    <!-- 77K References accordion -->
+                    <div class="accordion mb-1 mt-2" id="accordionRefs77K">
+                    <div class="card" style="border:1px solid #b8dce8; border-left:3px solid #17a2b8;">
+                    <div class="card-header py-1 px-2" id="headingRefs77K" style="background:#f0f8fc;">
+                        <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed p-0 text-left font-weight-bold" style="color:#0a3c58; font-size:0.9rem;"
+                                data-toggle="collapse" data-target="#collapseRefs77K" aria-expanded="false" aria-controls="collapseRefs77K">
+                            <span class="badge badge-info mr-1">77 K</span> References
+                        </button></h6>
+                    </div>
+                    <div id="collapseRefs77K" class="collapse" aria-labelledby="headingRefs77K">
+                    <div class="card-body p-2">
                     <p class="mb-1 text-muted" style="font-size:0.88em;"><em>Core methodology:</em></p>
                     <ol class="mb-1" style="padding-left:1.4rem; font-size:0.9em;">
                         <li>Murata N et al. (1966) <em>Biochim Biophys Acta</em> 126:234–243. — Band assignments (F685, F695, F730)</li>
@@ -198,47 +367,170 @@
                         <li>Mullineaux CW, Allen JF (1990) <em>Photosynth Res</em> 23:297–311. — State 1–State 2 transitions in <em>Synechococcus</em> characterized by 77 K emission spectroscopy (F697/F654 ratio as state-transition indicator)</li>
                     </ol>
                     <p class="mb-1 text-muted" style="font-size:0.88em;"><em>Application examples:</em></p>
-                    <ol start="6" class="mb-2" style="padding-left:1.4rem; font-size:0.9em;">
+                    <ol start="6" class="mb-1" style="padding-left:1.4rem; font-size:0.9em;">
                         <li>Luimstra VM et al. (2020) <em>J Exp Bot</em> 71:3650–3660. — 77 K tracking of PS remodelling under blue light in <em>Synechocystis</em></li>
                         <li>Zavřel T et al. (2024) <em>Plant Cell Physiol</em> 65:1082–1097. — 77 K in light-quality acclimation in <em>Synechocystis</em></li>
                     </ol>
+                    </div></div></div></div><!-- /accordionRefs77K -->
 
-                    <hr class="my-2">
+                    <!-- ── RT section header ── -->
+                    <div class="mb-1 mt-2" style="border-left:3px; padding-left:0.5rem;">
+                        <span class="font-weight-bold" style="color:#7a5100; font-size:0.95rem;">Measurement at room temperature (RT)</span>
+                    </div>
 
-                    <!-- RT section -->
-                    <p class="font-weight-bold mb-1">
-                        <span class="badge badge-warning mr-1">RT</span> Emission bands and derived parameters
-                    </p>
-                    <p class="mb-1">All measurements use Ex 440 nm (Chl excitation) and optionally Ex 620 nm (PC/PBS excitation).</p>
-                    <table style="width:100%; margin-bottom:0.6rem;">
+                    <!-- RT table accordion -->
+                    <div class="accordion mb-1" id="accordionFWRT">
+                    <div class="card" style="border:1px solid #f5d78e; border-left:3px solid #e6a817;">
+                    <div class="card-header py-1 px-2" id="headingFWRT" style="background:#fffdf0;">
+                        <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed p-0 text-left font-weight-bold" style="color:#7a5100; font-size:0.9rem;"
+                                data-toggle="collapse" data-target="#collapseFWRT" aria-expanded="false" aria-controls="collapseFWRT">
+                            <span class="badge badge-warning mr-1">RT</span> Ex/Em combinations and derived parameters — fixed-wavelength method
+                        </button></h6>
+                    </div>
+                    <div id="collapseFWRT" class="collapse" aria-labelledby="headingFWRT">
+                    <div class="card-body p-2">
+                    <table style="width:100%;">
+                        <colgroup>
+                            <col style="width:28%"><col style="width:10%"><col style="width:10%"><col style="width:13%"><col style="width:20%">
+                        </colgroup>
                         <tr>
-                            <th style="width:18%;">Band / parameter</th>
-                            <th style="width:18%;">Measurement</th>
-                            <th>Origin / interpretation</th>
+                            <td></td>
+                            <td><i><u>Chl only</u></i></td>
+                            <td><i><u>Chl+PC</u></i></td>
+                            <td><i><u>Chl+PE</u></i></td>
+                            <td><i><u>Chl+PC+PE</u></i></td>
                         </tr>
-                        <tr><td colspan="3" class="text-muted pt-1"><em>Chl a excitation (Ex 440 nm)</em></td></tr>
-                        <tr><td>F685</td><td>Ex440/Em685</td><td>PSII core (CP43/CP47)</td></tr>
-                        <tr><td>F695</td><td>Ex440/Em695</td><td>CP47 inner antenna — elevated F695/F685 indicates PSII structural changes</td></tr>
-                        <tr><td>F730</td><td>Ex440/Em730</td><td>PSI "red" chlorophylls — dominant direct Chl→PSI emission at RT</td></tr>
-                        <tr><td colspan="3" class="text-muted pt-1"><em>PBS excitation (Ex 620 nm — PC absorption)</em></td></tr>
-                        <tr><td>PBS-free</td><td>Ex620/Em657</td><td>Uncoupled phycobilisomes — free PBS not transferring energy to photosystems (~657 nm)</td></tr>
-                        <tr><td>PBS-PSII</td><td>Ex620/Em685</td><td>PBS→PSII energy transfer; coupled PBS emission via PSII</td></tr>
-                        <tr><td>PBS-PSI</td><td>Ex620/Em705</td><td>PBS→PSI energy transfer; coupled PBS emission via PSI (~705 nm)</td></tr>
-                        <tr><td>PBS-F730</td><td>Ex620/Em730</td><td>Direct Chl→PSI emission under PBS excitation (Chl reabsorption / red-shifted PSI Chls)</td></tr>
-                        <tr><td colspan="3" class="text-muted pt-1"><em>Derived parameters:</em></td></tr>
-                        <tr><td>PBS-free norm</td><td>PBS-free / PBS-tot</td><td>Fraction of uncoupled PBS (State 1 ↔ State 2 indicator)</td></tr>
-                        <tr><td>PBS-PSII norm</td><td>PBS-PSII / PBS-tot</td><td>Fraction of PBS coupled to PSII (high → State 1)</td></tr>
-                        <tr><td>PBS-PSI norm</td><td>PBS-PSI / PBS-tot</td><td>Fraction of PBS coupled to PSI (high → State 2)</td></tr>
-                        <tr><td>PBS F685/F705</td><td>PBS-PSII / PBS-PSI</td><td>State-transition ratio (high → State 1 / PBS–PSII; low → State 2 / PBS–PSI)</td></tr>
-                        <tr><td colspan="3" class="text-muted pt-1"><em>PBS-tot = PBS-free + PBS-PSII + PBS-PSI (Ex 620 nm sum). Methodology: Zavřel et al. (2021).</em></td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Measured intensities</em></td></tr>
+                        <tr><td>Ex: Chl / Em: PSII (~685 nm) <sup title="At RT, CP43 and CP47 are not spectrally resolved — both contribute to this single broad ~685 nm peak (PSII pool)." style="color:#212529; font-weight:bold; cursor:help;">*</sup></td><td>Ex440/Em685</td><td>Ex440/Em685</td><td>Ex440/Em685</td><td>Ex440/Em685</td></tr>
+                        <tr><td>Ex: Chl / Em: PSI (~730 nm) <sup title="PSI emission at ~730 nm has a broad tail that overlaps the PSII region at RT; fixed-wavelength intensity is contaminated by PSII emission." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td>Ex440/Em730</td><td>Ex440/Em730</td><td>Ex440/Em730</td><td>Ex440/Em730</td></tr>
+                        <tr><td>Ex: PC / Em: PBS-free</td><td></td><td>Ex620/Em657</td><td></td><td>Ex620/Em657</td></tr>
+                        <tr><td>Ex: PC / Em: PSII</td><td></td><td>Ex620/Em685</td><td></td><td>Ex620/Em685</td></tr>
+                        <tr><td>Ex: PC / Em: PBS-PSI <sup title="Em705 lies between the PSII and PSI peaks; PBS-PSI signal may overlap with PSI Chl emission at RT." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>Ex620/Em705</td><td></td><td>Ex620/Em705</td></tr>
+                        <tr><td>Ex: PC / Em: PSI (F730) <sup title="Em730 with PC excitation reflects total PSI cross-section including both direct Chl and PBS-routed energy; contaminated by PSII emission tail at RT." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>Ex620/Em730</td><td></td><td>Ex620/Em730</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios)</em></td></tr>
+                        <tr><td>PSII : PSI <sup title="CP43 and CP47 are not resolved at Em685 (PSII pool)." style="color:#212529; font-weight:bold; cursor:help;">*</sup> <sup title="PSI emission tail overlaps the PSII region at RT; ratio is unreliable at fixed wavelengths. Prefer Gaussian decomposition or PARAFAC." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td>Em685/Em730</td><td>Em685/Em730</td><td>Em685/Em730</td><td>Em685/Em730</td></tr>
+                        <tr><td>Chl-PSII pool / Chl-tot <sup title="At RT, CP43 and CP47 are not resolved — Em685 reflects the combined unresolved PSII pool." style="color:#212529; font-weight:bold; cursor:help;">*</sup></td><td>Em685/(Em685+Em730)</td><td>Em685/(Em685+Em730)</td><td>Em685/(Em685+Em730)</td><td>Em685/(Em685+Em730)</td></tr>
+                        <tr><td>Chl-PSI / Chl-tot <sup title="PSI emission tail extends into the PSII region at RT; Em730-based estimate is unreliable at fixed wavelengths. Prefer Gaussian decomposition or PARAFAC." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td>Em730/(Em685+Em730)</td><td>Em730/(Em685+Em730)</td><td>Em730/(Em685+Em730)</td><td>Em730/(Em685+Em730)</td></tr>
+                        <tr><td>PBS-free / PBS-tot</td><td></td><td>Ex620/Em657 / PBS-tot</td><td></td><td>Ex620/Em657 / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>Ex620/Em685 / PBS-tot</td><td></td><td>Ex620/Em685 / PBS-tot</td></tr>
+                        <tr><td>PBS-PSI / PBS-tot <sup title="Em705 lies between the PSII and PSI peaks; PBS-PSI fraction may be overestimated due to PSI Chl emission overlap at RT." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>Ex620/Em705 / PBS-tot</td><td></td><td>Ex620/Em705 / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII : PBS-PSI <sup title="PBS-PSI (Em705) may be overestimated due to PSI Chl emission overlap at RT." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>Ex620/Em685 / Ex620/Em705</td><td></td><td>Ex620/Em685 / Ex620/Em705</td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>Chl-tot = Ex440/Em685 + Ex440/Em730. &nbsp; PBS-tot = Ex620/Em657 + Ex620/Em685 + Ex620/Em705.</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em><sup style="color:#212529; font-weight:bold;">*</sup> CP43 (~685 nm) and CP47 (~695 nm) are not spectrally resolved at RT — they merge into a single broad ~685 nm peak (PSII pool); individual antenna contributions cannot be distinguished. &nbsp; <br><sup style="color:#212529; font-weight:bold;">†</sup> Unreliable at RT due to spectral overlap — PSI emission tail extends into the PSII region, and Em705 overlaps both PSII and PSI; fixed-wavelength estimates should be interpreted with caution. Gaussian decomposition or PARAFAC is preferred (Remelli &amp; Santabarbara 2018).</em></td></tr>
                     </table>
+                    </div></div></div></div><!-- /accordionFWRT -->
 
-                    <p class="font-weight-bold mb-1">
-                        <span class="badge badge-warning mr-1" style="font-size:0.85em;">RT</span> References
+                    <!-- RT Gaussian accordion -->
+                    <div class="accordion mb-1" id="accordionGaussRT">
+                    <div class="card" style="border:1px solid #f5d78e; border-left:3px solid #e6a817;">
+                    <div class="card-header py-1 px-2" id="headingGaussRT" style="background:#fffdf0;">
+                        <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed p-0 text-left font-weight-bold" style="color:#7a5100; font-size:0.9rem;"
+                                data-toggle="collapse" data-target="#collapseGaussRT" aria-expanded="false" aria-controls="collapseGaussRT">
+                            <span class="badge badge-warning mr-1">RT</span> Gaussian deconvolution — peak areas by pigmentation type
+                        </button></h6>
+                    </div>
+                    <div id="collapseGaussRT" class="collapse" aria-labelledby="headingGaussRT">
+                    <div class="card-body p-2">
+                    <p class="font-weight-bold mb-1 mt-2">
+                        <span class="badge badge-warning mr-1">RT</span> Gaussian deconvolution — peak areas by pigmentation type
                     </p>
+                    <table style="width:100%;">
+                        <colgroup>
+                            <col style="width:26%"><col style="width:18.5%"><col style="width:18.5%"><col style="width:18.5%"><col style="width:18.5%">
+                        </colgroup>
+                        <tr>
+                            <td></td>
+                            <td><i><u>Chl only</u></i></td>
+                            <td><i><u>Chl+PC</u></i></td>
+                            <td><i><u>Chl+PE</u></i></td>
+                            <td><i><u>Chl+PC+PE</u></i></td>
+                        </tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Measured peaks (Ex 440 nm)</em></td></tr>
+                        <tr><td>PSII pool (CP43+CP47) <sup title="CP43 and CP47 are not spectrally resolved at RT — both contribute to a single broad ~685 nm Gaussian component." style="color:#212529; font-weight:bold; cursor:help;">*</sup></td><td>Ex440 / area 670–710 nm</td><td>Ex440 / area 670–710 nm</td><td>Ex440 / area 670–710 nm</td><td>Ex440 / area 670–710 nm</td></tr>
+                        <tr><td>PSI</td><td>Ex440 / area &gt;710 nm</td><td>Ex440 / area &gt;710 nm</td><td>Ex440 / area &gt;710 nm</td><td>Ex440 / area &gt;710 nm</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Measured peaks (Ex 560 / 620 nm)</em></td></tr>
+                        <tr><td>PE</td><td></td><td></td><td>Ex560 / area ~580 nm</td><td>Ex560 / area ~580 nm</td></tr>
+                        <tr><td>PC/APC (PBS-free)</td><td></td><td>Ex620 / area ~657 nm</td><td></td><td>Ex620 / area ~657 nm</td></tr>
+                        <tr><td>APC via PE</td><td></td><td></td><td>Ex560 / area ~657 nm</td><td>Ex560 / area ~657 nm</td></tr>
+                        <tr><td>PBS→PSII</td><td></td><td>Ex620 / area ~685 nm</td><td>Ex560 / area ~685 nm</td><td>(Ex560 + Ex620) / area ~685 nm</td></tr>
+                        <tr><td>PBS→PSI <sup title="PBS→PSI (~705 nm) partially overlaps with both the PSII pool (~685 nm) and PSI Chl emission (~730 nm) at RT; Gaussian fitting improves but does not fully resolve this overlap." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>Ex620 / area ~705 nm</td><td>Ex560 / area ~705 nm</td><td>(Ex560 + Ex620) / area ~705 nm</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios)</em></td></tr>
+                        <tr><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td></tr>
+                        <tr><td>Chl-PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td></tr>
+                        <tr><td>Chl-PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td></tr>
+                        <tr><td>PBS-free / PBS-tot</td><td></td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td></tr>
+                        <tr><td>PBS-PSI / PBS-tot <sup title="PBS→PSI (~705 nm) partially overlaps with PSI Chl emission at RT; treat with caution." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII : PBS-PSI <sup title="PBS→PSI (~705 nm) partially overlaps with PSI Chl emission at RT; treat with caution." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em><sup style="color:#212529; font-weight:bold;">*</sup> CP43/CP47 ratio cannot be derived from RT spectra — both contribute to a single ~685 nm Gaussian component (PSII pool). Chl-tot = PSII pool + PSI.</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em><sup style="color:#212529; font-weight:bold;">†</sup> PBS→PSI (~705 nm) overlaps with both PSII pool and PSI Chl tails at RT; interpret with caution. PBS-tot = PBS-free + PBS→PSII + PBS→PSI.</em></td></tr>
+                    </table>
+                    </div></div></div></div><!-- /accordionGaussRT -->
+
+                    <!-- RT PARAFAC accordion -->
+                    <div class="accordion mb-1" id="accordionPARAFACRT">
+                    <div class="card" style="border:1px solid #f5d78e; border-left:3px solid #e6a817;">
+                    <div class="card-header py-1 px-2" id="headingPARAFACRT" style="background:#fffdf0;">
+                        <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed p-0 text-left font-weight-bold" style="color:#7a5100; font-size:0.9rem;"
+                                data-toggle="collapse" data-target="#collapsePARAFACRT" aria-expanded="false" aria-controls="collapsePARAFACRT">
+                            <span class="badge badge-warning mr-1">RT</span> PARAFAC — component scores by pigmentation type
+                        </button></h6>
+                    </div>
+                    <div id="collapsePARAFACRT" class="collapse" aria-labelledby="headingPARAFACRT">
+                    <div class="card-body p-2">
+                    <table style="width:100%; margin-bottom:0.6rem;">
+                        <colgroup>
+                            <col style="width:28%"><col style="width:18%"><col style="width:18%"><col style="width:18%"><col style="width:18%">
+                        </colgroup>
+                        <tr>
+                            <td></td>
+                            <td><i><u>Chl only</u></i></td>
+                            <td><i><u>Chl+PC</u></i></td>
+                            <td><i><u>Chl+PE</u></i></td>
+                            <td><i><u>Chl+PC+PE</u></i></td>
+                        </tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Suggested rank (number of components)</em></td></tr>
+                        <tr><td>F</td><td>2</td><td>3–4</td><td>4–5</td><td>5–6</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Chl-related components (scores)</em></td></tr>
+                        <tr><td>PSII pool (CP43+CP47) <sup title="CP43 and CP47 cannot be resolved at RT even by PARAFAC — expect a single component with excitation maximum near 440 nm and emission near 685 nm." style="color:#212529; font-weight:bold; cursor:help;">*</sup></td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
+                        <tr><td>PSI</td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>PBS-related components (scores); dominant excitation loading shown</em></td></tr>
+                        <tr><td>PE</td><td></td><td></td><td>score (Ex560/Em580)</td><td>score (Ex560/Em580)</td></tr>
+                        <tr><td>PC/APC (PBS-free)</td><td></td><td>score (Ex620/Em657)</td><td>score (Ex560/Em657)</td><td>score (Ex560+620/Em657)</td></tr>
+                        <tr><td>PBS→PSII</td><td></td><td>score (Ex620/Em685)</td><td>score (Ex560/Em685)</td><td>score (Ex560+620/Em685)</td></tr>
+                        <tr><td>PBS→PSI <sup title="PBS→PSI component (~705 nm) may partially merge with PSI Chl component at RT if rank is too low; verify by comparing excitation loadings." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>score (Ex620/Em705)</td><td>score (Ex560/Em705)</td><td>score (Ex560+620/Em705)</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios) — same formula as Gaussian, using scores instead of areas</em></td></tr>
+                        <tr><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td></tr>
+                        <tr><td>Chl-PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td></tr>
+                        <tr><td>Chl-PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td></tr>
+                        <tr><td>PBS-free / PBS-tot</td><td></td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td></tr>
+                        <tr><td>PBS-PSI / PBS-tot <sup title="PBS→PSI component (~705 nm) may partially merge with PSI Chl at RT; verify excitation loading." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII : PBS-PSI <sup title="PBS→PSI component (~705 nm) may partially merge with PSI Chl at RT; verify excitation loading." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em><sup style="color:#212529; font-weight:bold;">*</sup> CP43/CP47 ratio cannot be resolved at RT even by PARAFAC. PSII pool = CP43 + CP47. Chl-tot = PSII pool + PSI.</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em><sup style="color:#212529; font-weight:bold;">†</sup> PBS→PSI (~705 nm) may overlap with PSI Chl component at RT; verify using excitation loadings. PBS-free = PE + PC/APC. PBS-tot = PBS-free + PBS→PSII + PBS→PSI.</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PARAFAC is the preferred method for quantitative RT analysis as it leverages the full EEM to separate spectrally overlapping components (Remelli &amp; Santabarbara 2018).</em></td></tr>
+                    </table>
+                    </div></div></div></div><!-- /accordionPARAFACRT -->
+
+                    <!-- RT References accordion -->
+                    <div class="accordion mb-1" id="accordionRefsRT">
+                    <div class="card" style="border:1px solid #f5d78e; border-left:3px solid #e6a817;">
+                    <div class="card-header py-1 px-2" id="headingRefsRT" style="background:#fffdf0;">
+                        <h6 class="mb-0"><button class="btn btn-link btn-sm collapsed p-0 text-left font-weight-bold" style="color:#7a5100; font-size:0.9rem;"
+                                data-toggle="collapse" data-target="#collapseRefsRT" aria-expanded="false" aria-controls="collapseRefsRT">
+                            <span class="badge badge-warning mr-1">RT</span> References
+                        </button></h6>
+                    </div>
+                    <div id="collapseRefsRT" class="collapse" aria-labelledby="headingRefsRT">
+                    <div class="card-body p-2">
                     <ol class="mb-1" style="padding-left:1.4rem; font-size:0.9em;">
-                        <li>Zavřel T et al. (2021) <em>Algal Res</em> 58:102328. — Direct source for PBS-free (~657 nm), PBS-PSII (~685 nm), PBS-PSI (~705 nm) emission bands and PBS coupling fractions from RT EEM spectra</li>
+                        <li>Zavřel T et al. (2021) <em>Algal Res</em> 58:102328. — Primary source for RT EEM-based PBS coupling analysis; assigns PBS-free (~657 nm), PBS-PSII (~685 nm), and PBS-PSI (~705 nm) emission bands; provides PBS coupling fractions from fixed-wavelength RT spectra</li>
+                        <li>Remelli W &amp; Santabarbara S (2018) <em>Biochim Biophys Acta Bioenerg</em> 1859:1207–1222. — RT fluorescence lifetime and EEM characterisation of <em>Synechocystis</em> PCC6803: single broad PSII peak at ~684.5 nm; uncoupled PBS (long-lived ~1.3 ns component at 650–680 nm); PSI overlap above ~700 nm causes unreliable FV/FM at fixed wavelengths — spectral decomposition recommended</li>
+                        <li>Mullineaux CW &amp; Allen JF (1992) <em>Biochim Biophys Acta</em> 1100:285–292. — Demonstrates direct PBS→PSI energy transfer in <em>Synechococcus</em> 6301 (not spillover); phycobilin excitation at 625–630 nm contributes a major fraction of PSI cross-section in state 2; PSII closure does not increase PSI cross-section</li>
+                        <li>Glazer AN (1984) <em>Biochim Biophys Acta</em> 768:29–51. — Review of PBS structure and energy transfer; APC core emission ~660 nm; terminal emitter (~680 nm) couples to Chl <em>a</em>; background reference for PBS energy-transfer principles</li>
                     </ol>
+                    </div></div></div></div><!-- /accordionRefsRT -->
                 </div>
             </div>
         </div>
@@ -401,15 +693,27 @@
         <div class="d-flex align-items-center" id="global-pigm-group" style="gap:0.6rem;">
             <span style="color:#b8d4ee; font-size:0.78rem; font-weight:700;
                          letter-spacing:0.04em; white-space:nowrap;">PIGMENTATION</span>
-            <select id="global-pigm-select" class="form-control form-control-sm"
-                    style="width:auto; background:#1a5a80; color:#fff; border-color:rgba(255,255,255,0.3);
-                           font-size:0.82rem; font-weight:600;"
-                    onchange="switchPigmentation(this.value)">
+            <select id="global-pigm-select" style="display:none;">
                 <option value="checkbox_chl_only">Chl only</option>
                 <option value="checkbox_chl_PC" selected>Chl + PC</option>
                 <option value="checkbox_chl_PE">Chl + PE</option>
                 <option value="checkbox_chl_PC_PE">Chl + PC + PE</option>
             </select>
+            <div class="ojip-seg-ctrl" id="global-pigm-btns"
+                 style="background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.2);">
+                <button class="btn btn-outline-primary" data-pigm="checkbox_chl_only"
+                        onclick="switchPigmentation('checkbox_chl_only')"
+                        style="font-size:0.78rem; color:rgba(255,255,255,0.7) !important;">Chl</button>
+                <button class="btn btn-primary" data-pigm="checkbox_chl_PC"
+                        onclick="switchPigmentation('checkbox_chl_PC')"
+                        style="font-size:0.78rem; color:#004085 !important;">Chl+PC</button>
+                <button class="btn btn-outline-primary" data-pigm="checkbox_chl_PE"
+                        onclick="switchPigmentation('checkbox_chl_PE')"
+                        style="font-size:0.78rem; color:rgba(255,255,255,0.7) !important;">Chl+PE</button>
+                <button class="btn btn-outline-primary" data-pigm="checkbox_chl_PC_PE"
+                        onclick="switchPigmentation('checkbox_chl_PC_PE')"
+                        style="font-size:0.78rem; color:rgba(255,255,255,0.7) !important;">Chl+PC+PE</button>
+            </div>
             <span style="color:rgba(255,255,255,0.55); font-size:0.75rem;">
                 updates Derived Parameters &amp; PARAFAC
             </span>
@@ -788,12 +1092,8 @@
                             <div class="font-weight-bold mb-1 text-muted" style="font-size:0.75rem; letter-spacing:0.05em;">RT — EMISSION (nm)</div>
                             <div class="row" style="row-gap:0.35rem;">
                                 <div class="col-6 col-md-2">
-                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">F685 (PSII)</label>
+                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">F685 (PSII pool)</label>
                                     <input type="number" class="form-control form-control-sm" id="wl-rt-em-f685" value="685" min="675" max="695" onchange="updateWlConfig()">
-                                </div>
-                                <div class="col-6 col-md-2">
-                                    <label class="mb-0 text-muted" style="font-size:0.78rem;">F695 (CP47)</label>
-                                    <input type="number" class="form-control form-control-sm" id="wl-rt-em-f695" value="695" min="685" max="710" onchange="updateWlConfig()">
                                 </div>
                                 <div class="col-6 col-md-2">
                                     <label class="mb-0 text-muted" style="font-size:0.78rem;">F730 (PSI)</label>
@@ -839,7 +1139,21 @@
                 separates their contributions more accurately than direct point readings.
             </div>
             <div id="eem-rt-state-note" class="alert alert-warning py-2 mb-2" style="display:none; font-size:0.9em;">
-                <i class="fa fa-info-circle mr-1"></i><strong>RT mode:</strong> PBS-PSII norm and PBS-PSI norm (fractions of total PBS signal at Ex620) are the primary state-transition indicators. F685/F730 (Ex440) reports the overall PSII:PSI Chl ratio. Absolute thresholds are species- and condition-specific.
+                <i class="fa fa-info-circle mr-1"></i><strong>RT mode:</strong>
+                At RT, CP43 (~685 nm) and CP47 (~695 nm) are not spectrally resolved — the PSII contribution appears as a single broad ~685 nm peak (<strong>PSII pool</strong>).
+                <strong>F685/F730</strong> (Ex440) reports the PSII pool : PSI ratio; PSI emission tail overlap makes this unreliable for fixed-wavelength analysis — Gaussian deconvolution or PARAFAC is preferred.
+                <br><strong>PBS coupling</strong> (Ex620): <em>PBS-free</em> = Em657 (uncoupled PBS); <em>PBS-PSII</em> = Em685; <em>PBS-PSI</em> = Em705.
+                Normalised fractions (PBS-PSII/PBS-tot, PBS-PSI/PBS-tot) are the primary state-transition indicators.
+                Note: Em705 (PBS-PSI) partially overlaps PSI Chl emission at RT — interpret the PBS-PSI fraction with caution.
+                Absolute thresholds are species- and condition-specific.
+                <div class="form-check mt-1">
+                    <input class="form-check-input" type="checkbox" id="rt-show-unreliable" checked
+                           onchange="setRtShowUnreliable(this.checked)">
+                    <label class="form-check-label" for="rt-show-unreliable" style="font-size:0.88em; cursor:pointer;">
+                        Show unreliable parameters <sup style="color:#212529; font-weight:bold;">†</sup>
+                        <span class="text-muted">(F685/F730, PBS-PSI, PBS F685/F705)</span>
+                    </label>
+                </div>
             </div>
             <div class="d-flex align-items-center mb-2" style="gap:0.5rem;">
                 <h6 class="mb-0 text-muted">Derived parameters per sample</h6>
@@ -918,18 +1232,71 @@
         <!-- ── DECONVOLUTION TAB ── -->
         <div class="tab-pane fade" id="eem-deconv" role="tabpanel">
 
-            <div class="d-flex align-items-center mb-2" style="gap:0.5rem;">
-                <div class="alert alert-info py-2 mb-0 flex-grow-1" style="font-size:0.87em;">
-                    <i class="fa fa-info-circle mr-1"></i>
-                    All uploaded samples are assumed to share the same pigmentation selected above.
-                    Sub-tabs and peak presets update automatically when pigmentation changes.
-                </div>
-                <button class="btn btn-success btn-sm text-nowrap" id="deconv-fitall-all"
-                        onclick="runDeconvBatchAll()" style="white-space:nowrap;">
-                    <i class="fa fa-play-circle mr-1"></i> Fit all excitations
+            <!-- Gaussian deconvolution info accordion -->
+            <div class="mb-3">
+                <button class="btn btn-sm btn-link px-0 text-muted" type="button"
+                        data-toggle="collapse" data-target="#deconv-method-info"
+                        style="font-size:0.85rem; text-decoration:none;">
+                    <i class="fa fa-question-circle mr-1"></i>What is Gaussian deconvolution and how should I use it?
                 </button>
-                <span id="deconv-fitall-all-progress" class="text-muted text-nowrap"
-                      style="font-size:0.83rem;"></span>
+                <div class="collapse" id="deconv-method-info">
+                    <div class="card card-body bg-light py-2 px-3 mt-1" style="font-size:0.85em; line-height:1.6;">
+                        <p class="mb-2">
+                            <strong>Gaussian deconvolution</strong> fits a sum of Gaussian-shaped peaks to the
+                            emission spectrum recorded at a single fixed excitation wavelength.
+                            Each Gaussian represents one fluorescent complex — for example CP43 (~685 nm),
+                            CP47 (~695 nm) and PSI (~724 nm) when excited at 440 nm.
+                            Because the peaks overlap significantly, fitting the full lineshape separates their
+                            contributions more accurately than reading intensity at a single wavelength.
+                        </p>
+                        <p class="mb-2">
+                            <strong>Peak areas</strong> (amplitude × σ × √2π), not heights, are used to derive
+                            biological parameters, because the area is proportional to the number of emitting
+                            molecules regardless of peak width.
+                        </p>
+                        <p class="mb-2">
+                            <strong>When to use it:</strong> Gaussian deconvolution is preferred over direct
+                            wavelength readings whenever two peaks are separated by less than ~15 nm
+                            (e.g. CP43/CP47 at 685/695 nm, or PBS-free/PBS-PSII). It is also the most
+                            reliable method for the CP43/CP47 ratio, which PARAFAC cannot resolve due to the
+                            small spectral distance between these two complexes.
+                        </p>
+                        <p class="mb-0 text-muted">
+                            <strong>Limitation:</strong> Gaussian lineshapes are approximately valid at 77 K.
+                            At room temperature, peaks are broader and less symmetric; R² values are expected
+                            to be lower, and results should be interpreted with more caution.
+                            Always inspect the R² badge — fits below 0.90 are flagged and should be reviewed
+                            manually using the <em>Adjust</em> button.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info py-2 mb-2" style="font-size:0.87em;">
+                <i class="fa fa-info-circle mr-1"></i>
+                All uploaded samples are assumed to share the same pigmentation selected above.
+                Sub-tabs and peak presets update automatically when pigmentation changes.
+            </div>
+            <div class="d-flex align-items-center justify-content-between mb-2 px-2 py-2 rounded"
+                 style="background:#eaf4ea; border:1px solid #b2dbb2;">
+                <div>
+                    <strong style="font-size:0.92rem;">
+                        <i class="fa fa-play-circle mr-1" style="color:#1a7a1a;"></i>
+                        Batch Gaussian deconvolution
+                        <span class="par-tip" title="Fitting routine: Levenberg-Marquardt nonlinear least squares (scipy.optimize.curve_fit). Each peak is described by amplitude (A), center wavelength (μ), and standard deviation (σ). Initial peak positions are set by the active preset; bounds prevent peaks from shifting more than ±10 nm from their preset center. Peak area = |A| × |σ| × √(2π) is used for all ratio calculations."><i class="fa fa-info-circle"></i></span>
+                    </strong>
+                    <span class="text-muted ml-2" style="font-size:0.82rem;">
+                        Fit all samples across all active excitations in one click
+                    </span>
+                </div>
+                <div class="d-flex align-items-center" style="gap:0.5rem;">
+                    <span id="deconv-fitall-all-progress" class="text-muted text-nowrap"
+                          style="font-size:0.83rem;"></span>
+                    <button class="btn btn-success text-nowrap" id="deconv-fitall-all"
+                            onclick="runDeconvBatchAll()">
+                        <i class="fa fa-play-circle mr-1"></i> Fit all excitations
+                    </button>
+                </div>
             </div>
 
             <!-- Deconvolution sub-tab navigation -->
@@ -968,9 +1335,9 @@
                 <div class="tab-pane fade show active" id="dcsub-440" role="tabpanel">
                     <div class="alert alert-secondary py-2 mb-3"
                          style="font-size:0.87em; border-left:3px solid #27ae60; background:#f6faf6;">
-                        <strong>Chl Soret excitation (Ex 440 nm)</strong> — Resolves PSII inner antenna:
+                        <strong>Chl Soret excitation (Ex 440 nm)</strong> — <span id="dcsub-440-desc">Resolves PSII inner antenna:
                         CP43 (~685 nm), CP47 (~695 nm), and PSI long-wavelength Chl (~724 nm).
-                        Used for PSII:PSI stoichiometry and CP43/CP47 ratio.
+                        Used for PSII:PSI stoichiometry and CP43/CP47 ratio.</span>
                     </div>
                     <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem;">
                         <label class="mb-0 font-weight-bold" style="font-size:0.85rem;">Excitation:</label>
@@ -1141,6 +1508,60 @@
         <!-- ── PARAFAC TAB ── -->
         <div class="tab-pane fade" id="eem-parafac" role="tabpanel">
 
+            <!-- PARAFAC method info accordion -->
+            <div class="mb-3">
+                <button class="btn btn-sm btn-link px-0 text-muted" type="button"
+                        data-toggle="collapse" data-target="#parafac-method-info"
+                        style="font-size:0.85rem; text-decoration:none;">
+                    <i class="fa fa-question-circle mr-1"></i>What is PARAFAC and how should I use it?
+                </button>
+                <div class="collapse" id="parafac-method-info">
+                    <div class="card card-body bg-light py-2 px-3 mt-1" style="font-size:0.85em; line-height:1.6;">
+                        <p class="mb-2">
+                            <strong>PARAFAC</strong> (Parallel Factor Analysis) decomposes the full
+                            excitation-emission matrix (EEM) simultaneously across all uploaded samples.
+                            It finds trilinear <strong>components</strong> — each described by an excitation
+                            loading profile, an emission loading profile, and a <strong>score</strong>
+                            (relative abundance) per sample. Each component ideally corresponds to one
+                            fluorescent species or energy-transfer pathway (e.g. PBS→PSII, PBS→PSI,
+                            uncoupled PBS).
+                        </p>
+                        <p class="mb-2">
+                            <strong>Advantage over single-excitation methods:</strong> by using the full EEM,
+                            PARAFAC exploits both excitation and emission variation across samples. This makes
+                            it particularly powerful for separating PBS coupling states (PBS-free vs PBS→PSII
+                            vs PBS→PSI) that appear at the same emission wavelengths but differ in excitation
+                            profile. Gaussian deconvolution at a single excitation cannot fully separate these.
+                        </p>
+                        <p class="mb-2">
+                            <strong>Limitation:</strong> PARAFAC cannot resolve CP43 and CP47 as separate
+                            components — their excitation and emission profiles are too similar (~10 nm apart).
+                            For the CP43/CP47 ratio, use the Gaussian deconvolution or direct wavelength method.
+                            PARAFAC also requires ≥3 samples with a common EEM grid and assumes
+                            all variation across samples is due to changes in component abundance
+                            (not peak position).
+                        </p>
+                        <p class="mb-2">
+                            <strong>Recommended workflow:</strong>
+                            <ol class="mb-0 pl-3">
+                                <li>Run <em>Step 1: Diagnostic (CORCONDIA)</em> to determine the optimal number of components.</li>
+                                <li>Click the optimal F on the CORCONDIA plot to pre-fill <em>Components to fit</em>.</li>
+                                <li>Run <em>Step 2: Run PARAFAC</em> to extract components and scores.</li>
+                                <li>Verify component annotations match expected fluorophores; adjust manually if needed.</li>
+                                <li>Use <em>Copy scores (for method comparison)</em> to compare PARAFAC results with Gaussian and fixed-wavelength parameters.</li>
+                            </ol>
+                        </p>
+                        <p class="mb-0 text-muted">
+                            <strong>CORCONDIA (Core Consistency Diagnostic):</strong> tests whether the
+                            chosen F fits the data in a truly trilinear way. Values near 100% indicate a
+                            valid, interpretable model. Values below 80–90% indicate over-factoring —
+                            too many components are being extracted and some are noise artefacts.
+                            Choose the highest F where CORCONDIA remains ≥ 80–90%.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Not-ready banner (shown when <3 samples or grid mismatch) -->
             <div id="parafac-not-ready" class="alert alert-info py-2 mb-3" style="font-size:0.92em;">
                 <i class="fa fa-info-circle mr-1"></i>
@@ -1159,47 +1580,56 @@
                     <div class="row">
                         <div class="col-md-4 mb-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="par-r1-check" onchange="updateParafacScatterUI()">
+                                <input class="form-check-input" type="checkbox" id="par-r1-check" checked onchange="updateParafacScatterUI()">
                                 <label class="form-check-label small font-weight-bold" for="par-r1-check">
                                     Rayleigh 1st order
                                     <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
                                        title="Removes the bright elastic-scatter diagonal where λ_em ≈ λ_ex. Enable when excitation and emission ranges overlap. Typical width: 10–20 nm."></i>
                                 </label>
                             </div>
-                            <div id="par-r1-row" style="display:none; padding-left:1.4rem;">
-                                <label class="small text-muted">Band half-width ±<span id="par-r1-val">15</span> nm</label>
-                                <input type="range" class="custom-range" id="par-r1-slider" min="5" max="50" value="15" step="1"
-                                       oninput="document.getElementById('par-r1-val').textContent=this.value">
+                            <div id="par-r1-row" style="padding-left:1.4rem;">
+                                <div class="d-flex align-items-center" style="gap:0.35rem;">
+                                    <span class="small text-muted">Half-width ±</span>
+                                    <input type="number" class="form-control form-control-sm" id="par-r1-slider"
+                                           value="20" min="1" max="100" step="1" style="width:60px;">
+                                    <span class="small text-muted">nm</span>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4 mb-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="par-r2-check" onchange="updateParafacScatterUI()">
+                                <input class="form-check-input" type="checkbox" id="par-r2-check" checked onchange="updateParafacScatterUI()">
                                 <label class="form-check-label small font-weight-bold" for="par-r2-check">
                                     Rayleigh 2nd order
                                     <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
                                        title="Removes second-harmonic scatter at λ_em ≈ 2×λ_ex (e.g. Ex 330 nm produces a band at Em 660 nm). Less common in 77 K EEM; relevant when Ex starts below 350 nm. Typical width: 10–15 nm."></i>
                                 </label>
                             </div>
-                            <div id="par-r2-row" style="display:none; padding-left:1.4rem;">
-                                <label class="small text-muted">Band half-width ±<span id="par-r2-val">15</span> nm</label>
-                                <input type="range" class="custom-range" id="par-r2-slider" min="5" max="50" value="15" step="1"
-                                       oninput="document.getElementById('par-r2-val').textContent=this.value">
+                            <div id="par-r2-row" style="padding-left:1.4rem;">
+                                <div class="d-flex align-items-center" style="gap:0.35rem;">
+                                    <span class="small text-muted">Half-width ±</span>
+                                    <input type="number" class="form-control form-control-sm" id="par-r2-slider"
+                                           value="15" min="1" max="100" step="1" style="width:60px;">
+                                    <span class="small text-muted">nm</span>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4 mb-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="par-ram-check" onchange="updateParafacScatterUI()">
+                                <input class="form-check-input" type="checkbox" id="par-ram-check" checked onchange="updateParafacScatterUI()">
                                 <label class="form-check-label small font-weight-bold" for="par-ram-check">
                                     Raman (water, ~3400 cm⁻¹)
                                     <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
                                        title="Removes inelastic water Raman scatter (O-H stretch, ~3400 cm⁻¹ shift). Band position depends on λ_ex. Most important in dilute liquid samples at RT; minimal in frozen 77 K samples. Typical width: 5–15 nm."></i>
                                 </label>
                             </div>
-                            <div id="par-ram-row" style="display:none; padding-left:1.4rem;">
-                                <label class="small text-muted">Band half-width ±<span id="par-ram-val">10</span> nm</label>
-                                <input type="range" class="custom-range" id="par-ram-slider" min="5" max="30" value="10" step="1"
-                                       oninput="document.getElementById('par-ram-val').textContent=this.value">
+                            <div id="par-ram-row" style="padding-left:1.4rem;">
+                                <div class="d-flex align-items-center" style="gap:0.35rem;">
+                                    <span class="small text-muted">Half-width ±</span>
+                                    <input type="number" class="form-control form-control-sm" id="par-ram-slider"
+                                           value="10" min="1" max="60" step="1" style="width:60px;">
+                                    <span class="small text-muted">nm</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1210,6 +1640,22 @@
                             <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
                                title="After zeroing the scatter regions, fills them by linear interpolation from the nearest valid emission wavelengths. Strongly recommended — prevents PARAFAC from modelling the zeros as if they were real signal, which would otherwise distort components."></i>
                         </label>
+                    </div>
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="par-diag-mask-check" checked onchange="updateParafacScatterUI()">
+                        <label class="form-check-label small font-weight-bold" for="par-diag-mask-check">
+                            Mask below diagonal (Em &le; Ex + buffer)
+                            <i class="fa fa-question-circle par-tip" data-toggle="tooltip" data-placement="top"
+                               title="Zeros all tensor values where Em ≤ Ex + buffer. Removes the region where emission wavelength is shorter than or close to excitation — physically meaningless in normal fluorescence. Essential when Ex and Em ranges overlap."></i>
+                        </label>
+                    </div>
+                    <div id="par-diag-mask-row" style="padding-left:1.4rem;">
+                        <div class="d-flex align-items-center" style="gap:0.35rem;">
+                            <span class="small text-muted">Buffer</span>
+                            <input type="number" class="form-control form-control-sm" id="par-diag-mask-buffer"
+                                   value="10" min="0" max="100" step="1" style="width:60px;">
+                            <span class="small text-muted">nm</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1241,6 +1687,7 @@
                                 <span class="badge badge-primary" id="par-rank-val" style="min-width:1.8rem;">2</span>
                             </div>
                             <div id="par-rank-pigm-hint" class="text-muted mt-1" style="font-size:0.76rem;"></div>
+                            <div id="par-rank-cc-hint" class="mt-1" style="font-size:0.76rem; display:none;"></div>
                         </div>
                         <div class="col-sm-6 col-md-3 mb-2">
                             <label class="small font-weight-bold d-block">
@@ -1289,17 +1736,49 @@
                 </div>
 
                 <!-- Action buttons -->
-                <div class="d-flex flex-wrap mb-3" style="gap:0.5rem;">
-                    <button class="btn btn-outline-primary" onclick="runParafacDiagnostic()">
+                <div class="d-flex flex-wrap align-items-center mb-3" style="gap:0.5rem;">
+                    <button class="btn btn-outline-primary" id="par-diag-btn" onclick="runParafacDiagnostic()">
                         <span id="par-diag-spinner" class="spinner-border spinner-border-sm mr-1" style="display:none;" role="status"></span>
                         <i class="fa fa-bar-chart mr-1"></i>Step 1: Run diagnostic (CORCONDIA)
                     </button>
-                    <button class="btn btn-primary" onclick="runParafac()">
+                    <button class="btn btn-danger btn-sm" id="par-diag-stop" style="display:none;" onclick="stopParafacDiagnostic()">
+                        <i class="fa fa-stop mr-1"></i>Stop
+                    </button>
+                    <button class="btn btn-primary" id="par-fit-btn" onclick="runParafac()">
                         <span id="par-fit-spinner" class="spinner-border spinner-border-sm mr-1" style="display:none;" role="status"></span>
                         <i class="fa fa-cogs mr-1"></i>Step 2: Run PARAFAC
                     </button>
+                    <button class="btn btn-danger btn-sm" id="par-fit-stop" style="display:none;" onclick="stopParafac()">
+                        <i class="fa fa-stop mr-1"></i>Stop
+                    </button>
                 </div>
                 <div id="parafac-error" class="alert alert-danger py-1 px-2 mb-2" style="display:none; font-size:0.88em;"></div>
+
+                <!-- Step 1 progress -->
+                <div id="par-diag-progress-wrap" style="display:none;" class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small id="par-diag-status" class="text-muted"></small>
+                        <small id="par-diag-elapsed" class="text-muted font-weight-bold"></small>
+                    </div>
+                    <div class="progress" style="height:10px; border-radius:5px;">
+                        <div id="par-diag-progress-bar"
+                             class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                             role="progressbar" style="width:0%; transition:width 0.4s ease;"></div>
+                    </div>
+                </div>
+
+                <!-- Step 2 progress -->
+                <div id="par-fit-progress-wrap" style="display:none;" class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small id="par-fit-status" class="text-muted"></small>
+                        <small id="par-fit-elapsed" class="text-muted font-weight-bold"></small>
+                    </div>
+                    <div class="progress" style="height:10px; border-radius:5px;">
+                        <div id="par-fit-progress-bar"
+                             class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                             role="progressbar" style="width:0%; transition:width 0.4s ease;"></div>
+                    </div>
+                </div>
 
                 <!-- Diagnostic results -->
                 <div id="parafac-diag-section" style="display:none;">
@@ -1329,27 +1808,20 @@
                     <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem;">
                         <h6 class="font-weight-bold mb-0">PARAFAC components</h6>
                         <span id="parafac-quality-badge"></span>
-                        <button class="btn btn-sm btn-outline-secondary ml-auto" onclick="copyParafacTable()">
-                            <i class="fa fa-clipboard"></i> Copy scores table
+                        <button id="parafac-copy-scores-btn" class="btn btn-sm btn-outline-secondary ml-auto"
+                                onclick="copyParafacTable()" style="display:none;"
+                                title="Copy raw scores for active (non-rejected) components to clipboard">
+                            <i class="fa fa-clipboard"></i> Copy scores (rejected components excluded)
                         </button>
                     </div>
                     <div id="parafac-components-row" class="row mb-3"></div>
 
-                    <h6 class="font-weight-bold">Scores per sample</h6>
-                    <p class="small text-muted mb-1">
-                        Component scores = relative abundance of each component per sample (arbitrary units, proportional to fluorescence contribution).
-                    </p>
-                    <div style="position:relative; height:320px;" class="mb-2">
-                        <canvas id="parafac-scores-chart"></canvas>
-                    </div>
-                    <div id="parafac-scores-table-container" style="overflow-x:auto;" class="mb-3"></div>
-
-                    <!-- 2D component maps -->
-                    <h6 class="font-weight-bold mt-2">2D component maps</h6>
+                    <!-- 2D component maps (above scores) -->
+                    <h6 class="font-weight-bold mt-1">2D component maps</h6>
                     <p class="small text-muted mb-2">
                         Each map is the outer product of excitation × emission loadings — the spectral fingerprint of that component in EEM space.
                     </p>
-                    <div class="row" id="parafac-comp-maps-row"></div>
+                    <div class="row mb-3" id="parafac-comp-maps-row"></div>
 
                     <!-- Reconstructed + residuals -->
                     <h6 class="font-weight-bold mt-1">Reconstructed EEM &amp; residuals</h6>
@@ -1359,7 +1831,16 @@
                                 style="width:auto;" onchange="renderParafacReconMaps()"></select>
                         <span class="badge badge-secondary" id="parafac-recon-expvar-badge"></span>
                     </div>
-                    <div class="row" id="parafac-recon-maps-row"></div>
+                    <div class="row mb-3" id="parafac-recon-maps-row"></div>
+
+                    <h6 class="font-weight-bold">Scores per sample</h6>
+                    <p class="small text-muted mb-1">
+                        Component scores = relative abundance of each component per sample (arbitrary units, proportional to fluorescence contribution).
+                    </p>
+                    <div style="position:relative; height:320px;" class="mb-2">
+                        <canvas id="parafac-scores-chart"></canvas>
+                    </div>
+                    <div id="parafac-scores-table-container" style="overflow-x:auto;" class="mb-3"></div>
                 </div>
 
             </div><!-- /parafac-controls -->
@@ -1378,21 +1859,117 @@
             <!-- Main content shown once batch data is ready -->
             <div id="comparison-content" style="display:none;">
 
+                <!-- Method reference accordion -->
+                <div class="mb-3">
+                    <button class="btn btn-sm btn-link px-0 text-muted" type="button"
+                            data-toggle="collapse" data-target="#cmp-method-info"
+                            style="font-size:0.85rem; text-decoration:none;">
+                        <i class="fa fa-question-circle mr-1"></i>How are these parameters calculated?
+                    </button>
+                    <div class="collapse" id="cmp-method-info">
+                        <div class="card card-body bg-light py-2 px-3 mt-1" style="font-size:0.83em; line-height:1.6;">
+                            <p class="mb-2">Each parameter is computed by three independent methods. <strong style="color:#c0392b;">Red values</strong> differ &gt;20% from Fixed-WL — check the fit quality in the Deconvolution tab.</p>
+                            <div style="overflow-x:auto;">
+                                <table class="table table-sm table-bordered mb-2" style="font-size:0.81em; min-width:620px;">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="min-width:120px;">Parameter</th>
+                                            <th><strong>Fixed-WL</strong><br><small class="text-muted font-weight-normal">direct intensity at a single emission point</small></th>
+                                            <th><strong>Gaussian deconvolution</strong><br><small class="text-muted font-weight-normal">peak area = |A|·|σ|·√(2π) from fitted Gaussians</small></th>
+                                            <th><strong>PARAFAC</strong><br><small class="text-muted font-weight-normal">component scores from tensor decomposition</small></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>PSII / PSI</strong><br><small class="text-muted">Ex 440 nm</small></td>
+                                            <td>F(Em<sub>689</sub>) / F(Em<sub>724</sub>)</td>
+                                            <td>[Area<sub>CP43</sub>(~685) + Area<sub>CP47</sub>(~695)] / Area<sub>PSI</sub>(~724)<br><small class="text-muted">PSII = sum of both inner antenna areas</small></td>
+                                            <td>Score<sub>CP43+CP47</sub> / Score<sub>PSI</sub></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>CP43 / CP47</strong><br><small class="text-muted">Ex 440 nm</small></td>
+                                            <td>F(Em<sub>685</sub>) / F(Em<sub>695</sub>)</td>
+                                            <td>Area<sub>CP43</sub>(~685) / Area<sub>CP47</sub>(~695)<br><small class="text-muted">Gaussian separates overlapping peaks more accurately than direct reading</small></td>
+                                            <td>Score<sub>CP43</sub> / Score<sub>CP47</sub></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Chl-PSII / total</strong><br><small class="text-muted">Ex 440 nm</small></td>
+                                            <td>F(Em<sub>689</sub>) / [F(Em<sub>689</sub>) + F(Em<sub>724</sub>)]</td>
+                                            <td>Area<sub>PSII</sub> / [Area<sub>Chl</sub> + Area<sub>PSII</sub> + Area<sub>PSI</sub>]</td>
+                                            <td>Score<sub>CP43+CP47</sub> / Score<sub>Chl total</sub></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Chl-PSI / total</strong><br><small class="text-muted">Ex 440 nm</small></td>
+                                            <td>F(Em<sub>724</sub>) / [F(Em<sub>689</sub>) + F(Em<sub>724</sub>)]</td>
+                                            <td>Area<sub>PSI</sub> / [Area<sub>Chl</sub> + Area<sub>PSII</sub> + Area<sub>PSI</sub>]</td>
+                                            <td>Score<sub>PSI</sub> / Score<sub>Chl total</sub></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PBS-PSII : PBS-PSI</strong><br><small class="text-muted">Ex 620 nm</small></td>
+                                            <td>F(Em<sub>689</sub>) / F(Em<sub>724</sub>)</td>
+                                            <td>Area<sub>PBS→PSII</sub>(675–710 nm) / Area<sub>PBS→PSI</sub>(&gt;710 nm)</td>
+                                            <td>Score<sub>PBS→PSII</sub> / Score<sub>PBS→PSI</sub></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PBS-PSII / PBS-tot</strong><br><small class="text-muted">Ex 620 nm</small></td>
+                                            <td>F(Em<sub>689</sub>) / [F(Em<sub>662</sub>) + F(Em<sub>689</sub>) + F(Em<sub>724</sub>)]</td>
+                                            <td>Area<sub>PBS→PSII</sub> / [Area<sub>free</sub> + Area<sub>PBS→PSII</sub> + Area<sub>PBS→PSI</sub>]</td>
+                                            <td>Score<sub>PBS→PSII</sub> / Score<sub>PBS total</sub></td>
+                                        </tr>
+                                        <tr class="table-light">
+                                            <td colspan="4" class="text-muted" style="font-size:0.79em; line-height:1.5;">
+                                                <strong>Peak classification (Gaussian method, Ex 440):</strong>
+                                                μ &lt; 680 nm → free Chl &nbsp;|&nbsp; 680–690 nm → CP43 &nbsp;|&nbsp; 690–710 nm → CP47 &nbsp;|&nbsp; &gt;710 nm → PSI.<br>
+                                                <strong>Peak classification (Ex 620/560):</strong>
+                                                μ &lt; 675 nm → PBS-free (uncoupled) &nbsp;|&nbsp; 675–710 nm → PBS→PSII &nbsp;|&nbsp; &gt;710 nm → PBS→PSI.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Toolbar -->
-                <div class="d-flex align-items-center mb-3" style="gap:0.5rem; flex-wrap:wrap;">
+                <div class="d-flex align-items-center mb-2" style="gap:0.5rem; flex-wrap:wrap;">
                     <button class="btn btn-sm btn-outline-secondary" onclick="renderComparisonTab()">
                         <i class="fa fa-refresh mr-1"></i> Refresh
                     </button>
                     <span id="comparison-status" class="text-muted" style="font-size:0.85rem; flex:1;"></span>
+                    <span id="cmp-rt-unreliable-wrap" style="display:none;" class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="checkbox" id="cmp-rt-show-unreliable" checked
+                               onchange="setRtShowUnreliable(this.checked)">
+                        <label class="form-check-label" for="cmp-rt-show-unreliable" style="font-size:0.85em; cursor:pointer;">
+                            Show unreliable params <sup style="color:#212529; font-weight:bold;">†</sup>
+                        </label>
+                    </span>
                     <button class="btn btn-sm btn-success" onclick="exportComparisonToStatistics()">
                         <i class="fa fa-send mr-1"></i> Export to Statistics
                     </button>
                 </div>
 
+                <!-- Excluded samples bar -->
+                <div id="cmp-excluded-bar" style="display:none;" class="alert alert-warning py-1 px-2 mb-2">
+                    <i class="fa fa-eye-slash mr-1"></i>
+                    <span id="cmp-excluded-count"></span> sample(s) hidden from comparison.
+                    <button class="btn btn-xs btn-outline-secondary ml-2"
+                            onclick="cmpExcluded={}; renderComparisonTab();">
+                        <i class="fa fa-undo mr-1"></i>Restore all
+                    </button>
+                </div>
+
+                <!-- Method agreement scatter plots (top) -->
+                <h6 class="font-weight-bold mb-1" style="font-size:0.9rem;">
+                    <i class="fa fa-dot-circle-o mr-1"></i>
+                    Method agreement &nbsp;<small class="text-muted font-weight-normal">click a point to inspect or remove</small>
+                </h6>
+                <div id="comparison-scatter-grid" class="row mb-4" style="margin:0 -6px;"></div>
+
                 <!-- Chl / PSII·PSI table -->
                 <h6 class="font-weight-bold mb-1" style="font-size:0.9rem;">
                     <i class="fa fa-leaf mr-1" style="color:#27ae60;"></i>
-                    Chlorophyll / PSII · PSI &nbsp;<small class="text-muted font-weight-normal">(Ex 440 nm)</small>
+                    <span id="cmp-section-chl">Chlorophyll / PSII · PSI &nbsp;<small class="text-muted font-weight-normal">(Ex 440 nm)</small></span>
                 </h6>
                 <div class="mb-3" style="overflow-x:auto;">
                     <div id="comparison-table-chl" style="font-size:0.82em;"></div>
@@ -1401,23 +1978,36 @@
                 <!-- PBS table -->
                 <h6 class="font-weight-bold mb-1" style="font-size:0.9rem;">
                     <i class="fa fa-circle mr-1" style="color:#5b9bd5;"></i>
-                    Phycobilisome coupling &nbsp;<small class="text-muted font-weight-normal">(Ex 620 nm)</small>
+                    <span id="cmp-section-pbs">Phycobilisome coupling &nbsp;<small class="text-muted font-weight-normal">(Ex 620 nm)</small></span>
                 </h6>
                 <div class="mb-4" style="overflow-x:auto;">
                     <div id="comparison-table-pbs" style="font-size:0.82em;"></div>
                 </div>
 
-                <!-- Method agreement scatter plots -->
-                <h6 class="font-weight-bold mb-2" style="font-size:0.9rem;">
-                    <i class="fa fa-dot-circle-o mr-1"></i>
-                    Method agreement &nbsp;<small class="text-muted font-weight-normal">Fixed-wavelength vs Gaussian (each point = one sample)</small>
-                </h6>
-                <div id="comparison-scatter-grid" class="row" style="margin:0 -6px;"></div>
-
             </div><!-- /comparison-content -->
         </div><!-- /eem-comparison tab-pane -->
 
     </div><!-- /tab-content -->
+
+    <!-- Comparison scatter point popup -->
+    <div id="cmp-pt-popup" style="display:none; position:fixed; z-index:9999;
+         background:#fff; border:1px solid #bdc3c7; border-radius:7px;
+         padding:9px 12px; box-shadow:0 4px 16px rgba(0,0,0,0.18); min-width:210px;">
+        <div class="font-weight-bold mb-1" id="cmp-popup-name"
+             style="font-size:0.8rem; max-width:220px; overflow:hidden;
+                    text-overflow:ellipsis; white-space:nowrap; color:#343a40;"></div>
+        <div class="d-flex" style="gap:5px; flex-wrap:wrap;">
+            <button id="cmp-popup-inspect" class="btn btn-xs btn-outline-primary" style="font-size:0.78rem;">
+                <i class="fa fa-search mr-1"></i>Inspect
+            </button>
+            <button id="cmp-popup-remove" class="btn btn-xs btn-outline-danger" style="font-size:0.78rem;">
+                <i class="fa fa-times mr-1"></i>Remove
+            </button>
+            <button onclick="_cmpHidePopup()" class="btn btn-xs btn-outline-secondary" style="font-size:0.78rem;">
+                Cancel
+            </button>
+        </div>
+    </div>
 
     <!-- Export row -->
     <div class="d-flex align-items-center flex-wrap mb-5" style="gap:0.5rem;">
