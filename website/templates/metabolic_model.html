@@ -1,0 +1,901 @@
+{% extends "base.html" %}
+
+{% block title %}Metabolic Model iRH783 — Synechocystis 6803 | CyanoTools{% endblock %}
+{% block description %}Interactive genome-scale metabolic reconstruction (iRH783) for Synechocystis sp. PCC 6803. Browse reactions, metabolites and genes, visualise pathway networks, and run Flux Balance Analysis simulations.{% endblock %}
+{% block keywords %}metabolic model, iRH783, Synechocystis 6803, FBA, flux balance analysis, genome-scale model, COBRApy, pathway network{% endblock %}
+
+{% block head %}
+<!-- Cytoscape.js for network visualisation -->
+<script src="https://unpkg.com/cytoscape@3.29.2/dist/cytoscape.min.js"></script>
+<!-- Dagre hierarchical layout for Cytoscape -->
+<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+<!-- Chart.js for bar charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<!-- SheetJS for XLSX export -->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
+    #cy {
+        width: 100%;
+        height: 580px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background: #f8f9fa;
+    }
+    .table-scroll { max-height: 500px; overflow-y: auto; }
+    .table thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
+    code { font-size: 0.82em; }
+    .stat-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        background: #e9f5eb;
+        border-radius: 20px;
+        font-size: 0.9em;
+        margin-right: 8px;
+        margin-bottom: 6px;
+    }
+    .stat-badge strong { color: #2c7a42; }
+    #loading-overlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(255,255,255,0.78);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+    #loading-overlay.active { display: flex; }
+    .cy-legend { font-size: 0.8em; }
+    .cy-legend span {
+        display: inline-block;
+        width: 12px; height: 12px;
+        border-radius: 50%;
+        margin-right: 4px;
+        vertical-align: middle;
+    }
+    /* Flux overlay legend items */
+    .flux-legend-line {
+        display: inline-block;
+        width: 28px; height: 4px;
+        border-radius: 2px;
+        margin-right: 4px;
+        vertical-align: middle;
+    }
+    /* Inline sparkbar in flux table */
+    .sparkbar-wrap {
+        width: 90px;
+        height: 10px;
+        background: #f0f0f0;
+        border-radius: 2px;
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .sparkbar-fill {
+        height: 100%;
+        border-radius: 2px;
+    }
+    /* Preset button group */
+    .preset-btn {
+        font-size: 0.82em;
+        margin: 2px;
+    }
+    /* Network flux badge */
+    #flux-overlay-badge {
+        display: none;
+        font-size: 0.8em;
+    }
+    /* Compartment colour dots */
+    .comp-dot {
+        display: inline-block;
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        margin-right: 3px;
+        vertical-align: middle;
+    }
+    /* iPath3 SVG panel */
+    #ipath3-panel {
+        max-height: 600px;
+        overflow: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background: #fff;
+        padding: 8px;
+    }
+    #ipath3-panel svg {
+        width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Loading overlay -->
+<div id="loading-overlay">
+    <div class="spinner-border text-success mb-3" role="status" style="width:3rem;height:3rem;"></div>
+    <p class="text-muted" id="loading-msg">Loading model data…</p>
+</div>
+
+<div class="container-fluid mt-3 mb-5">
+    <h2 class="mb-1">Metabolic Model — <em>Synechocystis</em> sp. PCC 6803</h2>
+    <p class="text-muted mb-2">
+        Genome-scale reconstruction <strong>iRH783</strong> &nbsp;·&nbsp; 783 genes &nbsp;·&nbsp;
+        <a href="https://github.com/krotlkpt/syn6803" target="_blank">source repository</a>
+    </p>
+
+    <!-- Stats bar -->
+    <div id="stats-bar" class="mb-3">
+        <span class="stat-badge">Reactions: <strong id="n-rxn">—</strong></span>
+        <span class="stat-badge">Metabolites: <strong id="n-met">—</strong></span>
+        <span class="stat-badge">Genes: <strong id="n-gen">—</strong></span>
+        <span class="stat-badge">Compartments: <strong id="n-comp">—</strong></span>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="main-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-toggle="tab" href="#tab-network" role="tab">
+                <i class="fa fa-share-alt"></i> Network
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#tab-reactions" role="tab">
+                <i class="fa fa-exchange"></i> Reactions
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#tab-metabolites" role="tab">
+                <i class="fa fa-circle-o"></i> Metabolites
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#tab-genes" role="tab">
+                <i class="fa fa-dna"></i> Genes
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#tab-fba" role="tab">
+                <i class="fa fa-bar-chart"></i> FBA Simulation
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#tab-analysis" role="tab">
+                <i class="fa fa-line-chart"></i> Analysis
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content pt-3">
+
+        <!-- ── Network tab ───────────────────────────────────────────── -->
+        <div id="tab-network" class="tab-pane fade show active" role="tabpanel">
+            <div class="row align-items-end mb-2">
+                <div class="col-md-4">
+                    <label for="subsystem-select" class="mb-1"><strong>Subsystem / Pathway</strong></label>
+                    <select id="subsystem-select" class="form-control">
+                        <option value="">— select a pathway —</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label for="layout-select" class="mb-1 small text-muted">Layout</label>
+                    <select id="layout-select" class="form-control form-control-sm" style="min-width:130px;">
+                        <option value="dagre">Dagre (hierarchy)</option>
+                        <option value="cose">CoSE (force)</option>
+                        <option value="breadthfirst">Breadth-first</option>
+                        <option value="concentric">Concentric</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-success" id="load-network-btn">
+                        <i class="fa fa-play"></i> Load network
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-outline-secondary btn-sm" id="fit-network-btn" style="display:none;">
+                        <i class="fa fa-compress"></i> Fit
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-outline-primary btn-sm" id="apply-flux-btn" style="display:none;"
+                            title="Colour edges by FBA flux (run FBA first)">
+                        <i class="fa fa-tint"></i> Apply flux colours
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-outline-secondary btn-sm" id="reset-flux-btn" style="display:none;">
+                        <i class="fa fa-undo"></i> Reset colours
+                    </button>
+                </div>
+            </div>
+
+            <!-- Legends -->
+            <div class="row mb-1">
+                <div class="col-auto cy-legend" id="cy-legend" style="display:none;">
+                    <span style="background:#4e8dc7;"></span> Reaction &nbsp;
+                    Metabolite by compartment:
+                    <span class="comp-dot" style="background:#5cb85c;"></span>cytosol (c) &nbsp;
+                    <span class="comp-dot" style="background:#e67e22;"></span>extracellular (e) &nbsp;
+                    <span class="comp-dot" style="background:#9b59b6;"></span>periplasm (p) &nbsp;
+                    <span class="comp-dot" style="background:#e74c3c;"></span>carboxysome (cx) &nbsp;
+                    <span class="comp-dot" style="background:#3498db;"></span>membrane (cm) &nbsp;
+                    <span class="comp-dot" style="background:#1abc9c;"></span>thylakoid (um)
+                </div>
+                <div class="col-auto cy-legend" id="flux-overlay-badge" style="display:none;">
+                    &nbsp;|&nbsp;
+                    <span class="flux-legend-line" style="background:#1e64c8;"></span> Forward flux &nbsp;
+                    <span class="flux-legend-line" style="background:#c0392b;"></span> Reverse flux &nbsp;
+                    <span class="flux-legend-line" style="background:#ddd;"></span> Zero / inactive
+                </div>
+            </div>
+
+            <div id="cy-placeholder" class="text-center text-muted py-5">
+                <i class="fa fa-share-alt fa-3x mb-2" style="color:#ccc;"></i>
+                <p>Select a subsystem above and click <em>Load network</em> to visualise the bipartite reaction–metabolite graph.<br>
+                <small>Tip: run FBA first, then load a network to overlay flux colours on edges.</small></p>
+            </div>
+            <div id="cy" style="display:none;"></div>
+            
+            <div id="cy-node-info" class="mt-2 p-2 border rounded bg-light" style="display:none; font-size:0.9em;">
+                <strong id="cy-node-title"></strong><br>
+                <span id="cy-node-detail" class="text-muted"></span>
+            </div>
+        </div>
+
+        <!-- ── Reactions tab ─────────────────────────────────────────── -->
+        <div id="tab-reactions" class="tab-pane fade" role="tabpanel">
+            <div class="row mb-2">
+                <div class="col-md-5">
+                    <input class="form-control" id="rxn-search" placeholder="Search by ID, name, equation or subsystem…">
+                </div>
+                <div class="col-auto align-self-center text-muted small" id="rxn-count-label"></div>
+            </div>
+            <div class="table-scroll">
+                <table class="table table-sm table-striped table-hover" id="rxn-table">
+                    <thead class="thead-light">
+                        <tr><th>ID</th><th>Name</th><th>Equation</th><th>Subsystem</th><th>Genes</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Metabolites tab ───────────────────────────────────────── -->
+        <div id="tab-metabolites" class="tab-pane fade" role="tabpanel">
+            <div class="row mb-2">
+                <div class="col-md-5">
+                    <input class="form-control" id="met-search" placeholder="Search by ID, name, formula or compartment…">
+                </div>
+                <div class="col-auto align-self-center text-muted small" id="met-count-label"></div>
+            </div>
+            <div class="table-scroll">
+                <table class="table table-sm table-striped table-hover" id="met-table">
+                    <thead class="thead-light">
+                        <tr><th>ID</th><th>Name</th><th>Formula</th><th>Compartment</th><th>Charge</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Genes tab ─────────────────────────────────────────────── -->
+        <div id="tab-genes" class="tab-pane fade" role="tabpanel">
+            <div class="row mb-2">
+                <div class="col-md-5">
+                    <input class="form-control" id="gene-search" placeholder="Search by locus tag or name…">
+                </div>
+                <div class="col-md-4 align-self-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="ko-constrained-chk" checked>
+                        <label class="form-check-label" for="ko-constrained-chk">
+                            Use photoautotrophic constraints for KO
+                        </label>
+                    </div>
+                </div>
+                <div class="col-auto align-self-center text-muted small" id="gene-count-label"></div>
+            </div>
+            <p class="text-muted small">Click <strong>KO</strong> to simulate gene knockout by FBA.
+                <span class="badge badge-danger">Essential</span> growth = 0 &nbsp;
+                <span class="badge badge-warning">Impaired</span> &lt;50% WT &nbsp;
+                <span class="badge badge-success">Non-essential</span> ≥50% WT
+                (WT baseline ≈ 1.0 h⁻¹).
+            </p>
+            <div class="table-scroll">
+                <table class="table table-sm table-striped table-hover" id="gene-table">
+                    <thead class="thead-light">
+                        <tr><th>Locus tag</th><th>Name</th><th>Reactions</th><th>KO growth (h⁻¹)</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── FBA tab ───────────────────────────────────────────────── -->
+        <div id="tab-fba" class="tab-pane fade" role="tabpanel">
+            <div class="row">
+
+                <!-- Left: condition setup -->
+                <div class="col-md-5">
+                    <h5>Growth condition</h5>
+
+                    <!-- Preset buttons -->
+                    <div class="mb-3">
+                        <p class="mb-1 small text-muted">Quick presets:</p>
+                        <button class="btn btn-outline-primary preset-btn" data-preset="photoautotrophic">
+                            ☀️ Photoautotrophic
+                        </button>
+                        <button class="btn btn-outline-primary preset-btn" data-preset="low_light">
+                            🌤 Low light (50%)
+                        </button>
+                        <button class="btn btn-outline-primary preset-btn" data-preset="high_light">
+                            🔆 High light (2×)
+                        </button>
+                        <button class="btn btn-outline-primary preset-btn" data-preset="mixotrophic">
+                            🍬 Mixotrophic (+glucose)
+                        </button>
+                        <button class="btn btn-outline-primary preset-btn" data-preset="nh4_nitrogen">
+                            🧪 NH₄⁺ as N-source
+                        </button>
+                        <button class="btn btn-outline-primary preset-btn" data-preset="n_starvation">
+                            ⚠️ N-starvation
+                        </button>
+                    </div>
+
+                    <hr class="my-2">
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="fba-constrained-chk" checked>
+                        <label class="form-check-label" for="fba-constrained-chk">
+                            Base: photoautotrophic constraints
+                            <small class="text-muted d-block">CO₂ + NO₃⁻ + photons, target growth 1 h⁻¹</small>
+                        </label>
+                    </div>
+
+                    <p class="mb-1 small text-muted">Additional custom bounds:</p>
+                    <div class="row no-gutters mb-1">
+                        <div class="col-5 pr-1"><small class="text-muted">Reaction ID</small></div>
+                        <div class="col-3 pr-1"><small class="text-muted">Lower bound</small></div>
+                        <div class="col-3 pr-1"><small class="text-muted">Upper bound</small></div>
+                    </div>
+                    <div id="constraint-rows"></div>
+                    <button class="btn btn-sm btn-outline-secondary mb-3" id="add-constraint-btn">
+                        <i class="fa fa-plus"></i> Add bound
+                    </button>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="pfba-chk">
+                        <label class="form-check-label" for="pfba-chk">
+                            Parsimonious FBA (pFBA)
+                            <small class="text-muted d-block">minimises total flux — biologically realistic flux distribution</small>
+                        </label>
+                    </div>
+
+                    <div>
+                        <button class="btn btn-success" id="run-fba-btn">
+                            <i class="fa fa-play"></i> Run FBA
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: results -->
+                <div class="col-md-7">
+                    <h5>Results</h5>
+                    <div id="fba-result-box" class="mb-2"></div>
+
+                    <div id="fba-flux-wrap" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted">Non-zero fluxes, sorted by magnitude</span>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary mr-1" id="view-network-btn"
+                                        title="Go to Network tab and apply flux colours">
+                                    <i class="fa fa-share-alt"></i> View on network
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" id="export-fba-btn">
+                                    <i class="fa fa-download"></i> Export XLSX
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-scroll" style="max-height:300px;">
+                            <table class="table table-sm table-hover" id="fba-flux-table">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Reaction ID</th>
+                                        <th>Name</th>
+                                        <th>Flux</th>
+                                        <th style="width:95px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Subsystem activity chart -->
+                        <div id="subsystem-chart-wrap" class="mt-3" style="display:none;">
+                            <h6 class="text-muted">Pathway activity (sum of absolute fluxes per subsystem)</h6>
+                            <canvas id="subsystem-chart" style="max-height:420px;"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- ── Pathway visualisation (after FBA) ─────────── -->
+                    <div id="pathway-vis-wrap" style="display:none;" class="mt-3">
+                        <hr class="my-2">
+                        <h6 class="text-muted mb-2">Pathway visualisation</h6>
+
+                        <!-- KEGG Mapper -->
+                        <div class="row align-items-center mb-2">
+                            <div class="col-auto">
+                                <select id="kegg-pathway-select" class="form-control form-control-sm"
+                                        style="min-width:220px;">
+                                    <option value="">— KEGG pathway —</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-outline-success" id="open-kegg-btn"
+                                        title="Open selected KEGG pathway coloured by FBA flux in a new tab">
+                                    <i class="fa fa-external-link"></i> Open in KEGG Mapper
+                                </button>
+                            </div>
+                            <div class="col-auto text-muted small">
+                                Colours genes by flux magnitude (blue = forward, red = reverse)
+                            </div>
+                        </div>
+
+                        <!-- iPath3 -->
+                        <div class="row align-items-center mb-2">
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-outline-primary" id="ipath3-btn">
+                                    <i class="fa fa-globe"></i> Global map (iPath3)
+                                </button>
+                            </div>
+                            <div class="col-auto text-muted small">
+                                Renders the full KEGG metabolic map via
+                                <a href="https://pathways.embl.de/" target="_blank">iPath3 (EMBL)</a>
+                                coloured by flux (may take ~5 s)
+                            </div>
+                        </div>
+                        <div id="ipath3-panel" style="display:none;"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── Analysis tab ──────────────────────────────────────────── -->
+        <div id="tab-analysis" class="tab-pane fade" role="tabpanel">
+
+            <p class="text-muted small mb-3">
+                Run FBA first (FBA Simulation tab) to use the growth condition and flux state here.
+                These tools can also run independently with their own constraint settings.
+            </p>
+
+            <!-- ── Custom reactions / pathway templates ─────────────── -->
+            <div class="card mb-4" id="cr-card">
+                <div class="card-header py-2">
+                    <strong><i class="fa fa-plus-circle text-primary"></i> Custom reactions &amp; pathway templates</strong>
+                    <small class="text-muted ml-2">Add heterologous enzymes — applies to FBA, light sweep, production envelope &amp; biosynthetic cost</small>
+                </div>
+                <div class="card-body">
+                    <div class="form-row align-items-end mb-2">
+                        <div class="col-md-5">
+                            <label class="small text-muted mb-1">Pathway template</label>
+                            <select class="form-control form-control-sm" id="cr-template-select">
+                                <option value="">— choose template —</option>
+                                <option value="ethylene_efe">Ethylene via Efe (P. syringae) — α-KG + O₂ → ethylene</option>
+                                <option value="isoprene_isps">Isoprene via IspS (poplar) — DMAPP → isoprene</option>
+                                <option value="sucrose_export">Sucrose export sink (native pathway)</option>
+                                <option value="phb_pha">PHB (PhaABC) — acetyl-CoA → polyhydroxybutyrate</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-sm btn-outline-primary" id="cr-add-template-btn">
+                                <i class="fa fa-plus"></i> Add template
+                            </button>
+                        </div>
+                        <div class="col-auto text-muted small mx-1">or</div>
+                        <div class="col-auto">
+                            <button class="btn btn-sm btn-outline-secondary" id="cr-add-manual-btn">
+                                <i class="fa fa-pencil"></i> Custom reaction
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Manual entry form -->
+                    <div id="cr-manual-form" class="p-2 mb-2 border rounded bg-light" style="display:none;">
+                        <div class="form-row align-items-end mb-1">
+                            <div class="col-md-2">
+                                <label class="small mb-0">Reaction ID</label>
+                                <input type="text" class="form-control form-control-sm" id="cr-man-id" placeholder="e.g. EFE">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small mb-0">Name (optional)</label>
+                                <input type="text" class="form-control form-control-sm" id="cr-man-name" placeholder="Ethylene-forming enzyme">
+                            </div>
+                            <div class="col-auto">
+                                <label class="small mb-0">lb</label>
+                                <input type="number" class="form-control form-control-sm" id="cr-man-lb" value="0" step="any" style="width:70px;">
+                            </div>
+                            <div class="col-auto">
+                                <label class="small mb-0">ub</label>
+                                <input type="number" class="form-control form-control-sm" id="cr-man-ub" value="1000" step="any" style="width:70px;">
+                            </div>
+                        </div>
+                        <div class="form-row mb-1">
+                            <div class="col-9">
+                                <label class="small mb-0">Stoichiometry <small class="text-muted">(met_id:coeff, …)</small></label>
+                                <input type="text" class="form-control form-control-sm" id="cr-man-stoich"
+                                       placeholder="akg_c:-1, o2_c:-1, succ_c:1, co2_c:3, ethy_c:1">
+                            </div>
+                        </div>
+                        <div class="form-row mb-2">
+                            <div class="col-9">
+                                <label class="small mb-0">New metabolites <small class="text-muted">(id:name:formula, …)</small></label>
+                                <input type="text" class="form-control form-control-sm" id="cr-man-newmets"
+                                       placeholder="ethy_c:Ethylene:C2H4">
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-primary" id="cr-man-add-btn"><i class="fa fa-plus"></i> Add reaction</button>
+                        <button class="btn btn-sm btn-link text-secondary py-0" id="cr-man-cancel-btn">Cancel</button>
+                    </div>
+                    <!-- Active reactions list -->
+                    <div id="cr-list-wrap" style="display:none;">
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="small font-weight-bold text-primary">
+                                <i class="fa fa-check-circle"></i> Active custom reactions
+                            </span>
+                            <button class="btn btn-link text-danger ml-auto py-0 px-0" id="cr-clear-all-btn" style="font-size:0.8em;">
+                                <i class="fa fa-trash"></i> Clear all
+                            </button>
+                        </div>
+                        <div id="cr-list" class="small"></div>
+                    </div>
+                    <p class="text-muted small mb-0 mt-1">
+                        <i class="fa fa-info-circle"></i>
+                        Use the <strong>Metabolites</strong> tab to verify IDs. Templates use standard BiGG notation —
+                        check against the model. New metabolites not in iRH783 must be declared in the stoichiometry field.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ── Light response sweep ─────────────────────────────── -->
+            <div class="card mb-4">
+                <div class="card-header py-2">
+                    <strong><i class="fa fa-sun-o"></i> Light response curve</strong>
+                    <small class="text-muted ml-2">Growth rate &amp; yield vs photon flux</small>
+                </div>
+                <div class="card-body">
+                    <div class="form-row align-items-end mb-3">
+                        <div class="col-auto">
+                            <label class="small text-muted mb-1">Min photons (µmol·gDW⁻¹·h⁻¹)</label>
+                            <input type="number" class="form-control form-control-sm" id="ls-imin" value="10" min="1" style="width:110px;">
+                        </div>
+                        <div class="col-auto">
+                            <label class="small text-muted mb-1">Max photons</label>
+                            <input type="number" class="form-control form-control-sm" id="ls-imax" value="1200" min="10" style="width:110px;">
+                        </div>
+                        <div class="col-auto">
+                            <label class="small text-muted mb-1">Points</label>
+                            <input type="number" class="form-control form-control-sm" id="ls-steps" value="40" min="5" max="80" style="width:80px;">
+                        </div>
+                        <div class="col-auto">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="ls-constrained" checked>
+                                <label class="form-check-label small" for="ls-constrained">Photoautotrophic constraints</label>
+                            </div>
+                        </div>
+                        <div class="col-auto mt-4">
+                            <button class="btn btn-success btn-sm" id="run-ls-btn">
+                                <i class="fa fa-play"></i> Run sweep
+                            </button>
+                        </div>
+                    </div>
+                    <div id="ls-ref-bar" class="d-flex align-items-center mb-2" style="display:none;">
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="ls-lock-btn" style="font-size:0.8em;">
+                            <i class="fa fa-bookmark-o"></i> Save as reference
+                        </button>
+                        <button class="btn btn-sm btn-link text-danger py-0 px-2 ml-1" id="ls-clear-btn" style="display:none; font-size:0.8em;">
+                            <i class="fa fa-times"></i> Clear
+                        </button>
+                        <span id="ls-ref-badge" class="ml-2 small" style="display:none;">
+                            <i class="fa fa-bookmark text-secondary"></i>
+                            <span id="ls-ref-badge-text" class="text-muted"></span>
+                        </span>
+                    </div>
+                    <div id="ls-error" class="alert alert-danger py-1 small" style="display:none;"></div>
+                    <div id="ls-charts" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <canvas id="ls-growth-chart" style="max-height:280px;"></canvas>
+                                <p class="text-muted small text-center mt-1 mb-0">Growth rate (h⁻¹) vs photon uptake</p>
+                            </div>
+                            <div class="col-md-6">
+                                <canvas id="ls-yield-chart" style="max-height:280px;"></canvas>
+                                <p class="text-muted small text-center mt-1 mb-0">Biomass yield per photon (gDW·µmol⁻¹) vs photon uptake</p>
+                            </div>
+                        </div>
+                        <div id="ls-o2-wrap" class="row mt-2" style="display:none;">
+                            <div class="col-md-6">
+                                <canvas id="ls-o2-chart" style="max-height:240px;"></canvas>
+                                <p class="text-muted small text-center mt-1 mb-0">O₂ evolution (mmol·gDW⁻¹·h⁻¹) vs photon uptake</p>
+                            </div>
+                        </div>
+                        <!-- Overlay on growth curve simulator -->
+                        <div class="mt-2 d-flex align-items-center flex-wrap" id="ls-overlay-bar">
+                            <button class="btn btn-sm btn-outline-info mr-2" id="ls-overlay-haldane-btn">
+                                <i class="fa fa-line-chart"></i> Overlay on growth curve simulator
+                            </button>
+                            <span class="text-muted small mr-1">α =</span>
+                            <input type="number" id="ls-alpha-conv" value="0.13" step="0.01" min="0.01" max="1"
+                                   class="form-control form-control-sm" style="width:65px;display:inline-block;">
+                            <span class="text-muted small ml-1">m²·gCDW⁻¹ (converts photon flux → incident light)</span>
+                            <span id="ls-overlay-badge" class="badge badge-info ml-2" style="display:none;">overlaid ✓</span>
+                            <button class="btn btn-link text-danger py-0 ml-1" id="ls-overlay-clear-btn" style="display:none;font-size:0.8em;">
+                                <i class="fa fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Production envelope ───────────────────────────────── -->
+            <div class="card mb-4">
+                <div class="card-header py-2">
+                    <strong><i class="fa fa-area-chart"></i> Production envelope</strong>
+                    <small class="text-muted ml-2">Max product flux vs growth rate (phenotypic phase plane)</small>
+                </div>
+                <div class="card-body">
+                    <div class="form-row align-items-end mb-3">
+                        <div class="col-md-4">
+                            <label class="small text-muted mb-1">Product reaction ID</label>
+                            <input type="text" class="form-control form-control-sm" id="pe-rxn"
+                                   placeholder="e.g. EX_etoh_e or EX_ipdp_e">
+                        </div>
+                        <div class="col-auto">
+                            <label class="small text-muted mb-1">Points</label>
+                            <input type="number" class="form-control form-control-sm" id="pe-points" value="20" min="5" max="50" style="width:80px;">
+                        </div>
+                        <div class="col-auto">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="pe-constrained" checked>
+                                <label class="form-check-label small" for="pe-constrained">Photoautotrophic constraints</label>
+                            </div>
+                        </div>
+                        <div class="col-auto mt-4">
+                            <button class="btn btn-success btn-sm" id="run-pe-btn">
+                                <i class="fa fa-play"></i> Compute envelope
+                            </button>
+                        </div>
+                    </div>
+                    <div id="pe-ref-bar" class="d-flex align-items-center mb-2" style="display:none;">
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="pe-lock-btn" style="font-size:0.8em;">
+                            <i class="fa fa-bookmark-o"></i> Save as reference
+                        </button>
+                        <button class="btn btn-sm btn-link text-danger py-0 px-2 ml-1" id="pe-clear-btn" style="display:none; font-size:0.8em;">
+                            <i class="fa fa-times"></i> Clear
+                        </button>
+                        <span id="pe-ref-badge" class="ml-2 small" style="display:none;">
+                            <i class="fa fa-bookmark text-secondary"></i>
+                            <span id="pe-ref-badge-text" class="text-muted"></span>
+                        </span>
+                    </div>
+                    <p class="text-muted small">
+                        The shaded region shows all feasible (growth, product) combinations.
+                        The upper frontier is the maximum product flux at each growth rate.
+                        A steep drop-off means production and growth are competing.
+                    </p>
+                    <div id="pe-error" class="alert alert-danger py-1 small" style="display:none;"></div>
+                    <div id="pe-chart-wrap" style="display:none;">
+                        <canvas id="pe-chart" style="max-height:340px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Energetics ─────────────────────────────────────────── -->
+            <div class="card mb-4">
+                <div class="card-header py-2">
+                    <strong><i class="fa fa-bolt"></i> Biosynthetic cost</strong>
+                    <small class="text-muted ml-2">Photons, CO₂, ATP &amp; NADPH required per unit of product</small>
+                </div>
+                <div class="card-body">
+                    <div class="form-row align-items-end mb-3">
+                        <div class="col-md-4">
+                            <label class="small text-muted mb-1">Target reaction ID</label>
+                            <input type="text" class="form-control form-control-sm" id="en-rxn"
+                                   placeholder="e.g. EX_etoh_e or demand reaction">
+                        </div>
+                        <div class="col-auto">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="en-constrained" checked>
+                                <label class="form-check-label small" for="en-constrained">Photoautotrophic constraints</label>
+                            </div>
+                        </div>
+                        <div class="col-auto mt-4">
+                            <button class="btn btn-success btn-sm" id="run-en-btn">
+                                <i class="fa fa-play"></i> Calculate
+                            </button>
+                        </div>
+                    </div>
+                    <div id="en-ref-bar" class="d-flex align-items-center mb-2" style="display:none;">
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="en-lock-btn" style="font-size:0.8em;">
+                            <i class="fa fa-bookmark-o"></i> Save as reference
+                        </button>
+                        <button class="btn btn-sm btn-link text-danger py-0 px-2 ml-1" id="en-clear-btn" style="display:none; font-size:0.8em;">
+                            <i class="fa fa-times"></i> Clear
+                        </button>
+                        <span id="en-ref-badge" class="ml-2 small" style="display:none;">
+                            <i class="fa fa-bookmark text-secondary"></i>
+                            <span id="en-ref-badge-text" class="text-muted"></span>
+                        </span>
+                    </div>
+                    <p class="text-muted small">
+                        Growth is blocked; the model maximises the target reaction flux.
+                        Costs are normalised to 1 mmol of product (mmol per mmol).
+                    </p>
+                    <div id="en-error" class="alert alert-danger py-1 small" style="display:none;"></div>
+                    <div id="en-results" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <canvas id="en-chart" style="max-height:260px;"></canvas>
+                            </div>
+                            <div class="col-md-4">
+                                <table class="table table-sm table-bordered" id="en-table">
+                                    <thead class="thead-light">
+                                        <tr><th>Resource</th><th>Cost (per mmol product)</th></tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                                <p class="text-muted small mt-1" id="en-note"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Haldane / Höper growth curve simulator ───────────────── -->
+            <div class="card mb-4">
+                <div class="card-header py-2">
+                    <strong><i class="fa fa-line-chart"></i> Growth curve simulator</strong>
+                    <small class="text-muted ml-2">Haldane/Aiba or Höper 2024 model — instant, no server call</small>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Simulate growth rate across a range of light intensities using empirical (Haldane/Aiba)
+                        or physical (Höper 2024) kinetics. Move any slider to instantly redraw.
+                        Save a curve as reference, then change parameters to visualise the effect.
+                    </p>
+                    <div class="row">
+
+                        <!-- Left column: controls -->
+                        <div class="col-md-4">
+
+                            <!-- Model selector -->
+                            <div class="mb-2">
+                                <div class="btn-group btn-group-sm w-100" role="group">
+                                    <button type="button" class="btn btn-outline-secondary active" id="hm-btn-haldane" onclick="setHaldaneModel('haldane')">Haldane/Aiba</button>
+                                    <button type="button" class="btn btn-outline-secondary" id="hm-btn-hoper" onclick="setHaldaneModel('hoper')">Höper 2024</button>
+                                </div>
+                            </div>
+
+                            <!-- Equation display -->
+                            <div id="hm-equation" class="mb-2 small text-muted" style="font-family:monospace;font-size:0.78em;background:#f8f9fa;padding:6px 8px;border-radius:4px;line-height:1.7;">
+                                μ(I) = μ* · I / (K_A + I + I²/K_I)<br>
+                                <span class="text-info" id="hm-iopt-line">I_opt = <span id="hm-iopt">—</span> µmol·m⁻²·s⁻¹</span>
+                            </div>
+
+                            <!-- Haldane params -->
+                            <div id="hm-params-haldane">
+                                <div class="mb-1">
+                                    <div class="d-flex justify-content-between"><label class="small mb-0">μ* — max growth <small class="text-muted">(h⁻¹)</small></label><span class="small font-weight-bold" id="hm-mu-star-val">0.18</span></div>
+                                    <input type="range" class="custom-range" id="hm-mu-star" min="0.01" max="0.50" step="0.01" value="0.18" oninput="hmSlider(this,'hm-mu-star-val')">
+                                </div>
+                                <div class="mb-1">
+                                    <div class="d-flex justify-content-between"><label class="small mb-0">K_A — half-saturation <small class="text-muted">(µmol·m⁻²·s⁻¹)</small></label><span class="small font-weight-bold" id="hm-KA-val">100</span></div>
+                                    <input type="range" class="custom-range" id="hm-KA" min="5" max="500" step="5" value="100" oninput="hmSlider(this,'hm-KA-val')">
+                                </div>
+                                <div class="mb-1">
+                                    <div class="d-flex justify-content-between"><label class="small mb-0">K_I — photoinhibition <small class="text-muted">(µmol·m⁻²·s⁻¹)</small></label><span class="small font-weight-bold" id="hm-KI-val">1500</span></div>
+                                    <input type="range" class="custom-range" id="hm-KI" min="50" max="5000" step="50" value="1500" oninput="hmSlider(this,'hm-KI-val')">
+                                </div>
+                            </div>
+
+                            <!-- Höper 2024 params -->
+                            <div id="hm-params-hoper" style="display:none;">
+                                <div class="mb-1">
+                                    <div class="d-flex justify-content-between"><label class="small mb-0">α — specific absorption <small class="text-muted">(m²·gCDW⁻¹)</small></label><span class="small font-weight-bold" id="hm-alpha-val">0.13</span></div>
+                                    <input type="range" class="custom-range" id="hm-alpha" min="0.01" max="0.50" step="0.01" value="0.13" oninput="hmSlider(this,'hm-alpha-val')">
+                                </div>
+                                <div class="mb-1">
+                                    <div class="d-flex justify-content-between"><label class="small mb-0">K_L — max photosynthetic capacity <small class="text-muted">(mmol·gCDW⁻¹·h⁻¹)</small></label><span class="small font-weight-bold" id="hm-KL-val">119</span></div>
+                                    <input type="range" class="custom-range" id="hm-KL" min="10" max="500" step="1" value="119" oninput="hmSlider(this,'hm-KL-val')">
+                                </div>
+                                <div class="mb-1">
+                                    <div class="d-flex justify-content-between"><label class="small mb-0">Y_BM — yield on photons <small class="text-muted">(gCDW·mmol⁻¹ ×10⁻³)</small></label><span class="small font-weight-bold" id="hm-ybm-val">1.84</span></div>
+                                    <input type="range" class="custom-range" id="hm-ybm" min="0.5" max="5.0" step="0.05" value="1.84" oninput="hmSlider(this,'hm-ybm-val')">
+                                </div>
+                                <div class="mb-1">
+                                    <div class="d-flex justify-content-between"><label class="small mb-0">k_d — maintenance <small class="text-muted">(h⁻¹)</small></label><span class="small font-weight-bold" id="hm-kd-val">0.07</span></div>
+                                    <input type="range" class="custom-range" id="hm-kd" min="0.00" max="0.30" step="0.005" value="0.07" oninput="hmSlider(this,'hm-kd-val')">
+                                </div>
+                            </div>
+
+                            <!-- I axis max -->
+                            <div class="mb-1 mt-2">
+                                <div class="d-flex justify-content-between"><label class="small mb-0">I₀ axis max <small class="text-muted">(µmol·m⁻²·s⁻¹)</small></label><span class="small font-weight-bold" id="hm-imax-val">1500</span></div>
+                                <input type="range" class="custom-range" id="hm-imax" min="100" max="2500" step="100" value="1500" oninput="hmSlider(this,'hm-imax-val')">
+                            </div>
+
+                            <!-- Density toggle -->
+                            <div class="form-check mb-1 mt-2">
+                                <input type="checkbox" class="form-check-input" id="hm-density-check" onchange="hmToggleDensity()">
+                                <label class="form-check-label small" for="hm-density-check">Culture density (Lambert-Beer attenuation)</label>
+                            </div>
+                            <div id="hm-density-controls" style="display:none;">
+                                <div class="mb-1">
+                                    <div class="d-flex justify-content-between"><label class="small mb-0">X_A — areal biomass <small class="text-muted">(g·m⁻²)</small></label><span class="small font-weight-bold" id="hm-xa-val">30</span></div>
+                                    <input type="range" class="custom-range" id="hm-xa" min="1" max="200" step="1" value="30" oninput="hmSlider(this,'hm-xa-val')">
+                                </div>
+                                <div class="mb-1" id="hm-kext-row">
+                                    <div class="d-flex justify-content-between"><label class="small mb-0">k_ext — extinction <small class="text-muted">(m²·g⁻¹)</small></label><span class="small font-weight-bold" id="hm-kext-val">0.15</span></div>
+                                    <input type="range" class="custom-range" id="hm-kext" min="0.01" max="0.50" step="0.01" value="0.15" oninput="hmSlider(this,'hm-kext-val')">
+                                </div>
+                                <p class="text-muted" style="font-size:0.76em;" id="hm-density-note"></p>
+                            </div>
+
+                            <!-- Reference bar -->
+                            <div id="hm-ref-bar" class="d-flex align-items-center mt-3" style="display:none;">
+                                <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="hm-lock-btn" style="font-size:0.8em;">
+                                    <i class="fa fa-bookmark-o"></i> Save as reference
+                                </button>
+                                <button class="btn btn-sm btn-link text-danger py-0 px-2 ml-1" id="hm-clear-btn" style="display:none; font-size:0.8em;">
+                                    <i class="fa fa-times"></i> Clear
+                                </button>
+                                <span id="hm-ref-badge" class="ml-2 small" style="display:none;">
+                                    <i class="fa fa-bookmark text-secondary"></i>
+                                    <span id="hm-ref-badge-text" class="text-muted"></span>
+                                </span>
+                            </div>
+
+                            <!-- FBA integration -->
+                            <div class="mt-3 pt-2 border-top">
+                                <div class="small text-muted font-weight-bold mb-1">
+                                    <i class="fa fa-link"></i> FBA integration
+                                </div>
+                                <div class="d-flex align-items-center mb-2 flex-wrap">
+                                    <span class="small text-muted mr-1">α =</span>
+                                    <input type="number" id="hm-calib-alpha" value="0.13" step="0.01" min="0.01" max="1"
+                                           class="form-control form-control-sm mr-1" style="width:65px;display:inline-block;">
+                                    <span class="small text-muted">m²·gCDW⁻¹ for unit conversion</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-info btn-block mb-1" id="hm-calibrate-btn">
+                                    <i class="fa fa-magic"></i> Calibrate parameters from FBA sweep
+                                </button>
+                                <div id="hm-fba-marker-badge" class="mt-1 small text-muted" style="display:none;">
+                                    <i class="fa fa-map-marker text-danger"></i>
+                                    <span id="hm-fba-marker-text"></span>
+                                    <button class="btn btn-link text-danger py-0 ml-1" id="hm-clear-fba-marker-btn" style="font-size:0.8em;">
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                </div>
+                                <div id="hm-fba-sweep-badge" class="mt-1 small text-muted" style="display:none;">
+                                    <i class="fa fa-dot-circle-o text-warning"></i> FBA sweep overlaid on chart
+                                    <button class="btn btn-link text-danger py-0 ml-1" id="hm-clear-fba-sweep-btn" style="font-size:0.8em;">
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div><!-- /col controls -->
+
+                        <!-- Right column: charts -->
+                        <div class="col-md-8">
+                            <canvas id="hm-growth-chart" style="max-height:220px;"></canvas>
+                            <canvas id="hm-yield-chart" style="max-height:180px;" class="mt-3"></canvas>
+                        </div>
+
+                    </div><!-- /row -->
+                </div><!-- /card-body -->
+            </div><!-- /haldane card -->
+
+        </div><!-- /tab-analysis -->
+
+    </div><!-- /tab-content -->
+</div>
+<script src="{{ url_for('static', filename='js_metabolic_model.js') }}"></script>
+{% endblock %}

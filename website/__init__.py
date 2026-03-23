@@ -65,7 +65,7 @@ def create_app():
         '/cell_size_round_cells', '/cell_size_filament',
         '/light_curves_analysis', '/MIMS_data_analysis',
         '/MIMS_data_analysis_periodic', '/statistics',
-        '/calculators', '/development_log',
+        '/calculators',
     ])
 
     @app.before_request
@@ -100,12 +100,12 @@ def create_app():
     from .settings import settings 
     from .light_curves_analysis import light_curves_analysis 
     from .calculators import calculators
-    from .development_log import development_log
     from .MIMS_data_analysis import MIMS_data_analysis
     from .MIMS_data_analysis_periodic import MIMS_data_analysis_periodic
     from .statistics import stats_bp
     from .deploy import deploy
     from .pixel_size_api import pixel_size_api
+    from .metabolic_model import metabolic_bp
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
@@ -122,12 +122,12 @@ def create_app():
     app.register_blueprint(settings, url_prefix='/') 
     app.register_blueprint(light_curves_analysis, url_prefix='/') 
     app.register_blueprint(calculators, url_prefix='/') 
-    app.register_blueprint(development_log, url_prefix='/')
     app.register_blueprint(MIMS_data_analysis, url_prefix='/')
     app.register_blueprint(MIMS_data_analysis_periodic, url_prefix='/')
     app.register_blueprint(stats_bp, url_prefix='/')
     app.register_blueprint(deploy, url_prefix='/')
     app.register_blueprint(pixel_size_api, url_prefix='/')
+    app.register_blueprint(metabolic_bp, url_prefix='/')
 
     #### DATABASE ####
     with app.app_context(): # creating the database

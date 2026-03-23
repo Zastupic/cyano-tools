@@ -214,42 +214,26 @@
                     </div>
                     <div id="collapseGauss77K" class="collapse" aria-labelledby="headingGauss77K">
                     <div class="card-body p-2">
-                    <!-- Method concept accordion (closed by default) -->
-                    <div class="accordion mb-2 mt-3" id="accordionMethodConcepts">
+                    <!-- Gaussian method accordion (closed by default) -->
+                    <div class="accordion mb-2 mt-3" id="accordionGaussMethod77K">
                         <div class="card" style="border:1px solid #dee2e6;">
-                            <div class="card-header py-1 px-2" id="headingMethodConcepts" style="background:#f8f9fa;">
+                            <div class="card-header py-1 px-2" id="headingGaussMethod77K" style="background:#f8f9fa;">
                                 <h6 class="mb-0">
                                     <button class="btn btn-link btn-sm collapsed p-0 text-left" style="color:#0a3c58; font-size:0.82rem;"
-                                            data-toggle="collapse" data-target="#collapseMethodConcepts"
-                                            aria-expanded="false" aria-controls="collapseMethodConcepts">
-                                        <i class="fa fa-info-circle mr-1"></i> How are Gaussian and PARAFAC values calculated?
+                                            data-toggle="collapse" data-target="#collapseGaussMethod77K"
+                                            aria-expanded="false" aria-controls="collapseGaussMethod77K">
+                                        <i class="fa fa-info-circle mr-1"></i> How are Gaussian values calculated?
                                     </button>
                                 </h6>
                             </div>
-                            <div id="collapseMethodConcepts" class="collapse" aria-labelledby="headingMethodConcepts">
+                            <div id="collapseGaussMethod77K" class="collapse" aria-labelledby="headingGaussMethod77K">
                                 <div class="card-body py-2 px-2">
-                                    <div class="row" style="font-size:0.83em;">
-                                        <div class="col-md-6 mb-2">
-                                            <div class="card card-body py-2 px-2 h-100" style="background:#f8f9ff; border-color:#c8d4f0;">
-                                                <p class="font-weight-bold mb-1">Gaussian deconvolution</p>
-                                                <p class="mb-1">The emission spectrum is fitted as a sum of bell-shaped (Gaussian) curves, one per pigment–protein complex.
-                                                Each curve is described by three numbers: its <strong>height</strong> (amplitude), <strong>position</strong> (emission maximum, in nm), and <strong>width</strong> (standard deviation, in nm).
-                                                The <strong>area</strong> under each curve — height × width × √(2π) — represents the total fluorescence contribution of that complex and is used for all ratio calculations.
-                                                Using areas rather than peak heights accounts for any differences in peak width between samples or conditions.</p>
-                                                <p class="mb-0 text-muted">Each Gaussian component is assigned to a pigment–protein complex based on its fitted emission maximum (see table below).</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <div class="card card-body py-2 px-2 h-100" style="background:#f8fff8; border-color:#b2ddb2;">
-                                                <p class="font-weight-bold mb-1">PARAFAC (Parallel Factor Analysis)</p>
-                                                <p class="mb-1">PARAFAC decomposes the full three-dimensional excitation–emission fluorescence map (EEM) into a set of independent spectral components.
-                                                Each component has a characteristic excitation spectrum, emission spectrum, and a <strong>score</strong> (relative abundance) per sample.
-                                                Components are assigned to pigment–protein complexes in the PARAFAC tab based on their excitation and emission peak positions.
-                                                Ratios are then computed from the scores of the assigned components.</p>
-                                                <p class="mb-0 text-muted">PARAFAC uses the full EEM and is therefore less sensitive to spectral overlap than single-excitation methods.</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <p class="font-weight-bold mb-1">Gaussian deconvolution</p>
+                                    <p class="mb-1" style="font-size:0.78em;">The emission spectrum is fitted as a sum of bell-shaped (Gaussian) curves, one per pigment–protein complex.
+                                    Each curve is described by three numbers: its <strong>height</strong> (amplitude), <strong>position</strong> (emission maximum, in nm), and <strong>width</strong> (standard deviation, in nm).
+                                    The <strong>area</strong> under each curve — height × width × √(2π) — represents the total fluorescence contribution of that complex and is used for all ratio calculations.
+                                    Using areas rather than peak heights accounts for any differences in peak width between samples or conditions.</p>
+                                    <p class="mb-0 text-muted" style="font-size:0.78em;">Each Gaussian component is assigned to a pigment–protein complex based on its fitted emission maximum (see table below). At 77 K, CP43 (~685 nm) and CP47 (~695 nm) are spectrally resolved and can be fitted as separate components.</p>
                                 </div>
                             </div>
                         </div>
@@ -290,8 +274,9 @@
                         <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td></tr>
                         <tr><td>PBS-PSI / PBS-tot</td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
                         <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PSII = CP43 + CP47. Chl-tot = CP43 + CP47 + PSI.</em></td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PBS-tot = PBS-free + PBS→PSII + PBS→PSI (all contributing areas summed; zero for absent pigments).</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.75em;"><em>PSII = CP43 + CP47. 
+                        <br>Chl-tot = PSII + PSI.
+                        <br>PBS-tot = PBS-free + PBS→PSII + PBS→PSI (all contributing areas summed; zero for absent pigments).</em></td></tr>
                     </table>
 
                     <!-- /Gaussian table ends -->
@@ -308,6 +293,30 @@
                     </div>
                     <div id="collapsePARAFAC77K" class="collapse" aria-labelledby="headingPARAFAC77K">
                     <div class="card-body p-2">
+                    <!-- PARAFAC method accordion (closed by default) -->
+                    <div class="accordion mb-2 mt-1" id="accordionPARAFACMethod77K">
+                        <div class="card" style="border:1px solid #dee2e6;">
+                            <div class="card-header py-1 px-2" id="headingPARAFACMethod77K" style="background:#f8f9fa;">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link btn-sm collapsed p-0 text-left" style="color:#0a3c58; font-size:0.82rem;"
+                                            data-toggle="collapse" data-target="#collapsePARAFACMethod77K"
+                                            aria-expanded="false" aria-controls="collapsePARAFACMethod77K">
+                                        <i class="fa fa-info-circle mr-1"></i> How are PARAFAC values calculated?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="collapsePARAFACMethod77K" class="collapse" aria-labelledby="headingPARAFACMethod77K">
+                                <div class="card-body py-2 px-2">
+                                    <p class="font-weight-bold mb-1">PARAFAC (Parallel Factor Analysis)</p>
+                                    <p class="mb-1" style="font-size:0.78em;">PARAFAC decomposes the full three-dimensional excitation–emission fluorescence map (EEM) into a set of independent spectral components.
+                                    Each component has a characteristic excitation spectrum, emission spectrum, and a <strong>score</strong> (relative abundance) per sample.
+                                    Components are assigned to pigment–protein complexes in the PARAFAC tab based on their excitation and emission peak positions.
+                                    Ratios are then computed from the scores of the assigned components.</p>
+                                    <p class="mb-0 text-muted" style="font-size:0.78em;">PARAFAC uses the full EEM and is therefore less sensitive to spectral overlap than single-excitation methods. At 77 K, PARAFAC cannot resolve CP43 and CP47 as separate components — their excitation and emission profiles differ by only ~10 nm; use Gaussian deconvolution for the CP43/CP47 ratio.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- PARAFAC table -->
                     <table style="width:100%; margin-bottom:0.6rem;">
                         <colgroup>
@@ -321,18 +330,16 @@
                             <td><i><u>Chl+PC+PE</u></i></td>
                         </tr>
                         <tr><td colspan="5" class="text-muted pt-1"><em>Suggested rank (number of components)</em></td></tr>
-                        <tr><td>F</td><td>2–3</td><td>4–5</td><td>5–6</td><td>7–8</td></tr>
-                        <tr><td colspan="5" class="text-muted pt-1"><em>Chl-related components (scores)</em></td></tr>
-                        <tr><td>CP43</td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
-                        <tr><td>CP47</td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
-                        <tr><td>PSI</td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
+                        <tr><td>F</td><td>2</td><td>3–4</td><td>4–5</td><td>6–7</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Chl-related components (scores); dominant excitation loading shown</em></td></tr>
+                        <tr><td>PSII pool (CP43+CP47) <sup title="CP43 and CP47 cannot be resolved by PARAFAC at 77 K — their excitation and emission profiles differ by only ~10 nm; they appear as a single PSII pool component near 685–695 nm. Use Gaussian deconvolution for the CP43/CP47 ratio." style="color:#212529; font-weight:bold; cursor:help;">*</sup></td><td>score (Ex440/Em685)</td><td>score (Ex440/Em685)</td><td>score (Ex440/Em685)</td><td>score (Ex440/Em685)</td></tr>
+                        <tr><td>PSI</td><td>score (Ex440/Em724)</td><td>score (Ex440/Em724)</td><td>score (Ex440/Em724)</td><td>score (Ex440/Em724)</td></tr>
                         <tr><td colspan="5" class="text-muted pt-1"><em>PBS-related components (scores); dominant excitation loading shown</em></td></tr>
                         <tr><td>PE</td><td></td><td></td><td>score (Ex560/Em580)</td><td>score (Ex560/Em580)</td></tr>
                         <tr><td>PC/APC (PBS-free)</td><td></td><td>score (Ex620/Em662)</td><td>score (Ex560/Em662)</td><td>score (Ex560+620/Em662)</td></tr>
                         <tr><td>PBS→PSII</td><td></td><td>score (Ex620/Em689)</td><td>score (Ex560/Em689)</td><td>score (Ex560+620/Em689)</td></tr>
                         <tr><td>PBS→PSI</td><td></td><td>score (Ex620/Em724)</td><td>score (Ex560/Em724)</td><td>score (Ex560+620/Em724)</td></tr>
                         <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios) — same formula as Gaussian, using scores instead of areas</em></td></tr>
-                        <tr><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td></tr>
                         <tr><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td></tr>
                         <tr><td>Chl-PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td></tr>
                         <tr><td>Chl-PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td></tr>
@@ -340,8 +347,11 @@
                         <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td></tr>
                         <tr><td>PBS-PSI / PBS-tot</td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
                         <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PSII = CP43 + CP47. Chl-tot = CP43 + CP47 + PSI.</em></td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PBS-free = PE + PC/APC components (scores summed per pigmentation). PBS-tot = PBS-free + PBS→PSII + PBS→PSI.</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.75em;"><em><sup style="color:#212529; font-weight:bold;">
+                        *</sup> CP43/CP47 ratio cannot be derived from PARAFAC — both contribute to a single ~685–695 nm component. Use Gaussian deconvolution for this ratio. 
+                        <br>Chl-tot = PSII pool + PSI.
+                        <br>PBS-free = PE + PC/APC components (scores summed per pigmentation). 
+                        <br>PBS-tot = PBS-free + PBS→PSII + PBS→PSI.</em></td></tr>
                     </table>
 
                     <!-- /PARAFAC table ends -->
@@ -431,6 +441,30 @@
                     </div>
                     <div id="collapseGaussRT" class="collapse" aria-labelledby="headingGaussRT">
                     <div class="card-body p-2">
+                    <!-- Gaussian method accordion RT (closed by default) -->
+                    <div class="accordion mb-2 mt-3" id="accordionGaussMethodRT">
+                        <div class="card" style="border:1px solid #dee2e6;">
+                            <div class="card-header py-1 px-2" id="headingGaussMethodRT" style="background:#f8f9fa;">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link btn-sm collapsed p-0 text-left" style="color:#0a3c58; font-size:0.82rem;"
+                                            data-toggle="collapse" data-target="#collapseGaussMethodRT"
+                                            aria-expanded="false" aria-controls="collapseGaussMethodRT">
+                                        <i class="fa fa-info-circle mr-1"></i> How are Gaussian values calculated?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="collapseGaussMethodRT" class="collapse" aria-labelledby="headingGaussMethodRT">
+                                <div class="card-body py-2 px-2">
+                                    <p class="font-weight-bold mb-1">Gaussian deconvolution</p>
+                                    <p class="mb-1" style="font-size:0.78em;">The emission spectrum is fitted as a sum of bell-shaped (Gaussian) curves, one per pigment–protein complex.
+                                    Each curve is described by three numbers: its <strong>height</strong> (amplitude), <strong>position</strong> (emission maximum, in nm), and <strong>width</strong> (standard deviation, in nm).
+                                    The <strong>area</strong> under each curve — height × width × √(2π) — represents the total fluorescence contribution of that complex and is used for all ratio calculations.
+                                    Using areas rather than peak heights accounts for any differences in peak width between samples or conditions.</p>
+                                    <p class="mb-0 text-muted" style="font-size:0.78em;"    >Each Gaussian component is assigned to a pigment–protein complex based on its fitted emission maximum (see table below). At RT, CP43 (~685 nm) and CP47 (~695 nm) cannot be spectrally resolved — both contribute to a single broad PSII pool component near 685 nm. PSI is estimated from the ~730 nm Gaussian component.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <p class="font-weight-bold mb-1 mt-2">
                         <span class="badge badge-warning mr-1">RT</span> Gaussian deconvolution — peak areas by pigmentation type
                     </p>
@@ -462,8 +496,10 @@
                         <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td></tr>
                         <tr><td>PBS-PSI / PBS-tot <sup title="PBS→PSI (~705 nm) partially overlaps with PSI Chl emission at RT; treat with caution." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
                         <tr><td>PBS-PSII : PBS-PSI <sup title="PBS→PSI (~705 nm) partially overlaps with PSI Chl emission at RT; treat with caution." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em><sup style="color:#212529; font-weight:bold;">*</sup> CP43/CP47 ratio cannot be derived from RT spectra — both contribute to a single ~685 nm Gaussian component (PSII pool). Chl-tot = PSII pool + PSI.</em></td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em><sup style="color:#212529; font-weight:bold;">†</sup> PBS→PSI (~705 nm) overlaps with both PSII pool and PSI Chl tails at RT; interpret with caution. PBS-tot = PBS-free + PBS→PSII + PBS→PSI.</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.75em;"><em><sup style="color:#212529; font-weight:bold;">*</sup> CP43/CP47 ratio cannot be derived from RT spectra — both contribute to a single ~685 nm Gaussian component (PSII pool). 
+                        <br><sup style="color:#212529; font-weight:bold;">†</sup> PBS→PSI (~705 nm) overlaps with both PSII pool and PSI Chl tails at RT; interpret with caution. 
+                        <br>Chl-tot = PSII pool + PSI.
+                        <br>PBS-tot = PBS-free + PBS→PSII + PBS→PSI.</em></td></tr>
                     </table>
                     </div></div></div></div><!-- /accordionGaussRT -->
 
@@ -478,6 +514,30 @@
                     </div>
                     <div id="collapsePARAFACRT" class="collapse" aria-labelledby="headingPARAFACRT">
                     <div class="card-body p-2">
+                    <!-- PARAFAC method accordion RT (closed by default) -->
+                    <div class="accordion mb-2 mt-1" id="accordionPARAFACMethodRT">
+                        <div class="card" style="border:1px solid #dee2e6;">
+                            <div class="card-header py-1 px-2" id="headingPARAFACMethodRT" style="background:#f8f9fa;">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link btn-sm collapsed p-0 text-left" style="color:#0a3c58; font-size:0.82rem;"
+                                            data-toggle="collapse" data-target="#collapsePARAFACMethodRT"
+                                            aria-expanded="false" aria-controls="collapsePARAFACMethodRT">
+                                        <i class="fa fa-info-circle mr-1"></i> How are PARAFAC values calculated?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="collapsePARAFACMethodRT" class="collapse" aria-labelledby="headingPARAFACMethodRT">
+                                <div class="card-body py-2 px-2">
+                                    <p class="font-weight-bold mb-1">PARAFAC (Parallel Factor Analysis)</p>
+                                    <p class="mb-1" style="font-size:0.78em;">PARAFAC decomposes the full three-dimensional excitation–emission fluorescence map (EEM) into a set of independent spectral components.
+                                    Each component has a characteristic excitation spectrum, emission spectrum, and a <strong>score</strong> (relative abundance) per sample.
+                                    Components are assigned to pigment–protein complexes in the PARAFAC tab based on their excitation and emission peak positions.
+                                    Ratios are then computed from the scores of the assigned components.</p>
+                                    <p class="mb-0 text-muted" style="font-size:0.78em;">PARAFAC is the preferred method for quantitative RT analysis — the PSI emission tail overlaps the PSII region at fixed wavelengths, but PARAFAC leverages the full EEM to separate these components (Remelli &amp; Santabarbara 2018).</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <table style="width:100%; margin-bottom:0.6rem;">
                         <colgroup>
                             <col style="width:28%"><col style="width:18%"><col style="width:18%"><col style="width:18%"><col style="width:18%">
@@ -491,9 +551,9 @@
                         </tr>
                         <tr><td colspan="5" class="text-muted pt-1"><em>Suggested rank (number of components)</em></td></tr>
                         <tr><td>F</td><td>2</td><td>3–4</td><td>4–5</td><td>5–6</td></tr>
-                        <tr><td colspan="5" class="text-muted pt-1"><em>Chl-related components (scores)</em></td></tr>
-                        <tr><td>PSII pool (CP43+CP47) <sup title="CP43 and CP47 cannot be resolved at RT even by PARAFAC — expect a single component with excitation maximum near 440 nm and emission near 685 nm." style="color:#212529; font-weight:bold; cursor:help;">*</sup></td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
-                        <tr><td>PSI</td><td>score</td><td>score</td><td>score</td><td>score</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Chl-related components (scores); dominant excitation loading shown</em></td></tr>
+                        <tr><td>PSII pool (CP43+CP47) <sup title="CP43 and CP47 cannot be resolved at RT even by PARAFAC — expect a single component with excitation maximum near 440 nm and emission near 685 nm." style="color:#212529; font-weight:bold; cursor:help;">*</sup></td><td>score (Ex440/Em685)</td><td>score (Ex440/Em685)</td><td>score (Ex440/Em685)</td><td>score (Ex440/Em685)</td></tr>
+                        <tr><td>PSI</td><td>score (Ex440/Em730)</td><td>score (Ex440/Em730)</td><td>score (Ex440/Em730)</td><td>score (Ex440/Em730)</td></tr>
                         <tr><td colspan="5" class="text-muted pt-1"><em>PBS-related components (scores); dominant excitation loading shown</em></td></tr>
                         <tr><td>PE</td><td></td><td></td><td>score (Ex560/Em580)</td><td>score (Ex560/Em580)</td></tr>
                         <tr><td>PC/APC (PBS-free)</td><td></td><td>score (Ex620/Em657)</td><td>score (Ex560/Em657)</td><td>score (Ex560+620/Em657)</td></tr>
@@ -507,9 +567,12 @@
                         <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td></tr>
                         <tr><td>PBS-PSI / PBS-tot <sup title="PBS→PSI component (~705 nm) may partially merge with PSI Chl at RT; verify excitation loading." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
                         <tr><td>PBS-PSII : PBS-PSI <sup title="PBS→PSI component (~705 nm) may partially merge with PSI Chl at RT; verify excitation loading." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em><sup style="color:#212529; font-weight:bold;">*</sup> CP43/CP47 ratio cannot be resolved at RT even by PARAFAC. PSII pool = CP43 + CP47. Chl-tot = PSII pool + PSI.</em></td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em><sup style="color:#212529; font-weight:bold;">†</sup> PBS→PSI (~705 nm) may overlap with PSI Chl component at RT; verify using excitation loadings. PBS-free = PE + PC/APC. PBS-tot = PBS-free + PBS→PSII + PBS→PSI.</em></td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PARAFAC is the preferred method for quantitative RT analysis as it leverages the full EEM to separate spectrally overlapping components (Remelli &amp; Santabarbara 2018).</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.75em;"><em><sup style="color:#212529; font-weight:bold;">*</sup> CP43/CP47 ratio cannot be resolved at RT even by PARAFAC. PSII pool = CP43 + CP47. 
+                        <br><sup style="color:#212529; font-weight:bold;">†</sup> PBS→PSI (~705 nm) may overlap with PSI Chl component at RT; verify using excitation loadings. 
+                        <br>Chl-tot = PSII pool + PSI.
+                        <br>PBS-free = PE + PC/APC. 
+                        <br>PBS-tot = PBS-free + PBS→PSII + PBS→PSI.
+                        <br>PARAFAC is the preferred method for quantitative RT analysis as it leverages the full EEM to separate spectrally overlapping components (Remelli &amp; Santabarbara 2018).</em></td></tr>
                     </table>
                     </div></div></div></div><!-- /accordionPARAFACRT -->
 
