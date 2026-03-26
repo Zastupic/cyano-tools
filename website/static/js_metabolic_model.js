@@ -12,9 +12,7 @@ let subsystemChart = null;    // Chart.js instance
 // ── Custom reactions state ────────────────────────────────────────────────────
 let customReactions = [];   // [{id, name, lb, ub, stoich, new_mets}] — sent with every API call
 
-// ── Haldane FBA integration state ────────────────────────────────────────────
-let hmFbaMarker    = null;  // {growth, I0} — single FBA result point on growth curve
-let hmFbaSweepData = null;  // [{I, mu}]   — FBA sweep overlay on growth curve
+// (hmFbaMarker / hmFbaSweepData migrated to simFbaMarker / simFbaPoints)
 
 // ── Condition presets ─────────────────────────────────────────────────────────
 // Bounds based on iRH783 constrained model exchange IDs.
@@ -143,6 +141,331 @@ const REACTION_TEMPLATES = {
     },
 };
 
+// ── Experimental reference data ───────────────────────────────────────────────
+// Zavřel et al. 2019 (eLife 42508) — Synechocystis PCC 6803 turbidostat
+// Light intensity (µmol·m⁻²·s⁻¹) vs specific growth rate (h⁻¹) ± SD
+// Source: https://github.com/krotlkpt/syn-growth-fit/blob/main/data/zavrel_data.csv
+const ZAVREL_2019_DATA = [
+    { I:   27.5, mu: 0.025401, muErr: 0.001780 },
+    { I:   55.0, mu: 0.038817, muErr: 0.006375 },
+    { I:  110.0, mu: 0.058689, muErr: 0.009331 },
+    { I:  220.0, mu: 0.081121, muErr: 0.009607 },
+    { I:  440.0, mu: 0.104364, muErr: 0.008618 },
+    { I:  660.0, mu: 0.103798, muErr: 0.010185 },
+    { I:  880.0, mu: 0.099283, muErr: 0.012520 },
+    { I: 1100.0, mu: 0.093270, muErr: 0.010918 },
+];
+
+// ── Medium composition sliders ────────────────────────────────────────────────
+const MEDIUM_SLIDERS = [
+    { id: 'med-co2',    rxn: 'EX_co2_e' },
+    { id: 'med-no3',    rxn: 'EX_no3_e' },
+    { id: 'med-nh4',    rxn: 'EX_nh4_e' },
+    { id: 'med-glc',    rxn: 'EX_glc__D_e' },
+    { id: 'med-pi',     rxn: 'EX_pi_e' },
+    { id: 'med-so4',    rxn: 'EX_so4_e' },
+    { id: 'med-fe2',    rxn: 'EX_fe2_e' },
+    { id: 'med-mn2',    rxn: 'EX_mn2_e' },
+    { id: 'med-zn2',    rxn: 'EX_zn2_e' },
+    { id: 'med-cu2',    rxn: 'EX_cu2_e' },
+];
+
+// ── Molecular weights for concentration → uptake rate conversion ──────────────
+const MED_MW = {
+    'med-co2':  44.01,   // CO₂
+    'med-no3':  62.00,   // NO₃⁻
+    'med-nh4':  18.04,   // NH₄⁺
+    'med-glc': 180.16,   // Glucose
+    'med-pi':   94.97,   // PO₄³⁻ (phosphate)
+    'med-so4':  96.06,   // SO₄²⁻
+    'med-fe2':  55.85,   // Fe²⁺
+    'med-mn2':  54.94,   // Mn²⁺
+    'med-zn2':  65.38,   // Zn²⁺
+    'med-cu2':  63.55,   // Cu²⁺
+};
+
+// ── Gene knockout dropdown helpers ────────────────────────────────────────────
+function simKoGetGenes() {
+    const sel = document.getElementById('sim-ko-select');
+    if (!sel) return [];
+    return Array.from(sel.selectedOptions).map(o => o.value);
+}
+
+function simKoClear() {
+    const sel = document.getElementById('sim-ko-select');
+    if (sel) Array.from(sel.options).forEach(o => o.selected = false);
+    simKoUpdateDisplay();
+}
+
+function simKoSetGenes(geneList) {
+    const sel = document.getElementById('sim-ko-select');
+    if (!sel) return;
+    Array.from(sel.options).forEach(o => { o.selected = geneList.includes(o.value); });
+    simKoUpdateDisplay();
+}
+
+function simKoUpdateDisplay() {
+    const genes    = simKoGetGenes();
+    const list     = document.getElementById('sim-ko-selected-list');
+    const noneMsg  = document.getElementById('sim-ko-none-msg');
+    if (list) {
+        list.textContent = genes.join(', ');
+        list.style.display = genes.length ? '' : 'none';
+    }
+    if (noneMsg) noneMsg.style.display = genes.length ? 'none' : '';
+}
+
+function simKoFilter() {
+    const q   = (document.getElementById('sim-ko-search')?.value || '').trim().toLowerCase();
+    const sel = document.getElementById('sim-ko-select');
+    if (!sel) return;
+    Array.from(sel.options).forEach(o => {
+        o.style.display = (!q || o.text.toLowerCase().includes(q) || o.title.toLowerCase().includes(q)) ? '' : 'none';
+    });
+}
+
+function simKoOpenKEGG() {
+    const sel = document.getElementById('sim-ko-select');
+    if (!sel) return;
+    const first = Array.from(sel.selectedOptions)[0];
+    if (!first) { alert('Select a gene first.'); return; }
+    const gene   = allGenes.find(g => g.id === first.value);
+    const keggId = gene?.kegg_id || first.value;
+    window.open(`https://www.genome.jp/entry/syn:${encodeURIComponent(keggId)}`, '_blank');
+}
+
+// ── Concentration → uptake rate converter ─────────────────────────────────────
+// Henry's constant for CO₂ dissolution at 25°C: 34 mmol/(L·atm)
+// NOTE: Henry's law dissolution is NOT used for sparged-CO₂ photobioreactors —
+// see CO₂ handling in medApplyConcentrations / medPrefillConcentrations.
+const KH_CO2 = 34;
+// Photosynthetic CO₂ model for sparged PBRs:
+//   q_CO2 [mmol/gDW/h] = (ppm / (ppm + Ks)) × µ × C_content
+//   Ks,CO2 ≈ 150 ppm  (half-saturation for Synechocystis PCC 6803)
+//   C_content ≈ 42 mmol C/gDW  (50% carbon by weight, MW_C = 12 g/mol)
+//   At 5000 ppm, µ=0.06 h⁻¹: q ≈ 2.4 mmol/gDW/h  (Zavřel 2019: 0.78–4.01)
+const KS_CO2_PPM    = 150;   // half-saturation constant [ppm]
+const CO2_C_CONTENT = 42;    // mmol C per gDW biomass (Synechocystis)
+
+/** Calculate XA from reactor geometry: XA [g/m²] = ρ [g/L] × V [L] / A [m²] */
+function medCalcXA() {
+    const A   = parseFloat(document.getElementById('med-reactor-area')?.value);
+    const V   = parseFloat(document.getElementById('med-reactor-vol')?.value);
+    const rho = parseFloat(document.getElementById('med-reactor-rho')?.value);
+    const res = document.getElementById('med-xa-calc-result');
+    if (!A || !V || !rho || A <= 0) {
+        if (res) res.textContent = 'Enter A, V and ρ';
+        return;
+    }
+    const XA = (rho * V) / A;
+    // Set both the main XA slider and the conversion panel input
+    const slider = document.getElementById('sim-XA');
+    const sliderVal = document.getElementById('sim-XA-val');
+    if (slider) { slider.value = Math.min(XA, parseFloat(slider.max || 200)).toFixed(1); }
+    if (sliderVal) sliderVal.textContent = XA.toFixed(1);
+    const xaConvInput = document.getElementById('med-conv-xa');
+    if (xaConvInput) xaConvInput.value = XA.toFixed(1);
+    medUpdateX();   // refresh X [g/L] display
+    if (res) res.textContent = `= ${XA.toFixed(1)} gCDM·m⁻²`;
+}
+
+/** Re-compute and display X whenever XA or d changes. */
+function medUpdateX() {
+    const XA = parseFloat(document.getElementById('med-conv-xa')?.value)    || 30;
+    const d  = parseFloat(document.getElementById('med-conv-depth')?.value) || 0.05;
+    const X  = XA / (d * 1000);
+    const el = document.getElementById('med-conv-x-display');
+    if (el) el.textContent = `= ${X.toFixed(3)} gDW/L`;
+}
+
+function medCopyFBAmu() {
+    const box = document.getElementById('fba-result-box');
+    if (!box) return;
+    const match = box.textContent.match(/Growth rate:\s*([\d.]+)/);
+    if (match) {
+        const el = document.getElementById('med-conv-mu');
+        if (el) el.value = parseFloat(match[1]).toFixed(4);
+    }
+}
+
+// Per-nutrient unit select IDs (suffix maps to nutrient slider id suffix)
+const MED_UNIT_IDS = {
+    'med-co2': 'med-unit-co2',
+    'med-no3': 'med-unit-no3',
+    'med-nh4': 'med-unit-nh4',
+    'med-glc': 'med-unit-glc',
+    'med-pi':  'med-unit-pi',
+    'med-so4': 'med-unit-so4',
+    'med-fe2': 'med-unit-fe2',
+    'med-mn2': 'med-unit-mn2',
+    'med-zn2': 'med-unit-zn2',
+    'med-cu2': 'med-unit-cu2',
+};
+
+function _medGetUnit(id) {
+    return document.getElementById(MED_UNIT_IDS[id])?.value || 'mmol_L';
+}
+
+function _medXFromInputs() {
+    const XA = parseFloat(document.getElementById('med-conv-xa')?.value)    || 30;
+    const d  = parseFloat(document.getElementById('med-conv-depth')?.value) || 0.05;
+    return XA / (d * 1000);
+}
+
+/** Back-calculate concentrations from current slider values and fill the table. */
+function medPrefillConcentrations() {
+    const mu = parseFloat(document.getElementById('med-conv-mu')?.value) || 0.06;
+    const X  = _medXFromInputs();
+
+    const xDisp = document.getElementById('med-conv-x-display');
+    if (xDisp) xDisp.textContent = `= ${X.toFixed(3)} gDW/L`;
+
+    // maxConc: if back-calculated concentration exceeds this (mmol/L), the slider is at an
+    // "unconstrained" level — show blank rather than an unrealistically large number.
+    const nutrients = [
+        { id: 'med-co2', maxConc: null  },  // CO2 handled via ppm branch (fSat check)
+        { id: 'med-no3', maxConc:  200  },  // > 200 mM NO3 is unrealistic in any medium
+        { id: 'med-nh4', maxConc:   50  },
+        { id: 'med-glc', maxConc:   20  },
+        { id: 'med-pi',  maxConc:   10  },
+        { id: 'med-so4', maxConc:   10  },
+        { id: 'med-fe2', maxConc:    1  },
+        { id: 'med-mn2', maxConc:    1  },
+        { id: 'med-zn2', maxConc:    1  },
+        { id: 'med-cu2', maxConc:  0.1  },
+    ];
+    nutrients.forEach(({ id, maxConc }) => {
+        const sliderEl = document.getElementById(id);
+        const ccEl     = document.getElementById('med-cc-' + id.replace('med-',''));
+        if (!sliderEl || !ccEl) return;
+        const q    = parseFloat(sliderEl.value) || 0;
+        const unit = _medGetUnit(id);
+        let c;
+        if (unit === 'ppm_co2') {
+            // Invert photosynthetic stoichiometry model:
+            //   q = fSat × µ × C_content  →  fSat = q / (µ × C_content)
+            //   ppm = fSat × Ks / (1 - fSat)
+            // If fSat ≥ 1 the exchange bound exceeds what any finite ppm can drive
+            // (CO2 non-limiting) — leave the field blank rather than showing 99999.
+            const fSat = q / (mu * CO2_C_CONTENT);
+            c = (fSat >= 1) ? NaN : (fSat * KS_CO2_PPM) / (1 - fSat);
+        } else {
+            // c [mmol/L] = q × X / µ
+            c = (q * X) / mu;
+            if (unit === 'mg_L') {
+                const mw = MED_MW[id];
+                if (mw) c = c * mw;
+            }
+        }
+        const valid = c > 0 && isFinite(c) && (maxConc === null || c <= maxConc);
+        ccEl.value = valid ? +c.toFixed(4) : '';
+    });
+}
+
+function medApplyConcentrations() {
+    const mu = parseFloat(document.getElementById('med-conv-mu')?.value) || 0.06;
+    const X  = _medXFromInputs();  // gDW/L
+
+    const xDisp = document.getElementById('med-conv-x-display');
+    if (xDisp) xDisp.textContent = `= ${X.toFixed(3)} gDW/L`;
+
+    // Trace metals (Fe, Mn, Zn, Cu) are intentionally excluded from the dissolved-pool
+    // converter.  The formula q = µ·c/X is valid for macronutrients consumed in bulk,
+    // but not for trace metals: cells use high-affinity transporters that absorb metals
+    // far below dissolved-pool expectations, and FBA stoichiometric coefficients reflect
+    // cellular quotas, not kinetic uptake from the medium.  Limiting trace metal sliders
+    // to BG-11 dissolved concentrations would set them orders of magnitude too low and
+    // block growth.  Their sliders stay at the Höper unconstrained defaults (max slider).
+    const nutrients = [
+        { id: 'med-co2', maxVal: 1000, step:  0.1   },
+        { id: 'med-no3', maxVal: 1000, step:  0.1   },
+        { id: 'med-nh4', maxVal:   50, step:  0.1   },
+        { id: 'med-glc', maxVal:   20, step:  0.1   },
+        { id: 'med-pi',  maxVal:    1, step:  0.001 },
+        { id: 'med-so4', maxVal:    1, step:  0.001 },
+    ];
+
+    nutrients.forEach(({ id, maxVal, step }) => {
+        const suffix   = id.replace('med-', '');
+        const ccEl     = document.getElementById('med-cc-' + suffix);
+        const sliderEl = document.getElementById(id);
+        const valEl    = document.getElementById(id + '-val');
+        if (!ccEl || !sliderEl || ccEl.value === '') return;
+
+        let cMmolL = parseFloat(ccEl.value);
+        if (isNaN(cMmolL)) return;
+
+        const unit = _medGetUnit(id);
+        let q;
+        if (unit === 'ppm_co2') {
+            // Sparged CO₂ in a photobioreactor: CO₂ is continuously supplied from
+            // the gas phase — Henry's law dissolved concentration severely underestimates
+            // photosynthetic fixation (~100×).  Use stoichiometric model instead:
+            //   q = satFactor × µ × C_content
+            // where satFactor = Michaelis-Menten saturation at given ppm.
+            const ppm = cMmolL;  // raw input is still in ppm here
+            const satFactor = ppm / (ppm + KS_CO2_PPM);
+            q = satFactor * mu * CO2_C_CONTENT;
+        } else {
+            if (unit === 'mg_L') {
+                const mw = MED_MW[id];
+                if (mw) cMmolL = cMmolL / mw;
+            }
+            q = (mu * cMmolL) / X;
+        }
+        q = Math.min(maxVal, Math.max(0, q));
+        q = Math.round(q / step) * step;
+
+        // Guard: never set a slider to 0 from a positive raw value — that would
+        // completely block a nutrient that is actually present in the medium.
+        // If rounding collapses a small-but-positive q to 0, use the minimum step.
+        if (q === 0 && cMmolL > 0) q = step;
+
+        sliderEl.value = q;
+        if (valEl) valEl.textContent = (q % 1 === 0) ? q : +q.toFixed(4);
+    });
+}
+
+/** Build constraints dict from medium sliders. Value shown = uptake magnitude; lb = negative. */
+function getMediumConstraints() {
+    const constraints = {};
+    // Photon constraint: J*_I = KL * JI / (KL + JI) — quantum-yield correction (Höper 2024 Eq. 5)
+    const alpha = parseFloat(document.getElementById('sim-alpha')?.value) || 0.13;
+    const I0    = parseFloat(document.getElementById('sim-I0')?.value)    || 660;
+    const KL    = parseFloat(document.getElementById('sim-KL')?.value)    || 119;
+    const JI    = alpha * I0 * 3.6;
+    const jstar = KL * JI / (KL + JI);
+    constraints['EX_photon_e1_e'] = { lb: -jstar };
+    MEDIUM_SLIDERS.forEach(({ id, rxn }) => {
+        const el = document.getElementById(id);
+        if (el) constraints[rxn] = { lb: -parseFloat(el.value) };
+    });
+    return constraints;
+}
+
+/** Update the read-only photon display in Medium composition to show J*_I (quantum-yield corrected) */
+function syncMedPhoton() {
+    const alpha = parseFloat(document.getElementById('sim-alpha')?.value) || 0.13;
+    const I0    = parseFloat(document.getElementById('sim-I0')?.value)    || 660;
+    const KL    = parseFloat(document.getElementById('sim-KL')?.value)    || 119;
+    const JI    = alpha * I0 * 3.6;
+    const jstar = KL * JI / (KL + JI);
+    const lbl   = document.getElementById('med-photon-val');
+    if (lbl) lbl.textContent = jstar.toFixed(1);
+}
+
+function medSlider(input, valId) {
+    document.getElementById(valId).textContent = input.value;
+}
+
+function medNudge(id, valId, dir) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const step = parseFloat(el.step) || 1;
+    el.value = Math.max(parseFloat(el.min), Math.min(parseFloat(el.max), parseFloat(el.value) + dir * step));
+    document.getElementById(valId).textContent = el.value;
+}
+
 // ── Compartment colours ───────────────────────────────────────────────────────
 const COMP_COLORS = {
     c:  '#5cb85c',   // cytosol — green
@@ -167,9 +490,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fit-network-btn').addEventListener('click', () => cy && cy.fit());
     document.getElementById('apply-flux-btn').addEventListener('click', () => applyFluxOverlay(lastFluxes));
     document.getElementById('reset-flux-btn').addEventListener('click', resetFluxOverlay);
-    document.getElementById('run-fba-btn').addEventListener('click', runFBA);
+    document.getElementById('run-fba-btn').addEventListener('click', runFBAwithPFBA);
     document.getElementById('export-fba-btn').addEventListener('click', exportFBA);
-    document.getElementById('add-constraint-btn').addEventListener('click', addConstraintRow);
     document.getElementById('view-network-btn').addEventListener('click', () => {
         document.querySelector('[href="#tab-network"]').click();
         if (cy) applyFluxOverlay(lastFluxes);
@@ -186,6 +508,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('rxn-search').addEventListener('input',  () => filterTable('rxn-table',  'rxn-search',  'rxn-count-label'));
     document.getElementById('met-search').addEventListener('input',  () => filterTable('met-table',  'met-search',  'met-count-label'));
     document.getElementById('gene-search').addEventListener('input', () => filterTable('gene-table', 'gene-search', 'gene-count-label'));
+
+    // Auto-prefill concentration table when the panel is opened; show X on load
+    document.getElementById('med-conc-panel')?.addEventListener('show.bs.collapse', medPrefillConcentrations);
+    medUpdateX();
 });
 
 // ── Loading overlay ───────────────────────────────────────────────────────────
@@ -240,6 +566,7 @@ function loadReactions() {
         .then(data => {
             allReactions = data;
             data.forEach(r => { rxnNameMap[r.id] = r.name || r.id; });
+            initAllRxnDropdowns();
 
             const tbody = document.querySelector('#rxn-table tbody');
             tbody.innerHTML = data.map(r => `<tr>
@@ -274,22 +601,92 @@ function loadMetabolites() {
 }
 
 // ── Genes table ───────────────────────────────────────────────────────────────
-function loadGenes() {
+function _setAnnLoadingUI(loading) {
+    const loadEl = document.getElementById('ann-loading-msg');
+    const doneEl = document.getElementById('ann-done-msg');
+    if (loadEl) loadEl.style.display = loading ? '' : 'none';
+    if (doneEl) doneEl.style.display = (!loading) ? '' : 'none';
+}
+
+function loadGenes(opts) {
+    const skipStatus = opts?.skipStatus;
+    if (!skipStatus) {
+        // Check if annotations are still loading; show indicator and reload when done
+        fetch('/api/metabolic/gene_annotations_status')
+            .then(r => r.json())
+            .then(st => {
+                if (!st.loaded) {
+                    _setAnnLoadingUI(true);
+                    // Poll until loaded, then reload gene table with enriched names
+                    const poll = setInterval(() => {
+                        fetch('/api/metabolic/gene_annotations_status')
+                            .then(r => r.json())
+                            .then(st2 => {
+                                if (st2.loaded) {
+                                    clearInterval(poll);
+                                    loadGenes({ skipStatus: true });
+                                }
+                            }).catch(() => clearInterval(poll));
+                    }, 3000);
+                } else {
+                    // Annotations already done — hide both indicators
+                    const loadEl = document.getElementById('ann-loading-msg');
+                    const doneEl = document.getElementById('ann-done-msg');
+                    if (loadEl) loadEl.style.display = 'none';
+                    if (doneEl) doneEl.style.display = 'none';
+                }
+            }).catch(() => {});
+    }
+
     fetch('/api/metabolic/genes')
         .then(r => r.json())
         .then(data => {
             allGenes = data;
+            // Reveal table, hide initial spinner
+            const loadingEl = document.getElementById('gene-table-loading');
+            const wrapEl    = document.getElementById('gene-table-wrap');
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (wrapEl)    wrapEl.style.display = '';
+
             const tbody = document.querySelector('#gene-table tbody');
             tbody.innerHTML = data.map(g => {
                 const rxnPreview = g.reactions.slice(0, 4).join(', ') +
                     (g.reactions.length > 4 ? ` +${g.reactions.length - 4}` : '');
+                const subPreview = (g.subsystems || []).slice(0, 2).join(', ') +
+                    (g.subsystems?.length > 2 ? ` +${g.subsystems.length - 2}` : '');
+
+                // Backend resolves protein name: UniProt > KEGG product > rxn_names[0] > model name
+                const proteinName = g.name || '—';
+
+                // Build protein cell: name + optional gene_name sub-label + EC badge
+                const geneNameTag = g.gene_name ? `<br><small class="text-muted" style="font-size:0.78em;">${esc(g.gene_name)}</small>` : '';
+                const ecTag = g.ec ? `<span class="badge badge-light border ml-1" style="font-size:0.7em;" title="EC number">${esc(g.ec)}</span>` : '';
+
+                // Tooltip: function text, GO terms, reaction names
+                const tooltipParts = [];
+                if (g.function) tooltipParts.push(g.function);
+                if (g.go_terms?.length) tooltipParts.push(`GO: ${g.go_terms.slice(0, 5).join(', ')}`);
+                if (g.rxn_names?.length) tooltipParts.push(`Reactions: ${g.rxn_names.join('; ')}`);
+                const tooltip = tooltipParts.join('\n');
+
+                // External links: KEGG + UniProt
+                const keggLink = g.kegg_id
+                    ? ` <a href="https://www.genome.jp/entry/syn:${esc(g.kegg_id)}" target="_blank" class="text-muted" style="font-size:0.8em;" title="KEGG"><i class="fa fa-external-link"></i></a>`
+                    : '';
+                const uniprotLink = g.uniprot_id
+                    ? ` <a href="https://www.uniprot.org/uniprot/${esc(g.uniprot_id)}" target="_blank" class="text-info" style="font-size:0.8em;" title="UniProt ${esc(g.uniprot_id)}"><i class="fa fa-external-link"></i></a>`
+                    : '';
+
                 return `<tr data-gene="${esc(g.id)}">
-                    <td><code>${esc(g.id)}</code></td>
-                    <td>${esc(g.name || '—')}</td>
+                    <td style="white-space:nowrap;"><code>${esc(g.id)}</code>${keggLink}${uniprotLink}</td>
+                    <td title="${esc(tooltip)}">${esc(proteinName)}${ecTag}${geneNameTag}</td>
+                    <td style="font-size:0.78em;" class="text-muted">${esc(subPreview || '—')}</td>
                     <td style="font-size:0.78em;">${esc(rxnPreview)}</td>
-                    <td>
+                    <td style="white-space:nowrap;">
                         <button class="btn btn-xs btn-outline-secondary ko-btn py-0 px-1"
-                                data-gene="${esc(g.id)}">KO</button>
+                                data-gene="${esc(g.id)}">Test KO</button>
+                        <button class="btn btn-xs btn-outline-primary add-ko-btn py-0 px-1 ml-1"
+                                data-gene="${esc(g.id)}" title="Add to FBA KO set (sidebar)">+FBA KO</button>
                         <span class="ko-result ml-1 small" id="ko-${esc(g.id)}"></span>
                     </td>
                 </tr>`;
@@ -297,11 +694,77 @@ function loadGenes() {
 
             document.getElementById('gene-count-label').textContent = `${data.length} genes`;
 
+            // After annotation reload: hide spinner, show brief "done" message
+            if (skipStatus) {
+                _setAnnLoadingUI(false);
+                // Flash a transient "Protein names updated" toast
+                const doneEl = document.getElementById('ann-done-msg');
+                if (doneEl) {
+                    doneEl.style.display = '';
+                    setTimeout(() => { doneEl.style.display = 'none'; }, 4000);
+                }
+            }
+
+            // Also populate the KO dropdown select with rich option labels + hover tooltips
+            const koSel = document.getElementById('sim-ko-select');
+            if (koSel) {
+                koSel.innerHTML = data.map(g => {
+                    // g.name is now resolved by backend: UniProt > KEGG > rxn_names[0]
+                    const proteinLabel = g.name || '';
+                    const subsStr    = g.subsystems?.join('; ') || '';
+                    const rxnShort   = (g.reactions || []).slice(0, 6).join(', ') +
+                                       (g.reactions?.length > 6 ? ` +${g.reactions.length - 6}` : '');
+                    const titleParts  = [];
+                    if (proteinLabel) titleParts.push(`Protein: ${proteinLabel}`);
+                    if (g.gene_name)  titleParts.push(`Gene: ${g.gene_name}`);
+                    if (g.ec)         titleParts.push(`EC: ${g.ec}`);
+                    if (g.function)   titleParts.push(g.function.slice(0, 200));
+                    if (g.kegg_id)    titleParts.push(`KEGG: syn:${g.kegg_id}`);
+                    if (g.uniprot_id) titleParts.push(`UniProt: ${g.uniprot_id}`);
+                    if (subsStr)      titleParts.push(`Subsystem(s): ${subsStr}`);
+                    titleParts.push(`Reaction IDs (${g.reactions?.length || 0}): ${rxnShort}`);
+                    const subsTag = g.subsystems?.length
+                        ? ` [${g.subsystems[0]}${g.subsystems.length > 1 ? ' +' + (g.subsystems.length - 1) : ''}]`
+                        : '';
+                    const label = g.id + (proteinLabel ? `  ${proteinLabel}` : '') + subsTag;
+                    return `<option value="${esc(g.id)}" title="${esc(titleParts.join('\n'))}">${esc(label)}</option>`;
+                }).join('');
+            }
+
             document.querySelector('#gene-table tbody').addEventListener('click', e => {
-                const btn = e.target.closest('.ko-btn');
-                if (btn) runKnockout(btn.dataset.gene, btn);
+                const koBtn  = e.target.closest('.ko-btn');
+                const addBtn = e.target.closest('.add-ko-btn');
+                if (koBtn)  runKnockout(koBtn.dataset.gene, koBtn);
+                if (addBtn) addGeneToFBAKO(addBtn.dataset.gene, addBtn);
+            });
+
+            // Chevron toggle for gene browser card
+            document.getElementById('gene-browser-body')?.addEventListener('show.bs.collapse',  () => {
+                const ch = document.getElementById('gene-browser-chevron');
+                if (ch) ch.className = 'fa fa-chevron-up ml-auto';
+            });
+            document.getElementById('gene-browser-body')?.addEventListener('hide.bs.collapse', () => {
+                const ch = document.getElementById('gene-browser-chevron');
+                if (ch) ch.className = 'fa fa-chevron-down ml-auto';
             });
         });
+}
+
+function addGeneToFBAKO(geneId, btn) {
+    const sel = document.getElementById('sim-ko-select');
+    if (!sel) return;
+    const opt = Array.from(sel.options).find(o => o.value === geneId);
+    if (opt) {
+        opt.selected = true;
+        simKoUpdateDisplay();
+        if (btn) {
+            const orig = btn.textContent;
+            btn.textContent = '✓ added';
+            btn.classList.add('btn-primary');
+            btn.classList.remove('btn-outline-primary');
+            setTimeout(() => { btn.textContent = orig; btn.classList.remove('btn-primary'); btn.classList.add('btn-outline-primary'); }, 1500);
+        }
+    }
 }
 
 function runKnockout(geneId, btn) {
@@ -319,20 +782,21 @@ function runKnockout(geneId, btn) {
     .then(r => r.json())
     .then(d => {
         if (d.status === 'optimal') {
-            const rate = d.objective.toFixed(4);
-            const cls = d.objective < 0.01 ? 'text-danger font-weight-bold'
-                      : d.objective < 0.5  ? 'text-warning font-weight-bold'
-                      : 'text-success';
+            const wt  = d.wt_objective || 0;
+            const pct = wt > 0 ? (d.objective / wt * 100) : 0;
+            const cls = pct < 1  ? 'text-danger font-weight-bold'   // Essential: growth = 0
+                      : pct < 50 ? 'text-warning font-weight-bold'  // Impaired:  < 50% WT
+                      : 'text-success';                              // Non-essential: ≥ 50% WT
             span.className = `ko-result ml-1 small ${cls}`;
-            span.textContent = `${rate} h⁻¹`;
+            span.textContent = `${pct.toFixed(1)}% WT`;
         } else {
-            span.className = 'ko-result ml-1 small text-danger';
-            span.textContent = d.status;
+            span.className = 'ko-result ml-1 small text-danger font-weight-bold';
+            span.textContent = '0% WT';
         }
         btn.disabled = false;
-        btn.textContent = 'KO';
+        btn.textContent = 'Test KO';
     })
-    .catch(() => { btn.disabled = false; btn.textContent = 'KO'; });
+    .catch(() => { btn.disabled = false; btn.textContent = 'Test KO'; });
 }
 
 // ── Network (Cytoscape.js) ────────────────────────────────────────────────────
@@ -858,12 +1322,11 @@ function filterTable(tableId, inputId, countLabelId) {
 
 // ── Analysis tab wiring ───────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('run-ls-btn').addEventListener('click', runLightSweep);
     document.getElementById('run-pe-btn').addEventListener('click', runProductionEnvelope);
     document.getElementById('run-en-btn').addEventListener('click', runEnergetics);
 
-    // Reference lock / clear buttons
-    ['ls', 'pe', 'en'].forEach(pfx => {
+    // Reference lock / clear buttons (ls- prefix no longer has dedicated lock/clear btn in new layout)
+    ['pe', 'en'].forEach(pfx => {
         document.getElementById(`${pfx}-lock-btn`).addEventListener('click', () => lockRef(pfx));
         document.getElementById(`${pfx}-clear-btn`).addEventListener('click', () => clearRef(pfx));
     });
@@ -879,49 +1342,31 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cr-man-add-btn').addEventListener('click', crAddManual);
     document.getElementById('cr-clear-all-btn').addEventListener('click', crClearAll);
 
-    // FBA ↔ Haldane integration
-    document.getElementById('ls-overlay-haldane-btn').addEventListener('click', hmOverlayFBASweep);
-    document.getElementById('ls-overlay-clear-btn').addEventListener('click', hmClearFbaSweep);
-    document.getElementById('hm-clear-fba-sweep-btn').addEventListener('click', hmClearFbaSweep);
-    document.getElementById('hm-calibrate-btn').addEventListener('click', hmCalibrateFromFBA);
-    document.getElementById('hm-clear-fba-marker-btn').addEventListener('click', () => {
-        hmFbaMarker = null;
-        document.getElementById('hm-fba-marker-badge').style.display = 'none';
-        if (hmLastData) renderHaldaneCurve(hmLastData);
-    });
+    // Sim card actions
+    document.getElementById('sim-fit-btn')?.addEventListener('click', simFitToFBA);
+    document.getElementById('sim-run-ls-btn')?.addEventListener('click', runLightSweep);
+    document.getElementById('sim-pipeline-btn')?.addEventListener('click', simRunPipeline);
+    document.getElementById('sim-compare-btn')?.addEventListener('click', simCompareWTvsKO);
+    document.getElementById('sim-saveref-btn')?.addEventListener('click', simSaveRef);
+    document.getElementById('sim-clearref-btn')?.addEventListener('click', simClearRef);
+    document.getElementById('sim-loadhoper-btn')?.addEventListener('click', simLoadHoper);
+    document.getElementById('sim-clear-fba-marker-btn')?.addEventListener('click', simClearFbaMarker);
 });
 
-// ── pFBA checkbox in FBA tab ──────────────────────────────────────────────────
-// Override the original listener so the pfba flag is included in the fetch body
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('run-fba-btn').removeEventListener('click', runFBA);
-    document.getElementById('run-fba-btn').addEventListener('click', runFBAwithPFBA);
-});
+// run-fba-btn wired in the main DOMContentLoaded block below
 
 function runFBAwithPFBA() {
     const btn = document.getElementById('run-fba-btn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Running…';
 
-    const constrained = document.getElementById('fba-constrained-chk').checked;
     const usePfba     = document.getElementById('pfba-chk').checked;
-    const constraints = {};
-
-    document.querySelectorAll('.constraint-row').forEach(row => {
-        const id = row.querySelector('.c-rxn-id').value.trim();
-        const lb = row.querySelector('.c-lb').value;
-        const ub = row.querySelector('.c-ub').value;
-        if (id) {
-            constraints[id] = {};
-            if (lb !== '') constraints[id].lb = parseFloat(lb);
-            if (ub !== '') constraints[id].ub = parseFloat(ub);
-        }
-    });
+    const constraints = getMediumConstraints();
 
     fetch('/api/metabolic/fba', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ constrained, constraints, pfba: usePfba, custom_reactions: customReactions }),
+        body: JSON.stringify({ constrained: true, constraints, pfba: usePfba, custom_reactions: customReactions, knockout_genes: simKoGetGenes() }),
     })
     .then(r => r.json())
     .then(d => {
@@ -935,7 +1380,7 @@ function runFBAwithPFBA() {
             lastFluxes = d.fluxes;
             populateFBATable(d.fluxes);
             renderSubsystemChart(d.fluxes);
-            hmMarkFBAPoint(d.objective, d.fluxes);
+            simMarkFBAPoint(d.objective, d.fluxes);
             document.getElementById('fba-flux-wrap').style.display = '';
             document.getElementById('pathway-vis-wrap').style.display = '';
             if (cy) { document.getElementById('apply-flux-btn').style.display = ''; applyFluxOverlay(d.fluxes); }
@@ -957,15 +1402,13 @@ function runFBAwithPFBA() {
 }
 
 // ── Analysis: reference state ─────────────────────────────────────────────────
-let lsLastData = null, lsRefData = null, lsRefLabel = '';
 let peLastData = null, peRefData = null, peRefLabel = '';
 let enLastData = null, enRefData = null, enRefLabel = '';
 
 function lockRef(pfx) {
-    const data = pfx === 'ls' ? lsLastData : pfx === 'pe' ? peLastData : enLastData;
+    const data = pfx === 'pe' ? peLastData : enLastData;
     if (!data) return;
     const label = captureRefLabel(pfx);
-    if (pfx === 'ls') { lsRefData = data; lsRefLabel = label; renderLightSweep(lsLastData); }
     if (pfx === 'pe') { peRefData = data; peRefLabel = label; renderProductionEnvelope(peLastData); }
     if (pfx === 'en') { enRefData = data; enRefLabel = label; renderEnergetics(enLastData); }
     document.getElementById(`${pfx}-ref-badge-text`).textContent = label;
@@ -974,7 +1417,6 @@ function lockRef(pfx) {
 }
 
 function clearRef(pfx) {
-    if (pfx === 'ls') { lsRefData = null; lsRefLabel = ''; if (lsLastData) renderLightSweep(lsLastData); }
     if (pfx === 'pe') { peRefData = null; peRefLabel = ''; if (peLastData) renderProductionEnvelope(peLastData); }
     if (pfx === 'en') { enRefData = null; enRefLabel = ''; if (enLastData) renderEnergetics(enLastData); }
     document.getElementById(`${pfx}-ref-badge`).style.display = 'none';
@@ -984,11 +1426,6 @@ function clearRef(pfx) {
 function captureRefLabel(pfx) {
     const constrained = document.getElementById(`${pfx}-constrained`)?.checked;
     const base = constrained ? 'autotrophic' : 'unconstrained';
-    if (pfx === 'ls') {
-        const imin = document.getElementById('ls-imin').value;
-        const imax = document.getElementById('ls-imax').value;
-        return `I=${imin}–${imax}, ${base}`;
-    }
     if (pfx === 'pe') return `${document.getElementById('pe-rxn').value.trim()}, ${base}`;
     if (pfx === 'en') return `${document.getElementById('en-rxn').value.trim()}, ${base}`;
     return base;
@@ -999,103 +1436,254 @@ function showRefBar(pfx) {
 }
 
 // ── Chart instances ───────────────────────────────────────────────────────────
-let lsGrowthChart = null, lsYieldChart = null, lsO2Chart = null;
-let peChart       = null;
-let enChart       = null;
+let peChart = null;
+let enChart = null;
 
-// ── Light sweep ───────────────────────────────────────────────────────────────
+// ── FBA light sweep ───────────────────────────────────────────────────────────
+let simFbaData     = null;   // last FBA sweep result {points}
+let simFbaPoints   = null;   // [{I, mu}] converted with current α for growth curve overlay
+let simFbaRefData  = null;   // saved FBA reference
+let simFbaRefLabel = '';
+let simFbaGrowthChart = null, simFbaYieldChart = null, simFbaO2Chart = null;
+
 function runLightSweep() {
-    const btn = document.getElementById('run-ls-btn');
+    const btn = document.getElementById('sim-run-ls-btn');
+    if (!btn) return Promise.reject(new Error('sim-run-ls-btn not found'));
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Running…';
-    document.getElementById('ls-error').style.display  = 'none';
-    document.getElementById('ls-charts').style.display = 'none';
+    const errEl = document.getElementById('sim-fba-error');
+    if (errEl) errEl.style.display = 'none';
 
-    fetch('/api/metabolic/light_sweep', {
+    const knockout_genes = simKoGetGenes();
+
+    const alpha   = parseFloat(document.getElementById('sim-alpha')?.value) || 0.13;
+    const KL      = parseFloat(document.getElementById('sim-KL')?.value)    || 119;
+    const iMinUm  = parseFloat(document.getElementById('sim-ls-imin')?.value)  || 10;
+    const iMaxUm  = parseFloat(document.getElementById('sim-ls-imax')?.value)  || 1200;
+    return fetch('/api/metabolic/light_sweep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            i_min:            parseFloat(document.getElementById('ls-imin').value)  || 10,
-            i_max:            parseFloat(document.getElementById('ls-imax').value)  || 1200,
-            steps:            parseInt(document.getElementById('ls-steps').value)   || 40,
-            constrained:      document.getElementById('ls-constrained').checked,
+            i_min:            iMinUm * alpha * 3.6,   // convert µmol·m⁻²·s⁻¹ → mmol·gDW⁻¹·h⁻¹
+            i_max:            iMaxUm * alpha * 3.6,
+            steps:            parseInt(document.getElementById('sim-ls-steps')?.value)   || 40,
+            constrained:      document.getElementById('sim-ls-constrained')?.checked ?? true,
             custom_reactions: customReactions,
+            knockout_genes,
+            alpha,
+            KL,
         }),
     })
     .then(r => r.json())
     .then(d => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-play"></i> Run sweep';
-        if (d.error) { showAnalysisError('ls-error', d.error); return; }
-        lsLastData = d;
-        showRefBar('ls');
-        renderLightSweep(d);
+        btn.innerHTML = '<i class="fa fa-sun-o"></i> Run FBA light sweep';
+        if (d.error) {
+            if (errEl) { errEl.style.display = ''; errEl.textContent = d.error; }
+            return d;
+        }
+        simFbaData = d;
+        // Convert to I/mu pairs using current α for growth curve overlay
+        const alpha = +document.getElementById('sim-alpha').value || 0.13;
+        simFbaPoints = d.points
+            .filter(p => p.growth > 1e-4)
+            .map(p => ({ I: p.photon / (alpha * 3.6), mu: p.growth }));
+        renderSimFbaSweep(d);
+        simRecompute();   // redraw growth curve with FBA overlay
+        return d;
     })
     .catch(err => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-play"></i> Run sweep';
-        showAnalysisError('ls-error', err.message);
+        btn.innerHTML = '<i class="fa fa-sun-o"></i> Run FBA light sweep';
+        if (errEl) { errEl.style.display = ''; errEl.textContent = err.message; }
+        throw err;
     });
 }
 
-function renderLightSweep(d) {
+/** Generate Höper 2024 analytical growth curve points over [0, Imax] in I₀ space. */
+function simHoepCurve(Imax) {
+    const p = simGetParams();
+    const N = 250;
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+        const I = (i / N) * Imax;
+        pts.push({ x: I, y: Math.max(0, simHoperMu(I, 0, p.alpha, p.KL, p.YBM, p.kd, p.ngam_photon, 0)) });
+    }
+    return pts;
+}
+
+/** Update only the analytical overlay and I₀ marker on the FBA growth chart (no FBA re-run). */
+function updateFbaGrowthOverlay() {
+    if (!simFbaGrowthChart) return;
+    const p     = simGetParams();
+    const I0_op = p.I0;
+    // Höper curve is always dataset index 2; I₀ marker is index 3
+    const ds2 = simFbaGrowthChart.data.datasets[2];
+    const ds3 = simFbaGrowthChart.data.datasets[3];
+    if (!ds2 || !ds3) return;
+    const xMax = Math.max(
+        ...simFbaGrowthChart.data.datasets[0].data.map(pt => pt.x),
+        I0_op * 1.05, 200
+    );
+    ds2.data = simHoepCurve(xMax);
+    const muOp = simHoperMu(I0_op, 0, p.alpha, p.KL, p.YBM, p.kd, p.ngam_photon, 0);
+    ds3.data  = [{ x: I0_op, y: 0 }, { x: I0_op, y: Math.max(0.02, muOp + 0.02) }];
+    ds3.label = `I₀ = ${I0_op} µmol·m⁻²·s⁻¹`;
+    simFbaGrowthChart.update('none');
+}
+
+function renderSimFbaSweep(d) {
     const pts    = d.points;
+    const alpha  = parseFloat(document.getElementById('sim-alpha')?.value) || 0.13;
     const hasO2  = pts.some(p => p.o2 !== null && p.o2 !== 0);
-    const hasRef = !!lsRefData;
-    const refPts = lsRefData?.points || [];
+    const hasRef = !!simFbaRefData;
+    const refPts = simFbaRefData?.points || [];
 
-    document.getElementById('ls-charts').style.display = '';
-    document.getElementById('ls-o2-wrap').style.display = (hasO2 || (hasRef && refPts.some(p => p.o2))) ? '' : 'none';
+    // Show charts, hide placeholder, reveal action buttons
+    document.getElementById('sim-fba-placeholder').style.display  = 'none';
+    document.getElementById('sim-fba-charts-wrap').style.display  = '';
+    document.getElementById('sim-fba-lock-btn').style.display     = '';
 
-    function lsDataset(label, pts, yKey, color, fillColor, isRef) {
+    document.getElementById('sim-fba-o2-wrap').style.display =
+        (hasO2 || (hasRef && refPts.some(p => p.o2))) ? '' : 'none';
+
+    // Helper for yield / O₂ charts (x = photon flux, mmol·gDW⁻¹·h⁻¹)
+    function ds(label, points, yKey, color, fillColor, isRef) {
         return {
             label,
-            data: pts.map(p => ({ x: p.photon, y: p[yKey] })),
+            data: points.map(p => ({ x: p.photon, y: p[yKey] })),
             borderColor: isRef ? '#aaa' : color,
             backgroundColor: isRef ? 'rgba(0,0,0,0)' : fillColor,
             borderWidth: isRef ? 1.5 : 2,
             borderDash: isRef ? [5, 3] : [],
             pointRadius: isRef ? 0 : 2,
-            fill: isRef ? false : (!hasRef),
+            fill: isRef ? false : false,
             tension: 0.3,
         };
     }
 
-    const growthLabel = hasRef ? 'Current' : 'Growth rate (h⁻¹)';
-    const yieldLabel  = hasRef ? 'Current' : 'Yield (gDW·µmol⁻¹)';
-    const o2Label     = hasRef ? 'Current' : 'O₂ evolution';
+    // ── Growth rate chart — x-axis = I₀ (µmol·m⁻²·s⁻¹) ─────────────────────
+    // FBA points converted from J_I back to I₀; Höper curve and exp. data in native I₀ units.
+    const fbaPtsI0 = pts.filter(p => p.growth > 1e-4)
+        .map(p => ({ x: p.photon / (alpha * 3.6), y: p.growth }));
+    const refPtsI0 = refPts.filter(p => p.growth > 1e-4)
+        .map(p => ({ x: p.photon / (alpha * 3.6), y: p.growth }));
+    const xMax = Math.max(...fbaPtsI0.map(p => p.x).concat(
+        ZAVREL_2019_DATA.map(d => d.I)).concat([parseFloat(document.getElementById('sim-I0')?.value) || 660])
+    ) * 1.05;
+    const I0_op = parseFloat(document.getElementById('sim-I0')?.value) || 660;
+    const p_now = simGetParams();
+    const muOp  = simHoperMu(I0_op, 0, p_now.alpha, p_now.KL, p_now.YBM, p_now.kd, p_now.ngam_photon, 0);
 
-    // Growth chart
-    if (lsGrowthChart) lsGrowthChart.destroy();
-    const growthDs = [lsDataset(growthLabel, pts, 'growth', '#2e7a42', 'rgba(46,122,66,0.08)', false)];
-    if (hasRef) growthDs.push(lsDataset(lsRefLabel || 'Reference', refPts, 'growth', '#aaa', null, true));
-    lsGrowthChart = new Chart(document.getElementById('ls-growth-chart').getContext('2d'), {
-        type: 'line',
-        data: { datasets: growthDs },
-        options: xyLineOpts('Photon uptake (µmol·gDW⁻¹·h⁻¹)', 'Growth rate (h⁻¹)', hasRef),
-    });
+    const gDs = [
+        {   // 0 — FBA sweep points
+            label: hasRef ? 'FBA (current)' : 'FBA sweep',
+            data: fbaPtsI0,
+            type: 'scatter',
+            borderColor: '#c0392b', backgroundColor: 'rgba(192,57,43,0.65)',
+            pointRadius: 4, pointHoverRadius: 6, showLine: false,
+        },
+        {   // 1 — FBA reference (empty if none)
+            label: simFbaRefLabel || 'FBA reference',
+            data: refPtsI0,
+            type: 'scatter',
+            borderColor: '#aaa', backgroundColor: 'rgba(150,150,150,0.5)',
+            pointRadius: 3, showLine: false,
+            hidden: !hasRef,
+        },
+        {   // 2 — Höper 2024 analytical curve (updated live by updateFbaGrowthOverlay)
+            label: 'Höper 2024 model',
+            data: simHoepCurve(xMax),
+            borderColor: '#2e7a42', backgroundColor: 'rgba(46,122,66,0.07)',
+            borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3,
+        },
+        {   // 3 — I₀ operating point marker (updated live)
+            label: `I₀ = ${I0_op} µmol·m⁻²·s⁻¹`,
+            data: [{ x: I0_op, y: 0 }, { x: I0_op, y: Math.max(0.02, muOp + 0.02) }],
+            borderColor: 'rgba(230,126,34,0.75)', backgroundColor: 'rgba(0,0,0,0)',
+            borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, fill: false,
+            showLine: true, tension: 0,
+        },
+        {   // 4 — Experimental data Zavřel 2019
+            label: 'Zavřel 2019 (exp.)',
+            data: ZAVREL_2019_DATA.map(d => ({ x: d.I, y: d.mu })),
+            type: 'scatter',
+            borderColor: '#1a64c8', backgroundColor: 'rgba(26,100,200,0.75)',
+            pointRadius: 5, pointHoverRadius: 7, pointStyle: 'circle', showLine: false,
+        },
+    ];
 
-    // Yield per photon chart
-    if (lsYieldChart) lsYieldChart.destroy();
-    const yieldDs = [lsDataset(yieldLabel, pts, 'yield', '#e67e22', 'rgba(230,126,34,0.08)', false)];
-    if (hasRef) yieldDs.push(lsDataset(lsRefLabel || 'Reference', refPts, 'yield', '#aaa', null, true));
-    lsYieldChart = new Chart(document.getElementById('ls-yield-chart').getContext('2d'), {
-        type: 'line',
-        data: { datasets: yieldDs },
-        options: xyLineOpts('Photon uptake (µmol·gDW⁻¹·h⁻¹)', 'Yield (gDW·µmol⁻¹)', hasRef),
-    });
-
-    // O2 evolution chart
-    if (hasO2 || (hasRef && refPts.some(p => p.o2))) {
-        if (lsO2Chart) lsO2Chart.destroy();
-        const o2Ds = [lsDataset(o2Label, pts, 'o2', '#3498db', 'rgba(52,152,219,0.08)', false)];
-        if (hasRef) o2Ds.push(lsDataset(lsRefLabel || 'Reference', refPts, 'o2', '#aaa', null, true));
-        lsO2Chart = new Chart(document.getElementById('ls-o2-chart').getContext('2d'), {
+    if (simFbaGrowthChart) { simFbaGrowthChart.destroy(); simFbaGrowthChart = null; }
+    simFbaGrowthChart = new Chart(
+        document.getElementById('sim-fba-growth-chart').getContext('2d'),
+        {
             type: 'line',
-            data: { datasets: o2Ds },
-            options: xyLineOpts('Photon uptake (µmol·gDW⁻¹·h⁻¹)', 'O₂ evolution (mmol·gDW⁻¹·h⁻¹)', hasRef),
-        });
+            data: { datasets: gDs },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 16 } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                if (ctx.dataset.label?.startsWith('Zavřel')) {
+                                    const d = ZAVREL_2019_DATA[ctx.dataIndex];
+                                    return `Zavřel 2019: μ = ${d.mu.toFixed(4)} ± ${d.muErr.toFixed(4)} h⁻¹`;
+                                }
+                                if (ctx.dataset.label?.startsWith('I₀')) return null;
+                                return `${ctx.dataset.label}: μ = ${ctx.parsed.y.toFixed(4)} h⁻¹`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: { type: 'linear', title: { display: true, text: 'I₀ — incident irradiance (µmol·m⁻²·s⁻¹)', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    y: { title: { display: true, text: 'Growth rate µ (h⁻¹)', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                },
+            },
+        }
+    );
+
+    // ── Yield chart — x = photon flux J_I (mmol·gDW⁻¹·h⁻¹) ──────────────────
+    const yLabel = hasRef ? 'Current' : 'Yield (gDW·mmol⁻¹)';
+    if (simFbaYieldChart) { simFbaYieldChart.destroy(); simFbaYieldChart = null; }
+    const yDs = [ds(yLabel, pts, 'yield', '#e67e22', 'rgba(230,126,34,0.08)', false)];
+    if (hasRef) yDs.push(ds(simFbaRefLabel || 'Reference', refPts, 'yield', '#aaa', null, true));
+    simFbaYieldChart = new Chart(
+        document.getElementById('sim-fba-yield-chart').getContext('2d'),
+        { type: 'line', data: { datasets: yDs },
+          options: xyLineOpts('Photon uptake J_I (mmol·gDW⁻¹·h⁻¹)', 'Yield (gDW·mmol⁻¹)', hasRef) });
+
+    // ── O₂ chart ──────────────────────────────────────────────────────────────
+    if (hasO2 || (hasRef && refPts.some(p => p.o2))) {
+        if (simFbaO2Chart) { simFbaO2Chart.destroy(); simFbaO2Chart = null; }
+        const oLabel = hasRef ? 'Current' : 'O₂ evolution';
+        const oDs = [ds(oLabel, pts, 'o2', '#3498db', 'rgba(52,152,219,0.08)', false)];
+        if (hasRef) oDs.push(ds(simFbaRefLabel || 'Reference', refPts, 'o2', '#aaa', null, true));
+        simFbaO2Chart = new Chart(
+            document.getElementById('sim-fba-o2-chart').getContext('2d'),
+            { type: 'line', data: { datasets: oDs },
+              options: xyLineOpts('Photon uptake J_I (mmol·gDW⁻¹·h⁻¹)', 'O₂ evolution (mmol·gDW⁻¹·h⁻¹)', hasRef) });
     }
+}
+
+function simLockFbaRef() {
+    if (!simFbaData) return;
+    const constrained = document.getElementById('sim-ls-constrained')?.checked;
+    simFbaRefLabel = `I=${document.getElementById('sim-ls-imin')?.value}–${document.getElementById('sim-ls-imax')?.value}, ${constrained ? 'autotrophic' : 'unconstrained'}`;
+    simFbaRefData  = simFbaData;
+    renderSimFbaSweep(simFbaData);
+    document.getElementById('sim-fba-ref-text').textContent  = simFbaRefLabel;
+    document.getElementById('sim-fba-ref-badge').style.display = '';
+    document.getElementById('sim-fba-clear-btn').style.display = '';
+}
+
+function simClearFbaRef() {
+    simFbaRefData  = null;
+    simFbaRefLabel = '';
+    document.getElementById('sim-fba-ref-badge').style.display = 'none';
+    document.getElementById('sim-fba-clear-btn').style.display = 'none';
+    if (simFbaData) renderSimFbaSweep(simFbaData);
 }
 
 function xyLineOpts(xLabel, yLabel, showLegend) {
@@ -1348,225 +1936,295 @@ function showAnalysisError(elId, msg) {
     el.style.display = '';
 }
 
-// ── Haldane / Höper growth curve simulator ────────────────────────────────────
-let hmCurrentModel  = 'haldane';
-let hmLastData      = null;
-let hmRefData       = null;
-let hmRefLabel      = '';
-let hmGrowthChart   = null;
-let hmYieldChart    = null;
+// ── Unified Simulation & Analysis ─────────────────────────────────────────────
+let simMode             = 'chemo';
+let simGrowthChart      = null;
+let simChemoChart       = null;
+let simBatchDensityChart = null;
+let simBatchProdChart   = null;
 
-// Wire up controls once DOM is ready
+// FBA single-point marker (from FBA tab single-run)
+let simFbaMarker = null;   // { I0, mu }
+
+// Reference overlay (growth curve + productivity)
+let simRefData  = null;    // { mode, gcPts, prodData, label }
+
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('hm-lock-btn').addEventListener('click', hmLockRef);
-    document.getElementById('hm-clear-btn').addEventListener('click', hmClearRef);
-    // Initial render
-    recomputeHaldane();
+    const analysisTabLink = document.querySelector('[href="#tab-simulations"]');
+    if (analysisTabLink) {
+        // Render (or re-render) every time the Simulations tab becomes visible.
+        // requestAnimationFrame defers one paint cycle so layout is settled.
+        analysisTabLink.addEventListener('shown.bs.tab', () => requestAnimationFrame(simRecompute));
+        // Sub-tab shown: re-render productivity charts when switching to that sub-tab
+        const prodTabLink = document.querySelector('[href="#sim-sub-productivity"]');
+        if (prodTabLink) prodTabLink.addEventListener('shown.bs.tab', () => requestAnimationFrame(simRecompute));
+        // If the simulations tab is already the active tab on page load, render now.
+        const pane = document.getElementById('tab-simulations');
+        if (pane && pane.classList.contains('active')) requestAnimationFrame(simRecompute);
+    } else {
+        // No tab structure — render immediately.
+        simRecompute();
+    }
+
+    // Sub-tab change: update parameter panel visibility (jQuery event — Bootstrap 4 canonical)
+    $('#sim-sub-tabs').on('shown.bs.tab', '[data-toggle="tab"]', function(e) {
+        const tabId = ($(e.target).attr('href') || '').replace('#sim-sub-', '');
+        simUpdateParamVisibility(tabId);
+        if (tabId === 'light') requestAnimationFrame(simRecompute);
+        if (tabId === 'sweep') requestAnimationFrame(updateFbaGrowthOverlay);
+    });
+    // Set initial visibility (first tab = static = Static FBA)
+    simUpdateParamVisibility('static');
 });
 
-function hmSlider(input, valId) {
+/** Read all shared simulation parameters */
+function simGetParams() {
+    return {
+        alpha:       +document.getElementById('sim-alpha').value,
+        KL:          +document.getElementById('sim-KL').value,
+        YBM:         +document.getElementById('sim-YBM').value,
+        kd:          +document.getElementById('sim-kd').value,
+        ngam_photon: +(document.getElementById('sim-ngam-photon')?.value ?? 0),
+        I0:          +document.getElementById('sim-I0').value,
+        XA:          +document.getElementById('sim-XA').value,
+        rho0:        +document.getElementById('sim-rho0').value,
+        t_end:       +document.getElementById('sim-tend').value,
+        Y_X:         +document.getElementById('sim-yx').value,
+        productName: document.getElementById('sim-product-name')?.value?.trim() || 'Product',
+    };
+}
+
+function simSlider(input, valId) {
     document.getElementById(valId).textContent = input.value;
-    recomputeHaldane();
+    simRecompute();
 }
 
-function hmToggleDensity() {
-    const on = document.getElementById('hm-density-check').checked;
-    document.getElementById('hm-density-controls').style.display = on ? '' : 'none';
-    recomputeHaldane();
+function simNudge(id, valId, dir) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const step = parseFloat(el.step) || 1;
+    const min  = parseFloat(el.min);
+    const max  = parseFloat(el.max);
+    el.value   = Math.max(min, Math.min(max, parseFloat(el.value) + dir * step));
+    simSlider(el, valId);
 }
 
-function setHaldaneModel(model) {
-    hmCurrentModel = model;
-    document.getElementById('hm-params-haldane').style.display = model === 'haldane' ? '' : 'none';
-    document.getElementById('hm-params-hoper').style.display   = model === 'hoper'   ? '' : 'none';
-    document.getElementById('hm-btn-haldane').classList.toggle('active', model === 'haldane');
-    document.getElementById('hm-btn-hoper').classList.toggle('active', model === 'hoper');
-    // k_ext row: only relevant for Haldane (Höper uses α for extinction)
-    document.getElementById('hm-kext-row').style.display = model === 'haldane' ? '' : 'none';
-    // Update equation display
-    if (model === 'haldane') {
-        document.getElementById('hm-equation').innerHTML =
-            'μ(I) = μ* · I / (K_A + I + I²/K_I)<br>' +
-            '<span class="text-info" id="hm-iopt-line">I_opt = <span id="hm-iopt">—</span> µmol·m⁻²·s⁻¹</span>';
-    } else {
-        document.getElementById('hm-equation').innerHTML =
-            'J_I = α · I · 3.6 (mmol·gCDW⁻¹·h⁻¹)<br>' +
-            'J*_I = K_L · J_I / (K_L + J_I)<br>' +
-            'μ = Y_BM × 10⁻³ · J*_I − k_d';
-    }
-    recomputeHaldane();
+
+function simSetMode(mode) {
+    simMode = mode;
+    document.getElementById('sim-btn-chemo').classList.toggle('active', mode === 'chemo');
+    document.getElementById('sim-btn-batch').classList.toggle('active',  mode === 'batch');
+    document.getElementById('sim-chemo-charts').style.display  = mode === 'chemo' ? '' : 'none';
+    document.getElementById('sim-batch-charts').style.display  = mode === 'batch' ? '' : 'none';
+    const ins = document.getElementById('sim-insight-text');
+    if (ins) ins.innerHTML = mode === 'chemo'
+        ? 'For light-limited chemostat cultures, productivity peaks at <em>low</em> dilution rates — unlike heterotrophic cultures. Increasing α raises self-shading; reducing k<sub>d</sub> shifts D<sub>opt</sub> lower.'
+        : 'In batch culture, growth rate decreases as biomass accumulates and self-shading increases. Higher α or X<sub>A,0</sub> accelerates entry into the light-limited phase.';
+    // Batch initial conditions only visible in productivity tab AND batch mode
+    const activeTabHref = document.querySelector('#sim-sub-tabs .nav-link.active')?.getAttribute('href') || '';
+    const inProductivity = activeTabHref === '#sim-sub-productivity';
+    const batchParams = document.getElementById('sim-batch-params');
+    if (batchParams) batchParams.style.display = (mode === 'batch' && inProductivity) ? '' : 'none';
+    simRecompute();
 }
 
-/** Lambert-Beer average light over an optically thick culture layer */
-function hmLambertBeer(I0, k, XA) {
-    if (XA <= 0 || k <= 0) return I0;
-    const tau = k * XA;
-    return I0 * (1 - Math.exp(-tau)) / tau;
-}
+/** Show/hide left-panel parameter groups based on the active sub-tab. */
+function simUpdateParamVisibility(tabId) {
+    document.querySelectorAll('.sim-pg[data-tabs]').forEach(el => {
+        if (el.id === 'sim-batch-params') return; // handled by simSetMode
+        const tabs = el.dataset.tabs.split(',');
+        el.style.display = tabs.includes(tabId) ? '' : 'none';
+    });
+    // Batch params only visible in productivity tab AND batch mode
+    const bp = document.getElementById('sim-batch-params');
+    if (bp) bp.style.display = (tabId === 'productivity' && simMode === 'batch') ? '' : 'none';
 
-/** Haldane/Aiba growth rate */
-function hmHaldaneGrowth(I, muStar, KA, KI) {
-    if (I <= 0) return 0;
-    return muStar * I / (KA + I + (I * I) / KI);
-}
-
-/** Höper 2024 growth rate. Y_BM in gCDW/mmol (pass as ×10⁻³) */
-function hmHoperGrowth(I, alpha, KL, Y_BM_milli, kd) {
-    if (I <= 0) return Math.max(0, -kd);
-    const JI    = alpha * I * 3.6;              // mmol photons / gCDW / h
-    const JStar = KL * JI / (KL + JI);          // saturation of photosynthetic capacity
-    return (Y_BM_milli * 1e-3) * JStar - kd;    // h⁻¹  (Y_BM slider is in ×10⁻³ units)
-}
-
-function recomputeHaldane() {
-    const Imax     = parseFloat(document.getElementById('hm-imax').value) || 1500;
-    const useDens  = document.getElementById('hm-density-check').checked;
-    const XA       = useDens ? (parseFloat(document.getElementById('hm-xa').value) || 30) : 0;
-    const N        = 300;
-    const pts      = [];
-
-    // Read model-specific params
-    let muStar, KA, KI, alpha, KL, Y_BM_milli, kd, k_ext;
-    if (hmCurrentModel === 'haldane') {
-        muStar = parseFloat(document.getElementById('hm-mu-star').value);
-        KA     = parseFloat(document.getElementById('hm-KA').value);
-        KI     = parseFloat(document.getElementById('hm-KI').value);
-        k_ext  = useDens ? (parseFloat(document.getElementById('hm-kext').value) || 0.15) : 0;
-        // Update I_opt display
-        const iopt = Math.sqrt(KA * KI);
-        const iel = document.getElementById('hm-iopt');
-        if (iel) iel.textContent = iopt.toFixed(0);
-    } else {
-        alpha       = parseFloat(document.getElementById('hm-alpha').value);
-        KL          = parseFloat(document.getElementById('hm-KL').value);
-        Y_BM_milli  = parseFloat(document.getElementById('hm-ybm').value);
-        kd          = parseFloat(document.getElementById('hm-kd').value);
-        k_ext       = alpha; // Höper: same coefficient for absorption and extinction
-    }
-
-    for (let i = 0; i <= N; i++) {
-        const I0   = (i / N) * Imax;
-        const Ieff = useDens ? hmLambertBeer(I0, k_ext, XA) : I0;
-        let mu, yield_val;
-
-        if (hmCurrentModel === 'haldane') {
-            mu = hmHaldaneGrowth(Ieff, muStar, KA, KI);
-            // Light use efficiency: μ / I (relative; set to 0 at I=0)
-            yield_val = I0 > 0 ? mu / I0 : 0;
-        } else {
-            mu = hmHoperGrowth(Ieff, alpha, KL, Y_BM_milli, kd);
-            // Biomass yield per photon absorbed: μ / J*I (gCDW / mmol photons)
-            const JI = alpha * Ieff * 3.6;
-            yield_val = JI > 0 ? mu / JI : 0;
+    // Highlight active step in workflow diagram
+    ['static', 'sweep', 'light', 'productivity'].forEach(id => {
+        const card  = document.getElementById('sim-step-' + id);
+        const badge = document.getElementById('sim-step-badge-' + id);
+        if (!card) return;
+        const active = id === tabId;
+        card.classList.toggle('border-primary', active);
+        card.classList.toggle('border', !active);
+        if (badge) {
+            badge.classList.toggle('badge-primary', active);
+            badge.classList.toggle('badge-secondary', !active);
         }
-
-        pts.push({ I: I0, Ieff, mu: Math.max(mu, 0), yield: Math.max(yield_val, 0) });
-    }
-
-    // Update density note
-    if (useDens && XA > 0) {
-        const Iavg_mid = hmLambertBeer(Imax / 2, k_ext, XA);
-        const note = document.getElementById('hm-density-note');
-        if (note) note.textContent =
-            `At I₀ = ${(Imax/2).toFixed(0)} µmol·m⁻²·s⁻¹: I_avg ≈ ${Iavg_mid.toFixed(0)} µmol·m⁻²·s⁻¹ (${(100*Iavg_mid/(Imax/2)).toFixed(0)}% of surface)`;
-    }
-
-    hmLastData = { pts, Imax, model: hmCurrentModel };
-    // Show ref-bar after first compute
-    document.getElementById('hm-ref-bar').style.display = 'flex';
-    renderHaldaneCurve(hmLastData);
-}
-
-function renderHaldaneCurve(d) {
-    const pts    = d.pts;
-    const hasRef = !!hmRefData;
-    const refPts = hmRefData ? hmRefData.pts : [];
-
-    const isHoper = (d.model === 'hoper');
-    const yieldLabel = isHoper ? 'Biomass yield (gCDW·mmol⁻¹)' : 'Light use efficiency (μ/I, rel.)';
-
-    function hmDs(label, points, yKey, color, isRef) {
-        return {
-            label,
-            data: points.map(p => ({ x: p.I, y: p[yKey] })),
-            borderColor: isRef ? '#aaa' : color,
-            backgroundColor: isRef ? 'rgba(0,0,0,0)' : color + '14',
-            borderWidth: isRef ? 1.5 : 2,
-            borderDash: isRef ? [5, 3] : [],
-            pointRadius: 0,
-            fill: isRef ? false : !hasRef,
-            tension: 0.3,
-        };
-    }
-
-    // Growth rate chart — includes optional FBA marker and FBA sweep overlay
-    if (hmGrowthChart) hmGrowthChart.destroy();
-    const hasFbaSweep  = !!hmFbaSweepData && hmFbaSweepData.length > 0;
-    const hasFbaMarker = !!hmFbaMarker;
-    const showLegend   = hasRef || hasFbaSweep || hasFbaMarker;
-    const growthDs = [hmDs(showLegend ? 'Kinetic model' : 'Growth rate (h⁻¹)', pts, 'mu', '#2e7a42', false)];
-    if (hasRef)      growthDs.push(hmDs(hmRefLabel || 'Reference', refPts, 'mu', '#aaa', true));
-    if (hasFbaSweep) growthDs.push({
-        label: 'FBA sweep',
-        data: hmFbaSweepData.map(p => ({ x: p.I, y: p.mu })),
-        borderColor: '#e67e22', backgroundColor: '#e67e22',
-        pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 6,
-        showLine: false, type: 'scatter',
-    });
-    if (hasFbaMarker) growthDs.push({
-        label: `FBA (μ=${hmFbaMarker.growth.toFixed(3)} h⁻¹)`,
-        data: [{ x: hmFbaMarker.I0, y: hmFbaMarker.growth }],
-        borderColor: '#e74c3c', backgroundColor: '#e74c3c',
-        pointStyle: 'triangle', pointRadius: 9, pointHoverRadius: 11,
-        showLine: false, type: 'scatter',
-    });
-    hmGrowthChart = new Chart(document.getElementById('hm-growth-chart').getContext('2d'), {
-        type: 'line',
-        data: { datasets: growthDs },
-        options: xyLineOpts('Incident light I₀ (µmol·m⁻²·s⁻¹)', 'Growth rate (h⁻¹)', showLegend),
-    });
-
-    // Yield/efficiency chart
-    if (hmYieldChart) hmYieldChart.destroy();
-    const yieldDs = [hmDs(hasRef ? 'Current' : yieldLabel, pts, 'yield', '#e67e22', false)];
-    if (hasRef) yieldDs.push(hmDs(hmRefLabel || 'Reference', refPts, 'yield', '#aaa', true));
-    hmYieldChart = new Chart(document.getElementById('hm-yield-chart').getContext('2d'), {
-        type: 'line',
-        data: { datasets: yieldDs },
-        options: xyLineOpts('Incident light I₀ (µmol·m⁻²·s⁻¹)', yieldLabel, hasRef),
     });
 }
 
-function hmLockRef() {
-    if (!hmLastData) return;
-    // Build a label from current params
-    let label;
-    if (hmCurrentModel === 'haldane') {
-        const mu = document.getElementById('hm-mu-star').value;
-        const KA = document.getElementById('hm-KA').value;
-        const KI = document.getElementById('hm-KI').value;
-        label = `Haldane μ*=${mu}, KA=${KA}, KI=${KI}`;
+/** Compute + render both growth curve and productivity */
+function simRecompute() {
+    const p = simGetParams();
+    syncMedPhoton();
+    simUpdateDerived(p);
+    simRenderGrowthCurve(p);
+    updateFbaGrowthOverlay();   // refresh Höper curve + I₀ marker on FBA sweep chart
+    if (simMode === 'chemo') simRenderChemostat(simComputeChemostat(p));
+    else                     simRenderBatch(simComputeBatch(p));
+}
+
+function simUpdateDerived(p) {
+    const muMax = simHoperMu(p.I0, 0, p.alpha, p.KL, p.YBM, p.kd, p.ngam_photon, 0);
+    const tau   = p.alpha * p.XA;
+    const mEl = document.getElementById('sim-mumax-val');
+    const tEl = document.getElementById('sim-tau-val');
+    if (mEl) mEl.textContent = muMax.toFixed(3);
+    if (tEl) tEl.textContent = tau.toFixed(2);
+}
+
+/**
+ * Höper 2024 net growth rate with Beer-Lambert depth integration.
+ *
+ *   J_I,0 = α · I₀ · 3.6          (photon absorption rate at surface, mmol·gCDW⁻¹·h⁻¹)
+ *   τ     = α · X_A                (optical thickness, dimensionless)
+ *
+ *   Dilute (τ→0):
+ *     J*_I        = K_L · J_I / (K_L + J_I)    [quantum efficiency, Höper 2024 Eq. 5]
+ *     J_net       = J*_I − k_d · J_I − ngam_p  [Eq. 6 + NGAM maintenance]
+ *     μ           = Y_BM · 10⁻³ · max(0, J_net)
+ *
+ *   Depth-integrated (τ > 0):
+ *     J*_avg      = (K_L/τ) · ln((K_L + J_I,0) / (K_L + J_I,1))
+ *     J_dmg_avg   = J_I,0 · (1 − e^−τ) / τ   [mean raw flux, for damage term]
+ *     μ           = Y_BM · 10⁻³ · max(0, J*_avg − k_d · J_dmg_avg − ngam_p)
+ *
+ *   k_d = 0.07 (dimensionless, ATP/photon, Höper 2024 Table 1).
+ *   Photodamage uses raw J_I (not J*_I), matching the GitHub FBA implementation.
+ *   ngam_photon (mmol·gCDW⁻¹·h⁻¹): photon-equivalent NGAM maintenance cost.
+ *   Optional Haldane photoinhibition (KI > 0) is not part of Höper 2024.
+ */
+function simHoperMu(I0, XA, alpha, KL, YBM_m, kd, ngam_photon, KI) {
+    if (I0 <= 0) return 0;
+    const JI0 = alpha * I0 * 3.6;
+    const tau  = alpha * XA;
+    let mu;
+    if (tau < 1e-6) {
+        const jstar = KL * JI0 / (KL + JI0);
+        const jnet  = jstar - kd * JI0 - ngam_photon;
+        mu = (YBM_m * 1e-3) * Math.max(0, jnet);
     } else {
-        const al = document.getElementById('hm-alpha').value;
-        const KL = document.getElementById('hm-KL').value;
-        const kd = document.getElementById('hm-kd').value;
-        label = `Höper α=${al}, KL=${KL}, kd=${kd}`;
+        const JI1        = JI0 * Math.exp(-tau);
+        const jstar_avg  = (KL / tau) * Math.log((KL + JI0) / (KL + JI1));
+        const jdmg_avg   = JI0 * (1 - Math.exp(-tau)) / tau;
+        const jnet       = jstar_avg - kd * jdmg_avg - ngam_photon;
+        mu = (YBM_m * 1e-3) * Math.max(0, jnet);
     }
-    hmRefData  = hmLastData;
-    hmRefLabel = label;
-    renderHaldaneCurve(hmLastData);
-    document.getElementById('hm-ref-badge-text').textContent = label;
-    document.getElementById('hm-ref-badge').style.display = '';
-    document.getElementById('hm-clear-btn').style.display = '';
+    if (KI > 0) mu *= 1 / (1 + I0 / KI);
+    return mu;
 }
 
-function hmClearRef() {
-    hmRefData  = null;
-    hmRefLabel = '';
-    if (hmLastData) renderHaldaneCurve(hmLastData);
-    document.getElementById('hm-ref-badge').style.display = 'none';
-    document.getElementById('hm-clear-btn').style.display = 'none';
+// ── Growth curve render ───────────────────────────────────────────────────────
+function simRenderGrowthCurve(p) {
+    const { alpha, KL, YBM, kd, ngam_photon, I0, XA } = p;
+    const N    = 300;
+    const Imax = Math.max(I0 * 2.2, 200);
+    const pts  = [];
+    for (let i = 0; i <= N; i++) {
+        const I  = (i / N) * Imax;
+        const mu = simHoperMu(I, XA, alpha, KL, YBM, kd, ngam_photon, 0);
+        pts.push({ x: I, y: mu });
+    }
+
+    const datasets = [{
+        label: XA > 0 ? `μ — X_A=${XA} g·m⁻²` : 'μ(I₀)',
+        data: pts.map(p => ({ x: p.x, y: p.y })),
+        borderColor: '#2e7a42', backgroundColor: 'rgba(46,122,66,0.06)',
+        fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
+    }];
+
+    // Show dilute-limit curve when XA > 0 (dashed)
+    if (XA > 0) {
+        const pts0 = [];
+        for (let i = 0; i <= N; i++) {
+            const I = (i / N) * Imax;
+            pts0.push({ x: I, y: simHoperMu(I, 0, alpha, KL, YBM, kd, ngam_photon, 0) });
+        }
+        datasets.push({
+            label: 'μ — dilute (X_A→0)',
+            data: pts0.map(p => ({ x: p.x, y: p.y })),
+            borderColor: 'rgba(46,122,66,0.35)', backgroundColor: 'rgba(0,0,0,0)',
+            fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
+            borderDash: [4, 3],
+        });
+    }
+
+    // FBA sweep overlay
+    if (simFbaPoints?.length) {
+        datasets.push({
+            label: 'FBA sweep',
+            data: simFbaPoints.map(p => ({ x: p.I, y: p.mu })),
+            type: 'scatter',
+            borderColor: '#c0392b', backgroundColor: 'rgba(192,57,43,0.7)',
+            pointRadius: 4, pointHoverRadius: 6,
+        });
+    }
+
+    // Single FBA run marker
+    if (simFbaMarker) {
+        datasets.push({
+            label: `FBA: I₀≈${simFbaMarker.I0.toFixed(0)}, μ=${simFbaMarker.growth.toFixed(4)}`,
+            data: [{ x: simFbaMarker.I0, y: simFbaMarker.mu }],
+            type: 'scatter',
+            borderColor: '#e74c3c', backgroundColor: '#e74c3c',
+            pointRadius: 7, pointStyle: 'triangle',
+        });
+    }
+
+    // Reference overlay
+    if (simRefData?.gcPts?.length) {
+        datasets.push({
+            label: simRefData.label,
+            data: simRefData.gcPts.map(p => ({ x: p.x, y: p.y })),
+            borderColor: 'rgba(120,120,120,0.7)', backgroundColor: 'rgba(0,0,0,0)',
+            fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
+            borderDash: [6, 4],
+        });
+    }
+
+    // Experimental data Zavřel 2019
+    datasets.push({
+        label: 'Zavřel 2019 (exp.)',
+        data: ZAVREL_2019_DATA.map(d => ({ x: d.I, y: d.mu })),
+        type: 'scatter',
+        borderColor: '#1a64c8', backgroundColor: 'rgba(26,100,200,0.75)',
+        pointRadius: 5, pointHoverRadius: 7, showLine: false,
+    });
+
+    if (simGrowthChart) { simGrowthChart.destroy(); simGrowthChart = null; }
+    simGrowthChart = new Chart(
+        document.getElementById('sim-growth-chart').getContext('2d'), {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top',
+                          labels: { font: { size: 10 }, boxWidth: 16 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.dataset.label?.startsWith('Zavřel')) {
+                                const d = ZAVREL_2019_DATA[ctx.dataIndex];
+                                return `Zavřel 2019: μ = ${d.mu.toFixed(4)} ± ${d.muErr.toFixed(4)} h⁻¹`;
+                            }
+                            return `${ctx.dataset.label}: μ = ${ctx.parsed.y.toFixed(4)} h⁻¹`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: { type: 'linear', title: { display: true, text: 'I₀ (µmol·m⁻²·s⁻¹)', font: { size: 10 } },
+                     ticks: { font: { size: 10 }, maxTicksLimit: 7 } },
+                y: { title: { display: true, text: 'μ (h⁻¹)', font: { size: 10 } },
+                     ticks: { font: { size: 10 } } },
+            },
+        },
+    });
 }
+
 
 // ── Custom reactions management ───────────────────────────────────────────────
 
@@ -1670,60 +2328,23 @@ function crAddManual() {
 // ── Haldane FBA integration ───────────────────────────────────────────────────
 
 /** Called after every successful FBA run. Marks the result point on the Haldane chart. */
-function hmMarkFBAPoint(growth, fluxes) {
-    // Find photon exchange flux (absolute value = uptake)
+// ── FBA result → sim marker ───────────────────────────────────────────────────
+function simMarkFBAPoint(growth, fluxes) {
     const photonKeys = ['EX_photon_e1_e', 'EX_photon_e', 'R_EX_photon_e'];
     let photon = 0;
     for (const k of photonKeys) {
         if (fluxes[k] !== undefined) { photon = Math.abs(fluxes[k]); break; }
     }
-    if (photon === 0) return;   // no photon flux found — not a phototrophic run
-
-    const alpha = parseFloat(document.getElementById('hm-calib-alpha')?.value) || 0.13;
-    const I0    = photon / (alpha * 3.6);   // mmol/gDW/h → µmol/m²/s
-    hmFbaMarker = { growth, I0, photon };
-
-    const badge = document.getElementById('hm-fba-marker-badge');
-    if (badge) {
-        document.getElementById('hm-fba-marker-text').textContent =
-            `FBA: I₀ ≈ ${I0.toFixed(0)} µmol·m⁻²·s⁻¹, μ = ${growth.toFixed(4)} h⁻¹`;
-        badge.style.display = '';
-    }
-    if (hmLastData) renderHaldaneCurve(hmLastData);
+    if (photon === 0) return;
+    const alpha = parseFloat(document.getElementById('sim-alpha')?.value) || 0.13;
+    const I0    = photon / (alpha * 3.6);
+    simFbaMarker = { growth, I0, photon };
+    simRecompute();
 }
 
-/** Overlay last FBA light sweep data onto the Haldane growth chart. */
-function hmOverlayFBASweep() {
-    if (!lsLastData || !lsLastData.points) {
-        alert('Run a light sweep first.');
-        return;
-    }
-    const alpha = parseFloat(document.getElementById('ls-alpha-conv')?.value) || 0.13;
-    hmFbaSweepData = lsLastData.points
-        .filter(p => p.growth > 0)
-        .map(p => ({ I: p.photon / (alpha * 3.6), mu: p.growth }));
-
-    // Sync alpha to Haldane card input if present
-    const hc = document.getElementById('hm-calib-alpha');
-    if (hc) hc.value = alpha;
-
-    document.getElementById('ls-overlay-badge').style.display = '';
-    document.getElementById('ls-overlay-clear-btn').style.display = '';
-    document.getElementById('hm-fba-sweep-badge').style.display = '';
-
-    if (hmLastData) renderHaldaneCurve(hmLastData);
-    // Switch to Analysis tab so user can see the result
-    document.querySelector('[href="#tab-analysis"]')?.click();
-    // Scroll to Haldane card (smooth)
-    document.getElementById('hm-growth-chart')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function hmClearFbaSweep() {
-    hmFbaSweepData = null;
-    document.getElementById('ls-overlay-badge').style.display = 'none';
-    document.getElementById('ls-overlay-clear-btn').style.display = 'none';
-    document.getElementById('hm-fba-sweep-badge').style.display = 'none';
-    if (hmLastData) renderHaldaneCurve(hmLastData);
+function simClearFbaMarker() {
+    simFbaMarker = null;
+    simRecompute();
 }
 
 // ── Nelder-Mead minimiser (unconstrained, for ≤6 parameters) ─────────────────
@@ -1776,64 +2397,48 @@ function nelderMead(f, x0, maxIter = 2000, tol = 1e-9) {
     return { x: S[0], val: vals[0] };
 }
 
-// ── Calibrate Haldane/Höper parameters from FBA sweep ────────────────────────
-function hmCalibrateFromFBA() {
-    if (!lsLastData || !lsLastData.points) {
-        alert('Run a light sweep first — calibration fits the selected kinetic model to FBA predictions.');
+// ── Fit Höper parameters to FBA sweep ────────────────────────────────────────
+function simFitToFBA() {
+    if (!simFbaData || !simFbaData.points) {
+        alert('Run a light sweep first — calibration fits the Höper model to FBA predictions.');
         return;
     }
-    const alpha = parseFloat(document.getElementById('hm-calib-alpha')?.value) || 0.13;
-    const rawPts = lsLastData.points.filter(p => p.growth > 1e-4);
+    const alpha  = parseFloat(document.getElementById('sim-alpha')?.value) || 0.13;
+    const rawPts = simFbaData.points.filter(p => p.growth > 1e-4);
     if (rawPts.length < 4) {
         alert('Need at least 4 positive-growth sweep points for fitting.');
         return;
     }
-    // Convert photon flux (mmol·gDW⁻¹·h⁻¹) → incident light I₀ (µmol·m⁻²·s⁻¹)
     const pts = rawPts.map(p => ({ I: p.photon / (alpha * 3.6), mu: p.growth }));
 
-    const btn = document.getElementById('hm-calibrate-btn');
+    const btn = document.getElementById('sim-fit-btn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Fitting…';
 
-    // Use setTimeout to allow browser to repaint the spinner before heavy JS
     setTimeout(() => {
         try {
-            if (hmCurrentModel === 'haldane') {
-                // Log-space NM: [log(μ*), log(KA), log(KI)]
-                const res = nelderMead(([lmu, lKA, lKI]) => {
-                    const [mu, KA, KI] = [Math.exp(lmu), Math.exp(lKA), Math.exp(lKI)];
-                    return pts.reduce((s, { I, mu: obs }) =>
-                        s + (hmHaldaneGrowth(I, mu, KA, KI) - obs) ** 2, 0);
-                }, [Math.log(0.18), Math.log(100), Math.log(1500)]);
+            // Log-space Nelder-Mead for KL, Y_BM; linear kd (α held fixed from slider)
+            // ngam_photon=0: NGAM is already baked into FBA results via ATPM constraint
+            const res = nelderMead(([lKL, lY, kd]) => {
+                const [KL, Y] = [Math.exp(lKL), Math.exp(lY)];
+                return pts.reduce((s, { I, mu: obs }) =>
+                    s + (simHoperMu(I, 0, alpha, KL, Y, Math.max(0, kd), 0, 0) - obs) ** 2, 0);
+            }, [Math.log(119), Math.log(1.84), 0.07]);
 
-                const [mu, KA, KI] = res.x.map(Math.exp);
-                hmSetSlider('hm-mu-star', mu, 0.01, 0.50, 3);
-                hmSetSlider('hm-KA',      KA, 5,    500,  0);
-                hmSetSlider('hm-KI',      KI, 50,   5000, 0);
-            } else {
-                // Log-space NM for α, KL, Y_BM; linear kd
-                const res = nelderMead(([la, lKL, lY, kd]) => {
-                    const [a, KL, Y] = [Math.exp(la), Math.exp(lKL), Math.exp(lY)];
-                    return pts.reduce((s, { I, mu: obs }) =>
-                        s + (hmHoperGrowth(I, a, KL, Y, kd) - obs) ** 2, 0);
-                }, [Math.log(0.13), Math.log(119), Math.log(1.84), 0.07]);
-
-                const [la, lKL, lY, kd] = res.x;
-                hmSetSlider('hm-alpha', Math.exp(la),  0.01, 0.50, 2);
-                hmSetSlider('hm-KL',   Math.exp(lKL),  10,   500,  0);
-                hmSetSlider('hm-ybm',  Math.exp(lY),   0.5,  5.0,  2);
-                hmSetSlider('hm-kd',   Math.max(0, kd),0,    0.30, 3);
-            }
-            recomputeHaldane();
+            const [lKL, lY, kd] = res.x;
+            simSetSlider('sim-KL',  Math.exp(lKL),    10,    500,  0);
+            simSetSlider('sim-YBM', Math.exp(lY),      0.5,   5.0, 2);
+            simSetSlider('sim-kd',  Math.max(0, kd),   0,     0.5, 3);
+            simRecompute();
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa fa-magic"></i> Calibrate parameters from FBA sweep';
+            btn.innerHTML = '<i class="fa fa-magic"></i> Fit Y_BM only';
         }
     }, 20);
 }
 
 /** Set a range slider value (clamped) and update its display label. */
-function hmSetSlider(id, value, min, max, decimals) {
+function simSetSlider(id, value, min, max, decimals) {
     const clamped = Math.max(min, Math.min(max, value));
     const el = document.getElementById(id);
     if (el) {
@@ -1841,6 +2446,519 @@ function hmSetSlider(id, value, min, max, decimals) {
         const lbl = document.getElementById(id + '-val');
         if (lbl) lbl.textContent = clamped.toFixed(decimals);
     }
+}
+
+// ── Culture Productivity Simulator (Höper 2024) ───────────────────────────────
+
+/**
+ * Chemostat steady-state: for each D, bisect ρ_A such that simHoperMu(I₀,ρ_A,…)=D.
+ * μ is monotone decreasing in ρ_A (self-shading), so bisection is valid.
+ */
+function simComputeChemostat(p) {
+    const { I0, alpha, KL, YBM, kd, ngam_photon, Y_X } = p;
+    const steps  = 300;
+    const mu_max = simHoperMu(I0, 0, alpha, KL, YBM, kd, ngam_photon, 0);
+    const D_max  = Math.max(0, mu_max - 1e-4);
+    if (D_max <= 0) return { points: [], D_opt: 0, P_max: 0, D_max: 0 };
+
+    const points = [];
+    let D_opt = 0, P_max = 0;
+
+    for (let i = 1; i <= steps; i++) {
+        const D = (i / steps) * D_max;
+        // Bisect ρ_A: simHoperMu is monotone decreasing in ρ_A
+        let lo = 0, hi = 5000;
+        for (let k = 0; k < 80; k++) {
+            const mid = (lo + hi) / 2;
+            if (simHoperMu(I0, mid, alpha, KL, YBM, kd, ngam_photon, 0) > D) lo = mid; else hi = mid;
+        }
+        const rho_A  = (lo + hi) / 2;
+        const P_A    = rho_A * D * 24;
+        const P_prod = Y_X > 0 ? Y_X * rho_A * D * 24 : null;
+        points.push({ D, rho_A, P_A, P_prod });
+        if (P_A > P_max) { P_max = P_A; D_opt = D; }
+    }
+
+    return { points, D_opt, P_max, D_max };
+}
+
+/** Batch culture ODE: dρ_A/dt = simHoperMu(I₀, ρ, …) · ρ — integrated via RK4. */
+function simComputeBatch(p) {
+    const { I0, alpha, KL, YBM, kd, ngam_photon, rho0, t_end, Y_X } = p;
+    const steps = 600;
+    const dt    = t_end / steps;
+    let rho     = rho0;
+    let P_max = 0, t_Pmax = 0;
+    const points = [];
+
+    const f = r => simHoperMu(I0, Math.max(0, r), alpha, KL, YBM, kd, ngam_photon, 0) * Math.max(0, r);
+
+    for (let i = 0; i <= steps; i++) {
+        const t      = i * dt;
+        const mu     = simHoperMu(I0, rho, alpha, KL, YBM, kd, ngam_photon, 0);
+        const P_inst = Math.max(0, mu * rho);
+        const I_bot  = I0 * Math.exp(-alpha * rho);
+        const P_prod = Y_X > 0 ? Y_X * P_inst : null;
+
+        if (P_inst > P_max) { P_max = P_inst; t_Pmax = t; }
+        points.push({ t, rho, mu, P_inst, I_bot, P_prod });
+
+        if (i < steps) {
+            const k1 = f(rho);
+            const k2 = f(rho + 0.5 * dt * k1);
+            const k3 = f(rho + 0.5 * dt * k2);
+            const k4 = f(rho + dt * k3);
+            rho = Math.max(0, rho + (dt / 6) * (k1 + 2*k2 + 2*k3 + k4));
+        }
+    }
+
+    return { points, P_max, t_Pmax };
+}
+
+function simRenderChemostat(d) {
+    const ctx = document.getElementById('sim-chemo-chart')?.getContext('2d');
+    if (!ctx) return;
+    if (simChemoChart) { simChemoChart.destroy(); simChemoChart = null; }
+    const placeholder = document.getElementById('sim-prod-placeholder');
+    const chartWrap   = document.getElementById('sim-chemo-charts');
+    if (!d.points.length) {
+        if (placeholder) placeholder.style.display = '';
+        if (chartWrap)   chartWrap.style.display   = 'none';
+        return;
+    }
+    if (placeholder) placeholder.style.display = 'none';
+    if (chartWrap)   chartWrap.style.display   = '';
+
+    const p      = simGetParams();
+    const labels = d.points.map(pt => pt.D.toFixed(4));
+
+    let summaryHTML = `D<sub>opt</sub> ≈ <strong>${d.D_opt.toFixed(4)} h⁻¹</strong> &nbsp;|&nbsp; P<sub>A,max</sub> ≈ <strong>${d.P_max.toFixed(1)} gCDM·m⁻²·d⁻¹</strong>`;
+    if (simRefData?.mode === 'chemo' && simRefData.prodData?.points?.length) {
+        summaryHTML += ` &nbsp;|&nbsp; <span class="text-secondary">${simRefData.label}: ${simRefData.prodData.P_max.toFixed(1)} gCDM·m⁻²·d⁻¹</span>`;
+    }
+    const summary = document.getElementById('sim-chemo-summary');
+    if (summary) { summary.style.display = ''; summary.innerHTML = summaryHTML; }
+
+    const datasets = [
+        {
+            label: 'P_A (gCDM·m⁻²·d⁻¹)',
+            data: d.points.map(pt => pt.P_A),
+            borderColor: 'rgba(40,167,69,0.9)',
+            backgroundColor: 'rgba(40,167,69,0.08)',
+            fill: true, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y',
+        },
+        {
+            label: 'ρ_A (gCDM·m⁻²)',
+            data: d.points.map(pt => pt.rho_A),
+            borderColor: 'rgba(255,140,0,0.9)',
+            borderDash: [5, 3],
+            fill: false, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y2',
+        },
+    ];
+
+    if (simRefData?.mode === 'chemo' && simRefData.prodData?.points?.length) {
+        datasets.push({
+            label: `P_A — ${simRefData.label}`,
+            data: simRefData.prodData.points.map(pt => pt.P_A),
+            borderColor: 'rgba(120,120,120,0.7)',
+            borderDash: [6, 4],
+            fill: false, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y',
+        });
+    }
+
+    if (p.Y_X > 0 && d.points[0]?.P_prod != null) {
+        datasets.push({
+            label: `${p.productName || 'Product'} (mmol·m⁻²·d⁻¹)`,
+            data: d.points.map(pt => pt.P_prod),
+            borderColor: 'rgba(111,66,193,0.85)',
+            borderDash: [3, 3],
+            fill: false, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y',
+        });
+    }
+
+    simChemoChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
+                title: { display: true, text: 'Chemostat: Productivity & Biomass vs Dilution Rate', font: { size: 12 } },
+            },
+            scales: {
+                x:  { title: { display: true, text: 'Dilution rate D (h⁻¹)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+                y:  { title: { display: true, text: 'P_A (gCDM·m⁻²·d⁻¹)',   font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
+                y2: { title: { display: true, text: 'ρ_A (gCDM·m⁻²)',        font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+            }
+        }
+    });
+}
+
+function simRenderBatch(d) {
+    const placeholder = document.getElementById('sim-prod-placeholder');
+    const batchWrap   = document.getElementById('sim-batch-charts');
+    if (!d.points.length) {
+        if (placeholder) placeholder.style.display = '';
+        if (batchWrap)   batchWrap.style.display   = 'none';
+        return;
+    }
+    if (placeholder) placeholder.style.display = 'none';
+    if (batchWrap)   batchWrap.style.display   = '';
+
+    const pts    = d.points;
+    const p      = simGetParams();
+    const labels = pts.map(pt => pt.t.toFixed(1));
+
+    const summary = document.getElementById('sim-batch-summary');
+    if (summary) {
+        summary.style.display = '';
+        summary.innerHTML = `P<sub>A,max</sub> ≈ <strong>${d.P_max.toFixed(2)} gCDM·m⁻²·h⁻¹</strong> at t ≈ <strong>${d.t_Pmax.toFixed(1)} h</strong>`;
+    }
+
+    // Chart 1: biomass density + bottom light
+    if (simBatchDensityChart) { simBatchDensityChart.destroy(); simBatchDensityChart = null; }
+    const densDatasets = [
+        {
+            label: 'ρ_A (gCDM·m⁻²)',
+            data: pts.map(pt => pt.rho),
+            borderColor: 'rgba(255,140,0,0.9)',
+            fill: false, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y',
+        },
+        {
+            label: 'I_bottom (µmol·m⁻²·s⁻¹)',
+            data: pts.map(pt => pt.I_bot),
+            borderColor: 'rgba(255,193,7,0.85)',
+            borderDash: [4, 3],
+            fill: false, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y2',
+        },
+    ];
+    if (simRefData?.mode === 'batch' && simRefData.prodData?.points?.length) {
+        densDatasets.push({
+            label: `ρ_A — ${simRefData.label}`,
+            data: simRefData.prodData.points.map(pt => pt.rho),
+            borderColor: 'rgba(120,120,120,0.65)',
+            borderDash: [6, 4],
+            fill: false, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y',
+        });
+    }
+    simBatchDensityChart = new Chart(
+        document.getElementById('sim-batch-density-chart').getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: densDatasets },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
+                title: { display: true, text: 'Batch: Biomass density & Bottom light', font: { size: 12 } },
+            },
+            scales: {
+                x:  { title: { display: true, text: 'Time (h)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+                y:  { title: { display: true, text: 'ρ_A (gCDM·m⁻²)',           font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
+                y2: { title: { display: true, text: 'I_bottom (µmol·m⁻²·s⁻¹)', font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+            },
+        },
+    });
+
+    // Chart 2: productivity + growth rate
+    if (simBatchProdChart) { simBatchProdChart.destroy(); simBatchProdChart = null; }
+    const prodDatasets = [
+        {
+            label: 'P_A (gCDM·m⁻²·h⁻¹)',
+            data: pts.map(pt => pt.P_inst),
+            borderColor: 'rgba(40,167,69,0.9)',
+            backgroundColor: 'rgba(40,167,69,0.08)',
+            fill: true, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y',
+        },
+        {
+            label: 'μ (h⁻¹)',
+            data: pts.map(pt => pt.mu),
+            borderColor: 'rgba(0,123,255,0.8)',
+            fill: false, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y2',
+        },
+    ];
+    if (simRefData?.mode === 'batch' && simRefData.prodData?.points?.length) {
+        prodDatasets.push({
+            label: `P_A — ${simRefData.label}`,
+            data: simRefData.prodData.points.map(pt => pt.P_inst),
+            borderColor: 'rgba(120,120,120,0.65)',
+            borderDash: [6, 4],
+            fill: false, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y',
+        });
+    }
+    if (p.Y_X > 0 && pts[0]?.P_prod != null) {
+        prodDatasets.push({
+            label: `${p.productName || 'Product'} (mmol·m⁻²·h⁻¹)`,
+            data: pts.map(pt => pt.P_prod),
+            borderColor: 'rgba(111,66,193,0.85)',
+            borderDash: [3, 3],
+            fill: false, tension: 0.3, pointRadius: 0,
+            yAxisID: 'y',
+        });
+    }
+    simBatchProdChart = new Chart(
+        document.getElementById('sim-batch-prod-chart').getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: prodDatasets },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
+                title: { display: true, text: 'Batch: Productivity & Growth rate', font: { size: 12 } },
+            },
+            scales: {
+                x:  { title: { display: true, text: 'Time (h)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+                y:  { title: { display: true, text: 'P_A (gCDM·m⁻²·h⁻¹)', font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
+                y2: { title: { display: true, text: 'μ (h⁻¹)',              font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+            },
+        },
+    });
+}
+
+/** Load Höper 2024 / iRH783 defaults into sim-* sliders */
+function simLoadHoper() {
+    const defaults = [
+        ['sim-alpha',       'sim-alpha-val',       0.13],
+        ['sim-KL',          'sim-KL-val',           119],
+        ['sim-YBM',         'sim-YBM-val',          1.84],
+        ['sim-kd',          'sim-kd-val',           0.07],
+        ['sim-ngam-photon', 'sim-ngam-photon-val',  14.4],
+        ['sim-I0',          'sim-I0-val',            660],
+        ['sim-XA',          'sim-XA-val',             30],
+        ['sim-rho0',        'sim-rho0-val',           1.0],
+        ['sim-tend',        'sim-tend-val',           120],
+    ];
+    for (const [id, lblId, val] of defaults) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.value = Math.max(+(el.min || -Infinity), Math.min(+(el.max || Infinity), val));
+            const lbl = document.getElementById(lblId);
+            if (lbl) lbl.textContent = el.value;
+        }
+    }
+    simRecompute();
+}
+
+/** Reset medium composition sliders to Höper 2024 / BG-11 photoautotrophic defaults */
+function simLoadHoperMedium() {
+    // FBA exchange bounds (mmol·gDW⁻¹·h⁻¹): unconstrained for all nutrients except
+    // glucose and ammonium (0 = not supplied in standard BG-11 photoautotrophic conditions)
+    const medDefaults = [
+        ['med-co2',  'med-co2-val',  1000],   // CO₂ — unconstrained (Höper 2024 default)
+        ['med-no3',  'med-no3-val',  1000],   // NO₃⁻ — BG-11 is nitrogen-replete
+        ['med-nh4',  'med-nh4-val',     0],   // NH₄⁺ — not in standard BG-11
+        ['med-glc',  'med-glc-val',     0],   // Glucose — photoautotrophic
+        ['med-pi',   'med-pi-val',      1],   // Pi   — max slider; model needs ~0.11 at µ=0.155
+        ['med-so4',  'med-so4-val',     1],   // SO₄  — max slider; model needs ~0.029
+        ['med-fe2',  'med-fe2-val',   0.1],   // Fe   — max slider; model needs ~0.0012
+        ['med-mn2',  'med-mn2-val',   0.1],   // Mn   — max slider; model needs ~0.0005
+        ['med-zn2',  'med-zn2-val',   0.1],   // Zn   — max slider; model needs ~0.0005
+        ['med-cu2',  'med-cu2-val',   0.1],   // Cu   — max slider; model needs ~0.0005
+    ];
+    for (const [id, lblId, val] of medDefaults) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.value = Math.max(+(el.min || 0), Math.min(+(el.max || 1000), val));
+            const lbl = document.getElementById(lblId);
+            if (lbl) lbl.textContent = el.value;
+        }
+    }
+    // Also reset concentration panel BG-11 defaults and unit selectors
+    const concDefaults = {
+        'med-cc-co2': 5000,  'med-unit-co2': 'ppm_co2',   // 5000 ppm CO₂ (Höper 2024 / Zavřel 2019 sparging gas)
+        'med-cc-no3': 17.6,  'med-unit-no3': 'mmol_L',    // BG-11: 1.5 g/L NaNO₃
+        'med-cc-nh4': 0,     'med-unit-nh4': 'mmol_L',
+        'med-cc-glc': 0,     'med-unit-glc': 'mmol_L',
+        'med-cc-pi':  0.18,  'med-unit-pi':  'mmol_L',    // BG-11: 0.04 g/L K₂HPO₄
+        'med-cc-so4': 0.30,  'med-unit-so4': 'mmol_L',    // BG-11: MgSO₄·7H₂O
+        'med-cc-fe2': 0.020, 'med-unit-fe2': 'mmol_L',    // BG-11: ferric ammonium citrate
+        'med-cc-mn2': 0.009, 'med-unit-mn2': 'mmol_L',
+        'med-cc-zn2': 0.001, 'med-unit-zn2': 'mmol_L',
+        'med-cc-cu2': 3e-4,  'med-unit-cu2': 'mmol_L',
+    };
+    for (const [id, val] of Object.entries(concDefaults)) {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    }
+    medUpdateX();
+}
+
+function simPipelineStatus(msg) {
+    const el = document.getElementById('sim-pipeline-status');
+    if (!el) return;
+    el.style.display = msg ? '' : 'none';
+    el.innerHTML = msg ? '<i class="fa fa-spinner fa-spin"></i> ' + msg : '';
+}
+
+async function simRunPipeline() {
+    const btn = document.getElementById('sim-pipeline-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Running…';
+    simPipelineStatus('Step 1/2: FBA light sweep…');
+    try {
+        const d = await runLightSweep();
+        if (!d || d.error) throw new Error(d?.error || 'Light sweep failed');
+        simPipelineStatus('Step 2/2: Fitting Höper parameters…');
+        simFitToFBA();
+        await new Promise(r => setTimeout(r, 300));
+        simPipelineStatus('');
+        // Switch to Growth Curve tab to show the result
+        const growthTabLink = document.querySelector('[href="#sim-sub-light"]');
+        if (growthTabLink) $(growthTabLink).tab('show');
+        document.getElementById('sim-card')?.scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+        simPipelineStatus('');
+        alert('Pipeline error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-code-fork"></i> FBA sweep \u2192 Fit Y_BM \u2192 Update model';
+    }
+}
+
+function simAutoLabel() {
+    const genes = simKoGetGenes();
+    if (!genes.length) return 'WT';
+    return 'Δ' + genes.slice(0, 3).join(' Δ') + (genes.length > 3 ? '…' : '');
+}
+
+/** Return growth-curve points [{x:I, y:μ}] for current params */
+function simGrowthCurvePoints(p) {
+    const N = 200, Imax = Math.max(p.I0 * 2.2, 200);
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+        const I = (i / N) * Imax;
+        pts.push({ x: I, y: simHoperMu(I, p.XA, p.alpha, p.KL, p.YBM, p.kd, p.ngam_photon, 0) });
+    }
+    return pts;
+}
+
+function simSaveRef() {
+    const p       = simGetParams();
+    const prodData = simMode === 'chemo' ? simComputeChemostat(p) : simComputeBatch(p);
+    const gcPts   = simGrowthCurvePoints(p);
+    const label   = simAutoLabel();
+    simRefData = { mode: simMode, gcPts, prodData, label };
+
+    const lbl = document.getElementById('sim-ref-label');
+    if (lbl) lbl.textContent = label;
+    const badge = document.getElementById('sim-ref-badge');
+    if (badge) badge.style.display = '';
+    const clrBtn = document.getElementById('sim-clearref-btn');
+    if (clrBtn) clrBtn.style.display = '';
+    simRecompute();
+}
+
+function simClearRef() {
+    simRefData = null;
+    const badge = document.getElementById('sim-ref-badge');
+    if (badge) badge.style.display = 'none';
+    const clrBtn = document.getElementById('sim-clearref-btn');
+    if (clrBtn) clrBtn.style.display = 'none';
+    simRecompute();
+}
+
+/** Run FBA twice (WT then KO) and compare productivity */
+async function simCompareWTvsKO() {
+    const btn = document.getElementById('sim-compare-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Comparing…';
+    simPipelineStatus('WT sweep (1/4)…');
+
+    const savedKO = simKoGetGenes();
+    simKoClear();
+
+    try {
+        // ── WT run ──
+        const dWT = await runLightSweep();
+        if (!dWT || dWT.error) throw new Error(dWT?.error || 'WT sweep failed');
+        simPipelineStatus('Fitting WT kinetics (2/4)…');
+        simFitToFBA();
+        await new Promise(r => setTimeout(r, 300));
+        const pWT    = simGetParams();
+        const wtProd = simMode === 'chemo' ? simComputeChemostat(pWT) : simComputeBatch(pWT);
+        const wtGC   = simGrowthCurvePoints(pWT);
+        simRefData   = { mode: simMode, gcPts: wtGC, prodData: wtProd, label: 'WT' };
+        const lbl    = document.getElementById('sim-ref-label');
+        if (lbl) lbl.textContent = 'WT';
+        const badge  = document.getElementById('sim-ref-badge');
+        if (badge) badge.style.display = '';
+        const clrBtn = document.getElementById('sim-clearref-btn');
+        if (clrBtn) clrBtn.style.display = '';
+
+        // ── KO run ──
+        simKoSetGenes(savedKO);
+        simPipelineStatus('KO sweep (3/4)…');
+        const dKO = await runLightSweep();
+        if (!dKO || dKO.error) throw new Error(dKO?.error || 'KO sweep failed');
+        simPipelineStatus('Fitting KO kinetics & productivity (4/4)…');
+        simFitToFBA();
+        await new Promise(r => setTimeout(r, 300));
+
+        simPipelineStatus('');
+        simRecompute();
+        // Switch to Growth Curve tab to show the comparison
+        const growthTabLink2 = document.querySelector('[href="#sim-sub-light"]');
+        if (growthTabLink2) $(growthTabLink2).tab('show');
+        document.getElementById('sim-card')?.scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+        simKoSetGenes(savedKO);
+        simPipelineStatus('');
+        alert('Comparison error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-exchange"></i> Compare WT vs current KO set';
+    }
+}
+
+// ── Searchable reaction dropdown ──────────────────────────────────────────────
+function initRxnDropdown(searchId, dropdownId, hiddenId) {
+    const input    = document.getElementById(searchId);
+    const dropdown = document.getElementById(dropdownId);
+    const hidden   = document.getElementById(hiddenId);
+    if (!input || !dropdown || !hidden) return;
+
+    function refresh() {
+        const q = input.value.trim().toLowerCase();
+        if (!q) { dropdown.style.display = 'none'; return; }
+        const matches = allReactions.filter(r =>
+            r.id.toLowerCase().includes(q) || (r.name || '').toLowerCase().includes(q)
+        ).slice(0, 60);
+        if (!matches.length) { dropdown.style.display = 'none'; return; }
+        dropdown.innerHTML = matches.map(r =>
+            `<div class="rxn-item" data-id="${esc(r.id)}">` +
+            `<code>${esc(r.id)}</code> <span class="text-muted" style="font-size:0.9em;">${esc(r.name || '')}</span></div>`
+        ).join('');
+        dropdown.style.display = '';
+        dropdown.querySelectorAll('.rxn-item').forEach(item => {
+            item.addEventListener('mousedown', e => {
+                e.preventDefault();
+                hidden.value   = item.dataset.id;
+                input.value    = item.dataset.id;
+                dropdown.style.display = 'none';
+            });
+        });
+    }
+
+    input.addEventListener('input', refresh);
+    input.addEventListener('focus', refresh);
+    input.addEventListener('blur', () => setTimeout(() => { dropdown.style.display = 'none'; }, 180));
+}
+
+function initAllRxnDropdowns() {
+    initRxnDropdown('pe-rxn-search', 'pe-rxn-dropdown', 'pe-rxn');
+    initRxnDropdown('en-rxn-search', 'en-rxn-dropdown', 'en-rxn');
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────

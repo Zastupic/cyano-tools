@@ -1,8 +1,146 @@
 import os
+import json
 import threading
 import urllib.request
 import urllib.parse
 from flask import Blueprint, render_template, jsonify, request
+
+# ── External gene annotation cache ───────────────────────────────────────────
+# Populated in a background thread on first /api/metabolic/genes request.
+# Structure: { locus_tag: { 'product': str, 'gene_name': str,
+#                            'uniprot_id': str, 'function': str,
+#                            'go_terms': [str], 'ec': str } }
+_EXT_ANNOTATIONS: dict = {}
+_EXT_ANN_LOCK    = threading.Lock()
+_EXT_ANN_LOADED  = False
+_EXT_ANN_THREAD  = None   # background loader thread
+
+
+def _start_annotation_loading(locus_uniprot_map):
+    """Start background thread to fetch annotations (no-op if already running/done)."""
+    global _EXT_ANN_THREAD
+    with _EXT_ANN_LOCK:
+        if _EXT_ANN_LOADED:
+            return
+        if _EXT_ANN_THREAD and _EXT_ANN_THREAD.is_alive():
+            return
+        t = threading.Thread(
+            target=_run_annotation_loader,
+            args=(locus_uniprot_map,),
+            daemon=True,
+        )
+        _EXT_ANN_THREAD = t
+        t.start()
+
+
+def _run_annotation_loader(locus_uniprot_map):
+    """Background thread: fetch KEGG gene names then UniProt protein data."""
+    global _EXT_ANN_LOADED
+    print('[metabolic] Annotation loading started (background)')
+    _fetch_kegg_gene_list()
+    _fetch_uniprot_by_accessions(locus_uniprot_map)
+    _EXT_ANN_LOADED = True
+    print(f'[metabolic] Annotation loading done — {len(_EXT_ANNOTATIONS)} entries')
+
+
+def _fetch_kegg_gene_list():
+    """Single request to KEGG REST: GET /list/syn  →  all Synechocystis gene names.
+    Actual format (4 tab-separated columns):
+        syn:sll1212\tCDS\tcomplement(5534..6622)\trfbD; GDP-D-mannose dehydratase
+        syn:slr0612\tCDS\t937..1494\thypothetical protein
+    Description is in parts[3]; gene symbol (if any) precedes ';'.
+    """
+    try:
+        url = 'https://rest.kegg.jp/list/syn'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            text = resp.read().decode('utf-8')
+        for line in text.splitlines():
+            parts = line.strip().split('\t')
+            if len(parts) < 4:
+                continue
+            locus = parts[0].replace('syn:', '').strip()
+            desc  = parts[3].strip()   # gene_symbol; product  OR just product
+            if ';' in desc:
+                gene_sym, product = desc.split(';', 1)
+                gene_sym = gene_sym.split(',')[0].strip()
+                product  = product.strip()
+            else:
+                gene_sym = ''
+                product  = desc
+            # Skip generic descriptions
+            if product.lower() in ('hypothetical protein', 'unknown protein', 'cds', ''):
+                product = ''
+            entry = _EXT_ANNOTATIONS.setdefault(locus, {})
+            if not entry.get('gene_name') and gene_sym:
+                entry['gene_name'] = gene_sym
+            if not entry.get('product') and product:
+                entry['product']   = product
+    except Exception as exc:
+        print(f'[metabolic] KEGG gene list fetch failed: {exc}')
+
+
+def _fetch_uniprot_by_accessions(locus_uniprot_map):
+    """Fetch UniProt entries by exact accession IDs from the model.
+    locus_uniprot_map: {locus_tag: uniprot_accession}
+    Queries in chunks of 100 to avoid URL length limits.
+    """
+    uniprot_to_locus = {v: k for k, v in locus_uniprot_map.items() if v}
+    accessions = list(uniprot_to_locus.keys())
+    if not accessions:
+        return
+    fields = 'gene_names,protein_name,cc_function,go_id,ec'
+    CHUNK  = 100
+    for i in range(0, len(accessions), CHUNK):
+        chunk = accessions[i:i + CHUNK]
+        query = ' OR '.join(f'accession:{a}' for a in chunk)
+        url   = (f'https://rest.uniprot.org/uniprotkb/search'
+                 f'?query={urllib.parse.quote(query)}&format=json'
+                 f'&fields={fields}&size={CHUNK}')
+        try:
+            req = urllib.request.Request(url, headers={
+                'User-Agent': 'Mozilla/5.0',
+                'Accept':     'application/json',
+            })
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read())
+        except Exception as exc:
+            print(f'[metabolic] UniProt batch fetch failed (chunk {i}): {exc}')
+            continue
+
+        for entry in data.get('results', []):
+            uid   = entry.get('primaryAccession', '')
+            locus = uniprot_to_locus.get(uid, '')
+            if not locus:
+                continue
+
+            prot_obj  = entry.get('proteinDescription', {})
+            rec_name  = prot_obj.get('recommendedName', {})
+            full_name = (rec_name.get('fullName', {}).get('value', '')
+                         or next((s.get('fullName', {}).get('value', '')
+                                  for s in prot_obj.get('submittedNames', [])), ''))
+
+            func_text = ''
+            for cmnt in entry.get('comments', []):
+                if cmnt.get('commentType') == 'FUNCTION':
+                    for txt in cmnt.get('texts', []):
+                        func_text = txt.get('value', '')[:300]
+                        break
+                if func_text:
+                    break
+
+            go_terms = [x['id'] for x in entry.get('uniProtKBCrossReferences', [])
+                        if x.get('database') == 'GO']
+            ec = rec_name.get('ecNumbers', [{}])[0].get('value', '') if rec_name else ''
+
+            entry_data = _EXT_ANNOTATIONS.setdefault(locus, {})
+            entry_data.update({
+                'uniprot_id':   uid,
+                'protein_name': full_name,
+                'function':     func_text,
+                'go_terms':     go_terms[:10],
+                'ec':           ec,
+            })
 
 # ── Curated KEGG pathway list for Synechocystis PCC 6803 ─────────────────────
 KEGG_PATHWAYS = [
@@ -245,14 +383,50 @@ def metabolites():
     } for met in m.metabolites])
 
 
+@metabolic_bp.route('/api/metabolic/gene_annotations_status')
+def gene_annotations_status():
+    loading = bool(_EXT_ANN_THREAD and _EXT_ANN_THREAD.is_alive())
+    return jsonify({'loaded': _EXT_ANN_LOADED, 'loading': loading,
+                    'count': len(_EXT_ANNOTATIONS)})
+
+
 @metabolic_bp.route('/api/metabolic/genes')
 def genes():
     m = _get_model()
-    return jsonify([{
-        'id':        g.id,
-        'name':      g.name,
-        'reactions': [r.id for r in g.reactions],
-    } for g in m.genes])
+    # Build {locus: uniprot_id} map from model and start background annotation loader
+    locus_uniprot = {g.id: g.annotation.get('uniprot', '')
+                     for g in m.genes if g.annotation.get('uniprot')}
+    _start_annotation_loading(locus_uniprot)  # non-blocking; no-op if already running
+    result = []
+    for g in m.genes:
+        subsystems = sorted({_get_subsystem(r) for r in g.reactions})
+        ann     = dict(g.annotation)
+        kegg_id = ann.get('kegg.genes', '')
+        if kegg_id.startswith('syn:'):
+            kegg_id = kegg_id[4:]
+        rxn_names = sorted({r.name for r in g.reactions if r.name and r.name != r.id})
+        ext       = _EXT_ANNOTATIONS.get(g.id, {})
+
+        # Best protein name: UniProt protein_name > KEGG product > model name
+        protein_name = (ext.get('protein_name') or ext.get('product')
+                        or (g.name if g.name and not g.name.startswith('G_') else '')
+                        or '')
+
+        result.append({
+            'id':           g.id,
+            'name':         protein_name,
+            'gene_name':    ext.get('gene_name', ''),   # e.g. "psbA"
+            'reactions':    [r.id for r in g.reactions],
+            'rxn_names':    rxn_names,
+            'subsystems':   subsystems,
+            'kegg_id':      kegg_id,
+            'uniprot_id':   ext.get('uniprot_id', ''),
+            'function':     ext.get('function', ''),
+            'go_terms':     ext.get('go_terms', []),
+            'ec':           ext.get('ec', ''),
+            'annotation':   ann,
+        })
+    return jsonify(result)
 
 
 # ── Subsystem graph (bipartite: metabolites ↔ reactions) ─────────────────────
@@ -331,8 +505,13 @@ def run_fba():
 def gene_knockout(gene_id):
     data = request.json or {}
     constrained = bool(data.get('constrained', False))
-    m = _get_model(constrained).copy()
 
+    # WT reference (same constraints, no KO)
+    m_wt = _get_model(constrained).copy()
+    sol_wt = m_wt.optimize()
+    wt_rate = round(sol_wt.objective_value, 6) if sol_wt.status == 'optimal' else 0.0
+
+    m = _get_model(constrained).copy()
     try:
         m.genes.get_by_id(gene_id).knock_out()
     except KeyError:
@@ -340,8 +519,9 @@ def gene_knockout(gene_id):
 
     sol = m.optimize()
     return jsonify({
-        'status':    sol.status,
-        'objective': round(sol.objective_value, 6) if sol.status == 'optimal' else None,
+        'status':       sol.status,
+        'objective':    round(sol.objective_value, 6) if sol.status == 'optimal' else None,
+        'wt_objective': wt_rate,
     })
 
 
@@ -470,6 +650,18 @@ def light_sweep():
     i_max       = float(data.get('i_max', 1200))
     steps       = min(int(data.get('steps', 40)), 80)
 
+    # Höper 2024 photodamage: optional ATP drain proportional to photon flux.
+    # fba_kd (mmol ATP / mmol photon): sets ATPM lower bound to fba_kd * J_I at each step.
+    # alpha (m²/gCDW) and KL (mmol/gCDW/h): kinetic parameters for quantum yield correction.
+    # When alpha and KL are provided, the photon exchange reaction is bounded by J*_I
+    # = KL * J_I / (KL + J_I) (Höper 2024 Eq. 5), while photodamage still uses raw J_I.
+    fba_kd_raw = data.get('fba_kd')
+    fba_kd: float = float(fba_kd_raw) if fba_kd_raw is not None else 0.0
+    alpha_raw = data.get('alpha')
+    KL_raw    = data.get('KL')
+    fba_alpha: float = float(alpha_raw) if alpha_raw is not None else 0.0
+    fba_KL:    float = float(KL_raw)    if KL_raw    is not None else 0.0
+
     m = _get_model(constrained).copy()
     _apply_custom_reactions(m, data.get('custom_reactions', []))
     _apply_knockouts(m, data.get('knockout_genes', []))
@@ -485,14 +677,34 @@ def light_sweep():
     o2_id  = _find_rxn(m, ('EX_o2_e',  'EX_O2_e',  'R_EX_o2_e'))
     co2_id = _find_rxn(m, ('EX_co2_e', 'EX_CO2_e', 'R_EX_co2_e'))
 
+    # Find ATPM reaction for photodamage drain
+    atpm_id   = _find_rxn(m, ('ATPM', 'atpm', 'R_ATPM')) if fba_kd > 0.0 else None
+    atpm_rxn  = m.reactions.get_by_id(atpm_id) if atpm_id else None
+    atpm_base: float = float(atpm_rxn.lower_bound) if atpm_rxn else 0.0
+
     ph_rxn = m.reactions.get_by_id(photon_id)
     results = []
     step_size = (i_max - i_min) / max(steps - 1, 1)
 
     for i in range(steps):
-        photon_val = i_min + i * step_size
-        ph_rxn.lower_bound = -abs(photon_val)
+        photon_val = i_min + i * step_size   # J_I (mmol photons/gDW/h)
+
+        # Apply quantum yield correction (Höper 2024 Eq. 5): J*_I = KL * J_I / (KL + J_I)
+        # The photon exchange reaction is bounded by J*_I when KL is provided.
+        if fba_alpha > 0 and fba_KL > 0:
+            j_star = fba_KL * photon_val / (fba_KL + photon_val)
+        else:
+            j_star = photon_val
+
+        ph_rxn.lower_bound = -abs(j_star)
         ph_rxn.upper_bound = 0
+
+        if atpm_rxn is not None:
+            # Photodamage ATP drain uses raw J_I (not J*_I), matching Höper 2024 GitHub code.
+            new_lb = atpm_base + fba_kd * photon_val
+            # Guard: lower_bound must not exceed upper_bound
+            atpm_rxn.lower_bound = min(new_lb, atpm_rxn.upper_bound)
+
         sol = m.optimize()
         if sol.status == 'optimal':
             growth   = sol.objective_value
@@ -511,7 +723,8 @@ def light_sweep():
             'yield':  round(yield_v,  8),
         })
 
-    return jsonify({'points': results, 'photon_rxn': photon_id, 'o2_rxn': o2_id})
+    return jsonify({'points': results, 'photon_rxn': photon_id, 'o2_rxn': o2_id,
+                    'fba_kd': fba_kd, 'atpm_rxn': atpm_id})
 
 
 # ── Production envelope ────────────────────────────────────────────────────────
