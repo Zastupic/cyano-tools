@@ -1,0 +1,715 @@
+[
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 297,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15978",
+  "id": "C15978",
+  "label": "2-Methyl-1-hydroxybutyl-ThPP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15973",
+  "id": "C15973",
+  "label": "Enzyme N6-(dihydrolipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 405,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15973",
+  "id": "C15973",
+  "label": "Enzyme N6-(dihydrolipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 322,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15972",
+  "id": "C15972",
+  "label": "Enzyme N6-(lipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 405,
+  "cy": 322,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15972",
+  "id": "C15972",
+  "label": "Enzyme N6-(lipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 297,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15976",
+  "id": "C15976",
+  "label": "2-Methyl-1-hydroxypropyl-ThPP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 658,
+  "cy": 281,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00068",
+  "id": "C00068",
+  "label": "Thiamin diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 481,
+  "cy": 281,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00068",
+  "id": "C00068",
+  "label": "Thiamin diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 128,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15973",
+  "id": "C15973",
+  "label": "Enzyme N6-(dihydrolipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 128,
+  "cy": 322,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15972",
+  "id": "C15972",
+  "label": "Enzyme N6-(lipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 204,
+  "cy": 281,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00068",
+  "id": "C00068",
+  "label": "Thiamin diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 162,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00123",
+  "id": "C00123",
+  "label": "L-Leucine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 228,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00233",
+  "id": "C00233",
+  "label": "4-Methyl-2-oxopentanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 366,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15975",
+  "id": "C15975",
+  "label": "[Dihydrolipoyllysine-residue (2-methylpropanoyl)transferase] S-(3-methylbutanoyl)dihydrolipoyllysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02939",
+  "id": "C02939",
+  "label": "3-Methylbutanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 526,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03069",
+  "id": "C03069",
+  "label": "3-Methylcrotonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 75,
+  "cy": 526,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05998",
+  "id": "C05998",
+  "label": "3-Hydroxyisovaleryl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03231",
+  "id": "C03231",
+  "label": "3-Methylglutaconyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 100,
+  "cy": 684,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00164",
+  "id": "C00164",
+  "label": "Acetoacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 100,
+  "cy": 749,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00332",
+  "id": "C00332",
+  "label": "Acetoacetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 241,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 245,
+  "cy": 914,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00091",
+  "id": "C00091",
+  "label": "Succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 329,
+  "cy": 755,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03284",
+  "id": "C03284",
+  "label": "L-3-Aminoisobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 755,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06002+C00349",
+  "id": "C06002",
+  "label": "(S)-Methylmalonate semialdehyde), C00349 (2-Methyl-3-oxopropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 847,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02170",
+  "id": "C02170",
+  "label": "Methylmalonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 914,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01213",
+  "id": "C01213",
+  "label": "(R)-Methylmalonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 914,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00683",
+  "id": "C00683",
+  "label": "(S)-Methylmalonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 755,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00100",
+  "id": "C00100",
+  "label": "Propanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 667,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03344",
+  "id": "C03344",
+  "label": "2-Methylacetoacetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 526,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03345",
+  "id": "C03345",
+  "label": "2-Methylbut-2-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 300,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05996",
+  "id": "C05996",
+  "label": "Branched chain fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00630",
+  "id": "C00630",
+  "label": "2-Methylpropanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 526,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03460",
+  "id": "C03460",
+  "label": "2-Methylprop-2-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 603,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06000",
+  "id": "C06000",
+  "label": "(S)-3-Hydroxyisobutyryl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 667,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06001",
+  "id": "C06001",
+  "label": "(S)-3-Hydroxyisobutyrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 162,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00183",
+  "id": "C00183",
+  "label": "L-Valine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 228,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00141",
+  "id": "C00141",
+  "label": "3-Methyl-2-oxobutanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 366,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15977",
+  "id": "C15977",
+  "label": "[Dihydrolipoyllysine-residue (2-methylpropanoyl)transferase] S-(2-methylpropanoyl)dihydrolipoyllysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 162,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00407",
+  "id": "C00407",
+  "label": "L-Isoleucine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 228,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00671",
+  "id": "C00671",
+  "label": "(S)-3-Methyl-2-oxopentanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 366,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15979",
+  "id": "C15979",
+  "label": "[Dihydrolipoyllysine-residue (2-methylpropanoyl)transferase] S-(2-methylbutanoyl)dihydrolipoyllysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15980",
+  "id": "C15980",
+  "label": "(S)-2-Methylbutanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 603,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04405",
+  "id": "C04405",
+  "label": "(2S,3S)-3-Hydroxy-2-methylbutanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 75,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20827",
+  "id": "C20827",
+  "label": "3-Hydroxyisovalerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 329,
+  "cy": 791,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01205",
+  "id": "C01205",
+  "label": "(R)-3-Amino-2-methylpropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 648,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00356",
+  "id": "C00356",
+  "label": "(S)-3-Hydroxy-3-methylglutaryl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 297,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15974",
+  "id": "C15974",
+  "label": "3-Methyl-1-hydroxybutyl-ThPP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 561,
+  "y1": 352,
+  "x2": 607,
+  "y2": 369,
+  "url": "/dbget-bin/www_bget?syn:slr1096",
+  "id": "slr1096",
+  "label": "slr1096 (phdD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1096",
+    "product": "dihydrolipoamide dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 383,
+  "y1": 352,
+  "x2": 429,
+  "y2": 369,
+  "url": "/dbget-bin/www_bget?syn:slr1096",
+  "id": "slr1096",
+  "label": "slr1096 (phdD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1096",
+    "product": "dihydrolipoamide dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 106,
+  "y1": 352,
+  "x2": 152,
+  "y2": 369,
+  "url": "/dbget-bin/www_bget?syn:slr1096",
+  "id": "slr1096",
+  "label": "slr1096 (phdD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1096",
+    "product": "dihydrolipoamide dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 156,
+  "y1": 741,
+  "x2": 202,
+  "y2": 758,
+  "url": "/dbget-bin/www_bget?syn:slr1993",
+  "id": "slr1993",
+  "label": "slr1993 (thl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1993",
+    "product": "acetyl coenzyme A acetyltransferase (thiolase)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 420,
+  "y1": 184,
+  "x2": 466,
+  "y2": 201,
+  "url": "/dbget-bin/www_bget?syn:slr0032",
+  "id": "slr0032",
+  "label": "slr0032 (ilvE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0032",
+    "product": "branched-chain amino acid aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 597,
+  "y1": 184,
+  "x2": 643,
+  "y2": 201,
+  "url": "/dbget-bin/www_bget?syn:slr0032",
+  "id": "slr0032",
+  "label": "slr0032 (ilvE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0032",
+    "product": "branched-chain amino acid aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 395,
+  "y1": 805,
+  "x2": 441,
+  "y2": 822,
+  "url": "/dbget-bin/www_bget?syn:slr0091",
+  "id": "slr0091",
+  "label": "slr0091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0091",
+    "product": "aldehyde dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 118,
+  "y1": 184,
+  "x2": 164,
+  "y2": 201,
+  "url": "/dbget-bin/www_bget?syn:slr0032",
+  "id": "slr0032",
+  "label": "slr0032 (ilvE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0032",
+    "product": "branched-chain amino acid aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 421,
+  "y1": 693,
+  "x2": 467,
+  "y2": 710,
+  "url": "/dbget-bin/www_bget?syn:slr0229",
+  "id": "slr0229",
+  "label": "slr0229 (mmsB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0229",
+    "product": "3-hydroxyisobutyrate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 669,
+  "y1": 896,
+  "x2": 820,
+  "y2": 930,
+  "url": "/kegg-bin/show_pathway?map00522",
+  "id": "map00522:",
+  "label": "map00522: Biosynthesis of 12-, 14- and 16-membered macrolides",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 693,
+  "y1": 934,
+  "x2": 820,
+  "y2": 968,
+  "url": "/kegg-bin/show_pathway?map01056",
+  "id": "map01056:",
+  "label": "map01056: Biosynthesis of type II polyketide backbone",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 197,
+  "y1": 34,
+  "x2": 584,
+  "y2": 59,
+  "url": "/dbget-bin/www_bget?syn00280",
+  "id": "syn00280",
+  "label": "syn00280: Valine, leucine and isoleucine degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 208,
+  "y1": 839,
+  "x2": 284,
+  "y2": 864,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 293,
+  "y1": 830,
+  "x2": 365,
+  "y2": 864,
+  "url": "/kegg-bin/show_pathway?syn00240",
+  "id": "syn00240",
+  "label": "syn00240: Pyrimidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 505,
+  "y1": 778,
+  "x2": 578,
+  "y2": 812,
+  "url": "/kegg-bin/show_pathway?syn00640",
+  "id": "syn00640",
+  "label": "syn00640: Propanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 298,
+  "y1": 87,
+  "x2": 425,
+  "y2": 121,
+  "url": "/kegg-bin/show_pathway?syn00290",
+  "id": "syn00290",
+  "label": "syn00290: Valine, leucine and isoleucine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 244,
+  "y1": 631,
+  "x2": 358,
+  "y2": 665,
+  "url": "/kegg-bin/show_pathway?syn00900",
+  "id": "syn00900",
+  "label": "syn00900: Terpenoid backbone biosynthesis",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,577 @@
+[
+ {
+  "type": "circ",
+  "cx": 410,
+  "cy": 314,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00082",
+  "id": "C00082",
+  "label": "L-Tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 410,
+  "cy": 394,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15809",
+  "id": "C15809",
+  "label": "Iminoglycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 311,
+  "cy": 404,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11437",
+  "id": "C11437",
+  "label": "1-Deoxy-D-xylulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 321,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15814",
+  "id": "C15814",
+  "label": "Thiocarboxy-[sulfur-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 260,
+  "cy": 321,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15813",
+  "id": "C15813",
+  "label": "Adenylyl-[sulfur-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 275,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15812",
+  "id": "C15812",
+  "label": "[Enzyme]-S-sulfanylcysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 165,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15811",
+  "id": "C15811",
+  "label": "[Enzyme]-cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 185,
+  "cy": 254,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 150,
+  "cy": 320,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15810",
+  "id": "C15810",
+  "label": "Sulfur-carrier protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 199,
+  "cy": 157,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03373",
+  "id": "C03373",
+  "label": "Aminoimidazole ribotide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 56,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01279",
+  "id": "C01279",
+  "label": "4-Amino-5-hydroxymethyl-2-methylpyrimidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 316,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04556",
+  "id": "C04556",
+  "label": "4-Amino-2-methyl-5-(phosphooxymethyl)pyrimidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 542,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04752",
+  "id": "C04752",
+  "label": "4-Amino-5-hydroxymethyl-2-methylpyrimidine diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 201,
+  "cy": 404,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 600,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04327",
+  "id": "C04327",
+  "label": "4-Methyl-5-(2-phosphooxyethyl)thiazole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 622,
+  "cy": 600,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01081",
+  "id": "C01081",
+  "label": "Thiamin monophosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 835,
+  "cy": 739,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02892",
+  "id": "C02892",
+  "label": "Thiamine acetic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 600,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00068",
+  "id": "C00068",
+  "label": "Thiamin diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 891,
+  "cy": 600,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03028",
+  "id": "C03028",
+  "label": "Thiamin triphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 622,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00378",
+  "id": "C00378",
+  "label": "Thiamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 725,
+  "cy": 739,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05856",
+  "id": "C05856",
+  "label": "Thiamine aldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 600,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04294",
+  "id": "C04294",
+  "label": "5-(2-Hydroxyethyl)-4-methylthiazole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 164,
+  "cy": 509,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 535,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00003",
+  "id": "C00003",
+  "label": "NAD+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 316,
+  "cy": 100,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00018",
+  "id": "C00018",
+  "label": "Pyridoxal phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 474,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20246",
+  "id": "C20246",
+  "label": "2-[(2R,5Z)-2-Carboxy-4-methylthiazol-5(2H)-ylidene]ethyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 491,
+  "cy": 314,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 535,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20247",
+  "id": "C20247",
+  "label": "2-(2-Carboxy-4-methylthiazol-5-yl)ethyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 201,
+  "cy": 372,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 279,
+  "cy": 535,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20784",
+  "id": "C20784",
+  "label": "ADP-5-ethyl-4-methylthiazole-2-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 541,
+  "cy": 739,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19872",
+  "id": "C19872",
+  "label": "N-Formyl-4-amino-5-aminomethyl-2-methylpyrimidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 739,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20267",
+  "id": "C20267",
+  "label": "4-Amino-5-aminomethyl-2-methylpyrimidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 811,
+  "y1": 602,
+  "x2": 857,
+  "y2": 619,
+  "url": "/dbget-bin/www_bget?syn:sll1059+syn:sll1815",
+  "id": "sll1059",
+  "label": "sll1059 (adk), sll1815 (adk)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1059",
+    "product": "adenylate kinase"
+   },
+   {
+    "locus": "sll1815",
+    "product": "adenylate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 680,
+  "y1": 592,
+  "x2": 726,
+  "y2": 609,
+  "url": "/dbget-bin/www_bget?syn:slr1787",
+  "id": "slr1787",
+  "label": "slr1787",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1787",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 599,
+  "y1": 642,
+  "x2": 645,
+  "y2": 659,
+  "url": "/dbget-bin/www_bget?syn:sll0898",
+  "id": "sll0898",
+  "label": "sll0898",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0898",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 347,
+  "y1": 422,
+  "x2": 393,
+  "y2": 439,
+  "url": "/dbget-bin/www_bget?syn:slr0633",
+  "id": "slr0633",
+  "label": "slr0633 (thiG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0633",
+    "product": "ThiG protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 199,
+  "y1": 275,
+  "x2": 245,
+  "y2": 292,
+  "url": "/dbget-bin/www_bget?syn:sll0704+syn:slr0387",
+  "id": "sll0704",
+  "label": "sll0704 (nifS), slr0387 (nifS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0704",
+    "product": "NifS protein"
+   },
+   {
+    "locus": "slr0387",
+    "product": "NifS protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 238,
+  "y1": 397,
+  "x2": 284,
+  "y2": 414,
+  "url": "/dbget-bin/www_bget?syn:sll1945",
+  "id": "sll1945",
+  "label": "sll1945",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1945",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 554,
+  "y1": 592,
+  "x2": 600,
+  "y2": 609,
+  "url": "/dbget-bin/www_bget?syn:sll0635",
+  "id": "sll0635",
+  "label": "sll0635 (thiE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0635",
+    "product": "thiamin biosynthetic bifunctional enzyme"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 236,
+  "y1": 149,
+  "x2": 282,
+  "y2": 166,
+  "url": "/dbget-bin/www_bget?syn:slr0118",
+  "id": "slr0118",
+  "label": "slr0118 (thiC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0118",
+    "product": "ThiC protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 554,
+  "y1": 527,
+  "x2": 600,
+  "y2": 544,
+  "url": "/dbget-bin/www_bget?syn:sll0635",
+  "id": "sll0635",
+  "label": "sll0635 (thiE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0635",
+    "product": "thiamin biosynthetic bifunctional enzyme"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 680,
+  "y1": 557,
+  "x2": 726,
+  "y2": 574,
+  "url": "/dbget-bin/www_bget?syn:sll0898",
+  "id": "sll0898",
+  "label": "sll0898",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0898",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 455,
+  "y1": 228,
+  "x2": 528,
+  "y2": 262,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 373,
+  "y1": 228,
+  "x2": 448,
+  "y2": 262,
+  "url": "/kegg-bin/show_pathway?syn00400",
+  "id": "syn00400",
+  "label": "syn00400: Phenylalanine, tyrosine and tryptophan biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 227,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00730",
+  "id": "syn00730",
+  "label": "syn00730: Thiamine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 79,
+  "y1": 392,
+  "x2": 150,
+  "y2": 417,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 30,
+  "y1": 144,
+  "x2": 138,
+  "y2": 169,
+  "url": "/kegg-bin/show_pathway?syn00230",
+  "id": "syn00230",
+  "label": "syn00230: Purine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 114,
+  "y1": 88,
+  "x2": 254,
+  "y2": 113,
+  "url": "/kegg-bin/show_pathway?syn00750",
+  "id": "syn00750",
+  "label": "syn00750: Vitamin B6 metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 74,
+  "y1": 237,
+  "x2": 145,
+  "y2": 271,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ }
+]

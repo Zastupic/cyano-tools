@@ -1,0 +1,569 @@
+[
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22078",
+  "id": "C22078",
+  "label": "6-Sulfo-beta-D-quinovose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13508",
+  "id": "C13508",
+  "label": "Sulfoquinovosyldiacylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22077",
+  "id": "C22077",
+  "label": "6-Sulfo-alpha-D-quinovose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20830",
+  "id": "C20830",
+  "label": "6-Deoxy-6-sulfo-D-fructose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 729,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20831",
+  "id": "C20831",
+  "label": "6-Deoxy-6-sulfo-D-fructose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 839,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21181",
+  "id": "C21181",
+  "label": "(2S)-3-Sulfolactaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21064",
+  "id": "C21064",
+  "label": "6-Deoxy-6-sulfo-D-glucono-1,5-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 729,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21182",
+  "id": "C21182",
+  "label": "6-Deoxy-6-sulfo-D-gluconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 839,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21180",
+  "id": "C21180",
+  "label": "2-Dehydro-3,6-dideoxy-6-sulfo-D-gluconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 977,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22383",
+  "id": "C22383",
+  "label": "(2S)-2,3-Dihydroxypropane-1-sulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1087,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22384",
+  "id": "C22384",
+  "label": "3-Oxopropane-1-sulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1087,
+  "cy": 235,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05235",
+  "id": "C05235",
+  "label": "Hydroxyacetone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 839,
+  "cy": 391,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11499",
+  "id": "C11499",
+  "label": "(S)-3-Sulfolactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 298,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22508",
+  "id": "C22508",
+  "label": "6-Dehydro-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 839,
+  "cy": 468,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05528",
+  "id": "C05528",
+  "label": "3-Sulfopyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 839,
+  "cy": 545,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11537",
+  "id": "C11537",
+  "label": "(2R)-3-Sulfolactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 839,
+  "cy": 632,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1063,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00094",
+  "id": "C00094",
+  "label": "Sulfite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 909,
+  "cy": 606,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11481",
+  "id": "C11481",
+  "label": "HSO3-",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 977,
+  "cy": 545,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19675",
+  "id": "C19675",
+  "label": "(R)-2,3-Dihydroxypropane-1-sulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 389,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22510",
+  "id": "C22510",
+  "label": "4-Deoxy-4-sulfo-D-erythrose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 469,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22511",
+  "id": "C22511",
+  "label": "4-Deoxy-4-sulfo-D-erythrulose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 692,
+  "cy": 519,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00231",
+  "id": "C00231",
+  "label": "D-Xylulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 549,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00593",
+  "id": "C00593",
+  "label": "Sulfoacetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 629,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05123",
+  "id": "C05123",
+  "label": "2-Hydroxyethanesulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 298,
+  "cy": 399,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00031",
+  "id": "C00031",
+  "label": "D-Glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1197,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23079",
+  "id": "C23079",
+  "label": "3-Hydroxypropane-1-sulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1087,
+  "cy": 399,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23080",
+  "id": "C23080",
+  "label": "3-Sulfopropionyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1197,
+  "cy": 399,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23081",
+  "id": "C23081",
+  "label": "3-Sulfopropionate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 179,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00029",
+  "id": "C00029",
+  "label": "UDP-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11521",
+  "id": "C11521",
+  "label": "UDP-6-sulfoquinovose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 69,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00103",
+  "id": "C00103",
+  "label": "D-Glucose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 489,
+  "cy": 629,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19685",
+  "id": "C19685",
+  "label": "Sulfoacetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 267,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00094",
+  "id": "C00094",
+  "label": "Sulfite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 977,
+  "cy": 438,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23082",
+  "id": "C23082",
+  "label": "2-Oxo-3-hydroxypropane-1-sulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 489,
+  "cy": 698,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14179",
+  "id": "C14179",
+  "label": "Sulfoacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 124,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23114",
+  "id": "C23114",
+  "label": "Sulfofucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 125,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23115",
+  "id": "C23115",
+  "label": "6-Deoxy-6-sulfo-D-galactono-1,5-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 729,
+  "cy": 126,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23112",
+  "id": "C23112",
+  "label": "6-Deoxy-6-sulfo-D-galactonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 920,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23111",
+  "id": "C23111",
+  "label": "2-Dehydro-3,6-dideoxy-6-sulfo-D-galactonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 791,
+  "y1": 499,
+  "x2": 837,
+  "y2": 516,
+  "url": "/dbget-bin/www_bget?syn:sll0891",
+  "id": "sll0891",
+  "label": "sll0891 (citH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0891",
+    "product": "2-ketoacid dehydrogenase; malate dehydrogenase; lactate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 207,
+  "y1": 169,
+  "x2": 253,
+  "y2": 186,
+  "url": "/dbget-bin/www_bget?syn:slr1020",
+  "id": "slr1020",
+  "label": "slr1020 (sqdB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1020",
+    "product": "sulfolipid biosynthesis protein; SqdB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 317,
+  "y1": 169,
+  "x2": 363,
+  "y2": 186,
+  "url": "/dbget-bin/www_bget?syn:slr0384",
+  "id": "slr0384",
+  "label": "slr0384",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0384",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 101,
+  "y1": 168,
+  "x2": 147,
+  "y2": 185,
+  "url": "/dbget-bin/www_bget?syn:sll1558",
+  "id": "sll1558",
+  "label": "sll1558",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1558",
+    "product": "mannose-1-phosphate guanyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 278,
+  "y2": 66,
+  "url": "/dbget-bin/www_bget?syn00566",
+  "id": "syn00566",
+  "label": "syn00566: Sulfoquinovose metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1145,
+  "y1": 219,
+  "x2": 1221,
+  "y2": 253,
+  "url": "/kegg-bin/show_pathway?syn00640",
+  "id": "syn00640",
+  "label": "syn00640: Propanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 802,
+  "y1": 687,
+  "x2": 878,
+  "y2": 721,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 979,
+  "y1": 594,
+  "x2": 1084,
+  "y2": 619,
+  "url": "/kegg-bin/show_pathway?syn00920",
+  "id": "syn00920",
+  "label": "syn00920: Sulfur metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1145,
+  "y1": 176,
+  "x2": 1221,
+  "y2": 210,
+  "url": "/kegg-bin/show_pathway?syn00920",
+  "id": "syn00920",
+  "label": "syn00920: Sulfur metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 21,
+  "y1": 234,
+  "x2": 119,
+  "y2": 268,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 552,
+  "y1": 682,
+  "x2": 688,
+  "y2": 716,
+  "url": "/kegg-bin/show_pathway?syn00430",
+  "id": "syn00430",
+  "label": "syn00430: Taurine and hypotaurine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 396,
+  "y1": 250,
+  "x2": 472,
+  "y2": 284,
+  "url": "/kegg-bin/show_pathway?syn00920",
+  "id": "syn00920",
+  "label": "syn00920: Sulfur metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 251,
+  "y1": 457,
+  "x2": 349,
+  "y2": 491,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ }
+]

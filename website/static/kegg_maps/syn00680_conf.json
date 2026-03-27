@@ -1,0 +1,1430 @@
+[
+ {
+  "type": "circ",
+  "cx": 163,
+  "cy": 94,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01438",
+  "id": "C01438",
+  "label": "Methane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 163,
+  "cy": 199,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00132",
+  "id": "C00132",
+  "label": "Methanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 163,
+  "cy": 409,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00067",
+  "id": "C00067",
+  "label": "Formaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 163,
+  "cy": 640,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00058",
+  "id": "C00058",
+  "label": "Formate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 582,
+  "cy": 640,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00237",
+  "id": "C00237",
+  "label": "CO",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 411,
+  "cy": 494,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04330",
+  "id": "C04330",
+  "label": "5,10-Methenyltetrahydromethanopterin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 308,
+  "cy": 494,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01274",
+  "id": "C01274",
+  "label": "5-Formyl-5,6,7,8-tetrahydromethanopterin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 191,
+  "cy": 494,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01001",
+  "id": "C01001",
+  "label": "Formylmethanofuran",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 494,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04488+C18799",
+  "id": "C04488",
+  "label": "5-Methyl-5,6,7,8-tetrahydromethanopterin), C18799 (5-Methyl-H4SPT",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 545,
+  "cy": 494,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04377",
+  "id": "C04377",
+  "label": "5,10-Methylenetetrahydromethanopterin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 653,
+  "cy": 199,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03920",
+  "id": "C03920",
+  "label": "2-(Methylthio)ethanesulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 508,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00543",
+  "id": "C00543",
+  "label": "Dimethylamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 363,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00565",
+  "id": "C00565",
+  "label": "Trimethylamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 253,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01104",
+  "id": "C01104",
+  "label": "Trimethylamine N-oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 354,
+  "cy": 365,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01046",
+  "id": "C01046",
+  "label": "N-Methyl-L-glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 653,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00218",
+  "id": "C00218",
+  "label": "Methylamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 134,
+  "cy": 574,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01031",
+  "id": "C01031",
+  "label": "S-Formylglutathione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 134,
+  "cy": 485,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14180",
+  "id": "C14180",
+  "label": "S-(Hydroxymethyl)glutathione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 288,
+  "cy": 530,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00862",
+  "id": "C00862",
+  "label": "Methanofuran",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 518,
+  "cy": 545,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00876",
+  "id": "C00876",
+  "label": "Coenzyme F420",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 545,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01080",
+  "id": "C01080",
+  "label": "Reduced coenzyme F420",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 734,
+  "cy": 95,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04832",
+  "id": "C04832",
+  "label": "Coenzyme M 7-mercaptoheptanoylthreonine-phosphate heterodisulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 734,
+  "cy": 185,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04628",
+  "id": "C04628",
+  "label": "Coenzyme B",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 734,
+  "cy": 439,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01217+C18802",
+  "id": "C01217",
+  "label": "5,6,7,8-Tetrahydromethanopterin), C18802 (Tetrahydrosarcinapterin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 792,
+  "cy": 640,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 996,
+  "cy": 640,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1167,
+  "cy": 640,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00074",
+  "id": "C00074",
+  "label": "Phosphoenolpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1167,
+  "cy": 506,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00631",
+  "id": "C00631",
+  "label": "2-Phospho-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1167,
+  "cy": 351,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00197",
+  "id": "C00197",
+  "label": "3-Phospho-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1067,
+  "cy": 351,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03232",
+  "id": "C03232",
+  "label": "3-Phosphonooxypyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 967,
+  "cy": 351,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01005",
+  "id": "C01005",
+  "label": "O-Phospho-L-serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 835,
+  "cy": 351,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00065",
+  "id": "C00065",
+  "label": "L-Serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 904,
+  "cy": 467,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 819,
+  "cy": 598,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04348",
+  "id": "C04348",
+  "label": "L-Malyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 937,
+  "cy": 506,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00168",
+  "id": "C00168",
+  "label": "Hydroxypyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 819,
+  "cy": 506,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00048",
+  "id": "C00048",
+  "label": "Glyoxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1052,
+  "cy": 506,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00258",
+  "id": "C00258",
+  "label": "D-Glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 937,
+  "cy": 598,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00149",
+  "id": "C00149",
+  "label": "(S)-Malate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1052,
+  "cy": 598,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00036",
+  "id": "C00036",
+  "label": "Oxaloacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1167,
+  "cy": 278,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00354",
+  "id": "C00354",
+  "label": "D-Fructose 1,6-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1167,
+  "cy": 189,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00085",
+  "id": "C00085",
+  "label": "D-Fructose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1050,
+  "cy": 138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00199",
+  "id": "C00199",
+  "label": "D-Ribulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1037,
+  "cy": 278,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00111",
+  "id": "C00111",
+  "label": "Glycerone phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 965,
+  "cy": 142,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00231",
+  "id": "C00231",
+  "label": "D-Xylulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1064,
+  "cy": 244,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 278,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00184",
+  "id": "C00184",
+  "label": "Glycerone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1167,
+  "cy": 110,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06019",
+  "id": "C06019",
+  "label": "D-arabino-Hex-3-ulose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 659,
+  "cy": 682,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00227",
+  "id": "C00227",
+  "label": "Acetyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 525,
+  "cy": 682,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00033",
+  "id": "C00033",
+  "label": "Acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 950,
+  "cy": 397,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00101",
+  "id": "C00101",
+  "label": "Tetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 950,
+  "cy": 442,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00143",
+  "id": "C00143",
+  "label": "5,10-Methylenetetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 357,
+  "cy": 640,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00011",
+  "id": "C00011",
+  "label": "CO2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 110,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00067",
+  "id": "C00067",
+  "label": "Formaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 834,
+  "cy": 199,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03576",
+  "id": "C03576",
+  "label": "Coenzyme M",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 651,
+  "cy": 545,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00876",
+  "id": "C00876",
+  "label": "Coenzyme F420",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 566,
+  "cy": 545,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01080",
+  "id": "C01080",
+  "label": "Reduced coenzyme F420",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1232,
+  "cy": 914,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00876",
+  "id": "C00876",
+  "label": "Coenzyme F420",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 733,
+  "cy": 914,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04732",
+  "id": "C04732",
+  "label": "5-Amino-6-(1-D-ribitylamino)uracil",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 912,
+  "cy": 914,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19154",
+  "id": "C19154",
+  "label": "7,8-Didemethyl-8-hydroxy-5-deazariboflavin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 859,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19155",
+  "id": "C19155",
+  "label": "(2S)-Lactyl-2-diphospho-5'-guanosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 840,
+  "cy": 859,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19156",
+  "id": "C19156",
+  "label": "(2S)-2-Phospholactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1127,
+  "cy": 914,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19152",
+  "id": "C19152",
+  "label": "Coenzyme F420-1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1231,
+  "cy": 987,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19151",
+  "id": "C19151",
+  "label": "Coenzyme F420-3",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1022,
+  "cy": 914,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19153",
+  "id": "C19153",
+  "label": "Coenzyme F420-0",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 493,
+  "cy": 883,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00593",
+  "id": "C00593",
+  "label": "Sulfoacetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 383,
+  "cy": 883,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05528",
+  "id": "C05528",
+  "label": "3-Sulfopyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 273,
+  "cy": 883,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11537",
+  "id": "C11537",
+  "label": "(2R)-3-Sulfolactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 163,
+  "cy": 883,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11536",
+  "id": "C11536",
+  "label": "(2R)-O-Phospho-3-sulfolactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 883,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03576",
+  "id": "C03576",
+  "label": "Coenzyme M",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 53,
+  "cy": 883,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00074",
+  "id": "C00074",
+  "label": "Phosphoenolpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1235,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04628",
+  "id": "C04628",
+  "label": "Coenzyme B",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1140,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16594",
+  "id": "C16594",
+  "label": "7-Mercaptoheptanoylthreonine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1056,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16593",
+  "id": "C16593",
+  "label": "7-Mercaptoheptanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 972,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16590",
+  "id": "C16590",
+  "label": "7-Oxoheptanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 888,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16589",
+  "id": "C16589",
+  "label": "2-Oxosuberate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 163,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00322",
+  "id": "C00322",
+  "label": "2-Oxoadipate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 253,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16583",
+  "id": "C16583",
+  "label": "(R)-(Homo)2-citrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 343,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20581",
+  "id": "C20581",
+  "label": "cis-(Homo)2-aconitate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16597",
+  "id": "C16597",
+  "label": "(-)-threo-Iso(homo)2-citrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 523,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16588",
+  "id": "C16588",
+  "label": "2-Oxopimelate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 613,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16598",
+  "id": "C16598",
+  "label": "(R)-(Homo)3-citrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 703,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20582",
+  "id": "C20582",
+  "label": "cis-(Homo)3-aconitate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 793,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16600",
+  "id": "C16600",
+  "label": "(-)-threo-Iso(homo)3-citrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 676,
+  "cy": 1020,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21070",
+  "id": "C21070",
+  "label": "(4-{4-[2-(gamma-L-Glutamylamino)ethyl]phenoxymethyl}furan-2-yl)methanamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 972,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00082",
+  "id": "C00082",
+  "label": "L-Tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 972,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20926",
+  "id": "C20926",
+  "label": "gamma-Glutamyltyramine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 464,
+  "cy": 972,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00483",
+  "id": "C00483",
+  "label": "Tyramine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 163,
+  "cy": 1020,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 283,
+  "cy": 1020,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20954",
+  "id": "C20954",
+  "label": "(5-Formylfuran-3-yl)methyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 403,
+  "cy": 1020,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21068",
+  "id": "C21068",
+  "label": "[5-(Aminomethyl)furan-3-yl]methyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 536,
+  "cy": 1020,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21069",
+  "id": "C21069",
+  "label": "[5-(Aminomethyl)furan-3-yl]methyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 822,
+  "cy": 914,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21971",
+  "id": "C21971",
+  "label": "5-Amino-5-(4-hydroxybenzyl)-6-(D-ribitylimino)-5,6-dihydrouracil",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1022,
+  "cy": 975,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22277",
+  "id": "C22277",
+  "label": "Dehydro coenzyme F420-0",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 922,
+  "cy": 975,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22297",
+  "id": "C22297",
+  "label": "Enolpyruvoyl-2-diphospho-5'-guanosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 840,
+  "cy": 975,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00074",
+  "id": "C00074",
+  "label": "Phosphoenolpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 111,
+  "y1": 598,
+  "x2": 157,
+  "y2": 615,
+  "url": "/dbget-bin/www_bget?syn:sll0992",
+  "id": "sll0992",
+  "label": "sll0992",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0992",
+    "product": "esterase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 111,
+  "y1": 512,
+  "x2": 157,
+  "y2": 529,
+  "url": "/dbget-bin/www_bget?syn:sll0990",
+  "id": "sll0990",
+  "label": "sll0990",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0990",
+    "product": "formaldehyde dehydrogenase (glutathione)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 635,
+  "y1": 447,
+  "x2": 681,
+  "y2": 464,
+  "url": "/dbget-bin/www_bget?syn:sll1931",
+  "id": "sll1931",
+  "label": "sll1931 (gylA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1931",
+    "product": "serine hydroxymethyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1060,
+  "y1": 632,
+  "x2": 1106,
+  "y2": 649,
+  "url": "/dbget-bin/www_bget?syn:slr0301",
+  "id": "slr0301",
+  "label": "slr0301 (ppsA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0301",
+    "product": "phosphoenolpyruvate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1144,
+  "y1": 557,
+  "x2": 1190,
+  "y2": 574,
+  "url": "/dbget-bin/www_bget?syn:slr0752",
+  "id": "slr0752",
+  "label": "slr0752 (eno)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0752",
+    "product": "enolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1100,
+  "y1": 343,
+  "x2": 1146,
+  "y2": 360,
+  "url": "/dbget-bin/www_bget?syn:sll1908",
+  "id": "sll1908",
+  "label": "sll1908 (serA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1908",
+    "product": "phosphoglycerate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1094,
+  "y1": 589,
+  "x2": 1140,
+  "y2": 606,
+  "url": "/dbget-bin/www_bget?syn:sll0920",
+  "id": "sll0920",
+  "label": "sll0920 (ppc)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0920",
+    "product": "phosphoenolpyruvate carboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 978,
+  "y1": 590,
+  "x2": 1024,
+  "y2": 607,
+  "url": "/dbget-bin/www_bget?syn:sll0891",
+  "id": "sll0891",
+  "label": "sll0891 (citH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0891",
+    "product": "2-ketoacid dehydrogenase; malate dehydrogenase; lactate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1197,
+  "y1": 234,
+  "x2": 1243,
+  "y2": 251,
+  "url": "/dbget-bin/www_bget?syn:slr0952+syn:slr2094",
+  "id": "slr0952",
+  "label": "slr0952 (fbp), slr2094 (glpX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0952",
+    "product": "fructose 1,6-bisphosphatase"
+   },
+   {
+    "locus": "slr2094",
+    "product": "GlpX protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1119,
+  "y1": 213,
+  "x2": 1165,
+  "y2": 230,
+  "url": "/dbget-bin/www_bget?syn:sll0745+syn:sll1196",
+  "id": "sll0745",
+  "label": "sll0745 (pfkA), sll1196 (pfkA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0745",
+    "product": "phosphofructokinase"
+   },
+   {
+    "locus": "sll1196",
+    "product": "phosphofructokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1088,
+  "y1": 270,
+  "x2": 1134,
+  "y2": 287,
+  "url": "/dbget-bin/www_bget?syn:sll0018+syn:slr0943",
+  "id": "sll0018",
+  "label": "sll0018 (cbbA), slr0943 (fda)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0018",
+    "product": "fructose-1,6-bisphosphate aldolase"
+   },
+   {
+    "locus": "slr0943",
+    "product": "fructose-bisphosphate aldolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 882,
+  "y1": 412,
+  "x2": 928,
+  "y2": 429,
+  "url": "/dbget-bin/www_bget?syn:sll1931",
+  "id": "sll1931",
+  "label": "sll1931 (gylA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1931",
+    "product": "serine hydroxymethyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 570,
+  "y1": 674,
+  "x2": 616,
+  "y2": 691,
+  "url": "/dbget-bin/www_bget?syn:sll1299",
+  "id": "sll1299",
+  "label": "sll1299 (ackA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1299",
+    "product": "acetate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 708,
+  "y1": 674,
+  "x2": 754,
+  "y2": 691,
+  "url": "/dbget-bin/www_bget?syn:slr2132",
+  "id": "slr2132",
+  "label": "slr2132 (pta)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2132",
+    "product": "phosphotransacetylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 638,
+  "y1": 709,
+  "x2": 684,
+  "y2": 726,
+  "url": "/dbget-bin/www_bget?syn:sll0542",
+  "id": "sll0542",
+  "label": "sll0542 (acs)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0542",
+    "product": "acetyl-coenzyme A synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 748,
+  "y1": 906,
+  "x2": 794,
+  "y2": 923,
+  "url": "/dbget-bin/www_bget?syn:sll1659",
+  "id": "sll1659",
+  "label": "sll1659",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1659",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 189,
+  "y1": 875,
+  "x2": 235,
+  "y2": 892,
+  "url": "/dbget-bin/www_bget?syn:slr1718",
+  "id": "slr1718",
+  "label": "slr1718",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1718",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1169,
+  "y1": 423,
+  "x2": 1215,
+  "y2": 440,
+  "url": "/dbget-bin/www_bget?syn:slr1945",
+  "id": "slr1945",
+  "label": "slr1945 (yibO)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1945",
+    "product": "2,3-bisphosphoglycerate-independent phosphoglycerate mutase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 840,
+  "y1": 906,
+  "x2": 886,
+  "y2": 923,
+  "url": "/dbget-bin/www_bget?syn:sll1285",
+  "id": "sll1285",
+  "label": "sll1285",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1285",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 220,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00680",
+  "id": "syn00680",
+  "label": "syn00680: Methane metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 658,
+  "y1": 327,
+  "x2": 730,
+  "y2": 361,
+  "url": "/kegg-bin/show_pathway?syn00790",
+  "id": "syn00790",
+  "label": "syn00790: Folate biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 913,
+  "y1": 542,
+  "x2": 1068,
+  "y2": 576,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 844,
+  "y1": 667,
+  "x2": 1003,
+  "y2": 701,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1014,
+  "y1": 428,
+  "x2": 1106,
+  "y2": 453,
+  "url": "/kegg-bin/show_pathway?syn00720",
+  "id": "syn00720",
+  "label": "syn00720: Other carbon fixation pathways",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 869,
+  "y1": 298,
+  "x2": 989,
+  "y2": 332,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 994,
+  "y1": 168,
+  "x2": 1099,
+  "y2": 203,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 803,
+  "y1": 230,
+  "x2": 869,
+  "y2": 264,
+  "url": "/kegg-bin/show_pathway?syn00920",
+  "id": "syn00920",
+  "label": "syn00920: Sulfur metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 125,
+  "y1": 697,
+  "x2": 201,
+  "y2": 731,
+  "url": "/kegg-bin/show_pathway?syn00910",
+  "id": "syn00910",
+  "label": "syn00910: Nitrogen metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 620,
+  "y1": 897,
+  "x2": 693,
+  "y2": 931,
+  "url": "/kegg-bin/show_pathway?syn00740",
+  "id": "syn00740",
+  "label": "syn00740: Riboflavin metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 47,
+  "y1": 756,
+  "x2": 120,
+  "y2": 790,
+  "url": "/kegg-bin/show_pathway?syn00300",
+  "id": "syn00300",
+  "label": "syn00300: Lysine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 222,
+  "y1": 955,
+  "x2": 296,
+  "y2": 989,
+  "url": "/kegg-bin/show_pathway?syn00300",
+  "id": "syn00300",
+  "label": "syn00300: Lysine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 45,
+  "y1": 1008,
+  "x2": 118,
+  "y2": 1033,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ }
+]

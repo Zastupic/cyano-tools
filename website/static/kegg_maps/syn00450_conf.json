@@ -1,0 +1,395 @@
+[
+ {
+  "type": "circ",
+  "cx": 421,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01528",
+  "id": "C01528",
+  "label": "Hydrogen selenide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 823,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05697",
+  "id": "C05697",
+  "label": "Selenate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 713,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05684",
+  "id": "C05684",
+  "label": "Selenite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 457,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05172",
+  "id": "C05172",
+  "label": "Selenophosphoric acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 168,
+  "cy": 426,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06481",
+  "id": "C06481",
+  "label": "L-Seryl-tRNA(Sec)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 64,
+  "cy": 457,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06482",
+  "id": "C06482",
+  "label": "L-Selenocysteinyl-tRNA(Sec)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 285,
+  "cy": 330,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05689",
+  "id": "C05689",
+  "label": "Se-Methyl-L-selenocysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 379,
+  "cy": 286,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05695",
+  "id": "C05695",
+  "label": "gamma-Glutamyl-Se-methylselenocysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05688",
+  "id": "C05688",
+  "label": "L-Selenocysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 330,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05699",
+  "id": "C05699",
+  "label": "L-Selenocystathionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05698",
+  "id": "C05698",
+  "label": "Selenohomocysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 175,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05335",
+  "id": "C05335",
+  "label": "L-Selenomethionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 106,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05690",
+  "id": "C05690",
+  "label": "Se-Methylselenomethionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 64,
+  "cy": 175,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05336",
+  "id": "C05336",
+  "label": "Selenomethionyl-tRNA(Met)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 64,
+  "cy": 330,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00017",
+  "id": "C00017",
+  "label": "Protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 421,
+  "cy": 175,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05703",
+  "id": "C05703",
+  "label": "Methaneselenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 523,
+  "cy": 237,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02535",
+  "id": "C02535",
+  "label": "Dimethyl selenide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 523,
+  "cy": 175,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18902",
+  "id": "C18902",
+  "label": "Methylselenic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 379,
+  "cy": 330,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18904",
+  "id": "C18904",
+  "label": "Methylselenopyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 168,
+  "cy": 488,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16638",
+  "id": "C16638",
+  "label": "O-Phosphoseryl-tRNA(Sec)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 168,
+  "cy": 549,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06481",
+  "id": "C06481",
+  "label": "L-Seryl-tRNA(Sec)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 618,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18870",
+  "id": "C18870",
+  "label": "Selenodiglutathione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 618,
+  "cy": 237,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18872",
+  "id": "C18872",
+  "label": "Trimethylselenonium",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 523,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18871",
+  "id": "C18871",
+  "label": "Glutathioselenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 523,
+  "cy": 330,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18893",
+  "id": "C18893",
+  "label": "1-Methylseleno-N-acetyl-D-galactosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 823,
+  "cy": 330,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05686",
+  "id": "C05686",
+  "label": "Adenylylselenate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 379,
+  "cy": 237,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18905",
+  "id": "C18905",
+  "label": "Methylselenocysteine Se-oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 379,
+  "cy": 421,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00041",
+  "id": "C00041",
+  "label": "L-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 546,
+  "y1": 449,
+  "x2": 592,
+  "y2": 466,
+  "url": "/dbget-bin/www_bget?syn:slr0600",
+  "id": "slr0600",
+  "label": "slr0600",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0600",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 94,
+  "y1": 166,
+  "x2": 140,
+  "y2": 183,
+  "url": "/dbget-bin/www_bget?syn:slr0649",
+  "id": "slr0649",
+  "label": "slr0649 (metS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0649",
+    "product": "methionyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 304,
+  "y1": 385,
+  "x2": 350,
+  "y2": 402,
+  "url": "/dbget-bin/www_bget?syn:slr0077",
+  "id": "slr0077",
+  "label": "slr0077 (nifS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0077",
+    "product": "NifS protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 800,
+  "y1": 355,
+  "x2": 846,
+  "y2": 372,
+  "url": "/dbget-bin/www_bget?syn:slr1165",
+  "id": "slr1165",
+  "label": "slr1165 (met3)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1165",
+    "product": "sulfate adenylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 175,
+  "y1": 209,
+  "x2": 221,
+  "y2": 226,
+  "url": "/dbget-bin/www_bget?syn:slr0212",
+  "id": "slr0212",
+  "label": "slr0212 (metH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0212",
+    "product": "5-methyltetrahydrofolate--homocysteine methyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 448,
+  "y1": 166,
+  "x2": 494,
+  "y2": 183,
+  "url": "/dbget-bin/www_bget?syn:slr0600",
+  "id": "slr0600",
+  "label": "slr0600",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0600",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 291,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00450",
+  "id": "syn00450",
+  "label": "syn00450: Selenocompound metabolism",
+  "entry_type": "pathway"
+ }
+]

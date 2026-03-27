@@ -1,0 +1,80 @@
+[
+ {
+  "type": "rect",
+  "x1": 88,
+  "y1": 354,
+  "x2": 134,
+  "y2": 371,
+  "url": "/dbget-bin/www_bget?syn:sll1787",
+  "id": "sll1787",
+  "label": "sll1787 (rpoB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1787",
+    "product": "RNA polymerase beta subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 88,
+  "y1": 371,
+  "x2": 134,
+  "y2": 388,
+  "url": "/dbget-bin/www_bget?syn:sll1789+syn:slr1265",
+  "id": "sll1789",
+  "label": "sll1789 (rpoC2), slr1265 (rpoC1)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1789",
+    "product": "RNA polymerase beta prime subunit"
+   },
+   {
+    "locus": "slr1265",
+    "product": "RNA polymerase gamma-subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 134,
+  "y1": 364,
+  "x2": 180,
+  "y2": 381,
+  "url": "/dbget-bin/www_bget?syn:sll1818",
+  "id": "sll1818",
+  "label": "sll1818 (rpoA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1818",
+    "product": "RNA polymerase alpha subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 180,
+  "y1": 364,
+  "x2": 226,
+  "y2": 381,
+  "url": "/dbget-bin/www_bget?syn:ssl2982",
+  "id": "ssl2982",
+  "label": "ssl2982",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 185,
+  "y2": 71,
+  "url": "/dbget-bin/www_bget?syn03020",
+  "id": "syn03020",
+  "label": "syn03020: RNA polymerase",
+  "entry_type": "pathway"
+ }
+]

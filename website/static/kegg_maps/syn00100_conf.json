@@ -1,0 +1,696 @@
+[
+ {
+  "type": "circ",
+  "cx": 87,
+  "cy": 1114,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01673",
+  "id": "C01673",
+  "label": "Calcitriol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 87,
+  "cy": 1059,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01561",
+  "id": "C01561",
+  "label": "Calcidiol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 353,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01902",
+  "id": "C01902",
+  "label": "Cycloartenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 1153,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05442",
+  "id": "C05442",
+  "label": "Stigmasterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 753,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15776",
+  "id": "C15776",
+  "label": "4alpha-Methylfecosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 703,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11508",
+  "id": "C11508",
+  "label": "4alpha-Methyl-5alpha-ergosta-8,14,24(28)-trien-3beta-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 1053,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01802",
+  "id": "C01802",
+  "label": "Desmosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 1103,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01789",
+  "id": "C01789",
+  "label": "Campesterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 1053,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15781",
+  "id": "C15781",
+  "label": "24-Methylenecholesterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 1003,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05107",
+  "id": "C05107",
+  "label": "7-Dehydrodesmosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 1003,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15780",
+  "id": "C15780",
+  "label": "5-Dehydroepisterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 1003,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15783",
+  "id": "C15783",
+  "label": "5-Dehydroavenasterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 1103,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01753",
+  "id": "C01753",
+  "label": "beta-Sitosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 453,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08830",
+  "id": "C08830",
+  "label": "24-Methylidenecycloartanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 1053,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08821",
+  "id": "C08821",
+  "label": "Isofucosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 953,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15782",
+  "id": "C15782",
+  "label": "Delta7-Avenasterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 603,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02141",
+  "id": "C02141",
+  "label": "Cycloeucalenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01943",
+  "id": "C01943",
+  "label": "Obtusifoliol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 803,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11523",
+  "id": "C11523",
+  "label": "24-Ethylidenelophenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 287,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01054",
+  "id": "C01054",
+  "label": "(S)-2,3-Epoxysqualene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 353,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01724",
+  "id": "C01724",
+  "label": "Lanosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 236,
+  "cy": 352,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05109",
+  "id": "C05109",
+  "label": "24,25-Dihydrolanosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 903,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04525",
+  "id": "C04525",
+  "label": "Fecosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 403,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11455",
+  "id": "C11455",
+  "label": "4,4-Dimethyl-5alpha-cholesta-8,14,24-trien-3beta-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 237,
+  "cy": 453,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15915",
+  "id": "C15915",
+  "label": "4,4-Dimethyl-5alpha-cholesta-8-en-3beta-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 453,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05108",
+  "id": "C05108",
+  "label": "14-Demethyllanosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 953,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15777",
+  "id": "C15777",
+  "label": "Episterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 503,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15808",
+  "id": "C15808",
+  "label": "4alpha-Methylzymosterol-4-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 1003,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15780",
+  "id": "C15780",
+  "label": "5-Dehydroepisterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 553,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15816",
+  "id": "C15816",
+  "label": "3-Keto-4-methylzymosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 236,
+  "cy": 953,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01189",
+  "id": "C01189",
+  "label": "Lathosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 236,
+  "cy": 1003,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01164",
+  "id": "C01164",
+  "label": "7-Dehydrocholesterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 87,
+  "cy": 1003,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05443",
+  "id": "C05443",
+  "label": "Vitamin D3",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 603,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05103",
+  "id": "C05103",
+  "label": "4alpha-Methylzymosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 803,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05437",
+  "id": "C05437",
+  "label": "Zymosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 1053,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05440",
+  "id": "C05440",
+  "label": "Ergosta-5,7,22,24(28)-tetraen-3beta-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 1103,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01694",
+  "id": "C01694",
+  "label": "Ergosterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 236,
+  "cy": 803,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03845",
+  "id": "C03845",
+  "label": "5alpha-Cholest-8-en-3beta-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 803,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11522",
+  "id": "C11522",
+  "label": "24-Methylenelophenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 1156,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05441",
+  "id": "C05441",
+  "label": "Vitamin D2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 953,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05439",
+  "id": "C05439",
+  "label": "5alpha-Cholesta-7,24-dien-3beta-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 953,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15777",
+  "id": "C15777",
+  "label": "Episterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 236,
+  "cy": 1053,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00187",
+  "id": "C00187",
+  "label": "Cholesterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 150,
+  "cy": 1053,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02530",
+  "id": "C02530",
+  "label": "Cholesterol ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 87,
+  "cy": 1169,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18231",
+  "id": "C18231",
+  "label": "Calcitetrol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 1169,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07712",
+  "id": "C07712",
+  "label": "Secalciferol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 108,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00448",
+  "id": "C00448",
+  "label": "trans,trans-Farnesyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03428",
+  "id": "C03428",
+  "label": "Presqualene diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 227,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00751",
+  "id": "C00751",
+  "label": "Squalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 747,
+  "cy": 1103,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21106",
+  "id": "C21106",
+  "label": "24-epi-Campesterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 747,
+  "cy": 1153,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08813",
+  "id": "C08813",
+  "label": "Brassicasterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 503,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22116",
+  "id": "C22116",
+  "label": "3beta-Hydroxy-4beta,14alpha-dimethyl-9beta,19-cyclo-5alpha-ergost-24(24(1))-en-4alpha-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 853,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22119",
+  "id": "C22119",
+  "label": "3beta-Hydroxyergosta-7,24(24(1))-dien-4alpha-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 853,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22120",
+  "id": "C22120",
+  "label": "4alpha-Carboxy-stigmasta-7,24(24(1))-dien-3beta-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 553,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22121",
+  "id": "C22121",
+  "label": "Cycloeucalenone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 903,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22122",
+  "id": "C22122",
+  "label": "Episterone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 903,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22123",
+  "id": "C22123",
+  "label": "Avenastenone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22112",
+  "id": "C22112",
+  "label": "4alpha-Carboxy-5alpha-cholesta-8,24-dien-3beta-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 371,
+  "cy": 703,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22136",
+  "id": "C22136",
+  "label": "Zymosterone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 348,
+  "y1": 127,
+  "x2": 394,
+  "y2": 144,
+  "url": "/dbget-bin/www_bget?syn:sll0513",
+  "id": "sll0513",
+  "label": "sll0513",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0513",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 348,
+  "y1": 185,
+  "x2": 394,
+  "y2": 202,
+  "url": "/dbget-bin/www_bget?syn:sll0513",
+  "id": "sll0513",
+  "label": "sll0513",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0513",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 620,
+  "y1": 1179,
+  "x2": 715,
+  "y2": 1213,
+  "url": "/kegg-bin/show_pathway?map00905",
+  "id": "map00905:",
+  "label": "map00905: Brassinosteroid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 219,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00100",
+  "id": "syn00100",
+  "label": "syn00100: Steroid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 185,
+  "y1": 1161,
+  "x2": 287,
+  "y2": 1195,
+  "url": "/kegg-bin/show_pathway?map00120",
+  "id": "map00120:",
+  "label": "map00120: Primary bile acid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 302,
+  "y1": 1076,
+  "x2": 461,
+  "y2": 1101,
+  "url": "/kegg-bin/show_pathway?map00140",
+  "id": "map00140:",
+  "label": "map00140: Steroid hormone biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 302,
+  "y1": 1106,
+  "x2": 413,
+  "y2": 1131,
+  "url": "/kegg-bin/show_pathway?map00984",
+  "id": "map00984:",
+  "label": "map00984: Steroid degradation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 312,
+  "y1": 41,
+  "x2": 431,
+  "y2": 75,
+  "url": "/kegg-bin/show_pathway?syn00900",
+  "id": "syn00900",
+  "label": "syn00900: Terpenoid backbone biosynthesis",
+  "entry_type": "pathway"
+ }
+]

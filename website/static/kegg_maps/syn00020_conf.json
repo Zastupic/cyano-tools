@@ -1,0 +1,688 @@
+[
+ {
+  "type": "circ",
+  "cx": 736,
+  "cy": 240,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 189,
+  "cy": 485,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00122",
+  "id": "C00122",
+  "label": "Fumarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 319,
+  "cy": 348,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00036",
+  "id": "C00036",
+  "label": "Oxaloacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 717,
+  "cy": 457,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05379",
+  "id": "C05379",
+  "label": "Oxalosuccinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 387,
+  "cy": 240,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 189,
+  "cy": 397,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00149",
+  "id": "C00149",
+  "label": "(S)-Malate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 717,
+  "cy": 348,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00311",
+  "id": "C00311",
+  "label": "Isocitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 348,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00417",
+  "id": "C00417",
+  "label": "cis-Aconitate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 189,
+  "cy": 578,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00042",
+  "id": "C00042",
+  "label": "Succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 521,
+  "cy": 348,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00158",
+  "id": "C00158",
+  "label": "Citrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 521,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15972",
+  "id": "C15972",
+  "label": "Enzyme N6-(lipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 588,
+  "cy": 534,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00068",
+  "id": "C00068",
+  "label": "Thiamin diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 461,
+  "cy": 577,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16254",
+  "id": "C16254",
+  "label": "[Dihydrolipoyllysine-residue succinyltransferase] S-succinyldihydrolipoyllysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 407,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15973",
+  "id": "C15973",
+  "label": "Enzyme N6-(dihydrolipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 578,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00091",
+  "id": "C00091",
+  "label": "Succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 717,
+  "cy": 577,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00026",
+  "id": "C00026",
+  "label": "2-Oxoglutarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 592,
+  "cy": 577,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05381",
+  "id": "C05381",
+  "label": "3-Carboxy-1-hydroxypropyl-ThPP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 625,
+  "cy": 240,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05125",
+  "id": "C05125",
+  "label": "2-(alpha-Hydroxyethyl)thiamine diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 625,
+  "cy": 197,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00068",
+  "id": "C00068",
+  "label": "Thiamin diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 574,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15972",
+  "id": "C15972",
+  "label": "Enzyme N6-(lipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 511,
+  "cy": 240,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16255",
+  "id": "C16255",
+  "label": "[Dihydrolipoyllysine-residue acetyltransferase] S-acetyldihydrolipoyllysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 472,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15973",
+  "id": "C15973",
+  "label": "Enzyme N6-(dihydrolipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 470,
+  "cy": 115,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00074",
+  "id": "C00074",
+  "label": "Phosphoenolpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 443,
+  "y1": 613,
+  "x2": 489,
+  "y2": 630,
+  "url": "/dbget-bin/www_bget?syn:slr1096",
+  "id": "slr1096",
+  "label": "slr1096 (phdD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1096",
+    "product": "dihydrolipoamide dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 236,
+  "y1": 569,
+  "x2": 282,
+  "y2": 586,
+  "url": "/dbget-bin/www_bget?syn:sll1023+syn:sll1557",
+  "id": "sll1023",
+  "label": "sll1023 (sucC), sll1557 (sucD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1023",
+    "product": "succinate--CoA ligase"
+   },
+   {
+    "locus": "sll1557",
+    "product": "succinyl-CoA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 694,
+  "y1": 500,
+  "x2": 740,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:slr1289",
+  "id": "slr1289",
+  "label": "slr1289 (icd)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1289",
+    "product": "isocitrate dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 694,
+  "y1": 395,
+  "x2": 740,
+  "y2": 412,
+  "url": "/dbget-bin/www_bget?syn:slr1289",
+  "id": "slr1289",
+  "label": "slr1289 (icd)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1289",
+    "product": "isocitrate dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 167,
+  "y1": 431,
+  "x2": 213,
+  "y2": 448,
+  "url": "/dbget-bin/www_bget?syn:slr0018",
+  "id": "slr0018",
+  "label": "slr0018 (fumC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0018",
+    "product": "fumarase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 646,
+  "y1": 340,
+  "x2": 692,
+  "y2": 357,
+  "url": "/dbget-bin/www_bget?syn:slr0665",
+  "id": "slr0665",
+  "label": "slr0665",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0665",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 547,
+  "y1": 340,
+  "x2": 593,
+  "y2": 357,
+  "url": "/dbget-bin/www_bget?syn:slr0665",
+  "id": "slr0665",
+  "label": "slr0665",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0665",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 229,
+  "y1": 339,
+  "x2": 275,
+  "y2": 356,
+  "url": "/dbget-bin/www_bget?syn:sll0891",
+  "id": "sll0891",
+  "label": "sll0891 (citH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0891",
+    "product": "2-ketoacid dehydrogenase; malate dehydrogenase; lactate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 657,
+  "y1": 231,
+  "x2": 703,
+  "y2": 248,
+  "url": "/dbget-bin/www_bget?syn:sll1721+syn:slr1934",
+  "id": "sll1721",
+  "label": "sll1721 (pdhB), slr1934",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1721",
+    "product": "pyruvate dehydrogenase E1 beta subunit"
+   },
+   {
+    "locus": "slr1934",
+    "product": "pyruvate dehydrogenase E1 component, alpha subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 553,
+  "y1": 231,
+  "x2": 599,
+  "y2": 248,
+  "url": "/dbget-bin/www_bget?syn:sll1721+syn:slr1934",
+  "id": "sll1721",
+  "label": "sll1721 (pdhB), slr1934",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1721",
+    "product": "pyruvate dehydrogenase E1 beta subunit"
+   },
+   {
+    "locus": "slr1934",
+    "product": "pyruvate dehydrogenase E1 component, alpha subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 500,
+  "y1": 275,
+  "x2": 546,
+  "y2": 292,
+  "url": "/dbget-bin/www_bget?syn:slr1096",
+  "id": "slr1096",
+  "label": "slr1096 (phdD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1096",
+    "product": "dihydrolipoamide dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 435,
+  "y1": 232,
+  "x2": 481,
+  "y2": 249,
+  "url": "/dbget-bin/www_bget?syn:sll1841",
+  "id": "sll1841",
+  "label": "sll1841 (odhB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1841",
+    "product": "dihydrolipoamide acetyltransferase component (E2) of pyruvate dehydrogenase complex"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 141,
+  "y1": 525,
+  "x2": 187,
+  "y2": 542,
+  "url": "/dbget-bin/www_bget?syn:sll0823+syn:sll1625+syn:slr0201+syn:slr1233",
+  "id": "sll0823",
+  "label": "sll0823 (sdhB), sll1625 (sdhB), slr0201 (hdrB), slr1233 (frdA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0823",
+    "product": "succinate dehydrogenase iron-sulfur protein"
+   },
+   {
+    "locus": "sll1625",
+    "product": "succinate dehydrogenase iron-sulphur protein subunit"
+   },
+   {
+    "locus": "slr0201",
+    "product": "heterodisulfide reductase subunit B"
+   },
+   {
+    "locus": "slr1233",
+    "product": "succinate dehydrogenase flavoprotein subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 511,
+  "y1": 147,
+  "x2": 557,
+  "y2": 164,
+  "url": "/dbget-bin/www_bget?syn:sll0741",
+  "id": "sll0741",
+  "label": "sll0741 (nifJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0741",
+    "product": "pyruvate oxidoreductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 400,
+  "y1": 350,
+  "x2": 446,
+  "y2": 367,
+  "url": "/dbget-bin/www_bget?syn:sll0401",
+  "id": "sll0401",
+  "label": "sll0401 (gltA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0401",
+    "product": "citrate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 69,
+  "y1": 294,
+  "x2": 227,
+  "y2": 328,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 583,
+  "y1": 92,
+  "x2": 799,
+  "y2": 138,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 99,
+  "y1": 139,
+  "x2": 225,
+  "y2": 164,
+  "url": "/kegg-bin/show_pathway?syn00061",
+  "id": "syn00061",
+  "label": "syn00061: Fatty acid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 31,
+  "y1": 167,
+  "x2": 225,
+  "y2": 192,
+  "url": "/kegg-bin/show_pathway?map00062",
+  "id": "map00062:",
+  "label": "map00062: Fatty acid elongation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 104,
+  "y1": 225,
+  "x2": 225,
+  "y2": 250,
+  "url": "/kegg-bin/show_pathway?syn00071",
+  "id": "syn00071",
+  "label": "syn00071: Fatty acid degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 800,
+  "y1": 597,
+  "x2": 926,
+  "y2": 631,
+  "url": "/kegg-bin/show_pathway?syn00053",
+  "id": "syn00053",
+  "label": "syn00053: Ascorbate and aldarate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 800,
+  "y1": 634,
+  "x2": 921,
+  "y2": 668,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 266,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 222,
+  "y1": 623,
+  "x2": 307,
+  "y2": 657,
+  "url": "/kegg-bin/show_pathway?syn00280",
+  "id": "syn00280",
+  "label": "syn00280: Valine, leucine and isoleucine degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 105,
+  "y1": 257,
+  "x2": 226,
+  "y2": 291,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 800,
+  "y1": 671,
+  "x2": 941,
+  "y2": 696,
+  "url": "/kegg-bin/show_pathway?syn00470",
+  "id": "syn00470",
+  "label": "syn00470: D-Amino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 197,
+  "x2": 225,
+  "y2": 222,
+  "url": "/kegg-bin/show_pathway?syn00280",
+  "id": "syn00280",
+  "label": "syn00280: Valine, leucine and isoleucine degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 19,
+  "y1": 472,
+  "x2": 139,
+  "y2": 497,
+  "url": "/kegg-bin/show_pathway?syn00220",
+  "id": "syn00220",
+  "label": "syn00220: Arginine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 800,
+  "y1": 569,
+  "x2": 919,
+  "y2": 594,
+  "url": "/kegg-bin/show_pathway?syn00220",
+  "id": "syn00220",
+  "label": "syn00220: Arginine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 22,
+  "y1": 561,
+  "x2": 121,
+  "y2": 595,
+  "url": "/kegg-bin/show_pathway?syn00190",
+  "id": "syn00190",
+  "label": "syn00190: Oxidative phosphorylation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 63,
+  "y1": 430,
+  "x2": 139,
+  "y2": 464,
+  "url": "/kegg-bin/show_pathway?syn00350",
+  "id": "syn00350",
+  "label": "syn00350: Tyrosine metabolism",
+  "entry_type": "pathway"
+ }
+]

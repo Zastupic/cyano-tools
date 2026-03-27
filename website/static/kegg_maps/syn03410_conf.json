@@ -1,0 +1,234 @@
+[
+ {
+  "type": "rect",
+  "x1": 541,
+  "y1": 918,
+  "x2": 587,
+  "y2": 935,
+  "url": "/dbget-bin/www_bget?syn:sll1209",
+  "id": "sll1209",
+  "label": "sll1209 (lig)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1209",
+    "product": "DNA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 541,
+  "y1": 803,
+  "x2": 587,
+  "y2": 820,
+  "url": "/dbget-bin/www_bget?syn:slr0707",
+  "id": "slr0707",
+  "label": "slr0707 (polA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0707",
+    "product": "DNA polymerase I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 541,
+  "y1": 630,
+  "x2": 587,
+  "y2": 647,
+  "url": "/dbget-bin/www_bget?syn:slr0707",
+  "id": "slr0707",
+  "label": "slr0707 (polA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0707",
+    "product": "DNA polymerase I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 374,
+  "y1": 506,
+  "x2": 420,
+  "y2": 523,
+  "url": "/dbget-bin/www_bget?syn:slr0707",
+  "id": "slr0707",
+  "label": "slr0707 (polA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0707",
+    "product": "DNA polymerase I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 541,
+  "y1": 409,
+  "x2": 587,
+  "y2": 426,
+  "url": "/dbget-bin/www_bget?syn:sll1854",
+  "id": "sll1854",
+  "label": "sll1854 (xthA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1854",
+    "product": "exodeoxyribonuclease III"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 236,
+  "y1": 234,
+  "x2": 282,
+  "y2": 251,
+  "url": "/dbget-bin/www_bget?syn:slr1822",
+  "id": "slr1822",
+  "label": "slr1822 (nth)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1822",
+    "product": "endonuclease III"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 374,
+  "y1": 479,
+  "x2": 420,
+  "y2": 496,
+  "url": "/dbget-bin/www_bget?syn:slr1689",
+  "id": "slr1689",
+  "label": "slr1689 (mutM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1689",
+    "product": "formamidopyrimidine-DNA glycosylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 166,
+  "y1": 209,
+  "x2": 212,
+  "y2": 226,
+  "url": "/dbget-bin/www_bget?syn:slr1689",
+  "id": "slr1689",
+  "label": "slr1689 (mutM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1689",
+    "product": "formamidopyrimidine-DNA glycosylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 166,
+  "y1": 860,
+  "x2": 212,
+  "y2": 877,
+  "url": "/dbget-bin/www_bget?syn:sll1209",
+  "id": "sll1209",
+  "label": "sll1209 (lig)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1209",
+    "product": "DNA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 425,
+  "y1": 506,
+  "x2": 471,
+  "y2": 523,
+  "url": "/dbget-bin/www_bget?syn:sll1354",
+  "id": "sll1354",
+  "label": "sll1354 (recJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1354",
+    "product": "single-strand-DNA-specific exonuclease; RecJ"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 166,
+  "y1": 409,
+  "x2": 212,
+  "y2": 426,
+  "url": "/dbget-bin/www_bget?syn:sll1854",
+  "id": "sll1854",
+  "label": "sll1854 (xthA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1854",
+    "product": "exodeoxyribonuclease III"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 483,
+  "y1": 209,
+  "x2": 529,
+  "y2": 226,
+  "url": "/dbget-bin/www_bget?syn:slr0231",
+  "id": "slr0231",
+  "label": "slr0231",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0231",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 166,
+  "y1": 630,
+  "x2": 212,
+  "y2": 647,
+  "url": "/dbget-bin/www_bget?syn:slr0707",
+  "id": "slr0707",
+  "label": "slr0707 (polA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0707",
+    "product": "DNA polymerase I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 228,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn03410",
+  "id": "syn03410",
+  "label": "syn03410: Base excision repair",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,920 @@
+[
+ {
+  "type": "circ",
+  "cx": 469,
+  "cy": 336,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06178",
+  "id": "C06178",
+  "label": "1-Methylpyrrolinium",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 579,
+  "cy": 681,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15523",
+  "id": "C15523",
+  "label": "2,6-Dihydroxynicotinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 713,
+  "cy": 666,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 754,
+  "cy": 642,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00163",
+  "id": "C00163",
+  "label": "Propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 713,
+  "cy": 592,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03652",
+  "id": "C03652",
+  "label": "(2R,3S)-2,3-Dimethylmalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 617,
+  "cy": 592,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00922",
+  "id": "C00922",
+  "label": "2,3-Dimethylmaleate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 617,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02295",
+  "id": "C02295",
+  "label": "Methylitaconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 705,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02930",
+  "id": "C02930",
+  "label": "2-Methyleneglutarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 776,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16390",
+  "id": "C16390",
+  "label": "(S)-2-(Hydroxymethyl)glutarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 776,
+  "cy": 449,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16159",
+  "id": "C16159",
+  "label": "2-Formylglutarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 681,
+  "cy": 449,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04226",
+  "id": "C04226",
+  "label": "6-Oxo-1,4,5,6-tetrahydronicotinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 307,
+  "cy": 801,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16152",
+  "id": "C16152",
+  "label": "Blue pigment",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 307,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03458",
+  "id": "C03458",
+  "label": "2,3,6-Trihydroxypyridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 150,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03056",
+  "id": "C03056",
+  "label": "2,6-Dihydroxypyridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 82,
+  "cy": 593,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16151",
+  "id": "C16151",
+  "label": "2,6-Dihydroxy-N-methylmyosmine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 150,
+  "cy": 593,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15986",
+  "id": "C15986",
+  "label": "2,6-Dihydroxypseudooxynicotine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 150,
+  "cy": 535,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01297",
+  "id": "C01297",
+  "label": "6-Hydroxypseudooxynicotine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 150,
+  "cy": 441,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01056",
+  "id": "C01056",
+  "label": "(S)-6-Hydroxynicotine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 150,
+  "cy": 357,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00745",
+  "id": "C00745",
+  "label": "Nicotine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1016,
+  "cy": 85,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00006",
+  "id": "C00006",
+  "label": "NADP+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1007,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00003",
+  "id": "C00003",
+  "label": "NAD+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1007,
+  "cy": 357,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00857",
+  "id": "C00857",
+  "label": "Deamino-NAD+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 868,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00455",
+  "id": "C00455",
+  "label": "Nicotinamide D-ribonucleotide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 868,
+  "cy": 357,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01185",
+  "id": "C01185",
+  "label": "Nicotinate D-ribonucleotide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 868,
+  "cy": 435,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03722",
+  "id": "C03722",
+  "label": "Quinolinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 898,
+  "cy": 493,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00111",
+  "id": "C00111",
+  "label": "Glycerone phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 868,
+  "cy": 612,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00049",
+  "id": "C00049",
+  "label": "L-Aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 753,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00122",
+  "id": "C00122",
+  "label": "Fumarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 666,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01384",
+  "id": "C01384",
+  "label": "Maleic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 579,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01596",
+  "id": "C01596",
+  "label": "Maleamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 536,
+  "cy": 583,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01059",
+  "id": "C01059",
+  "label": "2,5-Dihydroxypyridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 579,
+  "cy": 449,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01020",
+  "id": "C01020",
+  "label": "6-Hydroxynicotinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 579,
+  "cy": 357,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00253",
+  "id": "C00253",
+  "label": "Nicotinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 473,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02918",
+  "id": "C02918",
+  "label": "1-Methylnicotinamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 719,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03150",
+  "id": "C03150",
+  "label": "Nicotinamide-beta-riboside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 868,
+  "cy": 507,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05840",
+  "id": "C05840",
+  "label": "Iminoaspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 718,
+  "cy": 357,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05841",
+  "id": "C05841",
+  "label": "Nicotinate D-ribonucleoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 485,
+  "cy": 417,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05380",
+  "id": "C05380",
+  "label": "Nicotinurate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05843",
+  "id": "C05843",
+  "label": "N1-Methyl-4-pyridone-5-carboxamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 201,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05842",
+  "id": "C05842",
+  "label": "N1-Methyl-2-pyridone-5-carboxamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 95,
+  "cy": 441,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03043",
+  "id": "C03043",
+  "label": "(R)-6-Hydroxynicotine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00153",
+  "id": "C00153",
+  "label": "Nicotinamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 535,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19631",
+  "id": "C19631",
+  "label": "6-Hydroxy-3-succinoylpyridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 636,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00232",
+  "id": "C00232",
+  "label": "Succinate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 536,
+  "cy": 667,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18232",
+  "id": "C18232",
+  "label": "N-Formylmaleamic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 422,
+  "cy": 800,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20381",
+  "id": "C20381",
+  "label": "3,3'-Bipyridine-2,2',5,5',6,6'-hexol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 698,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00334",
+  "id": "C00334",
+  "label": "4-Aminobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 199,
+  "cy": 636,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15987",
+  "id": "C15987",
+  "label": "4-Methylaminobutyrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20361",
+  "id": "C20361",
+  "label": "Pseudooxynicotine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 459,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19569",
+  "id": "C19569",
+  "label": "3-Succinoylpyridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19567",
+  "id": "C19567",
+  "label": "4-Oxo-1-(3-pyridyl)-1-butanone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 246,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21154",
+  "id": "C21154",
+  "label": "N-Methylmyosmine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 150,
+  "cy": 496,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21075",
+  "id": "C21075",
+  "label": "5-(N-Methyl-4,5-dihydro-1H-pyrrol-2-yl)pyridin-2-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 396,
+  "cy": 636,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00042",
+  "id": "C00042",
+  "label": "Succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 95,
+  "cy": 357,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16386",
+  "id": "C16386",
+  "label": "(R)-Nicotine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 820,
+  "y1": 557,
+  "x2": 866,
+  "y2": 574,
+  "url": "/dbget-bin/www_bget?syn:sll0631",
+  "id": "sll0631",
+  "label": "sll0631 (nadB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0631",
+    "product": "L-aspartate oxidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 846,
+  "y1": 461,
+  "x2": 892,
+  "y2": 478,
+  "url": "/dbget-bin/www_bget?syn:sll0622",
+  "id": "sll0622",
+  "label": "sll0622 (nadA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0622",
+    "product": "quinolinate synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 845,
+  "y1": 402,
+  "x2": 891,
+  "y2": 419,
+  "url": "/dbget-bin/www_bget?syn:slr0936",
+  "id": "slr0936",
+  "label": "slr0936 (nadC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0936",
+    "product": "nicotinate-nucleotide pyrophosphorylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 911,
+  "y1": 329,
+  "x2": 957,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll1916",
+  "id": "sll1916",
+  "label": "sll1916",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1916",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 911,
+  "y1": 308,
+  "x2": 957,
+  "y2": 325,
+  "url": "/dbget-bin/www_bget?syn:slr0787",
+  "id": "slr0787",
+  "label": "slr0787",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0787",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1013,
+  "y1": 283,
+  "x2": 1059,
+  "y2": 300,
+  "url": "/dbget-bin/www_bget?syn:slr1691",
+  "id": "slr1691",
+  "label": "slr1691 (nadE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1691",
+    "product": "NH(3)-dependent NAD(+) synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 911,
+  "y1": 211,
+  "x2": 957,
+  "y2": 228,
+  "url": "/dbget-bin/www_bget?syn:sll1916",
+  "id": "sll1916",
+  "label": "sll1916",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1916",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 911,
+  "y1": 190,
+  "x2": 957,
+  "y2": 207,
+  "url": "/dbget-bin/www_bget?syn:slr0787",
+  "id": "slr0787",
+  "label": "slr0787",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0787",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 698,
+  "y1": 149,
+  "x2": 744,
+  "y2": 166,
+  "url": "/dbget-bin/www_bget?syn:slr0788",
+  "id": "slr0788",
+  "label": "slr0788",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0788",
+    "product": "pre-B cell enhancing factor"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1062,
+  "y1": 170,
+  "x2": 1108,
+  "y2": 187,
+  "url": "/dbget-bin/www_bget?syn:sll1415+syn:slr0400",
+  "id": "sll1415,",
+  "label": "sll1415, slr0400",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1415",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0400",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1140,
+  "y1": 148,
+  "x2": 1186,
+  "y2": 165,
+  "url": "/dbget-bin/www_bget?syn:slr1239+syn:slr1434",
+  "id": "slr1239",
+  "label": "slr1239 (pntA), slr1434 (pntB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1239",
+    "product": "pyridine nucleotide transhydrogenase alpha subunit"
+   },
+   {
+    "locus": "slr1434",
+    "product": "pyridine nucleotide transhydrogenase beta subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 765,
+  "y1": 248,
+  "x2": 811,
+  "y2": 265,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 765,
+  "y1": 373,
+  "x2": 811,
+  "y2": 390,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 322,
+  "y1": 647,
+  "x2": 368,
+  "y2": 664,
+  "url": "/dbget-bin/www_bget?syn:slr0370",
+  "id": "slr0370",
+  "label": "slr0370 (gabD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0370",
+    "product": "succinate-semialdehyde dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 322,
+  "y1": 609,
+  "x2": 368,
+  "y2": 626,
+  "url": "/dbget-bin/www_bget?syn:slr0370",
+  "id": "slr0370",
+  "label": "slr0370 (gabD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0370",
+    "product": "succinate-semialdehyde dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 757,
+  "y1": 662,
+  "x2": 830,
+  "y2": 696,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 645,
+  "y1": 702,
+  "x2": 784,
+  "y2": 736,
+  "url": "/kegg-bin/show_pathway?syn00660",
+  "id": "syn00660",
+  "label": "syn00660: C5-Branched dibasic acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 379,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00760",
+  "id": "syn00760",
+  "label": "syn00760: Nicotinate and nicotinamide metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 807,
+  "y1": 735,
+  "x2": 931,
+  "y2": 769,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 943,
+  "y1": 422,
+  "x2": 1081,
+  "y2": 447,
+  "url": "/kegg-bin/show_pathway?syn00380",
+  "id": "syn00380",
+  "label": "syn00380: Tryptophan metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 277,
+  "y1": 292,
+  "x2": 443,
+  "y2": 326,
+  "url": "/kegg-bin/show_pathway?map00960",
+  "id": "map00960:",
+  "label": "map00960: Tropane, piperidine and pyridine alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 362,
+  "y1": 681,
+  "x2": 434,
+  "y2": 715,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 432,
+  "y1": 624,
+  "x2": 509,
+  "y2": 649,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ }
+]

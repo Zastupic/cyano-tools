@@ -1,0 +1,572 @@
+[
+ {
+  "type": "circ",
+  "cx": 599,
+  "cy": 336,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01380",
+  "id": "C01380",
+  "label": "Ethylene glycol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 599,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06548",
+  "id": "C06548",
+  "label": "Ethylene oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 490,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06547",
+  "id": "C06547",
+  "label": "Ethylene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 382,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06793",
+  "id": "C06793",
+  "label": "Vinyl chloride",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 274,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06791",
+  "id": "C06791",
+  "label": "trans-1,2-Dichloroethene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 706,
+  "cy": 322,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00084",
+  "id": "C00084",
+  "label": "Acetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 58,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06789",
+  "id": "C06789",
+  "label": "Tetrachloroethene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 490,
+  "cy": 322,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01548",
+  "id": "C01548",
+  "label": "Acetylene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 274,
+  "cy": 439,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06792",
+  "id": "C06792",
+  "label": "cis-1,2-Dichloroethene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 274,
+  "cy": 123,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06609",
+  "id": "C06609",
+  "label": "trans-1,3-Dichloropropene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 274,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06610",
+  "id": "C06610",
+  "label": "cis-1,3-Dichloropropene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 382,
+  "cy": 123,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06611",
+  "id": "C06611",
+  "label": "trans-3-Chloro-2-propene-1-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 382,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06612",
+  "id": "C06612",
+  "label": "cis-3-Chloro-2-propene-1-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 490,
+  "cy": 123,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06613",
+  "id": "C06613",
+  "label": "trans-3-Chloroallyl aldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 491,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16348",
+  "id": "C16348",
+  "label": "cis-3-Chloroallyl aldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 598,
+  "cy": 123,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06614",
+  "id": "C06614",
+  "label": "trans-3-Chloroacrylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 598,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06615",
+  "id": "C06615",
+  "label": "cis-3-Chloroacrylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 706,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00222",
+  "id": "C00222",
+  "label": "3-Oxopropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 322,
+  "cy": 357,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14866",
+  "id": "C14866",
+  "label": "Chloral",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 411,
+  "cy": 284,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11150",
+  "id": "C11150",
+  "label": "Trichloroacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 322,
+  "cy": 284,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07490",
+  "id": "C07490",
+  "label": "Trichloroethanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 470,
+  "cy": 513,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11149",
+  "id": "C11149",
+  "label": "Dichloroacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 530,
+  "cy": 545,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00048",
+  "id": "C00048",
+  "label": "Glyoxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 382,
+  "cy": 576,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00058",
+  "id": "C00058",
+  "label": "Formate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 382,
+  "cy": 635,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00067",
+  "id": "C00067",
+  "label": "Formaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 274,
+  "cy": 675,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06752",
+  "id": "C06752",
+  "label": "1,2-Dichloroethane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 382,
+  "cy": 675,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06753",
+  "id": "C06753",
+  "label": "2-Chloroethanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 490,
+  "cy": 675,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06754",
+  "id": "C06754",
+  "label": "Chloroacetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 598,
+  "cy": 675,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06755",
+  "id": "C06755",
+  "label": "Chloroacetic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 706,
+  "cy": 675,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00160",
+  "id": "C00160",
+  "label": "Glycolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 437,
+  "cy": 490,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00237",
+  "id": "C00237",
+  "label": "CO",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 231,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18246",
+  "id": "C18246",
+  "label": "1,1,1-Trichloroethane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 274,
+  "cy": 231,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18247",
+  "id": "C18247",
+  "label": "1,1-Dichloroethane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 382,
+  "cy": 231,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18248",
+  "id": "C18248",
+  "label": "Chloroethane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 284,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00209",
+  "id": "C00209",
+  "label": "Oxalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 493,
+  "cy": 254,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00011",
+  "id": "C00011",
+  "label": "CO2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 166,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06790",
+  "id": "C06790",
+  "label": "Trichloroethene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 382,
+  "cy": 513,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11148",
+  "id": "C11148",
+  "label": "TCE epoxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 274,
+  "cy": 635,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02271",
+  "id": "C02271",
+  "label": "Dichloromethane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 695,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21752",
+  "id": "C21752",
+  "label": "2-Hydroxyethyl-CoM",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 599,
+  "cy": 440,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20303",
+  "id": "C20303",
+  "label": "Chloroethylene oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 695,
+  "cy": 440,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21753",
+  "id": "C21753",
+  "label": "2-Chloro-2-hydroxyethyl-CoM",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 410,
+  "y1": 115,
+  "x2": 456,
+  "y2": 132,
+  "url": "/dbget-bin/www_bget?syn:sll0990",
+  "id": "sll0990",
+  "label": "sll0990",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0990",
+    "product": "formaldehyde dehydrogenase (glutathione)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 410,
+  "y1": 170,
+  "x2": 456,
+  "y2": 187,
+  "url": "/dbget-bin/www_bget?syn:sll0990",
+  "id": "sll0990",
+  "label": "sll0990",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0990",
+    "product": "formaldehyde dehydrogenase (glutathione)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 517,
+  "y1": 114,
+  "x2": 563,
+  "y2": 131,
+  "url": "/dbget-bin/www_bget?syn:slr0091",
+  "id": "slr0091",
+  "label": "slr0091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0091",
+    "product": "aldehyde dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 518,
+  "y1": 170,
+  "x2": 564,
+  "y2": 187,
+  "url": "/dbget-bin/www_bget?syn:slr0091",
+  "id": "slr0091",
+  "label": "slr0091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0091",
+    "product": "aldehyde dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 518,
+  "y1": 666,
+  "x2": 564,
+  "y2": 683,
+  "url": "/dbget-bin/www_bget?syn:slr0091",
+  "id": "slr0091",
+  "label": "slr0091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0091",
+    "product": "aldehyde dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 830,
+  "y1": 376,
+  "x2": 905,
+  "y2": 410,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 427,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00625",
+  "id": "syn00625",
+  "label": "syn00625: Chloroalkane and chloroalkene degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 622,
+  "y1": 528,
+  "x2": 786,
+  "y2": 562,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 444,
+  "y1": 558,
+  "x2": 518,
+  "y2": 592,
+  "url": "/kegg-bin/show_pathway?syn00680",
+  "id": "syn00680",
+  "label": "syn00680: Methane metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 580,
+  "y1": 260,
+  "x2": 672,
+  "y2": 305,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ }
+]

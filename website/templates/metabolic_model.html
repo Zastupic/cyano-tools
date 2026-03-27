@@ -5,11 +5,6 @@
 {% block keywords %}metabolic model, iRH783, Synechocystis 6803, FBA, flux balance analysis, genome-scale model, COBRApy, pathway network{% endblock %}
 
 {% block head %}
-<!-- Cytoscape.js for network visualisation -->
-<script src="https://unpkg.com/cytoscape@3.29.2/dist/cytoscape.min.js"></script>
-<!-- Dagre hierarchical layout for Cytoscape -->
-<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
-<script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
 <!-- Chart.js for bar charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <!-- SheetJS for XLSX export -->
@@ -41,13 +36,6 @@
     .rxn-item:hover, .rxn-item.active { background: #e8f0fe; }
     /* Sub-tab nav smaller */
     #sim-sub-tabs .nav-link { padding: 0.35rem 0.75rem; font-size: 0.9em; }
-    #cy {
-        width: 100%;
-        height: 580px;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        background: #f8f9fa;
-    }
     .table-scroll { max-height: 500px; overflow-y: auto; }
     .table thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
     code { font-size: 0.82em; }
@@ -71,22 +59,6 @@
         flex-direction: column;
     }
     #loading-overlay.active { display: flex; }
-    .cy-legend { font-size: 0.8em; }
-    .cy-legend span {
-        display: inline-block;
-        width: 12px; height: 12px;
-        border-radius: 50%;
-        margin-right: 4px;
-        vertical-align: middle;
-    }
-    /* Flux overlay legend items */
-    .flux-legend-line {
-        display: inline-block;
-        width: 28px; height: 4px;
-        border-radius: 2px;
-        margin-right: 4px;
-        vertical-align: middle;
-    }
     /* Inline sparkbar in flux table */
     .sparkbar-wrap {
         width: 90px;
@@ -122,19 +94,6 @@
         border-radius: 3px;
         text-align: right;
     }
-    /* Network flux badge */
-    #flux-overlay-badge {
-        display: none;
-        font-size: 0.8em;
-    }
-    /* Compartment colour dots */
-    .comp-dot {
-        display: inline-block;
-        width: 10px; height: 10px;
-        border-radius: 50%;
-        margin-right: 3px;
-        vertical-align: middle;
-    }
     /* iPath3 SVG panel */
     #ipath3-panel {
         max-height: 600px;
@@ -159,18 +118,91 @@
 </div>
 
 <div class="container-fluid mt-3 mb-5">
-    <h2 class="mb-1">Metabolic Model — <em>Synechocystis</em> sp. PCC 6803</h2>
-    <p class="text-muted mb-2">
-        Genome-scale reconstruction <strong>iRH783</strong> &nbsp;·&nbsp; 783 genes &nbsp;·&nbsp;
-        <a href="https://github.com/krotlkpt/syn6803" target="_blank">source repository</a>
-    </p>
 
-    <!-- Stats bar -->
-    <div id="stats-bar" class="mb-3">
-        <span class="stat-badge">Reactions: <strong id="n-rxn">—</strong></span>
-        <span class="stat-badge">Metabolites: <strong id="n-met">—</strong></span>
-        <span class="stat-badge">Genes: <strong id="n-gen">—</strong></span>
-        <span class="stat-badge">Compartments: <strong id="n-comp">—</strong></span>
+    <div class="p-4 border rounded shadow-sm bg-white mb-4">
+        <h2 class="font-weight-bold mb-3">
+            <i class="fa fa-share-alt text-primary mr-2"></i>Metabolic Reconstruction of <em>Synechocystis</em> sp. PCC 6803
+        </h2>
+
+        <div class="row">
+            <div class="col-lg-7">
+                <p style="font-size:0.95em; line-height:1.6;">
+                    The genome-scale metabolic reconstruction <strong>iRH783</strong> of the cyanobacterium
+                    <em>Synechocystis</em> sp. PCC 6803
+                    (<a href="https://doi.org/10.1371/journal.pcbi.1012280" target="_blank">H&ouml;per et al., 2024, <em>PLoS Comput. Biol.</em></a>)
+                    encompasses 920 reactions, 809 metabolites, and 783 genes.
+                    It builds upon earlier reconstructions by
+                    <a href="https://doi.org/10.1371/journal.pcbi.1003081" target="_blank">Knoop et al. (2013)</a> and
+                    <a href="https://doi.org/10.3389/fbioe.2015.00047" target="_blank">Knoop &amp; Steuer (2015)</a>,
+                    with revised gene-protein-reaction associations, the addition of the Entner-Doudoroff pathway,
+                    and updated coverage of purine, pyrimidine, and biotin metabolism.
+                    The model incorporates a novel description of light absorption and utilization within
+                    the FBA framework, including a variable quantum yield and photoinhibition.
+                    Model parameters were calibrated against quantitative growth data obtained
+                    in a light-limited turbidostat
+                    (<a href="https://doi.org/10.7554/eLife.42508" target="_blank">Zav&rcaron;el et al., 2019, <em>eLife</em></a>),
+                    which provides the primary experimental reference dataset including growth rates,
+                    O<sub>2</sub> evolution, and biomass composition as a function of light intensity.
+                </p>
+                <p style="font-size:0.95em; line-height:1.6;">
+                    Metabolites and reactions are organized into <strong>7 compartments</strong> that reflect
+                    the cellular ultrastructure of <em>Synechocystis</em> (see figure):
+                </p>
+                <ul style="font-size:0.9em; line-height:1.6; margin-bottom:0.8em;">
+                    <li><strong>e</strong> — extracellular space (growth medium with dissolved nutrients)</li>
+                    <li><strong>p</strong> — periplasm (space between outer and cytoplasmic membranes)</li>
+                    <li><strong>cm</strong> — cytoplasmic membrane (respiratory complexes, nutrient transporters)</li>
+                    <li><strong>c</strong> — cytoplasm (central metabolism, anabolic reactions)</li>
+                    <li><strong>cx</strong> — carboxysome (CO<sub>2</sub>-concentrating microcompartment with RuBisCO)</li>
+                    <li><strong>um</strong> — thylakoid membrane (photosynthetic electron transport: PSII, Cyt b<sub>6</sub>f, PSI, ATPase)</li>
+                    <li><strong>u</strong> — thylakoid lumen (proton gradient driving ATP synthesis)</li>
+                </ul>
+                <p style="font-size:0.95em; line-height:1.6; margin-bottom:0.4em;">
+                    <strong>Available analyses:</strong>
+                </p>
+                <ul style="font-size:0.9em; line-height:1.6; margin-bottom:0.8em;">
+                    <li>Interactive KEGG pathway maps with gene and compound annotations linked to KEGG records</li>
+                    <li>Searchable reaction and metabolite tables with direct navigation to pathway maps</li>
+                    <li>Flux Balance Analysis (FBA) under user-defined growth conditions (light intensity, carbon source, nutrient constraints) with flux overlay on pathway maps</li>
+                    <li>Production envelope analysis for growth-product trade-offs</li>
+                    <li>Biosynthetic cost estimation for target metabolites</li>
+                </ul>
+
+                <!-- Stats bar -->
+                <div id="stats-bar" class="mb-2">
+                    <span class="stat-badge">Reactions: <strong id="n-rxn">—</strong></span>
+                    <span class="stat-badge">Metabolites: <strong id="n-met">—</strong></span>
+                    <span class="stat-badge">Genes: <strong id="n-gen">—</strong></span>
+                    <span class="stat-badge">Compartments: <strong id="n-comp">—</strong></span>
+                </div>
+
+                <p class="mb-0" style="font-size:0.82em; color:#666;">
+                    <a href="https://github.com/krotlkpt/syn6803" target="_blank"><i class="fa fa-github"></i> Model repository</a>
+                    &nbsp;&middot;&nbsp;
+                    <a href="https://doi.org/10.1371/journal.pcbi.1012280" target="_blank"><i class="fa fa-file-text-o"></i> H&ouml;per et al. (2024)</a>
+                    &nbsp;&middot;&nbsp;
+                    <a href="https://doi.org/10.7554/eLife.42508" target="_blank">Zav&rcaron;el et al. (2019)</a>
+                    &nbsp;&middot;&nbsp;
+                    <a href="https://doi.org/10.1371/journal.pcbi.1003081" target="_blank">Knoop et al. (2013)</a>
+                    &nbsp;&middot;&nbsp;
+                    <a href="https://doi.org/10.3389/fbioe.2015.00047" target="_blank">Knoop &amp; Steuer (2015)</a>
+                </p>
+            </div>
+            <div class="col-lg-5 text-center">
+                <img src="{{ url_for('static', filename='images/hoeper2024_fig1.png') }}"
+                     alt="Key metabolic processes in Synechocystis sp. PCC 6803"
+                     style="max-width:100%; border:1px solid #dee2e6; border-radius:4px;">
+                <p class="text-muted mt-1" style="font-size:0.75em; line-height:1.3;">
+                    Key metabolic processes involved in cyanobacterial phototrophic growth.
+                    Nutrients are taken up from the extracellular space; CO<sub>2</sub> is fixed in
+                    carboxysomes by RuBisCO; ATP and NADPH are regenerated by the photosynthetic
+                    electron transport chain in the thylakoid membrane.
+                    <br>Figure from
+                    <a href="https://doi.org/10.1371/journal.pcbi.1012280" target="_blank">H&ouml;per et al. (2024)</a>,
+                    CC BY 4.0.
+                </p>
+            </div>
+        </div>
     </div>
 
     <!-- Tabs -->
@@ -181,18 +213,8 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" href="#tab-reactions" role="tab">
-                <i class="fa fa-exchange"></i> Reactions
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" href="#tab-metabolites" role="tab">
-                <i class="fa fa-circle-o"></i> Metabolites
-            </a>
-        </li>
-        <li class="nav-item">
             <a class="nav-link" data-toggle="tab" href="#tab-simulations" role="tab">
-                <i class="fa fa-flask"></i> Simulations
+                <i class="fa fa-flask"></i> Flux Balance Analysis (FBA)
             </a>
         </li>
         <li class="nav-item">
@@ -211,113 +233,113 @@
 
         <!-- ── Network tab ───────────────────────────────────────────── -->
         <div id="tab-network" class="tab-pane fade show active" role="tabpanel">
+
+            <!-- Sub-tabs: Pathways | Reactions | Metabolites -->
+            <ul class="nav nav-tabs mb-3" id="network-sub-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#sub-pathways" role="tab">
+                        <i class="fa fa-map"></i> Pathways
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#sub-reactions" role="tab">
+                        <i class="fa fa-exchange"></i> Reactions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#sub-metabolites" role="tab">
+                        <i class="fa fa-circle-o"></i> Metabolites
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+
+            <!-- ── Pathways sub-tab ──────────────────────────── -->
+            <div id="sub-pathways" class="tab-pane fade show active" role="tabpanel">
             <div class="row align-items-end mb-2">
-                <div class="col-md-4">
-                    <label for="subsystem-select" class="mb-1"><strong>Subsystem / Pathway</strong></label>
-                    <select id="subsystem-select" class="form-control">
-                        <option value="">— select a pathway —</option>
+                <div class="col-auto">
+                    <label class="mb-1 d-block"><strong>KEGG Pathway Map</strong></label>
+                    <select id="kegg-map-select" class="form-control" style="min-width:300px;">
+                        <option value="">— loading pathways... —</option>
                     </select>
                 </div>
                 <div class="col-auto">
-                    <label for="layout-select" class="mb-1 small text-muted">Layout</label>
-                    <select id="layout-select" class="form-control form-control-sm" style="min-width:130px;">
-                        <option value="dagre">Dagre (hierarchy)</option>
-                        <option value="cose">CoSE (force)</option>
-                        <option value="breadthfirst">Breadth-first</option>
-                        <option value="concentric">Concentric</option>
-                    </select>
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-success" id="load-network-btn">
-                        <i class="fa fa-play"></i> Load network
+                    <button class="btn btn-success" id="load-kegg-map-btn">
+                        <i class="fa fa-map"></i> Load map
                     </button>
                 </div>
-                <div class="col-auto">
-                    <button class="btn btn-outline-secondary btn-sm" id="fit-network-btn" style="display:none;">
-                        <i class="fa fa-compress"></i> Fit
-                    </button>
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-outline-primary btn-sm" id="apply-flux-btn" style="display:none;"
-                            title="Colour edges by FBA flux (run FBA first)">
+                <div class="col-auto" id="kegg-map-actions" style="display:none;">
+                    <button class="btn btn-outline-primary btn-sm" id="kegg-flux-btn"
+                            title="Overlay FBA flux on gene boxes (run FBA first)">
                         <i class="fa fa-tint"></i> Apply flux colours
                     </button>
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-outline-secondary btn-sm" id="reset-flux-btn" style="display:none;">
-                        <i class="fa fa-undo"></i> Reset colours
+                    <button class="btn btn-outline-secondary btn-sm" id="kegg-reset-flux-btn">
+                        <i class="fa fa-undo"></i> Reset
                     </button>
                 </div>
-            </div>
-
-            <!-- Legends -->
-            <div class="row mb-1">
-                <div class="col-auto cy-legend" id="cy-legend" style="display:none;">
-                    <span style="background:#4e8dc7;"></span> Reaction &nbsp;
-                    Metabolite by compartment:
-                    <span class="comp-dot" style="background:#5cb85c;"></span>cytosol (c) &nbsp;
-                    <span class="comp-dot" style="background:#e67e22;"></span>extracellular (e) &nbsp;
-                    <span class="comp-dot" style="background:#9b59b6;"></span>periplasm (p) &nbsp;
-                    <span class="comp-dot" style="background:#e74c3c;"></span>carboxysome (cx) &nbsp;
-                    <span class="comp-dot" style="background:#3498db;"></span>membrane (cm) &nbsp;
-                    <span class="comp-dot" style="background:#1abc9c;"></span>thylakoid (um)
-                </div>
-                <div class="col-auto cy-legend" id="flux-overlay-badge" style="display:none;">
-                    &nbsp;|&nbsp;
-                    <span class="flux-legend-line" style="background:#1e64c8;"></span> Forward flux &nbsp;
-                    <span class="flux-legend-line" style="background:#c0392b;"></span> Reverse flux &nbsp;
-                    <span class="flux-legend-line" style="background:#ddd;"></span> Zero / inactive
+                <div class="col-auto text-muted small" style="align-self:flex-end; line-height:1.3;">
+                    Original KEGG layout with interactive overlay.<br>
+                    Click compounds/genes for details. Run FBA for flux colours.
                 </div>
             </div>
-
-            <div id="cy-placeholder" class="text-center text-muted py-5">
-                <i class="fa fa-share-alt fa-3x mb-2" style="color:#ccc;"></i>
-                <p>Select a subsystem above and click <em>Load network</em> to visualise the bipartite reaction–metabolite graph.<br>
-                <small>Tip: run FBA first, then load a network to overlay flux colours on edges.</small></p>
-            </div>
-            <div id="cy" style="display:none;"></div>
-            
-            <div id="cy-node-info" class="mt-2 p-2 border rounded bg-light" style="display:none; font-size:0.9em;">
-                <strong id="cy-node-title"></strong><br>
-                <span id="cy-node-detail" class="text-muted"></span>
-            </div>
-        </div>
-
-        <!-- ── Reactions tab ─────────────────────────────────────────── -->
-        <div id="tab-reactions" class="tab-pane fade" role="tabpanel">
-            <div class="row mb-2">
-                <div class="col-md-5">
-                    <input class="form-control" id="rxn-search" placeholder="Search by ID, name, equation or subsystem…">
+            <div id="kegg-map-panel" style="display:none;">
+                <div id="kegg-map-container" style="position:relative; border:1px solid #000; border-radius:4px; background:#fff;">
+                    <img id="kegg-map-img" style="display:block;">
+                    <svg id="kegg-map-svg" style="position:absolute; top:0; left:0; pointer-events:none;"></svg>
                 </div>
-                <div class="col-auto align-self-center text-muted small" id="rxn-count-label"></div>
-            </div>
-            <div class="table-scroll">
-                <table class="table table-sm table-striped table-hover" id="rxn-table">
-                    <thead class="thead-light">
-                        <tr><th>ID</th><th>Name</th><th>Equation</th><th>Subsystem</th><th>Genes</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- ── Metabolites tab ───────────────────────────────────────── -->
-        <div id="tab-metabolites" class="tab-pane fade" role="tabpanel">
-            <div class="row mb-2">
-                <div class="col-md-5">
-                    <input class="form-control" id="met-search" placeholder="Search by ID, name, formula or compartment…">
+                <!-- FBA flux legend (below the map) -->
+                <div id="kegg-flux-legend" class="mt-2 p-2 border rounded" style="display:none; font-size:0.82em; background:#f8f9fa;">
+                    <strong>FBA Flux Overlay</strong> &nbsp;
+                    <span style="display:inline-block; width:18px; height:12px; background:rgba(30,100,200,0.7); border:1px solid #1565C0; border-radius:2px; vertical-align:middle;"></span>
+                    Forward flux (positive) &nbsp;&nbsp;
+                    <span style="display:inline-block; width:18px; height:12px; background:rgba(192,57,43,0.7); border:1px solid #c0392b; border-radius:2px; vertical-align:middle;"></span>
+                    Reverse flux (negative) &nbsp;&nbsp;
+                    <span style="display:inline-block; width:18px; height:12px; background:rgba(200,200,200,0.5); border:1px solid #ccc; border-radius:2px; vertical-align:middle;"></span>
+                    Zero / inactive &nbsp;&nbsp;
+                    <span class="text-muted">| Colour intensity &amp; border width scale with flux magnitude. Hover for exact values.</span>
                 </div>
-                <div class="col-auto align-self-center text-muted small" id="met-count-label"></div>
             </div>
-            <div class="table-scroll">
-                <table class="table table-sm table-striped table-hover" id="met-table">
-                    <thead class="thead-light">
-                        <tr><th>ID</th><th>Name</th><th>Formula</th><th>Compartment</th><th>Charge</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
+            </div><!-- /sub-pathways -->
+
+            <!-- ── Reactions sub-tab ─────────────────────────── -->
+            <div id="sub-reactions" class="tab-pane fade" role="tabpanel">
+                <div class="row mb-2">
+                    <div class="col-md-5">
+                        <input class="form-control" id="rxn-search" placeholder="Search by ID, name, equation or subsystem…">
+                    </div>
+                    <div class="col-auto align-self-center text-muted small" id="rxn-count-label"></div>
+                </div>
+                <div class="table-scroll">
+                    <table class="table table-sm table-striped table-hover" id="rxn-table">
+                        <thead class="thead-light">
+                            <tr><th>ID</th><th>Name</th><th>Equation</th><th>Subsystem</th><th>Genes</th><th>Show in pathway</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div><!-- /sub-reactions -->
+
+            <!-- ── Metabolites sub-tab ───────────────────────── -->
+            <div id="sub-metabolites" class="tab-pane fade" role="tabpanel">
+                <div class="row mb-2">
+                    <div class="col-md-5">
+                        <input class="form-control" id="met-search" placeholder="Search by ID, name, formula or compartment…">
+                    </div>
+                    <div class="col-auto align-self-center text-muted small" id="met-count-label"></div>
+                </div>
+                <div class="table-scroll">
+                    <table class="table table-sm table-striped table-hover" id="met-table">
+                        <thead class="thead-light">
+                            <tr><th>ID</th><th>Name</th><th>Formula</th><th>Compartment</th><th>Charge</th><th>Show in pathway</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div><!-- /sub-metabolites -->
+
+            </div><!-- /tab-content (sub-tabs) -->
+        </div><!-- /tab-network -->
 
         <!-- ── Genes tab ─────────────────────────────────────────────── -->
 
@@ -1352,7 +1374,7 @@
                     <div id="en-ref-bar" class="d-flex align-items-center mb-2" style="display:none;">
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="en-lock-btn" style="font-size:0.8em;">
                             <i class="fa fa-bookmark-o"></i> Save as reference
-                        </button>
+                       </button>
                         <button class="btn btn-sm btn-link text-danger py-0 px-2 ml-1" id="en-clear-btn" style="display:none; font-size:0.8em;">
                             <i class="fa fa-times"></i> Clear
                         </button>
@@ -1391,7 +1413,7 @@
         </div><!-- /tab-bc -->
 
     </div><!-- /tab-content -->
-    <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>    
+    <br><br><br><br><br><br><br><br><br>    
 </div>
 <script src="{{ url_for('static', filename='js_metabolic_model.js') }}?v=5"></script>
 {% endblock %}

@@ -1,0 +1,969 @@
+[
+ {
+  "type": "circ",
+  "cx": 367,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15973",
+  "id": "C15973",
+  "label": "Enzyme N6-(dihydrolipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 367,
+  "cy": 462,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15972",
+  "id": "C15972",
+  "label": "Enzyme N6-(lipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 405,
+  "cy": 491,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16255",
+  "id": "C16255",
+  "label": "[Dihydrolipoyllysine-residue acetyltransferase] S-acetyldihydrolipoyllysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 405,
+  "cy": 430,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05125",
+  "id": "C05125",
+  "label": "2-(alpha-Hydroxyethyl)thiamine diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 540,
+  "cy": 136,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03248",
+  "id": "C03248",
+  "label": "Acetylenedicarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 402,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00074",
+  "id": "C00074",
+  "label": "Phosphoenolpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 540,
+  "cy": 195,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03981",
+  "id": "C03981",
+  "label": "2-Hydroxyethylenedicarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 251,
+  "cy": 503,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00058",
+  "id": "C00058",
+  "label": "Formate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 160,
+  "cy": 645,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00149",
+  "id": "C00149",
+  "label": "(S)-Malate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 273,
+  "cy": 792,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00332",
+  "id": "C00332",
+  "label": "Acetoacetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 405,
+  "cy": 564,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 645,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00227",
+  "id": "C00227",
+  "label": "Acetyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 616,
+  "cy": 628,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05993",
+  "id": "C05993",
+  "label": "Acetyl adenylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 542,
+  "cy": 757,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02504",
+  "id": "C02504",
+  "label": "alpha-Isopropylmalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 273,
+  "cy": 757,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02488",
+  "id": "C02488",
+  "label": "(R)-2-Ethylmalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 273,
+  "cy": 831,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05994",
+  "id": "C05994",
+  "label": "2-Propylmalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 542,
+  "cy": 792,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01251",
+  "id": "C01251",
+  "label": "(R)-2-Hydroxybutane-1,2,4-tricarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 542,
+  "cy": 831,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00083",
+  "id": "C00083",
+  "label": "Malonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 800,
+  "cy": 690,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00084",
+  "id": "C00084",
+  "label": "Acetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 796,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00033",
+  "id": "C00033",
+  "label": "Acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 799,
+  "cy": 350,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00186",
+  "id": "C00186",
+  "label": "(S)-Lactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 799,
+  "cy": 244,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00256",
+  "id": "C00256",
+  "label": "(R)-Lactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 712,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03451",
+  "id": "C03451",
+  "label": "(R)-S-Lactoylglutathione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 802,
+  "cy": 126,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00937",
+  "id": "C00937",
+  "label": "(R)-Lactaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 802,
+  "cy": 70,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00424",
+  "id": "C00424",
+  "label": "(S)-Lactaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 635,
+  "cy": 70,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00546",
+  "id": "C00546",
+  "label": "Methylglyoxal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 405,
+  "cy": 353,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 160,
+  "cy": 498,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00036",
+  "id": "C00036",
+  "label": "Oxaloacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 415,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00068",
+  "id": "C00068",
+  "label": "Thiamin diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 260,
+  "cy": 649,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00122",
+  "id": "C00122",
+  "label": "Fumarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 353,
+  "cy": 649,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00042",
+  "id": "C00042",
+  "label": "Succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 800,
+  "cy": 815,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00469",
+  "id": "C00469",
+  "label": "Ethanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 382,
+  "y1": 447,
+  "x2": 428,
+  "y2": 464,
+  "url": "/dbget-bin/www_bget?syn:sll1721+syn:slr1934",
+  "id": "sll1721",
+  "label": "sll1721 (pdhB), slr1934",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1721",
+    "product": "pyruvate dehydrogenase E1 beta subunit"
+   },
+   {
+    "locus": "slr1934",
+    "product": "pyruvate dehydrogenase E1 component, alpha subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 197,
+  "y1": 118,
+  "x2": 243,
+  "y2": 135,
+  "url": "/dbget-bin/www_bget?syn:sll0920",
+  "id": "sll0920",
+  "label": "sll0920 (ppc)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0920",
+    "product": "phosphoenolpyruvate carboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 316,
+  "y1": 188,
+  "x2": 362,
+  "y2": 205,
+  "url": "/dbget-bin/www_bget?syn:slr0301",
+  "id": "slr0301",
+  "label": "slr0301 (ppsA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0301",
+    "product": "phosphoenolpyruvate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 362,
+  "y1": 242,
+  "x2": 408,
+  "y2": 259,
+  "url": "/dbget-bin/www_bget?syn:sll0587+syn:sll1275",
+  "id": "sll0587",
+  "label": "sll0587 (pykF), sll1275 (pykF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0587",
+    "product": "pyruvate kinase"
+   },
+   {
+    "locus": "sll1275",
+    "product": "pyruvate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 647,
+  "y1": 177,
+  "x2": 693,
+  "y2": 194,
+  "url": "/dbget-bin/www_bget?syn:slr0381",
+  "id": "slr0381",
+  "label": "slr0381",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0381",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 556,
+  "y1": 225,
+  "x2": 602,
+  "y2": 242,
+  "url": "/dbget-bin/www_bget?syn:slr1556",
+  "id": "slr1556",
+  "label": "slr1556 (ddh)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1556",
+    "product": "2-hydroxyaciddehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 729,
+  "y1": 177,
+  "x2": 775,
+  "y2": 194,
+  "url": "/dbget-bin/www_bget?syn:sll1019",
+  "id": "sll1019",
+  "label": "sll1019 (HAGH1)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1019",
+    "product": "glyoxalase II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 167,
+  "y1": 430,
+  "x2": 213,
+  "y2": 447,
+  "url": "/dbget-bin/www_bget?syn:slr0721",
+  "id": "slr0721",
+  "label": "slr0721 (me)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0721",
+    "product": "malic enzyme"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 489,
+  "y1": 459,
+  "x2": 535,
+  "y2": 476,
+  "url": "/dbget-bin/www_bget?syn:sll0741",
+  "id": "sll0741",
+  "label": "sll0741 (nifJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0741",
+    "product": "pyruvate oxidoreductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 112,
+  "y1": 549,
+  "x2": 158,
+  "y2": 566,
+  "url": "/dbget-bin/www_bget?syn:sll0891",
+  "id": "sll0891",
+  "label": "sll0891 (citH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0891",
+    "product": "2-ketoacid dehydrogenase; malate dehydrogenase; lactate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 568,
+  "y1": 515,
+  "x2": 614,
+  "y2": 532,
+  "url": "/dbget-bin/www_bget?syn:slr2132",
+  "id": "slr2132",
+  "label": "slr2132 (pta)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2132",
+    "product": "phosphotransacetylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 491,
+  "y1": 620,
+  "x2": 537,
+  "y2": 637,
+  "url": "/dbget-bin/www_bget?syn:sll0542",
+  "id": "sll0542",
+  "label": "sll0542 (acs)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0542",
+    "product": "acetyl-coenzyme A synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 692,
+  "y1": 620,
+  "x2": 738,
+  "y2": 637,
+  "url": "/dbget-bin/www_bget?syn:sll0542",
+  "id": "sll0542",
+  "label": "sll0542 (acs)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0542",
+    "product": "acetyl-coenzyme A synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 752,
+  "y1": 634,
+  "x2": 798,
+  "y2": 651,
+  "url": "/dbget-bin/www_bget?syn:slr0091",
+  "id": "slr0091",
+  "label": "slr0091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0091",
+    "product": "aldehyde dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 324,
+  "y1": 783,
+  "x2": 370,
+  "y2": 800,
+  "url": "/dbget-bin/www_bget?syn:slr1993",
+  "id": "slr1993",
+  "label": "slr1993 (thl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1993",
+    "product": "acetyl coenzyme A acetyltransferase (thiolase)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 441,
+  "y1": 748,
+  "x2": 487,
+  "y2": 765,
+  "url": "/dbget-bin/www_bget?syn:sll1564+syn:slr0186",
+  "id": "sll1564",
+  "label": "sll1564 (leuA), slr0186 (leuA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1564",
+    "product": "alpha-isopropylmalate synthase"
+   },
+   {
+    "locus": "slr0186",
+    "product": "2-isopropylmalate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 441,
+  "y1": 822,
+  "x2": 487,
+  "y2": 839,
+  "url": "/dbget-bin/www_bget?syn:sll0053+syn:sll0336+syn:sll0728+syn:slr0435",
+  "id": "sll0053",
+  "label": "sll0053 (accC), sll0336 (accD), sll0728 (accA), slr0435 (accB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0053",
+    "product": "biotin carboxylase"
+   },
+   {
+    "locus": "sll0336",
+    "product": "acetyl-CoA carboxylase beta subunit"
+   },
+   {
+    "locus": "sll0728",
+    "product": "acetyl-CoA carboxylase alpha subunit"
+   },
+   {
+    "locus": "slr0435",
+    "product": "biotin carboxyl carrier protein of acetyl-CoA carboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 381,
+  "y1": 387,
+  "x2": 427,
+  "y2": 404,
+  "url": "/dbget-bin/www_bget?syn:sll1721+syn:slr1934",
+  "id": "sll1721",
+  "label": "sll1721 (pdhB), slr1934",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1721",
+    "product": "pyruvate dehydrogenase E1 beta subunit"
+   },
+   {
+    "locus": "slr1934",
+    "product": "pyruvate dehydrogenase E1 component, alpha subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 382,
+  "y1": 519,
+  "x2": 428,
+  "y2": 536,
+  "url": "/dbget-bin/www_bget?syn:sll1841",
+  "id": "sll1841",
+  "label": "sll1841 (odhB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1841",
+    "product": "dihydrolipoamide acetyltransferase component (E2) of pyruvate dehydrogenase complex"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 343,
+  "y1": 485,
+  "x2": 389,
+  "y2": 502,
+  "url": "/dbget-bin/www_bget?syn:slr1096",
+  "id": "slr1096",
+  "label": "slr1096 (phdD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1096",
+    "product": "dihydrolipoamide dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 692,
+  "y1": 436,
+  "x2": 738,
+  "y2": 453,
+  "url": "/dbget-bin/www_bget?syn:sll1299",
+  "id": "sll1299",
+  "label": "sll1299 (ackA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1299",
+    "product": "acetate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 187,
+  "y1": 644,
+  "x2": 233,
+  "y2": 661,
+  "url": "/dbget-bin/www_bget?syn:slr0018",
+  "id": "slr0018",
+  "label": "slr0018 (fumC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0018",
+    "product": "fumarase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 489,
+  "y1": 478,
+  "x2": 535,
+  "y2": 495,
+  "url": "/dbget-bin/www_bget?syn:sll0741",
+  "id": "sll0741",
+  "label": "sll0741 (nifJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0741",
+    "product": "pyruvate oxidoreductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 802,
+  "y1": 730,
+  "x2": 848,
+  "y2": 747,
+  "url": "/dbget-bin/www_bget?syn:slr0942+syn:slr1192",
+  "id": "slr0942,",
+  "label": "slr0942, slr1192",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0942",
+    "product": "aldehyde reductase"
+   },
+   {
+    "locus": "slr1192",
+    "product": "zinc-containing alcohol dehydrogenase family"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 752,
+  "y1": 730,
+  "x2": 798,
+  "y2": 747,
+  "url": "/dbget-bin/www_bget?syn:sll0990",
+  "id": "sll0990",
+  "label": "sll0990",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0990",
+    "product": "formaldehyde dehydrogenase (glutathione)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 227,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 96,
+  "y1": 219,
+  "x2": 247,
+  "y2": 253,
+  "url": "/kegg-bin/show_pathway?syn00760",
+  "id": "syn00760",
+  "label": "syn00760: Nicotinate and nicotinamide metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 26,
+  "y1": 689,
+  "x2": 103,
+  "y2": 714,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 505,
+  "y1": 89,
+  "x2": 620,
+  "y2": 123,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 308,
+  "y1": 84,
+  "x2": 376,
+  "y2": 109,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 71,
+  "y1": 595,
+  "x2": 141,
+  "y2": 629,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 219,
+  "y1": 541,
+  "x2": 290,
+  "y2": 575,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 590,
+  "x2": 391,
+  "y2": 624,
+  "url": "/kegg-bin/show_pathway?syn00640",
+  "id": "syn00640",
+  "label": "syn00640: Propanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 94,
+  "y1": 775,
+  "x2": 174,
+  "y2": 809,
+  "url": "/kegg-bin/show_pathway?syn00650",
+  "id": "syn00650",
+  "label": "syn00650: Butanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 610,
+  "y1": 745,
+  "x2": 729,
+  "y2": 770,
+  "url": "/kegg-bin/show_pathway?syn00290",
+  "id": "syn00290",
+  "label": "syn00290: Valine, leucine and isoleucine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 610,
+  "y1": 780,
+  "x2": 724,
+  "y2": 805,
+  "url": "/kegg-bin/show_pathway?syn00300",
+  "id": "syn00300",
+  "label": "syn00300: Lysine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 610,
+  "y1": 818,
+  "x2": 740,
+  "y2": 843,
+  "url": "/kegg-bin/show_pathway?syn00061",
+  "id": "syn00061",
+  "label": "syn00061: Fatty acid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 96,
+  "y1": 301,
+  "x2": 228,
+  "y2": 335,
+  "url": "/kegg-bin/show_pathway?syn00290",
+  "id": "syn00290",
+  "label": "syn00290: Valine, leucine and isoleucine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 610,
+  "y1": 846,
+  "x2": 768,
+  "y2": 880,
+  "url": "/kegg-bin/show_pathway?map00522",
+  "id": "map00522:",
+  "label": "map00522: Biosynthesis of 12-, 14- and 16-membered macrolides",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 610,
+  "y1": 883,
+  "x2": 804,
+  "y2": 908,
+  "url": "/kegg-bin/show_pathway?map01059",
+  "id": "map01059:",
+  "label": "map01059: Biosynthesis of enediyne antibiotics",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 610,
+  "y1": 911,
+  "x2": 842,
+  "y2": 936,
+  "url": "/kegg-bin/show_pathway?map01056",
+  "id": "map01056:",
+  "label": "map01056: Biosynthesis of type II polyketide backbone",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 96,
+  "y1": 260,
+  "x2": 228,
+  "y2": 294,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ }
+]

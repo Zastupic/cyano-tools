@@ -1,0 +1,272 @@
+[
+ {
+  "type": "rect",
+  "x1": 1134,
+  "y1": 299,
+  "x2": 1180,
+  "y2": 316,
+  "url": "/dbget-bin/www_bget?syn:slr0925",
+  "id": "slr0925",
+  "label": "slr0925 (ssb)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0925",
+    "product": "single-stranded DNA-binding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1057,
+  "y1": 299,
+  "x2": 1103,
+  "y2": 316,
+  "url": "/dbget-bin/www_bget?syn:sll1868",
+  "id": "sll1868",
+  "label": "sll1868 (dnaG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1868",
+    "product": "DNA primase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1071,
+  "y1": 191,
+  "x2": 1117,
+  "y2": 208,
+  "url": "/dbget-bin/www_bget?syn:sll1572+syn:slr0603",
+  "id": "sll1572",
+  "label": "sll1572 (dnaE), slr0603 (dnaE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1572",
+    "product": "DNA polymerase III alpha subunit"
+   },
+   {
+    "locus": "slr0603",
+    "product": "DNA polymerase III alpha subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1071,
+  "y1": 208,
+  "x2": 1117,
+  "y2": 225,
+  "url": "/dbget-bin/www_bget?syn:sll1360",
+  "id": "sll1360",
+  "label": "sll1360 (dnaX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1360",
+    "product": "DNA polymerase III subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1071,
+  "y1": 225,
+  "x2": 1117,
+  "y2": 242,
+  "url": "/dbget-bin/www_bget?syn:slr0446",
+  "id": "slr0446",
+  "label": "slr0446 (dnaX_and_dnaZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0446",
+    "product": "DNA polymerase III subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1071,
+  "y1": 242,
+  "x2": 1117,
+  "y2": 259,
+  "url": "/dbget-bin/www_bget?syn:sll0544",
+  "id": "sll0544",
+  "label": "sll0544",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0544",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 979,
+  "y1": 242,
+  "x2": 1025,
+  "y2": 259,
+  "url": "/dbget-bin/www_bget?syn:slr0965",
+  "id": "slr0965",
+  "label": "slr0965 (dnaN)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0965",
+    "product": "DNA polymerase III beta subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 979,
+  "y1": 356,
+  "x2": 1025,
+  "y2": 373,
+  "url": "/dbget-bin/www_bget?syn:slr0080",
+  "id": "slr0080",
+  "label": "slr0080 (rnhA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0080",
+    "product": "ribonuclease H"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1134,
+  "y1": 356,
+  "x2": 1180,
+  "y2": 373,
+  "url": "/dbget-bin/www_bget?syn:sll1209",
+  "id": "sll1209",
+  "label": "sll1209 (lig)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1209",
+    "product": "DNA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1057,
+  "y1": 356,
+  "x2": 1103,
+  "y2": 373,
+  "url": "/dbget-bin/www_bget?syn:slr0707",
+  "id": "slr0707",
+  "label": "slr0707 (polA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0707",
+    "product": "DNA polymerase I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 979,
+  "y1": 299,
+  "x2": 1025,
+  "y2": 316,
+  "url": "/dbget-bin/www_bget?syn:slr0833",
+  "id": "slr0833",
+  "label": "slr0833 (dnaB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0833",
+    "product": "replicative DNA helicase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1134,
+  "y1": 669,
+  "x2": 1180,
+  "y2": 686,
+  "url": "/dbget-bin/www_bget?syn:slr0080",
+  "id": "slr0080",
+  "label": "slr0080 (rnhA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0080",
+    "product": "ribonuclease H"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 979,
+  "y1": 1164,
+  "x2": 1025,
+  "y2": 1181,
+  "url": "/dbget-bin/www_bget?syn:slr0080",
+  "id": "slr0080",
+  "label": "slr0080 (rnhA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0080",
+    "product": "ribonuclease H"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1134,
+  "y1": 690,
+  "x2": 1180,
+  "y2": 707,
+  "url": "/dbget-bin/www_bget?syn:slr1130",
+  "id": "slr1130",
+  "label": "slr1130 (rhnB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1130",
+    "product": "ribonuclease HII"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 979,
+  "y1": 379,
+  "x2": 1025,
+  "y2": 396,
+  "url": "/dbget-bin/www_bget?syn:slr1130",
+  "id": "slr1130",
+  "label": "slr1130 (rhnB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1130",
+    "product": "ribonuclease HII"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 190,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn03030",
+  "id": "syn03030",
+  "label": "syn03030: DNA replication",
+  "entry_type": "pathway"
+ }
+]

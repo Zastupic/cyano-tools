@@ -1,0 +1,1115 @@
+[
+ {
+  "type": "circ",
+  "cx": 486,
+  "cy": 122,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00005",
+  "id": "C00005",
+  "label": "NADPH",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 549,
+  "cy": 123,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00006",
+  "id": "C00006",
+  "label": "NADP+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 412,
+  "cy": 401,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 293,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16693",
+  "id": "C16693",
+  "label": "Plastoquinol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 260,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02061",
+  "id": "C02061",
+  "label": "Plastoquinone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 209,
+  "cy": 360,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00034",
+  "id": "C00034",
+  "label": "Manganese",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 185,
+  "cy": 401,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00001",
+  "id": "C00001",
+  "label": "H2O",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 236,
+  "cy": 401,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00007",
+  "id": "C00007",
+  "label": "Oxygen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 209,
+  "cy": 401,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 532,
+  "cy": 123,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 807,
+  "cy": 400,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 412,
+  "cy": 196,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 746,
+  "cy": 65,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00008",
+  "id": "C00008",
+  "label": "ADP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 806,
+  "cy": 61,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 858,
+  "cy": 61,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 762,
+  "cy": 65,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00009",
+  "id": "C00009",
+  "label": "Orthophosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 858,
+  "y1": 623,
+  "x2": 904,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:sll1323+syn:sll1324",
+  "id": "sll1323",
+  "label": "sll1323 (atpG), sll1324 (atpF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1323",
+    "product": "ATP synthase subunit b'"
+   },
+   {
+    "locus": "sll1324",
+    "product": "ATP synthase subunit b"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 812,
+  "y1": 623,
+  "x2": 858,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:sll1322",
+  "id": "sll1322",
+  "label": "sll1322 (atpI)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1322",
+    "product": "ATP synthase subunit a"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 692,
+  "y1": 567,
+  "x2": 738,
+  "y2": 584,
+  "url": "/dbget-bin/www_bget?syn:sll1796",
+  "id": "sll1796",
+  "label": "sll1796 (petJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1796",
+    "product": "cytochrome c553"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 284,
+  "y1": 569,
+  "x2": 330,
+  "y2": 586,
+  "url": "/dbget-bin/www_bget?syn:slr1739",
+  "id": "slr1739",
+  "label": "slr1739",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1739",
+    "product": "photosystem II 13kD protein (PsbW) homologue"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 238,
+  "y1": 569,
+  "x2": 284,
+  "y2": 586,
+  "url": "/dbget-bin/www_bget?syn:sll1398",
+  "id": "sll1398",
+  "label": "sll1398 (psb13)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1398",
+    "product": "photosystem II 13 kD protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 192,
+  "y1": 569,
+  "x2": 238,
+  "y2": 586,
+  "url": "/dbget-bin/www_bget?syn:slr1645",
+  "id": "slr1645",
+  "label": "slr1645 (psbZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1645",
+    "product": "photosystem II 11 kD protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 422,
+  "y1": 535,
+  "x2": 468,
+  "y2": 552,
+  "url": "/dbget-bin/www_bget?syn:sll1418",
+  "id": "sll1418",
+  "label": "sll1418",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1418",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 504,
+  "y1": 203,
+  "x2": 550,
+  "y2": 220,
+  "url": "/dbget-bin/www_bget?syn:slr1643",
+  "id": "slr1643",
+  "label": "slr1643 (petH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1643",
+    "product": "ferredoxin-NADP oxidoreductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 766,
+  "y1": 623,
+  "x2": 812,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:ssl2615",
+  "id": "ssl2615",
+  "label": "ssl2615 (atpH)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 720,
+  "y1": 623,
+  "x2": 766,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:slr1330",
+  "id": "slr1330",
+  "label": "slr1330 (atpE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1330",
+    "product": "ATP synthase e subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 674,
+  "y1": 623,
+  "x2": 720,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:sll1325",
+  "id": "sll1325",
+  "label": "sll1325 (atpD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1325",
+    "product": "ATP synthase d subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 628,
+  "y1": 623,
+  "x2": 674,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:sll1327",
+  "id": "sll1327",
+  "label": "sll1327 (atpC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1327",
+    "product": "ATP synthase g subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 582,
+  "y1": 623,
+  "x2": 628,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:sll1326",
+  "id": "sll1326",
+  "label": "sll1326 (atpA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1326",
+    "product": "ATP synthase a subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 536,
+  "y1": 623,
+  "x2": 582,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:slr1329",
+  "id": "slr1329",
+  "label": "slr1329 (atpB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1329",
+    "product": "ATP synthase b subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 389,
+  "y1": 330,
+  "x2": 435,
+  "y2": 347,
+  "url": "/dbget-bin/www_bget?syn:sll1182+syn:sll1316+syn:slr1185",
+  "id": "sll1182",
+  "label": "sll1182 (petC), sll1316 (petC), slr1185 (petC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1182",
+    "product": "cytochrome b6/f complex iron-sulfur subunit"
+   },
+   {
+    "locus": "sll1316",
+    "product": "plastoquinol--plastocyanin reductase"
+   },
+   {
+    "locus": "slr1185",
+    "product": "cytochrome b6/f-complex iron-sulfur protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 536,
+  "y1": 500,
+  "x2": 582,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:slr0342",
+  "id": "slr0342",
+  "label": "slr0342 (petB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0342",
+    "product": "cytochrome b6"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 582,
+  "y1": 500,
+  "x2": 628,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:slr0343",
+  "id": "slr0343",
+  "label": "slr0343 (petD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0343",
+    "product": "cytochrome b6-f complex subunit 4"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 628,
+  "y1": 500,
+  "x2": 674,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:sll1317",
+  "id": "sll1317",
+  "label": "sll1317 (petA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1317",
+    "product": "apocytochrome f"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 674,
+  "y1": 500,
+  "x2": 720,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:sll1182+syn:sll1316+syn:slr1185",
+  "id": "sll1182",
+  "label": "sll1182 (petC), sll1316 (petC), slr1185 (petC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1182",
+    "product": "cytochrome b6/f complex iron-sulfur subunit"
+   },
+   {
+    "locus": "sll1316",
+    "product": "plastoquinol--plastocyanin reductase"
+   },
+   {
+    "locus": "slr1185",
+    "product": "cytochrome b6/f-complex iron-sulfur protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 766,
+  "y1": 500,
+  "x2": 812,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:smr0003",
+  "id": "smr0003",
+  "label": "smr0003 (petM)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 812,
+  "y1": 500,
+  "x2": 858,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:sml0004",
+  "id": "sml0004",
+  "label": "sml0004 (ycf6)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 858,
+  "y1": 500,
+  "x2": 904,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:smr0010",
+  "id": "smr0010",
+  "label": "smr0010 (petG)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 536,
+  "y1": 567,
+  "x2": 582,
+  "y2": 584,
+  "url": "/dbget-bin/www_bget?syn:sll0199",
+  "id": "sll0199",
+  "label": "sll0199 (petE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0199",
+    "product": "plastocyanin"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 588,
+  "y1": 567,
+  "x2": 634,
+  "y2": 584,
+  "url": "/dbget-bin/www_bget?syn:sll1382+syn:slr0150+syn:slr1828+syn:ssl0020",
+  "id": "sll1382",
+  "label": "sll1382 (petF), slr0150 (petF), slr1828 (petF), ssl0020 (petF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1382",
+    "product": "ferredoxin"
+   },
+   {
+    "locus": "slr0150",
+    "product": "ferredoxin"
+   },
+   {
+    "locus": "slr1828",
+    "product": "ferredoxin"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 640,
+  "y1": 567,
+  "x2": 686,
+  "y2": 584,
+  "url": "/dbget-bin/www_bget?syn:slr1643",
+  "id": "slr1643",
+  "label": "slr1643 (petH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1643",
+    "product": "ferredoxin-NADP oxidoreductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 146,
+  "y1": 623,
+  "x2": 192,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:slr1835",
+  "id": "slr1835",
+  "label": "slr1835 (psaB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1835",
+    "product": "P700 apoprotein subunit Ib"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 192,
+  "y1": 623,
+  "x2": 238,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:ssl0563",
+  "id": "ssl0563",
+  "label": "ssl0563 (psaC)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 238,
+  "y1": 623,
+  "x2": 284,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:slr0737",
+  "id": "slr0737",
+  "label": "slr0737 (psaD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0737",
+    "product": "photosystem I subunit II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 284,
+  "y1": 623,
+  "x2": 330,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:ssr2831",
+  "id": "ssr2831",
+  "label": "ssr2831 (psaE)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 330,
+  "y1": 623,
+  "x2": 376,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:sll0819",
+  "id": "sll0819",
+  "label": "sll0819 (psaF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0819",
+    "product": "photosystem I subunit III"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 100,
+  "y1": 640,
+  "x2": 146,
+  "y2": 657,
+  "url": "/dbget-bin/www_bget?syn:smr0004",
+  "id": "smr0004",
+  "label": "smr0004 (psaI)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 146,
+  "y1": 640,
+  "x2": 192,
+  "y2": 657,
+  "url": "/dbget-bin/www_bget?syn:sml0008",
+  "id": "sml0008",
+  "label": "sml0008 (psaJ)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 192,
+  "y1": 640,
+  "x2": 238,
+  "y2": 657,
+  "url": "/dbget-bin/www_bget?syn:sll0629+syn:ssr0390",
+  "id": "sll0629",
+  "label": "sll0629 (psaK), ssr0390 (psaK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0629",
+    "product": "photosystem I subunit X"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 238,
+  "y1": 640,
+  "x2": 284,
+  "y2": 657,
+  "url": "/dbget-bin/www_bget?syn:slr1655",
+  "id": "slr1655",
+  "label": "slr1655 (psaL)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1655",
+    "product": "photosystem I subunit XI"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 284,
+  "y1": 640,
+  "x2": 330,
+  "y2": 657,
+  "url": "/dbget-bin/www_bget?syn:smr0005",
+  "id": "smr0005",
+  "label": "smr0005 (psaM)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 100,
+  "y1": 623,
+  "x2": 146,
+  "y2": 640,
+  "url": "/dbget-bin/www_bget?syn:slr1834",
+  "id": "slr1834",
+  "label": "slr1834 (psaA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1834",
+    "product": "P700 apoprotein subunit Ia"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 146,
+  "y1": 569,
+  "x2": 192,
+  "y2": 586,
+  "url": "/dbget-bin/www_bget?syn:sll1281",
+  "id": "sll1281",
+  "label": "sll1281 (ycf9)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1281",
+    "product": "ycf9 gene product"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 238,
+  "y1": 552,
+  "x2": 284,
+  "y2": 569,
+  "url": "/dbget-bin/www_bget?syn:smr0001",
+  "id": "smr0001",
+  "label": "smr0001 (psbT)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 330,
+  "y1": 535,
+  "x2": 376,
+  "y2": 552,
+  "url": "/dbget-bin/www_bget?syn:sml0001",
+  "id": "sml0001",
+  "label": "sml0001 (psbI)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 376,
+  "y1": 535,
+  "x2": 422,
+  "y2": 552,
+  "url": "/dbget-bin/www_bget?syn:sll0427",
+  "id": "sll0427",
+  "label": "sll0427 (psbO)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0427",
+    "product": "photosystem II manganese-stabilizing polypeptide"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 284,
+  "y1": 552,
+  "x2": 330,
+  "y2": 569,
+  "url": "/dbget-bin/www_bget?syn:sll1194",
+  "id": "sll1194",
+  "label": "sll1194 (psbU)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1194",
+    "product": "photosystem II 12 kD extrinsic protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 330,
+  "y1": 552,
+  "x2": 376,
+  "y2": 569,
+  "url": "/dbget-bin/www_bget?syn:sll0258",
+  "id": "sll0258",
+  "label": "sll0258 (psbV)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0258",
+    "product": "cytochrome c550"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 422,
+  "y1": 552,
+  "x2": 468,
+  "y2": 569,
+  "url": "/dbget-bin/www_bget?syn:sml0002",
+  "id": "sml0002",
+  "label": "sml0002 (psbX)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 100,
+  "y1": 569,
+  "x2": 146,
+  "y2": 586,
+  "url": "/dbget-bin/www_bget?syn:sml0007",
+  "id": "sml0007",
+  "label": "sml0007 (ycf32)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 284,
+  "y1": 535,
+  "x2": 330,
+  "y2": 552,
+  "url": "/dbget-bin/www_bget?syn:ssl2598",
+  "id": "ssl2598",
+  "label": "ssl2598 (psbH)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 238,
+  "y1": 535,
+  "x2": 284,
+  "y2": 552,
+  "url": "/dbget-bin/www_bget?syn:sml0003",
+  "id": "sml0003",
+  "label": "sml0003 (psbM)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 192,
+  "y1": 535,
+  "x2": 238,
+  "y2": 552,
+  "url": "/dbget-bin/www_bget?syn:sml0005",
+  "id": "sml0005",
+  "label": "sml0005 (psbK)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 146,
+  "y1": 535,
+  "x2": 192,
+  "y2": 552,
+  "url": "/dbget-bin/www_bget?syn:smr0008",
+  "id": "smr0008",
+  "label": "smr0008 (psbJ)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 100,
+  "y1": 535,
+  "x2": 146,
+  "y2": 552,
+  "url": "/dbget-bin/www_bget?syn:smr0007",
+  "id": "smr0007",
+  "label": "smr0007 (psbL)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 330,
+  "y1": 500,
+  "x2": 376,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:smr0006",
+  "id": "smr0006",
+  "label": "smr0006 (psbF)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 284,
+  "y1": 500,
+  "x2": 330,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:ssr3451",
+  "id": "ssr3451",
+  "label": "ssr3451 (psbE)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 238,
+  "y1": 500,
+  "x2": 284,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:slr0906",
+  "id": "slr0906",
+  "label": "slr0906 (psbB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0906",
+    "product": "photosystem II CP47 protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 192,
+  "y1": 500,
+  "x2": 238,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:sll0851",
+  "id": "sll0851",
+  "label": "sll0851 (psbC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0851",
+    "product": "photosystem II CP43 protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 146,
+  "y1": 500,
+  "x2": 192,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:sll0849+syn:slr0927",
+  "id": "sll0849",
+  "label": "sll0849 (psbD), slr0927 (psbD2)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0849",
+    "product": "photosystem II D2 protein"
+   },
+   {
+    "locus": "slr0927",
+    "product": "photosystem II D2 protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 100,
+  "y1": 500,
+  "x2": 146,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:sll1867+syn:slr1181+syn:slr1311",
+  "id": "sll1867",
+  "label": "sll1867 (psbA3), slr1181 (psbA1), slr1311 (psbA2)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1867",
+    "product": "photosystem II D1 protein"
+   },
+   {
+    "locus": "slr1181",
+    "product": "photosystem II D1 protein"
+   },
+   {
+    "locus": "slr1311",
+    "product": "photosystem II D1 protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 784,
+  "y1": 96,
+  "x2": 830,
+  "y2": 113,
+  "url": "/dbget-bin/www_bget?syn:sll1322+syn:sll1323+syn:sll1324+syn:sll1325+syn:sll1326+syn:sll1327+syn:slr1329+syn:slr1330+syn:ssl2615",
+  "id": "sll1322",
+  "label": "sll1322 (atpI), sll1323 (atpG), sll1324 (atpF), sll1325 (atpD), sll1326 (atpA), sll1327 (atpC), slr1329 (atpB), slr1330 (atpE), ssl2615 (atpH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1322",
+    "product": "ATP synthase subunit a"
+   },
+   {
+    "locus": "sll1323",
+    "product": "ATP synthase subunit b'"
+   },
+   {
+    "locus": "sll1324",
+    "product": "ATP synthase subunit b"
+   },
+   {
+    "locus": "sll1325",
+    "product": "ATP synthase d subunit"
+   },
+   {
+    "locus": "sll1326",
+    "product": "ATP synthase a subunit"
+   },
+   {
+    "locus": "sll1327",
+    "product": "ATP synthase g subunit"
+   },
+   {
+    "locus": "slr1329",
+    "product": "ATP synthase b subunit"
+   },
+   {
+    "locus": "slr1330",
+    "product": "ATP synthase e subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 268,
+  "y1": 145,
+  "x2": 373,
+  "y2": 170,
+  "url": "/kegg-bin/show_pathway?syn00196",
+  "id": "syn00196",
+  "label": "syn00196: Photosynthesis - antenna proteins",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 184,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00195",
+  "id": "syn00195",
+  "label": "syn00195: Photosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 520,
+  "y1": 35,
+  "x2": 619,
+  "y2": 69,
+  "url": "/kegg-bin/show_pathway?syn00710",
+  "id": "syn00710",
+  "label": "syn00710: Carbon fixation by Calvin cycle",
+  "entry_type": "pathway"
+ }
+]

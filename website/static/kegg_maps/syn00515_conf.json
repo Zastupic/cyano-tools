@@ -1,0 +1,312 @@
+[
+ {
+  "type": "circ",
+  "cx": 74,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02189",
+  "id": "C02189",
+  "label": "[Protein]-L-serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 96,
+  "cy": 122,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10617",
+  "id": "G10617",
+  "label": "Dolichyl phosphate D-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 217,
+  "cy": 493,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13082",
+  "id": "G13082",
+  "label": "G13082",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 217,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13027",
+  "id": "G13027",
+  "label": "G13027",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 217,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13026",
+  "id": "G13026",
+  "label": "G13026",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 146,
+  "cy": 493,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13085",
+  "id": "G13085",
+  "label": "G13085",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 217,
+  "cy": 569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13088",
+  "id": "G13088",
+  "label": "G13088",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 288,
+  "cy": 493,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13100",
+  "id": "G13100",
+  "label": "G13100",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 475,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13028",
+  "id": "G13028",
+  "label": "G13028",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 475,
+  "cy": 417,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13086",
+  "id": "G13086",
+  "label": "O-Mannose core M2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 475,
+  "cy": 493,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13083",
+  "id": "G13083",
+  "label": "G13083",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 475,
+  "cy": 569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13089",
+  "id": "G13089",
+  "label": "G13089",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 421,
+  "cy": 492,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13090",
+  "id": "G13090",
+  "label": "G13090",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 337,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13087",
+  "id": "G13087",
+  "label": "G13087",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 576,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13092",
+  "id": "G13092",
+  "label": "Phospho-core M3",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 576,
+  "cy": 263,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13093",
+  "id": "G13093",
+  "label": "G13093",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1179,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13099",
+  "id": "G13099",
+  "label": "G13099",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 816,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13096",
+  "id": "G13096",
+  "label": "G13096",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 457,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13091",
+  "id": "G13091",
+  "label": "O-mannose core M3",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 636,
+  "cy": 122,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01068",
+  "id": "C01068",
+  "label": "D-Ribitol 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 593,
+  "cy": 135,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00063",
+  "id": "C00063",
+  "label": "CTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 636,
+  "cy": 198,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00789",
+  "id": "C00789",
+  "label": "CDP-ribitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 576,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13094",
+  "id": "G13094",
+  "label": "G13094",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 696,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13095",
+  "id": "G13095",
+  "label": "G13095",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13097",
+  "id": "G13097",
+  "label": "G13097",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1056,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13098",
+  "id": "G13098",
+  "label": "G13098",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 217,
+  "cy": 417,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13084",
+  "id": "G13084",
+  "label": "O-Mannose core M1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 129,
+  "y1": 177,
+  "x2": 175,
+  "y2": 194,
+  "url": "/dbget-bin/www_bget?syn:slr1050",
+  "id": "slr1050",
+  "label": "slr1050",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1050",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 352,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00515",
+  "id": "syn00515",
+  "label": "syn00515: Mannose type O-glycan biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 185,
+  "y1": 104,
+  "x2": 261,
+  "y2": 138,
+  "url": "/kegg-bin/show_pathway?map00510",
+  "id": "map00510:",
+  "label": "map00510: N-Glycan biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ }
+]

@@ -1,0 +1,711 @@
+[
+ {
+  "type": "circ",
+  "cx": 485,
+  "cy": 118,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00137",
+  "id": "C00137",
+  "label": "myo-Inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 322,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05385",
+  "id": "C05385",
+  "label": "D-Glucuronate 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 190,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00167",
+  "id": "C00167",
+  "label": "UDP-glucuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 190,
+  "cy": 254,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00029",
+  "id": "C00029",
+  "label": "UDP-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 480,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01825",
+  "id": "C01825",
+  "label": "L-Galactose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 454,
+  "cy": 605,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15930",
+  "id": "C15930",
+  "label": "L-Galactonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 286,
+  "cy": 480,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15926",
+  "id": "C15926",
+  "label": "beta-L-Galactose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 285,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15923",
+  "id": "C15923",
+  "label": "L-Gulose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 286,
+  "cy": 335,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15925",
+  "id": "C15925",
+  "label": "GDP-L-gulose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 286,
+  "cy": 414,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02280",
+  "id": "C02280",
+  "label": "GDP-L-galactose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 190,
+  "cy": 414,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00096",
+  "id": "C00096",
+  "label": "GDP-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 567,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02670",
+  "id": "C02670",
+  "label": "D-Glucuronolactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 454,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00191",
+  "id": "C00191",
+  "label": "D-Glucuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 567,
+  "cy": 285,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01040",
+  "id": "C01040",
+  "label": "L-Gulono-1,4-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 454,
+  "cy": 285,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00800",
+  "id": "C00800",
+  "label": "L-Gulonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 454,
+  "cy": 748,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00333",
+  "id": "C00333",
+  "label": "D-Galacturonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 567,
+  "cy": 480,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01115",
+  "id": "C01115",
+  "label": "L-Galactono-1,4-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 286,
+  "cy": 285,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15924",
+  "id": "C15924",
+  "label": "L-Gulose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 97,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03921",
+  "id": "C03921",
+  "label": "2-Dehydro-3-deoxy-D-glucarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 865,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00818",
+  "id": "C00818",
+  "label": "D-Glucarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1186,
+  "cy": 144,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01146",
+  "id": "C01146",
+  "label": "2-Hydroxy-3-oxopropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1228,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00679",
+  "id": "C00679",
+  "label": "5-Dehydro-4-deoxy-D-glucarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 865,
+  "cy": 262,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00879",
+  "id": "C00879",
+  "label": "D-Galactarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00433",
+  "id": "C00433",
+  "label": "2,5-Dioxopentanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1148,
+  "cy": 273,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00026",
+  "id": "C00026",
+  "label": "2-Oxoglutarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1188,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00259",
+  "id": "C00259",
+  "label": "L-Arabinose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1188,
+  "cy": 424,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00684",
+  "id": "C00684",
+  "label": "2-Dehydro-3-deoxy-L-arabinonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1188,
+  "cy": 517,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00545",
+  "id": "C00545",
+  "label": "L-Arabinonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1188,
+  "cy": 607,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01114",
+  "id": "C01114",
+  "label": "L-Arabinono-1,4-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 972,
+  "cy": 401,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20889",
+  "id": "C20889",
+  "label": "D-Galactaro-1,5-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 972,
+  "cy": 262,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20896",
+  "id": "C20896",
+  "label": "D-Galactaro-1,4-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 610,
+  "cy": 410,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01620",
+  "id": "C01620",
+  "label": "Threonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 486,
+  "cy": 410,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03064",
+  "id": "C03064",
+  "label": "3-Dehydro-L-threonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 752,
+  "cy": 395,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16186",
+  "id": "C16186",
+  "label": "L-Ascorbate 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 752,
+  "cy": 311,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14899",
+  "id": "C14899",
+  "label": "3-Dehydro-L-gulonate 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 676,
+  "cy": 618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05422",
+  "id": "C05422",
+  "label": "Dehydroascorbate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01041",
+  "id": "C01041",
+  "label": "Monodehydroascorbate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 829,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04575",
+  "id": "C04575",
+  "label": "(4R,5S)-4,5,6-Trihydroxy-2,3-dioxohexanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 713,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05411",
+  "id": "C05411",
+  "label": "L-Xylonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 829,
+  "cy": 713,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05412",
+  "id": "C05412",
+  "label": "L-Lyxonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 828,
+  "cy": 474,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00618",
+  "id": "C00618",
+  "label": "3-Dehydro-L-gulonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 676,
+  "cy": 480,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00072",
+  "id": "C00072",
+  "label": "Ascorbate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 556,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00231",
+  "id": "C00231",
+  "label": "D-Xylulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 445,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01101",
+  "id": "C01101",
+  "label": "L-Ribulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03291",
+  "id": "C03291",
+  "label": "L-Xylulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 676,
+  "cy": 285,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03289",
+  "id": "C03289",
+  "label": "L-xylo-Hexulonolactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 605,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21955",
+  "id": "C21955",
+  "label": "L-Galactono-1,5-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 555,
+  "cy": 712,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00558",
+  "id": "C00558",
+  "label": "D-Tagaturonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 322,
+  "cy": 132,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03033",
+  "id": "C03033",
+  "label": "beta-D-Glucuronoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 286,
+  "cy": 668,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00617",
+  "id": "C00617",
+  "label": "UDP-D-galacturonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 286,
+  "cy": 748,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04037",
+  "id": "C04037",
+  "label": "1-Phospho-alpha-D-galacturonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00216",
+  "id": "C00216",
+  "label": "D-Arabinose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 607,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00652",
+  "id": "C00652",
+  "label": "D-Arabinono-1,4-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 984,
+  "cy": 607,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06316",
+  "id": "C06316",
+  "label": "Dehydro-D-arabinono-1,4-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 517,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00878",
+  "id": "C00878",
+  "label": "D-Arabinonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 424,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03826",
+  "id": "C03826",
+  "label": "2-Dehydro-3-deoxy-D-xylonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 167,
+  "y1": 219,
+  "x2": 213,
+  "y2": 236,
+  "url": "/dbget-bin/www_bget?syn:slr1299",
+  "id": "slr1299",
+  "label": "slr1299",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1299",
+    "product": "UDP-glucose dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 184,
+  "x2": 743,
+  "y2": 201,
+  "url": "/dbget-bin/www_bget?syn:slr0091",
+  "id": "slr0091",
+  "label": "slr0091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0091",
+    "product": "aldehyde dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 406,
+  "y1": 228,
+  "x2": 452,
+  "y2": 245,
+  "url": "/dbget-bin/www_bget?syn:slr0942",
+  "id": "slr0942",
+  "label": "slr0942",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0942",
+    "product": "aldehyde reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 359,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00053",
+  "id": "syn00053",
+  "label": "syn00053: Ascorbate and aldarate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 127,
+  "y1": 515,
+  "x2": 255,
+  "y2": 549,
+  "url": "/kegg-bin/show_pathway?syn00051",
+  "id": "syn00051",
+  "label": "syn00051: Fructose and mannose metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 50,
+  "y1": 292,
+  "x2": 206,
+  "y2": 326,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 899,
+  "y1": 127,
+  "x2": 1038,
+  "y2": 161,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 442,
+  "y1": 789,
+  "x2": 575,
+  "y2": 823,
+  "url": "/kegg-bin/show_pathway?syn00040",
+  "id": "syn00040",
+  "label": "syn00040: Pentose and glucuronate interconversions",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1110,
+  "y1": 209,
+  "x2": 1186,
+  "y2": 234,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1086,
+  "y1": 724,
+  "x2": 1181,
+  "y2": 758,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 244,
+  "y1": 237,
+  "x2": 383,
+  "y2": 271,
+  "url": "/kegg-bin/show_pathway?syn00040",
+  "id": "syn00040",
+  "label": "syn00040: Pentose and glucuronate interconversions",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,1287 @@
+[
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 517,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06113",
+  "id": "C06113",
+  "label": "L-Aspartyl-tRNA(Asn)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 759,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02992",
+  "id": "C02992",
+  "label": "L-Threonyl-tRNA(Thr)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 966,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02839",
+  "id": "C02839",
+  "label": "L-Tyrosyl-tRNA(Tyr)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 1055,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00078",
+  "id": "C00078",
+  "label": "L-Tryptophan",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 1055,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03512",
+  "id": "C03512",
+  "label": "L-Tryptophanyl-tRNA(Trp)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 966,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00082",
+  "id": "C00082",
+  "label": "L-Tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 759,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00188",
+  "id": "C00188",
+  "label": "L-Threonine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 244,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00123",
+  "id": "C00123",
+  "label": "L-Leucine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 244,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02047",
+  "id": "C02047",
+  "label": "L-Leucyl-tRNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00407",
+  "id": "C00407",
+  "label": "L-Isoleucine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03127",
+  "id": "C03127",
+  "label": "L-Isoleucyl-tRNA(Ile)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 422,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00047",
+  "id": "C00047",
+  "label": "L-Lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 422,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01931",
+  "id": "C01931",
+  "label": "L-Lysyl-tRNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 368,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00041",
+  "id": "C00041",
+  "label": "L-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 368,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00886",
+  "id": "C00886",
+  "label": "L-Alanyl-tRNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 155,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00183",
+  "id": "C00183",
+  "label": "L-Valine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 155,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02554",
+  "id": "C02554",
+  "label": "L-Valyl-tRNA(Val)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 1163,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00073",
+  "id": "C00073",
+  "label": "L-Methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 1163,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02430",
+  "id": "C02430",
+  "label": "L-Methionyl-tRNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 365,
+  "cy": 1131,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00234",
+  "id": "C00234",
+  "label": "10-Formyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 455,
+  "cy": 1197,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00101",
+  "id": "C00101",
+  "label": "Tetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 480,
+  "cy": 1163,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03294",
+  "id": "C03294",
+  "label": "N-Formylmethionyl-tRNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 927,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00065",
+  "id": "C00065",
+  "label": "L-Serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 848,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02553",
+  "id": "C02553",
+  "label": "L-Seryl-tRNA(Ser)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 457,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00049",
+  "id": "C00049",
+  "label": "L-Aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 457,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02984",
+  "id": "C02984",
+  "label": "L-Aspartyl-tRNA(Asp)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 670,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 670,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02412",
+  "id": "C02412",
+  "label": "Glycyl-tRNA(Gly)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 699,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00148",
+  "id": "C00148",
+  "label": "L-Proline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 699,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02702",
+  "id": "C02702",
+  "label": "L-Prolyl-tRNA(Pro)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 1074,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 1074,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03125",
+  "id": "C03125",
+  "label": "L-Cysteinyl-tRNA(Cys)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 155,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00025",
+  "id": "C00025",
+  "label": "L-Glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 155,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02987",
+  "id": "C02987",
+  "label": "L-Glutamyl-tRNA(Glu)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 279,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00064",
+  "id": "C00064",
+  "label": "L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 279,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02282",
+  "id": "C02282",
+  "label": "Glutaminyl-tRNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 610,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00062",
+  "id": "C00062",
+  "label": "L-Arginine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 610,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02163",
+  "id": "C02163",
+  "label": "L-Arginyl-tRNA(Arg)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 877,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00079",
+  "id": "C00079",
+  "label": "L-Phenylalanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 877,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03511",
+  "id": "C03511",
+  "label": "L-Phenylalanyl-tRNA(Phe)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 788,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00135",
+  "id": "C00135",
+  "label": "L-Histidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 788,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02988",
+  "id": "C02988",
+  "label": "L-Histidyl-tRNA(His)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 193,
+  "cy": 581,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00152",
+  "id": "C00152",
+  "label": "L-Asparagine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 581,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03402",
+  "id": "C03402",
+  "label": "L-Asparaginyl-tRNA(Asn)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 215,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06112",
+  "id": "C06112",
+  "label": "L-Glutamyl-tRNA(Gln)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 1009,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17022",
+  "id": "C17022",
+  "label": "O-Phosphoseryl-tRNA(Cys)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06481",
+  "id": "C06481",
+  "label": "L-Seryl-tRNA(Sec)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 436,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16638",
+  "id": "C16638",
+  "label": "O-Phosphoseryl-tRNA(Sec)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 533,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06482",
+  "id": "C06482",
+  "label": "L-Selenocysteinyl-tRNA(Sec)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 795,
+  "cy": 521,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16138",
+  "id": "C16138",
+  "label": "L-Pyrrolysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 939,
+  "cy": 521,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17027",
+  "id": "C17027",
+  "label": "L-Pyrrolysyl-tRNA(Pyl)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 191,
+  "cy": 1009,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01005",
+  "id": "C01005",
+  "label": "O-Phospho-L-serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 325,
+  "x2": 897,
+  "y2": 342,
+  "url": "/dbget-bin/www_bget?syn:sll1362",
+  "id": "sll1362",
+  "label": "sll1362 (ileS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1362",
+    "product": "isoleucyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 573,
+  "x2": 293,
+  "y2": 590,
+  "url": "/dbget-bin/www_bget?syn:sll0495",
+  "id": "sll0495",
+  "label": "sll0495 (asnS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0495",
+    "product": "asparaginyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 780,
+  "x2": 897,
+  "y2": 797,
+  "url": "/dbget-bin/www_bget?syn:slr0357",
+  "id": "slr0357",
+  "label": "slr0357 (hisS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0357",
+    "product": "histidyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 869,
+  "x2": 897,
+  "y2": 886,
+  "url": "/dbget-bin/www_bget?syn:sll0454+syn:sll1553",
+  "id": "sll0454",
+  "label": "sll0454 (pheS), sll1553 (pheT)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0454",
+    "product": "phenylalanyl-tRNA synthetase alpha chain"
+   },
+   {
+    "locus": "sll1553",
+    "product": "phenylalanyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 601,
+  "x2": 897,
+  "y2": 618,
+  "url": "/dbget-bin/www_bget?syn:sll0502",
+  "id": "sll0502",
+  "label": "sll0502 (argS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0502",
+    "product": "arginyl-tRNA-synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 1066,
+  "x2": 293,
+  "y2": 1083,
+  "url": "/dbget-bin/www_bget?syn:slr0958",
+  "id": "slr0958",
+  "label": "slr0958 (cysS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0958",
+    "product": "cysteinyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 662,
+  "x2": 293,
+  "y2": 679,
+  "url": "/dbget-bin/www_bget?syn:slr0220+syn:slr0638",
+  "id": "slr0220",
+  "label": "slr0220 (glyS), slr0638 (glyQ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0220",
+    "product": "glycyl-tRNA synthetase beta chain"
+   },
+   {
+    "locus": "slr0638",
+    "product": "glycyl-tRNA synthetase alpha chain"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 438,
+  "x2": 293,
+  "y2": 455,
+  "url": "/dbget-bin/www_bget?syn:slr1720",
+  "id": "slr1720",
+  "label": "slr1720 (aspS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1720",
+    "product": "aspartyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 840,
+  "x2": 293,
+  "y2": 857,
+  "url": "/dbget-bin/www_bget?syn:slr1703",
+  "id": "slr1703",
+  "label": "slr1703 (serS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1703",
+    "product": "seryl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 1155,
+  "x2": 293,
+  "y2": 1172,
+  "url": "/dbget-bin/www_bget?syn:slr0649",
+  "id": "slr0649",
+  "label": "slr0649 (metS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0649",
+    "product": "methionyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 147,
+  "x2": 897,
+  "y2": 164,
+  "url": "/dbget-bin/www_bget?syn:slr0557",
+  "id": "slr0557",
+  "label": "slr0557 (valS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0557",
+    "product": "valyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 361,
+  "x2": 293,
+  "y2": 378,
+  "url": "/dbget-bin/www_bget?syn:sll0362",
+  "id": "sll0362",
+  "label": "sll0362 (alaS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0362",
+    "product": "alanyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 414,
+  "x2": 897,
+  "y2": 431,
+  "url": "/dbget-bin/www_bget?syn:slr1550",
+  "id": "slr1550",
+  "label": "slr1550 (lysS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1550",
+    "product": "lysyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 236,
+  "x2": 897,
+  "y2": 253,
+  "url": "/dbget-bin/www_bget?syn:sll1074",
+  "id": "sll1074",
+  "label": "sll1074 (leuS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1074",
+    "product": "leucyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 751,
+  "x2": 293,
+  "y2": 768,
+  "url": "/dbget-bin/www_bget?syn:sll0078",
+  "id": "sll0078",
+  "label": "sll0078 (thrS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0078",
+    "product": "threonyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 1047,
+  "x2": 897,
+  "y2": 1064,
+  "url": "/dbget-bin/www_bget?syn:slr1884",
+  "id": "slr1884",
+  "label": "slr1884 (trpS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1884",
+    "product": "tryptophanyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 385,
+  "y1": 1155,
+  "x2": 431,
+  "y2": 1172,
+  "url": "/dbget-bin/www_bget?syn:slr0070",
+  "id": "slr0070",
+  "label": "slr0070 (fmt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0070",
+    "product": "methionyl-tRNA formyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 958,
+  "x2": 897,
+  "y2": 975,
+  "url": "/dbget-bin/www_bget?syn:slr1031+syn:ssr1720",
+  "id": "slr1031",
+  "label": "slr1031 (tyrS), ssr1720 (tyrS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1031",
+    "product": "tyrosyl tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 691,
+  "x2": 897,
+  "y2": 708,
+  "url": "/dbget-bin/www_bget?syn:sll1425",
+  "id": "sll1425",
+  "label": "sll1425 (proS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1425",
+    "product": "proline-tRNA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 136,
+  "x2": 293,
+  "y2": 153,
+  "url": "/dbget-bin/www_bget?syn:sll0179",
+  "id": "sll0179",
+  "label": "sll0179 (gltX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0179",
+    "product": "glutamyl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 314,
+  "y1": 235,
+  "x2": 360,
+  "y2": 252,
+  "url": "/dbget-bin/www_bget?syn:sll1435+syn:slr0033+syn:slr0877",
+  "id": "sll1435",
+  "label": "sll1435 (pet112), slr0033, slr0877",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1435",
+    "product": "PET112 protein"
+   },
+   {
+    "locus": "slr0033",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "slr0877",
+    "product": "amidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 313,
+  "y1": 538,
+  "x2": 359,
+  "y2": 555,
+  "url": "/dbget-bin/www_bget?syn:sll1435+syn:slr0033+syn:slr0877",
+  "id": "sll1435",
+  "label": "sll1435 (pet112), slr0033, slr0877",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1435",
+    "product": "PET112 protein"
+   },
+   {
+    "locus": "slr0033",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "slr0877",
+    "product": "amidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 247,
+  "y1": 920,
+  "x2": 293,
+  "y2": 937,
+  "url": "/dbget-bin/www_bget?syn:slr1703",
+  "id": "slr1703",
+  "label": "slr1703 (serS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1703",
+    "product": "seryl-tRNA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 110,
+  "x2": 250,
+  "y2": 127,
+  "url": "/dbget-bin/www_bget?syn:trnE-UUC",
+  "id": "trnE-UUC",
+  "label": "trnE-UUC",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 236,
+  "x2": 250,
+  "y2": 253,
+  "url": "/dbget-bin/www_bget?syn:trnQ-UUG",
+  "id": "trnQ-UUG",
+  "label": "trnQ-UUG",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 323,
+  "x2": 250,
+  "y2": 340,
+  "url": "/dbget-bin/www_bget?syn:trnA-CGC+syn:trnA-GGC+syn:trnA-UGC",
+  "id": "trnA-CGC,",
+  "label": "trnA-CGC, trnA-GGC, trnA-UGC",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 412,
+  "x2": 250,
+  "y2": 429,
+  "url": "/dbget-bin/www_bget?syn:trnD-GUC",
+  "id": "trnD-GUC",
+  "label": "trnD-GUC",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 804,
+  "x2": 250,
+  "y2": 821,
+  "url": "/dbget-bin/www_bget?syn:trnS-CGA+syn:trnS-GCU+syn:trnS-GGA+syn:trnS-UGA",
+  "id": "trnS-CGA,",
+  "label": "trnS-CGA, trnS-GCU, trnS-GGA, trnS-UGA",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 715,
+  "x2": 250,
+  "y2": 732,
+  "url": "/dbget-bin/www_bget?syn:trnT-CGU+syn:trnT-GGU+syn:trnT-UGU",
+  "id": "trnT-CGU,",
+  "label": "trnT-CGU, trnT-GGU, trnT-UGU",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 539,
+  "x2": 250,
+  "y2": 556,
+  "url": "/dbget-bin/www_bget?syn:trnN-GUU",
+  "id": "trnN-GUU",
+  "label": "trnN-GUU",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 625,
+  "x2": 250,
+  "y2": 642,
+  "url": "/dbget-bin/www_bget?syn:trnG-CCC+syn:trnG-GCC+syn:trnG-UCC",
+  "id": "trnG-CCC,",
+  "label": "trnG-CCC, trnG-GCC, trnG-UCC",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 1031,
+  "x2": 250,
+  "y2": 1048,
+  "url": "/dbget-bin/www_bget?syn:trnC-GCA",
+  "id": "trnC-GCA",
+  "label": "trnC-GCA",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 204,
+  "y1": 1118,
+  "x2": 250,
+  "y2": 1135,
+  "url": "/dbget-bin/www_bget?syn:trnI-CAU",
+  "id": "trnI-CAU",
+  "label": "trnI-CAU",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 110,
+  "x2": 855,
+  "y2": 127,
+  "url": "/dbget-bin/www_bget?syn:trnV-GAC+syn:trnV-UAC",
+  "id": "trnV-GAC,",
+  "label": "trnV-GAC, trnV-UAC",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 200,
+  "x2": 855,
+  "y2": 217,
+  "url": "/dbget-bin/www_bget?syn:trnL-CAA+syn:trnL-CAG+syn:trnL-GAG+syn:trnL-UAA+syn:trnL-UAG",
+  "id": "trnL-CAA,",
+  "label": "trnL-CAA, trnL-CAG, trnL-GAG, trnL-UAA, trnL-UAG",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 288,
+  "x2": 855,
+  "y2": 305,
+  "url": "/dbget-bin/www_bget?syn:trnI-GAU-1+syn:trnI-GAU-2",
+  "id": "trnI-GAU-1,",
+  "label": "trnI-GAU-1, trnI-GAU-2",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 378,
+  "x2": 855,
+  "y2": 395,
+  "url": "/dbget-bin/www_bget?syn:trnK-UUU",
+  "id": "trnK-UUU",
+  "label": "trnK-UUU",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 567,
+  "x2": 855,
+  "y2": 584,
+  "url": "/dbget-bin/www_bget?syn:trnR-ACG+syn:trnR-CCG+syn:trnR-CCU+syn:trnR-UCU",
+  "id": "trnR-ACG,",
+  "label": "trnR-ACG, trnR-CCG, trnR-CCU, trnR-UCU",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 654,
+  "x2": 855,
+  "y2": 671,
+  "url": "/dbget-bin/www_bget?syn:trnP-CGG+syn:trnP-GGG+syn:trnP-UGG",
+  "id": "trnP-CGG,",
+  "label": "trnP-CGG, trnP-GGG, trnP-UGG",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 743,
+  "x2": 855,
+  "y2": 760,
+  "url": "/dbget-bin/www_bget?syn:trnH-GUG",
+  "id": "trnH-GUG",
+  "label": "trnH-GUG",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 833,
+  "x2": 855,
+  "y2": 850,
+  "url": "/dbget-bin/www_bget?syn:trnF-GAA",
+  "id": "trnF-GAA",
+  "label": "trnF-GAA",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 922,
+  "x2": 855,
+  "y2": 939,
+  "url": "/dbget-bin/www_bget?syn:trnY-GUA",
+  "id": "trnY-GUA",
+  "label": "trnY-GUA",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 1011,
+  "x2": 855,
+  "y2": 1028,
+  "url": "/dbget-bin/www_bget?syn:trnW-CCA",
+  "id": "trnW-CCA",
+  "label": "trnW-CCA",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 295,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00970",
+  "id": "syn00970",
+  "label": "syn00970: Aminoacyl-tRNA biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 625,
+  "y1": 228,
+  "x2": 753,
+  "y2": 262,
+  "url": "/kegg-bin/show_pathway?syn00290",
+  "id": "syn00290",
+  "label": "syn00290: Valine, leucine and isoleucine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 42,
+  "y1": 1102,
+  "x2": 175,
+  "y2": 1136,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 631,
+  "y1": 636,
+  "x2": 747,
+  "y2": 670,
+  "url": "/kegg-bin/show_pathway?syn00330",
+  "id": "syn00330",
+  "label": "syn00330: Arginine and proline metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 646,
+  "y1": 1038,
+  "x2": 720,
+  "y2": 1072,
+  "url": "/kegg-bin/show_pathway?syn00380",
+  "id": "syn00380",
+  "label": "syn00380: Tryptophan metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 42,
+  "y1": 305,
+  "x2": 169,
+  "y2": 339,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 646,
+  "y1": 771,
+  "x2": 723,
+  "y2": 805,
+  "url": "/kegg-bin/show_pathway?syn00340",
+  "id": "syn00340",
+  "label": "syn00340: Histidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 613,
+  "y1": 907,
+  "x2": 767,
+  "y2": 941,
+  "url": "/kegg-bin/show_pathway?syn00400",
+  "id": "syn00400",
+  "label": "syn00400: Phenylalanine, tyrosine and tryptophan biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 42,
+  "y1": 808,
+  "x2": 168,
+  "y2": 842,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 453,
+  "x2": 728,
+  "y2": 487,
+  "url": "/kegg-bin/show_pathway?syn00300",
+  "id": "syn00300",
+  "label": "syn00300: Lysine biosynthesis",
+  "entry_type": "pathway"
+ }
+]

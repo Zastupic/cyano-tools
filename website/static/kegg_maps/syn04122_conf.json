@@ -1,0 +1,555 @@
+[
+ {
+  "type": "circ",
+  "cx": 183,
+  "cy": 268,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 216,
+  "cy": 269,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00041",
+  "id": "C00041",
+  "label": "L-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 460,
+  "cy": 455,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00868",
+  "id": "C00868",
+  "label": "tRNA uridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 503,
+  "cy": 466,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17322",
+  "id": "C17322",
+  "label": "tRNA containing 2-thiouridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 461,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00868",
+  "id": "C00868",
+  "label": "tRNA uridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 503,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17322",
+  "id": "C17322",
+  "label": "tRNA containing 2-thiouridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1036,
+  "cy": 755,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00378",
+  "id": "C00378",
+  "label": "Thiamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1038,
+  "cy": 587,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05924",
+  "id": "C05924",
+  "label": "Molybdopterin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 985,
+  "cy": 569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18239",
+  "id": "C18239",
+  "label": "Precursor Z",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 857,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00044",
+  "id": "C00044",
+  "label": "GTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 881,
+  "cy": 553,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00019",
+  "id": "C00019",
+  "label": "S-Adenosyl-L-methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1181,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18237",
+  "id": "C18237",
+  "label": "Molybdoenzyme molybdenum cofactor",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1038,
+  "cy": 471,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05924",
+  "id": "C05924",
+  "label": "Molybdopterin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 986,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18239",
+  "id": "C18239",
+  "label": "Precursor Z",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 857,
+  "cy": 451,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00044",
+  "id": "C00044",
+  "label": "GTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 879,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00019",
+  "id": "C00019",
+  "label": "S-Adenosyl-L-methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1181,
+  "cy": 469,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18237",
+  "id": "C18237",
+  "label": "Molybdoenzyme molybdenum cofactor",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 760,
+  "cy": 271,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 793,
+  "cy": 272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00041",
+  "id": "C00041",
+  "label": "L-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1036,
+  "cy": 892,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 919,
+  "cy": 877,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00979",
+  "id": "C00979",
+  "label": "O-Acetyl-L-serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 388,
+  "x2": 315,
+  "y2": 405,
+  "url": "/dbget-bin/www_bget?syn:sll0704+syn:slr0387",
+  "id": "sll0704",
+  "label": "sll0704 (nifS), slr0387 (nifS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0704",
+    "product": "NifS protein"
+   },
+   {
+    "locus": "slr0387",
+    "product": "NifS protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 270,
+  "y1": 582,
+  "x2": 316,
+  "y2": 599,
+  "url": "/dbget-bin/www_bget?syn:sll0704+syn:slr0387",
+  "id": "sll0704",
+  "label": "sll0704 (nifS), slr0387 (nifS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0704",
+    "product": "NifS protein"
+   },
+   {
+    "locus": "slr0387",
+    "product": "NifS protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 700,
+  "y1": 746,
+  "x2": 746,
+  "y2": 763,
+  "url": "/dbget-bin/www_bget?syn:ssr0102",
+  "id": "ssr0102",
+  "label": "ssr0102 (ycf40)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 405,
+  "y1": 656,
+  "x2": 451,
+  "y2": 673,
+  "url": "/dbget-bin/www_bget?syn:sll0844",
+  "id": "sll0844",
+  "label": "sll0844",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0844",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 794,
+  "y1": 673,
+  "x2": 840,
+  "y2": 690,
+  "url": "/dbget-bin/www_bget?syn:sll0704+syn:slr0387",
+  "id": "sll0704",
+  "label": "sll0704 (nifS), slr0387 (nifS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0704",
+    "product": "NifS protein"
+   },
+   {
+    "locus": "slr0387",
+    "product": "NifS protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 794,
+  "y1": 542,
+  "x2": 840,
+  "y2": 559,
+  "url": "/dbget-bin/www_bget?syn:sll0704+syn:slr0387",
+  "id": "sll0704",
+  "label": "sll0704 (nifS), slr0387 (nifS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0704",
+    "product": "NifS protein"
+   },
+   {
+    "locus": "slr0387",
+    "product": "NifS protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 864,
+  "y1": 578,
+  "x2": 910,
+  "y2": 595,
+  "url": "/dbget-bin/www_bget?syn:slr0903",
+  "id": "slr0903",
+  "label": "slr0903 (moaE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0903",
+    "product": "molybdopterin (MPT) converting factor, subunit 2"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 700,
+  "y1": 578,
+  "x2": 746,
+  "y2": 595,
+  "url": "/dbget-bin/www_bget?syn:slr0821+syn:ssr1527",
+  "id": "slr0821,",
+  "label": "slr0821, ssr1527",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0821",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 794,
+  "y1": 578,
+  "x2": 840,
+  "y2": 595,
+  "url": "/dbget-bin/www_bget?syn:sll1536",
+  "id": "sll1536",
+  "label": "sll1536 (moeB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1536",
+    "product": "molybdopterin biosynthesis MoeB protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 916,
+  "y1": 557,
+  "x2": 962,
+  "y2": 574,
+  "url": "/dbget-bin/www_bget?syn:slr0902",
+  "id": "slr0902",
+  "label": "slr0902 (moaC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0902",
+    "product": "molybdenum cofactor biosynthesis protein C"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 794,
+  "y1": 425,
+  "x2": 840,
+  "y2": 442,
+  "url": "/dbget-bin/www_bget?syn:sll0704+syn:slr0387",
+  "id": "sll0704",
+  "label": "sll0704 (nifS), slr0387 (nifS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0704",
+    "product": "NifS protein"
+   },
+   {
+    "locus": "slr0387",
+    "product": "NifS protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 864,
+  "y1": 462,
+  "x2": 910,
+  "y2": 479,
+  "url": "/dbget-bin/www_bget?syn:slr0903",
+  "id": "slr0903",
+  "label": "slr0903 (moaE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0903",
+    "product": "molybdopterin (MPT) converting factor, subunit 2"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 913,
+  "y1": 441,
+  "x2": 959,
+  "y2": 458,
+  "url": "/dbget-bin/www_bget?syn:slr0901",
+  "id": "slr0901",
+  "label": "slr0901 (moaA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0901",
+    "product": "molybdenum cofactor biosynthesis protein A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 915,
+  "y1": 535,
+  "x2": 961,
+  "y2": 552,
+  "url": "/dbget-bin/www_bget?syn:slr0901",
+  "id": "slr0901",
+  "label": "slr0901 (moaA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0901",
+    "product": "molybdenum cofactor biosynthesis protein A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 700,
+  "y1": 884,
+  "x2": 746,
+  "y2": 901,
+  "url": "/dbget-bin/www_bget?syn:slr0821+syn:ssr1527",
+  "id": "slr0821,",
+  "label": "slr0821, ssr1527",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0821",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 794,
+  "y1": 884,
+  "x2": 840,
+  "y2": 901,
+  "url": "/dbget-bin/www_bget?syn:sll1536",
+  "id": "sll1536",
+  "label": "sll1536 (moeB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1536",
+    "product": "molybdopterin biosynthesis MoeB protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 239,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn04122",
+  "id": "syn04122",
+  "label": "syn04122: Sulfur relay system",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 9,
+  "y1": 123,
+  "x2": 104,
+  "y2": 157,
+  "url": "/kegg-bin/show_pathway?map04120",
+  "id": "map04120:",
+  "label": "map04120: Ubiquitin mediated proteolysis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 882,
+  "y1": 711,
+  "x2": 974,
+  "y2": 745,
+  "url": "/kegg-bin/show_pathway?syn00730",
+  "id": "syn00730",
+  "label": "syn00730: Thiamine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 884,
+  "y1": 807,
+  "x2": 1014,
+  "y2": 841,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1059,
+  "y1": 501,
+  "x2": 1151,
+  "y2": 535,
+  "url": "/kegg-bin/show_pathway?syn00790",
+  "id": "syn00790",
+  "label": "syn00790: Folate biosynthesis",
+  "entry_type": "pathway"
+ }
+]

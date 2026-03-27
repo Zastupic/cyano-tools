@@ -1,0 +1,988 @@
+[
+ {
+  "type": "circ",
+  "cx": 284,
+  "cy": 529,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00122",
+  "id": "C00122",
+  "label": "Fumarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 283,
+  "cy": 586,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00042",
+  "id": "C00042",
+  "label": "Succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 747,
+  "cy": 527,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00036",
+  "id": "C00036",
+  "label": "Oxaloacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 679,
+  "cy": 586,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00026",
+  "id": "C00026",
+  "label": "2-Oxoglutarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 301,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00041",
+  "id": "C00041",
+  "label": "L-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 495,
+  "cy": 305,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00049",
+  "id": "C00049",
+  "label": "L-Aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 748,
+  "cy": 305,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00152",
+  "id": "C00152",
+  "label": "L-Asparagine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 615,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00402",
+  "id": "C00402",
+  "label": "D-Aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 751,
+  "cy": 410,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02362",
+  "id": "C02362",
+  "label": "2-Oxosuccinamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 679,
+  "cy": 209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01042",
+  "id": "C01042",
+  "label": "N-Acetyl-L-aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 394,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03794",
+  "id": "C03794",
+  "label": "N6-(1,2-Dicarboxyethyl)-AMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 415,
+  "cy": 394,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03406",
+  "id": "C03406",
+  "label": "N-(L-Arginino)succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 527,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 679,
+  "cy": 148,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00438",
+  "id": "C00438",
+  "label": "N-Carbamoyl-L-aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 283,
+  "cy": 717,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00232",
+  "id": "C00232",
+  "label": "Succinate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 679,
+  "cy": 714,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00025",
+  "id": "C00025",
+  "label": "L-Glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 415,
+  "cy": 717,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00334",
+  "id": "C00334",
+  "label": "4-Aminobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 847,
+  "cy": 714,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00064",
+  "id": "C00064",
+  "label": "L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 708,
+  "cy": 830,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 847,
+  "cy": 830,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00169",
+  "id": "C00169",
+  "label": "Carbamoyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 847,
+  "cy": 586,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00940",
+  "id": "C00940",
+  "label": "2-Oxoglutaramate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 676,
+  "cy": 876,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03912",
+  "id": "C03912",
+  "label": "(S)-1-Pyrroline-5-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 947,
+  "cy": 669,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00352",
+  "id": "C00352",
+  "label": "D-Glucosamine 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 947,
+  "cy": 769,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03090",
+  "id": "C03090",
+  "label": "5-Phosphoribosylamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 531,
+  "cy": 611,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 810,
+  "cy": 209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12270",
+  "id": "C12270",
+  "label": "N-Acetylaspartylglutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 941,
+  "cy": 209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20776",
+  "id": "C20776",
+  "label": "N-Acetylaspartylglutamylglutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 758,
+  "cy": 557,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00158",
+  "id": "C00158",
+  "label": "Citrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 890,
+  "cy": 557,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20775",
+  "id": "C20775",
+  "label": "beta-Citryl-L-glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 623,
+  "y1": 353,
+  "x2": 669,
+  "y2": 370,
+  "url": "/dbget-bin/www_bget?syn:sll0422+syn:sll0585",
+  "id": "sll0422,",
+  "label": "sll0422, sll0585",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0422",
+    "product": "asparaginase"
+   },
+   {
+    "locus": "sll0585",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 584,
+  "y1": 497,
+  "x2": 630,
+  "y2": 514,
+  "url": "/dbget-bin/www_bget?syn:sll0631",
+  "id": "sll0631",
+  "label": "sll0631 (nadB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0631",
+    "product": "L-aspartate oxidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 584,
+  "y1": 518,
+  "x2": 630,
+  "y2": 535,
+  "url": "/dbget-bin/www_bget?syn:sll0402",
+  "id": "sll0402",
+  "label": "sll0402 (aspC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0402",
+    "product": "aspartate aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 391,
+  "y1": 338,
+  "x2": 437,
+  "y2": 355,
+  "url": "/dbget-bin/www_bget?syn:slr0585",
+  "id": "slr0585",
+  "label": "slr0585 (argG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0585",
+    "product": "argininosuccinate synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 334,
+  "y1": 338,
+  "x2": 380,
+  "y2": 355,
+  "url": "/dbget-bin/www_bget?syn:sll1823",
+  "id": "sll1823",
+  "label": "sll1823 (purA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1823",
+    "product": "adenylosuccinate synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 392,
+  "y1": 432,
+  "x2": 438,
+  "y2": 449,
+  "url": "/dbget-bin/www_bget?syn:slr1133",
+  "id": "slr1133",
+  "label": "slr1133 (argH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1133",
+    "product": "L-argininosuccinate lyase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 335,
+  "y1": 432,
+  "x2": 381,
+  "y2": 449,
+  "url": "/dbget-bin/www_bget?syn:sll0421",
+  "id": "sll0421",
+  "label": "sll0421 (purB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0421",
+    "product": "adenylosuccinate lyase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 181,
+  "y1": 416,
+  "x2": 227,
+  "y2": 433,
+  "url": "/dbget-bin/www_bget?syn:sll1682",
+  "id": "sll1682",
+  "label": "sll1682",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1682",
+    "product": "alanine dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 557,
+  "y1": 139,
+  "x2": 603,
+  "y2": 156,
+  "url": "/dbget-bin/www_bget?syn:slr1476",
+  "id": "slr1476",
+  "label": "slr1476 (pyrB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1476",
+    "product": "aspartate carbamoyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 261,
+  "y1": 632,
+  "x2": 307,
+  "y2": 649,
+  "url": "/dbget-bin/www_bget?syn:slr0370",
+  "id": "slr0370",
+  "label": "slr0370 (gabD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0370",
+    "product": "succinate-semialdehyde dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 631,
+  "y1": 661,
+  "x2": 677,
+  "y2": 678,
+  "url": "/dbget-bin/www_bget?syn:sll1027",
+  "id": "sll1027",
+  "label": "sll1027 (gltD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1027",
+    "product": "NADH-glutamate synthase small subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 577,
+  "y1": 662,
+  "x2": 623,
+  "y2": 679,
+  "url": "/dbget-bin/www_bget?syn:slr0710",
+  "id": "slr0710",
+  "label": "slr0710 (gdhA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0710",
+    "product": "glutamate dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 518,
+  "y1": 709,
+  "x2": 564,
+  "y2": 726,
+  "url": "/dbget-bin/www_bget?syn:sll1641",
+  "id": "sll1641",
+  "label": "sll1641 (gad)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1641",
+    "product": "glutamate decarboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 739,
+  "y1": 706,
+  "x2": 785,
+  "y2": 723,
+  "url": "/dbget-bin/www_bget?syn:slr0288+syn:slr1756",
+  "id": "slr0288",
+  "label": "slr0288 (glnN), slr1756 (glnA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0288",
+    "product": "glutamate--ammonia ligase"
+   },
+   {
+    "locus": "slr1756",
+    "product": "glutamate--ammonia ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 739,
+  "y1": 748,
+  "x2": 785,
+  "y2": 765,
+  "url": "/dbget-bin/www_bget?syn:slr0520+syn:slr2079",
+  "id": "slr0520",
+  "label": "slr0520 (purL), slr2079",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0520",
+    "product": "phosphoribosyl formylglycinamidine synthase"
+   },
+   {
+    "locus": "slr2079",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 824,
+  "y1": 784,
+  "x2": 870,
+  "y2": 801,
+  "url": "/dbget-bin/www_bget?syn:sll0370+syn:sll1498+syn:slr1616",
+  "id": "sll0370",
+  "label": "sll0370 (carB), sll1498 (carA), slr1616",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0370",
+    "product": "carbamoyl-phosphate synthase, pyrimidine-specific, large chain"
+   },
+   {
+    "locus": "sll1498",
+    "product": "carbamoyl-phosphate synthetase subunit A"
+   },
+   {
+    "locus": "slr1616",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 652,
+  "y1": 783,
+  "x2": 698,
+  "y2": 800,
+  "url": "/dbget-bin/www_bget?syn:sll1561",
+  "id": "sll1561",
+  "label": "sll1561 (putA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1561",
+    "product": "delta-1-pyrroline-5-carboxylate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 873,
+  "y1": 661,
+  "x2": 919,
+  "y2": 678,
+  "url": "/dbget-bin/www_bget?syn:sll0220",
+  "id": "sll0220",
+  "label": "sll0220 (glmS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0220",
+    "product": "L-glutamine:D-fructose-6-P amidotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 872,
+  "y1": 760,
+  "x2": 918,
+  "y2": 777,
+  "url": "/dbget-bin/www_bget?syn:sll0757",
+  "id": "sll0757",
+  "label": "sll0757 (purF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0757",
+    "product": "amidophosphoribosyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 235,
+  "y1": 651,
+  "x2": 281,
+  "y2": 668,
+  "url": "/dbget-bin/www_bget?syn:slr0370",
+  "id": "slr0370",
+  "label": "slr0370 (gabD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0370",
+    "product": "succinate-semialdehyde dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 557,
+  "y1": 231,
+  "x2": 603,
+  "y2": 248,
+  "url": "/dbget-bin/www_bget?syn:slr1705",
+  "id": "slr1705",
+  "label": "slr1705 (aspA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1705",
+    "product": "aspartoacylase, ASP"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 273,
+  "y1": 540,
+  "x2": 747,
+  "y2": 574,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 68,
+  "y1": 213,
+  "x2": 216,
+  "y2": 238,
+  "url": "/kegg-bin/show_pathway?syn00470",
+  "id": "syn00470",
+  "label": "syn00470: D-Amino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 759,
+  "y1": 136,
+  "x2": 887,
+  "y2": 161,
+  "url": "/kegg-bin/show_pathway?syn00240",
+  "id": "syn00240",
+  "label": "syn00240: Pyrimidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 93,
+  "y1": 595,
+  "x2": 197,
+  "y2": 629,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 544,
+  "y1": 387,
+  "x2": 670,
+  "y2": 412,
+  "url": "/kegg-bin/show_pathway?syn00340",
+  "id": "syn00340",
+  "label": "syn00340: Histidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 256,
+  "y1": 91,
+  "x2": 414,
+  "y2": 116,
+  "url": "/kegg-bin/show_pathway?syn00460",
+  "id": "syn00460",
+  "label": "syn00460: Cyanoamino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 531,
+  "y1": 89,
+  "x2": 613,
+  "y2": 123,
+  "url": "/kegg-bin/show_pathway?syn00220",
+  "id": "syn00220",
+  "label": "syn00220: Arginine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 301,
+  "y1": 147,
+  "x2": 414,
+  "y2": 172,
+  "url": "/kegg-bin/show_pathway?syn00300",
+  "id": "syn00300",
+  "label": "syn00300: Lysine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 292,
+  "y1": 203,
+  "x2": 414,
+  "y2": 228,
+  "url": "/kegg-bin/show_pathway?syn00410",
+  "id": "syn00410",
+  "label": "syn00410: beta-Alanine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 270,
+  "y1": 231,
+  "x2": 414,
+  "y2": 256,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 214,
+  "y1": 119,
+  "x2": 414,
+  "y2": 144,
+  "url": "/kegg-bin/show_pathway?syn00760",
+  "id": "syn00760",
+  "label": "syn00760: Nicotinate and nicotinamide metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 230,
+  "y1": 259,
+  "x2": 414,
+  "y2": 284,
+  "url": "/kegg-bin/show_pathway?syn00770",
+  "id": "syn00770",
+  "label": "syn00770: Pantothenate and CoA biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1003,
+  "y1": 648,
+  "x2": 1104,
+  "y2": 693,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1003,
+  "y1": 756,
+  "x2": 1107,
+  "y2": 781,
+  "url": "/kegg-bin/show_pathway?syn00230",
+  "id": "syn00230",
+  "label": "syn00230: Purine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 916,
+  "y1": 817,
+  "x2": 1047,
+  "y2": 842,
+  "url": "/kegg-bin/show_pathway?syn00240",
+  "id": "syn00240",
+  "label": "syn00240: Pyrimidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 721,
+  "y1": 922,
+  "x2": 894,
+  "y2": 947,
+  "url": "/kegg-bin/show_pathway?syn00330",
+  "id": "syn00330",
+  "label": "syn00330: Arginine and proline metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 468,
+  "y1": 735,
+  "x2": 589,
+  "y2": 760,
+  "url": "/kegg-bin/show_pathway?syn00340",
+  "id": "syn00340",
+  "label": "syn00340: Histidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 468,
+  "y1": 763,
+  "x2": 589,
+  "y2": 788,
+  "url": "/kegg-bin/show_pathway?syn00910",
+  "id": "syn00910",
+  "label": "syn00910: Nitrogen metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 445,
+  "y1": 791,
+  "x2": 589,
+  "y2": 816,
+  "url": "/kegg-bin/show_pathway?syn00470",
+  "id": "syn00470",
+  "label": "syn00470: D-Amino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 457,
+  "y1": 819,
+  "x2": 588,
+  "y2": 844,
+  "url": "/kegg-bin/show_pathway?syn00480",
+  "id": "syn00480",
+  "label": "syn00480: Glutathione metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 458,
+  "y1": 847,
+  "x2": 589,
+  "y2": 872,
+  "url": "/kegg-bin/show_pathway?syn00860",
+  "id": "syn00860",
+  "label": "syn00860: Porphyrin metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 433,
+  "y1": 875,
+  "x2": 589,
+  "y2": 900,
+  "url": "/kegg-bin/show_pathway?syn00460",
+  "id": "syn00460",
+  "label": "syn00460: Cyanoamino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 467,
+  "y1": 903,
+  "x2": 589,
+  "y2": 928,
+  "url": "/kegg-bin/show_pathway?syn00650",
+  "id": "syn00650",
+  "label": "syn00650: Butanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 392,
+  "y1": 931,
+  "x2": 590,
+  "y2": 956,
+  "url": "/kegg-bin/show_pathway?syn00660",
+  "id": "syn00660",
+  "label": "syn00660: C5-Branched dibasic acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 444,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 375,
+  "y1": 959,
+  "x2": 590,
+  "y2": 984,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 273,
+  "y1": 175,
+  "x2": 414,
+  "y2": 200,
+  "url": "/kegg-bin/show_pathway?syn00261",
+  "id": "syn00261",
+  "label": "syn00261: Monobactam biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 787,
+  "y1": 880,
+  "x2": 911,
+  "y2": 905,
+  "url": "/kegg-bin/show_pathway?syn00220",
+  "id": "syn00220",
+  "label": "syn00220: Arginine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 34,
+  "y1": 553,
+  "x2": 107,
+  "y2": 587,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ }
+]

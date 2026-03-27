@@ -1,0 +1,1822 @@
+[
+ {
+  "type": "circ",
+  "cx": 1238,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04088",
+  "id": "C04088",
+  "label": "Octadecanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1238,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16221",
+  "id": "C16221",
+  "label": "(2E)-Octadecenoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1238,
+  "cy": 468,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16220",
+  "id": "C16220",
+  "label": "(3R)-3-Hydroxyoctadecanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1238,
+  "cy": 375,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16219",
+  "id": "C16219",
+  "label": "3-Oxostearoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1351,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00712",
+  "id": "C00712",
+  "label": "(9Z)-Octadecenoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1238,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01530",
+  "id": "C01530",
+  "label": "Octadecanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1138,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08362",
+  "id": "C08362",
+  "label": "(9Z)-Hexadecenoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1351,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01203",
+  "id": "C01203",
+  "label": "Oleoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1138,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16520",
+  "id": "C16520",
+  "label": "Hexadecenoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 869,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06424",
+  "id": "C06424",
+  "label": "Tetradecanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 728,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02679",
+  "id": "C02679",
+  "label": "Dodecanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 586,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01571",
+  "id": "C01571",
+  "label": "Decanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 444,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06423",
+  "id": "C06423",
+  "label": "Octanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 161,
+  "cy": 125,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 274,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00083",
+  "id": "C00083",
+  "label": "Malonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 274,
+  "cy": 273,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01209",
+  "id": "C01209",
+  "label": "Malonyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 161,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03939",
+  "id": "C03939",
+  "label": "Acetyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 161,
+  "cy": 375,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05744",
+  "id": "C05744",
+  "label": "Acetoacetyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 161,
+  "cy": 468,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04618",
+  "id": "C04618",
+  "label": "(3R)-3-Hydroxybutanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 161,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04246",
+  "id": "C04246",
+  "label": "But-2-enoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 161,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05745",
+  "id": "C05745",
+  "label": "Butyryl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 309,
+  "cy": 195,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00229",
+  "id": "C00229",
+  "label": "Acyl-carrier protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 375,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05746",
+  "id": "C05746",
+  "label": "3-Oxohexanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 468,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05747",
+  "id": "C05747",
+  "label": "(3R)-3-Hydroxyhexanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05748",
+  "id": "C05748",
+  "label": "trans-Hex-2-enoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 302,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05749",
+  "id": "C05749",
+  "label": "Hexanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 444,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05752",
+  "id": "C05752",
+  "label": "Octanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 444,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05751",
+  "id": "C05751",
+  "label": "trans-Oct-2-enoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 444,
+  "cy": 468,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04620",
+  "id": "C04620",
+  "label": "(3R)-3-Hydroxyoctanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 444,
+  "cy": 375,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05750",
+  "id": "C05750",
+  "label": "3-Oxooctanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 586,
+  "cy": 375,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05753",
+  "id": "C05753",
+  "label": "3-Oxodecanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 586,
+  "cy": 468,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04619",
+  "id": "C04619",
+  "label": "(3R)-3-Hydroxydecanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 586,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05754",
+  "id": "C05754",
+  "label": "trans-Dec-2-enoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 586,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05755",
+  "id": "C05755",
+  "label": "Decanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 728,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05223",
+  "id": "C05223",
+  "label": "Dodecanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 728,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05758",
+  "id": "C05758",
+  "label": "trans-Dodec-2-enoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 728,
+  "cy": 468,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05757",
+  "id": "C05757",
+  "label": "(3R)-3-Hydroxydodecanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 728,
+  "cy": 375,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05756",
+  "id": "C05756",
+  "label": "3-Oxododecanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 869,
+  "cy": 375,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05759",
+  "id": "C05759",
+  "label": "3-Oxotetradecanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 869,
+  "cy": 468,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04688",
+  "id": "C04688",
+  "label": "(3R)-3-Hydroxytetradecanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 869,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05760",
+  "id": "C05760",
+  "label": "trans-Tetradec-2-enoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 869,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05761",
+  "id": "C05761",
+  "label": "Tetradecanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1011,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00249",
+  "id": "C00249",
+  "label": "Hexadecanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1011,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05764",
+  "id": "C05764",
+  "label": "Hexadecanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1011,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05763",
+  "id": "C05763",
+  "label": "trans-Hexadec-2-enoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1011,
+  "cy": 468,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04633",
+  "id": "C04633",
+  "label": "(3R)-3-Hydroxypalmitoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1011,
+  "cy": 375,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05762",
+  "id": "C05762",
+  "label": "3-Oxohexadecanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 535,
+  "cy": 761,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04180",
+  "id": "C04180",
+  "label": "cis-Dec-3-enoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 535,
+  "cy": 840,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20794",
+  "id": "C20794",
+  "label": "n-7 Unsaturated acyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1011,
+  "cy": 874,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00154",
+  "id": "C00154",
+  "label": "Palmitoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 340,
+  "cy": 119,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00383",
+  "id": "C00383",
+  "label": "Malonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 306,
+  "cy": 1031,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 368,
+  "cy": 1084,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00083",
+  "id": "C00083",
+  "label": "Malonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 853,
+  "cy": 1031,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 955,
+  "cy": 1084,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00083",
+  "id": "C00083",
+  "label": "Malonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 955,
+  "cy": 1157,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01209",
+  "id": "C01209",
+  "label": "Malonyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 955,
+  "cy": 1230,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05744+C00685",
+  "id": "C05744",
+  "label": "Acetoacetyl-[acp]), C00685 (3-Oxoacyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 955,
+  "cy": 1303,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01271",
+  "id": "C01271",
+  "label": "(3R)-3-Hydroxyacyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 955,
+  "cy": 1376,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00693",
+  "id": "C00693",
+  "label": "trans-2,3-Dehydroacyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 955,
+  "cy": 1449,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00173",
+  "id": "C00173",
+  "label": "Acyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 991,
+  "cy": 1105,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00229",
+  "id": "C00229",
+  "label": "Acyl-carrier protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1068,
+  "cy": 1084,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00383",
+  "id": "C00383",
+  "label": "Malonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 573,
+  "cy": 1031,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 1084,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00083",
+  "id": "C00083",
+  "label": "Malonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 1157,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01209",
+  "id": "C01209",
+  "label": "Malonyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 1230,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05744+C00685",
+  "id": "C05744",
+  "label": "Acetoacetyl-[acp]), C00685 (3-Oxoacyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 1303,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01271",
+  "id": "C01271",
+  "label": "(3R)-3-Hydroxyacyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 1376,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00693",
+  "id": "C00693",
+  "label": "trans-2,3-Dehydroacyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 1449,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00173+C20683",
+  "id": "C00173",
+  "label": "Acyl-[acyl-carrier protein]), C20683 (Long-chain acyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 710,
+  "cy": 1105,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00229",
+  "id": "C00229",
+  "label": "Acyl-carrier protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 306,
+  "cy": 1511,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00638",
+  "id": "C00638",
+  "label": "Long-chain fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 306,
+  "cy": 1572,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02843",
+  "id": "C02843",
+  "label": "Long-chain acyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 1572,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02843",
+  "id": "C02843",
+  "label": "Long-chain acyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 1511,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00638",
+  "id": "C00638",
+  "label": "Long-chain fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 853,
+  "cy": 1137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03939",
+  "id": "C03939",
+  "label": "Acetyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 1240,
+  "y1": 600,
+  "x2": 1286,
+  "y2": 617,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1240,
+  "y1": 507,
+  "x2": 1286,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1240,
+  "y1": 329,
+  "x2": 1286,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1240,
+  "y1": 414,
+  "x2": 1286,
+  "y2": 431,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1013,
+  "y1": 329,
+  "x2": 1059,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 871,
+  "y1": 329,
+  "x2": 917,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 730,
+  "y1": 329,
+  "x2": 776,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 588,
+  "y1": 329,
+  "x2": 634,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 446,
+  "y1": 329,
+  "x2": 492,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 304,
+  "y1": 329,
+  "x2": 350,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1013,
+  "y1": 580,
+  "x2": 1059,
+  "y2": 597,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1013,
+  "y1": 395,
+  "x2": 1059,
+  "y2": 412,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 871,
+  "y1": 580,
+  "x2": 917,
+  "y2": 597,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 871,
+  "y1": 395,
+  "x2": 917,
+  "y2": 412,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 730,
+  "y1": 580,
+  "x2": 776,
+  "y2": 597,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 730,
+  "y1": 395,
+  "x2": 776,
+  "y2": 412,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 588,
+  "y1": 580,
+  "x2": 634,
+  "y2": 597,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 588,
+  "y1": 395,
+  "x2": 634,
+  "y2": 412,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 446,
+  "y1": 580,
+  "x2": 492,
+  "y2": 597,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 446,
+  "y1": 395,
+  "x2": 492,
+  "y2": 412,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 304,
+  "y1": 580,
+  "x2": 350,
+  "y2": 597,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 304,
+  "y1": 395,
+  "x2": 350,
+  "y2": 412,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 163,
+  "y1": 580,
+  "x2": 209,
+  "y2": 597,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 163,
+  "y1": 395,
+  "x2": 209,
+  "y2": 412,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 276,
+  "y1": 217,
+  "x2": 322,
+  "y2": 234,
+  "url": "/dbget-bin/www_bget?syn:slr2023",
+  "id": "slr2023",
+  "label": "slr2023 (fabD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2023",
+    "product": "malonyl coenzyme A-acyl carrier protein transacylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 251,
+  "y1": 137,
+  "x2": 297,
+  "y2": 154,
+  "url": "/dbget-bin/www_bget?syn:sll0053+syn:sll0336+syn:sll0728+syn:slr0435",
+  "id": "sll0053",
+  "label": "sll0053 (accC), sll0336 (accD), sll0728 (accA), slr0435 (accB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0053",
+    "product": "biotin carboxylase"
+   },
+   {
+    "locus": "sll0336",
+    "product": "acetyl-CoA carboxylase beta subunit"
+   },
+   {
+    "locus": "sll0728",
+    "product": "acetyl-CoA carboxylase alpha subunit"
+   },
+   {
+    "locus": "slr0435",
+    "product": "biotin carboxyl carrier protein of acetyl-CoA carboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 163,
+  "y1": 329,
+  "x2": 209,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 10,
+  "y1": 319,
+  "x2": 56,
+  "y2": 336,
+  "url": "/dbget-bin/www_bget?syn:slr1511",
+  "id": "slr1511",
+  "label": "slr1511 (fabH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1511",
+    "product": "beta-ketoacyl-acyl carrier protein synthase III"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 163,
+  "y1": 507,
+  "x2": 209,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 304,
+  "y1": 507,
+  "x2": 350,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 446,
+  "y1": 507,
+  "x2": 492,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 588,
+  "y1": 507,
+  "x2": 634,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 730,
+  "y1": 507,
+  "x2": 776,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 871,
+  "y1": 507,
+  "x2": 917,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1013,
+  "y1": 507,
+  "x2": 1059,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 988,
+  "y1": 819,
+  "x2": 1034,
+  "y2": 836,
+  "url": "/dbget-bin/www_bget?syn:slr1609",
+  "id": "slr1609",
+  "label": "slr1609",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1609",
+    "product": "long-chain-fatty-acid CoA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 907,
+  "y1": 1259,
+  "x2": 953,
+  "y2": 1276,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 677,
+  "y1": 1396,
+  "x2": 723,
+  "y2": 1413,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 677,
+  "y1": 1183,
+  "x2": 723,
+  "y2": 1200,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 284,
+  "y1": 1530,
+  "x2": 330,
+  "y2": 1547,
+  "url": "/dbget-bin/www_bget?syn:slr1609",
+  "id": "slr1609",
+  "label": "slr1609",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1609",
+    "product": "long-chain-fatty-acid CoA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 653,
+  "y1": 1530,
+  "x2": 699,
+  "y2": 1547,
+  "url": "/dbget-bin/www_bget?syn:slr1609",
+  "id": "slr1609",
+  "label": "slr1609",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1609",
+    "product": "long-chain-fatty-acid CoA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 550,
+  "y1": 1165,
+  "x2": 596,
+  "y2": 1182,
+  "url": "/dbget-bin/www_bget?syn:slr1511",
+  "id": "slr1511",
+  "label": "slr1511 (fabH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1511",
+    "product": "beta-ketoacyl-acyl carrier protein synthase III"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 653,
+  "y1": 1114,
+  "x2": 699,
+  "y2": 1131,
+  "url": "/dbget-bin/www_bget?syn:slr2023",
+  "id": "slr2023",
+  "label": "slr2023 (fabD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2023",
+    "product": "malonyl coenzyme A-acyl carrier protein transacylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 653,
+  "y1": 1259,
+  "x2": 699,
+  "y2": 1276,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 653,
+  "y1": 1332,
+  "x2": 699,
+  "y2": 1349,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 933,
+  "y1": 1114,
+  "x2": 979,
+  "y2": 1131,
+  "url": "/dbget-bin/www_bget?syn:slr2023",
+  "id": "slr2023",
+  "label": "slr2023 (fabD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2023",
+    "product": "malonyl coenzyme A-acyl carrier protein transacylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 933,
+  "y1": 1183,
+  "x2": 979,
+  "y2": 1200,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 831,
+  "y1": 1183,
+  "x2": 877,
+  "y2": 1200,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 653,
+  "y1": 1044,
+  "x2": 699,
+  "y2": 1061,
+  "url": "/dbget-bin/www_bget?syn:sll0053+syn:sll0336+syn:sll0728+syn:slr0435",
+  "id": "sll0053",
+  "label": "sll0053 (accC), sll0336 (accD), sll0728 (accA), slr0435 (accB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0053",
+    "product": "biotin carboxylase"
+   },
+   {
+    "locus": "sll0336",
+    "product": "acetyl-CoA carboxylase beta subunit"
+   },
+   {
+    "locus": "sll0728",
+    "product": "acetyl-CoA carboxylase alpha subunit"
+   },
+   {
+    "locus": "slr0435",
+    "product": "biotin carboxyl carrier protein of acetyl-CoA carboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 677,
+  "y1": 1415,
+  "x2": 723,
+  "y2": 1432,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 773,
+  "y1": 863,
+  "x2": 900,
+  "y2": 888,
+  "url": "/kegg-bin/show_pathway?syn00071",
+  "id": "syn00071",
+  "label": "syn00071: Fatty acid degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 29,
+  "y1": 44,
+  "x2": 239,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00061",
+  "id": "syn00061",
+  "label": "syn00061: Fatty acid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 416,
+  "y1": 138,
+  "x2": 534,
+  "y2": 163,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 185,
+  "y1": 82,
+  "x2": 260,
+  "y2": 107,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 416,
+  "y1": 169,
+  "x2": 546,
+  "y2": 194,
+  "url": "/kegg-bin/show_pathway?syn00410",
+  "id": "syn00410",
+  "label": "syn00410: beta-Alanine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 330,
+  "y1": 833,
+  "x2": 460,
+  "y2": 858,
+  "url": "/kegg-bin/show_pathway?syn00785",
+  "id": "syn00785",
+  "label": "syn00785: Lipoic acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1140,
+  "y1": 887,
+  "x2": 1314,
+  "y2": 912,
+  "url": "/kegg-bin/show_pathway?syn00564",
+  "id": "syn00564",
+  "label": "syn00564: Glycerophospholipid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1174,
+  "y1": 857,
+  "x2": 1313,
+  "y2": 882,
+  "url": "/kegg-bin/show_pathway?syn00561",
+  "id": "syn00561",
+  "label": "syn00561: Glycerolipid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1194,
+  "y1": 917,
+  "x2": 1313,
+  "y2": 942,
+  "url": "/kegg-bin/show_pathway?map00062",
+  "id": "map00062:",
+  "label": "map00062: Fatty acid elongation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 235,
+  "y1": 1609,
+  "x2": 376,
+  "y2": 1634,
+  "url": "/kegg-bin/show_pathway?map00074",
+  "id": "map00074:",
+  "label": "map00074: Mycolic acid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ }
+]

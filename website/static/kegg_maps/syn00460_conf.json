@@ -1,0 +1,775 @@
+[
+ {
+  "type": "circ",
+  "cx": 373,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05670",
+  "id": "C05670",
+  "label": "3-Aminopropiononitrile",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 690,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01401",
+  "id": "C01401",
+  "label": "Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 817,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00302",
+  "id": "C00302",
+  "label": "Glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 329,
+  "cy": 690,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05714",
+  "id": "C05714",
+  "label": "alpha-Aminopropiononitrile",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 585,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00488",
+  "id": "C00488",
+  "label": "Formamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 329,
+  "cy": 817,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05715",
+  "id": "C05715",
+  "label": "gamma-Amino-gamma-cyanobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 247,
+  "cy": 887,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05711",
+  "id": "C05711",
+  "label": "gamma-Glutamyl-beta-cyanoalanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 434,
+  "cy": 994,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00049",
+  "id": "C00049",
+  "label": "L-Aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 434,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02512",
+  "id": "C02512",
+  "label": "3-Cyano-L-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 434,
+  "cy": 1060,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00152",
+  "id": "C00152",
+  "label": "L-Asparagine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 693,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 247,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06114",
+  "id": "C06114",
+  "label": "gamma-Glutamyl-beta-aminopropiononitrile",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 693,
+  "cy": 768,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00065",
+  "id": "C00065",
+  "label": "L-Serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 585,
+  "cy": 768,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 693,
+  "cy": 840,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 877,
+  "cy": 514,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16074",
+  "id": "C16074",
+  "label": "Phenylacetonitrile",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 997,
+  "cy": 649,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08325",
+  "id": "C08325",
+  "label": "Amygdalin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 166,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00082",
+  "id": "C00082",
+  "label": "L-Tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 236,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03004",
+  "id": "C03004",
+  "label": "N-Hydroxy-L-tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 306,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15503",
+  "id": "C15503",
+  "label": "N,N-Dihydroxy-L-tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 446,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04350",
+  "id": "C04350",
+  "label": "(E)-4-Hydroxyphenylacetaldehyde oxime",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 236,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20310",
+  "id": "C20310",
+  "label": "N-Hydroxy-L-isoleucine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 306,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20311",
+  "id": "C20311",
+  "label": "N,N-Dihydroxy-L-isoleucine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 446,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20312",
+  "id": "C20312",
+  "label": "(Z)-2-Methylbutanal oxime",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 166,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00407",
+  "id": "C00407",
+  "label": "L-Isoleucine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 650,
+  "cy": 236,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20313",
+  "id": "C20313",
+  "label": "N-Hydroxy-L-valine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 650,
+  "cy": 306,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20314",
+  "id": "C20314",
+  "label": "N,N-Dihydroxy-L-valine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 650,
+  "cy": 446,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20315",
+  "id": "C20315",
+  "label": "(Z)-2-Methylpropanal oxime",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 650,
+  "cy": 166,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00183",
+  "id": "C00183",
+  "label": "L-Valine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 197,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03742",
+  "id": "C03742",
+  "label": "(S)-4-Hydroxymandelonitrile",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18796",
+  "id": "C18796",
+  "label": "(2R)-2-Hydroxy-2-methylbutanenitrile",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 650,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02659",
+  "id": "C02659",
+  "label": "Acetone cyanohydrin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 317,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05143",
+  "id": "C05143",
+  "label": "Dhurrin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08334",
+  "id": "C08334",
+  "label": "Lotaustralin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01594",
+  "id": "C01594",
+  "label": "Linamarin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 376,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19491",
+  "id": "C19491",
+  "label": "(E)-2-Methylbutanal oxime",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 650,
+  "cy": 376,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03219",
+  "id": "C03219",
+  "label": "(E)-2-Methylpropanal oxime",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 997,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00844",
+  "id": "C00844",
+  "label": "Prunasin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 877,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00561",
+  "id": "C00561",
+  "label": "Mandelonitrile",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 663,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01326",
+  "id": "C01326",
+  "label": "Hydrogen cyanide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 877,
+  "cy": 166,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00079",
+  "id": "C00079",
+  "label": "L-Phenylalanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 877,
+  "cy": 446,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16075",
+  "id": "C16075",
+  "label": "(Z)-Phenylacetaldehyde oxime",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 877,
+  "cy": 236,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19712",
+  "id": "C19712",
+  "label": "N-Hydroxy-L-phenylalanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 877,
+  "cy": 306,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19715",
+  "id": "C19715",
+  "label": "N,N-Dihydroxy-L-phenylalanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 877,
+  "cy": 376,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19714",
+  "id": "C19714",
+  "label": "(E)-Phenylacetaldoxime",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 248,
+  "y1": 682,
+  "x2": 294,
+  "y2": 699,
+  "url": "/dbget-bin/www_bget?syn:sll0784",
+  "id": "sll0784",
+  "label": "sll0784 (merR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0784",
+    "product": "nitrilase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 248,
+  "y1": 809,
+  "x2": 294,
+  "y2": 826,
+  "url": "/dbget-bin/www_bget?syn:sll0784",
+  "id": "sll0784",
+  "label": "sll0784 (merR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0784",
+    "product": "nitrilase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 287,
+  "y1": 879,
+  "x2": 333,
+  "y2": 896,
+  "url": "/dbget-bin/www_bget?syn:slr1269",
+  "id": "slr1269",
+  "label": "slr1269 (ggt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1269",
+    "product": "gamma-glutamyltranspeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 412,
+  "y1": 1023,
+  "x2": 458,
+  "y2": 1040,
+  "url": "/dbget-bin/www_bget?syn:sll0422+syn:sll0585",
+  "id": "sll0422,",
+  "label": "sll0422, sll0585",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0422",
+    "product": "asparaginase"
+   },
+   {
+    "locus": "sll0585",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 686,
+  "y1": 545,
+  "x2": 732,
+  "y2": 562,
+  "url": "/dbget-bin/www_bget?syn:sll1538",
+  "id": "sll1538",
+  "label": "sll1538 (bgl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1538",
+    "product": "beta-glucosidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 287,
+  "y1": 920,
+  "x2": 333,
+  "y2": 937,
+  "url": "/dbget-bin/www_bget?syn:slr1269",
+  "id": "slr1269",
+  "label": "slr1269 (ggt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1269",
+    "product": "gamma-glutamyltranspeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 618,
+  "y1": 759,
+  "x2": 664,
+  "y2": 776,
+  "url": "/dbget-bin/www_bget?syn:sll1931",
+  "id": "sll1931",
+  "label": "sll1931 (gylA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1931",
+    "product": "serine hydroxymethyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 469,
+  "y1": 545,
+  "x2": 515,
+  "y2": 562,
+  "url": "/dbget-bin/www_bget?syn:sll1538",
+  "id": "sll1538",
+  "label": "sll1538 (bgl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1538",
+    "product": "beta-glucosidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 233,
+  "y1": 545,
+  "x2": 279,
+  "y2": 562,
+  "url": "/dbget-bin/www_bget?syn:sll1538",
+  "id": "sll1538",
+  "label": "sll1538 (bgl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1538",
+    "product": "beta-glucosidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 913,
+  "y1": 554,
+  "x2": 959,
+  "y2": 571,
+  "url": "/dbget-bin/www_bget?syn:sll1538",
+  "id": "sll1538",
+  "label": "sll1538 (bgl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1538",
+    "product": "beta-glucosidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1055,
+  "y1": 609,
+  "x2": 1101,
+  "y2": 626,
+  "url": "/dbget-bin/www_bget?syn:sll1538",
+  "id": "sll1538",
+  "label": "sll1538 (bgl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1538",
+    "product": "beta-glucosidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 35,
+  "y1": 711,
+  "x2": 123,
+  "y2": 745,
+  "url": "/kegg-bin/show_pathway?syn00470",
+  "id": "syn00470",
+  "label": "syn00470: D-Amino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 39,
+  "x2": 297,
+  "y2": 64,
+  "url": "/dbget-bin/www_bget?syn00460",
+  "id": "syn00460",
+  "label": "syn00460: Cyanoamino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 267,
+  "y1": 978,
+  "x2": 344,
+  "y2": 1012,
+  "url": "/kegg-bin/show_pathway?syn00410",
+  "id": "syn00410",
+  "label": "syn00410: beta-Alanine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 35,
+  "y1": 673,
+  "x2": 138,
+  "y2": 707,
+  "url": "/kegg-bin/show_pathway?syn00450",
+  "id": "syn00450",
+  "label": "syn00450: Selenocompound metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 753,
+  "y1": 750,
+  "x2": 873,
+  "y2": 784,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 521,
+  "y1": 801,
+  "x2": 655,
+  "y2": 826,
+  "url": "/kegg-bin/show_pathway?syn00480",
+  "id": "syn00480",
+  "label": "syn00480: Glutathione metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 737,
+  "y1": 792,
+  "x2": 873,
+  "y2": 826,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 753,
+  "y1": 679,
+  "x2": 825,
+  "y2": 713,
+  "url": "/kegg-bin/show_pathway?syn00910",
+  "id": "syn00910",
+  "label": "syn00910: Nitrogen metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 137,
+  "y1": 95,
+  "x2": 259,
+  "y2": 120,
+  "url": "/kegg-bin/show_pathway?syn00350",
+  "id": "syn00350",
+  "label": "syn00350: Tyrosine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 476,
+  "y1": 95,
+  "x2": 605,
+  "y2": 129,
+  "url": "/kegg-bin/show_pathway?syn00290",
+  "id": "syn00290",
+  "label": "syn00290: Valine, leucine and isoleucine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 150,
+  "y1": 751,
+  "x2": 246,
+  "y2": 785,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 806,
+  "y1": 95,
+  "x2": 948,
+  "y2": 120,
+  "url": "/kegg-bin/show_pathway?syn00360",
+  "id": "syn00360",
+  "label": "syn00360: Phenylalanine metabolism",
+  "entry_type": "pathway"
+ }
+]

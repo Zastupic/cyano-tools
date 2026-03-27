@@ -1,0 +1,635 @@
+[
+ {
+  "type": "circ",
+  "cx": 92,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00188",
+  "id": "C00188",
+  "label": "L-Threonine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 181,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06032",
+  "id": "C06032",
+  "label": "D-erythro-3-Methylmalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 181,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02226",
+  "id": "C02226",
+  "label": "2-Methylmaleate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 473,
+  "cy": 181,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02612",
+  "id": "C02612",
+  "label": "(R)-2-Methylmalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 530,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 473,
+  "cy": 266,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00109",
+  "id": "C00109",
+  "label": "2-Oxobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 324,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06006",
+  "id": "C06006",
+  "label": "(S)-2-Aceto-2-hydroxybutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14463",
+  "id": "C14463",
+  "label": "(R)-3-Hydroxy-3-methyl-2-oxopentanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 463,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06007",
+  "id": "C06007",
+  "label": "(R)-2,3-Dihydroxy-3-methylpentanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00671",
+  "id": "C00671",
+  "label": "(S)-3-Methyl-2-oxopentanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 598,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00407",
+  "id": "C00407",
+  "label": "L-Isoleucine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 598,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00183",
+  "id": "C00183",
+  "label": "L-Valine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00141",
+  "id": "C00141",
+  "label": "3-Methyl-2-oxobutanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 463,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04272",
+  "id": "C04272",
+  "label": "(R)-2,3-Dihydroxy-3-methylbutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04181",
+  "id": "C04181",
+  "label": "3-Hydroxy-3-methyl-2-oxobutanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 324,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06010",
+  "id": "C06010",
+  "label": "(S)-2-Acetolactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 473,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02504",
+  "id": "C02504",
+  "label": "alpha-Isopropylmalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 587,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02631",
+  "id": "C02631",
+  "label": "2-Isopropylmaleate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 700,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04411",
+  "id": "C04411",
+  "label": "(2R,3S)-3-Isopropylmalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 700,
+  "cy": 598,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04236",
+  "id": "C04236",
+  "label": "(2S)-2-Isopropyl-3-oxosuccinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 700,
+  "cy": 649,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00233",
+  "id": "C00233",
+  "label": "4-Methyl-2-oxopentanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 700,
+  "cy": 740,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00123",
+  "id": "C00123",
+  "label": "L-Leucine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 246,
+  "y1": 173,
+  "x2": 292,
+  "y2": 190,
+  "url": "/dbget-bin/www_bget?syn:sll1444+syn:sll1470",
+  "id": "sll1444",
+  "label": "sll1444 (leuD), sll1470 (leuC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1444",
+    "product": "3-isopropylmalate dehydratase"
+   },
+   {
+    "locus": "sll1470",
+    "product": "3-isopropylmalate dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 155,
+  "y1": 198,
+  "x2": 201,
+  "y2": 215,
+  "url": "/dbget-bin/www_bget?syn:slr1517",
+  "id": "slr1517",
+  "label": "slr1517 (leuB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1517",
+    "product": "3-isopropylmalate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 105,
+  "y1": 230,
+  "x2": 151,
+  "y2": 247,
+  "url": "/dbget-bin/www_bget?syn:slr2072",
+  "id": "slr2072",
+  "label": "slr2072 (ilvA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2072",
+    "product": "L-threonine deaminase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 130,
+  "y1": 555,
+  "x2": 176,
+  "y2": 572,
+  "url": "/dbget-bin/www_bget?syn:slr0032",
+  "id": "slr0032",
+  "label": "slr0032 (ilvE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0032",
+    "product": "branched-chain amino acid aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 652,
+  "y1": 694,
+  "x2": 698,
+  "y2": 711,
+  "url": "/dbget-bin/www_bget?syn:slr0032",
+  "id": "slr0032",
+  "label": "slr0032 (ilvE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0032",
+    "product": "branched-chain amino acid aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 155,
+  "y1": 419,
+  "x2": 201,
+  "y2": 436,
+  "url": "/dbget-bin/www_bget?syn:sll1363",
+  "id": "sll1363",
+  "label": "sll1363 (ilvC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1363",
+    "product": "ketol-acid reductoisomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 509,
+  "y1": 520,
+  "x2": 555,
+  "y2": 537,
+  "url": "/dbget-bin/www_bget?syn:sll1444+syn:sll1470",
+  "id": "sll1444",
+  "label": "sll1444 (leuD), sll1470 (leuC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1444",
+    "product": "3-isopropylmalate dehydratase"
+   },
+   {
+    "locus": "sll1470",
+    "product": "3-isopropylmalate dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 678,
+  "y1": 555,
+  "x2": 724,
+  "y2": 572,
+  "url": "/dbget-bin/www_bget?syn:slr1517",
+  "id": "slr1517",
+  "label": "slr1517 (leuB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1517",
+    "product": "3-isopropylmalate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 621,
+  "y1": 520,
+  "x2": 667,
+  "y2": 537,
+  "url": "/dbget-bin/www_bget?syn:sll1444+syn:sll1470",
+  "id": "sll1444",
+  "label": "sll1444 (leuD), sll1470 (leuC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1444",
+    "product": "3-isopropylmalate dehydratase"
+   },
+   {
+    "locus": "sll1470",
+    "product": "3-isopropylmalate dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 387,
+  "y1": 514,
+  "x2": 433,
+  "y2": 531,
+  "url": "/dbget-bin/www_bget?syn:sll1564+syn:slr0186",
+  "id": "sll1564",
+  "label": "sll1564 (leuA), slr0186 (leuA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1564",
+    "product": "alpha-isopropylmalate synthase"
+   },
+   {
+    "locus": "slr0186",
+    "product": "2-isopropylmalate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 272,
+  "y1": 555,
+  "x2": 318,
+  "y2": 572,
+  "url": "/dbget-bin/www_bget?syn:slr0032",
+  "id": "slr0032",
+  "label": "slr0032 (ilvE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0032",
+    "product": "branched-chain amino acid aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 297,
+  "y1": 485,
+  "x2": 343,
+  "y2": 502,
+  "url": "/dbget-bin/www_bget?syn:slr0452",
+  "id": "slr0452",
+  "label": "slr0452 (ilvD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0452",
+    "product": "dihydroxyacid dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 130,
+  "y1": 351,
+  "x2": 176,
+  "y2": 368,
+  "url": "/dbget-bin/www_bget?syn:sll1363",
+  "id": "sll1363",
+  "label": "sll1363 (ilvC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1363",
+    "product": "ketol-acid reductoisomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 272,
+  "y1": 351,
+  "x2": 318,
+  "y2": 368,
+  "url": "/dbget-bin/www_bget?syn:sll1363",
+  "id": "sll1363",
+  "label": "sll1363 (ilvC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1363",
+    "product": "ketol-acid reductoisomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 155,
+  "y1": 485,
+  "x2": 201,
+  "y2": 502,
+  "url": "/dbget-bin/www_bget?syn:slr0452",
+  "id": "slr0452",
+  "label": "slr0452 (ilvD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0452",
+    "product": "dihydroxyacid dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 297,
+  "y1": 419,
+  "x2": 343,
+  "y2": 436,
+  "url": "/dbget-bin/www_bget?syn:sll1363",
+  "id": "sll1363",
+  "label": "sll1363 (ilvC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1363",
+    "product": "ketol-acid reductoisomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 155,
+  "y1": 283,
+  "x2": 201,
+  "y2": 300,
+  "url": "/dbget-bin/www_bget?syn:sll0065+syn:sll1981+syn:slr2088",
+  "id": "sll0065",
+  "label": "sll0065 (ilvN), sll1981 (ilvB), slr2088 (ilvG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0065",
+    "product": "acetolactate synthase"
+   },
+   {
+    "locus": "sll1981",
+    "product": "acetolactate synthase"
+   },
+   {
+    "locus": "slr2088",
+    "product": "acetohydroxy acid synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 387,
+  "y1": 172,
+  "x2": 433,
+  "y2": 189,
+  "url": "/dbget-bin/www_bget?syn:sll1444+syn:sll1470",
+  "id": "sll1444",
+  "label": "sll1444 (leuD), sll1470 (leuC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1444",
+    "product": "3-isopropylmalate dehydratase"
+   },
+   {
+    "locus": "sll1470",
+    "product": "3-isopropylmalate dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 297,
+  "y1": 283,
+  "x2": 343,
+  "y2": 300,
+  "url": "/dbget-bin/www_bget?syn:sll0065+syn:sll1981+syn:slr2088",
+  "id": "sll0065",
+  "label": "sll0065 (ilvN), sll1981 (ilvB), slr2088 (ilvG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0065",
+    "product": "acetolactate synthase"
+   },
+   {
+    "locus": "sll1981",
+    "product": "acetolactate synthase"
+   },
+   {
+    "locus": "slr2088",
+    "product": "acetohydroxy acid synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 422,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00290",
+  "id": "syn00290",
+  "label": "syn00290: Valine, leucine and isoleucine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 33,
+  "y1": 122,
+  "x2": 152,
+  "y2": 156,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 260,
+  "y1": 723,
+  "x2": 387,
+  "y2": 757,
+  "url": "/kegg-bin/show_pathway?syn00280",
+  "id": "syn00280",
+  "label": "syn00280: Valine, leucine and isoleucine degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 437,
+  "y1": 374,
+  "x2": 511,
+  "y2": 408,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ }
+]

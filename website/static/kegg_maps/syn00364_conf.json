@@ -1,0 +1,403 @@
+[
+ {
+  "type": "circ",
+  "cx": 164,
+  "cy": 272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02364",
+  "id": "C02364",
+  "label": "3-Fluorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 534,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16474",
+  "id": "C16474",
+  "label": "3-Fluoro-cis,cis-muconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 927,
+  "cy": 408,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 281,
+  "cy": 504,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16484",
+  "id": "C16484",
+  "label": "1-Fluorocyclohexadiene-cis,cis-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 164,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02949",
+  "id": "C02949",
+  "label": "4-Hydroxybenzoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 687,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16476",
+  "id": "C16476",
+  "label": "4-Fluoromuconolactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 406,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16473",
+  "id": "C16473",
+  "label": "4-Fluorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 534,
+  "cy": 272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16475",
+  "id": "C16475",
+  "label": "2-Fluoro-cis,cis-muconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 406,
+  "cy": 272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16472",
+  "id": "C16472",
+  "label": "3-Fluorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 842,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02222",
+  "id": "C02222",
+  "label": "2-Maleylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 164,
+  "cy": 446,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11272",
+  "id": "C11272",
+  "label": "Fluorobenzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 164,
+  "cy": 394,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02371",
+  "id": "C02371",
+  "label": "4-Fluorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 281,
+  "cy": 394,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16480",
+  "id": "C16480",
+  "label": "4-Fluorocyclohexadiene-cis,cis-1,2-diol-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 281,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16479",
+  "id": "C16479",
+  "label": "5-Fluorocyclohexadiene-cis,cis-1,2-diol-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 281,
+  "cy": 272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16478",
+  "id": "C16478",
+  "label": "3-Fluorocyclohexadiene-cis,cis-1,2-diol-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 281,
+  "cy": 126,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16482",
+  "id": "C16482",
+  "label": "2-Fluorocyclohexadiene-cis,cis-1,2-diol-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 164,
+  "cy": 126,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02359",
+  "id": "C02359",
+  "label": "2-Fluorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 281,
+  "cy": 446,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16483",
+  "id": "C16483",
+  "label": "4-Fluorocyclohexadiene-cis,cis-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 281,
+  "cy": 204,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16481",
+  "id": "C16481",
+  "label": "6-Fluorocyclohexadiene-cis,cis-1,2-diol-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 687,
+  "cy": 272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16477",
+  "id": "C16477",
+  "label": "5-Fluoromuconolactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 91,
+  "cy": 586,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02802",
+  "id": "C02802",
+  "label": "4-Fluorobenzoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 164,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06387",
+  "id": "C06387",
+  "label": "4-Chlorobenzoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 164,
+  "cy": 520,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02370",
+  "id": "C02370",
+  "label": "4-Chlorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 398,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06670",
+  "id": "C06670",
+  "label": "2,4-Dichlorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 281,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06671",
+  "id": "C06671",
+  "label": "2,4-Dichlorobenzoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 629,
+  "cy": 237,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16248",
+  "id": "C16248",
+  "label": "2,6-Dibromohydroquinone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 629,
+  "cy": 174,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04178",
+  "id": "C04178",
+  "label": "Bromoxynil",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 844,
+  "cy": 237,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16249",
+  "id": "C16249",
+  "label": "2-Bromomaleylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 727,
+  "cy": 174,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16246",
+  "id": "C16246",
+  "label": "3,5-Dibromo-4-hydroxybenzamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 807,
+  "cy": 174,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03925",
+  "id": "C03925",
+  "label": "3,5-Dibromo-4-hydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 408,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02357",
+  "id": "C02357",
+  "label": "2-Chlorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 807,
+  "cy": 212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16247",
+  "id": "C16247",
+  "label": "2,6-Dibromophenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 750,
+  "y1": 325,
+  "x2": 796,
+  "y2": 342,
+  "url": "/dbget-bin/www_bget?syn:sll1298",
+  "id": "sll1298",
+  "label": "sll1298 (clcD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1298",
+    "product": "dienelactone hydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 750,
+  "y1": 264,
+  "x2": 796,
+  "y2": 281,
+  "url": "/dbget-bin/www_bget?syn:sll1298",
+  "id": "sll1298",
+  "label": "sll1298 (clcD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1298",
+    "product": "dienelactone hydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 291,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00364",
+  "id": "syn00364",
+  "label": "syn00364: Fluorobenzoate degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 343,
+  "y1": 634,
+  "x2": 463,
+  "y2": 659,
+  "url": "/kegg-bin/show_pathway?map00362",
+  "id": "map00362:",
+  "label": "map00362: Benzoate degradation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 781,
+  "y1": 368,
+  "x2": 901,
+  "y2": 393,
+  "url": "/kegg-bin/show_pathway?map00362",
+  "id": "map00362:",
+  "label": "map00362: Benzoate degradation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 306,
+  "y1": 537,
+  "x2": 419,
+  "y2": 562,
+  "url": "/kegg-bin/show_pathway?map00621",
+  "id": "map00621:",
+  "label": "map00621: Dioxin degradation",
+  "entry_type": "gene",
+  "genes": []
+ }
+]

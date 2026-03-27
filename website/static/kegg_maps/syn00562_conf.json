@@ -1,0 +1,648 @@
+[
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 72,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11557",
+  "id": "C11557",
+  "label": "1-Phosphatidyl-1D-myo-inositol 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 59,
+  "cy": 444,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11555",
+  "id": "C11555",
+  "label": "1D-myo-Inositol 1,4,5,6-tetrakisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 84,
+  "cy": 364,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01272",
+  "id": "C01272",
+  "label": "1D-myo-Inositol 1,3,4,5-tetrakisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 610,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01204",
+  "id": "C01204",
+  "label": "Phytic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 268,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01245",
+  "id": "C01245",
+  "label": "D-myo-Inositol 1,4,5-trisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 364,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01243",
+  "id": "C01243",
+  "label": "1D-myo-Inositol 1,3,4-trisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 510,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01284",
+  "id": "C01284",
+  "label": "1D-myo-Inositol 1,3,4,5,6-pentakisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 328,
+  "cy": 510,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04520",
+  "id": "C04520",
+  "label": "1D-myo-Inositol 3,4,5,6-tetrakisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 110,
+  "cy": 569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04563",
+  "id": "C04563",
+  "label": "D-myo-Inositol 1,2,4,5,6-pentakisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 444,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04477",
+  "id": "C04477",
+  "label": "1D-myo-Inositol 1,3,4,6-tetrakisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 110,
+  "cy": 610,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04579",
+  "id": "C04579",
+  "label": "Inositol 1,2,3,5,6-pentakisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 364,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04063",
+  "id": "C04063",
+  "label": "D-myo-Inositol 3,4-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 723,
+  "cy": 421,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04062",
+  "id": "C04062",
+  "label": "D-myo-Inositol 1,3-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 268,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01220",
+  "id": "C01220",
+  "label": "1D-myo-Inositol 1,4-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 324,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00092",
+  "id": "C00092",
+  "label": "D-Glucose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 436,
+  "cy": 364,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04006",
+  "id": "C04006",
+  "label": "1D-myo-Inositol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 436,
+  "cy": 268,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03546",
+  "id": "C03546",
+  "label": "myo-Inositol 4-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00191",
+  "id": "C00191",
+  "label": "D-Glucuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 723,
+  "cy": 364,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01177",
+  "id": "C01177",
+  "label": "Inositol 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 180,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04637",
+  "id": "C04637",
+  "label": "1-Phosphatidyl-D-myo-inositol 4,5-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 256,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01277",
+  "id": "C01277",
+  "label": "1-Phosphatidyl-1D-myo-inositol 4-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 674,
+  "cy": 124,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05981",
+  "id": "C05981",
+  "label": "Phosphatidylinositol-3,4,5-trisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 838,
+  "cy": 364,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01194",
+  "id": "C01194",
+  "label": "1-Phosphatidyl-D-myo-inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 335,
+  "cy": 212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00641",
+  "id": "C00641",
+  "label": "1,2-Diacyl-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 650,
+  "cy": 425,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03659",
+  "id": "C03659",
+  "label": "D-Bornesitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 650,
+  "cy": 391,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03660",
+  "id": "C03660",
+  "label": "L-Bornesitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 772,
+  "cy": 544,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04287",
+  "id": "C04287",
+  "label": "3D-3,5/4-Trihydroxycyclohexane-1,2-dione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 864,
+  "cy": 544,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16737",
+  "id": "C16737",
+  "label": "5-Deoxy-D-glucuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 960,
+  "cy": 544,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06892",
+  "id": "C06892",
+  "label": "2-Deoxy-5-keto-D-gluconic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1054,
+  "cy": 544,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06893",
+  "id": "C06893",
+  "label": "2-Deoxy-5-keto-D-gluconic acid 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 993,
+  "cy": 620,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00222",
+  "id": "C00222",
+  "label": "3-Oxopropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 620,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 993,
+  "cy": 667,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00111",
+  "id": "C00111",
+  "label": "Glycerone phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 667,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 838,
+  "cy": 72,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11556",
+  "id": "C11556",
+  "label": "1-Phosphatidyl-1D-myo-inositol 3,5-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 674,
+  "cy": 180,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11554",
+  "id": "C11554",
+  "label": "1-Phosphatidyl-1D-myo-inositol 3,4-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 659,
+  "cy": 683,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20251",
+  "id": "C20251",
+  "label": "1-Keto-D-chiro-inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 364,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00137",
+  "id": "C00137",
+  "label": "myo-Inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 683,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19891",
+  "id": "C19891",
+  "label": "1D-chiro-Inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 615,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06153",
+  "id": "C06153",
+  "label": "scyllo-Inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 351,
+  "cy": 435,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19794",
+  "id": "C19794",
+  "label": "CDP-1L-myo-inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 436,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19799",
+  "id": "C19799",
+  "label": "Bis(1L-myo-inositol)-3,1'-phosphate 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 659,
+  "cy": 544,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00691",
+  "id": "C00691",
+  "label": "2,4,6/3,5-Pentahydroxycyclohexanone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 772,
+  "cy": 500,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21643",
+  "id": "C21643",
+  "label": "3-Dehydro-scyllo-inosose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 960,
+  "cy": 500,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00558",
+  "id": "C00558",
+  "label": "D-Tagaturonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 864,
+  "cy": 500,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21644",
+  "id": "C21644",
+  "label": "5-Dehydro-L-gluconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 838,
+  "cy": 180,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04549",
+  "id": "C04549",
+  "label": "1-Phosphatidyl-1D-myo-inositol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 691,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11526",
+  "id": "C11526",
+  "label": "5-PP-InsP5",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 310,
+  "cy": 610,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11174",
+  "id": "C11174",
+  "label": "1-Diphosinositol pentakisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 310,
+  "cy": 691,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20690",
+  "id": "C20690",
+  "label": "1D-myo-Inositol 1,5-bis(diphosphate) 2,3,4,6-tetrakisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 468,
+  "y1": 260,
+  "x2": 514,
+  "y2": 277,
+  "url": "/dbget-bin/www_bget?syn:sll1329+syn:sll1383",
+  "id": "sll1329,",
+  "label": "sll1329, sll1383 (suhB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1329",
+    "product": "monophosphatase"
+   },
+   {
+    "locus": "sll1383",
+    "product": "extragenic suppressor; SuhB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 468,
+  "y1": 356,
+  "x2": 514,
+  "y2": 373,
+  "url": "/dbget-bin/www_bget?syn:sll1329+syn:sll1383",
+  "id": "sll1329,",
+  "label": "sll1329, sll1383 (suhB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1329",
+    "product": "monophosphatase"
+   },
+   {
+    "locus": "sll1383",
+    "product": "extragenic suppressor; SuhB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 612,
+  "y1": 356,
+  "x2": 658,
+  "y2": 373,
+  "url": "/dbget-bin/www_bget?syn:sll1329+syn:sll1383",
+  "id": "sll1329,",
+  "label": "sll1329, sll1383 (suhB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1329",
+    "product": "monophosphatase"
+   },
+   {
+    "locus": "sll1383",
+    "product": "extragenic suppressor; SuhB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 929,
+  "y1": 659,
+  "x2": 975,
+  "y2": 676,
+  "url": "/dbget-bin/www_bget?syn:slr0783",
+  "id": "slr0783",
+  "label": "slr0783 (tpi)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0783",
+    "product": "triosephosphate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 305,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00562",
+  "id": "syn00562",
+  "label": "syn00562: Inositol phosphate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 365,
+  "y1": 651,
+  "x2": 501,
+  "y2": 685,
+  "url": "/kegg-bin/show_pathway?syn00040",
+  "id": "syn00040",
+  "label": "syn00040: Pentose and glucuronate interconversions",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 779,
+  "y1": 410,
+  "x2": 900,
+  "y2": 444,
+  "url": "/kegg-bin/show_pathway?syn00564",
+  "id": "syn00564",
+  "label": "syn00564: Glycerophospholipid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 755,
+  "y1": 651,
+  "x2": 852,
+  "y2": 685,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 784,
+  "y1": 608,
+  "x2": 852,
+  "y2": 633,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 995,
+  "y1": 482,
+  "x2": 1130,
+  "y2": 516,
+  "url": "/kegg-bin/show_pathway?syn00040",
+  "id": "syn00040",
+  "label": "syn00040: Pentose and glucuronate interconversions",
+  "entry_type": "pathway"
+ }
+]

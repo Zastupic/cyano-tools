@@ -1,0 +1,557 @@
+[
+ {
+  "type": "circ",
+  "cx": 514,
+  "cy": 255,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20931",
+  "id": "C20931",
+  "label": "4-Amino-4-deoxy-L-arabinose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 511,
+  "cy": 451,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00346",
+  "id": "C00346",
+  "label": "Ethanolamine phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 529,
+  "cy": 1039,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?D07746+D00128+D00212+C15922+C18313",
+  "id": "D07746",
+  "label": "Colistin (INN)), D00128 (Bacitracin (JP18/USP/INN)), D00212 (Vancomycin (USP)), C15922 (Indolicidin), C18313 (LL-37",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 309,
+  "cy": 817,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?D08401",
+  "id": "D08401",
+  "label": "Polymyxin B (INN)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 189,
+  "cy": 659,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?D02224",
+  "id": "D02224",
+  "label": "Protamine sulfate (JP18/USP/INN)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 156,
+  "cy": 224,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?D08401+D07746",
+  "id": "D08401",
+  "label": "Polymyxin B (INN)), D07746 (Colistin (INN)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 475,
+  "cy": 529,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?D02224+C16059",
+  "id": "D02224",
+  "label": "Protamine sulfate (JP18/USP/INN)), C16059 (Defensin beta-1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 417,
+  "cy": 839,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 486,
+  "cy": 839,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 416,
+  "cy": 913,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 492,
+  "cy": 913,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 309,
+  "cy": 839,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?D07746+C15922+C15936+D08401+D00212",
+  "id": "D07746",
+  "label": "Colistin (INN)), C15922 (Indolicidin), C15936 (Magainin 2), D08401 (Polymyxin B (INN)), D00212 (Vancomycin (USP)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 309,
+  "cy": 913,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?D07746+C15922+C15936+D08401+D00212",
+  "id": "D07746",
+  "label": "Colistin (INN)), C15922 (Indolicidin), C15936 (Magainin 2), D08401 (Polymyxin B (INN)), D00212 (Vancomycin (USP)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 631,
+  "cy": 934,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 391,
+  "cy": 994,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?D08152+C15936+C11198+D08401+D00212",
+  "id": "D08152",
+  "label": "Lysozyme (DCF)), C15936 (Magainin 2), C11198 (Melitten), D08401 (Polymyxin B (INN)), D00212 (Vancomycin (USP)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 136,
+  "cy": 516,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20930",
+  "id": "C20930",
+  "label": "C18G peptide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 839,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16054",
+  "id": "C16054",
+  "label": "Defensin alpha-1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 888,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18313",
+  "id": "C18313",
+  "label": "LL-37",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 993,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18313",
+  "id": "C18313",
+  "label": "LL-37",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 155,
+  "cy": 737,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18313",
+  "id": "C18313",
+  "label": "LL-37",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 956,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18313",
+  "id": "C18313",
+  "label": "LL-37",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 135,
+  "cy": 294,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18313",
+  "id": "C18313",
+  "label": "LL-37",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 135,
+  "cy": 334,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18313",
+  "id": "C18313",
+  "label": "LL-37",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 156,
+  "cy": 195,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20930+D07746+C18313+C15936+D08401",
+  "id": "C20930",
+  "label": "C18G peptide), D07746 (Colistin (INN)), C18313 (LL-37), C15936 (Magainin 2), D08401 (Polymyxin B (INN)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 127,
+  "cy": 113,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20930",
+  "id": "C20930",
+  "label": "C18G peptide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 156,
+  "cy": 255,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20930+D08401",
+  "id": "C20930",
+  "label": "C18G peptide), D08401 (Polymyxin B (INN)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 156,
+  "cy": 452,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18313+D08401",
+  "id": "C18313",
+  "label": "LL-37), D08401 (Polymyxin B (INN)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 218,
+  "cy": 738,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19596",
+  "id": "C19596",
+  "label": "Lipooligosaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 218,
+  "cy": 196,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00338",
+  "id": "C00338",
+  "label": "Lipopolysaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 218,
+  "cy": 257,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00338",
+  "id": "C00338",
+  "label": "Lipopolysaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 218,
+  "cy": 453,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00338",
+  "id": "C00338",
+  "label": "Lipopolysaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 563,
+  "cy": 255,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06026",
+  "id": "C06026",
+  "label": "KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 563,
+  "cy": 451,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06026",
+  "id": "C06026",
+  "label": "KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 563,
+  "cy": 739,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06026",
+  "id": "C06026",
+  "label": "KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 897,
+  "y1": 522,
+  "x2": 943,
+  "y2": 539,
+  "url": "/dbget-bin/www_bget?syn:slr0891+syn:slr1744+syn:slr1910",
+  "id": "slr0891",
+  "label": "slr0891 (amiA), slr1744 (amiA), slr1910 (amiA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0891",
+    "product": "N-acetylmuramoyl-L-alanine amidase"
+   },
+   {
+    "locus": "slr1744",
+    "product": "N-acetylmuramoyl-L-alanine amidase"
+   },
+   {
+    "locus": "slr1910",
+    "product": "N-acetylmuramoyl-L-alanine amidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 955,
+  "y1": 522,
+  "x2": 1001,
+  "y2": 539,
+  "url": "/dbget-bin/www_bget?syn:slr0891+syn:slr1744+syn:slr1910",
+  "id": "slr0891",
+  "label": "slr0891 (amiA), slr1744 (amiA), slr1910 (amiA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0891",
+    "product": "N-acetylmuramoyl-L-alanine amidase"
+   },
+   {
+    "locus": "slr1744",
+    "product": "N-acetylmuramoyl-L-alanine amidase"
+   },
+   {
+    "locus": "slr1910",
+    "product": "N-acetylmuramoyl-L-alanine amidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 566,
+  "y1": 641,
+  "x2": 612,
+  "y2": 658,
+  "url": "/dbget-bin/www_bget?syn:sll0141+syn:sll1053",
+  "id": "sll0141,",
+  "label": "sll0141, sll1053",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0141",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1053",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 566,
+  "y1": 658,
+  "x2": 612,
+  "y2": 675,
+  "url": "/dbget-bin/www_bget?syn:sll0142+syn:slr0369+syn:slr2131",
+  "id": "sll0142,",
+  "label": "sll0142, slr0369, slr2131",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0142",
+    "product": "cation or drug efflux system protein"
+   },
+   {
+    "locus": "slr0369",
+    "product": "cation or drug efflux system protein"
+   },
+   {
+    "locus": "slr2131",
+    "product": "cation or drug efflux system protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 997,
+  "y1": 629,
+  "x2": 1043,
+  "y2": 646,
+  "url": "/dbget-bin/www_bget?syn:sll0141+syn:sll1053",
+  "id": "sll0141,",
+  "label": "sll0141, sll1053",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0141",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1053",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 997,
+  "y1": 651,
+  "x2": 1043,
+  "y2": 668,
+  "url": "/dbget-bin/www_bget?syn:sll0142+syn:slr0369+syn:slr2131",
+  "id": "sll0142,",
+  "label": "sll0142, slr0369, slr2131",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0142",
+    "product": "cation or drug efflux system protein"
+   },
+   {
+    "locus": "slr0369",
+    "product": "cation or drug efflux system protein"
+   },
+   {
+    "locus": "slr2131",
+    "product": "cation or drug efflux system protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 624,
+  "y1": 730,
+  "x2": 670,
+  "y2": 747,
+  "url": "/dbget-bin/www_bget?syn:sll0379",
+  "id": "sll0379",
+  "label": "sll0379 (lpxA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0379",
+    "product": "acyl-[acyl-carrier-protein]--UDP-N-acetylglucosamine o-acyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 477,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn01503",
+  "id": "syn01503",
+  "label": "syn01503: Cationic antimicrobial peptide (CAMP) resistance",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 338,
+  "y1": 303,
+  "x2": 483,
+  "y2": 328,
+  "url": "/kegg-bin/show_pathway?syn02020",
+  "id": "syn02020",
+  "label": "syn02020: Two-component system",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 206,
+  "y1": 1017,
+  "x2": 358,
+  "y2": 1051,
+  "url": "/kegg-bin/show_pathway?map05150",
+  "id": "map05150:",
+  "label": "map05150: Staphylococcus aureus infection",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 683,
+  "y1": 725,
+  "x2": 811,
+  "y2": 759,
+  "url": "/kegg-bin/show_pathway?syn00540",
+  "id": "syn00540",
+  "label": "syn00540: Lipopolysaccharide biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 617,
+  "y1": 247,
+  "x2": 769,
+  "y2": 281,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,1673 @@
+[
+ {
+  "type": "circ",
+  "cx": 90,
+  "cy": 371,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04501",
+  "id": "C04501",
+  "label": "N-Acetyl-alpha-D-glucosamine 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20768",
+  "id": "C20768",
+  "label": "UDP-2-acetamido-2,6-dideoxy-beta-L-talose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 699,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20774",
+  "id": "C20774",
+  "label": "UDP-N-acetyl-beta-L-fucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 677,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04613",
+  "id": "C04613",
+  "label": "UDP-2-acetamido-4-dehydro-2,6-dideoxyglucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 699,
+  "cy": 540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22261",
+  "id": "C22261",
+  "label": "UDP-2-acetamido-2,6-dideoxy-alpha-D-galactose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 699,
+  "cy": 504,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22262",
+  "id": "C22262",
+  "label": "UDP-2-acetamido-2,6-dideoxy-alpha-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 453,
+  "cy": 371,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19961",
+  "id": "C19961",
+  "label": "UDP-4-amino-4,6-dideoxy-N-acetyl-beta-L-altrosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 371,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19971",
+  "id": "C19971",
+  "label": "UDP-2,4-bis(acetamido)-2,4,6-trideoxy-beta-L-altropyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 787,
+  "cy": 371,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19972",
+  "id": "C19972",
+  "label": "2,4-Bis(acetamido)-2,4,6-trideoxy-beta-L-altropyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 371,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20082",
+  "id": "C20082",
+  "label": "Pseudaminic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 371,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20083",
+  "id": "C20083",
+  "label": "CMP-pseudaminic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 453,
+  "cy": 677,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04630",
+  "id": "C04630",
+  "label": "UDP-2-acetamido-4-amino-2,4,6-trideoxy-alpha-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 564,
+  "cy": 677,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22247",
+  "id": "C22247",
+  "label": "UDP-2-acetamido-4-(D-alanylamino)-2,4,6-trideoxy-alpha-D-glucopyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 787,
+  "cy": 677,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22249",
+  "id": "C22249",
+  "label": "2-Acetamido-4-(D-alanylamino)-2,4,6-trideoxy-D-mannopyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 677,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22250",
+  "id": "C22250",
+  "label": "5-N-Acetyl-7-N-(D-alanyl)-legionaminic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 677,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22248",
+  "id": "C22248",
+  "label": "UDP-2-acetamido-4-(D-alanylamino)-2,4,6-trideoxy-alpha-D-mannopyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 677,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22251",
+  "id": "C22251",
+  "label": "CMP-5-N-acetyl-7-N-(D-alanyl)-legionaminic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 564,
+  "cy": 432,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22252",
+  "id": "C22252",
+  "label": "UDP-2,4-diacetamido-2,4,6-trideoxy-beta-L-idose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 432,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22253",
+  "id": "C22253",
+  "label": "UDP-2,4-diacetamido-2,4,6-trideoxy-beta-L-gulose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 787,
+  "cy": 432,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22254",
+  "id": "C22254",
+  "label": "2,4-Diacetamido-2,4,6-trideoxy-beta-L-gulose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 432,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22255",
+  "id": "C22255",
+  "label": "5,7-Diacetamido-3,5,7,9-tetradeoxy-L-glycero-D-galacto-non-2-ulosonic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 432,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22256",
+  "id": "C22256",
+  "label": "CMP-5,7-diacetamido-3,5,7,9-tetradeoxy-L-glycero-D-galacto-non-2-ulosonic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 371,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19823",
+  "id": "C19823",
+  "label": "UDP-2-acetamido-2,6-dideoxy-beta-L-arabino-hexos-4-ulose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 811,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22270",
+  "id": "C22270",
+  "label": "UDP-2,6-dideoxy-2-acetamidino-beta-L-galactose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 453,
+  "cy": 432,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22276",
+  "id": "C22276",
+  "label": "UDP-4-amino-4,6-dideoxy-N-acetyl-beta-L-idosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 479,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20769",
+  "id": "C20769",
+  "label": "UDP-2-acetamido-2,6-dideoxy-beta-L-lyxo-4-hexulose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 471,
+  "cy": 575,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22575",
+  "id": "C22575",
+  "label": "UDP-2-acetamido-4-amino-2,4,6-trideoxy-D-galactose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 564,
+  "cy": 618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20357",
+  "id": "C20357",
+  "label": "UDP-N,N'-diacetylbacillosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 787,
+  "cy": 618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20424",
+  "id": "C20424",
+  "label": "2,4-Diacetamido-2,4,6-trideoxy-D-mannopyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20418",
+  "id": "C20418",
+  "label": "N,N'-Diacetyllegionaminate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20419",
+  "id": "C20419",
+  "label": "CMP-N,N'-diacetyllegionaminate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 575,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22973",
+  "id": "C22973",
+  "label": "UDP-yelosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 389,
+  "cy": 219,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04573",
+  "id": "C04573",
+  "label": "UDP-N-acetyl-2-amino-2-deoxy-D-glucuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 500,
+  "cy": 219,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20395",
+  "id": "C20395",
+  "label": "UDP-2-acetamido-2-deoxy-alpha-D-ribo-hex-3-uluronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 610,
+  "cy": 219,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20359",
+  "id": "C20359",
+  "label": "UDP-2-acetamido-3-amino-2,3-dideoxy-alpha-D-glucuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 720,
+  "cy": 219,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19725",
+  "id": "C19725",
+  "label": "UDP-2,3-diacetamido-2,3-dideoxy-alpha-D-glucuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 831,
+  "cy": 219,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19745",
+  "id": "C19745",
+  "label": "UDP-2,3-diacetamido-2,3-dideoxy-alpha-D-mannuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 943,
+  "cy": 219,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22246",
+  "id": "C22246",
+  "label": "UDP-2,3-dideoxy-2-acetamido-3-acetamidino-alpha-D-mannuronic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 389,
+  "cy": 144,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13952",
+  "id": "C13952",
+  "label": "UDP-N-acetyl-D-galactosaminuronic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 144,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00203",
+  "id": "C00203",
+  "label": "UDP-N-acetyl-D-galactosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 500,
+  "cy": 144,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22245",
+  "id": "C22245",
+  "label": "UDP-2-acetamido-2-deoxy-alpha-D-galacturonamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 500,
+  "cy": 99,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22576",
+  "id": "C22576",
+  "label": "UDP-2-acetamido-2-deoxy-L-altruronic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 500,
+  "cy": 264,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22938",
+  "id": "C22938",
+  "label": "UDP-N-acetyl-alpha-D-xylosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 90,
+  "cy": 1212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00103",
+  "id": "C00103",
+  "label": "D-Glucose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 1212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00029",
+  "id": "C00029",
+  "label": "UDP-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 378,
+  "cy": 1212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00167",
+  "id": "C00167",
+  "label": "UDP-glucuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 378,
+  "cy": 1276,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02330",
+  "id": "C02330",
+  "label": "UDP-L-iduronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 508,
+  "cy": 1212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16155",
+  "id": "C16155",
+  "label": "UDP-L-Ara4O",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 638,
+  "cy": 1212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16153",
+  "id": "C16153",
+  "label": "UDP-L-Ara4N",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16154",
+  "id": "C16154",
+  "label": "UDP-L-Ara4FN",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1295,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16156",
+  "id": "C16156",
+  "label": "Undecaprenyl phosphate alpha-L-Ara4FN",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1371,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16157",
+  "id": "C16157",
+  "label": "Undecaprenyl phosphate alpha-L-Ara4N",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 531,
+  "cy": 1138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02199",
+  "id": "C02199",
+  "label": "UDP-L-rhamnose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 432,
+  "cy": 1138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17328",
+  "id": "C17328",
+  "label": "UDP-4-keto-rhamnose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 1138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04089",
+  "id": "C04089",
+  "label": "UDP-4-dehydro-6-deoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 1539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00842",
+  "id": "C00842",
+  "label": "dTDP-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 432,
+  "cy": 1479,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00688",
+  "id": "C00688",
+  "label": "dTDP-4-dehydro-beta-L-rhamnose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 531,
+  "cy": 1438,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03319",
+  "id": "C03319",
+  "label": "dTDP-L-rhamnose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 531,
+  "cy": 1479,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03187",
+  "id": "C03187",
+  "label": "dTDP-6-deoxy-beta-L-talose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 1539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19960",
+  "id": "C19960",
+  "label": "dTDP-3-dehydro-6-deoxy-alpha-D-galactopyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19947",
+  "id": "C19947",
+  "label": "dTDP-3-amino-3,6-dideoxy-alpha-D-galactopyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 663,
+  "cy": 1539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20156",
+  "id": "C20156",
+  "label": "dTDP-3-acetamido-3,6-dideoxy-alpha-D-galactopyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1600,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11925",
+  "id": "C11925",
+  "label": "dTDP-3-amino-3,6-dideoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 663,
+  "cy": 1600,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22257",
+  "id": "C22257",
+  "label": "dTDP-3-acetamido-3,6-dideoxy-alpha-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 1600,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11908",
+  "id": "C11908",
+  "label": "dTDP-3-oxo-6-deoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1654,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04346",
+  "id": "C04346",
+  "label": "dTDP-4-amino-4,6-dideoxy-D-galactose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 663,
+  "cy": 1654,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20415",
+  "id": "C20415",
+  "label": "dTDP-4-acetamido-4,6-dideoxy-alpha-D-galactose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 1766,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07277",
+  "id": "C07277",
+  "label": "dTDP-D-fucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1766,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20682",
+  "id": "C20682",
+  "label": "dTDP-alpha-D-fucofuranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1709,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04268",
+  "id": "C04268",
+  "label": "dTDP-4-amino-4,6-dideoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 663,
+  "cy": 1709,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06018",
+  "id": "C06018",
+  "label": "dTDP-4-acetamido-4,6-dideoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 1323,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00501",
+  "id": "C00501",
+  "label": "CDP-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 1323,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01219",
+  "id": "C01219",
+  "label": "CDP-4-dehydro-6-deoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1281,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03598",
+  "id": "C03598",
+  "label": "CDP-3,6-dideoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 663,
+  "cy": 1281,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03599",
+  "id": "C03599",
+  "label": "CDP-3,6-dideoxy-D-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 663,
+  "cy": 1370,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17327",
+  "id": "C17327",
+  "label": "CDP-ascarylose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1370,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17326",
+  "id": "C17326",
+  "label": "CDP-4-dehydro-3,6-dideoxy-D-glucose epimer",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1323,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01788",
+  "id": "C01788",
+  "label": "CDP-abequose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 1323,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04297",
+  "id": "C04297",
+  "label": "CDP-4-dehydro-3,6-dideoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 1539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11907",
+  "id": "C11907",
+  "label": "dTDP-4-oxo-6-deoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 90,
+  "cy": 1861,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00636",
+  "id": "C00636",
+  "label": "D-Mannose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 1861,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01222",
+  "id": "C01222",
+  "label": "GDP-4-dehydro-6-deoxy-D-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 1985,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03117",
+  "id": "C03117",
+  "label": "GDP-6-deoxy-D-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 439,
+  "cy": 1898,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00325",
+  "id": "C00325",
+  "label": "GDP-L-fucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 1934,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20612",
+  "id": "C20612",
+  "label": "GDP-4-dehydro-3,6-dideoxy-alpha-D-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1934,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20613",
+  "id": "C20613",
+  "label": "GDP-beta-L-colitose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 1861,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20638",
+  "id": "C20638",
+  "label": "GDP-4-amino-4,6-dideoxy-alpha-D-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1861,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20672",
+  "id": "C20672",
+  "label": "GDP-4-acetamido-4,6-dideoxy-alpha-D-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 2042,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02977",
+  "id": "C02977",
+  "label": "GDP-6-deoxy-D-talose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 1861,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00096",
+  "id": "C00096",
+  "label": "GDP-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 1817,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22397",
+  "id": "C22397",
+  "label": "GDP-N-formyl-alpha-D-perosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 940,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01170",
+  "id": "C01170",
+  "label": "UDP-N-acetyl-D-mannosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 389,
+  "cy": 940,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06240",
+  "id": "C06240",
+  "label": "UDP-N-acetyl-D-mannosaminouronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 560,
+  "cy": 852,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04257",
+  "id": "C04257",
+  "label": "N-Acetyl-D-mannosamine 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 749,
+  "cy": 852,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06241",
+  "id": "C06241",
+  "label": "N-Acetylneuraminate 9-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 852,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00270",
+  "id": "C00270",
+  "label": "N-Acetylneuraminate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 852,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00128",
+  "id": "C00128",
+  "label": "CMP-N-acetylneuraminate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 975,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03410",
+  "id": "C03410",
+  "label": "N-Glycoloyl-neuraminate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 975,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03691",
+  "id": "C03691",
+  "label": "CMP-N-glycoloylneuraminate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 982,
+  "cy": 884,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00999",
+  "id": "C00999",
+  "label": "Ferrocytochrome b5",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 982,
+  "cy": 940,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00996",
+  "id": "C00996",
+  "label": "Ferricytochrome b5",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 749,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21383",
+  "id": "C21383",
+  "label": "3-Deoxy-D-glycero-D-galacto-non-2-ulopyranosonate 9-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20934",
+  "id": "C20934",
+  "label": "3-Deoxy-D-glycero-D-galacto-non-2-ulopyranosonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21384",
+  "id": "C21384",
+  "label": "CMP-3-deoxy-D-glycero-D-galacto-non-2-ulopyranosonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 560,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00275",
+  "id": "C00275",
+  "label": "D-Mannose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04121",
+  "id": "C04121",
+  "label": "CMP-3-deoxy-D-manno-octulosonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01187",
+  "id": "C01187",
+  "label": "3-Deoxy-D-manno-octulosonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 749,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04478",
+  "id": "C04478",
+  "label": "3-Deoxy-D-manno-octulosonate 8-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 560,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01112",
+  "id": "C01112",
+  "label": "D-Arabinose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 408,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00199",
+  "id": "C00199",
+  "label": "D-Ribulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 371,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00043",
+  "id": "C00043",
+  "label": "UDP-N-acetyl-alpha-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 408,
+  "cy": 1011,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05382",
+  "id": "C05382",
+  "label": "Sedoheptulose 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 560,
+  "cy": 1059,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07836",
+  "id": "C07836",
+  "label": "D-glycero-beta-D-manno-Heptose 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 749,
+  "cy": 1059,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11472",
+  "id": "C11472",
+  "label": "D-glycero-beta-D-manno-Heptose 1,7-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 1059,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07838",
+  "id": "C07838",
+  "label": "D-glycero-beta-D-manno-Heptose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 1059,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06397",
+  "id": "C06397",
+  "label": "ADP-D-glycero-beta-D-manno-heptose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1169,
+  "cy": 1059,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06398",
+  "id": "C06398",
+  "label": "ADP-L-glycero-beta-D-manno-heptose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 749,
+  "cy": 1011,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19879",
+  "id": "C19879",
+  "label": "D-glycero-alpha-D-manno-Heptose 1,7-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 899,
+  "cy": 1011,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19880",
+  "id": "C19880",
+  "label": "D-glycero-alpha-D-manno-Heptose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1061,
+  "cy": 1011,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19881",
+  "id": "C19881",
+  "label": "GDP-D-glycero-alpha-D-manno-heptose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 560,
+  "cy": 1011,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19878",
+  "id": "C19878",
+  "label": "D-glycero-alpha-D-manno-Heptose 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 410,
+  "cy": 852,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00645",
+  "id": "C00645",
+  "label": "N-Acetyl-D-mannosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 126,
+  "y1": 363,
+  "x2": 172,
+  "y2": 380,
+  "url": "/dbget-bin/www_bget?syn:sll0899",
+  "id": "sll0899",
+  "label": "sll0899 (glmU)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0899",
+    "product": "UDP-N-acetylglucosamine pyrophosphorylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 134,
+  "y1": 1193,
+  "x2": 180,
+  "y2": 1210,
+  "url": "/dbget-bin/www_bget?syn:sll1558",
+  "id": "sll1558",
+  "label": "sll1558",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1558",
+    "product": "mannose-1-phosphate guanyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 280,
+  "y1": 1204,
+  "x2": 326,
+  "y2": 1221,
+  "url": "/dbget-bin/www_bget?syn:slr1299",
+  "id": "slr1299",
+  "label": "slr1299",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1299",
+    "product": "UDP-glucose dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 355,
+  "y1": 1471,
+  "x2": 401,
+  "y2": 1488,
+  "url": "/dbget-bin/www_bget?syn:slr0985+syn:slr1933",
+  "id": "slr0985",
+  "label": "slr0985 (rfbC), slr1933 (rfbC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0985",
+    "product": "dTDP-6-deoxy-L-mannose-dehydrogenase"
+   },
+   {
+    "locus": "slr1933",
+    "product": "dTDP-4-dehydrorhamnose 3,5-epimerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 252,
+  "y1": 1315,
+  "x2": 298,
+  "y2": 1332,
+  "url": "/dbget-bin/www_bget?syn:slr0984",
+  "id": "slr0984",
+  "label": "slr0984 (rfbG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0984",
+    "product": "CDP-glucose-4,6-dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 134,
+  "y1": 1315,
+  "x2": 180,
+  "y2": 1332,
+  "url": "/dbget-bin/www_bget?syn:slr0983",
+  "id": "slr0983",
+  "label": "slr0983 (rfbF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0983",
+    "product": "alpha-D-glucose-1-phosphate cytidylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 134,
+  "y1": 1532,
+  "x2": 180,
+  "y2": 1549,
+  "url": "/dbget-bin/www_bget?syn:sll0207",
+  "id": "sll0207",
+  "label": "sll0207 (rfbA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0207",
+    "product": "glucose-1-phosphate thymidylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 252,
+  "y1": 1531,
+  "x2": 298,
+  "y2": 1548,
+  "url": "/dbget-bin/www_bget?syn:slr0836",
+  "id": "slr0836",
+  "label": "slr0836 (rfbB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0836",
+    "product": "dTDP-glucose 4,6-dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 134,
+  "y1": 1853,
+  "x2": 180,
+  "y2": 1870,
+  "url": "/dbget-bin/www_bget?syn:sll1370+syn:sll1496",
+  "id": "sll1370",
+  "label": "sll1370 (rfbM), sll1496",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1370",
+    "product": "GDP-mannose pyrophosphorylase"
+   },
+   {
+    "locus": "sll1496",
+    "product": "mannose-1-phosphate guanyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 252,
+  "y1": 1853,
+  "x2": 298,
+  "y2": 1870,
+  "url": "/dbget-bin/www_bget?syn:sll1212+syn:slr1072",
+  "id": "sll1212",
+  "label": "sll1212 (rfbD), slr1072 (yefA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1212",
+    "product": "GDP-D-mannose dehydratase"
+   },
+   {
+    "locus": "slr1072",
+    "product": "GDP-D-mannose dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 358,
+  "y1": 1890,
+  "x2": 404,
+  "y2": 1907,
+  "url": "/dbget-bin/www_bget?syn:sll1213",
+  "id": "sll1213",
+  "label": "sll1213",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1213",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 358,
+  "y1": 1853,
+  "x2": 404,
+  "y2": 1870,
+  "url": "/dbget-bin/www_bget?syn:slr2114",
+  "id": "slr2114",
+  "label": "slr2114 (spsC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2114",
+    "product": "spore coat polysaccharide biosynthesis protein; SpsC"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 200,
+  "y1": 869,
+  "x2": 246,
+  "y2": 886,
+  "url": "/dbget-bin/www_bget?syn:slr0624",
+  "id": "slr0624",
+  "label": "slr0624",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0624",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 462,
+  "y1": 1051,
+  "x2": 508,
+  "y2": 1068,
+  "url": "/dbget-bin/www_bget?syn:sll0083",
+  "id": "sll0083",
+  "label": "sll0083 (gmhA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0083",
+    "product": "phosphoheptose isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 795,
+  "y1": 1051,
+  "x2": 841,
+  "y2": 1068,
+  "url": "/dbget-bin/www_bget?syn:sll0084",
+  "id": "sll0084",
+  "label": "sll0084 (hisB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0084",
+    "product": "imidazoleglycerol-phosphate dehydratase; histidinol-phosphatase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 634,
+  "y1": 1005,
+  "x2": 680,
+  "y2": 1022,
+  "url": "/dbget-bin/www_bget?syn:slr0862",
+  "id": "slr0862",
+  "label": "slr0862 (lmbP)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0862",
+    "product": "LmbP protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 795,
+  "y1": 1004,
+  "x2": 841,
+  "y2": 1021,
+  "url": "/dbget-bin/www_bget?syn:sll0084",
+  "id": "sll0084",
+  "label": "sll0084 (hisB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0084",
+    "product": "imidazoleglycerol-phosphate dehydratase; histidinol-phosphatase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 959,
+  "y1": 1003,
+  "x2": 1005,
+  "y2": 1020,
+  "url": "/dbget-bin/www_bget?syn:slr0007",
+  "id": "slr0007",
+  "label": "slr0007",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0007",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 462,
+  "y1": 1003,
+  "x2": 508,
+  "y2": 1020,
+  "url": "/dbget-bin/www_bget?syn:sll0083",
+  "id": "sll0083",
+  "label": "sll0083 (gmhA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0083",
+    "product": "phosphoheptose isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 454,
+  "y1": 1430,
+  "x2": 500,
+  "y2": 1447,
+  "url": "/dbget-bin/www_bget?syn:sll1395",
+  "id": "sll1395",
+  "label": "sll1395 (rfbD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1395",
+    "product": "dTDP-6-deoxy-L-mannose-dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 414,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00541",
+  "id": "syn00541",
+  "label": "syn00541: Biosynthesis of various nucleotide sugars",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 15,
+  "y1": 1108,
+  "x2": 176,
+  "y2": 1142,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 15,
+  "y1": 1755,
+  "x2": 176,
+  "y2": 1789,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 713,
+  "y1": 1439,
+  "x2": 824,
+  "y2": 1473,
+  "url": "/kegg-bin/show_pathway?syn00540",
+  "id": "syn00540",
+  "label": "syn00540: Lipopolysaccharide biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 15,
+  "y1": 259,
+  "x2": 176,
+  "y2": 293,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 380,
+  "y1": 724,
+  "x2": 513,
+  "y2": 758,
+  "url": "/kegg-bin/show_pathway?syn00051",
+  "id": "syn00051",
+  "label": "syn00051: Fructose and mannose metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 242,
+  "y1": 766,
+  "x2": 352,
+  "y2": 800,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1114,
+  "y1": 767,
+  "x2": 1225,
+  "y2": 801,
+  "url": "/kegg-bin/show_pathway?syn00540",
+  "id": "syn00540",
+  "label": "syn00540: Lipopolysaccharide biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 242,
+  "y1": 994,
+  "x2": 352,
+  "y2": 1028,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ }
+]

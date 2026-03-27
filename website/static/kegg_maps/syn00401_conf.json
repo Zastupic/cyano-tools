@@ -1,0 +1,431 @@
+[
+ {
+  "type": "circ",
+  "cx": 821,
+  "cy": 291,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12477",
+  "id": "C12477",
+  "label": "3-Methylpyrrole-2,4-dicarboxylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 709,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12483",
+  "id": "C12483",
+  "label": "Pyrrole-2-carbonyl-[pcp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 821,
+  "cy": 550,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12479",
+  "id": "C12479",
+  "label": "Coumermic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1006,
+  "cy": 817,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05080",
+  "id": "C05080",
+  "label": "Novobiocin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 244,
+  "cy": 138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00082",
+  "id": "C00082",
+  "label": "L-Tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 435,
+  "cy": 138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12462",
+  "id": "C12462",
+  "label": "beta-Hydroxy-L-tyrosyl-[pcp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 775,
+  "cy": 138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12467",
+  "id": "C12467",
+  "label": "2-Hydroxy-beta-keto-L-tyrosyl-[pcp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 244,
+  "cy": 226,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01179",
+  "id": "C01179",
+  "label": "3-(4-Hydroxyphenyl)pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 112,
+  "cy": 226,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00254",
+  "id": "C00254",
+  "label": "Prephenate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 244,
+  "cy": 318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12456",
+  "id": "C12456",
+  "label": "3-Dimethylallyl-4-hydroxyphenylpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 815,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12032",
+  "id": "C12032",
+  "label": "Clorobiocin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 913,
+  "cy": 571,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12481",
+  "id": "C12481",
+  "label": "dTDP-5-dimethyl-L-lyxose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 435,
+  "cy": 232,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12460",
+  "id": "C12460",
+  "label": "3-Dimethylallyl-beta-hydroxy-L-tyrosyl-[pcp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 821,
+  "cy": 819,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05073",
+  "id": "C05073",
+  "label": "Coumermycin A1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1006,
+  "cy": 717,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12476",
+  "id": "C12476",
+  "label": "Decarbamoylnovobiocin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1006,
+  "cy": 644,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12475",
+  "id": "C12475",
+  "label": "Demethyldecarbamoylnovobiocin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1003,
+  "cy": 138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12468",
+  "id": "C12468",
+  "label": "3-Amino-4,7-dihydroxycoumarin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 244,
+  "cy": 398,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12457",
+  "id": "C12457",
+  "label": "3-Dimethylallyl-4-hydroxymandelic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 709,
+  "cy": 571,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12470",
+  "id": "C12470",
+  "label": "L-Prolyl-[pcp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 346,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12469",
+  "id": "C12469",
+  "label": "3-Amino-4,7-dihydroxy-8-chlorocoumarin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 435,
+  "cy": 398,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12458",
+  "id": "C12458",
+  "label": "3-Dimethylallyl-4-hydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12463",
+  "id": "C12463",
+  "label": "beta-Keto-L-tyrosyl-[pcp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 435,
+  "cy": 318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12459",
+  "id": "C12459",
+  "label": "3-Dimethylallyl-4-hydroxybenzaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 709,
+  "cy": 482,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00148",
+  "id": "C00148",
+  "label": "L-Proline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 550,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12471",
+  "id": "C12471",
+  "label": "Chlorobiocic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 571,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12481",
+  "id": "C12481",
+  "label": "dTDP-5-dimethyl-L-lyxose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 644,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12472",
+  "id": "C12472",
+  "label": "Novclobiocin 105",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1006,
+  "cy": 550,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12474",
+  "id": "C12474",
+  "label": "Novobiocic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 821,
+  "cy": 720,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12480",
+  "id": "C12480",
+  "label": "Coumermycin D",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 719,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12473",
+  "id": "C12473",
+  "label": "Novclobiocin 104",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 338,
+  "cy": 138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12461",
+  "id": "C12461",
+  "label": "L-Tyrosyl-[pcp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 709,
+  "cy": 657,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12483",
+  "id": "C12483",
+  "label": "Pyrrole-2-carbonyl-[pcp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 821,
+  "cy": 383,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20637",
+  "id": "C20637",
+  "label": "5-[[(4,7-Dihydroxy-2-oxo-2H-1-benzopyran-3-yl)amino]carbonyl]-4-methyl-1H-pyrrole-3-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1006,
+  "cy": 482,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20629",
+  "id": "C20629",
+  "label": "8-Demethylnovobiocic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 196,
+  "y1": 183,
+  "x2": 242,
+  "y2": 200,
+  "url": "/dbget-bin/www_bget?syn:sll1958",
+  "id": "sll1958",
+  "label": "sll1958 (hisC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1958",
+    "product": "histidinol phosphate aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 196,
+  "y1": 164,
+  "x2": 242,
+  "y2": 181,
+  "url": "/dbget-bin/www_bget?syn:sll0402",
+  "id": "sll0402",
+  "label": "sll0402 (aspC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0402",
+    "product": "aspartate aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 456,
+  "y1": 466,
+  "x2": 562,
+  "y2": 500,
+  "url": "/kegg-bin/show_pathway?syn00523",
+  "id": "syn00523",
+  "label": "syn00523: Polyketide sugar unit biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 861,
+  "y1": 466,
+  "x2": 966,
+  "y2": 500,
+  "url": "/kegg-bin/show_pathway?syn00523",
+  "id": "syn00523",
+  "label": "syn00523: Polyketide sugar unit biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 382,
+  "x2": 770,
+  "y2": 416,
+  "url": "/kegg-bin/show_pathway?syn00330",
+  "id": "syn00330",
+  "label": "syn00330: Arginine and proline metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 258,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00401",
+  "id": "syn00401",
+  "label": "syn00401: Novobiocin biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 36,
+  "y1": 122,
+  "x2": 187,
+  "y2": 156,
+  "url": "/kegg-bin/show_pathway?syn00400",
+  "id": "syn00400",
+  "label": "syn00400: Phenylalanine, tyrosine and tryptophan biosynthesis",
+  "entry_type": "pathway"
+ }
+]

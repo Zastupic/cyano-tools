@@ -1,0 +1,1154 @@
+[
+ {
+  "type": "circ",
+  "cx": 138,
+  "cy": 246,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04574",
+  "id": "C04574",
+  "label": "di-trans,poly-cis-Undecaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 138,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17556",
+  "id": "C17556",
+  "label": "di-trans,poly-cis-Undecaprenyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 438,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13165",
+  "id": "G13165",
+  "label": "4-O-[(2R)-1-Glycerophospho]-N-acetyl-beta-D-mannosaminyl-(1-&gt;4)-N-acetyl-alpha-D-glucosaminyl-diphospho-ditrans,octacis-undecaprenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 585,
+  "cy": 156,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10608",
+  "id": "G10608",
+  "label": "UDP-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 441,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13168",
+  "id": "G13168",
+  "label": "Und-PP-GlcNAc-ManNAc-GroP-RboP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 248,
+  "cy": 156,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G11112",
+  "id": "G11112",
+  "label": "UDP-N-acetyl-D-mannosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 474,
+  "cy": 363,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00789",
+  "id": "C00789",
+  "label": "CDP-ribitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13170",
+  "id": "G13170",
+  "label": "beta-Glycosylated WTA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 355,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13174",
+  "id": "G13174",
+  "label": "alpha-O-GlcNAcylated WTA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13167",
+  "id": "G13167",
+  "label": "alpha-Glycosylated WTA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 338,
+  "cy": 685,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13182",
+  "id": "G13182",
+  "label": "Glc2-DAG",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 538,
+  "cy": 685,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13184",
+  "id": "G13184",
+  "label": "Polyglycerolphosphate lipoteichoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 138,
+  "cy": 685,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00641",
+  "id": "C00641",
+  "label": "1,2-Diacyl-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 238,
+  "cy": 685,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13181",
+  "id": "G13181",
+  "label": "beta-Glc-DAG",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 338,
+  "cy": 782,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13188",
+  "id": "G13188",
+  "label": "GalGlc-DAG",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 438,
+  "cy": 782,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13189",
+  "id": "G13189",
+  "label": "GroP-Gal-Glc-DAG",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 538,
+  "cy": 782,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13190",
+  "id": "G13190",
+  "label": "Polyglycerolphosphate lipoteichoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 148,
+  "cy": 915,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00043",
+  "id": "C00043",
+  "label": "UDP-N-acetyl-alpha-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 148,
+  "cy": 975,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04613",
+  "id": "C04613",
+  "label": "UDP-2-acetamido-4-dehydro-2,6-dideoxyglucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 148,
+  "cy": 1036,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13194",
+  "id": "G13194",
+  "label": "UDP-AATGal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 138,
+  "cy": 1082,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17556",
+  "id": "C17556",
+  "label": "di-trans,poly-cis-Undecaprenyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 238,
+  "cy": 1082,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13195",
+  "id": "G13195",
+  "label": "G13195",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 338,
+  "cy": 1082,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13196",
+  "id": "G13196",
+  "label": "G13196",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 347,
+  "cy": 1052,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00789",
+  "id": "C00789",
+  "label": "CDP-ribitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 438,
+  "cy": 1082,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13197",
+  "id": "G13197",
+  "label": "G13197",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 538,
+  "cy": 1082,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13198",
+  "id": "G13198",
+  "label": "G13198",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 638,
+  "cy": 1082,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13199",
+  "id": "G13199",
+  "label": "G13199",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 473,
+  "cy": 1004,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00114",
+  "id": "C00114",
+  "label": "Choline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 563,
+  "cy": 1004,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00588",
+  "id": "C00588",
+  "label": "Choline phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 653,
+  "cy": 1004,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00307",
+  "id": "C00307",
+  "label": "CDP-choline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 739,
+  "cy": 1082,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13200",
+  "id": "G13200",
+  "label": "G13200",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 840,
+  "cy": 1082,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13201",
+  "id": "G13201",
+  "label": "G13201",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 138,
+  "cy": 1142,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04574",
+  "id": "C04574",
+  "label": "di-trans,poly-cis-Undecaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 940,
+  "cy": 1082,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13202",
+  "id": "G13202",
+  "label": "G13202",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 150,
+  "cy": 156,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10610",
+  "id": "G10610",
+  "label": "UDP-N-acetyl-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 407,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00513",
+  "id": "C00513",
+  "label": "CDP-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 434,
+  "cy": 393,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13172",
+  "id": "G13172",
+  "label": "G13172",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 585,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10608",
+  "id": "G10608",
+  "label": "UDP-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 249,
+  "cy": 1052,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10608",
+  "id": "G10608",
+  "label": "UDP-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 452,
+  "cy": 1052,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10611",
+  "id": "G10611",
+  "label": "UDP-N-acetyl-D-galactosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 1052,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10611",
+  "id": "G10611",
+  "label": "UDP-N-acetyl-D-galactosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 438,
+  "cy": 685,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13183",
+  "id": "G13183",
+  "label": "GroP-Glc2DAG",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 452,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00344",
+  "id": "C00344",
+  "label": "Phosphatidylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 464,
+  "cy": 626,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17556",
+  "id": "C17556",
+  "label": "di-trans,poly-cis-Undecaprenyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 476,
+  "cy": 594,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10610",
+  "id": "G10610",
+  "label": "UDP-N-acetyl-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 554,
+  "cy": 626,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13163",
+  "id": "G13163",
+  "label": "beta-GlcNAc-P-undecaprenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 638,
+  "cy": 685,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13185",
+  "id": "G13185",
+  "label": "G13185",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 464,
+  "cy": 823,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17556",
+  "id": "C17556",
+  "label": "di-trans,poly-cis-Undecaprenyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 554,
+  "cy": 823,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13191",
+  "id": "G13191",
+  "label": "Und-P-Gal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 638,
+  "cy": 782,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13192",
+  "id": "G13192",
+  "label": "G13192",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 238,
+  "cy": 782,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13187",
+  "id": "G13187",
+  "label": "alpha-Glc-DAG",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 585,
+  "cy": 401,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10610",
+  "id": "G10610",
+  "label": "UDP-N-acetyl-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13176",
+  "id": "G13176",
+  "label": "beta-O-GlcNAcylated WTA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 476,
+  "cy": 855,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10609",
+  "id": "G10609",
+  "label": "UDP-D-galactose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 657,
+  "cy": 655,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1049,
+  "cy": 1025,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 505,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13178",
+  "id": "G13178",
+  "label": "G13178",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 952,
+  "cy": 1025,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13187",
+  "id": "G13187",
+  "label": "alpha-Glc-DAG",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 684,
+  "cy": 156,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 684,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 684,
+  "cy": 401,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 657,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1038,
+  "cy": 1055,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13203",
+  "id": "G13203",
+  "label": "G13203",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 684,
+  "cy": 475,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 248,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10609",
+  "id": "G10609",
+  "label": "UDP-D-galactose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 353,
+  "cy": 156,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00513",
+  "id": "C00513",
+  "label": "CDP-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 684,
+  "cy": 325,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 470,
+  "cy": 207,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00789",
+  "id": "C00789",
+  "label": "CDP-ribitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 474,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00789",
+  "id": "C00789",
+  "label": "CDP-ribitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 585,
+  "cy": 325,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10610",
+  "id": "G10610",
+  "label": "UDP-N-acetyl-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 585,
+  "cy": 475,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10610",
+  "id": "G10610",
+  "label": "UDP-N-acetyl-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 153,
+  "cy": 655,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10608",
+  "id": "G10608",
+  "label": "UDP-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 248,
+  "cy": 655,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10608",
+  "id": "G10608",
+  "label": "UDP-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 153,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10608",
+  "id": "G10608",
+  "label": "UDP-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 474,
+  "cy": 156,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00513",
+  "id": "C00513",
+  "label": "CDP-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 353,
+  "cy": 655,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00344",
+  "id": "C00344",
+  "label": "Phosphatidylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 353,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00344",
+  "id": "C00344",
+  "label": "Phosphatidylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 452,
+  "cy": 655,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00344",
+  "id": "C00344",
+  "label": "Phosphatidylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 738,
+  "cy": 685,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13186",
+  "id": "G13186",
+  "label": "G13186",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 738,
+  "cy": 782,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13193",
+  "id": "G13193",
+  "label": "G13193",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13180",
+  "id": "G13180",
+  "label": "G13180",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13171",
+  "id": "G13171",
+  "label": "G13171",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 355,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13175",
+  "id": "G13175",
+  "label": "G13175",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13177",
+  "id": "G13177",
+  "label": "G13177",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 505,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13179",
+  "id": "G13179",
+  "label": "G13179",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1049,
+  "cy": 1077,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 571,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13169",
+  "id": "G13169",
+  "label": "PolyRboP-WTA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 571,
+  "cy": 393,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13173",
+  "id": "G13173",
+  "label": "G13173",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 238,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13164",
+  "id": "G13164",
+  "label": "N-Acetyl-alpha-D-glucosaminyl-diphospho-ditrans,octacis-undecaprenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 338,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G00177",
+  "id": "G00177",
+  "label": "N-Acetyl-beta-D-mannosaminyl-(1-&gt;4)-N-acetyl-alpha-D-glucosaminyl-diphospho-ditrans,octacis-undecaprenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 571,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G13166",
+  "id": "G13166",
+  "label": "PolyGroP-WTA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 116,
+  "y1": 213,
+  "x2": 162,
+  "y2": 230,
+  "url": "/dbget-bin/www_bget?syn:sll0210",
+  "id": "sll0210",
+  "label": "sll0210",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0210",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 163,
+  "y1": 178,
+  "x2": 209,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:sll0648",
+  "id": "sll0648",
+  "label": "sll0648 (lim)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0648",
+    "product": "lipophilic protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 792,
+  "y1": 178,
+  "x2": 838,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:sll1872+syn:slr0883",
+  "id": "sll1872",
+  "label": "sll1872 (lytR), slr0883 (psr)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1872",
+    "product": "membrane bound protein; LytR"
+   },
+   {
+    "locus": "slr0883",
+    "product": "regulation of penicillin binding protein 5 production"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 259,
+  "y1": 178,
+  "x2": 305,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:slr1118+syn:slr1271",
+  "id": "slr1118",
+  "label": "slr1118 (rffM), slr1271 (rffM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1118",
+    "product": "UDP-N-acetyl-D-mannosaminuronic acid transferase"
+   },
+   {
+    "locus": "slr1271",
+    "product": "UDP-N-acetyl-D-mannosaminuronic acid transferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 116,
+  "y1": 1108,
+  "x2": 162,
+  "y2": 1125,
+  "url": "/dbget-bin/www_bget?syn:sll0210",
+  "id": "sll0210",
+  "label": "sll0210",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0210",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 792,
+  "y1": 347,
+  "x2": 838,
+  "y2": 364,
+  "url": "/dbget-bin/www_bget?syn:sll1872+syn:slr0883",
+  "id": "sll1872",
+  "label": "sll1872 (lytR), slr0883 (psr)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1872",
+    "product": "membrane bound protein; LytR"
+   },
+   {
+    "locus": "slr0883",
+    "product": "regulation of penicillin binding protein 5 production"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 792,
+  "y1": 423,
+  "x2": 838,
+  "y2": 440,
+  "url": "/dbget-bin/www_bget?syn:sll1872+syn:slr0883",
+  "id": "sll1872",
+  "label": "sll1872 (lytR), slr0883 (psr)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1872",
+    "product": "membrane bound protein; LytR"
+   },
+   {
+    "locus": "slr0883",
+    "product": "regulation of penicillin binding protein 5 production"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 792,
+  "y1": 275,
+  "x2": 838,
+  "y2": 292,
+  "url": "/dbget-bin/www_bget?syn:sll1872+syn:slr0883",
+  "id": "sll1872",
+  "label": "sll1872 (lytR), slr0883 (psr)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1872",
+    "product": "membrane bound protein; LytR"
+   },
+   {
+    "locus": "slr0883",
+    "product": "regulation of penicillin binding protein 5 production"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 792,
+  "y1": 497,
+  "x2": 838,
+  "y2": 514,
+  "url": "/dbget-bin/www_bget?syn:sll1872+syn:slr0883",
+  "id": "sll1872",
+  "label": "sll1872 (lytR), slr0883 (psr)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1872",
+    "product": "membrane bound protein; LytR"
+   },
+   {
+    "locus": "slr0883",
+    "product": "regulation of penicillin binding protein 5 production"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 965,
+  "y1": 1099,
+  "x2": 1011,
+  "y2": 1116,
+  "url": "/dbget-bin/www_bget?syn:sll1872+syn:slr0883",
+  "id": "sll1872",
+  "label": "sll1872 (lytR), slr0883 (psr)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1872",
+    "product": "membrane bound protein; LytR"
+   },
+   {
+    "locus": "slr0883",
+    "product": "regulation of penicillin binding protein 5 production"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 277,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00552",
+  "id": "syn00552",
+  "label": "syn00552: Teichoic acid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 93,
+  "y1": 602,
+  "x2": 185,
+  "y2": 636,
+  "url": "/kegg-bin/show_pathway?syn00561",
+  "id": "syn00561",
+  "label": "syn00561: Glycerolipid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 196,
+  "y1": 1126,
+  "x2": 313,
+  "y2": 1160,
+  "url": "/kegg-bin/show_pathway?syn00900",
+  "id": "syn00900",
+  "label": "syn00900: Terpenoid backbone biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 80,
+  "y1": 303,
+  "x2": 197,
+  "y2": 337,
+  "url": "/kegg-bin/show_pathway?syn00900",
+  "id": "syn00900",
+  "label": "syn00900: Terpenoid backbone biosynthesis",
+  "entry_type": "pathway"
+ }
+]

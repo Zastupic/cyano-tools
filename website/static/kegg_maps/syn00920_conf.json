@@ -1,0 +1,1057 @@
+[
+ {
+  "type": "circ",
+  "cx": 498,
+  "cy": 191,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00320",
+  "id": "C00320",
+  "label": "Thiosulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 94,
+  "cy": 369,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 369,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00094",
+  "id": "C00094",
+  "label": "Sulfite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 740,
+  "cy": 369,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00283",
+  "id": "C00283",
+  "label": "Hydrogen sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 94,
+  "cy": 487,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00224",
+  "id": "C00224",
+  "label": "Adenylyl sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 94,
+  "cy": 664,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00054",
+  "id": "C00054",
+  "label": "Adenosine 3',5'-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 94,
+  "cy": 587,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00053",
+  "id": "C00053",
+  "label": "3'-Phosphoadenylyl sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 624,
+  "cy": 406,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19692",
+  "id": "C19692",
+  "label": "Polysulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 190,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01861",
+  "id": "C01861",
+  "label": "Trithionate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 862,
+  "cy": 221,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00087",
+  "id": "C00087",
+  "label": "Sulfur",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 243,
+  "cy": 261,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00245",
+  "id": "C00245",
+  "label": "Taurine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 318,
+  "cy": 261,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15521",
+  "id": "C15521",
+  "label": "Alkanesulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 94,
+  "cy": 161,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 243,
+  "cy": 161,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00245",
+  "id": "C00245",
+  "label": "Taurine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 318,
+  "cy": 161,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15521",
+  "id": "C15521",
+  "label": "Alkanesulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1040,
+  "cy": 369,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 284,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00979",
+  "id": "C00979",
+  "label": "O-Acetyl-L-serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1014,
+  "cy": 284,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00033",
+  "id": "C00033",
+  "label": "Acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 188,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00065",
+  "id": "C00065",
+  "label": "L-Serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1040,
+  "cy": 455,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00155",
+  "id": "C00155",
+  "label": "L-Homocysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01118",
+  "id": "C01118",
+  "label": "O-Succinyl-L-homoserine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1014,
+  "cy": 540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00042",
+  "id": "C00042",
+  "label": "Succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 638,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00263",
+  "id": "C00263",
+  "label": "L-Homoserine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 406,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19692",
+  "id": "C19692",
+  "label": "Polysulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 559,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11142",
+  "id": "C11142",
+  "label": "Dimethyl sulfone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 496,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11145",
+  "id": "C11145",
+  "label": "Methanesulfonic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11143",
+  "id": "C11143",
+  "label": "Dimethyl sulfoxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 565,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00580",
+  "id": "C00580",
+  "label": "Dimethyl sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 740,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00409",
+  "id": "C00409",
+  "label": "Methanethiol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 565,
+  "cy": 812,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04022",
+  "id": "C04022",
+  "label": "S,S-Dimethyl-beta-propiothetin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 621,
+  "cy": 532,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03920",
+  "id": "C03920",
+  "label": "2-(Methylthio)ethanesulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 565,
+  "cy": 877,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08276",
+  "id": "C08276",
+  "label": "3-(Methylthio)propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 740,
+  "cy": 877,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20870",
+  "id": "C20870",
+  "label": "3-(Methylthio)propanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 740,
+  "cy": 763,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20955",
+  "id": "C20955",
+  "label": "3-(Methylthio)acryloyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 540,
+  "cy": 453,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17267",
+  "id": "C17267",
+  "label": "S-Sulfanylglutathione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 203,
+  "cy": 1015,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 463,
+  "cy": 1015,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00053",
+  "id": "C00053",
+  "label": "3'-Phosphoadenylyl sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 1015,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00224",
+  "id": "C00224",
+  "label": "Adenylyl sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 593,
+  "cy": 1015,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00094",
+  "id": "C00094",
+  "label": "Sulfite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 203,
+  "cy": 1081,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 1081,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00224",
+  "id": "C00224",
+  "label": "Adenylyl sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 593,
+  "cy": 1081,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00094",
+  "id": "C00094",
+  "label": "Sulfite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1078,
+  "cy": 1081,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00283",
+  "id": "C00283",
+  "label": "Hydrogen sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 203,
+  "cy": 1149,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 765,
+  "cy": 1149,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00320",
+  "id": "C00320",
+  "label": "Thiosulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1078,
+  "cy": 1015,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00283",
+  "id": "C00283",
+  "label": "Hydrogen sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 566,
+  "cy": 369,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22834",
+  "id": "C22834",
+  "label": "Protein-trisulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 594,
+  "cy": 139,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02084",
+  "id": "C02084",
+  "label": "Tetrathionate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 186,
+  "cy": 811,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00073",
+  "id": "C00073",
+  "label": "L-Methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 186,
+  "cy": 863,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01180",
+  "id": "C01180",
+  "label": "4-Methylthio-2-oxobutanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 303,
+  "cy": 863,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22315",
+  "id": "C22315",
+  "label": "(2R)-2-Hydroxy-4-(methylsulfanyl)butanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 414,
+  "cy": 863,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22316",
+  "id": "C22316",
+  "label": "(2R)-4-(Dimethylsulfaniumyl)-2-hydroxybutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 291,
+  "cy": 812,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03172",
+  "id": "C03172",
+  "label": "S-Methyl-L-methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 381,
+  "cy": 812,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23001",
+  "id": "C23001",
+  "label": "3-Aminopropyl(dimethyl)sulfanium",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 471,
+  "cy": 812,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23002",
+  "id": "C23002",
+  "label": "3-Dimethylsulfoniopropionaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 496,
+  "cy": 692,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00511",
+  "id": "C00511",
+  "label": "Acrylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 403,
+  "cy": 692,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00894",
+  "id": "C00894",
+  "label": "Propenoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 310,
+  "cy": 692,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01013",
+  "id": "C01013",
+  "label": "3-Hydroxypropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 780,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00084",
+  "id": "C00084",
+  "label": "Acetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 765,
+  "cy": 1264,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00320",
+  "id": "C00320",
+  "label": "Thiosulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 1264,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02084",
+  "id": "C02084",
+  "label": "Tetrathionate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 203,
+  "cy": 1264,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 921,
+  "cy": 1318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00087",
+  "id": "C00087",
+  "label": "Sulfur",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1078,
+  "cy": 1318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00283",
+  "id": "C00283",
+  "label": "Hydrogen sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1078,
+  "cy": 1362,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00283",
+  "id": "C00283",
+  "label": "Hydrogen sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 921,
+  "cy": 1362,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00087",
+  "id": "C00087",
+  "label": "Sulfur",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 310,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00163",
+  "id": "C00163",
+  "label": "Propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 570,
+  "y1": 332,
+  "x2": 616,
+  "y2": 349,
+  "url": "/dbget-bin/www_bget?syn:slr0963",
+  "id": "slr0963",
+  "label": "slr0963 (sir)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0963",
+    "product": "ferredoxin-sulfite reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 147,
+  "y1": 527,
+  "x2": 193,
+  "y2": 544,
+  "url": "/dbget-bin/www_bget?syn:sll0895",
+  "id": "sll0895",
+  "label": "sll0895 (cysQ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0895",
+    "product": "ammonium transport protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 71,
+  "y1": 527,
+  "x2": 117,
+  "y2": 544,
+  "url": "/dbget-bin/www_bget?syn:slr0676",
+  "id": "slr0676",
+  "label": "slr0676 (cysC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0676",
+    "product": "adenylylsulfate 3'-phosphotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 96,
+  "y1": 416,
+  "x2": 142,
+  "y2": 433,
+  "url": "/dbget-bin/www_bget?syn:sll0509",
+  "id": "sll0509",
+  "label": "sll0509",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0509",
+    "product": "Ap-4-A phosphorylase II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 46,
+  "y1": 416,
+  "x2": 92,
+  "y2": 433,
+  "url": "/dbget-bin/www_bget?syn:slr1165",
+  "id": "slr1165",
+  "label": "slr1165 (met3)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1165",
+    "product": "sulfate adenylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 307,
+  "y1": 427,
+  "x2": 353,
+  "y2": 444,
+  "url": "/dbget-bin/www_bget?syn:slr1791",
+  "id": "slr1791",
+  "label": "slr1791 (cysH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1791",
+    "product": "3'-phosphoadenosine-5'-phosphosulfate sulfotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 661,
+  "y1": 398,
+  "x2": 707,
+  "y2": 415,
+  "url": "/dbget-bin/www_bget?syn:sll5036+syn:slr0876",
+  "id": "sll5036,",
+  "label": "sll5036, slr0876",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5036",
+    "product": "sulfide-quinone reductase"
+   },
+   {
+    "locus": "slr0876",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 71,
+  "y1": 202,
+  "x2": 117,
+  "y2": 219,
+  "url": "/dbget-bin/www_bget?syn:slr1452+syn:slr1453+syn:slr1454+syn:slr1455",
+  "id": "slr1452",
+  "label": "slr1452 (sbpA), slr1453 (cysT), slr1454 (cysW), slr1455 (cysA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1452",
+    "product": "sulfate binding protein; SbpA"
+   },
+   {
+    "locus": "slr1453",
+    "product": "sulfate transport system permease protein"
+   },
+   {
+    "locus": "slr1454",
+    "product": "sulfate transport system permease protein"
+   },
+   {
+    "locus": "slr1455",
+    "product": "sulfate transport system permease protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 949,
+  "y1": 371,
+  "x2": 995,
+  "y2": 388,
+  "url": "/dbget-bin/www_bget?syn:sll0712+syn:slr1842",
+  "id": "sll0712",
+  "label": "sll0712 (cysM), slr1842 (cysK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0712",
+    "product": "cysteine synthase"
+   },
+   {
+    "locus": "slr1842",
+    "product": "cysteine synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 906,
+  "y1": 220,
+  "x2": 952,
+  "y2": 237,
+  "url": "/dbget-bin/www_bget?syn:slr1348",
+  "id": "slr1348",
+  "label": "slr1348 (cysE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1348",
+    "product": "serine acetyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 825,
+  "y1": 1017,
+  "x2": 871,
+  "y2": 1034,
+  "url": "/dbget-bin/www_bget?syn:slr0963",
+  "id": "slr0963",
+  "label": "slr0963 (sir)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0963",
+    "product": "ferredoxin-sulfite reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 505,
+  "y1": 1007,
+  "x2": 551,
+  "y2": 1024,
+  "url": "/dbget-bin/www_bget?syn:slr1791",
+  "id": "slr1791",
+  "label": "slr1791 (cysH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1791",
+    "product": "3'-phosphoadenosine-5'-phosphosulfate sulfotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 244,
+  "y1": 1007,
+  "x2": 290,
+  "y2": 1024,
+  "url": "/dbget-bin/www_bget?syn:slr1165",
+  "id": "slr1165",
+  "label": "slr1165 (met3)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1165",
+    "product": "sulfate adenylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 370,
+  "y1": 1007,
+  "x2": 416,
+  "y2": 1024,
+  "url": "/dbget-bin/www_bget?syn:slr0676",
+  "id": "slr0676",
+  "label": "slr0676 (cysC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0676",
+    "product": "adenylylsulfate 3'-phosphotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 244,
+  "y1": 1072,
+  "x2": 290,
+  "y2": 1089,
+  "url": "/dbget-bin/www_bget?syn:slr1165",
+  "id": "slr1165",
+  "label": "slr1165 (met3)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1165",
+    "product": "sulfate adenylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 209,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00920",
+  "id": "syn00920",
+  "label": "syn00920: Sulfur metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1080,
+  "y1": 353,
+  "x2": 1220,
+  "y2": 387,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1067,
+  "y1": 267,
+  "x2": 1193,
+  "y2": 301,
+  "url": "/kegg-bin/show_pathway?syn00720",
+  "id": "syn00720",
+  "label": "syn00720: Other carbon fixation pathways",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1004,
+  "y1": 171,
+  "x2": 1127,
+  "y2": 205,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 866,
+  "y1": 119,
+  "x2": 988,
+  "y2": 144,
+  "url": "/kegg-bin/show_pathway?syn00680",
+  "id": "syn00680",
+  "label": "syn00680: Methane metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1004,
+  "y1": 621,
+  "x2": 1122,
+  "y2": 655,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 492,
+  "y1": 515,
+  "x2": 569,
+  "y2": 549,
+  "url": "/kegg-bin/show_pathway?syn00680",
+  "id": "syn00680",
+  "label": "syn00680: Methane metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 767,
+  "y1": 515,
+  "x2": 845,
+  "y2": 549,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 170,
+  "y1": 675,
+  "x2": 248,
+  "y2": 709,
+  "url": "/kegg-bin/show_pathway?syn00640",
+  "id": "syn00640",
+  "label": "syn00640: Propanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 71,
+  "y1": 796,
+  "x2": 149,
+  "y2": 830,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ }
+]

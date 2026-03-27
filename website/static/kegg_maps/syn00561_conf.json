@@ -1,0 +1,729 @@
+[
+ {
+  "type": "circ",
+  "cx": 704,
+  "cy": 585,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00422",
+  "id": "C00422",
+  "label": "Triacylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 560,
+  "cy": 584,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00641",
+  "id": "C00641",
+  "label": "1,2-Diacyl-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 92,
+  "cy": 318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00111",
+  "id": "C00111",
+  "label": "Glycerone phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 380,
+  "cy": 401,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00093",
+  "id": "C00093",
+  "label": "sn-Glycerol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 214,
+  "cy": 167,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00197",
+  "id": "C00197",
+  "label": "3-Phospho-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 380,
+  "cy": 167,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00258",
+  "id": "C00258",
+  "label": "D-Glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 380,
+  "cy": 245,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00577",
+  "id": "C00577",
+  "label": "D-Glyceraldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 213,
+  "cy": 318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00184",
+  "id": "C00184",
+  "label": "Glycerone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 380,
+  "cy": 318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00116",
+  "id": "C00116",
+  "label": "Glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 764,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00029",
+  "id": "C00029",
+  "label": "UDP-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00040",
+  "id": "C00040",
+  "label": "Acyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 400,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00162",
+  "id": "C00162",
+  "label": "Fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 688,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11521",
+  "id": "C11521",
+  "label": "UDP-6-sulfoquinovose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 380,
+  "cy": 498,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00681",
+  "id": "C00681",
+  "label": "1-Acyl-sn-glycerol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 380,
+  "cy": 585,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00416",
+  "id": "C00416",
+  "label": "Phosphatidate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 558,
+  "cy": 931,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05401",
+  "id": "C05401",
+  "label": "3-beta-D-Galactosyl-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 410,
+  "cy": 518,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00040",
+  "id": "C00040",
+  "label": "Acyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 704,
+  "cy": 658,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13508",
+  "id": "C13508",
+  "label": "Sulfoquinovosyldiacylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 344,
+  "cy": 931,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04872",
+  "id": "C04872",
+  "label": "1,2-Diacyl-3-[3-(alpha-D-N-acetylneuraminyl)-beta-D-galactosyl]-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 411,
+  "cy": 421,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00040",
+  "id": "C00040",
+  "label": "Acyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 344,
+  "cy": 850,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06037",
+  "id": "C06037",
+  "label": "Digalactosyl-diacylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 632,
+  "cy": 887,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06038",
+  "id": "C06038",
+  "label": "Acyl1-monogalactosyl-diacylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 668,
+  "cy": 856,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04315",
+  "id": "C04315",
+  "label": "2-Acyl-3-O-(beta-D-galactosyl)-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 344,
+  "cy": 678,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06365",
+  "id": "C06365",
+  "label": "alpha-Kojibiosyldiacylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 236,
+  "cy": 678,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20897",
+  "id": "C20897",
+  "label": "Glycerophosphoglycoglycerolipid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 452,
+  "cy": 850,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03692",
+  "id": "C03692",
+  "label": "1,2-Diacyl-3-beta-D-galactosyl-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 452,
+  "cy": 678,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06364",
+  "id": "C06364",
+  "label": "1,2-Diacyl-3-alpha-D-glucosyl-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 488,
+  "cy": 498,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01885",
+  "id": "C01885",
+  "label": "1-Acylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 679,
+  "cy": 318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02457",
+  "id": "C02457",
+  "label": "Propane-1,3-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 573,
+  "cy": 318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00969",
+  "id": "C00969",
+  "label": "3-Hydroxypropanal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 344,
+  "cy": 735,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06040",
+  "id": "C06040",
+  "label": "Diglucosyldiacylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 236,
+  "cy": 735,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06041",
+  "id": "C06041",
+  "label": "Glycerophosphoglycoglycerolipid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 452,
+  "cy": 735,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04046",
+  "id": "C04046",
+  "label": "3-D-Glucosyl-1,2-diacylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 128,
+  "cy": 678,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06042",
+  "id": "C06042",
+  "label": "Lipoteichoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 128,
+  "cy": 735,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20898",
+  "id": "C20898",
+  "label": "Lipoteichoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 344,
+  "cy": 890,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20991",
+  "id": "C20991",
+  "label": "1,2-Diacyl-3-O-[beta-D-galactosyl-(1-&gt;6)-beta-D-galactosyl]-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 214,
+  "cy": 116,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00631",
+  "id": "C00631",
+  "label": "2-Phospho-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 683,
+  "cy": 764,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00103",
+  "id": "C00103",
+  "label": "D-Glucose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 267,
+  "cy": 422,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02133",
+  "id": "C02133",
+  "label": "Acyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 162,
+  "cy": 422,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00173",
+  "id": "C00173",
+  "label": "Acyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 573,
+  "y1": 721,
+  "x2": 619,
+  "y2": 738,
+  "url": "/dbget-bin/www_bget?syn:slr1020",
+  "id": "slr1020",
+  "label": "slr1020 (sqdB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1020",
+    "product": "sulfolipid biosynthesis protein; SqdB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 612,
+  "y1": 650,
+  "x2": 658,
+  "y2": 667,
+  "url": "/dbget-bin/www_bget?syn:slr0384",
+  "id": "slr0384",
+  "label": "slr0384",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0384",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 612,
+  "y1": 524,
+  "x2": 658,
+  "y2": 541,
+  "url": "/dbget-bin/www_bget?syn:sll1969",
+  "id": "sll1969",
+  "label": "sll1969",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1969",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 612,
+  "y1": 586,
+  "x2": 658,
+  "y2": 603,
+  "url": "/dbget-bin/www_bget?syn:slr2103",
+  "id": "slr2103",
+  "label": "slr2103",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2103",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 533,
+  "y1": 514,
+  "x2": 579,
+  "y2": 531,
+  "url": "/dbget-bin/www_bget?syn:sll1969",
+  "id": "sll1969",
+  "label": "sll1969",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1969",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 358,
+  "y1": 530,
+  "x2": 404,
+  "y2": 547,
+  "url": "/dbget-bin/www_bget?syn:sll1848",
+  "id": "sll1848",
+  "label": "sll1848",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1848",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 381,
+  "y1": 359,
+  "x2": 427,
+  "y2": 376,
+  "url": "/dbget-bin/www_bget?syn:slr1672",
+  "id": "slr1672",
+  "label": "slr1672 (glpK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1672",
+    "product": "glycerol kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 356,
+  "y1": 199,
+  "x2": 402,
+  "y2": 216,
+  "url": "/dbget-bin/www_bget?syn:slr0091",
+  "id": "slr0091",
+  "label": "slr0091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0091",
+    "product": "aldehyde dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 410,
+  "y1": 269,
+  "x2": 456,
+  "y2": 286,
+  "url": "/dbget-bin/www_bget?syn:slr0942",
+  "id": "slr0942",
+  "label": "slr0942",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0942",
+    "product": "aldehyde reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 424,
+  "y1": 611,
+  "x2": 470,
+  "y2": 628,
+  "url": "/dbget-bin/www_bget?syn:slr0054",
+  "id": "slr0054",
+  "label": "slr0054 (dgkA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0054",
+    "product": "diacylglycerol kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 491,
+  "y1": 737,
+  "x2": 537,
+  "y2": 754,
+  "url": "/dbget-bin/www_bget?syn:sll1377",
+  "id": "sll1377",
+  "label": "sll1377",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1377",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 429,
+  "y1": 768,
+  "x2": 475,
+  "y2": 785,
+  "url": "/dbget-bin/www_bget?syn:sll1376",
+  "id": "sll1376",
+  "label": "sll1376",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1376",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 270,
+  "y1": 107,
+  "x2": 316,
+  "y2": 124,
+  "url": "/dbget-bin/www_bget?syn:slr1840",
+  "id": "slr1840",
+  "label": "slr1840",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1840",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 623,
+  "y1": 756,
+  "x2": 669,
+  "y2": 773,
+  "url": "/dbget-bin/www_bget?syn:sll1558",
+  "id": "sll1558",
+  "label": "sll1558",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1558",
+    "product": "mannose-1-phosphate guanyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 280,
+  "y1": 435,
+  "x2": 326,
+  "y2": 452,
+  "url": "/dbget-bin/www_bget?syn:sll1973",
+  "id": "sll1973",
+  "label": "sll1973",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1973",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 190,
+  "y1": 414,
+  "x2": 236,
+  "y2": 431,
+  "url": "/dbget-bin/www_bget?syn:slr1510",
+  "id": "slr1510",
+  "label": "slr1510 (plsX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1510",
+    "product": "PlsX protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 34,
+  "y1": 455,
+  "x2": 151,
+  "y2": 489,
+  "url": "/kegg-bin/show_pathway?syn00564",
+  "id": "syn00564",
+  "label": "syn00564: Glycerophospholipid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 57,
+  "y1": 155,
+  "x2": 127,
+  "y2": 180,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 663,
+  "y1": 384,
+  "x2": 737,
+  "y2": 418,
+  "url": "/kegg-bin/show_pathway?syn00071",
+  "id": "syn00071",
+  "label": "syn00071: Fatty acid degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 258,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00561",
+  "id": "syn00561",
+  "label": "syn00561: Glycerolipid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 728,
+  "y1": 746,
+  "x2": 826,
+  "y2": 780,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,234 @@
+[
+ {
+  "type": "circ",
+  "cx": 407,
+  "cy": 182,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G00010",
+  "id": "G00010",
+  "label": "G00010",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 639,
+  "cy": 436,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00076",
+  "id": "C00076",
+  "label": "Calcium cation",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 377,
+  "cy": 328,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G00010",
+  "id": "G00010",
+  "label": "G00010",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 332,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G00009",
+  "id": "G00009",
+  "label": "G00009",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 500,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G00011",
+  "id": "G00011",
+  "label": "G00011",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 527,
+  "cy": 166,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G00011",
+  "id": "G00011",
+  "label": "G00011",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 615,
+  "cy": 165,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G10694",
+  "id": "G10694",
+  "label": "G10694",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 633,
+  "cy": 395,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?G00012",
+  "id": "G00012",
+  "label": "G00012",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 946,
+  "y1": 258,
+  "x2": 992,
+  "y2": 275,
+  "url": "/dbget-bin/www_bget?syn:sll0430",
+  "id": "sll0430",
+  "label": "sll0430 (htpG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0430",
+    "product": "heat shock protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 946,
+  "y1": 298,
+  "x2": 992,
+  "y2": 315,
+  "url": "/dbget-bin/www_bget?syn:sll1514",
+  "id": "sll1514",
+  "label": "sll1514 (hsp17)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1514",
+    "product": "16.6 kDa small heat shock protein, molecular chaperon"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 459,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn04141",
+  "id": "syn04141",
+  "label": "syn04141: Protein processing in endoplasmic reticulum",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 8,
+  "y1": 144,
+  "x2": 100,
+  "y2": 169,
+  "url": "/kegg-bin/show_pathway?syn03060",
+  "id": "syn03060",
+  "label": "syn03060: Protein export",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 600,
+  "y1": 625,
+  "x2": 680,
+  "y2": 650,
+  "url": "/kegg-bin/show_pathway?map04210",
+  "id": "map04210:",
+  "label": "map04210: Apoptosis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 1097,
+  "y1": 343,
+  "x2": 1189,
+  "y2": 368,
+  "url": "/kegg-bin/show_pathway?map03050",
+  "id": "map03050:",
+  "label": "map03050: Proteasome",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 276,
+  "y1": 232,
+  "x2": 368,
+  "y2": 266,
+  "url": "/kegg-bin/show_pathway?map00510",
+  "id": "map00510:",
+  "label": "map00510: N-Glycan biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 324,
+  "y1": 781,
+  "x2": 404,
+  "y2": 806,
+  "url": "/kegg-bin/show_pathway?map04210",
+  "id": "map04210:",
+  "label": "map04210: Apoptosis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 17,
+  "y1": 484,
+  "x2": 109,
+  "y2": 518,
+  "url": "/kegg-bin/show_pathway?map05010",
+  "id": "map05010:",
+  "label": "map05010: Alzheimer disease",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 17,
+  "y1": 529,
+  "x2": 109,
+  "y2": 563,
+  "url": "/kegg-bin/show_pathway?map05012",
+  "id": "map05012:",
+  "label": "map05012: Parkinson disease",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 16,
+  "y1": 449,
+  "x2": 108,
+  "y2": 474,
+  "url": "/kegg-bin/show_pathway?map05020",
+  "id": "map05020:",
+  "label": "map05020: Prion disease",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 17,
+  "y1": 573,
+  "x2": 109,
+  "y2": 607,
+  "url": "/kegg-bin/show_pathway?map04930",
+  "id": "map04930:",
+  "label": "map04930: Type II diabetes mellitus",
+  "entry_type": "gene",
+  "genes": []
+ }
+]

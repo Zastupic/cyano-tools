@@ -1,0 +1,203 @@
+[
+ {
+  "type": "circ",
+  "cx": 1022,
+  "cy": 460,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 591,
+  "cy": 86,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09306",
+  "id": "C09306",
+  "label": "Sulfur dioxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 148,
+  "cy": 460,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00283",
+  "id": "C00283",
+  "label": "Hydrogen sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 604,
+  "cy": 763,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00087",
+  "id": "C00087",
+  "label": "Sulfur",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 367,
+  "cy": 460,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00094",
+  "id": "C00094",
+  "label": "Sulfite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 803,
+  "cy": 460,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00224",
+  "id": "C00224",
+  "label": "Adenylyl sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 585,
+  "cy": 460,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00053",
+  "id": "C00053",
+  "label": "3'-Phosphoadenylyl sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 634,
+  "cy": 86,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 547,
+  "cy": 86,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00283",
+  "id": "C00283",
+  "label": "Hydrogen sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 686,
+  "cy": 170,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1141,
+  "cy": 512,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04022",
+  "id": "C04022",
+  "label": "S,S-Dimethyl-beta-propiothetin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1141,
+  "cy": 298,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00580",
+  "id": "C00580",
+  "label": "Dimethyl sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 810,
+  "cy": 763,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00320",
+  "id": "C00320",
+  "label": "Thiosulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 810,
+  "cy": 619,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02084",
+  "id": "C02084",
+  "label": "Tetrathionate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1141,
+  "cy": 194,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00580",
+  "id": "C00580",
+  "label": "Dimethyl sulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1110,
+  "cy": 345,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01013",
+  "id": "C01013",
+  "label": "3-Hydroxypropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1110,
+  "cy": 390,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00511",
+  "id": "C00511",
+  "label": "Acrylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1110,
+  "cy": 438,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00894",
+  "id": "C00894",
+  "label": "Propenoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 735,
+  "cy": 170,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00073",
+  "id": "C00073",
+  "label": "L-Methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 164,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn01320",
+  "id": "syn01320",
+  "label": "syn01320: Sulfur cycle",
+  "entry_type": "pathway"
+ }
+]

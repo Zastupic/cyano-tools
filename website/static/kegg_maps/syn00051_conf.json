@@ -1,0 +1,920 @@
+[
+ {
+  "type": "circ",
+  "cx": 245,
+  "cy": 96,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00247",
+  "id": "C00247",
+  "label": "L-Sorbose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 157,
+  "cy": 151,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00267",
+  "id": "C00267",
+  "label": "alpha-D-Glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 1012,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01094",
+  "id": "C01094",
+  "label": "D-Fructose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 245,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00159",
+  "id": "C00159",
+  "label": "D-Mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00275",
+  "id": "C00275",
+  "label": "D-Mannose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 527,
+  "cy": 208,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00392",
+  "id": "C00392",
+  "label": "Mannitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 999,
+  "cy": 208,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00644",
+  "id": "C00644",
+  "label": "D-Mannitol 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 570,
+  "cy": 255,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03267",
+  "id": "C03267",
+  "label": "beta-D-Fructose 2-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 943,
+  "cy": 255,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00665",
+  "id": "C00665",
+  "label": "beta-D-Fructose 2,6-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1016,
+  "cy": 503,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00794",
+  "id": "C00794",
+  "label": "D-Sorbitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 245,
+  "cy": 444,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00464",
+  "id": "C00464",
+  "label": "Mannan",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 171,
+  "cy": 485,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02492",
+  "id": "C02492",
+  "label": "1,4-beta-D-Mannan",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1016,
+  "cy": 413,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01096",
+  "id": "C01096",
+  "label": "Sorbitol 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 632,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00325",
+  "id": "C00325",
+  "label": "GDP-L-fucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 745,
+  "cy": 427,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01768",
+  "id": "C01768",
+  "label": "(Alginate)n",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 998,
+  "cy": 852,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00577",
+  "id": "C00577",
+  "label": "D-Glyceraldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 242,
+  "cy": 921,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00507",
+  "id": "C00507",
+  "label": "L-Rhamnose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 242,
+  "cy": 980,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00861",
+  "id": "C00861",
+  "label": "L-Rhamnulose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 980,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01131",
+  "id": "C01131",
+  "label": "L-Rhamnulose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 242,
+  "cy": 878,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02431",
+  "id": "C02431",
+  "label": "L-Rhamnofuranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 426,
+  "cy": 878,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01934",
+  "id": "C01934",
+  "label": "L-Rhamnonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 521,
+  "cy": 878,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03979",
+  "id": "C03979",
+  "label": "2-Dehydro-3-deoxy-L-rhamnonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 944,
+  "cy": 652,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 484,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00096",
+  "id": "C00096",
+  "label": "GDP-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 944,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00085",
+  "id": "C00085",
+  "label": "D-Fructose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 544,
+  "cy": 427,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00976",
+  "id": "C00976",
+  "label": "GDP-D-mannuronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 574,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01222",
+  "id": "C01222",
+  "label": "GDP-4-dehydro-6-deoxy-D-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 699,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02985",
+  "id": "C02985",
+  "label": "L-Fucose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 845,
+  "cy": 427,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05392",
+  "id": "C05392",
+  "label": "Oligouronide with 4-deoxy-alpha-L-erythro-hex-4-enopyranuronosyl group",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 630,
+  "cy": 573,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02977",
+  "id": "C02977",
+  "label": "GDP-6-deoxy-D-talose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 630,
+  "cy": 634,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03117",
+  "id": "C03117",
+  "label": "GDP-6-deoxy-D-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 245,
+  "cy": 255,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00095",
+  "id": "C00095",
+  "label": "D-Fructose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 245,
+  "cy": 151,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00794",
+  "id": "C00794",
+  "label": "D-Sorbitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 404,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00636",
+  "id": "C00636",
+  "label": "D-Mannose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 944,
+  "cy": 564,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00354",
+  "id": "C00354",
+  "label": "D-Fructose 1,6-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 878,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02991",
+  "id": "C02991",
+  "label": "L-Rhamnono-1,4-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 345,
+  "cy": 287,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01355",
+  "id": "C01355",
+  "label": "Fructan",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 245,
+  "cy": 699,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01019",
+  "id": "C01019",
+  "label": "L-Fucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 944,
+  "cy": 758,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00111",
+  "id": "C00111",
+  "label": "Glycerone phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 758,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01099",
+  "id": "C01099",
+  "label": "L-Fuculose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 245,
+  "cy": 758,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01721",
+  "id": "C01721",
+  "label": "L-Fuculose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 324,
+  "cy": 404,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06192",
+  "id": "C06192",
+  "label": "ADP-mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1069,
+  "cy": 470,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02888",
+  "id": "C02888",
+  "label": "Sorbose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1069,
+  "cy": 546,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00247",
+  "id": "C00247",
+  "label": "L-Sorbose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1047,
+  "cy": 269,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18096",
+  "id": "C18096",
+  "label": "D-Allulose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1047,
+  "cy": 204,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02962",
+  "id": "C02962",
+  "label": "D-Allose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1047,
+  "cy": 141,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01487",
+  "id": "C01487",
+  "label": "D-Allose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 804,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18028",
+  "id": "C18028",
+  "label": "L-Fucono-1,5-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 426,
+  "cy": 804,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01720",
+  "id": "C01720",
+  "label": "L-Fuconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 521,
+  "cy": 804,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03827",
+  "id": "C03827",
+  "label": "2-Dehydro-3-deoxy-L-fuconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 616,
+  "cy": 804,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20781",
+  "id": "C20781",
+  "label": "2,4-Diketo-3-deoxy-L-fuconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 825,
+  "cy": 878,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00424",
+  "id": "C00424",
+  "label": "(S)-Lactaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 711,
+  "cy": 804,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00186",
+  "id": "C00186",
+  "label": "(S)-Lactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 732,
+  "cy": 487,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11544",
+  "id": "C11544",
+  "label": "2-O-(alpha-D-Mannosyl)-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 635,
+  "cy": 487,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11516",
+  "id": "C11516",
+  "label": "2-(alpha-D-Mannosyl)-3-phosphoglycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 644,
+  "cy": 427,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05144",
+  "id": "C05144",
+  "label": "(beta-D-Mannuronate)n",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 137,
+  "cy": 804,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20836",
+  "id": "C20836",
+  "label": "beta-L-Fucopyranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 522,
+  "y1": 290,
+  "x2": 568,
+  "y2": 307,
+  "url": "/dbget-bin/www_bget?syn:slr1448",
+  "id": "slr1448",
+  "label": "slr1448 (cscK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1448",
+    "product": "fructokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 681,
+  "y1": 332,
+  "x2": 727,
+  "y2": 349,
+  "url": "/dbget-bin/www_bget?syn:slr0493+syn:slr2074",
+  "id": "slr0493",
+  "label": "slr0493 (rfbM), slr2074 (manA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0493",
+    "product": "phosphomannose isomerase"
+   },
+   {
+    "locus": "slr2074",
+    "product": "mannose-6-phosphate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 396,
+  "y1": 363,
+  "x2": 442,
+  "y2": 380,
+  "url": "/dbget-bin/www_bget?syn:sll1496",
+  "id": "sll1496",
+  "label": "sll1496",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1496",
+    "product": "mannose-1-phosphate guanyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 396,
+  "y1": 591,
+  "x2": 442,
+  "y2": 608,
+  "url": "/dbget-bin/www_bget?syn:sll1213",
+  "id": "sll1213",
+  "label": "sll1213",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1213",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 396,
+  "y1": 526,
+  "x2": 442,
+  "y2": 543,
+  "url": "/dbget-bin/www_bget?syn:sll1212+syn:slr1072",
+  "id": "sll1212",
+  "label": "sll1212 (rfbD), slr1072 (yefA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1212",
+    "product": "GDP-D-mannose dehydratase"
+   },
+   {
+    "locus": "slr1072",
+    "product": "GDP-D-mannose dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 371,
+  "y1": 434,
+  "x2": 417,
+  "y2": 451,
+  "url": "/dbget-bin/www_bget?syn:sll1370+syn:sll1496",
+  "id": "sll1370",
+  "label": "sll1370 (rfbM), sll1496",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1370",
+    "product": "GDP-mannose pyrophosphorylase"
+   },
+   {
+    "locus": "sll1496",
+    "product": "mannose-1-phosphate guanyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 962,
+  "y1": 426,
+  "x2": 1008,
+  "y2": 443,
+  "url": "/dbget-bin/www_bget?syn:sll0745+syn:sll1196",
+  "id": "sll0745",
+  "label": "sll0745 (pfkA), sll1196 (pfkA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0745",
+    "product": "phosphofructokinase"
+   },
+   {
+    "locus": "sll1196",
+    "product": "phosphofructokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 921,
+  "y1": 455,
+  "x2": 967,
+  "y2": 472,
+  "url": "/dbget-bin/www_bget?syn:sll0745+syn:sll1196",
+  "id": "sll0745",
+  "label": "sll0745 (pfkA), sll1196 (pfkA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0745",
+    "product": "phosphofructokinase"
+   },
+   {
+    "locus": "sll1196",
+    "product": "phosphofructokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 921,
+  "y1": 695,
+  "x2": 967,
+  "y2": 712,
+  "url": "/dbget-bin/www_bget?syn:slr0783",
+  "id": "slr0783",
+  "label": "slr0783 (tpi)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0783",
+    "product": "triosephosphate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 614,
+  "y1": 997,
+  "x2": 660,
+  "y2": 1014,
+  "url": "/dbget-bin/www_bget?syn:sll0018+syn:slr0943",
+  "id": "sll0018",
+  "label": "sll0018 (cbbA), slr0943 (fda)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0018",
+    "product": "fructose-1,6-bisphosphate aldolase"
+   },
+   {
+    "locus": "slr0943",
+    "product": "fructose-bisphosphate aldolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 921,
+  "y1": 601,
+  "x2": 967,
+  "y2": 618,
+  "url": "/dbget-bin/www_bget?syn:sll0018+syn:slr0943",
+  "id": "sll0018",
+  "label": "sll0018 (cbbA), slr0943 (fda)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0018",
+    "product": "fructose-1,6-bisphosphate aldolase"
+   },
+   {
+    "locus": "slr0943",
+    "product": "fructose-bisphosphate aldolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 877,
+  "y1": 426,
+  "x2": 923,
+  "y2": 443,
+  "url": "/dbget-bin/www_bget?syn:slr0952+syn:slr2094",
+  "id": "slr0952",
+  "label": "slr0952 (fbp), slr2094 (glpX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0952",
+    "product": "fructose 1,6-bisphosphatase"
+   },
+   {
+    "locus": "slr2094",
+    "product": "GlpX protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1024,
+  "y1": 224,
+  "x2": 1070,
+  "y2": 241,
+  "url": "/dbget-bin/www_bget?syn:ssl2153",
+  "id": "ssl2153",
+  "label": "ssl2153 (rpiB)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 37,
+  "y1": 134,
+  "x2": 113,
+  "y2": 168,
+  "url": "/kegg-bin/show_pathway?syn00052",
+  "id": "syn00052",
+  "label": "syn00052: Galactose metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1055,
+  "y1": 324,
+  "x2": 1125,
+  "y2": 349,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 339,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00051",
+  "id": "syn00051",
+  "label": "syn00051: Fructose and mannose metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 53,
+  "y1": 317,
+  "x2": 156,
+  "y2": 362,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 312,
+  "y1": 557,
+  "x2": 392,
+  "y2": 591,
+  "url": "/kegg-bin/show_pathway?map00510",
+  "id": "map00510:",
+  "label": "map00510: N-Glycan biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 743,
+  "y1": 788,
+  "x2": 812,
+  "y2": 822,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 468,
+  "y1": 349,
+  "x2": 621,
+  "y2": 383,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 831,
+  "y1": 640,
+  "x2": 901,
+  "y2": 665,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 191,
+  "y1": 513,
+  "x2": 323,
+  "y2": 547,
+  "url": "/kegg-bin/show_pathway?syn00053",
+  "id": "syn00053",
+  "label": "syn00053: Ascorbate and aldarate metabolism",
+  "entry_type": "pathway"
+ }
+]

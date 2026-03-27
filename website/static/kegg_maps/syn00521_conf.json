@@ -1,0 +1,419 @@
+[
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 356,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01214",
+  "id": "C01214",
+  "label": "1-Amino-1-deoxy-scyllo-inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03319",
+  "id": "C03319",
+  "label": "dTDP-L-rhamnose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 472,
+  "cy": 722,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06592",
+  "id": "C06592",
+  "label": "NDP-N-methyl-L-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 114,
+  "cy": 846,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00413",
+  "id": "C00413",
+  "label": "Streptomycin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 219,
+  "cy": 846,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01138",
+  "id": "C01138",
+  "label": "Streptomycin 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 845,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01221",
+  "id": "C01221",
+  "label": "Dihydrostreptomycin 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 767,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04767",
+  "id": "C04767",
+  "label": "O-(1-&gt;4)-alpha-L-Dihydrostreptosyl-streptidine 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03442",
+  "id": "C03442",
+  "label": "dTDP-L-dihydrostreptose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 477,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00688",
+  "id": "C00688",
+  "label": "dTDP-4-dehydro-beta-L-rhamnose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 385,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11907",
+  "id": "C11907",
+  "label": "dTDP-4-oxo-6-deoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 293,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00842",
+  "id": "C00842",
+  "label": "dTDP-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 320,
+  "cy": 202,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00103",
+  "id": "C00103",
+  "label": "D-Glucose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 208,
+  "cy": 202,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00092",
+  "id": "C00092",
+  "label": "D-Glucose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 690,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01121",
+  "id": "C01121",
+  "label": "Streptidine 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 408,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01283",
+  "id": "C01283",
+  "label": "1-Amino-1-deoxy-scyllo-inositol 4-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00137",
+  "id": "C00137",
+  "label": "myo-Inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04006",
+  "id": "C04006",
+  "label": "1D-myo-Inositol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 208,
+  "cy": 124,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00031",
+  "id": "C00031",
+  "label": "D-Glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 305,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00691",
+  "id": "C00691",
+  "label": "2,4,6/3,5-Pentahydroxycyclohexanone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 512,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04280",
+  "id": "C04280",
+  "label": "1-Guanidino-1-deoxy-scyllo-inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 554,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04673",
+  "id": "C04673",
+  "label": "1D-1-Guanidino-1-deoxy-3-dehydro-scyllo-inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 606,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01298",
+  "id": "C01298",
+  "label": "1D-1-Guanidino-3-amino-1,3-dideoxy-scyllo-inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 648,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11351",
+  "id": "C11351",
+  "label": "N1-Amidinostreptamine 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 97,
+  "cy": 460,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01294",
+  "id": "C01294",
+  "label": "1-Guanidino-1-deoxy-scyllo-inositol 4-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 210,
+  "y1": 152,
+  "x2": 256,
+  "y2": 169,
+  "url": "/dbget-bin/www_bget?syn:sll0593+syn:slr0329",
+  "id": "sll0593",
+  "label": "sll0593 (glk), slr0329 (xylR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0593",
+    "product": "glucokinase"
+   },
+   {
+    "locus": "slr0329",
+    "product": "xylose repressor"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 75,
+  "y1": 215,
+  "x2": 121,
+  "y2": 232,
+  "url": "/dbget-bin/www_bget?syn:sll1329+syn:sll1383",
+  "id": "sll1329,",
+  "label": "sll1329, sll1383 (suhB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1329",
+    "product": "monophosphatase"
+   },
+   {
+    "locus": "sll1383",
+    "product": "extragenic suppressor; SuhB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 298,
+  "y1": 510,
+  "x2": 344,
+  "y2": 527,
+  "url": "/dbget-bin/www_bget?syn:sll1395",
+  "id": "sll1395",
+  "label": "sll1395 (rfbD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1395",
+    "product": "dTDP-6-deoxy-L-mannose-dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 298,
+  "y1": 418,
+  "x2": 344,
+  "y2": 435,
+  "url": "/dbget-bin/www_bget?syn:slr0985+syn:slr1933",
+  "id": "slr0985",
+  "label": "slr0985 (rfbC), slr1933 (rfbC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0985",
+    "product": "dTDP-6-deoxy-L-mannose-dehydrogenase"
+   },
+   {
+    "locus": "slr1933",
+    "product": "dTDP-4-dehydrorhamnose 3,5-epimerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 298,
+  "y1": 326,
+  "x2": 344,
+  "y2": 343,
+  "url": "/dbget-bin/www_bget?syn:slr0836",
+  "id": "slr0836",
+  "label": "slr0836 (rfbB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0836",
+    "product": "dTDP-glucose 4,6-dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 298,
+  "y1": 234,
+  "x2": 344,
+  "y2": 251,
+  "url": "/dbget-bin/www_bget?syn:sll0207",
+  "id": "sll0207",
+  "label": "sll0207 (rfbA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0207",
+    "product": "glucose-1-phosphate thymidylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 240,
+  "y1": 194,
+  "x2": 286,
+  "y2": 211,
+  "url": "/dbget-bin/www_bget?syn:sll0726",
+  "id": "sll0726",
+  "label": "sll0726 (pgm)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0726",
+    "product": "phosphoglucomutase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 62,
+  "y1": 782,
+  "x2": 164,
+  "y2": 816,
+  "url": "/kegg-bin/show_pathway?map07021",
+  "id": "map07021:",
+  "label": "map07021: Aminoglycosides",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 195,
+  "y1": 404,
+  "x2": 292,
+  "y2": 438,
+  "url": "/kegg-bin/show_pathway?syn00523",
+  "id": "syn00523",
+  "label": "syn00523: Polyketide sugar unit biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 274,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00521",
+  "id": "syn00521",
+  "label": "syn00521: Streptomycin biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 159,
+  "y1": 261,
+  "x2": 304,
+  "y2": 295,
+  "url": "/kegg-bin/show_pathway?map00524",
+  "id": "map00524:",
+  "label": "map00524: Neomycin, kanamycin and gentamicin biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ }
+]

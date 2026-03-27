@@ -1,0 +1,924 @@
+[
+ {
+  "type": "circ",
+  "cx": 697,
+  "cy": 656,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01151",
+  "id": "C01151",
+  "label": "D-Ribose 1,5-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 402,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00668",
+  "id": "C00668",
+  "label": "alpha-D-Glucose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 840,
+  "cy": 328,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 800,
+  "cy": 238,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 534,
+  "cy": 154,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00257",
+  "id": "C00257",
+  "label": "D-Gluconic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 154,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00198",
+  "id": "C00198",
+  "label": "D-Glucono-1,5-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 229,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00031",
+  "id": "C00031",
+  "label": "D-Glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 154,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00221",
+  "id": "C00221",
+  "label": "beta-D-Glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 534,
+  "cy": 328,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00345",
+  "id": "C00345",
+  "label": "6-Phospho-D-gluconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 154,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00204",
+  "id": "C00204",
+  "label": "2-Dehydro-3-deoxy-D-gluconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 581,
+  "cy": 403,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03752",
+  "id": "C03752",
+  "label": "2-Amino-2-deoxy-D-gluconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 328,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04442",
+  "id": "C04442",
+  "label": "2-Dehydro-3-deoxy-6-phospho-D-gluconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 534,
+  "cy": 547,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00117",
+  "id": "C00117",
+  "label": "D-Ribose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 534,
+  "cy": 656,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00119",
+  "id": "C00119",
+  "label": "5-Phospho-alpha-D-ribose 1-diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 697,
+  "cy": 578,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00620",
+  "id": "C00620",
+  "label": "alpha-D-Ribose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 697,
+  "cy": 547,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00121",
+  "id": "C00121",
+  "label": "D-Ribose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 355,
+  "cy": 504,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00279",
+  "id": "C00279",
+  "label": "D-Erythrose 4-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 455,
+  "cy": 275,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01218",
+  "id": "C01218",
+  "label": "6-Phospho-2-dehydro-D-gluconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 355,
+  "cy": 628,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05382",
+  "id": "C05382",
+  "label": "Sedoheptulose 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 470,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01801",
+  "id": "C01801",
+  "label": "Deoxyribose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 789,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00673",
+  "id": "C00673",
+  "label": "2-Deoxy-D-ribose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 646,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00354",
+  "id": "C00354",
+  "label": "D-Fructose 1,6-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 328,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01172",
+  "id": "C01172",
+  "label": "beta-D-Glucose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 328,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01236",
+  "id": "C01236",
+  "label": "D-Glucono-1,5-lactone 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 455,
+  "cy": 214,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06473",
+  "id": "C06473",
+  "label": "2-Keto-D-gluconic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 473,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00085",
+  "id": "C00085",
+  "label": "D-Fructose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 470,
+  "cy": 789,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00672",
+  "id": "C00672",
+  "label": "2-Deoxy-D-ribose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 840,
+  "cy": 154,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00577",
+  "id": "C00577",
+  "label": "D-Glyceraldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 938,
+  "cy": 154,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00258",
+  "id": "C00258",
+  "label": "D-Glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1024,
+  "cy": 154,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00631",
+  "id": "C00631",
+  "label": "2-Phospho-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 414,
+  "cy": 473,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00231",
+  "id": "C00231",
+  "label": "D-Xylulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 725,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00231",
+  "id": "C00231",
+  "label": "D-Xylulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 534,
+  "cy": 473,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00199",
+  "id": "C00199",
+  "label": "D-Ribulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 404,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06019",
+  "id": "C06019",
+  "label": "D-arabino-Hex-3-ulose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 403,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20589",
+  "id": "C20589",
+  "label": "D-Glucosaminate-6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 81,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03752",
+  "id": "C03752",
+  "label": "2-Amino-2-deoxy-D-gluconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 938,
+  "cy": 328,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00197",
+  "id": "C00197",
+  "label": "3-Phospho-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 817,
+  "cy": 657,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01182",
+  "id": "C01182",
+  "label": "D-Ribulose 1,5-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 355,
+  "cy": 697,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02076",
+  "id": "C02076",
+  "label": "Sedoheptulose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 183,
+  "y1": 355,
+  "x2": 229,
+  "y2": 372,
+  "url": "/dbget-bin/www_bget?syn:slr1349",
+  "id": "slr1349",
+  "label": "slr1349 (pgi)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1349",
+    "product": "glucose-6-phosphate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 738,
+  "y1": 309,
+  "x2": 784,
+  "y2": 326,
+  "url": "/dbget-bin/www_bget?syn:sll0107",
+  "id": "sll0107",
+  "label": "sll0107 (eda)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0107",
+    "product": "4-hydroxy-2-oxoglutarate aldolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 244,
+  "y1": 781,
+  "x2": 290,
+  "y2": 798,
+  "url": "/dbget-bin/www_bget?syn:sll1776",
+  "id": "sll1776",
+  "label": "sll1776 (deoC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1776",
+    "product": "deoxyribose-phosphate aldolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 512,
+  "y1": 603,
+  "x2": 558,
+  "y2": 620,
+  "url": "/dbget-bin/www_bget?syn:sll0469",
+  "id": "sll0469",
+  "label": "sll0469 (prsA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0469",
+    "product": "ribose-phosphate pyrophosphokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 392,
+  "y1": 578,
+  "x2": 438,
+  "y2": 595,
+  "url": "/dbget-bin/www_bget?syn:sll1070",
+  "id": "sll1070",
+  "label": "sll1070 (tktA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1070",
+    "product": "transketolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 511,
+  "y1": 503,
+  "x2": 557,
+  "y2": 520,
+  "url": "/dbget-bin/www_bget?syn:slr0194+syn:ssl2153",
+  "id": "slr0194",
+  "label": "slr0194 (rpiA), ssl2153 (rpiB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0194",
+    "product": "ribose 5-phosphate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 452,
+  "y1": 464,
+  "x2": 498,
+  "y2": 481,
+  "url": "/dbget-bin/www_bget?syn:sll0807",
+  "id": "sll0807",
+  "label": "sll0807 (cfxE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0807",
+    "product": "pentose-5-phosphate-3-epimerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 287,
+  "y1": 464,
+  "x2": 333,
+  "y2": 481,
+  "url": "/dbget-bin/www_bget?syn:sll1070",
+  "id": "sll1070",
+  "label": "sll1070 (tktA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1070",
+    "product": "transketolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 183,
+  "y1": 597,
+  "x2": 229,
+  "y2": 614,
+  "url": "/dbget-bin/www_bget?syn:sll0018+syn:slr0943",
+  "id": "sll0018",
+  "label": "sll0018 (cbbA), slr0943 (fda)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0018",
+    "product": "fructose-1,6-bisphosphate aldolase"
+   },
+   {
+    "locus": "slr0943",
+    "product": "fructose-bisphosphate aldolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 158,
+  "y1": 515,
+  "x2": 204,
+  "y2": 532,
+  "url": "/dbget-bin/www_bget?syn:sll0745+syn:sll1196",
+  "id": "sll0745",
+  "label": "sll0745 (pfkA), sll1196 (pfkA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0745",
+    "product": "phosphofructokinase"
+   },
+   {
+    "locus": "sll1196",
+    "product": "phosphofructokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 122,
+  "y1": 494,
+  "x2": 168,
+  "y2": 511,
+  "url": "/dbget-bin/www_bget?syn:slr0952+syn:slr2094",
+  "id": "slr0952",
+  "label": "slr0952 (fbp), slr2094 (glpX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0952",
+    "product": "fructose 1,6-bisphosphatase"
+   },
+   {
+    "locus": "slr2094",
+    "product": "GlpX protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 183,
+  "y1": 429,
+  "x2": 229,
+  "y2": 446,
+  "url": "/dbget-bin/www_bget?syn:slr1349",
+  "id": "slr1349",
+  "label": "slr1349 (pgi)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1349",
+    "product": "glucose-6-phosphate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 486,
+  "y1": 363,
+  "x2": 532,
+  "y2": 380,
+  "url": "/dbget-bin/www_bget?syn:sll0329",
+  "id": "sll0329",
+  "label": "sll0329 (gnd)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0329",
+    "product": "6-phosphogluconate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 432,
+  "y1": 319,
+  "x2": 478,
+  "y2": 336,
+  "url": "/dbget-bin/www_bget?syn:sll1479",
+  "id": "sll1479",
+  "label": "sll1479 (devB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1479",
+    "product": "glucose-6-P-dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 262,
+  "y1": 309,
+  "x2": 308,
+  "y2": 326,
+  "url": "/dbget-bin/www_bget?syn:slr1843",
+  "id": "slr1843",
+  "label": "slr1843 (zwf)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1843",
+    "product": "glucose 6-phosphate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 249,
+  "y1": 115,
+  "x2": 295,
+  "y2": 132,
+  "url": "/dbget-bin/www_bget?syn:sll1709",
+  "id": "sll1709",
+  "label": "sll1709 (gdh)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1709",
+    "product": "glucose dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 333,
+  "y1": 555,
+  "x2": 379,
+  "y2": 572,
+  "url": "/dbget-bin/www_bget?syn:slr1793",
+  "id": "slr1793",
+  "label": "slr1793 (talB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1793",
+    "product": "transaldolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 591,
+  "y1": 580,
+  "x2": 637,
+  "y2": 597,
+  "url": "/dbget-bin/www_bget?syn:sll0726",
+  "id": "sll0726",
+  "label": "sll0726 (pgm)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0726",
+    "product": "phosphoglucomutase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 244,
+  "y1": 717,
+  "x2": 290,
+  "y2": 734,
+  "url": "/dbget-bin/www_bget?syn:slr0453",
+  "id": "slr0453",
+  "label": "slr0453",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0453",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 536,
+  "y1": 363,
+  "x2": 582,
+  "y2": 380,
+  "url": "/dbget-bin/www_bget?syn:sll0329",
+  "id": "sll0329",
+  "label": "sll0329 (gnd)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0329",
+    "product": "6-phosphogluconate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 237,
+  "y1": 330,
+  "x2": 283,
+  "y2": 347,
+  "url": "/dbget-bin/www_bget?syn:slr1843",
+  "id": "slr1843",
+  "label": "slr1843 (zwf)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1843",
+    "product": "glucose 6-phosphate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 94,
+  "y1": 515,
+  "x2": 140,
+  "y2": 532,
+  "url": "/dbget-bin/www_bget?syn:sll0745+syn:sll1196",
+  "id": "sll0745",
+  "label": "sll0745 (pfkA), sll1196 (pfkA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0745",
+    "product": "phosphofructokinase"
+   },
+   {
+    "locus": "sll1196",
+    "product": "phosphofructokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 991,
+  "y1": 225,
+  "x2": 1062,
+  "y2": 251,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 17,
+  "y1": 369,
+  "x2": 81,
+  "y2": 673,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 622,
+  "y1": 456,
+  "x2": 758,
+  "y2": 490,
+  "url": "/kegg-bin/show_pathway?syn00040",
+  "id": "syn00040",
+  "label": "syn00040: Pentose and glucuronate interconversions",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 603,
+  "y1": 690,
+  "x2": 676,
+  "y2": 722,
+  "url": "/kegg-bin/show_pathway?syn00230",
+  "id": "syn00230",
+  "label": "syn00230: Purine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 278,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 603,
+  "y1": 725,
+  "x2": 676,
+  "y2": 757,
+  "url": "/kegg-bin/show_pathway?syn00240",
+  "id": "syn00240",
+  "label": "syn00240: Pyrimidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 603,
+  "y1": 760,
+  "x2": 676,
+  "y2": 792,
+  "url": "/kegg-bin/show_pathway?syn00340",
+  "id": "syn00340",
+  "label": "syn00340: Histidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 432,
+  "y1": 98,
+  "x2": 566,
+  "y2": 132,
+  "url": "/kegg-bin/show_pathway?syn00040",
+  "id": "syn00040",
+  "label": "syn00040: Pentose and glucuronate interconversions",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 780,
+  "y1": 77,
+  "x2": 902,
+  "y2": 102,
+  "url": "/kegg-bin/show_pathway?syn00052",
+  "id": "syn00052",
+  "label": "syn00052: Galactose metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 780,
+  "y1": 381,
+  "x2": 902,
+  "y2": 406,
+  "url": "/kegg-bin/show_pathway?syn00052",
+  "id": "syn00052",
+  "label": "syn00052: Galactose metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 431,
+  "y1": 488,
+  "x2": 503,
+  "y2": 522,
+  "url": "/kegg-bin/show_pathway?syn00750",
+  "id": "syn00750",
+  "label": "syn00750: Vitamin B6 metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 882,
+  "y1": 640,
+  "x2": 1023,
+  "y2": 674,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ }
+]

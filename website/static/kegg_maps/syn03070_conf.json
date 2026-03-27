@@ -1,0 +1,291 @@
+[
+ {
+  "type": "circ",
+  "cx": 1056,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1116,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1171,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1288,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 819,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 422,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 126,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 518,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 148,
+  "y1": 788,
+  "x2": 194,
+  "y2": 805,
+  "url": "/dbget-bin/www_bget?syn:sll1180",
+  "id": "sll1180",
+  "label": "sll1180 (hlyB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1180",
+    "product": "HlyB family"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 148,
+  "y1": 771,
+  "x2": 194,
+  "y2": 788,
+  "url": "/dbget-bin/www_bget?syn:sll1181",
+  "id": "sll1181",
+  "label": "sll1181 (hlyD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1181",
+    "product": "HlyD family of secretion proteins"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 532,
+  "y1": 959,
+  "x2": 578,
+  "y2": 976,
+  "url": "/dbget-bin/www_bget?syn:sll0616",
+  "id": "sll0616",
+  "label": "sll0616 (secA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0616",
+    "product": "preprotein translocase SecA subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 580,
+  "y1": 1012,
+  "x2": 626,
+  "y2": 1029,
+  "url": "/dbget-bin/www_bget?syn:slr1531",
+  "id": "slr1531",
+  "label": "slr1531 (ffh)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1531",
+    "product": "signal recognition particle protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 532,
+  "y1": 993,
+  "x2": 578,
+  "y2": 1010,
+  "url": "/dbget-bin/www_bget?syn:slr2102",
+  "id": "slr2102",
+  "label": "slr2102 (ftsY)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2102",
+    "product": "cell division protein; FtsY"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 532,
+  "y1": 925,
+  "x2": 578,
+  "y2": 942,
+  "url": "/dbget-bin/www_bget?syn:slr0774+syn:slr0775",
+  "id": "slr0774",
+  "label": "slr0774 (secD), slr0775 (secF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0774",
+    "product": "protein-export membrane protein; SecD"
+   },
+   {
+    "locus": "slr0775",
+    "product": "protein-export membrane protein; SecF"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 624,
+  "y1": 925,
+  "x2": 670,
+  "y2": 942,
+  "url": "/dbget-bin/www_bget?syn:ssr3307",
+  "id": "ssr3307",
+  "label": "ssr3307 (ycf47)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 532,
+  "y1": 942,
+  "x2": 578,
+  "y2": 959,
+  "url": "/dbget-bin/www_bget?syn:sll1814",
+  "id": "sll1814",
+  "label": "sll1814 (secY)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1814",
+    "product": "preprotein translocase SecY subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 624,
+  "y1": 942,
+  "x2": 670,
+  "y2": 959,
+  "url": "/dbget-bin/www_bget?syn:slr1471",
+  "id": "slr1471",
+  "label": "slr1471",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1471",
+    "product": "inner membrane protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 578,
+  "y1": 925,
+  "x2": 624,
+  "y2": 942,
+  "url": "/dbget-bin/www_bget?syn:ssl3335",
+  "id": "ssl3335",
+  "label": "ssl3335 (secE)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 766,
+  "y1": 925,
+  "x2": 812,
+  "y2": 942,
+  "url": "/dbget-bin/www_bget?syn:slr1046+syn:ssl2823",
+  "id": "slr1046,",
+  "label": "slr1046, ssl2823",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1046",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 858,
+  "y1": 925,
+  "x2": 904,
+  "y2": 942,
+  "url": "/dbget-bin/www_bget?syn:sll0194",
+  "id": "sll0194",
+  "label": "sll0194 (ycf43)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0194",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 293,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn03070",
+  "id": "syn03070",
+  "label": "syn03070: Bacterial secretion system",
+  "entry_type": "pathway"
+ }
+]

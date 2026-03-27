@@ -1,0 +1,3263 @@
+[
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01455",
+  "id": "C01455",
+  "label": "Toluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00261",
+  "id": "C00261",
+  "label": "Benzaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00556",
+  "id": "C00556",
+  "label": "Benzyl alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00180",
+  "id": "C00180",
+  "label": "Benzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06321",
+  "id": "C06321",
+  "label": "(1R,6S)-1,6-Dihydroxycyclohexa-2,4-diene-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 248,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02364",
+  "id": "C02364",
+  "label": "3-Fluorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 248,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16479",
+  "id": "C16479",
+  "label": "5-Fluorocyclohexadiene-cis,cis-1,2-diol-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 248,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16473",
+  "id": "C16473",
+  "label": "4-Fluorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 265,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02371",
+  "id": "C02371",
+  "label": "4-Fluorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 265,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16480",
+  "id": "C16480",
+  "label": "4-Fluorocyclohexadiene-cis,cis-1,2-diol-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 265,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16473",
+  "id": "C16473",
+  "label": "4-Fluorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 458,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02359",
+  "id": "C02359",
+  "label": "2-Fluorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 458,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16481",
+  "id": "C16481",
+  "label": "6-Fluorocyclohexadiene-cis,cis-1,2-diol-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 458,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16472",
+  "id": "C16472",
+  "label": "3-Fluorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06337",
+  "id": "C06337",
+  "label": "Terephthalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06318",
+  "id": "C06318",
+  "label": "(3S,4R)-3,4-Dihydroxycyclohexa-1,5-diene-1,4-dicarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00230",
+  "id": "C00230",
+  "label": "3,4-Dihydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02480",
+  "id": "C02480",
+  "label": "cis,cis-Muconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14610",
+  "id": "C14610",
+  "label": "(S)-5-Oxo-2,5-dihydrofuran-2-acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03586",
+  "id": "C03586",
+  "label": "2-Oxo-2,3-dihydrofuran-5-acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00846",
+  "id": "C00846",
+  "label": "3-Oxoadipate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01163",
+  "id": "C01163",
+  "label": "3-Carboxy-cis,cis-muconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01278",
+  "id": "C01278",
+  "label": "2-Carboxy-2,5-dihydro-5-oxofuran-2-acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03586",
+  "id": "C03586",
+  "label": "2-Oxo-2,3-dihydrofuran-5-acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00846",
+  "id": "C00846",
+  "label": "3-Oxoadipate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06730",
+  "id": "C06730",
+  "label": "4-Methylcatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04112",
+  "id": "C04112",
+  "label": "3-Methyl-cis,cis-hexadienedioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04558",
+  "id": "C04558",
+  "label": "3-Methylmuconolactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18311",
+  "id": "C18311",
+  "label": "4-Methyl-3-oxoadipate-enol-lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18312",
+  "id": "C18312",
+  "label": "4-Methyl-3-oxoadipate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 233,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02501",
+  "id": "C02501",
+  "label": "2-Hydroxymuconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 233,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03453",
+  "id": "C03453",
+  "label": "gamma-Oxalocrotonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 233,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1008,
+  "cy": 233,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03589",
+  "id": "C03589",
+  "label": "4-Hydroxy-2-oxopentanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1064,
+  "cy": 275,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 419,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07478",
+  "id": "C07478",
+  "label": "2-Hydroxy-5-methyl-cis,cis-muconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 419,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07479",
+  "id": "C07479",
+  "label": "2-Oxo-5-methyl-cis-muconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 419,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11354",
+  "id": "C11354",
+  "label": "2-Hydroxy-cis-hex-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1008,
+  "cy": 419,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06762",
+  "id": "C06762",
+  "label": "4-Hydroxy-2-oxohexanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1064,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1088,
+  "cy": 419,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00479",
+  "id": "C00479",
+  "label": "Propanal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 407,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07212",
+  "id": "C07212",
+  "label": "o-Xylene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 407,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07214",
+  "id": "C07214",
+  "label": "2-Methylbenzaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 407,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07213",
+  "id": "C07213",
+  "label": "2-Methylbenzyl alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 407,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07215",
+  "id": "C07215",
+  "label": "o-Toluate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 377,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06756",
+  "id": "C06756",
+  "label": "p-Xylene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07208",
+  "id": "C07208",
+  "label": "m-Xylene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07216",
+  "id": "C07216",
+  "label": "3-Methylbenzyl alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 377,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06757",
+  "id": "C06757",
+  "label": "4-Methylbenzyl alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 377,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06758",
+  "id": "C06758",
+  "label": "p-Tolualdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 436,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07209",
+  "id": "C07209",
+  "label": "3-Methylbenzaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 377,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01454",
+  "id": "C01454",
+  "label": "Toluate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07211",
+  "id": "C07211",
+  "label": "m-Methylbenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 377,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06729",
+  "id": "C06729",
+  "label": "cis-1,2-Dihydroxy-4-methylcyclohexa-3,5-diene-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 377,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06730",
+  "id": "C06730",
+  "label": "4-Methylcatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 407,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06731",
+  "id": "C06731",
+  "label": "1,2-Dihydroxy-6-methylcyclohexa-3,5-dienecarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06720",
+  "id": "C06720",
+  "label": "1,6-Dihydroxy-5-methylcyclohexa-2,4-dienecarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 407,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02923",
+  "id": "C02923",
+  "label": "2,3-Dihydroxytoluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02923",
+  "id": "C02923",
+  "label": "2,3-Dihydroxytoluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 377,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06760",
+  "id": "C06760",
+  "label": "2-Hydroxy-5-methyl-cis,cis-muconic semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 377,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11354",
+  "id": "C11354",
+  "label": "2-Hydroxy-cis-hex-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 352,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00058",
+  "id": "C00058",
+  "label": "Formate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06575",
+  "id": "C06575",
+  "label": "p-Cymene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06577",
+  "id": "C06577",
+  "label": "4-Isopropylbenzaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06576",
+  "id": "C06576",
+  "label": "p-Cumic alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06578",
+  "id": "C06578",
+  "label": "p-Cumate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06579",
+  "id": "C06579",
+  "label": "cis-2,3-Dihydroxy-2,3-dihydro-p-cumate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06580",
+  "id": "C06580",
+  "label": "2,3-Dihydroxy-p-cumate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 658,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06581",
+  "id": "C06581",
+  "label": "2-Hydroxy-3-carboxy-6-oxo-7-methylocta-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 708,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06582",
+  "id": "C06582",
+  "label": "2-Hydroxy-6-oxo-7-methylocta-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 594,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02632",
+  "id": "C02632",
+  "label": "2-Methylpropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 727,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01407",
+  "id": "C01407",
+  "label": "Benzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 727,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04091",
+  "id": "C04091",
+  "label": "cis-1,2-Dihydrobenzene-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 727,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 886,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07085",
+  "id": "C07085",
+  "label": "3-Vinylcatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 886,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07087",
+  "id": "C07087",
+  "label": "2-Hydroxy-6-oxoocta-2,4,7-trienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 727,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00682",
+  "id": "C00682",
+  "label": "2-Hydroxymuconate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 727,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 886,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 700,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00058",
+  "id": "C00058",
+  "label": "Formate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 911,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00511",
+  "id": "C00511",
+  "label": "Acrylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 825,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01455",
+  "id": "C01455",
+  "label": "Toluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 825,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04592",
+  "id": "C04592",
+  "label": "Toluene-cis-dihydrodiol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 825,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02923",
+  "id": "C02923",
+  "label": "2,3-Dihydroxytoluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 825,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06210",
+  "id": "C06210",
+  "label": "2-Hydroxy-6-keto-2,4-heptadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 825,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 799,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00033",
+  "id": "C00033",
+  "label": "Acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1463,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04793",
+  "id": "C04793",
+  "label": "3,4-Dihydroxy-9,10-secoandrosta-1,3,5(10)-triene-9,17-dione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1463,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04844",
+  "id": "C04844",
+  "label": "3-Hydroxy-5,9,17-trioxo-4,5:9,10-disecoandrosta-1(10),2-dien-4-oate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1463,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11354",
+  "id": "C11354",
+  "label": "2-Hydroxy-cis-hex-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 1489,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20199",
+  "id": "C20199",
+  "label": "3-[(3aS,4S,7aS)-7a-Methyl-1,5-dioxo-octahydro-1H-inden-4-yl]propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 960,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00423",
+  "id": "C00423",
+  "label": "trans-Cinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 960,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12622",
+  "id": "C12622",
+  "label": "cis-3-(3-Carboxyethenyl)-3,5-cyclohexadiene-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 960,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12623",
+  "id": "C12623",
+  "label": "trans-2,3-Dihydroxycinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 976,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05629",
+  "id": "C05629",
+  "label": "Phenylpropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 976,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11588",
+  "id": "C11588",
+  "label": "cis-3-(Carboxy-ethyl)-3,5-cyclo-hexadiene-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 976,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04044",
+  "id": "C04044",
+  "label": "3-(2,3-Dihydroxyphenyl)propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1043,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06588",
+  "id": "C06588",
+  "label": "Biphenyl",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1043,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06589",
+  "id": "C06589",
+  "label": "cis-2,3-Dihydro-2,3-dihydroxybiphenyl",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1043,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02526",
+  "id": "C02526",
+  "label": "Biphenyl-2,3-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1058,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06584",
+  "id": "C06584",
+  "label": "4-Chlorobiphenyl",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1058,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06585",
+  "id": "C06585",
+  "label": "cis-2,3-Dihydro-2,3-dihydroxy-4'-chlorobiphenyl",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1058,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06586",
+  "id": "C06586",
+  "label": "2,3-Dihydroxy-4'-chlorobiphenyl",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 845,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07111",
+  "id": "C07111",
+  "label": "Ethylbenzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 845,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06727",
+  "id": "C06727",
+  "label": "cis-1,2-Dihydro-3-ethylcatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 845,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06728",
+  "id": "C06728",
+  "label": "3-Ethylcatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 960,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12624",
+  "id": "C12624",
+  "label": "2-Hydroxy-6-ketononatrienedioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 976,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04479",
+  "id": "C04479",
+  "label": "2-Hydroxy-6-oxonona-2,4-diene-1,9-dioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 845,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07123",
+  "id": "C07123",
+  "label": "2-Hydroxy-6-oxo-octa-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1345,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07733",
+  "id": "C07733",
+  "label": "2,2',3-Trihydroxydiphenylether",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1345,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02501",
+  "id": "C02501",
+  "label": "2-Hydroxymuconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1345,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07734",
+  "id": "C07734",
+  "label": "2-Hydroxy-6-oxo-6-(2-hydroxyphenoxy)-hexa-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1043,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01273",
+  "id": "C01273",
+  "label": "2-Hydroxy-6-oxo-6-phenylhexa-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1058,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06587",
+  "id": "C06587",
+  "label": "2-Hydroxy-6-oxo-6-(4'-chlorophenyl)-hexa-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 960,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 976,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1043,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1058,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 845,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1655,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01407",
+  "id": "C01407",
+  "label": "Benzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1655,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1655,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00146",
+  "id": "C00146",
+  "label": "Phenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 1000,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00042",
+  "id": "C00042",
+  "label": "Succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 934,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00122",
+  "id": "C00122",
+  "label": "Fumarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 1016,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00180",
+  "id": "C00180",
+  "label": "Benzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 1083,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02370",
+  "id": "C02370",
+  "label": "4-Chlorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 870,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00163",
+  "id": "C00163",
+  "label": "Propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 1369,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1783,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01455",
+  "id": "C01455",
+  "label": "Toluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1783,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01542",
+  "id": "C01542",
+  "label": "o-Cresol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1826,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01468",
+  "id": "C01468",
+  "label": "4-Cresol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1783,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02923",
+  "id": "C02923",
+  "label": "2,3-Dihydroxytoluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1805,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01467",
+  "id": "C01467",
+  "label": "3-Cresol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1849,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01438",
+  "id": "C01438",
+  "label": "Methane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1849,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00132",
+  "id": "C00132",
+  "label": "Methanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 2209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01455",
+  "id": "C01455",
+  "label": "Toluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 2209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09818",
+  "id": "C09818",
+  "label": "E-Phenylitaconyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 478,
+  "cy": 2209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09820",
+  "id": "C09820",
+  "label": "(S)-2-Benzoylsuccinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 418,
+  "cy": 2209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09819",
+  "id": "C09819",
+  "label": "(2S)-[(R)-Hydroxy(phenyl)methyl]succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07111",
+  "id": "C07111",
+  "label": "Ethylbenzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 328,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07113",
+  "id": "C07113",
+  "label": "Acetophenone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 478,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07118",
+  "id": "C07118",
+  "label": "Benzoylacetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 540,
+  "cy": 2297,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 403,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07114",
+  "id": "C07114",
+  "label": "3-Oxo-3-phenylpropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 253,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11348",
+  "id": "C11348",
+  "label": "(S)-1-Phenylethanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 567,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00512",
+  "id": "C00512",
+  "label": "Benzoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 540,
+  "cy": 2184,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00091",
+  "id": "C00091",
+  "label": "Succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 2333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00146",
+  "id": "C00146",
+  "label": "Phenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 478,
+  "cy": 2333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02949",
+  "id": "C02949",
+  "label": "4-Hydroxybenzoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 328,
+  "cy": 2333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00156",
+  "id": "C00156",
+  "label": "4-Hydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 714,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06749",
+  "id": "C06749",
+  "label": "6-Hydroxycyclohex-1-ene-1-carbonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 854,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06714",
+  "id": "C06714",
+  "label": "3-Hydroxypimeloyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 784,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09821",
+  "id": "C09821",
+  "label": "6-Oxocyclohex-1-ene-1-carbonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 644,
+  "cy": 2272,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06322",
+  "id": "C06322",
+  "label": "Cyclohexa-1,5-diene-1-carbonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 644,
+  "cy": 2212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09811",
+  "id": "C09811",
+  "label": "Cyclohex-1-ene-1-carbonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 714,
+  "cy": 2212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09812",
+  "id": "C09812",
+  "label": "2-Hydroxycyclohexane-1-carbonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 854,
+  "cy": 2212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01063",
+  "id": "C01063",
+  "label": "Pimeloyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 784,
+  "cy": 2212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09813",
+  "id": "C09813",
+  "label": "2-Oxocyclohexane-1-carbonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 238,
+  "cy": 2209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09816",
+  "id": "C09816",
+  "label": "Benzylsuccinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 298,
+  "cy": 2209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09817",
+  "id": "C09817",
+  "label": "Benzylsuccinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 2380,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14098",
+  "id": "C14098",
+  "label": "2-Methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 2380,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14117",
+  "id": "C14117",
+  "label": "Naphthyl-2-methylene-succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 478,
+  "cy": 2380,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14119",
+  "id": "C14119",
+  "label": "Naphthyl-2-oxomethyl-succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 418,
+  "cy": 2380,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14118",
+  "id": "C14118",
+  "label": "Naphthyl-2-hydroxymethyl-succinyl CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 567,
+  "cy": 2380,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14120",
+  "id": "C14120",
+  "label": "2-Naphthoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 540,
+  "cy": 2355,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00091",
+  "id": "C00091",
+  "label": "Succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 238,
+  "cy": 2380,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14115",
+  "id": "C14115",
+  "label": "2-Naphtylmethylsuccinic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 298,
+  "cy": 2380,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14116",
+  "id": "C14116",
+  "label": "Naphthyl-2-methyl-succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 747,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11272",
+  "id": "C11272",
+  "label": "Fluorobenzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 747,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16483",
+  "id": "C16483",
+  "label": "4-Fluorocyclohexadiene-cis,cis-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 747,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16473",
+  "id": "C16473",
+  "label": "4-Fluorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 768,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01606",
+  "id": "C01606",
+  "label": "Phthalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 768,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04783",
+  "id": "C04783",
+  "label": "cis-4,5-Dihydroxycyclohexa-1(6),2-diene-1,2-dicarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 768,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03233",
+  "id": "C03233",
+  "label": "4,5-Dihydroxyphthalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 886,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07083",
+  "id": "C07083",
+  "label": "Styrene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 886,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07084",
+  "id": "C07084",
+  "label": "Styrene-cis-2,3-dihydrodiol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 917,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06990",
+  "id": "C06990",
+  "label": "Chlorobenzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 917,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12837",
+  "id": "C12837",
+  "label": "3-Chloro-cis-1,2-dihydroxycyclohexa-3,5-diene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 917,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05618",
+  "id": "C05618",
+  "label": "3-Chlorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1146,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18300",
+  "id": "C18300",
+  "label": "2,4-Dichlorotoluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1146,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18301",
+  "id": "C18301",
+  "label": "4,6-Dichloro-3-methyl-cis-1,2-dihydroxycyclohexa-3,5-diene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1146,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18302",
+  "id": "C18302",
+  "label": "4,6-Dichloro-3-methylcatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1167,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07092",
+  "id": "C07092",
+  "label": "1,4-Dichlorobenzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1167,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07093",
+  "id": "C07093",
+  "label": "3,6-Dichloro-cis-1,2-dihydroxycyclohexa-3,5-diene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1167,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07094",
+  "id": "C07094",
+  "label": "3,6-Dichlorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1676,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00180",
+  "id": "C00180",
+  "label": "Benzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1676,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00230",
+  "id": "C00230",
+  "label": "3,4-Dihydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1670,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00587",
+  "id": "C00587",
+  "label": "3-Hydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1702,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00423",
+  "id": "C00423",
+  "label": "trans-Cinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1702,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01197",
+  "id": "C01197",
+  "label": "Caffeate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1702,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00811",
+  "id": "C00811",
+  "label": "4-Coumarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1737,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00423",
+  "id": "C00423",
+  "label": "trans-Cinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1737,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12623",
+  "id": "C12623",
+  "label": "trans-2,3-Dihydroxycinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1737,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12621",
+  "id": "C12621",
+  "label": "trans-3-Hydroxycinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1755,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05629",
+  "id": "C05629",
+  "label": "Phenylpropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1755,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04044",
+  "id": "C04044",
+  "label": "3-(2,3-Dihydroxyphenyl)propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1755,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11457",
+  "id": "C11457",
+  "label": "3-(3-Hydroxyphenyl)propanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 644,
+  "cy": 2335,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11929",
+  "id": "C11929",
+  "label": "Perillyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 714,
+  "cy": 2335,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11934",
+  "id": "C11934",
+  "label": "2-Hydroxy-4-isopropenylcyclohexane-1-carboxyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 854,
+  "cy": 2335,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11936",
+  "id": "C11936",
+  "label": "3-Isopropenylpimelyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 784,
+  "cy": 2335,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11935",
+  "id": "C11935",
+  "label": "4-Isopropenyl-2-oxy-cyclohexanecarboxyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 2070,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00854",
+  "id": "C00854",
+  "label": "Cyclohexanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 258,
+  "cy": 2070,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00414",
+  "id": "C00414",
+  "label": "Cyclohexanone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 338,
+  "cy": 2070,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01880",
+  "id": "C01880",
+  "label": "epsilon-Caprolactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 418,
+  "cy": 2070,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06103",
+  "id": "C06103",
+  "label": "6-Hydroxyhexanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 498,
+  "cy": 2070,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06102",
+  "id": "C06102",
+  "label": "Adipate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 578,
+  "cy": 2070,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06104",
+  "id": "C06104",
+  "label": "Adipate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 658,
+  "cy": 2070,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14143",
+  "id": "C14143",
+  "label": "Adipyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 2097,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11397",
+  "id": "C11397",
+  "label": "(1R,2S,4R)-Neo-dihydrocarveol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 258,
+  "cy": 2097,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11398",
+  "id": "C11398",
+  "label": "(1R,4R)-Dihydrocarvone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 418,
+  "cy": 2097,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11404",
+  "id": "C11404",
+  "label": "(3R)-6-Hydroxy-3-isopropenyl-heptanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 578,
+  "cy": 2097,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11405",
+  "id": "C11405",
+  "label": "(3R)-3-Isopropenyl-6-oxoheptanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 658,
+  "cy": 2097,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11407",
+  "id": "C11407",
+  "label": "(3R)-3-Isopropenyl-6-oxoheptanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1268,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08060",
+  "id": "C08060",
+  "label": "Carbazole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1268,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08061",
+  "id": "C08061",
+  "label": "2'-Aminobiphenyl-2,3-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1268,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08062",
+  "id": "C08062",
+  "label": "2-Hydroxy-6-oxo-(2'-aminophenyl)-hexa-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1268,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 1293,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00108",
+  "id": "C00108",
+  "label": "Anthranilate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1305,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07729",
+  "id": "C07729",
+  "label": "Dibenzofuran",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1305,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03569",
+  "id": "C03569",
+  "label": "2,2',3-Trihydroxybiphenyl",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1305,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07731",
+  "id": "C07731",
+  "label": "2-Hydroxy-6-oxo-6-(2-hydroxyphenyl)-hexa-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1305,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 1330,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00805",
+  "id": "C00805",
+  "label": "Salicylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1934,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02519",
+  "id": "C02519",
+  "label": "4-Methoxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1934,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00156",
+  "id": "C00156",
+  "label": "4-Hydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1934,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00230",
+  "id": "C00230",
+  "label": "3,4-Dihydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1953,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07088",
+  "id": "C07088",
+  "label": "4-Chlorophenoxyacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1953,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02124",
+  "id": "C02124",
+  "label": "4-Chlorophenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1953,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02375",
+  "id": "C02375",
+  "label": "4-Chlorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1973,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03664",
+  "id": "C03664",
+  "label": "2,4-Dichlorophenoxyacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1973,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02625",
+  "id": "C02625",
+  "label": "2,4-Dichlorophenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1973,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02933",
+  "id": "C02933",
+  "label": "3,5-Dichlorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 2001,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00642",
+  "id": "C00642",
+  "label": "4-Hydroxyphenylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 2001,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01161",
+  "id": "C01161",
+  "label": "3,4-Dihydroxyphenylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 2001,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04642",
+  "id": "C04642",
+  "label": "2-Hydroxy-5-carboxymethylmuconate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 2001,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04052",
+  "id": "C04052",
+  "label": "5-Carboxy-2-oxohept-3-enedioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 2001,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05600",
+  "id": "C05600",
+  "label": "2-Hydroxyhepta-2,4-dienedioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 2001,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04186",
+  "id": "C04186",
+  "label": "5-Carboxymethyl-2-hydroxymuconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 514,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07097",
+  "id": "C07097",
+  "label": "2,6-Dichlorohydroquinone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 514,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06329",
+  "id": "C06329",
+  "label": "2-Chloromaleylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 514,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02222",
+  "id": "C02222",
+  "label": "2-Maleylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 514,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07096",
+  "id": "C07096",
+  "label": "2,6-Dichlorophenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 535,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16248",
+  "id": "C16248",
+  "label": "2,6-Dibromohydroquinone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 535,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16249",
+  "id": "C16249",
+  "label": "2-Bromomaleylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 535,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02222",
+  "id": "C02222",
+  "label": "2-Maleylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 535,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16247",
+  "id": "C16247",
+  "label": "2,6-Dibromophenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00829",
+  "id": "C00829",
+  "label": "Naphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04314",
+  "id": "C04314",
+  "label": "cis-1,2-Dihydronaphthalene-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03012",
+  "id": "C03012",
+  "label": "Naphthalene-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06204",
+  "id": "C06204",
+  "label": "2-Hydroxychromene-2-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06203",
+  "id": "C06203",
+  "label": "trans-o-Hydroxybenzylidenepyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 1540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06202",
+  "id": "C06202",
+  "label": "Salicylaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14082",
+  "id": "C14082",
+  "label": "1-Methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14083",
+  "id": "C14083",
+  "label": "cis-1,2-Dihydroxy-1,2-dihydro-8-methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14084",
+  "id": "C14084",
+  "label": "1,2-Dihydroxy-8-methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14085",
+  "id": "C14085",
+  "label": "2-Hydroxy-8-methylchromene-2-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14086",
+  "id": "C14086",
+  "label": "2-Hydroxy-3-methylbenzalpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 1569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14087",
+  "id": "C14087",
+  "label": "3-Methylsalicylaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 1569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14088",
+  "id": "C14088",
+  "label": "3-Methylsalicylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1008,
+  "cy": 1540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1008,
+  "cy": 1569,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02923",
+  "id": "C02923",
+  "label": "2,3-Dihydroxytoluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11422",
+  "id": "C11422",
+  "label": "Phenanthrene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04468",
+  "id": "C04468",
+  "label": "(+)-cis-3,4-Dihydrophenanthrene-3,4-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03164",
+  "id": "C03164",
+  "label": "Phenanthrene-3,4-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11425",
+  "id": "C11425",
+  "label": "2-Hydroxy-2H-benzo[h]chromene-2-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11426",
+  "id": "C11426",
+  "label": "cis-4-(1'-Hydroxynaphth-2'-yl)-2-oxobut-3-enoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 1597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11427",
+  "id": "C11427",
+  "label": "1-Hydroxy-2-naphthaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 1597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03203",
+  "id": "C03203",
+  "label": "1-Hydroxy-2-naphthoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1008,
+  "cy": 1597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03012",
+  "id": "C03012",
+  "label": "Naphthalene-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 641,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01467",
+  "id": "C01467",
+  "label": "3-Cresol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 641,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03067",
+  "id": "C03067",
+  "label": "3-Hydroxybenzaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 641,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03351",
+  "id": "C03351",
+  "label": "3-Hydroxybenzyl alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 641,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00587",
+  "id": "C00587",
+  "label": "3-Hydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06677",
+  "id": "C06677",
+  "label": "Toluene-4-sulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06679",
+  "id": "C06679",
+  "label": "4-Sulfobenzaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06678",
+  "id": "C06678",
+  "label": "4-Sulfobenzyl alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02236",
+  "id": "C02236",
+  "label": "4-Sulfobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 681,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14082",
+  "id": "C14082",
+  "label": "1-Methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 681,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14090",
+  "id": "C14090",
+  "label": "1-Naphthaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 681,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14089",
+  "id": "C14089",
+  "label": "1-Hydroxymethylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 681,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14091",
+  "id": "C14091",
+  "label": "1-Naphthoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 702,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14098",
+  "id": "C14098",
+  "label": "2-Methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 702,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14099",
+  "id": "C14099",
+  "label": "2-Naphthaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 702,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02909",
+  "id": "C02909",
+  "label": "(2-Naphthyl)methanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 702,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14101",
+  "id": "C14101",
+  "label": "2-Naphthoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1190,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06594",
+  "id": "C06594",
+  "label": "1,2,4-Trichlorobenzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1190,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12832",
+  "id": "C12832",
+  "label": "3,4,6-Trichloro-cis-1,2-dihydroxycyclohexa-3,5-diene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1190,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12831",
+  "id": "C12831",
+  "label": "3,4,6-Trichlorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1213,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18236",
+  "id": "C18236",
+  "label": "1,2,3,4-Tetrachlorobenzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1213,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18238",
+  "id": "C18238",
+  "label": "cis-Chlorobenzene dihydrodiol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1213,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18240",
+  "id": "C18240",
+  "label": "Tetrachlorocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1682,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00156",
+  "id": "C00156",
+  "label": "4-Hydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00540",
+  "id": "C00540",
+  "label": "Cinnamoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00323",
+  "id": "C00323",
+  "label": "Caffeoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00223",
+  "id": "C00223",
+  "label": "p-Coumaroyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1345,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07732",
+  "id": "C07732",
+  "label": "Dibenzo-p-dioxin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 928,
+  "cy": 1540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00805",
+  "id": "C00805",
+  "label": "Salicylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1008,
+  "cy": 2001,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03063",
+  "id": "C03063",
+  "label": "2-Oxohept-3-enedioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 338,
+  "cy": 2097,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11402",
+  "id": "C11402",
+  "label": "(4R,7R)-4-Isopropenyl-7-methyl-2-oxo-oxepanone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 790,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01606",
+  "id": "C01606",
+  "label": "Phthalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 790,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18314",
+  "id": "C18314",
+  "label": "Phthalate 3,4-cis-dihydrodiol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 790,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03223",
+  "id": "C03223",
+  "label": "3,4-Dihydroxyphthalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1168,
+  "cy": 233,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1088,
+  "cy": 233,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00084",
+  "id": "C00084",
+  "label": "Acetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1168,
+  "cy": 419,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00100",
+  "id": "C00100",
+  "label": "Propanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00682",
+  "id": "C00682",
+  "label": "2-Hydroxymuconate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 166,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00058",
+  "id": "C00058",
+  "label": "Formate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00596",
+  "id": "C00596",
+  "label": "2-Hydroxy-2,4-pentadienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1376,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18315",
+  "id": "C18315",
+  "label": "4-Methyl-5-nitrocatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1376,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11006",
+  "id": "C11006",
+  "label": "2,4-Dinitrotoluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1403,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1403,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06813",
+  "id": "C06813",
+  "label": "Nitrobenzene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1430,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1430,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02357",
+  "id": "C02357",
+  "label": "2-Chlorobenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1876,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21390",
+  "id": "C21390",
+  "label": "Butane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1876,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06142",
+  "id": "C06142",
+  "label": "1-Butanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 448,
+  "cy": 1100,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04596",
+  "id": "C04596",
+  "label": "1,1-Dichloro-2,2-bis(4-chlorophenyl)ethylene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 528,
+  "cy": 1100,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21859",
+  "id": "C21859",
+  "label": "cis-3-[2,2-Dichloro-1-(4-chlorophenyl)vinyl]-6-chlorocyclohexa-3,5-diene-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1100,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06644",
+  "id": "C06644",
+  "label": "1,1-Dichloro-2-(dihydroxy-4'-chlorophenyl)-2-(4'-chlorophenyl)ethylene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 1100,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06645",
+  "id": "C06645",
+  "label": "6-Oxo-2-hydroxy-7-(4'-chlorophenyl)-3,8,8-trichloroocta-2E,4E,7E-trienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 768,
+  "cy": 1100,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06646",
+  "id": "C06646",
+  "label": "2-(4'-Chlorophenyl)-3,3-dichloropropenoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 1125,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11353",
+  "id": "C11353",
+  "label": "2-Hydroxy-3-chloropenta-2,4-dienoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 360,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn01220",
+  "id": "syn01220",
+  "label": "syn01220: Degradation of aromatic compounds",
+  "entry_type": "pathway"
+ }
+]

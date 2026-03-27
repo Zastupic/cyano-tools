@@ -1,0 +1,850 @@
+[
+ {
+  "type": "circ",
+  "cx": 1392,
+  "cy": 571,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06771",
+  "id": "C06771",
+  "label": "Triethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1284,
+  "cy": 571,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06772",
+  "id": "C06772",
+  "label": "Diethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1172,
+  "cy": 510,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00084",
+  "id": "C00084",
+  "label": "Acetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 757,
+  "cy": 459,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00641",
+  "id": "C00641",
+  "label": "1,2-Diacyl-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1336,
+  "cy": 330,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01996",
+  "id": "C01996",
+  "label": "Acetylcholine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00307",
+  "id": "C00307",
+  "label": "CDP-choline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1009,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00588",
+  "id": "C00588",
+  "label": "Choline phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1172,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00114",
+  "id": "C00114",
+  "label": "Choline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 757,
+  "cy": 242,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00157",
+  "id": "C00157",
+  "label": "Phosphatidylcholine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 572,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00570",
+  "id": "C00570",
+  "label": "CDP-ethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 344,
+  "cy": 856,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00344",
+  "id": "C00344",
+  "label": "Phosphatidylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 344,
+  "cy": 790,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03892",
+  "id": "C03892",
+  "label": "Phosphatidylglycerophosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 515,
+  "cy": 856,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00641",
+  "id": "C00641",
+  "label": "1,2-Diacyl-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1009,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01210",
+  "id": "C01210",
+  "label": "N-Methylethanolamine phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1009,
+  "cy": 405,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13482",
+  "id": "C13482",
+  "label": "Phosphodimethylethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 351,
+  "cy": 351,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03974",
+  "id": "C03974",
+  "label": "2-Acyl-sn-glycerol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 111,
+  "cy": 242,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00111",
+  "id": "C00111",
+  "label": "Glycerone phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1172,
+  "cy": 572,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00189",
+  "id": "C00189",
+  "label": "Ethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 849,
+  "cy": 630,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03872",
+  "id": "C03872",
+  "label": "L-Serine-phosphoethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 351,
+  "cy": 242,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00093",
+  "id": "C00093",
+  "label": "sn-Glycerol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 344,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00269",
+  "id": "C00269",
+  "label": "CDP-diacylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 216,
+  "cy": 670,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01194",
+  "id": "C01194",
+  "label": "1-Phosphatidyl-D-myo-inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 434,
+  "cy": 242,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00513",
+  "id": "C00513",
+  "label": "CDP-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 275,
+  "cy": 351,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00681",
+  "id": "C00681",
+  "label": "1-Acyl-sn-glycerol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 351,
+  "cy": 459,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00416",
+  "id": "C00416",
+  "label": "Phosphatidate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 111,
+  "cy": 351,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03372",
+  "id": "C03372",
+  "label": "Acylglycerone phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 516,
+  "cy": 888,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05976",
+  "id": "C05976",
+  "label": "Aminoacyl-phosphatidylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 388,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00040",
+  "id": "C00040",
+  "label": "Acyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 216,
+  "cy": 856,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05980",
+  "id": "C05980",
+  "label": "Cardiolipin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 616,
+  "cy": 813,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05974",
+  "id": "C05974",
+  "label": "2-Acyl-sn-glycero-3-phosphoserine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 521,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02737",
+  "id": "C02737",
+  "label": "Phosphatidylserine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 757,
+  "cy": 714,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00350",
+  "id": "C00350",
+  "label": "Phosphatidylethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 639,
+  "cy": 404,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01241",
+  "id": "C01241",
+  "label": "Phosphatidyl-N-methylethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 388,
+  "cy": 279,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00040",
+  "id": "C00040",
+  "label": "Acyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1009,
+  "cy": 572,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00346",
+  "id": "C00346",
+  "label": "Ethanolamine phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 639,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04308",
+  "id": "C04308",
+  "label": "Phosphatidyl-N-dimethylethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1064,
+  "cy": 714,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01233",
+  "id": "C01233",
+  "label": "sn-Glycero-3-phosphoethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1208,
+  "cy": 714,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00093",
+  "id": "C00093",
+  "label": "sn-Glycerol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 911,
+  "cy": 765,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05973",
+  "id": "C05973",
+  "label": "2-Acyl-sn-glycero-3-phosphoethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 911,
+  "cy": 678,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04438",
+  "id": "C04438",
+  "label": "1-Acyl-sn-glycero-3-phosphoethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 911,
+  "cy": 198,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04230",
+  "id": "C04230",
+  "label": "1-Acyl-sn-glycero-3-phosphocholine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1208,
+  "cy": 242,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00093",
+  "id": "C00093",
+  "label": "sn-Glycerol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1064,
+  "cy": 242,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00670",
+  "id": "C00670",
+  "label": "sn-Glycero-3-phosphocholine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 911,
+  "cy": 279,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04233",
+  "id": "C04233",
+  "label": "2-Acyl-sn-glycero-3-phosphocholine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 103,
+  "cy": 670,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03819",
+  "id": "C03819",
+  "label": "1-Acylglycerophosphoinositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 103,
+  "cy": 856,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18129",
+  "id": "C18129",
+  "label": "Monolysocardiolipin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 344,
+  "cy": 937,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18126",
+  "id": "C18126",
+  "label": "1-Acyl-sn-glycero-3-phosphoglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 616,
+  "cy": 767,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18125",
+  "id": "C18125",
+  "label": "1-Acyl-sn-glycero-3-phosphoserine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 858,
+  "cy": 459,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18168",
+  "id": "C18168",
+  "label": "Diacylglycerylhomoserine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 958,
+  "cy": 459,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18169",
+  "id": "C18169",
+  "label": "Diacylglyceryl-N,N,N-trimethylhomoserine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 351,
+  "cy": 140,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00623",
+  "id": "C00623",
+  "label": "sn-Glycerol 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 451,
+  "cy": 140,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04590",
+  "id": "C04590",
+  "label": "3-(O-Geranylgeranyl)-sn-glycerol 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 140,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04638",
+  "id": "C04638",
+  "label": "2,3-Bis-(O-geranylgeranyl)-sn-glycerol 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 651,
+  "cy": 140,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18059",
+  "id": "C18059",
+  "label": "CDP-2,3-bis-(O-geranylgeranyl)-sn-glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 751,
+  "cy": 140,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20466",
+  "id": "C20466",
+  "label": "2,3-Bis-(O-geranylgeranyl)-sn-glycero-1-phospho-L-serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 205,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20518",
+  "id": "C20518",
+  "label": "2,3-Bis-(O-phytanyl)-sn-glycerol 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 451,
+  "cy": 78,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22340",
+  "id": "C22340",
+  "label": "Heptaprenylglyceryl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 551,
+  "cy": 78,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22341",
+  "id": "C22341",
+  "label": "Heptaprenylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 651,
+  "cy": 78,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22342",
+  "id": "C22342",
+  "label": "Diacetylheptaprenylglycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1266,
+  "cy": 619,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00065",
+  "id": "C00065",
+  "label": "L-Serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 400,
+  "y1": 472,
+  "x2": 446,
+  "y2": 489,
+  "url": "/dbget-bin/www_bget?syn:slr0054",
+  "id": "slr0054",
+  "label": "slr0054 (dgkA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0054",
+    "product": "diacylglycerol kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 253,
+  "y1": 404,
+  "x2": 299,
+  "y2": 421,
+  "url": "/dbget-bin/www_bget?syn:sll1848",
+  "id": "sll1848",
+  "label": "sll1848",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1848",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 146,
+  "y1": 223,
+  "x2": 192,
+  "y2": 240,
+  "url": "/dbget-bin/www_bget?syn:slr1755",
+  "id": "slr1755",
+  "label": "slr1755 (gpsA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1755",
+    "product": "NAD+ dependent glycerol-3-phosphate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 146,
+  "y1": 263,
+  "x2": 192,
+  "y2": 280,
+  "url": "/dbget-bin/www_bget?syn:sll1085",
+  "id": "sll1085",
+  "label": "sll1085 (glpD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1085",
+    "product": "glycerol-3-phosphate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 322,
+  "y1": 808,
+  "x2": 368,
+  "y2": 825,
+  "url": "/dbget-bin/www_bget?syn:slr0362",
+  "id": "slr0362",
+  "label": "slr0362",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0362",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 347,
+  "y1": 600,
+  "x2": 393,
+  "y2": 617,
+  "url": "/dbget-bin/www_bget?syn:slr1369",
+  "id": "slr1369",
+  "label": "slr1369 (cdsA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1369",
+    "product": "phosphatidate cytidylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 321,
+  "y1": 744,
+  "x2": 367,
+  "y2": 761,
+  "url": "/dbget-bin/www_bget?syn:sll1522",
+  "id": "sll1522",
+  "label": "sll1522 (pgsA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1522",
+    "product": "CDP-diacylglycerol--glycerol-3-phosphate 3-phosphatidyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 277,
+  "y1": 296,
+  "x2": 323,
+  "y2": 313,
+  "url": "/dbget-bin/www_bget?syn:sll1973",
+  "id": "sll1973",
+  "label": "sll1973",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1973",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 47,
+  "y1": 401,
+  "x2": 175,
+  "y2": 426,
+  "url": "/kegg-bin/show_pathway?map00565",
+  "id": "map00565:",
+  "label": "map00565: Ether lipid metabolism",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 1138,
+  "y1": 432,
+  "x2": 1207,
+  "y2": 457,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 148,
+  "y1": 601,
+  "x2": 283,
+  "y2": 626,
+  "url": "/kegg-bin/show_pathway?map00563",
+  "id": "map00563:",
+  "label": "map00563: Glycosylphosphatidylinositol (GPI)-anchor biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 43,
+  "y1": 92,
+  "x2": 180,
+  "y2": 117,
+  "url": "/kegg-bin/show_pathway?syn00561",
+  "id": "syn00561",
+  "label": "syn00561: Glycerolipid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 696,
+  "y1": 812,
+  "x2": 818,
+  "y2": 846,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1334,
+  "y1": 487,
+  "x2": 1412,
+  "y2": 521,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 322,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00564",
+  "id": "syn00564",
+  "label": "syn00564: Glycerophospholipid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 136,
+  "y1": 733,
+  "x2": 297,
+  "y2": 758,
+  "url": "/kegg-bin/show_pathway?syn00562",
+  "id": "syn00562",
+  "label": "syn00562: Inositol phosphate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1312,
+  "y1": 607,
+  "x2": 1419,
+  "y2": 632,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1110,
+  "y1": 380,
+  "x2": 1236,
+  "y2": 414,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ }
+]

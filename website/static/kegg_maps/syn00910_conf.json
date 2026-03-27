@@ -1,0 +1,798 @@
+[
+ {
+  "type": "circ",
+  "cx": 721,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00058",
+  "id": "C00058",
+  "label": "Formate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 648,
+  "cy": 116,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00488",
+  "id": "C00488",
+  "label": "Formamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 648,
+  "cy": 286,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 498,
+  "cy": 366,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00192",
+  "id": "C00192",
+  "label": "Hydroxylamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 412,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06058",
+  "id": "C06058",
+  "label": "Nitroalkane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 440,
+  "cy": 171,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00887",
+  "id": "C00887",
+  "label": "Nitrous oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 171,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00533",
+  "id": "C00533",
+  "label": "Nitric oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 286,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00088",
+  "id": "C00088",
+  "label": "Nitrite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 167,
+  "cy": 286,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00244",
+  "id": "C00244",
+  "label": "Nitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 648,
+  "cy": 412,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00726",
+  "id": "C00726",
+  "label": "Nitrile",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 923,
+  "cy": 225,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01417",
+  "id": "C01417",
+  "label": "Cyanate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 811,
+  "cy": 225,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01563",
+  "id": "C01563",
+  "label": "Carbamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 910,
+  "cy": 198,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00288",
+  "id": "C00288",
+  "label": "HCO3-",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 769,
+  "cy": 198,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00011",
+  "id": "C00011",
+  "label": "CO2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 811,
+  "cy": 286,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00169",
+  "id": "C00169",
+  "label": "Carbamoyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 49,
+  "cy": 286,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00244",
+  "id": "C00244",
+  "label": "Nitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 49,
+  "cy": 350,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00088",
+  "id": "C00088",
+  "label": "Nitrite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 747,
+  "cy": 366,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00064",
+  "id": "C00064",
+  "label": "L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 898,
+  "cy": 366,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00025",
+  "id": "C00025",
+  "label": "L-Glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 165,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00244",
+  "id": "C00244",
+  "label": "Nitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 277,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00088",
+  "id": "C00088",
+  "label": "Nitrite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 949,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 165,
+  "cy": 592,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00244",
+  "id": "C00244",
+  "label": "Nitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 277,
+  "cy": 592,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00088",
+  "id": "C00088",
+  "label": "Nitrite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 165,
+  "cy": 659,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00244",
+  "id": "C00244",
+  "label": "Nitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 277,
+  "cy": 659,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00088",
+  "id": "C00088",
+  "label": "Nitrite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 613,
+  "cy": 659,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00697",
+  "id": "C00697",
+  "label": "Nitrogen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 501,
+  "cy": 659,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00887",
+  "id": "C00887",
+  "label": "Nitrous oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 389,
+  "cy": 659,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00533",
+  "id": "C00533",
+  "label": "Nitric oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 613,
+  "cy": 723,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00697",
+  "id": "C00697",
+  "label": "Nitrogen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 949,
+  "cy": 723,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 949,
+  "cy": 786,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 277,
+  "cy": 786,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00088",
+  "id": "C00088",
+  "label": "Nitrite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 165,
+  "cy": 786,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00244",
+  "id": "C00244",
+  "label": "Nitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 949,
+  "cy": 592,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 725,
+  "cy": 786,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00192",
+  "id": "C00192",
+  "label": "Hydroxylamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 949,
+  "cy": 847,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 613,
+  "cy": 847,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00697",
+  "id": "C00697",
+  "label": "Nitrogen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 277,
+  "cy": 885,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00088",
+  "id": "C00088",
+  "label": "Nitrite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 837,
+  "cy": 847,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05361",
+  "id": "C05361",
+  "label": "Hydrazine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 389,
+  "cy": 885,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00533",
+  "id": "C00533",
+  "label": "Nitric oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 549,
+  "cy": 171,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00697",
+  "id": "C00697",
+  "label": "Nitrogen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 549,
+  "cy": 236,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05361",
+  "id": "C05361",
+  "label": "Hydrazine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 525,
+  "cy": 101,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00007",
+  "id": "C00007",
+  "label": "Oxygen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 201,
+  "y1": 267,
+  "x2": 247,
+  "y2": 284,
+  "url": "/dbget-bin/www_bget?syn:sll1454",
+  "id": "sll1454",
+  "label": "sll1454 (narB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1454",
+    "product": "nitrate reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 383,
+  "y1": 267,
+  "x2": 429,
+  "y2": 284,
+  "url": "/dbget-bin/www_bget?syn:slr0898",
+  "id": "slr0898",
+  "label": "slr0898 (nirA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0898",
+    "product": "ferredoxin--nitrite reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 362,
+  "y1": 152,
+  "x2": 408,
+  "y2": 169,
+  "url": "/dbget-bin/www_bget?syn:sll0450",
+  "id": "sll0450",
+  "label": "sll0450 (norB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0450",
+    "product": "cytochrome b subunit of nitric oxide reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 626,
+  "y1": 380,
+  "x2": 672,
+  "y2": 397,
+  "url": "/dbget-bin/www_bget?syn:sll0784",
+  "id": "sll0784",
+  "label": "sll0784 (merR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0784",
+    "product": "nitrilase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 846,
+  "y1": 217,
+  "x2": 892,
+  "y2": 234,
+  "url": "/dbget-bin/www_bget?syn:slr0899",
+  "id": "slr0899",
+  "label": "slr0899 (cynS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0899",
+    "product": "cyanate lyase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 816,
+  "y1": 190,
+  "x2": 862,
+  "y2": 207,
+  "url": "/dbget-bin/www_bget?syn:slr0051+syn:slr1347",
+  "id": "slr0051",
+  "label": "slr0051 (icfA), slr1347 (icfA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0051",
+    "product": "carbonic anhydrase"
+   },
+   {
+    "locus": "slr1347",
+    "product": "carbonic anhydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 788,
+  "y1": 251,
+  "x2": 834,
+  "y2": 268,
+  "url": "/dbget-bin/www_bget?syn:sll0573",
+  "id": "sll0573",
+  "label": "sll0573 (arcC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0573",
+    "product": "carbamate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 85,
+  "y1": 288,
+  "x2": 131,
+  "y2": 305,
+  "url": "/dbget-bin/www_bget?syn:sll1450+syn:sll1451+syn:sll1452+syn:sll1453",
+  "id": "sll1450",
+  "label": "sll1450 (nrtA), sll1451 (nrtB), sll1452 (nrtC), sll1453 (nrtD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1450",
+    "product": "nitrate transport 45kD protein"
+   },
+   {
+    "locus": "sll1451",
+    "product": "nitrate transport protein; NrtB"
+   },
+   {
+    "locus": "sll1452",
+    "product": "nitrate transport protein; NrtC"
+   },
+   {
+    "locus": "sll1453",
+    "product": "nitrate transport protein; NrtD"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 673,
+  "y1": 358,
+  "x2": 719,
+  "y2": 375,
+  "url": "/dbget-bin/www_bget?syn:slr0288+syn:slr1756",
+  "id": "slr0288",
+  "label": "slr0288 (glnN), slr1756 (glnA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0288",
+    "product": "glutamate--ammonia ligase"
+   },
+   {
+    "locus": "slr1756",
+    "product": "glutamate--ammonia ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 799,
+  "y1": 339,
+  "x2": 845,
+  "y2": 356,
+  "url": "/dbget-bin/www_bget?syn:sll1027",
+  "id": "sll1027",
+  "label": "sll1027 (gltD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1027",
+    "product": "NADH-glutamate synthase small subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 799,
+  "y1": 377,
+  "x2": 845,
+  "y2": 394,
+  "url": "/dbget-bin/www_bget?syn:sll1499+syn:sll1502",
+  "id": "sll1499",
+  "label": "sll1499 (gltB), sll1502 (gltB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1499",
+    "product": "ferredoxin-dependent glutamate synthase"
+   },
+   {
+    "locus": "sll1502",
+    "product": "glutamate synthase (ferredoxin)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 746,
+  "y1": 325,
+  "x2": 792,
+  "y2": 342,
+  "url": "/dbget-bin/www_bget?syn:slr0710",
+  "id": "slr0710",
+  "label": "slr0710 (gdhA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0710",
+    "product": "glutamate dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 195,
+  "y1": 565,
+  "x2": 241,
+  "y2": 582,
+  "url": "/dbget-bin/www_bget?syn:sll1454",
+  "id": "sll1454",
+  "label": "sll1454 (narB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1454",
+    "product": "nitrate reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 532,
+  "y1": 584,
+  "x2": 578,
+  "y2": 601,
+  "url": "/dbget-bin/www_bget?syn:slr0898",
+  "id": "slr0898",
+  "label": "slr0898 (nirA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0898",
+    "product": "ferredoxin--nitrite reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 418,
+  "y1": 651,
+  "x2": 464,
+  "y2": 668,
+  "url": "/dbget-bin/www_bget?syn:sll0450",
+  "id": "sll0450",
+  "label": "sll0450 (norB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0450",
+    "product": "cytochrome b subunit of nitric oxide reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 158,
+  "y1": 206,
+  "x2": 324,
+  "y2": 231,
+  "url": "/kegg-bin/show_pathway?syn00720",
+  "id": "syn00720",
+  "label": "syn00720: Other carbon fixation pathways",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 569,
+  "y1": 54,
+  "x2": 731,
+  "y2": 79,
+  "url": "/kegg-bin/show_pathway?syn00460",
+  "id": "syn00460",
+  "label": "syn00460: Cyanoamino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 225,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00910",
+  "id": "syn00910",
+  "label": "syn00910: Nitrogen metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 801,
+  "y1": 122,
+  "x2": 920,
+  "y2": 147,
+  "url": "/kegg-bin/show_pathway?syn00680",
+  "id": "syn00680",
+  "label": "syn00680: Methane metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 801,
+  "y1": 155,
+  "x2": 932,
+  "y2": 180,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 897,
+  "y1": 274,
+  "x2": 1022,
+  "y2": 299,
+  "url": "/kegg-bin/show_pathway?syn00220",
+  "id": "syn00220",
+  "label": "syn00220: Arginine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 954,
+  "y1": 349,
+  "x2": 1031,
+  "y2": 383,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,13 @@
+[
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 372,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00514",
+  "id": "syn00514",
+  "label": "syn00514: Other types of O-glycan biosynthesis",
+  "entry_type": "pathway"
+ }
+]

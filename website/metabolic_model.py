@@ -1,5 +1,7 @@
 import os
 import json
+import math
+import re
 import threading
 import urllib.request
 import urllib.parse
@@ -381,6 +383,7 @@ def metabolites():
         'formula':     met.formula,
         'compartment': met.compartment,
         'charge':      met.charge,
+        'kegg':        met.annotation.get('kegg.compound', ''),
     } for met in m.metabolites])
 
 
@@ -430,31 +433,203 @@ def genes():
     return jsonify(result)
 
 
-# ── Subsystem graph (bipartite: metabolites ↔ reactions) ─────────────────────
+# ── KEGG pathway manifest ─────────────────────────────────────────────────────
 
-@metabolic_bp.route('/api/metabolic/subsystem/<path:name>/graph')
-def subsystem_graph(name):
-    m = _get_model()
-    nodes, edges = [], []
-    met_seen, rxn_seen = set(), set()
+_kegg_manifest = None  # {pathway_id: pathway_name}
 
-    for r in m.reactions:
-        if _get_subsystem(r) != name:
+
+def _load_kegg_manifest():
+    """Load the KEGG pathway manifest (pid → name) from manifest.json."""
+    global _kegg_manifest
+    if _kegg_manifest is not None:
+        return _kegg_manifest
+    manifest_path = os.path.join(os.path.dirname(__file__), 'static', 'kegg_maps',
+                                 'manifest.json')
+    try:
+        with open(manifest_path) as f:
+            _kegg_manifest = json.load(f)
+    except Exception:
+        _kegg_manifest = {}
+    return _kegg_manifest
+
+
+@metabolic_bp.route('/api/metabolic/kegg_pathways')
+def kegg_pathway_list():
+    """Return sorted list of available KEGG pathway maps [{id, name}]."""
+    manifest = _load_kegg_manifest()
+    return jsonify(sorted(
+        [{'id': pid, 'name': name} for pid, name in manifest.items()],
+        key=lambda x: x['name']
+    ))
+
+
+# ── KEGG compound → pathway index ─────────────────────────────────────────────
+
+_compound_pathway_index = None  # {kegg_cpd_id: [{pathway_id, pathway_name}]}
+
+
+def _build_compound_index():
+    global _compound_pathway_index
+    if _compound_pathway_index is not None:
+        return _compound_pathway_index
+
+    kegg_dir = os.path.join(os.path.dirname(__file__), 'static', 'kegg_maps')
+    pathway_names = _load_kegg_manifest()
+
+    index = {}
+    for pid, pname in pathway_names.items():
+        conf_path = os.path.join(kegg_dir, f'{pid}_conf.json')
+        if not os.path.isfile(conf_path):
             continue
-        if r.id not in rxn_seen:
-            nodes.append({'data': {'id': r.id, 'label': r.name or r.id, 'type': 'rxn'}})
-            rxn_seen.add(r.id)
-        for met, coeff in r.metabolites.items():
-            if met.id not in met_seen:
-                nodes.append({'data': {'id': met.id, 'label': met.name or met.id,
-                                       'type': 'met', 'compartment': met.compartment or ''}})
-                met_seen.add(met.id)
-            if coeff < 0:
-                edges.append({'data': {'source': met.id, 'target': r.id}})
-            else:
-                edges.append({'data': {'source': r.id, 'target': met.id}})
+        try:
+            with open(conf_path) as f:
+                hotspots = json.load(f)
+            seen_cpds = set()
+            for hs in hotspots:
+                if hs.get('entry_type') == 'compound':
+                    cpd_id = hs['id']
+                    if (cpd_id, pid) not in seen_cpds:
+                        seen_cpds.add((cpd_id, pid))
+                        index.setdefault(cpd_id, []).append({
+                            'pathway_id': pid, 'pathway_name': pname})
+        except Exception:
+            pass
 
-    return jsonify({'nodes': nodes, 'edges': edges})
+    _compound_pathway_index = index
+    return index
+
+
+@metabolic_bp.route('/api/metabolic/compound_pathways')
+def compound_pathways():
+    """Return {kegg_cpd_id: [{pathway_id, pathway_name}]} for all compounds
+    that appear in downloaded KEGG maps."""
+    return jsonify(_build_compound_index())
+
+
+_reaction_pathway_index = None  # {rxn_id: [{pathway_id, pathway_name}]}
+
+
+def _build_reaction_index():
+    global _reaction_pathway_index
+    if _reaction_pathway_index is not None:
+        return _reaction_pathway_index
+
+    kegg_dir = os.path.join(os.path.dirname(__file__), 'static', 'kegg_maps')
+    names = _load_kegg_manifest()
+
+    # We need rxn_ids from gene hotspots — load conf files and run the
+    # same locus→reaction mapping as kegg_map_conf does
+    m = _get_model()
+    locus_to_rxns = {}
+    for r in m.reactions:
+        for g in r.genes:
+            locus_to_rxns.setdefault(g.id, []).append(r.id)
+
+    index = {}
+    for pid, pname in names.items():
+        conf_path = os.path.join(kegg_dir, f'{pid}_conf.json')
+        if not os.path.isfile(conf_path):
+            continue
+        try:
+            with open(conf_path) as f:
+                hotspots = json.load(f)
+            for hs in hotspots:
+                if hs.get('entry_type') == 'gene':
+                    loci = re.findall(r'(s[lr][rl]\d+)', hs.get('label', ''))
+                    rxn_ids = set()
+                    for locus in loci:
+                        rxn_ids.update(locus_to_rxns.get(locus, []))
+                    for rid in rxn_ids:
+                        entry = {'pathway_id': pid, 'pathway_name': pname}
+                        existing = index.setdefault(rid, [])
+                        if not any(e['pathway_id'] == pid for e in existing):
+                            existing.append(entry)
+        except Exception:
+            pass
+
+    _reaction_pathway_index = index
+    return index
+
+
+@metabolic_bp.route('/api/metabolic/reaction_pathways')
+def reaction_pathways():
+    """Return {rxn_id: [{pathway_id, pathway_name}]} for all iRH783 reactions
+    that map to genes in downloaded KEGG maps."""
+    return jsonify(_build_reaction_index())
+
+
+# ── KEGG pathway map conf data ───────────────────────────────────────────────
+
+@metabolic_bp.route('/api/metabolic/kegg_map/<pathway_id>')
+def kegg_map_conf(pathway_id):
+    """Return parsed KEGG conf hotspot data + image URL for a pathway.
+
+    Also maps KEGG gene IDs to iRH783 reaction IDs so flux data can be
+    overlaid on the correct gene boxes.
+    """
+    # Validate pathway_id format
+    if not re.match(r'^syn\d{5}$', pathway_id):
+        return jsonify({'error': 'Invalid pathway ID'}), 400
+
+    conf_path = os.path.join(os.path.dirname(__file__), 'static', 'kegg_maps',
+                             f'{pathway_id}_conf.json')
+    img_url = f'/static/kegg_maps/{pathway_id}.png'
+
+    if not os.path.isfile(conf_path):
+        return jsonify({'error': f'No conf data for {pathway_id}'}), 404
+
+    with open(conf_path) as f:
+        hotspots = json.load(f)
+
+    # Build gene locus → iRH783 reaction ID mapping and name lookup
+    m = _get_model()
+    locus_to_rxns = {}  # e.g. 'slr1289' → ['ICDHyr']
+    locus_to_rxn_names = {}  # e.g. 'slr1289' → ['Isocitrate dehydrogenase']
+    for r in m.reactions:
+        for g in r.genes:
+            locus_to_rxns.setdefault(g.id, []).append(r.id)
+            if r.name and r.name != r.id:
+                locus_to_rxn_names.setdefault(g.id, set()).add(r.name)
+
+    # Build locus → protein name from external annotations + model
+    locus_to_protein = {}
+    for g in m.genes:
+        ext = _EXT_ANNOTATIONS.get(g.id, {})
+        protein_name = (ext.get('protein_name') or ext.get('product')
+                        or (g.name if g.name and not g.name.startswith('G_') else '')
+                        or '')
+        gene_name = ext.get('gene_name', '')
+        if protein_name or gene_name:
+            locus_to_protein[g.id] = {
+                'protein': protein_name,
+                'gene_name': gene_name,
+            }
+
+    # Annotate gene hotspots with iRH783 reaction IDs and protein names
+    for hs in hotspots:
+        if hs['entry_type'] == 'gene':
+            # label may be "slr1289 (icd)" or "sll0823 (sdhB), slr0090 (sdhA)"
+            loci = re.findall(r'(s[lr][rl]\d+)', hs['label'])
+            rxn_ids = set()
+            gene_details = []
+            for locus in loci:
+                rxn_ids.update(locus_to_rxns.get(locus, []))
+                info = locus_to_protein.get(locus, {})
+                protein = info.get('protein', '')
+                gname = info.get('gene_name', '')
+                rxn_names = sorted(locus_to_rxn_names.get(locus, set()))
+                gene_details.append({
+                    'locus': locus,
+                    'gene_name': gname,
+                    'protein': protein,
+                    'rxn_names': rxn_names,
+                })
+            hs['rxn_ids'] = list(rxn_ids)
+            hs['gene_details'] = gene_details
+
+    return jsonify({'hotspots': hotspots, 'image_url': img_url,
+                    'pathway_id': pathway_id})
+
 
 
 # ── FBA ───────────────────────────────────────────────────────────────────────

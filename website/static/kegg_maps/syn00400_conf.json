@@ -1,0 +1,984 @@
+[
+ {
+  "type": "circ",
+  "cx": 237,
+  "cy": 200,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00279",
+  "id": "C00279",
+  "label": "D-Erythrose 4-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 245,
+  "cy": 235,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00074",
+  "id": "C00074",
+  "label": "Phosphoenolpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 328,
+  "cy": 200,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04691",
+  "id": "C04691",
+  "label": "2-Dehydro-3-deoxy-D-arabino-heptonate 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 200,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00944",
+  "id": "C00944",
+  "label": "3-Dehydroquinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 124,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00296",
+  "id": "C00296",
+  "label": "Quinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 297,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02637",
+  "id": "C02637",
+  "label": "3-Dehydroshikimate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 374,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00493",
+  "id": "C00493",
+  "label": "Shikimate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 435,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03175",
+  "id": "C03175",
+  "label": "Shikimate 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 496,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01269",
+  "id": "C01269",
+  "label": "5-O-(1-Carboxyvinyl)-3-phosphoshikimate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 557,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00251",
+  "id": "C00251",
+  "label": "Chorismate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 329,
+  "cy": 811,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00079",
+  "id": "C00079",
+  "label": "L-Phenylalanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 308,
+  "cy": 530,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00119",
+  "id": "C00119",
+  "label": "5-Phospho-alpha-D-ribose 1-diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 328,
+  "cy": 557,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00108",
+  "id": "C00108",
+  "label": "Anthranilate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 235,
+  "cy": 557,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04302",
+  "id": "C04302",
+  "label": "N-(5-Phospho-D-ribosyl)anthranilate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 235,
+  "cy": 496,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01302",
+  "id": "C01302",
+  "label": "1-(2-Carboxyphenylamino)-1-deoxy-D-ribulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 235,
+  "cy": 435,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03506",
+  "id": "C03506",
+  "label": "Indoleglycerol phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 374,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00463",
+  "id": "C00463",
+  "label": "Indole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 435,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00078",
+  "id": "C00078",
+  "label": "L-Tryptophan",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 523,
+  "cy": 811,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00082",
+  "id": "C00082",
+  "label": "L-Tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 523,
+  "cy": 694,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01179",
+  "id": "C01179",
+  "label": "3-(4-Hydroxyphenyl)pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00254",
+  "id": "C00254",
+  "label": "Prephenate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 705,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00826",
+  "id": "C00826",
+  "label": "L-Arogenate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 329,
+  "cy": 694,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00166",
+  "id": "C00166",
+  "label": "Phenylpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 510,
+  "cy": 200,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16850",
+  "id": "C16850",
+  "label": "2-Amino-3,7-dideoxy-D-threo-hept-6-ulosonic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 201,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00441",
+  "id": "C00441",
+  "label": "L-Aspartate 4-semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 592,
+  "cy": 241,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16848",
+  "id": "C16848",
+  "label": "6-Deoxy-5-ketofructose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 687,
+  "cy": 241,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01094",
+  "id": "C01094",
+  "label": "D-Fructose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 687,
+  "cy": 279,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00354",
+  "id": "C00354",
+  "label": "D-Fructose 1,6-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 157,
+  "cy": 694,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20653",
+  "id": "C20653",
+  "label": "2-Benzylmalic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 65,
+  "cy": 694,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20654",
+  "id": "C20654",
+  "label": "3-Benzylmalic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 65,
+  "cy": 755,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20327",
+  "id": "C20327",
+  "label": "2-Oxo-4-phenylbutyric acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 65,
+  "cy": 818,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17235",
+  "id": "C17235",
+  "label": "L-Homophenylalanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 619,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00587",
+  "id": "C00587",
+  "label": "3-Hydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 679,
+  "cy": 619,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20710",
+  "id": "C20710",
+  "label": "(4R,5R)-4,5-Dihydroxycyclohexa-1(6),2-diene-1-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 510,
+  "cy": 297,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00230",
+  "id": "C00230",
+  "label": "3,4-Dihydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 258,
+  "y1": 191,
+  "x2": 304,
+  "y2": 208,
+  "url": "/dbget-bin/www_bget?syn:sll0934",
+  "id": "sll0934",
+  "label": "sll0934 (ccmA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0934",
+    "product": "carboxysome formation protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 396,
+  "y1": 515,
+  "x2": 442,
+  "y2": 532,
+  "url": "/dbget-bin/www_bget?syn:sll1747",
+  "id": "sll1747",
+  "label": "sll1747 (aroC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1747",
+    "product": "chorismate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 166,
+  "y1": 426,
+  "x2": 212,
+  "y2": 443,
+  "url": "/dbget-bin/www_bget?syn:slr0543+syn:slr0966",
+  "id": "slr0543",
+  "label": "slr0543 (trpB), slr0966 (trpA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0543",
+    "product": "tryptophan synthase beta subunit"
+   },
+   {
+    "locus": "slr0966",
+    "product": "tryptophan synthase alpha chain"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 166,
+  "y1": 365,
+  "x2": 212,
+  "y2": 382,
+  "url": "/dbget-bin/www_bget?syn:slr0966",
+  "id": "slr0966",
+  "label": "slr0966 (trpA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0966",
+    "product": "tryptophan synthase alpha chain"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 119,
+  "y1": 389,
+  "x2": 165,
+  "y2": 406,
+  "url": "/dbget-bin/www_bget?syn:slr0543",
+  "id": "slr0543",
+  "label": "slr0543 (trpB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0543",
+    "product": "tryptophan synthase beta subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 212,
+  "y1": 454,
+  "x2": 258,
+  "y2": 471,
+  "url": "/dbget-bin/www_bget?syn:slr0546",
+  "id": "slr0546",
+  "label": "slr0546 (trpC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0546",
+    "product": "indole-3-glycerol phosphate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 213,
+  "y1": 521,
+  "x2": 259,
+  "y2": 538,
+  "url": "/dbget-bin/www_bget?syn:sll0356",
+  "id": "sll0356",
+  "label": "sll0356 (trpF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0356",
+    "product": "5'-phosphoribosyl anthranilate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 254,
+  "y1": 549,
+  "x2": 300,
+  "y2": 566,
+  "url": "/dbget-bin/www_bget?syn:slr1867",
+  "id": "slr1867",
+  "label": "slr1867 (trpD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1867",
+    "product": "anthranilate phosphoribosyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 354,
+  "y1": 550,
+  "x2": 400,
+  "y2": 567,
+  "url": "/dbget-bin/www_bget?syn:slr0055+syn:slr0738",
+  "id": "slr0055",
+  "label": "slr0055 (trpG), slr0738 (trpE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0055",
+    "product": "anthranilate synthase component II"
+   },
+   {
+    "locus": "slr0738",
+    "product": "anthranilate synthetase alpha-subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 396,
+  "y1": 580,
+  "x2": 442,
+  "y2": 597,
+  "url": "/dbget-bin/www_bget?syn:sll0109",
+  "id": "sll0109",
+  "label": "sll0109 (aroH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0109",
+    "product": "chorismate mutase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 306,
+  "y1": 640,
+  "x2": 352,
+  "y2": 657,
+  "url": "/dbget-bin/www_bget?syn:sll1662",
+  "id": "sll1662",
+  "label": "sll1662 (pheA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1662",
+    "product": "chorismate mutase/prephenate dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 356,
+  "y1": 792,
+  "x2": 402,
+  "y2": 809,
+  "url": "/dbget-bin/www_bget?syn:sll1662",
+  "id": "sll1662",
+  "label": "sll1662 (pheA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1662",
+    "product": "chorismate mutase/prephenate dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 396,
+  "y1": 458,
+  "x2": 442,
+  "y2": 475,
+  "url": "/dbget-bin/www_bget?syn:slr0444",
+  "id": "slr0444",
+  "label": "slr0444 (aroA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0444",
+    "product": "3-phosphoshikimate 1-carboxyvinyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 396,
+  "y1": 392,
+  "x2": 442,
+  "y2": 409,
+  "url": "/dbget-bin/www_bget?syn:sll1669",
+  "id": "sll1669",
+  "label": "sll1669 (aroK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1669",
+    "product": "shikimate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 397,
+  "y1": 238,
+  "x2": 443,
+  "y2": 255,
+  "url": "/dbget-bin/www_bget?syn:sll1112",
+  "id": "sll1112",
+  "label": "sll1112 (aroQ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1112",
+    "product": "carbonic 3-dehydroquinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 348,
+  "y1": 192,
+  "x2": 394,
+  "y2": 209,
+  "url": "/dbget-bin/www_bget?syn:slr2130",
+  "id": "slr2130",
+  "label": "slr2130 (aroB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2130",
+    "product": "3-dehydroquinate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 281,
+  "y1": 725,
+  "x2": 327,
+  "y2": 742,
+  "url": "/dbget-bin/www_bget?syn:sll0402",
+  "id": "sll0402",
+  "label": "sll0402 (aspC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0402",
+    "product": "aspartate aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 475,
+  "y1": 725,
+  "x2": 521,
+  "y2": 742,
+  "url": "/dbget-bin/www_bget?syn:sll0402",
+  "id": "sll0402",
+  "label": "sll0402 (aspC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0402",
+    "product": "aspartate aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 281,
+  "y1": 744,
+  "x2": 327,
+  "y2": 761,
+  "url": "/dbget-bin/www_bget?syn:sll1958",
+  "id": "sll1958",
+  "label": "sll1958 (hisC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1958",
+    "product": "histidinol phosphate aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 475,
+  "y1": 744,
+  "x2": 521,
+  "y2": 761,
+  "url": "/dbget-bin/www_bget?syn:sll1958",
+  "id": "sll1958",
+  "label": "sll1958 (hisC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1958",
+    "product": "histidinol phosphate aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 446,
+  "y1": 813,
+  "x2": 492,
+  "y2": 830,
+  "url": "/dbget-bin/www_bget?syn:slr2081",
+  "id": "slr2081",
+  "label": "slr2081 (tyrA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2081",
+    "product": "prephenate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 111,
+  "y1": 797,
+  "x2": 208,
+  "y2": 831,
+  "url": "/kegg-bin/show_pathway?map00940",
+  "id": "map00940:",
+  "label": "map00940: Phenylpropanoid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 569,
+  "y1": 867,
+  "x2": 672,
+  "y2": 901,
+  "url": "/kegg-bin/show_pathway?map00940",
+  "id": "map00940:",
+  "label": "map00940: Phenylpropanoid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 574,
+  "y1": 467,
+  "x2": 700,
+  "y2": 512,
+  "url": "/kegg-bin/show_pathway?map01053",
+  "id": "map01053:",
+  "label": "map01053: Biosynthesis of siderophore group nonribosomal peptides",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 581,
+  "x2": 207,
+  "y2": 606,
+  "url": "/kegg-bin/show_pathway?map01058",
+  "id": "map01058:",
+  "label": "map01058: Acridone alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 33,
+  "y1": 492,
+  "x2": 124,
+  "y2": 526,
+  "url": "/kegg-bin/show_pathway?map00901",
+  "id": "map00901:",
+  "label": "map00901: Indole alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 195,
+  "y1": 327,
+  "x2": 292,
+  "y2": 361,
+  "url": "/kegg-bin/show_pathway?map00402",
+  "id": "map00402:",
+  "label": "map00402: Benzoxazinoid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 127,
+  "y1": 849,
+  "x2": 263,
+  "y2": 894,
+  "url": "/kegg-bin/show_pathway?map00960",
+  "id": "map00960:",
+  "label": "map00960: Tropane, piperidine and pyridine alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 498,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00400",
+  "id": "syn00400",
+  "label": "syn00400: Phenylalanine, tyrosine and tryptophan biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 33,
+  "y1": 454,
+  "x2": 109,
+  "y2": 488,
+  "url": "/kegg-bin/show_pathway?syn00380",
+  "id": "syn00380",
+  "label": "syn00380: Tryptophan metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 196,
+  "y1": 916,
+  "x2": 352,
+  "y2": 941,
+  "url": "/kegg-bin/show_pathway?syn00360",
+  "id": "syn00360",
+  "label": "syn00360: Phenylalanine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 499,
+  "y1": 915,
+  "x2": 618,
+  "y2": 940,
+  "url": "/kegg-bin/show_pathway?syn00350",
+  "id": "syn00350",
+  "label": "syn00350: Tyrosine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 112,
+  "y1": 223,
+  "x2": 188,
+  "y2": 248,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 118,
+  "y1": 147,
+  "x2": 213,
+  "y2": 181,
+  "url": "/kegg-bin/show_pathway?syn00710",
+  "id": "syn00710",
+  "label": "syn00710: Carbon fixation in photosynthetic organisms",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 186,
+  "y1": 104,
+  "x2": 292,
+  "y2": 138,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 803,
+  "y1": 536,
+  "x2": 882,
+  "y2": 570,
+  "url": "/kegg-bin/show_pathway?syn00790",
+  "id": "syn00790",
+  "label": "syn00790: Folate biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 635,
+  "y1": 677,
+  "x2": 802,
+  "y2": 711,
+  "url": "/kegg-bin/show_pathway?syn00130",
+  "id": "syn00130",
+  "label": "syn00130: Ubiquinone and other terpenoid-quinone biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 707,
+  "y1": 867,
+  "x2": 824,
+  "y2": 901,
+  "url": "/kegg-bin/show_pathway?map00950",
+  "id": "map00950:",
+  "label": "map00950: Isoquinoline alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 351,
+  "y1": 882,
+  "x2": 502,
+  "y2": 907,
+  "url": "/kegg-bin/show_pathway?map00966",
+  "id": "map00966:",
+  "label": "map00966: Glucosinolate biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 272,
+  "y1": 374,
+  "x2": 388,
+  "y2": 408,
+  "url": "/kegg-bin/show_pathway?map00403",
+  "id": "map00403:",
+  "label": "map00403: Indole diterpene alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 72,
+  "y1": 530,
+  "x2": 153,
+  "y2": 564,
+  "url": "/kegg-bin/show_pathway?map00404",
+  "id": "map00404:",
+  "label": "map00404: Staurosporine biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 744,
+  "y1": 606,
+  "x2": 861,
+  "y2": 640,
+  "url": "/kegg-bin/show_pathway?map01059",
+  "id": "map01059:",
+  "label": "map01059: Biosynthesis of enediyne antibiotics",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 216,
+  "y1": 275,
+  "x2": 342,
+  "y2": 320,
+  "url": "/kegg-bin/show_pathway?map01053",
+  "id": "map01053:",
+  "label": "map01053: Biosynthesis of siderophore group nonribosomal peptides",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 524,
+  "y1": 327,
+  "x2": 642,
+  "y2": 351,
+  "url": "/kegg-bin/show_pathway?map00362",
+  "id": "map00362:",
+  "label": "map00362: Benzoate degradation",
+  "entry_type": "gene",
+  "genes": []
+ }
+]

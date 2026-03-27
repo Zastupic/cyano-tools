@@ -1,0 +1,563 @@
+[
+ {
+  "type": "circ",
+  "cx": 496,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19877",
+  "id": "C19877",
+  "label": "4-O-Phospho-alpha-Kdo-(2-&gt;6)-lipid IVA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 705,
+  "cy": 299,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04121",
+  "id": "C04121",
+  "label": "CMP-3-deoxy-D-manno-octulosonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 449,
+  "cy": 337,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06251",
+  "id": "C06251",
+  "label": "Lauroyl-KDO2-lipid IV(A)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 391,
+  "cy": 401,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00229",
+  "id": "C00229",
+  "label": "Acyl-carrier protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 449,
+  "cy": 245,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06025",
+  "id": "C06025",
+  "label": "KDO2-lipid IVA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 732,
+  "cy": 245,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04919",
+  "id": "C04919",
+  "label": "2,3,2'3'-Tetrakis(3-hydroxytetradecanoyl)-D-glucosaminyl-1,6-beta-D-glucosamine 1,4'-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 874,
+  "cy": 245,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04932",
+  "id": "C04932",
+  "label": "Lipid A disaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 961,
+  "cy": 134,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04824",
+  "id": "C04824",
+  "label": "Lipid X",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 391,
+  "cy": 363,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05761",
+  "id": "C05761",
+  "label": "Tetradecanoyl-[acp]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 390,
+  "cy": 308,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00229",
+  "id": "C00229",
+  "label": "Acyl-carrier protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 591,
+  "cy": 245,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06024",
+  "id": "C06024",
+  "label": "3-Deoxy-D-manno-octulosonyl-lipid IV(A)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 874,
+  "cy": 134,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04652",
+  "id": "C04652",
+  "label": "UDP-2,3-bis(3-hydroxytetradecanoyl)glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 449,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06026",
+  "id": "C06026",
+  "label": "KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 591,
+  "cy": 134,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04738",
+  "id": "C04738",
+  "label": "UDP-3-O-(3-hydroxytetradecanoyl)-N-acetylglucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 732,
+  "cy": 134,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06022",
+  "id": "C06022",
+  "label": "UDP-3-O-(3-hydroxytetradecanoyl)-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 449,
+  "cy": 134,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00043",
+  "id": "C00043",
+  "label": "UDP-N-acetyl-alpha-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 390,
+  "cy": 270,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05223",
+  "id": "C05223",
+  "label": "Dodecanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 874,
+  "cy": 378,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21982",
+  "id": "C21982",
+  "label": "Lipid IVB",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 874,
+  "cy": 452,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21984",
+  "id": "C21984",
+  "label": "Deacyl-lipid IVA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 962,
+  "cy": 424,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21983",
+  "id": "C21983",
+  "label": "Deacyl-lipid IVB",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 505,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21994",
+  "id": "C21994",
+  "label": "1-Dephospho-KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 576,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21995",
+  "id": "C21995",
+  "label": "1-PEtN-KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 786,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21998",
+  "id": "C21998",
+  "label": "H. pylori KDO-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 646,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21996",
+  "id": "C21996",
+  "label": "1-PEtN-KDO-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21988",
+  "id": "C21988",
+  "label": "H. pylori KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 124,
+  "cy": 620,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01187",
+  "id": "C01187",
+  "label": "3-Deoxy-D-manno-octulosonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 504,
+  "cy": 337,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20933",
+  "id": "C20933",
+  "label": "(9Z)-Hexadec-9-enoyl-KDO2-lipid IV(A)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 614,
+  "cy": 337,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21991",
+  "id": "C21991",
+  "label": "Palmitoleoyl-myristoyl-KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 340,
+  "cy": 544,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21157",
+  "id": "C21157",
+  "label": "KDO2-lipid A 1-diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 340,
+  "cy": 624,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21461",
+  "id": "C21461",
+  "label": "KDO2-lipid A 1-(2-aminoethyl diphosphate)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 340,
+  "cy": 489,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21992",
+  "id": "C21992",
+  "label": "3'-O-Deacylated KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 560,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21993",
+  "id": "C21993",
+  "label": "C16-KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 560,
+  "cy": 624,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21173",
+  "id": "C21173",
+  "label": "PEtN-KDO2-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 560,
+  "cy": 521,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19890",
+  "id": "C19890",
+  "label": "alpha-Kdo-(2-&gt;4)-alpha-Kdo-(2-&gt;6)-[4-P-L-Ara4N]-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 874,
+  "cy": 275,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19884",
+  "id": "C19884",
+  "label": "Lipid IIA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 962,
+  "cy": 303,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22002",
+  "id": "C22002",
+  "label": "Lipid IIB",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 340,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22003",
+  "id": "C22003",
+  "label": "(S)-2-Hydroxymyristate-modified lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 229,
+  "cy": 624,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21463",
+  "id": "C21463",
+  "label": "KDO2-lipid A 1,4'-bis(2-aminoethyl diphosphate)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 716,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21997",
+  "id": "C21997",
+  "label": "4'-Dephosphorylated 1-PEtN-KDO-lipid A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 245,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22068",
+  "id": "C22068",
+  "label": "H. pylori KDO2-lipid IVA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 94,
+  "cy": 270,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04088",
+  "id": "C04088",
+  "label": "Octadecanoyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 94,
+  "cy": 308,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00229",
+  "id": "C00229",
+  "label": "Acyl-carrier protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 337,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21999",
+  "id": "C21999",
+  "label": "Stearoyl-KDO2-lipid IVA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 762,
+  "cy": 323,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16157",
+  "id": "C16157",
+  "label": "Undecaprenyl phosphate alpha-L-Ara4N",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 473,
+  "cy": 572,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16157",
+  "id": "C16157",
+  "label": "Undecaprenyl phosphate alpha-L-Ara4N",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 615,
+  "cy": 648,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06398",
+  "id": "C06398",
+  "label": "ADP-L-glycero-beta-D-manno-heptose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 187,
+  "x2": 897,
+  "y2": 204,
+  "url": "/dbget-bin/www_bget?syn:slr0015",
+  "id": "slr0015",
+  "label": "slr0015 (lpxB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0015",
+    "product": "lipid A disaccharide synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 773,
+  "y1": 126,
+  "x2": 819,
+  "y2": 143,
+  "url": "/dbget-bin/www_bget?syn:slr0776",
+  "id": "slr0776",
+  "label": "slr0776 (lpxD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0776",
+    "product": "UDP-3-o-[3-hydroxymyristoyl] glucosamine n-acyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 631,
+  "y1": 126,
+  "x2": 677,
+  "y2": 143,
+  "url": "/dbget-bin/www_bget?syn:sll1508",
+  "id": "sll1508",
+  "label": "sll1508 (lpxC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1508",
+    "product": "UDP-3-o-acyl N-acetylglcosamine deacetylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 491,
+  "y1": 126,
+  "x2": 537,
+  "y2": 143,
+  "url": "/dbget-bin/www_bget?syn:sll0379",
+  "id": "sll0379",
+  "label": "sll0379 (lpxA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0379",
+    "product": "acyl-[acyl-carrier-protein]--UDP-N-acetylglucosamine o-acyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 317,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00540",
+  "id": "syn00540",
+  "label": "syn00540: Lipopolysaccharide biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 232,
+  "y1": 117,
+  "x2": 387,
+  "y2": 151,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 767,
+  "y1": 555,
+  "x2": 910,
+  "y2": 589,
+  "url": "/kegg-bin/show_pathway?syn00541",
+  "id": "syn00541",
+  "label": "syn00541: Biosynthesis of various nucleotide sugars",
+  "entry_type": "pathway"
+ }
+]

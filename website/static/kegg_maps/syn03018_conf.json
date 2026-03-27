@@ -1,0 +1,291 @@
+[
+ {
+  "type": "rect",
+  "x1": 708,
+  "y1": 674,
+  "x2": 754,
+  "y2": 691,
+  "url": "/dbget-bin/www_bget?syn:slr1129",
+  "id": "slr1129",
+  "label": "slr1129 (rne)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1129",
+    "product": "ribonuclease E"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 708,
+  "y1": 724,
+  "x2": 754,
+  "y2": 741,
+  "url": "/dbget-bin/www_bget?syn:slr1129",
+  "id": "slr1129",
+  "label": "slr1129 (rne)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1129",
+    "product": "ribonuclease E"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 708,
+  "y1": 774,
+  "x2": 754,
+  "y2": 791,
+  "url": "/dbget-bin/www_bget?syn:slr1129",
+  "id": "slr1129",
+  "label": "slr1129 (rne)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1129",
+    "product": "ribonuclease E"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 799,
+  "y1": 674,
+  "x2": 845,
+  "y2": 691,
+  "url": "/dbget-bin/www_bget?syn:slr0752",
+  "id": "slr0752",
+  "label": "slr0752 (eno)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0752",
+    "product": "enolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 845,
+  "y1": 674,
+  "x2": 891,
+  "y2": 691,
+  "url": "/dbget-bin/www_bget?syn:sll1043",
+  "id": "sll1043",
+  "label": "sll1043 (pnp)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1043",
+    "product": "polyribonucleotide nucleotidyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 799,
+  "y1": 724,
+  "x2": 845,
+  "y2": 741,
+  "url": "/dbget-bin/www_bget?syn:sll1910",
+  "id": "sll1910",
+  "label": "sll1910 (zam)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1910",
+    "product": "protein conferring resistance to acetazolamide; Zam"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 754,
+  "y1": 774,
+  "x2": 800,
+  "y2": 791,
+  "url": "/dbget-bin/www_bget?syn:slr0083+syn:slr1536",
+  "id": "slr0083",
+  "label": "slr0083 (deaD), slr1536 (recQ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0083",
+    "product": "ATP-dependent RNA helicase; DeaD"
+   },
+   {
+    "locus": "slr1536",
+    "product": "ATP-dependent DNA helicase; RecQ"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 708,
+  "y1": 890,
+  "x2": 754,
+  "y2": 907,
+  "url": "/dbget-bin/www_bget?syn:sll0058+syn:sll0170+syn:sll1932",
+  "id": "sll0058",
+  "label": "sll0058 (dnaK), sll0170 (dnaK), sll1932 (dnaK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0058",
+    "product": "DnaK protein"
+   },
+   {
+    "locus": "sll0170",
+    "product": "DnaK protein"
+   },
+   {
+    "locus": "sll1932",
+    "product": "DnaK protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 760,
+  "y1": 890,
+  "x2": 806,
+  "y2": 907,
+  "url": "/dbget-bin/www_bget?syn:sll0416+syn:slr2076",
+  "id": "sll0416",
+  "label": "sll0416 (groEL-2), slr2076 (groEL)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0416",
+    "product": "60kD chaperonin 2"
+   },
+   {
+    "locus": "slr2076",
+    "product": "60kD chaperonin 1"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 708,
+  "y1": 912,
+  "x2": 754,
+  "y2": 929,
+  "url": "/dbget-bin/www_bget?syn:sll0290",
+  "id": "sll0290",
+  "label": "sll0290 (ppk)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0290",
+    "product": "polyphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 810,
+  "y1": 890,
+  "x2": 856,
+  "y2": 907,
+  "url": "/dbget-bin/www_bget?syn:ssr3341",
+  "id": "ssr3341",
+  "label": "ssr3341",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 892,
+  "y1": 823,
+  "x2": 938,
+  "y2": 840,
+  "url": "/dbget-bin/www_bget?syn:sll1043",
+  "id": "sll1043",
+  "label": "sll1043 (pnp)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1043",
+    "product": "polyribonucleotide nucleotidyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 800,
+  "y1": 823,
+  "x2": 846,
+  "y2": 840,
+  "url": "/dbget-bin/www_bget?syn:slr0551",
+  "id": "slr0551",
+  "label": "slr0551",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0551",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 754,
+  "y1": 823,
+  "x2": 800,
+  "y2": 840,
+  "url": "/dbget-bin/www_bget?syn:slr0083",
+  "id": "slr0083",
+  "label": "slr0083 (deaD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0083",
+    "product": "ATP-dependent RNA helicase; DeaD"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 846,
+  "y1": 823,
+  "x2": 892,
+  "y2": 840,
+  "url": "/dbget-bin/www_bget?syn:slr0752",
+  "id": "slr0752",
+  "label": "slr0752 (eno)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0752",
+    "product": "enolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 200,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn03018",
+  "id": "syn03018",
+  "label": "syn03018: RNA degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 195,
+  "y1": 1005,
+  "x2": 301,
+  "y2": 1039,
+  "url": "/kegg-bin/show_pathway?map03015",
+  "id": "map03015:",
+  "label": "map03015: mRNA surveillance pathway",
+  "entry_type": "gene",
+  "genes": []
+ }
+]

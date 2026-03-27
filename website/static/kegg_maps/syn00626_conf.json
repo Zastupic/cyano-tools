@@ -1,0 +1,694 @@
+[
+ {
+  "type": "circ",
+  "cx": 340,
+  "cy": 598,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00091",
+  "id": "C00091",
+  "label": "Succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 778,
+  "cy": 581,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03203",
+  "id": "C03203",
+  "label": "1-Hydroxy-2-naphthoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 778,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14101",
+  "id": "C14101",
+  "label": "2-Naphthoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 475,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14099",
+  "id": "C14099",
+  "label": "2-Naphthaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 133,
+  "cy": 777,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02909",
+  "id": "C02909",
+  "label": "(2-Naphthyl)methanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 133,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14098",
+  "id": "C14098",
+  "label": "2-Methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 675,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14120",
+  "id": "C14120",
+  "label": "2-Naphthoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14097",
+  "id": "C14097",
+  "label": "2-Hydroxyisophthalic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 664,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14096",
+  "id": "C14096",
+  "label": "3-Formylsalicylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 557,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14095",
+  "id": "C14095",
+  "label": "2-Hydroxy-3-carboxybenzalpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 450,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14094",
+  "id": "C14094",
+  "label": "2-Carboxy-2-hydroxy-8-carboxychromene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 345,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14093",
+  "id": "C14093",
+  "label": "1,2-Dihydroxy-8-carboxynaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 241,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14092",
+  "id": "C14092",
+  "label": "cis-1,2-Dihydroxy-1,2-dihydro-8-carboxynaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 557,
+  "cy": 304,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14086",
+  "id": "C14086",
+  "label": "2-Hydroxy-3-methylbenzalpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 241,
+  "cy": 303,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14083",
+  "id": "C14083",
+  "label": "cis-1,2-Dihydroxy-1,2-dihydro-8-methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 664,
+  "cy": 304,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14087",
+  "id": "C14087",
+  "label": "3-Methylsalicylaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 133,
+  "cy": 404,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14090",
+  "id": "C14090",
+  "label": "1-Naphthaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 133,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14091",
+  "id": "C14091",
+  "label": "1-Naphthoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 133,
+  "cy": 353,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14089",
+  "id": "C14089",
+  "label": "1-Hydroxymethylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 935,
+  "cy": 684,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14113",
+  "id": "C14113",
+  "label": "Decahydro-2-naphthoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 935,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14112",
+  "id": "C14112",
+  "label": "cis-2-Carboxycyclohexyl-acetic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 880,
+  "cy": 304,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02923",
+  "id": "C02923",
+  "label": "2,3-Dihydroxytoluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 664,
+  "cy": 777,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14108",
+  "id": "C14108",
+  "label": "4-Hydroxymethylsalicylaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 880,
+  "cy": 777,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14110",
+  "id": "C14110",
+  "label": "4-Hydroxymethylcatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 326,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14116",
+  "id": "C14116",
+  "label": "Naphthyl-2-methyl-succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 237,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14115",
+  "id": "C14115",
+  "label": "2-Naphtylmethylsuccinic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 241,
+  "cy": 777,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14104",
+  "id": "C14104",
+  "label": "cis-1,2-Dihydroxy-1,2-dihydro-7-hydroxymethylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 549,
+  "cy": 729,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14100",
+  "id": "C14100",
+  "label": "4-Formylsalicylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14111",
+  "id": "C14111",
+  "label": "5,6,7,8-Tetrahydro-2-naphthoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 861,
+  "cy": 713,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14114",
+  "id": "C14114",
+  "label": "Tetralin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 241,
+  "cy": 540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14102",
+  "id": "C14102",
+  "label": "cis-1,2-Dihydroxy-1,2-dihydro-7-methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 410,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14117",
+  "id": "C14117",
+  "label": "Naphthyl-2-methylene-succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 450,
+  "cy": 304,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14085",
+  "id": "C14085",
+  "label": "2-Hydroxy-8-methylchromene-2-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 493,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14118",
+  "id": "C14118",
+  "label": "Naphthyl-2-hydroxymethyl-succinyl CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14103",
+  "id": "C14103",
+  "label": "4-Methylsalicylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 880,
+  "cy": 540,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06730",
+  "id": "C06730",
+  "label": "4-Methylcatechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 345,
+  "cy": 777,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14105",
+  "id": "C14105",
+  "label": "1,2-Dihydroxy-7-hydroxymethylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 557,
+  "cy": 777,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14107",
+  "id": "C14107",
+  "label": "2-Hydroxy-4-hydroxymethylbenzalpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 450,
+  "cy": 777,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14106",
+  "id": "C14106",
+  "label": "2-Hydroxy-7-hydroxymethylchromene-2-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 304,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14088",
+  "id": "C14088",
+  "label": "3-Methylsalicylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 578,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14119",
+  "id": "C14119",
+  "label": "Naphthyl-2-oxomethyl-succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 777,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14109",
+  "id": "C14109",
+  "label": "4-Hydroxymethylsalicylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 133,
+  "cy": 303,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14082",
+  "id": "C14082",
+  "label": "1-Methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 345,
+  "cy": 304,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14084",
+  "id": "C14084",
+  "label": "1,2-Dihydroxy-8-methylnaphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 133,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00829",
+  "id": "C00829",
+  "label": "Naphthalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 241,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04314",
+  "id": "C04314",
+  "label": "cis-1,2-Dihydronaphthalene-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 345,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03012",
+  "id": "C03012",
+  "label": "Naphthalene-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 450,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06204",
+  "id": "C06204",
+  "label": "2-Hydroxychromene-2-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 557,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06203",
+  "id": "C06203",
+  "label": "trans-o-Hydroxybenzylidenepyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 664,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06202",
+  "id": "C06202",
+  "label": "Salicylaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 880,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00090",
+  "id": "C00090",
+  "label": "Catechol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 145,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16201",
+  "id": "C16201",
+  "label": "1-Naphthalenesulfonic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 165,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16202",
+  "id": "C16202",
+  "label": "2-Naphthalenesulfonic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 122,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00628",
+  "id": "C00628",
+  "label": "2,5-Dihydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 400,
+  "cy": 114,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16193",
+  "id": "C16193",
+  "label": "1,6-Naphthalenedisulfonic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 400,
+  "cy": 131,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16194",
+  "id": "C16194",
+  "label": "2,6-Naphthalenedisulfonic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 508,
+  "cy": 122,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16196",
+  "id": "C16196",
+  "label": "1,2-Dihydroxynaphthalene-6-sulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 614,
+  "cy": 122,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16198",
+  "id": "C16198",
+  "label": "(Z)-4-(2-Hydroxy-5-sulfonatophenyl)-2-oxo-3-butenoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 692,
+  "cy": 122,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16199",
+  "id": "C16199",
+  "label": "5-Sulfosalicylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00805",
+  "id": "C00805",
+  "label": "Salicylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 111,
+  "y1": 365,
+  "x2": 157,
+  "y2": 382,
+  "url": "/dbget-bin/www_bget?syn:sll0990",
+  "id": "sll0990",
+  "label": "sll0990",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0990",
+    "product": "formaldehyde dehydrogenase (glutathione)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 281,
+  "y1": 688,
+  "x2": 327,
+  "y2": 705,
+  "url": "/dbget-bin/www_bget?syn:sll0990",
+  "id": "sll0990",
+  "label": "sll0990",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0990",
+    "product": "formaldehyde dehydrogenase (glutathione)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 933,
+  "y1": 527,
+  "x2": 1047,
+  "y2": 552,
+  "url": "/kegg-bin/show_pathway?map00622",
+  "id": "map00622:",
+  "label": "map00622: Xylene degradation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 932,
+  "y1": 286,
+  "x2": 1007,
+  "y2": 320,
+  "url": "/kegg-bin/show_pathway?map00622",
+  "id": "map00622:",
+  "label": "map00622: Xylene degradation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 270,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00626",
+  "id": "syn00626",
+  "label": "syn00626: Naphthalene degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 932,
+  "y1": 190,
+  "x2": 1051,
+  "y2": 215,
+  "url": "/kegg-bin/show_pathway?map00362",
+  "id": "map00362:",
+  "label": "map00362: Benzoate degradation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 822,
+  "y1": 110,
+  "x2": 937,
+  "y2": 135,
+  "url": "/kegg-bin/show_pathway?syn00350",
+  "id": "syn00350",
+  "label": "syn00350: Tyrosine metabolism",
+  "entry_type": "pathway"
+ }
+]

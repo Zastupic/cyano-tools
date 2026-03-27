@@ -1,0 +1,802 @@
+[
+ {
+  "type": "circ",
+  "cx": 461,
+  "cy": 487,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 461,
+  "cy": 346,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00445",
+  "id": "C00445",
+  "label": "5,10-Methenyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 346,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03479",
+  "id": "C03479",
+  "label": "Folinic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 362,
+  "cy": 346,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03479",
+  "id": "C03479",
+  "label": "Folinic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 488,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 362,
+  "cy": 334,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 603,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 334,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 210,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 987,
+  "cy": 416,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00101",
+  "id": "C00101",
+  "label": "Tetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 488,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 334,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 363,
+  "cy": 604,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 461,
+  "cy": 416,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00143",
+  "id": "C00143",
+  "label": "5,10-Methylenetetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 752,
+  "cy": 427,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 758,
+  "cy": 604,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 604,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 758,
+  "cy": 488,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 896,
+  "cy": 336,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1078,
+  "cy": 416,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00143",
+  "id": "C00143",
+  "label": "5,10-Methylenetetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 883,
+  "cy": 488,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1169,
+  "cy": 416,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 891,
+  "cy": 733,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 934,
+  "cy": 277,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 733,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 915,
+  "cy": 764,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1273,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1274,
+  "cy": 344,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 759,
+  "cy": 277,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 1318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 638,
+  "cy": 1318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 638,
+  "cy": 1268,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 748,
+  "cy": 1318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 747,
+  "cy": 1218,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 638,
+  "cy": 1218,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 145,
+  "cy": 1145,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03479",
+  "id": "C03479",
+  "label": "Folinic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 145,
+  "cy": 1057,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 160,
+  "cy": 668,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 187,
+  "cy": 1013,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 531,
+  "cy": 1031,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 536,
+  "cy": 1163,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 1287,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 896,
+  "cy": 416,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00415",
+  "id": "C00415",
+  "label": "Dihydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 996,
+  "cy": 599,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01937",
+  "id": "C01937",
+  "label": "Methotrexate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1024,
+  "cy": 507,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00365",
+  "id": "C00365",
+  "label": "dUMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 966,
+  "cy": 507,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00364",
+  "id": "C00364",
+  "label": "dTMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 559,
+  "cy": 1064,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 318,
+  "cy": 1057,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1109,
+  "cy": 1199,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00021",
+  "id": "C00021",
+  "label": "S-Adenosyl-L-homocysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1363,
+  "cy": 1199,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00019",
+  "id": "C00019",
+  "label": "S-Adenosyl-L-methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1109,
+  "cy": 1036,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00114",
+  "id": "C00114",
+  "label": "Choline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1190,
+  "cy": 1124,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1268,
+  "cy": 1124,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00101",
+  "id": "C00101",
+  "label": "Tetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1189,
+  "cy": 1036,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00719",
+  "id": "C00719",
+  "label": "Betaine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1109,
+  "cy": 1079,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00155",
+  "id": "C00155",
+  "label": "L-Homocysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1363,
+  "cy": 1079,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00073",
+  "id": "C00073",
+  "label": "L-Methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1269,
+  "cy": 1036,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01026",
+  "id": "C01026",
+  "label": "N,N-Dimethylglycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1033,
+  "cy": 1036,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00157",
+  "id": "C00157",
+  "label": "Phosphatidylcholine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 318,
+  "cy": 1042,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 544,
+  "cy": 1031,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 536,
+  "cy": 1176,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 143,
+  "cy": 1251,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 801,
+  "cy": 1124,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1171,
+  "cy": 992,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01996",
+  "id": "C01996",
+  "label": "Acetylcholine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 387,
+  "y1": 354,
+  "x2": 433,
+  "y2": 371,
+  "url": "/dbget-bin/www_bget?syn:sll1643",
+  "id": "sll1643",
+  "label": "sll1643",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1643",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1002,
+  "y1": 394,
+  "x2": 1048,
+  "y2": 411,
+  "url": "/dbget-bin/www_bget?syn:sll1931",
+  "id": "sll1931",
+  "label": "sll1931 (gylA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1931",
+    "product": "serine hydroxymethyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1204,
+  "y1": 1086,
+  "x2": 1250,
+  "y2": 1103,
+  "url": "/dbget-bin/www_bget?syn:slr0212",
+  "id": "slr0212",
+  "label": "slr0212 (metH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0212",
+    "product": "5-methyltetrahydrofolate--homocysteine methyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 1122,
+  "x2": 127,
+  "y2": 1139,
+  "url": "/dbget-bin/www_bget?syn:sll1643",
+  "id": "sll1643",
+  "label": "sll1643",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1643",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 349,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn04981",
+  "id": "syn04981",
+  "label": "syn04981: Folate transport and metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 424,
+  "y1": 265,
+  "x2": 564,
+  "y2": 290,
+  "url": "/kegg-bin/show_pathway?syn00670",
+  "id": "syn00670",
+  "label": "syn00670: One carbon pool by folate",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1052,
+  "y1": 599,
+  "x2": 1182,
+  "y2": 624,
+  "url": "/kegg-bin/show_pathway?map01523",
+  "id": "map01523:",
+  "label": "map01523: Antifolate resistance",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 29,
+  "y1": 242,
+  "x2": 139,
+  "y2": 267,
+  "url": "/kegg-bin/show_pathway?ko00790",
+  "id": "ko00790:",
+  "label": "ko00790: Folate biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 265,
+  "y1": 917,
+  "x2": 337,
+  "y2": 942,
+  "url": "/kegg-bin/show_pathway?map04144",
+  "id": "map04144:",
+  "label": "map04144: Endocytosis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 1052,
+  "y1": 540,
+  "x2": 1182,
+  "y2": 565,
+  "url": "/kegg-bin/show_pathway?syn00240",
+  "id": "syn00240",
+  "label": "syn00240: Pyrimidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 959,
+  "y1": 1240,
+  "x2": 1099,
+  "y2": 1265,
+  "url": "/kegg-bin/show_pathway?syn00670",
+  "id": "syn00670",
+  "label": "syn00670: One carbon pool by folate",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1130,
+  "y1": 918,
+  "x2": 1250,
+  "y2": 943,
+  "url": "/kegg-bin/show_pathway?map04725",
+  "id": "map04725:",
+  "label": "map04725: Cholinergic synapse",
+  "entry_type": "gene",
+  "genes": []
+ }
+]

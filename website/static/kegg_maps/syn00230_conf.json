@@ -1,0 +1,2418 @@
+[
+ {
+  "type": "circ",
+  "cx": 156,
+  "cy": 187,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00117",
+  "id": "C00117",
+  "label": "D-Ribose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 244,
+  "cy": 187,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00119",
+  "id": "C00119",
+  "label": "5-Phospho-alpha-D-ribose 1-diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 341,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03090",
+  "id": "C03090",
+  "label": "5-Phosphoribosylamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 981,
+  "cy": 245,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04734",
+  "id": "C04734",
+  "label": "1-(5'-Phosphoribosyl)-5-formamido-4-imidazolecarboxamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 265,
+  "cy": 223,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00064",
+  "id": "C00064",
+  "label": "L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 688,
+  "cy": 508,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04392",
+  "id": "C04392",
+  "label": "P1,P4-Bis(5'-xanthosyl) tetraphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1589,
+  "cy": 418,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00046",
+  "id": "C00046",
+  "label": "RNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1591,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00039",
+  "id": "C00039",
+  "label": "DNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1565,
+  "cy": 755,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05512",
+  "id": "C05512",
+  "label": "Deoxyinosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1565,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00559",
+  "id": "C00559",
+  "label": "Deoxyadenosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1379,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00360",
+  "id": "C00360",
+  "label": "dAMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1379,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00206",
+  "id": "C00206",
+  "label": "dADP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1541,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00131",
+  "id": "C00131",
+  "label": "dATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1379,
+  "cy": 460,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00008",
+  "id": "C00008",
+  "label": "ADP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1190,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00020",
+  "id": "C00020",
+  "label": "AMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1191,
+  "cy": 557,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00212",
+  "id": "C00212",
+  "label": "Adenosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1191,
+  "cy": 686,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00147",
+  "id": "C00147",
+  "label": "Adenine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1089,
+  "cy": 341,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03794",
+  "id": "C03794",
+  "label": "N6-(1,2-Dicarboxyethyl)-AMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1038,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 984,
+  "cy": 457,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00130",
+  "id": "C00130",
+  "label": "IMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 984,
+  "cy": 562,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00294",
+  "id": "C00294",
+  "label": "Inosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 984,
+  "cy": 686,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00262",
+  "id": "C00262",
+  "label": "Hypoxanthine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1415,
+  "cy": 293,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00008",
+  "id": "C00008",
+  "label": "ADP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1415,
+  "cy": 209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01260",
+  "id": "C01260",
+  "label": "P1,P4-Bis(5'-adenosyl)tetraphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1504,
+  "cy": 209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00224",
+  "id": "C00224",
+  "label": "Adenylyl sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1504,
+  "cy": 293,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00053",
+  "id": "C00053",
+  "label": "3'-Phosphoadenylyl sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1591,
+  "cy": 209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 648,
+  "cy": 686,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00242",
+  "id": "C00242",
+  "label": "Guanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 336,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00330",
+  "id": "C00330",
+  "label": "Deoxyguanosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 463,
+  "cy": 622,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00362",
+  "id": "C00362",
+  "label": "dGMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00039",
+  "id": "C00039",
+  "label": "DNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 338,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00286",
+  "id": "C00286",
+  "label": "dGTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 465,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00361",
+  "id": "C00361",
+  "label": "dGDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 266,
+  "cy": 402,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00046",
+  "id": "C00046",
+  "label": "RNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 465,
+  "cy": 447,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00035",
+  "id": "C00035",
+  "label": "GDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 192,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04494",
+  "id": "C04494",
+  "label": "Guanosine 3'-diphosphate 5'-triphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 337,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01228",
+  "id": "C01228",
+  "label": "Guanosine 3',5'-bis(diphosphate)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 648,
+  "cy": 451,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00144",
+  "id": "C00144",
+  "label": "GMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 648,
+  "cy": 564,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00387",
+  "id": "C00387",
+  "label": "Guanosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 823,
+  "cy": 560,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01762",
+  "id": "C01762",
+  "label": "Xanthosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 752,
+  "cy": 356,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00081",
+  "id": "C00081",
+  "label": "ITP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 854,
+  "cy": 357,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00104",
+  "id": "C00104",
+  "label": "IDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 510,
+  "cy": 262,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01345",
+  "id": "C01345",
+  "label": "dITP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 695,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03373",
+  "id": "C03373",
+  "label": "Aminoimidazole ribotide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 790,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04751",
+  "id": "C04751",
+  "label": "1-(5-Phospho-D-ribosyl)-5-amino-4-imidazolecarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 607,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04640",
+  "id": "C04640",
+  "label": "2-(Formamido)-N1-(5'-phosphoribosyl)acetamidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 517,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04376",
+  "id": "C04376",
+  "label": "5'-Phosphoribosyl-N-formylglycinamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 885,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04823",
+  "id": "C04823",
+  "label": "1-(5'-Phosphoribosyl)-5-amino-4-(N-succinocarboxamide)-imidazole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 429,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03838",
+  "id": "C03838",
+  "label": "5'-Phosphoribosylglycinamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 981,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04677",
+  "id": "C04677",
+  "label": "1-(5'-Phosphoribosyl)-5-amino-4-imidazolecarboxamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 415,
+  "cy": 262,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01344",
+  "id": "C01344",
+  "label": "dIDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 338,
+  "cy": 447,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00044",
+  "id": "C00044",
+  "label": "GTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 356,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03614",
+  "id": "C03614",
+  "label": "Inosine 5'-tetraphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 139,
+  "cy": 365,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00942",
+  "id": "C00942",
+  "label": "3',5'-Cyclic GMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 516,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01261",
+  "id": "C01261",
+  "label": "P1,P4-Bis(5'-guanosyl) tetraphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1152,
+  "cy": 379,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02353",
+  "id": "C02353",
+  "label": "2',3'-Cyclic AMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1152,
+  "cy": 434,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01367",
+  "id": "C01367",
+  "label": "3'-AMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1541,
+  "cy": 350,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03483",
+  "id": "C03483",
+  "label": "Adenosine tetraphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 68,
+  "cy": 187,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00620",
+  "id": "C00620",
+  "label": "alpha-D-Ribose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 68,
+  "cy": 262,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00301",
+  "id": "C00301",
+  "label": "ADP-ribose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1541,
+  "cy": 460,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1285,
+  "cy": 209,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 823,
+  "cy": 454,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00655",
+  "id": "C00655",
+  "label": "Xanthosine 5'-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 773,
+  "cy": 508,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00700",
+  "id": "C00700",
+  "label": "XTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 504,
+  "cy": 813,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06194",
+  "id": "C06194",
+  "label": "2',3'-Cyclic GMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 601,
+  "cy": 262,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06196",
+  "id": "C06196",
+  "label": "2'-Deoxyinosine 5'-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 504,
+  "cy": 758,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06193",
+  "id": "C06193",
+  "label": "Guanosine 3'-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1285,
+  "cy": 293,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06197",
+  "id": "C06197",
+  "label": "P1,P3-Bis(5'-adenosyl) triphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1086,
+  "cy": 186,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04051",
+  "id": "C04051",
+  "label": "5-Amino-4-imidazolecarboxyamide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1110,
+  "cy": 252,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05993",
+  "id": "C05993",
+  "label": "Acetyl adenylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1110,
+  "cy": 294,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06433",
+  "id": "C06433",
+  "label": "5'-Benzoylphosphoadenosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 858,
+  "cy": 421,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06435",
+  "id": "C06435",
+  "label": "5'-Butyrylphosphoinosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 242,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15667",
+  "id": "C15667",
+  "label": "5-Carboxyamino-1-(5-phospho-D-ribosyl)imidazole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 822,
+  "cy": 902,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12248",
+  "id": "C12248",
+  "label": "5-Hydroxy-2-oxo-4-ureido-2,5-dihydro-1H-imidazole-5-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 822,
+  "cy": 846,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11821",
+  "id": "C11821",
+  "label": "5-Hydroxyisourate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1090,
+  "cy": 837,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02091",
+  "id": "C02091",
+  "label": "(S)-Ureidoglycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1308,
+  "cy": 901,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00802",
+  "id": "C00802",
+  "label": "Oxalureate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1403,
+  "cy": 901,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00169",
+  "id": "C00169",
+  "label": "Carbamoyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1490,
+  "cy": 977,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1512,
+  "cy": 901,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00288",
+  "id": "C00288",
+  "label": "HCO3-",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1179,
+  "cy": 981,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00048",
+  "id": "C00048",
+  "label": "Glyoxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1222,
+  "cy": 1026,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00011",
+  "id": "C00011",
+  "label": "CO2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1140,
+  "cy": 1004,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1100,
+  "cy": 952,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00086",
+  "id": "C00086",
+  "label": "Urea",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1179,
+  "cy": 902,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00603",
+  "id": "C00603",
+  "label": "(S)-Ureidoglycolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1000,
+  "cy": 902,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00499",
+  "id": "C00499",
+  "label": "Allantoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 903,
+  "cy": 902,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02350",
+  "id": "C02350",
+  "label": "(S)-Allantoin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 822,
+  "cy": 968,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02348",
+  "id": "C02348",
+  "label": "(R)(-)-Allantoin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 822,
+  "cy": 790,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00366",
+  "id": "C00366",
+  "label": "Urate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 717,
+  "cy": 790,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05513",
+  "id": "C05513",
+  "label": "Urate-3-ribonucleoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1369,
+  "cy": 799,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1280,
+  "cy": 799,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02718",
+  "id": "C02718",
+  "label": "N-Formiminoglycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1104,
+  "cy": 799,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05239",
+  "id": "C05239",
+  "label": "5-Aminoimidazole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1013,
+  "cy": 799,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05516",
+  "id": "C05516",
+  "label": "5-Amino-4-imidazole carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 924,
+  "cy": 799,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05515",
+  "id": "C05515",
+  "label": "5-Ureido-4-imidazole carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1192,
+  "cy": 799,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06195",
+  "id": "C06195",
+  "label": "Imidazolone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1382,
+  "cy": 934,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01444",
+  "id": "C01444",
+  "label": "Oxamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1382,
+  "cy": 1000,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00209",
+  "id": "C00209",
+  "label": "Oxalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 463,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22395",
+  "id": "C22395",
+  "label": "N6-Succino-2-amino-2'-deoxyadenylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 368,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22441",
+  "id": "C22441",
+  "label": "dZMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 273,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22442",
+  "id": "C22442",
+  "label": "dZDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22443",
+  "id": "C22443",
+  "label": "dZTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 824,
+  "cy": 684,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00385",
+  "id": "C00385",
+  "label": "Xanthine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1618,
+  "cy": 292,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00054",
+  "id": "C00054",
+  "label": "Adenosine 3',5'-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1668,
+  "cy": 460,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00575",
+  "id": "C00575",
+  "label": "3',5'-Cyclic AMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1100,
+  "cy": 1026,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00288",
+  "id": "C00288",
+  "label": "HCO3-",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1297,
+  "cy": 721,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22499",
+  "id": "C22499",
+  "label": "8-Hydroxyadenine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1398,
+  "cy": 721,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22500",
+  "id": "C22500",
+  "label": "2,8-Dihydroxyadenine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 442,
+  "y1": 481,
+  "x2": 488,
+  "y2": 498,
+  "url": "/dbget-bin/www_bget?syn:slr0591+syn:slr1164",
+  "id": "slr0591,",
+  "label": "slr0591, slr1164 (nrdA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0591",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "slr1164",
+    "product": "ribonucleotide reductase subunit alpha"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 169,
+  "y1": 178,
+  "x2": 215,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:sll0469",
+  "id": "sll0469",
+  "label": "sll0469 (prsA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0469",
+    "product": "ribose-phosphate pyrophosphokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 273,
+  "y1": 178,
+  "x2": 319,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:sll0757",
+  "id": "sll0757",
+  "label": "sll0757 (purF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0757",
+    "product": "amidophosphoribosyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 359,
+  "y1": 178,
+  "x2": 405,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:slr1159",
+  "id": "slr1159",
+  "label": "slr1159 (purD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1159",
+    "product": "glycinamide ribonucleotide synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 447,
+  "y1": 167,
+  "x2": 493,
+  "y2": 184,
+  "url": "/dbget-bin/www_bget?syn:slr0477",
+  "id": "slr0477",
+  "label": "slr0477 (purN)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0477",
+    "product": "phosphoribosylglycinamide formyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 626,
+  "y1": 178,
+  "x2": 672,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:slr0838",
+  "id": "slr0838",
+  "label": "slr0838 (purM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0838",
+    "product": "phosphoribosyl formylglycinamidine cyclo-ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 933,
+  "y1": 203,
+  "x2": 979,
+  "y2": 220,
+  "url": "/dbget-bin/www_bget?syn:slr0597",
+  "id": "slr0597",
+  "label": "slr0597 (purH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0597",
+    "product": "phosphoribosyl aminoimidazole carboxy formyl formyltransferase/inosinemonophosphate cyclohydrolase; PUR-H(J)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 910,
+  "y1": 178,
+  "x2": 956,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:sll0421",
+  "id": "sll0421",
+  "label": "sll0421 (purB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0421",
+    "product": "adenylosuccinate lyase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 815,
+  "y1": 178,
+  "x2": 861,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:slr1226",
+  "id": "slr1226",
+  "label": "slr1226 (purC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1226",
+    "product": "phosphoribosyl aminoidazole succinocarboxamide synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 958,
+  "y1": 273,
+  "x2": 1004,
+  "y2": 290,
+  "url": "/dbget-bin/www_bget?syn:slr0597",
+  "id": "slr0597",
+  "label": "slr0597 (purH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0597",
+    "product": "phosphoribosyl aminoimidazole carboxy formyl formyltransferase/inosinemonophosphate cyclohydrolase; PUR-H(J)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1596,
+  "y1": 452,
+  "x2": 1642,
+  "y2": 469,
+  "url": "/dbget-bin/www_bget?syn:sll0646+syn:sll1161+syn:slr1991",
+  "id": "sll0646",
+  "label": "sll0646 (cyaA), sll1161, slr1991 (cyaA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0646",
+    "product": "adenylate cyclase"
+   },
+   {
+    "locus": "sll1161",
+    "product": "adenylate cyclase"
+   },
+   {
+    "locus": "slr1991",
+    "product": "adenylate cyclase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1357,
+  "y1": 498,
+  "x2": 1403,
+  "y2": 515,
+  "url": "/dbget-bin/www_bget?syn:slr0591+syn:slr1164",
+  "id": "slr0591,",
+  "label": "slr0591, slr1164 (nrdA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0591",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "slr1164",
+    "product": "ribonucleotide reductase subunit alpha"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1307,
+  "y1": 442,
+  "x2": 1353,
+  "y2": 459,
+  "url": "/dbget-bin/www_bget?syn:sll1059+syn:sll1815",
+  "id": "sll1059",
+  "label": "sll1059 (adk), sll1815 (adk)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1059",
+    "product": "adenylate kinase"
+   },
+   {
+    "locus": "sll1815",
+    "product": "adenylate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1116,
+  "y1": 332,
+  "x2": 1162,
+  "y2": 349,
+  "url": "/dbget-bin/www_bget?syn:sll0421",
+  "id": "sll0421",
+  "label": "sll0421 (purB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0421",
+    "product": "adenylosuccinate lyase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1009,
+  "y1": 332,
+  "x2": 1055,
+  "y2": 349,
+  "url": "/dbget-bin/www_bget?syn:sll1823",
+  "id": "sll1823",
+  "label": "sll1823 (purA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1823",
+    "product": "adenylosuccinate synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1168,
+  "y1": 500,
+  "x2": 1214,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1276,
+  "y1": 542,
+  "x2": 1322,
+  "y2": 559,
+  "url": "/dbget-bin/www_bget?syn:sll1430",
+  "id": "sll1430",
+  "label": "sll1430 (apt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1430",
+    "product": "adenine phosphoribosyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1446,
+  "y1": 603,
+  "x2": 1492,
+  "y2": 620,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 986,
+  "y1": 500,
+  "x2": 1032,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1067,
+  "y1": 553,
+  "x2": 1113,
+  "y2": 570,
+  "url": "/dbget-bin/www_bget?syn:slr1573",
+  "id": "slr1573",
+  "label": "slr1573",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1573",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 781,
+  "y1": 318,
+  "x2": 827,
+  "y2": 335,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 879,
+  "y1": 443,
+  "x2": 925,
+  "y2": 460,
+  "url": "/dbget-bin/www_bget?syn:slr1722",
+  "id": "slr1722",
+  "label": "slr1722 (guaB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1722",
+    "product": "IMP dehydrogenase subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 709,
+  "y1": 443,
+  "x2": 755,
+  "y2": 460,
+  "url": "/dbget-bin/www_bget?syn:slr0213",
+  "id": "slr0213",
+  "label": "slr0213 (guaA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0213",
+    "product": "GMP synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1168,
+  "y1": 596,
+  "x2": 1214,
+  "y2": 613,
+  "url": "/dbget-bin/www_bget?syn:slr1573",
+  "id": "slr1573",
+  "label": "slr1573",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1573",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 600,
+  "y1": 519,
+  "x2": 646,
+  "y2": 536,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 800,
+  "y1": 500,
+  "x2": 846,
+  "y2": 517,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 515,
+  "y1": 439,
+  "x2": 561,
+  "y2": 456,
+  "url": "/dbget-bin/www_bget?syn:slr1123",
+  "id": "slr1123",
+  "label": "slr1123 (gmk)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1123",
+    "product": "guanylate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 711,
+  "y1": 680,
+  "x2": 757,
+  "y2": 697,
+  "url": "/dbget-bin/www_bget?syn:sll0051",
+  "id": "sll0051",
+  "label": "sll0051",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0051",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1441,
+  "y1": 201,
+  "x2": 1487,
+  "y2": 218,
+  "url": "/dbget-bin/www_bget?syn:sll0509",
+  "id": "sll0509",
+  "label": "sll0509",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0509",
+    "product": "Ap-4-A phosphorylase II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 382,
+  "y1": 324,
+  "x2": 428,
+  "y2": 341,
+  "url": "/dbget-bin/www_bget?syn:slr1325",
+  "id": "slr1325",
+  "label": "slr1325 (spoT)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1325",
+    "product": "(p)ppGpp 3'-pyrophosphohydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 243,
+  "y1": 313,
+  "x2": 289,
+  "y2": 330,
+  "url": "/dbget-bin/www_bget?syn:sll1546",
+  "id": "sll1546",
+  "label": "sll1546 (ppx)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1546",
+    "product": "exopolyphosphatase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 243,
+  "y1": 334,
+  "x2": 289,
+  "y2": 351,
+  "url": "/dbget-bin/www_bget?syn:sll1546",
+  "id": "sll1546",
+  "label": "sll1546 (ppx)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1546",
+    "product": "exopolyphosphatase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 443,
+  "y1": 562,
+  "x2": 489,
+  "y2": 579,
+  "url": "/dbget-bin/www_bget?syn:slr1123",
+  "id": "slr1123",
+  "label": "slr1123 (gmk)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1123",
+    "product": "guanylate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 380,
+  "y1": 531,
+  "x2": 426,
+  "y2": 548,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 380,
+  "y1": 603,
+  "x2": 426,
+  "y2": 620,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 600,
+  "y1": 598,
+  "x2": 646,
+  "y2": 615,
+  "url": "/dbget-bin/www_bget?syn:slr1573",
+  "id": "slr1573",
+  "label": "slr1573",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1573",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 171,
+  "y1": 368,
+  "x2": 217,
+  "y2": 385,
+  "url": "/dbget-bin/www_bget?syn:slr1325",
+  "id": "slr1325",
+  "label": "slr1325 (spoT)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1325",
+    "product": "(p)ppGpp 3'-pyrophosphohydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1529,
+  "y1": 201,
+  "x2": 1575,
+  "y2": 218,
+  "url": "/dbget-bin/www_bget?syn:slr1165",
+  "id": "slr1165",
+  "label": "slr1165 (met3)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1165",
+    "product": "sulfate adenylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1481,
+  "y1": 239,
+  "x2": 1527,
+  "y2": 256,
+  "url": "/dbget-bin/www_bget?syn:slr0676",
+  "id": "slr0676",
+  "label": "slr0676 (cysC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0676",
+    "product": "adenylylsulfate 3'-phosphotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 534,
+  "y1": 178,
+  "x2": 580,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:sll1056+syn:slr0519+syn:slr0520",
+  "id": "sll1056",
+  "label": "sll1056 (purL), slr0519, slr0520 (purL)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1056",
+    "product": "phosphoribosylformyl glycinamidine synthetase II"
+   },
+   {
+    "locus": "slr0519",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0520",
+    "product": "phosphoribosyl formylglycinamidine synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 839,
+  "y1": 289,
+  "x2": 885,
+  "y2": 306,
+  "url": "/dbget-bin/www_bget?syn:slr0402",
+  "id": "slr0402",
+  "label": "slr0402",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0402",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 751,
+  "y1": 475,
+  "x2": 797,
+  "y2": 492,
+  "url": "/dbget-bin/www_bget?syn:slr0402",
+  "id": "slr0402",
+  "label": "slr0402",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0402",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1130,
+  "y1": 477,
+  "x2": 1176,
+  "y2": 494,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 481,
+  "y1": 721,
+  "x2": 527,
+  "y2": 738,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 313,
+  "y1": 586,
+  "x2": 359,
+  "y2": 603,
+  "url": "/dbget-bin/www_bget?syn:sll0398",
+  "id": "sll0398",
+  "label": "sll0398 (dgt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0398",
+    "product": "dGTP triphosphohydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 88,
+  "y1": 243,
+  "x2": 134,
+  "y2": 260,
+  "url": "/dbget-bin/www_bget?syn:sll1054",
+  "id": "sll1054",
+  "label": "sll1054",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1054",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1381,
+  "y1": 571,
+  "x2": 1427,
+  "y2": 588,
+  "url": "/dbget-bin/www_bget?syn:sll1059+syn:sll1815",
+  "id": "sll1059",
+  "label": "sll1059 (adk), sll1815 (adk)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1059",
+    "product": "adenylate kinase"
+   },
+   {
+    "locus": "sll1815",
+    "product": "adenylate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 440,
+  "y1": 253,
+  "x2": 486,
+  "y2": 270,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1346,
+  "y1": 239,
+  "x2": 1392,
+  "y2": 256,
+  "url": "/dbget-bin/www_bget?syn:sll0509",
+  "id": "sll0509",
+  "label": "sll0509",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0509",
+    "product": "Ap-4-A phosphorylase II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 91,
+  "y1": 399,
+  "x2": 137,
+  "y2": 416,
+  "url": "/dbget-bin/www_bget?syn:sll0646+syn:sll1161+syn:slr1991",
+  "id": "sll0646",
+  "label": "sll0646 (cyaA), sll1161, slr1991 (cyaA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0646",
+    "product": "adenylate cyclase"
+   },
+   {
+    "locus": "sll1161",
+    "product": "adenylate cyclase"
+   },
+   {
+    "locus": "slr1991",
+    "product": "adenylate cyclase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1011,
+  "y1": 178,
+  "x2": 1057,
+  "y2": 195,
+  "url": "/dbget-bin/www_bget?syn:sll1430",
+  "id": "sll1430",
+  "label": "sll1430 (apt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1430",
+    "product": "adenine phosphoribosyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 672,
+  "y1": 211,
+  "x2": 718,
+  "y2": 228,
+  "url": "/dbget-bin/www_bget?syn:sll0578",
+  "id": "sll0578",
+  "label": "sll0578 (purK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0578",
+    "product": "phosphoribosyl aminoimidazole carboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 767,
+  "y1": 211,
+  "x2": 813,
+  "y2": 228,
+  "url": "/dbget-bin/www_bget?syn:sll0901",
+  "id": "sll0901",
+  "label": "sll0901 (purE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0901",
+    "product": "phosphoribosylaminoimidazole carboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 88,
+  "y1": 189,
+  "x2": 134,
+  "y2": 206,
+  "url": "/dbget-bin/www_bget?syn:sll0726",
+  "id": "sll0726",
+  "label": "sll0726 (pgm)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0726",
+    "product": "phosphoglucomutase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 528,
+  "y1": 254,
+  "x2": 574,
+  "y2": 271,
+  "url": "/dbget-bin/www_bget?syn:slr0402",
+  "id": "slr0402",
+  "label": "slr0402",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0402",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1077,
+  "y1": 974,
+  "x2": 1123,
+  "y2": 991,
+  "url": "/dbget-bin/www_bget?syn:sll0420+syn:sll1750+syn:slr1256",
+  "id": "sll0420",
+  "label": "sll0420 (ureB), sll1750 (ureC), slr1256 (ureA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0420",
+    "product": "urease beta subunit"
+   },
+   {
+    "locus": "sll1750",
+    "product": "urease alpha subunit"
+   },
+   {
+    "locus": "slr1256",
+    "product": "urease gamma subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1430,
+  "y1": 893,
+  "x2": 1476,
+  "y2": 910,
+  "url": "/dbget-bin/www_bget?syn:sll0573",
+  "id": "sll0573",
+  "label": "sll0573 (arcC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0573",
+    "product": "carbamate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 447,
+  "y1": 188,
+  "x2": 493,
+  "y2": 205,
+  "url": "/dbget-bin/www_bget?syn:slr0861",
+  "id": "slr0861",
+  "label": "slr0861 (purT)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0861",
+    "product": "glycinamide ribonucleotide transformylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 380,
+  "y1": 439,
+  "x2": 426,
+  "y2": 456,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1446,
+  "y1": 452,
+  "x2": 1492,
+  "y2": 469,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1446,
+  "y1": 530,
+  "x2": 1492,
+  "y2": 547,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 398,
+  "y1": 734,
+  "x2": 444,
+  "y2": 751,
+  "url": "/dbget-bin/www_bget?syn:sll0421",
+  "id": "sll0421",
+  "label": "sll0421 (purB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0421",
+    "product": "adenylosuccinate lyase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 304,
+  "y1": 734,
+  "x2": 350,
+  "y2": 751,
+  "url": "/dbget-bin/www_bget?syn:slr1123",
+  "id": "slr1123",
+  "label": "slr1123 (gmk)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1123",
+    "product": "guanylate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 208,
+  "y1": 734,
+  "x2": 254,
+  "y2": 751,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 962,
+  "y1": 628,
+  "x2": 1008,
+  "y2": 645,
+  "url": "/dbget-bin/www_bget?syn:slr1573",
+  "id": "slr1573",
+  "label": "slr1573",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1573",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1276,
+  "y1": 542,
+  "x2": 1322,
+  "y2": 559,
+  "url": "/dbget-bin/www_bget?syn:sll1430",
+  "id": "sll1430",
+  "label": "sll1430 (apt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1430",
+    "product": "adenine phosphoribosyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 208,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00230",
+  "id": "syn00230",
+  "label": "syn00230: Purine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 304,
+  "y1": 101,
+  "x2": 434,
+  "y2": 135,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 143,
+  "y1": 101,
+  "x2": 295,
+  "y2": 126,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 635,
+  "y1": 125,
+  "x2": 757,
+  "y2": 150,
+  "url": "/kegg-bin/show_pathway?syn00730",
+  "id": "syn00730",
+  "label": "syn00730: Thiamine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 919,
+  "y1": 101,
+  "x2": 1045,
+  "y2": 127,
+  "url": "/kegg-bin/show_pathway?syn00340",
+  "id": "syn00340",
+  "label": "syn00340: Histidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 41,
+  "y1": 434,
+  "x2": 114,
+  "y2": 468,
+  "url": "/kegg-bin/show_pathway?syn00740",
+  "id": "syn00740",
+  "label": "syn00740: Riboflavin metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 82,
+  "y1": 485,
+  "x2": 194,
+  "y2": 510,
+  "url": "/kegg-bin/show_pathway?syn00790",
+  "id": "syn00790",
+  "label": "syn00790: Folate biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1000,
+  "y1": 359,
+  "x2": 1077,
+  "y2": 393,
+  "url": "/kegg-bin/show_pathway?syn00220",
+  "id": "syn00220",
+  "label": "syn00220: Arginine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1269,
+  "y1": 964,
+  "x2": 1348,
+  "y2": 998,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1439,
+  "y1": 781,
+  "x2": 1563,
+  "y2": 815,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ }
+]

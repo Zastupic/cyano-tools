@@ -1,0 +1,745 @@
+[
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 326,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00222",
+  "id": "C00222",
+  "label": "3-Oxopropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 469,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00804",
+  "id": "C00804",
+  "label": "Propynoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 323,
+  "cy": 326,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01013",
+  "id": "C01013",
+  "label": "3-Hydroxypropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 324,
+  "cy": 398,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00099",
+  "id": "C00099",
+  "label": "beta-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 221,
+  "cy": 227,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00083",
+  "id": "C00083",
+  "label": "Malonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 805,
+  "cy": 104,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00109",
+  "id": "C00109",
+  "label": "2-Oxobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 910,
+  "cy": 104,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02876",
+  "id": "C02876",
+  "label": "Propanoyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1025,
+  "cy": 104,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00163",
+  "id": "C00163",
+  "label": "Propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 156,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00186",
+  "id": "C00186",
+  "label": "(S)-Lactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 227,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00827",
+  "id": "C00827",
+  "label": "Lactoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 805,
+  "cy": 323,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00100",
+  "id": "C00100",
+  "label": "Propanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 806,
+  "cy": 453,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00683",
+  "id": "C00683",
+  "label": "(S)-Methylmalonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 896,
+  "cy": 453,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02170",
+  "id": "C02170",
+  "label": "Methylmalonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 418,
+  "cy": 398,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02335",
+  "id": "C02335",
+  "label": "beta-Alanyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 417,
+  "cy": 326,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05668",
+  "id": "C05668",
+  "label": "3-Hydroxypropionyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 683,
+  "cy": 62,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05984",
+  "id": "C05984",
+  "label": "2-Hydroxybutanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 417,
+  "cy": 227,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05989",
+  "id": "C05989",
+  "label": "3-Oxopropionyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1025,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05983",
+  "id": "C05983",
+  "label": "Propionyladenylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 806,
+  "cy": 537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01213",
+  "id": "C01213",
+  "label": "(R)-Methylmalonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1040,
+  "cy": 531,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04225",
+  "id": "C04225",
+  "label": "(Z)-But-2-ene-1,2,3-tricarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 806,
+  "cy": 618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00091",
+  "id": "C00091",
+  "label": "Succinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1040,
+  "cy": 432,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02225",
+  "id": "C02225",
+  "label": "2-Methylcitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 917,
+  "cy": 618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00042",
+  "id": "C00042",
+  "label": "Succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1040,
+  "cy": 618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04593",
+  "id": "C04593",
+  "label": "(2S,3R)-3-Hydroxybutane-1,2,3-tricarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 89,
+  "cy": 226,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 636,
+  "cy": 580,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05979",
+  "id": "C05979",
+  "label": "Propane-1-ol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 636,
+  "cy": 467,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00479",
+  "id": "C00479",
+  "label": "Propanal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 290,
+  "cy": 580,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00111",
+  "id": "C00111",
+  "label": "Glycerone phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 498,
+  "cy": 467,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00583",
+  "id": "C00583",
+  "label": "Propane-1,2-diol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 498,
+  "cy": 580,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00424",
+  "id": "C00424",
+  "label": "(S)-Lactaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 395,
+  "cy": 467,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05235",
+  "id": "C05235",
+  "label": "Hydroxyacetone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 395,
+  "cy": 580,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00546",
+  "id": "C00546",
+  "label": "Methylglyoxal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 949,
+  "cy": 453,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06002",
+  "id": "C06002",
+  "label": "(S)-Methylmalonate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 767,
+  "cy": 270,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15973",
+  "id": "C15973",
+  "label": "Enzyme N6-(dihydrolipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 767,
+  "cy": 205,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15972",
+  "id": "C15972",
+  "label": "Enzyme N6-(lipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 805,
+  "cy": 176,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21017",
+  "id": "C21017",
+  "label": "2-(alpha-Hydroxypropyl)thiamine diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 843,
+  "cy": 159,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00068",
+  "id": "C00068",
+  "label": "Thiamin diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 805,
+  "cy": 248,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21018",
+  "id": "C21018",
+  "label": "Enzyme N6-(S-propyldihydrolipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1126,
+  "cy": 531,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21250",
+  "id": "C21250",
+  "label": "2-Methyl-trans-aconitate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 326,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00894",
+  "id": "C00894",
+  "label": "Propenoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1127,
+  "cy": 104,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00511",
+  "id": "C00511",
+  "label": "Acrylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1162,
+  "cy": 359,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00036",
+  "id": "C00036",
+  "label": "Oxaloacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 135,
+  "y1": 252,
+  "x2": 181,
+  "y2": 269,
+  "url": "/dbget-bin/www_bget?syn:sll0053+syn:sll0336+syn:sll0728+syn:slr0435",
+  "id": "sll0053",
+  "label": "sll0053 (accC), sll0336 (accD), sll0728 (accA), slr0435 (accB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0053",
+    "product": "biotin carboxylase"
+   },
+   {
+    "locus": "sll0336",
+    "product": "acetyl-CoA carboxylase beta subunit"
+   },
+   {
+    "locus": "sll0728",
+    "product": "acetyl-CoA carboxylase alpha subunit"
+   },
+   {
+    "locus": "slr0435",
+    "product": "biotin carboxyl carrier protein of acetyl-CoA carboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 862,
+  "y1": 219,
+  "x2": 908,
+  "y2": 236,
+  "url": "/dbget-bin/www_bget?syn:slr2132",
+  "id": "slr2132",
+  "label": "slr2132 (pta)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2132",
+    "product": "phosphotransacetylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 977,
+  "y1": 219,
+  "x2": 1023,
+  "y2": 236,
+  "url": "/dbget-bin/www_bget?syn:sll0542",
+  "id": "sll0542",
+  "label": "sll0542 (acs)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0542",
+    "product": "acetyl-coenzyme A synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 977,
+  "y1": 133,
+  "x2": 1023,
+  "y2": 150,
+  "url": "/dbget-bin/www_bget?syn:sll0542",
+  "id": "sll0542",
+  "label": "sll0542 (acs)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0542",
+    "product": "acetyl-coenzyme A synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 944,
+  "y1": 85,
+  "x2": 990,
+  "y2": 102,
+  "url": "/dbget-bin/www_bget?syn:sll1299",
+  "id": "sll1299",
+  "label": "sll1299 (ackA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1299",
+    "product": "acetate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1017,
+  "y1": 383,
+  "x2": 1063,
+  "y2": 400,
+  "url": "/dbget-bin/www_bget?syn:sll0401",
+  "id": "sll0401",
+  "label": "sll0401 (gltA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0401",
+    "product": "citrate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1017,
+  "y1": 566,
+  "x2": 1063,
+  "y2": 583,
+  "url": "/dbget-bin/www_bget?syn:slr0665",
+  "id": "slr0665",
+  "label": "slr0665",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0665",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 841,
+  "y1": 620,
+  "x2": 887,
+  "y2": 637,
+  "url": "/dbget-bin/www_bget?syn:sll1023+syn:sll1557",
+  "id": "sll1023",
+  "label": "sll1023 (sucC), sll1557 (sucD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1023",
+    "product": "succinate--CoA ligase"
+   },
+   {
+    "locus": "sll1557",
+    "product": "succinyl-CoA synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 745,
+  "y1": 231,
+  "x2": 791,
+  "y2": 248,
+  "url": "/dbget-bin/www_bget?syn:slr1096",
+  "id": "slr1096",
+  "label": "slr1096 (phdD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1096",
+    "product": "dihydrolipoamide dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 244,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00640",
+  "id": "syn00640",
+  "label": "syn00640: Propanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 273,
+  "y1": 441,
+  "x2": 375,
+  "y2": 475,
+  "url": "/kegg-bin/show_pathway?syn00770",
+  "id": "syn00770",
+  "label": "syn00770: Pantothenate and CoA biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 410,
+  "y1": 143,
+  "x2": 477,
+  "y2": 168,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1074,
+  "y1": 310,
+  "x2": 1199,
+  "y2": 335,
+  "url": "/kegg-bin/show_pathway?syn00280",
+  "id": "syn00280",
+  "label": "syn00280: Valine, leucine and isoleucine degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1074,
+  "y1": 241,
+  "x2": 1205,
+  "y2": 275,
+  "url": "/kegg-bin/show_pathway?syn00660",
+  "id": "syn00660",
+  "label": "syn00660: C5-Branched dibasic acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1074,
+  "y1": 280,
+  "x2": 1199,
+  "y2": 305,
+  "url": "/kegg-bin/show_pathway?syn00410",
+  "id": "syn00410",
+  "label": "syn00410: beta-Alanine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 12,
+  "x2": 987,
+  "y2": 46,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 29,
+  "y1": 147,
+  "x2": 151,
+  "y2": 172,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 166,
+  "y1": 567,
+  "x2": 234,
+  "y2": 592,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 770,
+  "y1": 659,
+  "x2": 843,
+  "y2": 684,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 858,
+  "y1": 659,
+  "x2": 976,
+  "y2": 684,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 843,
+  "y1": 478,
+  "x2": 918,
+  "y2": 512,
+  "url": "/kegg-bin/show_pathway?syn00280",
+  "id": "syn00280",
+  "label": "syn00280: Valine, leucine and isoleucine degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 851,
+  "y1": 51,
+  "x2": 997,
+  "y2": 76,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1126,
+  "y1": 398,
+  "x2": 1199,
+  "y2": 423,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ }
+]

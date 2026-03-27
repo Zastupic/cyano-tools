@@ -1,0 +1,35 @@
+[
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 275,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00511",
+  "id": "syn00511",
+  "label": "syn00511: Other glycan degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 599,
+  "y1": 117,
+  "x2": 722,
+  "y2": 142,
+  "url": "/kegg-bin/show_pathway?map00510",
+  "id": "map00510:",
+  "label": "map00510: N-Glycan biosynthesis",
+  "entry_type": "gene"
+ },
+ {
+  "type": "rect",
+  "x1": 599,
+  "y1": 320,
+  "x2": 763,
+  "y2": 354,
+  "url": "/kegg-bin/show_pathway?map00604",
+  "id": "map00604:",
+  "label": "map00604: Glycosphingolipid biosynthesis - ganglio series",
+  "entry_type": "gene"
+ }
+]

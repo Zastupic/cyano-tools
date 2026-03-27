@@ -1,0 +1,601 @@
+[
+ {
+  "type": "circ",
+  "cx": 1059,
+  "cy": 137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11950",
+  "id": "C11950",
+  "label": "3-Isopropyl-3-butenoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 949,
+  "cy": 137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11949",
+  "id": "C11949",
+  "label": "3-Isopropylbut-3-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 839,
+  "cy": 137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11948",
+  "id": "C11948",
+  "label": "2,6-Dimethyl-5-methylene-3-oxo-heptanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 729,
+  "cy": 137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11947",
+  "id": "C11947",
+  "label": "3-Hydroxy-2,6-dimethyl-5-methylene-heptanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 195,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11945",
+  "id": "C11945",
+  "label": "trans-2-Methyl-5-isopropylhexa-2,5-dienoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11946",
+  "id": "C11946",
+  "label": "cis-2-Methyl-5-isopropylhexa-2,5-dienoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 195,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11943",
+  "id": "C11943",
+  "label": "trans-2-Methyl-5-isopropylhexa-2,5-dienoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11944",
+  "id": "C11944",
+  "label": "cis-2-Methyl-5-isopropylhexa-2,5-dienoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 195,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11942",
+  "id": "C11942",
+  "label": "trans-2-Methyl-5-isopropylhexa-2,5-dienal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 300,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11941",
+  "id": "C11941",
+  "label": "Pinocarveol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 247,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11940",
+  "id": "C11940",
+  "label": "Myrtenic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 247,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11939",
+  "id": "C11939",
+  "label": "Myrtenal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 247,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11938",
+  "id": "C11938",
+  "label": "Myrtenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04435",
+  "id": "C04435",
+  "label": "(Z)-2-Methyl-5-isopropylhexa-2,5-dienal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02759",
+  "id": "C02759",
+  "label": "alpha-Pinene-oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 300,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09884",
+  "id": "C09884",
+  "label": "Pinocarvone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 179,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00808",
+  "id": "C00808",
+  "label": "(+)-Camphor",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 477,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20271",
+  "id": "C20271",
+  "label": "[(1R)-2,2,3-Trimethyl-5-oxocyclopent-3-enyl]acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03448",
+  "id": "C03448",
+  "label": "(+)-exo-5-Hydroxycamphor",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03037",
+  "id": "C03037",
+  "label": "(+)-Bornane-2,5-dione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02952",
+  "id": "C02952",
+  "label": "5-Oxo-1,2-campholide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 729,
+  "cy": 477,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07160",
+  "id": "C07160",
+  "label": "[(1R)-2,2,3-Trimethyl-5-oxocyclopent-3-enyl]acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 839,
+  "cy": 477,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20321",
+  "id": "C20321",
+  "label": "[(2R)-3,3,4-Trimethyl-6-oxo-3,6-dihydro-1H-pyran-2-yl]acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 358,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20323",
+  "id": "C20323",
+  "label": "(+)-6-endo-Hydroxycamphor",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 358,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20320",
+  "id": "C20320",
+  "label": "Bornane-2,6-dione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 358,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20324",
+  "id": "C20324",
+  "label": "[(1S)-4-Hydroxy-2,2,3-trimethylcyclopent-3-enyl]acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 417,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20322",
+  "id": "C20322",
+  "label": "(+)-6-exo-Hydroxycamphor",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 179,
+  "cy": 551,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00809",
+  "id": "C00809",
+  "label": "(-)-Camphor",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 551,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22610",
+  "id": "C22610",
+  "label": "(-)-3-exo-Hydroxycamphor",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 551,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21929",
+  "id": "C21929",
+  "label": "(-)-Bornane-2,5-dione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 551,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21930",
+  "id": "C21930",
+  "label": "(-)-5-Oxo-1,2-campholide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 179,
+  "cy": 137,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09880",
+  "id": "C09880",
+  "label": "alpha-Pinene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1339,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03069",
+  "id": "C03069",
+  "label": "3-Methylcrotonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1249,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16471",
+  "id": "C16471",
+  "label": "5-Methyl-3-oxo-4-hexenoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1159,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16469",
+  "id": "C16469",
+  "label": "3-Hydroxy-5-methylhex-4-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 619,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01920",
+  "id": "C01920",
+  "label": "Geranoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16465",
+  "id": "C16465",
+  "label": "trans-Geranyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 979,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16470",
+  "id": "C16470",
+  "label": "5-Methylhex-4-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 799,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04675",
+  "id": "C04675",
+  "label": "3-Hydroxy-3-(4-methylpent-3-en-1-yl)glutaryl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 709,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01291",
+  "id": "C01291",
+  "label": "3-(4-Methylpent-3-en-1-yl)pent-2-enedioyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01499",
+  "id": "C01499",
+  "label": "Geranial",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16461",
+  "id": "C16461",
+  "label": "Geranic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 179,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01500",
+  "id": "C01500",
+  "label": "Geraniol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 179,
+  "cy": 606,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09871",
+  "id": "C09871",
+  "label": "Nerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 889,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16466",
+  "id": "C16466",
+  "label": "7-Methyl-3-oxo-6-octenoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 606,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09847",
+  "id": "C09847",
+  "label": "cis-Citral",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1069,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16468",
+  "id": "C16468",
+  "label": "(2E)-5-Methylhexa-2,4-dienoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 399,
+  "cy": 753,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16462",
+  "id": "C16462",
+  "label": "Citronellate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 509,
+  "cy": 753,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16464",
+  "id": "C16464",
+  "label": "Citronellyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 289,
+  "cy": 753,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09848+C11384",
+  "id": "C09848",
+  "label": "(R)-(+)-Citronellal), C11384 ((S)-(-)-Citronellal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 179,
+  "cy": 753,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09849+C11386",
+  "id": "C09849",
+  "label": "beta-Citronellol), C11386 ((-)-Citronellol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 929,
+  "cy": 470,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 929,
+  "cy": 484,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00630",
+  "id": "C00630",
+  "label": "2-Methylpropanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 208,
+  "y1": 598,
+  "x2": 254,
+  "y2": 615,
+  "url": "/dbget-bin/www_bget?syn:slr1192",
+  "id": "slr1192",
+  "label": "slr1192",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1192",
+    "product": "zinc-containing alcohol dehydrogenase family"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 208,
+  "y1": 642,
+  "x2": 254,
+  "y2": 659,
+  "url": "/dbget-bin/www_bget?syn:slr1192",
+  "id": "slr1192",
+  "label": "slr1192",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1192",
+    "product": "zinc-containing alcohol dehydrogenase family"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 23,
+  "y1": 348,
+  "x2": 121,
+  "y2": 382,
+  "url": "/kegg-bin/show_pathway?map00902",
+  "id": "map00902:",
+  "label": "map00902: Monoterpenoid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 409,
+  "y2": 69,
+  "url": "/kegg-bin/show_pathway?map00903",
+  "id": "map00903:",
+  "label": "map00903: Limonene degradation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 1390,
+  "y1": 644,
+  "x2": 1520,
+  "y2": 678,
+  "url": "/kegg-bin/show_pathway?syn00280",
+  "id": "syn00280",
+  "label": "syn00280: Valine, leucine and isoleucine degradation",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,636 @@
+[
+ {
+  "type": "circ",
+  "cx": 581,
+  "cy": 350,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02656",
+  "id": "C02656",
+  "label": "Pimelate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 581,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01063",
+  "id": "C01063",
+  "label": "Pimeloyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 413,
+  "cy": 527,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01092",
+  "id": "C01092",
+  "label": "8-Amino-7-oxononanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 413,
+  "cy": 672,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01909",
+  "id": "C01909",
+  "label": "Dethiobiotin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 413,
+  "cy": 605,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01037",
+  "id": "C01037",
+  "label": "7,8-Diaminononanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 413,
+  "cy": 739,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00120",
+  "id": "C00120",
+  "label": "Biotin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 237,
+  "cy": 759,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00047",
+  "id": "C00047",
+  "label": "L-Lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 279,
+  "cy": 805,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05552",
+  "id": "C05552",
+  "label": "Biocytin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 512,
+  "cy": 832,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01894",
+  "id": "C01894",
+  "label": "Biotinyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 413,
+  "cy": 832,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05921",
+  "id": "C05921",
+  "label": "Biotinyl-5'-AMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 279,
+  "cy": 877,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06250",
+  "id": "C06250",
+  "label": "Holo-[carboxylase]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 413,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19845",
+  "id": "C19845",
+  "label": "Pimeloyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 292,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19846",
+  "id": "C19846",
+  "label": "Pimeloyl-[acyl-carrier protein] methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 117,
+  "cy": 140,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01209",
+  "id": "C01209",
+  "label": "Malonyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 117,
+  "cy": 206,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19673",
+  "id": "C19673",
+  "label": "Malonyl-[acp] methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 177,
+  "cy": 263,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20372",
+  "id": "C20372",
+  "label": "3-Ketoglutaryl-[acp] methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 177,
+  "cy": 329,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20373",
+  "id": "C20373",
+  "label": "3-Hydroxyglutaryl-[acp] methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 177,
+  "cy": 395,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20374",
+  "id": "C20374",
+  "label": "Enoylglutaryl-[acp] methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 177,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20375",
+  "id": "C20375",
+  "label": "Glutaryl-[acp] methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 292,
+  "cy": 263,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20376",
+  "id": "C20376",
+  "label": "3-Ketopimeloyl-[acp] methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 292,
+  "cy": 329,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20377",
+  "id": "C20377",
+  "label": "3-Hydroxypimeloyl-[acp] methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 292,
+  "cy": 395,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20378",
+  "id": "C20378",
+  "label": "Enoylpimeloyl-[acp] methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 413,
+  "cy": 350,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20683",
+  "id": "C20683",
+  "label": "Long-chain acyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 578,
+  "cy": 832,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20384",
+  "id": "C20384",
+  "label": "Bisnorbiotin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 644,
+  "cy": 832,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20385",
+  "id": "C20385",
+  "label": "Tetranorbiotin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 512,
+  "cy": 739,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20386",
+  "id": "C20386",
+  "label": "Biotin sulfoxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 578,
+  "cy": 739,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20387",
+  "id": "C20387",
+  "label": "Biotin sulfone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 644,
+  "cy": 875,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00086",
+  "id": "C00086",
+  "label": "Urea",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 512,
+  "cy": 672,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22458",
+  "id": "C22458",
+  "label": "8-Amino-7-(carboxyamino)nonanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 354,
+  "y1": 879,
+  "x2": 400,
+  "y2": 896,
+  "url": "/dbget-bin/www_bget?syn:sll1655",
+  "id": "sll1655",
+  "label": "sll1655 (birA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1655",
+    "product": "biotin [acetyl-CoA-carboxylase] ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 365,
+  "y1": 787,
+  "x2": 411,
+  "y2": 804,
+  "url": "/dbget-bin/www_bget?syn:sll1655",
+  "id": "sll1655",
+  "label": "sll1655 (birA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1655",
+    "product": "biotin [acetyl-CoA-carboxylase] ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 390,
+  "y1": 690,
+  "x2": 436,
+  "y2": 707,
+  "url": "/dbget-bin/www_bget?syn:slr1364",
+  "id": "slr1364",
+  "label": "slr1364 (bioB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1364",
+    "product": "biotin synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 390,
+  "y1": 626,
+  "x2": 436,
+  "y2": 643,
+  "url": "/dbget-bin/www_bget?syn:slr0523",
+  "id": "slr0523",
+  "label": "slr0523",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0523",
+    "product": "dethiobiotin synthetase; BioD"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 559,
+  "y1": 483,
+  "x2": 605,
+  "y2": 500,
+  "url": "/dbget-bin/www_bget?syn:slr0917",
+  "id": "slr0917",
+  "label": "slr0917 (bioF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0917",
+    "product": "7-keto-8-aminopelargonic acid synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 391,
+  "y1": 483,
+  "x2": 437,
+  "y2": 500,
+  "url": "/dbget-bin/www_bget?syn:slr0917",
+  "id": "slr0917",
+  "label": "slr0917 (bioF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0917",
+    "product": "7-keto-8-aminopelargonic acid synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 155,
+  "y1": 285,
+  "x2": 201,
+  "y2": 302,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 155,
+  "y1": 351,
+  "x2": 201,
+  "y2": 368,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 155,
+  "y1": 417,
+  "x2": 201,
+  "y2": 434,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 270,
+  "y1": 285,
+  "x2": 316,
+  "y2": 302,
+  "url": "/dbget-bin/www_bget?syn:sll5079+syn:slr0886",
+  "id": "sll5079,",
+  "label": "sll5079, slr0886 (fabG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5079",
+    "product": "probable short chain dehydrogenase"
+   },
+   {
+    "locus": "slr0886",
+    "product": "3-oxoacyl-[acyl-carrier protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 270,
+  "y1": 351,
+  "x2": 316,
+  "y2": 368,
+  "url": "/dbget-bin/www_bget?syn:sll1605",
+  "id": "sll1605",
+  "label": "sll1605 (fabZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1605",
+    "product": "(3R)-hydroxymyristol acyl carrier protein dehydrase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 270,
+  "y1": 417,
+  "x2": 316,
+  "y2": 434,
+  "url": "/dbget-bin/www_bget?syn:slr1051",
+  "id": "slr1051",
+  "label": "slr1051 (envM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1051",
+    "product": "enoyl-[acyl-carrier-protein] reductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 294,
+  "y1": 219,
+  "x2": 340,
+  "y2": 236,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 179,
+  "y1": 219,
+  "x2": 225,
+  "y2": 236,
+  "url": "/dbget-bin/www_bget?syn:sll1069+syn:slr1332",
+  "id": "sll1069",
+  "label": "sll1069 (fabF), slr1332 (fabF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1069",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   },
+   {
+    "locus": "slr1332",
+    "product": "beta ketoacyl-acyl carrier protein synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 440,
+  "y1": 664,
+  "x2": 486,
+  "y2": 681,
+  "url": "/dbget-bin/www_bget?syn:slr0523",
+  "id": "slr0523",
+  "label": "slr0523",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0523",
+    "product": "dethiobiotin synthetase; BioD"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 490,
+  "y1": 594,
+  "x2": 536,
+  "y2": 611,
+  "url": "/dbget-bin/www_bget?syn:slr0355",
+  "id": "slr0355",
+  "label": "slr0355",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0355",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 26,
+  "y1": 776,
+  "x2": 162,
+  "y2": 821,
+  "url": "/kegg-bin/show_pathway?map00960",
+  "id": "map00960:",
+  "label": "map00960: Tropane, piperidine and pyridine alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 215,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00780",
+  "id": "syn00780",
+  "label": "syn00780: Biotin metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 46,
+  "y1": 747,
+  "x2": 162,
+  "y2": 772,
+  "url": "/kegg-bin/show_pathway?syn00310",
+  "id": "syn00310",
+  "label": "syn00310: Lysine degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 56,
+  "y1": 865,
+  "x2": 179,
+  "y2": 890,
+  "url": "/kegg-bin/show_pathway?syn00061",
+  "id": "syn00061",
+  "label": "syn00061: Fatty acid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 350,
+  "y1": 97,
+  "x2": 473,
+  "y2": 122,
+  "url": "/kegg-bin/show_pathway?syn00061",
+  "id": "syn00061",
+  "label": "syn00061: Fatty acid biosynthesis",
+  "entry_type": "pathway"
+ }
+]

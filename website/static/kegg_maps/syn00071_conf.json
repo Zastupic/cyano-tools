@@ -1,0 +1,735 @@
+[
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 300,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02990",
+  "id": "C02990",
+  "label": "L-Palmitoylcarnitine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 398,
+  "cy": 773,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00638",
+  "id": "C00638",
+  "label": "Long-chain fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 398,
+  "cy": 823,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05280",
+  "id": "C05280",
+  "label": "cis,cis-3,6-Dodecadienoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 398,
+  "cy": 848,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03561",
+  "id": "C03561",
+  "label": "(R)-3-Hydroxybutanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01144",
+  "id": "C01144",
+  "label": "(S)-3-Hydroxybutanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 452,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00877",
+  "id": "C00877",
+  "label": "Crotonoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00332",
+  "id": "C00332",
+  "label": "Acetoacetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00136",
+  "id": "C00136",
+  "label": "Butanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 429,
+  "cy": 801,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00229",
+  "id": "C00229",
+  "label": "Acyl-carrier protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05269",
+  "id": "C05269",
+  "label": "3-Oxohexanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 452,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05271",
+  "id": "C05271",
+  "label": "trans-Hex-2-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 692,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00010",
+  "id": "C00010",
+  "label": "CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05268",
+  "id": "C05268",
+  "label": "(S)-Hydroxyhexanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 771,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05270",
+  "id": "C05270",
+  "label": "Hexanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 535,
+  "cy": 773,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20683",
+  "id": "C20683",
+  "label": "Long-chain acyl-[acyl-carrier protein]",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 535,
+  "cy": 823,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05279",
+  "id": "C05279",
+  "label": "trans,cis-Lauro-2,6-dienoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 535,
+  "cy": 848,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01144",
+  "id": "C01144",
+  "label": "(S)-3-Hydroxybutanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 645,
+  "cy": 692,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00010",
+  "id": "C00010",
+  "label": "CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 645,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05267",
+  "id": "C05267",
+  "label": "3-Oxooctanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 645,
+  "cy": 537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05266",
+  "id": "C05266",
+  "label": "(S)-3-Hydroxyoctanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 645,
+  "cy": 452,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05276",
+  "id": "C05276",
+  "label": "trans-Oct-2-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 645,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01944",
+  "id": "C01944",
+  "label": "Octanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 270,
+  "cy": 913,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01371",
+  "id": "C01371",
+  "label": "Alkane",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 291,
+  "cy": 946,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00340",
+  "id": "C00340",
+  "label": "Reduced rubredoxin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 519,
+  "cy": 452,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05275",
+  "id": "C05275",
+  "label": "trans-Dec-2-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 519,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05274",
+  "id": "C05274",
+  "label": "Decanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 519,
+  "cy": 537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05264",
+  "id": "C05264",
+  "label": "(S)-Hydroxydecanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 519,
+  "cy": 692,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00010",
+  "id": "C00010",
+  "label": "CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 519,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05265",
+  "id": "C05265",
+  "label": "3-Oxodecanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 377,
+  "cy": 946,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00435",
+  "id": "C00435",
+  "label": "Oxidized rubredoxin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 400,
+  "cy": 913,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00226",
+  "id": "C00226",
+  "label": "Primary alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05262",
+  "id": "C05262",
+  "label": "(S)-3-Hydroxydodecanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01832",
+  "id": "C01832",
+  "label": "Lauroyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 692,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00010",
+  "id": "C00010",
+  "label": "CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05263",
+  "id": "C05263",
+  "label": "3-Oxododecanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 393,
+  "cy": 452,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03221",
+  "id": "C03221",
+  "label": "2-trans-Dodecenoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 505,
+  "cy": 913,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00071",
+  "id": "C00071",
+  "label": "Aldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 692,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00010",
+  "id": "C00010",
+  "label": "CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 267,
+  "cy": 537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05260",
+  "id": "C05260",
+  "label": "(S)-3-Hydroxytetradecanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 267,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02593",
+  "id": "C02593",
+  "label": "Tetradecanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 267,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05261",
+  "id": "C05261",
+  "label": "3-Oxotetradecanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 267,
+  "cy": 452,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05273",
+  "id": "C05273",
+  "label": "trans-Tetradec-2-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 609,
+  "cy": 913,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00162",
+  "id": "C00162",
+  "label": "Fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 977,
+  "cy": 386,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00527",
+  "id": "C00527",
+  "label": "Glutaryl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 692,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00010",
+  "id": "C00010",
+  "label": "CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 621,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05259",
+  "id": "C05259",
+  "label": "3-Oxopalmitoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05258",
+  "id": "C05258",
+  "label": "(S)-3-Hydroxyhexadecanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 452,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05272",
+  "id": "C05272",
+  "label": "trans-Hexadec-2-enoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 239,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00154",
+  "id": "C00154",
+  "label": "Palmitoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00249",
+  "id": "C00249",
+  "label": "Hexadecanoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 706,
+  "cy": 945,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05102",
+  "id": "C05102",
+  "label": "alpha-Hydroxy fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 706,
+  "cy": 913,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03547",
+  "id": "C03547",
+  "label": "omega-Hydroxy fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 251,
+  "cy": 176,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00517",
+  "id": "C00517",
+  "label": "Hexadecanal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 360,
+  "cy": 176,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00823",
+  "id": "C00823",
+  "label": "1-Hexadecanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 897,
+  "cy": 779,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 977,
+  "cy": 321,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00489",
+  "id": "C00489",
+  "label": "Glutarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 142,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00154",
+  "id": "C00154",
+  "label": "Palmitoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 784,
+  "y1": 638,
+  "x2": 830,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:slr1993",
+  "id": "slr1993",
+  "label": "slr1993 (thl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1993",
+    "product": "acetyl coenzyme A acetyltransferase (thiolase)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 431,
+  "y1": 895,
+  "x2": 477,
+  "y2": 912,
+  "url": "/dbget-bin/www_bget?syn:sll0990",
+  "id": "sll0990",
+  "label": "sll0990",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0990",
+    "product": "formaldehyde dehydrogenase (glutathione)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 119,
+  "y1": 200,
+  "x2": 165,
+  "y2": 217,
+  "url": "/dbget-bin/www_bget?syn:slr1609",
+  "id": "slr1609",
+  "label": "slr1609",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1609",
+    "product": "long-chain-fatty-acid CoA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 899,
+  "y1": 649,
+  "x2": 945,
+  "y2": 666,
+  "url": "/dbget-bin/www_bget?syn:slr1993",
+  "id": "slr1993",
+  "label": "slr1993 (thl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1993",
+    "product": "acetyl coenzyme A acetyltransferase (thiolase)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 533,
+  "y1": 895,
+  "x2": 579,
+  "y2": 912,
+  "url": "/dbget-bin/www_bget?syn:slr0091",
+  "id": "slr0091",
+  "label": "slr0091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0091",
+    "product": "aldehyde dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 855,
+  "y1": 862,
+  "x2": 936,
+  "y2": 887,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 103,
+  "y1": 96,
+  "x2": 181,
+  "y2": 130,
+  "url": "/kegg-bin/show_pathway?syn00061",
+  "id": "syn00061",
+  "label": "syn00061: Fatty acid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 239,
+  "y1": 100,
+  "x2": 357,
+  "y2": 125,
+  "url": "/kegg-bin/show_pathway?map00062",
+  "id": "map00062:",
+  "label": "map00062: Fatty acid elongation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 239,
+  "y1": 128,
+  "x2": 376,
+  "y2": 153,
+  "url": "/kegg-bin/show_pathway?syn00561",
+  "id": "syn00561",
+  "label": "syn00561: Glycerolipid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 255,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00071",
+  "id": "syn00071",
+  "label": "syn00071: Fatty acid degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 978,
+  "y1": 766,
+  "x2": 1101,
+  "y2": 791,
+  "url": "/kegg-bin/show_pathway?syn00650",
+  "id": "syn00650",
+  "label": "syn00650: Butanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 978,
+  "y1": 795,
+  "x2": 1121,
+  "y2": 829,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ }
+]

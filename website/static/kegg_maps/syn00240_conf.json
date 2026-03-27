@@ -1,0 +1,1484 @@
+[
+ {
+  "type": "circ",
+  "cx": 127,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00064",
+  "id": "C00064",
+  "label": "L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 127,
+  "cy": 152,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00438",
+  "id": "C00438",
+  "label": "N-Carbamoyl-L-aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 127,
+  "cy": 224,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00169",
+  "id": "C00169",
+  "label": "Carbamoyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 229,
+  "cy": 152,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00337",
+  "id": "C00337",
+  "label": "(S)-Dihydroorotate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 388,
+  "cy": 103,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00119",
+  "id": "C00119",
+  "label": "5-Phospho-alpha-D-ribose 1-diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 472,
+  "cy": 152,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01103",
+  "id": "C01103",
+  "label": "Orotidine 5'-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 235,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00075",
+  "id": "C00075",
+  "label": "UTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 445,
+  "cy": 235,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00015",
+  "id": "C00015",
+  "label": "UDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 562,
+  "cy": 235,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00105",
+  "id": "C00105",
+  "label": "UMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 692,
+  "cy": 235,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00299",
+  "id": "C00299",
+  "label": "Uridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 235,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00106",
+  "id": "C00106",
+  "label": "Uracil",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 247,
+  "cy": 424,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00046",
+  "id": "C00046",
+  "label": "RNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 425,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00063",
+  "id": "C00063",
+  "label": "CTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 247,
+  "cy": 900,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00039",
+  "id": "C00039",
+  "label": "DNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 900,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00459",
+  "id": "C00459",
+  "label": "dTTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 449,
+  "cy": 900,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00363",
+  "id": "C00363",
+  "label": "dTDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 562,
+  "cy": 900,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00364",
+  "id": "C00364",
+  "label": "dTMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 692,
+  "cy": 900,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00214",
+  "id": "C00214",
+  "label": "Thymidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 815,
+  "cy": 934,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00672",
+  "id": "C00672",
+  "label": "2-Deoxy-D-ribose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 979,
+  "cy": 822,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05281",
+  "id": "C05281",
+  "label": "5-Methylbarbiturate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 822,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20846",
+  "id": "C20846",
+  "label": "3-Oxo-3-ureidoisobutyrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 755,
+  "cy": 822,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02376",
+  "id": "C02376",
+  "label": "5-Methylcytosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 979,
+  "cy": 900,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21028",
+  "id": "C21028",
+  "label": "(R)-5,6-Dihydrothymine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 900,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21029",
+  "id": "C21029",
+  "label": "(R)-3-Ureidoisobutyrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1184,
+  "cy": 900,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01205",
+  "id": "C01205",
+  "label": "(R)-3-Amino-2-methylpropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 692,
+  "cy": 426,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00475",
+  "id": "C00475",
+  "label": "Cytidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 562,
+  "cy": 426,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00055",
+  "id": "C00055",
+  "label": "CMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 449,
+  "cy": 426,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00112",
+  "id": "C00112",
+  "label": "CDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 449,
+  "cy": 845,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00015",
+  "id": "C00015",
+  "label": "UDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 335,
+  "cy": 752,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00460",
+  "id": "C00460",
+  "label": "dUTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 449,
+  "cy": 751,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01346",
+  "id": "C01346",
+  "label": "dUDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 562,
+  "cy": 751,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00365",
+  "id": "C00365",
+  "label": "dUMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 692,
+  "cy": 597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00881",
+  "id": "C00881",
+  "label": "Deoxycytidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 562,
+  "cy": 597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00239",
+  "id": "C00239",
+  "label": "dCMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 449,
+  "cy": 597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00705",
+  "id": "C00705",
+  "label": "dCDP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 333,
+  "cy": 597,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00458",
+  "id": "C00458",
+  "label": "dCTP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 657,
+  "cy": 541,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03997",
+  "id": "C03997",
+  "label": "5-Hydroxymethyldeoxycytidylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 747,
+  "cy": 541,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11038",
+  "id": "C11038",
+  "label": "2'-Deoxy-5-hydroxymethylcytidine-5'-diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 837,
+  "cy": 541,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11039",
+  "id": "C11039",
+  "label": "2'-Deoxy-5-hydroxymethylcytidine-5'-triphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 152,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00295",
+  "id": "C00295",
+  "label": "Orotate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 719,
+  "cy": 165,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01368",
+  "id": "C01368",
+  "label": "3'-UMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 810,
+  "cy": 165,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02355",
+  "id": "C02355",
+  "label": "2',3'-Cyclic UMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 491,
+  "cy": 512,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02354",
+  "id": "C02354",
+  "label": "2',3'-Cyclic CMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 239,
+  "cy": 207,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06198",
+  "id": "C06198",
+  "label": "P1,P4-Bis(5'-uridyl) tetraphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 578,
+  "cy": 512,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05822",
+  "id": "C05822",
+  "label": "3'-CMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 960,
+  "cy": 179,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01168",
+  "id": "C01168",
+  "label": "Pseudouridine 5'-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1060,
+  "cy": 179,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02067",
+  "id": "C02067",
+  "label": "Pseudouridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 306,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15607",
+  "id": "C15607",
+  "label": "3-Oxo-3-ureidopropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1184,
+  "cy": 306,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00383",
+  "id": "C00383",
+  "label": "Malonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1163,
+  "cy": 343,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00086",
+  "id": "C00086",
+  "label": "Urea",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 979,
+  "cy": 306,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00813",
+  "id": "C00813",
+  "label": "Barbiturate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1184,
+  "cy": 234,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00099",
+  "id": "C00099",
+  "label": "beta-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1079,
+  "cy": 234,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02642",
+  "id": "C02642",
+  "label": "3-Ureidopropionate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 979,
+  "cy": 234,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00429",
+  "id": "C00429",
+  "label": "5,6-Dihydrouracil",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 990,
+  "cy": 467,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20231",
+  "id": "C20231",
+  "label": "(Z)-3-Ureidoacrylate peracid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1088,
+  "cy": 467,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20249",
+  "id": "C20249",
+  "label": "(Z)-3-Peroxyaminoacrylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1069,
+  "cy": 438,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01563",
+  "id": "C01563",
+  "label": "Carbamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1270,
+  "cy": 467,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00222",
+  "id": "C00222",
+  "label": "3-Oxopropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1361,
+  "cy": 467,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01013",
+  "id": "C01013",
+  "label": "3-Hydroxypropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1179,
+  "cy": 467,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20253",
+  "id": "C20253",
+  "label": "Aminoacrylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 990,
+  "cy": 412,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20254",
+  "id": "C20254",
+  "label": "Ureidoacrylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1184,
+  "cy": 822,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02170",
+  "id": "C02170",
+  "label": "Methylmalonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1163,
+  "cy": 785,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00086",
+  "id": "C00086",
+  "label": "Urea",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 247,
+  "cy": 598,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00039",
+  "id": "C00039",
+  "label": "DNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 692,
+  "cy": 751,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00526",
+  "id": "C00526",
+  "label": "Deoxyuridine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 853,
+  "cy": 426,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00380",
+  "id": "C00380",
+  "label": "Cytosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 853,
+  "cy": 900,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00178",
+  "id": "C00178",
+  "label": "Thymine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 184,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22509",
+  "id": "C22509",
+  "label": "3',5'-Cyclic UMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 419,
+  "cy": 469,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00941",
+  "id": "C00941",
+  "label": "3',5'-Cyclic CMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 426,
+  "y1": 797,
+  "x2": 472,
+  "y2": 814,
+  "url": "/dbget-bin/www_bget?syn:slr0591+syn:slr1164",
+  "id": "slr0591,",
+  "label": "slr0591, slr1164 (nrdA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0591",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "slr1164",
+    "product": "ribonucleotide reductase subunit alpha"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 482,
+  "y1": 237,
+  "x2": 528,
+  "y2": 254,
+  "url": "/dbget-bin/www_bget?syn:sll0144",
+  "id": "sll0144",
+  "label": "sll0144 (pyrH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0144",
+    "product": "uridine monophosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 564,
+  "y1": 816,
+  "x2": 610,
+  "y2": 833,
+  "url": "/dbget-bin/www_bget?syn:sll1635",
+  "id": "sll1635",
+  "label": "sll1635",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1635",
+    "product": "Thy1 protein homologue"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 104,
+  "y1": 254,
+  "x2": 150,
+  "y2": 271,
+  "url": "/dbget-bin/www_bget?syn:sll0370+syn:sll1498+syn:slr1616",
+  "id": "sll0370",
+  "label": "sll0370 (carB), sll1498 (carA), slr1616",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0370",
+    "product": "carbamoyl-phosphate synthase, pyrimidine-specific, large chain"
+   },
+   {
+    "locus": "sll1498",
+    "product": "carbamoyl-phosphate synthetase subunit A"
+   },
+   {
+    "locus": "slr1616",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 104,
+  "y1": 182,
+  "x2": 150,
+  "y2": 199,
+  "url": "/dbget-bin/www_bget?syn:slr1476",
+  "id": "slr1476",
+  "label": "slr1476 (pyrB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1476",
+    "product": "aspartate carbamoyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 155,
+  "y1": 144,
+  "x2": 201,
+  "y2": 161,
+  "url": "/dbget-bin/www_bget?syn:sll1018+syn:slr0406",
+  "id": "sll1018",
+  "label": "sll1018 (pyrC), slr0406 (pyrC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1018",
+    "product": "dihydroorotase"
+   },
+   {
+    "locus": "slr0406",
+    "product": "dihydroorotase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 266,
+  "y1": 144,
+  "x2": 312,
+  "y2": 161,
+  "url": "/dbget-bin/www_bget?syn:sll0744",
+  "id": "sll0744",
+  "label": "sll0744",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0744",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 398,
+  "y1": 144,
+  "x2": 444,
+  "y2": 161,
+  "url": "/dbget-bin/www_bget?syn:slr0185",
+  "id": "slr0185",
+  "label": "slr0185 (umpS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0185",
+    "product": "uridine 5'-monophosphate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 371,
+  "y1": 227,
+  "x2": 417,
+  "y2": 244,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 310,
+  "y1": 309,
+  "x2": 356,
+  "y2": 326,
+  "url": "/dbget-bin/www_bget?syn:sll1443",
+  "id": "sll1443",
+  "label": "sll1443 (pyrG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1443",
+    "product": "CTP synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 615,
+  "y1": 289,
+  "x2": 661,
+  "y2": 306,
+  "url": "/dbget-bin/www_bget?syn:sll0368+syn:sll1035",
+  "id": "sll0368",
+  "label": "sll0368 (pyrR), sll1035 (upp)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0368",
+    "product": "pyrimidine operon regulatory protein; PyrR"
+   },
+   {
+    "locus": "sll1035",
+    "product": "uracil phosphoribosyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 615,
+  "y1": 245,
+  "x2": 661,
+  "y2": 262,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 371,
+  "y1": 427,
+  "x2": 417,
+  "y2": 444,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 615,
+  "y1": 399,
+  "x2": 661,
+  "y2": 416,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 670,
+  "y1": 347,
+  "x2": 716,
+  "y2": 364,
+  "url": "/dbget-bin/www_bget?syn:sll5107+syn:slr6034",
+  "id": "sll5107,",
+  "label": "sll5107, slr6034",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5107",
+    "product": "cytidine deaminase"
+   },
+   {
+    "locus": "slr6034",
+    "product": "cytidine deaminase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 830,
+  "y1": 347,
+  "x2": 876,
+  "y2": 364,
+  "url": "/dbget-bin/www_bget?syn:slr1237",
+  "id": "slr1237",
+  "label": "slr1237 (codA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1237",
+    "product": "cytosine deaminase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 426,
+  "y1": 512,
+  "x2": 472,
+  "y2": 529,
+  "url": "/dbget-bin/www_bget?syn:slr0591+syn:slr1164",
+  "id": "slr0591,",
+  "label": "slr0591, slr1164 (nrdA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0591",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "slr1164",
+    "product": "ribonucleotide reductase subunit alpha"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 371,
+  "y1": 589,
+  "x2": 417,
+  "y2": 606,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 306,
+  "y1": 686,
+  "x2": 352,
+  "y2": 703,
+  "url": "/dbget-bin/www_bget?syn:sll1258",
+  "id": "sll1258",
+  "label": "sll1258",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1258",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 615,
+  "y1": 569,
+  "x2": 661,
+  "y2": 586,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 371,
+  "y1": 734,
+  "x2": 417,
+  "y2": 751,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 482,
+  "y1": 742,
+  "x2": 528,
+  "y2": 759,
+  "url": "/dbget-bin/www_bget?syn:slr0379",
+  "id": "slr0379",
+  "label": "slr0379",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0379",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 669,
+  "y1": 658,
+  "x2": 715,
+  "y2": 675,
+  "url": "/dbget-bin/www_bget?syn:sll5107+syn:slr6034",
+  "id": "sll5107,",
+  "label": "sll5107, slr6034",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll5107",
+    "product": "cytidine deaminase"
+   },
+   {
+    "locus": "slr6034",
+    "product": "cytidine deaminase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 371,
+  "y1": 891,
+  "x2": 417,
+  "y2": 908,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 482,
+  "y1": 882,
+  "x2": 528,
+  "y2": 899,
+  "url": "/dbget-bin/www_bget?syn:slr0379",
+  "id": "slr0379",
+  "label": "slr0379",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0379",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 615,
+  "y1": 872,
+  "x2": 661,
+  "y2": 889,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 784,
+  "y1": 814,
+  "x2": 830,
+  "y2": 831,
+  "url": "/dbget-bin/www_bget?syn:slr1237",
+  "id": "slr1237",
+  "label": "slr1237 (codA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1237",
+    "product": "cytosine deaminase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 266,
+  "y1": 163,
+  "x2": 312,
+  "y2": 180,
+  "url": "/dbget-bin/www_bget?syn:slr1418",
+  "id": "slr1418",
+  "label": "slr1418 (pyrD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1418",
+    "product": "dihydroorotate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 495,
+  "y1": 144,
+  "x2": 541,
+  "y2": 161,
+  "url": "/dbget-bin/www_bget?syn:sll0838",
+  "id": "sll0838",
+  "label": "sll0838 (pyrF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0838",
+    "product": "orotidine 5' monophosphate decarboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 670,
+  "y1": 185,
+  "x2": 716,
+  "y2": 202,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 628,
+  "y1": 504,
+  "x2": 674,
+  "y2": 521,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 615,
+  "y1": 724,
+  "x2": 661,
+  "y2": 741,
+  "url": "/dbget-bin/www_bget?syn:sll1108+syn:sll1459+syn:slr0306",
+  "id": "sll1108,",
+  "label": "sll1108, sll1459, slr0306",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1108",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1459",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr0306",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 766,
+  "y1": 532,
+  "x2": 812,
+  "y2": 549,
+  "url": "/dbget-bin/www_bget?syn:sll1852",
+  "id": "sll1852",
+  "label": "sll1852 (ndkR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1852",
+    "product": "nucleoside diphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 482,
+  "y1": 599,
+  "x2": 528,
+  "y2": 616,
+  "url": "/dbget-bin/www_bget?syn:sll1249",
+  "id": "sll1249",
+  "label": "sll1249 (panC_kcy)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1249",
+    "product": "pantothenate synthetase/cytidylate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 482,
+  "y1": 428,
+  "x2": 528,
+  "y2": 445,
+  "url": "/dbget-bin/www_bget?syn:sll1249",
+  "id": "sll1249",
+  "label": "sll1249 (panC_kcy)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1249",
+    "product": "pantothenate synthetase/cytidylate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 429,
+  "y1": 299,
+  "x2": 475,
+  "y2": 316,
+  "url": "/dbget-bin/www_bget?syn:sll0905",
+  "id": "sll0905",
+  "label": "sll0905 (maf)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0905",
+    "product": "maf protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 429,
+  "y1": 963,
+  "x2": 475,
+  "y2": 980,
+  "url": "/dbget-bin/www_bget?syn:sll0905",
+  "id": "sll0905",
+  "label": "sll0905 (maf)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0905",
+    "product": "maf protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 429,
+  "y1": 369,
+  "x2": 475,
+  "y2": 386,
+  "url": "/dbget-bin/www_bget?syn:sll0905",
+  "id": "sll0905",
+  "label": "sll0905 (maf)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0905",
+    "product": "maf protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 243,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00240",
+  "id": "syn00240",
+  "label": "syn00240: Pyrimidine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 101,
+  "y1": 89,
+  "x2": 248,
+  "y2": 114,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 65,
+  "y1": 359,
+  "x2": 190,
+  "y2": 393,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1228,
+  "y1": 882,
+  "x2": 1361,
+  "y2": 916,
+  "url": "/kegg-bin/show_pathway?syn00280",
+  "id": "syn00280",
+  "label": "syn00280: Valine, leucine and isoleucine degradation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 16,
+  "y1": 280,
+  "x2": 95,
+  "y2": 314,
+  "url": "/kegg-bin/show_pathway?syn00220",
+  "id": "syn00220",
+  "label": "syn00220: Arginine biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1228,
+  "y1": 221,
+  "x2": 1351,
+  "y2": 246,
+  "url": "/kegg-bin/show_pathway?syn00410",
+  "id": "syn00410",
+  "label": "syn00410: beta-Alanine metabolism",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,471 @@
+[
+ {
+  "type": "circ",
+  "cx": 362,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00836",
+  "id": "C00836",
+  "label": "Sphinganine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 400,
+  "cy": 275,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12144",
+  "id": "C12144",
+  "label": "Phytosphingosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 507,
+  "cy": 275,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12145",
+  "id": "C12145",
+  "label": "Phytoceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 507,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12126",
+  "id": "C12126",
+  "label": "Dihydroceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 362,
+  "cy": 493,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01290",
+  "id": "C01290",
+  "label": "Lactosylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 670,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06124",
+  "id": "C06124",
+  "label": "Sphingosine 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 507,
+  "cy": 493,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01190",
+  "id": "C01190",
+  "label": "Glucosylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 362,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01120",
+  "id": "C01120",
+  "label": "Sphinganine 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 507,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00346",
+  "id": "C00346",
+  "label": "Ethanolamine phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 814,
+  "cy": 264,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06062",
+  "id": "C06062",
+  "label": "Ceramide phosphoethanolamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 814,
+  "cy": 289,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05681",
+  "id": "C05681",
+  "label": "Ceramide 2-aminoethylphosphonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 255,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02934",
+  "id": "C02934",
+  "label": "3-Dehydrosphinganine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 163,
+  "cy": 288,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00065",
+  "id": "C00065",
+  "label": "L-Serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 145,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00154",
+  "id": "C00154",
+  "label": "Palmitoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 670,
+  "cy": 202,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00319",
+  "id": "C00319",
+  "label": "Sphingosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 670,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00195",
+  "id": "C00195",
+  "label": "N-Acylsphingosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 670,
+  "cy": 585,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02686",
+  "id": "C02686",
+  "label": "Galactosylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 814,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01747",
+  "id": "C01747",
+  "label": "Psychosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 934,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03640",
+  "id": "C03640",
+  "label": "Sphingosyl-phosphocholine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 814,
+  "cy": 493,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02960",
+  "id": "C02960",
+  "label": "Ceramide 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 814,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00550",
+  "id": "C00550",
+  "label": "Sphingomyelin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 814,
+  "cy": 585,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06125",
+  "id": "C06125",
+  "label": "Sulfatide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 526,
+  "cy": 585,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06128",
+  "id": "C06128",
+  "label": "GM4",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 670,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06126",
+  "id": "C06126",
+  "label": "Digalactosylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 813,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06127",
+  "id": "C06127",
+  "label": "Digalactosylceramide sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 362,
+  "cy": 582,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03405",
+  "id": "C03405",
+  "label": "Lactosylceramide sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 362,
+  "cy": 666,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22467",
+  "id": "C22467",
+  "label": "Gangliotriaosylceramide-II3 sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 279,
+  "cy": 582,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04737",
+  "id": "C04737",
+  "label": "alpha-D-Galactosyl-(1-&gt;4)-beta-D-galactosyl-(1-&gt;4)-beta-D-glucosyl-(1&lt;-&gt;1)-ceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 964,
+  "cy": 127,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03108",
+  "id": "C03108",
+  "label": "D-Glucosylsphingosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 141,
+  "cy": 666,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06135",
+  "id": "C06135",
+  "label": "GA2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 141,
+  "cy": 749,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06136",
+  "id": "C06136",
+  "label": "GA1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 210,
+  "cy": 749,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04911",
+  "id": "C04911",
+  "label": "D-Galactosyl-N-acetyl-D-galactosaminyl-(N-acetylneuraminyl)-D-galactosyl-D-glucosylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 210,
+  "cy": 666,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04884",
+  "id": "C04884",
+  "label": "N-Acetyl-D-galactosaminyl-(N-acetylneuraminyl)-D-galactosyl-D-glucosylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 210,
+  "cy": 582,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04730",
+  "id": "C04730",
+  "label": "GM3",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 279,
+  "cy": 666,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03272",
+  "id": "C03272",
+  "label": "Globoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 365,
+  "cy": 425,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23072",
+  "id": "C23072",
+  "label": "Oxidized ceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 557,
+  "y1": 483,
+  "x2": 606,
+  "y2": 500,
+  "url": "/dbget-bin/www_bget?syn:sll1775",
+  "id": "sll1775",
+  "label": "sll1775",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1775",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 556,
+  "y1": 429,
+  "x2": 602,
+  "y2": 446,
+  "url": "/dbget-bin/www_bget?syn:slr0813",
+  "id": "slr0813",
+  "label": "slr0813",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0813",
+    "product": "ceramide glucosyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 942,
+  "y1": 159,
+  "x2": 988,
+  "y2": 176,
+  "url": "/dbget-bin/www_bget?syn:sll1775",
+  "id": "sll1775",
+  "label": "sll1775",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1775",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 60,
+  "y1": 786,
+  "x2": 230,
+  "y2": 820,
+  "url": "/kegg-bin/show_pathway?map00604",
+  "id": "map00604:",
+  "label": "map00604: Glycosphingolipid biosynthesis - ganglio series",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 266,
+  "y1": 786,
+  "x2": 436,
+  "y2": 820,
+  "url": "/kegg-bin/show_pathway?map00603",
+  "id": "map00603:",
+  "label": "map00603: Glycosphingolipid biosynthesis - globo and isoglobo series",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 431,
+  "x2": 251,
+  "y2": 465,
+  "url": "/kegg-bin/show_pathway?map00601",
+  "id": "map00601:",
+  "label": "map00601: Glycosphingolipid biosynthesis - lacto and neolacto series",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 102,
+  "y1": 148,
+  "x2": 228,
+  "y2": 182,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 253,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00600",
+  "id": "syn00600",
+  "label": "syn00600: Sphingolipid metabolism",
+  "entry_type": "pathway"
+ }
+]

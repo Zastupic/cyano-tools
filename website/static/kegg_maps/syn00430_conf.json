@@ -1,0 +1,410 @@
+[
+ {
+  "type": "circ",
+  "cx": 242,
+  "cy": 394,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00094",
+  "id": "C00094",
+  "label": "Sulfite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 210,
+  "cy": 363,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06735",
+  "id": "C06735",
+  "label": "Aminoacetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 411,
+  "cy": 399,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00041",
+  "id": "C00041",
+  "label": "L-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 411,
+  "cy": 334,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 258,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00227",
+  "id": "C00227",
+  "label": "Acetyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 165,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 242,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00606",
+  "id": "C00606",
+  "label": "3-Sulfino-L-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 361,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00519",
+  "id": "C00519",
+  "label": "Hypotaurine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 242,
+  "cy": 143,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01678",
+  "id": "C01678",
+  "label": "Cysteamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 140,
+  "cy": 192,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 242,
+  "cy": 301,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00506",
+  "id": "C00506",
+  "label": "L-Cysteate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 361,
+  "cy": 302,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00245",
+  "id": "C00245",
+  "label": "Taurine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 361,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00593",
+  "id": "C00593",
+  "label": "Sulfoacetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 361,
+  "cy": 578,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05123",
+  "id": "C05123",
+  "label": "2-Hydroxyethanesulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 498,
+  "cy": 301,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01959",
+  "id": "C01959",
+  "label": "Taurocyamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 654,
+  "cy": 301,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03149",
+  "id": "C03149",
+  "label": "N-Phosphotaurocyamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 496,
+  "cy": 229,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05844",
+  "id": "C05844",
+  "label": "5-L-Glutamyl-taurine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 225,
+  "cy": 340,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05122",
+  "id": "C05122",
+  "label": "Taurocholate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 258,
+  "cy": 534,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00033",
+  "id": "C00033",
+  "label": "Acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 470,
+  "cy": 399,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00025",
+  "id": "C00025",
+  "label": "L-Glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 470,
+  "cy": 334,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00026",
+  "id": "C00026",
+  "label": "2-Oxoglutarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 165,
+  "cy": 578,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00084",
+  "id": "C00084",
+  "label": "Acetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 537,
+  "cy": 500,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14179",
+  "id": "C14179",
+  "label": "Sulfoacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 447,
+  "cy": 500,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19685",
+  "id": "C19685",
+  "label": "Sulfoacetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 389,
+  "y1": 358,
+  "x2": 435,
+  "y2": 375,
+  "url": "/dbget-bin/www_bget?syn:sll1682",
+  "id": "sll1682",
+  "label": "sll1682",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1682",
+    "product": "alanine dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 189,
+  "y1": 423,
+  "x2": 235,
+  "y2": 440,
+  "url": "/dbget-bin/www_bget?syn:slr2132",
+  "id": "slr2132",
+  "label": "slr2132 (pta)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2132",
+    "product": "phosphotransacetylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 276,
+  "y1": 282,
+  "x2": 322,
+  "y2": 299,
+  "url": "/dbget-bin/www_bget?syn:sll1641",
+  "id": "sll1641",
+  "label": "sll1641 (gad)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1641",
+    "product": "glutamate decarboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 276,
+  "y1": 173,
+  "x2": 322,
+  "y2": 190,
+  "url": "/dbget-bin/www_bget?syn:sll1641",
+  "id": "sll1641",
+  "label": "sll1641 (gad)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1641",
+    "product": "glutamate decarboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 422,
+  "y1": 221,
+  "x2": 468,
+  "y2": 238,
+  "url": "/dbget-bin/www_bget?syn:slr1269",
+  "id": "slr1269",
+  "label": "slr1269 (ggt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1269",
+    "product": "gamma-glutamyltranspeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 235,
+  "y1": 476,
+  "x2": 281,
+  "y2": 493,
+  "url": "/dbget-bin/www_bget?syn:sll1299",
+  "id": "sll1299",
+  "label": "sll1299 (ackA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1299",
+    "product": "acetate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 111,
+  "y1": 377,
+  "x2": 184,
+  "y2": 411,
+  "url": "/kegg-bin/show_pathway?syn00920",
+  "id": "syn00920",
+  "label": "syn00920: Sulfur metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 129,
+  "y1": 484,
+  "x2": 202,
+  "y2": 518,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 358,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00430",
+  "id": "syn00430",
+  "label": "syn00430: Taurine and hypotaurine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 31,
+  "y1": 148,
+  "x2": 106,
+  "y2": 182,
+  "url": "/kegg-bin/show_pathway?syn00480",
+  "id": "syn00480",
+  "label": "syn00480: Glutathione metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 83,
+  "y1": 94,
+  "x2": 187,
+  "y2": 128,
+  "url": "/kegg-bin/show_pathway?syn00460",
+  "id": "syn00460",
+  "label": "syn00460: Cyanoamino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 155,
+  "y1": 229,
+  "x2": 234,
+  "y2": 274,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,891 @@
+[
+ {
+  "type": "rect",
+  "x1": 987,
+  "y1": 850,
+  "x2": 1033,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll0767",
+  "id": "sll0767",
+  "label": "sll0767 (rpl20)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0767",
+    "product": "50S ribosomal protein L20"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1036,
+  "y1": 850,
+  "x2": 1082,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:slr1678",
+  "id": "slr1678",
+  "label": "slr1678 (rpl21)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1678",
+    "product": "50S ribosomal protein L21"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 48,
+  "y1": 874,
+  "x2": 94,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:sll1803",
+  "id": "sll1803",
+  "label": "sll1803 (rpl22)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1803",
+    "product": "50S ribosomal protein L22"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 97,
+  "y1": 874,
+  "x2": 143,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:sll1801",
+  "id": "sll1801",
+  "label": "sll1801 (rpl23)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1801",
+    "product": "50S ribosomal protein L23"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 147,
+  "y1": 874,
+  "x2": 193,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:sll1807",
+  "id": "sll1807",
+  "label": "sll1807 (rpl24)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1807",
+    "product": "50S ribosomal protein L24"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 344,
+  "y1": 874,
+  "x2": 390,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:ssl3436",
+  "id": "ssl3436",
+  "label": "ssl3436 (rpl29)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 196,
+  "y1": 874,
+  "x2": 242,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:sll1824",
+  "id": "sll1824",
+  "label": "sll1824",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1824",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 246,
+  "y1": 874,
+  "x2": 292,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:ssr2799",
+  "id": "ssr2799",
+  "label": "ssr2799 (rpl27)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 295,
+  "y1": 874,
+  "x2": 341,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:ssr1604",
+  "id": "ssr1604",
+  "label": "ssr1604 (rpl28)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 443,
+  "y1": 874,
+  "x2": 489,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:ssl3445",
+  "id": "ssl3445",
+  "label": "ssl3445 (rpl31)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 492,
+  "y1": 874,
+  "x2": 538,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:ssr1736",
+  "id": "ssr1736",
+  "label": "ssr1736 (rps32)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 542,
+  "y1": 874,
+  "x2": 588,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:ssr1398",
+  "id": "ssr1398",
+  "label": "ssr1398 (rpl33)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 592,
+  "y1": 874,
+  "x2": 638,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:smr0011",
+  "id": "smr0011",
+  "label": "smr0011 (rpl34)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 641,
+  "y1": 874,
+  "x2": 687,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:ssl1426",
+  "id": "ssl1426",
+  "label": "ssl1426 (rpl35)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 690,
+  "y1": 874,
+  "x2": 736,
+  "y2": 891,
+  "url": "/dbget-bin/www_bget?syn:sml0006",
+  "id": "sml0006",
+  "label": "sml0006 (rpl36)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 345,
+  "y1": 670,
+  "x2": 391,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1097",
+  "id": "sll1097",
+  "label": "sll1097 (rps7)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1097",
+    "product": "30S ribosomal protein S7"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 394,
+  "y1": 670,
+  "x2": 440,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1809",
+  "id": "sll1809",
+  "label": "sll1809 (rps8)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1809",
+    "product": "30S ribosomal protein S8"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 443,
+  "y1": 670,
+  "x2": 489,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1822",
+  "id": "sll1822",
+  "label": "sll1822 (rps9)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1822",
+    "product": "30S ribosomal protein S9"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 493,
+  "y1": 670,
+  "x2": 539,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1101",
+  "id": "sll1101",
+  "label": "sll1101 (rps10)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1101",
+    "product": "30S ribosomal protein S10"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 542,
+  "y1": 670,
+  "x2": 588,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1817",
+  "id": "sll1817",
+  "label": "sll1817 (rps11)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1817",
+    "product": "30S ribosomal protein S11"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 591,
+  "y1": 670,
+  "x2": 637,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1096",
+  "id": "sll1096",
+  "label": "sll1096 (rps12)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1096",
+    "product": "30S ribosomal protein S12"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 640,
+  "y1": 670,
+  "x2": 686,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1816",
+  "id": "sll1816",
+  "label": "sll1816 (rps13)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1816",
+    "product": "30S ribosomal protein S13"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 689,
+  "y1": 670,
+  "x2": 735,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:slr0628",
+  "id": "slr0628",
+  "label": "slr0628 (rps14)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0628",
+    "product": "30S ribosomal protein S14"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 738,
+  "y1": 670,
+  "x2": 784,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:ssl1784",
+  "id": "ssl1784",
+  "label": "ssl1784 (rps15)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 837,
+  "y1": 670,
+  "x2": 883,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:ssl3437",
+  "id": "ssl3437",
+  "label": "ssl3437 (rps17)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 935,
+  "y1": 670,
+  "x2": 981,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:ssl3432",
+  "id": "ssl3432",
+  "label": "ssl3432 (rps19)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 788,
+  "y1": 670,
+  "x2": 834,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:ssr0482",
+  "id": "ssr0482",
+  "label": "ssr0482 (rps16)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 886,
+  "y1": 670,
+  "x2": 932,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:ssr1399",
+  "id": "ssr1399",
+  "label": "ssr1399 (rps18)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 985,
+  "y1": 670,
+  "x2": 1031,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:ssl2233",
+  "id": "ssl2233",
+  "label": "ssl2233 (rps20)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 1034,
+  "y1": 670,
+  "x2": 1080,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:ssl0601",
+  "id": "ssl0601",
+  "label": "ssl0601 (rps21)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 148,
+  "y1": 670,
+  "x2": 194,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1804",
+  "id": "sll1804",
+  "label": "sll1804 (rps3)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1804",
+    "product": "30S ribosomal protein S3"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 197,
+  "y1": 670,
+  "x2": 243,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:slr0469",
+  "id": "slr0469",
+  "label": "slr0469 (rps4)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0469",
+    "product": "30S ribosomal protein S4"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 246,
+  "y1": 670,
+  "x2": 292,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1812",
+  "id": "sll1812",
+  "label": "sll1812 (rps5)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1812",
+    "product": "30S ribosomal protein S5"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 49,
+  "y1": 670,
+  "x2": 95,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:slr1356+syn:slr1984",
+  "id": "slr1356",
+  "label": "slr1356 (rps1), slr1984 (rps1)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1356",
+    "product": "30S ribosomal protein S1"
+   },
+   {
+    "locus": "slr1984",
+    "product": "30S ribosomal protein S1"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 296,
+  "y1": 670,
+  "x2": 342,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1767",
+  "id": "sll1767",
+  "label": "sll1767 (rps6)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1767",
+    "product": "30S ribosomal protein S6"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 98,
+  "y1": 670,
+  "x2": 144,
+  "y2": 687,
+  "url": "/dbget-bin/www_bget?syn:sll1260",
+  "id": "sll1260",
+  "label": "sll1260 (rps2)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1260",
+    "product": "30S ribosomal protein S2"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 443,
+  "y1": 851,
+  "x2": 489,
+  "y2": 868,
+  "url": "/dbget-bin/www_bget?syn:sll1745",
+  "id": "sll1745",
+  "label": "sll1745 (rpl10)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1745",
+    "product": "50S ribosomal protein L10"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 492,
+  "y1": 850,
+  "x2": 538,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1743",
+  "id": "sll1743",
+  "label": "sll1743 (rpl11)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1743",
+    "product": "50S ribosomal protein L11"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 640,
+  "y1": 850,
+  "x2": 686,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1821",
+  "id": "sll1821",
+  "label": "sll1821 (rpl13)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1821",
+    "product": "50S ribosomal protein L13"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 97,
+  "y1": 851,
+  "x2": 143,
+  "y2": 868,
+  "url": "/dbget-bin/www_bget?syn:sll1802",
+  "id": "sll1802",
+  "label": "sll1802 (rpl2)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1802",
+    "product": "50S ribosomal protein L2"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 147,
+  "y1": 851,
+  "x2": 193,
+  "y2": 868,
+  "url": "/dbget-bin/www_bget?syn:sll1799",
+  "id": "sll1799",
+  "label": "sll1799 (rpl3)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1799",
+    "product": "50S ribosomal protein L3"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 245,
+  "y1": 851,
+  "x2": 291,
+  "y2": 868,
+  "url": "/dbget-bin/www_bget?syn:sll1808",
+  "id": "sll1808",
+  "label": "sll1808 (rpl5)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1808",
+    "product": "50S ribosomal protein L5"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 294,
+  "y1": 851,
+  "x2": 340,
+  "y2": 868,
+  "url": "/dbget-bin/www_bget?syn:sll1810",
+  "id": "sll1810",
+  "label": "sll1810 (rpl6)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1810",
+    "product": "50S ribosomal protein L6"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 690,
+  "y1": 850,
+  "x2": 736,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1806",
+  "id": "sll1806",
+  "label": "sll1806 (rpl14)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1806",
+    "product": "50S ribosomal protein L14"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 740,
+  "y1": 850,
+  "x2": 786,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1813",
+  "id": "sll1813",
+  "label": "sll1813 (rpl15)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1813",
+    "product": "50S ribosomal protein L15"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 888,
+  "y1": 850,
+  "x2": 934,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1811",
+  "id": "sll1811",
+  "label": "sll1811 (rpl18)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1811",
+    "product": "50S ribosomal protein L18"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 196,
+  "y1": 851,
+  "x2": 242,
+  "y2": 868,
+  "url": "/dbget-bin/www_bget?syn:sll1800",
+  "id": "sll1800",
+  "label": "sll1800 (rpl4)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1800",
+    "product": "50S ribosomal protein L4"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 393,
+  "y1": 851,
+  "x2": 439,
+  "y2": 868,
+  "url": "/dbget-bin/www_bget?syn:sll1244",
+  "id": "sll1244",
+  "label": "sll1244 (rpl9)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1244",
+    "product": "50S ribosomal protein L9"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 542,
+  "y1": 850,
+  "x2": 588,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1746",
+  "id": "sll1746",
+  "label": "sll1746 (rpl12)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1746",
+    "product": "50S ribosomal protein L12"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 789,
+  "y1": 850,
+  "x2": 835,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1805",
+  "id": "sll1805",
+  "label": "sll1805 (rpl16)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1805",
+    "product": "50S ribosomal protein L16"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 838,
+  "y1": 850,
+  "x2": 884,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1819",
+  "id": "sll1819",
+  "label": "sll1819 (rpl17)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1819",
+    "product": "50S ribosomal protein L17"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 937,
+  "y1": 850,
+  "x2": 983,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1740",
+  "id": "sll1740",
+  "label": "sll1740 (rpl19)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1740",
+    "product": "50S ribosomal protein L19"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 48,
+  "y1": 851,
+  "x2": 94,
+  "y2": 868,
+  "url": "/dbget-bin/www_bget?syn:sll1744",
+  "id": "sll1744",
+  "label": "sll1744 (rpl1)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1744",
+    "product": "50S ribosomal protein L1"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 98,
+  "y1": 721,
+  "x2": 144,
+  "y2": 738,
+  "url": "/dbget-bin/www_bget?syn:slr0923",
+  "id": "slr0923",
+  "label": "slr0923",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0923",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 403,
+  "y1": 549,
+  "x2": 449,
+  "y2": 566,
+  "url": "/dbget-bin/www_bget?syn:rrn5Sa+syn:rrn5Sb",
+  "id": "rrn5Sa,",
+  "label": "rrn5Sa, rrn5Sb",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 357,
+  "y1": 549,
+  "x2": 403,
+  "y2": 566,
+  "url": "/dbget-bin/www_bget?syn:rrn23Sa+syn:rrn23Sb",
+  "id": "rrn23Sa,",
+  "label": "rrn23Sa, rrn23Sb",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 303,
+  "y1": 549,
+  "x2": 349,
+  "y2": 566,
+  "url": "/dbget-bin/www_bget?syn:rrn16Sa+syn:rrn16Sb",
+  "id": "rrn16Sa,",
+  "label": "rrn16Sa, rrn16Sb",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 134,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn03010",
+  "id": "syn03010",
+  "label": "syn03010: Ribosome",
+  "entry_type": "pathway"
+ }
+]

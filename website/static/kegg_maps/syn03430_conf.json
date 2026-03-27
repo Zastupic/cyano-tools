@@ -1,0 +1,193 @@
+[
+ {
+  "type": "rect",
+  "x1": 254,
+  "y1": 765,
+  "x2": 300,
+  "y2": 782,
+  "url": "/dbget-bin/www_bget?syn:sll0729+syn:slr1803",
+  "id": "sll0729,",
+  "label": "sll0729, slr1803 (mbpA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0729",
+    "product": "modification methylase"
+   },
+   {
+    "locus": "slr1803",
+    "product": "adenine-specific DNA metylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 122,
+  "y1": 206,
+  "x2": 168,
+  "y2": 223,
+  "url": "/dbget-bin/www_bget?syn:sll1165+syn:sll1772",
+  "id": "sll1165",
+  "label": "sll1165 (mutS), sll1772 (mutS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1165",
+    "product": "DNA mismatch repair protein"
+   },
+   {
+    "locus": "sll1772",
+    "product": "DNA mismatch repair protein; MutS"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 122,
+  "y1": 223,
+  "x2": 168,
+  "y2": 240,
+  "url": "/dbget-bin/www_bget?syn:slr1199",
+  "id": "slr1199",
+  "label": "slr1199 (mutL)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1199",
+    "product": "DNA mismatch repair protein; MutL"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 122,
+  "y1": 765,
+  "x2": 168,
+  "y2": 782,
+  "url": "/dbget-bin/www_bget?syn:sll1209",
+  "id": "sll1209",
+  "label": "sll1209 (lig)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1209",
+    "product": "DNA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 122,
+  "y1": 484,
+  "x2": 168,
+  "y2": 501,
+  "url": "/dbget-bin/www_bget?syn:sll1121+syn:sll1143",
+  "id": "sll1121,",
+  "label": "sll1121, sll1143 (uvrD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1121",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "sll1143",
+    "product": "DNA helicase II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 254,
+  "y1": 633,
+  "x2": 300,
+  "y2": 650,
+  "url": "/dbget-bin/www_bget?syn:sll0544+syn:sll1360+syn:sll1572+syn:slr0446+syn:slr0603+syn:slr0965",
+  "id": "sll0544,",
+  "label": "sll0544, sll1360 (dnaX), sll1572 (dnaE), slr0446 (dnaX_and_dnaZ), slr0603 (dnaE), slr0965 (dnaN)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0544",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "sll1360",
+    "product": "DNA polymerase III subunit"
+   },
+   {
+    "locus": "sll1572",
+    "product": "DNA polymerase III alpha subunit"
+   },
+   {
+    "locus": "slr0446",
+    "product": "DNA polymerase III subunit"
+   },
+   {
+    "locus": "slr0603",
+    "product": "DNA polymerase III alpha subunit"
+   },
+   {
+    "locus": "slr0965",
+    "product": "DNA polymerase III beta subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 306,
+  "y1": 505,
+  "x2": 352,
+  "y2": 522,
+  "url": "/dbget-bin/www_bget?syn:sll1354",
+  "id": "sll1354",
+  "label": "sll1354 (recJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1354",
+    "product": "single-strand-DNA-specific exonuclease; RecJ"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 122,
+  "y1": 633,
+  "x2": 168,
+  "y2": 650,
+  "url": "/dbget-bin/www_bget?syn:slr0925",
+  "id": "slr0925",
+  "label": "slr0925 (ssb)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0925",
+    "product": "single-stranded DNA-binding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 720,
+  "y1": 340,
+  "x2": 818,
+  "y2": 364,
+  "url": "/kegg-bin/show_pathway?map05210",
+  "id": "map05210:",
+  "label": "map05210: Colorectal cancer",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 43,
+  "x2": 190,
+  "y2": 68,
+  "url": "/dbget-bin/www_bget?syn03430",
+  "id": "syn03430",
+  "label": "syn03430: Mismatch repair",
+  "entry_type": "pathway"
+ }
+]

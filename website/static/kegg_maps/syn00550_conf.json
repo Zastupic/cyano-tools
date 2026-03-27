@@ -1,0 +1,837 @@
+[
+ {
+  "type": "circ",
+  "cx": 474,
+  "cy": 202,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01050",
+  "id": "C01050",
+  "label": "UDP-N-acetylmuramate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 605,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04574",
+  "id": "C04574",
+  "label": "di-trans,poly-cis-Undecaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 509,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17556",
+  "id": "C17556",
+  "label": "di-trans,poly-cis-Undecaprenyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 420,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00993",
+  "id": "C00993",
+  "label": "D-Alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 359,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00133",
+  "id": "C00133",
+  "label": "D-Alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 596,
+  "cy": 450,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17558",
+  "id": "C17558",
+  "label": "di-trans,poly-cis-Undecaprenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 474,
+  "cy": 100,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00043",
+  "id": "C00043",
+  "label": "UDP-N-acetyl-alpha-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 474,
+  "cy": 151,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04631",
+  "id": "C04631",
+  "label": "UDP-N-acetyl-3-(1-carboxyvinyl)-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 474,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01212",
+  "id": "C01212",
+  "label": "UDP-N-acetylmuramoyl-L-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 474,
+  "cy": 341,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00692",
+  "id": "C00692",
+  "label": "UDP-N-acetylmuramoyl-L-alanyl-D-glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 723,
+  "cy": 396,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04877",
+  "id": "C04877",
+  "label": "UDP-N-acetylmuramoyl-L-alanyl-gamma-D-glutamyl-meso-2,6-diaminopimelate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 723,
+  "cy": 490,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04882",
+  "id": "C04882",
+  "label": "UDP-N-acetylmuramoyl-L-alanyl-D-glutamyl-6-carboxy-L-lysyl-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 723,
+  "cy": 585,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05897",
+  "id": "C05897",
+  "label": "Undecaprenyl-diphospho-N-acetylmuramoyl-L-alanyl-D-glutamyl-meso-2,6-diaminopimeloyl-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 723,
+  "cy": 680,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05898",
+  "id": "C05898",
+  "label": "Undecaprenyl-diphospho-N-acetylmuramoyl-(N-acetylglucosamine)-L-alanyl-D-glutamyl-meso-2,6-diaminopimeloyl-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 396,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05892",
+  "id": "C05892",
+  "label": "UDP-N-acetylmuramoyl-L-alanyl-gamma-D-glutamyl-L-lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 490,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04702",
+  "id": "C04702",
+  "label": "UDPMurNAc(oyl-L-Ala-D-gamma-Glu-L-Lys-D-Ala-D-Ala)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 585,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04851",
+  "id": "C04851",
+  "label": "MurAc(oyl-L-Ala-D-gamma-Glu-L-Lys-D-Ala-D-Ala)-diphospho-undecaprenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 680,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05893",
+  "id": "C05893",
+  "label": "Undecaprenyl-diphospho-N-acetylmuramoyl-(N-acetylglucosamine)-L-alanyl-gamma-D-glutamyl-L-lysyl-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 762,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05894",
+  "id": "C05894",
+  "label": "Undecaprenyl-diphospho-N-acetylmuramoyl-(N-acetylglucosamine)-L-alanyl-D-isoglutaminyl-L-lysyl-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 843,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17541",
+  "id": "C17541",
+  "label": "Undecaprenyl-diphospho-N-acetylmuramoyl-(N-acetylglucosamine)-L-alanyl-D-isoglutaminyl-L-lysyl-(glycyl)-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 937,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17542",
+  "id": "C17542",
+  "label": "Undecaprenyl-diphospho-N-acetylmuramoyl-(N-acetylglucosamine)-L-alanyl-D-isoglutaminyl-L-lysyl-(glycyl)3-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 1022,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05895",
+  "id": "C05895",
+  "label": "Undecaprenyl-diphospho-N-acetylmuramoyl-(N-acetylglucosamine)-L-alanyl-D-isoglutaminyl-L-lysyl-(glycyl)5-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 469,
+  "cy": 843,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17550",
+  "id": "C17550",
+  "label": "Undecaprenyl-diphospho-N-acetylmuramoyl-(N-acetylglucosamine)-L-alanyl-gamma-D-glutamyl-L-lysyl-(L-alanyl)-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 469,
+  "cy": 937,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17549",
+  "id": "C17549",
+  "label": "Undecaprenyl-diphospho-N-acetylmuramoyl-(N-acetylglucosamine)-L-alanyl-gamma-D-glutamyl-L-lysyl-(L-alanyl-L-alanyl)-D-alanyl-D-alanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 224,
+  "cy": 1355,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05896",
+  "id": "C05896",
+  "label": "Crosslinked peptidoglycan",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 469,
+  "cy": 1355,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05896",
+  "id": "C05896",
+  "label": "Crosslinked peptidoglycan",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 723,
+  "cy": 1355,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05896",
+  "id": "C05896",
+  "label": "Crosslinked peptidoglycan",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 499,
+  "cy": 605,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00448",
+  "id": "C00448",
+  "label": "trans,trans-Farnesyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 339,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22053",
+  "id": "C22053",
+  "label": "UDP-N-acetyl-alpha-D-muramoyl-L-alanyl-L-glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 700,
+  "y1": 434,
+  "x2": 746,
+  "y2": 451,
+  "url": "/dbget-bin/www_bget?syn:slr1351",
+  "id": "slr1351",
+  "label": "slr1351 (murF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1351",
+    "product": "UDP-N-acetylmuramoylalanyl-D-glutamyl-2,6-diamino-pimelate-D-alanyl-D-alanine ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 574,
+  "y1": 551,
+  "x2": 620,
+  "y2": 568,
+  "url": "/dbget-bin/www_bget?syn:sll0210",
+  "id": "sll0210",
+  "label": "sll0210",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0210",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 202,
+  "y1": 618,
+  "x2": 248,
+  "y2": 635,
+  "url": "/dbget-bin/www_bget?syn:slr1656",
+  "id": "slr1656",
+  "label": "slr1656 (murG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1656",
+    "product": "UDP-N-acetylglucosamine-N-acetylmuramyl-(pentapeptide)pyrophosphoryl-undecaprenol N-acetylglucosamine transferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 202,
+  "y1": 528,
+  "x2": 248,
+  "y2": 545,
+  "url": "/dbget-bin/www_bget?syn:sll0657",
+  "id": "sll0657",
+  "label": "sll0657 (mraY)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0657",
+    "product": "phospho-N-acetylmuramoyl-pentapeptide-transferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 202,
+  "y1": 435,
+  "x2": 248,
+  "y2": 452,
+  "url": "/dbget-bin/www_bget?syn:slr1351",
+  "id": "slr1351",
+  "label": "slr1351 (murF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1351",
+    "product": "UDP-N-acetylmuramoylalanyl-D-glutamyl-2,6-diamino-pimelate-D-alanyl-D-alanine ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 574,
+  "y1": 377,
+  "x2": 620,
+  "y2": 394,
+  "url": "/dbget-bin/www_bget?syn:slr1874",
+  "id": "slr1874",
+  "label": "slr1874 (ddlA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1874",
+    "product": "D-alanine:D-alanine ligase-related protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 452,
+  "y1": 276,
+  "x2": 498,
+  "y2": 293,
+  "url": "/dbget-bin/www_bget?syn:sll2010",
+  "id": "sll2010",
+  "label": "sll2010 (murD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll2010",
+    "product": "UDP-N-acetylmuramoylalanine--D-glutamate ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 452,
+  "y1": 214,
+  "x2": 498,
+  "y2": 231,
+  "url": "/dbget-bin/www_bget?syn:slr1423",
+  "id": "slr1423",
+  "label": "slr1423 (murC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1423",
+    "product": "UDP-N-acetylmuramate-alanine ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 700,
+  "y1": 358,
+  "x2": 746,
+  "y2": 375,
+  "url": "/dbget-bin/www_bget?syn:slr0528",
+  "id": "slr0528",
+  "label": "slr0528 (murE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0528",
+    "product": "UDP-MurNac-tripeptide synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 700,
+  "y1": 528,
+  "x2": 746,
+  "y2": 545,
+  "url": "/dbget-bin/www_bget?syn:sll0657",
+  "id": "sll0657",
+  "label": "sll0657 (mraY)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0657",
+    "product": "phospho-N-acetylmuramoyl-pentapeptide-transferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 700,
+  "y1": 618,
+  "x2": 746,
+  "y2": 635,
+  "url": "/dbget-bin/www_bget?syn:slr1656",
+  "id": "slr1656",
+  "label": "slr1656 (murG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1656",
+    "product": "UDP-N-acetylglucosamine-N-acetylmuramyl-(pentapeptide)pyrophosphoryl-undecaprenol N-acetylglucosamine transferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 452,
+  "y1": 113,
+  "x2": 498,
+  "y2": 130,
+  "url": "/dbget-bin/www_bget?syn:slr0017",
+  "id": "slr0017",
+  "label": "slr0017 (murZ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0017",
+    "product": "UDP-N-acetylglucosamine 1-carboxyvinyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 452,
+  "y1": 164,
+  "x2": 498,
+  "y2": 181,
+  "url": "/dbget-bin/www_bget?syn:slr1424",
+  "id": "slr1424",
+  "label": "slr1424",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1424",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 471,
+  "y1": 1311,
+  "x2": 517,
+  "y2": 1328,
+  "url": "/dbget-bin/www_bget?syn:sll0034",
+  "id": "sll0034",
+  "label": "sll0034",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0034",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 725,
+  "y1": 1311,
+  "x2": 771,
+  "y2": 1328,
+  "url": "/dbget-bin/www_bget?syn:sll0034",
+  "id": "sll0034",
+  "label": "sll0034",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0034",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 226,
+  "y1": 1311,
+  "x2": 272,
+  "y2": 1328,
+  "url": "/dbget-bin/www_bget?syn:sll0034",
+  "id": "sll0034",
+  "label": "sll0034",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0034",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 176,
+  "y1": 1107,
+  "x2": 222,
+  "y2": 1124,
+  "url": "/dbget-bin/www_bget?syn:sll0002",
+  "id": "sll0002",
+  "label": "sll0002 (ponA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0002",
+    "product": "penicillin-binding protein 1A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 421,
+  "y1": 1107,
+  "x2": 467,
+  "y2": 1124,
+  "url": "/dbget-bin/www_bget?syn:sll0002",
+  "id": "sll0002",
+  "label": "sll0002 (ponA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0002",
+    "product": "penicillin-binding protein 1A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 675,
+  "y1": 1107,
+  "x2": 721,
+  "y2": 1124,
+  "url": "/dbget-bin/www_bget?syn:sll0002",
+  "id": "sll0002",
+  "label": "sll0002 (ponA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0002",
+    "product": "penicillin-binding protein 1A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 176,
+  "y1": 1269,
+  "x2": 222,
+  "y2": 1286,
+  "url": "/dbget-bin/www_bget?syn:sll0002",
+  "id": "sll0002",
+  "label": "sll0002 (ponA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0002",
+    "product": "penicillin-binding protein 1A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 421,
+  "y1": 1269,
+  "x2": 467,
+  "y2": 1286,
+  "url": "/dbget-bin/www_bget?syn:sll0002",
+  "id": "sll0002",
+  "label": "sll0002 (ponA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0002",
+    "product": "penicillin-binding protein 1A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 675,
+  "y1": 1269,
+  "x2": 721,
+  "y2": 1286,
+  "url": "/dbget-bin/www_bget?syn:sll0002",
+  "id": "sll0002",
+  "label": "sll0002 (ponA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0002",
+    "product": "penicillin-binding protein 1A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 725,
+  "y1": 1269,
+  "x2": 771,
+  "y2": 1286,
+  "url": "/dbget-bin/www_bget?syn:sll1833",
+  "id": "sll1833",
+  "label": "sll1833 (ftsI)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1833",
+    "product": "penicillin-binding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 675,
+  "y1": 1311,
+  "x2": 721,
+  "y2": 1328,
+  "url": "/dbget-bin/www_bget?syn:slr0646+syn:slr0804",
+  "id": "slr0646",
+  "label": "slr0646 (dacB), slr0804 (dacB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0646",
+    "product": "penicillin-binding protein 4"
+   },
+   {
+    "locus": "slr0804",
+    "product": "D-alanyl-D-alanine carboxypeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 202,
+  "y1": 708,
+  "x2": 248,
+  "y2": 725,
+  "url": "/dbget-bin/www_bget?syn:slr0938+syn:slr1742",
+  "id": "slr0938,",
+  "label": "slr0938, slr1742",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0938",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr1742",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 519,
+  "y1": 597,
+  "x2": 565,
+  "y2": 614,
+  "url": "/dbget-bin/www_bget?syn:sll0506",
+  "id": "sll0506",
+  "label": "sll0506",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0506",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 725,
+  "y1": 1107,
+  "x2": 771,
+  "y2": 1124,
+  "url": "/dbget-bin/www_bget?syn:slr1267",
+  "id": "slr1267",
+  "label": "slr1267 (mrdB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1267",
+    "product": "rod-shape-determining protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 471,
+  "y1": 1107,
+  "x2": 517,
+  "y2": 1124,
+  "url": "/dbget-bin/www_bget?syn:slr1267",
+  "id": "slr1267",
+  "label": "slr1267 (mrdB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1267",
+    "product": "rod-shape-determining protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 226,
+  "y1": 1107,
+  "x2": 272,
+  "y2": 1124,
+  "url": "/dbget-bin/www_bget?syn:slr1267",
+  "id": "slr1267",
+  "label": "slr1267 (mrdB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1267",
+    "product": "rod-shape-determining protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 281,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00550",
+  "id": "syn00550",
+  "label": "syn00550: Peptidoglycan biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 234,
+  "y1": 83,
+  "x2": 400,
+  "y2": 117,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 323,
+  "y1": 588,
+  "x2": 449,
+  "y2": 622,
+  "url": "/kegg-bin/show_pathway?syn00900",
+  "id": "syn00900",
+  "label": "syn00900: Terpenoid backbone biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 459,
+  "y1": 378,
+  "x2": 544,
+  "y2": 412,
+  "url": "/kegg-bin/show_pathway?syn00470",
+  "id": "syn00470",
+  "label": "syn00470: D-Amino acid metabolism",
+  "entry_type": "pathway"
+ }
+]

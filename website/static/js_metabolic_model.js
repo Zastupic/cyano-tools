@@ -6,10 +6,10 @@ let allMetabolites = [];
 let allGenes       = [];
 let lastFluxes     = {};      // rxnId → flux value from most recent FBA
 let rxnNameMap     = {};      // rxnId → display name
-let cy             = null;    // Cytoscape instance
 let subsystemChart = null;    // Chart.js instance
 let biomassRxnId   = '';      // objective/biomass reaction ID from model info
 
+// ── Escher static map files ───────────────────────────────────────────────────
 // ── Custom reactions state ────────────────────────────────────────────────────
 let customReactions = [];   // [{id, name, lb, ub, stoich, new_mets}] — sent with every API call
 
@@ -563,15 +563,6 @@ function medNudge(id, valId, dir) {
 }
 
 // ── Compartment colours ───────────────────────────────────────────────────────
-const COMP_COLORS = {
-    c:  '#5cb85c',   // cytosol — green
-    e:  '#e67e22',   // extracellular — orange
-    p:  '#9b59b6',   // periplasm — purple
-    cx: '#e74c3c',   // carboxysome — red
-    cm: '#3498db',   // cytoplasmic membrane — blue
-    um: '#1abc9c',   // thylakoid membrane — teal
-};
-
 // ── Boot ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     // All calls fire in parallel; backend lock ensures the SBML is only parsed once
@@ -582,15 +573,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loadKeggPathways();
 
     // Buttons
-    document.getElementById('load-network-btn').addEventListener('click', loadNetwork);
-    document.getElementById('fit-network-btn').addEventListener('click', () => cy && cy.fit());
-    document.getElementById('apply-flux-btn').addEventListener('click', () => applyFluxOverlay(lastFluxes));
-    document.getElementById('reset-flux-btn').addEventListener('click', resetFluxOverlay);
+    document.getElementById('load-kegg-map-btn').addEventListener('click', loadKeggMap);
+    document.getElementById('kegg-flux-btn').addEventListener('click', () => applyKeggFlux(lastFluxes));
+    document.getElementById('kegg-reset-flux-btn').addEventListener('click', resetKeggFlux);
     document.getElementById('run-fba-btn').addEventListener('click', runFBAwithPFBA);
     document.getElementById('export-fba-btn').addEventListener('click', exportFBA);
     document.getElementById('view-network-btn').addEventListener('click', () => {
         document.querySelector('[href="#tab-network"]').click();
-        if (cy) applyFluxOverlay(lastFluxes);
     });
     document.getElementById('open-kegg-btn').addEventListener('click', openKegg);
     document.getElementById('ipath3-btn').addEventListener('click', loadIpath3);
@@ -634,15 +623,10 @@ async function loadStats() {
         document.getElementById('n-rxn').textContent  = d.reactions;
         document.getElementById('n-met').textContent  = d.metabolites;
         document.getElementById('n-gen').textContent  = d.genes;
-        document.getElementById('n-comp').textContent = d.compartments.join(', ');
+        document.getElementById('n-comp').textContent = d.compartments.length;
         biomassRxnId = d.biomass_rxn || '';
 
-        const sel = document.getElementById('subsystem-select');
-        d.subsystems.forEach(s => {
-            const o = document.createElement('option');
-            o.value = o.textContent = s;
-            sel.appendChild(o);
-        });
+        // Subsystems available for other features (gene table, etc.)
     } catch (err) {
         hideLoading();
         showError('Failed to load model: ' + err.message + '. Check the server console.');
@@ -660,44 +644,121 @@ function showError(msg) {
 }
 
 // ── Reactions table ───────────────────────────────────────────────────────────
-function loadReactions() {
-    fetch('/api/metabolic/reactions')
-        .then(r => r.json())
-        .then(data => {
-            allReactions = data;
-            data.forEach(r => { rxnNameMap[r.id] = r.name || r.id; });
-            initAllRxnDropdowns();
+let reactionPathwayIndex = {};  // rxn_id → [{pathway_id, pathway_name}]
 
-            const tbody = document.querySelector('#rxn-table tbody');
-            tbody.innerHTML = data.map(r => `<tr>
+function loadReactions() {
+    Promise.all([
+        fetch('/api/metabolic/reactions').then(r => r.json()),
+        fetch('/api/metabolic/reaction_pathways').then(r => r.json()),
+    ]).then(([data, rxnIndex]) => {
+        allReactions = data;
+        reactionPathwayIndex = rxnIndex;
+        data.forEach(r => { rxnNameMap[r.id] = r.name || r.id; });
+        initAllRxnDropdowns();
+
+        const tbody = document.querySelector('#rxn-table tbody');
+        tbody.innerHTML = data.map(r => {
+            const pathways = rxnIndex[r.id] || [];
+            let pathwayBtns = '';
+            if (pathways.length > 0) {
+                pathwayBtns = pathways.map(p =>
+                    `<button class="btn btn-outline-info btn-sm py-0 px-1 mr-1 mb-1 rxn-show-pathway"
+                             data-pathway="${p.pathway_id}" data-rxn="${esc(r.id)}"
+                             style="font-size:0.72em; line-height:1.3;"
+                             title="Show in ${esc(p.pathway_name)}">${esc(p.pathway_name)}</button>`
+                ).join('');
+            }
+            return `<tr>
                 <td><code>${esc(r.id)}</code></td>
                 <td>${esc(r.name || '—')}</td>
                 <td style="font-size:0.78em;">${esc(r.equation)}</td>
                 <td>${esc(r.subsystem || '—')}</td>
                 <td style="font-size:0.78em;">${esc(r.genes.join(', ') || '—')}</td>
-            </tr>`).join('');
+                <td>${pathwayBtns || '<span class="text-muted">—</span>'}</td>
+            </tr>`;
+        }).join('');
 
-            document.getElementById('rxn-count-label').textContent = `${data.length} reactions`;
+        // Attach click handlers for pathway buttons
+        tbody.querySelectorAll('.rxn-show-pathway').forEach(btn => {
+            btn.addEventListener('click', () => {
+                showReactionInPathway(btn.dataset.pathway, btn.dataset.rxn);
+            });
         });
+
+        document.getElementById('rxn-count-label').textContent = `${data.length} reactions`;
+    });
+}
+
+function showReactionInPathway(pathwayId, rxnId) {
+    // Switch to Pathways sub-tab
+    const pathTab = document.querySelector('#network-sub-tabs a[href="#sub-pathways"]');
+    if (pathTab) pathTab.click();
+
+    const sel = document.getElementById('kegg-map-select');
+    sel.value = pathwayId;
+
+    // Store highlight target so renderKeggMap can flash it after load
+    window._highlightKeggRxn = rxnId;
+    loadKeggMap();
 }
 
 // ── Metabolites table ─────────────────────────────────────────────────────────
+let compoundPathwayIndex = {};  // kegg_cpd_id → [{pathway_id, pathway_name}]
+
 function loadMetabolites() {
-    fetch('/api/metabolic/metabolites')
-        .then(r => r.json())
-        .then(data => {
-            allMetabolites = data;
-            const tbody = document.querySelector('#met-table tbody');
-            tbody.innerHTML = data.map(m => `<tr>
+    // Load compound→pathway index in parallel with metabolites
+    Promise.all([
+        fetch('/api/metabolic/metabolites').then(r => r.json()),
+        fetch('/api/metabolic/compound_pathways').then(r => r.json()),
+    ]).then(([data, cpIndex]) => {
+        allMetabolites = data;
+        compoundPathwayIndex = cpIndex;
+        const tbody = document.querySelector('#met-table tbody');
+        tbody.innerHTML = data.map(m => {
+            const kegg = m.kegg || '';
+            const pathways = kegg ? (cpIndex[kegg] || []) : [];
+            let pathwayBtns = '';
+            if (pathways.length > 0) {
+                pathwayBtns = pathways.map(p =>
+                    `<button class="btn btn-outline-info btn-sm py-0 px-1 mr-1 mb-1 met-show-pathway"
+                             data-pathway="${p.pathway_id}" data-kegg="${kegg}"
+                             style="font-size:0.72em; line-height:1.3;"
+                             title="Show in ${esc(p.pathway_name)}">${esc(p.pathway_name)}</button>`
+                ).join('');
+            }
+            return `<tr>
                 <td><code>${esc(m.id)}</code></td>
                 <td>${esc(m.name || '—')}</td>
                 <td><code>${esc(m.formula || '—')}</code></td>
                 <td>${esc(m.compartment)}</td>
                 <td>${m.charge != null ? m.charge : '—'}</td>
-            </tr>`).join('');
+                <td>${pathwayBtns || '<span class="text-muted">—</span>'}</td>
+            </tr>`;
+        }).join('');
 
-            document.getElementById('met-count-label').textContent = `${data.length} metabolites`;
+        // Attach click handlers for pathway buttons
+        tbody.querySelectorAll('.met-show-pathway').forEach(btn => {
+            btn.addEventListener('click', () => {
+                showMetaboliteInPathway(btn.dataset.pathway, btn.dataset.kegg);
+            });
         });
+
+        document.getElementById('met-count-label').textContent = `${data.length} metabolites`;
+    });
+}
+
+function showMetaboliteInPathway(pathwayId, keggCpdId) {
+    // Switch to Pathways sub-tab
+    const pathTab = document.querySelector('#network-sub-tabs a[href="#sub-pathways"]');
+    if (pathTab) pathTab.click();
+
+    // Set pathway dropdown and load map
+    const sel = document.getElementById('kegg-map-select');
+    sel.value = pathwayId;
+
+    // Store highlight target so renderKeggMap can flash it after load
+    window._highlightKeggCpd = keggCpdId;
+    loadKeggMap();
 }
 
 // ── Genes table ───────────────────────────────────────────────────────────────
@@ -930,205 +991,351 @@ function sortGeneTableByKO() {
     _koSortAsc = !_koSortAsc;
 }
 
-// ── Network (Cytoscape.js) ────────────────────────────────────────────────────
-function loadNetwork() {
-    const subsystem = document.getElementById('subsystem-select').value;
-    if (!subsystem) { alert('Please select a subsystem first.'); return; }
+// ── KEGG Pathway Map (PNG + interactive overlay) ─────────────────────────────
 
-    showLoading(`Building "${subsystem}" network…`);
+// ── KEGG Pathway Map (PNG + interactive overlay) ─────────────────────────────
 
-    fetch(`/api/metabolic/subsystem/${encodeURIComponent(subsystem)}/graph`)
+let keggHotspots = [];   // current hotspot data from conf
+
+function loadKeggMap() {
+    const pid = document.getElementById('kegg-map-select').value;
+    if (!pid) { alert('Please select a KEGG pathway.'); return; }
+
+    showLoading('Loading KEGG pathway map...');
+
+    fetch(`/api/metabolic/kegg_map/${pid}`)
         .then(r => r.json())
         .then(data => {
             hideLoading();
-            buildCytoscape(data.nodes, data.edges);
+            if (data.error) { alert(data.error); return; }
+            keggHotspots = data.hotspots;
+            renderKeggMap(data.image_url, data.hotspots);
         })
-        .catch(err => { hideLoading(); console.error('Network error:', err); });
+        .catch(err => { hideLoading(); console.error('KEGG map error:', err); });
 }
 
-function buildCytoscape(nodes, edges) {
-    document.getElementById('cy-placeholder').style.display = 'none';
-    const cyEl = document.getElementById('cy');
-    cyEl.style.display = 'block';
-    document.getElementById('fit-network-btn').style.display = '';
-    document.getElementById('cy-legend').style.display = '';
-    document.getElementById('cy-node-info').style.display = 'none';
-    document.getElementById('flux-overlay-badge').style.display = 'none';
+function renderKeggMap(imageUrl, hotspots) {
+    const panel = document.getElementById('kegg-map-panel');
+    const container = document.getElementById('kegg-map-container');
+    const img = document.getElementById('kegg-map-img');
+    const svg = document.getElementById('kegg-map-svg');
+    const actions = document.getElementById('kegg-map-actions');
 
-    // Show overlay buttons only when flux data is available
-    const hasFlux = Object.keys(lastFluxes).length > 0;
-    document.getElementById('apply-flux-btn').style.display = hasFlux ? '' : 'none';
-    document.getElementById('reset-flux-btn').style.display = 'none';
+    panel.style.display = 'block';
+    actions.style.display = Object.keys(lastFluxes).length > 0 ? '' : 'none';
 
-    if (cy) cy.destroy();
+    img.onload = function() {
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
 
-    const layoutName = document.getElementById('layout-select').value || 'dagre';
+        // Scale image to fit container but never exceed native size
+        img.style.maxWidth = '100%';
+        img.style.width = w + 'px';
+        img.style.height = 'auto';
 
-    const layoutOptions = {
-        dagre: {
-            name: 'dagre',
-            rankDir: 'LR',
-            nodeSep: 40,
-            rankSep: 80,
-            animate: false,
-            nodeDimensionsIncludeLabels: true,
-        },
-        cose: {
-            name: 'cose',
-            animate: false,
-            nodeRepulsion: 6000,
-            idealEdgeLength: 80,
-            nodeDimensionsIncludeLabels: true,
-        },
-        breadthfirst: {
-            name: 'breadthfirst',
-            directed: true,
-            spacingFactor: 1.4,
-            animate: false,
-            nodeDimensionsIncludeLabels: true,
-        },
-        concentric: {
-            name: 'concentric',
-            animate: false,
-            spacingFactor: 1.6,
-            concentric: n => n.data('type') === 'rxn' ? 2 : 1,
-            levelWidth: () => 1,
-            nodeDimensionsIncludeLabels: true,
-        },
-    };
+        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        svg.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+        svg.style.pointerEvents = 'all';
+        svg.innerHTML = '';
 
-    cy = cytoscape({
-        container: cyEl,
-        elements: { nodes, edges },
-        style: [
-            {
-                selector: 'node[type="rxn"]',
-                style: {
-                    'background-color': '#4e8dc7',
-                    'label': 'data(label)',
-                    'color': '#fff',
-                    'font-size': 9,
-                    'text-halign': 'center',
-                    'text-valign': 'center',
-                    'shape': 'rectangle',
-                    'width': 'label',
-                    'height': 18,
-                    'padding': '4px',
-                    'text-wrap': 'wrap',
-                    'text-max-width': 110,
-                }
-            },
-            {
-                selector: 'node[type="met"]',
-                style: {
-                    'background-color': '#5cb85c',
-                    'label': 'data(label)',
-                    'color': '#fff',
-                    'font-size': 8,
-                    'text-halign': 'center',
-                    'text-valign': 'center',
-                    'shape': 'ellipse',
-                    'width': 'label',
-                    'height': 18,
-                    'padding': '3px',
-                    'text-wrap': 'wrap',
-                    'text-max-width': 80,
-                }
-            },
-            {
-                selector: 'edge',
-                style: {
-                    'width': 1.5,
-                    'line-color': '#aaa',
-                    'target-arrow-color': '#888',
-                    'target-arrow-shape': 'triangle',
-                    'curve-style': 'bezier',
-                    'arrow-scale': 0.7,
-                }
-            },
-            {
-                selector: ':selected',
-                style: { 'border-width': 3, 'border-color': '#e67e22' }
+        // Draw interactive hotspots
+        hotspots.forEach(hs => {
+            let el;
+            if (hs.type === 'circ') {
+                el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                el.setAttribute('cx', hs.cx);
+                el.setAttribute('cy', hs.cy);
+                el.setAttribute('r', Math.max(hs.r, 6));  // min radius for clickability
+                el.setAttribute('fill', 'transparent');
+                el.setAttribute('stroke', 'transparent');
+                el.setAttribute('stroke-width', '2');
+            } else {
+                el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                el.setAttribute('x', hs.x1);
+                el.setAttribute('y', hs.y1);
+                el.setAttribute('width', hs.x2 - hs.x1);
+                el.setAttribute('height', hs.y2 - hs.y1);
+                el.setAttribute('fill', 'transparent');
+                el.setAttribute('stroke', 'transparent');
+                el.setAttribute('stroke-width', '1');
             }
-        ],
-        layout: layoutOptions[layoutName] || layoutOptions.dagre,
-    });
 
-    // Apply compartment colours to metabolite nodes
-    cy.nodes('[type="met"]').forEach(node => {
-        const comp = node.data('compartment') || node.id().split('_').pop();
-        const col  = COMP_COLORS[comp] || '#5cb85c';
-        node.style('background-color', col);
-    });
+            el.style.cursor = 'pointer';
+            el.dataset.hsId = hs.id;
+            el.dataset.hsType = hs.entry_type;
+            el.dataset.hsLabel = hs.label;
+            if (hs.rxn_ids) el.dataset.rxnIds = hs.rxn_ids.join(',');
 
-    // Auto-apply flux overlay if FBA has been run
-    if (hasFlux) applyFluxOverlay(lastFluxes);
+            // Build tooltip text
+            let tipText = '';
+            if (hs.entry_type === 'gene' && hs.genes && hs.genes.length > 0) {
+                hs.genes.forEach(g => {
+                    tipText += `<strong>${g.locus}</strong>`;
+                    if (g.product) tipText += `<br><small>${g.product}</small>`;
+                    tipText += '<br>';
+                });
+                if (hs.rxn_ids && hs.rxn_ids.length > 0) {
+                    tipText += `<small class="text-muted">iRH783: ${hs.rxn_ids.join(', ')}</small><br>`;
+                    hs.rxn_ids.forEach(rid => {
+                        const flux = lastFluxes[rid];
+                        if (flux != null) tipText += `<small>${rid}: <strong>${flux.toFixed(4)}</strong> mmol/gDW/h</small><br>`;
+                    });
+                }
+            } else if (hs.entry_type === 'compound') {
+                tipText = `<strong>${hs.label}</strong><br><small class="text-muted">${hs.id}</small>`;
+            } else {
+                tipText = `<strong>${hs.label}</strong>`;
+            }
+            if (hs.entry_type === 'pathway') {
+                tipText += '<br><small class="text-info">Click to open pathway</small>';
+            } else if (hs.url) {
+                tipText += '<small class="text-muted" style="opacity:0.7;">Click to open in KEGG</small>';
+            }
 
-    // Node tap → info panel
-    cy.on('tap', 'node', evt => {
-        const n = evt.target;
-        const flux = lastFluxes[n.id()];
-        const comp = n.data('compartment') || '';
-        const compStr = comp ? ` · compartment: ${comp}` : '';
-        const fluxStr = flux != null ? ` · flux: ${flux.toFixed(4)} mmol·gDW⁻¹·h⁻¹` : '';
-        document.getElementById('cy-node-title').textContent = n.data('label');
-        document.getElementById('cy-node-detail').textContent =
-            (n.data('type') === 'rxn' ? `Reaction: ${n.id()}` : `Metabolite: ${n.id()}${compStr}`) + fluxStr;
-        document.getElementById('cy-node-info').style.display = 'block';
-    });
-    cy.on('tap', evt => {
-        if (evt.target === cy) document.getElementById('cy-node-info').style.display = 'none';
-    });
+            // Hover highlight + tooltip
+            const hoverColor = hs.entry_type === 'pathway' ? '#3498db' : '#e67e22';
+            const hoverFill = hs.entry_type === 'pathway'
+                ? 'rgba(52,152,219,0.2)' : 'rgba(230,126,34,0.15)';
+            el.addEventListener('mouseenter', (evt) => {
+                if (hs.type === 'circ') {
+                    el.setAttribute('stroke', hoverColor);
+                    el.setAttribute('fill', 'rgba(230,126,34,0.2)');
+                    el.setAttribute('r', Math.max(hs.r, 6) + 3);
+                } else {
+                    el.setAttribute('stroke', hoverColor);
+                    el.setAttribute('fill', hoverFill);
+                    el.setAttribute('stroke-width', '2');
+                }
+                showKeggTooltip(tipText, evt);
+            });
+            el.addEventListener('mousemove', (evt) => moveKeggTooltip(evt));
+            el.addEventListener('mouseleave', () => {
+                if (hs.type === 'circ') {
+                    el.setAttribute('stroke', el._fluxStroke || 'transparent');
+                    el.setAttribute('fill', el._fluxFill || 'transparent');
+                    el.setAttribute('r', Math.max(hs.r, 6));
+                } else {
+                    el.setAttribute('stroke', el._fluxStroke || 'transparent');
+                    el.setAttribute('fill', el._fluxFill || 'transparent');
+                    el.setAttribute('stroke-width', el._fluxStrokeW || '1');
+                }
+                hideKeggTooltip();
+            });
+
+            // Click → pathway: load map; gene/compound: open KEGG page
+            el.addEventListener('click', () => {
+                if (hs.entry_type === 'pathway') {
+                    const m = hs.id.match(/^(syn\d{5})$/);
+                    if (m) {
+                        const sel = document.getElementById('kegg-map-select');
+                        const opt = sel.querySelector(`option[value="${m[1]}"]`);
+                        if (opt) {
+                            sel.value = m[1];
+                            loadKeggMap();
+                            return;
+                        }
+                    }
+                }
+                if (hs.url) {
+                    window.open('https://www.kegg.jp' + hs.url, '_blank');
+                }
+            });
+
+            svg.appendChild(el);
+        });
+
+        // Auto-apply flux if available
+        if (Object.keys(lastFluxes).length > 0) {
+            applyKeggFlux(lastFluxes);
+        }
+
+        // Highlight a specific compound if requested (from metabolites table)
+        if (window._highlightKeggCpd) {
+            highlightKeggCompound(window._highlightKeggCpd, svg);
+            window._highlightKeggCpd = null;
+        }
+        // Highlight gene boxes for a specific reaction (from reactions table)
+        if (window._highlightKeggRxn) {
+            highlightKeggReaction(window._highlightKeggRxn, svg);
+            window._highlightKeggRxn = null;
+        }
+    };
+    img.src = imageUrl;
 }
 
-// ── Flux overlay on Cytoscape ─────────────────────────────────────────────────
-function applyFluxOverlay(fluxes) {
-    if (!cy || Object.keys(fluxes).length === 0) return;
+function highlightKeggCompound(keggCpdId, svg) {
+    const el = svg.querySelector(`[data-hs-id="${keggCpdId}"][data-hs-type="compound"]`);
+    if (!el) return;
 
+    // Scroll the compound into view
+    const container = document.getElementById('kegg-map-panel');
+    if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Pulsing highlight animation
+    el.setAttribute('fill', 'rgba(255, 0, 0, 0.45)');
+    el.setAttribute('stroke', '#e00');
+    el.setAttribute('stroke-width', '3');
+    if (el.tagName === 'circle') {
+        el.setAttribute('r', 12);
+    }
+
+    let flashes = 0;
+    const interval = setInterval(() => {
+        flashes++;
+        if (flashes % 2 === 0) {
+            el.setAttribute('fill', 'rgba(255, 0, 0, 0.45)');
+            el.setAttribute('stroke', '#e00');
+        } else {
+            el.setAttribute('fill', 'rgba(255, 200, 0, 0.5)');
+            el.setAttribute('stroke', '#f90');
+        }
+        if (flashes >= 8) {
+            clearInterval(interval);
+            // Leave a visible ring so user can find it
+            el.setAttribute('fill', 'rgba(255, 0, 0, 0.25)');
+            el.setAttribute('stroke', '#e00');
+            el.setAttribute('stroke-width', '2');
+            if (el.tagName === 'circle') el.setAttribute('r', 10);
+        }
+    }, 350);
+}
+
+function highlightKeggReaction(rxnId, svg) {
+    // Find all gene hotspots whose rxn_ids contain this reaction
+    const els = svg.querySelectorAll('[data-hs-type="gene"]');
+    const matches = [];
+    els.forEach(el => {
+        const rxnIds = (el.dataset.rxnIds || '').split(',');
+        if (rxnIds.includes(rxnId)) matches.push(el);
+    });
+    if (matches.length === 0) return;
+
+    const container = document.getElementById('kegg-map-panel');
+    if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    matches.forEach(el => {
+        el.setAttribute('fill', 'rgba(255, 0, 0, 0.45)');
+        el.setAttribute('stroke', '#e00');
+        el.setAttribute('stroke-width', '3');
+    });
+
+    let flashes = 0;
+    const interval = setInterval(() => {
+        flashes++;
+        matches.forEach(el => {
+            if (flashes % 2 === 0) {
+                el.setAttribute('fill', 'rgba(255, 0, 0, 0.45)');
+                el.setAttribute('stroke', '#e00');
+            } else {
+                el.setAttribute('fill', 'rgba(255, 200, 0, 0.5)');
+                el.setAttribute('stroke', '#f90');
+            }
+        });
+        if (flashes >= 8) {
+            clearInterval(interval);
+            matches.forEach(el => {
+                el.setAttribute('fill', 'rgba(255, 0, 0, 0.25)');
+                el.setAttribute('stroke', '#e00');
+                el.setAttribute('stroke-width', '2');
+            });
+        }
+    }, 350);
+}
+
+// ── KEGG map tooltip ─────────────────────────────────────────────────────────
+let _keggTip = null;
+function _getKeggTip() {
+    if (!_keggTip) {
+        _keggTip = document.createElement('div');
+        _keggTip.id = 'kegg-tooltip';
+        _keggTip.style.cssText = 'position:fixed;z-index:9999;background:#fff;color:#333;border:1px solid #ccc;'
+            + 'border-radius:4px;padding:6px 10px;font-size:0.82em;line-height:1.4;'
+            + 'pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.15);max-width:320px;display:none;';
+        document.body.appendChild(_keggTip);
+    }
+    return _keggTip;
+}
+function showKeggTooltip(html, evt) {
+    const tip = _getKeggTip();
+    tip.innerHTML = html;
+    tip.style.display = 'block';
+    moveKeggTooltip(evt);
+}
+function moveKeggTooltip(evt) {
+    const tip = _getKeggTip();
+    if (tip.style.display === 'none') return;
+    const x = evt.clientX + 14;
+    const y = evt.clientY + 14;
+    // Keep tooltip on screen
+    const maxX = window.innerWidth - tip.offsetWidth - 8;
+    const maxY = window.innerHeight - tip.offsetHeight - 8;
+    tip.style.left = Math.min(x, maxX) + 'px';
+    tip.style.top = Math.min(y, maxY) + 'px';
+}
+function hideKeggTooltip() {
+    const tip = _getKeggTip();
+    tip.style.display = 'none';
+}
+
+function applyKeggFlux(fluxes) {
+    const svg = document.getElementById('kegg-map-svg');
+    if (!svg) return;
     const maxFlux = Math.max(...Object.values(fluxes).map(Math.abs), 1);
 
-    // Colour edges by the flux of their reaction node
-    cy.edges().forEach(edge => {
-        const srcType = edge.source().data('type');
-        const rxnNode = srcType === 'rxn' ? edge.source() : edge.target();
-        const flux    = fluxes[rxnNode.id()] || 0;
-        const absFlux = Math.abs(flux);
+    svg.querySelectorAll('[data-hs-type="gene"]').forEach(el => {
+        const rxnIds = (el.dataset.rxnIds || '').split(',').filter(Boolean);
+        if (rxnIds.length === 0) return;
+
+        // Use max absolute flux among mapped reactions
+        let maxVal = 0;
+        let direction = 0;
+        rxnIds.forEach(rid => {
+            const f = fluxes[rid] || 0;
+            if (Math.abs(f) > Math.abs(maxVal)) {
+                maxVal = f;
+                direction = f > 0 ? 1 : f < 0 ? -1 : 0;
+            }
+        });
+
+        const absFlux = Math.abs(maxVal);
+        const intensity = Math.min(absFlux / maxFlux, 1);
 
         if (absFlux < 1e-9) {
-            edge.style({ 'line-color': '#e0e0e0', 'target-arrow-color': '#e0e0e0', 'width': 0.8, 'opacity': 0.5 });
+            el._fluxFill = 'rgba(200,200,200,0.5)';
+            el._fluxStroke = '#ccc';
+            el._fluxStrokeW = '1';
         } else {
-            const intensity = Math.min(absFlux / maxFlux, 1);
-            const width = 1 + intensity * 7;
-            const alpha = 0.35 + intensity * 0.65;
-            const color = flux > 0
-                ? `rgba(30, 100, 200, ${alpha})`
-                : `rgba(192, 57, 43, ${alpha})`;
-            edge.style({ 'line-color': color, 'target-arrow-color': color, 'width': width, 'opacity': 1 });
+            const alpha = 0.3 + intensity * 0.5;
+            el._fluxFill = direction > 0
+                ? `rgba(30,100,200,${alpha})`    // forward: blue
+                : `rgba(192,57,43,${alpha})`;     // reverse: red
+            el._fluxStroke = direction > 0 ? '#1565C0' : '#c0392b';
+            el._fluxStrokeW = String(1 + intensity * 2);
         }
+
+        el.setAttribute('fill', el._fluxFill);
+        el.setAttribute('stroke', el._fluxStroke);
+        el.setAttribute('stroke-width', el._fluxStrokeW);
     });
 
-    // Dim inactive reaction nodes, brighten active ones
-    cy.nodes('[type="rxn"]').forEach(node => {
-        const flux = fluxes[node.id()] || 0;
-        if (Math.abs(flux) < 1e-9) {
-            node.style({ 'background-color': '#bdc3c7', 'opacity': 0.55 });
-        } else {
-            node.style({ 'background-color': '#4e8dc7', 'opacity': 1 });
-        }
-    });
-
-    document.getElementById('flux-overlay-badge').style.display = '';
-    document.getElementById('apply-flux-btn').style.display = 'none';
-    document.getElementById('reset-flux-btn').style.display = '';
+    document.getElementById('kegg-map-actions').style.display = '';
+    document.getElementById('kegg-flux-legend').style.display = '';
 }
 
-function resetFluxOverlay() {
-    if (!cy) return;
-    cy.edges().style({ 'line-color': '#aaa', 'target-arrow-color': '#888', 'width': 1.5, 'opacity': 1 });
-    cy.nodes('[type="rxn"]').style({ 'background-color': '#4e8dc7', 'opacity': 1 });
-    document.getElementById('flux-overlay-badge').style.display = 'none';
-    document.getElementById('apply-flux-btn').style.display = '';
-    document.getElementById('reset-flux-btn').style.display = 'none';
+function resetKeggFlux() {
+    const svg = document.getElementById('kegg-map-svg');
+    if (!svg) return;
+    svg.querySelectorAll('[data-hs-type="gene"]').forEach(el => {
+        el._fluxFill = 'transparent';
+        el._fluxStroke = 'transparent';
+        el._fluxStrokeW = '1';
+        el.setAttribute('fill', 'transparent');
+        el.setAttribute('stroke', 'transparent');
+        el.setAttribute('stroke-width', '1');
+    });
+    document.getElementById('kegg-flux-legend').style.display = 'none';
 }
 
 // ── FBA ───────────────────────────────────────────────────────────────────────
@@ -1170,11 +1377,8 @@ function runFBA() {
             document.getElementById('fba-flux-wrap').style.display = '';
             document.getElementById('pathway-vis-wrap').style.display = '';
 
-            // Show "View on network" button; update overlay button state if network is open
-            if (cy) {
-                document.getElementById('apply-flux-btn').style.display = '';
-                applyFluxOverlay(d.fluxes);
-            }
+            // Auto-apply flux to KEGG map if open
+            if (keggHotspots.length > 0) applyKeggFlux(d.fluxes);
         } else {
             box.innerHTML = `<div class="alert alert-warning mb-1">
                 Optimisation status: <strong>${d.status}</strong>
@@ -1386,13 +1590,27 @@ function loadKeggPathways() {
     fetch('/api/metabolic/kegg_pathways')
         .then(r => r.json())
         .then(pathways => {
+            // Populate FBA tab KEGG dropdown
             const sel = document.getElementById('kegg-pathway-select');
-            pathways.forEach(p => {
-                const o = document.createElement('option');
-                o.value = p.id;
-                o.textContent = p.name;
-                sel.appendChild(o);
-            });
+            if (sel) {
+                pathways.forEach(p => {
+                    const o = document.createElement('option');
+                    o.value = p.id;
+                    o.textContent = p.name;
+                    sel.appendChild(o);
+                });
+            }
+            // Populate Network tab pathway map dropdown
+            const mapSel = document.getElementById('kegg-map-select');
+            if (mapSel) {
+                mapSel.innerHTML = '<option value="">— select a KEGG pathway —</option>';
+                pathways.forEach(p => {
+                    const o = document.createElement('option');
+                    o.value = p.id;
+                    o.textContent = `${p.name} (${p.id})`;
+                    mapSel.appendChild(o);
+                });
+            }
         })
         .catch(() => {});   // non-fatal
 }
@@ -1571,7 +1789,7 @@ function runFBAwithPFBA() {
             simMarkFBAPoint(d.objective, d.fluxes);
             document.getElementById('fba-flux-wrap').style.display = '';
             document.getElementById('pathway-vis-wrap').style.display = '';
-            if (cy) { document.getElementById('apply-flux-btn').style.display = ''; applyFluxOverlay(d.fluxes); }
+            if (keggHotspots.length > 0) applyKeggFlux(d.fluxes);
         } else {
             box.innerHTML = `<div class="alert alert-warning mb-1">
                 Optimisation status: <strong>${d.status}</strong>

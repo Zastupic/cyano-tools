@@ -1,0 +1,721 @@
+[
+ {
+  "type": "circ",
+  "cx": 767,
+  "cy": 497,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 104,
+  "cy": 214,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00151",
+  "id": "C00151",
+  "label": "L-Amino acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 194,
+  "cy": 142,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01879",
+  "id": "C01879",
+  "label": "5-Oxoproline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 414,
+  "cy": 247,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 541,
+  "cy": 174,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00025",
+  "id": "C00025",
+  "label": "L-Glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 489,
+  "cy": 303,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 376,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01419",
+  "id": "C01419",
+  "label": "Cys-Gly",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 194,
+  "cy": 296,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03740",
+  "id": "C03740",
+  "label": "(5-L-Glutamyl)-L-amino acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 455,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00051",
+  "id": "C00051",
+  "label": "Glutathione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 541,
+  "cy": 455,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00669",
+  "id": "C00669",
+  "label": "gamma-L-Glutamyl-L-cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 745,
+  "cy": 459,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03646",
+  "id": "C03646",
+  "label": "Bis-gamma-glutamylcystine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 65,
+  "cy": 455,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00127",
+  "id": "C00127",
+  "label": "Glutathione disulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 116,
+  "cy": 499,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00005",
+  "id": "C00005",
+  "label": "NADPH",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 269,
+  "cy": 499,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00006",
+  "id": "C00006",
+  "label": "NADP+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 358,
+  "cy": 497,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01322",
+  "id": "C01322",
+  "label": "RX",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 440,
+  "cy": 524,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02320",
+  "id": "C02320",
+  "label": "R-S-Glutathione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 497,
+  "cy": 683,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05730",
+  "id": "C05730",
+  "label": "Glutathionylspermidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 522,
+  "cy": 497,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00025",
+  "id": "C00025",
+  "label": "L-Glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 547,
+  "cy": 524,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05729",
+  "id": "C05729",
+  "label": "R-S-Cysteinylglycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 725,
+  "cy": 497,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 748,
+  "cy": 524,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05726",
+  "id": "C05726",
+  "label": "S-Substituted L-cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 855,
+  "cy": 524,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05727",
+  "id": "C05727",
+  "label": "S-Substituted N-acetyl-L-cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 714,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00077",
+  "id": "C00077",
+  "label": "L-Ornithine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 641,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00134",
+  "id": "C00134",
+  "label": "Putrescine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 383,
+  "cy": 644,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00315",
+  "id": "C00315",
+  "label": "Spermidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 683,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02090",
+  "id": "C02090",
+  "label": "Trypanothione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 683,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03170",
+  "id": "C03170",
+  "label": "Trypanothione disulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 775,
+  "cy": 579,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00005",
+  "id": "C00005",
+  "label": "NADPH",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 693,
+  "cy": 579,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00006",
+  "id": "C00006",
+  "label": "NADP+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 668,
+  "cy": 648,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05422",
+  "id": "C05422",
+  "label": "Dehydroascorbate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 800,
+  "cy": 648,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00072",
+  "id": "C00072",
+  "label": "Ascorbate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 668,
+  "cy": 717,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16664",
+  "id": "C16664",
+  "label": "Tryparedoxin disulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 800,
+  "cy": 717,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16663",
+  "id": "C16663",
+  "label": "Tryparedoxin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 367,
+  "cy": 790,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00750",
+  "id": "C00750",
+  "label": "Spermine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 497,
+  "cy": 863,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16562",
+  "id": "C16562",
+  "label": "Glutathionylspermine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 863,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16563",
+  "id": "C16563",
+  "label": "Bis(glutathionyl)spermine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 863,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16564",
+  "id": "C16564",
+  "label": "Bis(glutathionyl)spermine disulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 187,
+  "cy": 919,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01672",
+  "id": "C01672",
+  "label": "Cadaverine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 293,
+  "cy": 919,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16565",
+  "id": "C16565",
+  "label": "Aminopropylcadaverine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 497,
+  "cy": 919,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16566",
+  "id": "C16566",
+  "label": "Glutathionylaminopropylcadaverine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 620,
+  "cy": 919,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16567",
+  "id": "C16567",
+  "label": "Homotrypanothione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 919,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16568",
+  "id": "C16568",
+  "label": "Homotrypanothione disulfide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 568,
+  "y1": 505,
+  "x2": 614,
+  "y2": 522,
+  "url": "/dbget-bin/www_bget?syn:sll1343",
+  "id": "sll1343",
+  "label": "sll1343 (ape2)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1343",
+    "product": "aminopeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 465,
+  "y1": 516,
+  "x2": 511,
+  "y2": 533,
+  "url": "/dbget-bin/www_bget?syn:slr1269",
+  "id": "slr1269",
+  "label": "slr1269 (ggt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1269",
+    "product": "gamma-glutamyltranspeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 193,
+  "y1": 501,
+  "x2": 239,
+  "y2": 518,
+  "url": "/dbget-bin/www_bget?syn:slr1843",
+  "id": "slr1843",
+  "label": "slr1843 (zwf)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1843",
+    "product": "glucose 6-phosphate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 145,
+  "y1": 480,
+  "x2": 191,
+  "y2": 497,
+  "url": "/dbget-bin/www_bget?syn:slr1289",
+  "id": "slr1289",
+  "label": "slr1289 (icd)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1289",
+    "product": "isocitrate dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 434,
+  "y1": 447,
+  "x2": 480,
+  "y2": 464,
+  "url": "/dbget-bin/www_bget?syn:slr1238",
+  "id": "slr1238",
+  "label": "slr1238 (gshB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1238",
+    "product": "glutathione synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 308,
+  "y1": 420,
+  "x2": 354,
+  "y2": 437,
+  "url": "/dbget-bin/www_bget?syn:slr1269",
+  "id": "slr1269",
+  "label": "slr1269 (ggt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1269",
+    "product": "gamma-glutamyltranspeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 333,
+  "y1": 313,
+  "x2": 379,
+  "y2": 330,
+  "url": "/dbget-bin/www_bget?syn:sll1343",
+  "id": "sll1343",
+  "label": "sll1343 (ape2)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1343",
+    "product": "aminopeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 350,
+  "y1": 134,
+  "x2": 396,
+  "y2": 151,
+  "url": "/dbget-bin/www_bget?syn:slr0697",
+  "id": "slr0697",
+  "label": "slr0697",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0697",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 171,
+  "y1": 395,
+  "x2": 217,
+  "y2": 412,
+  "url": "/dbget-bin/www_bget?syn:slr1269",
+  "id": "slr1269",
+  "label": "slr1269 (ggt)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1269",
+    "product": "gamma-glutamyltranspeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 364,
+  "y1": 516,
+  "x2": 410,
+  "y2": 533,
+  "url": "/dbget-bin/www_bget?syn:sll0067+syn:sll1147+syn:sll1545+syn:sll1902",
+  "id": "sll0067",
+  "label": "sll0067 (gst), sll1147, sll1545 (gst1), sll1902",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0067",
+    "product": "glutathione S-transferase"
+   },
+   {
+    "locus": "sll1147",
+    "product": "glutathione S-transferase"
+   },
+   {
+    "locus": "sll1545",
+    "product": "glutathione S-transferase"
+   },
+   {
+    "locus": "sll1902",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 145,
+  "y1": 501,
+  "x2": 191,
+  "y2": 518,
+  "url": "/dbget-bin/www_bget?syn:sll0329",
+  "id": "sll0329",
+  "label": "sll0329 (gnd)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0329",
+    "product": "6-phosphogluconate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 283,
+  "y1": 313,
+  "x2": 329,
+  "y2": 330,
+  "url": "/dbget-bin/www_bget?syn:sll2001",
+  "id": "sll2001",
+  "label": "sll2001 (lap)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll2001",
+    "product": "leucine aminopeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 568,
+  "y1": 526,
+  "x2": 614,
+  "y2": 543,
+  "url": "/dbget-bin/www_bget?syn:sll2001",
+  "id": "sll2001",
+  "label": "sll2001 (lap)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll2001",
+    "product": "leucine aminopeptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 258,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00480",
+  "id": "syn00480",
+  "label": "syn00480: Glutathione metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 546,
+  "y1": 214,
+  "x2": 620,
+  "y2": 248,
+  "url": "/kegg-bin/show_pathway?syn00250",
+  "id": "syn00250",
+  "label": "syn00250: Alanine, aspartate and glutamate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 450,
+  "y1": 187,
+  "x2": 528,
+  "y2": 232,
+  "url": "/kegg-bin/show_pathway?syn00430",
+  "id": "syn00430",
+  "label": "syn00430: Taurine and hypotaurine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 349,
+  "y1": 258,
+  "x2": 461,
+  "y2": 292,
+  "url": "/kegg-bin/show_pathway?syn00460",
+  "id": "syn00460",
+  "label": "syn00460: Cyanoamino acid metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 287,
+  "y1": 182,
+  "x2": 369,
+  "y2": 227,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 145,
+  "y1": 760,
+  "x2": 269,
+  "y2": 785,
+  "url": "/kegg-bin/show_pathway?syn00220",
+  "id": "syn00220",
+  "label": "syn00220: Arginine biosynthesis",
+  "entry_type": "pathway"
+ }
+]

@@ -1,0 +1,1025 @@
+[
+ {
+  "type": "circ",
+  "cx": 628,
+  "cy": 199,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00146",
+  "id": "C00146",
+  "label": "Phenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 233,
+  "cy": 240,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02515",
+  "id": "C02515",
+  "label": "3-Iodo-L-tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 153,
+  "cy": 240,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01060",
+  "id": "C01060",
+  "label": "3,5-Diiodo-L-tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 61,
+  "cy": 266,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02465",
+  "id": "C02465",
+  "label": "Triiodothyronine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 61,
+  "cy": 240,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01829",
+  "id": "C01829",
+  "label": "Thyroxine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1138,
+  "cy": 142,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04185",
+  "id": "C04185",
+  "label": "5,6-Dihydroxyindole-2-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 822,
+  "cy": 96,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00822",
+  "id": "C00822",
+  "label": "Dopaquinone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 920,
+  "cy": 96,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05604",
+  "id": "C05604",
+  "label": "2-Carboxy-2,3-dihydro-5,6-dihydroxyindole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1037,
+  "cy": 96,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01693",
+  "id": "C01693",
+  "label": "L-Dopachrome",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1138,
+  "cy": 96,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05578",
+  "id": "C05578",
+  "label": "5,6-Dihydroxyindole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1261,
+  "cy": 96,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05579",
+  "id": "C05579",
+  "label": "Indole-5,6-quinone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 823,
+  "cy": 264,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00355",
+  "id": "C00355",
+  "label": "3,4-Dihydroxy-L-phenylalanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 823,
+  "cy": 353,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04045",
+  "id": "C04045",
+  "label": "3-(3,4-Dihydroxyphenyl)pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1000,
+  "cy": 264,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03758",
+  "id": "C03758",
+  "label": "Dopamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1087,
+  "cy": 321,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05587",
+  "id": "C05587",
+  "label": "3-Methoxytyramine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1000,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04043",
+  "id": "C04043",
+  "label": "3,4-Dihydroxyphenylacetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1087,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05581",
+  "id": "C05581",
+  "label": "3-Methoxy-4-hydroxyphenylacetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1087,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05582",
+  "id": "C05582",
+  "label": "Homovanillate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1268,
+  "cy": 264,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00547",
+  "id": "C00547",
+  "label": "L-Noradrenaline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1306,
+  "cy": 325,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05589",
+  "id": "C05589",
+  "label": "L-Normetanephrine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1407,
+  "cy": 264,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00788",
+  "id": "C00788",
+  "label": "L-Adrenaline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1407,
+  "cy": 325,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05588",
+  "id": "C05588",
+  "label": "L-Metanephrine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1268,
+  "cy": 580,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05584",
+  "id": "C05584",
+  "label": "3-Methoxy-4-hydroxymandelate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1268,
+  "cy": 503,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05580",
+  "id": "C05580",
+  "label": "3,4-Dihydroxymandelate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1268,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05577",
+  "id": "C05577",
+  "label": "3,4-Dihydroxymandelaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1205,
+  "cy": 503,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05576",
+  "id": "C05576",
+  "label": "3,4-Dihydroxyphenylethyleneglycol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1205,
+  "cy": 580,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05594",
+  "id": "C05594",
+  "label": "3-Methoxy-4-hydroxyphenylethyleneglycol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 823,
+  "cy": 435,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22038",
+  "id": "C22038",
+  "label": "(R)-3-(3,4-Dihydroxyphenyl)lactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1006,
+  "cy": 231,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04797",
+  "id": "C04797",
+  "label": "5-(L-Alanin-3-yl)-2-hydroxy-cis,cis-muconate 6-semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 823,
+  "cy": 520,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01850",
+  "id": "C01850",
+  "label": "Rosmarinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1007,
+  "cy": 194,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04796",
+  "id": "C04796",
+  "label": "4-(L-Alanin-3-yl)-2-hydroxy-cis,cis-muconate 6-semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1231,
+  "cy": 194,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06047",
+  "id": "C06047",
+  "label": "Stizolobate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1232,
+  "cy": 231,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06048",
+  "id": "C06048",
+  "label": "Stizolobinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1368,
+  "cy": 96,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17937",
+  "id": "C17937",
+  "label": "Eumelanin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1261,
+  "cy": 142,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17938",
+  "id": "C17938",
+  "label": "5,6-Indolequinone-2-carboxylic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1047,
+  "cy": 50,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17935",
+  "id": "C17935",
+  "label": "Cysteinyldopa",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1368,
+  "cy": 50,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17936",
+  "id": "C17936",
+  "label": "Phaeomelanin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 879,
+  "cy": 353,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C10447",
+  "id": "C10447",
+  "label": "3,4-Dihydroxyphenylpropanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 335,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00164",
+  "id": "C00164",
+  "label": "Acetoacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 249,
+  "cy": 739,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00122",
+  "id": "C00122",
+  "label": "Fumarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 335,
+  "cy": 687,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01061",
+  "id": "C01061",
+  "label": "4-Fumarylacetoacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 335,
+  "cy": 613,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01036",
+  "id": "C01036",
+  "label": "4-Maleylacetoacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 52,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00530",
+  "id": "C00530",
+  "label": "Hydroquinone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 772,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 687,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02514",
+  "id": "C02514",
+  "label": "3-Fumarylpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 613,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02167",
+  "id": "C02167",
+  "label": "Maleylpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 152,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00628",
+  "id": "C00628",
+  "label": "2,5-Dihydroxybenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 241,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05585",
+  "id": "C05585",
+  "label": "Gentisate aldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 130,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03964",
+  "id": "C03964",
+  "label": "(R)-3-(4-Hydroxyphenyl)lactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 335,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01179",
+  "id": "C01179",
+  "label": "3-(4-Hydroxyphenyl)pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 222,
+  "cy": 490,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05350",
+  "id": "C05350",
+  "label": "2-Hydroxy-3-(4-hydroxyphenyl)propenoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 335,
+  "cy": 267,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00082",
+  "id": "C00082",
+  "label": "L-Tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04368",
+  "id": "C04368",
+  "label": "3-Amino-3-(4-hydroxyphenyl)propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 335,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00544",
+  "id": "C00544",
+  "label": "Homogentisate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 235,
+  "cy": 332,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00811",
+  "id": "C00811",
+  "label": "4-Coumarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 71,
+  "cy": 797,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01384",
+  "id": "C01384",
+  "label": "Maleic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 687,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06044",
+  "id": "C06044",
+  "label": "4-Hydroxyphenylethanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 747,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06046",
+  "id": "C06046",
+  "label": "Salidroside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 718,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04186",
+  "id": "C04186",
+  "label": "5-Carboxymethyl-2-hydroxymuconate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 718,
+  "cy": 613,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04642",
+  "id": "C04642",
+  "label": "2-Hydroxy-5-carboxymethylmuconate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 813,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04052",
+  "id": "C04052",
+  "label": "5-Carboxy-2-oxohept-3-enedioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 908,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05600",
+  "id": "C05600",
+  "label": "2-Hydroxyhepta-2,4-dienedioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1200,
+  "cy": 694,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00232",
+  "id": "C00232",
+  "label": "Succinate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1295,
+  "cy": 694,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00042",
+  "id": "C00042",
+  "label": "Succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 469,
+  "cy": 728,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05596",
+  "id": "C05596",
+  "label": "p-Hydroxyphenylacetylglycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 529,
+  "cy": 728,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05595",
+  "id": "C05595",
+  "label": "4-Hydroxyphenylacetylglutamic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 718,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01161",
+  "id": "C01161",
+  "label": "3,4-Dihydroxyphenylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 529,
+  "cy": 539,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00642",
+  "id": "C00642",
+  "label": "4-Hydroxyphenylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 529,
+  "cy": 636,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05338",
+  "id": "C05338",
+  "label": "4-Hydroxyphenylacetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 529,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03765",
+  "id": "C03765",
+  "label": "4-Hydroxyphenylacetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 529,
+  "cy": 321,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00483",
+  "id": "C00483",
+  "label": "Tyramine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 631,
+  "cy": 321,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02442",
+  "id": "C02442",
+  "label": "N-Methyltyramine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 816,
+  "cy": 600,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03077",
+  "id": "C03077",
+  "label": "4-Chlorophenylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1010,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03063",
+  "id": "C03063",
+  "label": "2-Oxohept-3-enedioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1105,
+  "cy": 695,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06201",
+  "id": "C06201",
+  "label": "2,4-Dihydroxyhept-2-enedioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 733,
+  "cy": 321,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06199",
+  "id": "C06199",
+  "label": "Hordenine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 718,
+  "cy": 456,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05593",
+  "id": "C05593",
+  "label": "3-Hydroxyphenylacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1407,
+  "cy": 423,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05583",
+  "id": "C05583",
+  "label": "3-Methoxy-4-hydroxyphenylglycolaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 281,
+  "cy": 490,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23042",
+  "id": "C23042",
+  "label": "Atromentin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 1182,
+  "y1": 459,
+  "x2": 1228,
+  "y2": 476,
+  "url": "/dbget-bin/www_bget?syn:sll0990",
+  "id": "sll0990",
+  "label": "sll0990",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0990",
+    "product": "formaldehyde dehydrogenase (glutathione)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 287,
+  "y1": 307,
+  "x2": 333,
+  "y2": 324,
+  "url": "/dbget-bin/www_bget?syn:sll0402",
+  "id": "sll0402",
+  "label": "sll0402 (aspC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0402",
+    "product": "aspartate aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 312,
+  "y1": 470,
+  "x2": 358,
+  "y2": 487,
+  "url": "/dbget-bin/www_bget?syn:slr0090",
+  "id": "slr0090",
+  "label": "slr0090 (ppd)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0090",
+    "product": "4-hydroxyphenylpyruvic acid dioxgenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 287,
+  "y1": 326,
+  "x2": 333,
+  "y2": 343,
+  "url": "/dbget-bin/www_bget?syn:sll1958",
+  "id": "sll1958",
+  "label": "sll1958 (hisC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1958",
+    "product": "histidinol phosphate aminotransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1219,
+  "y1": 686,
+  "x2": 1265,
+  "y2": 703,
+  "url": "/dbget-bin/www_bget?syn:slr0370",
+  "id": "slr0370",
+  "label": "slr0370 (gabD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0370",
+    "product": "succinate-semialdehyde dehydrogenase (NADP+)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 225,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00350",
+  "id": "syn00350",
+  "label": "syn00350: Tyrosine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 211,
+  "y1": 814,
+  "x2": 288,
+  "y2": 839,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 442,
+  "y1": 179,
+  "x2": 561,
+  "y2": 213,
+  "url": "/kegg-bin/show_pathway?map00950",
+  "id": "map00950:",
+  "label": "map00950: Isoquinoline alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 340,
+  "y1": 179,
+  "x2": 438,
+  "y2": 213,
+  "url": "/kegg-bin/show_pathway?map00940",
+  "id": "map00940:",
+  "label": "map00940: Phenylpropanoid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 1121,
+  "y1": 312,
+  "x2": 1242,
+  "y2": 346,
+  "url": "/kegg-bin/show_pathway?map00950",
+  "id": "map00950:",
+  "label": "map00950: Isoquinoline alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 259,
+  "y1": 113,
+  "x2": 412,
+  "y2": 147,
+  "url": "/kegg-bin/show_pathway?syn00400",
+  "id": "syn00400",
+  "label": "syn00400: Phenylalanine, tyrosine and tryptophan biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 114,
+  "y1": 825,
+  "x2": 190,
+  "y2": 859,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 33,
+  "y1": 824,
+  "x2": 109,
+  "y2": 858,
+  "url": "/kegg-bin/show_pathway?syn00650",
+  "id": "syn00650",
+  "label": "syn00650: Butanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 591,
+  "y1": 341,
+  "x2": 709,
+  "y2": 375,
+  "url": "/kegg-bin/show_pathway?map00950",
+  "id": "map00950:",
+  "label": "map00950: Isoquinoline alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 875,
+  "y1": 583,
+  "x2": 947,
+  "y2": 617,
+  "url": "/kegg-bin/show_pathway?map00621",
+  "id": "map00621:",
+  "label": "map00621: Dioxin degradation",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 599,
+  "y1": 439,
+  "x2": 688,
+  "y2": 473,
+  "url": "/kegg-bin/show_pathway?syn00360",
+  "id": "syn00360",
+  "label": "syn00360: Phenylalanine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 389,
+  "y1": 556,
+  "x2": 478,
+  "y2": 590,
+  "url": "/kegg-bin/show_pathway?syn00360",
+  "id": "syn00360",
+  "label": "syn00360: Phenylalanine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 1347,
+  "y1": 682,
+  "x2": 1425,
+  "y2": 707,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ }
+]

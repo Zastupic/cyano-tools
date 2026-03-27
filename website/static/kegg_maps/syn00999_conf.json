@@ -1,0 +1,1604 @@
+[
+ {
+  "type": "circ",
+  "cx": 968,
+  "cy": 983,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22445",
+  "id": "C22445",
+  "label": "8-Hydroxybergapten",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09315",
+  "id": "C09315",
+  "label": "Umbelliferone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 548,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18083",
+  "id": "C18083",
+  "label": "Demethylsuberosin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 653,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09276",
+  "id": "C09276",
+  "label": "Marmesin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00758",
+  "id": "C00758",
+  "label": "Bergaptol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 548,
+  "cy": 878,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18080",
+  "id": "C18080",
+  "label": "Osthenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 653,
+  "cy": 878,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19707",
+  "id": "C19707",
+  "label": "(+)-Columbianetin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 758,
+  "cy": 878,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09060",
+  "id": "C09060",
+  "label": "Angelicin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 1108,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00841",
+  "id": "C00841",
+  "label": "Xanthotoxol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1068,
+  "cy": 1013,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02162",
+  "id": "C02162",
+  "label": "Isopimpinellin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 993,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09263",
+  "id": "C09263",
+  "label": "Esculetin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 1068,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01752",
+  "id": "C01752",
+  "label": "Scopoletin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 443,
+  "cy": 1138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01527",
+  "id": "C01527",
+  "label": "Scopolin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 758,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09305",
+  "id": "C09305",
+  "label": "Psoralen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 248,
+  "cy": 993,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00323",
+  "id": "C00323",
+  "label": "Caffeoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 563,
+  "cy": 1028,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18079",
+  "id": "C18079",
+  "label": "Isoscopoletin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 673,
+  "cy": 1028,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09311",
+  "id": "C09311",
+  "label": "Scoparone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 968,
+  "cy": 1108,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01864",
+  "id": "C01864",
+  "label": "Xanthotoxin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 368,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22070",
+  "id": "C22070",
+  "label": "2,4-Dihydroxycinnamoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 598,
+  "cy": 1068,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09265",
+  "id": "C09265",
+  "label": "Fraxetin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 708,
+  "cy": 1068,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22007",
+  "id": "C22007",
+  "label": "Sideretin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 368,
+  "cy": 1068,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21459",
+  "id": "C21459",
+  "label": "6-Hydroxyferuloyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 968,
+  "cy": 1043,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02951",
+  "id": "C02951",
+  "label": "5-Hydroxyxanthotoxin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 968,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01557",
+  "id": "C01557",
+  "label": "Bergapten",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1043,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22152",
+  "id": "C22152",
+  "label": "Bergamottin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1103,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22153",
+  "id": "C22153",
+  "label": "Epoxybergamottin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1163,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22156",
+  "id": "C22156",
+  "label": "6',7'-Dihydroxybergamottin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 1013,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22444",
+  "id": "C22444",
+  "label": "5,8-Dihydroxypsoralen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 113,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00082",
+  "id": "C00082",
+  "label": "L-Tyrosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 248,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00423",
+  "id": "C00423",
+  "label": "trans-Cinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 248,
+  "cy": 928,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00223",
+  "id": "C00223",
+  "label": "p-Coumaroyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 113,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00254",
+  "id": "C00254",
+  "label": "Prephenate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 183,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00079",
+  "id": "C00079",
+  "label": "L-Phenylalanine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 383,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01772",
+  "id": "C01772",
+  "label": "trans-2-Hydroxycinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 518,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05158",
+  "id": "C05158",
+  "label": "trans-beta-D-Glucosyl-2-hydroxycinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 653,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05839",
+  "id": "C05839",
+  "label": "cis-beta-D-Glucosyl-2-hydroxycinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 788,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05838",
+  "id": "C05838",
+  "label": "cis-2-Hydroxycinnamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 888,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05851",
+  "id": "C05851",
+  "label": "Coumarin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1023,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02274",
+  "id": "C02274",
+  "label": "Dihydrocoumarin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1158,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01198",
+  "id": "C01198",
+  "label": "3-(2-Hydroxyphenyl)propanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 308,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05366",
+  "id": "C05366",
+  "label": "(+)-Pinoresinol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 408,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C10646",
+  "id": "C10646",
+  "label": "Lariciresinol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 508,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18167",
+  "id": "C18167",
+  "label": "Secoisolariciresinol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C10682",
+  "id": "C10682",
+  "label": "Matairesinol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 708,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21191",
+  "id": "C21191",
+  "label": "Pluviatolide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 808,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21183",
+  "id": "C21183",
+  "label": "Bursehernin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 908,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21184",
+  "id": "C21184",
+  "label": "(-)-5'-Demethylyatein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1008,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C10557",
+  "id": "C10557",
+  "label": "Dihydroanhydropodorhizol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1108,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C10556",
+  "id": "C10556",
+  "label": "Deoxypodophyllotoxin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1178,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C10874",
+  "id": "C10874",
+  "label": "Podophyllotoxin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 308,
+  "cy": 1223,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20455",
+  "id": "C20455",
+  "label": "(-)-Pinoresinol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 408,
+  "cy": 1223,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20454",
+  "id": "C20454",
+  "label": "(-)-Lariciresinol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 508,
+  "cy": 1223,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20456",
+  "id": "C20456",
+  "label": "(+)-Secoisolariciresinol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 1178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00590",
+  "id": "C00590",
+  "label": "Coniferyl alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 248,
+  "cy": 1068,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00406",
+  "id": "C00406",
+  "label": "Feruloyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 263,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02637",
+  "id": "C02637",
+  "label": "3-Dehydroshikimate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 533,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01424",
+  "id": "C01424",
+  "label": "Gallate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 693,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01158",
+  "id": "C01158",
+  "label": "1-O-Galloyl-beta-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 853,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04576",
+  "id": "C04576",
+  "label": "Pentagalloylglucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 423,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22438",
+  "id": "C22438",
+  "label": "3,5-Dehydroshikimate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 113,
+  "cy": 653,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00493",
+  "id": "C00493",
+  "label": "Shikimate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 598,
+  "cy": 992,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22452",
+  "id": "C22452",
+  "label": "6,7,8-Trihydroxycoumarin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 113,
+  "cy": 129,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00074",
+  "id": "C00074",
+  "label": "Phosphoenolpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 373,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00353",
+  "id": "C00353",
+  "label": "Geranylgeranyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 293,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00448",
+  "id": "C00448",
+  "label": "trans,trans-Farnesyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 458,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06098",
+  "id": "C06098",
+  "label": "Zeaxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19731",
+  "id": "C19731",
+  "label": "(3S)-3-Hydroxycyclocitral",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 693,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19730",
+  "id": "C19730",
+  "label": "Crocetin dialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 853,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19867",
+  "id": "C19867",
+  "label": "beta-D-Glucosyl crocetin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 963,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19869",
+  "id": "C19869",
+  "label": "beta-D-Gentiobiosyl crocetin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 963,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19868",
+  "id": "C19868",
+  "label": "Bis(beta-D-glucosyl) crocetin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1073,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17513",
+  "id": "C17513",
+  "label": "trans-Crocetin (beta-D-glucosyl) (beta-D-gentibiosyl) ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1183,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08589",
+  "id": "C08589",
+  "label": "Crocin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 583,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20894",
+  "id": "C20894",
+  "label": "beta-Citraurin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 643,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17055",
+  "id": "C17055",
+  "label": "Picrocrocin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 733,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17062",
+  "id": "C17062",
+  "label": "Safranal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 748,
+  "cy": 128,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08588",
+  "id": "C08588",
+  "label": "Crocetin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 223,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00083",
+  "id": "C00083",
+  "label": "Malonyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 353,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20413",
+  "id": "C20413",
+  "label": "3,5,7-Trioxododecanoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 483,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20417",
+  "id": "C20417",
+  "label": "2,4-Dihydroxy-6-pentylbenzoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 613,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20406",
+  "id": "C20406",
+  "label": "Cannabigerolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 753,
+  "cy": 518,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21903",
+  "id": "C21903",
+  "label": "Delta9-Tetrahydrocannabinolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 753,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C10784",
+  "id": "C10784",
+  "label": "Cannabidiolic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 518,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06972",
+  "id": "C06972",
+  "label": "Dronabinol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 478,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07578",
+  "id": "C07578",
+  "label": "Cannabidiol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 458,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00049",
+  "id": "C00049",
+  "label": "L-Aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 573,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00073",
+  "id": "C00073",
+  "label": "L-Methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 348,
+  "cy": 573,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00019",
+  "id": "C00019",
+  "label": "S-Adenosyl-L-methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 518,
+  "cy": 573,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05324",
+  "id": "C05324",
+  "label": "Nicotianamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 663,
+  "cy": 573,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15486",
+  "id": "C15486",
+  "label": "3''-Deamino-3''-oxonicotianamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 943,
+  "cy": 573,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15500",
+  "id": "C15500",
+  "label": "Mugineic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1083,
+  "cy": 573,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15501",
+  "id": "C15501",
+  "label": "3-Epihydroxymugineic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 943,
+  "cy": 623,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15502",
+  "id": "C15502",
+  "label": "3-Epihydroxy-2'-deoxymugineic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 803,
+  "cy": 573,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15485",
+  "id": "C15485",
+  "label": "2'-Deoxymugineic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 178,
+  "cy": 293,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00036",
+  "id": "C00036",
+  "label": "Oxaloacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 113,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00251",
+  "id": "C00251",
+  "label": "Chorismate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 203,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00108",
+  "id": "C00108",
+  "label": "Anthranilate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 298,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03506",
+  "id": "C03506",
+  "label": "Indoleglycerol phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 408,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00463",
+  "id": "C00463",
+  "label": "Indole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 518,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12312",
+  "id": "C12312",
+  "label": "Indolin-2-one",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 628,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11130",
+  "id": "C11130",
+  "label": "3-Hydroxyindolin-2-one",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 738,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15769",
+  "id": "C15769",
+  "label": "HBOA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 848,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15770",
+  "id": "C15770",
+  "label": "DIBOA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 958,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15772",
+  "id": "C15772",
+  "label": "DIBOA-glucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1068,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18062",
+  "id": "C18062",
+  "label": "TRIBOA-glucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1178,
+  "cy": 718,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04831",
+  "id": "C04831",
+  "label": "DIMBOA-glucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 298,
+  "cy": 778,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00078",
+  "id": "C00078",
+  "label": "L-Tryptophan",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 608,
+  "cy": 778,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21602",
+  "id": "C21602",
+  "label": "(1H-Indol-3-yl)-N-methylmethanamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 778,
+  "cy": 778,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08304",
+  "id": "C08304",
+  "label": "Gramine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 438,
+  "cy": 778,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21601",
+  "id": "C21601",
+  "label": "3-(Aminomethyl)indole",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 168,
+  "cy": 1038,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00179",
+  "id": "C00179",
+  "label": "Agmatine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 118,
+  "cy": 1138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04498",
+  "id": "C04498",
+  "label": "p-Coumaroylagmatine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 118,
+  "cy": 1218,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08307",
+  "id": "C08307",
+  "label": "Hordatine A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 168,
+  "cy": 1138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18325",
+  "id": "C18325",
+  "label": "Feruloylagmatine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 168,
+  "cy": 1218,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08308",
+  "id": "C08308",
+  "label": "Hordatine B",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 293,
+  "cy": 203,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00751",
+  "id": "C00751",
+  "label": "Squalene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 293,
+  "cy": 273,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01054",
+  "id": "C01054",
+  "label": "(S)-2,3-Epoxysqualene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 428,
+  "cy": 273,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19829",
+  "id": "C19829",
+  "label": "Dammarenediol-II",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 713,
+  "cy": 273,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22128",
+  "id": "C22128",
+  "label": "(20S)-Ginsenoside Rh2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 273,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20778",
+  "id": "C20778",
+  "label": "Ginsenoside Rg3",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 563,
+  "cy": 273,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20715",
+  "id": "C20715",
+  "label": "Protopanaxadiol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 563,
+  "cy": 218,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22127",
+  "id": "C22127",
+  "label": "Ginsenoside C-K",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 563,
+  "cy": 322,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20716",
+  "id": "C20716",
+  "label": "Protopanaxatriol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 713,
+  "cy": 322,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20780",
+  "id": "C20780",
+  "label": "Ginsenoside F1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 322,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08946",
+  "id": "C08946",
+  "label": "Ginsenoside Rg1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 463,
+  "cy": 322,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22129",
+  "id": "C22129",
+  "label": "Ginsenoside Rh1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 713,
+  "cy": 218,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20779",
+  "id": "C20779",
+  "label": "Ginsenoside F2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 218,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20725",
+  "id": "C20725",
+  "label": "Ginsenoside Rd",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1013,
+  "cy": 218,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20713",
+  "id": "C20713",
+  "label": "Ginsenoside Rb1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 293,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08616",
+  "id": "C08616",
+  "label": "beta-Amyrin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 383,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17148",
+  "id": "C17148",
+  "label": "Oleanolic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 473,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08942",
+  "id": "C08942",
+  "label": "Echinocystic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 563,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08972",
+  "id": "C08972",
+  "label": "Quillaic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 653,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22652",
+  "id": "C22652",
+  "label": "Quillaic acid 3-O-beta-D-glucuronide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 838,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22654",
+  "id": "C22654",
+  "label": "Quillaic acid 3-O-beta-D-xylosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 838,
+  "cy": 438,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22655",
+  "id": "C22655",
+  "label": "Quillaic acid 3-O-alpha-L-rhamnosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 932,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22656",
+  "id": "C22656",
+  "label": "Quillaic acid 3-O-beta-D-xylosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 933,
+  "cy": 438,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22657",
+  "id": "C22657",
+  "label": "Quillaic acid 3-O-alpha-L-rhamnosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1028,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22658",
+  "id": "C22658",
+  "label": "Quillaic acid 3-O-beta-D-xylosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-alpha-L-rhamnosyl-1,2-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1028,
+  "cy": 438,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22659",
+  "id": "C22659",
+  "label": "Quillaic acid 3-O-alpha-L-rhamnosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-alpha-L-rhamnosyl-1,2-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1233,
+  "cy": 333,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22662",
+  "id": "C22662",
+  "label": "Quillaic acid 3-O-beta-D-xylosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-beta-D-xylosyl-1,3-beta-D-xylosyl-1,4-alpha-L-rhamnosyl-1,2-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1233,
+  "cy": 494,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22663",
+  "id": "C22663",
+  "label": "Quillaic acid 3-O-alpha-L-rhamnosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-beta-D-xylosyl-1,3-beta-D-xylosyl-1,4-alpha-L-rhamnosyl-1,2-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1233,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22664",
+  "id": "C22664",
+  "label": "Quillaic acid 3-O-beta-D-xylosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-beta-D-apiosyl-1,3-beta-D-xylosyl-1,4-alpha-L-rhamnosyl-1,2-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1233,
+  "cy": 438,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22665",
+  "id": "C22665",
+  "label": "Quillaic acid 3-O-alpha-L-rhamnosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-beta-D-apiosyl-1,3-beta-D-xylosyl-1,4-alpha-L-rhamnosyl-1,2-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1398,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22666",
+  "id": "C22666",
+  "label": "Quillaic acid 3-O-beta-D-xylosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide 28-O-beta-D-apiosyl-1,3-beta-D-xylosyl-1,4-(beta-D-glucosyl-1,3)-alpha-L-rhamnosyl-1,2-(alpha-L-rhamnosyl-1,3)-4-O-acetyl-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1123,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22660",
+  "id": "C22660",
+  "label": "Quillaic acid 3-O-beta-D-xylosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-beta-D-xylosyl-1,4-alpha-L-rhamnosyl-1,2-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1123,
+  "cy": 438,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22661",
+  "id": "C22661",
+  "label": "Quillaic acid 3-O-alpha-L-rhamnosyl-1,3-(beta-D-galactosyl-1,2)-beta-D-glucuronide-28-O-beta-D-xylosyl-1,4-alpha-L-rhamnosyl-1,2-beta-D-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 743,
+  "cy": 388,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22653",
+  "id": "C22653",
+  "label": "Quillaic acid 3-O-beta-D-galactosyl-1,2-beta-D-glucuronide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 689,
+  "y1": 824,
+  "x2": 735,
+  "y2": 841,
+  "url": "/dbget-bin/www_bget?syn:sll1538",
+  "id": "sll1538",
+  "label": "sll1538 (bgl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1538",
+    "product": "beta-glucosidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 244,
+  "y1": 564,
+  "x2": 290,
+  "y2": 581,
+  "url": "/dbget-bin/www_bget?syn:sll0927",
+  "id": "sll0927",
+  "label": "sll0927 (metX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0927",
+    "product": "S-adenosylmethionine synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 500,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00999",
+  "id": "syn00999",
+  "label": "syn00999: Biosynthesis of various plant secondary metabolites",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 129,
+  "y1": 729,
+  "x2": 279,
+  "y2": 763,
+  "url": "/kegg-bin/show_pathway?syn00400",
+  "id": "syn00400",
+  "label": "syn00400: Phenylalanine, tyrosine and tryptophan biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 319,
+  "y1": 189,
+  "x2": 439,
+  "y2": 223,
+  "url": "/kegg-bin/show_pathway?syn00900",
+  "id": "syn00900",
+  "label": "syn00900: Terpenoid backbone biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 124,
+  "y1": 594,
+  "x2": 266,
+  "y2": 628,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 59,
+  "y1": 213,
+  "x2": 163,
+  "y2": 247,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 129,
+  "y1": 349,
+  "x2": 209,
+  "y2": 371,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 221,
+  "y1": 862,
+  "x2": 321,
+  "y2": 896,
+  "url": "/kegg-bin/show_pathway?map00940",
+  "id": "map00940:",
+  "label": "map00940: Phenylpropanoid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ }
+]

@@ -1,0 +1,1739 @@
+[
+ {
+  "type": "circ",
+  "cx": 1328,
+  "cy": 839,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16486",
+  "id": "C16486",
+  "label": "Astaxanthin diester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1095,
+  "cy": 534,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16340",
+  "id": "C16340",
+  "label": "beta-Isorenieratene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 260,
+  "cy": 783,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16291",
+  "id": "C16291",
+  "label": "7,8-Dihydro-beta-carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 260,
+  "cy": 673,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05434",
+  "id": "C05434",
+  "label": "beta-Zeacarotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1328,
+  "cy": 479,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16284",
+  "id": "C16284",
+  "label": "Nostoxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1328,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16282",
+  "id": "C16282",
+  "label": "Caloxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1115,
+  "cy": 324,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15981",
+  "id": "C15981",
+  "label": "alpha-Cryptoxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 982,
+  "cy": 241,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16276",
+  "id": "C16276",
+  "label": "epsilon-Carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 602,
+  "cy": 188,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16270",
+  "id": "C16270",
+  "label": "Rhodopinal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 602,
+  "cy": 113,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16271",
+  "id": "C16271",
+  "label": "Rhodopinal glucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 236,
+  "cy": 282,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16148",
+  "id": "C16148",
+  "label": "Staphyloxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 332,
+  "cy": 282,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16147",
+  "id": "C16147",
+  "label": "Glucosyl-4,4'-diaponeurosporenoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 428,
+  "cy": 282,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16146",
+  "id": "C16146",
+  "label": "4,4'-Diaponeurosporenic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 428,
+  "cy": 152,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16145",
+  "id": "C16145",
+  "label": "4,4'-Diaponeurosporene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 332,
+  "cy": 152,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16144",
+  "id": "C16144",
+  "label": "4,4'-Diapophytoene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 73,
+  "cy": 228,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00353",
+  "id": "C00353",
+  "label": "Geranylgeranyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 136,
+  "cy": 152,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00448",
+  "id": "C00448",
+  "label": "trans,trans-Farnesyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1539,
+  "cy": 828,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13456",
+  "id": "C13456",
+  "label": "Abscisic alcohol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1619,
+  "cy": 908,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15970",
+  "id": "C15970",
+  "label": "Abscisic acid glucose ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1200,
+  "cy": 908,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15971",
+  "id": "C15971",
+  "label": "Dihydrophaseic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1277,
+  "cy": 908,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09707",
+  "id": "C09707",
+  "label": "Phaseic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1355,
+  "cy": 908,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15514",
+  "id": "C15514",
+  "label": "8'-Hydroxyabscisate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1489,
+  "cy": 908,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06082",
+  "id": "C06082",
+  "label": "Abscisate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1433,
+  "cy": 748,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13454",
+  "id": "C13454",
+  "label": "Xanthoxic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1489,
+  "cy": 828,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13455",
+  "id": "C13455",
+  "label": "Abscisic aldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1489,
+  "cy": 748,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13453",
+  "id": "C13453",
+  "label": "Xanthoxin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1576,
+  "cy": 668,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13431",
+  "id": "C13431",
+  "label": "9'-cis-Neoxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1489,
+  "cy": 479,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08585",
+  "id": "C08585",
+  "label": "Capsorubin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1489,
+  "cy": 668,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13433",
+  "id": "C13433",
+  "label": "9-cis-Violaxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1576,
+  "cy": 596,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08606",
+  "id": "C08606",
+  "label": "Neoxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1378,
+  "cy": 479,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08584",
+  "id": "C08584",
+  "label": "Capsanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1489,
+  "cy": 595,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08614",
+  "id": "C08614",
+  "label": "Violaxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1378,
+  "cy": 595,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08579",
+  "id": "C08579",
+  "label": "Antheraxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1261,
+  "cy": 479,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15969",
+  "id": "C15969",
+  "label": "Zeaxanthin diglucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1264,
+  "cy": 838,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08580",
+  "id": "C08580",
+  "label": "Astaxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1264,
+  "cy": 707,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15968",
+  "id": "C15968",
+  "label": "Adonixanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1134,
+  "cy": 838,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15967",
+  "id": "C15967",
+  "label": "Phoenicoxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1001,
+  "cy": 838,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08583",
+  "id": "C08583",
+  "label": "Canthaxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1134,
+  "cy": 707,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15966",
+  "id": "C15966",
+  "label": "3-Hydroxyechinenone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1086,
+  "cy": 765,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15965",
+  "id": "C15965",
+  "label": "3'-Hydroxyechinenone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1195,
+  "cy": 479,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15984",
+  "id": "C15984",
+  "label": "Thermobiszeaxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1195,
+  "cy": 534,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15983",
+  "id": "C15983",
+  "label": "Thermozeaxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1134,
+  "cy": 534,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15982",
+  "id": "C15982",
+  "label": "Thermocryptoxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1095,
+  "cy": 479,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15943",
+  "id": "C15943",
+  "label": "Isorenieratene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1264,
+  "cy": 595,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06098",
+  "id": "C06098",
+  "label": "Zeaxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1134,
+  "cy": 595,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08591",
+  "id": "C08591",
+  "label": "beta-Cryptoxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1001,
+  "cy": 707,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08592",
+  "id": "C08592",
+  "label": "Echinenone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 758,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15942",
+  "id": "C15942",
+  "label": "(3S,2'S)-4-Ketomyxol 2'-alpha-L-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15941",
+  "id": "C15941",
+  "label": "(3R,2'S)-Myxol 2'-alpha-L-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 628,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15940",
+  "id": "C15940",
+  "label": "(2'S)-Deoxymyxol 2'-alpha-L-fucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 472,
+  "cy": 758,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15864",
+  "id": "C15864",
+  "label": "1'-Hydroxy-gamma-carotene glucoside ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 472,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15861",
+  "id": "C15861",
+  "label": "1'-Hydroxy-gamma-carotene glucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 577,
+  "cy": 758,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15917",
+  "id": "C15917",
+  "label": "Hydroxychlorobactene glucoside ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 577,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15914",
+  "id": "C15914",
+  "label": "Hydroxychlorobactene glucoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 577,
+  "cy": 628,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15911",
+  "id": "C15911",
+  "label": "Hydroxychlorobactene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 577,
+  "cy": 552,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15908",
+  "id": "C15908",
+  "label": "Chlorobactene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 69,
+  "cy": 951,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15905",
+  "id": "C15905",
+  "label": "Hydroxyspheroidenone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 159,
+  "cy": 951,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15903",
+  "id": "C15903",
+  "label": "Spheroidenone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 69,
+  "cy": 820,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15902",
+  "id": "C15902",
+  "label": "Hydroxyspheroidene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 159,
+  "cy": 820,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15900",
+  "id": "C15900",
+  "label": "Spheroidene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 159,
+  "cy": 721,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15898",
+  "id": "C15898",
+  "label": "Demethylspheroidene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 69,
+  "cy": 627,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15895",
+  "id": "C15895",
+  "label": "3,4-Dihydrospheroidene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 159,
+  "cy": 627,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15892",
+  "id": "C15892",
+  "label": "Chloroxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 952,
+  "cy": 187,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15888",
+  "id": "C15888",
+  "label": "3,4,3',4'-Tetrahydrospirilloxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 858,
+  "cy": 187,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15887",
+  "id": "C15887",
+  "label": "3',4'-Dihydrorhodovibrin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 765,
+  "cy": 187,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15886",
+  "id": "C15886",
+  "label": "3,4-Dihydroanhydrorhodovibrin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1328,
+  "cy": 116,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15885",
+  "id": "C15885",
+  "label": "2,2'-Diketospirilloxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1233,
+  "cy": 116,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15884",
+  "id": "C15884",
+  "label": "2-Ketospirilloxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1139,
+  "cy": 116,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15881",
+  "id": "C15881",
+  "label": "Spirilloxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1046,
+  "cy": 116,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15879",
+  "id": "C15879",
+  "label": "Hydroxyspirilloxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 952,
+  "cy": 116,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15878",
+  "id": "C15878",
+  "label": "Rhodovibrin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 857,
+  "cy": 116,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15877",
+  "id": "C15877",
+  "label": "Anhydrorhodovibrin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 764,
+  "cy": 116,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15874",
+  "id": "C15874",
+  "label": "3,4-Dehydrorhodopin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 666,
+  "cy": 188,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19795",
+  "id": "C19795",
+  "label": "1-Hydroxy-1,2-dihydrolycopene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 534,
+  "cy": 628,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15860",
+  "id": "C15860",
+  "label": "1'-Hydroxytorulene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 472,
+  "cy": 628,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15859",
+  "id": "C15859",
+  "label": "1'-Hydroxy-gamma-carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1001,
+  "cy": 594,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02094",
+  "id": "C02094",
+  "label": "beta-Carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 552,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05435",
+  "id": "C05435",
+  "label": "gamma-Carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1240,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08601",
+  "id": "C08601",
+  "label": "Lutein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1115,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08590",
+  "id": "C08590",
+  "label": "Zeinoxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 982,
+  "cy": 283,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05433",
+  "id": "C05433",
+  "label": "alpha-Carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 808,
+  "cy": 241,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08586",
+  "id": "C08586",
+  "label": "delta-Carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 851,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16275",
+  "id": "C16275",
+  "label": "(2S,2'S)-Oscillol 2,2'-di(alpha-L-fucoside)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 761,
+  "cy": 309,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16274",
+  "id": "C16274",
+  "label": "(2S,2'S)-Oscillol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 311,
+  "cy": 823,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16278",
+  "id": "C16278",
+  "label": "R.g.-Keto III",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 821,
+  "cy": 867,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18037",
+  "id": "C18037",
+  "label": "5-Deoxystrigol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 821,
+  "cy": 949,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C09190",
+  "id": "C09190",
+  "label": "Strigol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 73,
+  "cy": 295,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03427",
+  "id": "C03427",
+  "label": "Prephytoene diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 221,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05414",
+  "id": "C05414",
+  "label": "all-trans-Phytofluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 667,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05432",
+  "id": "C05432",
+  "label": "Lycopene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 73,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05421+C05413",
+  "id": "C05421",
+  "label": "15-cis-Phytoene), C05413 (all-trans-Phytoene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 173,
+  "cy": 370,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19765",
+  "id": "C19765",
+  "label": "15,9'-dicis-Phytofluene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 469,
+  "cy": 370,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19759",
+  "id": "C19759",
+  "label": "7,9,9'-tricis-Neurosporene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 370,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15857",
+  "id": "C15857",
+  "label": "9,9'-dicis-zeta-Carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 271,
+  "cy": 370,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19764",
+  "id": "C19764",
+  "label": "9,15,9'-tricis-zeta-Carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 567,
+  "cy": 370,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15858",
+  "id": "C15858",
+  "label": "7,9,7',9'-tetracis-Lycopene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 370,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05430",
+  "id": "C05430",
+  "label": "all-trans-zeta-Carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 531,
+  "cy": 217,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19798",
+  "id": "C19798",
+  "label": "4,4'-Diapolycopenedial",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 531,
+  "cy": 152,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19797",
+  "id": "C19797",
+  "label": "4,4'-Diapolycopene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 231,
+  "cy": 152,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03428",
+  "id": "C03428",
+  "label": "Presqualene diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 518,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05431",
+  "id": "C05431",
+  "label": "all-trans-Neurosporene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 800,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15867",
+  "id": "C15867",
+  "label": "3,4-Dehydrolycopene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 934,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08613",
+  "id": "C08613",
+  "label": "Torulene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1068,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19892",
+  "id": "C19892",
+  "label": "4'-Apo-beta,psi-caroten-4'-al",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1202,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C08607",
+  "id": "C08607",
+  "label": "Neurosporaxanthin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 907,
+  "cy": 682,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20484",
+  "id": "C20484",
+  "label": "9-cis-beta-Carotene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 907,
+  "cy": 742,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20692",
+  "id": "C20692",
+  "label": "9-cis-10'-Apo-beta-carotenal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 821,
+  "cy": 784,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18036",
+  "id": "C18036",
+  "label": "Strigolactone ABC-rings",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 761,
+  "cy": 374,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22058",
+  "id": "C22058",
+  "label": "Dihydroisopentenyldehydrorhodopin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 851,
+  "cy": 374,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22059",
+  "id": "C22059",
+  "label": "Isopentenyldehydrorhodopin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 941,
+  "cy": 374,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22060",
+  "id": "C22060",
+  "label": "Dihydrobisanhydrobacterioruberin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1031,
+  "cy": 374,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22347",
+  "id": "C22347",
+  "label": "Bisanhydrobacterioruberin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1121,
+  "cy": 374,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22348",
+  "id": "C22348",
+  "label": "Monoanhydrobacterioruberin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1211,
+  "cy": 374,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22349",
+  "id": "C22349",
+  "label": "Bacterioruberin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 531,
+  "cy": 282,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21770",
+  "id": "C21770",
+  "label": "4,4'-Diapolycopene-4,4'-dioate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 373,
+  "cy": 758,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16279",
+  "id": "C16279",
+  "label": "Thiothece-474",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 373,
+  "cy": 824,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16280",
+  "id": "C16280",
+  "label": "Okenone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 373,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22346",
+  "id": "C22346",
+  "label": "1'-Hydroxy-1',2'-dihydro-beta,psi-caroten-4'-one",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 907,
+  "cy": 867,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23076",
+  "id": "C23076",
+  "label": "(11R)-Carlactonoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 907,
+  "cy": 927,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23077",
+  "id": "C23077",
+  "label": "(11R)-Methyl carlactonoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 907,
+  "cy": 987,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23078",
+  "id": "C23078",
+  "label": "(11R)-Hydroxymethyl carlactonoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 907,
+  "cy": 802,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20693",
+  "id": "C20693",
+  "label": "Carlactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 772,
+  "cy": 949,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23075",
+  "id": "C23075",
+  "label": "Sorgomol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 628,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15935",
+  "id": "C15935",
+  "label": "(2'S)-Deoxymyxol 2'-(2,4-di-O-methyl-alpha-L-fucoside)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 311,
+  "cy": 758,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16277",
+  "id": "C16277",
+  "label": "R.g.-Keto I",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 770,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15937",
+  "id": "C15937",
+  "label": "(3R,2'S)-Myxol 2'-(2,4-di-O-methyl-alpha-L-fucoside)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 428,
+  "cy": 217,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19839",
+  "id": "C19839",
+  "label": "4,4'-Diaponeurosporen-4-al",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 1072,
+  "y1": 502,
+  "x2": 1118,
+  "y2": 519,
+  "url": "/dbget-bin/www_bget?syn:sll0254",
+  "id": "sll0254",
+  "label": "sll0254",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0254",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 604,
+  "y1": 543,
+  "x2": 650,
+  "y2": 560,
+  "url": "/dbget-bin/www_bget?syn:sll0254",
+  "id": "sll0254",
+  "label": "sll0254",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0254",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1018,
+  "y1": 526,
+  "x2": 1064,
+  "y2": 543,
+  "url": "/dbget-bin/www_bget?syn:sll0254",
+  "id": "sll0254",
+  "label": "sll0254",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0254",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1238,
+  "y1": 502,
+  "x2": 1284,
+  "y2": 519,
+  "url": "/dbget-bin/www_bget?syn:slr1125",
+  "id": "slr1125",
+  "label": "slr1125 (crtX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1125",
+    "product": "zeaxanthin glucosyl transferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 747,
+  "y1": 646,
+  "x2": 793,
+  "y2": 663,
+  "url": "/dbget-bin/www_bget?syn:sll1468",
+  "id": "sll1468",
+  "label": "sll1468 (bhy)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1468",
+    "product": "b-carotene hydroxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 645,
+  "y1": 646,
+  "x2": 691,
+  "y2": 663,
+  "url": "/dbget-bin/www_bget?syn:sll1468",
+  "id": "sll1468",
+  "label": "sll1468 (bhy)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1468",
+    "product": "b-carotene hydroxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 953,
+  "y1": 797,
+  "x2": 999,
+  "y2": 814,
+  "url": "/dbget-bin/www_bget?syn:slr0088",
+  "id": "slr0088",
+  "label": "slr0088 (crtO)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0088",
+    "product": "b-carotene ketolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 953,
+  "y1": 640,
+  "x2": 999,
+  "y2": 657,
+  "url": "/dbget-bin/www_bget?syn:slr0088",
+  "id": "slr0088",
+  "label": "slr0088 (crtO)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0088",
+    "product": "b-carotene ketolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 556,
+  "y1": 467,
+  "x2": 602,
+  "y2": 484,
+  "url": "/dbget-bin/www_bget?syn:slr0940",
+  "id": "slr0940",
+  "label": "slr0940 (crtQ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0940",
+    "product": "zeta-carotene desaturase precursor"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 418,
+  "y1": 467,
+  "x2": 464,
+  "y2": 484,
+  "url": "/dbget-bin/www_bget?syn:slr0940",
+  "id": "slr0940",
+  "label": "slr0940 (crtQ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0940",
+    "product": "zeta-carotene desaturase precursor"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 268,
+  "y1": 467,
+  "x2": 314,
+  "y2": 484,
+  "url": "/dbget-bin/www_bget?syn:slr1254",
+  "id": "slr1254",
+  "label": "slr1254 (pds)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1254",
+    "product": "phytoene desaturase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 125,
+  "y1": 467,
+  "x2": 171,
+  "y2": 484,
+  "url": "/dbget-bin/www_bget?syn:slr1254",
+  "id": "slr1254",
+  "label": "slr1254 (pds)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1254",
+    "product": "phytoene desaturase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 820,
+  "y1": 552,
+  "x2": 866,
+  "y2": 569,
+  "url": "/dbget-bin/www_bget?syn:sll0147+syn:sll0659",
+  "id": "sll0147,",
+  "label": "sll0147, sll0659",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0147",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "sll0659",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 619,
+  "y1": 488,
+  "x2": 665,
+  "y2": 505,
+  "url": "/dbget-bin/www_bget?syn:sll0147+syn:sll0659",
+  "id": "sll0147,",
+  "label": "sll0147, sll0659",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0147",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "sll0659",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 51,
+  "y1": 324,
+  "x2": 97,
+  "y2": 341,
+  "url": "/dbget-bin/www_bget?syn:slr1255",
+  "id": "slr1255",
+  "label": "slr1255 (pys)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1255",
+    "product": "phytoene synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 51,
+  "y1": 249,
+  "x2": 97,
+  "y2": 266,
+  "url": "/dbget-bin/www_bget?syn:slr1255",
+  "id": "slr1255",
+  "label": "slr1255 (pys)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1255",
+    "product": "phytoene synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 98,
+  "y1": 362,
+  "x2": 144,
+  "y2": 379,
+  "url": "/dbget-bin/www_bget?syn:slr1254",
+  "id": "slr1254",
+  "label": "slr1254 (pds)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1254",
+    "product": "phytoene desaturase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 193,
+  "y1": 362,
+  "x2": 239,
+  "y2": 379,
+  "url": "/dbget-bin/www_bget?syn:slr1254",
+  "id": "slr1254",
+  "label": "slr1254 (pds)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1254",
+    "product": "phytoene desaturase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 293,
+  "y1": 362,
+  "x2": 339,
+  "y2": 379,
+  "url": "/dbget-bin/www_bget?syn:slr1599",
+  "id": "slr1599",
+  "label": "slr1599",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1599",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 394,
+  "y1": 362,
+  "x2": 440,
+  "y2": 379,
+  "url": "/dbget-bin/www_bget?syn:slr0940",
+  "id": "slr0940",
+  "label": "slr0940 (crtQ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0940",
+    "product": "zeta-carotene desaturase precursor"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 491,
+  "y1": 362,
+  "x2": 537,
+  "y2": 379,
+  "url": "/dbget-bin/www_bget?syn:slr0940",
+  "id": "slr0940",
+  "label": "slr0940 (crtQ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0940",
+    "product": "zeta-carotene desaturase precursor"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 589,
+  "y1": 362,
+  "x2": 635,
+  "y2": 379,
+  "url": "/dbget-bin/www_bget?syn:sll0033",
+  "id": "sll0033",
+  "label": "sll0033",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0033",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1017,
+  "y1": 576,
+  "x2": 1063,
+  "y2": 593,
+  "url": "/dbget-bin/www_bget?syn:sll1468",
+  "id": "sll1468",
+  "label": "sll1468 (bhy)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1468",
+    "product": "b-carotene hydroxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1191,
+  "y1": 576,
+  "x2": 1237,
+  "y2": 593,
+  "url": "/dbget-bin/www_bget?syn:sll1468",
+  "id": "sll1468",
+  "label": "sll1468 (bhy)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1468",
+    "product": "b-carotene hydroxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1017,
+  "y1": 746,
+  "x2": 1063,
+  "y2": 763,
+  "url": "/dbget-bin/www_bget?syn:sll1468",
+  "id": "sll1468",
+  "label": "sll1468 (bhy)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1468",
+    "product": "b-carotene hydroxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 960,
+  "y1": 475,
+  "x2": 1040,
+  "y2": 509,
+  "url": "/kegg-bin/show_pathway?map00830",
+  "id": "map00830:",
+  "label": "map00830: Retinol metabolism",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 18,
+  "y1": 92,
+  "x2": 131,
+  "y2": 126,
+  "url": "/kegg-bin/show_pathway?syn00900",
+  "id": "syn00900",
+  "label": "syn00900: Terpenoid backbone biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 256,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00906",
+  "id": "syn00906",
+  "label": "syn00906: Carotenoid biosynthesis",
+  "entry_type": "pathway"
+ }
+]

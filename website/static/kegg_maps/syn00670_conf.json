@@ -1,0 +1,815 @@
+[
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 260,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00415",
+  "id": "C00415",
+  "label": "Dihydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 746,
+  "cy": 263,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00143",
+  "id": "C00143",
+  "label": "5,10-Methylenetetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 746,
+  "cy": 455,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 613,
+  "cy": 406,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00664",
+  "id": "C00664",
+  "label": "5-Formiminotetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 486,
+  "cy": 263,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00234",
+  "id": "C00234",
+  "label": "10-Formyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 616,
+  "cy": 263,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00445",
+  "id": "C00445",
+  "label": "5,10-Methenyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 408,
+  "cy": 888,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00440",
+  "id": "C00440",
+  "label": "5-Methyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 378,
+  "cy": 723,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00101",
+  "id": "C00101",
+  "label": "Tetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 548,
+  "cy": 888,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00155",
+  "id": "C00155",
+  "label": "L-Homocysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 548,
+  "cy": 723,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00073",
+  "id": "C00073",
+  "label": "L-Methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 673,
+  "cy": 723,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01026",
+  "id": "C01026",
+  "label": "N,N-Dimethylglycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 883,
+  "cy": 888,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00114",
+  "id": "C00114",
+  "label": "Choline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 673,
+  "cy": 633,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00019",
+  "id": "C00019",
+  "label": "S-Adenosyl-L-methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 898,
+  "cy": 923,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00021",
+  "id": "C00021",
+  "label": "S-Adenosyl-L-homocysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 543,
+  "cy": 973,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02291",
+  "id": "C02291",
+  "label": "L-Cystathionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 543,
+  "cy": 1038,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00097",
+  "id": "C00097",
+  "label": "L-Cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 498,
+  "cy": 918,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00065",
+  "id": "C00065",
+  "label": "L-Serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 343,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00065",
+  "id": "C00065",
+  "label": "L-Serine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 268,
+  "cy": 693,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 148,
+  "cy": 643,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00415",
+  "id": "C00415",
+  "label": "Dihydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 148,
+  "cy": 568,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00504",
+  "id": "C00504",
+  "label": "Folate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 378,
+  "cy": 788,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00234",
+  "id": "C00234",
+  "label": "10-Formyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 378,
+  "cy": 853,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00445",
+  "id": "C00445",
+  "label": "5,10-Methenyltetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 728,
+  "cy": 603,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 723,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00213",
+  "id": "C00213",
+  "label": "Sarcosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 248,
+  "cy": 888,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00143",
+  "id": "C00143",
+  "label": "5,10-Methylenetetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 108,
+  "cy": 698,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00364",
+  "id": "C00364",
+  "label": "dTMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 108,
+  "cy": 768,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00365",
+  "id": "C00365",
+  "label": "dUMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 658,
+  "cy": 963,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00212",
+  "id": "C00212",
+  "label": "Adenosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 698,
+  "cy": 753,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00101",
+  "id": "C00101",
+  "label": "Tetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 783,
+  "cy": 753,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00143",
+  "id": "C00143",
+  "label": "5,10-Methylenetetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 833,
+  "cy": 833,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00037",
+  "id": "C00037",
+  "label": "Glycine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 748,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00101",
+  "id": "C00101",
+  "label": "Tetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 753,
+  "cy": 888,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00576",
+  "id": "C00576",
+  "label": "Betaine aldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 663,
+  "cy": 888,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00719",
+  "id": "C00719",
+  "label": "Betaine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 803,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00143",
+  "id": "C00143",
+  "label": "5,10-Methylenetetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 263,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00101",
+  "id": "C00101",
+  "label": "Tetrahydrofolate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 578,
+  "cy": 603,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 616,
+  "cy": 179,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03479",
+  "id": "C03479",
+  "label": "Folinic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 437,
+  "y1": 350,
+  "x2": 483,
+  "y2": 367,
+  "url": "/dbget-bin/www_bget?syn:slr0477",
+  "id": "slr0477",
+  "label": "slr0477 (purN)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0477",
+    "product": "phosphoribosylglycinamide formyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 748,
+  "y1": 383,
+  "x2": 794,
+  "y2": 400,
+  "url": "/dbget-bin/www_bget?syn:slr2141",
+  "id": "slr2141",
+  "label": "slr2141",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2141",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 528,
+  "y1": 255,
+  "x2": 574,
+  "y2": 272,
+  "url": "/dbget-bin/www_bget?syn:sll0753",
+  "id": "sll0753",
+  "label": "sll0753 (folD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0753",
+    "product": "methylenetetrahydrofolate dehydrogenase/methenyltetrahydrofolate cyclohydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 658,
+  "y1": 255,
+  "x2": 704,
+  "y2": 272,
+  "url": "/dbget-bin/www_bget?syn:sll0753",
+  "id": "sll0753",
+  "label": "sll0753 (folD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0753",
+    "product": "methylenetetrahydrofolate dehydrogenase/methenyltetrahydrofolate cyclohydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 638,
+  "y1": 190,
+  "x2": 684,
+  "y2": 207,
+  "url": "/dbget-bin/www_bget?syn:sll1643",
+  "id": "sll1643",
+  "label": "sll1643",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1643",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 594,
+  "y1": 215,
+  "x2": 640,
+  "y2": 232,
+  "url": "/dbget-bin/www_bget?syn:sll0171",
+  "id": "sll0171",
+  "label": "sll0171 (gcvT)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0171",
+    "product": "aminomethyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 387,
+  "y1": 297,
+  "x2": 433,
+  "y2": 314,
+  "url": "/dbget-bin/www_bget?syn:sll0070",
+  "id": "sll0070",
+  "label": "sll0070 (purU)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0070",
+    "product": "phosphoribosylglycinamide formyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 387,
+  "y1": 212,
+  "x2": 433,
+  "y2": 229,
+  "url": "/dbget-bin/www_bget?syn:slr0477",
+  "id": "slr0477",
+  "label": "slr0477 (purN)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0477",
+    "product": "phosphoribosylglycinamide formyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 387,
+  "y1": 191,
+  "x2": 433,
+  "y2": 208,
+  "url": "/dbget-bin/www_bget?syn:slr0597",
+  "id": "slr0597",
+  "label": "slr0597 (purH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0597",
+    "product": "phosphoribosyl aminoimidazole carboxy formyl formyltransferase/inosinemonophosphate cyclohydrolase; PUR-H(J)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 463,
+  "y1": 436,
+  "x2": 509,
+  "y2": 453,
+  "url": "/dbget-bin/www_bget?syn:slr0212",
+  "id": "slr0212",
+  "label": "slr0212 (metH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0212",
+    "product": "5-methyltetrahydrofolate--homocysteine methyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 440,
+  "y1": 76,
+  "x2": 486,
+  "y2": 93,
+  "url": "/dbget-bin/www_bget?syn:sll1635",
+  "id": "sll1635",
+  "label": "sll1635",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1635",
+    "product": "Thy1 protein homologue"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 463,
+  "y1": 97,
+  "x2": 509,
+  "y2": 114,
+  "url": "/dbget-bin/www_bget?syn:sll1931",
+  "id": "sll1931",
+  "label": "sll1931 (gylA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1931",
+    "product": "serine hydroxymethyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 536,
+  "y1": 76,
+  "x2": 582,
+  "y2": 93,
+  "url": "/dbget-bin/www_bget?syn:sll0171",
+  "id": "sll0171",
+  "label": "sll0171 (gcvT)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0171",
+    "product": "aminomethyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 164,
+  "y1": 814,
+  "x2": 210,
+  "y2": 831,
+  "url": "/dbget-bin/www_bget?syn:sll0171+syn:slr0293+syn:slr0879+syn:slr1096",
+  "id": "sll0171",
+  "label": "sll0171 (gcvT), slr0293 (gcvP), slr0879 (gcvH), slr1096 (phdD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0171",
+    "product": "aminomethyltransferase"
+   },
+   {
+    "locus": "slr0293",
+    "product": "P protein of glycine cleavage complex"
+   },
+   {
+    "locus": "slr0879",
+    "product": "glycine decarboxylase complex H-protein"
+   },
+   {
+    "locus": "slr1096",
+    "product": "dihydrolipoamide dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 284,
+  "y1": 715,
+  "x2": 330,
+  "y2": 732,
+  "url": "/dbget-bin/www_bget?syn:sll1931",
+  "id": "sll1931",
+  "label": "sll1931 (gylA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1931",
+    "product": "serine hydroxymethyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 445,
+  "y1": 800,
+  "x2": 491,
+  "y2": 817,
+  "url": "/dbget-bin/www_bget?syn:slr0212",
+  "id": "slr0212",
+  "label": "slr0212 (metH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0212",
+    "product": "5-methyltetrahydrofolate--homocysteine methyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 356,
+  "y1": 811,
+  "x2": 402,
+  "y2": 828,
+  "url": "/dbget-bin/www_bget?syn:sll0753",
+  "id": "sll0753",
+  "label": "sll0753 (folD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0753",
+    "product": "methylenetetrahydrofolate dehydrogenase/methenyltetrahydrofolate cyclohydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 834,
+  "x2": 315,
+  "y2": 851,
+  "url": "/dbget-bin/www_bget?syn:sll0753",
+  "id": "sll0753",
+  "label": "sll0753 (folD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0753",
+    "product": "methylenetetrahydrofolate dehydrogenase/methenyltetrahydrofolate cyclohydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 589,
+  "y1": 625,
+  "x2": 635,
+  "y2": 642,
+  "url": "/dbget-bin/www_bget?syn:sll0927",
+  "id": "sll0927",
+  "label": "sll0927 (metX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0927",
+    "product": "S-adenosylmethionine synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 719,
+  "y1": 914,
+  "x2": 765,
+  "y2": 931,
+  "url": "/dbget-bin/www_bget?syn:sll1234",
+  "id": "sll1234",
+  "label": "sll1234 (ahcY)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1234",
+    "product": "S-adenosylhomocysteine hydrolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 322,
+  "y1": 890,
+  "x2": 368,
+  "y2": 907,
+  "url": "/dbget-bin/www_bget?syn:slr2141",
+  "id": "slr2141",
+  "label": "slr2141",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2141",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 284,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00670",
+  "id": "syn00670",
+  "label": "syn00670: One carbon pool by folate",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 89,
+  "y1": 141,
+  "x2": 169,
+  "y2": 175,
+  "url": "/kegg-bin/show_pathway?syn00790",
+  "id": "syn00790",
+  "label": "syn00790: Folate biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 261,
+  "y1": 943,
+  "x2": 389,
+  "y2": 977,
+  "url": "/kegg-bin/show_pathway?syn00260",
+  "id": "syn00260",
+  "label": "syn00260: Glycine, serine and threonine metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 708,
+  "y1": 982,
+  "x2": 841,
+  "y2": 1016,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ }
+]

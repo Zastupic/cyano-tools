@@ -1,0 +1,249 @@
+[
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 186,
+  "x2": 127,
+  "y2": 203,
+  "url": "/dbget-bin/www_bget?syn:slr1471",
+  "id": "slr1471",
+  "label": "slr1471",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1471",
+    "product": "inner membrane protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 171,
+  "y1": 636,
+  "x2": 217,
+  "y2": 653,
+  "url": "/dbget-bin/www_bget?syn:sll0194",
+  "id": "sll0194",
+  "label": "sll0194 (ycf43)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0194",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 636,
+  "x2": 127,
+  "y2": 653,
+  "url": "/dbget-bin/www_bget?syn:slr1046+syn:ssl2823",
+  "id": "slr1046,",
+  "label": "slr1046, ssl2823",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1046",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 207,
+  "x2": 127,
+  "y2": 224,
+  "url": "/dbget-bin/www_bget?syn:sll0616",
+  "id": "sll0616",
+  "label": "sll0616 (secA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0616",
+    "product": "preprotein translocase SecA subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 144,
+  "x2": 127,
+  "y2": 161,
+  "url": "/dbget-bin/www_bget?syn:sll1814",
+  "id": "sll1814",
+  "label": "sll1814 (secY)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1814",
+    "product": "preprotein translocase SecY subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 127,
+  "y1": 144,
+  "x2": 173,
+  "y2": 161,
+  "url": "/dbget-bin/www_bget?syn:ssl3335",
+  "id": "ssl3335",
+  "label": "ssl3335 (secE)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 173,
+  "y1": 144,
+  "x2": 219,
+  "y2": 161,
+  "url": "/dbget-bin/www_bget?syn:ssr3307",
+  "id": "ssr3307",
+  "label": "ssr3307 (ycf47)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 165,
+  "x2": 127,
+  "y2": 182,
+  "url": "/dbget-bin/www_bget?syn:slr0774+syn:slr0775",
+  "id": "slr0774",
+  "label": "slr0774 (secD), slr0775 (secF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0774",
+    "product": "protein-export membrane protein; SecD"
+   },
+   {
+    "locus": "slr0775",
+    "product": "protein-export membrane protein; SecF"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 732,
+  "x2": 127,
+  "y2": 749,
+  "url": "/dbget-bin/www_bget?syn:sll0716+syn:slr1377",
+  "id": "sll0716",
+  "label": "sll0716 (lepB), slr1377 (lepB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0716",
+    "product": "leader peptidase I"
+   },
+   {
+    "locus": "slr1377",
+    "product": "leader peptidase I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 133,
+  "y1": 732,
+  "x2": 179,
+  "y2": 749,
+  "url": "/dbget-bin/www_bget?syn:slr1366",
+  "id": "slr1366",
+  "label": "slr1366 (lspA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1366",
+    "product": "lipoprotein signal peptidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 371,
+  "y1": 264,
+  "x2": 417,
+  "y2": 281,
+  "url": "/dbget-bin/www_bget?syn:slr1531",
+  "id": "slr1531",
+  "label": "slr1531 (ffh)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1531",
+    "product": "signal recognition particle protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 247,
+  "x2": 127,
+  "y2": 264,
+  "url": "/dbget-bin/www_bget?syn:slr1531",
+  "id": "slr1531",
+  "label": "slr1531 (ffh)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1531",
+    "product": "signal recognition particle protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 295,
+  "x2": 127,
+  "y2": 312,
+  "url": "/dbget-bin/www_bget?syn:slr2102",
+  "id": "slr2102",
+  "label": "slr2102 (ftsY)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2102",
+    "product": "cell division protein; FtsY"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 81,
+  "y1": 388,
+  "x2": 127,
+  "y2": 405,
+  "url": "/dbget-bin/www_bget?syn:sll0086",
+  "id": "sll0086",
+  "label": "sll0086",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0086",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 175,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn03060",
+  "id": "syn03060",
+  "label": "syn03060: Protein export",
+  "entry_type": "pathway"
+ }
+]

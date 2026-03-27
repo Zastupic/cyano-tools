@@ -1,0 +1,193 @@
+[
+ {
+  "type": "rect",
+  "x1": 116,
+  "y1": 246,
+  "x2": 162,
+  "y2": 263,
+  "url": "/dbget-bin/www_bget?syn:sll0459",
+  "id": "sll0459",
+  "label": "sll0459 (uvrB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0459",
+    "product": "excinuclease ABC subunit B"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 116,
+  "y1": 229,
+  "x2": 162,
+  "y2": 246,
+  "url": "/dbget-bin/www_bget?syn:slr1844",
+  "id": "slr1844",
+  "label": "slr1844 (uvrA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1844",
+    "product": "excinuclease ABC subunit A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 248,
+  "y1": 889,
+  "x2": 294,
+  "y2": 906,
+  "url": "/dbget-bin/www_bget?syn:sll1209",
+  "id": "sll1209",
+  "label": "sll1209 (lig)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1209",
+    "product": "DNA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 248,
+  "y1": 769,
+  "x2": 294,
+  "y2": 786,
+  "url": "/dbget-bin/www_bget?syn:slr0707",
+  "id": "slr0707",
+  "label": "slr0707 (polA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0707",
+    "product": "DNA polymerase I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 369,
+  "y1": 328,
+  "x2": 415,
+  "y2": 345,
+  "url": "/dbget-bin/www_bget?syn:slr1844",
+  "id": "slr1844",
+  "label": "slr1844 (uvrA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1844",
+    "product": "excinuclease ABC subunit A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 248,
+  "y1": 746,
+  "x2": 294,
+  "y2": 763,
+  "url": "/dbget-bin/www_bget?syn:sll1121+syn:sll1143",
+  "id": "sll1121,",
+  "label": "sll1121, sll1143 (uvrD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1121",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "sll1143",
+    "product": "DNA helicase II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 369,
+  "y1": 345,
+  "x2": 415,
+  "y2": 362,
+  "url": "/dbget-bin/www_bget?syn:sll0459",
+  "id": "sll0459",
+  "label": "sll0459 (uvrB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0459",
+    "product": "excinuclease ABC subunit B"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 369,
+  "y1": 229,
+  "x2": 415,
+  "y2": 246,
+  "url": "/dbget-bin/www_bget?syn:sll0377",
+  "id": "sll0377",
+  "label": "sll0377 (mfd)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0377",
+    "product": "transcription-repair coupling factor"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 248,
+  "y1": 618,
+  "x2": 294,
+  "y2": 635,
+  "url": "/dbget-bin/www_bget?syn:sll0865",
+  "id": "sll0865",
+  "label": "sll0865 (uvrC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0865",
+    "product": "excinuclease ABC subunit C"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1073,
+  "y1": 224,
+  "x2": 1175,
+  "y2": 249,
+  "url": "/kegg-bin/show_pathway?syn03020",
+  "id": "syn03020",
+  "label": "syn03020: RNA polymerase",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 829,
+  "y1": 334,
+  "x2": 959,
+  "y2": 368,
+  "url": "/kegg-bin/show_pathway?map04120",
+  "id": "map04120:",
+  "label": "map04120: Ubiquitin mediated proteolysis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 281,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn03420",
+  "id": "syn03420",
+  "label": "syn03420: Nucleotide excision repair",
+  "entry_type": "pathway"
+ }
+]

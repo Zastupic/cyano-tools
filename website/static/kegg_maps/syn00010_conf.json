@@ -1,0 +1,871 @@
+[
+ {
+  "type": "circ",
+  "cx": 145,
+  "cy": 957,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00033",
+  "id": "C00033",
+  "label": "Acetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 600,
+  "cy": 194,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00031",
+  "id": "C00031",
+  "label": "D-Glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 142,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00103",
+  "id": "C00103",
+  "label": "D-Glucose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 663,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00631",
+  "id": "C00631",
+  "label": "2-Phospho-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 172,
+  "cy": 227,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00267",
+  "id": "C00267",
+  "label": "alpha-D-Glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 172,
+  "cy": 302,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00221",
+  "id": "C00221",
+  "label": "beta-D-Glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 331,
+  "cy": 447,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00111",
+  "id": "C00111",
+  "label": "Glycerone phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 323,
+  "cy": 302,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01172",
+  "id": "C01172",
+  "label": "beta-D-Glucose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 229,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00668",
+  "id": "C00668",
+  "label": "alpha-D-Glucose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 302,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00085",
+  "id": "C00085",
+  "label": "D-Fructose 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 735,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00074",
+  "id": "C00074",
+  "label": "Phosphoenolpyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 591,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00197",
+  "id": "C00197",
+  "label": "3-Phospho-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 519,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00236",
+  "id": "C00236",
+  "label": "3-Phospho-D-glyceroyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 626,
+  "cy": 867,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00186",
+  "id": "C00186",
+  "label": "(S)-Lactate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 313,
+  "cy": 910,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15972",
+  "id": "C15972",
+  "label": "Enzyme N6-(lipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 549,
+  "cy": 957,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00469",
+  "id": "C00469",
+  "label": "Ethanol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 867,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 377,
+  "cy": 867,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05125",
+  "id": "C05125",
+  "label": "2-(alpha-Hydroxyethyl)thiamine diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 145,
+  "cy": 867,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 377,
+  "cy": 957,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00084",
+  "id": "C00084",
+  "label": "Acetaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 264,
+  "cy": 867,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16255",
+  "id": "C16255",
+  "label": "[Dihydrolipoyllysine-residue acetyltransferase] S-acetyldihydrolipoyllysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 211,
+  "cy": 910,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15973",
+  "id": "C15973",
+  "label": "Enzyme N6-(dihydrolipoyl)lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 372,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00354",
+  "id": "C00354",
+  "label": "D-Fructose 1,6-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 123,
+  "cy": 358,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06186",
+  "id": "C06186",
+  "label": "Arbutin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 230,
+  "cy": 358,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06187",
+  "id": "C06187",
+  "label": "Arbutin 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 230,
+  "cy": 393,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06188",
+  "id": "C06188",
+  "label": "Salicin 6-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 123,
+  "cy": 393,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01451",
+  "id": "C01451",
+  "label": "Salicin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 145,
+  "cy": 735,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00036",
+  "id": "C00036",
+  "label": "Oxaloacetate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 567,
+  "cy": 555,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01159",
+  "id": "C01159",
+  "label": "2,3-Bisphospho-D-glycerate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 482,
+  "cy": 447,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 377,
+  "cy": 824,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00068",
+  "id": "C00068",
+  "label": "Thiamin diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 459,
+  "y1": 397,
+  "x2": 505,
+  "y2": 414,
+  "url": "/dbget-bin/www_bget?syn:sll0018+syn:slr0943",
+  "id": "sll0018",
+  "label": "sll0018 (cbbA), slr0943 (fda)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0018",
+    "product": "fructose-1,6-bisphosphate aldolase"
+   },
+   {
+    "locus": "slr0943",
+    "product": "fructose-bisphosphate aldolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 260,
+  "y1": 938,
+  "x2": 306,
+  "y2": 955,
+  "url": "/dbget-bin/www_bget?syn:slr0091",
+  "id": "slr0091",
+  "label": "slr0091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0091",
+    "product": "aldehyde dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 463,
+  "y1": 938,
+  "x2": 509,
+  "y2": 955,
+  "url": "/dbget-bin/www_bget?syn:slr0942+syn:slr1192",
+  "id": "slr0942,",
+  "label": "slr0942, slr1192",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0942",
+    "product": "aldehyde reductase"
+   },
+   {
+    "locus": "slr1192",
+    "product": "zinc-containing alcohol dehydrogenase family"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 415,
+  "y1": 931,
+  "x2": 461,
+  "y2": 948,
+  "url": "/dbget-bin/www_bget?syn:sll0990",
+  "id": "sll0990",
+  "label": "sll0990",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0990",
+    "product": "formaldehyde dehydrogenase (glutathione)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 407,
+  "y1": 848,
+  "x2": 453,
+  "y2": 865,
+  "url": "/dbget-bin/www_bget?syn:sll1721+syn:slr1934",
+  "id": "sll1721",
+  "label": "sll1721 (pdhB), slr1934",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1721",
+    "product": "pyruvate dehydrogenase E1 beta subunit"
+   },
+   {
+    "locus": "slr1934",
+    "product": "pyruvate dehydrogenase E1 component, alpha subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 295,
+  "y1": 860,
+  "x2": 341,
+  "y2": 877,
+  "url": "/dbget-bin/www_bget?syn:sll1721+syn:slr1934",
+  "id": "sll1721",
+  "label": "sll1721 (pdhB), slr1934",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1721",
+    "product": "pyruvate dehydrogenase E1 beta subunit"
+   },
+   {
+    "locus": "slr1934",
+    "product": "pyruvate dehydrogenase E1 component, alpha subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 186,
+  "y1": 860,
+  "x2": 232,
+  "y2": 877,
+  "url": "/dbget-bin/www_bget?syn:sll1841",
+  "id": "sll1841",
+  "label": "sll1841 (odhB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1841",
+    "product": "dihydrolipoamide acetyltransferase component (E2) of pyruvate dehydrogenase complex"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 459,
+  "y1": 761,
+  "x2": 505,
+  "y2": 778,
+  "url": "/dbget-bin/www_bget?syn:sll0587+syn:sll1275",
+  "id": "sll0587",
+  "label": "sll0587 (pykF), sll1275 (pykF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0587",
+    "product": "pyruvate kinase"
+   },
+   {
+    "locus": "sll1275",
+    "product": "pyruvate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 459,
+  "y1": 691,
+  "x2": 505,
+  "y2": 708,
+  "url": "/dbget-bin/www_bget?syn:slr0752",
+  "id": "slr0752",
+  "label": "slr0752 (eno)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0752",
+    "product": "enolase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 434,
+  "y1": 474,
+  "x2": 480,
+  "y2": 491,
+  "url": "/dbget-bin/www_bget?syn:slr0884",
+  "id": "slr0884",
+  "label": "slr0884 (gap1)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0884",
+    "product": "glyceraldehyde 3-phosphate dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 362,
+  "y1": 439,
+  "x2": 408,
+  "y2": 456,
+  "url": "/dbget-bin/www_bget?syn:slr0783",
+  "id": "slr0783",
+  "label": "slr0783 (tpi)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0783",
+    "product": "triosephosphate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 434,
+  "y1": 329,
+  "x2": 480,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll0745+syn:sll1196",
+  "id": "sll0745",
+  "label": "sll0745 (pfkA), sll1196 (pfkA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0745",
+    "product": "phosphofructokinase"
+   },
+   {
+    "locus": "sll1196",
+    "product": "phosphofructokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 384,
+  "y1": 329,
+  "x2": 430,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:slr0952+syn:slr2094",
+  "id": "slr0952",
+  "label": "slr0952 (fbp), slr2094 (glpX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0952",
+    "product": "fructose 1,6-bisphosphatase"
+   },
+   {
+    "locus": "slr2094",
+    "product": "GlpX protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 459,
+  "y1": 258,
+  "x2": 505,
+  "y2": 275,
+  "url": "/dbget-bin/www_bget?syn:slr1349",
+  "id": "slr1349",
+  "label": "slr1349 (pgi)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1349",
+    "product": "glucose-6-phosphate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 459,
+  "y1": 168,
+  "x2": 505,
+  "y2": 185,
+  "url": "/dbget-bin/www_bget?syn:sll0726",
+  "id": "sll0726",
+  "label": "sll0726 (pgm)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0726",
+    "product": "phosphoglucomutase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 195,
+  "y1": 304,
+  "x2": 241,
+  "y2": 321,
+  "url": "/dbget-bin/www_bget?syn:sll0593+syn:slr0329",
+  "id": "sll0593",
+  "label": "sll0593 (glk), slr0329 (xylR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0593",
+    "product": "glucokinase"
+   },
+   {
+    "locus": "slr0329",
+    "product": "xylose repressor"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 325,
+  "y1": 258,
+  "x2": 371,
+  "y2": 275,
+  "url": "/dbget-bin/www_bget?syn:slr1349",
+  "id": "slr1349",
+  "label": "slr1349 (pgi)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1349",
+    "product": "glucose-6-phosphate isomerase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 195,
+  "y1": 229,
+  "x2": 241,
+  "y2": 246,
+  "url": "/dbget-bin/www_bget?syn:sll0593+syn:slr0329",
+  "id": "sll0593",
+  "label": "sll0593 (glk), slr0329 (xylR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0593",
+    "product": "glucokinase"
+   },
+   {
+    "locus": "slr0329",
+    "product": "xylose repressor"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 238,
+  "y1": 903,
+  "x2": 284,
+  "y2": 920,
+  "url": "/dbget-bin/www_bget?syn:slr1096",
+  "id": "slr1096",
+  "label": "slr1096 (phdD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1096",
+    "product": "dihydrolipoamide dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 459,
+  "y1": 547,
+  "x2": 505,
+  "y2": 564,
+  "url": "/dbget-bin/www_bget?syn:slr0394",
+  "id": "slr0394",
+  "label": "slr0394 (pgk)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0394",
+    "product": "phosphoglycerate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 484,
+  "y1": 474,
+  "x2": 530,
+  "y2": 491,
+  "url": "/dbget-bin/www_bget?syn:sll1342",
+  "id": "sll1342",
+  "label": "sll1342 (gap2)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1342",
+    "product": "glyceraldehyde-3-phosphate dehydrogenase (NADP+) (phosphorylating)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 260,
+  "y1": 779,
+  "x2": 306,
+  "y2": 796,
+  "url": "/dbget-bin/www_bget?syn:sll0741",
+  "id": "sll0741",
+  "label": "sll0741 (nifJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0741",
+    "product": "pyruvate oxidoreductase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 72,
+  "y1": 906,
+  "x2": 118,
+  "y2": 923,
+  "url": "/dbget-bin/www_bget?syn:sll0542",
+  "id": "sll0542",
+  "label": "sll0542 (acs)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0542",
+    "product": "acetyl-coenzyme A synthetase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 484,
+  "y1": 622,
+  "x2": 530,
+  "y2": 639,
+  "url": "/dbget-bin/www_bget?syn:slr1945",
+  "id": "slr1945",
+  "label": "slr1945 (yibO)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1945",
+    "product": "2,3-bisphosphoglycerate-independent phosphoglycerate mutase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 534,
+  "y1": 329,
+  "x2": 580,
+  "y2": 346,
+  "url": "/dbget-bin/www_bget?syn:sll0745+syn:sll1196",
+  "id": "sll0745",
+  "label": "sll0745 (pfkA), sll1196 (pfkA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0745",
+    "product": "phosphofructokinase"
+   },
+   {
+    "locus": "sll1196",
+    "product": "phosphofructokinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 550,
+  "y1": 786,
+  "x2": 596,
+  "y2": 803,
+  "url": "/dbget-bin/www_bget?syn:slr0301",
+  "id": "slr0301",
+  "label": "slr0301 (ppsA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0301",
+    "product": "phosphoenolpyruvate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 624,
+  "y1": 219,
+  "x2": 686,
+  "y2": 456,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 428,
+  "y1": 58,
+  "x2": 538,
+  "y2": 92,
+  "url": "/kegg-bin/show_pathway?syn00500",
+  "id": "syn00500",
+  "label": "syn00500: Starch and sucrose metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 344,
+  "y1": 745,
+  "x2": 422,
+  "y2": 779,
+  "url": "/kegg-bin/show_pathway?syn00620",
+  "id": "syn00620",
+  "label": "syn00620: Pyruvate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 722,
+  "x2": 86,
+  "y2": 876,
+  "url": "/kegg-bin/show_pathway?syn00020",
+  "id": "syn00020",
+  "label": "syn00020: Citrate cycle (TCA cycle)",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 282,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 564,
+  "y1": 911,
+  "x2": 691,
+  "y2": 936,
+  "url": "/kegg-bin/show_pathway?syn00640",
+  "id": "syn00640",
+  "label": "syn00640: Propanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 286,
+  "y1": 577,
+  "x2": 384,
+  "y2": 611,
+  "url": "/kegg-bin/show_pathway?syn00710",
+  "id": "syn00710",
+  "label": "syn00710: Carbon fixation by Calvin cycle",
+  "entry_type": "pathway"
+ }
+]

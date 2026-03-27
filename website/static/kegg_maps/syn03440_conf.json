@@ -1,0 +1,356 @@
+[
+ {
+  "type": "rect",
+  "x1": 399,
+  "y1": 226,
+  "x2": 445,
+  "y2": 243,
+  "url": "/dbget-bin/www_bget?syn:sll7106",
+  "id": "sll7106",
+  "label": "sll7106",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll7106",
+    "product": "exodeoxyribonuclease V alpha chain"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 450,
+  "y1": 641,
+  "x2": 496,
+  "y2": 658,
+  "url": "/dbget-bin/www_bget?syn:slr0020",
+  "id": "slr0020",
+  "label": "slr0020 (recG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0020",
+    "product": "DNA recombinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 229,
+  "y1": 641,
+  "x2": 275,
+  "y2": 658,
+  "url": "/dbget-bin/www_bget?syn:slr0020",
+  "id": "slr0020",
+  "label": "slr0020 (recG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0020",
+    "product": "DNA recombinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 399,
+  "y1": 658,
+  "x2": 445,
+  "y2": 675,
+  "url": "/dbget-bin/www_bget?syn:sll0896",
+  "id": "sll0896",
+  "label": "sll0896",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0896",
+    "product": "Holliday juction resolvase; RuvC"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 179,
+  "y1": 658,
+  "x2": 225,
+  "y2": 675,
+  "url": "/dbget-bin/www_bget?syn:sll0896",
+  "id": "sll0896",
+  "label": "sll0896",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0896",
+    "product": "Holliday juction resolvase; RuvC"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 399,
+  "y1": 641,
+  "x2": 445,
+  "y2": 658,
+  "url": "/dbget-bin/www_bget?syn:sll0613",
+  "id": "sll0613",
+  "label": "sll0613 (ruvB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0613",
+    "product": "Holliday junction DNA helicase; RuvB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 179,
+  "y1": 641,
+  "x2": 225,
+  "y2": 658,
+  "url": "/dbget-bin/www_bget?syn:sll0613",
+  "id": "sll0613",
+  "label": "sll0613 (ruvB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0613",
+    "product": "Holliday junction DNA helicase; RuvB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 399,
+  "y1": 624,
+  "x2": 445,
+  "y2": 641,
+  "url": "/dbget-bin/www_bget?syn:sll0876",
+  "id": "sll0876",
+  "label": "sll0876 (ruvA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0876",
+    "product": "Holliday junction DNA helicase; RuvA"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 399,
+  "y1": 320,
+  "x2": 445,
+  "y2": 337,
+  "url": "/dbget-bin/www_bget?syn:sll0569",
+  "id": "sll0569",
+  "label": "sll0569 (recA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0569",
+    "product": "RecA gene product"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 399,
+  "y1": 795,
+  "x2": 445,
+  "y2": 812,
+  "url": "/dbget-bin/www_bget?syn:sll0270",
+  "id": "sll0270",
+  "label": "sll0270 (priA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0270",
+    "product": "primosomal protein N'"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 179,
+  "y1": 483,
+  "x2": 225,
+  "y2": 500,
+  "url": "/dbget-bin/www_bget?syn:slr0707",
+  "id": "slr0707",
+  "label": "slr0707 (polA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0707",
+    "product": "DNA polymerase I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 229,
+  "y1": 320,
+  "x2": 275,
+  "y2": 337,
+  "url": "/dbget-bin/www_bget?syn:sll0569",
+  "id": "sll0569",
+  "label": "sll0569 (recA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0569",
+    "product": "RecA gene product"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 179,
+  "y1": 354,
+  "x2": 225,
+  "y2": 371,
+  "url": "/dbget-bin/www_bget?syn:slr1426",
+  "id": "slr1426",
+  "label": "slr1426 (recR)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1426",
+    "product": "recombination protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 399,
+  "y1": 483,
+  "x2": 445,
+  "y2": 500,
+  "url": "/dbget-bin/www_bget?syn:sll0544+syn:sll1360+syn:sll1572+syn:slr0446+syn:slr0603+syn:slr0965",
+  "id": "sll0544,",
+  "label": "sll0544, sll1360 (dnaX), sll1572 (dnaE), slr0446 (dnaX_and_dnaZ), slr0603 (dnaE), slr0965 (dnaN)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0544",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "sll1360",
+    "product": "DNA polymerase III subunit"
+   },
+   {
+    "locus": "sll1572",
+    "product": "DNA polymerase III alpha subunit"
+   },
+   {
+    "locus": "slr0446",
+    "product": "DNA polymerase III subunit"
+   },
+   {
+    "locus": "slr0603",
+    "product": "DNA polymerase III alpha subunit"
+   },
+   {
+    "locus": "slr0965",
+    "product": "DNA polymerase III beta subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 179,
+  "y1": 192,
+  "x2": 225,
+  "y2": 209,
+  "url": "/dbget-bin/www_bget?syn:sll1354",
+  "id": "sll1354",
+  "label": "sll1354 (recJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1354",
+    "product": "single-strand-DNA-specific exonuclease; RecJ"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 179,
+  "y1": 320,
+  "x2": 225,
+  "y2": 337,
+  "url": "/dbget-bin/www_bget?syn:sll1277",
+  "id": "sll1277",
+  "label": "sll1277 (recF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1277",
+    "product": "RecF protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 179,
+  "y1": 624,
+  "x2": 225,
+  "y2": 641,
+  "url": "/dbget-bin/www_bget?syn:sll0876",
+  "id": "sll0876",
+  "label": "sll0876 (ruvA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0876",
+    "product": "Holliday junction DNA helicase; RuvA"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 179,
+  "y1": 337,
+  "x2": 225,
+  "y2": 354,
+  "url": "/dbget-bin/www_bget?syn:slr0181",
+  "id": "slr0181",
+  "label": "slr0181",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0181",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 229,
+  "y1": 192,
+  "x2": 275,
+  "y2": 209,
+  "url": "/dbget-bin/www_bget?syn:slr0925",
+  "id": "slr0925",
+  "label": "slr0925 (ssb)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0925",
+    "product": "single-stranded DNA-binding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 278,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn03440",
+  "id": "syn03440",
+  "label": "syn03440: Homologous recombination",
+  "entry_type": "pathway"
+ }
+]

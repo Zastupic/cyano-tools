@@ -1,0 +1,957 @@
+[
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 258,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16640",
+  "id": "C16640",
+  "label": "CAI-1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 193,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16421",
+  "id": "C16421",
+  "label": "AI-2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 226,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21195",
+  "id": "C21195",
+  "label": "N-(3-Hydroxybutanoyl)-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 354,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18049",
+  "id": "C18049",
+  "label": "N-Acyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 207,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21220+C21241+C21242+C21243",
+  "id": "C21220",
+  "label": "AIP-1), C21241 (AIP-2), C21242 (AIP-3), C21243 (AIP-4",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 1507,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21246",
+  "id": "C21246",
+  "label": "GBAP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 1391,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21229",
+  "id": "C21229",
+  "label": "iAD1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 699,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21221+C21222",
+  "id": "C21221",
+  "label": "CSP), C21222 (CSP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 1743,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21230",
+  "id": "C21230",
+  "label": "ComX pheromone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 2046,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21197",
+  "id": "C21197",
+  "label": "N-Hexanoyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1411,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11841",
+  "id": "C11841",
+  "label": "N-(3-Oxooctanoyl)homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 2574,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18049",
+  "id": "C18049",
+  "label": "N-Acyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1824,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21198+C11841",
+  "id": "C21198",
+  "label": "N-(3-Oxohexanoyl)-L-homoserine lactone), C11841 (N-(3-Oxooctanoyl)homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 939,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00788+C00547",
+  "id": "C00788",
+  "label": "L-Adrenaline), C00547 (L-Noradrenaline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 926,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21223",
+  "id": "C21223",
+  "label": "Blp",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1317,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11845",
+  "id": "C11845",
+  "label": "N-(3-Hydroxy-7-cis-tetradecenoyl)homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1459,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21197+C11844+C21199+C21200",
+  "id": "C21197",
+  "label": "N-Hexanoyl-L-homoserine lactone), C11844 (N-Heptanoylhomoserine lactone), C21199 (N-Octanoyl-L-homoserine lactone), C21200 (N-3-Hydroxyoctanoyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1502,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21197",
+  "id": "C21197",
+  "label": "N-Hexanoyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 2085,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21202",
+  "id": "C21202",
+  "label": "cis-2-Dodecenoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 2249,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18206",
+  "id": "C18206",
+  "label": "cis-11-Methyl-2-dodecenoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 657,
+  "cy": 2085,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16463",
+  "id": "C16463",
+  "label": "3',5'-Cyclic diGMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1968,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21199",
+  "id": "C21199",
+  "label": "N-Octanoyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1671,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11841",
+  "id": "C11841",
+  "label": "N-(3-Oxooctanoyl)homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1759,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00334",
+  "id": "C00334",
+  "label": "4-Aminobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 2406,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21199",
+  "id": "C21199",
+  "label": "N-Octanoyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 2511,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21197",
+  "id": "C21197",
+  "label": "N-Hexanoyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1230,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20677",
+  "id": "C20677",
+  "label": "N-(4-Coumaroyl)-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 822,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21197",
+  "id": "C21197",
+  "label": "N-Hexanoyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1894,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21198",
+  "id": "C21198",
+  "label": "N-(3-Oxohexanoyl)-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21245",
+  "id": "C21245",
+  "label": "AgrD1 peptide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 663,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00007",
+  "id": "C00007",
+  "label": "Oxygen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 1017,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21224",
+  "id": "C21224",
+  "label": "SHP2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 1045,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21225",
+  "id": "C21225",
+  "label": "SHP3",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 1294,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21226",
+  "id": "C21226",
+  "label": "cCF10",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 1265,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21227",
+  "id": "C21227",
+  "label": "iCF10",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 1419,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21228",
+  "id": "C21228",
+  "label": "cAD1",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 2040,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21239",
+  "id": "C21239",
+  "label": "PapR peptide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 2140,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21238",
+  "id": "C21238",
+  "label": "NprX peptide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 565,
+  "cy": 2249,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16463",
+  "id": "C16463",
+  "label": "3',5'-Cyclic diGMP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 453,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21201",
+  "id": "C21201",
+  "label": "N-3-Oxo-dodecanoyl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 647,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11837",
+  "id": "C11837",
+  "label": "N-Butyryl-L-homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 581,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20643",
+  "id": "C20643",
+  "label": "2-Heptyl-4(1H)-quinolone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 592,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11848",
+  "id": "C11848",
+  "label": "2-Heptyl-3-hydroxy-quinolone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1102,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11841",
+  "id": "C11841",
+  "label": "N-(3-Oxooctanoyl)homoserine lactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 1057,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01019",
+  "id": "C01019",
+  "label": "L-Fucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 973,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059",
+  "id": "C00059",
+  "label": "Sulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 346,
+  "cy": 984,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00009",
+  "id": "C00009",
+  "label": "Orthophosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 471,
+  "cy": 1759,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00232",
+  "id": "C00232",
+  "label": "Succinate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 564,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21244",
+  "id": "C21244",
+  "label": "AgrD peptide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1519,
+  "cy": 1870,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21232+C21234+C21237+C21235+C21236+C21231+C21233",
+  "id": "C21232",
+  "label": "PhrC pentapeptide), C21234 (PhrF pentapeptide), C21237 (PhrK pentapeptide), C21235 (PhrG pentapeptide), C21236 (PhrH pentapeptide), C21231 (PhrA pentapeptide), C21233 (PhrE pentapeptide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 319,
+  "cy": 1161,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21382",
+  "id": "C21382",
+  "label": "R-THMF",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 565,
+  "cy": 1161,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20959",
+  "id": "C20959",
+  "label": "(4S)-4-Hydroxy-5-phosphooxypentane-2,3-dione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 747,
+  "y1": 258,
+  "x2": 793,
+  "y2": 275,
+  "url": "/dbget-bin/www_bget?syn:ssr3341",
+  "id": "ssr3341",
+  "label": "ssr3341",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 196,
+  "y1": 2230,
+  "x2": 242,
+  "y2": 2247,
+  "url": "/dbget-bin/www_bget?syn:slr1609",
+  "id": "slr1609",
+  "label": "slr1609",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1609",
+    "product": "long-chain-fatty-acid CoA ligase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1047,
+  "y1": 2419,
+  "x2": 1093,
+  "y2": 2436,
+  "url": "/dbget-bin/www_bget?syn:slr0066",
+  "id": "slr0066",
+  "label": "slr0066 (ribG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0066",
+    "product": "riboflavin biosynthesis protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 755,
+  "y1": 834,
+  "x2": 801,
+  "y2": 851,
+  "url": "/dbget-bin/www_bget?syn:slr1019",
+  "id": "slr1019",
+  "label": "slr1019",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1019",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1273,
+  "y1": 1286,
+  "x2": 1319,
+  "y2": 1303,
+  "url": "/dbget-bin/www_bget?syn:slr1471",
+  "id": "slr1471",
+  "label": "slr1471",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1471",
+    "product": "inner membrane protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1435,
+  "y1": 1597,
+  "x2": 1481,
+  "y2": 1614,
+  "url": "/dbget-bin/www_bget?syn:slr0535",
+  "id": "slr0535",
+  "label": "slr0535",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0535",
+    "product": "serine proteinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1338,
+  "y1": 1862,
+  "x2": 1384,
+  "y2": 1879,
+  "url": "/dbget-bin/www_bget?syn:sll0616+syn:sll1814+syn:slr1471+syn:slr1531+syn:slr2102+syn:ssl3335+syn:ssr3307",
+  "id": "sll0616",
+  "label": "sll0616 (secA), sll1814 (secY), slr1471, slr1531 (ffh), slr2102 (ftsY), ssl3335 (secE), ssr3307 (ycf47)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0616",
+    "product": "preprotein translocase SecA subunit"
+   },
+   {
+    "locus": "sll1814",
+    "product": "preprotein translocase SecY subunit"
+   },
+   {
+    "locus": "slr1471",
+    "product": "inner membrane protein"
+   },
+   {
+    "locus": "slr1531",
+    "product": "signal recognition particle protein"
+   },
+   {
+    "locus": "slr2102",
+    "product": "cell division protein; FtsY"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1338,
+  "y1": 2032,
+  "x2": 1384,
+  "y2": 2049,
+  "url": "/dbget-bin/www_bget?syn:sll0616+syn:sll1814+syn:slr1471+syn:slr1531+syn:slr2102+syn:ssl3335+syn:ssr3307",
+  "id": "sll0616",
+  "label": "sll0616 (secA), sll1814 (secY), slr1471, slr1531 (ffh), slr2102 (ftsY), ssl3335 (secE), ssr3307 (ycf47)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0616",
+    "product": "preprotein translocase SecA subunit"
+   },
+   {
+    "locus": "sll1814",
+    "product": "preprotein translocase SecY subunit"
+   },
+   {
+    "locus": "slr1471",
+    "product": "inner membrane protein"
+   },
+   {
+    "locus": "slr1531",
+    "product": "signal recognition particle protein"
+   },
+   {
+    "locus": "slr2102",
+    "product": "cell division protein; FtsY"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1338,
+  "y1": 2132,
+  "x2": 1384,
+  "y2": 2149,
+  "url": "/dbget-bin/www_bget?syn:sll0616+syn:sll1814+syn:slr1471+syn:slr1531+syn:slr2102+syn:ssl3335+syn:ssr3307",
+  "id": "sll0616",
+  "label": "sll0616 (secA), sll1814 (secY), slr1471, slr1531 (ffh), slr2102 (ftsY), ssl3335 (secE), ssr3307 (ycf47)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0616",
+    "product": "preprotein translocase SecA subunit"
+   },
+   {
+    "locus": "sll1814",
+    "product": "preprotein translocase SecY subunit"
+   },
+   {
+    "locus": "slr1471",
+    "product": "inner membrane protein"
+   },
+   {
+    "locus": "slr1531",
+    "product": "signal recognition particle protein"
+   },
+   {
+    "locus": "slr2102",
+    "product": "cell division protein; FtsY"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 637,
+  "y1": 2241,
+  "x2": 683,
+  "y2": 2258,
+  "url": "/dbget-bin/www_bget?syn:sll1371+syn:sll1924",
+  "id": "sll1371,",
+  "label": "sll1371, sll1924",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1371",
+    "product": "catabolite gene activator protein"
+   },
+   {
+    "locus": "sll1924",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 803,
+  "y1": 507,
+  "x2": 849,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:slr0055",
+  "id": "slr0055",
+  "label": "slr0055 (trpG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0055",
+    "product": "anthranilate synthase component II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 755,
+  "y1": 507,
+  "x2": 801,
+  "y2": 524,
+  "url": "/dbget-bin/www_bget?syn:slr0738",
+  "id": "slr0738",
+  "label": "slr0738 (trpE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0738",
+    "product": "anthranilate synthetase alpha-subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 755,
+  "y1": 1085,
+  "x2": 801,
+  "y2": 1102,
+  "url": "/dbget-bin/www_bget?syn:sll1641",
+  "id": "sll1641",
+  "label": "sll1641 (gad)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1641",
+    "product": "glutamate decarboxylase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1632,
+  "y1": 1099,
+  "x2": 1678,
+  "y2": 1116,
+  "url": "/dbget-bin/www_bget?syn:sll0312+syn:sll0833+syn:sll1699+syn:sll1768+syn:sll1927+syn:slr0324+syn:slr1740",
+  "id": "sll0312,",
+  "label": "sll0312, sll0833, sll1699, sll1768, sll1927, slr0324, slr1740",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0312",
+    "product": "OppB in a binding protein-dependent transport system"
+   },
+   {
+    "locus": "sll0833",
+    "product": "OppC in a binding protein-dependent transport system"
+   },
+   {
+    "locus": "sll1699",
+    "product": "extracellular solute-binding protein"
+   },
+   {
+    "locus": "sll1768",
+    "product": "OppB in a binding protein-dependent transport system"
+   },
+   {
+    "locus": "sll1927",
+    "product": "ABC transporter"
+   },
+   {
+    "locus": "slr0324",
+    "product": "OppC in a binding protein-dependent transport system"
+   },
+   {
+    "locus": "slr1740",
+    "product": "extracellular solute-binding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 2019,
+  "y1": 1605,
+  "x2": 2065,
+  "y2": 1622,
+  "url": "/dbget-bin/www_bget?syn:slr0535",
+  "id": "slr0535",
+  "label": "slr0535",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0535",
+    "product": "serine proteinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 381,
+  "y1": 1740,
+  "x2": 427,
+  "y2": 1757,
+  "url": "/dbget-bin/www_bget?syn:slr0401",
+  "id": "slr0401",
+  "label": "slr0401",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0401",
+    "product": "spermidine/putrescine-binding periplasmic protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 220,
+  "y1": 541,
+  "x2": 266,
+  "y2": 558,
+  "url": "/dbget-bin/www_bget?syn:slr0055",
+  "id": "slr0055",
+  "label": "slr0055 (trpG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0055",
+    "product": "anthranilate synthase component II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 172,
+  "y1": 541,
+  "x2": 218,
+  "y2": 558,
+  "url": "/dbget-bin/www_bget?syn:slr0738",
+  "id": "slr0738",
+  "label": "slr0738 (trpE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0738",
+    "product": "anthranilate synthetase alpha-subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 196,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn02024",
+  "id": "syn02024",
+  "label": "syn02024: Quorum sensing",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 964,
+  "y1": 892,
+  "x2": 1077,
+  "y2": 917,
+  "url": "/kegg-bin/show_pathway?map02040",
+  "id": "map02040:",
+  "label": "map02040: Flagellar assembly",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 955,
+  "y1": 1011,
+  "x2": 1088,
+  "y2": 1045,
+  "url": "/kegg-bin/show_pathway?map05130",
+  "id": "map05130:",
+  "label": "map05130: Pathogenic Escherichia coli infection",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 1061,
+  "y1": 2391,
+  "x2": 1174,
+  "y2": 2416,
+  "url": "/kegg-bin/show_pathway?map02040",
+  "id": "map02040:",
+  "label": "map02040: Flagellar assembly",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 964,
+  "y1": 812,
+  "x2": 1102,
+  "y2": 837,
+  "url": "/kegg-bin/show_pathway?syn00405",
+  "id": "syn00405",
+  "label": "syn00405: Phenazine biosynthesis",
+  "entry_type": "pathway"
+ }
+]

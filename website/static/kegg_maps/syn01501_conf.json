@@ -1,0 +1,288 @@
+[
+ {
+  "type": "circ",
+  "cx": 784,
+  "cy": 126,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04702",
+  "id": "C04702",
+  "label": "UDPMurNAc(oyl-L-Ala-D-gamma-Glu-L-Lys-D-Ala-D-Ala)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 892,
+  "cy": 515,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00039",
+  "id": "C00039",
+  "label": "DNA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 136,
+  "cy": 175,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?D07746+D08401",
+  "id": "D07746",
+  "label": "Colistin (INN)), D08401 (Polymyxin B (INN)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 339,
+  "cy": 435,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03438",
+  "id": "C03438",
+  "label": "beta-Lactam antibiotics",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 1076,
+  "y1": 260,
+  "x2": 1122,
+  "y2": 277,
+  "url": "/dbget-bin/www_bget?syn:slr0121",
+  "id": "slr0121",
+  "label": "slr0121",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0121",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 568,
+  "y1": 525,
+  "x2": 614,
+  "y2": 542,
+  "url": "/dbget-bin/www_bget?syn:sll0002",
+  "id": "sll0002",
+  "label": "sll0002 (ponA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0002",
+    "product": "penicillin-binding protein 1A"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 341,
+  "y1": 824,
+  "x2": 387,
+  "y2": 841,
+  "url": "/dbget-bin/www_bget?syn:slr0121",
+  "id": "slr0121",
+  "label": "slr0121",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0121",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 291,
+  "y1": 843,
+  "x2": 337,
+  "y2": 860,
+  "url": "/dbget-bin/www_bget?syn:slr0319",
+  "id": "slr0319",
+  "label": "slr0319 (blaOXA-3)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0319",
+    "product": "beta-lactamase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1076,
+  "y1": 617,
+  "x2": 1122,
+  "y2": 634,
+  "url": "/dbget-bin/www_bget?syn:sll0141+syn:sll1053",
+  "id": "sll0141,",
+  "label": "sll0141, sll1053",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0141",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1053",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1076,
+  "y1": 638,
+  "x2": 1122,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll0142+syn:slr0369+syn:slr2131",
+  "id": "sll0142,",
+  "label": "sll0142, slr0369, slr2131",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0142",
+    "product": "cation or drug efflux system protein"
+   },
+   {
+    "locus": "slr0369",
+    "product": "cation or drug efflux system protein"
+   },
+   {
+    "locus": "slr2131",
+    "product": "cation or drug efflux system protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 191,
+  "y1": 711,
+  "x2": 237,
+  "y2": 728,
+  "url": "/dbget-bin/www_bget?syn:sll0142+syn:slr0369+syn:slr2131",
+  "id": "sll0142,",
+  "label": "sll0142, slr0369, slr2131",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0142",
+    "product": "cation or drug efflux system protein"
+   },
+   {
+    "locus": "slr0369",
+    "product": "cation or drug efflux system protein"
+   },
+   {
+    "locus": "slr2131",
+    "product": "cation or drug efflux system protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 169,
+  "y1": 728,
+  "x2": 215,
+  "y2": 745,
+  "url": "/dbget-bin/www_bget?syn:sll0141+syn:sll1053",
+  "id": "sll0141,",
+  "label": "sll0141, sll1053",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0141",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1053",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 568,
+  "y1": 687,
+  "x2": 614,
+  "y2": 704,
+  "url": "/dbget-bin/www_bget?syn:sll1833",
+  "id": "sll1833",
+  "label": "sll1833 (ftsI)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1833",
+    "product": "penicillin-binding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 236,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn01501",
+  "id": "syn01501",
+  "label": "syn01501: beta-Lactam resistance",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 205,
+  "y1": 261,
+  "x2": 286,
+  "y2": 286,
+  "url": "/kegg-bin/show_pathway?map07011",
+  "id": "map07011:",
+  "label": "map07011: Penicillins",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 205,
+  "y1": 332,
+  "x2": 323,
+  "y2": 367,
+  "url": "/kegg-bin/show_pathway?map07012",
+  "id": "map07012:",
+  "label": "map07012: Cephalosporins - parenteral agents",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 205,
+  "y1": 292,
+  "x2": 323,
+  "y2": 327,
+  "url": "/kegg-bin/show_pathway?map07013",
+  "id": "map07013:",
+  "label": "map07013: Cephalosporins - oral agents",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 638,
+  "y1": 78,
+  "x2": 796,
+  "y2": 103,
+  "url": "/kegg-bin/show_pathway?syn00550",
+  "id": "syn00550",
+  "label": "syn00550: Peptidoglycan biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 122,
+  "y1": 581,
+  "x2": 280,
+  "y2": 606,
+  "url": "/kegg-bin/show_pathway?syn00550",
+  "id": "syn00550",
+  "label": "syn00550: Peptidoglycan biosynthesis",
+  "entry_type": "pathway"
+ }
+]

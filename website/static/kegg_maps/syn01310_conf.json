@@ -1,0 +1,103 @@
+[
+ {
+  "type": "circ",
+  "cx": 545,
+  "cy": 124,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00697",
+  "id": "C00697",
+  "label": "Nitrogen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 996,
+  "cy": 750,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00244",
+  "id": "C00244",
+  "label": "Nitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 761,
+  "cy": 750,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00088",
+  "id": "C00088",
+  "label": "Nitrite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 288,
+  "cy": 750,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00014",
+  "id": "C00014",
+  "label": "Ammonia",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 996,
+  "cy": 466,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00533",
+  "id": "C00533",
+  "label": "Nitric oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 996,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00887",
+  "id": "C00887",
+  "label": "Nitrous oxide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 524,
+  "cy": 750,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00192",
+  "id": "C00192",
+  "label": "Hydroxylamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 996,
+  "cy": 587,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00088",
+  "id": "C00088",
+  "label": "Nitrite",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 829,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05361",
+  "id": "C05361",
+  "label": "Hydrazine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 183,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn01310",
+  "id": "syn01310",
+  "label": "syn01310: Nitrogen cycle",
+  "entry_type": "pathway"
+ }
+]

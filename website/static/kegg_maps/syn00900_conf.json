@@ -1,0 +1,943 @@
+[
+ {
+  "type": "circ",
+  "cx": 323,
+  "cy": 1185,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05859",
+  "id": "C05859",
+  "label": "ditrans,polycis-Polyprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 251,
+  "cy": 1185,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06081",
+  "id": "C06081",
+  "label": "Polyprenol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 643,
+  "cy": 184,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00022",
+  "id": "C00022",
+  "label": "Pyruvate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 173,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00024",
+  "id": "C00024",
+  "label": "Acetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 498,
+  "cy": 254,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00332",
+  "id": "C00332",
+  "label": "Acetoacetyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 173,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 323,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11434",
+  "id": "C11434",
+  "label": "2-C-Methyl-D-erythritol 4-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11435",
+  "id": "C11435",
+  "label": "4-(Cytidine 5'-diphospho)-2-C-methyl-D-erythritol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11436",
+  "id": "C11436",
+  "label": "2-Phospho-4-(cytidine 5'-diphospho)-2-C-methyl-D-erythritol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 530,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11453",
+  "id": "C11453",
+  "label": "2-C-Methyl-D-erythritol 2,4-cyclodiphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 599,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11811",
+  "id": "C11811",
+  "label": "1-Hydroxy-2-methyl-2-butenyl 4-diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 323,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00356",
+  "id": "C00356",
+  "label": "(S)-3-Hydroxy-3-methylglutaryl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 392,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00418",
+  "id": "C00418",
+  "label": "(R)-Mevalonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01107",
+  "id": "C01107",
+  "label": "(R)-5-Phosphomevalonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 530,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01143",
+  "id": "C01143",
+  "label": "(R)-5-Diphosphomevalonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 396,
+  "cy": 679,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02321",
+  "id": "C02321",
+  "label": "cis-1,4-Polyisoprene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 552,
+  "cy": 679,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00129",
+  "id": "C00129",
+  "label": "Isopentenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 679,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00235",
+  "id": "C00235",
+  "label": "Dimethylallyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 820,
+  "cy": 679,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16521",
+  "id": "C16521",
+  "label": "Isoprene",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 768,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00341",
+  "id": "C00341",
+  "label": "Geranyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 254,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11437",
+  "id": "C11437",
+  "label": "1-Deoxy-D-xylulose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 847,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16826",
+  "id": "C16826",
+  "label": "2-cis,6-trans-Farnesyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 251,
+  "cy": 1246,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04574",
+  "id": "C04574",
+  "label": "di-trans,poly-cis-Undecaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 1246,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17432",
+  "id": "C17432",
+  "label": "all-trans-Decaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 433,
+  "cy": 927,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00448",
+  "id": "C00448",
+  "label": "trans,trans-Farnesyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 1124,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04216",
+  "id": "C04216",
+  "label": "all-trans-Heptaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 1185,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04146",
+  "id": "C04146",
+  "label": "all-trans-Octaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 923,
+  "cy": 1132,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04145",
+  "id": "C04145",
+  "label": "all-trans-Nonaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 1063,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01230",
+  "id": "C01230",
+  "label": "all-trans-Hexaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 671,
+  "cy": 995,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00353",
+  "id": "C00353",
+  "label": "Geranylgeranyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 340,
+  "cy": 794,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C18321",
+  "id": "C18321",
+  "label": "trans,octacis-Decaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 809,
+  "cy": 1097,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19852",
+  "id": "C19852",
+  "label": "tritrans,heptacis-Undecaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 341,
+  "cy": 821,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19853",
+  "id": "C19853",
+  "label": "trans,polycis-Polyprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 200,
+  "cy": 1064,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04506",
+  "id": "C04506",
+  "label": "Protein C-terminal S-farnesyl-L-cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 435,
+  "cy": 767,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19760",
+  "id": "C19760",
+  "label": "2-cis,6-cis-Farnesyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 90,
+  "cy": 1005,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19691",
+  "id": "C19691",
+  "label": "Farnesylcysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 90,
+  "cy": 927,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03461",
+  "id": "C03461",
+  "label": "2-trans,6-trans-Farnesal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 200,
+  "cy": 927,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01126",
+  "id": "C01126",
+  "label": "(2E,6E)-Farnesol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 90,
+  "cy": 1064,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04748",
+  "id": "C04748",
+  "label": "Protein C-terminal S-farnesyl-L-cysteine methyl ester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 310,
+  "cy": 1064,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20120",
+  "id": "C20120",
+  "label": "S-Farnesyl protein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 311,
+  "cy": 927,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20121",
+  "id": "C20121",
+  "label": "trans,trans-Farnesyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 369,
+  "cy": 626,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20345",
+  "id": "C20345",
+  "label": "Isopentenyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 255,
+  "cy": 461,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20847",
+  "id": "C20847",
+  "label": "(R)-Mevalonate 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 255,
+  "cy": 530,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20848",
+  "id": "C20848",
+  "label": "(R)-Mevalonate 3,5-bisphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 314,
+  "cy": 530,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22453",
+  "id": "C22453",
+  "label": "trans-Anhydromevalonate 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 755,
+  "cy": 1071,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04217",
+  "id": "C04217",
+  "label": "all-trans-Pentaprenyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 861,
+  "cy": 1132,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05427",
+  "id": "C05427",
+  "label": "Phytyl diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 648,
+  "y1": 194,
+  "x2": 694,
+  "y2": 211,
+  "url": "/dbget-bin/www_bget?syn:sll1945",
+  "id": "sll1945",
+  "label": "sll1945",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1945",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 648,
+  "y1": 274,
+  "x2": 694,
+  "y2": 291,
+  "url": "/dbget-bin/www_bget?syn:sll0019",
+  "id": "sll0019",
+  "label": "sll0019",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0019",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 648,
+  "y1": 343,
+  "x2": 694,
+  "y2": 360,
+  "url": "/dbget-bin/www_bget?syn:slr0951",
+  "id": "slr0951",
+  "label": "slr0951",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0951",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 648,
+  "y1": 412,
+  "x2": 694,
+  "y2": 429,
+  "url": "/dbget-bin/www_bget?syn:sll0711",
+  "id": "sll0711",
+  "label": "sll0711",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0711",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 649,
+  "y1": 481,
+  "x2": 695,
+  "y2": 498,
+  "url": "/dbget-bin/www_bget?syn:slr1542",
+  "id": "slr1542",
+  "label": "slr1542",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1542",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 623,
+  "y1": 552,
+  "x2": 669,
+  "y2": 569,
+  "url": "/dbget-bin/www_bget?syn:slr2136",
+  "id": "slr2136",
+  "label": "slr2136 (gcpE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2136",
+    "product": "GcpE protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 475,
+  "y1": 194,
+  "x2": 521,
+  "y2": 211,
+  "url": "/dbget-bin/www_bget?syn:slr1993",
+  "id": "slr1993",
+  "label": "slr1993 (thl)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1993",
+    "product": "acetyl coenzyme A acetyltransferase (thiolase)"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 648,
+  "y1": 632,
+  "x2": 694,
+  "y2": 649,
+  "url": "/dbget-bin/www_bget?syn:slr0348",
+  "id": "slr0348",
+  "label": "slr0348",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0348",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 589,
+  "y1": 672,
+  "x2": 635,
+  "y2": 689,
+  "url": "/dbget-bin/www_bget?syn:sll1556",
+  "id": "sll1556",
+  "label": "sll1556",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1556",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 584,
+  "y1": 591,
+  "x2": 630,
+  "y2": 608,
+  "url": "/dbget-bin/www_bget?syn:slr0348",
+  "id": "slr0348",
+  "label": "slr0348",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0348",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 649,
+  "y1": 731,
+  "x2": 695,
+  "y2": 748,
+  "url": "/dbget-bin/www_bget?syn:slr0739",
+  "id": "slr0739",
+  "label": "slr0739 (crtE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0739",
+    "product": "geranylgeranyl pyrophosphate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 469,
+  "y1": 919,
+  "x2": 515,
+  "y2": 936,
+  "url": "/dbget-bin/www_bget?syn:slr0739",
+  "id": "slr0739",
+  "label": "slr0739 (crtE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0739",
+    "product": "geranylgeranyl pyrophosphate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 355,
+  "y1": 1239,
+  "x2": 401,
+  "y2": 1256,
+  "url": "/dbget-bin/www_bget?syn:sll0506",
+  "id": "sll0506",
+  "label": "sll0506",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0506",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 528,
+  "y1": 986,
+  "x2": 574,
+  "y2": 1003,
+  "url": "/dbget-bin/www_bget?syn:slr0739",
+  "id": "slr0739",
+  "label": "slr0739 (crtE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0739",
+    "product": "geranylgeranyl pyrophosphate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 838,
+  "y1": 1017,
+  "x2": 884,
+  "y2": 1034,
+  "url": "/dbget-bin/www_bget?syn:sll1091",
+  "id": "sll1091",
+  "label": "sll1091",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1091",
+    "product": "43 kD bacteriochlorophyll synthase subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 949,
+  "y1": 1017,
+  "x2": 995,
+  "y2": 1034,
+  "url": "/dbget-bin/www_bget?syn:slr0611",
+  "id": "slr0611",
+  "label": "slr0611 (sds)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0611",
+    "product": "solanesyl diphosphate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 899,
+  "y1": 1017,
+  "x2": 945,
+  "y2": 1034,
+  "url": "/dbget-bin/www_bget?syn:slr0611",
+  "id": "slr0611",
+  "label": "slr0611 (sds)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0611",
+    "product": "solanesyl diphosphate synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 673,
+  "y1": 552,
+  "x2": 719,
+  "y2": 569,
+  "url": "/dbget-bin/www_bget?syn:slr2136",
+  "id": "slr2136",
+  "label": "slr2136 (gcpE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2136",
+    "product": "GcpE protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 290,
+  "y1": 552,
+  "x2": 336,
+  "y2": 569,
+  "url": "/dbget-bin/www_bget?syn:slr1099",
+  "id": "slr1099",
+  "label": "slr1099 (ubiX)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1099",
+    "product": "3-octaprenyl-4-hydroxybenzoate carboxy-lyase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 517,
+  "y1": 103,
+  "x2": 587,
+  "y2": 128,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 325,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00900",
+  "id": "syn00900",
+  "label": "syn00900: Terpenoid backbone biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 817,
+  "y1": 755,
+  "x2": 972,
+  "y2": 780,
+  "url": "/kegg-bin/show_pathway?map00902",
+  "id": "map00902:",
+  "label": "map00902: Monoterpenoid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 114,
+  "y1": 749,
+  "x2": 255,
+  "y2": 783,
+  "url": "/kegg-bin/show_pathway?syn00909",
+  "id": "syn00909",
+  "label": "syn00909: Sesquiterpenoid and triterpenoid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 209,
+  "y1": 1114,
+  "x2": 339,
+  "y2": 1139,
+  "url": "/kegg-bin/show_pathway?syn00906",
+  "id": "syn00906",
+  "label": "syn00906: Carotenoid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 778,
+  "y1": 884,
+  "x2": 912,
+  "y2": 909,
+  "url": "/kegg-bin/show_pathway?map00904",
+  "id": "map00904:",
+  "label": "map00904: Diterpenoid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 778,
+  "y1": 914,
+  "x2": 912,
+  "y2": 939,
+  "url": "/kegg-bin/show_pathway?syn00906",
+  "id": "syn00906",
+  "label": "syn00906: Carotenoid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 799,
+  "y1": 1228,
+  "x2": 972,
+  "y2": 1262,
+  "url": "/kegg-bin/show_pathway?syn00130",
+  "id": "syn00130",
+  "label": "syn00130: Ubiquinone and other terpenoid-quinone biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 97,
+  "y1": 1168,
+  "x2": 179,
+  "y2": 1202,
+  "url": "/kegg-bin/show_pathway?map00510",
+  "id": "map00510:",
+  "label": "map00510: N-Glycan biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 817,
+  "y1": 707,
+  "x2": 929,
+  "y2": 732,
+  "url": "/kegg-bin/show_pathway?map00908",
+  "id": "map00908:",
+  "label": "map00908: Zeatin biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 224,
+  "y1": 990,
+  "x2": 335,
+  "y2": 1015,
+  "url": "/kegg-bin/show_pathway?syn00100",
+  "id": "syn00100",
+  "label": "syn00100: Steroid biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 778,
+  "y1": 944,
+  "x2": 891,
+  "y2": 978,
+  "url": "/kegg-bin/show_pathway?map00403",
+  "id": "map00403:",
+  "label": "map00403: Indole diterpene alkaloid biosynthesis",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 817,
+  "y1": 237,
+  "x2": 958,
+  "y2": 271,
+  "url": "/kegg-bin/show_pathway?syn00270",
+  "id": "syn00270",
+  "label": "syn00270: Cysteine and methionine metabolism",
+  "entry_type": "pathway"
+ }
+]

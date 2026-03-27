@@ -1,0 +1,278 @@
+[
+ {
+  "type": "circ",
+  "cx": 572,
+  "cy": 336,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00154",
+  "id": "C00154",
+  "label": "Palmitoyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 572,
+  "cy": 386,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22352",
+  "id": "C22352",
+  "label": "Ultra-long-chain fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 572,
+  "cy": 436,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22353",
+  "id": "C22353",
+  "label": "Ultra-long-chain omega-hydroxy fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 572,
+  "cy": 536,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23028",
+  "id": "C23028",
+  "label": "Ultra-long-chain omega-hydroxyceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 572,
+  "cy": 586,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23029",
+  "id": "C23029",
+  "label": "linoleate-esterified acylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 780,
+  "cy": 433,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23030",
+  "id": "C23030",
+  "label": "Acylglucosylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 780,
+  "cy": 586,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23029",
+  "id": "C23029",
+  "label": "linoleate-esterified acylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1315,
+  "cy": 631,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00135",
+  "id": "C00135",
+  "label": "L-Histidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1303,
+  "cy": 631,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00064",
+  "id": "C00064",
+  "label": "L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1303,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01879",
+  "id": "C01879",
+  "label": "5-Oxoproline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1315,
+  "cy": 561,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00785",
+  "id": "C00785",
+  "label": "Urocanate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 785,
+  "cy": 184,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00076",
+  "id": "C00076",
+  "label": "Calcium cation",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 895,
+  "cy": 433,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23030",
+  "id": "C23030",
+  "label": "Acylglucosylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1005,
+  "cy": 433,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23030",
+  "id": "C23030",
+  "label": "Acylglucosylceramide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1005,
+  "cy": 298,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22353",
+  "id": "C22353",
+  "label": "Ultra-long-chain omega-hydroxy fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 886,
+  "cy": 445,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00162",
+  "id": "C00162",
+  "label": "Fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 909,
+  "cy": 445,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00187",
+  "id": "C00187",
+  "label": "Cholesterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 996,
+  "cy": 282,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00162",
+  "id": "C00162",
+  "label": "Fatty acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1019,
+  "cy": 282,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00187",
+  "id": "C00187",
+  "label": "Cholesterol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 572,
+  "cy": 486,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C23027",
+  "id": "C23027",
+  "label": "Ultra-long-chain omega-hydroxy fatty acyl-CoA",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 657,
+  "cy": 336,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02934",
+  "id": "C02934",
+  "label": "3-Dehydrosphinganine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 657,
+  "cy": 456,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00836",
+  "id": "C00836",
+  "label": "Sphinganine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 728,
+  "y1": 497,
+  "x2": 774,
+  "y2": 514,
+  "url": "/dbget-bin/www_bget?syn:slr0813",
+  "id": "slr0813",
+  "label": "slr0813",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0813",
+    "product": "ceramide glucosyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1011,
+  "y1": 335,
+  "x2": 1057,
+  "y2": 352,
+  "url": "/dbget-bin/www_bget?syn:sll1775",
+  "id": "sll1775",
+  "label": "sll1775",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1775",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 299,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn04382",
+  "id": "syn04382",
+  "label": "syn04382: Cornified envelope formation",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 584,
+  "y1": 618,
+  "x2": 734,
+  "y2": 643,
+  "url": "/kegg-bin/show_pathway?syn00600",
+  "id": "syn00600",
+  "label": "syn00600: Sphingolipid metabolism",
+  "entry_type": "pathway"
+ }
+]

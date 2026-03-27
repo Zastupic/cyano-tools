@@ -1,0 +1,429 @@
+[
+ {
+  "type": "circ",
+  "cx": 73,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20956",
+  "id": "C20956",
+  "label": "alpha-D-Sedoheptulopyranose 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 258,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17692",
+  "id": "C17692",
+  "label": "2-epi-5-epi-Valiolone 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 348,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17693",
+  "id": "C17693",
+  "label": "5-epi-Valiolone 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1003,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17698",
+  "id": "C17698",
+  "label": "Salbostatin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1003,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06802",
+  "id": "C06802",
+  "label": "Acarbose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 745,
+  "cy": 108,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04268",
+  "id": "C04268",
+  "label": "dTDP-4-amino-4,6-dideoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 168,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17691",
+  "id": "C17691",
+  "label": "2-epi-5-epi-Valiolone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 533,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21205",
+  "id": "C21205",
+  "label": "1-epi-Valienol 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 633,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21209",
+  "id": "C21209",
+  "label": "1-epi-Valienol 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 728,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21210",
+  "id": "C21210",
+  "label": "NDP-1-epi-valienol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 863,
+  "cy": 253,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21211",
+  "id": "C21211",
+  "label": "Salbostatin 6'-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 633,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21206",
+  "id": "C21206",
+  "label": "1,7-Diphospho-1-epi-valienol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 828,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21208",
+  "id": "C21208",
+  "label": "dTDP-acarviose-7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 913,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21156",
+  "id": "C21156",
+  "label": "Acarbose 7IV-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 438,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21204",
+  "id": "C21204",
+  "label": "5-epi-Valiolol 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 728,
+  "cy": 168,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21207",
+  "id": "C21207",
+  "label": "NDP-1-epi-valienol 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 458,
+  "cy": 108,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00103",
+  "id": "C00103",
+  "label": "D-Glucose 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 553,
+  "cy": 108,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00842",
+  "id": "C00842",
+  "label": "dTDP-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 648,
+  "cy": 108,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11907",
+  "id": "C11907",
+  "label": "dTDP-4-oxo-6-deoxy-D-glucose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 347,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17696",
+  "id": "C17696",
+  "label": "Valienone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1002,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C12112",
+  "id": "C12112",
+  "label": "Validamycin A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 912,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17700",
+  "id": "C17700",
+  "label": "Validoxylamine A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 827,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21219",
+  "id": "C21219",
+  "label": "Validoxylamine A 7'-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 390,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21249",
+  "id": "C21249",
+  "label": "Cetoniacytone B",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 490,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17699",
+  "id": "C17699",
+  "label": "Cetoniacytone A",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 267,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21247",
+  "id": "C21247",
+  "label": "2-Amino-5-epi-valiolone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 327,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21248",
+  "id": "C21248",
+  "label": "2-Aminovalienone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 622,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21218",
+  "id": "C21218",
+  "label": "Validone 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 167,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17694",
+  "id": "C17694",
+  "label": "5-epi-Valiolone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 167,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17695",
+  "id": "C17695",
+  "label": "2-Keto-5-epi-valiolone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 533,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C17697",
+  "id": "C17697",
+  "label": "Valienone 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1002,
+  "cy": 430,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21293",
+  "id": "C21293",
+  "label": "Validamycin B",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 633,
+  "cy": 313,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21367",
+  "id": "C21367",
+  "label": "Valienol 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 728,
+  "cy": 313,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21368",
+  "id": "C21368",
+  "label": "GDP-valienol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 712,
+  "cy": 361,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21216",
+  "id": "C21216",
+  "label": "Validamine 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 578,
+  "cy": 313,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21415",
+  "id": "C21415",
+  "label": "Valienol 7-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 474,
+  "y1": 99,
+  "x2": 520,
+  "y2": 116,
+  "url": "/dbget-bin/www_bget?syn:sll0207",
+  "id": "sll0207",
+  "label": "sll0207 (rfbA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0207",
+    "product": "glucose-1-phosphate thymidylyltransferase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 574,
+  "y1": 99,
+  "x2": 620,
+  "y2": 116,
+  "url": "/dbget-bin/www_bget?syn:slr0836",
+  "id": "slr0836",
+  "label": "slr0836 (rfbB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0836",
+    "product": "dTDP-glucose 4,6-dehydratase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 380,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00525",
+  "id": "syn00525",
+  "label": "syn00525: Acarbose and validamycin biosynthesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 24,
+  "y1": 99,
+  "x2": 131,
+  "y2": 135,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 249,
+  "y1": 89,
+  "x2": 405,
+  "y2": 125,
+  "url": "/kegg-bin/show_pathway?syn00520",
+  "id": "syn00520",
+  "label": "syn00520: Amino sugar and nucleotide sugar metabolism",
+  "entry_type": "pathway"
+ }
+]

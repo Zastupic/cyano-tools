@@ -1,0 +1,2592 @@
+[
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 2015,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16421",
+  "id": "C16421",
+  "label": "AI-2",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 2031,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01684",
+  "id": "C01684",
+  "label": "D-Rhamnose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1998,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00095",
+  "id": "C00095",
+  "label": "D-Fructose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1972,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01487",
+  "id": "C01487",
+  "label": "D-Allose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1945,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00181",
+  "id": "C00181",
+  "label": "D-Xylose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1918,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03619",
+  "id": "C03619",
+  "label": "Methyl beta-D-galactoside",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1864,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00259",
+  "id": "C00259",
+  "label": "L-Arabinose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1313,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00140",
+  "id": "C00140",
+  "label": "N-Acetyl-D-glucosamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1357,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00185",
+  "id": "C00185",
+  "label": "Cellobiose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 923,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05402+C00492+C02160+C01835",
+  "id": "C05402",
+  "label": "Melibiose), C00492 (Raffinose), C02160 (Isomaltotriose), C01835 (Maltotriose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1225,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01083+C00208",
+  "id": "C01083",
+  "label": "alpha,alpha-Trehalose), C00208 (Maltose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1740,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00031+C00259",
+  "id": "C00031",
+  "label": "D-Glucose), C00259 (L-Arabinose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1009,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00794+C00392",
+  "id": "C00794",
+  "label": "D-Sorbitol), C00392 (Mannitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 966,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00243+C00259",
+  "id": "C00243",
+  "label": "Lactose), C00259 (L-Arabinose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 212,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00047+C00062+C00077",
+  "id": "C00047",
+  "label": "L-Lysine), C00062 (L-Arginine), C00077 (L-Ornithine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 314,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00049+C00025+C00064",
+  "id": "C00049",
+  "label": "L-Aspartate), C00025 (L-Glutamate), C00064 (L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 288,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00064",
+  "id": "C00064",
+  "label": "L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 669,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00062+C00077",
+  "id": "C00062",
+  "label": "L-Arginine), C00077 (L-Ornithine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 588,
+  "cy": 560,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00491",
+  "id": "C00491",
+  "label": "L-Cystine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 524,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00025",
+  "id": "C00025",
+  "label": "L-Glutamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 480,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00151",
+  "id": "C00151",
+  "label": "L-Amino acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04137+C01682",
+  "id": "C04137",
+  "label": "Octopine), C01682 (Nopaline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 394,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00025+C00049",
+  "id": "C00025",
+  "label": "L-Glutamate), C00049 (L-Aspartate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 350,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00062",
+  "id": "C00062",
+  "label": "L-Arginine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 590,
+  "cy": 255,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00135",
+  "id": "C00135",
+  "label": "L-Histidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 567,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00315+C00134",
+  "id": "C00315",
+  "label": "Spermidine), C00134 (Putrescine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 590,
+  "cy": 896,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00183+C00123+C00407+C00188+C00135",
+  "id": "C00183",
+  "label": "L-Valine), C00123 (L-Leucine), C00407 (L-Isoleucine), C00188 (L-Threonine), C00135 (L-Histidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 837,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00208+C01935",
+  "id": "C00208",
+  "label": "Maltose), C01935 (Maltodextrin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1818,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00121+C16421+C00181",
+  "id": "C00121",
+  "label": "D-Ribose), C16421 (AI-2), C00181 (D-Xylose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1052,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00089+C00208+C01083",
+  "id": "C00089",
+  "label": "Sucrose), C00208 (Maltose), C01083 (alpha,alpha-Trehalose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1095,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00333+C00470",
+  "id": "C00333",
+  "label": "D-Galacturonate), C00470 (Pectate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1903,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00291",
+  "id": "C00291",
+  "label": "Nickel",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1713,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14818+C00034",
+  "id": "C14818",
+  "label": "Fe2+), C00034 (Manganese",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 458,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06232",
+  "id": "C06232",
+  "label": "Molybdate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1841,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00175",
+  "id": "C00175",
+  "label": "Cobalt ion",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 496,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14819",
+  "id": "C14819",
+  "label": "Fe3+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1649,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00038",
+  "id": "C00038",
+  "label": "Zinc cation",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 180,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20679",
+  "id": "C20679",
+  "label": "Tungstate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1090,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00098",
+  "id": "C00098",
+  "label": "Oligopeptide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1564,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05776",
+  "id": "C05776",
+  "label": "Vitamin B12",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 590,
+  "cy": 977,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00855",
+  "id": "C00855",
+  "label": "D-Methionine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 331,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00245",
+  "id": "C00245",
+  "label": "Taurine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 210,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06232+C20679",
+  "id": "C06232",
+  "label": "Molybdate), C20679 (Tungstate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 143,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00059+C00320",
+  "id": "C00059",
+  "label": "Sulfate), C00320 (Thiosulfate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 177,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01153",
+  "id": "C01153",
+  "label": "Orthophosphoric monoester",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 143,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00009",
+  "id": "C00009",
+  "label": "Orthophosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 2228,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00093",
+  "id": "C00093",
+  "label": "sn-Glycerol 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 779,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00719+C00148+C00114+C00919+C00487+C04114+C01181",
+  "id": "C00719",
+  "label": "Betaine), C00148 (L-Proline), C00114 (Choline), C00919 (Choline sulfate), C00487 (Carnitine), C04114 ((E)-4-(Trimethylammonio)but-2-enoate), C01181 (4-Trimethylammoniobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 749,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00719+C00148+C00114+C00919+C00487+C04114+C01181",
+  "id": "C00719",
+  "label": "Betaine), C00148 (L-Proline), C00114 (Choline), C00919 (Choline sulfate), C00487 (Carnitine), C04114 ((E)-4-(Trimethylammonio)but-2-enoate), C01181 (4-Trimethylammoniobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 528,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00378",
+  "id": "C00378",
+  "label": "Thiamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 367,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06767",
+  "id": "C06767",
+  "label": "Hemine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 572,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01834",
+  "id": "C01834",
+  "label": "Lipoprotein",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 339,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01330",
+  "id": "C01330",
+  "label": "Sodium cation",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 312,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06706",
+  "id": "C06706",
+  "label": "Lipo-oligosaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 284,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06707",
+  "id": "C06707",
+  "label": "Teichoic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 256,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00338",
+  "id": "C00338",
+  "label": "Lipopolysaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 615,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00032",
+  "id": "C00032",
+  "label": "Heme",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 178,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06705",
+  "id": "C06705",
+  "label": "Capsular polysaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 614,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00134",
+  "id": "C00134",
+  "label": "Putrescine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 209,
+  "cy": 708,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03557",
+  "id": "C03557",
+  "label": "2-Aminoethylphosphonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 206,
+  "cy": 660,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C16692",
+  "id": "C16692",
+  "label": "Mannopine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1590,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00034",
+  "id": "C00034",
+  "label": "Manganese",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 449,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01667",
+  "id": "C01667",
+  "label": "Bacitracin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1677,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C14818+C14819+C00070+C00034+C00038",
+  "id": "C14818",
+  "label": "Fe2+), C14819 (Fe3+), C00070 (Copper), C00034 (Manganese), C00038 (Zinc cation",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1782,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00038+C00034+C14818",
+  "id": "C00038",
+  "label": "Zinc cation), C00034 (Manganese), C14818 (Fe2+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 935,
+  "cy": 661,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00338",
+  "id": "C00338",
+  "label": "Lipopolysaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 293,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00288",
+  "id": "C00288",
+  "label": "HCO3-",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 590,
+  "cy": 941,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00041+C00064+C00037+C00123+C00079+C00148+C00065+C00135",
+  "id": "C00041",
+  "label": "L-Alanine), C00064 (L-Glutamine), C00037 (Glycine), C00123 (L-Leucine), C00079 (L-Phenylalanine), C00148 (L-Proline), C00065 (L-Serine), C00135 (L-Histidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 590,
+  "cy": 1014,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00086",
+  "id": "C00086",
+  "label": "Urea",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1132,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00107+C00032+C00430",
+  "id": "C00107",
+  "label": "Dipeptide), C00032 (Heme), C00430 (5-Aminolevulinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1318,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00051",
+  "id": "C00051",
+  "label": "Glutathione",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 360,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C15521",
+  "id": "C15521",
+  "label": "Alkanesulfonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 420,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01606",
+  "id": "C01606",
+  "label": "Phthalate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1274,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C19609",
+  "id": "C19609",
+  "label": "Nickel(2+)",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 247,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00244+C00088+C01417",
+  "id": "C00244",
+  "label": "Nitrate), C00088 (Nitrite), C01417 (Cyanate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 389,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01279+C19872",
+  "id": "C01279",
+  "label": "4-Amino-5-hydroxymethyl-2-methylpyrimidine), C19872 (N-Formyl-4-amino-5-aminomethyl-2-methylpyrimidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 880,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03611+C00973+C01935+C01835+G00457",
+  "id": "C03611",
+  "label": "Galactose oligosaccharide), C00973 (Cyclomaltodextrin), C01935 (Maltodextrin), C01835 (Maltotriose), G00457 (Maltotetraose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1174,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00107",
+  "id": "C00107",
+  "label": "Dipeptide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1939,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00120",
+  "id": "C00120",
+  "label": "Biotin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1974,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00120",
+  "id": "C00120",
+  "label": "Biotin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 935,
+  "cy": 705,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C05349+C06687+C07663+C07662",
+  "id": "C05349",
+  "label": "Ciprofloxacin), C06687 (Norfloxacin), C07663 (Moxifloxacin), C07662 (Sparfloxacin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 595,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00491",
+  "id": "C00491",
+  "label": "L-Cystine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 590,
+  "cy": 631,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C22040",
+  "id": "C22040",
+  "label": "S-Methyl-L-cysteine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 705,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00062+C00047+C00135+C00064",
+  "id": "C00062",
+  "label": "L-Arginine), C00047 (L-Lysine), C00135 (L-Histidine), C00064 (L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 766,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00047",
+  "id": "C00047",
+  "label": "L-Lysine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 2064,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00503",
+  "id": "C00503",
+  "label": "Erythritol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 2089,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00379",
+  "id": "C00379",
+  "label": "Xylitol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 2114,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00137",
+  "id": "C00137",
+  "label": "myo-Inositol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 2146,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01177",
+  "id": "C01177",
+  "label": "Inositol 1-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1138,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C02273",
+  "id": "C02273",
+  "label": "Digalacturonate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1443,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01674",
+  "id": "C01674",
+  "label": "Chitobiose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1487,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20570+C20571+C20572",
+  "id": "C20570",
+  "label": "alpha-1,5-L-Arabinobiose), C20571 (alpha-1,5-L-Arabinotriose), C20572 (alpha-1,5-L-Arabinotetraose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1783,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00031+C00159",
+  "id": "C00031",
+  "label": "D-Glucose), C00159 (D-Mannose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1269,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01083",
+  "id": "C01083",
+  "label": "alpha,alpha-Trehalose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1400,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01674",
+  "id": "C01674",
+  "label": "Chitobiose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1182,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C20573",
+  "id": "C20573",
+  "label": "Aldotetraouronic acid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 2187,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00116",
+  "id": "C00116",
+  "label": "Glycerol",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1530,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01630",
+  "id": "C01630",
+  "label": "Xylobiose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 394,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01946",
+  "id": "C01946",
+  "label": "Oleandomycin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1632,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00865",
+  "id": "C00865",
+  "label": "Phospholipid",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 935,
+  "cy": 827,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01667",
+  "id": "C01667",
+  "label": "Bacitracin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 935,
+  "cy": 860,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C13768+C11612",
+  "id": "C13768",
+  "label": "Colistin sulfate), C11612 (Polymyxin B",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 421,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01667",
+  "id": "C01667",
+  "label": "Bacitracin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1748,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00034+C00038",
+  "id": "C00034",
+  "label": "Manganese), C00038 (Zinc cation",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1618,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00034",
+  "id": "C00034",
+  "label": "Manganese",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 936,
+  "cy": 221,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06705",
+  "id": "C06705",
+  "label": "Capsular polysaccharide",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 736,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00062+C00047+C00135",
+  "id": "C00062",
+  "label": "L-Arginine), C00047 (L-Lysine), C00135 (L-Histidine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 851,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01157",
+  "id": "C01157",
+  "label": "Hydroxyproline",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 806,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00047+C00062+C00077+C00135+C04137",
+  "id": "C00047",
+  "label": "L-Lysine), C00062 (L-Arginine), C00077 (L-Ornithine), C00135 (L-Histidine), C04137 (Octopine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1537,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06227",
+  "id": "C06227",
+  "label": "Fe(III)hydroxamate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1501,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06230+C15719",
+  "id": "C06230",
+  "label": "Fe-enterobactin), C15719 (Coelichelin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 589,
+  "cy": 1457,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06229",
+  "id": "C06229",
+  "label": "Fe(III)dicitrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 590,
+  "cy": 2059,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00255",
+  "id": "C00255",
+  "label": "Riboflavin",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 208,
+  "cy": 1890,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C21066",
+  "id": "C21066",
+  "label": "D-Galactofuranose",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 207,
+  "cy": 1686,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00212+C00294+C00299+C00330+C00387+C00475+C00526+C00559+C00881+C01762+C05512",
+  "id": "C00212",
+  "label": "Adenosine), C00294 (Inosine), C00299 (Uridine), C00330 (Deoxyguanosine), C00387 (Guanosine), C00475 (Cytidine), C00526 (Deoxyuridine), C00559 (Deoxyadenosine), C00881 (Deoxycytidine), C01762 (Xanthosine), C05512 (Deoxyinosine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 1349,
+  "x2": 361,
+  "y2": 1366,
+  "url": "/dbget-bin/www_bget?syn:slr0747+syn:slr1224",
+  "id": "slr0747",
+  "label": "slr0747 (ggtA), slr1224 (malK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0747",
+    "product": "ATP-binding subunit of an ABC-type osmolyte transporter"
+   },
+   {
+    "locus": "slr1224",
+    "product": "cytoplasmic membrane protein for maltose uptake"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 1044,
+  "x2": 361,
+  "y2": 1061,
+  "url": "/dbget-bin/www_bget?syn:slr0747+syn:slr1224",
+  "id": "slr0747",
+  "label": "slr0747 (ggtA), slr1224 (malK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0747",
+    "product": "ATP-binding subunit of an ABC-type osmolyte transporter"
+   },
+   {
+    "locus": "slr1224",
+    "product": "cytoplasmic membrane protein for maltose uptake"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 1052,
+  "x2": 315,
+  "y2": 1069,
+  "url": "/dbget-bin/www_bget?syn:slr0531",
+  "id": "slr0531",
+  "label": "slr0531",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0531",
+    "product": "membrane bound sugar transport protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 1035,
+  "x2": 315,
+  "y2": 1052,
+  "url": "/dbget-bin/www_bget?syn:slr0530",
+  "id": "slr0530",
+  "label": "slr0530",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0530",
+    "product": "membrane bound sugar transport protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 223,
+  "y1": 1044,
+  "x2": 269,
+  "y2": 1061,
+  "url": "/dbget-bin/www_bget?syn:slr0529",
+  "id": "slr0529",
+  "label": "slr0529",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0529",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 1001,
+  "x2": 361,
+  "y2": 1018,
+  "url": "/dbget-bin/www_bget?syn:slr0747+syn:slr1224",
+  "id": "slr0747",
+  "label": "slr0747 (ggtA), slr1224 (malK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0747",
+    "product": "ATP-binding subunit of an ABC-type osmolyte transporter"
+   },
+   {
+    "locus": "slr1224",
+    "product": "cytoplasmic membrane protein for maltose uptake"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 915,
+  "x2": 361,
+  "y2": 932,
+  "url": "/dbget-bin/www_bget?syn:slr0747+syn:slr1224",
+  "id": "slr0747",
+  "label": "slr0747 (ggtA), slr1224 (malK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0747",
+    "product": "ATP-binding subunit of an ABC-type osmolyte transporter"
+   },
+   {
+    "locus": "slr1224",
+    "product": "cytoplasmic membrane protein for maltose uptake"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1275,
+  "y1": 1267,
+  "x2": 1321,
+  "y2": 1284,
+  "url": "/dbget-bin/www_bget?syn:sll0182",
+  "id": "sll0182",
+  "label": "sll0182",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0182",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1523,
+  "y1": 372,
+  "x2": 1569,
+  "y2": 389,
+  "url": "/dbget-bin/www_bget?syn:slr0615+syn:slr1149",
+  "id": "slr0615,",
+  "label": "slr0615, slr1149",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0615",
+    "product": "ABC transporter"
+   },
+   {
+    "locus": "slr1149",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 829,
+  "x2": 361,
+  "y2": 846,
+  "url": "/dbget-bin/www_bget?syn:slr0747+syn:slr1224",
+  "id": "slr0747",
+  "label": "slr0747 (ggtA), slr1224 (malK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0747",
+    "product": "ATP-binding subunit of an ABC-type osmolyte transporter"
+   },
+   {
+    "locus": "slr1224",
+    "product": "cytoplasmic membrane protein for maltose uptake"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1523,
+  "y1": 444,
+  "x2": 1569,
+  "y2": 461,
+  "url": "/dbget-bin/www_bget?syn:sll1180",
+  "id": "sll1180",
+  "label": "sll1180 (hlyB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1180",
+    "product": "HlyB family"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 1903,
+  "x2": 697,
+  "y2": 1920,
+  "url": "/dbget-bin/www_bget?syn:sll0384",
+  "id": "sll0384",
+  "label": "sll0384",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0384",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 1886,
+  "x2": 697,
+  "y2": 1903,
+  "url": "/dbget-bin/www_bget?syn:sll0383",
+  "id": "sll0383",
+  "label": "sll0383 (cbiM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0383",
+    "product": "CbiM protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 1842,
+  "x2": 697,
+  "y2": 1859,
+  "url": "/dbget-bin/www_bget?syn:sll0384",
+  "id": "sll0384",
+  "label": "sll0384",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0384",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 1825,
+  "x2": 697,
+  "y2": 1842,
+  "url": "/dbget-bin/www_bget?syn:sll0383",
+  "id": "sll0383",
+  "label": "sll0383 (cbiM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0383",
+    "product": "CbiM protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 1894,
+  "x2": 743,
+  "y2": 1911,
+  "url": "/dbget-bin/www_bget?syn:sll0385",
+  "id": "sll0385",
+  "label": "sll0385",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0385",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 441,
+  "x2": 361,
+  "y2": 458,
+  "url": "/dbget-bin/www_bget?syn:sll0739",
+  "id": "sll0739",
+  "label": "sll0739",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0739",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 449,
+  "x2": 315,
+  "y2": 466,
+  "url": "/dbget-bin/www_bget?syn:sll0739",
+  "id": "sll0739",
+  "label": "sll0739",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0739",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 223,
+  "y1": 449,
+  "x2": 269,
+  "y2": 466,
+  "url": "/dbget-bin/www_bget?syn:sll0738",
+  "id": "sll0738",
+  "label": "sll0738 (modA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0738",
+    "product": "molybdate-binding periplasmic protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 1833,
+  "x2": 743,
+  "y2": 1850,
+  "url": "/dbget-bin/www_bget?syn:sll0385",
+  "id": "sll0385",
+  "label": "sll0385",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0385",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 487,
+  "x2": 361,
+  "y2": 504,
+  "url": "/dbget-bin/www_bget?syn:sll0240+syn:sll1878",
+  "id": "sll0240,",
+  "label": "sll0240, sll1878",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0240",
+    "product": "ABC transporter"
+   },
+   {
+    "locus": "sll1878",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 487,
+  "x2": 315,
+  "y2": 504,
+  "url": "/dbget-bin/www_bget?syn:sll0238+syn:slr0327",
+  "id": "sll0238,",
+  "label": "sll0238, slr0327 (hitB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0238",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "slr0327",
+    "product": "iron utilization protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 223,
+  "y1": 487,
+  "x2": 269,
+  "y2": 504,
+  "url": "/dbget-bin/www_bget?syn:sll0237+syn:slr0513+syn:slr1295",
+  "id": "sll0237,",
+  "label": "sll0237, slr0513, slr1295 (sufA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0237",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "slr0513",
+    "product": "periplasmic iron-binding protein"
+   },
+   {
+    "locus": "slr1295",
+    "product": "iron transport protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 1640,
+  "x2": 743,
+  "y2": 1657,
+  "url": "/dbget-bin/www_bget?syn:slr2044",
+  "id": "slr2044",
+  "label": "slr2044",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2044",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 1640,
+  "x2": 697,
+  "y2": 1657,
+  "url": "/dbget-bin/www_bget?syn:slr2045",
+  "id": "slr2045",
+  "label": "slr2045",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2045",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 605,
+  "y1": 1640,
+  "x2": 651,
+  "y2": 1657,
+  "url": "/dbget-bin/www_bget?syn:slr2043",
+  "id": "slr2043",
+  "label": "slr2043 (zntC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr2043",
+    "product": "periplasmic binding protein component of an ABC type zinc uptake transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 135,
+  "x2": 361,
+  "y2": 152,
+  "url": "/dbget-bin/www_bget?syn:slr1455",
+  "id": "slr1455",
+  "label": "slr1455 (cysA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1455",
+    "product": "sulfate transport system permease protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 143,
+  "x2": 315,
+  "y2": 160,
+  "url": "/dbget-bin/www_bget?syn:slr1454",
+  "id": "slr1454",
+  "label": "slr1454 (cysW)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1454",
+    "product": "sulfate transport system permease protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 126,
+  "x2": 315,
+  "y2": 143,
+  "url": "/dbget-bin/www_bget?syn:slr1453",
+  "id": "slr1453",
+  "label": "slr1453 (cysT)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1453",
+    "product": "sulfate transport system permease protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 135,
+  "x2": 743,
+  "y2": 152,
+  "url": "/dbget-bin/www_bget?syn:sll0683+syn:sll0684+syn:slr1250",
+  "id": "sll0683",
+  "label": "sll0683 (pstB), sll0684 (pstB), slr1250 (pstB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0683",
+    "product": "phosphate transport ATP-binding protein; PstB"
+   },
+   {
+    "locus": "sll0684",
+    "product": "phosphate transport ATP-binding protein; PstB"
+   },
+   {
+    "locus": "slr1250",
+    "product": "phosphate transport ATP-binding protein; PstB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 143,
+  "x2": 697,
+  "y2": 160,
+  "url": "/dbget-bin/www_bget?syn:sll0682+syn:slr1249",
+  "id": "sll0682",
+  "label": "sll0682 (pstA), slr1249 (pstA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0682",
+    "product": "phosphate transport system permease protein; PstA"
+   },
+   {
+    "locus": "slr1249",
+    "product": "phosphate transport system permease protein; PstA"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 126,
+  "x2": 697,
+  "y2": 143,
+  "url": "/dbget-bin/www_bget?syn:sll0681+syn:slr1248",
+  "id": "sll0681",
+  "label": "sll0681 (pstC), slr1248 (pstC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0681",
+    "product": "phosphate transport system permease protein; PstC"
+   },
+   {
+    "locus": "slr1248",
+    "product": "phosphate transport system permease protein; PstC"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 605,
+  "y1": 135,
+  "x2": 651,
+  "y2": 152,
+  "url": "/dbget-bin/www_bget?syn:sll0540+syn:sll0679+syn:sll0680+syn:slr1247",
+  "id": "sll0540,",
+  "label": "sll0540, sll0679 (sphX), sll0680 (pstS), slr1247 (pstS)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0540",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll0679",
+    "product": "SphX protein precursor"
+   },
+   {
+    "locus": "sll0680",
+    "product": "phosphate-binding periplasmic protein precursor"
+   },
+   {
+    "locus": "slr1247",
+    "product": "periplasmic phosphate binding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1044,
+  "y1": 246,
+  "x2": 1090,
+  "y2": 263,
+  "url": "/dbget-bin/www_bget?syn:sll0575+syn:slr0982+syn:slr2108",
+  "id": "sll0575",
+  "label": "sll0575 (rfbB), slr0982 (rfbB), slr2108 (kpsT)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0575",
+    "product": "ATP-binding protein"
+   },
+   {
+    "locus": "slr0982",
+    "product": "ABC transporter"
+   },
+   {
+    "locus": "slr2108",
+    "product": "polysialic acid transport ATP-binding protein; KpsT"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 998,
+  "y1": 246,
+  "x2": 1044,
+  "y2": 263,
+  "url": "/dbget-bin/www_bget?syn:sll0574+syn:slr0977+syn:slr2107",
+  "id": "sll0574",
+  "label": "sll0574 (rfbA), slr0977, slr2107 (kpsM)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0574",
+    "product": "integral membrane O-antigen translocator protein"
+   },
+   {
+    "locus": "slr0977",
+    "product": "ABC transporter"
+   },
+   {
+    "locus": "slr2107",
+    "product": "polysialic acid transport protein; KpsM"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 1582,
+  "x2": 743,
+  "y2": 1599,
+  "url": "/dbget-bin/www_bget?syn:sll1599",
+  "id": "sll1599",
+  "label": "sll1599 (mntA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1599",
+    "product": "Mn transporter; MntA"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 1582,
+  "x2": 697,
+  "y2": 1599,
+  "url": "/dbget-bin/www_bget?syn:sll1600",
+  "id": "sll1600",
+  "label": "sll1600 (mntB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1600",
+    "product": "Mn transporter; MntB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 605,
+  "y1": 1582,
+  "x2": 651,
+  "y2": 1599,
+  "url": "/dbget-bin/www_bget?syn:sll1598",
+  "id": "sll1598",
+  "label": "sll1598 (mntC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1598",
+    "product": "Mn transporter; MntC"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1043,
+  "y1": 653,
+  "x2": 1089,
+  "y2": 670,
+  "url": "/dbget-bin/www_bget?syn:slr0251",
+  "id": "slr0251",
+  "label": "slr0251",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0251",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 997,
+  "y1": 661,
+  "x2": 1043,
+  "y2": 678,
+  "url": "/dbget-bin/www_bget?syn:sll0496+syn:slr0882",
+  "id": "sll0496,",
+  "label": "sll0496, slr0882",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0496",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "slr0882",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 293,
+  "x2": 361,
+  "y2": 310,
+  "url": "/dbget-bin/www_bget?syn:slr0044",
+  "id": "slr0044",
+  "label": "slr0044 (nrtD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0044",
+    "product": "nitrate transport protein; NrtD"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 276,
+  "x2": 361,
+  "y2": 293,
+  "url": "/dbget-bin/www_bget?syn:slr0043",
+  "id": "slr0043",
+  "label": "slr0043 (nrtC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0043",
+    "product": "nitrate transport protein; NrtC"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 285,
+  "x2": 315,
+  "y2": 302,
+  "url": "/dbget-bin/www_bget?syn:slr0041",
+  "id": "slr0041",
+  "label": "slr0041 (cmpB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0041",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 223,
+  "y1": 285,
+  "x2": 269,
+  "y2": 302,
+  "url": "/dbget-bin/www_bget?syn:slr0040",
+  "id": "slr0040",
+  "label": "slr0040 (cmpA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0040",
+    "product": "bicarbonate transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 941,
+  "x2": 743,
+  "y2": 958,
+  "url": "/dbget-bin/www_bget?syn:slr1881",
+  "id": "slr1881",
+  "label": "slr1881 (livF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1881",
+    "product": "high-affinity branched-chain amino acid transport ATP-binding protein; BraG"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 924,
+  "x2": 743,
+  "y2": 941,
+  "url": "/dbget-bin/www_bget?syn:slr0467",
+  "id": "slr0467",
+  "label": "slr0467 (natA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0467",
+    "product": "conserved component of ABC transporter for natural amino acids"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 941,
+  "x2": 697,
+  "y2": 958,
+  "url": "/dbget-bin/www_bget?syn:slr0949",
+  "id": "slr0949",
+  "label": "slr0949 (livH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0949",
+    "product": "high-affinity branched-chain amino acid transport permease protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 924,
+  "x2": 697,
+  "y2": 941,
+  "url": "/dbget-bin/www_bget?syn:sll0146",
+  "id": "sll0146",
+  "label": "sll0146",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0146",
+    "product": "high-affinity branched-chain amino acid transport protein; BraE"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 605,
+  "y1": 933,
+  "x2": 651,
+  "y2": 950,
+  "url": "/dbget-bin/www_bget?syn:slr0559",
+  "id": "slr0559",
+  "label": "slr0559 (natB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0559",
+    "product": "periplasmic binding protein of ABC transporter for natural amino acids"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 1014,
+  "x2": 743,
+  "y2": 1031,
+  "url": "/dbget-bin/www_bget?syn:sll0374",
+  "id": "sll0374",
+  "label": "sll0374 (braG_or_livF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0374",
+    "product": "high-affinity branched-chain amino acid transport ATP-binding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 997,
+  "x2": 743,
+  "y2": 1014,
+  "url": "/dbget-bin/www_bget?syn:sll0764",
+  "id": "sll0764",
+  "label": "sll0764 (livG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0764",
+    "product": "high-affinity branched-chain amino acid transport ATP-binding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 1014,
+  "x2": 697,
+  "y2": 1031,
+  "url": "/dbget-bin/www_bget?syn:slr1201",
+  "id": "slr1201",
+  "label": "slr1201",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1201",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 997,
+  "x2": 697,
+  "y2": 1014,
+  "url": "/dbget-bin/www_bget?syn:slr1200",
+  "id": "slr1200",
+  "label": "slr1200 (livH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1200",
+    "product": "high-affinity branched-chain amino acid transport protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 605,
+  "y1": 1006,
+  "x2": 651,
+  "y2": 1023,
+  "url": "/dbget-bin/www_bget?syn:slr0447",
+  "id": "slr0447",
+  "label": "slr0447 (amiC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0447",
+    "product": "negative aliphatic amidase regulator"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 247,
+  "x2": 361,
+  "y2": 264,
+  "url": "/dbget-bin/www_bget?syn:sll1453",
+  "id": "sll1453",
+  "label": "sll1453 (nrtD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1453",
+    "product": "nitrate transport protein; NrtD"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 230,
+  "x2": 361,
+  "y2": 247,
+  "url": "/dbget-bin/www_bget?syn:sll1452",
+  "id": "sll1452",
+  "label": "sll1452 (nrtC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1452",
+    "product": "nitrate transport protein; NrtC"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 239,
+  "x2": 315,
+  "y2": 256,
+  "url": "/dbget-bin/www_bget?syn:sll1451",
+  "id": "sll1451",
+  "label": "sll1451 (nrtB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1451",
+    "product": "nitrate transport protein; NrtB"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 223,
+  "y1": 239,
+  "x2": 269,
+  "y2": 256,
+  "url": "/dbget-bin/www_bget?syn:sll1450",
+  "id": "sll1450",
+  "label": "sll1450 (nrtA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1450",
+    "product": "nitrate transport 45kD protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 872,
+  "x2": 361,
+  "y2": 889,
+  "url": "/dbget-bin/www_bget?syn:slr0747+syn:slr1224",
+  "id": "slr0747",
+  "label": "slr0747 (ggtA), slr1224 (malK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0747",
+    "product": "ATP-binding subunit of an ABC-type osmolyte transporter"
+   },
+   {
+    "locus": "slr1224",
+    "product": "cytoplasmic membrane protein for maltose uptake"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 1869,
+  "x2": 697,
+  "y2": 1886,
+  "url": "/dbget-bin/www_bget?syn:sll0382",
+  "id": "sll0382",
+  "label": "sll0382",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0382",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 605,
+  "y1": 1930,
+  "x2": 651,
+  "y2": 1947,
+  "url": "/dbget-bin/www_bget?syn:slr1365",
+  "id": "slr1365",
+  "label": "slr1365 (bioY)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1365",
+    "product": "BioY protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 1965,
+  "x2": 697,
+  "y2": 1982,
+  "url": "/dbget-bin/www_bget?syn:slr1978",
+  "id": "slr1978",
+  "label": "slr1978",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1978",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 1957,
+  "x2": 743,
+  "y2": 1974,
+  "url": "/dbget-bin/www_bget?syn:sll1623",
+  "id": "sll1623",
+  "label": "sll1623",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1623",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 605,
+  "y1": 1965,
+  "x2": 651,
+  "y2": 1982,
+  "url": "/dbget-bin/www_bget?syn:slr1365",
+  "id": "slr1365",
+  "label": "slr1365 (bioY)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1365",
+    "product": "BioY protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 1974,
+  "x2": 743,
+  "y2": 1991,
+  "url": "/dbget-bin/www_bget?syn:slr0354",
+  "id": "slr0354",
+  "label": "slr0354",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0354",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 697,
+  "y1": 697,
+  "x2": 743,
+  "y2": 714,
+  "url": "/dbget-bin/www_bget?syn:slr1735",
+  "id": "slr1735",
+  "label": "slr1735",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1735",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 651,
+  "y1": 697,
+  "x2": 697,
+  "y2": 714,
+  "url": "/dbget-bin/www_bget?syn:sll1270",
+  "id": "sll1270",
+  "label": "sll1270 (glnH_glnP)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1270",
+    "product": "glutamine-binding periplasmic protein/glutamine transport system permease protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 1443,
+  "x2": 315,
+  "y2": 1460,
+  "url": "/dbget-bin/www_bget?syn:slr1723",
+  "id": "slr1723",
+  "label": "slr1723 (lacG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1723",
+    "product": "lactose transport system permease protein; LacG"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 1426,
+  "x2": 315,
+  "y2": 1443,
+  "url": "/dbget-bin/www_bget?syn:slr1202",
+  "id": "slr1202",
+  "label": "slr1202 (lacF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1202",
+    "product": "lactose transport system permease protein; LacF"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 223,
+  "y1": 1435,
+  "x2": 269,
+  "y2": 1452,
+  "url": "/dbget-bin/www_bget?syn:slr1897",
+  "id": "slr1897",
+  "label": "slr1897 (srrA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1897",
+    "product": "SrrA"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 1479,
+  "x2": 361,
+  "y2": 1496,
+  "url": "/dbget-bin/www_bget?syn:slr0747+syn:slr1224",
+  "id": "slr0747",
+  "label": "slr0747 (ggtA), slr1224 (malK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0747",
+    "product": "ATP-binding subunit of an ABC-type osmolyte transporter"
+   },
+   {
+    "locus": "slr1224",
+    "product": "cytoplasmic membrane protein for maltose uptake"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 1775,
+  "x2": 361,
+  "y2": 1792,
+  "url": "/dbget-bin/www_bget?syn:slr0747+syn:slr1224",
+  "id": "slr0747",
+  "label": "slr0747 (ggtA), slr1224 (malK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0747",
+    "product": "ATP-binding subunit of an ABC-type osmolyte transporter"
+   },
+   {
+    "locus": "slr1224",
+    "product": "cytoplasmic membrane protein for maltose uptake"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 1392,
+  "x2": 361,
+  "y2": 1409,
+  "url": "/dbget-bin/www_bget?syn:slr0747+syn:slr1224",
+  "id": "slr0747",
+  "label": "slr0747 (ggtA), slr1224 (malK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0747",
+    "product": "ATP-binding subunit of an ABC-type osmolyte transporter"
+   },
+   {
+    "locus": "slr1224",
+    "product": "cytoplasmic membrane protein for maltose uptake"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 315,
+  "y1": 1624,
+  "x2": 361,
+  "y2": 1641,
+  "url": "/dbget-bin/www_bget?syn:sll1001+syn:sll1041",
+  "id": "sll1001,",
+  "label": "sll1001, sll1041",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1001",
+    "product": "ABC transporter"
+   },
+   {
+    "locus": "sll1041",
+    "product": "ABC transporter"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 269,
+  "y1": 1624,
+  "x2": 315,
+  "y2": 1641,
+  "url": "/dbget-bin/www_bget?syn:slr1045+syn:slr1344",
+  "id": "slr1045,",
+  "label": "slr1045, slr1344",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1045",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "slr1344",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 223,
+  "y1": 1632,
+  "x2": 269,
+  "y2": 1649,
+  "url": "/dbget-bin/www_bget?syn:sll0751+syn:sll0752+syn:sll1002",
+  "id": "sll0751",
+  "label": "sll0751 (ycf22), sll0752, sll1002 (ycf22)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0751",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll0752",
+    "product": "unknown protein"
+   },
+   {
+    "locus": "sll1002",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 223,
+  "y1": 143,
+  "x2": 269,
+  "y2": 160,
+  "url": "/dbget-bin/www_bget?syn:slr1452",
+  "id": "slr1452",
+  "label": "slr1452 (sbpA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1452",
+    "product": "sulfate binding protein; SbpA"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 205,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn02010",
+  "id": "syn02010",
+  "label": "syn02010: ABC transporters",
+  "entry_type": "pathway"
+ }
+]

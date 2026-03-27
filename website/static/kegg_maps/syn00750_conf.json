@@ -1,0 +1,492 @@
+[
+ {
+  "type": "circ",
+  "cx": 921,
+  "cy": 276,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00118",
+  "id": "C00118",
+  "label": "D-Glyceraldehyde 3-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 876,
+  "cy": 306,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00117",
+  "id": "C00117",
+  "label": "D-Ribose 5-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 755,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C07335",
+  "id": "C07335",
+  "label": "2-Amino-3-oxo-4-phosphonooxybutyrate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 69,
+  "cy": 135,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00232",
+  "id": "C00232",
+  "label": "Succinate semialdehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 69,
+  "cy": 211,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01215",
+  "id": "C01215",
+  "label": "2-(Acetamidomethylene)succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 169,
+  "cy": 211,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C01270",
+  "id": "C01270",
+  "label": "3-Hydroxy-2-methylpyridine-5-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 269,
+  "cy": 211,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04604",
+  "id": "C04604",
+  "label": "3-Hydroxy-2-methylpyridine-4,5-dicarboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 369,
+  "cy": 211,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06050",
+  "id": "C06050",
+  "label": "2-Methyl-3-hydroxy-5-formylpyridine-4-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 469,
+  "cy": 158,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00971",
+  "id": "C00971",
+  "label": "4-Pyridoxolactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 597,
+  "cy": 211,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00250",
+  "id": "C00250",
+  "label": "Pyridoxal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 597,
+  "cy": 75,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00534",
+  "id": "C00534",
+  "label": "Pyridoxamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 755,
+  "cy": 75,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00647",
+  "id": "C00647",
+  "label": "Pyridoxamine phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 755,
+  "cy": 211,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00018",
+  "id": "C00018",
+  "label": "Pyridoxal phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 755,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00627",
+  "id": "C00627",
+  "label": "Pyridoxine phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 456,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00266",
+  "id": "C00266",
+  "label": "Glycolaldehyde",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 597,
+  "cy": 347,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00314",
+  "id": "C00314",
+  "label": "Pyridoxine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 385,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04773",
+  "id": "C04773",
+  "label": "3-Hydroxy-4-hydroxymethyl-2-methylpyridine-5-carboxylate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 250,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04690",
+  "id": "C04690",
+  "label": "2-(Hydroxymethyl)-3-(acetamidomethylene)succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 420,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C03393",
+  "id": "C03393",
+  "label": "4-Phospho-D-erythronate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 308,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00279",
+  "id": "C00279",
+  "label": "D-Erythrose 4-phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 597,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06051",
+  "id": "C06051",
+  "label": "Isopyridoxal",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 493,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06052",
+  "id": "C06052",
+  "label": "5-Pyridoxolactone",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 125,
+  "cy": 431,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C04106",
+  "id": "C04106",
+  "label": "2-(Hydroxymethyl)-4-oxobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 532,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06054",
+  "id": "C06054",
+  "label": "2-Oxo-3-hydroxy-4-phosphobutanoate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 645,
+  "cy": 525,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06055",
+  "id": "C06055",
+  "label": "O-Phospho-4-hydroxy-L-threonine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 469,
+  "cy": 211,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00847",
+  "id": "C00847",
+  "label": "4-Pyridoxate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 755,
+  "cy": 437,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C11638",
+  "id": "C11638",
+  "label": "3-Amino-2-oxopropyl phosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 645,
+  "cy": 457,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C06056",
+  "id": "C06056",
+  "label": "4-Hydroxy-L-threonine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 851,
+  "cy": 276,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00064",
+  "id": "C00064",
+  "label": "L-Glutamine",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 599,
+  "y1": 126,
+  "x2": 645,
+  "y2": 143,
+  "url": "/dbget-bin/www_bget?syn:sll1440",
+  "id": "sll1440",
+  "label": "sll1440 (pdxH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1440",
+    "product": "pyridoxamine 5'-phosphate oxidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 733,
+  "y1": 126,
+  "x2": 779,
+  "y2": 143,
+  "url": "/dbget-bin/www_bget?syn:sll1440",
+  "id": "sll1440",
+  "label": "sll1440 (pdxH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1440",
+    "product": "pyridoxamine 5'-phosphate oxidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 622,
+  "y1": 485,
+  "x2": 668,
+  "y2": 502,
+  "url": "/dbget-bin/www_bget?syn:sll1172+syn:sll1688",
+  "id": "sll1172",
+  "label": "sll1172 (thrC), sll1688 (thrC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1172",
+    "product": "threonine synthase"
+   },
+   {
+    "locus": "sll1688",
+    "product": "threonine synthase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 733,
+  "y1": 281,
+  "x2": 779,
+  "y2": 298,
+  "url": "/dbget-bin/www_bget?syn:sll1440",
+  "id": "sll1440",
+  "label": "sll1440 (pdxH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1440",
+    "product": "pyridoxamine 5'-phosphate oxidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 575,
+  "y1": 262,
+  "x2": 621,
+  "y2": 279,
+  "url": "/dbget-bin/www_bget?syn:slr1503",
+  "id": "slr1503",
+  "label": "slr1503",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1503",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 599,
+  "y1": 281,
+  "x2": 645,
+  "y2": 298,
+  "url": "/dbget-bin/www_bget?syn:sll1440",
+  "id": "sll1440",
+  "label": "sll1440 (pdxH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1440",
+    "product": "pyridoxamine 5'-phosphate oxidase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 733,
+  "y1": 388,
+  "x2": 779,
+  "y2": 405,
+  "url": "/dbget-bin/www_bget?syn:slr1779",
+  "id": "slr1779",
+  "label": "slr1779 (pdxJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1779",
+    "product": "pyridoxal phosphate biosynthetic protein; PdxJ"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 885,
+  "y1": 322,
+  "x2": 959,
+  "y2": 347,
+  "url": "/kegg-bin/show_pathway?syn00010",
+  "id": "syn00010",
+  "label": "syn00010: Glycolysis / Gluconeogenesis",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 823,
+  "y1": 359,
+  "x2": 975,
+  "y2": 384,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 242,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00750",
+  "id": "syn00750",
+  "label": "syn00750: Vitamin B6 metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 125,
+  "y1": 508,
+  "x2": 241,
+  "y2": 542,
+  "url": "/kegg-bin/show_pathway?syn00030",
+  "id": "syn00030",
+  "label": "syn00030: Pentose phosphate pathway",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 240,
+  "y1": 330,
+  "x2": 381,
+  "y2": 364,
+  "url": "/kegg-bin/show_pathway?syn00630",
+  "id": "syn00630",
+  "label": "syn00630: Glyoxylate and dicarboxylate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 158,
+  "y1": 123,
+  "x2": 284,
+  "y2": 148,
+  "url": "/kegg-bin/show_pathway?syn00650",
+  "id": "syn00650",
+  "label": "syn00650: Butanoate metabolism",
+  "entry_type": "pathway"
+ },
+ {
+  "type": "rect",
+  "x1": 903,
+  "y1": 198,
+  "x2": 1026,
+  "y2": 223,
+  "url": "/kegg-bin/show_pathway?syn00730",
+  "id": "syn00730",
+  "label": "syn00730: Thiamine metabolism",
+  "entry_type": "pathway"
+ }
+]

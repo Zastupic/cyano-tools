@@ -1,0 +1,1136 @@
+[
+ {
+  "type": "circ",
+  "cx": 343,
+  "cy": 365,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 343,
+  "cy": 183,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 117,
+  "cy": 490,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00004",
+  "id": "C00004",
+  "label": "NADH",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 234,
+  "cy": 504,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00003",
+  "id": "C00003",
+  "label": "NAD+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 249,
+  "cy": 504,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 517,
+  "cy": 427,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00122",
+  "id": "C00122",
+  "label": "Fumarate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 699,
+  "cy": 182,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 699,
+  "cy": 403,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 913,
+  "cy": 182,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 872,
+  "cy": 382,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00007",
+  "id": "C00007",
+  "label": "Oxygen",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 953,
+  "cy": 382,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00001",
+  "id": "C00001",
+  "label": "H2O",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 913,
+  "cy": 382,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1113,
+  "cy": 188,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1063,
+  "cy": 481,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00008",
+  "id": "C00008",
+  "label": "ADP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1049,
+  "cy": 481,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00009",
+  "id": "C00009",
+  "label": "Orthophosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1112,
+  "cy": 491,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00080",
+  "id": "C00080",
+  "label": "H+",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 959,
+  "cy": 481,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00013",
+  "id": "C00013",
+  "label": "Diphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 860,
+  "cy": 481,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00536",
+  "id": "C00536",
+  "label": "Triphosphate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1161,
+  "cy": 491,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00002",
+  "id": "C00002",
+  "label": "ATP",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 1174,
+  "cy": 491,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00001",
+  "id": "C00001",
+  "label": "H2O",
+  "entry_type": "compound"
+ },
+ {
+  "type": "circ",
+  "cx": 438,
+  "cy": 427,
+  "r": 4,
+  "url": "/dbget-bin/www_bget?C00042",
+  "id": "C00042",
+  "label": "Succinate",
+  "entry_type": "compound"
+ },
+ {
+  "type": "rect",
+  "x1": 671,
+  "y1": 638,
+  "x2": 717,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll1262",
+  "id": "sll1262",
+  "label": "sll1262",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1262",
+    "product": "hypothetical protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 625,
+  "y1": 638,
+  "x2": 671,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:slr1623",
+  "id": "slr1623",
+  "label": "slr1623",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1623",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 579,
+  "y1": 638,
+  "x2": 625,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:ssr1386",
+  "id": "ssr1386",
+  "label": "ssr1386 (ndhL)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 533,
+  "y1": 638,
+  "x2": 579,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll0223",
+  "id": "sll0223",
+  "label": "sll0223 (ndhB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0223",
+    "product": "NADH dehydrogenase subunit 2"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 487,
+  "y1": 638,
+  "x2": 533,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll0027+syn:sll1733+syn:slr0331+syn:slr1291",
+  "id": "sll0027",
+  "label": "sll0027 (ndhD), sll1733 (ndhD3), slr0331 (ndhD), slr1291 (ndhD2)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0027",
+    "product": "NADH dehydrogenase subunit 4"
+   },
+   {
+    "locus": "sll1733",
+    "product": "NADH dehydrogenase subunit 4"
+   },
+   {
+    "locus": "slr0331",
+    "product": "NADH dehydrogenase subunit 4"
+   },
+   {
+    "locus": "slr1291",
+    "product": "NADH dehydrogenase subunit 4"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 441,
+  "y1": 638,
+  "x2": 487,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll0026+syn:sll1732+syn:slr0844",
+  "id": "sll0026",
+  "label": "sll0026 (ndhF), sll1732 (ndhF), slr0844 (ndhF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0026",
+    "product": "NADH dehydrogenase subunit 5"
+   },
+   {
+    "locus": "sll1732",
+    "product": "NADH dehydrogenase subunit 5"
+   },
+   {
+    "locus": "slr0844",
+    "product": "NADH dehydrogenase subunit 5"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 395,
+  "y1": 638,
+  "x2": 441,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll0522",
+  "id": "sll0522",
+  "label": "sll0522 (ndhE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0522",
+    "product": "NADH dehydrogenase subunit 4L"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 349,
+  "y1": 638,
+  "x2": 395,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll0521",
+  "id": "sll0521",
+  "label": "sll0521 (ndhG)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0521",
+    "product": "NADH dehydrogenase subunit 6"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 303,
+  "y1": 638,
+  "x2": 349,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll0520",
+  "id": "sll0520",
+  "label": "sll0520 (ndhI)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0520",
+    "product": "NADH dehydrogenase subunit; NdhI"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 257,
+  "y1": 638,
+  "x2": 303,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll0519",
+  "id": "sll0519",
+  "label": "sll0519 (ndhA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0519",
+    "product": "NADH dehydrogenase subunit 1"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 809,
+  "y1": 638,
+  "x2": 855,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll1223",
+  "id": "sll1223",
+  "label": "sll1223 (hoxU)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1223",
+    "product": "hydrogenase subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 763,
+  "y1": 638,
+  "x2": 809,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll1221",
+  "id": "sll1221",
+  "label": "sll1221 (hoxF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1221",
+    "product": "hydrogenase subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 717,
+  "y1": 638,
+  "x2": 763,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll1220",
+  "id": "sll1220",
+  "label": "sll1220",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1220",
+    "product": "potential NAD-reducing hydrogenase subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 211,
+  "y1": 638,
+  "x2": 257,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:slr0261",
+  "id": "slr0261",
+  "label": "slr0261 (ndhH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0261",
+    "product": "NADH dehydrogenase subunit 7"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 165,
+  "y1": 638,
+  "x2": 211,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:slr1281",
+  "id": "slr1281",
+  "label": "slr1281 (ndhJ)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1281",
+    "product": "NADH dehydrogenase subunit I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 119,
+  "y1": 638,
+  "x2": 165,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:sll8031+syn:slr1280",
+  "id": "sll8031",
+  "label": "sll8031 (ndhK2), slr1280 (ndhK)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll8031",
+    "product": "NADH dehydrogenase subunit"
+   },
+   {
+    "locus": "slr1280",
+    "product": "NADH dehydrogenase subunit; NdhK"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 73,
+  "y1": 638,
+  "x2": 119,
+  "y2": 655,
+  "url": "/dbget-bin/www_bget?syn:slr1279",
+  "id": "slr1279",
+  "label": "slr1279 (ndhC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1279",
+    "product": "NADH dehydrogenase subunit 3"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 810,
+  "y1": 836,
+  "x2": 856,
+  "y2": 853,
+  "url": "/dbget-bin/www_bget?syn:sll1898",
+  "id": "sll1898",
+  "label": "sll1898",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1898",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 258,
+  "y1": 867,
+  "x2": 304,
+  "y2": 884,
+  "url": "/dbget-bin/www_bget?syn:sll0813+syn:slr1136",
+  "id": "sll0813",
+  "label": "sll0813 (ctaC), slr1136 (ctaC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0813",
+    "product": "cytochrome c oxidase subunit II"
+   },
+   {
+    "locus": "slr1136",
+    "product": "cytochrome c oxidase subunit II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 212,
+  "y1": 867,
+  "x2": 258,
+  "y2": 884,
+  "url": "/dbget-bin/www_bget?syn:slr1137+syn:slr2082",
+  "id": "slr1137",
+  "label": "slr1137 (ctaD), slr2082 (ctaD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1137",
+    "product": "cytochrome c oxidase subunit I"
+   },
+   {
+    "locus": "slr2082",
+    "product": "cytochrome c oxidase subunit I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 166,
+  "y1": 867,
+  "x2": 212,
+  "y2": 884,
+  "url": "/dbget-bin/www_bget?syn:slr1138+syn:slr2083",
+  "id": "slr1138",
+  "label": "slr1138 (ctaE), slr2083 (ctaE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1138",
+    "product": "cytochrome c oxidase subunit III"
+   },
+   {
+    "locus": "slr2083",
+    "product": "cytochrome c oxidase subunit III"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 890,
+  "y1": 334,
+  "x2": 936,
+  "y2": 351,
+  "url": "/dbget-bin/www_bget?syn:sll0813+syn:slr1136+syn:slr1137+syn:slr1138+syn:slr2082+syn:slr2083",
+  "id": "sll0813",
+  "label": "sll0813 (ctaC), slr1136 (ctaC), slr1137 (ctaD), slr1138 (ctaE), slr2082 (ctaD), slr2083 (ctaE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0813",
+    "product": "cytochrome c oxidase subunit II"
+   },
+   {
+    "locus": "slr1136",
+    "product": "cytochrome c oxidase subunit II"
+   },
+   {
+    "locus": "slr1137",
+    "product": "cytochrome c oxidase subunit I"
+   },
+   {
+    "locus": "slr1138",
+    "product": "cytochrome c oxidase subunit III"
+   },
+   {
+    "locus": "slr2082",
+    "product": "cytochrome c oxidase subunit I"
+   },
+   {
+    "locus": "slr2083",
+    "product": "cytochrome c oxidase subunit III"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1066,
+  "y1": 427,
+  "x2": 1112,
+  "y2": 444,
+  "url": "/dbget-bin/www_bget?syn:sll1322+syn:sll1323+syn:sll1324+syn:sll1325+syn:sll1326+syn:sll1327+syn:slr1329+syn:slr1330+syn:ssl2615",
+  "id": "sll1322",
+  "label": "sll1322 (atpI), sll1323 (atpG), sll1324 (atpF), sll1325 (atpD), sll1326 (atpA), sll1327 (atpC), slr1329 (atpB), slr1330 (atpE), ssl2615 (atpH)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1322",
+    "product": "ATP synthase subunit a"
+   },
+   {
+    "locus": "sll1323",
+    "product": "ATP synthase subunit b'"
+   },
+   {
+    "locus": "sll1324",
+    "product": "ATP synthase subunit b"
+   },
+   {
+    "locus": "sll1325",
+    "product": "ATP synthase d subunit"
+   },
+   {
+    "locus": "sll1326",
+    "product": "ATP synthase a subunit"
+   },
+   {
+    "locus": "sll1327",
+    "product": "ATP synthase g subunit"
+   },
+   {
+    "locus": "slr1329",
+    "product": "ATP synthase b subunit"
+   },
+   {
+    "locus": "slr1330",
+    "product": "ATP synthase e subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 976,
+  "y1": 473,
+  "x2": 1022,
+  "y2": 490,
+  "url": "/dbget-bin/www_bget?syn:slr1622",
+  "id": "slr1622",
+  "label": "slr1622 (ppa)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1622",
+    "product": "inorganic pyrophosphatase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 886,
+  "y1": 462,
+  "x2": 932,
+  "y2": 479,
+  "url": "/dbget-bin/www_bget?syn:sll0290",
+  "id": "sll0290",
+  "label": "sll0290 (ppk)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0290",
+    "product": "polyphosphate kinase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 74,
+  "y1": 765,
+  "x2": 120,
+  "y2": 782,
+  "url": "/dbget-bin/www_bget?syn:slr0201",
+  "id": "slr0201",
+  "label": "slr0201 (hdrB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr0201",
+    "product": "heterodisulfide reductase subunit B"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 166,
+  "y1": 765,
+  "x2": 212,
+  "y2": 782,
+  "url": "/dbget-bin/www_bget?syn:slr1233",
+  "id": "slr1233",
+  "label": "slr1233 (frdA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1233",
+    "product": "succinate dehydrogenase flavoprotein subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 212,
+  "y1": 765,
+  "x2": 258,
+  "y2": 782,
+  "url": "/dbget-bin/www_bget?syn:sll0823+syn:sll1625",
+  "id": "sll0823",
+  "label": "sll0823 (sdhB), sll1625 (sdhB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0823",
+    "product": "succinate dehydrogenase iron-sulfur protein"
+   },
+   {
+    "locus": "sll1625",
+    "product": "succinate dehydrogenase iron-sulphur protein subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 671,
+  "y1": 894,
+  "x2": 717,
+  "y2": 911,
+  "url": "/dbget-bin/www_bget?syn:slr1380",
+  "id": "slr1380",
+  "label": "slr1380 (cydB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1380",
+    "product": "cytochrome oxidase d subunit II"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 625,
+  "y1": 894,
+  "x2": 671,
+  "y2": 911,
+  "url": "/dbget-bin/www_bget?syn:slr1379",
+  "id": "slr1379",
+  "label": "slr1379 (cydA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1379",
+    "product": "cytochrome oxidase d subunit I"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 74,
+  "y1": 850,
+  "x2": 120,
+  "y2": 867,
+  "url": "/dbget-bin/www_bget?syn:sll1899",
+  "id": "sll1899",
+  "label": "sll1899 (ctaB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1899",
+    "product": "cytochrome c oxidase folding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 74,
+  "y1": 827,
+  "x2": 120,
+  "y2": 844,
+  "url": "/dbget-bin/www_bget?syn:sll1899",
+  "id": "sll1899",
+  "label": "sll1899 (ctaB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1899",
+    "product": "cytochrome c oxidase folding protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 978,
+  "y1": 595,
+  "x2": 1024,
+  "y2": 612,
+  "url": "/dbget-bin/www_bget?syn:slr1329",
+  "id": "slr1329",
+  "label": "slr1329 (atpB)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1329",
+    "product": "ATP synthase b subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 932,
+  "y1": 595,
+  "x2": 978,
+  "y2": 612,
+  "url": "/dbget-bin/www_bget?syn:sll1326",
+  "id": "sll1326",
+  "label": "sll1326 (atpA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1326",
+    "product": "ATP synthase a subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1024,
+  "y1": 595,
+  "x2": 1070,
+  "y2": 612,
+  "url": "/dbget-bin/www_bget?syn:sll1327",
+  "id": "sll1327",
+  "label": "sll1327 (atpC)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1327",
+    "product": "ATP synthase g subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1070,
+  "y1": 595,
+  "x2": 1116,
+  "y2": 612,
+  "url": "/dbget-bin/www_bget?syn:sll1325",
+  "id": "sll1325",
+  "label": "sll1325 (atpD)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1325",
+    "product": "ATP synthase d subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1116,
+  "y1": 595,
+  "x2": 1162,
+  "y2": 612,
+  "url": "/dbget-bin/www_bget?syn:slr1330",
+  "id": "slr1330",
+  "label": "slr1330 (atpE)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "slr1330",
+    "product": "ATP synthase e subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 1024,
+  "y1": 612,
+  "x2": 1070,
+  "y2": 629,
+  "url": "/dbget-bin/www_bget?syn:ssl2615",
+  "id": "ssl2615",
+  "label": "ssl2615 (atpH)",
+  "entry_type": "gene",
+  "genes": []
+ },
+ {
+  "type": "rect",
+  "x1": 932,
+  "y1": 612,
+  "x2": 978,
+  "y2": 629,
+  "url": "/dbget-bin/www_bget?syn:sll1322",
+  "id": "sll1322",
+  "label": "sll1322 (atpI)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1322",
+    "product": "ATP synthase subunit a"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 978,
+  "y1": 612,
+  "x2": 1024,
+  "y2": 629,
+  "url": "/dbget-bin/www_bget?syn:sll1323+syn:sll1324",
+  "id": "sll1323",
+  "label": "sll1323 (atpG), sll1324 (atpF)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1323",
+    "product": "ATP synthase subunit b'"
+   },
+   {
+    "locus": "sll1324",
+    "product": "ATP synthase subunit b"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 456,
+  "y1": 376,
+  "x2": 502,
+  "y2": 393,
+  "url": "/dbget-bin/www_bget?syn:sll0823+syn:sll1625+syn:slr0201+syn:slr1233",
+  "id": "sll0823",
+  "label": "sll0823 (sdhB), sll1625 (sdhB), slr0201 (hdrB), slr1233 (frdA)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0823",
+    "product": "succinate dehydrogenase iron-sulfur protein"
+   },
+   {
+    "locus": "sll1625",
+    "product": "succinate dehydrogenase iron-sulphur protein subunit"
+   },
+   {
+    "locus": "slr0201",
+    "product": "heterodisulfide reductase subunit B"
+   },
+   {
+    "locus": "slr1233",
+    "product": "succinate dehydrogenase flavoprotein subunit"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 156,
+  "y1": 458,
+  "x2": 202,
+  "y2": 475,
+  "url": "/dbget-bin/www_bget?syn:sll0026+syn:sll0027+syn:sll0223+syn:sll0519+syn:sll0520+syn:sll0521+syn:sll0522+syn:sll1220+syn:sll1221+syn:sll1223+syn:sll1262+syn:sll1732+syn:sll1733+syn:sll8031+syn:slr0261+syn:slr0331+syn:slr0844+syn:slr1279+syn:slr1280+syn:slr1281+syn:slr1291+syn:slr1623+syn:ssr1386",
+  "id": "sll0026",
+  "label": "sll0026 (ndhF), sll0027 (ndhD), sll0223 (ndhB), sll0519 (ndhA), sll0520 (ndhI), sll0521 (ndhG), sll0522 (ndhE), sll1220, sll1221 (hoxF), sll1223 (hoxU), sll1262, sll1732 (ndhF), sll1733 (ndhD3), sll8031 (ndhK2), slr0261 (ndhH), slr0331 (ndhD), slr0844 (ndhF), slr1279 (ndhC), slr1280 (ndhK), slr1281 (ndhJ), slr1291 (ndhD2), slr1623, ssr1386 (ndhL)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll0026",
+    "product": "NADH dehydrogenase subunit 5"
+   },
+   {
+    "locus": "sll0027",
+    "product": "NADH dehydrogenase subunit 4"
+   },
+   {
+    "locus": "sll0223",
+    "product": "NADH dehydrogenase subunit 2"
+   },
+   {
+    "locus": "sll0519",
+    "product": "NADH dehydrogenase subunit 1"
+   },
+   {
+    "locus": "sll0520",
+    "product": "NADH dehydrogenase subunit; NdhI"
+   },
+   {
+    "locus": "sll0521",
+    "product": "NADH dehydrogenase subunit 6"
+   },
+   {
+    "locus": "sll0522",
+    "product": "NADH dehydrogenase subunit 4L"
+   },
+   {
+    "locus": "sll1220",
+    "product": "potential NAD-reducing hydrogenase subunit"
+   },
+   {
+    "locus": "sll1221",
+    "product": "hydrogenase subunit"
+   },
+   {
+    "locus": "sll1223",
+    "product": "hydrogenase subunit"
+   },
+   {
+    "locus": "sll1262",
+    "product": "hypothetical protein"
+   },
+   {
+    "locus": "sll1732",
+    "product": "NADH dehydrogenase subunit 5"
+   },
+   {
+    "locus": "sll1733",
+    "product": "NADH dehydrogenase subunit 4"
+   },
+   {
+    "locus": "sll8031",
+    "product": "NADH dehydrogenase subunit"
+   },
+   {
+    "locus": "slr0261",
+    "product": "NADH dehydrogenase subunit 7"
+   },
+   {
+    "locus": "slr0331",
+    "product": "NADH dehydrogenase subunit 4"
+   },
+   {
+    "locus": "slr0844",
+    "product": "NADH dehydrogenase subunit 5"
+   },
+   {
+    "locus": "slr1279",
+    "product": "NADH dehydrogenase subunit 3"
+   },
+   {
+    "locus": "slr1280",
+    "product": "NADH dehydrogenase subunit; NdhK"
+   },
+   {
+    "locus": "slr1281",
+    "product": "NADH dehydrogenase subunit I"
+   },
+   {
+    "locus": "slr1291",
+    "product": "NADH dehydrogenase subunit 4"
+   },
+   {
+    "locus": "slr1623",
+    "product": "unknown protein"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 156,
+  "y1": 477,
+  "x2": 202,
+  "y2": 494,
+  "url": "/dbget-bin/www_bget?syn:sll1484+syn:slr0851",
+  "id": "sll1484",
+  "label": "sll1484 (ndh), slr0851 (ndh)",
+  "entry_type": "gene",
+  "genes": [
+   {
+    "locus": "sll1484",
+    "product": "NADH dehydrogenase"
+   },
+   {
+    "locus": "slr0851",
+    "product": "NADH dehydrogenase"
+   }
+  ]
+ },
+ {
+  "type": "rect",
+  "x1": 39,
+  "y1": 44,
+  "x2": 282,
+  "y2": 69,
+  "url": "/dbget-bin/www_bget?syn00190",
+  "id": "syn00190",
+  "label": "syn00190: Oxidative phosphorylation",
+  "entry_type": "pathway"
+ }
+]
