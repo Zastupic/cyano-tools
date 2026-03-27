@@ -8,6 +8,7 @@ let lastFluxes     = {};      // rxnId → flux value from most recent FBA
 let rxnNameMap     = {};      // rxnId → display name
 let cy             = null;    // Cytoscape instance
 let subsystemChart = null;    // Chart.js instance
+let biomassRxnId   = '';      // objective/biomass reaction ID from model info
 
 // ── Custom reactions state ────────────────────────────────────────────────────
 let customReactions = [];   // [{id, name, lb, ub, stoich, new_mets}] — sent with every API call
@@ -234,6 +235,96 @@ function simKoOpenKEGG() {
     window.open(`https://www.genome.jp/entry/syn:${encodeURIComponent(keggId)}`, '_blank');
 }
 
+// ── Gene KO sidebar autocomplete ─────────────────────────────────────────────
+let _koAcHighlight = -1;  // currently highlighted row index
+
+function simKoDirectFilter(q) {
+    const box = document.getElementById('sim-ko-autocomplete');
+    if (!box) return;
+    q = q.trim().toLowerCase();
+    if (!q || !allGenes.length) { box.style.display = 'none'; return; }
+
+    const matches = allGenes.filter(g =>
+        g.id.toLowerCase().includes(q) ||
+        (g.name && g.name.toLowerCase().includes(q))
+    ).slice(0, 20);
+
+    if (!matches.length) { box.style.display = 'none'; return; }
+
+    box.innerHTML = matches.map((g, i) => {
+        const alreadyKO = simKoGetGenes().includes(g.id);
+        return `<div class="sim-ko-ac-row px-2 py-1" data-gene="${g.id}"
+                     style="cursor:pointer;${alreadyKO ? 'color:#aaa;' : ''}"
+                     onmousedown="simKoDirectSelect('${g.id}')">
+            <strong>${g.id}</strong>
+            ${g.name ? `<span class="text-muted ml-1">${g.name}</span>` : ''}
+            ${alreadyKO ? '<span class="badge badge-secondary ml-1">KO</span>' : ''}
+        </div>`;
+    }).join('');
+    _koAcHighlight = -1;
+    box.style.display = 'block';
+}
+
+function simKoDirectKeydown(e) {
+    const box = document.getElementById('sim-ko-autocomplete');
+    const rows = box ? box.querySelectorAll('.sim-ko-ac-row') : [];
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        _koAcHighlight = Math.min(_koAcHighlight + 1, rows.length - 1);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        _koAcHighlight = Math.max(_koAcHighlight - 1, 0);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (_koAcHighlight >= 0 && rows[_koAcHighlight]) {
+            simKoDirectSelect(rows[_koAcHighlight].dataset.gene);
+        } else {
+            simKoDirectAdd();
+        }
+        return;
+    } else if (e.key === 'Escape') {
+        if (box) box.style.display = 'none';
+        return;
+    } else { return; }
+    rows.forEach((r, i) => r.style.background = i === _koAcHighlight ? '#e8f0fe' : '');
+}
+
+function simKoDirectSelect(geneId) {
+    const inp = document.getElementById('sim-ko-direct-input');
+    if (inp) inp.value = geneId;
+    const box = document.getElementById('sim-ko-autocomplete');
+    if (box) box.style.display = 'none';
+    addGeneToFBAKO(geneId, null);
+    if (inp) { inp.value = ''; inp.focus(); }
+}
+
+function simKoDirectAdd() {
+    const inp = document.getElementById('sim-ko-direct-input');
+    if (!inp) return;
+    const q = inp.value.trim();
+    if (!q) return;
+    // exact match first (case-insensitive on id or name)
+    const gene = allGenes.find(g =>
+        g.id.toLowerCase() === q.toLowerCase() ||
+        (g.name && g.name.toLowerCase() === q.toLowerCase())
+    );
+    if (gene) {
+        simKoDirectSelect(gene.id);
+    } else {
+        // flash red to signal not found
+        inp.classList.add('is-invalid');
+        setTimeout(() => inp.classList.remove('is-invalid'), 1200);
+    }
+}
+
+// Close autocomplete when clicking outside
+document.addEventListener('click', e => {
+    if (!e.target.closest('#sim-pg-fba-ko')) {
+        const box = document.getElementById('sim-ko-autocomplete');
+        if (box) box.style.display = 'none';
+    }
+});
+
 // ── Concentration → uptake rate converter ─────────────────────────────────────
 // Henry's constant for CO₂ dissolution at 25°C: 34 mmol/(L·atm)
 // NOTE: Henry's law dissolution is NOT used for sparged-CO₂ photobioreactors —
@@ -454,8 +545,13 @@ function syncMedPhoton() {
     if (lbl) lbl.textContent = jstar.toFixed(1);
 }
 
+// IDs of medium sliders where the maximum value means "unconstrained" (no upper bound in model)
+const MED_UNCONSTRAINED_IDS = new Set(['med-co2', 'med-no3', 'med-nh4', 'med-glc']);
+
 function medSlider(input, valId) {
-    document.getElementById(valId).textContent = input.value;
+    const atMax = MED_UNCONSTRAINED_IDS.has(input.id) &&
+                  parseFloat(input.value) >= parseFloat(input.max);
+    document.getElementById(valId).textContent = atMax ? '∞' : input.value;
 }
 
 function medNudge(id, valId, dir) {
@@ -463,7 +559,7 @@ function medNudge(id, valId, dir) {
     if (!el) return;
     const step = parseFloat(el.step) || 1;
     el.value = Math.max(parseFloat(el.min), Math.min(parseFloat(el.max), parseFloat(el.value) + dir * step));
-    document.getElementById(valId).textContent = el.value;
+    medSlider(el, valId);
 }
 
 // ── Compartment colours ───────────────────────────────────────────────────────
@@ -512,6 +608,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-prefill concentration table when the panel is opened; show X on load
     document.getElementById('med-conc-panel')?.addEventListener('show.bs.collapse', medPrefillConcentrations);
     medUpdateX();
+
+    // Make all slider value labels click-to-edit
+    initSliderValueLabels();
 });
 
 // ── Loading overlay ───────────────────────────────────────────────────────────
@@ -536,6 +635,7 @@ async function loadStats() {
         document.getElementById('n-met').textContent  = d.metabolites;
         document.getElementById('n-gen').textContent  = d.genes;
         document.getElementById('n-comp').textContent = d.compartments.join(', ');
+        biomassRxnId = d.biomass_rxn || '';
 
         const sel = document.getElementById('subsystem-select');
         d.subsystems.forEach(s => {
@@ -789,14 +889,45 @@ function runKnockout(geneId, btn) {
                       : 'text-success';                              // Non-essential: ≥ 50% WT
             span.className = `ko-result ml-1 small ${cls}`;
             span.textContent = `${pct.toFixed(1)}% WT`;
+            // Store for sort
+            const row = btn.closest('tr');
+            if (row) row.dataset.koPct = pct.toFixed(4);
         } else {
             span.className = 'ko-result ml-1 small text-danger font-weight-bold';
             span.textContent = '0% WT';
+            const row = btn.closest('tr');
+            if (row) row.dataset.koPct = '0';
         }
         btn.disabled = false;
         btn.textContent = 'Test KO';
     })
     .catch(() => { btn.disabled = false; btn.textContent = 'Test KO'; });
+}
+
+// ── Gene KO table sort ────────────────────────────────────────────────────────
+let _koSortAsc = true;
+
+function sortGeneTableByKO() {
+    const tbody = document.querySelector('#gene-table tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    // Partition: rows with a result vs rows without
+    const withResult = rows.filter(r => r.dataset.koPct !== undefined);
+    const withoutResult = rows.filter(r => r.dataset.koPct === undefined);
+
+    withResult.sort((a, b) => {
+        const va = parseFloat(a.dataset.koPct);
+        const vb = parseFloat(b.dataset.koPct);
+        return _koSortAsc ? va - vb : vb - va;
+    });
+
+    // Rows without results stay at the bottom
+    [...withResult, ...withoutResult].forEach(r => tbody.appendChild(r));
+
+    const icon = document.getElementById('ko-sort-icon');
+    if (icon) icon.className = _koSortAsc ? 'fa fa-sort-asc' : 'fa fa-sort-desc';
+    _koSortAsc = !_koSortAsc;
 }
 
 // ── Network (Cytoscape.js) ────────────────────────────────────────────────────
@@ -1061,18 +1192,65 @@ function runFBA() {
     });
 }
 
+// ── "What's limiting?" — active exchange constraint diagnosis ──────────────────
+// Friendly display names for common exchange reaction IDs
+const _EXCHANGE_LABELS = {
+    'EX_photon_e1_e': 'Photons (J*ᵢ)',
+    'EX_co2_e':       'CO₂',
+    'EX_no3_e':       'Nitrate (NO₃⁻)',
+    'EX_nh4_e':       'Ammonium (NH₄⁺)',
+    'EX_glc__D_e':    'Glucose',
+    'EX_pi_e':        'Phosphate (Pᵢ)',
+    'EX_so4_e':       'Sulfate (SO₄²⁻)',
+    'EX_fe2_e':       'Iron (Fe²⁺)',
+    'EX_mn2_e':       'Manganese (Mn²⁺)',
+    'EX_zn2_e':       'Zinc (Zn²⁺)',
+    'EX_cu2_e':       'Copper (Cu²⁺)',
+    'EX_o2_e':        'O₂ (secretion)',
+};
+
+function renderLimitingConstraints(fluxes, constraints) {
+    const box = document.getElementById('fba-result-box');
+    if (!box) return;
+
+    const active = [];
+    Object.entries(constraints).forEach(([rxnId, bounds]) => {
+        const flux = fluxes[rxnId];
+        if (flux == null) return;
+        // A lower-bound is active when the actual flux equals (or is very close to) the bound
+        if (bounds.lb != null) {
+            const lb = parseFloat(bounds.lb);
+            if (Math.abs(flux - lb) < Math.abs(lb) * 0.001 + 1e-6) {
+                const label = _EXCHANGE_LABELS[rxnId] || rxnId;
+                active.push(`${label} (${flux.toFixed(2)} mmol·gDW⁻¹·h⁻¹)`);
+            }
+        }
+    });
+
+    if (active.length === 0) return;
+
+    const div = document.createElement('div');
+    div.className = 'alert alert-warning py-1 px-2 mb-1';
+    div.style.fontSize = '0.8em';
+    div.innerHTML = `<i class="fa fa-exclamation-triangle"></i> <strong>Active constraints (limiting):</strong> ${active.map(esc).join(' &nbsp;·&nbsp; ')}`;
+    box.appendChild(div);
+}
+
 // ── FBA flux table with sparklines ────────────────────────────────────────────
 function populateFBATable(fluxes) {
     const sorted  = Object.entries(fluxes).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
     const maxAbs  = Math.abs(sorted[0]?.[1] || 1);
     const tbody   = document.querySelector('#fba-flux-table tbody');
+    const subsystemLookup = {};
+    allReactions.forEach(r => { subsystemLookup[r.id] = r.subsystem || ''; });
 
     tbody.innerHTML = sorted.map(([id, v]) => {
         const pct      = Math.min(Math.abs(v) / maxAbs * 100, 100).toFixed(1);
         const barColor = v >= 0 ? '#4e8dc7' : '#c0392b';
         const valClass = v >= 0 ? 'text-primary' : 'text-danger';
+        const sub      = subsystemLookup[id] || '';
 
-        return `<tr>
+        return `<tr data-subsystem="${esc(sub)}">
             <td><code>${esc(id)}</code></td>
             <td style="font-size:0.82em;">${esc(rxnNameMap[id] || '—')}</td>
             <td class="${valClass}" style="white-space:nowrap;">${v.toFixed(4)}</td>
@@ -1083,6 +1261,12 @@ function populateFBATable(fluxes) {
             </td>
         </tr>`;
     }).join('');
+
+    // Reset search filter and count label
+    const searchEl = document.getElementById('fba-flux-search');
+    if (searchEl) searchEl.value = '';
+    const countEl = document.getElementById('fba-flux-count');
+    if (countEl) countEl.textContent = `${sorted.length} reactions`;
 }
 
 // ── Subsystem activity bar chart ──────────────────────────────────────────────
@@ -1312,12 +1496,15 @@ function filterTable(tableId, inputId, countLabelId) {
     const rows = document.querySelectorAll(`#${tableId} tbody tr`);
     let shown  = 0;
     rows.forEach(row => {
-        const visible = row.textContent.toLowerCase().includes(q);
+        // Also search data-subsystem attribute when present (FBA flux table)
+        const haystack = row.textContent.toLowerCase() +
+            (row.dataset.subsystem ? ' ' + row.dataset.subsystem.toLowerCase() : '');
+        const visible = haystack.includes(q);
         row.style.display = visible ? '' : 'none';
         if (visible) shown++;
     });
     const label = document.getElementById(countLabelId);
-    if (label) label.textContent = q ? `${shown} / ${rows.length} shown` : `${rows.length} total`;
+    if (label) label.textContent = q ? `${shown} / ${rows.length} shown` : `${rows.length} reactions`;
 }
 
 // ── Analysis tab wiring ───────────────────────────────────────────────────────
@@ -1378,6 +1565,7 @@ function runFBAwithPFBA() {
                 <span class="float-right text-muted small">${Object.keys(d.fluxes).length} active reactions</span>
             </div>`;
             lastFluxes = d.fluxes;
+            renderLimitingConstraints(d.fluxes, constraints);
             populateFBATable(d.fluxes);
             renderSubsystemChart(d.fluxes);
             simMarkFBAPoint(d.objective, d.fluxes);
@@ -1665,6 +1853,42 @@ function renderSimFbaSweep(d) {
             { type: 'line', data: { datasets: oDs },
               options: xyLineOpts('Photon uptake J_I (mmol·gDW⁻¹·h⁻¹)', 'O₂ evolution (mmol·gDW⁻¹·h⁻¹)', hasRef) });
     }
+
+    renderFbaEfficiencyBox(d);
+}
+
+// ── FBA efficiency summary box (below light sweep charts) ────────────────────
+function renderFbaEfficiencyBox(d) {
+    const box = document.getElementById('sim-fba-efficiency-box');
+    if (!box) return;
+
+    const p  = simGetParams();
+    const I0 = p.I0;
+
+    // Find nearest FBA point to current I₀
+    const fbaPoint = d.points.reduce((best, pt) => {
+        const ptI = pt.photon / (p.alpha * 3.6);   // convert back to µmol·m⁻²·s⁻¹
+        return Math.abs(ptI - I0) < Math.abs((best.photon / (p.alpha * 3.6)) - I0) ? pt : best;
+    }, d.points[0]);
+    if (!fbaPoint) { box.style.display = 'none'; return; }
+
+    const muFBA    = fbaPoint.growth;
+    const muHoeper = Math.max(0, simHoperMu(I0, p.XA, p.alpha, p.KL, p.YBM, p.kd, p.ngam_photon, 0));
+    const eff      = muFBA > 1e-6 ? (muHoeper / muFBA * 100) : 0;
+    const INearest = (fbaPoint.photon / (p.alpha * 3.6)).toFixed(0);
+
+    box.style.display = '';
+    box.innerHTML = `
+        <div class="alert alert-light border py-2 px-3" style="font-size:0.81em;">
+            <strong>At I₀ = ${I0} µmol·m⁻²·s⁻¹</strong>
+            (nearest FBA point: ${INearest} µmol·m⁻²·s⁻¹):
+            &nbsp; μ<sub>FBA ceiling</sub> = <strong>${muFBA.toFixed(4)} h⁻¹</strong>
+            &nbsp;·&nbsp; μ<sub>Höper</sub> = <strong>${muHoeper.toFixed(4)} h⁻¹</strong>
+            &nbsp;·&nbsp; Efficiency = <strong>${eff.toFixed(1)}%</strong>
+            <span class="text-muted ml-1" title="Fraction of the stoichiometric ceiling actually achieved after accounting for photodamage (kd) and maintenance (NGAMphoton).">
+                <i class="fa fa-info-circle"></i>
+            </span>
+        </div>`;
 }
 
 function simLockFbaRef() {
@@ -1700,8 +1924,11 @@ function xyLineOpts(xLabel, yLabel, showLegend) {
 }
 
 // ── Production envelope ───────────────────────────────────────────────────────
+let peLastData2 = null;   // second product envelope (optional)
+
 function runProductionEnvelope() {
-    const rxn = document.getElementById('pe-rxn').value.trim();
+    const rxn  = document.getElementById('pe-rxn').value.trim();
+    const rxn2 = document.getElementById('pe-rxn2')?.value.trim() || '';
     if (!rxn) { showAnalysisError('pe-error', 'Enter a product reaction ID.'); return; }
 
     const btn = document.getElementById('run-pe-btn');
@@ -1709,23 +1936,35 @@ function runProductionEnvelope() {
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Computing…';
     document.getElementById('pe-error').style.display      = 'none';
     document.getElementById('pe-chart-wrap').style.display = 'none';
+    peLastData2 = null;
 
-    fetch('/api/metabolic/production_envelope', {
+    const commonBody = {
+        points:           parseInt(document.getElementById('pe-points').value) || 20,
+        constrained:      document.getElementById('pe-constrained').checked,
+        custom_reactions: customReactions,
+    };
+
+    const req1 = fetch('/api/metabolic/production_envelope', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            product_rxn:      rxn,
-            points:           parseInt(document.getElementById('pe-points').value) || 20,
-            constrained:      document.getElementById('pe-constrained').checked,
-            custom_reactions: customReactions,
-        }),
-    })
-    .then(r => r.json())
-    .then(d => {
+        body: JSON.stringify({ ...commonBody, product_rxn: rxn }),
+    }).then(r => r.json());
+
+    const req2 = rxn2
+        ? fetch('/api/metabolic/production_envelope', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...commonBody, product_rxn: rxn2 }),
+          }).then(r => r.json())
+        : Promise.resolve(null);
+
+    Promise.all([req1, req2])
+    .then(([d, d2]) => {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa fa-play"></i> Compute envelope';
         if (d.error) { showAnalysisError('pe-error', d.error); return; }
-        peLastData = d;
+        peLastData  = d;
+        peLastData2 = d2 && !d2.error ? d2 : null;
         showRefBar('pe');
         renderProductionEnvelope(d);
     })
@@ -1739,6 +1978,7 @@ function runProductionEnvelope() {
 function renderProductionEnvelope(d) {
     const pts    = d.points;
     const hasRef = !!peRefData;
+    const hasD2  = !!peLastData2;
     const refPts = peRefData?.points || [];
 
     document.getElementById('pe-chart-wrap').style.display = '';
@@ -1746,23 +1986,46 @@ function renderProductionEnvelope(d) {
     // Use {x,y} data so current and reference can have different max_growth
     const curMax = pts.map(p => ({ x: p.growth, y: p.flux_max }));
     const curMin = pts.map(p => ({ x: p.growth, y: p.flux_min }));
+    const rxn1Label = esc(d.product_rxn);
+    const rxn2Label = hasD2 ? esc(peLastData2.product_rxn) : '';
 
     const datasets = [
         {
-            label: hasRef ? 'Current (max)' : 'Max product flux',
+            label: hasD2 ? `${rxn1Label} (max)` : (hasRef ? 'Current (max)' : 'Max product flux'),
             data: curMax,
             borderColor: '#1a64c8',
             backgroundColor: 'rgba(26,100,200,0.12)',
             borderWidth: 2, pointRadius: 2, fill: '+1', tension: 0.2,
         },
         {
-            label: hasRef ? 'Current (min)' : 'Min product flux',
+            label: hasD2 ? `${rxn1Label} (min)` : (hasRef ? 'Current (min)' : 'Min product flux'),
             data: curMin,
             borderColor: 'rgba(26,100,200,0.35)',
             backgroundColor: 'rgba(26,100,200,0.04)',
             borderWidth: 1, pointRadius: 0, fill: false, tension: 0.2,
         },
     ];
+
+    // Second product overlay (orange)
+    if (hasD2) {
+        const d2pts = peLastData2.points;
+        datasets.push(
+            {
+                label: `${rxn2Label} (max)`,
+                data: d2pts.map(p => ({ x: p.growth, y: p.flux_max })),
+                borderColor: '#e67e22',
+                backgroundColor: 'rgba(230,126,34,0.10)',
+                borderWidth: 2, pointRadius: 2, fill: '+1', tension: 0.2,
+            },
+            {
+                label: `${rxn2Label} (min)`,
+                data: d2pts.map(p => ({ x: p.growth, y: p.flux_min })),
+                borderColor: 'rgba(230,126,34,0.4)',
+                backgroundColor: 'rgba(230,126,34,0.04)',
+                borderWidth: 1, pointRadius: 0, fill: false, tension: 0.2,
+            }
+        );
+    }
 
     if (hasRef) {
         datasets.push(
@@ -1785,6 +2048,10 @@ function renderProductionEnvelope(d) {
         );
     }
 
+    const yAxisLabel = hasD2
+        ? `Product flux (mmol·gDW⁻¹·h⁻¹)`
+        : `${rxn1Label} flux (mmol·gDW⁻¹·h⁻¹)`;
+
     if (peChart) peChart.destroy();
     peChart = new Chart(document.getElementById('pe-chart').getContext('2d'), {
         type: 'line',
@@ -1797,7 +2064,7 @@ function renderProductionEnvelope(d) {
             },
             scales: {
                 x: { type: 'linear', title: { display: true, text: 'Growth rate (h⁻¹)', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                y: { title: { display: true, text: `${esc(d.product_rxn)} flux (mmol·gDW⁻¹·h⁻¹)`, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                y: { title: { display: true, text: yAxisLabel, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
             },
         },
     });
@@ -1814,6 +2081,8 @@ const EN_RESOURCES = [
     { key: 'nadph_per_unit',   label: 'NADPH',     unit: 'mmol/mmol', color: '#f39c12' },
 ];
 
+let enBiomassData = null;   // energetics of biomass reaction for relative cost comparison
+
 function runEnergetics() {
     const rxn = document.getElementById('en-rxn').value.trim();
     if (!rxn) { showAnalysisError('en-error', 'Enter a target reaction ID.'); return; }
@@ -1824,21 +2093,33 @@ function runEnergetics() {
     document.getElementById('en-error').style.display   = 'none';
     document.getElementById('en-results').style.display = 'none';
 
-    fetch('/api/metabolic/energetics', {
+    const commonOpts = {
+        constrained:      document.getElementById('en-constrained').checked,
+        custom_reactions: customReactions,
+    };
+
+    const reqProduct = fetch('/api/metabolic/energetics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            target_rxn:       rxn,
-            constrained:      document.getElementById('en-constrained').checked,
-            custom_reactions: customReactions,
-        }),
-    })
-    .then(r => r.json())
-    .then(d => {
+        body: JSON.stringify({ ...commonOpts, target_rxn: rxn }),
+    }).then(r => r.json());
+
+    // Also fetch biomass energetics for relative cost — silently skip if it fails
+    const reqBiomass = (biomassRxnId && biomassRxnId !== rxn)
+        ? fetch('/api/metabolic/energetics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...commonOpts, target_rxn: biomassRxnId }),
+          }).then(r => r.json()).catch(() => null)
+        : Promise.resolve(null);
+
+    Promise.all([reqProduct, reqBiomass])
+    .then(([d, db]) => {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa fa-play"></i> Calculate';
         if (d.error) { showAnalysisError('en-error', d.error); return; }
-        enLastData = d;
+        enLastData    = d;
+        enBiomassData = (db && !db.error) ? db : null;
         showRefBar('en');
         renderEnergetics(d);
     })
@@ -1928,6 +2209,39 @@ function renderEnergetics(d) {
             },
         },
     });
+
+    // ── Relative-to-biomass comparison ──────────────────────────────────────
+    const bmBox = document.getElementById('en-biomass-compare');
+    if (!bmBox) return;
+    if (!enBiomassData) { bmBox.style.display = 'none'; return; }
+
+    const bmRows = EN_RESOURCES.filter(r => d[r.key] != null && d[r.key] > 0 && enBiomassData[r.key] != null && enBiomassData[r.key] > 0);
+    if (bmRows.length === 0) { bmBox.style.display = 'none'; return; }
+
+    bmBox.style.display = '';
+    bmBox.innerHTML = `
+        <div class="mt-3 border-top pt-2">
+            <p class="small font-weight-bold text-muted mb-1">
+                <i class="fa fa-balance-scale"></i>
+                Cost relative to biomass synthesis (<code>${esc(biomassRxnId)}</code>):
+                <span class="text-muted font-weight-normal" style="font-size:0.85em;">100% = same cost as producing 1 mmol biomass</span>
+            </p>
+            <table class="table table-sm table-bordered" style="font-size:0.82em;">
+                <thead class="thead-light"><tr><th>Resource</th><th>Product cost</th><th>Biomass cost</th><th>Ratio</th></tr></thead>
+                <tbody>${bmRows.map(r => {
+                    const vProd = d[r.key];
+                    const vBm   = enBiomassData[r.key];
+                    const ratio = (vProd / vBm * 100).toFixed(1);
+                    const cls   = parseFloat(ratio) > 100 ? 'text-danger' : parseFloat(ratio) < 50 ? 'text-success' : '';
+                    return `<tr>
+                        <td>${r.label}</td>
+                        <td>${vProd}</td>
+                        <td class="text-muted">${vBm}</td>
+                        <td class="${cls} font-weight-bold">${ratio}%</td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>
+        </div>`;
 }
 
 function showAnalysisError(elId, msg) {
@@ -2180,6 +2494,18 @@ function simRenderGrowthCurve(p) {
             borderColor: 'rgba(120,120,120,0.7)', backgroundColor: 'rgba(0,0,0,0)',
             fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
             borderDash: [6, 4],
+        });
+    }
+
+    // Saved scenario overlays (dashed colored lines)
+    for (const sc of scenarioGetOverlayCurves()) {
+        datasets.push({
+            label: sc.label,
+            data: sc.pts,
+            borderColor: sc.color,
+            backgroundColor: 'rgba(0,0,0,0)',
+            fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
+            borderDash: [5, 4],
         });
     }
 
@@ -2922,6 +3248,386 @@ async function simCompareWTvsKO() {
     }
 }
 
+// ── Scenario palette ─────────────────────────────────────────────────────────
+const SCENARIO_STORAGE_KEY = 'metabolic_scenarios_v1';
+const SCENARIO_MAX = 5;
+const SCENARIO_COLORS = ['#1a64c8','#27ae60','#e74c3c','#9b59b6','#e67e22'];
+
+function _scenarioLoad() {
+    try { return JSON.parse(localStorage.getItem(SCENARIO_STORAGE_KEY) || '[]'); } catch { return []; }
+}
+function _scenarioSave(list) {
+    localStorage.setItem(SCENARIO_STORAGE_KEY, JSON.stringify(list));
+}
+
+/** Capture all current simulation state into a scenario object. */
+function scenarioCaptureState(name) {
+    const p = simGetParams();
+    const sliderIds = [
+        'sim-I0','sim-XA','sim-alpha','sim-KL','sim-YBM','sim-kd','sim-ngam-photon',
+        'sim-rho0','sim-tend','sim-yx',
+        'med-co2','med-no3','med-nh4','med-glc','med-pi','med-so4','med-fe2','med-mn2','med-zn2','med-cu2',
+    ];
+    const sliders = {};
+    sliderIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) sliders[id] = parseFloat(el.value);
+    });
+    return {
+        name,
+        timestamp: Date.now(),
+        sliders,
+        ko_genes:        simKoGetGenes(),
+        custom_reactions: JSON.parse(JSON.stringify(customReactions)),
+        fba_result:       Object.keys(lastFluxes).length > 0 ? { fluxes: lastFluxes } : null,
+        mu_fba:           document.querySelector('#fba-result-box .alert-success strong')?.textContent?.match(/[\d.]+/)?.[0] || null,
+    };
+}
+
+/** Restore a scenario's sliders + KO genes + custom reactions. */
+function scenarioRestore(sc) {
+    // Restore sliders
+    Object.entries(sc.sliders || {}).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = val;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    // Restore KO genes
+    simKoSetGenes(sc.ko_genes || []);
+    // Restore custom reactions
+    customReactions = JSON.parse(JSON.stringify(sc.custom_reactions || []));
+    _crRefreshList();
+    scenarioRenderList();
+}
+
+function scenarioSave() {
+    const nameInput = document.getElementById('scenario-name-input');
+    const name = (nameInput?.value || '').trim() || `Scenario ${new Date().toLocaleTimeString()}`;
+    const list = _scenarioLoad();
+    if (list.length >= SCENARIO_MAX) list.shift();   // drop oldest when full
+    list.push(scenarioCaptureState(name));
+    _scenarioSave(list);
+    if (nameInput) nameInput.value = '';
+    scenarioRenderList();
+}
+
+function scenarioDelete(idx) {
+    const list = _scenarioLoad();
+    list.splice(idx, 1);
+    _scenarioSave(list);
+    scenarioRenderList();
+    simRecompute();   // redraw growth curve without deleted scenario
+}
+
+function scenarioClearAll() {
+    _scenarioSave([]);
+    scenarioRenderList();
+    simRecompute();
+}
+
+function scenarioRenderList() {
+    const list = _scenarioLoad();
+    const container = document.getElementById('scenario-list');
+    if (!container) return;
+
+    const hint = document.getElementById('scenario-hint');
+    if (hint) hint.style.display = list.length ? 'none' : '';
+
+    if (list.length === 0) { container.innerHTML = ''; return; }
+
+    container.innerHTML = list.map((sc, i) => {
+        const color = SCENARIO_COLORS[i % SCENARIO_COLORS.length];
+        const muStr = sc.mu_fba ? ` — μ = ${sc.mu_fba} h⁻¹` : '';
+        const koStr = sc.ko_genes?.length ? ` · KO: ${sc.ko_genes.slice(0,3).join(', ')}${sc.ko_genes.length > 3 ? ' …' : ''}` : '';
+        const crStr = sc.custom_reactions?.length ? ` · +${sc.custom_reactions.length} rxn(s)` : '';
+        return `<div class="d-flex align-items-center mb-1 py-1 px-2 border rounded" style="background:#fafafa;">
+            <span class="mr-2" style="display:inline-block;width:12px;height:12px;border-radius:2px;background:${color};flex-shrink:0;"></span>
+            <span class="flex-fill text-truncate" title="${esc(sc.name)}${muStr}${koStr}${crStr}">
+                <strong>${esc(sc.name)}</strong>
+                <span class="text-muted" style="font-size:0.78em;">${muStr}${koStr}${crStr}</span>
+            </span>
+            <button class="btn btn-xs btn-outline-secondary py-0 px-1 ml-1" style="font-size:0.72em;" onclick="scenarioRestore((_scenarioLoad())[${i}])" title="Restore parameters">
+                <i class="fa fa-undo"></i>
+            </button>
+            <button class="btn btn-xs btn-link text-danger py-0 px-1 ml-1" style="font-size:0.8em;" onclick="scenarioDelete(${i})" title="Delete">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>`;
+    }).join('');
+}
+
+/** Return saved scenario curves for overlay on the growth chart.
+ *  Each element: { label, color, pts: [{x, y}] } using current biophysical params. */
+function scenarioGetOverlayCurves() {
+    const list = _scenarioLoad();
+    if (list.length === 0) return [];
+    return list.map((sc, i) => {
+        const p = sc.sliders || {};
+        const alpha       = p['sim-alpha']       || 0.13;
+        const KL          = p['sim-KL']          || 119;
+        const YBM         = p['sim-YBM']         || 1.84;
+        const kd          = p['sim-kd']          || 0.07;
+        const ngam_photon = p['sim-ngam-photon'] || 14.4;
+        const XA          = p['sim-XA']          || 30;
+        const Imax        = Math.max((p['sim-I0'] || 660) * 2.2, 600);
+        const N = 200;
+        const pts = [];
+        for (let j = 0; j <= N; j++) {
+            const I = (j / N) * Imax;
+            pts.push({ x: I, y: Math.max(0, simHoperMu(I, XA, alpha, KL, YBM, kd, ngam_photon, 0)) });
+        }
+        return { label: sc.name, color: SCENARIO_COLORS[i % SCENARIO_COLORS.length], pts };
+    });
+}
+
+// Wire chevron toggle + URL state restore
+document.addEventListener('DOMContentLoaded', () => {
+    scenarioRenderList();
+    urlStateInit();   // restore from #state= fragment if present
+    document.getElementById('scenario-body')?.addEventListener('show.bs.collapse', () => {
+        const ch = document.getElementById('scenario-chevron');
+        if (ch) ch.className = 'fa fa-chevron-up ml-auto';
+    });
+    document.getElementById('scenario-body')?.addEventListener('hide.bs.collapse', () => {
+        const ch = document.getElementById('scenario-chevron');
+        if (ch) ch.className = 'fa fa-chevron-down ml-auto';
+    });
+});
+
+// ── URL state sharing ─────────────────────────────────────────────────────────
+/** Collect current simulator state into a plain object for serialisation. */
+function urlStateCaptureState() {
+    const sliders = {};
+    document.querySelectorAll('input[type=range][id^="sim-"]').forEach(el => {
+        sliders[el.id] = parseFloat(el.value);
+    });
+    // Medium slider values
+    document.querySelectorAll('.med-slider').forEach(el => {
+        sliders[el.id] = parseFloat(el.value);
+    });
+    const koGenes   = simKoGetGenes();
+    const simModeEl = document.querySelector('input[name="sim-mode"]:checked');
+    return {
+        sliders,
+        ko_genes:   koGenes,
+        sim_mode:   simModeEl ? simModeEl.value : null,
+    };
+}
+
+/** Encode state → base64url, write to location.hash, copy URL to clipboard. */
+function urlStateCopy() {
+    try {
+        const state   = urlStateCaptureState();
+        const json    = JSON.stringify(state);
+        const b64     = btoa(unescape(encodeURIComponent(json)));
+        const url     = location.origin + location.pathname + '#state=' + b64;
+        navigator.clipboard.writeText(url).then(() => {
+            const toast = document.getElementById('url-copy-toast');
+            if (toast) {
+                toast.style.display = '';
+                setTimeout(() => { toast.style.display = 'none'; }, 2500);
+            }
+        }).catch(() => {
+            // Fallback: prompt
+            prompt('Copy this URL:', url);
+        });
+    } catch (e) {
+        console.warn('urlStateCopy error', e);
+    }
+}
+
+/** Restore simulator state from a plain object (produced by urlStateCaptureState). */
+function urlStateRestore(state) {
+    if (!state) return;
+    // Sliders
+    if (state.sliders) {
+        for (const [id, val] of Object.entries(state.sliders)) {
+            const el = document.getElementById(id);
+            if (el && el.type === 'range') {
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+    }
+    // KO genes — wait until gene list is loaded
+    if (state.ko_genes?.length) {
+        const trySet = (attempts) => {
+            const sel = document.getElementById('sim-ko-select');
+            if (sel && sel.options.length > 0) {
+                simKoSetGenes(state.ko_genes);
+            } else if (attempts > 0) {
+                setTimeout(() => trySet(attempts - 1), 300);
+            }
+        };
+        trySet(20);
+    }
+    // Sim mode
+    if (state.sim_mode) {
+        const radio = document.querySelector(`input[name="sim-mode"][value="${CSS.escape(state.sim_mode)}"]`);
+        if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+}
+
+/** On page load: check #state= fragment and restore. */
+function urlStateInit() {
+    const hash = location.hash;
+    const m    = hash.match(/[#&]state=([A-Za-z0-9+/=_-]+)/);
+    if (!m) return;
+    try {
+        const json  = decodeURIComponent(escape(atob(m[1])));
+        const state = JSON.parse(json);
+        urlStateRestore(state);
+        // Replace hash so refreshing doesn't re-apply
+        history.replaceState(null, '', location.pathname + location.search);
+    } catch (e) {
+        console.warn('urlStateInit: could not parse state fragment', e);
+    }
+}
+
+// ── 1-D Parameter Sensitivity Sweep ──────────────────────────────────────────
+
+// Default ranges for each sweepable parameter [min, max]
+const SENS_PARAM_DEFAULTS = {
+    'sim-alpha':       [0.01, 0.40],
+    'sim-KL':          [20,   400],
+    'sim-YBM':         [0.5,  4.0],
+    'sim-kd':          [0.01, 0.25],
+    'sim-ngam-photon': [1,    40],
+    'sim-I0':          [50,   1200],
+    'sim-XA':          [0,    120],
+    'sim-D':           [0.001, 0.15],
+};
+
+let sensChart = null;
+
+function sensParamChanged() {
+    const pid   = document.getElementById('sens-param')?.value;
+    const range = SENS_PARAM_DEFAULTS[pid] || [0, 1];
+    const fromEl = document.getElementById('sens-from');
+    const toEl   = document.getElementById('sens-to');
+    if (fromEl) fromEl.value = range[0];
+    if (toEl)   toEl.value   = range[1];
+}
+
+function runSensitivitySweep() {
+    const pid    = document.getElementById('sens-param')?.value;
+    const from   = parseFloat(document.getElementById('sens-from')?.value);
+    const to     = parseFloat(document.getElementById('sens-to')?.value);
+    const nPts   = Math.max(5, Math.min(200, parseInt(document.getElementById('sens-n')?.value) || 60));
+    const output = document.getElementById('sens-output')?.value || 'mu';
+
+    if (!pid || isNaN(from) || isNaN(to) || from >= to) return;
+
+    // Collect current params (to keep all other params at their current slider values)
+    const p = simGetParams();
+
+    const xs = [];
+    const ys = [];
+
+    for (let i = 0; i < nPts; i++) {
+        const val = from + (i / (nPts - 1)) * (to - from);
+        xs.push(val);
+
+        // Override the swept parameter in a local copy of p
+        const pp = Object.assign({}, p);
+        switch (pid) {
+            case 'sim-alpha':       pp.alpha       = val; break;
+            case 'sim-KL':         pp.KL          = val; break;
+            case 'sim-YBM':        pp.YBM         = val; break;
+            case 'sim-kd':         pp.kd          = val; break;
+            case 'sim-ngam-photon':pp.ngam_photon = val; break;
+            case 'sim-I0':         pp.I0          = val; break;
+            case 'sim-XA':         pp.XA          = val; break;
+            case 'sim-D':          pp.D           = val; break;
+        }
+
+        let y = NaN;
+        const { alpha, KL, YBM, kd, ngam_photon, I0, XA, D } = pp;
+        if (output === 'mu') {
+            y = simHoperMu(I0, XA, alpha, KL, YBM, kd, ngam_photon, 0);
+        } else if (output === 'yield') {
+            // Volumetric productivity = µ × CX,vol for a chemostat at D = µ
+            // Here we compute max productivity by sweeping D and taking max µ·D / (µ-D)
+            // Simpler: steady-state output = D × CX  where CX from light balance is implicit
+            // Use: P_vol ≈ D × YBM × (µ/D - 1)  -- not standard; use gross µ as proxy
+            const mu = simHoperMu(I0, XA, alpha, KL, YBM, kd, ngam_photon, 0);
+            y = Math.max(0, mu) * YBM * 1000 * 0.001; // µ × YBM  (arbitrary units; normalise)
+            // Better: compute steady-state chemostat at D_opt
+            const Duse = (pid === 'sim-D') ? val : D;
+            y = Math.max(0, simHoperMu(I0, XA, alpha, KL, YBM, kd, ngam_photon, 0) - Duse) < 1e-6
+                ? 0
+                : Duse * YBM; // g per mol photon (relative)
+        } else if (output === 'opt_D') {
+            // Find D_opt by scanning D values 0.001 … µ_max
+            const muMax = simHoperMu(I0, XA, alpha, KL, YBM, kd, ngam_photon, 0);
+            if (muMax <= 0) { y = 0; break; }
+            let bestD = 0, bestP = 0;
+            for (let di = 1; di <= 100; di++) {
+                const Dtry = (di / 100) * muMax;
+                const P    = Dtry; // productivity ∝ D (simplified)
+                if (P > bestP) { bestP = P; bestD = Dtry; }
+            }
+            y = bestD;
+        }
+        ys.push(isFinite(y) ? y : NaN);
+    }
+
+    const yLabel = output === 'mu' ? 'µ (h⁻¹)'
+                 : output === 'yield' ? 'Relative yield (g·mol⁻¹ photon)'
+                 : 'D_opt (h⁻¹)';
+    const paramLabel = document.getElementById('sens-param')?.selectedOptions[0]?.text || pid;
+
+    // Find optimum
+    let maxY = -Infinity, maxX = NaN;
+    ys.forEach((y, i) => { if (isFinite(y) && y > maxY) { maxY = y; maxX = xs[i]; } });
+
+    // Render
+    document.getElementById('sens-result').style.display = '';
+    if (sensChart) { sensChart.destroy(); sensChart = null; }
+    sensChart = new Chart(document.getElementById('sens-chart').getContext('2d'), {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: yLabel,
+                data: xs.map((x, i) => ({ x, y: ys[i] })),
+                borderColor: '#1a6abf', backgroundColor: 'rgba(26,106,191,0.08)',
+                fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
+            }]
+        },
+        options: {
+            animation: false,
+            parsing: false,
+            scales: {
+                x: { type: 'linear', title: { display: true, text: paramLabel } },
+                y: { title: { display: true, text: yLabel }, beginAtZero: false }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${yLabel}: ${ctx.parsed.y?.toFixed(5)}` } }
+            }
+        }
+    });
+
+    const summaryEl = document.getElementById('sens-summary');
+    if (summaryEl && isFinite(maxY)) {
+        summaryEl.textContent = `Optimum: ${yLabel} = ${maxY.toFixed(5)} at ${paramLabel.split('—')[0].trim()} = ${maxX.toFixed(4)}`;
+    }
+}
+
+// Initialise default from/to when the sweep card first opens
+document.addEventListener('DOMContentLoaded', () => {
+    sensParamChanged();
+    document.getElementById('sensitivity-body')?.addEventListener('show.bs.collapse', () => {
+        const ch = document.getElementById('sensitivity-chevron');
+        if (ch) ch.className = 'fa fa-chevron-up ml-auto';
+    });
+    document.getElementById('sensitivity-body')?.addEventListener('hide.bs.collapse', () => {
+        const ch = document.getElementById('sensitivity-chevron');
+        if (ch) ch.className = 'fa fa-chevron-down ml-auto';
+    });
+});
+
 // ── Searchable reaction dropdown ──────────────────────────────────────────────
 function initRxnDropdown(searchId, dropdownId, hiddenId) {
     const input    = document.getElementById(searchId);
@@ -2957,8 +3663,9 @@ function initRxnDropdown(searchId, dropdownId, hiddenId) {
 }
 
 function initAllRxnDropdowns() {
-    initRxnDropdown('pe-rxn-search', 'pe-rxn-dropdown', 'pe-rxn');
-    initRxnDropdown('en-rxn-search', 'en-rxn-dropdown', 'en-rxn');
+    initRxnDropdown('pe-rxn-search',  'pe-rxn-dropdown',  'pe-rxn');
+    initRxnDropdown('pe-rxn2-search', 'pe-rxn2-dropdown', 'pe-rxn2');
+    initRxnDropdown('en-rxn-search',  'en-rxn-dropdown',  'en-rxn');
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
@@ -2969,4 +3676,67 @@ function esc(s) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+// ── Slider value labels — click to edit inline ────────────────────────────────
+// Finds every span whose id ends in '-val' and has a corresponding range input
+// (id = spanId without '-val'), then makes it click-to-edit.
+function initSliderValueLabels() {
+    document.querySelectorAll('span[id$="-val"]').forEach(span => {
+        const sliderId = span.id.slice(0, -4);   // strip '-val'
+        const slider   = document.getElementById(sliderId);
+        if (!slider || slider.type !== 'range') return;
+
+        span.classList.add('slider-val-lbl');
+        span.title = 'Click to enter exact value';
+
+        span.addEventListener('click', () => {
+            // Don't open if already in edit mode
+            if (span.querySelector('.slider-val-input')) return;
+
+            const currentVal = parseFloat(slider.value);
+            const input = document.createElement('input');
+            input.type  = 'number';
+            input.className = 'slider-val-input';
+            input.value = currentVal;
+            input.min   = slider.min;
+            input.max   = slider.max;
+            input.step  = slider.step;
+
+            span.textContent = '';
+            span.appendChild(input);
+            input.focus();
+            input.select();
+
+            function commit() {
+                let v = parseFloat(input.value);
+                if (isNaN(v)) v = currentVal;
+                v = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), v));
+                slider.value = v;
+                // Trigger the appropriate slider update function
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+                // Restore label (the oninput handler will set the text)
+                // But if the oninput doesn't update this span, set it now as fallback
+                if (!span.textContent || span.querySelector('.slider-val-input')) {
+                    span.textContent = v;
+                }
+            }
+
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter')  { commit(); e.preventDefault(); }
+                if (e.key === 'Escape') { span.textContent = slider.value; }
+            });
+            input.addEventListener('blur', commit);
+        });
+    });
+}
+
+// ── Chart PNG export ──────────────────────────────────────────────────────────
+function exportChart(canvasId, filename) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = (filename || canvasId) + '.png';
+    a.click();
 }

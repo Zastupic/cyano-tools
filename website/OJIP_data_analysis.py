@@ -231,7 +231,7 @@ def _calc_areas_fm_timing(Summary_file, data_cols, FJ_idx, FI_idx, ms_factor,
 
         fm_t[col] = float(Summary_file.iloc[Fm_idx, 0]) * ms_factor
 
-        x = Summary_file.iloc[:, 0]
+        x = Summary_file.iloc[:, 0] * ms_factor   # convert to ms so areas are in [ms × F]
         y = Summary_file.iloc[:, i]
         FM_raw = y.iloc[:Fm_idx].max()
 

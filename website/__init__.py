@@ -75,7 +75,19 @@ def create_app():
         if request.method != 'GET':
             return
         ua = (request.headers.get('User-Agent') or '').lower()
-        if any(b in ua for b in ('bot', 'crawler', 'spider', 'slurp', 'headless', 'python-requests')):
+        if not ua:
+            return
+        if any(b in ua for b in (
+            'bot', 'crawler', 'spider', 'slurp', 'headless',
+            'python-requests', 'python-urllib', 'python-httpx',
+            'curl/', 'wget/', 'scrapy', 'httpie', 'insomnia', 'postmanruntime',
+            'go-http-client', 'java/', 'libwww-perl',
+            'okhttp', 'node-fetch',
+            'facebookexternalhit', 'facebookcatalog',
+            'ia_archiver', 'archive.org',
+            'dataforseo', 'zgrab', 'masscan', 'censys', 'shodan',
+            'nmap', 'nikto',
+        )):
             return
         try:
             ip   = request.remote_addr or ''

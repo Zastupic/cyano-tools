@@ -240,8 +240,8 @@ def lc_process():
         else:
             etr_max_from_ab = float('nan')
 
-        Ik = etr_max_obs / alpha    if alpha    != 0 else float('nan')
-        Ib = etr_max_obs / beta_abs if beta_abs != 0 else float('nan')
+        Ik = etr_max_from_ab / alpha    if (alpha    != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
+        Ib = etr_max_from_ab / beta_abs if (beta_abs != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
 
         params_out[fname] = {
             'alpha':              _safe(alpha),

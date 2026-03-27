@@ -354,6 +354,7 @@ def model_info():
         'genes':        len(m.genes),
         'compartments': list(m.compartments.keys()),
         'subsystems':   subsystems,
+        'biomass_rxn':  _objective_rxn_id(m) or '',
     })
 
 

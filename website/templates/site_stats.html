@@ -47,15 +47,39 @@
         </div>
     </div>
 
-    <!-- Daily chart -->
-    <div class="card mb-4">
-        <div class="card-header"><b>Daily page views — last 30 days</b></div>
-        <div class="card-body">
-            {% if daily_labels %}
-            <canvas id="dailyChart" height="80"></canvas>
-            {% else %}
-            <p class="text-muted mb-0">No data yet — visit a few pages and reload.</p>
-            {% endif %}
+    <!-- Time-window charts (2×2 grid) -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header py-1" style="font-size:0.85rem;"><b>Last hour</b></div>
+                <div class="card-body p-2">
+                    <canvas id="hourChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header py-1" style="font-size:0.85rem;"><b>Last 24 hours</b></div>
+                <div class="card-body p-2">
+                    <canvas id="dayChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header py-1" style="font-size:0.85rem;"><b>Last 30 days</b></div>
+                <div class="card-body p-2">
+                    <canvas id="monthChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header py-1" style="font-size:0.85rem;"><b>Last year</b></div>
+                <div class="card-body p-2">
+                    <canvas id="yearChart" height="120"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -85,33 +109,42 @@
 
     <p class="text-muted" style="font-size:0.8rem;">
         Unique visitors are estimated by counting distinct hashed IPs per day (SHA-256 with a daily salt — raw IPs are never stored).
-        Bot traffic (known crawlers) is excluded. Only GET requests are counted.
+        Bot traffic (known crawlers, scrapers, and scanners) is excluded. Only GET requests are counted.
     </p>
 </div>
 
-{% if daily_labels %}
 <script>
-new Chart(document.getElementById('dailyChart'), {
-    type: 'bar',
-    data: {
-        labels: {{ daily_labels | tojson }},
-        datasets: [{
-            label: 'Page views',
-            data:  {{ daily_counts | tojson }},
-            backgroundColor: 'rgba(23, 162, 184, 0.7)',
-            borderColor:     'rgba(23, 162, 184, 1)',
-            borderWidth: 1,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: { ticks: { maxRotation: 45, font: { size: 11 } } },
-            y: { beginAtZero: true, ticks: { precision: 0 } }
+function makeChart(id, labels, data) {
+    return new Chart(document.getElementById(id), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Page views',
+                data: data,
+                borderColor: 'rgba(23, 162, 184, 1)',
+                backgroundColor: 'rgba(23, 162, 184, 0.12)',
+                fill: true,
+                tension: 0.2,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { maxRotation: 45, font: { size: 11 } } },
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
         }
-    }
-});
+    });
+}
+
+makeChart('hourChart',  {{ hour_labels  | tojson }}, {{ hour_counts  | tojson }});
+makeChart('dayChart',   {{ day24_labels | tojson }}, {{ day24_counts | tojson }});
+makeChart('monthChart', {{ d30_labels   | tojson }}, {{ d30_counts   | tojson }});
+makeChart('yearChart',  {{ yr_labels    | tojson }}, {{ yr_counts    | tojson }});
 </script>
-{% endif %}
 {% endblock %}

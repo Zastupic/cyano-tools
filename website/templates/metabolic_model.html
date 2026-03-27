@@ -106,6 +106,22 @@
         font-size: 0.82em;
         margin: 2px;
     }
+    /* Slider value labels — click to edit */
+    .slider-val-lbl {
+        cursor: text;
+        border-bottom: 1px dashed #aaa;
+        padding-bottom: 1px;
+    }
+    .slider-val-lbl:hover { border-bottom-color: #666; }
+    .slider-val-input {
+        width: 54px;
+        font-size: 0.82em;
+        padding: 0 3px;
+        height: 1.4em;
+        border: 1px solid #4e8dc7;
+        border-radius: 3px;
+        text-align: right;
+    }
     /* Network flux badge */
     #flux-overlay-badge {
         display: none;
@@ -307,6 +323,35 @@
 
         <!-- ── Simulations tab ──────────────────────────────────────── -->
         <div id="tab-simulations" class="tab-pane fade" role="tabpanel">
+
+            <!-- Scenario Palette card (full width) -->
+            <div class="card mb-3" id="scenario-card">
+                <div class="card-header py-2 d-flex align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#scenario-body">
+                    <span><i class="fa fa-bookmark text-warning"></i> <strong>Scenario palette</strong>
+                    <small class="text-muted ml-2">Save &amp; compare named simulation configurations (sliders, KOs, custom reactions, last FBA result)</small></span>
+                    <i class="fa fa-chevron-down ml-auto" id="scenario-chevron"></i>
+                </div>
+                <div class="collapse" id="scenario-body">
+                    <div class="card-body py-2">
+                        <div class="d-flex align-items-center mb-2" style="gap:0.4rem;">
+                            <input type="text" class="form-control form-control-sm" id="scenario-name-input" placeholder="Scenario name (e.g. WT 660 µmol)" style="max-width:280px;">
+                            <button class="btn btn-sm btn-warning" onclick="scenarioSave()"><i class="fa fa-plus"></i> Save current</button>
+                            <button class="btn btn-sm btn-outline-secondary ml-auto" onclick="scenarioClearAll()" title="Remove all saved scenarios"><i class="fa fa-trash"></i> Clear all</button>
+                        </div>
+                        <div id="scenario-list" class="small"></div>
+                        <div class="d-flex align-items-center mt-2" style="gap:0.4rem;">
+                            <button class="btn btn-sm btn-outline-info" onclick="urlStateCopy()" title="Encode current sliders, medium, and KOs into a shareable URL fragment">
+                                <i class="fa fa-link"></i> Copy shareable link
+                            </button>
+                            <span id="url-copy-toast" class="text-success small" style="display:none;"><i class="fa fa-check"></i> Copied!</span>
+                        </div>
+                        <p class="text-muted small mb-0 mt-1" id="scenario-hint">
+                            <i class="fa fa-info-circle"></i>
+                            Saved scenarios overlay as dashed lines on the Growth Curve chart. Up to 5 scenarios stored in browser localStorage.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             <!-- Custom reactions card (full width) -->
             <div class="card mb-3" id="cr-card">
@@ -596,9 +641,10 @@
                         <!-- pFBA -->
                         <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" id="pfba-chk">
-                            <label class="form-check-label small" for="pfba-chk">
-                                pFBA (parsimonious)
-                                <small class="text-muted d-block">minimises total flux</small>
+                            <label class="form-check-label small" for="pfba-chk"
+                                   title="Parsimonious FBA: first maximises growth (standard FBA), then minimises total absolute flux while keeping growth at the optimal. Produces sparser, more biologically realistic flux distributions. Slower (~2×) but recommended when inspecting individual pathway fluxes or visualising on KEGG/network. Not needed for light sweep or production envelope.">
+                                pFBA (parsimonious) <i class="fa fa-info-circle text-muted"></i>
+                                <small class="text-muted d-block">minimises total flux — better for pathway inspection</small>
                             </label>
                         </div>
 
@@ -701,8 +747,28 @@
                         <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">Gene knockouts (FBA)</p>
                         <!-- Hidden select keeps the multi-gene KO state; populated by loadGenes() -->
                         <select multiple id="sim-ko-select" style="display:none;" onchange="simKoUpdateDisplay()"></select>
+                        <!-- Direct gene input with autocomplete -->
+                        <div style="position:relative;" class="mb-1">
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="sim-ko-direct-input" class="form-control form-control-sm"
+                                       placeholder="Type gene ID or name…" autocomplete="off"
+                                       oninput="simKoDirectFilter(this.value)"
+                                       onkeydown="simKoDirectKeydown(event)">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-danger btn-sm" type="button"
+                                            onclick="simKoDirectAdd()" title="Add to KO set">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="sim-ko-autocomplete"
+                                 style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;
+                                        background:#fff;border:1px solid #ccc;border-top:none;
+                                        max-height:160px;overflow-y:auto;border-radius:0 0 4px 4px;
+                                        box-shadow:0 2px 6px rgba(0,0,0,0.15);font-size:0.82em;"></div>
+                        </div>
                         <div id="sim-ko-selected-wrap" class="border rounded p-1" style="min-height:32px;background:#fff8f8;">
-                            <span class="text-muted small" id="sim-ko-none-msg">No knockouts selected — use <strong>+FBA KO</strong> in the Gene Browser below.</span>
+                            <span class="text-muted small" id="sim-ko-none-msg">No knockouts — type above or use <strong>+FBA KO</strong> in the Gene Browser.</span>
                             <span id="sim-ko-selected-list" class="small font-weight-bold" style="display:none;"></span>
                         </div>
                         <div class="d-flex mt-1" style="gap:0.25rem;">
@@ -828,6 +894,12 @@
                                         </button>
                                     </div>
                                 </div>
+                                <div class="mb-1">
+                                    <input class="form-control form-control-sm" id="fba-flux-search"
+                                           placeholder="Filter by reaction ID, name or subsystem…"
+                                           oninput="filterTable('fba-flux-table','fba-flux-search','fba-flux-count')">
+                                    <span class="small text-muted" id="fba-flux-count"></span>
+                                </div>
                                 <div class="table-scroll" style="max-height:300px;">
                                     <table class="table table-sm table-hover" id="fba-flux-table">
                                         <thead class="thead-light">
@@ -839,7 +911,10 @@
                                     </table>
                                 </div>
                                 <div id="subsystem-chart-wrap" class="mt-3" style="display:none;">
-                                    <h6 class="text-muted">Pathway activity (sum of absolute fluxes per subsystem)</h6>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <h6 class="text-muted mb-0">Pathway activity (sum of absolute fluxes per subsystem)</h6>
+                                        <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('subsystem-chart','pathway_activity')"><i class="fa fa-download"></i> PNG</button>
+                                    </div>
                                     <canvas id="subsystem-chart" style="max-height:420px;"></canvas>
                                 </div>
                             </div>
@@ -916,14 +991,18 @@
                                 Run the <strong>FBA light sweep</strong> above to compute growth rate and biomass yield across a range of photon fluxes.
                             </div>
                             <div id="sim-fba-charts-wrap" style="display:none;">
+                                <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-growth-chart','fba_light_sweep_growth')"><i class="fa fa-download"></i> PNG</button></div>
                                 <canvas id="sim-fba-growth-chart" style="max-height:280px;"></canvas>
                                 <p class="text-muted small text-center mt-1 mb-3" style="font-size:0.75em;">Growth rate (h⁻¹) vs incident irradiance — FBA ceiling with Höper kinetic overlay</p>
+                                <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-yield-chart','fba_yield')"><i class="fa fa-download"></i> PNG</button></div>
                                 <canvas id="sim-fba-yield-chart" style="max-height:280px;"></canvas>
                                 <p class="text-muted small text-center mt-1 mb-3" style="font-size:0.75em;">Biomass yield (gDW·µmol⁻¹) vs photon uptake</p>
                                 <div id="sim-fba-o2-wrap" style="display:none;">
+                                    <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-o2-chart','fba_o2_evolution')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-fba-o2-chart" style="max-height:260px;"></canvas>
                                     <p class="text-muted small text-center mt-1 mb-0" style="font-size:0.75em;">O₂ evolution (mmol·gDW⁻¹·h⁻¹) vs photon uptake</p>
                                 </div>
+                                <div id="sim-fba-efficiency-box" class="mt-2" style="display:none;"></div>
                             </div>
 
                         </div><!-- /sim-sub-sweep -->
@@ -980,6 +1059,7 @@
                             <!-- Growth curve chart -->
                             <div id="sim-card">
                                 <div id="sim-error" class="alert alert-danger py-1 small" style="display:none;"></div>
+                                <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-growth-chart','growth_curve')"><i class="fa fa-download"></i> PNG</button></div>
                                 <canvas id="sim-growth-chart" style="max-height:300px;"></canvas>
                             </div>
 
@@ -1016,12 +1096,15 @@
                                 </div>
                                 <div id="sim-chemo-charts">
                                     <div id="sim-chemo-summary" class="mb-1 small text-muted" style="display:none;"></div>
+                                    <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-chemo-chart','chemostat_productivity')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-chemo-chart" style="max-height:320px;"></canvas>
                                 </div>
                                 <div id="sim-batch-charts" style="display:none;">
                                     <div id="sim-batch-summary" class="mb-1 small text-muted" style="display:none;"></div>
+                                    <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-batch-density-chart','batch_density')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-batch-density-chart" style="max-height:280px;"></canvas>
-                                    <canvas id="sim-batch-prod-chart" style="max-height:280px;" class="mt-3"></canvas>
+                                    <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-batch-prod-chart','batch_productivity')"><i class="fa fa-download"></i> PNG</button></div>
+                                    <canvas id="sim-batch-prod-chart" style="max-height:280px;"></canvas>
                                 </div>
 
                                 <div class="alert alert-info mt-3 py-2 px-2" style="font-size:0.74em;">
@@ -1036,6 +1119,70 @@
                 </div><!-- /right col -->
 
             </div><!-- /main row -->
+
+            <!-- ── 1-D Parameter Sensitivity Sweep (full-width) ── -->
+            <div class="card mt-3" id="sensitivity-card">
+                <div class="card-header py-2 d-flex align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#sensitivity-body">
+                    <span><i class="fa fa-line-chart text-primary"></i> <strong>1-D Parameter Sensitivity Sweep</strong>
+                    <small class="text-muted ml-2">Sweep any biophysical or medium parameter and plot µ, yield, or productivity</small></span>
+                    <i class="fa fa-chevron-down ml-auto" id="sensitivity-chevron"></i>
+                </div>
+                <div class="collapse" id="sensitivity-body">
+                    <div class="card-body py-2">
+                        <div class="row align-items-end mb-2" style="gap:0.25rem 0;">
+                            <div class="col-sm-4 col-md-3">
+                                <label class="small mb-0">Parameter</label>
+                                <select id="sens-param" class="form-control form-control-sm" onchange="sensParamChanged()">
+                                    <optgroup label="Biophysical">
+                                        <option value="sim-alpha">α — photon absorption</option>
+                                        <option value="sim-KL">K_L — half-sat. irradiance (µmol·m⁻²·s⁻¹)</option>
+                                        <option value="sim-YBM">Y_BM — biomass yield (g·mol⁻¹)</option>
+                                        <option value="sim-kd">k_d — decay rate (h⁻¹)</option>
+                                        <option value="sim-ngam-photon">NGAM (photon µmol·gDW⁻¹·h⁻¹)</option>
+                                        <option value="sim-I0">I₀ — incident irradiance (µmol·m⁻²·s⁻¹)</option>
+                                        <option value="sim-XA">X_A — areal biomass (g·m⁻²)</option>
+                                    </optgroup>
+                                    <optgroup label="Reactor (chemostat)">
+                                        <option value="sim-D">D — dilution rate (h⁻¹)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="col-sm-3 col-md-2">
+                                <label class="small mb-0">From</label>
+                                <input type="number" id="sens-from" class="form-control form-control-sm" step="any">
+                            </div>
+                            <div class="col-sm-3 col-md-2">
+                                <label class="small mb-0">To</label>
+                                <input type="number" id="sens-to" class="form-control form-control-sm" step="any">
+                            </div>
+                            <div class="col-sm-2 col-md-1">
+                                <label class="small mb-0">Points</label>
+                                <input type="number" id="sens-n" class="form-control form-control-sm" value="60" min="5" max="200">
+                            </div>
+                            <div class="col-sm-4 col-md-2">
+                                <label class="small mb-0">Output</label>
+                                <select id="sens-output" class="form-control form-control-sm">
+                                    <option value="mu">µ — growth rate (h⁻¹)</option>
+                                    <option value="yield">Y_vol — vol. productivity (g·L⁻¹·h⁻¹)</option>
+                                    <option value="opt_D">D_opt — optimal dilution rate (h⁻¹)</option>
+                                </select>
+                            </div>
+                            <div class="col-auto mt-1">
+                                <button class="btn btn-sm btn-primary" onclick="runSensitivitySweep()">
+                                    <i class="fa fa-play"></i> Sweep
+                                </button>
+                            </div>
+                        </div>
+                        <div id="sens-result" style="display:none;">
+                            <div class="d-flex justify-content-end mb-1">
+                                <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sens-chart','sensitivity_sweep')"><i class="fa fa-download"></i> PNG</button>
+                            </div>
+                            <canvas id="sens-chart" style="max-height:320px;"></canvas>
+                            <div id="sens-summary" class="small text-muted mt-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- ── Gene Browser (full-width, below simulation layout) ── -->
             <div class="card mt-3" id="gene-browser-card">
@@ -1085,7 +1232,7 @@
                                             <th>Protein / product</th>
                                             <th>Subsystem(s)</th>
                                             <th>Reactions</th>
-                                            <th>KO growth (h⁻¹)</th>
+                                            <th style="cursor:pointer;user-select:none;" onclick="sortGeneTableByKO()" title="Sort by KO growth (only rows with a result are sorted)">KO growth (h⁻¹) <i class="fa fa-sort" id="ko-sort-icon"></i></th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -1108,9 +1255,9 @@
                     <small class="text-muted ml-2">Max product flux vs growth rate (phenotypic phase plane)</small>
                 </div>
                 <div class="card-body">
-                    <div class="form-row align-items-end mb-3">
+                    <div class="form-row align-items-end mb-2">
                         <div class="col-md-5">
-                            <label class="small text-muted mb-1">Product reaction ID</label>
+                            <label class="small text-muted mb-1">Product reaction 1 <span class="badge badge-primary" style="font-size:0.7em;">●</span></label>
                             <div class="position-relative">
                                 <input type="text" class="form-control form-control-sm" id="pe-rxn-search"
                                        placeholder="Search reaction ID or name…" autocomplete="off">
@@ -1118,6 +1265,17 @@
                                 <input type="hidden" id="pe-rxn">
                             </div>
                         </div>
+                        <div class="col-md-5">
+                            <label class="small text-muted mb-1">Product reaction 2 <span class="text-muted" style="font-size:0.75em;">(optional comparison)</span> <span class="badge badge-warning" style="font-size:0.7em;">●</span></label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control form-control-sm" id="pe-rxn2-search"
+                                       placeholder="Second product (optional)…" autocomplete="off">
+                                <div id="pe-rxn2-dropdown" class="rxn-dropdown" style="display:none;"></div>
+                                <input type="hidden" id="pe-rxn2">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row align-items-end mb-3">
                         <div class="col-auto">
                             <label class="small text-muted mb-1">Points</label>
                             <input type="number" class="form-control form-control-sm" id="pe-points" value="20" min="5" max="50" style="width:80px;">
@@ -1153,6 +1311,7 @@
                     </p>
                     <div id="pe-error" class="alert alert-danger py-1 small" style="display:none;"></div>
                     <div id="pe-chart-wrap" style="display:none;">
+                        <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('pe-chart','production_envelope')"><i class="fa fa-download"></i> PNG</button></div>
                         <canvas id="pe-chart" style="max-height:340px;"></canvas>
                     </div>
                 </div>
@@ -1210,6 +1369,7 @@
                     <div id="en-results" style="display:none;">
                         <div class="row">
                             <div class="col-md-5">
+                                <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('en-chart','biosynthetic_cost')"><i class="fa fa-download"></i> PNG</button></div>
                                 <canvas id="en-chart" style="max-height:260px;"></canvas>
                             </div>
                             <div class="col-md-4">
@@ -1222,6 +1382,7 @@
                                 <p class="text-muted small mt-1" id="en-note"></p>
                             </div>
                         </div>
+                        <div id="en-biomass-compare" style="display:none;"></div>
                     </div>
                 </div>
             </div>

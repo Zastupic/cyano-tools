@@ -346,7 +346,7 @@ def _process_mcpam_params(files):
 
     fv_all = fm_all.iloc[:, 1:] - ft_all.iloc[:, 1:]
     qp_all = (fm_all.iloc[:, 1:] - ft_all.iloc[:, 1:]) / (fm_all.iloc[:, 1:] - f0.values)
-    qn_all = (fm - fm_all.iloc[:, 1:]) / fm
+    qn_all = (fm - fm_all.iloc[:, 1:]) / (fm - f0.values)
     npq_fm = (fm - fm_all.iloc[:, 1:]) / fm_all.iloc[:, 1:]
     npq_fm_max = (fm_max - fm_all.iloc[:, 1:]) / fm_all.iloc[:, 1:]
 
@@ -551,8 +551,9 @@ def _process_aquapen(files, protocol_key, upload_folder):
 
     # Fv = Fm' - Ft
     fv_data = fm_prime_data.values - ft_lookup.values
-    # qN = (Fm - Fm') / Fm
-    qn_data = (fm_first.values - fm_prime_data.values) / fm_first.values
+    # qN = (Fm - Fm') / (Fm - Fo)
+    fo_first = fo_row.iloc[0, 1:].astype(float).values
+    qn_data = (fm_first.values - fm_prime_data.values) / (fm_first.values - fo_first)
     # NPQ using Fm_max = (Fm_max - Fm') / Fm'
     npq_fmmax_data = (fm_max.values - fm_prime_data.values) / fm_prime_data.values
 
