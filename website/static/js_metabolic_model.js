@@ -579,11 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('kegg-reset-flux-btn').addEventListener('click', resetKeggFlux);
     document.getElementById('run-fba-btn').addEventListener('click', runFBAwithPFBA);
     document.getElementById('export-fba-btn').addEventListener('click', exportFBA);
-    document.getElementById('view-network-btn').addEventListener('click', () => {
-        document.querySelector('[href="#tab-network"]').click();
-    });
     document.getElementById('open-kegg-btn').addEventListener('click', openKegg);
-    document.getElementById('ipath3-btn').addEventListener('click', loadIpath3);
 
     // Preset buttons
     document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -1706,34 +1702,22 @@ function openKegg() {
         alert('Run FBA first to generate flux data for pathway colouring.');
         return;
     }
-    const pathway = document.getElementById('kegg-pathway-select').value || 'syn01100';
-    const btn = document.getElementById('open-kegg-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Building…';
+    const pathway = document.getElementById('kegg-pathway-select').value;
 
-    fetch('/api/metabolic/kegg_url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fluxes: lastFluxes, pathway }),
-    })
-    .then(r => r.json())
-    .then(d => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-external-link"></i> Open in KEGG Mapper';
-        if (d.url) {
-            window.open(d.url, '_blank');
-            if (d.colored === 0) {
-                alert('No KEGG-annotated genes found for this flux solution. The pathway map will open without colouring.');
-            }
-        } else {
-            alert('Failed to build KEGG URL.');
+    // Navigate to Network tab → Pathways sub-tab
+    const networkTab = document.querySelector('[href="#tab-network"]');
+    if (networkTab) networkTab.click();
+    const pathTab = document.querySelector('#network-sub-tabs a[href="#sub-pathways"]');
+    if (pathTab) pathTab.click();
+
+    // Set the pathway dropdown in the Network tab if one was selected
+    if (pathway) {
+        const mapSel = document.getElementById('kegg-map-select');
+        if (mapSel) {
+            mapSel.value = pathway;
+            loadKeggMap();
         }
-    })
-    .catch(err => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-external-link"></i> Open in KEGG Mapper';
-        console.error('KEGG URL error:', err);
-    });
+    }
 }
 
 // ── iPath3 global overview ────────────────────────────────────────────────────
