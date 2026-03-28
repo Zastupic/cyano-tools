@@ -94,19 +94,6 @@
         border-radius: 3px;
         text-align: right;
     }
-    /* iPath3 SVG panel */
-    #ipath3-panel {
-        max-height: 600px;
-        overflow: auto;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        background: #fff;
-        padding: 8px;
-    }
-    #ipath3-panel svg {
-        width: 100%;
-        height: auto;
-    }
 </style>
 {% endblock %}
 
@@ -121,7 +108,7 @@
 
     <div class="p-4 border rounded shadow-sm bg-white mb-4">
         <h2 class="font-weight-bold mb-3">
-            <i class="fa fa-share-alt text-primary mr-2"></i>Metabolic Reconstruction of <em>Synechocystis</em> sp. PCC 6803
+            <i class="fa fa-share-alt text-primary mr-2"></i>Flux Balance Analysis of <em>Synechocystis</em> sp. PCC 6803
         </h2>
 
         <div class="row">
@@ -345,114 +332,6 @@
 
         <!-- ── Simulations tab ──────────────────────────────────────── -->
         <div id="tab-simulations" class="tab-pane fade" role="tabpanel">
-
-            <!-- Scenario Palette card (full width) -->
-            <div class="card mb-3" id="scenario-card">
-                <div class="card-header py-2 d-flex align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#scenario-body">
-                    <span><i class="fa fa-bookmark text-warning"></i> <strong>Scenario palette</strong>
-                    <small class="text-muted ml-2">Save &amp; compare named simulation configurations (sliders, KOs, custom reactions, last FBA result)</small></span>
-                    <i class="fa fa-chevron-down ml-auto" id="scenario-chevron"></i>
-                </div>
-                <div class="collapse" id="scenario-body">
-                    <div class="card-body py-2">
-                        <div class="d-flex align-items-center mb-2" style="gap:0.4rem;">
-                            <input type="text" class="form-control form-control-sm" id="scenario-name-input" placeholder="Scenario name (e.g. WT 660 µmol)" style="max-width:280px;">
-                            <button class="btn btn-sm btn-warning" onclick="scenarioSave()"><i class="fa fa-plus"></i> Save current</button>
-                            <button class="btn btn-sm btn-outline-secondary ml-auto" onclick="scenarioClearAll()" title="Remove all saved scenarios"><i class="fa fa-trash"></i> Clear all</button>
-                        </div>
-                        <div id="scenario-list" class="small"></div>
-                        <div class="d-flex align-items-center mt-2" style="gap:0.4rem;">
-                            <button class="btn btn-sm btn-outline-info" onclick="urlStateCopy()" title="Encode current sliders, medium, and KOs into a shareable URL fragment">
-                                <i class="fa fa-link"></i> Copy shareable link
-                            </button>
-                            <span id="url-copy-toast" class="text-success small" style="display:none;"><i class="fa fa-check"></i> Copied!</span>
-                        </div>
-                        <p class="text-muted small mb-0 mt-1" id="scenario-hint">
-                            <i class="fa fa-info-circle"></i>
-                            Saved scenarios overlay as dashed lines on the Growth Curve chart. Up to 5 scenarios stored in browser localStorage.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Custom reactions card (full width) -->
-            <div class="card mb-3" id="cr-card">
-                <div class="card-header py-2">
-                    <strong><i class="fa fa-plus-circle text-primary"></i> Custom reactions &amp; pathway templates</strong>
-                    <small class="text-muted ml-2">Add heterologous enzymes — applies to FBA, light sweep, production envelope &amp; biosynthetic cost</small>
-                </div>
-                <div class="card-body">
-                    <div class="form-row align-items-end mb-2">
-                        <div class="col-md-5">
-                            <label class="small text-muted mb-1">Pathway template</label>
-                            <select class="form-control form-control-sm" id="cr-template-select">
-                                <option value="">— choose template —</option>
-                                <option value="ethylene_efe">Ethylene via Efe (P. syringae) — α-KG + O₂ → ethylene</option>
-                                <option value="isoprene_isps">Isoprene via IspS (poplar) — DMAPP → isoprene</option>
-                                <option value="sucrose_export">Sucrose export sink (native pathway)</option>
-                                <option value="phb_pha">PHB (PhaABC) — acetyl-CoA → polyhydroxybutyrate</option>
-                            </select>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-sm btn-outline-primary" id="cr-add-template-btn">
-                                <i class="fa fa-plus"></i> Add template
-                            </button>
-                        </div>
-                        <div class="col-auto text-muted small mx-1">or</div>
-                        <div class="col-auto">
-                            <button class="btn btn-sm btn-outline-secondary" id="cr-add-manual-btn">
-                                <i class="fa fa-pencil"></i> Custom reaction
-                            </button>
-                        </div>
-                    </div>
-                    <div id="cr-manual-form" class="p-2 mb-2 border rounded bg-light" style="display:none;">
-                        <div class="form-row align-items-end mb-1">
-                            <div class="col-md-2">
-                                <label class="small mb-0">Reaction ID</label>
-                                <input type="text" class="form-control form-control-sm" id="cr-man-id" placeholder="e.g. EFE">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small mb-0">Name (optional)</label>
-                                <input type="text" class="form-control form-control-sm" id="cr-man-name" placeholder="Ethylene-forming enzyme">
-                            </div>
-                            <div class="col-auto">
-                                <label class="small mb-0">lb</label>
-                                <input type="number" class="form-control form-control-sm" id="cr-man-lb" value="0" step="any" style="width:70px;">
-                            </div>
-                            <div class="col-auto">
-                                <label class="small mb-0">ub</label>
-                                <input type="number" class="form-control form-control-sm" id="cr-man-ub" value="1000" step="any" style="width:70px;">
-                            </div>
-                        </div>
-                        <div class="form-row mb-1">
-                            <div class="col-9">
-                                <label class="small mb-0">Stoichiometry <small class="text-muted">(met_id:coeff, …)</small></label>
-                                <input type="text" class="form-control form-control-sm" id="cr-man-stoich" placeholder="akg_c:-1, o2_c:-1, succ_c:1, co2_c:3, ethy_c:1">
-                            </div>
-                        </div>
-                        <div class="form-row mb-2">
-                            <div class="col-9">
-                                <label class="small mb-0">New metabolites <small class="text-muted">(id:name:formula, …)</small></label>
-                                <input type="text" class="form-control form-control-sm" id="cr-man-newmets" placeholder="ethy_c:Ethylene:C2H4">
-                            </div>
-                        </div>
-                        <button class="btn btn-sm btn-primary" id="cr-man-add-btn"><i class="fa fa-plus"></i> Add reaction</button>
-                        <button class="btn btn-sm btn-link text-secondary py-0" id="cr-man-cancel-btn">Cancel</button>
-                    </div>
-                    <div id="cr-list-wrap" style="display:none;">
-                        <div class="d-flex align-items-center mb-1">
-                            <span class="small font-weight-bold text-primary"><i class="fa fa-check-circle"></i> Active custom reactions</span>
-                            <button class="btn btn-link text-danger ml-auto py-0 px-0" id="cr-clear-all-btn" style="font-size:0.8em;"><i class="fa fa-trash"></i> Clear all</button>
-                        </div>
-                        <div id="cr-list" class="small"></div>
-                    </div>
-                    <div id="cr-note" class="small mt-1"></div>
-                    <p class="text-muted small mb-0 mt-1">
-                        <i class="fa fa-info-circle"></i>
-                        Use the <strong>Metabolites</strong> tab to verify IDs. New metabolites not in iRH783 must be declared in the stoichiometry field.
-                    </p>
-                </div>
-            </div>
 
             <!-- Main split: left shared inputs + right sub-tabbed results -->
             <div class="row">
@@ -764,42 +643,6 @@
                         <p class="text-muted mt-1 mb-0" style="font-size:0.72em;">Set Y<sub>X</sub> > 0 to add a product line to the chart.</p>
                     </div><!-- /sim-pg-product -->
 
-                    <!-- sim-pg-fba-ko: Gene knockouts (visible in Static FBA + Light Sweep tabs) -->
-                    <div class="sim-pg mt-2 pt-2 border-top" id="sim-pg-fba-ko" data-tabs="static,sweep">
-                        <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">Gene knockouts (FBA)</p>
-                        <!-- Hidden select keeps the multi-gene KO state; populated by loadGenes() -->
-                        <select multiple id="sim-ko-select" style="display:none;" onchange="simKoUpdateDisplay()"></select>
-                        <!-- Direct gene input with autocomplete -->
-                        <div style="position:relative;" class="mb-1">
-                            <div class="input-group input-group-sm">
-                                <input type="text" id="sim-ko-direct-input" class="form-control form-control-sm"
-                                       placeholder="Type gene ID or name…" autocomplete="off"
-                                       oninput="simKoDirectFilter(this.value)"
-                                       onkeydown="simKoDirectKeydown(event)">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-danger btn-sm" type="button"
-                                            onclick="simKoDirectAdd()" title="Add to KO set">
-                                        <i class="fa fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="sim-ko-autocomplete"
-                                 style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;
-                                        background:#fff;border:1px solid #ccc;border-top:none;
-                                        max-height:160px;overflow-y:auto;border-radius:0 0 4px 4px;
-                                        box-shadow:0 2px 6px rgba(0,0,0,0.15);font-size:0.82em;"></div>
-                        </div>
-                        <div id="sim-ko-selected-wrap" class="border rounded p-1" style="min-height:32px;background:#fff8f8;">
-                            <span class="text-muted small" id="sim-ko-none-msg">No knockouts — type above or use <strong>+FBA KO</strong> in the Gene Browser.</span>
-                            <span id="sim-ko-selected-list" class="small font-weight-bold" style="display:none;"></span>
-                        </div>
-                        <div class="d-flex mt-1" style="gap:0.25rem;">
-                            <a href="#" class="small text-danger" onclick="simKoClear();return false;"><i class="fa fa-times"></i> Clear</a>
-                            <a href="#" class="small text-muted ml-auto" onclick="simKoOpenKEGG();return false;" title="KEGG page for first selected gene"><i class="fa fa-external-link"></i> KEGG</a>
-                        </div>
-                        <p class="text-muted mt-1 mb-0" style="font-size:0.72em;">Applied to FBA light sweep and pipeline runs.</p>
-                    </div><!-- /sim-pg-fba-ko -->
-
                     <!-- sim-pg-sweep-range: FBA sweep range (visible in Light Sweep tab only) -->
                     <div class="sim-pg mt-2 pt-2 border-top" id="sim-pg-sweep-range" data-tabs="sweep" style="display:none;">
                         <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">FBA sweep range</p>
@@ -904,72 +747,95 @@
                                 </div>
                             </div>
                             <div id="fba-flux-wrap" style="display:none;">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="small text-muted">Non-zero fluxes, sorted by magnitude</span>
-                                    <div>
-                                        <button class="btn btn-sm btn-outline-primary mr-1" id="view-network-btn"
-                                                title="Go to Network tab and apply flux colours">
-                                            <i class="fa fa-share-alt"></i> View on network
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-secondary" id="export-fba-btn">
-                                            <i class="fa fa-download"></i> Export XLSX
-                                        </button>
+                                <!-- Pathway visualisation -->
+                                <div id="pathway-vis-wrap" class="mb-3">
+                                    <h6 class="text-muted mb-2">Pathway visualisation</h6>
+                                    <div class="row align-items-center mb-2">
+                                        <div class="col-auto">
+                                            <select id="kegg-pathway-select" class="form-control form-control-sm" style="min-width:220px;">
+                                                <option value="">— KEGG pathway —</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-auto">
+                                            <button class="btn btn-sm btn-outline-success" id="open-kegg-btn">
+                                                <i class="fa fa-external-link"></i> Open in KEGG Mapper
+                                            </button>
+                                        </div>
+                                        <div class="col-auto text-muted small">Colours genes by flux magnitude (blue = forward, red = reverse)</div>
                                     </div>
                                 </div>
-                                <div class="mb-1">
-                                    <input class="form-control form-control-sm" id="fba-flux-search"
-                                           placeholder="Filter by reaction ID, name or subsystem…"
-                                           oninput="filterTable('fba-flux-table','fba-flux-search','fba-flux-count')">
-                                    <span class="small text-muted" id="fba-flux-count"></span>
-                                </div>
-                                <div class="table-scroll" style="max-height:300px;">
-                                    <table class="table table-sm table-hover" id="fba-flux-table">
-                                        <thead class="thead-light">
-                                            <tr>
-                                                <th>Reaction ID</th><th>Name</th><th>Flux</th><th style="width:95px;"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
-                                </div>
+                                <!-- KEGG pathway activity chart -->
                                 <div id="subsystem-chart-wrap" class="mt-3" style="display:none;">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <h6 class="text-muted mb-0">Pathway activity (sum of absolute fluxes per subsystem)</h6>
-                                        <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('subsystem-chart','pathway_activity')"><i class="fa fa-download"></i> PNG</button>
+                                        <h6 class="text-muted mb-0">KEGG pathway activity (sum of absolute fluxes per pathway)</h6>
+                                        <div class="d-flex align-items-center" style="gap:0.5rem;">
+                                            <div class="form-check form-check-inline mb-0">
+                                                <input class="form-check-input" type="checkbox" id="kegg-chart-log" checked onchange="toggleChartScale('kegg')">
+                                                <label class="form-check-label small" for="kegg-chart-log">Log scale</label>
+                                            </div>
+                                            <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('subsystem-chart','kegg_pathway_activity')"><i class="fa fa-download"></i> PNG</button>
+                                        </div>
                                     </div>
-                                    <canvas id="subsystem-chart" style="max-height:420px;"></canvas>
-                                </div>
-                            </div>
-                            <!-- Pathway visualisation -->
-                            <div id="pathway-vis-wrap" style="display:none;" class="mt-3">
-                                <hr class="my-2">
-                                <h6 class="text-muted mb-2">Pathway visualisation</h6>
-                                <div class="row align-items-center mb-2">
-                                    <div class="col-auto">
-                                        <select id="kegg-pathway-select" class="form-control form-control-sm" style="min-width:220px;">
-                                            <option value="">— KEGG pathway —</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-auto">
-                                        <button class="btn btn-sm btn-outline-success" id="open-kegg-btn">
-                                            <i class="fa fa-external-link"></i> Open in KEGG Mapper
-                                        </button>
-                                    </div>
-                                    <div class="col-auto text-muted small">Colours genes by flux magnitude (blue = forward, red = reverse)</div>
-                                </div>
-                                <div class="row align-items-center mb-2">
-                                    <div class="col-auto">
-                                        <button class="btn btn-sm btn-outline-primary" id="ipath3-btn">
-                                            <i class="fa fa-globe"></i> Global map (iPath3)
-                                        </button>
-                                    </div>
-                                    <div class="col-auto text-muted small">
-                                        Renders the full KEGG metabolic map via
-                                        <a href="https://pathways.embl.de/" target="_blank">iPath3 (EMBL)</a>
-                                        coloured by flux (may take ~5 s)
+                                    <div style="max-height:420px;overflow-y:auto;">
+                                        <div id="subsystem-chart-inner">
+                                            <canvas id="subsystem-chart"></canvas>
+                                        </div>
                                     </div>
                                 </div>
-                                <div id="ipath3-panel" style="display:none;"></div>
+                                <!-- Model subsystem activity chart -->
+                                <div id="model-subsystem-chart-wrap" class="mt-3" style="display:none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <h6 class="text-muted mb-0">Model subsystem activity (sum of absolute fluxes per subsystem)</h6>
+                                        <div class="d-flex align-items-center" style="gap:0.5rem;">
+                                            <div class="form-check form-check-inline mb-0">
+                                                <input class="form-check-input" type="checkbox" id="subsystem-chart-log" checked onchange="toggleChartScale('subsystem')">
+                                                <label class="form-check-label small" for="subsystem-chart-log">Log scale</label>
+                                            </div>
+                                            <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('model-subsystem-chart','subsystem_activity')"><i class="fa fa-download"></i> PNG</button>
+                                        </div>
+                                    </div>
+                                    <div style="max-height:420px;overflow-y:auto;">
+                                        <div id="model-subsystem-chart-inner">
+                                            <canvas id="model-subsystem-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Flux table (collapsible) -->
+                                <div class="card mt-3">
+                                    <div class="card-header py-1 d-flex justify-content-between align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#fba-flux-table-body">
+                                        <span class="small text-muted">Non-zero fluxes, sorted by magnitude</span>
+                                        <div class="d-flex align-items-center" style="gap:0.4rem;">
+                                            <button class="btn btn-sm btn-outline-primary mr-1" id="view-network-btn"
+                                                    title="Go to Network tab and apply flux colours" onclick="event.stopPropagation();">
+                                                <i class="fa fa-share-alt"></i> View on network
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" id="export-fba-btn" onclick="event.stopPropagation();">
+                                                <i class="fa fa-download"></i> Export XLSX
+                                            </button>
+                                            <i class="fa fa-chevron-down ml-1"></i>
+                                        </div>
+                                    </div>
+                                    <div class="collapse" id="fba-flux-table-body">
+                                        <div class="card-body py-2">
+                                            <div class="mb-1">
+                                                <input class="form-control form-control-sm" id="fba-flux-search"
+                                                       placeholder="Filter by reaction ID, name or subsystem…"
+                                                       oninput="filterTable('fba-flux-table','fba-flux-search','fba-flux-count')">
+                                                <span class="small text-muted" id="fba-flux-count"></span>
+                                            </div>
+                                            <div class="table-scroll" style="max-height:300px;">
+                                                <table class="table table-sm table-hover" id="fba-flux-table">
+                                                    <thead class="thead-light">
+                                                        <tr>
+                                                            <th>Reaction ID</th><th>Name</th><th>Flux (mmol·gDW⁻¹·h⁻¹)</th><th style="width:95px;"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                         </div><!-- /sim-sub-static -->
@@ -1142,6 +1008,204 @@
 
             </div><!-- /main row -->
 
+            <!-- Scenario Palette card (full width) -->
+            <div class="card mt-3" id="scenario-card">
+                <div class="card-header py-2 d-flex align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#scenario-body">
+                    <span><i class="fa fa-bookmark text-warning"></i> <strong>Scenario palette</strong>
+                    <small class="text-muted ml-2">Save &amp; compare named simulation configurations (sliders, KOs, custom reactions, last FBA result)</small></span>
+                    <i class="fa fa-chevron-down ml-auto" id="scenario-chevron"></i>
+                </div>
+                <div class="collapse" id="scenario-body">
+                    <div class="card-body py-2">
+                        <div class="d-flex align-items-center mb-2" style="gap:0.4rem;">
+                            <input type="text" class="form-control form-control-sm" id="scenario-name-input" placeholder="Scenario name (e.g. WT 660 µmol)" style="max-width:280px;">
+                            <button class="btn btn-sm btn-warning" onclick="scenarioSave()"><i class="fa fa-plus"></i> Save current</button>
+                            <button class="btn btn-sm btn-outline-secondary ml-auto" onclick="scenarioClearAll()" title="Remove all saved scenarios"><i class="fa fa-trash"></i> Clear all</button>
+                        </div>
+                        <div id="scenario-list" class="small"></div>
+                        <p class="text-muted small mb-0 mt-1" id="scenario-hint">
+                            <i class="fa fa-info-circle"></i>
+                            Saved scenarios overlay as dashed lines on the Growth Curve chart. Up to 5 scenarios stored in browser localStorage.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Gene Browser (full-width, below simulation layout) ── -->
+            <div class="card mt-3" id="gene-browser-card">
+                <div class="card-header py-2 d-flex align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#gene-browser-body">
+                    <span><i class="fa fa-dna"></i> <strong>Gene Knockout Analysis</strong>
+                    <small class="text-muted ml-2">Browse iRH783 genes, simulate single- or multi-gene knockouts</small></span>
+                    <i class="fa fa-chevron-down ml-auto" id="gene-browser-chevron"></i>
+                </div>
+                <div class="collapse" id="gene-browser-body">
+                    <div class="card-body pt-2 pb-2">
+                        <!-- Gene knockouts (FBA) — moved here from sidebar -->
+                        <div class="mb-3 pb-2 border-bottom" id="sim-pg-fba-ko">
+                            <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">Gene knockouts (FBA)</p>
+                            <!-- Hidden select keeps the multi-gene KO state; populated by loadGenes() -->
+                            <select multiple id="sim-ko-select" style="display:none;" onchange="simKoUpdateDisplay()"></select>
+                            <!-- Direct gene input with autocomplete -->
+                            <div style="position:relative;" class="mb-1">
+                                <div class="input-group input-group-sm" style="max-width:400px;">
+                                    <input type="text" id="sim-ko-direct-input" class="form-control form-control-sm"
+                                           placeholder="Type gene ID or name…" autocomplete="off"
+                                           oninput="simKoDirectFilter(this.value)"
+                                           onkeydown="simKoDirectKeydown(event)">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-danger btn-sm" type="button"
+                                                onclick="simKoDirectAdd()" title="Add to KO set">
+                                            <i class="fa fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="sim-ko-autocomplete"
+                                     style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;
+                                            max-width:400px;background:#fff;border:1px solid #ccc;border-top:none;
+                                            max-height:160px;overflow-y:auto;border-radius:0 0 4px 4px;
+                                            box-shadow:0 2px 6px rgba(0,0,0,0.15);font-size:0.82em;"></div>
+                            </div>
+                            <div id="sim-ko-selected-wrap" class="border rounded p-1" style="min-height:32px;max-width:400px;background:#fff8f8;">
+                                <span class="text-muted small" id="sim-ko-none-msg">No knockouts — type above or use <strong>+FBA KO</strong> in the Gene Browser.</span>
+                                <span id="sim-ko-selected-list" class="small font-weight-bold" style="display:none;"></span>
+                            </div>
+                            <div class="d-flex mt-1" style="gap:0.25rem;max-width:400px;">
+                                <a href="#" class="small text-danger" onclick="simKoClear();return false;"><i class="fa fa-times"></i> Clear</a>
+                                <a href="#" class="small text-muted ml-auto" onclick="simKoOpenKEGG();return false;" title="KEGG page for first selected gene"><i class="fa fa-external-link"></i> KEGG</a>
+                            </div>
+                            <p class="text-muted mt-1 mb-0" style="font-size:0.72em;">Applied to FBA light sweep and pipeline runs.</p>
+                        </div>
+
+                        <div class="row mb-2 align-items-center">
+                            <div class="col-md-4">
+                                <input class="form-control form-control-sm" id="gene-search" placeholder="Search by locus tag, protein name, or subsystem…">
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="ko-constrained-chk" checked>
+                                    <label class="form-check-label small" for="ko-constrained-chk">Use photoautotrophic constraints for single-gene KO</label>
+                                </div>
+                            </div>
+                            <div class="col-auto text-muted small" id="gene-count-label"></div>
+                            <div class="col-auto small" id="ann-loading-msg" style="display:none;">
+                                <span class="spinner-border spinner-border-sm text-secondary" role="status" style="width:0.75rem;height:0.75rem;"></span>
+                                <span class="text-muted ml-1">Loading protein names…</span>
+                            </div>
+                            <div class="col-auto small text-success" id="ann-done-msg" style="display:none;">
+                                <i class="fa fa-check-circle"></i> Annotations loaded
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-2">
+                            <strong>KO</strong> simulates single-gene knockout (quick, standalone). &nbsp;
+                            <strong>+FBA KO</strong> adds the gene to the multi-gene KO set used in Static FBA and Light Sweep (sidebar). &nbsp;
+                            <span class="badge badge-danger">Essential</span> growth = 0 &nbsp;
+                            <span class="badge badge-warning">Impaired</span> &lt;50% WT &nbsp;
+                            <span class="badge badge-success">Non-essential</span> ≥50% WT
+                        </p>
+                        <div style="position:relative;">
+                            <div id="gene-table-loading" class="text-center py-4">
+                                <div class="spinner-border text-secondary" role="status" style="width:1.5rem;height:1.5rem;"></div>
+                                <div class="text-muted small mt-2">Loading genes…</div>
+                            </div>
+                            <div class="table-scroll" style="max-height:420px;display:none;" id="gene-table-wrap">
+                                <table class="table table-sm table-striped table-hover" id="gene-table">
+                                    <thead class="thead-light sticky-top">
+                                        <tr>
+                                            <th>Locus tag</th>
+                                            <th>Protein / product</th>
+                                            <th>Subsystem(s)</th>
+                                            <th>Reactions</th>
+                                            <th style="cursor:pointer;user-select:none;" onclick="sortGeneTableByKO()" title="Sort by KO growth (only rows with a result are sorted)">KO growth (h⁻¹) <i class="fa fa-sort" id="ko-sort-icon"></i></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /gene-browser-card -->
+
+            <!-- Custom reactions card (full width) -->
+            <div class="card mt-3" id="cr-card">
+                <div class="card-header py-2" style="cursor:pointer;" data-toggle="collapse" data-target="#cr-card-body">
+                    <strong><i class="fa fa-plus-circle text-primary"></i> Heterologous Pathway Engineering</strong>
+                    <small class="text-muted ml-2">Add heterologous enzymes and custom reactions — applies to FBA, light sweep, production envelope &amp; biosynthetic cost</small>
+                    <i class="fa fa-chevron-down float-right mt-1"></i>
+                </div>
+                <div class="card-body collapse" id="cr-card-body">
+                    <div class="form-row align-items-end mb-2">
+                        <div class="col-md-5">
+                            <label class="small text-muted mb-1">Pathway template</label>
+                            <select class="form-control form-control-sm" id="cr-template-select">
+                                <option value="">— choose template —</option>
+                                <option value="ethylene_efe">Ethylene via Efe (P. syringae) — α-KG + O₂ → ethylene</option>
+                                <option value="isoprene_isps">Isoprene via IspS (poplar) — DMAPP → isoprene</option>
+                                <option value="sucrose_export">Sucrose export sink (native pathway)</option>
+                                <option value="phb_pha">PHB (PhaABC) — acetyl-CoA → polyhydroxybutyrate</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-sm btn-outline-primary" id="cr-add-template-btn">
+                                <i class="fa fa-plus"></i> Add template
+                            </button>
+                        </div>
+                        <div class="col-auto text-muted small mx-1">or</div>
+                        <div class="col-auto">
+                            <button class="btn btn-sm btn-outline-secondary" id="cr-add-manual-btn">
+                                <i class="fa fa-pencil"></i> Custom reaction
+                            </button>
+                        </div>
+                    </div>
+                    <div id="cr-manual-form" class="p-2 mb-2 border rounded bg-light" style="display:none;">
+                        <div class="form-row align-items-end mb-1">
+                            <div class="col-md-2">
+                                <label class="small mb-0">Reaction ID</label>
+                                <input type="text" class="form-control form-control-sm" id="cr-man-id" placeholder="e.g. EFE">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small mb-0">Name (optional)</label>
+                                <input type="text" class="form-control form-control-sm" id="cr-man-name" placeholder="Ethylene-forming enzyme">
+                            </div>
+                            <div class="col-auto">
+                                <label class="small mb-0">lb</label>
+                                <input type="number" class="form-control form-control-sm" id="cr-man-lb" value="0" step="any" style="width:70px;">
+                            </div>
+                            <div class="col-auto">
+                                <label class="small mb-0">ub</label>
+                                <input type="number" class="form-control form-control-sm" id="cr-man-ub" value="1000" step="any" style="width:70px;">
+                            </div>
+                        </div>
+                        <div class="form-row mb-1">
+                            <div class="col-9">
+                                <label class="small mb-0">Stoichiometry <small class="text-muted">(met_id:coeff, …)</small></label>
+                                <input type="text" class="form-control form-control-sm" id="cr-man-stoich" placeholder="akg_c:-1, o2_c:-1, succ_c:1, co2_c:3, ethy_c:1">
+                            </div>
+                        </div>
+                        <div class="form-row mb-2">
+                            <div class="col-9">
+                                <label class="small mb-0">New metabolites <small class="text-muted">(id:name:formula, …)</small></label>
+                                <input type="text" class="form-control form-control-sm" id="cr-man-newmets" placeholder="ethy_c:Ethylene:C2H4">
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-primary" id="cr-man-add-btn"><i class="fa fa-plus"></i> Add reaction</button>
+                        <button class="btn btn-sm btn-link text-secondary py-0" id="cr-man-cancel-btn">Cancel</button>
+                    </div>
+                    <div id="cr-list-wrap" style="display:none;">
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="small font-weight-bold text-primary"><i class="fa fa-check-circle"></i> Active custom reactions</span>
+                            <button class="btn btn-link text-danger ml-auto py-0 px-0" id="cr-clear-all-btn" style="font-size:0.8em;"><i class="fa fa-trash"></i> Clear all</button>
+                        </div>
+                        <div id="cr-list" class="small"></div>
+                    </div>
+                    <div id="cr-note" class="small mt-1"></div>
+                    <p class="text-muted small mb-0 mt-1">
+                        <i class="fa fa-info-circle"></i>
+                        Use the <strong>Metabolites</strong> tab to verify IDs. New metabolites not in iRH783 must be declared in the stoichiometry field.
+                    </p>
+                </div>
+            </div>
+
             <!-- ── 1-D Parameter Sensitivity Sweep (full-width) ── -->
             <div class="card mt-3" id="sensitivity-card">
                 <div class="card-header py-2 d-flex align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#sensitivity-body">
@@ -1205,65 +1269,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- ── Gene Browser (full-width, below simulation layout) ── -->
-            <div class="card mt-3" id="gene-browser-card">
-                <div class="card-header py-2 d-flex align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#gene-browser-body" aria-expanded="true">
-                    <span><i class="fa fa-dna"></i> <strong>Gene Browser &amp; Knockout Analysis</strong>
-                    <small class="text-muted ml-2">Browse all iRH783 genes, run single-gene KO, or add genes to the FBA KO set</small></span>
-                    <i class="fa fa-chevron-down ml-auto" id="gene-browser-chevron"></i>
-                </div>
-                <div class="collapse show" id="gene-browser-body">
-                    <div class="card-body pt-2 pb-2">
-                        <div class="row mb-2 align-items-center">
-                            <div class="col-md-4">
-                                <input class="form-control form-control-sm" id="gene-search" placeholder="Search by locus tag, protein name, or subsystem…">
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="ko-constrained-chk" checked>
-                                    <label class="form-check-label small" for="ko-constrained-chk">Use photoautotrophic constraints for single-gene KO</label>
-                                </div>
-                            </div>
-                            <div class="col-auto text-muted small" id="gene-count-label"></div>
-                            <div class="col-auto small" id="ann-loading-msg" style="display:none;">
-                                <span class="spinner-border spinner-border-sm text-secondary" role="status" style="width:0.75rem;height:0.75rem;"></span>
-                                <span class="text-muted ml-1">Loading protein names…</span>
-                            </div>
-                            <div class="col-auto small text-success" id="ann-done-msg" style="display:none;">
-                                <i class="fa fa-check-circle"></i> Annotations loaded
-                            </div>
-                        </div>
-                        <p class="text-muted small mb-2">
-                            <strong>KO</strong> simulates single-gene knockout (quick, standalone). &nbsp;
-                            <strong>+FBA KO</strong> adds the gene to the multi-gene KO set used in Static FBA and Light Sweep (sidebar). &nbsp;
-                            <span class="badge badge-danger">Essential</span> growth = 0 &nbsp;
-                            <span class="badge badge-warning">Impaired</span> &lt;50% WT &nbsp;
-                            <span class="badge badge-success">Non-essential</span> ≥50% WT
-                        </p>
-                        <div style="position:relative;">
-                            <div id="gene-table-loading" class="text-center py-4">
-                                <div class="spinner-border text-secondary" role="status" style="width:1.5rem;height:1.5rem;"></div>
-                                <div class="text-muted small mt-2">Loading genes…</div>
-                            </div>
-                            <div class="table-scroll" style="max-height:420px;display:none;" id="gene-table-wrap">
-                                <table class="table table-sm table-striped table-hover" id="gene-table">
-                                    <thead class="thead-light sticky-top">
-                                        <tr>
-                                            <th>Locus tag</th>
-                                            <th>Protein / product</th>
-                                            <th>Subsystem(s)</th>
-                                            <th>Reactions</th>
-                                            <th style="cursor:pointer;user-select:none;" onclick="sortGeneTableByKO()" title="Sort by KO growth (only rows with a result are sorted)">KO growth (h⁻¹) <i class="fa fa-sort" id="ko-sort-icon"></i></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- /gene-browser-card -->
 
         </div><!-- /tab-simulations -->
 

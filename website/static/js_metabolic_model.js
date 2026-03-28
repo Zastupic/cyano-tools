@@ -6,7 +6,8 @@ let allMetabolites = [];
 let allGenes       = [];
 let lastFluxes     = {};      // rxnId → flux value from most recent FBA
 let rxnNameMap     = {};      // rxnId → display name
-let subsystemChart = null;    // Chart.js instance
+let subsystemChart = null;    // Chart.js instance (KEGG pathways)
+let modelSubsystemChart = null; // Chart.js instance (model subsystems)
 let biomassRxnId   = '';      // objective/biomass reaction ID from model info
 
 // ── Escher static map files ───────────────────────────────────────────────────
@@ -1374,8 +1375,8 @@ function runFBA() {
             lastFluxes = d.fluxes;
             populateFBATable(d.fluxes);
             renderSubsystemChart(d.fluxes);
+            renderModelSubsystemChart(d.fluxes);
             document.getElementById('fba-flux-wrap').style.display = '';
-            document.getElementById('pathway-vis-wrap').style.display = '';
 
             // Auto-apply flux to KEGG map if open
             if (keggHotspots.length > 0) applyKeggFlux(d.fluxes);
@@ -1475,13 +1476,15 @@ function populateFBATable(fluxes) {
 
 // ── Subsystem activity bar chart ──────────────────────────────────────────────
 function renderSubsystemChart(fluxes) {
-    // Aggregate absolute flux per subsystem
+    // Aggregate absolute flux per KEGG pathway
     const totals = {};
     allReactions.forEach(r => {
-        if (!r.subsystem) return;
         const f = Math.abs(fluxes[r.id] || 0);
         if (f < 1e-9) return;
-        totals[r.subsystem] = (totals[r.subsystem] || 0) + f;
+        const pathways = reactionPathwayIndex[r.id] || [];
+        pathways.forEach(p => {
+            totals[p.pathway_name] = (totals[p.pathway_name] || 0) + f;
+        });
     });
 
     const sorted = Object.entries(totals)
@@ -1494,6 +1497,10 @@ function renderSubsystemChart(fluxes) {
     const colors = values.map((_, i) =>
         i < 5 ? 'rgba(46, 122, 66, 0.8)' : 'rgba(78, 141, 199, 0.6)'
     );
+
+    // Size inner container so every bar is readable (22px per bar + padding)
+    const innerEl = document.getElementById('subsystem-chart-inner');
+    innerEl.style.height = Math.max(300, labels.length * 22 + 60) + 'px';
 
     const ctx = document.getElementById('subsystem-chart').getContext('2d');
     if (subsystemChart) subsystemChart.destroy();
@@ -1512,6 +1519,7 @@ function renderSubsystemChart(fluxes) {
         options: {
             indexAxis: 'y',
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
                 tooltip: {
@@ -1522,7 +1530,8 @@ function renderSubsystemChart(fluxes) {
             },
             scales: {
                 x: {
-                    title: { display: true, text: 'Total absolute flux (mmol·gDW⁻¹·h⁻¹)' },
+                    type: 'logarithmic',
+                    title: { display: true, text: 'Total absolute flux (mmol·gDW⁻¹·h⁻¹) — log scale' },
                     grid: { color: 'rgba(0,0,0,0.05)' },
                 },
                 y: {
@@ -1533,6 +1542,83 @@ function renderSubsystemChart(fluxes) {
     });
 
     document.getElementById('subsystem-chart-wrap').style.display = '';
+}
+
+// ── Model subsystem activity bar chart ────────────────────────────────────────
+function renderModelSubsystemChart(fluxes) {
+    const totals = {};
+    allReactions.forEach(r => {
+        if (!r.subsystem) return;
+        const f = Math.abs(fluxes[r.id] || 0);
+        if (f < 1e-9) return;
+        totals[r.subsystem] = (totals[r.subsystem] || 0) + f;
+    });
+
+    const sorted = Object.entries(totals)
+        .sort((a, b) => b[1] - a[1]);
+
+    const labels = sorted.map(([k]) => k);
+    const values = sorted.map(([, v]) => parseFloat(v.toFixed(3)));
+
+    const colors = values.map((_, i) =>
+        i < 5 ? 'rgba(153, 102, 51, 0.8)' : 'rgba(130, 130, 180, 0.6)'
+    );
+
+    const innerEl = document.getElementById('model-subsystem-chart-inner');
+    innerEl.style.height = Math.max(300, labels.length * 22 + 60) + 'px';
+
+    const ctx = document.getElementById('model-subsystem-chart').getContext('2d');
+    if (modelSubsystemChart) modelSubsystemChart.destroy();
+
+    modelSubsystemChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors,
+                borderColor: colors.map(c => c.replace('0.8', '1').replace('0.6', '1')),
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.raw} mmol·gDW⁻¹·h⁻¹ (Σ|flux|)`,
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'logarithmic',
+                    title: { display: true, text: 'Total absolute flux (mmol·gDW⁻¹·h⁻¹) — log scale' },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                },
+                y: {
+                    ticks: { font: { size: 11 } }
+                }
+            }
+        }
+    });
+
+    document.getElementById('model-subsystem-chart-wrap').style.display = '';
+}
+
+function toggleChartScale(which) {
+    const chart = which === 'kegg' ? subsystemChart : modelSubsystemChart;
+    const chkId = which === 'kegg' ? 'kegg-chart-log' : 'subsystem-chart-log';
+    if (!chart) return;
+    const isLog = document.getElementById(chkId).checked;
+    const newType = isLog ? 'logarithmic' : 'linear';
+    const label = 'Total absolute flux (mmol·gDW⁻¹·h⁻¹)' + (isLog ? ' — log scale' : '');
+    chart.options.scales.x.type = newType;
+    chart.options.scales.x.title.text = label;
+    chart.update();
 }
 
 // ── Condition presets ─────────────────────────────────────────────────────────
@@ -1786,9 +1872,9 @@ function runFBAwithPFBA() {
             renderLimitingConstraints(d.fluxes, constraints);
             populateFBATable(d.fluxes);
             renderSubsystemChart(d.fluxes);
+            renderModelSubsystemChart(d.fluxes);
             simMarkFBAPoint(d.objective, d.fluxes);
             document.getElementById('fba-flux-wrap').style.display = '';
-            document.getElementById('pathway-vis-wrap').style.display = '';
             if (keggHotspots.length > 0) applyKeggFlux(d.fluxes);
         } else {
             box.innerHTML = `<div class="alert alert-warning mb-1">
