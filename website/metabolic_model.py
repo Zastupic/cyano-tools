@@ -6,6 +6,7 @@ import threading
 import urllib.request
 import urllib.parse
 from flask import Blueprint, render_template, jsonify, request
+from . import metanetx_lookup
 
 # ── External gene annotation cache ───────────────────────────────────────────
 # Populated in a background thread on first /api/metabolic/genes request.
@@ -1049,3 +1050,90 @@ def energetics():
         'nadph_per_unit':    nadph_cost,
         'photon_rxn':        photon_id,
     })
+
+
+@metabolic_bp.route('/api/metabolic/kegg_search')
+def kegg_reaction_search():
+    """Proxy KEGG reaction full-text search to avoid browser CORS restrictions."""
+    query = request.args.get('q', '').strip()
+    if len(query) < 2:
+        return jsonify([])
+    try:
+        url = 'https://rest.kegg.jp/find/reaction/' + urllib.parse.quote(query)
+        req = urllib.request.Request(url, headers={'User-Agent': 'CyanoTools/1.0'})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            text = resp.read().decode('utf-8')
+        results = []
+        for line in text.strip().splitlines():
+            parts = line.split('\t', 1)
+            if len(parts) == 2:
+                rid  = parts[0].replace('rn:', '')
+                name = parts[1]
+                results.append({'id': rid, 'name': name})
+        return jsonify(results[:20])
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 503
+
+
+@metabolic_bp.route('/api/metabolic/kegg_reaction', methods=['POST'])
+def kegg_reaction_lookup():
+    """Translate a KEGG reaction ID into BiGG stoichiometry compatible with iRH783."""
+    data   = request.json or {}
+    raw_id = data.get('kegg_id', '').strip().upper()
+
+    if not re.match(r'^R\d{5}$', raw_id):
+        return jsonify({'error': 'Invalid KEGG reaction ID — expected format R#####'}), 400
+
+    if not metanetx_lookup.files_available():
+        state = metanetx_lookup.get_download_state()
+        if state == 'downloading':
+            return jsonify({'error': 'MetaNetX reference files are still downloading — '
+                                     'this happens once on first startup (~1–2 min). Please try again shortly.'}), 503
+        elif state == 'failed':
+            return jsonify({'error': 'MetaNetX download failed (check server logs). '
+                                     'Run website/download_metanetx.py manually to retry.'}), 503
+        else:
+            return jsonify({'error': 'MetaNetX data files not found. '
+                                     'Run website/download_metanetx.py to download them.'}), 503
+
+    m           = _get_model()
+    bigg_bases  = metanetx_lookup.get_model_bigg_base_ids(m)
+    result      = metanetx_lookup.lookup_kegg_reaction(raw_id, bigg_bases)
+
+    if not result.get('found'):
+        return jsonify({'error': result.get('error', 'Reaction not found')}), 404
+
+    result['kegg_id'] = raw_id
+
+    # Fetch reaction name + compound names for unmapped metabolites (best-effort, non-fatal)
+    import urllib.request as _ur
+
+    try:
+        _url = 'https://rest.kegg.jp/find/reaction/' + raw_id
+        with _ur.urlopen(_ur.Request(_url, headers={'User-Agent': 'CyanoTools/1.0'}), timeout=5) as _r:
+            _line = _r.read().decode('utf-8').strip().splitlines()[0]
+        result['kegg_name'] = _line.split('\t', 1)[1] if '\t' in _line else ''
+    except Exception:
+        result['kegg_name'] = ''
+
+    # Annotate unknown_mets with human-readable compound name from KEGG
+    unknowns = result.get('unknown_mets', [])
+    kegg_cpds = [u['kegg_cpd'] for u in unknowns if u.get('kegg_cpd')]
+    if kegg_cpds:
+        try:
+            _url2 = 'https://rest.kegg.jp/list/' + '+'.join(f'cpd:{c}' for c in kegg_cpds)
+            with _ur.urlopen(_ur.Request(_url2, headers={'User-Agent': 'CyanoTools/1.0'}), timeout=5) as _r2:
+                _cpd_text = _r2.read().decode('utf-8')
+            _cpd_names = {}
+            for _ln in _cpd_text.strip().splitlines():
+                _parts = _ln.split('\t', 1)
+                if len(_parts) == 2:
+                    _cid = _parts[0].replace('cpd:', '')
+                    _cpd_names[_cid] = _parts[1].split(';')[0].strip()
+            for u in unknowns:
+                u['name'] = _cpd_names.get(u.get('kegg_cpd', ''), '')
+        except Exception:
+            for u in unknowns:
+                u.setdefault('name', '')
+
+    return jsonify(result)

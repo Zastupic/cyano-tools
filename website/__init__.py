@@ -15,6 +15,30 @@ ALLOWED_EXTENSIONS = set(['.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.gi
 images = UploadSet('images', IMAGES)
 
 
+def _start_metanetx_download():
+    """Background thread: download MetaNetX TSV files if not already present."""
+    import importlib
+    def _run():
+        try:
+            mnx = importlib.import_module('website.metanetx_lookup')
+            dl  = importlib.import_module('website.download_metanetx')
+            if mnx.files_available():
+                mnx.set_download_state('ready')
+                return
+            mnx.set_download_state('downloading')
+            dl.main()
+            mnx.set_download_state('ready' if mnx.files_available() else 'failed')
+        except Exception as exc:
+            print(f'[metanetx] Auto-download failed: {exc}')
+            try:
+                mnx = importlib.import_module('website.metanetx_lookup')
+                mnx.set_download_state('failed')
+            except Exception:
+                pass
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+
+
 def _start_upload_cleanup(folder, max_age_minutes=30, interval_hours=1):
     """Daemon thread: every interval_hours, delete files in folder older than max_age_minutes."""
     def _loop():
@@ -163,6 +187,7 @@ def create_app():
     # Werkzeug reloader watcher (which would otherwise start two threads).
     if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         _start_upload_cleanup(UPLOAD_FOLDER, max_age_minutes=30, interval_hours=2)
+        _start_metanetx_download()
 
     return app
 

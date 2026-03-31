@@ -6,8 +6,9 @@ let allMetabolites = [];
 let allGenes       = [];
 let lastFluxes     = {};      // rxnId → flux value from most recent FBA
 let rxnNameMap     = {};      // rxnId → display name
-let subsystemChart = null;    // Chart.js instance (KEGG pathways)
-let modelSubsystemChart = null; // Chart.js instance (model subsystems)
+let modelSubsystemChart = null;  // Chart.js instance (model subsystems)
+let scenarioDiffChart = null;      // Chart.js instance (scenario differential)
+let scenarioPathwayChart = null;   // Chart.js instance (scenario pathway grouped bar)
 let biomassRxnId   = '';      // objective/biomass reaction ID from model info
 
 // ── Escher static map files ───────────────────────────────────────────────────
@@ -207,14 +208,16 @@ function simKoSetGenes(geneList) {
 }
 
 function simKoUpdateDisplay() {
-    const genes    = simKoGetGenes();
-    const list     = document.getElementById('sim-ko-selected-list');
-    const noneMsg  = document.getElementById('sim-ko-none-msg');
-    if (list) {
-        list.textContent = genes.join(', ');
-        list.style.display = genes.length ? '' : 'none';
-    }
-    if (noneMsg) noneMsg.style.display = genes.length ? 'none' : '';
+    const genes   = simKoGetGenes();
+    const hasKO   = genes.length > 0;
+    const list    = document.getElementById('sim-ko-selected-list');
+    const wrap    = document.getElementById('sim-ko-selected-wrap');
+    const actions = document.getElementById('sim-ko-actions');
+    const note    = document.getElementById('sim-ko-applied-note');
+    if (list)    { list.textContent = genes.join(', '); list.style.display = hasKO ? '' : 'none'; }
+    if (wrap)    wrap.style.display    = hasKO ? '' : 'none';
+    if (actions) actions.style.display = hasKO ? 'flex' : 'none';
+    if (note)    note.style.display    = hasKO ? '' : 'none';
 }
 
 function simKoFilter() {
@@ -362,6 +365,23 @@ function medCalcXA() {
 }
 
 /** Re-compute and display X whenever XA or d changes. */
+const _UNIT_LABELS = { ppm_co2: 'ppm', mmol_L: 'mM', mg_L: 'mg/L' };
+
+function medUnitCycle(btn) {
+    const opts = btn.dataset.opts.split(',');
+    const inp  = document.getElementById(btn.dataset.input);
+    const next = (opts.indexOf(inp.value) + 1) % opts.length;
+    inp.value    = opts[next];
+    btn.textContent = _UNIT_LABELS[opts[next]] || opts[next];
+}
+
+function medSyncUnitButtons() {
+    document.querySelectorAll('.med-unit-btn').forEach(btn => {
+        const inp = document.getElementById(btn.dataset.input);
+        if (inp) btn.textContent = _UNIT_LABELS[inp.value] || inp.value;
+    });
+}
+
 function medUpdateX() {
     const XA = parseFloat(document.getElementById('med-conv-xa')?.value)    || 30;
     const d  = parseFloat(document.getElementById('med-conv-depth')?.value) || 0.05;
@@ -946,13 +966,13 @@ function runKnockout(geneId, btn) {
                       : pct < 50 ? 'text-warning font-weight-bold'  // Impaired:  < 50% WT
                       : 'text-success';                              // Non-essential: ≥ 50% WT
             span.className = `ko-result ml-1 small ${cls}`;
-            span.textContent = `${pct.toFixed(1)}% WT`;
+            span.textContent = `Growth rate: ${pct.toFixed(1)}% WT`;
             // Store for sort
             const row = btn.closest('tr');
             if (row) row.dataset.koPct = pct.toFixed(4);
         } else {
             span.className = 'ko-result ml-1 small text-danger font-weight-bold';
-            span.textContent = '0% WT';
+            span.textContent = 'Growth rate: 0% WT';
             const row = btn.closest('tr');
             if (row) row.dataset.koPct = '0';
         }
@@ -1370,7 +1390,6 @@ function runFBA() {
             </div>`;
             lastFluxes = d.fluxes;
             populateFBATable(d.fluxes);
-            renderSubsystemChart(d.fluxes);
             renderModelSubsystemChart(d.fluxes);
             document.getElementById('fba-flux-wrap').style.display = '';
 
@@ -1384,12 +1403,12 @@ function runFBA() {
             document.getElementById('fba-flux-wrap').style.display = 'none';
         }
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-play"></i> Run FBA';
+        btn.innerHTML = '<i class="fa fa-play"></i> Run static FBA';
     })
     .catch(err => {
         console.error('FBA error:', err);
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-play"></i> Run FBA';
+        btn.innerHTML = '<i class="fa fa-play"></i> Run static FBA';
     });
 }
 
@@ -1410,30 +1429,102 @@ const _EXCHANGE_LABELS = {
     'EX_o2_e':        'O₂ (secretion)',
 };
 
+// What each limiting constraint means and how to relieve it
+const _CONSTRAINT_INTERP = {
+    'EX_photon_e1_e': { noun: 'light',       advice: 'increase I₀ or reduce areal biomass density (X_A)' },
+    'EX_co2_e':       { noun: 'CO₂ / carbon', advice: 'increase CO₂ supply or HCO₃⁻ exchange bound' },
+    'EX_no3_e':       { noun: 'nitrate',      advice: 'increase NO₃⁻ supply or allow NH₄⁺ uptake' },
+    'EX_nh4_e':       { noun: 'ammonium',     advice: 'increase NH₄⁺ supply' },
+    'EX_glc__D_e':    { noun: 'glucose',      advice: 'increase glucose supply bound' },
+    'EX_pi_e':        { noun: 'phosphate',    advice: 'increase phosphate supply bound' },
+    'EX_so4_e':       { noun: 'sulfate',      advice: 'increase sulfate supply bound' },
+    'EX_fe2_e':       { noun: 'iron',         advice: 'increase Fe²⁺ supply bound' },
+};
+
 function renderLimitingConstraints(fluxes, constraints) {
     const box = document.getElementById('fba-result-box');
     if (!box) return;
 
-    const active = [];
+    // Compute utilisation for every constrained uptake bound
+    const items = [];
     Object.entries(constraints).forEach(([rxnId, bounds]) => {
         const flux = fluxes[rxnId];
         if (flux == null) return;
-        // A lower-bound is active when the actual flux equals (or is very close to) the bound
         if (bounds.lb != null) {
-            const lb = parseFloat(bounds.lb);
-            if (Math.abs(flux - lb) < Math.abs(lb) * 0.001 + 1e-6) {
-                const label = _EXCHANGE_LABELS[rxnId] || rxnId;
-                active.push(`${label} (${flux.toFixed(2)} mmol·gDW⁻¹·h⁻¹)`);
-            }
+            const lb       = parseFloat(bounds.lb);
+            if (lb >= 0) return;                           // ignore non-uptake bounds
+            const capacity = Math.abs(lb);
+            const used     = Math.min(capacity, Math.abs(flux));
+            const ratio    = capacity > 0 ? used / capacity : 0;
+            const isActive = Math.abs(flux - lb) < Math.abs(lb) * 0.001 + 1e-6;
+            items.push({
+                rxnId, flux, lb, capacity, used, ratio, isActive,
+                label:  _EXCHANGE_LABELS[rxnId] || rxnId,
+                interp: _CONSTRAINT_INTERP[rxnId] || null,
+            });
         }
     });
 
-    if (active.length === 0) return;
+    if (items.length === 0) return;
+
+    const active  = items.filter(i => i.isActive);
+    const nouns   = active.map(a => `<strong>${esc(a.interp ? a.interp.noun : a.label)}</strong>`);
+    const advices = [...new Set(active.filter(a => a.interp).map(a => a.interp.advice))];
+
+    let sentence;
+    if (active.length === 1) {
+        const a = active[0];
+        sentence = `Growth is <strong>${a.interp ? esc(a.interp.noun) + '-limited' : 'constrained by ' + esc(a.label)}</strong>
+            — the model is using 100% of available ${a.interp ? esc(a.interp.noun) : esc(a.label)}.
+            To allow higher growth: ${advices[0] ? esc(advices[0]) : 'relax this bound'}.`;
+    } else if (active.length > 1) {
+        sentence = `Growth is co-limited by ${nouns.join(' and ')}
+            — all these bounds are fully consumed simultaneously.
+            ${advices.length ? 'To relieve: ' + advices.map(esc).join('; ') + '.' : ''}`;
+    } else {
+        sentence = 'All resources have spare capacity — growth is constrained by internal stoichiometry.';
+    }
+
+    // Bar chart: sorted by utilisation descending
+    const uid      = 'lim-bars-' + Math.random().toString(36).slice(2, 7);
+    const barsHtml = items
+        .sort((a, b) => b.ratio - a.ratio)
+        .map(item => {
+            const pct   = (item.ratio * 100).toFixed(1);
+            const fill  = item.ratio >= 0.999 ? '#c0392b'
+                        : item.ratio >= 0.75  ? '#e67e22'
+                        : '#2980b9';
+            return `<div class="mb-2">
+                <div class="d-flex justify-content-between mb-0" style="font-size:0.85em;">
+                    <span>${esc(item.label)}</span>
+                    <span class="text-muted">${item.used.toFixed(1)} / ${item.capacity.toFixed(1)} mmol·gDW⁻¹·h⁻¹
+                        &nbsp;<strong style="color:${fill};">${pct}%</strong></span>
+                </div>
+                <div style="background:#dce3ea;border-radius:4px;height:10px;overflow:hidden;">
+                    <div style="width:${pct}%;background:${fill};height:10px;border-radius:4px;transition:width .3s;"></div>
+                </div>
+            </div>`;
+        }).join('');
 
     const div = document.createElement('div');
-    div.className = 'alert alert-warning py-1 px-2 mb-1';
-    div.style.fontSize = '0.8em';
-    div.innerHTML = `<i class="fa fa-exclamation-triangle"></i> <strong>Active constraints (limiting):</strong> ${active.map(esc).join(' &nbsp;·&nbsp; ')}`;
+    div.className = 'alert alert-info py-2 px-3 mb-1';
+    div.style.fontSize = '0.82em';
+    div.innerHTML = `
+        <div style="cursor:pointer;" data-toggle="collapse" data-target="#${uid}">
+            <i class="fa fa-info-circle"></i> <strong>What is limiting growth?</strong>
+            <i class="fa fa-chevron-down float-right mt-1" style="font-size:0.85em;"></i>
+        </div>
+        <div class="mt-1">${sentence}</div>
+        <div class="collapse mt-2" id="${uid}">
+            <hr class="my-1">
+            <div class="mb-2" style="font-size:0.85em;font-weight:600;">Resource utilisation (% of set bound)</div>
+            ${barsHtml}
+            <div class="text-muted mt-1" style="font-size:0.78em;">
+                <span style="display:inline-block;width:10px;height:10px;background:#c0392b;border-radius:2px;"></span> 100% — limiting &nbsp;
+                <span style="display:inline-block;width:10px;height:10px;background:#e67e22;border-radius:2px;"></span> 75–99% — near-limiting &nbsp;
+                <span style="display:inline-block;width:10px;height:10px;background:#2980b9;border-radius:2px;"></span> &lt;75% — not limiting
+            </div>
+        </div>`;
     box.appendChild(div);
 }
 
@@ -1468,76 +1559,6 @@ function populateFBATable(fluxes) {
     if (searchEl) searchEl.value = '';
     const countEl = document.getElementById('fba-flux-count');
     if (countEl) countEl.textContent = `${sorted.length} reactions`;
-}
-
-// ── Subsystem activity bar chart ──────────────────────────────────────────────
-function renderSubsystemChart(fluxes) {
-    // Aggregate absolute flux per KEGG pathway
-    const totals = {};
-    allReactions.forEach(r => {
-        const f = Math.abs(fluxes[r.id] || 0);
-        if (f < 1e-9) return;
-        const pathways = reactionPathwayIndex[r.id] || [];
-        pathways.forEach(p => {
-            totals[p.pathway_name] = (totals[p.pathway_name] || 0) + f;
-        });
-    });
-
-    const sorted = Object.entries(totals)
-        .sort((a, b) => b[1] - a[1]);
-
-    const labels = sorted.map(([k]) => k);
-    const values = sorted.map(([, v]) => parseFloat(v.toFixed(3)));
-
-    // Colour bars: top-5 darker, rest lighter
-    const colors = values.map((_, i) =>
-        i < 5 ? 'rgba(46, 122, 66, 0.8)' : 'rgba(78, 141, 199, 0.6)'
-    );
-
-    // Size inner container so every bar is readable (22px per bar + padding)
-    const innerEl = document.getElementById('subsystem-chart-inner');
-    innerEl.style.height = Math.max(300, labels.length * 22 + 60) + 'px';
-
-    const ctx = document.getElementById('subsystem-chart').getContext('2d');
-    if (subsystemChart) subsystemChart.destroy();
-
-    subsystemChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                data: values,
-                backgroundColor: colors,
-                borderColor: colors.map(c => c.replace('0.8', '1').replace('0.6', '1')),
-                borderWidth: 1,
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => ` ${ctx.raw} mmol·gDW⁻¹·h⁻¹ (Σ|flux|)`,
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    type: 'logarithmic',
-                    title: { display: true, text: 'Total absolute flux (mmol·gDW⁻¹·h⁻¹) — log scale' },
-                    grid: { color: 'rgba(0,0,0,0.05)' },
-                },
-                y: {
-                    ticks: { font: { size: 11 } }
-                }
-            }
-        }
-    });
-
-    document.getElementById('subsystem-chart-wrap').style.display = '';
 }
 
 // ── Model subsystem activity bar chart ────────────────────────────────────────
@@ -1605,11 +1626,10 @@ function renderModelSubsystemChart(fluxes) {
     document.getElementById('model-subsystem-chart-wrap').style.display = '';
 }
 
-function toggleChartScale(which) {
-    const chart = which === 'kegg' ? subsystemChart : modelSubsystemChart;
-    const chkId = which === 'kegg' ? 'kegg-chart-log' : 'subsystem-chart-log';
+function toggleChartScale() {
+    const chart = modelSubsystemChart;
     if (!chart) return;
-    const isLog = document.getElementById(chkId).checked;
+    const isLog = document.getElementById('subsystem-chart-log').checked;
     const newType = isLog ? 'logarithmic' : 'linear';
     const label = 'Total absolute flux (mmol·gDW⁻¹·h⁻¹)' + (isLog ? ' — log scale' : '');
     chart.options.scales.x.type = newType;
@@ -1651,20 +1671,118 @@ function applyPreset(name) {
     });
 }
 
-// ── Export FBA ────────────────────────────────────────────────────────────────
+// ── Export FBA (unified: current run + saved scenarios) ───────────────────────
 function exportFBA() {
-    const rows = [['Reaction ID', 'Reaction name', 'Subsystem', 'Flux (mmol/gDW/h)']];
+    const hasCurrentFBA = Object.keys(lastFluxes).length > 0;
+    const scenarios     = _scenarioLoad();
+    if (!hasCurrentFBA && !scenarios.length) {
+        alert('Run FBA first to generate flux data for export.');
+        return;
+    }
+
+    const SLIDER_LABELS = {
+        'sim-I0':            'I₀ — incident irradiance (µmol·m⁻²·s⁻¹)',
+        'sim-XA':            'X_A — areal biomass (g·m⁻²)',
+        'sim-alpha':         'α — photon absorption',
+        'sim-KL':            'K_L — half-sat. irradiance (µmol·m⁻²·s⁻¹)',
+        'sim-YBM':           'Y_BM — biomass yield (g·mol⁻¹)',
+        'sim-kd':            'k_d — decay rate (h⁻¹)',
+        'sim-ngam-photon':   'NGAM (photon µmol·gDW⁻¹·h⁻¹)',
+        'sim-rho0':          'ρ₀ — initial biomass (g·L⁻¹)',
+        'sim-tend':          't_end — simulation end (h)',
+        'sim-yx':            'Y_X — product yield (mmol·gDW⁻¹)',
+        'med-co2':           'CO₂ (mmol·gDW⁻¹·h⁻¹)',
+        'med-no3':           'NO₃⁻ (mmol·gDW⁻¹·h⁻¹)',
+        'med-nh4':           'NH₄⁺ (mmol·gDW⁻¹·h⁻¹)',
+        'med-glc':           'Glucose (mmol·gDW⁻¹·h⁻¹)',
+        'med-pi':            'Phosphate (mmol·gDW⁻¹·h⁻¹)',
+        'med-so4':           'Sulfate (mmol·gDW⁻¹·h⁻¹)',
+        'med-fe2':           'Iron (mmol·gDW⁻¹·h⁻¹)',
+        'med-mn2':           'Manganese (mmol·gDW⁻¹·h⁻¹)',
+        'med-zn2':           'Zinc (mmol·gDW⁻¹·h⁻¹)',
+        'med-cu2':           'Copper (mmol·gDW⁻¹·h⁻¹)',
+    };
+
     const subsystemLookup = {};
     allReactions.forEach(r => { subsystemLookup[r.id] = r.subsystem || ''; });
 
-    Object.entries(lastFluxes)
-        .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-        .forEach(([id, v]) => rows.push([id, rxnNameMap[id] || '', subsystemLookup[id] || '', v]));
+    // Build the list of columns: current run first, then saved scenarios
+    const currentLabel = 'Current run';
+    const cols = [];   // [{ label, fluxes }]
+    if (hasCurrentFBA) cols.push({ label: currentLabel, fluxes: lastFluxes });
+    scenarios.forEach(sc => cols.push({ label: sc.name, fluxes: sc.fba_result?.fluxes || {} }));
+    const colLabels = cols.map(c => c.label);
 
-    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // ── Sheet 1: Parameters ───────────────────────────────────────────────────
+    // Only meaningful if there are saved scenarios (current run has no saved sliders)
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'FBA fluxes');
-    XLSX.writeFile(wb, 'fba_fluxes_iRH783.xlsx');
+
+    if (scenarios.length > 0) {
+        const scCols = scenarios.map(sc => sc.name);
+        const rows1 = [['Parameter', ...scCols]];
+        Object.keys(SLIDER_LABELS).forEach(id => {
+            rows1.push([SLIDER_LABELS[id], ...scenarios.map(sc => sc.sliders?.[id] ?? '')]);
+        });
+        rows1.push(['Gene knockouts (FBA)', ...scenarios.map(sc => (sc.ko_genes || []).join(', ') || 'none')]);
+        rows1.push(['Custom reactions',     ...scenarios.map(sc => (sc.custom_reactions || []).map(r => r.id).join(', ') || 'none')]);
+        rows1.push(['FBA growth rate µ (h⁻¹)', ...scenarios.map(sc => sc.mu_fba ?? '')]);
+        rows1.push(['Saved at',             ...scenarios.map(sc => sc.timestamp ? new Date(sc.timestamp).toLocaleString() : '')]);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows1), 'Parameters');
+    }
+
+    // ── Sheet 2: Reaction fluxes ──────────────────────────────────────────────
+    const rxnIds = new Set();
+    cols.forEach(c => Object.entries(c.fluxes).forEach(([id, v]) => { if (Math.abs(v) > 1e-9) rxnIds.add(id); }));
+
+    const rows2 = [['Reaction ID', 'Reaction name', 'Model subsystem', 'KEGG pathway(s)', 'KEGG pathway ID(s)', ...colLabels]];
+    [...rxnIds]
+        .sort((a, b) => {
+            const maxA = Math.max(...cols.map(c => Math.abs(c.fluxes[a] || 0)));
+            const maxB = Math.max(...cols.map(c => Math.abs(c.fluxes[b] || 0)));
+            return maxB - maxA;
+        })
+        .forEach(id => {
+            const pathways = reactionPathwayIndex[id] || [];
+            rows2.push([
+                id, rxnNameMap[id] || '', subsystemLookup[id] || '',
+                pathways.map(p => p.pathway_name).join('; '),
+                pathways.map(p => p.pathway_id).join('; '),
+                ...cols.map(c => c.fluxes[id] ?? ''),
+            ]);
+        });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows2), 'Reaction fluxes');
+
+    // ── Sheet 3: Metabolic module summary ─────────────────────────────────────
+    const subsysLookup = {};
+    allReactions.forEach(r => { subsysLookup[r.id] = r.subsystem || ''; });
+
+    function calcSubsystemTotals(fluxes) {
+        const t = {};
+        Object.entries(fluxes).forEach(([id, v]) => {
+            if (Math.abs(v) < 1e-9) return;
+            const s = subsysLookup[id];
+            if (!s) return;
+            t[s] = (t[s] || 0) + Math.abs(v);
+        });
+        return t;
+    }
+
+    const colSubTotals = cols.map(c => calcSubsystemTotals(c.fluxes));
+    const subsystemNames = new Set();
+    colSubTotals.forEach(t => Object.keys(t).forEach(k => subsystemNames.add(k)));
+    const sortedSubsystems = [...subsystemNames].sort((a, b) =>
+        Math.max(...colSubTotals.map(t => t[b] || 0)) - Math.max(...colSubTotals.map(t => t[a] || 0))
+    );
+
+    const rows3 = [['Metabolic module', ...colLabels]];
+    sortedSubsystems.forEach(name => {
+        rows3.push([name, ...colSubTotals.map(t => t[name] != null ? parseFloat(t[name].toFixed(4)) : '')]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows3), 'Metabolic module summary');
+
+    const filename = scenarios.length > 0 ? 'fba_scenarios_iRH783.xlsx' : 'fba_fluxes_iRH783.xlsx';
+    XLSX.writeFile(wb, filename);
 }
 
 // ── KEGG Mapper ───────────────────────────────────────────────────────────────
@@ -1811,6 +1929,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cr-add-manual-btn').addEventListener('click', () => {
         document.getElementById('cr-manual-form').style.display = '';
     });
+    document.getElementById('cr-kegg-lookup-btn').addEventListener('click', crLookupKegg);
     document.getElementById('cr-man-cancel-btn').addEventListener('click', () => {
         document.getElementById('cr-manual-form').style.display = 'none';
     });
@@ -1820,8 +1939,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sim card actions
     document.getElementById('sim-fit-btn')?.addEventListener('click', simFitToFBA);
     document.getElementById('sim-run-ls-btn')?.addEventListener('click', runLightSweep);
-    document.getElementById('sim-pipeline-btn')?.addEventListener('click', simRunPipeline);
-    document.getElementById('sim-compare-btn')?.addEventListener('click', simCompareWTvsKO);
     document.getElementById('sim-saveref-btn')?.addEventListener('click', simSaveRef);
     document.getElementById('sim-clearref-btn')?.addEventListener('click', simClearRef);
     document.getElementById('sim-loadhoper-btn')?.addEventListener('click', simLoadHoper);
@@ -1853,9 +1970,11 @@ function runFBAwithPFBA() {
                 <span class="float-right text-muted small">${Object.keys(d.fluxes).length} active reactions</span>
             </div>`;
             lastFluxes = d.fluxes;
+            _lastFbaResultForSummary = { growth_rate: parseFloat(d.objective) };
+            _staticFbaHasRun = true;
+            updateTabGates();
             renderLimitingConstraints(d.fluxes, constraints);
             populateFBATable(d.fluxes);
-            renderSubsystemChart(d.fluxes);
             renderModelSubsystemChart(d.fluxes);
             simMarkFBAPoint(d.objective, d.fluxes);
             document.getElementById('fba-flux-wrap').style.display = '';
@@ -1868,12 +1987,12 @@ function runFBAwithPFBA() {
             document.getElementById('fba-flux-wrap').style.display = 'none';
         }
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-play"></i> Run FBA';
+        btn.innerHTML = '<i class="fa fa-play"></i> Run static FBA';
     })
     .catch(err => {
         console.error('FBA error:', err);
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-play"></i> Run FBA';
+        btn.innerHTML = '<i class="fa fa-play"></i> Run static FBA';
     });
 }
 
@@ -1922,6 +2041,15 @@ let simFbaRefData  = null;   // saved FBA reference
 let simFbaRefLabel = '';
 let simFbaGrowthChart = null, simFbaYieldChart = null, simFbaO2Chart = null;
 
+// Plugin: pin chartArea.top so the plot area height is identical regardless of legend size
+const fixedPlotTopPlugin = {
+    id: 'fixedPlotTop',
+    beforeDraw(chart) {
+        const reserved = chart.options.plugins?.fixedPlotTop?.reservedTop;
+        if (reserved !== undefined) chart.chartArea.top = reserved;
+    },
+};
+
 function runLightSweep() {
     const btn = document.getElementById('sim-run-ls-btn');
     if (!btn) return Promise.reject(new Error('sim-run-ls-btn not found'));
@@ -1966,6 +2094,8 @@ function runLightSweep() {
             .map(p => ({ I: p.photon / (alpha * 3.6), mu: p.growth }));
         renderSimFbaSweep(d);
         simRecompute();   // redraw growth curve with FBA overlay
+        _lightSweepHasRun = true;
+        updateTabGates();
         return d;
     })
     .catch(err => {
@@ -2095,9 +2225,12 @@ function renderSimFbaSweep(d) {
         {
             type: 'line',
             data: { datasets: gDs },
+            plugins: [fixedPlotTopPlugin],
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
+                    fixedPlotTop: { reservedTop: 75 },
                     legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 16 } },
                     tooltip: {
                         callbacks: {
@@ -2811,10 +2944,13 @@ function simRenderGrowthCurve(p) {
         document.getElementById('sim-growth-chart').getContext('2d'), {
         type: 'line',
         data: { datasets },
+        plugins: [fixedPlotTopPlugin],
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
+                fixedPlotTop: { reservedTop: 75 },
                 legend: { display: true, position: 'top',
                           labels: { font: { size: 10 }, boxWidth: 16 } },
                 tooltip: {
@@ -2842,6 +2978,58 @@ function simRenderGrowthCurve(p) {
 
 // ── Custom reactions management ───────────────────────────────────────────────
 
+let _crNoteTimer = null;
+function crFlashNote(html) {
+    const el = document.getElementById('cr-note');
+    if (!el) return;
+    el.innerHTML = html;
+    el.style.opacity = '1';
+    clearTimeout(_crNoteTimer);
+    _crNoteTimer = setTimeout(() => {
+        el.style.transition = 'opacity 1s';
+        el.style.opacity = '0';
+        setTimeout(() => { el.innerHTML = ''; el.style.opacity = '1'; el.style.transition = ''; }, 1000);
+    }, 4000);
+}
+
+// Common BiGG base ID → human-readable name (fallback for crReconstructEq)
+const BIGG_NAMES = {
+    akg:'2-Oxoglutarate', o2:'O₂', co2:'CO₂', h2o:'H₂O', h:'H⁺',
+    nad:'NAD⁺', nadh:'NADH', nadp:'NADP⁺', nadph:'NADPH',
+    atp:'ATP', adp:'ADP', amp:'AMP', pi:'Pᵢ', ppi:'PPᵢ',
+    coa:'CoA', accoa:'Acetyl-CoA', succoa:'Succinyl-CoA',
+    succ:'Succinate', fum:'Fumarate', mal:'Malate', oaa:'Oxaloacetate',
+    cit:'Citrate', icit:'Isocitrate', pyr:'Pyruvate', pep:'PEP',
+    g6p:'Glucose-6P', f6p:'Fructose-6P', g3p:'G3P', dhap:'DHAP',
+    glu:'Glutamate', gln:'Glutamine', asp:'Aspartate', asn:'Asparagine',
+    nh4:'NH₄⁺', no3:'NO₃⁻', so4:'SO₄²⁻', hco3:'HCO₃⁻',
+    ac:'Acetate', acald:'Acetaldehyde', etoh:'Ethanol', for:'Formate',
+    lac:'Lactate', fe2:'Fe²⁺', fe3:'Fe³⁺', photon:'Photon',
+    o2s:'O₂ (periplasm)', glc:'Glucose', fru:'Fructose',
+};
+
+function crReconstructEq(stoich, new_mets) {
+    function metName(id) {
+        // 1. user-supplied new_mets name
+        if (new_mets && new_mets[id] && new_mets[id].name) return new_mets[id].name;
+        // 2. curated BiGG lookup (strip compartment suffix)
+        const base = id.replace(/_[a-z]$/, '');
+        if (BIGG_NAMES[base]) return BIGG_NAMES[base];
+        // 3. fallback: capitalised base ID
+        return base.charAt(0).toUpperCase() + base.slice(1);
+    }
+    function side(entries) {
+        return entries.map(([id, c]) => {
+            const abs = Math.abs(c);
+            return (abs === 1 ? '' : abs + ' ') + metName(id);
+        }).join(' + ');
+    }
+    const entries = Object.entries(stoich);
+    const lhs = side(entries.filter(([,c]) => c < 0));
+    const rhs = side(entries.filter(([,c]) => c > 0));
+    return lhs && rhs ? `${lhs} ⇌ ${rhs}` : '';
+}
+
 function crRender() {
     const wrap = document.getElementById('cr-list-wrap');
     const list = document.getElementById('cr-list');
@@ -2854,12 +3042,16 @@ function crRender() {
         const stoichStr = Object.entries(rd.stoich)
             .map(([k, v]) => `${k}:${v > 0 ? '+' : ''}${v}`)
             .join(', ');
-        return `<div class="d-flex align-items-start mb-1">
-            <code class="mr-2 text-primary" style="min-width:120px;">${esc(rd.id)}</code>
-            <span class="text-muted mr-2" style="font-size:0.82em;">${esc(rd.name || '')}</span>
-            <span style="font-size:0.78em;font-family:monospace;">${esc(stoichStr)}</span>
-            <button class="btn btn-link text-danger py-0 ml-auto" style="font-size:0.8em;"
-                    onclick="crRemove(${i})"><i class="fa fa-times"></i></button>
+        const eq = crReconstructEq(rd.stoich, rd.new_mets);
+        return `<div class="mb-2">
+            <div class="d-flex align-items-baseline">
+                <code class="mr-2 text-primary font-weight-bold">${esc(rd.id)}</code>
+                <span class="text-muted mr-2" style="font-size:0.82em;">${esc(rd.name || '')}</span>
+                <button class="btn btn-link text-danger py-0 ml-auto" style="font-size:0.8em;"
+                        onclick="crRemove(${i})"><i class="fa fa-times"></i></button>
+            </div>
+            ${eq ? `<div style="font-size:0.85em;margin-bottom:2px;">${esc(eq)}</div>` : ''}
+            <div style="font-size:0.78em;font-family:monospace;color:#555;">${esc(stoichStr)}</div>
         </div>`;
     }).join('');
 }
@@ -2889,9 +3081,7 @@ function crAddTemplate() {
         }
     });
     crRender();
-    // Show description
-    const note = document.getElementById('cr-note');
-    note.innerHTML = `<i class="fa fa-check-circle text-success"></i> <strong>${esc(tmpl.label)}</strong>: ${esc(tmpl.description)}`;
+    crFlashNote(`<i class="fa fa-check-circle text-success"></i> <strong>${esc(tmpl.label)}</strong> added — will be included in the next FBA run.`);
 }
 
 function crAddManual() {
@@ -2933,11 +3123,243 @@ function crAddManual() {
     }
     customReactions.push({ id, name, lb, ub, stoich, new_mets });
     crRender();
-    // Clear fields
+    // Clear fields and hide form
     ['cr-man-id', 'cr-man-name', 'cr-man-stoich', 'cr-man-newmets'].forEach(elId =>
         document.getElementById(elId).value = '');
+    document.getElementById('cr-man-stoich-preview').style.display = 'none';
+    document.getElementById('cr-man-unknown-panel').style.display  = 'none';
     document.getElementById('cr-manual-form').style.display = 'none';
+    crFlashNote(`<i class="fa fa-check-circle text-success"></i> Reaction <strong>${esc(id)}</strong> added — will be included in the next FBA run.`);
 }
+
+// ── KEGG reaction lookup ──────────────────────────────────────────────────────
+function crLookupKegg() {
+    const input  = document.getElementById('cr-kegg-input');
+    const status = document.getElementById('cr-kegg-status');
+    const id     = input.value.trim().toUpperCase();
+
+    if (!/^R\d{5}$/.test(id)) {
+        status.innerHTML = '<span class="text-danger"><i class="fa fa-times"></i> Use format R##### (e.g. R09415)</span>';
+        return;
+    }
+
+    status.innerHTML = '<span class="text-muted"><i class="fa fa-spinner fa-spin"></i> Looking up…</span>';
+
+    fetch('/api/metabolic/kegg_reaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kegg_id: id }),
+    })
+    .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+    .then(({ ok, data }) => {
+        if (!ok) {
+            status.innerHTML = `<span class="text-danger"><i class="fa fa-times"></i> ${esc(data.error || 'Not found')}</span>`;
+            return;
+        }
+
+        // Populate the manual reaction form
+        const form = document.getElementById('cr-manual-form');
+        form.style.display = '';
+        document.getElementById('cr-man-id').value   = id;
+        document.getElementById('cr-man-name').value = data.kegg_name || '';
+
+        // Build stoich string: "akg_c:-1, o2_c:-1, succ_c:1"
+        const stoichEntries = Object.entries(data.stoich || {});
+        const stoichStr = stoichEntries
+            .map(([met, coeff]) => `${met}:${Number.isInteger(coeff) || coeff % 1 === 0 ? Math.round(coeff) : coeff}`)
+            .join(', ');
+        document.getElementById('cr-man-stoich').value = stoichStr;
+
+        // Build new_mets string: "ethy_c:Ethylene:C2H4"
+        const newMetsStr = Object.entries(data.new_mets || {})
+            .map(([met]) => `${met}::`)
+            .join(', ');
+        document.getElementById('cr-man-newmets').value = newMetsStr;
+
+        // Human-readable reaction equation preview
+        const preview = document.getElementById('cr-man-stoich-preview');
+        if (stoichEntries.length) {
+            const subs = stoichEntries.filter(([,c]) => c < 0)
+                .map(([m, c]) => `${Math.abs(c) === 1 ? '' : Math.abs(c) + ' '}${m}`).join(' + ');
+            const prods = stoichEntries.filter(([,c]) => c > 0)
+                .map(([m, c]) => `${c === 1 ? '' : c + ' '}${m}`).join(' + ');
+            preview.innerHTML = `<span class="text-secondary"><i class="fa fa-arrow-right"></i> Mapped reaction: <strong>${esc(subs || '?')} → ${esc(prods || '?')}</strong></span>`;
+            preview.style.display = '';
+        } else {
+            preview.style.display = 'none';
+        }
+
+        // Handle unmapped metabolites — populate the action panel
+        const unknowns  = data.unknown_mets || [];
+        const unknPanel = document.getElementById('cr-man-unknown-panel');
+        const unknList  = document.getElementById('cr-man-unknown-list');
+        if (unknowns.length && unknList) {
+            unknList.innerHTML = unknowns.map(u => {
+                const mnx      = esc(u.mnx_id || '');
+                const cpd      = u.kegg_cpd  || '';
+                const name     = u.name      || '';
+                const coeff    = u.coeff     != null ? u.coeff : '?';
+                const coeffFmt = (typeof coeff === 'number' && coeff % 1 === 0)
+                                 ? Math.round(coeff) : coeff;
+                const keggHref = cpd
+                    ? `<a href="https://www.genome.jp/entry/${esc(cpd)}" target="_blank">
+                         ${esc(cpd)}${name ? ' — ' + esc(name) : ''} <i class="fa fa-external-link"></i></a>`
+                    : mnx;
+                const role     = coeff < 0 ? 'substrate (consumed)' : 'product (produced)';
+                const suggestId= name
+                    ? name.split(';')[0].trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,12) + '_c'
+                    : (cpd ? cpd.toLowerCase() + '_c' : mnx + '_c');
+                return `<div class="border rounded px-2 py-1 mb-1 bg-white">
+                    <strong>${keggHref}</strong>
+                    — coefficient <strong>${coeffFmt}</strong> (${role})<br>
+                    <span class="text-muted">Suggested ID: <code>${esc(suggestId)}</code>
+                    &nbsp;→ add <code>${esc(suggestId)}:${coeffFmt}</code> to Stoichiometry
+                    and <code>${esc(suggestId)}:${esc(name || '')}:${name ? '' : '??'}</code> to New metabolites</span>
+                </div>`;
+            }).join('');
+            unknPanel.style.display = '';
+        } else if (unknPanel) {
+            unknPanel.style.display = 'none';
+        }
+
+        // Status summary
+        const nNew      = Object.keys(data.new_mets || {}).length;
+        const warns     = data.warnings || [];
+        const keggLink  = `<a href="https://www.genome.jp/entry/${esc(id)}" target="_blank" class="ml-2 small"><i class="fa fa-external-link"></i> KEGG entry</a>`;
+        let msg = `<span class="text-success"><i class="fa fa-check"></i> Stoichiometry loaded${keggLink}`;
+        if (nNew)           msg += ` — <strong>${nNew} new metabolite(s)</strong> not yet in model: fill name &amp; formula below`;
+        if (unknowns.length)msg += ` — <span class="text-warning"><i class="fa fa-exclamation-triangle"></i> ${unknowns.length} metabolite(s) need manual entry (see panel below)</span>`;
+        if (warns.length)   msg += ` — <span class="text-warning">${warns.map(esc).join('; ')}</span>`;
+        msg += '</span>';
+        status.innerHTML = msg;
+
+        // Scroll form into view so user sees the populated fields
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    })
+    .catch(err => {
+        status.innerHTML = `<span class="text-danger"><i class="fa fa-times"></i> Request failed: ${esc(String(err))}</span>`;
+    });
+}
+
+// ── KEGG reaction typeahead ────────────────────────────────────────────────────
+(function () {
+    let _searchTimer = null;
+    let _activeIdx   = -1;
+    let _results     = [];
+
+    function getInput()    { return document.getElementById('cr-kegg-input'); }
+    function getDropdown() { return document.getElementById('cr-kegg-dropdown'); }
+
+    function closeDropdown() {
+        const dd = getDropdown();
+        if (dd) { dd.style.display = 'none'; dd.innerHTML = ''; }
+        _activeIdx = -1;
+        _results   = [];
+    }
+
+    function renderDropdown(items) {
+        const dd = getDropdown();
+        if (!dd) return;
+        if (!items.length) { closeDropdown(); return; }
+        _results = items;
+        dd.innerHTML = items.map((item, i) =>
+            `<div class="kegg-dd-item" data-idx="${i}"
+                  style="padding:5px 10px;cursor:pointer;border-bottom:1px solid #f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                <strong>${esc(item.id)}</strong>&nbsp;<span class="text-muted">${esc(item.name)}</span>
+             </div>`
+        ).join('');
+        dd.style.display = '';
+
+        dd.querySelectorAll('.kegg-dd-item').forEach(el => {
+            el.addEventListener('mousedown', e => {
+                e.preventDefault();   // keep focus on input
+                const idx = parseInt(el.dataset.idx, 10);
+                selectItem(idx);
+            });
+            el.addEventListener('mouseover', () => {
+                setActive(parseInt(el.dataset.idx, 10));
+            });
+        });
+    }
+
+    function setActive(idx) {
+        const dd = getDropdown();
+        if (!dd) return;
+        const items = dd.querySelectorAll('.kegg-dd-item');
+        items.forEach((el, i) => {
+            el.style.background = i === idx ? '#e8f4fd' : '';
+        });
+        _activeIdx = idx;
+    }
+
+    function selectItem(idx) {
+        const item = _results[idx];
+        if (!item) return;
+        const inp = getInput();
+        inp.value = item.id;
+        closeDropdown();
+        crLookupKegg();
+    }
+
+    function doSearch(query) {
+        if (query.length < 2) { closeDropdown(); return; }
+        fetch('/api/metabolic/kegg_search?q=' + encodeURIComponent(query))
+            .then(r => r.ok ? r.json() : [])
+            .then(items => renderDropdown(items))
+            .catch(() => closeDropdown());
+    }
+
+    // Initialise once DOM is ready
+    function initTypeahead() {
+        const inp = getInput();
+        if (!inp) return;
+
+        inp.addEventListener('input', () => {
+            clearTimeout(_searchTimer);
+            const val = inp.value.trim();
+            // If it already looks like a bare R-number, skip search
+            if (/^R\d{5}$/.test(val.toUpperCase())) { closeDropdown(); return; }
+            _searchTimer = setTimeout(() => doSearch(val), 300);
+        });
+
+        inp.addEventListener('keydown', e => {
+            const dd = getDropdown();
+            if (dd && dd.style.display !== 'none') {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setActive(Math.min(_activeIdx + 1, _results.length - 1));
+                    return;
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setActive(Math.max(_activeIdx - 1, 0));
+                    return;
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (_activeIdx >= 0) { selectItem(_activeIdx); return; }
+                    closeDropdown();
+                    crLookupKegg();
+                    return;
+                }
+                if (e.key === 'Escape') { closeDropdown(); return; }
+            }
+            if (e.key === 'Enter') { e.preventDefault(); crLookupKegg(); }
+        });
+
+        document.addEventListener('click', e => {
+            if (!inp.contains(e.target) && !getDropdown().contains(e.target)) {
+                closeDropdown();
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTypeahead);
+    } else {
+        initTypeahead();
+    }
+})();
 
 // ── Haldane FBA integration ───────────────────────────────────────────────────
 
@@ -3040,13 +3462,25 @@ function simFitToFBA() {
             }, [Math.log(119), Math.log(1.84), 0.07]);
 
             const [lKL, lY, kd] = res.x;
-            simSetSlider('sim-KL',  Math.exp(lKL),    10,    500,  0);
-            simSetSlider('sim-YBM', Math.exp(lY),      0.5,   5.0, 2);
-            simSetSlider('sim-kd',  Math.max(0, kd),   0,     0.5, 3);
+            const KL_fit = Math.exp(lKL), YBM_fit = Math.exp(lY), kd_fit = Math.max(0, kd);
+            simSetSlider('sim-KL',  KL_fit,   10,   500,  0);
+            simSetSlider('sim-YBM', YBM_fit,   0.5,  5.0, 2);
+            simSetSlider('sim-kd',  kd_fit,    0,    0.5, 3);
             simRecompute();
+            _growthCurveFitted = true;
+            updateTabGates();
+            // Show fitted parameters summary
+            const out = document.getElementById('sim-fit-result');
+            if (out) {
+                out.style.display = '';
+                out.innerHTML = `<i class="fa fa-check-circle text-success"></i> Fitted: `
+                    + `K<sub>L</sub> = <strong>${KL_fit.toFixed(0)}</strong> µmol·m⁻²·s⁻¹ &nbsp;·&nbsp; `
+                    + `Y<sub>BM</sub> = <strong>${YBM_fit.toFixed(3)}</strong> gDW·mmol<sub>photon</sub>⁻¹ &nbsp;·&nbsp; `
+                    + `k<sub>d</sub> = <strong>${kd_fit.toFixed(4)}</strong> h⁻¹`;
+            }
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa fa-magic"></i> Fit Y_BM only';
+            btn.innerHTML = '<i class="fa fa-magic"></i> Fit to FBA sweep';
         }
     }, 20);
 }
@@ -3407,39 +3841,9 @@ function simLoadHoperMedium() {
         if (el) el.value = val;
     }
     medUpdateX();
+    medSyncUnitButtons();
 }
 
-function simPipelineStatus(msg) {
-    const el = document.getElementById('sim-pipeline-status');
-    if (!el) return;
-    el.style.display = msg ? '' : 'none';
-    el.innerHTML = msg ? '<i class="fa fa-spinner fa-spin"></i> ' + msg : '';
-}
-
-async function simRunPipeline() {
-    const btn = document.getElementById('sim-pipeline-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Running…';
-    simPipelineStatus('Step 1/2: FBA light sweep…');
-    try {
-        const d = await runLightSweep();
-        if (!d || d.error) throw new Error(d?.error || 'Light sweep failed');
-        simPipelineStatus('Step 2/2: Fitting Höper parameters…');
-        simFitToFBA();
-        await new Promise(r => setTimeout(r, 300));
-        simPipelineStatus('');
-        // Switch to Growth Curve tab to show the result
-        const growthTabLink = document.querySelector('[href="#sim-sub-light"]');
-        if (growthTabLink) $(growthTabLink).tab('show');
-        document.getElementById('sim-card')?.scrollIntoView({ behavior: 'smooth' });
-    } catch (e) {
-        simPipelineStatus('');
-        alert('Pipeline error: ' + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-code-fork"></i> FBA sweep \u2192 Fit Y_BM \u2192 Update model';
-    }
-}
 
 function simAutoLabel() {
     const genes = simKoGetGenes();
@@ -3483,58 +3887,6 @@ function simClearRef() {
     simRecompute();
 }
 
-/** Run FBA twice (WT then KO) and compare productivity */
-async function simCompareWTvsKO() {
-    const btn = document.getElementById('sim-compare-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Comparing…';
-    simPipelineStatus('WT sweep (1/4)…');
-
-    const savedKO = simKoGetGenes();
-    simKoClear();
-
-    try {
-        // ── WT run ──
-        const dWT = await runLightSweep();
-        if (!dWT || dWT.error) throw new Error(dWT?.error || 'WT sweep failed');
-        simPipelineStatus('Fitting WT kinetics (2/4)…');
-        simFitToFBA();
-        await new Promise(r => setTimeout(r, 300));
-        const pWT    = simGetParams();
-        const wtProd = simMode === 'chemo' ? simComputeChemostat(pWT) : simComputeBatch(pWT);
-        const wtGC   = simGrowthCurvePoints(pWT);
-        simRefData   = { mode: simMode, gcPts: wtGC, prodData: wtProd, label: 'WT' };
-        const lbl    = document.getElementById('sim-ref-label');
-        if (lbl) lbl.textContent = 'WT';
-        const badge  = document.getElementById('sim-ref-badge');
-        if (badge) badge.style.display = '';
-        const clrBtn = document.getElementById('sim-clearref-btn');
-        if (clrBtn) clrBtn.style.display = '';
-
-        // ── KO run ──
-        simKoSetGenes(savedKO);
-        simPipelineStatus('KO sweep (3/4)…');
-        const dKO = await runLightSweep();
-        if (!dKO || dKO.error) throw new Error(dKO?.error || 'KO sweep failed');
-        simPipelineStatus('Fitting KO kinetics & productivity (4/4)…');
-        simFitToFBA();
-        await new Promise(r => setTimeout(r, 300));
-
-        simPipelineStatus('');
-        simRecompute();
-        // Switch to Growth Curve tab to show the comparison
-        const growthTabLink2 = document.querySelector('[href="#sim-sub-light"]');
-        if (growthTabLink2) $(growthTabLink2).tab('show');
-        document.getElementById('sim-card')?.scrollIntoView({ behavior: 'smooth' });
-    } catch (e) {
-        simKoSetGenes(savedKO);
-        simPipelineStatus('');
-        alert('Comparison error: ' + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-exchange"></i> Compare WT vs current KO set';
-    }
-}
 
 // ── Scenario palette ─────────────────────────────────────────────────────────
 const SCENARIO_STORAGE_KEY = 'metabolic_scenarios_v1';
@@ -3614,6 +3966,135 @@ function scenarioClearAll() {
     simRecompute();
 }
 
+// ── Scenario comparison charts ────────────────────────────────────────────────
+function renderScenarioCharts() {
+    const scenarios = _scenarioLoad().filter(sc => sc.fba_result?.fluxes);
+    const wrap = document.getElementById('scenario-charts-wrap');
+    if (!wrap) return;
+
+    if (scenarios.length < 2) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+
+    // Populate reference selector
+    const refSel = document.getElementById('scenario-ref-select');
+    const prevRef = refSel.value;
+    refSel.innerHTML = scenarios.map(sc => `<option value="${esc(sc.name)}">${esc(sc.name)}</option>`).join('');
+    if (prevRef && scenarios.find(sc => sc.name === prevRef)) refSel.value = prevRef;
+
+    const refName  = refSel.value;
+    const refSc    = scenarios.find(sc => sc.name === refName) || scenarios[0];
+    const others   = scenarios.filter(sc => sc.name !== refSc.name);
+    const colors   = SCENARIO_COLORS;
+
+    // ── Shared helper: Σ|flux| per KEGG pathway for a flux map ──────────────
+    // Use model subsystems (non-overlapping) for flux accounting
+    function scSubsystemTotals(sc) {
+        const t = {};
+        Object.entries(sc.fba_result.fluxes).forEach(([id, v]) => {
+            if (Math.abs(v) < 1e-9) return;
+            const subsys = subsystemLookup[id];
+            if (!subsys) return;
+            t[subsys] = (t[subsys] || 0) + Math.abs(v);
+        });
+        return t;
+    }
+
+    const subsystemLookup = {};
+    allReactions.forEach(r => { subsystemLookup[r.id] = r.subsystem || ''; });
+
+    const scTotals = scenarios.map(scSubsystemTotals);
+    const refTotals = scSubsystemTotals(refSc);
+
+    // All subsystems active in any scenario, sorted by max Σ|flux|
+    const allPathwayNames = new Set(scTotals.flatMap(t => Object.keys(t)));
+    const sortedPathways = [...allPathwayNames].sort((a, b) =>
+        Math.max(...scTotals.map(t => t[b] || 0)) - Math.max(...scTotals.map(t => t[a] || 0))
+    );
+
+    // ── Grouped bar chart: absolute Σ|flux| per pathway per scenario ─────────
+    const isLog = document.getElementById('scenario-pathway-log')?.checked;
+    const pathwayDatasets = scenarios.map((sc, i) => ({
+        label: sc.name,
+        data:  sortedPathways.map(name => parseFloat((scTotals[i][name] || 0).toFixed(3))),
+        backgroundColor: colors[i % colors.length] + 'cc',
+        borderColor:     colors[i % colors.length],
+        borderWidth: 1,
+    }));
+
+    const pathwayInner = document.getElementById('scenario-pathway-inner');
+    pathwayInner.style.height = Math.max(300, sortedPathways.length * (scenarios.length * 14 + 6) + 60) + 'px';
+
+    if (scenarioPathwayChart) scenarioPathwayChart.destroy();
+    scenarioPathwayChart = new Chart(
+        document.getElementById('scenario-pathway-chart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: sortedPathways, datasets: pathwayDatasets },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 10 } } },
+                tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.raw} mmol·gDW⁻¹·h⁻¹ (Σ|flux|)` } },
+            },
+            scales: {
+                x: {
+                    type: isLog ? 'logarithmic' : 'linear',
+                    title: { display: true, text: 'Σ|flux| (mmol·gDW⁻¹·h⁻¹)' + (isLog ? ' — log scale' : '') },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                },
+                y: { ticks: { font: { size: 10 } } },
+            },
+        },
+    });
+
+    // ── Differential chart: Δ Σ|flux| per KEGG pathway vs. reference ─────────
+    const diffPathways = sortedPathways.filter(name => {
+        const maxDelta = Math.max(...others.map(sc => {
+            const t = scTotals[scenarios.indexOf(sc)];
+            return Math.abs((t[name] || 0) - (refTotals[name] || 0));
+        }));
+        return maxDelta > 1e-9;
+    });
+
+    const diffDatasets = others.map((sc, i) => {
+        const t = scTotals[scenarios.indexOf(sc)];
+        return {
+            label: `Δ(${sc.name} − ${refSc.name})`,
+            data:  diffPathways.map(name => parseFloat(((t[name] || 0) - (refTotals[name] || 0)).toFixed(3))),
+            backgroundColor: colors[(i + 1) % colors.length] + 'cc',
+            borderColor:     colors[(i + 1) % colors.length],
+            borderWidth: 1,
+        };
+    });
+
+    const diffInner = document.getElementById('scenario-diff-inner');
+    diffInner.style.height = Math.max(200, diffPathways.length * (others.length * 14 + 6) + 60) + 'px';
+
+    if (scenarioDiffChart) scenarioDiffChart.destroy();
+    scenarioDiffChart = new Chart(
+        document.getElementById('scenario-diff-chart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: diffPathways, datasets: diffDatasets },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 10 } } },
+                tooltip: { callbacks: { label: c => ` ${c.dataset.label}: Δ${c.raw} mmol·gDW⁻¹·h⁻¹` } },
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Δ Σ|flux| vs. reference (mmol·gDW⁻¹·h⁻¹)' },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                },
+                y: { ticks: { font: { size: 10 } } },
+            },
+        },
+    });
+}
+
 function scenarioRenderList() {
     const list = _scenarioLoad();
     const container = document.getElementById('scenario-list');
@@ -3643,6 +4124,8 @@ function scenarioRenderList() {
             </button>
         </div>`;
     }).join('');
+
+    renderScenarioCharts();
 }
 
 /** Return saved scenario curves for overlay on the growth chart.
@@ -3775,27 +4258,41 @@ function urlStateInit() {
 
 // ── 1-D Parameter Sensitivity Sweep ──────────────────────────────────────────
 
-// Default ranges for each sweepable parameter [min, max]
-const SENS_PARAM_DEFAULTS = {
-    'sim-alpha':       [0.01, 0.40],
-    'sim-KL':          [20,   400],
-    'sim-YBM':         [0.5,  4.0],
-    'sim-kd':          [0.01, 0.25],
-    'sim-ngam-photon': [1,    40],
-    'sim-I0':          [50,   1200],
-    'sim-XA':          [0,    120],
-    'sim-D':           [0.001, 0.15],
+// Metadata for each sweepable parameter: [min, max, unit, description]
+const SENS_PARAM_META = {
+    'sim-I0':          [50,    1200,  'µmol·m⁻²·s⁻¹', 'Incident photon flux density at the culture surface. Sweep this to see how growth responds to light availability — the primary driver in photoautotrophic cultures.'],
+    'sim-XA':          [0,     120,   'g·m⁻²',         'Areal biomass density (dry weight per illuminated area). Higher X_A increases self-shading, reducing the average light dose per cell.'],
+    'sim-D':           [0.001, 0.15,  'h⁻¹',           'Chemostat dilution rate. At steady state D = µ; exceeding µ_max causes washout. Sweep to find the optimal operating point.'],
+    'sim-YBM':         [0.5,   4.0,   'g·mol⁻¹ photon','Biomass yield per absorbed photon — the key link between FBA stoichiometry and the growth curve. Run FBA first; this value is set by the FBA result. Sweep to assess how sensitive growth is to stoichiometric efficiency.'],
+    'sim-alpha':       [0.01,  0.40,  'm²·gDW⁻¹',      'Specific photon absorption coefficient of the biomass. Determines how efficiently the culture captures light. Typically fitted from experimental attenuation data.'],
+    'sim-KL':          [20,    400,   'µmol·m⁻²·s⁻¹',  'Half-saturation irradiance: the light level at which the absorbed photon rate is half its maximum. Low K_L = highly light-efficient cells (e.g. shade-adapted); high K_L = light-saturation only at high intensities.'],
+    'sim-kd':          [0.001, 0.25,  'h⁻¹',           'Specific decay/maintenance rate — the minimum growth rate needed to offset biomass losses. Includes endogenous respiration, photooxidative damage, and cell death.'],
+    'sim-ngam-photon': [1,     40,    'µmol·gDW⁻¹·h⁻¹','Non-growth-associated photon maintenance demand: photons consumed for processes unrelated to biomass synthesis (e.g. cyclic electron flow, thermal dissipation). Higher NGAM reduces effective growth yield.'],
 };
 
 let sensChart = null;
 
 function sensParamChanged() {
-    const pid   = document.getElementById('sens-param')?.value;
-    const range = SENS_PARAM_DEFAULTS[pid] || [0, 1];
+    const pid  = document.getElementById('sens-param')?.value;
+    const meta = SENS_PARAM_META[pid];
+    const range = meta ? [meta[0], meta[1]] : [0, 1];
+    const unit  = meta ? meta[2] : '';
+    const desc  = meta ? meta[3] : '';
+
     const fromEl = document.getElementById('sens-from');
     const toEl   = document.getElementById('sens-to');
     if (fromEl) fromEl.value = range[0];
     if (toEl)   toEl.value   = range[1];
+
+    // Update unit labels next to From / To
+    ['sens-unit-label', 'sens-unit-label-to'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = unit ? `(${unit})` : '';
+    });
+
+    // Update description line
+    const descEl = document.getElementById('sens-param-desc');
+    if (descEl) descEl.textContent = desc;
 }
 
 function runSensitivitySweep() {
@@ -3803,8 +4300,6 @@ function runSensitivitySweep() {
     const from   = parseFloat(document.getElementById('sens-from')?.value);
     const to     = parseFloat(document.getElementById('sens-to')?.value);
     const nPts   = Math.max(5, Math.min(200, parseInt(document.getElementById('sens-n')?.value) || 60));
-    const output = document.getElementById('sens-output')?.value || 'mu';
-
     if (!pid || isNaN(from) || isNaN(to) || from >= to) return;
 
     // Collect current params (to keep all other params at their current slider values)
@@ -3817,7 +4312,6 @@ function runSensitivitySweep() {
         const val = from + (i / (nPts - 1)) * (to - from);
         xs.push(val);
 
-        // Override the swept parameter in a local copy of p
         const pp = Object.assign({}, p);
         switch (pid) {
             case 'sim-alpha':       pp.alpha       = val; break;
@@ -3830,41 +4324,16 @@ function runSensitivitySweep() {
             case 'sim-D':          pp.D           = val; break;
         }
 
-        let y = NaN;
-        const { alpha, KL, YBM, kd, ngam_photon, I0, XA, D } = pp;
-        if (output === 'mu') {
-            y = simHoperMu(I0, XA, alpha, KL, YBM, kd, ngam_photon, 0);
-        } else if (output === 'yield') {
-            // Volumetric productivity = µ × CX,vol for a chemostat at D = µ
-            // Here we compute max productivity by sweeping D and taking max µ·D / (µ-D)
-            // Simpler: steady-state output = D × CX  where CX from light balance is implicit
-            // Use: P_vol ≈ D × YBM × (µ/D - 1)  -- not standard; use gross µ as proxy
-            const mu = simHoperMu(I0, XA, alpha, KL, YBM, kd, ngam_photon, 0);
-            y = Math.max(0, mu) * YBM * 1000 * 0.001; // µ × YBM  (arbitrary units; normalise)
-            // Better: compute steady-state chemostat at D_opt
-            const Duse = (pid === 'sim-D') ? val : D;
-            y = Math.max(0, simHoperMu(I0, XA, alpha, KL, YBM, kd, ngam_photon, 0) - Duse) < 1e-6
-                ? 0
-                : Duse * YBM; // g per mol photon (relative)
-        } else if (output === 'opt_D') {
-            // Find D_opt by scanning D values 0.001 … µ_max
-            const muMax = simHoperMu(I0, XA, alpha, KL, YBM, kd, ngam_photon, 0);
-            if (muMax <= 0) { y = 0; break; }
-            let bestD = 0, bestP = 0;
-            for (let di = 1; di <= 100; di++) {
-                const Dtry = (di / 100) * muMax;
-                const P    = Dtry; // productivity ∝ D (simplified)
-                if (P > bestP) { bestP = P; bestD = Dtry; }
-            }
-            y = bestD;
-        }
+        const { alpha, KL, YBM, kd, ngam_photon, I0, XA } = pp;
+        const y = simHoperMu(I0, XA, alpha, KL, YBM, kd, ngam_photon, 0);
         ys.push(isFinite(y) ? y : NaN);
     }
 
-    const yLabel = output === 'mu' ? 'µ (h⁻¹)'
-                 : output === 'yield' ? 'Relative yield (g·mol⁻¹ photon)'
-                 : 'D_opt (h⁻¹)';
-    const paramLabel = document.getElementById('sens-param')?.selectedOptions[0]?.text || pid;
+    const yLabel = 'µ (h⁻¹)';
+    const meta       = SENS_PARAM_META[pid];
+    const paramUnit  = meta ? meta[2] : '';
+    const paramLabel = (document.getElementById('sens-param')?.selectedOptions[0]?.text || pid)
+                       + (paramUnit ? `  (${paramUnit})` : '');
 
     // Find optimum
     let maxY = -Infinity, maxX = NaN;
@@ -3903,16 +4372,90 @@ function runSensitivitySweep() {
     }
 }
 
-// Initialise default from/to when the sweep card first opens
+// ── Bottom-card visibility & FBA summary on sub-tab switch ───────────────────
+
+let _lastFbaResultForSummary = null;   // stored when Static FBA completes
+let _staticFbaHasRun    = false;
+let _lightSweepHasRun   = false;
+let _growthCurveFitted  = false;
+
+function _setGate(id, visible) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = visible ? '' : 'none';
+}
+
+function updateTabGates() {
+    // ① Static FBA → unlocks Sweep tab content
+    _setGate('sweep-prereq-gate',   !_staticFbaHasRun);
+    _setGate('sweep-gated-content',  _staticFbaHasRun);
+
+    // ② Light Sweep → unlocks Growth Curve right column
+    _setGate('growth-curve-prereq-gate',   !_lightSweepHasRun);
+    _setGate('growth-curve-gated-content',  _lightSweepHasRun);
+
+    // ③ Growth curve fitted → unlocks Culture Productivity
+    _setGate('productivity-prereq-gate',   !_growthCurveFitted);
+    _setGate('productivity-gated-content',  _growthCurveFitted);
+}
+
+function updateLightSweepSummary() {
+    const card    = document.getElementById('fba-sweep-summary-card');
+    const content = document.getElementById('fba-sweep-summary-content');
+    if (!card || !content) return;
+
+    const d = _lastFbaResultForSummary;
+    if (!d) { card.style.display = 'none'; return; }
+
+    const p       = simGetParams();
+    const medium  = typeof getMediumConstraints === 'function' ? getMediumConstraints() : {};
+    const jstar   = medium['EX_photon_e1_e']?.lb != null ? Math.abs(medium['EX_photon_e1_e'].lb) : null;
+    const genes   = typeof simKoGetGenes === 'function' ? simKoGetGenes() : [];
+    const crs     = typeof customReactions !== 'undefined' ? customReactions : [];
+
+    const rows = [
+        ['Growth rate (FBA)',   `<strong>${Number(d.growth_rate).toFixed(5)} h⁻¹</strong>`],
+        ['Photon flux (J*ᵢ)',   jstar != null ? `${jstar.toFixed(1)} mmol·gDW⁻¹·h⁻¹` : '—'],
+        ['Y<sub>BM</sub>',      `${p.YBM?.toFixed(4) ?? '—'} g·mol⁻¹ photon`],
+        ['I₀',                  `${p.I0 ?? '—'} µmol·m⁻²·s⁻¹`],
+        ['X_A',                 `${p.XA ?? '—'} g·m⁻²`],
+        ['Gene knockouts',      genes.length ? genes.map(esc).join(', ') : '<span class="text-muted">none</span>'],
+        ['Custom reactions',    crs.length   ? crs.map(r => `<code>${esc(r.id)}</code>`).join(', ') : '<span class="text-muted">none</span>'],
+    ];
+
+    content.innerHTML = rows.map(([label, val]) =>
+        `<div class="d-flex mb-1" style="gap:0.5rem;">
+            <span class="text-muted" style="min-width:160px;">${label}</span>
+            <span>${val}</span>
+        </div>`
+    ).join('');
+    card.style.display = '';
+}
+
+function simSubTabChanged(href) {
+    const isStatic = (href === '#sim-sub-static');
+    // Cards that belong to Static FBA workflow
+    ['gene-browser-card', 'cr-card', 'scenario-card'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isStatic ? '' : 'none';
+    });
+    // Sensitivity Analysis shown on all other tabs
+    const sensCard = document.getElementById('sensitivity-card');
+    if (sensCard) sensCard.style.display = isStatic ? 'none' : '';
+
+    // Update Light Sweep FBA summary when switching to that tab
+    if (href === '#sim-sub-sweep') updateLightSweepSummary();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     sensParamChanged();
-    document.getElementById('sensitivity-body')?.addEventListener('show.bs.collapse', () => {
-        const ch = document.getElementById('sensitivity-chevron');
-        if (ch) ch.className = 'fa fa-chevron-up ml-auto';
-    });
-    document.getElementById('sensitivity-body')?.addEventListener('hide.bs.collapse', () => {
-        const ch = document.getElementById('sensitivity-chevron');
-        if (ch) ch.className = 'fa fa-chevron-down ml-auto';
+
+    // Initialise card visibility (Static FBA is active by default)
+    simSubTabChanged('#sim-sub-static');
+    updateTabGates();
+
+    // Listen to sub-tab switches (use jQuery — Bootstrap 4 fires shown.bs.tab via jQuery)
+    $('#sim-sub-tabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+        simSubTabChanged($(e.target).attr('href'));
     });
 });
 

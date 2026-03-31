@@ -1,6 +1,9 @@
 
 #uploads, temp
 uploads/
+
+# MetaNetX reference data (~50 MB TSV files, download with download_metanetx.py)
+website/metanetx_data/
 **/temp/
 temp/
 
