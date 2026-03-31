@@ -25,13 +25,10 @@
              alt="CyanoTools mobile banner"
              style="width: 100%;">
     </div>
-    <div class="hero-overlay">
-        <h1 class="hero-title">Open-access tools for photosynthesis &amp; microscopy research</h1>
-        <p class="hero-sub">Browser-based data analysis for photosynthesis and microscopy research. Free and open access.
-        <br></p>
-        <a href="#tools" class="btn btn-lg hero-btn">Browse all tools &darr;</a>
+    <div class="hero-overlay" style="padding-bottom:0rem;text-align:left;">
+        <h1 class="hero-title">Open-access tools for photosynthesis research</h1>
     </div>
-</div>
+</div>  
 <br>
 
 <!-- Introductory Paragraph with Keywords -->
@@ -45,83 +42,88 @@
             pre-processing raw instrument files for publication-ready results.
             All tools run entirely in the browser with no installation, account registration, or server-side data retention.
         </p>
-        <br>
-        <!-- Wrap the detailed tool descriptions in a Bootstrap accordion (closed by default) -->
-        <div class="accordion" id="toolsAccordion">
-            <div class="card">
-                <div class="card-header" id="toolsHeading">
-                    <h5 class="mb-0">
-                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#toolsCollapse" aria-expanded="false" aria-controls="toolsCollapse">
-                            Detailed Tools Description
-                        </button>
-                    </h5>
+        <!-- Detailed tools description accordion -->
+        <div id="toolsAccordion">
+            <div style="border:1px solid #dee2e6;border-radius:8px;overflow:hidden;">
+                <div style="background:#f8f9fa;padding:0.6rem 1rem;cursor:pointer;display:flex;align-items:center;gap:0.5rem;"
+                     data-toggle="collapse" data-target="#toolsCollapse" aria-expanded="false">
+                    <span style="font-size:0.9em;font-weight:600;color:#444;letter-spacing:0.01em;">
+                        <i class="fa fa-list-ul" style="color:#00b894;margin-right:0.4em;"></i>Detailed tools description
+                    </span>
+                    <i class="fa fa-chevron-down ml-auto" style="font-size:0.8em;color:#888;"></i>
                 </div>
-                <div id="toolsCollapse" class="collapse" aria-labelledby="toolsHeading" data-parent="#toolsAccordion">
-                    <div class="card-body">
-                        <p style="margin-bottom: 0.6rem;">
-                            <strong>&#128261; PAM fluorometry</strong> — Following complementary fluorescence-based approaches are supported:
-                            <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">Rapid Light Curves (RLC)</a>
-                            for characterizing
-                            the light-response of photosynthesis and deriving apparent
-                            electron transport rates (ETR) and non-photochemical quenching (NPQ);
-                            <a href="{{ url_for('OJIP_data_analysis.ojip_page') }}">OJIP transients</a> for millisecond-resolution assessment
-                            of PSII photochemical efficiency and the full electron transport chain via the JIP-test;
-                            and <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Kautsky (slow) kinetics</a> for resolving
-                            slower regulatory processes including NPQ induction/relaxation and state transitions.
-                            Compatible instruments: MULTI-COLOR-PAM, DUAL-PAM (Walz), FluorPen, AquaPen, FL-6000 (PSI).
-                        </p>
+                <div id="toolsCollapse" class="collapse">
+                    <div style="padding:1rem 1rem 0.5rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.75rem;">
 
-                        <p style="margin-bottom: 0.6rem;">
-                            <strong>&#127752; Fluorescence spectroscopy</strong> —
-                            <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">Fluorescence Spectra &amp; EEM Analyzer</a> enables
-                            excitation-emission analysis of pigment-protein complexes at cryogenic (77 K) and room temperatures, supporting quantification of
-                            PSII/PSI antenna stoichiometry and energy-coupling states.
-                            Compatible instruments: Jasco spectrofluorometers.
-                        </p>
+                        <div style="border-left:3px solid #00b894;padding:0.5rem 0.75rem;background:#f9fffe;border-radius:0 6px 6px 0;">
+                            <div style="font-weight:600;font-size:0.88em;margin-bottom:0.25rem;">&#128261; PAM Fluorometry</div>
+                            <div style="font-size:0.82em;color:#444;line-height:1.5;">
+                                <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">Rapid Light Curves</a>,
+                                <a href="{{ url_for('OJIP_data_analysis.ojip_page') }}">OJIP transients</a>,
+                                <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Kautsky kinetics</a>
+                                — ETR, NPQ, JIP-test, state transitions.<br>
+                                <span style="color:#888;font-size:0.9em;">Walz PAM, FluorPen, AquaPen, FL-6000</span>
+                            </div>
+                        </div>
 
-                        <p style="margin-bottom: 0.6rem;">
-                            <strong>&#128300; Membrane inlet mass spectrometry (MIMS)</strong> —
-                            The <a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">MIMS module</a> processes data from membrane inlet
-                            mass spectrometers to visualize and normalize dissolved gas dynamics
-                            (O<sub>2</sub>, CO<sub>2</sub>, H<sub>2</sub>, CH<sub>4</sub>, and more).
-                            Compatible instruments: Hiden HPR-40, PSI MS GAS.
-                        </p>
+                        <div style="border-left:3px solid #6c5ce7;padding:0.5rem 0.75rem;background:#faf9ff;border-radius:0 6px 6px 0;">
+                            <div style="font-weight:600;font-size:0.88em;margin-bottom:0.25rem;">&#127752; Fluorescence Spectroscopy</div>
+                            <div style="font-size:0.82em;color:#444;line-height:1.5;">
+                                <a href="{{ url_for('ex_em_spectra_analysis.analyze_ex_em_spectra') }}">Fluorescence Spectra &amp; EEM Analyzer</a>
+                                — 77 K &amp; RT, PSII/PSI stoichiometry, pigment-protein complexes.<br>
+                                <span style="color:#888;font-size:0.9em;">Jasco spectrofluorometers</span>
+                            </div>
+                        </div>
 
-                        <p style="margin-bottom: 0.6rem;">
-                            <strong>&#128247; Microscopy &amp; image analysis</strong> — Dedicated tools cover quantitative image-based
-                            phenotyping from fluorescence and brightfield microscopy:
-                            <a href="{{ url_for('cell_count.count_cells') }}">automated counting of round</a> or
-                            <a href="{{ url_for('cell_count_filament.count_filament_cells') }}">filamentous cells</a>,
-                            <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">cell diameter estimation</a>,
-                            and <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">pixel-intensity profiling of individual pigments within single cells</a>.
-                            Analysis handles both regular (spherical) and irregular (filamentous, elongated) morphologies.
-                            All standard image formats are supported (PNG, JPG, TIF, BMP).
-                        </p>
+                        <div style="border-left:3px solid #0984e3;padding:0.5rem 0.75rem;background:#f5faff;border-radius:0 6px 6px 0;">
+                            <div style="font-weight:600;font-size:0.88em;margin-bottom:0.25rem;">&#128300; Membrane Inlet MS (MIMS)</div>
+                            <div style="font-size:0.82em;color:#444;line-height:1.5;">
+                                <a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">MIMS module</a>
+                                — dissolved gas dynamics (O<sub>2</sub>, CO<sub>2</sub>, H<sub>2</sub>, CH<sub>4</sub>), visualisation &amp; normalisation.<br>
+                                <span style="color:#888;font-size:0.9em;">Hiden HPR-40, PSI MS GAS</span>
+                            </div>
+                        </div>
 
-                        <p style="margin-bottom: 0.6rem;">
-                            <strong>&#128202; Statistics</strong> — General <a href="{{ url_for('statistics.statistics_page') }}">statistical analysis</a> of experimental datasets,
-                            including ANOVA, pairwise comparisons, and boxplot visualisation.
-                        </p>
+                        <div style="border-left:3px solid #e17055;padding:0.5rem 0.75rem;background:#fff8f6;border-radius:0 6px 6px 0;">
+                            <div style="font-weight:600;font-size:0.88em;margin-bottom:0.25rem;">&#128247; Microscopy &amp; Image Analysis</div>
+                            <div style="font-size:0.82em;color:#444;line-height:1.5;">
+                                <a href="{{ url_for('cell_count.count_cells') }}">Round cell counting</a>,
+                                <a href="{{ url_for('cell_count_filament.count_filament_cells') }}">filament counting</a>,
+                                <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">cell size</a>,
+                                <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">pixel profiles</a>
+                                — fluorescence &amp; brightfield.<br>
+                                <span style="color:#888;font-size:0.9em;">PNG, JPG, TIF, BMP</span>
+                            </div>
+                        </div>
 
-                        <p style="margin-bottom: 0.6rem;">
-                            <strong>&#129518; Calculators</strong> — <a href="{{ url_for('calculators.run_calculators') }}">Calculators</a> for dissolved O<sub>2</sub> and CO<sub>2</sub> concentration,
-                            OD correction and recalculation, culture doubling time, and more.
-                        </p>
+                        <div style="border-left:3px solid #fdcb6e;padding:0.5rem 0.75rem;background:#fffef5;border-radius:0 6px 6px 0;">
+                            <div style="font-weight:600;font-size:0.88em;margin-bottom:0.25rem;">&#128202; Statistics</div>
+                            <div style="font-size:0.82em;color:#444;line-height:1.5;">
+                                <a href="{{ url_for('statistics.statistics_page') }}">Statistical analysis</a>
+                                — ANOVA, pairwise comparisons, boxplot visualisation.
+                            </div>
+                        </div>
 
-                        <p style="margin-bottom: 0;">
-                            Developed at the
-                            <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank" rel="noopener">Department of Adaptive Biotechnologies</a>,
-                            <a href="https://www.czechglobe.cz/en/" target="_blank" rel="noopener">CzechGlobe</a>, Czech Academy of Sciences.
-                            See the <a href="#faq">FAQ</a> for supported file formats.
-                        </p>
+                        <div style="border-left:3px solid #b2bec3;padding:0.5rem 0.75rem;background:#f8f9fa;border-radius:0 6px 6px 0;">
+                            <div style="font-weight:600;font-size:0.88em;margin-bottom:0.25rem;">&#129518; Calculators</div>
+                            <div style="font-size:0.82em;color:#444;line-height:1.5;">
+                                <a href="{{ url_for('calculators.run_calculators') }}">Lab calculators</a>
+                                — dissolved O<sub>2</sub>/CO<sub>2</sub>, OD conversion, culture doubling time, and more.
+                            </div>
+                        </div>
+
                     </div>
+                    <p style="font-size:0.78em;color:#888;padding:0.4rem 1rem 0.75rem;margin:0;">
+                        Developed at the <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank" rel="noopener">Department of Adaptive Biotechnologies</a>,
+                        <a href="https://www.czechglobe.cz/en/" target="_blank" rel="noopener">CzechGlobe</a>, Czech Academy of Sciences. See the <a href="#faq">FAQ</a> for supported file formats.
+                    </p>
                 </div>
             </div>
         </div>
 
     </div>
 </div>
-<br><br>
+<br>
 
 <!-- Features Section -->
 <section class="features" id="tools">
