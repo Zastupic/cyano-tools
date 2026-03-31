@@ -5,10 +5,9 @@
 {% block keywords %}metabolic model, iRH783, Synechocystis 6803, FBA, flux balance analysis, genome-scale model, COBRApy, pathway network{% endblock %}
 
 {% block head %}
-<!-- Chart.js for bar charts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<!-- SheetJS for XLSX export -->
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<!-- Chart.js — deferred so it doesn't block initial HTML parse/render -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+<!-- SheetJS loaded on demand (see loadXLSX() in js_metabolic_model.js) -->
 <style>
     /* Searchable reaction dropdown */
     .rxn-dropdown {

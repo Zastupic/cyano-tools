@@ -1671,8 +1671,21 @@ function applyPreset(name) {
     });
 }
 
+// ── Lazy-load SheetJS on first export use ─────────────────────────────────────
+let _xlsxLoaded = false;
+function _ensureXLSX(cb) {
+    if (_xlsxLoaded || typeof XLSX !== 'undefined') { _xlsxLoaded = true; cb(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js';
+    s.onload = () => { _xlsxLoaded = true; cb(); };
+    document.head.appendChild(s);
+}
+
 // ── Export FBA (unified: current run + saved scenarios) ───────────────────────
 function exportFBA() {
+    _ensureXLSX(_doExportFBA);
+}
+function _doExportFBA() {
     const hasCurrentFBA = Object.keys(lastFluxes).length > 0;
     const scenarios     = _scenarioLoad();
     if (!hasCurrentFBA && !scenarios.length) {
