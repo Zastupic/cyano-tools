@@ -56,7 +56,7 @@
                     <div style="padding:1rem 1rem 0.5rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.75rem;">
 
                         <div style="border-left:3px solid #00b894;padding:0.5rem 0.75rem;background:#f9fffe;border-radius:0 6px 6px 0;">
-                            <div style="font-weight:600;font-size:0.88em;margin-bottom:0.25rem;">&#128261; PAM Fluorometry</div>
+                            <div style="font-weight:600;font-size:0.88em;margin-bottom:0.25rem;">&#9889; PAM Fluorometry</div>
                             <div style="font-size:0.82em;color:#444;line-height:1.5;">
                                 <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">Rapid Light Curves</a>,
                                 <a href="{{ url_for('OJIP_data_analysis.ojip_page') }}">OJIP transients</a>,
@@ -93,6 +93,16 @@
                                 <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">pixel profiles</a>
                                 — fluorescence &amp; brightfield.<br>
                                 <span style="color:#888;font-size:0.9em;">PNG, JPG, TIF, BMP</span>
+                            </div>
+                        </div>
+
+                        <div style="border-left:3px solid #55efc4;padding:0.5rem 0.75rem;background:#f5fffb;border-radius:0 6px 6px 0;">
+                            <div style="font-weight:600;font-size:0.88em;margin-bottom:0.25rem;">&#9881; Modelling</div>
+                            <div style="font-size:0.82em;color:#444;line-height:1.5;">
+                                <a href="{{ url_for('metabolic_bp.metabolic_model_page') }}">Metabolic Model</a>
+                                — flux balance analysis, light sweep, growth modelling for cyanobacteria.<br>
+                                <a href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">E-cyanobacterium</a>
+                                — model sharing, annotation &amp; wet-lab integration.
                             </div>
                         </div>
 
@@ -135,7 +145,7 @@
 
             <!-- === PAM Fluorometry (3 tools) === -->
             <div class="tool-category cat-pam">
-                <div class="features-category-header">&#128261; PAM Fluorometry</div>
+                <div class="features-category-header">&#9889; PAM Fluorometry</div>
                 <div class="tool-tiles">
                     <a class="feature" href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">
                         <img src="{{ url_for('static', filename='images/light_curves_3.jpg') }}" alt="Rapid light curves" class="feature-thumb">
@@ -161,7 +171,7 @@
                 </div>
             </div>
 
-            <!-- === Row: Spectroscopy (2) + Statistics (2) === -->
+            <!-- === Row: Spectroscopy (2) + Modelling (2) === -->
             <div class="tool-category-row">
 
             <!-- === Spectroscopy & Mass Spectrometry (2 tools) === -->
@@ -185,7 +195,30 @@
                 </div>
             </div>
 
-            <!-- === Statistics & Calculators (2 tools) === -->
+            <!-- === Modelling (2 tools) === -->
+            <div class="tool-category cat-modelling">
+                <div class="features-category-header">&#9881; Modelling</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="{{ url_for('metabolic_bp.metabolic_model_page') }}">
+                        <img src="{{ url_for('static', filename='images/hoeper2024_fig1.png') }}" alt="Metabolic model" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Metabolic Model</b>{% if updated_tools.get('metabolic_model') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('metabolic_model') }}">Updated</span>{% endif %}</h3>
+                            <p>Flux balance analysis of <i>Synechocystis</i> sp. PCC 6803.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/ecyanobacterium_1.JPG') }}" alt="E-cyanobacterium" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>E-cyanobacterium</b></h3>
+                            <p>Sharing, annotation, analysis, and visualisation of multiple models and wet-lab experiments.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            </div><!-- /.tool-category-row (Spectroscopy + Modelling) -->
+
+            <!-- === Statistics & Calculators (3 tools) === -->
             <div class="tool-category cat-stats">
                 <div class="features-category-header">&#128202; Statistics &amp; Calculators</div>
                 <div class="tool-tiles">
@@ -193,7 +226,7 @@
                         <img src="{{ url_for('static', filename='images/boxplot.jpg') }}" alt="Statistical analysis" class="feature-thumb">
                         <div class="feature-text">
                             <h3><b>Statistics</b>{% if updated_tools.get('statistics') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('statistics') }}">Updated</span>{% endif %}</h3>
-                            <p>Statistical analysis of experimental data.</p>
+                            <p>ANOVA, pairwise comparisons, normality tests, correlation analysis, PCA and boxplot visualisation for experimental datasets.</p>
                         </div>
                     </a>
                     <a class="feature" href="{{ url_for('calculators.run_calculators') }}">
@@ -203,10 +236,15 @@
                             <p>Dissolved O<sub>2</sub>, doubling time, OD correction and recalculation, and more.</p>
                         </div>
                     </a>
+                    <a class="feature" href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/seacarb2_1.JPG') }}" alt="DIC in seawater" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>DIC in (sea)water</b></h3>
+                            <p>Concentration and ratio of dissolved CO<sub>2</sub>, HCO<sub>3</sub><sup>-</sup>, CO<sub>3</sub><sup>2-</sup>, and more.</p>
+                        </div>
+                    </a>
                 </div>
             </div>
-
-            </div><!-- /.tool-category-row (Spectroscopy + Statistics) -->
 
             <!-- === Image Analysis (6 tools) === -->
             <div class="tool-category cat-image">
@@ -257,7 +295,7 @@
                 </div>
             </div>
 
-            <!-- === Row: Photobioreactors (2) + Other Platforms (3) === -->
+            <!-- === Row: Photobioreactors (2) + Other Platforms (1) === -->
             <div class="tool-category-row">
 
             <!-- === Photobioreactors (2 tools) === -->
@@ -281,29 +319,15 @@
                 </div>
             </div>
 
-            <!-- === Other Platforms (3 tools) === -->
+            <!-- === Other Platforms (1 tool) === -->
             <div class="tool-category cat-other">
                 <div class="features-category-header">&#127760; Other Platforms</div>
                 <div class="tool-tiles">
-                    <a class="feature" href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" rel="noopener">
-                        <img src="{{ url_for('static', filename='images/seacarb2_1.JPG') }}" alt="DIC in seawater" class="feature-thumb">
-                        <div class="feature-text">
-                            <h3><b>DIC in (sea)water</b></h3>
-                            <p>Concentration and ratio of dissolved CO<sub>2</sub>, HCO<sub>3</sub><sup>-</sup>, CO<sub>3</sub><sup>2-</sup>, and more.</p>
-                        </div>
-                    </a>
                     <a class="feature" href="https://www.optimalga.com/" target="_blank" rel="noopener">
                         <img src="{{ url_for('static', filename='images/optimalga_logo_1.jpg') }}" alt="Optimalga platform" class="feature-thumb">
                         <div class="feature-text">
                             <h3><b>Optimalga</b></h3>
                             <p>Centralized platform for data collection, transformation and sharing.</p>
-                        </div>
-                    </a>
-                    <a class="feature" href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">
-                        <img src="{{ url_for('static', filename='images/ecyanobacterium_1.JPG') }}" alt="E-cyanobacterium" class="feature-thumb">
-                        <div class="feature-text">
-                            <h3><b>E-cyanobacterium</b></h3>
-                            <p>Sharing, annotation, analysis, and visualisation of models and wet-lab experiments.</p>
                         </div>
                     </a>
                 </div>

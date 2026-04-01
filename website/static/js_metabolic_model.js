@@ -1983,7 +1983,19 @@ function runFBAwithPFBA() {
                 <span class="float-right text-muted small">${Object.keys(d.fluxes).length} active reactions</span>
             </div>`;
             lastFluxes = d.fluxes;
-            _lastFbaResultForSummary = { growth_rate: parseFloat(d.objective) };
+            _lastFbaResultForSummary = {
+                growth_rate:      parseFloat(d.objective),
+                sliders:          Object.fromEntries(
+                    ['sim-I0','sim-XA','sim-alpha','sim-KL','sim-YBM','sim-kd','sim-ngam-photon',
+                     'med-co2','med-no3','med-nh4','med-glc','med-pi','med-so4','med-fe2','med-mn2','med-zn2','med-cu2']
+                    .map(id => {
+                        const el = document.getElementById(id);
+                        return [id, el ? parseFloat(el.value) : null];
+                    })
+                ),
+                ko_genes:         simKoGetGenes(),
+                custom_reactions: JSON.parse(JSON.stringify(customReactions)),
+            };
             _staticFbaHasRun = true;
             updateTabGates();
             renderLimitingConstraints(d.fluxes, constraints);
@@ -2048,11 +2060,16 @@ let peChart = null;
 let enChart = null;
 
 // ── FBA light sweep ───────────────────────────────────────────────────────────
+let _expData       = null;   // [{I0, mu, mu_err, X_A}] parsed experimental points, or null
+let _expDataXA     = 0;      // mean X_A from exp data (0 if not provided — dilute assumption)
 let simFbaData     = null;   // last FBA sweep result {points}
+let _sweepLocked   = false;  // when true, Run button is disabled to preserve current sweep
 let simFbaPoints   = null;   // [{I, mu}] converted with current α for growth curve overlay
-let simFbaRefData  = null;   // saved FBA reference
-let simFbaRefLabel = '';
 let simFbaGrowthChart = null, simFbaYieldChart = null, simFbaO2Chart = null;
+let simHoperYieldChart = null, simHoperO2Chart = null;
+let _sweepAugPts   = null;   // FBA sweep points augmented with I0 + hoperMu
+let _fbaYieldXMode   = 'photon';   // 'photon' | 'mu'  — left yield/O2 charts
+let _hoperYieldXMode = 'photon';   // 'photon' | 'mu'  — right yield/O2 charts
 
 // Plugin: pin chartArea.top so the plot area height is identical regardless of legend size
 const fixedPlotTopPlugin = {
@@ -2063,7 +2080,22 @@ const fixedPlotTopPlugin = {
     },
 };
 
+function toggleSweepLock() {
+    _sweepLocked = !_sweepLocked;
+    const lockBtn = document.getElementById('sim-sweep-lock-btn');
+    const runBtn  = document.getElementById('sim-run-ls-btn');
+    if (lockBtn) {
+        lockBtn.innerHTML = _sweepLocked
+            ? '<i class="fa fa-lock"></i> Locked'
+            : '<i class="fa fa-unlock"></i> Lock';
+        lockBtn.classList.toggle('btn-warning',  _sweepLocked);
+        lockBtn.classList.toggle('btn-outline-secondary', !_sweepLocked);
+    }
+    if (runBtn) runBtn.disabled = _sweepLocked;
+}
+
 function runLightSweep() {
+    if (_sweepLocked) return Promise.resolve(simFbaData);
     const btn = document.getElementById('sim-run-ls-btn');
     if (!btn) return Promise.reject(new Error('sim-run-ls-btn not found'));
     btn.disabled = true;
@@ -2094,7 +2126,7 @@ function runLightSweep() {
     .then(r => r.json())
     .then(d => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-sun-o"></i> Run FBA light sweep';
+        btn.innerHTML = '<i class="fa fa-play"></i> Run';
         if (d.error) {
             if (errEl) { errEl.style.display = ''; errEl.textContent = d.error; }
             return d;
@@ -2113,7 +2145,7 @@ function runLightSweep() {
     })
     .catch(err => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-sun-o"></i> Run FBA light sweep';
+        btn.innerHTML = '<i class="fa fa-play"></i> Run';
         if (errEl) { errEl.style.display = ''; errEl.textContent = err.message; }
         throw err;
     });
@@ -2131,40 +2163,40 @@ function simHoepCurve(Imax) {
     return pts;
 }
 
-/** Update only the analytical overlay and I₀ marker on the FBA growth chart (no FBA re-run). */
+/** Refresh the unconstrained linear line on the FBA sweep chart when Y_BM or α change. */
 function updateFbaGrowthOverlay() {
+    if (_sweepLocked) return;
     if (!simFbaGrowthChart) return;
-    const p     = simGetParams();
-    const I0_op = p.I0;
-    // Höper curve is always dataset index 2; I₀ marker is index 3
-    const ds2 = simFbaGrowthChart.data.datasets[2];
-    const ds3 = simFbaGrowthChart.data.datasets[3];
-    if (!ds2 || !ds3) return;
-    const xMax = Math.max(
-        ...simFbaGrowthChart.data.datasets[0].data.map(pt => pt.x),
-        I0_op * 1.05, 200
-    );
-    ds2.data = simHoepCurve(xMax);
-    const muOp = simHoperMu(I0_op, 0, p.alpha, p.KL, p.YBM, p.kd, p.ngam_photon, 0);
-    ds3.data  = [{ x: I0_op, y: 0 }, { x: I0_op, y: Math.max(0.02, muOp + 0.02) }];
-    ds3.label = `I₀ = ${I0_op} µmol·m⁻²·s⁻¹`;
+    const ds3 = simFbaGrowthChart.data.datasets[2];
+    if (!ds3) return;
+    const p    = simGetParams();
+    const xMax = Math.max(...simFbaGrowthChart.data.datasets[0].data.map(pt => pt.x), 200) * 1.05;
+    ds3.data = [{ x: 0, y: 0 }, { x: xMax, y: p.YBM * 1e-3 * p.alpha * xMax * 3.6 }];
+    const fbaYMax = Math.max(...simFbaGrowthChart.data.datasets[0].data.map(pt => pt.y),
+                              ...ZAVREL_2019_DATA.map(d => d.mu)) * 1.2;
+    simFbaGrowthChart.options.scales.y.max = fbaYMax;
     simFbaGrowthChart.update('none');
+
+    // Refresh Höper µ on augmented sweep points and rebuild Höper yield/O₂ charts
+    if (_sweepAugPts) {
+        _sweepAugPts = _sweepAugPts.map(pt => ({
+            ...pt,
+            hoperMu: Math.max(0, simHoperMu(pt.I0, 0, p.alpha, p.KL, p.YBM, p.kd, p.ngam_photon, 0)),
+        }));
+        _buildHoperYieldCharts();
+    }
 }
 
 function renderSimFbaSweep(d) {
     const pts    = d.points;
     const alpha  = parseFloat(document.getElementById('sim-alpha')?.value) || 0.13;
     const hasO2  = pts.some(p => p.o2 !== null && p.o2 !== 0);
-    const hasRef = !!simFbaRefData;
-    const refPts = simFbaRefData?.points || [];
 
-    // Show charts, hide placeholder, reveal action buttons
+    // Show charts, hide placeholder
     document.getElementById('sim-fba-placeholder').style.display  = 'none';
     document.getElementById('sim-fba-charts-wrap').style.display  = '';
-    document.getElementById('sim-fba-lock-btn').style.display     = '';
 
-    document.getElementById('sim-fba-o2-wrap').style.display =
-        (hasO2 || (hasRef && refPts.some(p => p.o2))) ? '' : 'none';
+    document.getElementById('sim-fba-o2-wrap').style.display = hasO2 ? '' : 'none';
 
     // Helper for yield / O₂ charts (x = photon flux, mmol·gDW⁻¹·h⁻¹)
     function ds(label, points, yKey, color, fillColor, isRef) {
@@ -2185,52 +2217,47 @@ function renderSimFbaSweep(d) {
     // FBA points converted from J_I back to I₀; Höper curve and exp. data in native I₀ units.
     const fbaPtsI0 = pts.filter(p => p.growth > 1e-4)
         .map(p => ({ x: p.photon / (alpha * 3.6), y: p.growth }));
-    const refPtsI0 = refPts.filter(p => p.growth > 1e-4)
-        .map(p => ({ x: p.photon / (alpha * 3.6), y: p.growth }));
-    const xMax = Math.max(...fbaPtsI0.map(p => p.x).concat(
-        ZAVREL_2019_DATA.map(d => d.I)).concat([parseFloat(document.getElementById('sim-I0')?.value) || 660])
+    const I0_op   = parseFloat(document.getElementById('sim-I0')?.value) || 660;
+    const xMax    = Math.max(...fbaPtsI0.map(p => p.x).concat(
+        ZAVREL_2019_DATA.map(d => d.I)).concat([I0_op])
     ) * 1.05;
-    const I0_op = parseFloat(document.getElementById('sim-I0')?.value) || 660;
+    const fbaYMax = Math.max(...fbaPtsI0.map(p => p.y),
+                              ...ZAVREL_2019_DATA.map(d => d.mu)) * 1.2;
     const p_now = simGetParams();
     const muOp  = simHoperMu(I0_op, 0, p_now.alpha, p_now.KL, p_now.YBM, p_now.kd, p_now.ngam_photon, 0);
 
     const gDs = [
-        {   // 0 — FBA sweep points
-            label: hasRef ? 'FBA (current)' : 'FBA sweep',
+        {   // 0 — FBA sweep line
+            label: 'Light sweep — FBA with QY correction (last run)',
             data: fbaPtsI0,
+            borderColor: '#c0392b', backgroundColor: 'rgba(0,0,0,0)',
+            borderWidth: 2, borderDash: [6, 3],
+            pointRadius: 0, fill: false, tension: 0,
+        },
+        {   // 1 — Static FBA result marker (updated when static FBA runs)
+            label: 'Static FBA (last run)',
+            data: simFbaMarker ? [{ x: simFbaMarker.I0, y: simFbaMarker.growth }] : [],
             type: 'scatter',
-            borderColor: '#c0392b', backgroundColor: 'rgba(192,57,43,0.65)',
-            pointRadius: 4, pointHoverRadius: 6, showLine: false,
+            borderColor: '#e67e22', backgroundColor: '#e67e22',
+            pointRadius: 7, pointStyle: 'triangle',
+            hidden: !simFbaMarker,
         },
-        {   // 1 — FBA reference (empty if none)
-            label: simFbaRefLabel || 'FBA reference',
-            data: refPtsI0,
-            type: 'scatter',
-            borderColor: '#aaa', backgroundColor: 'rgba(150,150,150,0.5)',
-            pointRadius: 3, showLine: false,
-            hidden: !hasRef,
+        {   // 2 — Unconstrained linear (no quantum yield, no damage): μ = Y_BM·α·I₀·3.6·10⁻³
+            label: 'Light sweep — FBA unconstrained (last run)',
+            data: [{ x: 0, y: 0 }, { x: xMax, y: p_now.YBM * 1e-3 * p_now.alpha * xMax * 3.6 }],
+            borderColor: 'rgba(155,89,182,0.55)', backgroundColor: 'rgba(0,0,0,0)',
+            borderWidth: 1.5, borderDash: [4, 4],
+            pointRadius: 0, fill: false, tension: 0,
         },
-        {   // 2 — Höper 2024 analytical curve (updated live by updateFbaGrowthOverlay)
-            label: 'Höper 2024 model',
-            data: simHoepCurve(xMax),
-            borderColor: '#2e7a42', backgroundColor: 'rgba(46,122,66,0.07)',
-            borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3,
-        },
-        {   // 3 — I₀ operating point marker (updated live)
-            label: `I₀ = ${I0_op} µmol·m⁻²·s⁻¹`,
-            data: [{ x: I0_op, y: 0 }, { x: I0_op, y: Math.max(0.02, muOp + 0.02) }],
-            borderColor: 'rgba(230,126,34,0.75)', backgroundColor: 'rgba(0,0,0,0)',
-            borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, fill: false,
-            showLine: true, tension: 0,
-        },
-        {   // 4 — Experimental data Zavřel 2019
-            label: 'Zavřel 2019 (exp.)',
+        {   // 3 — Experimental data Zavřel 2019
+            label: 'Reference data (Zavřel 2019)',
             data: ZAVREL_2019_DATA.map(d => ({ x: d.I, y: d.mu })),
             type: 'scatter',
             borderColor: '#1a64c8', backgroundColor: 'rgba(26,100,200,0.75)',
             pointRadius: 5, pointHoverRadius: 7, pointStyle: 'circle', showLine: false,
         },
     ];
+
 
     if (simFbaGrowthChart) { simFbaGrowthChart.destroy(); simFbaGrowthChart = null; }
     simFbaGrowthChart = new Chart(
@@ -2248,7 +2275,7 @@ function renderSimFbaSweep(d) {
                     tooltip: {
                         callbacks: {
                             label: ctx => {
-                                if (ctx.dataset.label?.startsWith('Zavřel')) {
+                                if (ctx.dataset.label?.startsWith('Reference data')) {
                                     const d = ZAVREL_2019_DATA[ctx.dataIndex];
                                     return `Zavřel 2019: μ = ${d.mu.toFixed(4)} ± ${d.muErr.toFixed(4)} h⁻¹`;
                                 }
@@ -2257,91 +2284,108 @@ function renderSimFbaSweep(d) {
                             },
                         },
                     },
+                    zoom: {
+                        zoom: { drag: { enabled: true }, mode: 'xy' },
+                        pan:  { enabled: false },
+                        limits: { x: { min: 0 }, y: { min: 0 } },
+                    },
                 },
                 scales: {
                     x: { type: 'linear', title: { display: true, text: 'I₀ — incident irradiance (µmol·m⁻²·s⁻¹)', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                    y: { title: { display: true, text: 'Growth rate µ (h⁻¹)', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    y: { min: 0, max: fbaYMax, title: { display: true, text: 'Growth rate µ (h⁻¹)', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
                 },
             },
         }
     );
 
-    // ── Yield chart — x = photon flux J_I (mmol·gDW⁻¹·h⁻¹) ──────────────────
-    const yLabel = hasRef ? 'Current' : 'Yield (gDW·mmol⁻¹)';
+    // Augment sweep points with I₀ and Höper µ for reuse by yield/O₂ charts
+    const p_aug = simGetParams();
+    _sweepAugPts = pts.map(pt => ({
+        ...pt,
+        I0:      pt.photon / (alpha * 3.6),
+        hoperMu: Math.max(0, simHoperMu(pt.photon / (alpha * 3.6), 0,
+                    p_aug.alpha, p_aug.KL, p_aug.YBM, p_aug.kd, p_aug.ngam_photon, 0)),
+    }));
+
+    _fbaYieldXMode   = 'photon';
+    _hoperYieldXMode = 'photon';
+    _buildFbaYieldCharts();
+    _buildHoperYieldCharts();
+    expDataUpdateCharts();
+}
+
+function _buildFbaYieldCharts() {
+    if (_sweepLocked) return;
+    if (!_sweepAugPts) return;
+    const xFn    = _fbaYieldXMode === 'mu'
+        ? pt => pt.growth
+        : pt => pt.photon;
+    const xLabel = _fbaYieldXMode === 'mu'
+        ? 'FBA ceiling µ (h⁻¹)'
+        : 'Photon uptake J_I (mmol·gDW⁻¹·h⁻¹)';
+    const hasO2  = _sweepAugPts.some(p => p.o2 !== null && p.o2 !== 0);
+
     if (simFbaYieldChart) { simFbaYieldChart.destroy(); simFbaYieldChart = null; }
-    const yDs = [ds(yLabel, pts, 'yield', '#e67e22', 'rgba(230,126,34,0.08)', false)];
-    if (hasRef) yDs.push(ds(simFbaRefLabel || 'Reference', refPts, 'yield', '#aaa', null, true));
     simFbaYieldChart = new Chart(
         document.getElementById('sim-fba-yield-chart').getContext('2d'),
-        { type: 'line', data: { datasets: yDs },
-          options: xyLineOpts('Photon uptake J_I (mmol·gDW⁻¹·h⁻¹)', 'Yield (gDW·mmol⁻¹)', hasRef) });
+        { type: 'line',
+          data: { datasets: [{ label: 'Yield — last run',
+              data: _sweepAugPts.map(pt => ({ x: xFn(pt), y: pt.yield })),
+              borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.08)',
+              borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] },
+          options: xyLineOpts(xLabel, 'Yield (gDW·mmol⁻¹)', true) });
 
-    // ── O₂ chart ──────────────────────────────────────────────────────────────
-    if (hasO2 || (hasRef && refPts.some(p => p.o2))) {
+    document.getElementById('sim-fba-o2-wrap').style.display = hasO2 ? '' : 'none';
+    if (hasO2) {
         if (simFbaO2Chart) { simFbaO2Chart.destroy(); simFbaO2Chart = null; }
-        const oLabel = hasRef ? 'Current' : 'O₂ evolution';
-        const oDs = [ds(oLabel, pts, 'o2', '#3498db', 'rgba(52,152,219,0.08)', false)];
-        if (hasRef) oDs.push(ds(simFbaRefLabel || 'Reference', refPts, 'o2', '#aaa', null, true));
         simFbaO2Chart = new Chart(
             document.getElementById('sim-fba-o2-chart').getContext('2d'),
-            { type: 'line', data: { datasets: oDs },
-              options: xyLineOpts('Photon uptake J_I (mmol·gDW⁻¹·h⁻¹)', 'O₂ evolution (mmol·gDW⁻¹·h⁻¹)', hasRef) });
+            { type: 'line',
+              data: { datasets: [{ label: 'O₂ evolution — last run',
+                  data: _sweepAugPts.map(pt => ({ x: xFn(pt), y: pt.o2 })),
+                  borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.08)',
+                  borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] },
+              options: xyLineOpts(xLabel, 'O₂ evolution (mmol·gDW⁻¹·h⁻¹)', true) });
+    }
+}
+
+function _buildHoperYieldCharts() {
+    if (_sweepLocked) return;
+    if (!_sweepAugPts) return;
+    const xFn    = _hoperYieldXMode === 'mu'
+        ? pt => pt.hoperMu
+        : pt => pt.photon;
+    const xLabel = _hoperYieldXMode === 'mu'
+        ? 'Höper µ (h⁻¹)'
+        : 'Photon uptake J_I (mmol·gDW⁻¹·h⁻¹)';
+    const hasO2  = _sweepAugPts.some(p => p.o2 !== null && p.o2 !== 0);
+
+    if (simHoperYieldChart) { simHoperYieldChart.destroy(); simHoperYieldChart = null; }
+    const yieldEl = document.getElementById('sim-hoper-yield-chart');
+    if (yieldEl) {
+        simHoperYieldChart = new Chart(yieldEl.getContext('2d'),
+            { type: 'line',
+              data: { datasets: [{ label: 'Yield — last run',
+                  data: _sweepAugPts.map(pt => ({ x: xFn(pt), y: pt.yield })),
+                  borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.08)',
+                  borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] },
+              options: xyLineOpts(xLabel, 'Yield (gDW·mmol⁻¹)', true) });
     }
 
-    renderFbaEfficiencyBox(d);
-}
-
-// ── FBA efficiency summary box (below light sweep charts) ────────────────────
-function renderFbaEfficiencyBox(d) {
-    const box = document.getElementById('sim-fba-efficiency-box');
-    if (!box) return;
-
-    const p  = simGetParams();
-    const I0 = p.I0;
-
-    // Find nearest FBA point to current I₀
-    const fbaPoint = d.points.reduce((best, pt) => {
-        const ptI = pt.photon / (p.alpha * 3.6);   // convert back to µmol·m⁻²·s⁻¹
-        return Math.abs(ptI - I0) < Math.abs((best.photon / (p.alpha * 3.6)) - I0) ? pt : best;
-    }, d.points[0]);
-    if (!fbaPoint) { box.style.display = 'none'; return; }
-
-    const muFBA    = fbaPoint.growth;
-    const muHoeper = Math.max(0, simHoperMu(I0, p.XA, p.alpha, p.KL, p.YBM, p.kd, p.ngam_photon, 0));
-    const eff      = muFBA > 1e-6 ? (muHoeper / muFBA * 100) : 0;
-    const INearest = (fbaPoint.photon / (p.alpha * 3.6)).toFixed(0);
-
-    box.style.display = '';
-    box.innerHTML = `
-        <div class="alert alert-light border py-2 px-3" style="font-size:0.81em;">
-            <strong>At I₀ = ${I0} µmol·m⁻²·s⁻¹</strong>
-            (nearest FBA point: ${INearest} µmol·m⁻²·s⁻¹):
-            &nbsp; μ<sub>FBA ceiling</sub> = <strong>${muFBA.toFixed(4)} h⁻¹</strong>
-            &nbsp;·&nbsp; μ<sub>Höper</sub> = <strong>${muHoeper.toFixed(4)} h⁻¹</strong>
-            &nbsp;·&nbsp; Efficiency = <strong>${eff.toFixed(1)}%</strong>
-            <span class="text-muted ml-1" title="Fraction of the stoichiometric ceiling actually achieved after accounting for photodamage (kd) and maintenance (NGAMphoton).">
-                <i class="fa fa-info-circle"></i>
-            </span>
-        </div>`;
-}
-
-function simLockFbaRef() {
-    if (!simFbaData) return;
-    const constrained = document.getElementById('sim-ls-constrained')?.checked;
-    simFbaRefLabel = `I=${document.getElementById('sim-ls-imin')?.value}–${document.getElementById('sim-ls-imax')?.value}, ${constrained ? 'autotrophic' : 'unconstrained'}`;
-    simFbaRefData  = simFbaData;
-    renderSimFbaSweep(simFbaData);
-    document.getElementById('sim-fba-ref-text').textContent  = simFbaRefLabel;
-    document.getElementById('sim-fba-ref-badge').style.display = '';
-    document.getElementById('sim-fba-clear-btn').style.display = '';
-}
-
-function simClearFbaRef() {
-    simFbaRefData  = null;
-    simFbaRefLabel = '';
-    document.getElementById('sim-fba-ref-badge').style.display = 'none';
-    document.getElementById('sim-fba-clear-btn').style.display = 'none';
-    if (simFbaData) renderSimFbaSweep(simFbaData);
+    document.getElementById('sim-hoper-o2-wrap').style.display = hasO2 ? '' : 'none';
+    if (hasO2) {
+        if (simHoperO2Chart) { simHoperO2Chart.destroy(); simHoperO2Chart = null; }
+        const o2El = document.getElementById('sim-hoper-o2-chart');
+        if (o2El) {
+            simHoperO2Chart = new Chart(o2El.getContext('2d'),
+                { type: 'line',
+                  data: { datasets: [{ label: 'O₂ evolution — last run',
+                      data: _sweepAugPts.map(pt => ({ x: xFn(pt), y: pt.o2 })),
+                      borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.08)',
+                      borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 }] },
+                  options: xyLineOpts(xLabel, 'O₂ evolution (mmol·gDW⁻¹·h⁻¹)', true) });
+        }
+    }
 }
 
 function xyLineOpts(xLabel, yLabel, showLegend) {
@@ -2804,6 +2848,7 @@ function simUpdateParamVisibility(tabId) {
 
 /** Compute + render both growth curve and productivity */
 function simRecompute() {
+
     const p = simGetParams();
     syncMedPhoton();
     simUpdateDerived(p);
@@ -2811,6 +2856,9 @@ function simRecompute() {
     updateFbaGrowthOverlay();   // refresh Höper curve + I₀ marker on FBA sweep chart
     if (simMode === 'chemo') simRenderChemostat(simComputeChemostat(p));
     else                     simRenderBatch(simComputeBatch(p));
+    // Live R²/RMSE update whenever result panel is visible
+    const fitOut = document.getElementById('sim-fit-result');
+    if (fitOut && fitOut.style.display !== 'none') computeFitQuality();
 }
 
 function simUpdateDerived(p) {
@@ -2867,45 +2915,39 @@ function simHoperMu(I0, XA, alpha, KL, YBM_m, kd, ngam_photon, KI) {
 function simRenderGrowthCurve(p) {
     const { alpha, KL, YBM, kd, ngam_photon, I0, XA } = p;
     const N    = 300;
-    const Imax = Math.max(I0 * 2.2, 200);
+    // When experimental data is loaded, cap the curve to the data range so the
+    // visual fit matches R² (which is only computed at the data points).
+    const hasExp = _expData && _expData.length > 0;
+    const Imax = hasExp
+        ? Math.max(..._expData.map(r => r.I0)) * 1.1
+        : Math.max(...ZAVREL_2019_DATA.map(d => d.I)) * 1.1;
+    // Always use _expDataXA (0 by default, mean from uploaded data if provided).
+    // The XA slider is for the bioreactor productivity model, not the growth curve.
+    // This ensures the drawn curve matches what R² is computed against.
+    const curveXA = _expDataXA;
     const pts  = [];
     for (let i = 0; i <= N; i++) {
         const I  = (i / N) * Imax;
-        const mu = simHoperMu(I, XA, alpha, KL, YBM, kd, ngam_photon, 0);
+        const mu = simHoperMu(I, curveXA, alpha, KL, YBM, kd, ngam_photon, 0);
         pts.push({ x: I, y: mu });
     }
 
     const datasets = [{
-        label: XA > 0 ? `μ — X_A=${XA} g·m⁻²` : 'μ(I₀)',
+        label: 'Simulation for static FBA (last run)',
         data: pts.map(p => ({ x: p.x, y: p.y })),
         borderColor: '#2e7a42', backgroundColor: 'rgba(46,122,66,0.06)',
         fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
     }];
 
-    // Show dilute-limit curve when XA > 0 (dashed)
-    if (XA > 0) {
-        const pts0 = [];
-        for (let i = 0; i <= N; i++) {
-            const I = (i / N) * Imax;
-            pts0.push({ x: I, y: simHoperMu(I, 0, alpha, KL, YBM, kd, ngam_photon, 0) });
-        }
-        datasets.push({
-            label: 'μ — dilute (X_A→0)',
-            data: pts0.map(p => ({ x: p.x, y: p.y })),
-            borderColor: 'rgba(46,122,66,0.35)', backgroundColor: 'rgba(0,0,0,0)',
-            fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
-            borderDash: [4, 3],
-        });
-    }
 
     // FBA sweep overlay
     if (simFbaPoints?.length) {
         datasets.push({
-            label: 'FBA sweep',
+            label: 'FBA with QY Correction',
             data: simFbaPoints.map(p => ({ x: p.I, y: p.mu })),
-            type: 'scatter',
-            borderColor: '#c0392b', backgroundColor: 'rgba(192,57,43,0.7)',
-            pointRadius: 4, pointHoverRadius: 6,
+            borderColor: '#c0392b', backgroundColor: 'rgba(0,0,0,0)',
+            borderWidth: 2, borderDash: [6, 3],
+            pointRadius: 0, fill: false, tension: 0,
         });
     }
 
@@ -2931,17 +2973,6 @@ function simRenderGrowthCurve(p) {
         });
     }
 
-    // Saved scenario overlays (dashed colored lines)
-    for (const sc of scenarioGetOverlayCurves()) {
-        datasets.push({
-            label: sc.label,
-            data: sc.pts,
-            borderColor: sc.color,
-            backgroundColor: 'rgba(0,0,0,0)',
-            fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
-            borderDash: [5, 4],
-        });
-    }
 
     // Experimental data Zavřel 2019
     datasets.push({
@@ -2977,6 +3008,11 @@ function simRenderGrowthCurve(p) {
                         },
                     },
                 },
+                zoom: {
+                    zoom: { drag: { enabled: true }, mode: 'xy' },
+                    pan:  { enabled: false },
+                    limits: { x: { min: 0 }, y: { min: 0 } },
+                },
             },
             scales: {
                 x: { type: 'linear', title: { display: true, text: 'I₀ (µmol·m⁻²·s⁻¹)', font: { size: 10 } },
@@ -2986,6 +3022,7 @@ function simRenderGrowthCurve(p) {
             },
         },
     });
+    expDataUpdateCharts();
 }
 
 
@@ -3385,9 +3422,20 @@ function simMarkFBAPoint(growth, fluxes) {
         if (fluxes[k] !== undefined) { photon = Math.abs(fluxes[k]); break; }
     }
     if (photon === 0) return;
-    const alpha = parseFloat(document.getElementById('sim-alpha')?.value) || 0.13;
-    const I0    = photon / (alpha * 3.6);
+    // I₀ is read directly from the slider — the FBA bound was set to J*_I (quantum-corrected),
+    // so back-calculating from photon flux would give the wrong (lower) I₀.
+    const I0 = parseFloat(document.getElementById('sim-I0')?.value) || 660;
     simFbaMarker = { growth, I0, photon };
+    // Live-update the static FBA marker on the sweep chart if already rendered
+    if (simFbaGrowthChart) {
+        const ds1 = simFbaGrowthChart.data.datasets[1];
+        if (ds1) {
+            ds1.label  = 'Static FBA (last run)';
+            ds1.data   = [{ x: I0, y: growth }];
+            ds1.hidden = false;
+            simFbaGrowthChart.update();
+        }
+    }
     simRecompute();
 }
 
@@ -3397,13 +3445,54 @@ function simClearFbaMarker() {
 }
 
 // ── Nelder-Mead minimiser (unconstrained, for ≤6 parameters) ─────────────────
-function nelderMead(f, x0, maxIter = 2000, tol = 1e-9) {
+/**
+ * Differential Evolution (DE/rand/1/bin) global optimizer.
+ * All parameters in log-transformed space; bounds respected via clamping.
+ * Followed by Nelder-Mead local refinement from the best solution found.
+ */
+function differentialEvolution(f, bounds, { F = 0.8, CR = 0.9, maxGen = 400 } = {}) {
+    const n  = bounds.length;
+    const NP = Math.max(15, 10 * n);
+
+    // Initialize population uniformly within bounds
+    let pop   = Array.from({ length: NP }, () =>
+        bounds.map(b => b.lo + Math.random() * (b.hi - b.lo)));
+    let costs = pop.map(f);
+
+    for (let gen = 0; gen < maxGen; gen++) {
+        for (let i = 0; i < NP; i++) {
+            // Pick 3 distinct indices ≠ i
+            let a, b, c;
+            do { a = Math.floor(Math.random() * NP); } while (a === i);
+            do { b = Math.floor(Math.random() * NP); } while (b === i || b === a);
+            do { c = Math.floor(Math.random() * NP); } while (c === i || c === a || c === b);
+
+            const jrand = Math.floor(Math.random() * n);
+            const trial = pop[i].map((xi, j) => {
+                if (j === jrand || Math.random() < CR) {
+                    const v = pop[a][j] + F * (pop[b][j] - pop[c][j]);
+                    return Math.max(bounds[j].lo, Math.min(bounds[j].hi, v));
+                }
+                return xi;
+            });
+
+            const tc = f(trial);
+            if (tc <= costs[i]) { pop[i] = trial; costs[i] = tc; }
+        }
+    }
+
+    const best = costs.indexOf(Math.min(...costs));
+    // Refine with Nelder-Mead from the DE best
+    return nelderMead(f, pop[best]);
+}
+
+function nelderMead(f, x0, maxIter = 6000, tol = 1e-10) {
     const n = x0.length;
-    // Initial simplex: x0 + perturbed copies
+    // Initial simplex: x0 + perturbed copies (50% perturbation for better exploration)
     let S = [x0.slice()];
     for (let i = 0; i < n; i++) {
         const v = x0.slice();
-        v[i] = v[i] !== 0 ? v[i] * 1.1 : 0.1;
+        v[i] = v[i] !== 0 ? v[i] * 1.5 : 0.5;
         S.push(v);
     }
     let vals = S.map(f);
@@ -3446,19 +3535,208 @@ function nelderMead(f, x0, maxIter = 2000, tol = 1e-9) {
     return { x: S[0], val: vals[0] };
 }
 
-// ── Fit Höper parameters to FBA sweep ────────────────────────────────────────
+// ── Experimental data helpers & Höper model fitting ──────────────────────────
+
+function expDataLoad() {
+    const raw = document.getElementById('exp-data-paste')?.value?.trim();
+    const statusEl = document.getElementById('exp-data-status');
+    const previewEl = document.getElementById('exp-data-preview');
+    const fitOpts = document.getElementById('fit-params-options');
+    if (!raw) { _expData = null; expDataUpdateCharts(); _updateFitBtn(); if(statusEl) statusEl.textContent=''; if(previewEl) previewEl.style.display='none'; return; }
+
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length < 1) { if(statusEl) { statusEl.textContent = 'No data found.'; statusEl.className = 'small text-danger'; } return; }
+
+    // Detect whether first row is a header or numeric data
+    const firstCells = lines[0].split('\t');
+    const firstIsNumeric = firstCells.every(c => !isNaN(parseFloat(c.trim())) && c.trim() !== '');
+
+    let iI0, iMu, iErr, iXA, iRho, iV, iA, dataStart;
+    if (firstIsNumeric) {
+        // No header row — assign columns positionally: I0, mu, [mu_err], [X_A]
+        iI0 = 0; iMu = 1; iErr = firstCells.length >= 3 ? 2 : -1;
+        iXA = firstCells.length >= 4 ? 3 : -1;
+        iRho = -1; iV = -1; iA = -1;
+        dataStart = 0;
+    } else {
+        const headers = lines[0].split('\t').map(h => h.trim().toLowerCase());
+        const col = h => headers.indexOf(h);
+        iI0 = col('i0'); iMu = col('mu');
+        if (iI0 < 0 || iMu < 0) { if(statusEl) { statusEl.textContent = 'Missing required columns: I0, mu'; statusEl.className = 'small text-danger'; } return; }
+        iErr = col('mu_err'); iXA = col('x_a'); iRho = col('rho'); iV = col('v'); iA = col('a');
+        dataStart = 1;
+    }
+
+    const rows = [];
+    for (let i = dataStart; i < lines.length; i++) {
+        const cells = lines[i].split('\t');
+        const I0  = parseFloat(cells[iI0]);
+        const mu  = parseFloat(cells[iMu]);
+        if (isNaN(I0) || isNaN(mu)) continue;
+        const mu_err = iErr >= 0 ? parseFloat(cells[iErr]) || null : null;
+        let X_A = iXA >= 0 ? parseFloat(cells[iXA]) || null : null;
+        // compute X_A from rho, V, A if not provided directly
+        if (X_A == null && iRho >= 0 && iV >= 0 && iA >= 0) {
+            const rho = parseFloat(cells[iRho]), V = parseFloat(cells[iV]), A = parseFloat(cells[iA]);
+            if (!isNaN(rho) && !isNaN(V) && !isNaN(A) && A > 0) X_A = rho * V / A;
+        }
+        rows.push({ I0, mu, mu_err, X_A });
+    }
+
+    if (rows.length === 0) { if(statusEl) { statusEl.textContent = 'No valid rows parsed.'; statusEl.className = 'small text-danger'; } return; }
+
+    _expData = rows;
+    // Mean X_A across rows that have it; 0 otherwise (dilute/uniform-light assumption)
+    const xaRows = rows.filter(r => r.X_A != null && !isNaN(r.X_A));
+    _expDataXA = xaRows.length > 0 ? xaRows.reduce((s, r) => s + r.X_A, 0) / xaRows.length : 0;
+    if(statusEl) { statusEl.textContent = `${rows.length} rows loaded.`; statusEl.className = 'small text-success'; }
+    // Preview table
+    if (previewEl) {
+        const cols = [
+            { key: 'I0',     head: 'I₀',            fmt: v => v },
+            { key: 'mu',     head: 'μ (h⁻¹)',        fmt: v => v.toFixed(4) },
+            { key: 'mu_err', head: '± μ',            fmt: v => v != null ? v.toFixed(4) : '—' },
+            { key: 'X_A',    head: 'X_A (g·m⁻²)',   fmt: v => v != null ? v.toFixed(2)  : '—' },
+            { key: 'rho',    head: 'ρ (g·L⁻¹)',      fmt: v => v != null ? v.toFixed(3)  : '—' },
+            { key: 'V',      head: 'V (L)',           fmt: v => v != null ? v.toFixed(3)  : '—' },
+            { key: 'A',      head: 'A (m²)',          fmt: v => v != null ? v.toFixed(4)  : '—' },
+        ];
+        const th    = cols.map(c => `<th>${c.head}</th>`).join('');
+        const tbody = rows.map(r => `<tr>${cols.map(c => `<td>${c.fmt(r[c.key])}</td>`).join('')}</tr>`).join('');
+        previewEl.innerHTML = `<table class="table table-sm table-borderless mb-0"><thead><tr>${th}</tr></thead><tbody>${tbody}</tbody></table>`;
+        previewEl.style.display = '';
+    }
+
+    expDataUpdateCharts();
+    _updateFitBtn();
+}
+
+function expDataClear() {
+    _expData = null;
+    _expDataXA = 0;
+    const paste = document.getElementById('exp-data-paste');
+    if (paste) paste.value = '';
+    const statusEl = document.getElementById('exp-data-status');
+    if (statusEl) { statusEl.textContent = ''; statusEl.className = 'small text-muted'; }
+    const previewEl = document.getElementById('exp-data-preview');
+    if (previewEl) { previewEl.style.display = 'none'; previewEl.innerHTML = ''; }
+    expDataUpdateCharts();
+    _updateFitBtn();
+}
+
+function expDataUpdateCharts() {
+    [simFbaGrowthChart, simGrowthChart].forEach(chart => {
+        if (!chart) return;
+        const idx = chart.data.datasets.findIndex(ds => ds.label === 'Experimental data');
+        if (!_expData) {
+            if (idx >= 0) { chart.data.datasets.splice(idx, 1); chart.update(); }
+            return;
+        }
+        const ds = {
+            label: 'Experimental data',
+            data: _expData.map(r => ({ x: r.I0, y: r.mu })),
+            type: 'scatter',
+            borderColor: '#8e44ad', backgroundColor: 'rgba(142,68,173,0.7)',
+            pointRadius: 5, pointHoverRadius: 7, pointStyle: 'rectRot',
+        };
+        if (idx >= 0) { chart.data.datasets[idx] = ds; } else { chart.data.datasets.push(ds); }
+        chart.update();
+    });
+}
+
+function _updateFitBtn() {
+    const btn = document.getElementById('sim-fit-btn');
+    if (!btn) return;
+    if (_expData && _expData.length >= 3) {
+        btn.innerHTML = '<i class="fa fa-magic"></i> Fit to uploaded data';
+    } else {
+        btn.innerHTML = '<i class="fa fa-magic"></i> Fit to Zavřel 2019';
+    }
+}
+
+/**
+ * Compute R², RMSE, and compensation point using current slider values.
+ * If _expData is loaded, computes against experimental data.
+ * Updates #sim-fit-result display.  Returns { r2, rmse, iComp } or null.
+ */
+function computeFitQuality() {
+    // Always compare against experimental data: uploaded or Zavřel 2019 default.
+    const hasUploadedData = _expData && _expData.length >= 3;
+
+    const KL_draw   = parseFloat(document.getElementById('sim-KL')?.value)          || 119;
+    const YBM_draw  = parseFloat(document.getElementById('sim-YBM')?.value)          || 1.84;
+    const kd_draw   = parseFloat(document.getElementById('sim-kd')?.value)           || 0.07;
+    const ngam_draw = parseFloat(document.getElementById('sim-ngam-photon')?.value)  || 1;
+    const al_draw   = parseFloat(document.getElementById('sim-alpha')?.value)        || 0.13;
+
+    let pts;
+    if (hasUploadedData) {
+        pts = _expData.map(r => ({ I: r.I0, mu: r.mu, X_A: r.X_A ?? _expDataXA }));
+    } else {
+        pts = ZAVREL_2019_DATA.map(d => ({ I: d.I, mu: d.mu, X_A: 0 }));
+    }
+
+    const obs_mean = pts.reduce((s, p) => s + p.mu, 0) / pts.length;
+    let ss_res = 0, ss_tot = 0;
+    const debugRows = [];
+    pts.forEach(({ I, mu: obs, X_A }) => {
+        const pred = simHoperMu(I, X_A, al_draw, KL_draw, YBM_draw, kd_draw, ngam_draw, 0);
+        ss_res += (pred - obs) ** 2;
+        ss_tot += (obs - obs_mean) ** 2;
+        debugRows.push({ I0: +I.toFixed(2), obs: +obs.toFixed(5), pred: +pred.toFixed(5), residual: +(pred-obs).toFixed(5) });
+    });
+    const r2   = ss_tot > 0 ? (1 - ss_res / ss_tot) : 0;  // allow negative: bad fit < 0 < good fit ≤ 1
+    const rmse = Math.sqrt(ss_res / pts.length);
+    console.group(`Fit quality  R²=${r2.toFixed(4)}  RMSE=${rmse.toFixed(5)}  n=${pts.length}`);
+    console.log('params:', { KL_draw, YBM_draw, kd_draw, ngam_draw, al_draw });
+    console.table(debugRows);
+    console.groupEnd();
+
+    // Compensation point
+    let iComp = null;
+    const muAt0    = simHoperMu(1e-3, 0, al_draw, KL_draw, YBM_draw, kd_draw, ngam_draw, 0);
+    const muAt2000 = simHoperMu(2000, 0, al_draw, KL_draw, YBM_draw, kd_draw, ngam_draw, 0);
+    if (muAt0 <= 0 && muAt2000 > 0) {
+        let lo = 0, hi = 500;
+        for (let k = 0; k < 40; k++) {
+            const mid = (lo + hi) / 2;
+            simHoperMu(mid, 0, al_draw, KL_draw, YBM_draw, kd_draw, ngam_draw, 0) > 0 ? hi = mid : lo = mid;
+        }
+        iComp = (lo + hi) / 2;
+    }
+
+    const out = document.getElementById('sim-fit-result');
+    if (out && out.style.display !== 'none') {
+        const r2Color = r2 >= 0.98 ? 'text-success' : r2 >= 0.90 ? 'text-warning' : 'text-danger';
+        const r2Str   = r2 < 0 ? r2.toFixed(2) : r2.toFixed(4);  // negative: fewer decimals needed
+        const src = hasUploadedData ? 'uploaded data' : 'Zavřel 2019';
+        const r2Tip = 'R² = 1 − SS_res/SS_tot. '
+            + 'SS_res = Σ(obs−pred)², SS_tot = Σ(obs−mean)². '
+            + 'R²=1: perfect fit. R²=0: no better than the mean. R²<0: worse than the mean (model shape is wrong).';
+        out.innerHTML = `<i class="fa fa-check-circle text-success"></i> Fitted to ${src} &nbsp;`
+            + `<span class="${r2Color}"><strong>R² = ${r2Str}</strong></span>`
+            + ` <i class="fa fa-info-circle text-muted" title="${r2Tip}" style="cursor:help;"></i>`
+            + (iComp != null ? ` &nbsp;·&nbsp; I₀<sub>comp</sub> = ${iComp.toFixed(0)} µmol·m⁻²·s⁻¹` : '')
+            + ` &nbsp;·&nbsp; X<sub>A</sub> = ${_expDataXA.toFixed(1)} g·m⁻²`;
+    }
+
+    return { r2, rmse, iComp };
+}
+
 function simFitToFBA() {
-    if (!simFbaData || !simFbaData.points) {
-        alert('Run a light sweep first — calibration fits the Höper model to FBA predictions.');
-        return;
+    // Always fit to experimental data: uploaded data if available, else Zavřel 2019 default.
+    const hasUploadedData = _expData && _expData.length >= 3;
+    const XA_fallback = _expDataXA;
+
+    let pts;
+    if (hasUploadedData) {
+        pts = _expData.map(r => ({ I: r.I0, mu: r.mu, X_A: r.X_A ?? XA_fallback, w: r.mu_err ? 1 / (r.mu_err * r.mu_err) : 1 }));
+    } else {
+        // Fall back to built-in Zavřel 2019 reference data
+        pts = ZAVREL_2019_DATA.map(d => ({ I: d.I, mu: d.mu, X_A: 0, w: d.muErr ? 1 / (d.muErr * d.muErr) : 1 }));
     }
-    const alpha  = parseFloat(document.getElementById('sim-alpha')?.value) || 0.13;
-    const rawPts = simFbaData.points.filter(p => p.growth > 1e-4);
-    if (rawPts.length < 4) {
-        alert('Need at least 4 positive-growth sweep points for fitting.');
-        return;
-    }
-    const pts = rawPts.map(p => ({ I: p.photon / (alpha * 3.6), mu: p.growth }));
+    // Relative residual scale: median µ — prevents high-µ points dominating
+    const muMedian = pts.map(p => p.mu).sort((a,b)=>a-b)[Math.floor(pts.length/2)] || 1e-3;
 
     const btn = document.getElementById('sim-fit-btn');
     btn.disabled = true;
@@ -3466,34 +3744,93 @@ function simFitToFBA() {
 
     setTimeout(() => {
         try {
-            // Log-space Nelder-Mead for KL, Y_BM; linear kd (α held fixed from slider)
-            // ngam_photon=0: NGAM is already baked into FBA results via ATPM constraint
-            const res = nelderMead(([lKL, lY, kd]) => {
-                const [KL, Y] = [Math.exp(lKL), Math.exp(lY)];
-                return pts.reduce((s, { I, mu: obs }) =>
-                    s + (simHoperMu(I, 0, alpha, KL, Y, Math.max(0, kd), 0, 0) - obs) ** 2, 0);
-            }, [Math.log(119), Math.log(1.84), 0.07]);
+            // Free parameters controlled by checkboxes (always fitting to exp data)
+            const freeKL    = document.getElementById('fit-free-KL')?.checked;
+            const freeYBM   = document.getElementById('fit-free-YBM')?.checked;
+            const freekd    = document.getElementById('fit-free-kd')?.checked;
+            const freeNgam  = document.getElementById('fit-free-ngam')?.checked;
+            const freeAlpha = document.getElementById('fit-free-alpha')?.checked;
 
-            const [lKL, lY, kd] = res.x;
-            const KL_fit = Math.exp(lKL), YBM_fit = Math.exp(lY), kd_fit = Math.max(0, kd);
-            simSetSlider('sim-KL',  KL_fit,   10,   500,  0);
-            simSetSlider('sim-YBM', YBM_fit,   0.5,  5.0, 2);
-            simSetSlider('sim-kd',  kd_fit,    0,    0.5, 3);
-            simRecompute();
+            const KL0    = parseFloat(document.getElementById('sim-KL')?.value)          || 119;
+            const YBM0   = parseFloat(document.getElementById('sim-YBM')?.value)          || 1.84;
+            const alpha0 = Math.max(0.01,  parseFloat(document.getElementById('sim-alpha')?.value)       || 0.13);
+            const kd0    = Math.max(0.001, parseFloat(document.getElementById('sim-kd')?.value)          || 0.07);
+            const ngam0  = Math.max(0.01,  parseFloat(document.getElementById('sim-ngam-photon')?.value) || 1);
+
+            // FBA stoichiometric ceiling for YBM: computed from last static FBA run.
+            // No fitted YBM can exceed this — the metabolic network sets the hard limit.
+            let YBM_fba_ceil = 1.84; // FBA stoichiometric ceiling (iRH783 default)
+            if (_lastFbaResultForSummary?.growth_rate > 0) {
+                const lf     = _lastFbaResultForSummary;
+                const I0_lf  = lf.sliders?.['sim-I0'];
+                if (I0_lf) {
+                    const JI_lf   = alpha0 * I0_lf * 3.6;
+                    const jstar_lf = KL0 * JI_lf / (KL0 + JI_lf);
+                    const jnet_lf  = jstar_lf - kd0 * JI_lf - ngam0;
+                    if (jnet_lf > 0)
+                        YBM_fba_ceil = lf.growth_rate * 1000 / jnet_lf;
+                }
+            }
+            YBM_fba_ceil = Math.min(1.84, Math.max(0.5, YBM_fba_ceil));
+
+            // All params in log space — 5 dimensions: [lnKL, lnYBM, lnKd, lnNgam, lnAlpha]
+            // YBM upper bound: slider max (5.0) for exp-data fitting — the FBA ceiling is shown
+            // as a reference in the result, but NOT enforced as a fitting constraint here.
+            // The FBA ceiling is a model-specific value; real cells may differ.
+            const BOUNDS = [
+                { lo: Math.log(10),    hi: Math.log(500)  },  // KL    slider [10,500]
+                { lo: Math.log(0.5),   hi: Math.log(5.0)  },  // YBM   slider [0.5,5]
+                { lo: Math.log(0.001), hi: Math.log(0.5)  },  // kd    slider [0,0.5]
+                { lo: Math.log(0.01),  hi: Math.log(50)   },  // ngam  slider [0,50]
+                { lo: Math.log(0.03),  hi: Math.log(0.40) },  // alpha slider [0.01,0.50]
+            ];
+            const x0_full = [Math.log(KL0), Math.log(YBM0), Math.log(kd0), Math.log(ngam0), Math.log(alpha0)];
+            const free    = [freeKL, freeYBM, freekd, freeNgam, freeAlpha];
+            const fixed   = x0_full.slice();
+
+            const freeIdx = free.map((f, i) => f ? i : -1).filter(i => i >= 0);
+            if (freeIdx.length === 0) { alert('Select at least one free parameter.'); btn.disabled=false; _updateFitBtn(); return; }
+
+            const freeBounds = freeIdx.map(i => BOUNDS[i]);
+
+            // Relative residuals: normalise by (obs + muMedian/2) so low-µ points
+            // are not swamped by high-µ ones, but near-zero observations don't blow up
+            const cost = (x_red) => {
+                const x = fixed.slice();
+                freeIdx.forEach((dim, j) => { x[dim] = x_red[j]; });
+                const [KL, Y, kd, ngam, al] = x.map(Math.exp);
+                return pts.reduce((s, { I, mu: obs, X_A, w }) => {
+                    const pred = simHoperMu(I, X_A, al, KL, Y, kd, ngam, 0);
+                    const scale = obs + muMedian * 0.5;
+                    return s + w * ((pred - obs) / scale) ** 2;
+                }, 0);
+            };
+
+            // Global search with Differential Evolution, then NM refinement
+            const best = differentialEvolution(cost, freeBounds);
+
+            const x_opt = fixed.slice();
+            freeIdx.forEach((dim, j) => { x_opt[dim] = best.x[j]; });
+
+            const [KL_fit, YBM_fit, kd_fit, ngam_fit, alpha_fit] = x_opt.map(Math.exp);
+
+            if (freeKL)    simSetSlider('sim-KL',  KL_fit,  10,  500, 0);
+            if (freeYBM)   simSetSlider('sim-YBM', YBM_fit, 0.5, 5.0, 2);
+            if (freekd)    simSetSlider('sim-kd',          kd_fit,                          0,    0.5,          3);
+            if (freeNgam)  simSetSlider('sim-ngam-photon', ngam_fit,                        0,   50,            2);
+            if (freeAlpha) simSetSlider('sim-alpha',       alpha_fit,                       0.01, 0.50,         2);
+
+            // Show the result panel before simRecompute so computeFitQuality finds it visible
+            const out = document.getElementById('sim-fit-result');
+            if (out) out.style.display = '';
+
+            simRecompute();   // redraws the curve; computeFitQuality() called inside
+            computeFitQuality(); // explicit call in case visibility guard blocked it
             _growthCurveFitted = true;
             updateTabGates();
-            // Show fitted parameters summary
-            const out = document.getElementById('sim-fit-result');
-            if (out) {
-                out.style.display = '';
-                out.innerHTML = `<i class="fa fa-check-circle text-success"></i> Fitted: `
-                    + `K<sub>L</sub> = <strong>${KL_fit.toFixed(0)}</strong> µmol·m⁻²·s⁻¹ &nbsp;·&nbsp; `
-                    + `Y<sub>BM</sub> = <strong>${YBM_fit.toFixed(3)}</strong> gDW·mmol<sub>photon</sub>⁻¹ &nbsp;·&nbsp; `
-                    + `k<sub>d</sub> = <strong>${kd_fit.toFixed(4)}</strong> h⁻¹`;
-            }
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa fa-magic"></i> Fit to FBA sweep';
+            _updateFitBtn();
         }
     }, 20);
 }
@@ -3963,6 +4300,7 @@ function scenarioSave() {
     _scenarioSave(list);
     if (nameInput) nameInput.value = '';
     scenarioRenderList();
+    updateLightSweepSummary();
 }
 
 function scenarioDelete(idx) {
@@ -3971,12 +4309,14 @@ function scenarioDelete(idx) {
     _scenarioSave(list);
     scenarioRenderList();
     simRecompute();   // redraw growth curve without deleted scenario
+    updateLightSweepSummary();
 }
 
 function scenarioClearAll() {
     _scenarioSave([]);
     scenarioRenderList();
     simRecompute();
+    updateLightSweepSummary();
 }
 
 // ── Scenario comparison charts ────────────────────────────────────────────────
@@ -4405,10 +4745,21 @@ function updateTabGates() {
     // ② Light Sweep → unlocks Growth Curve right column
     _setGate('growth-curve-prereq-gate',   !_lightSweepHasRun);
     _setGate('growth-curve-gated-content',  _lightSweepHasRun);
+    _setGate('sim-card',                    _lightSweepHasRun);
 
     // ③ Growth curve fitted → unlocks Culture Productivity
     _setGate('productivity-prereq-gate',   !_growthCurveFitted);
     _setGate('productivity-gated-content',  _growthCurveFitted);
+
+}
+
+function setFbaYieldXMode(mode)   { _fbaYieldXMode   = mode; _buildFbaYieldCharts(); }
+function setHoperYieldXMode(mode) { _hoperYieldXMode = mode; _buildHoperYieldCharts(); }
+
+function setChartZoomMode(chart, mode) {
+    if (!chart) return;
+    chart.options.plugins.zoom.zoom.mode = mode;
+    chart.update('none');
 }
 
 function updateLightSweepSummary() {
@@ -4419,35 +4770,65 @@ function updateLightSweepSummary() {
     const d = _lastFbaResultForSummary;
     if (!d) { card.style.display = 'none'; return; }
 
-    const p       = simGetParams();
-    const medium  = typeof getMediumConstraints === 'function' ? getMediumConstraints() : {};
-    const jstar   = medium['EX_photon_e1_e']?.lb != null ? Math.abs(medium['EX_photon_e1_e'].lb) : null;
-    const genes   = typeof simKoGetGenes === 'function' ? simKoGetGenes() : [];
-    const crs     = typeof customReactions !== 'undefined' ? customReactions : [];
+    const s   = d.sliders || {};
+    const fmt = (id, digits) => {
+        const v = s[id];
+        return (v == null) ? '<span class="text-muted">—</span>' : Number(v).toFixed(digits ?? 2);
+    };
+    const fmtMed = (id, maxUnconstrained, digits) => {
+        const v = s[id];
+        if (v == null) return '<span class="text-muted">—</span>';
+        return (v >= maxUnconstrained) ? '∞' : Number(v).toFixed(digits ?? 2);
+    };
 
-    const rows = [
-        ['Growth rate (FBA)',   `<strong>${Number(d.growth_rate).toFixed(5)} h⁻¹</strong>`],
-        ['Photon flux (J*ᵢ)',   jstar != null ? `${jstar.toFixed(1)} mmol·gDW⁻¹·h⁻¹` : '—'],
-        ['Y<sub>BM</sub>',      `${p.YBM?.toFixed(4) ?? '—'} g·mol⁻¹ photon`],
-        ['I₀',                  `${p.I0 ?? '—'} µmol·m⁻²·s⁻¹`],
-        ['X_A',                 `${p.XA ?? '—'} g·m⁻²`],
-        ['Gene knockouts',      genes.length ? genes.map(esc).join(', ') : '<span class="text-muted">none</span>'],
-        ['Custom reactions',    crs.length   ? crs.map(r => `<code>${esc(r.id)}</code>`).join(', ') : '<span class="text-muted">none</span>'],
-    ];
+    const mu  = Number(d.growth_rate).toFixed(5);
+    const kos = d.ko_genes?.length ? d.ko_genes.map(esc).join(', ') : '<span class="text-muted">none</span>';
+    const crs = d.custom_reactions?.length
+        ? d.custom_reactions.map(r => esc(r.id)).join(', ')
+        : '<span class="text-muted">none</span>';
 
-    content.innerHTML = rows.map(([label, val]) =>
-        `<div class="d-flex mb-1" style="gap:0.5rem;">
-            <span class="text-muted" style="min-width:160px;">${label}</span>
-            <span>${val}</span>
-        </div>`
-    ).join('');
+    const row = (label, val) =>
+        `<tr><td class="py-0 pr-3 text-muted" style="white-space:nowrap;">${label}</td><td class="py-0">${val}</td></tr>`;
+
+    content.innerHTML = `
+        <div style="overflow-x:auto;">
+        <table class="table table-sm table-borderless mb-0" style="font-size:0.82em;">
+        <tbody>
+            <tr><td colspan="2" class="py-0 pb-1"><span class="text-uppercase text-muted" style="font-size:0.78em;letter-spacing:.05em;">Result</span></td></tr>
+            ${row('μ (h⁻¹)', `<strong>${mu}</strong>`)}
+            <tr><td colspan="2" class="py-0 pt-2 pb-1"><span class="text-uppercase text-muted" style="font-size:0.78em;letter-spacing:.05em;">Culture conditions</span></td></tr>
+            ${row('I₀ (µmol·m⁻²·s⁻¹)', fmt('sim-I0', 0))}
+            ${row('X<sub>A</sub> (g·m⁻²)', fmt('sim-XA', 0))}
+            <tr><td colspan="2" class="py-0 pt-2 pb-1"><span class="text-uppercase text-muted" style="font-size:0.78em;letter-spacing:.05em;">Biophysical parameters</span></td></tr>
+            ${row('α — photon absorption', fmt('sim-alpha', 2))}
+            ${row('K<sub>L</sub> (µmol·m⁻²·s⁻¹)', fmt('sim-KL', 0))}
+            ${row('Y<sub>BM</sub> (g·mol⁻¹)', fmt('sim-YBM', 2))}
+            ${row('k<sub>d</sub>', fmt('sim-kd', 3))}
+            ${row('NGAM<sub>photon</sub> (µmol·gDW⁻¹·h⁻¹)', fmt('sim-ngam-photon', 1))}
+            <tr><td colspan="2" class="py-0 pt-2 pb-1"><span class="text-uppercase text-muted" style="font-size:0.78em;letter-spacing:.05em;">Medium (mmol·gDW⁻¹·h⁻¹)</span></td></tr>
+            ${row('CO₂', fmtMed('med-co2', 1000, 1))}
+            ${row('NO₃⁻', fmtMed('med-no3', 1000, 1))}
+            ${row('NH₄⁺', fmtMed('med-nh4', 50, 1))}
+            ${row('Glucose', fmtMed('med-glc', 20, 1))}
+            ${row('Pi', fmtMed('med-pi', 1, 3))}
+            ${row('SO₄²⁻', fmtMed('med-so4', 1, 3))}
+            ${row('Fe²⁺', fmtMed('med-fe2', 0.1, 4))}
+            ${row('Mn²⁺', fmtMed('med-mn2', 0.1, 4))}
+            ${row('Zn²⁺', fmtMed('med-zn2', 0.1, 4))}
+            ${row('Cu²⁺', fmtMed('med-cu2', 0.1, 4))}
+            <tr><td colspan="2" class="py-0 pt-2 pb-1"><span class="text-uppercase text-muted" style="font-size:0.78em;letter-spacing:.05em;">Genetic modifications</span></td></tr>
+            ${row('Knockouts', kos)}
+            ${row('Custom reactions', crs)}
+        </tbody>
+        </table>
+        </div>`;
     card.style.display = '';
 }
 
 function simSubTabChanged(href) {
     const isStatic = (href === '#sim-sub-static');
-    // Cards that belong to Static FBA workflow
-    ['gene-browser-card', 'cr-card', 'scenario-card'].forEach(id => {
+    // scenario-card is still full-width below tabs; show only on Static FBA
+    ['scenario-card'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = isStatic ? '' : 'none';
     });
@@ -4470,6 +4851,17 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#sim-sub-tabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
         simSubTabChanged($(e.target).attr('href'));
     });
+
+    // Experimental data card
+    document.getElementById('exp-data-load-btn')?.addEventListener('click', expDataLoad);
+    document.getElementById('exp-data-clear-btn')?.addEventListener('click', expDataClear);
+    const expPaste = document.getElementById('exp-data-paste');
+    if (expPaste) {
+        expPaste.value = 'I0\tmu\tmu_err\tX_A\trho\tV\tA\n';
+        expPaste.focus();
+        expPaste.setSelectionRange(expPaste.value.length, expPaste.value.length);
+        expPaste.blur();
+    }
 });
 
 // ── Searchable reaction dropdown ──────────────────────────────────────────────

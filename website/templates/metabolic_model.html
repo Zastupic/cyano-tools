@@ -5,8 +5,10 @@
 {% block keywords %}metabolic model, iRH783, Synechocystis 6803, FBA, flux balance analysis, genome-scale model, COBRApy, pathway network{% endblock %}
 
 {% block head %}
-<!-- Chart.js — deferred so it doesn't block initial HTML parse/render -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 <!-- SheetJS loaded on demand (see loadXLSX() in js_metabolic_model.js) -->
 <style>
     /* Searchable reaction dropdown */
@@ -33,8 +35,42 @@
         text-overflow: ellipsis;
     }
     .rxn-item:hover, .rxn-item.active { background: #e8f0fe; }
-    /* Sub-tab nav smaller */
-    #sim-sub-tabs .nav-link { padding: 0.35rem 0.75rem; font-size: 0.9em; }
+    /* ── Active tab colours ── */
+    /* Main tabs */
+    #main-tabs .nav-link.active {
+        color: #007a63;
+        background-color: rgba(0, 184, 148, 0.08);
+        border-color: #00b894 #00b894 #fff;
+        font-weight: 600;
+    }
+    #main-tabs .nav-link:not(.active):hover {
+        color: #00b894;
+        border-color: transparent;
+    }
+    /* Network sub-tabs */
+    #network-sub-tabs .nav-link.active {
+        color: #0660a9;
+        background-color: rgba(9, 132, 227, 0.07);
+        border-color: #0984e3 #0984e3 #fff;
+        font-weight: 600;
+    }
+    #network-sub-tabs .nav-link:not(.active):hover { color: #0984e3; border-color: transparent; }
+    /* Simulation sub-tabs — same style as main tabs */
+    #sim-sub-tabs .nav-link.active {
+        color: #007a63;
+        background-color: rgba(0, 184, 148, 0.08);
+        border-color: #00b894 #00b894 #fff;
+        font-weight: 600;
+    }
+    #sim-sub-tabs .nav-link:not(.active):hover { color: #00b894; border-color: transparent; }
+    /* FBA Light Response section headers */
+    .sim-section-header {
+        display: flex; align-items: baseline; gap: 0.4rem;
+        padding: 0.3rem 0.6rem; border-radius: 0 4px 4px 0;
+        margin-bottom: 0.6rem; font-size: 0.88em; font-weight: 600;
+    }
+    .sim-section-header-qy  { border-left: 3px solid #e67e22; background: rgba(230,126,34,0.07); }
+    .sim-section-header-pdm { border-left: 3px solid #2980b9; background: rgba(41,128,185,0.07); }
     .table-scroll { max-height: 500px; overflow-y: auto; }
     .table thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
     code { font-size: 0.82em; }
@@ -332,11 +368,42 @@
         <!-- ── Simulations tab ──────────────────────────────────────── -->
         <div id="tab-simulations" class="tab-pane fade" role="tabpanel">
 
+            <!-- About this tool + Sub-tab nav (full width, above columns) -->
+            <div class="mb-2">
+                <a class="text-muted" data-toggle="collapse" href="#sim-workflow-info" style="font-size:0.8em;"><i class="fa fa-info-circle"></i> About this tool</a>
+                <div class="collapse" id="sim-workflow-info">
+                    <p class="small text-muted mb-0 mt-1" style="font-size:0.82em; line-height:1.6;">
+                        <strong>iRH783</strong> is a genome-scale metabolic reconstruction of <em>Synechocystis</em> sp. PCC 6803.
+                        <strong>Flux Balance Analysis (FBA)</strong> finds the intracellular flux distribution that maximises biomass synthesis rate, subject to stoichiometric mass balance, reaction directionality, and user-set exchange boundaries (nutrient and photon uptake rates); the result includes a predicted specific growth rate for the chosen conditions (<strong>Static FBA</strong> tab).
+                        Photon uptake is corrected for quantum-yield saturation: J*<sub>I</sub> = K<sub>L</sub>·J<sub>I</sub> / (K<sub>L</sub> + J<sub>I</sub>).
+                        A <strong>biophysical layer</strong> (<a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012280" target="_blank" class="text-muted" style="text-decoration:underline dotted;">Höper 2024</a>) couples the FBA-derived biomass yield on photons (Y<sub>BM</sub>) with a Lambert-Beer light-attenuation model over areal biomass density (X<sub>A</sub>), photodamage (k<sub>d</sub>), and maintenance (NGAM) to predict growth rate across the full range of light intensities (<strong>FBA Light Response</strong> tab) and simulate time-course culture productivity (<strong>Productivity</strong> tab).
+                    </p>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs mb-0" id="sim-sub-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#sim-sub-static" role="tab">
+                        <i class="fa fa-flask"></i> &#9312; Static FBA
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#sim-sub-sweep" role="tab">
+                        <i class="fa fa-sun-o"></i> &#9313; FBA Light Response
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#sim-sub-productivity" role="tab">
+                        <i class="fa fa-area-chart"></i> &#9314; Culture Productivity
+                    </a>
+                </li>
+            </ul>
+
             <!-- Main split: left shared inputs + right sub-tabbed results -->
-            <div class="row">
+            <div class="row" style="border-top:none;">
 
                 <!-- ── Left: shared inputs ──────────────────────────── -->
-                <div class="col-md-3">
+                <div class="col-md-3 pt-3">
                 <div style="background:#f5f6f7;border-radius:6px;padding:0.75rem 0.75rem 0.25rem;">
 
                     <!-- sim-pg-culture: Culture conditions (static + light + productivity tabs) -->
@@ -584,7 +651,7 @@
                             <div class="d-flex justify-content-between"><label class="small mb-0">Y<sub>BM</sub> — yield on photons <small class="text-muted">(gCDW·mmol⁻¹ ×10⁻³)</small></label><span class="small font-weight-bold" id="sim-YBM-val">1.84</span></div>
                             <div class="d-flex align-items-center">
                                 <button class="btn btn-sm btn-outline-secondary px-1 py-0 mr-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-YBM','sim-YBM-val',-1)">−</button>
-                                <input type="range" class="custom-range flex-fill" id="sim-YBM" min="0.50" max="5.0" step="0.05" value="1.84" oninput="simSlider(this,'sim-YBM-val')">
+                                <input type="range" class="custom-range flex-fill" id="sim-YBM" min="0.50" max="5.0" step="0.01" value="1.84" oninput="simSlider(this,'sim-YBM-val')">
                                 <button class="btn btn-sm btn-outline-secondary px-1 py-0 ml-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-YBM','sim-YBM-val',1)">+</button>
                             </div>
                         </div>
@@ -679,62 +746,7 @@
                 <!-- ── Right: sub-tabbed results ──────────────────────── -->
                 <div class="col-md-9">
 
-                    <!-- Workflow overview (always visible) -->
-                    <div class="mb-3">
-                        <p class="small text-muted mb-2" style="font-size:0.82em; line-height:1.5;">
-                            <strong>iRH783</strong> is a genome-scale metabolic reconstruction of <em>Synechocystis</em> sp. PCC 6803.
-                            <strong>Flux Balance Analysis (FBA)</strong> finds the intracellular flux distribution that maximises biomass synthesis rate, subject to stoichiometric mass balance, reaction directionality, and user-set exchange boundaries (nutrient and photon uptake rates).
-                            Photon uptake is corrected for quantum-yield saturation: J*<sub>I</sub> = K<sub>L</sub>·J<sub>I</sub> / (K<sub>L</sub> + J<sub>I</sub>).
-                            A <strong>biophysical layer</strong> (<a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012280" target="_blank" class="text-muted" style="text-decoration:underline dotted;">Höper 2024</a>) then couples the FBA-derived biomass yield on photons (Y<sub>BM</sub>) with a Lambert-Beer light-attenuation model over areal biomass density (X<sub>A</sub>), photodamage (k<sub>d</sub>), and maintenance (NGAM) to compute growth rate and culture productivity.
-                        </p>
-                        <p class="small font-weight-bold text-muted text-uppercase mb-2" style="font-size:0.7em;letter-spacing:.05em;"><i class="fa fa-sitemap"></i> Simulation workflow</p>
-                        <div class="d-flex align-items-stretch flex-wrap" id="sim-workflow-stepper" style="gap:0.35rem;">
-                            <div class="card flex-fill text-center p-2 sim-step-card" id="sim-step-static" style="min-width:90px;max-width:140px;cursor:pointer;" onclick="$('[href=\'#sim-sub-static\']').tab('show')">
-                                <span class="badge badge-secondary mb-1" id="sim-step-badge-static">①</span>
-                                <div class="small font-weight-bold">Static FBA</div>
-                                <div class="text-muted" style="font-size:0.71em;">Inspect flux distribution &amp; pathway activity at one operating point</div>
-                            </div>
-                            <div class="d-flex align-items-center text-muted px-1" style="font-size:1.1em;">&#8594;</div>
-                            <div class="card flex-fill text-center p-2 sim-step-card" id="sim-step-sweep" style="min-width:90px;max-width:140px;cursor:pointer;" onclick="$('[href=\'#sim-sub-sweep\']').tab('show')">
-                                <span class="badge badge-secondary mb-1" id="sim-step-badge-sweep">②</span>
-                                <div class="small font-weight-bold">Light Sweep</div>
-                                <div class="text-muted" style="font-size:0.71em;">FBA stoichiometric ceiling vs. light; extract Y<sub>BM</sub> for kinetic model</div>
-                            </div>
-                            <div class="d-flex align-items-center text-muted px-1" style="font-size:1.1em;">&#8594;</div>
-                            <div class="card flex-fill text-center p-2 sim-step-card" id="sim-step-light" style="min-width:90px;max-width:140px;cursor:pointer;" onclick="$('[href=\'#sim-sub-sweep\']').tab('show')">
-                                <span class="badge badge-secondary mb-1" id="sim-step-badge-light">③</span>
-                                <div class="small font-weight-bold">Growth Curve</div>
-                                <div class="text-muted" style="font-size:0.71em;">Kinetic prediction (Höper 2024): photodamage &amp; maintenance included</div>
-                            </div>
-                            <div class="d-flex align-items-center text-muted px-1" style="font-size:1.1em;">&#8594;</div>
-                            <div class="card flex-fill text-center p-2 sim-step-card" id="sim-step-productivity" style="min-width:90px;max-width:140px;cursor:pointer;" onclick="$('[href=\'#sim-sub-productivity\']').tab('show')">
-                                <span class="badge badge-secondary mb-1" id="sim-step-badge-productivity">④</span>
-                                <div class="small font-weight-bold">Productivity</div>
-                                <div class="text-muted" style="font-size:0.71em;">Chemostat / batch culture design &amp; product optimisation</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sub-tab nav -->
-                    <ul class="nav nav-tabs mb-3" id="sim-sub-tabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" data-toggle="tab" href="#sim-sub-static" role="tab">
-                                <i class="fa fa-flask"></i> &#9312; Static FBA
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-toggle="tab" href="#sim-sub-sweep" role="tab">
-                                <i class="fa fa-sun-o"></i> &#9313; Light Sweep &amp; Growth Curve
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-toggle="tab" href="#sim-sub-productivity" role="tab">
-                                <i class="fa fa-area-chart"></i> &#9314; Culture Productivity
-                            </a>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content">
+                    <div class="tab-content pt-3">
 
                         <!-- ── Static FBA sub-tab ─────────────────── -->
                         <div id="sim-sub-static" class="tab-pane fade show active" role="tabpanel">
@@ -751,6 +763,237 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- Gene Knockout Analysis -->
+                            <div class="card mb-2" id="gene-browser-card">
+                                <div class="card-header py-2 d-flex align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#gene-browser-body">
+                                    <span><i class="fa fa-minus-circle text-primary"></i> <strong>Gene Knockout Analysis</strong>
+                                    <small class="text-muted ml-2">Browse iRH783 genes, simulate single- or multi-gene knockouts</small></span>
+                                    <i class="fa fa-chevron-down ml-auto" id="gene-browser-chevron"></i>
+                                </div>
+                                <div class="collapse" id="gene-browser-body">
+                                    <div class="card-body pt-2 pb-2">
+                                        <!-- Gene knockouts (FBA) — moved here from sidebar -->
+                                        <div class="mb-3 pb-2 border-bottom" id="sim-pg-fba-ko">
+                                            <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">Gene knockouts (FBA)</p>
+                                            <!-- Hidden select keeps the multi-gene KO state; populated by loadGenes() -->
+                                            <select multiple id="sim-ko-select" style="display:none;" onchange="simKoUpdateDisplay()"></select>
+                                            <!-- Direct gene input with autocomplete -->
+                                            <div style="position:relative;" class="mb-1">
+                                                <div class="input-group input-group-sm" style="max-width:400px;">
+                                                    <input type="text" id="sim-ko-direct-input" class="form-control form-control-sm"
+                                                           placeholder="Type gene ID or name…" autocomplete="off"
+                                                           oninput="simKoDirectFilter(this.value)"
+                                                           onkeydown="simKoDirectKeydown(event)">
+                                                    <div class="input-group-append">
+                                                        <button class="btn btn-outline-danger btn-sm" type="button"
+                                                                onclick="simKoDirectAdd()" title="Add to KO set">
+                                                            <i class="fa fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div id="sim-ko-autocomplete"
+                                                     style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;
+                                                            max-width:400px;background:#fff;border:1px solid #ccc;border-top:none;
+                                                            max-height:160px;overflow-y:auto;border-radius:0 0 4px 4px;
+                                                            box-shadow:0 2px 6px rgba(0,0,0,0.15);font-size:0.82em;"></div>
+                                            </div>
+                                            <div id="sim-ko-selected-wrap" class="border rounded p-1" style="min-height:32px;max-width:400px;background:#fff8f8;display:none;">
+                                                <span id="sim-ko-selected-list" class="small font-weight-bold"></span>
+                                            </div>
+                                            <div id="sim-ko-actions" class="mt-1" style="gap:0.25rem;max-width:400px;display:none;">
+                                                <a href="#" class="small text-danger" onclick="simKoClear();return false;"><i class="fa fa-times"></i> Clear</a>
+                                                <a href="#" class="small text-muted ml-auto" onclick="simKoOpenKEGG();return false;" title="KEGG page for first selected gene"><i class="fa fa-external-link"></i> KEGG</a>
+                                            </div>
+                                            <p class="text-muted mt-1 mb-0" style="font-size:0.72em;" id="sim-ko-applied-note" style="display:none;">Applied to FBA light sweep and pipeline runs.</p>
+                                        </div>
+
+                                        <div class="row mb-2 align-items-center">
+                                            <div class="col-md-4">
+                                                <input class="form-control form-control-sm" id="gene-search" placeholder="Search by locus tag, protein name, or subsystem…">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="ko-constrained-chk" checked>
+                                                    <label class="form-check-label small" for="ko-constrained-chk">Photoautotrophic constraints
+                                                        <i class="fa fa-info-circle text-muted ml-1" style="cursor:help;"
+                                                           data-toggle="tooltip" data-placement="right"
+                                                           title="When screening single-gene knockouts, restricts the model to photoautotrophic growth (light + inorganic carbon only, no glucose). Without this, a knocked-out gene may appear non-essential because FBA finds a compensatory heterotrophic route that does not exist under standard photoautotrophic culture conditions and BG-11 medium."></i>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto text-muted small" id="gene-count-label"></div>
+                                            <div class="col-auto small" id="ann-loading-msg" style="display:none;">
+                                                <span class="spinner-border spinner-border-sm text-secondary" role="status" style="width:0.75rem;height:0.75rem;"></span>
+                                                <span class="text-muted ml-1">Loading protein names…</span>
+                                            </div>
+                                            <div class="col-auto small text-success" id="ann-done-msg" style="display:none;">
+                                                <i class="fa fa-check-circle"></i> Annotations loaded
+                                            </div>
+                                        </div>
+                                        <div class="text-muted small mb-2" style="display:table;border-spacing:0 2px;margin-left:auto;">
+                                            <div style="display:table-row;">
+                                                <span style="display:table-cell;white-space:nowrap;padding-right:6px;"><span class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.82em;pointer-events:none;">Test KO</span></span>
+                                                <span style="display:table-cell;text-align:right;">quick single-gene knockout (standalone, does not affect Static FBA or Light Sweep).</span>
+                                            </div>
+                                            <div style="display:table-row;">
+                                                <span style="display:table-cell;white-space:nowrap;padding-right:6px;"><span class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size:0.82em;pointer-events:none;">+FBA KO</span></span>
+                                                <span style="display:table-cell;text-align:right;">adds the gene to the active knockout set applied in Static FBA and FBA Light Response.</span>
+                                            </div>
+                                        </div>
+                                        <div style="position:relative;">
+                                            <div id="gene-table-loading" class="text-center py-4">
+                                                <div class="spinner-border text-secondary" role="status" style="width:1.5rem;height:1.5rem;"></div>
+                                                <div class="text-muted small mt-2">Loading genes…</div>
+                                            </div>
+                                            <div class="table-scroll" style="max-height:420px;display:none;" id="gene-table-wrap">
+                                                <table class="table table-sm table-striped table-hover" id="gene-table">
+                                                    <thead class="thead-light sticky-top">
+                                                        <tr>
+                                                            <th>Locus tag</th>
+                                                            <th>Protein / product</th>
+                                                            <th>Subsystem(s)</th>
+                                                            <th>Reactions</th>
+                                                            <th style="cursor:pointer;user-select:none;" onclick="sortGeneTableByKO()" title="Sort by KO growth (only rows with a result are sorted)">KO growth (h⁻¹) <i class="fa fa-sort" id="ko-sort-icon"></i></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div><!-- /gene-browser-card -->
+
+                            <!-- Custom Reaction Engineering -->
+                            <div class="card mb-2" id="cr-card">
+                                <div class="card-header py-2" style="cursor:pointer;" data-toggle="collapse" data-target="#cr-card-body">
+                                    <i class="fa fa-plus-circle text-primary"></i> <strong>Custom Reaction Engineering</strong>
+                                    <small class="text-muted ml-2">Add heterologous enzymes and custom reactions — applies to FBA, light sweep, production envelope &amp; biosynthetic cost</small>
+                                    <i class="fa fa-chevron-down float-right mt-1"></i>
+                                </div>
+                                <div class="card-body collapse" id="cr-card-body">
+                                    <div class="form-row align-items-end mb-1">
+                                        <div class="col-md-5">
+                                            <label class="small text-muted mb-1">Pathway template</label>
+                                            <select class="form-control form-control-sm" id="cr-template-select">
+                                                <option value="">— choose template —</option>
+                                                <option value="ethylene_efe">Ethylene via Efe (P. syringae) — α-KG + O₂ → ethylene</option>
+                                                <option value="isoprene_isps">Isoprene via IspS (poplar) — DMAPP → isoprene</option>
+                                                <option value="sucrose_export">Sucrose export sink (native pathway)</option>
+                                                <option value="phb_pha">PHB (PhaABC) — acetyl-CoA → polyhydroxybutyrate</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-auto">
+                                            <button class="btn btn-sm btn-outline-primary" id="cr-add-template-btn">
+                                                <i class="fa fa-plus"></i> Add template
+                                            </button>
+                                        </div>
+                                        <div class="col-auto text-muted small mx-1">or</div>
+                                        <div class="col-auto">
+                                            <button class="btn btn-sm btn-outline-secondary" id="cr-add-manual-btn">
+                                                <i class="fa fa-pencil"></i> Custom reaction
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="form-row align-items-end mb-2">
+                                        <div class="col-md-5" style="position:relative;">
+                                            <label class="small text-muted mb-1">KEGG reaction lookup <span class="text-muted" style="font-weight:normal;">(R##### or keyword)</span></label>
+                                            <input type="text" class="form-control form-control-sm" id="cr-kegg-input"
+                                                   placeholder="e.g. R09415 or ethylene"
+                                                   maxlength="80" autocomplete="off">
+                                            <div id="cr-kegg-dropdown"
+                                                 style="display:none;position:absolute;top:100%;left:0;z-index:1000;
+                                                        width:100%;max-height:220px;overflow-y:auto;
+                                                        background:#fff;border:1px solid #ced4da;border-radius:0 0 4px 4px;
+                                                        box-shadow:0 4px 8px rgba(0,0,0,.12);font-size:0.82em;"></div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <button class="btn btn-sm btn-outline-info" id="cr-kegg-lookup-btn">
+                                                <i class="fa fa-search"></i> Lookup
+                                            </button>
+                                        </div>
+                                        <div class="col-auto align-self-center" id="cr-kegg-status" style="font-size:0.82em;"></div>
+                                    </div>
+                                    <div id="cr-manual-form" class="p-2 mb-2 border rounded bg-light" style="display:none;">
+                                        <div class="form-row align-items-end mb-1">
+                                            <div class="col-md-2">
+                                                <label class="small mb-0">Reaction ID</label>
+                                                <input type="text" class="form-control form-control-sm" id="cr-man-id" placeholder="e.g. EFE">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="small mb-0">Name (optional)</label>
+                                                <input type="text" class="form-control form-control-sm" id="cr-man-name" placeholder="Ethylene-forming enzyme">
+                                            </div>
+                                            <div class="col-auto"
+                                                 title="Minimum allowed flux. Set to 0 for an irreversible reaction (forward only). Use a negative value (e.g. −1000) to allow the reverse direction. Units: mmol · gDW⁻¹ · h⁻¹">
+                                                <label class="small mb-0">Lower bound <i class="fa fa-info-circle text-muted" style="font-size:0.8em;"></i></label>
+                                                <div class="input-group" style="width:240px;">
+                                                    <input type="number" class="form-control" id="cr-man-lb" value="0" step="any">
+                                                    <div class="input-group-append"><span class="input-group-text" style="font-size:0.82em;">mmol/gDW/h</span></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto"
+                                                 title="Maximum allowed flux. 1000 is effectively unconstrained. Units: mmol · gDW⁻¹ · h⁻¹">
+                                                <label class="small mb-0">Upper bound <i class="fa fa-info-circle text-muted" style="font-size:0.8em;"></i></label>
+                                                <div class="input-group" style="width:240px;">
+                                                    <input type="number" class="form-control" id="cr-man-ub" value="1000" step="any">
+                                                    <div class="input-group-append"><span class="input-group-text" style="font-size:0.82em;">mmol/gDW/h</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-row mb-1">
+                                            <div class="col-12">
+                                                <p class="text-muted mb-1" style="font-size:0.8em;">
+                                                    <strong>Stoichiometry</strong><br>
+                                                    Comma-separated <code>metabolite_id:coefficient</code> pairs.
+                                                    Substrates (consumed) take <strong>negative</strong> coefficients; products (produced) take <strong>positive</strong> ones.
+                                                    Metabolite IDs use the BiGG naming convention with a compartment suffix:
+                                                    <strong>_c</strong> = cytoplasm (intracellular, use for most reactions),
+                                                    <strong>_e</strong> = extracellular / growth medium (use for exchange-facing metabolites such as secreted products or imported substrates).
+                                                </p>
+                                                <input type="text" class="form-control form-control-sm" id="cr-man-stoich"
+                                                       placeholder="akg_c:-1, o2_c:-1, succ_c:1, co2_c:3, ethy_c:1">
+                                            </div>
+                                        </div>
+                                        <div id="cr-man-stoich-preview" class="mb-2 small" style="display:none;"></div>
+                                        <div id="cr-man-unknown-panel" class="alert alert-warning py-2 px-3 mb-2" style="display:none;font-size:0.85em;">
+                                            <strong><i class="fa fa-exclamation-triangle"></i> Some metabolites could not be mapped automatically</strong>
+                                            <p class="mb-1 mt-1">The metabolites listed below have no BiGG database entry and were <em>not</em> added to the stoichiometry.
+                                            You need to assign them a custom ID (any short alphanumeric name with <code>_c</code> suffix is fine, e.g. <code>ethy_c</code>),
+                                            then add them to <strong>both</strong> the Stoichiometry field and the New metabolites field below.</p>
+                                            <div id="cr-man-unknown-list"></div>
+                                        </div>
+                                        <div class="form-row mb-2">
+                                            <div class="col-12">
+                                                <p class="text-muted mb-1" style="font-size:0.8em;">
+                                                    <Strong>New metabolites </Strong>(only for IDs not already in the model)<br>
+                                                    Comma-separated <code>id:name:formula</code> triples for any metabolite IDs listed above that do not yet exist in iRH783.
+                                                    Leave name or formula blank if unknown. Example: <code>ethy_c:Ethylene:C2H4</code>
+                                                </p>
+                                                <input type="text" class="form-control form-control-sm" id="cr-man-newmets" placeholder="ethy_c:Ethylene:C2H4">
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-sm btn-primary" id="cr-man-add-btn"><i class="fa fa-plus"></i> Add reaction</button>
+                                        <button class="btn btn-sm btn-link text-secondary py-0" id="cr-man-cancel-btn">Cancel</button>
+                                    </div>
+                                    <div id="cr-list-wrap" style="display:none;background:#d4edda;border:1px solid #c3e6cb;border-radius:6px;padding:0.6rem 0.75rem;">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="small font-weight-bold text-success"><i class="fa fa-check-circle"></i> Active custom reactions — applied to FBA</span>
+                                            <button class="btn btn-link text-danger ml-auto py-0 px-0" id="cr-clear-all-btn" style="font-size:0.8em;"><i class="fa fa-trash"></i> Clear all</button>
+                                        </div>
+                                        <div id="cr-list" class="small"></div>
+                                        <p class="text-muted mb-0 mt-1" style="font-size:0.72em;">
+                                            <i class="fa fa-info-circle"></i> These reactions will be included in all FBA runs (static FBA, FBA light response, and production envelope) until cleared.
+                                        </p>
+                                    </div>
+                                    <div id="cr-note" class="small mt-1"></div>
+                                    <p class="text-muted small mb-0 mt-1">
+                                        <i class="fa fa-info-circle"></i>
+                                        Use the <strong>Metabolites</strong> tab to verify IDs. New metabolites not in iRH783 must be declared in the stoichiometry field.
+                                    </p>
+                                </div>
+                            </div><!-- /cr-card -->
+
                             <button class="btn btn-success mb-3" id="run-fba-btn">
                                 <i class="fa fa-play"></i> Run static FBA
                             </button>
@@ -822,8 +1065,8 @@
                                 <a class="text-muted" data-toggle="collapse" href="#info-sweep" style="font-size:0.8em;"><i class="fa fa-info-circle"></i> What this tab shows</a>
                                 <div class="collapse" id="info-sweep">
                                     <div class="alert alert-light border py-2 px-3 mt-1" style="font-size:0.81em;">
-                                        <strong>Left — FBA light sweep:</strong> runs FBA across a range of photon fluxes and plots the stoichiometric maximum growth rate. These are theoretical ceilings; real cultures fall below due to photodamage and maintenance.
-                                        <strong>Right — Growth curve (Höper 2024 model):</strong> kinetically realistic prediction including quantum yield saturation (K<sub>L</sub>), photodamage (k<sub>d</sub>), and maintenance (NGAM<sub>photon</sub>).
+                                        <strong>Left — FBA with Quantum Yield Correction:</strong> runs FBA across a range of photon fluxes with quantum yield saturation applied (J*<sub>I</sub> = K<sub>L</sub>·J<sub>I</sub> / (K<sub>L</sub> + J<sub>I</sub>)). Shows the stoichiometric growth ceiling — no photodamage or maintenance losses included.
+                                        <strong>Right — FBA with Quantum Yield + Photodamage &amp; Maintenance (Höper 2024):</strong> extends the left model by subtracting photodamage (k<sub>d</sub>·J<sub>I</sub>) and maintenance (NGAM<sub>photon</sub>), giving a biologically realistic growth rate prediction.
                                         <strong>Workflow:</strong> run the FBA sweep, then click <em>FBA sweep → Fit Y<sub>BM</sub> → Update model</em> on the right to calibrate the kinetic model to your metabolic scenario.
                                     </div>
                                 </div>
@@ -832,7 +1075,7 @@
                             <!-- FBA parameters summary accordion -->
                             <div class="card mb-2" id="fba-sweep-summary-card" style="display:none;">
                                 <div class="card-header py-1 px-3" style="cursor:pointer;background:#f0f4f8;" data-toggle="collapse" data-target="#fba-sweep-summary-body">
-                                    <span class="small font-weight-bold"><i class="fa fa-check-circle text-success"></i> FBA parameters from last Static FBA run</span>
+                                    <span class="small font-weight-bold"><i class="fa fa-check-circle text-success"></i> Static FBA — last run parameters</span>
                                     <i class="fa fa-chevron-down float-right mt-1" style="font-size:0.8em;"></i>
                                 </div>
                                 <div class="collapse" id="fba-sweep-summary-body">
@@ -840,49 +1083,66 @@
                                 </div>
                             </div>
 
+                            <!-- Experimental µ vs I₀ data -->
+                            <div class="card mb-2" id="exp-data-card">
+                                <div class="card-header py-1 px-3" style="cursor:pointer;background:#f0f4f8;" data-toggle="collapse" data-target="#exp-data-body">
+                                    <span class="small font-weight-bold"><i class="fa fa-table text-primary"></i> Experimental growth data <small class="text-muted font-weight-normal">(optional — used for model fitting)</small></span>
+                                    <i class="fa fa-chevron-down float-right mt-1" style="font-size:0.8em;"></i>
+                                </div>
+                                <div class="collapse" id="exp-data-body">
+                                    <div class="card-body py-2 px-3">
+                                        <p class="text-muted mb-1" style="font-size:0.8em;">
+                                            Paste tab-separated data from Excel. Required columns: <code>I0</code>, <code>mu</code>.
+                                            Optional: <code>mu_err</code>, <code>X_A</code> (g·m⁻²), or compute X_A from <code>rho</code> (g·L⁻¹), <code>V</code> (L), <code>A</code> (m²).
+                                            Header row is optional — if omitted, columns are assumed to be <code>I0</code>, <code>mu</code>, <code>mu_err</code>, <code>X_A</code> in that order.
+                                        </p>
+                                        <textarea id="exp-data-paste" class="form-control mb-2" rows="5" style="font-size:0.8em;font-family:monospace;"></textarea>
+                                        <div class="d-flex align-items-center" style="gap:0.5rem;">
+                                            <button class="btn btn-sm btn-outline-primary" id="exp-data-load-btn"><i class="fa fa-upload"></i> Load</button>
+                                            <button class="btn btn-sm btn-outline-secondary" id="exp-data-clear-btn"><i class="fa fa-times"></i> Clear</button>
+                                            <span id="exp-data-status" class="small text-muted"></span>
+                                        </div>
+                                        <div id="exp-data-preview" class="mt-2" style="display:none;font-size:0.78em;overflow-x:auto;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Controls row -->
                             <div class="row no-gutters mb-2">
                                 <!-- LEFT controls -->
                                 <div class="col-lg-6 pr-lg-3" style="border-right:1px solid #dee2e6;">
-                                    <h6 class="font-weight-bold mb-2" style="font-size:0.9em;">
-                                        <i class="fa fa-sun-o text-warning"></i> FBA Light Sweep
+                                    <div class="sim-section-header sim-section-header-pdm">
+                                        <i class="fa fa-sun-o" style="color:#2980b9;"></i>
+                                        FBA with Quantum Yield Correction
                                         <small class="text-muted font-weight-normal"> — stoichiometric growth ceiling</small>
-                                    </h6>
+                                    </div>
                                     <div class="d-flex align-items-center" style="gap:0.4rem;">
                                         <button class="btn btn-outline-primary btn-sm" id="sim-run-ls-btn">
-                                            <i class="fa fa-play"></i> Run sweep
+                                            <i class="fa fa-play"></i> Run
                                         </button>
-                                        <div class="ml-auto d-flex align-items-center" style="gap:0.25rem;">
-                                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="sim-fba-lock-btn" style="font-size:0.8em;display:none;" onclick="simLockFbaRef()">
-                                                <i class="fa fa-bookmark-o"></i> Save ref
-                                            </button>
-                                            <button class="btn btn-sm btn-link text-danger py-0" id="sim-fba-clear-btn" style="display:none;font-size:0.8em;" onclick="simClearFbaRef()">
-                                                <i class="fa fa-times"></i> Clear
-                                            </button>
-                                            <span id="sim-fba-ref-badge" class="small" style="display:none;">
-                                                <i class="fa fa-bookmark text-secondary"></i>
-                                                <span id="sim-fba-ref-text" class="text-muted"></span>
-                                            </span>
-                                        </div>
+                                        <button class="btn btn-outline-secondary btn-sm" id="sim-sweep-lock-btn" onclick="toggleSweepLock()" title="Lock sweep to prevent re-running when parameters change">
+                                            <i class="fa fa-unlock"></i> Lock
+                                        </button>
                                     </div>
                                 </div>
                                 <!-- RIGHT controls -->
                                 <div class="col-lg-6 pl-lg-3 mt-2 mt-lg-0">
-                                    <h6 class="font-weight-bold mb-2" style="font-size:0.9em;">
-                                        <i class="fa fa-line-chart text-primary"></i> Growth Curve
-                                        <small class="text-muted font-weight-normal"> — kinetic model (Höper 2024)</small>
-                                    </h6>
+                                    <div class="sim-section-header sim-section-header-pdm">
+                                        <i class="fa fa-line-chart" style="color:#2980b9;"></i>
+                                        FBA with Quantum Yield + Photodamage &amp; Maintenance
+                                        <small class="text-muted font-weight-normal"> — Höper 2024</small>
+                                    </div>
 
                                     <!-- Light sweep prerequisite gate -->
                                     <div id="growth-curve-prereq-gate" class="alert alert-warning py-1 px-2 mb-1" style="font-size:0.82em;display:none;">
                                         <i class="fa fa-exclamation-triangle"></i>
-                                        <strong>Run FBA light sweep first</strong> — Y<sub>BM</sub> calibration requires sweep results.
+                                        <strong>Run FBA with Quantum Yield Correction first</strong> — Y<sub>BM</sub> calibration requires sweep results.
                                     </div>
 
                                     <div id="growth-curve-gated-content" style="display:none;">
                                     <div class="d-flex flex-wrap align-items-center" style="gap:0.4rem;">
                                         <button class="btn btn-sm btn-outline-primary" id="sim-fit-btn">
-                                            <i class="fa fa-magic"></i> Fit to FBA sweep
+                                            <i class="fa fa-magic"></i> Fit to Zavřel 2019
                                         </button>
                                         <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="simSaveRef()">
                                             <i class="fa fa-bookmark-o"></i> Save as reference
@@ -895,6 +1155,29 @@
                                         </span>
                                     </div>
                                     <div id="sim-fit-result" class="mt-1 small" style="display:none;font-size:0.8em;"></div>
+                                    <div id="fit-params-options" class="mt-1" style="font-size:0.8em;">
+                                        <span class="text-muted mr-2">Free parameters:</span>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="fit-free-KL" checked>
+                                            <label class="form-check-label" for="fit-free-KL">K<sub>L</sub></label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="fit-free-YBM" checked>
+                                            <label class="form-check-label" for="fit-free-YBM">Y<sub>BM</sub></label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="fit-free-kd">
+                                            <label class="form-check-label" for="fit-free-kd">k<sub>d</sub></label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="fit-free-ngam">
+                                            <label class="form-check-label" for="fit-free-ngam">NGAM<sub>photon</sub></label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="fit-free-alpha" checked>
+                                            <label class="form-check-label" for="fit-free-alpha">α</label>
+                                        </div>
+                                    </div>
                                     <div id="sim-fba-marker-badge" class="mt-1 small text-muted" style="display:none;">
                                         <i class="fa fa-map-marker text-danger"></i> Static FBA operating point:
                                         <span id="sim-fba-marker-text"></span>
@@ -914,22 +1197,35 @@
                                         Click <strong>Run sweep</strong> to compute growth rate across photon fluxes.
                                     </div>
                                     <div id="sim-fba-charts-wrap" style="display:none;">
-                                        <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-growth-chart','fba_light_sweep_growth')"><i class="fa fa-download"></i> PNG</button></div>
-                                        <div style="position:relative;height:320px;"><canvas id="sim-fba-growth-chart" style="height:100%;width:100%;"></canvas></div>
-                                        <div id="sim-fba-efficiency-box" class="mt-1 small text-muted text-center" style="display:none;font-size:0.8em;"></div>
-                                        <a class="text-muted small d-block mt-1" data-toggle="collapse" href="#fba-extra-charts" style="font-size:0.8em;">
+                                        <div class="d-flex align-items-center justify-content-end mb-1" style="gap:0.25rem;">
+                                            <span class="text-muted mr-1" style="font-size:0.72em;">Zoom:</span>
+                                            <div class="btn-group btn-group-sm" role="group" style="font-size:0.72em;">
+                                                <button type="button" class="btn btn-outline-secondary py-0 px-1" onclick="setChartZoomMode(simFbaGrowthChart,'xy')" title="Zoom both axes">XY</button>
+                                                <button type="button" class="btn btn-outline-secondary py-0 px-1" onclick="setChartZoomMode(simFbaGrowthChart,'x')" title="Zoom X axis only">X</button>
+                                                <button type="button" class="btn btn-outline-secondary py-0 px-1" onclick="setChartZoomMode(simFbaGrowthChart,'y')" title="Zoom Y axis only">Y</button>
+                                            </div>
+                                            <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="if(simFbaGrowthChart)simFbaGrowthChart.resetZoom()" title="Reset zoom"><i class="fa fa-search-minus"></i> Reset</button>
+                                            <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-growth-chart','fba_light_sweep_growth')"><i class="fa fa-download"></i> PNG</button>
+                                        </div>
+                                        <div style="position:relative;height:465px;"><canvas id="sim-fba-growth-chart" style="height:100%;width:100%;"></canvas></div>
+<a class="text-muted small d-block mt-1" data-toggle="collapse" href="#fba-extra-charts" style="font-size:0.8em;">
                                             <i class="fa fa-chevron-down"></i> Show yield &amp; O₂ charts
                                         </a>
                                         <div class="collapse" id="fba-extra-charts">
-                                            <div class="mt-2">
+                                            <div class="d-flex align-items-center mt-2 mb-1" style="gap:0.4rem;">
+                                                <span class="text-muted" style="font-size:0.75em;">X axis:</span>
+                                                <div class="btn-group btn-group-sm" role="group" style="font-size:0.72em;">
+                                                    <button type="button" class="btn btn-outline-secondary py-0 px-1 active" id="fba-yield-x-photon" onclick="setFbaYieldXMode('photon');this.classList.add('active');document.getElementById('fba-yield-x-mu').classList.remove('active');">J_I</button>
+                                                    <button type="button" class="btn btn-outline-secondary py-0 px-1" id="fba-yield-x-mu" onclick="setFbaYieldXMode('mu');this.classList.add('active');document.getElementById('fba-yield-x-photon').classList.remove('active');">μ (FBA ceiling)</button>
+                                                </div>
+                                            </div>
+                                            <div class="mt-1">
                                                 <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-yield-chart','fba_yield')"><i class="fa fa-download"></i> PNG</button></div>
                                                 <canvas id="sim-fba-yield-chart" style="max-height:200px;"></canvas>
-                                                <p class="text-muted small text-center mt-1 mb-2" style="font-size:0.75em;">Biomass yield (gDW·µmol⁻¹) vs photon uptake</p>
                                             </div>
                                             <div id="sim-fba-o2-wrap" style="display:none;">
-                                                <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-o2-chart','fba_o2_evolution')"><i class="fa fa-download"></i> PNG</button></div>
+                                                <div class="d-flex justify-content-end mb-1 mt-2"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-o2-chart','fba_o2_evolution')"><i class="fa fa-download"></i> PNG</button></div>
                                                 <canvas id="sim-fba-o2-chart" style="max-height:200px;"></canvas>
-                                                <p class="text-muted small text-center mt-1 mb-0" style="font-size:0.75em;">O₂ evolution (mmol·gDW⁻¹·h⁻¹) vs photon uptake</p>
                                             </div>
                                         </div>
                                     </div>
@@ -940,10 +1236,39 @@
                                     <div id="growth-curve-chart-gate" style="display:none;">
                                         <!-- placeholder shown before fit -->
                                     </div>
-                                    <div id="sim-card">
+                                    <div id="sim-card" style="display:none;">
                                         <div id="sim-error" class="alert alert-danger py-1 small" style="display:none;"></div>
-                                        <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-growth-chart','growth_curve')"><i class="fa fa-download"></i> PNG</button></div>
-                                        <div style="position:relative;height:320px;"><canvas id="sim-growth-chart" style="height:100%;width:100%;"></canvas></div>
+                                        <div class="d-flex align-items-center justify-content-end mb-1" style="gap:0.25rem;">
+                                            <span class="text-muted mr-1" style="font-size:0.72em;">Zoom:</span>
+                                            <div class="btn-group btn-group-sm" role="group" style="font-size:0.72em;">
+                                                <button type="button" class="btn btn-outline-secondary py-0 px-1" onclick="setChartZoomMode(simGrowthChart,'xy')" title="Zoom both axes">XY</button>
+                                                <button type="button" class="btn btn-outline-secondary py-0 px-1" onclick="setChartZoomMode(simGrowthChart,'x')" title="Zoom X axis only">X</button>
+                                                <button type="button" class="btn btn-outline-secondary py-0 px-1" onclick="setChartZoomMode(simGrowthChart,'y')" title="Zoom Y axis only">Y</button>
+                                            </div>
+                                            <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="if(simGrowthChart)simGrowthChart.resetZoom()" title="Reset zoom"><i class="fa fa-search-minus"></i> Reset</button>
+                                            <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-growth-chart','growth_curve')"><i class="fa fa-download"></i> PNG</button>
+                                        </div>
+                                        <div style="position:relative;height:465px;"><canvas id="sim-growth-chart" style="height:100%;width:100%;"></canvas></div>
+                                        <a class="text-muted small d-block mt-1" data-toggle="collapse" href="#hoper-extra-charts" style="font-size:0.8em;">
+                                            <i class="fa fa-chevron-down"></i> Show yield &amp; O₂ charts
+                                        </a>
+                                        <div class="collapse" id="hoper-extra-charts">
+                                            <div class="d-flex align-items-center mt-2 mb-1" style="gap:0.4rem;">
+                                                <span class="text-muted" style="font-size:0.75em;">X axis:</span>
+                                                <div class="btn-group btn-group-sm" role="group" style="font-size:0.72em;">
+                                                    <button type="button" class="btn btn-outline-secondary py-0 px-1 active" id="hoper-yield-x-photon" onclick="setHoperYieldXMode('photon');this.classList.add('active');document.getElementById('hoper-yield-x-mu').classList.remove('active');">J_I</button>
+                                                    <button type="button" class="btn btn-outline-secondary py-0 px-1" id="hoper-yield-x-mu" onclick="setHoperYieldXMode('mu');this.classList.add('active');document.getElementById('hoper-yield-x-photon').classList.remove('active');">μ (Höper)</button>
+                                                </div>
+                                            </div>
+                                            <div class="mt-1">
+                                                <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-hoper-yield-chart','hoper_yield')"><i class="fa fa-download"></i> PNG</button></div>
+                                                <canvas id="sim-hoper-yield-chart" style="max-height:200px;"></canvas>
+                                            </div>
+                                            <div id="sim-hoper-o2-wrap" style="display:none;">
+                                                <div class="d-flex justify-content-end mb-1 mt-2"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-hoper-o2-chart','hoper_o2_evolution')"><i class="fa fa-download"></i> PNG</button></div>
+                                                <canvas id="sim-hoper-o2-chart" style="max-height:200px;"></canvas>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div><!-- /right chart col -->
 
@@ -960,7 +1285,7 @@
                                 <strong>Growth curve not yet calibrated.</strong>
                                 Complete the full workflow first:
                                 <a href="#" class="alert-link" onclick="$('[href=\'#sim-sub-static\']').tab('show');return false;">① Static FBA</a>
-                                → <a href="#" class="alert-link" onclick="$('[href=\'#sim-sub-sweep\']').tab('show');return false;">② Light Sweep → Fit Y<sub>BM</sub></a>.
+                                → <a href="#" class="alert-link" onclick="$('[href=\'#sim-sub-sweep\']').tab('show');return false;">② FBA Light Response → Fit Y<sub>BM</sub></a>.
                                 Culture productivity predictions require a calibrated kinetic model.
                             </div>
 
@@ -1011,6 +1336,7 @@
                                     <span id="sim-insight-text">For light-limited chemostat cultures, productivity peaks at <em>low</em> dilution rates. Increasing α raises self-shading; reducing k<sub>d</sub> shifts D<sub>opt</sub> lower.</span>
                                 </div>
                             </div><!-- /sim-card-prod -->
+
                             </div><!-- /productivity-gated-content -->
                         </div><!-- /sim-sub-productivity -->
 
@@ -1019,238 +1345,6 @@
                 </div><!-- /right col -->
 
             </div><!-- /main row -->
-
-            <!-- ── Gene Browser (full-width, below simulation layout) ── -->
-            <div class="card mt-3" id="gene-browser-card">
-                <div class="card-header py-2 d-flex align-items-center" style="cursor:pointer;" data-toggle="collapse" data-target="#gene-browser-body">
-                    <span><i class="fa fa-minus-circle text-primary"></i> <strong>Gene Knockout Analysis</strong>
-                    <small class="text-muted ml-2">Browse iRH783 genes, simulate single- or multi-gene knockouts</small></span>
-                    <i class="fa fa-chevron-down ml-auto" id="gene-browser-chevron"></i>
-                </div>
-                <div class="collapse" id="gene-browser-body">
-                    <div class="card-body pt-2 pb-2">
-                        <!-- Gene knockouts (FBA) — moved here from sidebar -->
-                        <div class="mb-3 pb-2 border-bottom" id="sim-pg-fba-ko">
-                            <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">Gene knockouts (FBA)</p>
-                            <!-- Hidden select keeps the multi-gene KO state; populated by loadGenes() -->
-                            <select multiple id="sim-ko-select" style="display:none;" onchange="simKoUpdateDisplay()"></select>
-                            <!-- Direct gene input with autocomplete -->
-                            <div style="position:relative;" class="mb-1">
-                                <div class="input-group input-group-sm" style="max-width:400px;">
-                                    <input type="text" id="sim-ko-direct-input" class="form-control form-control-sm"
-                                           placeholder="Type gene ID or name…" autocomplete="off"
-                                           oninput="simKoDirectFilter(this.value)"
-                                           onkeydown="simKoDirectKeydown(event)">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-outline-danger btn-sm" type="button"
-                                                onclick="simKoDirectAdd()" title="Add to KO set">
-                                            <i class="fa fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div id="sim-ko-autocomplete"
-                                     style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;
-                                            max-width:400px;background:#fff;border:1px solid #ccc;border-top:none;
-                                            max-height:160px;overflow-y:auto;border-radius:0 0 4px 4px;
-                                            box-shadow:0 2px 6px rgba(0,0,0,0.15);font-size:0.82em;"></div>
-                            </div>
-                            <div id="sim-ko-selected-wrap" class="border rounded p-1" style="min-height:32px;max-width:400px;background:#fff8f8;display:none;">
-                                <span id="sim-ko-selected-list" class="small font-weight-bold"></span>
-                            </div>
-                            <div id="sim-ko-actions" class="mt-1" style="gap:0.25rem;max-width:400px;display:none;">
-                                <a href="#" class="small text-danger" onclick="simKoClear();return false;"><i class="fa fa-times"></i> Clear</a>
-                                <a href="#" class="small text-muted ml-auto" onclick="simKoOpenKEGG();return false;" title="KEGG page for first selected gene"><i class="fa fa-external-link"></i> KEGG</a>
-                            </div>
-                            <p class="text-muted mt-1 mb-0" style="font-size:0.72em;" id="sim-ko-applied-note" style="display:none;">Applied to FBA light sweep and pipeline runs.</p>
-                        </div>
-
-                        <div class="row mb-2 align-items-center">
-                            <div class="col-md-4">
-                                <input class="form-control form-control-sm" id="gene-search" placeholder="Search by locus tag, protein name, or subsystem…">
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="ko-constrained-chk" checked>
-                                    <label class="form-check-label small" for="ko-constrained-chk">Photoautotrophic constraints
-                                        <i class="fa fa-info-circle text-muted ml-1" style="cursor:help;"
-                                           data-toggle="tooltip" data-placement="right"
-                                           title="When screening single-gene knockouts, restricts the model to photoautotrophic growth (light + inorganic carbon only, no glucose). Without this, a knocked-out gene may appear non-essential because FBA finds a compensatory heterotrophic route that does not exist under standard photoautotrophic culture conditions and BG-11 medium."></i>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-auto text-muted small" id="gene-count-label"></div>
-                            <div class="col-auto small" id="ann-loading-msg" style="display:none;">
-                                <span class="spinner-border spinner-border-sm text-secondary" role="status" style="width:0.75rem;height:0.75rem;"></span>
-                                <span class="text-muted ml-1">Loading protein names…</span>
-                            </div>
-                            <div class="col-auto small text-success" id="ann-done-msg" style="display:none;">
-                                <i class="fa fa-check-circle"></i> Annotations loaded
-                            </div>
-                        </div>
-                        <div class="text-muted small mb-2" style="display:table;border-spacing:0 2px;margin-left:auto;">
-                            <div style="display:table-row;">
-                                <span style="display:table-cell;white-space:nowrap;padding-right:6px;"><span class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.82em;pointer-events:none;">Test KO</span></span>
-                                <span style="display:table-cell;text-align:right;">quick single-gene knockout (standalone, does not affect Static FBA or Light Sweep).</span>
-                            </div>
-                            <div style="display:table-row;">
-                                <span style="display:table-cell;white-space:nowrap;padding-right:6px;"><span class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size:0.82em;pointer-events:none;">+FBA KO</span></span>
-                                <span style="display:table-cell;text-align:right;">adds the gene to the active knockout set applied in Static FBA and Light Sweep.</span>
-                            </div>
-                        </div>
-                        <div style="position:relative;">
-                            <div id="gene-table-loading" class="text-center py-4">
-                                <div class="spinner-border text-secondary" role="status" style="width:1.5rem;height:1.5rem;"></div>
-                                <div class="text-muted small mt-2">Loading genes…</div>
-                            </div>
-                            <div class="table-scroll" style="max-height:420px;display:none;" id="gene-table-wrap">
-                                <table class="table table-sm table-striped table-hover" id="gene-table">
-                                    <thead class="thead-light sticky-top">
-                                        <tr>
-                                            <th>Locus tag</th>
-                                            <th>Protein / product</th>
-                                            <th>Subsystem(s)</th>
-                                            <th>Reactions</th>
-                                            <th style="cursor:pointer;user-select:none;" onclick="sortGeneTableByKO()" title="Sort by KO growth (only rows with a result are sorted)">KO growth (h⁻¹) <i class="fa fa-sort" id="ko-sort-icon"></i></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- /gene-browser-card -->
-
-            <!-- Custom reactions card (full width) -->
-            <div class="card mt-3" id="cr-card">
-                <div class="card-header py-2" style="cursor:pointer;" data-toggle="collapse" data-target="#cr-card-body">
-                    <i class="fa fa-plus-circle text-primary"></i> <strong>Custom Reaction Engineering</strong>
-                    <small class="text-muted ml-2">Add heterologous enzymes and custom reactions — applies to FBA, light sweep, production envelope &amp; biosynthetic cost</small>
-                    <i class="fa fa-chevron-down float-right mt-1"></i>
-                </div>
-                <div class="card-body collapse" id="cr-card-body">
-                    <div class="form-row align-items-end mb-1">
-                        <div class="col-md-5">
-                            <label class="small text-muted mb-1">Pathway template</label>
-                            <select class="form-control form-control-sm" id="cr-template-select">
-                                <option value="">— choose template —</option>
-                                <option value="ethylene_efe">Ethylene via Efe (P. syringae) — α-KG + O₂ → ethylene</option>
-                                <option value="isoprene_isps">Isoprene via IspS (poplar) — DMAPP → isoprene</option>
-                                <option value="sucrose_export">Sucrose export sink (native pathway)</option>
-                                <option value="phb_pha">PHB (PhaABC) — acetyl-CoA → polyhydroxybutyrate</option>
-                            </select>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-sm btn-outline-primary" id="cr-add-template-btn">
-                                <i class="fa fa-plus"></i> Add template
-                            </button>
-                        </div>
-                        <div class="col-auto text-muted small mx-1">or</div>
-                        <div class="col-auto">
-                            <button class="btn btn-sm btn-outline-secondary" id="cr-add-manual-btn">
-                                <i class="fa fa-pencil"></i> Custom reaction
-                            </button>
-                        </div>
-                    </div>
-                    <div class="form-row align-items-end mb-2">
-                        <div class="col-md-5" style="position:relative;">
-                            <label class="small text-muted mb-1">KEGG reaction lookup <span class="text-muted" style="font-weight:normal;">(R##### or keyword)</span></label>
-                            <input type="text" class="form-control form-control-sm" id="cr-kegg-input"
-                                   placeholder="e.g. R09415 or ethylene"
-                                   maxlength="80" autocomplete="off">
-                            <div id="cr-kegg-dropdown"
-                                 style="display:none;position:absolute;top:100%;left:0;z-index:1000;
-                                        width:100%;max-height:220px;overflow-y:auto;
-                                        background:#fff;border:1px solid #ced4da;border-radius:0 0 4px 4px;
-                                        box-shadow:0 4px 8px rgba(0,0,0,.12);font-size:0.82em;"></div>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-sm btn-outline-info" id="cr-kegg-lookup-btn">
-                                <i class="fa fa-search"></i> Lookup
-                            </button>
-                        </div>
-                        <div class="col-auto align-self-center" id="cr-kegg-status" style="font-size:0.82em;"></div>
-                    </div>
-                    <div id="cr-manual-form" class="p-2 mb-2 border rounded bg-light" style="display:none;">
-                        <div class="form-row align-items-end mb-1">
-                            <div class="col-md-2">
-                                <label class="small mb-0">Reaction ID</label>
-                                <input type="text" class="form-control form-control-sm" id="cr-man-id" placeholder="e.g. EFE">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small mb-0">Name (optional)</label>
-                                <input type="text" class="form-control form-control-sm" id="cr-man-name" placeholder="Ethylene-forming enzyme">
-                            </div>
-                            <div class="col-auto"
-                                 title="Minimum allowed flux. Set to 0 for an irreversible reaction (forward only). Use a negative value (e.g. −1000) to allow the reverse direction. Units: mmol · gDW⁻¹ · h⁻¹">
-                                <label class="small mb-0">Lower bound <i class="fa fa-info-circle text-muted" style="font-size:0.8em;"></i></label>
-                                <div class="input-group" style="width:240px;">
-                                    <input type="number" class="form-control" id="cr-man-lb" value="0" step="any">
-                                    <div class="input-group-append"><span class="input-group-text" style="font-size:0.82em;">mmol/gDW/h</span></div>
-                                </div>
-                            </div>
-                            <div class="col-auto"
-                                 title="Maximum allowed flux. 1000 is effectively unconstrained. Units: mmol · gDW⁻¹ · h⁻¹">
-                                <label class="small mb-0">Upper bound <i class="fa fa-info-circle text-muted" style="font-size:0.8em;"></i></label>
-                                <div class="input-group" style="width:240px;">
-                                    <input type="number" class="form-control" id="cr-man-ub" value="1000" step="any">
-                                    <div class="input-group-append"><span class="input-group-text" style="font-size:0.82em;">mmol/gDW/h</span></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-row mb-1">
-                            <div class="col-12">
-                               
-                                <p class="text-muted mb-1" style="font-size:0.8em;">
-                                    <strong>Stoichiometry</strong><br>
-                                    Comma-separated <code>metabolite_id:coefficient</code> pairs.
-                                    Substrates (consumed) take <strong>negative</strong> coefficients; products (produced) take <strong>positive</strong> ones.
-                                    Metabolite IDs use the BiGG naming convention with a compartment suffix:
-                                    <strong>_c</strong> = cytoplasm (intracellular, use for most reactions),
-                                    <strong>_e</strong> = extracellular / growth medium (use for exchange-facing metabolites such as secreted products or imported substrates).
-                                </p>
-                                <input type="text" class="form-control form-control-sm" id="cr-man-stoich"
-                                       placeholder="akg_c:-1, o2_c:-1, succ_c:1, co2_c:3, ethy_c:1">
-                            </div>
-                        </div>
-                        <div id="cr-man-stoich-preview" class="mb-2 small" style="display:none;"></div>
-                        <div id="cr-man-unknown-panel" class="alert alert-warning py-2 px-3 mb-2" style="display:none;font-size:0.85em;">
-                            <strong><i class="fa fa-exclamation-triangle"></i> Some metabolites could not be mapped automatically</strong>
-                            <p class="mb-1 mt-1">The metabolites listed below have no BiGG database entry and were <em>not</em> added to the stoichiometry.
-                            You need to assign them a custom ID (any short alphanumeric name with <code>_c</code> suffix is fine, e.g. <code>ethy_c</code>),
-                            then add them to <strong>both</strong> the Stoichiometry field and the New metabolites field below.</p>
-                            <div id="cr-man-unknown-list"></div>
-                        </div>
-                        <div class="form-row mb-2">
-                            <div class="col-12">
-                                <p class="text-muted mb-1" style="font-size:0.8em;">
-                                    <Strong>New metabolites </Strong>(only for IDs not already in the model)<br>
-                                    Comma-separated <code>id:name:formula</code> triples for any metabolite IDs listed above that do not yet exist in iRH783.
-                                    Leave name or formula blank if unknown. Example: <code>ethy_c:Ethylene:C2H4</code>
-                                </p>
-                                <input type="text" class="form-control form-control-sm" id="cr-man-newmets" placeholder="ethy_c:Ethylene:C2H4">
-                            </div>
-                        </div>
-                        <button class="btn btn-sm btn-primary" id="cr-man-add-btn"><i class="fa fa-plus"></i> Add reaction</button>
-                        <button class="btn btn-sm btn-link text-secondary py-0" id="cr-man-cancel-btn">Cancel</button>
-                    </div>
-                    <div id="cr-list-wrap" style="display:none;background:#d4edda;border:1px solid #c3e6cb;border-radius:6px;padding:0.6rem 0.75rem;">
-                        <div class="d-flex align-items-center mb-1">
-                            <span class="small font-weight-bold text-success"><i class="fa fa-check-circle"></i> Active custom reactions — applied to FBA</span>
-                            <button class="btn btn-link text-danger ml-auto py-0 px-0" id="cr-clear-all-btn" style="font-size:0.8em;"><i class="fa fa-trash"></i> Clear all</button>
-                        </div>
-                        <div id="cr-list" class="small"></div>
-                        <p class="text-muted mb-0 mt-1" style="font-size:0.72em;">
-                            <i class="fa fa-info-circle"></i> These reactions will be included in all FBA runs (static FBA, light sweep, and production envelope) until cleared.
-                        </p>
-                    </div>
-                    <div id="cr-note" class="small mt-1"></div>
-                    <p class="text-muted small mb-0 mt-1">
-                        <i class="fa fa-info-circle"></i>
-                        Use the <strong>Metabolites</strong> tab to verify IDs. New metabolites not in iRH783 must be declared in the stoichiometry field.
-                    </p>
-                </div>
-            </div>
 
             <!-- Scenario Comparison card (full width) -->
             <div class="card mt-3" id="scenario-card">
@@ -1269,7 +1363,7 @@
                         <div id="scenario-list" class="small"></div>
                         <p class="text-muted small mb-0 mt-1" id="scenario-hint">
                             <i class="fa fa-info-circle"></i>
-                            Up to 5 scenarios stored in browser localStorage. Scenarios overlay as dashed lines on the Growth Curve chart.
+                            Up to 5 scenarios stored in browser localStorage. Scenarios overlay as dashed lines on the FBA with Quantum Yield + Photodamage &amp; Maintenance chart.
                         </p>
 
                         <!-- Comparison charts — shown only when ≥2 scenarios with FBA results -->
@@ -1523,5 +1617,5 @@
     </div><!-- /tab-content -->
     <br><br><br><br><br><br><br><br><br>    
 </div>
-<script src="{{ url_for('static', filename='js_metabolic_model.js') }}?v=5"></script>
+<script src="{{ url_for('static', filename='js_metabolic_model.js') }}?v=25"></script>
 {% endblock %}
