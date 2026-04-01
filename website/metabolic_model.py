@@ -327,14 +327,25 @@ def _apply_custom_reactions(m, custom_list):
 # ── Model loading ─────────────────────────────────────────────────────────────
 
 def _get_model(constrained=False):
-    """Load and cache the COBRApy model (lazy, thread-safe, loaded once per key)."""
+    """Load and cache the COBRApy model (lazy, thread-safe, loaded once per key).
+    On first load, parses SBML and saves a JSON cache for faster subsequent starts.
+    """
     key = 'constrained' if constrained else 'base'
     if key in _cache:          # fast path — no lock needed once cached
         return _cache[key]
     with _cache_lock:
         if key not in _cache:  # second check inside lock (double-checked locking)
             import cobra
-            _cache[key] = cobra.io.read_sbml_model(_MODEL_PATHS[key])
+            sbml_path = _MODEL_PATHS[key]
+            json_path = sbml_path.rsplit('.', 1)[0] + '_cache.json'
+            if os.path.exists(json_path) and os.path.getmtime(json_path) >= os.path.getmtime(sbml_path):
+                _cache[key] = cobra.io.load_json_model(json_path)
+            else:
+                _cache[key] = cobra.io.read_sbml_model(sbml_path)
+                try:
+                    cobra.io.save_json_model(_cache[key], json_path)
+                except Exception as e:
+                    print(f'[metabolic] JSON cache save failed: {e}')
     return _cache[key]
 
 
