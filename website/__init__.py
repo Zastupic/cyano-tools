@@ -187,7 +187,9 @@ def create_app():
     # Werkzeug reloader watcher (which would otherwise start two threads).
     if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         _start_upload_cleanup(UPLOAD_FOLDER, max_age_minutes=30, interval_hours=2)
-        _start_metanetx_download()
+        from . import metanetx_lookup
+        if not metanetx_lookup.files_available():
+            _start_metanetx_download()
 
     return app
 
