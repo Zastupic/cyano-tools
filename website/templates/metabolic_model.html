@@ -11,30 +11,37 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 <!-- SheetJS loaded on demand (see loadXLSX() in js_metabolic_model.js) -->
 <style>
-    /* Searchable reaction dropdown */
-    .rxn-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        z-index: 1050;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-top: none;
+    /* Searchable reaction combobox */
+    .rxn-sel { position: relative; }
+    .rxn-sel-btn {
+        display: flex; align-items: center; justify-content: space-between;
+        width: 100%; text-align: left; background: #fff;
+        border: 1px solid #ced4da; border-radius: 4px;
+        padding: 3px 8px; font-size: 0.875rem; line-height: 1.5;
+        overflow: hidden; cursor: pointer; color: #495057;
+    }
+    .rxn-sel-btn:hover  { border-color: #80bdff; }
+    .rxn-sel-btn.active { border-color: #80bdff; border-radius: 4px 4px 0 0;
+                          box-shadow: 0 0 0 0.15rem rgba(0,123,255,.2); }
+    .rxn-sel-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .rxn-sel-chevron { flex-shrink: 0; margin-left: 6px; transition: transform .15s; font-size:0.8em; }
+    .rxn-sel-btn.active .rxn-sel-chevron { transform: rotate(180deg); }
+    .rxn-sel-panel {
+        position: absolute; top: 100%; left: 0; right: 0; z-index: 1060;
+        background: #fff; border: 1px solid #80bdff; border-top: none;
         border-radius: 0 0 4px 4px;
-        max-height: 200px;
-        overflow-y: auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .rxn-sel-search {
+        border: none !important; border-bottom: 1px solid #dee2e6 !important;
+        border-radius: 0 !important; box-shadow: none !important;
         font-size: 0.82em;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .rxn-item {
-        padding: 4px 8px;
-        cursor: pointer;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .rxn-item:hover, .rxn-item.active { background: #e8f0fe; }
+    .rxn-sel-search:focus { border-bottom-color: #80bdff !important; }
+    .rxn-sel-list { max-height: 320px; overflow-y: auto; font-size: 0.82em; }
+    .rxn-sel-item { cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+    .rxn-sel-item:last-child { border-bottom: none; }
+    .rxn-sel-item:hover, .rxn-sel-item.kb-active { background: #e8f0fe; }
     /* ── Active tab colours ── */
     /* Main tabs */
     #main-tabs .nav-link.active {
@@ -72,6 +79,23 @@
     .sim-section-header-qy  { border-left: 3px solid #e67e22; background: rgba(230,126,34,0.07); }
     .sim-section-header-pdm { border-left: 3px solid #2980b9; background: rgba(41,128,185,0.07); }
     .table-scroll { max-height: 500px; overflow-y: auto; }
+    /* Biosynthetic cost toggles */
+    input[name="bc-mode"]:checked + label,
+    input[name="bc-target-type"]:checked + label,
+    input[name="bc-view"]:checked + label { background: #007bff; color: #fff; border-color: #007bff; }
+    /* Flow narrative cards */
+    .bc-flow-card { border-left: 3px solid #dee2e6; padding: 6px 10px; margin-bottom: 6px; border-radius: 0 4px 4px 0; background: #f8f9fa; }
+    .bc-flow-card.bc-flow-photosyn  { border-color: #e67e22; background: rgba(230,126,34,0.05); }
+    .bc-flow-card.bc-flow-carbon    { border-color: #27ae60; background: rgba(39,174,96,0.05); }
+    .bc-flow-card.bc-flow-biosyn    { border-color: #2980b9; background: rgba(41,128,185,0.05); }
+    .bc-flow-inputs  { color: #c0392b; }
+    .bc-flow-outputs { color: #27ae60; }
+    /* Metabolite reaction table row hover */
+    #bc-met-rxn-table tr { cursor: pointer; }
+    #bc-met-rxn-table tr:hover { background: #e8f0fe; }
+    #bc-met-rxn-table tr.bc-rxn-selected { background: #cfe2ff; font-weight: 600; }
+    /* Subsystem table bar cells — prevent line wrapping */
+    #en-subsystem-table td { white-space: nowrap; vertical-align: middle; }
     .table thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
     code { font-size: 0.82em; }
     .stat-badge {
@@ -239,11 +263,7 @@
                 <i class="fa fa-flask"></i> Flux Balance Analysis (FBA)
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" href="#tab-pe" role="tab">
-                <i class="fa fa-area-chart"></i> Production Envelope
-            </a>
-        </li>
+
         <li class="nav-item">
             <a class="nav-link" data-toggle="tab" href="#tab-bc" role="tab">
                 <i class="fa fa-bolt"></i> Biosynthetic Cost
@@ -701,6 +721,20 @@
                             </div>
                         </div>
                     </div><!-- /sim-batch-params -->
+
+                    <!-- Reactor geometry (chemostat extra plots) -->
+                    <div id="sim-reactor-params" class="sim-pg mt-2 pt-2 border-top" data-tabs="productivity" style="display:none;">
+                        <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">Reactor geometry</p>
+                        <div class="mb-1">
+                            <div class="d-flex justify-content-between"><label class="small mb-0">z — reactor depth <small class="text-muted">(m)</small></label><span class="small font-weight-bold" id="sim-reactor-depth-val">0.10</span></div>
+                            <div class="d-flex align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary px-1 py-0 mr-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-reactor-depth','sim-reactor-depth-val',-1)">−</button>
+                                <input type="range" class="custom-range flex-fill" id="sim-reactor-depth" min="0.01" max="0.50" step="0.01" value="0.10" oninput="simSlider(this,'sim-reactor-depth-val')">
+                                <button class="btn btn-sm btn-outline-secondary px-1 py-0 ml-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-reactor-depth','sim-reactor-depth-val',1)">+</button>
+                            </div>
+                            <p class="text-muted mb-0" style="font-size:0.75em;">Used to compute volumetric productivity P<sub>V</sub> = P<sub>A</sub> / z</p>
+                        </div>
+                    </div><!-- /sim-reactor-params -->
 
                     <!-- sim-pg-product: Product productivity (visible in Culture Productivity tab only) -->
                     <div class="sim-pg mt-2 pt-2 border-top" id="sim-pg-product" data-tabs="productivity" style="display:none;">
@@ -1339,72 +1373,67 @@
                                 </div>
                                 <div class="collapse show" id="prod-param-body">
                                     <div class="card-body py-2 px-3" style="font-size:0.82em;">
-                                        <p class="text-muted mb-2">Fitted in the <strong>FBA Light Response</strong> tab. All productivity curves are computed directly from these values.</p>
-                                        <table class="table table-sm table-borderless mb-2" style="font-size:0.97em;">
-                                            <thead><tr style="border-bottom:1px solid #dee2e6;">
-                                                <th style="width:26%;">Parameter</th>
-                                                <th style="width:14%;">Value</th>
-                                                <th>Engineering interpretation</th>
+                                        <p class="text-muted mb-2">Fitted in the <strong>② FBA Light Response</strong> tab using experimental or reference growth data. These values drive all productivity curves below. Typical reference ranges are given for context.</p>
+                                        <table class="table table-sm mb-1" style="font-size:0.9em;">
+                                            <thead><tr style="border-bottom:2px solid #dee2e6;background:#f8f9fa;">
+                                                <th style="width:22%;">Parameter</th>
+                                                <th style="width:10%;">Value</th>
+                                                <th style="width:28%;">Typical range</th>
+                                                <th>Interpretation</th>
                                             </tr></thead>
                                             <tbody>
                                             <tr>
-                                                <td><strong>α</strong> <small class="text-muted">(m²·µmol⁻¹)</small><br><small class="text-muted">Specific absorption cross-section</small></td>
-                                                <td id="pp-alpha" class="font-weight-bold text-primary">—</td>
-                                                <td>Light capture efficiency per unit biomass. Sets the self-shading depth: optical depth τ = α·ρ<sub>A</sub>. Determines at what biomass density the back of the panel goes dark and sets the optimal operating density.</td>
+                                                <td>
+                                                    <strong style="font-size:1.08em;">α</strong>
+                                                    <span class="text-muted" style="font-size:0.9em;"> (m²·µmol⁻¹)</span><br>
+                                                    <span class="text-muted" style="font-size:0.85em;">Specific absorption cross-section</span>
+                                                </td>
+                                                <td id="pp-alpha" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                <td class="text-muted" style="font-size:0.85em;">0.05–0.30 m²·µmol⁻¹<br>Low-pigment mutants → high-pigment wild-types</td>
+                                                <td>Light capture efficiency per unit biomass. Determines how rapidly the culture self-shades: optical depth τ = α·ρ<sub>A</sub>. When τ ≈ 1 the culture absorbs ~63% of incident light; at τ &gt; 3 the interior receives negligible light. The optimal operating density ρ<sub>A,opt</sub> scales roughly as 1/α — higher α requires lower operating density to keep interior cells illuminated.</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>K<sub>L</sub></strong> <small class="text-muted">(mmol·gDW⁻¹·h⁻¹)</small><br><small class="text-muted">Half-saturation photon flux</small></td>
-                                                <td id="pp-KL" class="font-weight-bold text-primary">—</td>
-                                                <td>Photon flux at half-maximal growth. <span id="pp-KL-badge"></span> Low K<sub>L</sub>: growth saturates at low I₀ (dim-light adapted). High K<sub>L</sub>: requires high irradiance to approach µ<sub>max</sub>. Determines the optimal incident irradiance for reactor design.</td>
+                                                <td>
+                                                    <strong style="font-size:1.08em;">K<sub>L</sub></strong>
+                                                    <span class="text-muted" style="font-size:0.9em;"> (mmol·gDW⁻¹·h⁻¹)</span><br>
+                                                    <span class="text-muted" style="font-size:0.85em;">Half-saturation photon flux</span>
+                                                </td>
+                                                <td id="pp-KL" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                <td class="text-muted" style="font-size:0.85em;">50–400 mmol·gDW⁻¹·h⁻¹<br><em>Synechocystis</em> PCC 6803 ≈ 100–200</td>
+                                                <td>Absorbed photon flux at half-maximal growth. Low K<sub>L</sub>: growth saturates at low irradiance — efficient in dim light, well suited to high-density self-shaded cultures. High K<sub>L</sub>: growth saturates at high irradiance — requires intense illumination; less suitable for dense, self-shaded reactors.</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Y<sub>BM</sub></strong> <small class="text-muted">(gCDW·mmol⁻¹)</small><br><small class="text-muted">Biomass yield on photons</small></td>
-                                                <td id="pp-YBM" class="font-weight-bold text-primary">—</td>
-                                                <td>Photon-to-biomass conversion efficiency — the primary determinant of P<sub>A,max</sub>. <span id="pp-YBM-badge"></span> The gap to the FBA stoichiometric ceiling (1.84 gCDW·mmol⁻¹) is the maximum gain achievable by metabolic engineering.</td>
+                                                <td>
+                                                    <strong style="font-size:1.08em;">Y<sub>BM</sub></strong>
+                                                    <span class="text-muted" style="font-size:0.9em;"> (gCDW·mmol⁻¹)</span><br>
+                                                    <span class="text-muted" style="font-size:0.85em;">Biomass yield on photons</span>
+                                                </td>
+                                                <td id="pp-YBM" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                <td class="text-muted" style="font-size:0.85em;">0.5–1.8 gCDW·mmol⁻¹<br>WT cultures 0.8–1.2; optimised strains up to ~1.6<br>FBA ceiling: 1.84 gCDW·mmol⁻¹<br><span id="pp-YBM-badge"></span></td>
+                                                <td>Photon-to-biomass conversion efficiency — the primary determinant of maximum areal biomass productivity P<sub>A,max</sub> (g CDM·m⁻²·d⁻¹). The FBA stoichiometric ceiling (≈1.84 gCDW·mmol⁻¹) is the theoretical metabolic maximum — the gap between the fitted value and this ceiling is the maximum gain achievable by metabolic engineering of central metabolism.</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>k<sub>d</sub></strong> <small class="text-muted">(dimensionless)</small><br><small class="text-muted">Photodamage coefficient</small></td>
-                                                <td id="pp-kd" class="font-weight-bold text-primary">—</td>
-                                                <td>Fraction of absorbed photons lost to PSII photodamage and repair. High k<sub>d</sub> causes photoinhibition at elevated I₀ — the productivity peak shifts to lower irradiance and becomes narrower. Reducing k<sub>d</sub> (e.g. improved repair kinetics) broadens the optimal operating range.</td>
+                                                <td>
+                                                    <strong style="font-size:1.08em;">k<sub>d</sub></strong>
+                                                    <span class="text-muted" style="font-size:0.9em;"> (dimensionless)</span><br>
+                                                    <span class="text-muted" style="font-size:0.85em;">Photodamage coefficient</span>
+                                                </td>
+                                                <td id="pp-kd" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                <td class="text-muted" style="font-size:0.85em;">0.01–0.15<br>Moderate light ≈ 0.03–0.08<br>Photoinhibition-sensitive strains &gt; 0.10</td>
+                                                <td>Fraction of absorbed photons diverted to PSII photodamage and repair rather than growth. High k<sub>d</sub> causes photoinhibition: maximum productivity is achieved at lower irradiance and the productive irradiance range narrows. Cultures with high k<sub>d</sub> benefit from moderate, well-distributed illumination; improving PSII repair kinetics would lower k<sub>d</sub>.</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>NGAM<sub>photon</sub></strong> <small class="text-muted">(mmol·gDW⁻¹·h⁻¹)</small><br><small class="text-muted">Non-growth associated maintenance</small></td>
-                                                <td id="pp-ngam" class="font-weight-bold text-primary">—</td>
-                                                <td>Maintenance photon demand — the light compensation point below which no net growth occurs. Analogous to dark respiration in heterotrophs. Sets the minimum viable irradiance in any operation mode.</td>
+                                                <td>
+                                                    <strong style="font-size:1.08em;">NGAM<sub>photon</sub></strong>
+                                                    <span class="text-muted" style="font-size:0.9em;"> (mmol·gDW⁻¹·h⁻¹)</span><br>
+                                                    <span class="text-muted" style="font-size:0.85em;">Non-growth associated maintenance</span>
+                                                </td>
+                                                <td id="pp-ngam" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                <td class="text-muted" style="font-size:0.85em;">0.5–5 mmol·gDW⁻¹·h⁻¹<br>≈ 1–15 µmol·m⁻²·s⁻¹ at typical α<br>Not irradiance-dependent</td>
+                                                <td>Constant photon flux consumed for cellular maintenance regardless of growth rate — analogous to basal metabolic rate. Subtracted from the available photon budget at every irradiance. Below this threshold net growth cannot occur, defining the minimum viable irradiance (light compensation point) for the culture.</td>
                                             </tr>
                                             </tbody>
                                         </table>
-
-                                        <!-- Practical Q&A -->
-                                        <div class="border-top pt-2 mt-1">
-                                            <p class="font-weight-bold mb-1"><i class="fa fa-question-circle text-info"></i> What to read from the charts</p>
-                                            <div class="row" style="row-gap:0.35rem;">
-                                                <div class="col-md-6">
-                                                    <div class="border rounded p-2" style="background:#f8f9fa;">
-                                                        <strong>Optimal dilution rate (chemostat)</strong><br>
-                                                        <span class="text-muted">D<sub>opt</sub> = D at peak P<sub>A</sub>. Above D<sub>opt</sub>: washout; below D<sub>opt</sub>: self-shading losses dominate.</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="border rounded p-2" style="background:#f8f9fa;">
-                                                        <strong>Optimal biomass density (chemostat)</strong><br>
-                                                        <span class="text-muted">ρ<sub>A,opt</sub> = ρ<sub>A</sub> at D<sub>opt</sub> (orange curve). The target operating density balancing light penetration and biomass concentration.</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="border rounded p-2" style="background:#f8f9fa;">
-                                                        <strong>Optimal irradiance</strong><br>
-                                                        <span class="text-muted">Vary I₀ (left sidebar). P<sub>A,max</sub> rises with I₀ until photoinhibition (governed by k<sub>d</sub>) causes it to fall. The peak I₀ is the reactor design target.</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="border rounded p-2" style="background:#f8f9fa;">
-                                                        <strong>Metabolic engineering headroom</strong><br>
-                                                        <span class="text-muted">Raise Y<sub>BM</sub> toward 1.84 gCDW·mmol⁻¹ and observe P<sub>A</sub> gain. The current gap to ceiling is the theoretical maximum improvement from central-metabolism engineering.</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                         <!-- Hidden element needed for JS show/hide -->
                                         <span id="pp-product-legend-row" style="display:none;"></span>
                                     </div>
@@ -1430,22 +1459,107 @@
                                     <i class="fa fa-area-chart fa-2x mb-2 d-block" style="opacity:0.3;"></i>
                                     No net growth at current parameters — reduce k<sub>d</sub> or increase I₀.
                                 </div>
+
+                                <!-- Chemostat insight panel (shown in chemostat mode) -->
+                                <div id="prod-insight-chemo" class="mb-3">
+                                    <div class="card border-0" style="background:#f8fbff;">
+                                        <div class="card-body py-2 px-3" style="font-size:0.81em;">
+                                            <p class="font-weight-bold mb-2 text-primary" style="font-size:0.95em;"><i class="fa fa-info-circle"></i> How to read the chemostat chart</p>
+                                            <div class="row" style="row-gap:0.4rem;">
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#fff;">
+                                                        <strong>Optimal dilution rate (D<sub>opt</sub>)</strong><br>
+                                                        <span class="text-muted">Dilution rate D (h⁻¹) at which areal biomass productivity P<sub>A</sub> is maximised (peak of the green curve). D &gt; D<sub>opt</sub>: culture washout — cells are removed faster than they grow. D &lt; D<sub>opt</sub>: self-shading increases and productivity declines.</span>
+                                                        <div class="mt-1 font-weight-bold" id="prod-insight-dopt"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#fff;">
+                                                        <strong>Optimal areal biomass density (ρ<sub>A,opt</sub>)</strong><br>
+                                                        <span class="text-muted">Steady-state areal biomass density (g CDM·m⁻²) at D<sub>opt</sub> — shown on the orange curve (right axis). This is the target operating density that balances light penetration and biomass concentration. Running denser increases self-shading; running sparser wastes light.</span>
+                                                        <div class="mt-1 font-weight-bold" id="prod-insight-rhoopt"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#fff;">
+                                                        <strong>Maximum areal biomass productivity (P<sub>A,max</sub>)</strong><br>
+                                                        <span class="text-muted">Maximum biomass produced per unit panel area per day, achieved at D<sub>opt</sub>. Vary the I₀ slider to find the irradiance at which P<sub>A,max</sub> is highest — it rises with I₀ until photoinhibition (governed by k<sub>d</sub>) causes it to fall.</span>
+                                                        <div class="mt-1 font-weight-bold" id="prod-insight-pamax-chemo"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#fff;">
+                                                        <strong>Metabolic engineering headroom (Y<sub>BM</sub> → FBA ceiling)</strong><br>
+                                                        <span class="text-muted">The FBA stoichiometric ceiling (1.84 gCDW·mmol⁻¹) is the theoretical maximum Y<sub>BM</sub> set by the metabolic network. Raising Y<sub>BM</sub> toward this value in the slider shows the predicted P<sub>A,max</sub> after metabolic engineering.</span>
+                                                        <div class="mt-1 font-weight-bold" id="prod-insight-ybm"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Batch insight panel (shown in batch mode) -->
+                                <div id="prod-insight-batch" style="display:none;" class="mb-3">
+                                    <div class="card border-0" style="background:#f8fbff;">
+                                        <div class="card-body py-2 px-3" style="font-size:0.81em;">
+                                            <p class="font-weight-bold mb-2 text-primary" style="font-size:0.95em;"><i class="fa fa-info-circle"></i> How to read the batch chart</p>
+                                            <div class="row" style="row-gap:0.4rem;">
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#fff;">
+                                                        <strong>Peak areal productivity (P<sub>A,max</sub>)</strong><br>
+                                                        <span class="text-muted">Maximum instantaneous areal biomass productivity (g CDM·m⁻²·h⁻¹) during the batch — reached at the time when the balance between growth rate and biomass density is optimal, before self-shading begins to dominate.</span>
+                                                        <div class="mt-1 font-weight-bold" id="prod-insight-pamax-batch"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#fff;">
+                                                        <strong>Back-face irradiance (I<sub>bottom</sub>)</strong><br>
+                                                        <span class="text-muted">Irradiance transmitted through the culture to the back panel face (yellow dashed, right axis of the density chart). When I<sub>bottom</sub> → 0, the culture interior is light-limited and growth rate declines steeply. A practical reactor target is I<sub>bottom</sub> ≥ 10–20 µmol·m⁻²·s⁻¹.</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#fff;">
+                                                        <strong>Growth rate decline (μ)</strong><br>
+                                                        <span class="text-muted">Specific growth rate (h⁻¹, blue curve, right axis) declines monotonically as biomass accumulates and self-shading increases. The culture does not reach a true steady state — harvest before growth rate approaches zero to maximise volumetric productivity.</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#fff;">
+                                                        <strong>Initial biomass density effect</strong><br>
+                                                        <span class="text-muted">Increase ρ<sub>A,0</sub> (left sidebar) to simulate a higher inoculum. Higher ρ<sub>A,0</sub> accelerates entry into the self-shaded phase and shifts P<sub>A,max</sub> earlier in time, at the cost of a lower peak growth rate.</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div id="sim-chemo-charts">
-                                    <div id="sim-chemo-summary" class="mb-1 small text-muted" style="display:none;"></div>
                                     <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-chemo-chart','chemostat_productivity')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-chemo-chart" style="max-height:320px;"></canvas>
+
+                                    <!-- Design & operating charts -->
+                                    <hr class="my-3">
+                                    <p class="small font-weight-bold text-muted mb-2" style="font-size:0.8em; text-transform:uppercase; letter-spacing:.05em;"><i class="fa fa-line-chart"></i> Design &amp; operating charts</p>
+
+                                    <!-- Chart A: Light-response operational envelope -->
+                                    <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-chemo-i0-chart','chemostat_light_envelope')"><i class="fa fa-download"></i> PNG</button></div>
+                                    <canvas id="sim-chemo-i0-chart" style="max-height:340px;"></canvas>
+
+                                    <!-- Chart B: Volumetric productivity vs reactor depth -->
+                                    <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-chemo-pv-chart','chemostat_pv_depth')"><i class="fa fa-download"></i> PNG</button></div>
+                                    <canvas id="sim-chemo-pv-chart" style="max-height:320px;"></canvas>
+
+                                    <!-- Chart C: Operating window / robustness -->
+                                    <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-chemo-robust-chart','chemostat_robustness')"><i class="fa fa-download"></i> PNG</button></div>
+                                    <canvas id="sim-chemo-robust-chart" style="max-height:320px;"></canvas>
                                 </div>
                                 <div id="sim-batch-charts" style="display:none;">
-                                    <div id="sim-batch-summary" class="mb-1 small text-muted" style="display:none;"></div>
-                                    <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-batch-density-chart','batch_density')"><i class="fa fa-download"></i> PNG</button></div>
+<div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-batch-density-chart','batch_density')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-batch-density-chart" style="max-height:280px;"></canvas>
                                     <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-batch-prod-chart','batch_productivity')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-batch-prod-chart" style="max-height:280px;"></canvas>
-                                </div>
-
-                                <div class="alert alert-info mt-3 py-2 px-2" style="font-size:0.74em;">
-                                    <i class="fa fa-lightbulb-o"></i>
-                                    <span id="sim-insight-text">For light-limited chemostat cultures, productivity peaks at <em>low</em> dilution rates. Increasing α raises self-shading; reducing k<sub>d</sub> shifts D<sub>opt</sub> lower.</span>
                                 </div>
                             </div><!-- /sim-card-prod -->
 
@@ -1581,114 +1695,162 @@
 
         </div><!-- /tab-simulations -->
 
-        <!-- ── Production Envelope tab ──────────────────────────────── -->
-        <div id="tab-pe" class="tab-pane fade" role="tabpanel">
 
-            <!-- ── Production envelope ───────────────────────────────── -->
-            <div class="card mb-4">
-                <div class="card-header py-2">
-                    <strong><i class="fa fa-area-chart"></i> Production envelope</strong>
-                    <small class="text-muted ml-2">Max product flux vs growth rate (phenotypic phase plane)</small>
-                </div>
-                <div class="card-body">
-                    <div class="form-row align-items-end mb-2">
-                        <div class="col-md-5">
-                            <label class="small text-muted mb-1">Product reaction 1 <span class="badge badge-primary" style="font-size:0.7em;">●</span></label>
-                            <div class="position-relative">
-                                <input type="text" class="form-control form-control-sm" id="pe-rxn-search"
-                                       placeholder="Search reaction ID or name…" autocomplete="off">
-                                <div id="pe-rxn-dropdown" class="rxn-dropdown" style="display:none;"></div>
-                                <input type="hidden" id="pe-rxn">
-                            </div>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="small text-muted mb-1">Product reaction 2 <span class="text-muted" style="font-size:0.75em;">(optional comparison)</span> <span class="badge badge-warning" style="font-size:0.7em;">●</span></label>
-                            <div class="position-relative">
-                                <input type="text" class="form-control form-control-sm" id="pe-rxn2-search"
-                                       placeholder="Second product (optional)…" autocomplete="off">
-                                <div id="pe-rxn2-dropdown" class="rxn-dropdown" style="display:none;"></div>
-                                <input type="hidden" id="pe-rxn2">
-                            </div>
-                        </div>
+        <!-- ── Biosynthetic Cost tab ─────────────────────────────────── -->
+        <div id="tab-bc" class="tab-pane fade" role="tabpanel">
+
+            <!-- Methodology accordion -->
+            <div class="accordion mb-3" id="bc-method-accordion">
+                <div class="card border" style="border-radius:4px;">
+                    <div class="card-header py-2 px-3" id="bc-method-heading" style="background:#f8f9fa; cursor:pointer;"
+                         data-toggle="collapse" data-target="#bc-method-body" aria-expanded="false" aria-controls="bc-method-body">
+                        <span class="font-weight-600 small"><i class="fa fa-info-circle text-muted mr-1"></i> How is the biosynthetic cost calculated?</span>
+                        <i class="fa fa-chevron-down float-right text-muted mt-1" style="font-size:0.8em;"></i>
                     </div>
-                    <div class="form-row align-items-end mb-3">
-                        <div class="col-auto">
-                            <label class="small text-muted mb-1">Points</label>
-                            <input type="number" class="form-control form-control-sm" id="pe-points" value="20" min="5" max="50" style="width:80px;">
+                    <div id="bc-method-body" class="collapse" aria-labelledby="bc-method-heading">
+                        <div class="card-body py-3 px-3" style="font-size:0.87em; line-height:1.6;">
+
+                            <p class="mb-2">The tool uses <strong>Flux Balance Analysis (FBA)</strong> on the genome-scale metabolic model of <em>Synechocystis</em> sp. PCC 6803 to estimate the minimum photosynthetic resources (photons, CO₂, ATP, NADPH) required to synthesise one millimole of a chosen product from inorganic precursors.</p>
+
+                            <p class="font-weight-bold mb-1">Step-by-step procedure</p>
+                            <ol class="mb-2 pl-4">
+                                <li class="mb-1"><strong>Photoautotrophic model.</strong> The constrained model is used (no organic carbon, photons + CO₂ + NO₃⁻ as sole inputs), with the forced minimum photon uptake removed so the solver is free to use exactly as many photons as the target synthesis requires.</li>
+                                <li class="mb-1"><strong>Export drain added.</strong> A "demand" reaction that irreversibly consumes the target metabolite (exporting it from the system) is added or identified. This prevents the cell from incorporating the product into biomass, so the cost reflects pure synthesis, not growth.</li>
+                                <li class="mb-1"><strong>Objective: maximise product export.</strong> FBA maximises the drain flux — the rate at which the target molecule is produced and exported.</li>
+                                <li class="mb-1"><strong>pFBA minimises total flux.</strong> Parsimonious FBA (pFBA) then finds the flux distribution with the smallest total absolute flux that still achieves the maximum export rate. This eliminates thermodynamically infeasible futile cycles and gives the most direct biosynthetic route.</li>
+                                <li class="mb-1"><strong>Normalisation.</strong> Every exchange flux (photons, CO₂, O₂, NO₃⁻) and every ATP/NADPH balance is divided by the resulting product export flux, giving per-molecule costs.</li>
+                            </ol>
+
+                            <p class="font-weight-bold mb-1">FBA vs pFBA</p>
+                            <p class="mb-2">Both solutions are shown side by side. <strong>FBA</strong> may include parallel paths with equal efficiency (degenerate solutions). <strong>pFBA</strong> is parsimonious — it selects the single most direct route. For biosynthetic cost estimation, pFBA values are typically more meaningful because they suppress futile cycles.</p>
+
+                            <p class="font-weight-bold mb-1">Independent vs Based-on-simulation modes</p>
+                            <ul class="mb-2 pl-4">
+                                <li class="mb-1"><strong>Independent:</strong> growth is left unconstrained but receives no resources beyond what is strictly required for the target pathway (pFBA minimises growth to near zero). This gives the <em>theoretical minimum cost</em> of synthesising the molecule from CO₂ and light.</li>
+                                <li class="mb-1"><strong>Based on simulation:</strong> the biomass reaction is fixed at the growth rate from the most recent chemostat simulation. The per-molecule cost then reflects synthesis <em>within a growing cell</em> at that specific dilution rate.</li>
+                            </ul>
+
+                            <p class="font-weight-bold mb-1">Pathway / subsystem breakdown</p>
+                            <p class="mb-2">Reactions are grouped by their annotated pathway (using the model's internal prefix codes: PP = Calvin cycle, GS = glycolysis, AA = aromatic amino acids, etc.). For each group the <em>net</em> ATP and NADPH balance is reported — positive means the pathway <em>produces</em> that currency (e.g. photosynthetic reactions generate ATP), negative means it <em>consumes</em> it. The sum across all pathways is zero by mass balance.</p>
+
+                            <p class="font-weight-bold mb-1">Caveats</p>
+                            <ul class="mb-0 pl-4">
+                                <li class="mb-1">FBA is a steady-state, constraint-based model. It does not capture kinetics, enzyme capacities, or regulatory effects.</li>
+                                <li class="mb-1">The result is a <em>lower bound</em> on the true in-vivo cost; actual cells have thermodynamic inefficiencies and maintenance requirements not fully captured here.</li>
+                                <li>Costs depend on which metabolic route the solver selects. If multiple routes are equally efficient, pFBA picks one arbitrarily; the true in-vivo route may differ.</li>
+                            </ul>
+
                         </div>
-                        <div class="col-auto">
-                            <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="pe-constrained" checked>
-                                <label class="form-check-label small" for="pe-constrained">Photoautotrophic constraints</label>
-                            </div>
-                        </div>
-                        <div class="col-auto mt-4">
-                            <button class="btn btn-success btn-sm" id="run-pe-btn">
-                                <i class="fa fa-play"></i> Compute envelope
-                            </button>
-                        </div>
-                    </div>
-                    <div id="pe-ref-bar" class="d-flex align-items-center mb-2" style="display:none;">
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="pe-lock-btn" style="font-size:0.8em;">
-                            <i class="fa fa-bookmark-o"></i> Save as reference
-                        </button>
-                        <button class="btn btn-sm btn-link text-danger py-0 px-2 ml-1" id="pe-clear-btn" style="display:none; font-size:0.8em;">
-                            <i class="fa fa-times"></i> Clear
-                        </button>
-                        <span id="pe-ref-badge" class="ml-2 small" style="display:none;">
-                            <i class="fa fa-bookmark text-secondary"></i>
-                            <span id="pe-ref-badge-text" class="text-muted"></span>
-                        </span>
-                    </div>
-                    <p class="text-muted small">
-                        The shaded region shows all feasible (growth, product) combinations.
-                        The upper frontier is the maximum product flux at each growth rate.
-                        A steep drop-off means production and growth are competing.
-                    </p>
-                    <div id="pe-error" class="alert alert-danger py-1 small" style="display:none;"></div>
-                    <div id="pe-chart-wrap" style="display:none;">
-                        <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('pe-chart','production_envelope')"><i class="fa fa-download"></i> PNG</button></div>
-                        <canvas id="pe-chart" style="max-height:340px;"></canvas>
                     </div>
                 </div>
             </div>
 
-        </div><!-- /tab-pe -->
-
-        <!-- ── Biosynthetic Cost tab ─────────────────────────────────── -->
-        <div id="tab-bc" class="tab-pane fade" role="tabpanel">
             <div class="card mb-4">
                 <div class="card-header py-2">
-                    <strong><i class="fa fa-bolt"></i> Biosynthetic cost</strong>
-                    <small class="text-muted ml-2">Photons, CO₂, ATP &amp; NADPH required per unit of product</small>
+                    <strong><i class="fa fa-bolt"></i> Biosynthetic Cost</strong>
+                    <small class="text-muted ml-2">ATP &amp; NADPH cost per molecule, traced through the phototrophic chain</small>
                 </div>
                 <div class="card-body">
-                    <div class="form-row align-items-end mb-3">
-                        <div class="col-md-5">
-                            <label class="small text-muted mb-1">Target reaction ID</label>
-                            <div class="position-relative">
-                                <input type="text" class="form-control form-control-sm" id="en-rxn-search"
-                                       placeholder="Search reaction ID or name…" autocomplete="off">
-                                <div id="en-rxn-dropdown" class="rxn-dropdown" style="display:none;"></div>
-                                <input type="hidden" id="en-rxn">
+
+                    <!-- Mode + options row -->
+                    <div class="form-row align-items-center mb-2">
+                        <div class="col-auto">
+                            <label class="small text-muted d-block mb-1">Analysis mode</label>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <input type="radio" name="bc-mode" id="bc-mode-ind" value="independent" class="d-none" checked>
+                                <label class="btn btn-outline-secondary active py-1 px-2" for="bc-mode-ind" style="font-size:0.82em;">
+                                    <i class="fa fa-flask"></i> Independent
+                                </label>
+                                <input type="radio" name="bc-mode" id="bc-mode-dep" value="dependent" class="d-none">
+                                <label class="btn btn-outline-secondary py-1 px-2" for="bc-mode-dep" id="bc-dep-label" style="font-size:0.82em;">
+                                    <i class="fa fa-link"></i> Based on simulation
+                                </label>
                             </div>
                         </div>
                         <div class="col-auto">
-                            <div class="form-check mt-4">
+                            <div class="form-check mt-3">
                                 <input class="form-check-input" type="checkbox" id="en-constrained" checked>
                                 <label class="form-check-label small" for="en-constrained">Photoautotrophic constraints</label>
                             </div>
                         </div>
-                        <div class="col-auto mt-4">
-                            <button class="btn btn-success btn-sm" id="run-en-btn">
-                                <i class="fa fa-play"></i> Calculate
-                            </button>
+                    </div>
+
+                    <!-- Mode description -->
+                    <p class="small text-muted mb-2 py-1 px-2 rounded" id="bc-mode-desc" style="background:rgba(0,0,0,0.03); border-left:3px solid #adb5bd;">
+                        <span id="bc-mode-desc-text"><i class="fa fa-info-circle"></i> Growth blocked — all metabolic capacity directed to product. Cost normalised to 1 mmol of target reaction flux.</span>
+                    </p>
+
+                    <!-- Target type toggle -->
+                    <div class="mb-2">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" name="bc-target-type" id="bc-tt-rxn" value="reaction" class="d-none" checked>
+                            <label class="btn btn-outline-secondary active py-1 px-2" for="bc-tt-rxn" style="font-size:0.82em;"><i class="fa fa-exchange"></i> By reaction</label>
+                            <input type="radio" name="bc-target-type" id="bc-tt-met" value="metabolite" class="d-none">
+                            <label class="btn btn-outline-secondary py-1 px-2" for="bc-tt-met" style="font-size:0.82em;"><i class="fa fa-circle-o"></i> By metabolite</label>
                         </div>
                     </div>
+
+                    <!-- By-reaction picker -->
+                    <div id="bc-rxn-section">
+                        <div class="form-row align-items-end mb-2">
+                            <div class="col-md-6">
+                                <label class="small text-muted mb-1">Target reaction</label>
+                                <div class="rxn-sel" id="en-rxn-wrap">
+                                    <button type="button" class="rxn-sel-btn" id="en-rxn-btn">
+                                        <span class="rxn-sel-label text-muted font-italic">— select reaction —</span>
+                                        <i class="fa fa-chevron-down rxn-sel-chevron"></i>
+                                    </button>
+                                    <div class="rxn-sel-panel" id="en-rxn-panel" style="display:none;">
+                                        <input type="text" class="form-control form-control-sm rxn-sel-search" id="en-rxn-search" placeholder="Search ID, name, equation, subsystem…" autocomplete="off">
+                                        <div class="rxn-sel-list" id="en-rxn-list"></div>
+                                    </div>
+                                    <input type="hidden" id="en-rxn">
+                                </div>
+                            </div>
+                            <div class="col-auto mt-4">
+                                <button class="btn btn-success btn-sm" id="run-en-btn">
+                                    <i class="fa fa-play"></i> Calculate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- By-metabolite picker -->
+                    <div id="bc-met-section" style="display:none;">
+                        <div class="form-row align-items-end mb-2">
+                            <div class="col-md-4">
+                                <label class="small text-muted mb-1">Metabolite</label>
+                                <input type="text" class="form-control form-control-sm" id="bc-met-search" placeholder="Search name or ID…" autocomplete="off">
+                                <div id="bc-met-dropdown" class="rxn-sel-panel" style="display:none; position:relative; top:0;">
+                                    <div class="rxn-sel-list" id="bc-met-list" style="max-height:200px;"></div>
+                                </div>
+                                <input type="hidden" id="bc-met-id">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="small text-muted mb-1">Subsystem filter</label>
+                                <select class="form-control form-control-sm" id="bc-met-sub-filter">
+                                    <option value="">All subsystems</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Reactions for selected metabolite -->
+                        <div id="bc-met-rxn-wrap" style="display:none;">
+                            <label class="small text-muted mb-1">Reactions involving <strong id="bc-met-name-label"></strong> — pick one to analyse:</label>
+                            <div id="bc-met-rxn-table" class="table-responsive" style="max-height:220px; overflow-y:auto; font-size:0.82em;"></div>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-success btn-sm" id="run-en-btn-met" disabled>
+                                <i class="fa fa-play"></i> Calculate
+                            </button>
+                            <span class="small text-muted ml-2" id="bc-met-selected-rxn-label"></span>
+                        </div>
+                    </div>
+
+                    <!-- Reference bar -->
                     <div id="en-ref-bar" class="d-flex align-items-center mb-2" style="display:none;">
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="en-lock-btn" style="font-size:0.8em;">
                             <i class="fa fa-bookmark-o"></i> Save as reference
-                       </button>
+                        </button>
                         <button class="btn btn-sm btn-link text-danger py-0 px-2 ml-1" id="en-clear-btn" style="display:none; font-size:0.8em;">
                             <i class="fa fa-times"></i> Clear
                         </button>
@@ -1697,32 +1859,61 @@
                             <span id="en-ref-badge-text" class="text-muted"></span>
                         </span>
                     </div>
-                    <p class="text-muted small">
-                        Growth is blocked; the model maximises the target reaction flux.
-                        Costs are normalised to 1 mmol of product (mmol per mmol).
-                    </p>
+
                     <div id="en-error" class="alert alert-danger py-1 small" style="display:none;"></div>
+
+                    <!-- Results -->
                     <div id="en-results" style="display:none;">
-                        <div class="row">
+
+                        <!-- Resource summary: FBA vs pFBA -->
+                        <div class="row mb-2 align-items-start">
                             <div class="col-md-5">
-                                <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('en-chart','biosynthetic_cost')"><i class="fa fa-download"></i> PNG</button></div>
-                                <canvas id="en-chart" style="max-height:260px;"></canvas>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small font-weight-bold text-muted">Resource costs per mmol product</span>
+                                    <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.72em;" onclick="exportChart('en-chart','biosynthetic_cost')"><i class="fa fa-download"></i> PNG</button>
+                                </div>
+                                <canvas id="en-chart" style="max-height:230px;"></canvas>
                             </div>
-                            <div class="col-md-4">
-                                <table class="table table-sm table-bordered" id="en-table">
+                            <div class="col-md-5">
+                                <table class="table table-sm table-bordered mt-3" id="en-table" style="font-size:0.82em;">
                                     <thead class="thead-light">
-                                        <tr><th>Resource</th><th>Cost (per mmol product)</th></tr>
+                                        <tr><th>Resource</th><th>FBA</th><th>pFBA</th></tr>
                                     </thead>
                                     <tbody></tbody>
                                 </table>
-                                <p class="text-muted small mt-1" id="en-note"></p>
+                                <p class="text-muted" style="font-size:0.75em;" id="en-note"></p>
                             </div>
                         </div>
-                        <div id="en-biomass-compare" style="display:none;"></div>
-                    </div>
+
+                        <!-- Subsystem ATP/NADPH table (FBA vs pFBA) -->
+                        <div id="en-subsystem-wrap" class="border-top pt-2 mb-3">
+                            <div class="d-flex align-items-baseline mb-1">
+                                <strong class="small">ATP &amp; NADPH by pathway</strong>
+                                <span class="text-muted ml-2" style="font-size:0.78em;">per mmol product &nbsp;·&nbsp; <span class="text-success font-weight-bold">positive = generated</span> &nbsp; <span class="text-danger font-weight-bold">negative = consumed</span></span>
+                                <div class="ml-auto btn-group btn-group-sm" role="group">
+                                    <input type="radio" name="bc-view" id="bc-view-pfba" value="pfba" class="d-none" checked>
+                                    <label class="btn btn-outline-secondary py-0 px-2 active" for="bc-view-pfba" style="font-size:0.78em;">pFBA</label>
+                                    <input type="radio" name="bc-view" id="bc-view-fba" value="fba" class="d-none">
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="bc-view-fba" style="font-size:0.78em;">FBA</label>
+                                    <input type="radio" name="bc-view" id="bc-view-both" value="both" class="d-none">
+                                    <label class="btn btn-outline-secondary py-0 px-2" for="bc-view-both" style="font-size:0.78em;">Both</label>
+                                </div>
+                            </div>
+                            <div id="en-subsystem-table"></div>
+                        </div>
+
+                        <!-- Pathway flow narrative (pFBA) -->
+                        <div id="en-flow-wrap" class="border-top pt-2">
+                            <div class="d-flex align-items-baseline mb-2">
+                                <strong class="small">Metabolite flow through pathways</strong>
+                                <span class="text-muted ml-2" style="font-size:0.78em;">boundary metabolites exchanged between subsystems · pFBA solution · per mmol product</span>
+                            </div>
+                            <div id="en-flow-table"></div>
+                        </div>
+
+                    </div><!-- /en-results -->
                 </div>
             </div>
-
 
         </div><!-- /tab-bc -->
 

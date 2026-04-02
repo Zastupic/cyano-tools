@@ -1928,13 +1928,41 @@ function filterTable(tableId, inputId, countLabelId) {
 
 // ── Analysis tab wiring ───────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('run-pe-btn').addEventListener('click', runProductionEnvelope);
     document.getElementById('run-en-btn').addEventListener('click', runEnergetics);
+    document.getElementById('run-en-btn-met')?.addEventListener('click', runEnergeticsFromMet);
 
-    // Reference lock / clear buttons (ls- prefix no longer has dedicated lock/clear btn in new layout)
-    ['pe', 'en'].forEach(pfx => {
-        document.getElementById(`${pfx}-lock-btn`).addEventListener('click', () => lockRef(pfx));
-        document.getElementById(`${pfx}-clear-btn`).addEventListener('click', () => clearRef(pfx));
+    // Reference lock / clear buttons
+    document.getElementById('en-lock-btn').addEventListener('click',  () => lockRef('en'));
+    document.getElementById('en-clear-btn').addEventListener('click', () => clearRef('en'));
+
+    // Target-type toggle (reaction vs metabolite)
+    document.querySelectorAll('input[name="bc-target-type"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const byMet = radio.value === 'metabolite';
+            document.getElementById('bc-rxn-section').style.display = byMet ? 'none' : '';
+            document.getElementById('bc-met-section').style.display = byMet ? ''     : 'none';
+        });
+    });
+
+    // Init metabolite browser (needs allMetabolites to be loaded first — called again after load)
+    bcInitMetBrowser();
+
+    // Biosynthetic Cost mode toggle — update description text
+    document.querySelectorAll('input[name="bc-mode"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const dep  = radio.value === 'dependent';
+            const desc = document.getElementById('bc-mode-desc-text');
+            if (!desc) return;
+            if (dep) {
+                if (bcSimState) {
+                    desc.innerHTML = `<i class="fa fa-link"></i> Using simulation state: D<sub>opt</sub> = ${bcSimState.D_opt.toFixed(4)} h⁻¹, I₀ = ${bcSimState.I0} µmol·m⁻²·s⁻¹. Growth fixed; cost per mmol of target reaction flux.`;
+                } else {
+                    desc.innerHTML = `<i class="fa fa-exclamation-triangle text-warning"></i> No simulation run yet — run a chemostat simulation first, then switch to this mode.`;
+                }
+            } else {
+                desc.innerHTML = `<i class="fa fa-info-circle"></i> Growth unconstrained — pFBA naturally minimises it to ~0 when maximising product. Cost normalised per mmol of target reaction flux.`;
+            }
+        });
     });
 
     // Custom reactions
@@ -2021,32 +2049,30 @@ function runFBAwithPFBA() {
     });
 }
 
-// ── Analysis: reference state ─────────────────────────────────────────────────
-let peLastData = null, peRefData = null, peRefLabel = '';
+// ── Analysis: reference state (energetics only) ───────────────────────────────
 let enLastData = null, enRefData = null, enRefLabel = '';
 
 function lockRef(pfx) {
-    const data = pfx === 'pe' ? peLastData : enLastData;
-    if (!data) return;
-    const label = captureRefLabel(pfx);
-    if (pfx === 'pe') { peRefData = data; peRefLabel = label; renderProductionEnvelope(peLastData); }
-    if (pfx === 'en') { enRefData = data; enRefLabel = label; renderEnergetics(enLastData); }
-    document.getElementById(`${pfx}-ref-badge-text`).textContent = label;
-    document.getElementById(`${pfx}-ref-badge`).style.display = '';
-    document.getElementById(`${pfx}-clear-btn`).style.display = '';
+    if (pfx !== 'en') return;
+    if (!enLastData) return;
+    const label = captureRefLabel('en');
+    enRefData = enLastData; enRefLabel = label; renderEnergetics(enLastData);
+    document.getElementById('en-ref-badge-text').textContent = label;
+    document.getElementById('en-ref-badge').style.display = '';
+    document.getElementById('en-clear-btn').style.display = '';
 }
 
 function clearRef(pfx) {
-    if (pfx === 'pe') { peRefData = null; peRefLabel = ''; if (peLastData) renderProductionEnvelope(peLastData); }
-    if (pfx === 'en') { enRefData = null; enRefLabel = ''; if (enLastData) renderEnergetics(enLastData); }
-    document.getElementById(`${pfx}-ref-badge`).style.display = 'none';
-    document.getElementById(`${pfx}-clear-btn`).style.display = 'none';
+    if (pfx !== 'en') return;
+    enRefData = null; enRefLabel = '';
+    if (enLastData) renderEnergetics(enLastData);
+    document.getElementById('en-ref-badge').style.display = 'none';
+    document.getElementById('en-clear-btn').style.display = 'none';
 }
 
 function captureRefLabel(pfx) {
     const constrained = document.getElementById(`${pfx}-constrained`)?.checked;
     const base = constrained ? 'autotrophic' : 'unconstrained';
-    if (pfx === 'pe') return `${document.getElementById('pe-rxn').value.trim()}, ${base}`;
     if (pfx === 'en') return `${document.getElementById('en-rxn').value.trim()}, ${base}`;
     return base;
 }
@@ -2056,7 +2082,6 @@ function showRefBar(pfx) {
 }
 
 // ── Chart instances ───────────────────────────────────────────────────────────
-let peChart = null;
 let enChart = null;
 
 // ── FBA light sweep ───────────────────────────────────────────────────────────
@@ -2627,153 +2652,6 @@ function xyLineOpts(xLabel, yLabel, showLegend) {
     };
 }
 
-// ── Production envelope ───────────────────────────────────────────────────────
-let peLastData2 = null;   // second product envelope (optional)
-
-function runProductionEnvelope() {
-    const rxn  = document.getElementById('pe-rxn').value.trim();
-    const rxn2 = document.getElementById('pe-rxn2')?.value.trim() || '';
-    if (!rxn) { showAnalysisError('pe-error', 'Enter a product reaction ID.'); return; }
-
-    const btn = document.getElementById('run-pe-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Computing…';
-    document.getElementById('pe-error').style.display      = 'none';
-    document.getElementById('pe-chart-wrap').style.display = 'none';
-    peLastData2 = null;
-
-    const commonBody = {
-        points:           parseInt(document.getElementById('pe-points').value) || 20,
-        constrained:      document.getElementById('pe-constrained').checked,
-        custom_reactions: customReactions,
-    };
-
-    const req1 = fetch('/api/metabolic/production_envelope', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...commonBody, product_rxn: rxn }),
-    }).then(r => r.json());
-
-    const req2 = rxn2
-        ? fetch('/api/metabolic/production_envelope', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...commonBody, product_rxn: rxn2 }),
-          }).then(r => r.json())
-        : Promise.resolve(null);
-
-    Promise.all([req1, req2])
-    .then(([d, d2]) => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-play"></i> Compute envelope';
-        if (d.error) { showAnalysisError('pe-error', d.error); return; }
-        peLastData  = d;
-        peLastData2 = d2 && !d2.error ? d2 : null;
-        showRefBar('pe');
-        renderProductionEnvelope(d);
-    })
-    .catch(err => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-play"></i> Compute envelope';
-        showAnalysisError('pe-error', err.message);
-    });
-}
-
-function renderProductionEnvelope(d) {
-    const pts    = d.points;
-    const hasRef = !!peRefData;
-    const hasD2  = !!peLastData2;
-    const refPts = peRefData?.points || [];
-
-    document.getElementById('pe-chart-wrap').style.display = '';
-
-    // Use {x,y} data so current and reference can have different max_growth
-    const curMax = pts.map(p => ({ x: p.growth, y: p.flux_max }));
-    const curMin = pts.map(p => ({ x: p.growth, y: p.flux_min }));
-    const rxn1Label = esc(d.product_rxn);
-    const rxn2Label = hasD2 ? esc(peLastData2.product_rxn) : '';
-
-    const datasets = [
-        {
-            label: hasD2 ? `${rxn1Label} (max)` : (hasRef ? 'Current (max)' : 'Max product flux'),
-            data: curMax,
-            borderColor: '#1a64c8',
-            backgroundColor: 'rgba(26,100,200,0.12)',
-            borderWidth: 2, pointRadius: 2, fill: '+1', tension: 0.2,
-        },
-        {
-            label: hasD2 ? `${rxn1Label} (min)` : (hasRef ? 'Current (min)' : 'Min product flux'),
-            data: curMin,
-            borderColor: 'rgba(26,100,200,0.35)',
-            backgroundColor: 'rgba(26,100,200,0.04)',
-            borderWidth: 1, pointRadius: 0, fill: false, tension: 0.2,
-        },
-    ];
-
-    // Second product overlay (orange)
-    if (hasD2) {
-        const d2pts = peLastData2.points;
-        datasets.push(
-            {
-                label: `${rxn2Label} (max)`,
-                data: d2pts.map(p => ({ x: p.growth, y: p.flux_max })),
-                borderColor: '#e67e22',
-                backgroundColor: 'rgba(230,126,34,0.10)',
-                borderWidth: 2, pointRadius: 2, fill: '+1', tension: 0.2,
-            },
-            {
-                label: `${rxn2Label} (min)`,
-                data: d2pts.map(p => ({ x: p.growth, y: p.flux_min })),
-                borderColor: 'rgba(230,126,34,0.4)',
-                backgroundColor: 'rgba(230,126,34,0.04)',
-                borderWidth: 1, pointRadius: 0, fill: false, tension: 0.2,
-            }
-        );
-    }
-
-    if (hasRef) {
-        datasets.push(
-            {
-                label: `${peRefLabel || 'Reference'} (max)`,
-                data: refPts.map(p => ({ x: p.growth, y: p.flux_max })),
-                borderColor: '#999',
-                backgroundColor: 'rgba(150,150,150,0.10)',
-                borderWidth: 1.5, pointRadius: 0, borderDash: [5, 3],
-                fill: '+1', tension: 0.2,
-            },
-            {
-                label: `${peRefLabel || 'Reference'} (min)`,
-                data: refPts.map(p => ({ x: p.growth, y: p.flux_min })),
-                borderColor: 'rgba(150,150,150,0.4)',
-                backgroundColor: 'rgba(0,0,0,0)',
-                borderWidth: 1, pointRadius: 0, borderDash: [5, 3],
-                fill: false, tension: 0.2,
-            }
-        );
-    }
-
-    const yAxisLabel = hasD2
-        ? `Product flux (mmol·gDW⁻¹·h⁻¹)`
-        : `${rxn1Label} flux (mmol·gDW⁻¹·h⁻¹)`;
-
-    if (peChart) peChart.destroy();
-    peChart = new Chart(document.getElementById('pe-chart').getContext('2d'), {
-        type: 'line',
-        data: { datasets },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 20 } },
-                tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(4)} mmol·gDW⁻¹·h⁻¹` } },
-            },
-            scales: {
-                x: { type: 'linear', title: { display: true, text: 'Growth rate (h⁻¹)', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                y: { title: { display: true, text: yAxisLabel, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
-            },
-        },
-    });
-}
-
 // ── Energetics ────────────────────────────────────────────────────────────────
 // Fixed resource set used as common y-axis for grouped comparison
 const EN_RESOURCES = [
@@ -2785,45 +2663,42 @@ const EN_RESOURCES = [
     { key: 'nadph_per_unit',   label: 'NADPH',     unit: 'mmol/mmol', color: '#f39c12' },
 ];
 
-let enBiomassData = null;   // energetics of biomass reaction for relative cost comparison
+let bcSimState    = null;   // {D_opt, I0} — stored when a chemostat sim is rendered
+let bcMetSelRxn   = null;   // reaction ID selected via metabolite browser
+let bcMetSelMetId = null;   // metabolite ID currently browsed
 
-function runEnergetics() {
-    const rxn = document.getElementById('en-rxn').value.trim();
-    if (!rxn) { showAnalysisError('en-error', 'Enter a target reaction ID.'); return; }
+function _bcCommonBody() {
+    const mode = document.querySelector('input[name="bc-mode"]:checked')?.value || 'independent';
+    return {
+        mode,
+        constrained:      document.getElementById('en-constrained').checked,
+        custom_reactions: customReactions,
+        growth_rate:      (mode === 'dependent' && bcSimState) ? bcSimState.D_opt : 0,
+    };
+}
 
-    const btn = document.getElementById('run-en-btn');
+function _bcRunWithBody(body, btn) {
+    const mode = body.mode;
+    if (mode === 'dependent' && !bcSimState) {
+        showAnalysisError('en-error', 'Run a chemostat simulation first to use "Based on simulation" mode.');
+        return;
+    }
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Calculating…';
     document.getElementById('en-error').style.display   = 'none';
     document.getElementById('en-results').style.display = 'none';
 
-    const commonOpts = {
-        constrained:      document.getElementById('en-constrained').checked,
-        custom_reactions: customReactions,
-    };
-
-    const reqProduct = fetch('/api/metabolic/energetics', {
+    fetch('/api/metabolic/energetics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...commonOpts, target_rxn: rxn }),
-    }).then(r => r.json());
-
-    // Also fetch biomass energetics for relative cost — silently skip if it fails
-    const reqBiomass = (biomassRxnId && biomassRxnId !== rxn)
-        ? fetch('/api/metabolic/energetics', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...commonOpts, target_rxn: biomassRxnId }),
-          }).then(r => r.json()).catch(() => null)
-        : Promise.resolve(null);
-
-    Promise.all([reqProduct, reqBiomass])
-    .then(([d, db]) => {
+        body: JSON.stringify(body),
+    })
+    .then(r => r.json())
+    .then(d => {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa fa-play"></i> Calculate';
         if (d.error) { showAnalysisError('en-error', d.error); return; }
-        enLastData    = d;
-        enBiomassData = (db && !db.error) ? db : null;
+        enLastData = d;
         showRefBar('en');
         renderEnergetics(d);
     })
@@ -2834,118 +2709,408 @@ function runEnergetics() {
     });
 }
 
-function renderEnergetics(d) {
-    const hasRef = !!enRefData;
+function runEnergetics() {
+    const rxn = document.getElementById('en-rxn').value.trim();
+    if (!rxn) { showAnalysisError('en-error', 'Select a target reaction.'); return; }
+    _bcRunWithBody({ ...(_bcCommonBody()), target_rxn: rxn },
+                   document.getElementById('run-en-btn'));
+}
 
-    // Only show resources that have a value in at least one of the two datasets
-    const visibleRows = EN_RESOURCES.filter(r =>
-        (d[r.key] != null && d[r.key] > 0) ||
-        (hasRef && enRefData[r.key] != null && enRefData[r.key] > 0)
-    );
+function runEnergeticsFromMet() {
+    if (!bcMetSelRxn) { showAnalysisError('en-error', 'Select a reaction from the metabolite table.'); return; }
+    _bcRunWithBody({ ...(_bcCommonBody()), target_rxn: bcMetSelRxn, target_met: bcMetSelMetId },
+                   document.getElementById('run-en-btn-met'));
+}
 
-    document.getElementById('en-results').style.display = '';
-    document.getElementById('en-note').textContent =
-        `${d.target_rxn} · max flux = ${d.target_flux} mmol·gDW⁻¹·h⁻¹ (growth blocked)` +
-        (hasRef ? ` vs reference: ${enRefData.target_rxn}` : '');
+// ── Metabolite browser ────────────────────────────────────────────────────────
 
-    // Table
-    const tbody = document.querySelector('#en-table tbody');
-    if (hasRef) {
-        document.querySelector('#en-table thead tr').innerHTML =
-            `<th>Resource</th><th>Current</th><th>${esc(enRefLabel || 'Reference')}</th><th>Δ</th>`;
-        tbody.innerHTML = visibleRows.map(r => {
-            const cur = d[r.key] ?? null;
-            const ref = enRefData[r.key] ?? null;
-            const delta = (cur !== null && ref !== null)
-                ? (cur - ref).toFixed(3)
-                : '—';
-            const deltaClass = parseFloat(delta) > 0 ? 'text-danger' : parseFloat(delta) < 0 ? 'text-success' : '';
-            return `<tr>
-                <td>${r.label} <small class="text-muted">(${r.unit})</small></td>
-                <td><strong>${cur !== null ? cur : '—'}</strong></td>
-                <td class="text-muted">${ref !== null ? ref : '—'}</td>
-                <td class="${deltaClass}">${delta !== '—' ? (parseFloat(delta) > 0 ? '+' : '') + delta : '—'}</td>
-            </tr>`;
+function bcInitMetBrowser() {
+    const searchEl  = document.getElementById('bc-met-search');
+    const dropEl    = document.getElementById('bc-met-dropdown');
+    const listEl    = document.getElementById('bc-met-list');
+    const hiddenEl  = document.getElementById('bc-met-id');
+    const subFilter = document.getElementById('bc-met-sub-filter');
+    if (!searchEl) return;
+
+    let debounce = null;
+
+    function renderMetList(q) {
+        const query = (q || '').trim().toLowerCase();
+        const hits = query
+            ? allMetabolites.filter(m =>
+                m.id.toLowerCase().includes(query) || (m.name || '').toLowerCase().includes(query)
+              ).slice(0, 120)
+            : allMetabolites.slice(0, 120);
+
+        if (!hits.length) { listEl.innerHTML = '<div class="p-2 text-muted small">No matches</div>'; return; }
+        listEl.innerHTML = hits.map(m => {
+            const comp = m.compartment ? `<span class="badge badge-light border ml-1" style="font-size:0.7em;">${esc(m.compartment)}</span>` : '';
+            return `<div class="rxn-sel-item" data-id="${esc(m.id)}" style="padding:4px 8px;">` +
+                `<code style="font-size:0.85em;">${esc(m.id)}</code> ` +
+                `<span style="font-size:0.84em;">${esc(m.name || '')}</span>${comp}</div>`;
         }).join('');
-    } else {
-        document.querySelector('#en-table thead tr').innerHTML =
-            '<th>Resource</th><th>Cost (per mmol product)</th>';
-        tbody.innerHTML = visibleRows.map(r => {
-            const v = d[r.key];
-            return v != null && v > 0
-                ? `<tr><td>${r.label} <small class="text-muted">(${r.unit})</small></td><td><strong>${v}</strong></td></tr>`
-                : '';
-        }).join('');
-    }
-
-    // Bar chart — grouped when reference exists
-    const labels = visibleRows.map(r => r.label);
-    const datasets = [{
-        label: hasRef ? 'Current' : '',
-        data: visibleRows.map(r => d[r.key] ?? 0),
-        backgroundColor: visibleRows.map(r => r.color + 'cc'),
-        borderColor:     visibleRows.map(r => r.color),
-        borderWidth: 1,
-    }];
-    if (hasRef) {
-        datasets.push({
-            label: enRefLabel || 'Reference',
-            data: visibleRows.map(r => enRefData[r.key] ?? 0),
-            backgroundColor: visibleRows.map(() => 'rgba(150,150,150,0.4)'),
-            borderColor:     visibleRows.map(() => '#999'),
-            borderWidth: 1,
+        listEl.querySelectorAll('.rxn-sel-item').forEach(item => {
+            item.addEventListener('mousedown', e => { e.preventDefault(); pickMet(item.dataset.id); });
         });
     }
 
+    function pickMet(metId) {
+        const met = allMetabolites.find(m => m.id === metId);
+        hiddenEl.value = metId;
+        bcMetSelMetId  = metId;
+        searchEl.value = met ? `${met.id} — ${met.name || ''}` : metId;
+        dropEl.style.display = 'none';
+        document.getElementById('bc-met-name-label').textContent = met ? (met.name || metId) : metId;
+        loadMetReactions(metId);
+    }
+
+    searchEl.addEventListener('focus', () => {
+        renderMetList(searchEl.value);
+        dropEl.style.display = '';
+    });
+    searchEl.addEventListener('input', () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => { renderMetList(searchEl.value); dropEl.style.display = ''; }, 150);
+    });
+    document.addEventListener('mousedown', e => {
+        if (!searchEl.contains(e.target) && !dropEl.contains(e.target)) dropEl.style.display = 'none';
+    });
+
+    subFilter.addEventListener('change', () => {
+        if (bcMetSelMetId) filterMetRxnTable(subFilter.value);
+    });
+}
+
+let _metRxnCache = [];   // full list for current metabolite
+
+function loadMetReactions(metId) {
+    const wrap  = document.getElementById('bc-met-rxn-wrap');
+    const table = document.getElementById('bc-met-rxn-table');
+    const sub   = document.getElementById('bc-met-sub-filter');
+    bcMetSelRxn = null;
+    document.getElementById('run-en-btn-met').disabled = true;
+    document.getElementById('bc-met-selected-rxn-label').textContent = '';
+    wrap.style.display = 'none';
+    table.innerHTML = '<div class="p-2 text-muted small"><i class="fa fa-spinner fa-spin"></i> Loading…</div>';
+
+    fetch(`/api/metabolic/met_reactions/${encodeURIComponent(metId)}`)
+    .then(r => r.json())
+    .then(rxns => {
+        if (rxns.error) { table.innerHTML = `<div class="p-2 text-danger small">${esc(rxns.error)}</div>`; return; }
+        _metRxnCache = rxns;
+        // Populate subsystem filter
+        const subs = [...new Set(rxns.map(r => r.subsystem).filter(Boolean))].sort();
+        sub.innerHTML = '<option value="">All subsystems</option>' +
+            subs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+        filterMetRxnTable('');
+        wrap.style.display = '';
+    })
+    .catch(err => { table.innerHTML = `<div class="p-2 text-danger small">${esc(err.message)}</div>`; });
+}
+
+function filterMetRxnTable(subFilter) {
+    const table = document.getElementById('bc-met-rxn-table');
+    const rows  = subFilter
+        ? _metRxnCache.filter(r => r.subsystem === subFilter)
+        : _metRxnCache;
+
+    if (!rows.length) { table.innerHTML = '<div class="p-2 text-muted small">No reactions in this subsystem.</div>'; return; }
+
+    table.innerHTML = `<table class="table table-sm table-bordered mb-0" style="font-size:0.82em;">
+        <thead class="thead-light sticky-top">
+            <tr><th>ID</th><th>Name</th><th>Subsystem</th><th>Role</th><th>Bounds</th><th>Equation</th></tr>
+        </thead>
+        <tbody>${rows.map(r => {
+            const role = r.stoich > 0
+                ? '<span class="text-success font-weight-bold">produces</span>'
+                : '<span class="text-danger font-weight-bold">consumes</span>';
+            const bounds = `[${r.lb}, ${r.ub}]`;
+            return `<tr data-rxn-id="${esc(r.id)}">
+                <td><code>${esc(r.id)}</code></td>
+                <td>${esc(r.name || '')}</td>
+                <td><span class="badge badge-light border" style="font-size:0.75em;">${esc(r.subsystem || '')}</span></td>
+                <td>${role} (${r.stoich > 0 ? '+' : ''}${r.stoich})</td>
+                <td class="text-muted">${bounds}</td>
+                <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.equation)}">${esc(r.equation)}</td>
+            </tr>`;
+        }).join('')}</tbody>
+    </table>`;
+
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        tr.addEventListener('click', () => {
+            table.querySelectorAll('tr').forEach(r => r.classList.remove('bc-rxn-selected'));
+            tr.classList.add('bc-rxn-selected');
+            bcMetSelRxn = tr.dataset.rxnId;
+            const rxn = _metRxnCache.find(r => r.id === bcMetSelRxn);
+            document.getElementById('run-en-btn-met').disabled = false;
+            document.getElementById('bc-met-selected-rxn-label').textContent =
+                rxn ? `${rxn.id} — ${rxn.name || ''}` : bcMetSelRxn;
+        });
+    });
+}
+
+function runEnergetics() {
+    const rxn = document.getElementById('en-rxn').value.trim();
+    if (!rxn) { showAnalysisError('en-error', 'Select a target reaction.'); return; }
+    _bcRunWithBody({ ...(_bcCommonBody()), target_rxn: rxn },
+                   document.getElementById('run-en-btn'));
+}
+
+function renderEnergetics(d) {
+    document.getElementById('en-results').style.display = '';
+
+    const fba  = d.fba  || {};
+    const pfba = d.pfba || {};
+    const modeLabel = d.mode === 'dependent'
+        ? `dependent on simulation (D = ${(d.growth_rate || 0).toFixed(4)} h⁻¹)`
+        : 'independent';
+    document.getElementById('en-note').textContent =
+        `${d.target_rxn}${d.demand_added ? ' (demand reaction added)' : ''} — ${modeLabel}`;
+
+    // Resource table: FBA vs pFBA columns
+    const thead = document.querySelector('#en-table thead tr');
+    const tbody = document.querySelector('#en-table tbody');
+    thead.innerHTML = '<th>Resource</th><th>FBA</th><th>pFBA</th>';
+    tbody.innerHTML = EN_RESOURCES.map(r => {
+        const vf = fba[r.key],  vp = pfba[r.key];
+        if ((vf == null || vf === 0) && (vp == null || vp === 0)) return '';
+        const fmtF = vf != null && vf > 0 ? `<strong>${vf}</strong>` : '<span class="text-muted">—</span>';
+        const fmtP = vp != null && vp > 0 ? `<strong>${vp}</strong>` : '<span class="text-muted">—</span>';
+        // highlight if pFBA < FBA (futile cycles reduced)
+        const cls = (vf && vp && vp < vf) ? 'text-success' : '';
+        return `<tr>
+            <td>${r.label} <small class="text-muted">(${r.unit})</small></td>
+            <td>${fmtF}</td>
+            <td class="${cls}">${fmtP}</td>
+        </tr>`;
+    }).join('');
+
+    // Bar chart: grouped FBA (light) vs pFBA (solid)
+    const visRows = EN_RESOURCES.filter(r =>
+        (fba[r.key] != null && fba[r.key] > 0) || (pfba[r.key] != null && pfba[r.key] > 0));
+    const labels = visRows.map(r => r.label);
     if (enChart) enChart.destroy();
     enChart = new Chart(document.getElementById('en-chart').getContext('2d'), {
         type: 'bar',
-        data: { labels, datasets },
+        data: {
+            labels,
+            datasets: [
+                { label: 'FBA',  data: visRows.map(r => fba[r.key]  ?? 0),
+                  backgroundColor: visRows.map(r => r.color + '55'), borderColor: visRows.map(r => r.color), borderWidth: 1 },
+                { label: 'pFBA', data: visRows.map(r => pfba[r.key] ?? 0),
+                  backgroundColor: visRows.map(r => r.color + 'cc'), borderColor: visRows.map(r => r.color), borderWidth: 1 },
+            ],
+        },
         options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: {
-                legend: { display: hasRef, position: 'top', labels: { font: { size: 10 }, boxWidth: 16 } },
-            },
+            indexAxis: 'y', responsive: true,
+            plugins: { legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 14 } } },
             scales: {
-                x: { title: { display: true, text: 'Cost per mmol product', font: { size: 10 } } },
+                x: { title: { display: true, text: 'mmol per mmol product', font: { size: 10 } } },
                 y: { ticks: { font: { size: 10 } } },
             },
         },
     });
 
-    // ── Relative-to-biomass comparison ──────────────────────────────────────
-    const bmBox = document.getElementById('en-biomass-compare');
-    if (!bmBox) return;
-    if (!enBiomassData) { bmBox.style.display = 'none'; return; }
+    // Wire view toggle then render subsystem table
+    const viewRadios = document.querySelectorAll('input[name="bc-view"]');
+    viewRadios.forEach(r => {
+        r.onchange = () => renderSubsystemTable(fba.subsystems || [], pfba.subsystems || [],
+                                                document.querySelector('input[name="bc-view"]:checked')?.value || 'pfba');
+    });
+    renderSubsystemTable(fba.subsystems || [], pfba.subsystems || [],
+                         document.querySelector('input[name="bc-view"]:checked')?.value || 'pfba');
 
-    const bmRows = EN_RESOURCES.filter(r => d[r.key] != null && d[r.key] > 0 && enBiomassData[r.key] != null && enBiomassData[r.key] > 0);
-    if (bmRows.length === 0) { bmBox.style.display = 'none'; return; }
+    // Flow narrative — always uses pFBA (more parsimonious)
+    renderSubsystemFlow(pfba.subsystems || []);
+}
 
-    bmBox.style.display = '';
-    bmBox.innerHTML = `
-        <div class="mt-3 border-top pt-2">
-            <p class="small font-weight-bold text-muted mb-1">
-                <i class="fa fa-balance-scale"></i>
-                Cost relative to biomass synthesis (<code>${esc(biomassRxnId)}</code>):
-                <span class="text-muted font-weight-normal" style="font-size:0.85em;">100% = same cost as producing 1 mmol biomass</span>
-            </p>
-            <table class="table table-sm table-bordered" style="font-size:0.82em;">
-                <thead class="thead-light"><tr><th>Resource</th><th>Product cost</th><th>Biomass cost</th><th>Ratio</th></tr></thead>
-                <tbody>${bmRows.map(r => {
-                    const vProd = d[r.key];
-                    const vBm   = enBiomassData[r.key];
-                    const ratio = (vProd / vBm * 100).toFixed(1);
-                    const cls   = parseFloat(ratio) > 100 ? 'text-danger' : parseFloat(ratio) < 50 ? 'text-success' : '';
-                    return `<tr>
-                        <td>${r.label}</td>
-                        <td>${vProd}</td>
-                        <td class="text-muted">${vBm}</td>
-                        <td class="${cls} font-weight-bold">${ratio}%</td>
-                    </tr>`;
-                }).join('')}</tbody>
-            </table>
+function renderSubsystemTable(fbaSubs, pfbaSubs, view) {
+    const wrap = document.getElementById('en-subsystem-table');
+    if (!wrap) return;
+    view = view || 'pfba';
+
+    // Collect all subsystem names (union)
+    const allNames = [...new Set([
+        ...(fbaSubs  || []).map(s => s.name),
+        ...(pfbaSubs || []).map(s => s.name),
+    ])];
+    if (allNames.length === 0) { wrap.innerHTML = ''; return; }
+
+    // Build lookup maps
+    const fbaMap  = {};  (fbaSubs  || []).forEach(s => { fbaMap[s.name]  = s; });
+    const pfbaMap = {};  (pfbaSubs || []).forEach(s => { pfbaMap[s.name] = s; });
+
+    // Choose which set(s) to show
+    const showFBA  = view === 'fba'  || view === 'both';
+    const showPFBA = view === 'pfba' || view === 'both';
+
+    // Scale bars across all visible values
+    const allVals = allNames.flatMap(n => {
+        const arr = [];
+        if (showFBA  && fbaMap[n])  arr.push(Math.abs(fbaMap[n].atp_net),  Math.abs(fbaMap[n].nadph_net));
+        if (showPFBA && pfbaMap[n]) arr.push(Math.abs(pfbaMap[n].atp_net), Math.abs(pfbaMap[n].nadph_net));
+        return arr;
+    });
+    const maxVal = Math.max(1e-9, ...allVals);
+
+    const bar = (val, max) => {
+        if (val == null || Math.abs(val) < 1e-6) return '<span class="text-muted small">0</span>';
+        const pct   = Math.min(100, Math.abs(val) / max * 100).toFixed(1);
+        const color = val > 0 ? '#27ae60' : '#e74c3c';
+        const sign  = val > 0 ? '+' : '';
+        return `<span style="color:${color}; font-weight:600;">${sign}${val.toFixed(3)}</span>` +
+               `<div style="display:inline-block; width:${pct}%; max-width:80px; height:7px;` +
+               ` background:${color}; opacity:0.55; border-radius:2px;` +
+               ` vertical-align:middle; margin-left:4px;"></div>`;
+    };
+
+    const dash = '<span class="text-muted">—</span>';
+
+    // Header columns
+    let headerCols = '<th style="min-width:140px;">Pathway / subsystem</th>';
+    if (showFBA && showPFBA) {
+        headerCols += '<th>FBA ATP</th><th>FBA NADPH</th><th>pFBA ATP</th><th>pFBA NADPH</th>';
+    } else if (showFBA) {
+        headerCols += '<th>ATP net</th><th>NADPH net</th>';
+    } else {
+        headerCols += '<th>ATP net</th><th>NADPH net</th>';
+    }
+    headerCols += '<th class="text-right">Active rxns</th>';
+
+    // Footer net sums
+    let netFbaATP = 0, netFbaNADPH = 0, netPfbaATP = 0, netPfbaNADPH = 0;
+    allNames.forEach(n => {
+        if (fbaMap[n])  { netFbaATP  += fbaMap[n].atp_net;   netFbaNADPH  += fbaMap[n].nadph_net; }
+        if (pfbaMap[n]) { netPfbaATP += pfbaMap[n].atp_net;  netPfbaNADPH += pfbaMap[n].nadph_net; }
+    });
+    const netColor = v => Math.abs(v) < 0.01 ? 'text-success' : 'text-warning';
+    const netSign  = v => (v > 0 ? '+' : '') + v.toFixed(3);
+
+    let footCells = '';
+    if (showFBA && showPFBA) {
+        footCells = `<td class="${netColor(netFbaATP)} font-weight-bold">${netSign(netFbaATP)}</td>` +
+                    `<td class="${netColor(netFbaNADPH)} font-weight-bold">${netSign(netFbaNADPH)}</td>` +
+                    `<td class="${netColor(netPfbaATP)} font-weight-bold">${netSign(netPfbaATP)}</td>` +
+                    `<td class="${netColor(netPfbaNADPH)} font-weight-bold">${netSign(netPfbaNADPH)}</td>`;
+    } else if (showFBA) {
+        footCells = `<td class="${netColor(netFbaATP)} font-weight-bold">${netSign(netFbaATP)}</td>` +
+                    `<td class="${netColor(netFbaNADPH)} font-weight-bold">${netSign(netFbaNADPH)}</td>`;
+    } else {
+        footCells = `<td class="${netColor(netPfbaATP)} font-weight-bold">${netSign(netPfbaATP)}</td>` +
+                    `<td class="${netColor(netPfbaNADPH)} font-weight-bold">${netSign(netPfbaNADPH)}</td>`;
+    }
+
+    const rows = allNames.map(n => {
+        const f = fbaMap[n], p = pfbaMap[n];
+        const rxnCount = (p || f)?.rxn_count ?? 0;
+        let dataCells = '';
+        if (showFBA && showPFBA) {
+            dataCells = `<td>${f ? bar(f.atp_net,   maxVal) : dash}</td>` +
+                        `<td>${f ? bar(f.nadph_net, maxVal) : dash}</td>` +
+                        `<td>${p ? bar(p.atp_net,   maxVal) : dash}</td>` +
+                        `<td>${p ? bar(p.nadph_net, maxVal) : dash}</td>`;
+        } else if (showFBA) {
+            dataCells = `<td>${f ? bar(f.atp_net,   maxVal) : dash}</td>` +
+                        `<td>${f ? bar(f.nadph_net, maxVal) : dash}</td>`;
+        } else {
+            dataCells = `<td>${p ? bar(p.atp_net,   maxVal) : dash}</td>` +
+                        `<td>${p ? bar(p.nadph_net, maxVal) : dash}</td>`;
+        }
+        return `<tr>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                title="${esc(n)}">${esc(n)}</td>
+            ${dataCells}
+            <td class="text-muted text-right">${rxnCount}</td>
+        </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `
+        <div class="table-responsive">
+        <table class="table table-sm table-bordered table-hover" style="font-size:0.82em;">
+            <thead class="thead-light"><tr>${headerCols}</tr></thead>
+            <tbody>${rows}</tbody>
+            <tfoot>
+                <tr class="table-secondary" style="font-size:0.9em;">
+                    <td><strong>Net Σ</strong> <small class="text-muted">(≈ 0)</small></td>
+                    ${footCells}
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
         </div>`;
+}
+
+function renderSubsystemFlow(subsystems) {
+    const wrap = document.getElementById('en-flow-table');
+    if (!wrap) return;
+if (!subsystems || subsystems.length === 0) { wrap.innerHTML = ''; return; }
+
+    // Filter to subsystems that have boundary metabolites (inputs or outputs)
+    const active = subsystems.filter(s =>
+        (s.inputs  && s.inputs.length  > 0) ||
+        (s.outputs && s.outputs.length > 0));
+
+    if (active.length === 0) {
+        wrap.innerHTML = '<p class="text-muted small">No boundary metabolite flow data available.</p>';
+        return;
+    }
+
+    const fmtAmt = v => {
+        if (v == null) return '';
+        const a = Math.abs(v);
+        const s = a >= 10 ? a.toFixed(2) : a >= 1 ? a.toFixed(3) : a.toFixed(4);
+        return s;
+    };
+
+    const pillIn  = (name, amt) =>
+        `<span class="badge badge-pill" style="background:#d4edda; color:#155724; border:1px solid #c3e6cb;
+               font-size:0.78em; font-weight:500; margin:2px 3px 2px 0;">` +
+        `↓ ${esc(name)}${amt ? ' ' + fmtAmt(amt) : ''}</span>`;
+
+    const pillOut = (name, amt) =>
+        `<span class="badge badge-pill" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba;
+               font-size:0.78em; font-weight:500; margin:2px 3px 2px 0;">` +
+        `↑ ${esc(name)}${amt ? ' ' + fmtAmt(amt) : ''}</span>`;
+
+    // Colour the card's left border based on an ordered palette
+    const BORDER_COLORS = [
+        '#e67e22','#27ae60','#2980b9','#8e44ad','#c0392b',
+        '#16a085','#f39c12','#2c3e50','#1abc9c','#d35400'];
+
+    const cards = active.map((s, i) => {
+        const color  = BORDER_COLORS[i % BORDER_COLORS.length];
+        const inputs  = (s.inputs  || []).map(m => pillIn(m.met_name  || m.met_id,  m.amount)).join('');
+        const outputs = (s.outputs || []).map(m => pillOut(m.met_name || m.met_id, m.amount)).join('');
+
+        const atpLabel = s.atp_net > 0
+            ? `<span class="text-success font-weight-bold">+${s.atp_net.toFixed(3)}</span>`
+            : s.atp_net < 0
+                ? `<span class="text-danger font-weight-bold">${s.atp_net.toFixed(3)}</span>`
+                : '';
+        const nadphLabel = s.nadph_net > 0
+            ? `<span class="text-success font-weight-bold">+${s.nadph_net.toFixed(3)}</span>`
+            : s.nadph_net < 0
+                ? `<span class="text-danger font-weight-bold">${s.nadph_net.toFixed(3)}</span>`
+                : '';
+        const energyStr = [
+            atpLabel  ? `ATP ${atpLabel}`   : null,
+            nadphLabel ? `NADPH ${nadphLabel}` : null,
+        ].filter(Boolean).join('&ensp;');
+
+        return `<div class="bc-flow-card mb-2" style="border-left:3px solid ${color}; padding:6px 10px;
+                    background:#fafafa; border-radius:3px;">
+            <div class="d-flex align-items-baseline justify-content-between flex-wrap">
+                <strong style="font-size:0.88em; color:${color};">${esc(s.name)}</strong>
+                ${energyStr ? `<small class="text-muted ml-2" style="font-size:0.78em;">${energyStr}</small>` : ''}
+            </div>
+            ${inputs  ? `<div class="mt-1"><span class="text-muted small" style="width:50px; display:inline-block;">Takes in:</span>${inputs}</div>`  : ''}
+            ${outputs ? `<div class="mt-1"><span class="text-muted small" style="width:50px; display:inline-block;">Passes on:</span>${outputs}</div>` : ''}
+        </div>`;
+    });
+
+    // Interleave with arrows between cards
+    const arrow = '<div class="text-center text-muted" style="font-size:1.1em; line-height:1.2; margin:0 0 4px;">↓</div>';
+    wrap.innerHTML = cards.join(arrow);
 }
 
 function showAnalysisError(elId, msg) {
@@ -2960,6 +3125,9 @@ let simGrowthChart      = null;
 let simChemoChart       = null;
 let simBatchDensityChart = null;
 let simBatchProdChart   = null;
+let simChemoI0Chart     = null;   // design: light-response operational envelope
+let simChemoPvChart     = null;   // design: volumetric productivity P_V vs reactor depth z
+let simChemoRobustChart = null;   // design: normalised operating window / robustness
 
 // FBA single-point marker (from FBA tab single-run)
 let simFbaMarker = null;   // { I0, mu }
@@ -3009,6 +3177,7 @@ function simGetParams() {
         t_end:       +document.getElementById('sim-tend').value,
         Y_X:         +document.getElementById('sim-yx').value,
         productName: document.getElementById('sim-product-name')?.value?.trim() || 'Product',
+        z_reactor:   +(document.getElementById('sim-reactor-depth')?.value ?? 0.10),
     };
 }
 
@@ -3036,12 +3205,10 @@ function simSetMode(mode) {
     // Nav-tab active state
     document.getElementById('sim-tab-chemo')?.classList.toggle('active', mode === 'chemo');
     document.getElementById('sim-tab-batch')?.classList.toggle('active',  mode === 'batch');
-    document.getElementById('sim-chemo-charts').style.display  = mode === 'chemo' ? '' : 'none';
-    document.getElementById('sim-batch-charts').style.display  = mode === 'batch' ? '' : 'none';
-    const ins = document.getElementById('sim-insight-text');
-    if (ins) ins.innerHTML = mode === 'chemo'
-        ? 'For light-limited chemostat cultures, productivity peaks at <em>low</em> dilution rates — unlike heterotrophic cultures. Increasing α raises self-shading; reducing k<sub>d</sub> shifts D<sub>opt</sub> lower.'
-        : 'In batch culture, growth rate decreases as biomass accumulates and self-shading increases. Higher α or X<sub>A,0</sub> accelerates entry into the light-limited phase.';
+    document.getElementById('sim-chemo-charts').style.display      = mode === 'chemo' ? '' : 'none';
+    document.getElementById('sim-batch-charts').style.display      = mode === 'batch' ? '' : 'none';
+    document.getElementById('prod-insight-chemo').style.display    = mode === 'chemo' ? '' : 'none';
+    document.getElementById('prod-insight-batch').style.display    = mode === 'batch' ? '' : 'none';
     // Batch initial conditions only visible in productivity tab AND batch mode
     const activeTabHref = document.querySelector('#sim-sub-tabs .nav-link.active')?.getAttribute('href') || '';
     const inProductivity = activeTabHref === '#sim-sub-productivity';
@@ -3101,14 +3268,6 @@ function updateProdParamCard(p) {
     set('pp-YBM',   p.YBM.toFixed(3));
     set('pp-kd',    p.kd.toFixed(4));
     set('pp-ngam',  p.ngam_photon.toFixed(2));
-
-    // KL badge: < 150 = low-light adapted, > 300 = high-light requiring
-    const klBadge = document.getElementById('pp-KL-badge');
-    if (klBadge) {
-        if (p.KL < 150)      klBadge.innerHTML = '<span class="badge badge-success">Low-light adapted</span>';
-        else if (p.KL < 300) klBadge.innerHTML = '<span class="badge badge-warning">Moderate light requirement</span>';
-        else                 klBadge.innerHTML = '<span class="badge badge-danger">High-light requiring</span>';
-    }
 
     // YBM badge: compare to FBA ceiling 1.84
     const ybmBadge = document.getElementById('pp-YBM-badge');
@@ -4147,7 +4306,7 @@ function simComputeChemostat(p) {
     if (D_max <= 0) return { points: [], D_opt: 0, P_max: 0, D_max: 0 };
 
     const points = [];
-    let D_opt = 0, P_max = 0;
+    let D_opt = 0, P_max = 0, rho_A_opt = 0;
 
     for (let i = 1; i <= steps; i++) {
         const D = (i / steps) * D_max;
@@ -4170,10 +4329,10 @@ function simComputeChemostat(p) {
         }
 
         points.push({ D, rho_A, P_A, P_prod });
-        if (P_A > P_max) { P_max = P_A; D_opt = D; }
+        if (P_A > P_max) { P_max = P_A; D_opt = D; rho_A_opt = rho_A; }
     }
 
-    return { points, D_opt, P_max, D_max };
+    return { points, D_opt, P_max, D_max, rho_A_opt };
 }
 
 /** Batch culture ODE: dρ_A/dt = simHoperMu(I₀, ρ, …) · ρ — integrated via RK4. */
@@ -4235,21 +4394,33 @@ function simRenderChemostat(d) {
         return;
     }
     if (placeholder) placeholder.style.display = 'none';
+
+    // Store operating point for Biosynthetic Cost dependent mode
+    bcSimState = { D_opt: d.D_opt, I0: simGetParams().I0 };
+    // If dependent mode is currently selected, refresh the description label
+    if (document.getElementById('bc-mode-dep')?.checked) {
+        const desc = document.getElementById('bc-mode-desc-text');
+        if (desc) desc.innerHTML = `<i class="fa fa-link"></i> Using simulation state: D<sub>opt</sub> = ${bcSimState.D_opt.toFixed(4)} h⁻¹, I₀ = ${bcSimState.I0} µmol·m⁻²·s⁻¹. Growth fixed; cost per mmol of target reaction flux.`;
+    }
     if (chartWrap)   chartWrap.style.display   = '';
 
     const p      = simGetParams();
     const labels = d.points.map(pt => pt.D.toFixed(4));
 
-    let summaryHTML = `D<sub>opt</sub> ≈ <strong>${d.D_opt.toFixed(4)} h⁻¹</strong> &nbsp;|&nbsp; P<sub>A,max</sub> ≈ <strong>${d.P_max.toFixed(1)} gCDM·m⁻²·d⁻¹</strong>`;
-    if (simRefData?.mode === 'chemo' && simRefData.prodData?.points?.length) {
-        summaryHTML += ` &nbsp;|&nbsp; <span class="text-secondary">${simRefData.label}: ${simRefData.prodData.P_max.toFixed(1)} gCDM·m⁻²·d⁻¹</span>`;
-    }
-    const summary = document.getElementById('sim-chemo-summary');
-    if (summary) { summary.style.display = ''; summary.innerHTML = summaryHTML; }
+    // Populate chemostat insight panel with live computed values
+    const fmtResult = (html) => `<span class="badge badge-primary" style="font-size:0.9em;">${html}</span>`;
+    const setIns = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+    const fba_ceil = 1.84;
+    const p_ins = simGetParams();
+    const pct = Math.min(100, (p_ins.YBM / fba_ceil * 100)).toFixed(0);
+    setIns('prod-insight-dopt',    `Identified D<sub>opt</sub> = ${fmtResult(d.D_opt.toFixed(4) + ' h⁻¹')}`);
+    setIns('prod-insight-rhoopt',  `Identified ρ<sub>A,opt</sub> = ${fmtResult(d.rho_A_opt.toFixed(1) + ' g CDM·m⁻²')}`);
+    setIns('prod-insight-pamax-chemo', `Identified P<sub>A,max</sub> = ${fmtResult(d.P_max.toFixed(1) + ' g CDM·m⁻²·d⁻¹')}`);
+    setIns('prod-insight-ybm',     `Current Y<sub>BM</sub> = ${p_ins.YBM.toFixed(3)} gCDW·mmol⁻¹ — ${fmtResult(pct + '% of FBA ceiling')}. Raising Y<sub>BM</sub> to 1.84 would give P<sub>A,max</sub> ≈ ${fmtResult((d.P_max * fba_ceil / Math.max(p_ins.YBM, 0.01)).toFixed(1) + ' g CDM·m⁻²·d⁻¹')}.`);
 
     const datasets = [
         {
-            label: 'P_A — Areal biomass productivity (g CDM·m⁻²·d⁻¹)',
+            label: 'P_A — Areal productivity (g CDM·m⁻²·d⁻¹)',
             data: d.points.map(pt => pt.P_A),
             borderColor: 'rgba(40,167,69,0.9)',
             backgroundColor: 'rgba(40,167,69,0.08)',
@@ -4257,7 +4428,7 @@ function simRenderChemostat(d) {
             yAxisID: 'y',
         },
         {
-            label: 'ρ_A — Areal biomass density (g CDM·m⁻²)',
+            label: 'ρ_A — Biomass density (g CDM·m⁻²)',
             data: d.points.map(pt => pt.rho_A),
             borderColor: 'rgba(255,140,0,0.9)',
             borderDash: [5, 3],
@@ -4293,8 +4464,8 @@ function simRenderChemostat(d) {
 
     const scales = {
         x:  { title: { display: true, text: 'Dilution rate D (h⁻¹)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-        y:  { title: { display: true, text: 'P_A — Areal biomass productivity (g CDM·m⁻²·d⁻¹)', font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
-        y2: { title: { display: true, text: 'ρ_A — Areal biomass density (g CDM·m⁻²)',          font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+        y:  { title: { display: true, text: ['P_A — Areal productivity', '(g CDM·m⁻²·d⁻¹)'], font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
+        y2: { title: { display: true, text: ['ρ_A — Biomass density', '(g CDM·m⁻²)'],        font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
     };
     if (hasDecoupledProduct || hasCoupledProduct) {
         scales.y3 = { title: { display: true, text: `${p.productName || 'Product'} (mmol·m⁻²·d⁻¹)`, font: { size: 11 }, color: 'rgba(111,66,193,0.9)' }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: 'rgba(111,66,193,0.9)' } };
@@ -4313,6 +4484,269 @@ function simRenderChemostat(d) {
             scales,
         }
     });
+
+    simRenderChemostatNew(d, p);
+}
+
+/**
+ * Render 3 design/operating charts below the main chemostat plot:
+ *   A. Light-response operational envelope — P_A,max + D_opt + ρ_A,opt vs I₀
+ *   B. Volumetric productivity P_V vs reactor depth z (family of I₀ curves)
+ *   C. Normalised operating window — P_A/P_A,max vs D (robustness)
+ */
+function simRenderChemostatNew(d, p) {
+    if (!d.points.length) return;
+
+    // ── Chart A: Light-response operational envelope ──────────────────────────
+    // Sweep I₀ 50→2000 µmol·m⁻²·s⁻¹; for each: record P_A,max, D_opt, ρ_A,opt
+    if (simChemoI0Chart) { simChemoI0Chart.destroy(); simChemoI0Chart = null; }
+    {
+        const I0_steps = 40;
+        const i0_labels = [], pa_max = [], d_opt_vals = [], rho_opt_vals = [];
+        for (let i = 1; i <= I0_steps; i++) {
+            const I0_val = i * (2000 / I0_steps);   // 50, 100, …, 2000
+            const res = simComputeChemostat({ ...p, I0: I0_val });
+            if (!res.points.length) continue;
+            i0_labels.push(I0_val.toFixed(0));
+            pa_max.push(res.P_max.toFixed(2));
+            d_opt_vals.push(res.D_opt.toFixed(4));
+            rho_opt_vals.push(res.rho_A_opt.toFixed(1));
+        }
+        // Mark current I₀ with a vertical plugin
+        const curI0 = p.I0;
+        const annotI0 = {
+            id: 'curI0line',
+            afterDraw(chart) {
+                const ds = chart.getDatasetMeta(0);
+                if (!ds.data.length) return;
+                let idx = 0, minD = Infinity;
+                i0_labels.forEach((v, i) => { const diff = Math.abs(+v - curI0); if (diff < minD) { minD = diff; idx = i; } });
+                const x = ds.data[idx]?.x;
+                if (x == null) return;
+                const { ctx: c, chartArea: { top, bottom } } = chart;
+                c.save();
+                c.setLineDash([4, 3]);
+                c.strokeStyle = 'rgba(220,53,69,0.6)';
+                c.lineWidth = 1.5;
+                c.beginPath(); c.moveTo(x, top); c.lineTo(x, bottom); c.stroke();
+                c.setLineDash([]);
+                c.fillStyle = 'rgba(220,53,69,0.75)';
+                c.font = '9px sans-serif';
+                c.fillText('current I₀', x + 3, top + 10);
+                c.restore();
+            }
+        };
+        simChemoI0Chart = new Chart(document.getElementById('sim-chemo-i0-chart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: i0_labels,
+                datasets: [
+                    {
+                        label: 'P_A,max — Max areal productivity (g CDM·m⁻²·d⁻¹)',
+                        data: pa_max,
+                        borderColor: 'rgba(40,167,69,0.9)', backgroundColor: 'rgba(40,167,69,0.07)',
+                        fill: true, tension: 0.3, pointRadius: 0, yAxisID: 'y',
+                    },
+                    {
+                        label: 'D_opt — Optimal dilution rate (h⁻¹)',
+                        data: d_opt_vals,
+                        borderColor: 'rgba(0,123,255,0.85)', borderDash: [5, 3],
+                        fill: false, tension: 0.3, pointRadius: 0, yAxisID: 'y2',
+                    },
+                    {
+                        label: 'ρ_A,opt — Optimal biomass density (g CDM·m⁻²)',
+                        data: rho_opt_vals,
+                        borderColor: 'rgba(255,140,0,0.85)', borderDash: [3, 3],
+                        fill: false, tension: 0.3, pointRadius: 0, yAxisID: 'y3',
+                    },
+                ],
+            },
+            plugins: [annotI0],
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: true, position: 'top', labels: { font: { size: 10 } } },
+                    title:  { display: true, text: 'Light-response envelope: optimal operating point vs incident irradiance I₀', font: { size: 12 } },
+                },
+                scales: {
+                    x:  { title: { display: true, text: 'I₀ — Incident irradiance (µmol·m⁻²·s⁻¹)', font: { size: 11 } }, ticks: { font: { size: 10 } } },
+                    y:  { title: { display: true, text: ['P_A,max', '(g CDM·m⁻²·d⁻¹)'], font: { size: 11 }, color: 'rgba(40,167,69,0.9)' }, position: 'left',  ticks: { font: { size: 10 }, color: 'rgba(40,167,69,0.9)' }, min: 0 },
+                    y2: { title: { display: true, text: ['D_opt', '(h⁻¹)'], font: { size: 11 }, color: 'rgba(0,123,255,0.9)' }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: 'rgba(0,123,255,0.9)' }, min: 0 },
+                    y3: { title: { display: true, text: ['ρ_A,opt', '(g CDM·m⁻²)'], font: { size: 11 }, color: 'rgba(255,140,0,0.9)' }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: 'rgba(255,140,0,0.9)' }, min: 0 },
+                },
+            }
+        });
+    }
+
+    // ── Chart B: Volumetric productivity P_V vs reactor depth z ──────────────
+    // P_A,max is independent of z; P_V = P_A,max / z (hyperbola).
+    // Show curves for I₀/2, current I₀, and I₀×2 to combine depth + light info.
+    if (simChemoPvChart) { simChemoPvChart.destroy(); simChemoPvChart = null; }
+    {
+        const z_steps = 50;
+        const z_labels = [];
+        for (let i = 1; i <= z_steps; i++) z_labels.push((i * 0.01).toFixed(2));  // 0.01…0.50
+
+        const pvCurve = (I0_val) => {
+            const res = simComputeChemostat({ ...p, I0: I0_val });
+            const pa  = res.P_max;
+            return z_labels.map(z => pa > 0 ? (pa / +z).toFixed(1) : null);
+        };
+
+        const I0_cur  = p.I0;
+        const I0_low  = Math.max(50, I0_cur * 0.5);
+        const I0_high = Math.min(2000, I0_cur * 2);
+        const curZ    = Math.max(0.01, Math.min(0.50, p.z_reactor || 0.10));
+
+        // Annotation: vertical line at current z
+        const annotZ = {
+            id: 'curZline',
+            afterDraw(chart) {
+                const ds = chart.getDatasetMeta(0);
+                if (!ds.data.length) return;
+                let idx = 0, minD = Infinity;
+                z_labels.forEach((v, i) => { const diff = Math.abs(+v - curZ); if (diff < minD) { minD = diff; idx = i; } });
+                const x = ds.data[idx]?.x;
+                if (x == null) return;
+                const { ctx: c, chartArea: { top, bottom } } = chart;
+                c.save();
+                c.setLineDash([4, 3]);
+                c.strokeStyle = 'rgba(220,53,69,0.6)';
+                c.lineWidth = 1.5;
+                c.beginPath(); c.moveTo(x, top); c.lineTo(x, bottom); c.stroke();
+                c.setLineDash([]);
+                c.fillStyle = 'rgba(220,53,69,0.75)';
+                c.font = '9px sans-serif';
+                c.fillText('current z', x + 3, top + 10);
+                c.restore();
+            }
+        };
+
+        simChemoPvChart = new Chart(document.getElementById('sim-chemo-pv-chart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: z_labels,
+                datasets: [
+                    {
+                        label: `I₀ = ${I0_low.toFixed(0)} µmol·m⁻²·s⁻¹`,
+                        data: pvCurve(I0_low),
+                        borderColor: 'rgba(0,123,255,0.6)', borderDash: [4, 3],
+                        fill: false, tension: 0.2, pointRadius: 0,
+                    },
+                    {
+                        label: `I₀ = ${I0_cur.toFixed(0)} µmol·m⁻²·s⁻¹ (current)`,
+                        data: pvCurve(I0_cur),
+                        borderColor: 'rgba(40,167,69,0.9)', backgroundColor: 'rgba(40,167,69,0.07)',
+                        fill: true, tension: 0.2, pointRadius: 0,
+                    },
+                    {
+                        label: `I₀ = ${I0_high.toFixed(0)} µmol·m⁻²·s⁻¹`,
+                        data: pvCurve(I0_high),
+                        borderColor: 'rgba(255,140,0,0.75)', borderDash: [2, 2],
+                        fill: false, tension: 0.2, pointRadius: 0,
+                    },
+                ],
+            },
+            plugins: [annotZ],
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: true, position: 'top', labels: { font: { size: 10 } } },
+                    title:  { display: true, text: 'Volumetric productivity P_V vs reactor depth z (at D_opt per I₀)', font: { size: 12 } },
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Reactor depth z (m)', font: { size: 11 } }, ticks: { font: { size: 10 } } },
+                    y: { title: { display: true, text: ['P_V — Volumetric productivity', '(g CDM·m⁻³·d⁻¹)'], font: { size: 11 } }, position: 'left', ticks: { font: { size: 10 } }, min: 0 },
+                },
+            }
+        });
+    }
+
+    // ── Chart C: Normalised operating window / robustness ─────────────────────
+    // Shows P_A(D) / P_A,max. The width of the region above 0.9 quantifies
+    // how tolerant the culture is to dilution rate variation.
+    if (simChemoRobustChart) { simChemoRobustChart.destroy(); simChemoRobustChart = null; }
+    {
+        const norm_labels = d.points.map(pt => pt.D.toFixed(4));
+        const norm_pa     = d.points.map(pt => (pt.P_A / d.P_max).toFixed(4));
+
+        // Find D window where P_A > 90 % of P_A,max
+        const lo90 = d.points.find(pt => pt.P_A / d.P_max >= 0.9);
+        const hi90 = [...d.points].reverse().find(pt => pt.P_A / d.P_max >= 0.9);
+        const windowStr = (lo90 && hi90)
+            ? `90 % window: D = ${lo90.D.toFixed(4)} – ${hi90.D.toFixed(4)} h⁻¹ (Δ = ${(hi90.D - lo90.D).toFixed(4)} h⁻¹)`
+            : '';
+
+        // Annotation: D_opt vertical + 0.9 horizontal
+        const annotRobust = {
+            id: 'robustAnnot',
+            afterDraw(chart) {
+                const ds = chart.getDatasetMeta(0);
+                if (!ds.data.length) return;
+                const { ctx: c, chartArea: { left, right, top, bottom }, scales } = chart;
+                // vertical at D_opt
+                let idx = 0, minDiff = Infinity;
+                d.points.forEach((pt, i) => { const diff = Math.abs(pt.D - d.D_opt); if (diff < minDiff) { minDiff = diff; idx = i; } });
+                const xOpt = ds.data[idx]?.x;
+                if (xOpt != null) {
+                    c.save();
+                    c.setLineDash([4, 3]);
+                    c.strokeStyle = 'rgba(40,167,69,0.55)';
+                    c.lineWidth = 1.5;
+                    c.beginPath(); c.moveTo(xOpt, top); c.lineTo(xOpt, bottom); c.stroke();
+                    c.setLineDash([]);
+                    c.fillStyle = 'rgba(40,167,69,0.75)';
+                    c.font = '9px sans-serif';
+                    c.fillText('D_opt', xOpt + 3, top + 10);
+                    c.restore();
+                }
+                // horizontal 90 % threshold
+                const y90 = scales.y?.getPixelForValue(0.9);
+                if (y90 != null) {
+                    c.save();
+                    c.setLineDash([3, 4]);
+                    c.strokeStyle = 'rgba(220,53,69,0.5)';
+                    c.lineWidth = 1;
+                    c.beginPath(); c.moveTo(left, y90); c.lineTo(right, y90); c.stroke();
+                    c.setLineDash([]);
+                    c.fillStyle = 'rgba(220,53,69,0.65)';
+                    c.font = '9px sans-serif';
+                    c.fillText('90 %', right - 28, y90 - 3);
+                    c.restore();
+                }
+            }
+        };
+
+        simChemoRobustChart = new Chart(document.getElementById('sim-chemo-robust-chart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: norm_labels,
+                datasets: [{
+                    label: 'P_A / P_A,max — Normalised areal productivity',
+                    data: norm_pa,
+                    borderColor: 'rgba(40,167,69,0.9)', backgroundColor: 'rgba(40,167,69,0.1)',
+                    fill: true, tension: 0.3, pointRadius: 0,
+                }],
+            },
+            plugins: [annotRobust],
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: true, position: 'top', labels: { font: { size: 10 } } },
+                    title:  { display: true, text: windowStr
+                        ? `Operating window robustness — ${windowStr}`
+                        : 'Operating window robustness: P_A / P_A,max vs D', font: { size: 11 } },
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Dilution rate D (h⁻¹)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+                    y: { title: { display: true, text: 'P_A / P_A,max', font: { size: 11 } }, min: 0, max: 1, ticks: { font: { size: 10 } } },
+                },
+            }
+        });
+    }
 }
 
 function simRenderBatch(d) {
@@ -4330,11 +4764,10 @@ function simRenderBatch(d) {
     const p      = simGetParams();
     const labels = pts.map(pt => pt.t.toFixed(1));
 
-    const summary = document.getElementById('sim-batch-summary');
-    if (summary) {
-        summary.style.display = '';
-        summary.innerHTML = `P<sub>A,max</sub> ≈ <strong>${d.P_max.toFixed(2)} gCDM·m⁻²·h⁻¹</strong> at t ≈ <strong>${d.t_Pmax.toFixed(1)} h</strong>`;
-    }
+    // Populate batch insight panel with live computed values
+    const fmtB = (html) => `<span class="badge badge-primary" style="font-size:0.9em;">${html}</span>`;
+    const setInsB = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+    setInsB('prod-insight-pamax-batch', `Identified P<sub>A,max</sub> = ${fmtB(d.P_max.toFixed(3) + ' g CDM·m⁻²·h⁻¹')} at t = ${fmtB(d.t_Pmax.toFixed(1) + ' h')}`);
 
     // Chart 1: biomass density + bottom light
     if (simBatchDensityChart) { simBatchDensityChart.destroy(); simBatchDensityChart = null; }
@@ -4347,7 +4780,7 @@ function simRenderBatch(d) {
             yAxisID: 'y',
         },
         {
-            label: 'I_bottom — Back-face irradiance (µmol photons·m⁻²·s⁻¹)',
+            label: 'I_bottom — Back-face irradiance (µmol·m⁻²·s⁻¹)',
             data: pts.map(pt => pt.I_bot),
             borderColor: 'rgba(255,193,7,0.85)',
             borderDash: [4, 3],
@@ -4378,8 +4811,8 @@ function simRenderBatch(d) {
             },
             scales: {
                 x:  { title: { display: true, text: 'Time (h)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-                y:  { title: { display: true, text: 'ρ_A — Areal biomass density (g CDM·m⁻²)',              font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
-                y2: { title: { display: true, text: 'I_bottom — Back-face irradiance (µmol photons·m⁻²·s⁻¹)', font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+                y:  { title: { display: true, text: ['ρ_A — Biomass density', '(g CDM·m⁻²)'],             font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
+                y2: { title: { display: true, text: ['I_bottom — Back-face irradiance', '(µmol·m⁻²·s⁻¹)'], font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
             },
         },
     });
@@ -4388,7 +4821,7 @@ function simRenderBatch(d) {
     if (simBatchProdChart) { simBatchProdChart.destroy(); simBatchProdChart = null; }
     const prodDatasets = [
         {
-            label: 'P_A — Areal biomass productivity (g CDM·m⁻²·h⁻¹)',
+            label: 'P_A — Areal productivity (g CDM·m⁻²·h⁻¹)',
             data: pts.map(pt => pt.P_inst),
             borderColor: 'rgba(40,167,69,0.9)',
             backgroundColor: 'rgba(40,167,69,0.08)',
@@ -4428,8 +4861,8 @@ function simRenderBatch(d) {
     }
     const batchProdScales = {
         x:  { title: { display: true, text: 'Time (h)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-        y:  { title: { display: true, text: 'P_A — Areal biomass productivity (g CDM·m⁻²·h⁻¹)', font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
-        y2: { title: { display: true, text: 'μ — Specific growth rate (h⁻¹)',                    font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+        y:  { title: { display: true, text: ['P_A — Areal productivity', '(g CDM·m⁻²·h⁻¹)'], font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
+        y2: { title: { display: true, text: 'μ — Specific growth rate (h⁻¹)',               font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
     };
     if (batchHasDecoupledProduct || batchHasCoupledProduct) {
         batchProdScales.y3 = { title: { display: true, text: `${p.productName || 'Product'} (mmol·m⁻²·h⁻¹)`, font: { size: 11 }, color: 'rgba(111,66,193,0.9)' }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: 'rgba(111,66,193,0.9)' } };
@@ -5190,43 +5623,115 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Searchable reaction dropdown ──────────────────────────────────────────────
-function initRxnDropdown(searchId, dropdownId, hiddenId) {
-    const input    = document.getElementById(searchId);
-    const dropdown = document.getElementById(dropdownId);
-    const hidden   = document.getElementById(hiddenId);
-    if (!input || !dropdown || !hidden) return;
+/** Searchable combobox: wrapperId is the .rxn-sel div containing all sub-elements. */
+function initRxnSelect(wrapperId) {
+    const wrap   = document.getElementById(wrapperId);
+    if (!wrap) return;
+    const btn    = wrap.querySelector('.rxn-sel-btn');
+    const panel  = wrap.querySelector('.rxn-sel-panel');
+    const search = wrap.querySelector('.rxn-sel-search');
+    const list   = wrap.querySelector('.rxn-sel-list');
+    const hidden = wrap.querySelector('input[type="hidden"]');
+    const label  = wrap.querySelector('.rxn-sel-label');
+    if (!btn || !panel || !search || !list || !hidden || !label) return;
 
-    function refresh() {
-        const q = input.value.trim().toLowerCase();
-        if (!q) { dropdown.style.display = 'none'; return; }
-        const matches = allReactions.filter(r =>
-            r.id.toLowerCase().includes(q) || (r.name || '').toLowerCase().includes(q)
-        ).slice(0, 60);
-        if (!matches.length) { dropdown.style.display = 'none'; return; }
-        dropdown.innerHTML = matches.map(r =>
-            `<div class="rxn-item" data-id="${esc(r.id)}">` +
-            `<code>${esc(r.id)}</code> <span class="text-muted" style="font-size:0.9em;">${esc(r.name || '')}</span></div>`
-        ).join('');
-        dropdown.style.display = '';
-        dropdown.querySelectorAll('.rxn-item').forEach(item => {
-            item.addEventListener('mousedown', e => {
-                e.preventDefault();
-                hidden.value   = item.dataset.id;
-                input.value    = item.dataset.id;
-                dropdown.style.display = 'none';
-            });
+    let kbIdx = -1;   // keyboard-navigation index
+
+    function renderList(q) {
+        const query   = (q || '').trim().toLowerCase();
+        const matches = query
+            ? allReactions.filter(r =>
+                r.id.toLowerCase().includes(query) ||
+                (r.name      || '').toLowerCase().includes(query) ||
+                (r.subsystem || '').toLowerCase().includes(query) ||
+                (r.equation  || '').toLowerCase().includes(query)
+              ).slice(0, 120)
+            : allReactions.slice(0, 120);
+        kbIdx = -1;
+        if (!matches.length) {
+            list.innerHTML = '<div class="p-2 text-muted small">No matches</div>';
+            return;
+        }
+        list.innerHTML = matches.map(r => {
+            const sub = r.subsystem
+                ? `<span class="badge badge-light border ml-1" style="font-size:0.72em;font-weight:500;">${esc(r.subsystem)}</span>`
+                : '';
+            const eq = r.equation
+                ? `<div class="text-muted" style="font-size:0.78em;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.equation)}</div>`
+                : '';
+            return `<div class="rxn-sel-item" data-id="${esc(r.id)}" style="padding:5px 8px;">` +
+                `<div style="display:flex;align-items:baseline;gap:4px;">` +
+                `<code style="font-size:0.85em;flex-shrink:0;">${esc(r.id)}</code>` +
+                `<span style="font-size:0.84em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.name || '')}</span>` +
+                sub +
+                `</div>` +
+                eq +
+                `</div>`;
+        }).join('');
+        list.querySelectorAll('.rxn-sel-item').forEach(item => {
+            item.addEventListener('mousedown', e => { e.preventDefault(); pick(item.dataset.id); });
         });
     }
 
-    input.addEventListener('input', refresh);
-    input.addEventListener('focus', refresh);
-    input.addEventListener('blur', () => setTimeout(() => { dropdown.style.display = 'none'; }, 180));
+    function pick(id) {
+        hidden.value = id;
+        const rxn = allReactions.find(r => r.id === id);
+        label.textContent = rxn && rxn.name ? `${id} — ${rxn.name}` : id;
+        label.classList.remove('text-muted', 'font-italic');
+        close();
+    }
+
+    function open() {
+        renderList('');
+        search.value = '';
+        panel.style.display = '';
+        btn.classList.add('active');
+        // scroll current selection into view
+        if (hidden.value) {
+            setTimeout(() => {
+                const cur = list.querySelector(`[data-id="${CSS.escape(hidden.value)}"]`);
+                if (cur) { cur.classList.add('kb-active'); cur.scrollIntoView({ block: 'nearest' }); }
+            }, 0);
+        }
+        search.focus();
+    }
+
+    function close() {
+        panel.style.display = 'none';
+        btn.classList.remove('active');
+        kbIdx = -1;
+    }
+
+    btn.addEventListener('click', () => panel.style.display === 'none' ? open() : close());
+
+    search.addEventListener('input', () => renderList(search.value));
+
+    search.addEventListener('keydown', e => {
+        const items = [...list.querySelectorAll('.rxn-sel-item')];
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            kbIdx = Math.min(kbIdx + 1, items.length - 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            kbIdx = Math.max(kbIdx - 1, 0);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (kbIdx >= 0 && items[kbIdx]) pick(items[kbIdx].dataset.id);
+            else if (items.length === 1) pick(items[0].dataset.id);
+            return;
+        } else if (e.key === 'Escape') {
+            close(); btn.focus(); return;
+        } else { return; }
+        items.forEach((it, i) => it.classList.toggle('kb-active', i === kbIdx));
+        items[kbIdx]?.scrollIntoView({ block: 'nearest' });
+    });
+
+    // Close on outside click
+    document.addEventListener('mousedown', e => { if (!wrap.contains(e.target)) close(); });
 }
 
 function initAllRxnDropdowns() {
-    initRxnDropdown('pe-rxn-search',  'pe-rxn-dropdown',  'pe-rxn');
-    initRxnDropdown('pe-rxn2-search', 'pe-rxn2-dropdown', 'pe-rxn2');
-    initRxnDropdown('en-rxn-search',  'en-rxn-dropdown',  'en-rxn');
+    initRxnSelect('en-rxn-wrap');
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────

@@ -919,91 +919,268 @@ def light_sweep():
                     'fba_kd': fba_kd, 'atpm_rxn': atpm_id})
 
 
-# ── Production envelope ────────────────────────────────────────────────────────
-# At each growth rate from 0 → max, finds max and min product flux.
-# This traces the phenotypic phase plane / Pareto frontier.
-
-@metabolic_bp.route('/api/metabolic/production_envelope', methods=['POST'])
-def production_envelope_api():
-    data        = request.json or {}
-    constrained = bool(data.get('constrained', False))
-    product_rxn = data.get('product_rxn', '').strip()
-    n_points    = min(int(data.get('points', 20)), 50)
-
-    if not product_rxn:
-        return jsonify({'error': 'product_rxn is required'}), 400
-
-    m = _get_model(constrained).copy()
-    _apply_custom_reactions(m, data.get('custom_reactions', []))
-    try:
-        m.reactions.get_by_id(product_rxn)
-    except KeyError:
-        return jsonify({'error': f'Reaction {product_rxn!r} not found'}), 404
-
-    biomass_id = _objective_rxn_id(m)
-    if not biomass_id:
-        return jsonify({'error': 'Cannot determine objective reaction'}), 400
-
-    # Maximum growth rate (unconstrained product)
-    sol_wt = m.optimize()
-    if sol_wt.status != 'optimal':
-        return jsonify({'error': 'Model infeasible at baseline'}), 400
-    max_growth = sol_wt.objective_value
-
-    bm_rxn = m.reactions.get_by_id(biomass_id)
-    results = []
-
-    for i in range(n_points + 1):
-        growth_val = max_growth * i / n_points
-        max_prod = min_prod = 0
-
-        with m:
-            bm_rxn.lower_bound = growth_val
-            bm_rxn.upper_bound = growth_val
-            m.objective = product_rxn
-
-            m.objective_direction = 'max'
-            s = m.optimize()
-            if s.status == 'optimal':
-                max_prod = s.objective_value
-
-            m.objective_direction = 'min'
-            s = m.optimize()
-            if s.status == 'optimal':
-                min_prod = s.objective_value
-
-        results.append({
-            'growth':    round(growth_val, 6),
-            'flux_max':  round(max(max_prod, 0), 6),
-            'flux_min':  round(min_prod, 6),
-        })
-
-    return jsonify({
-        'points':      results,
-        'product_rxn': product_rxn,
-        'max_growth':  round(max_growth, 6),
-    })
-
-
-# ── Energetics ────────────────────────────────────────────────────────────────
-# Given a target reaction, reports the stoichiometric cost in photons, CO₂,
-# O₂, ATP, and NADPH per unit of product flux (growth blocked).
+# ── Biosynthetic Cost ─────────────────────────────────────────────────────────
+# Maximises the target reaction flux, then normalises all costs per unit flux.
+# Supports both a direct reaction target and a metabolite target (via exchange
+# or a transient demand reaction).
 
 @metabolic_bp.route('/api/metabolic/energetics', methods=['POST'])
 def energetics():
+    import traceback
+    from collections import defaultdict
     data        = request.json or {}
     constrained = bool(data.get('constrained', False))
     target_rxn  = data.get('target_rxn', '').strip()
+    target_met  = data.get('target_met', '').strip()   # metabolite ID alternative
+    mode        = data.get('mode', 'independent')       # 'independent' | 'dependent'
+    use_pfba    = bool(data.get('use_pfba', True))
+    growth_rate = float(data.get('growth_rate', 0.0))
 
-    if not target_rxn:
-        return jsonify({'error': 'target_rxn is required'}), 400
+    if not target_rxn and not target_met:
+        return jsonify({'error': 'target_rxn or target_met is required'}), 400
 
-    m = _get_model(constrained).copy()
-    _apply_custom_reactions(m, data.get('custom_reactions', []))
     try:
-        m.reactions.get_by_id(target_rxn)
+        return _energetics_inner(data, constrained, target_rxn, target_met,
+                                 mode, use_pfba, growth_rate)
+    except Exception:
+        tb = traceback.format_exc()
+        print(f'[energetics] unhandled exception:\n{tb}')
+        return jsonify({'error': f'Server error: {tb.splitlines()[-1]}'}), 500
+
+
+# Fallback subsystem names derived from the model's internal old_id prefix
+# (used when rxn.subsystem is empty, as in the Synechocystis 6803 model).
+_OLD_ID_PREFIX_SUBSYSTEM = {
+    'TR': 'Transport',
+    'GS': 'Glycolysis / Gluconeogenesis',
+    'PP': 'Pentose Phosphate / Calvin Cycle',
+    'PT': 'Pyruvate / TCA',
+    'AG': 'N-Assimilation (Glu/Gln)',
+    'LI': 'Fatty Acid Synthesis',
+    'PU': 'Purine Metabolism',
+    'PY': 'Pyrimidine Metabolism',
+    'IL': 'Branched-Chain Amino Acids',
+    'QT': 'Quinone / Tocopherol',
+    'CP': 'Chlorophyll / Porphyrin',
+    'CA': 'Carotenoid Biosynthesis',
+    'TE': 'Terpenoid / MEP Pathway',
+    'ST': 'Starch Metabolism',
+    'HE': 'Heme Biosynthesis',
+    'BM': 'Biomass',
+    'ME': 'CO2 / Exchange Reactions',
+    'GE': 'General Energy',
+    'BT': 'Fatty Acid Elongation',
+    'PG': 'Cell Wall / Peptidoglycan',
+    'AA': 'Aromatic Amino Acids',
+    'AL': 'Thr / Ser / Met Biosynthesis',
+    'HI': 'Histidine Biosynthesis',
+    'NI': 'NAD / Nicotinate',
+    'PC': 'Pantothenate / CoA',
+    'FO': 'Folate Metabolism',
+    'VS': 'Vitamin B6',
+    'RI': 'Riboflavin',
+    'TP': 'Thiamine Biosynthesis',
+    'SS': 'Secondary Metabolites',
+    'VT': 'Vitamin Biosynthesis',
+    'PR': 'Photosynthetic Reactions',
+    'GM': 'Sulfur / Cysteine Metabolism',
+    'IN': 'Inositol Metabolism',
+    'LA': 'Lactate Metabolism',
+    'GL': 'Glutathione Metabolism',
+}
+
+
+def _rxn_subsystem(rxn):
+    """Return a human-readable subsystem for a reaction.
+    Falls back to old_id-prefix mapping when rxn.subsystem is blank."""
+    sub = (rxn.subsystem or '').strip()
+    if sub:
+        return sub
+    old_id = (rxn.notes or {}).get('old_id', '') if hasattr(rxn, 'notes') else ''
+    if old_id:
+        m = re.match(r'^([A-Z]+)', old_id)
+        if m:
+            return _OLD_ID_PREFIX_SUBSYSTEM.get(m.group(1), 'Other')
+    return 'Other'
+
+
+# Metabolite IDs excluded from the boundary-metabolite flow narrative.
+# These are energy/redox carriers and currency metabolites; they are already
+# accounted for in the ATP/NADPH totals and would clutter the pathway story.
+_FLOW_EXCLUDE = frozenset({
+    'atp_c','adp_c','amp_c','atp_e','adp_e',
+    'nadph_c','nadp_c','nadh_c','nad_c',
+    'fadh2_c','fad_c',
+    'h2o_c','h2o_e','h_c','h_e','h_p',
+    'pi_c','pi_e','ppi_c',
+})
+
+
+def _compute_sol_metrics(m, sol, tf, photon_id, o2_id, co2_id, no3_id,
+                         atp_met, nadph_met, met_names):
+    """Given a solved model and normalisation factor tf, compute all cost metrics."""
+    from collections import defaultdict
+
+    def _ec(rid):
+        return round(abs(sol.fluxes.get(rid, 0)) / tf, 4) if rid else None
+
+    atp_consumed = nadph_consumed = 0.0
+    if atp_met:
+        atp_consumed = round(sum(
+            abs(rxn.metabolites[atp_met] * sol.fluxes.get(rxn.id, 0))
+            for rxn in atp_met.reactions
+            if rxn.metabolites[atp_met] * sol.fluxes.get(rxn.id, 0) < 0
+        ) / tf, 4)
+    if nadph_met:
+        nadph_consumed = round(sum(
+            abs(rxn.metabolites[nadph_met] * sol.fluxes.get(rxn.id, 0))
+            for rxn in nadph_met.reactions
+            if rxn.metabolites[nadph_met] * sol.fluxes.get(rxn.id, 0) < 0
+        ) / tf, 4)
+
+    # Per-subsystem ATP/NADPH balance and boundary metabolite flow
+    sub_atp      = defaultdict(float)
+    sub_nadph    = defaultdict(float)
+    sub_rxns     = defaultdict(int)
+    sub_met_bal  = defaultdict(lambda: defaultdict(float))  # sub → met_id → net
+
+    for rxn in m.reactions:
+        flux = sol.fluxes.get(rxn.id, 0)
+        if abs(flux) < 1e-9:
+            continue
+        sub = _rxn_subsystem(rxn)
+        sub_rxns[sub] += 1
+        if atp_met and atp_met in rxn.metabolites:
+            sub_atp[sub]  += rxn.metabolites[atp_met]  * flux
+        if nadph_met and nadph_met in rxn.metabolites:
+            sub_nadph[sub] += rxn.metabolites[nadph_met] * flux
+        for met, coeff in rxn.metabolites.items():
+            if met.id not in _FLOW_EXCLUDE:
+                sub_met_bal[sub][met.id] += coeff * flux
+
+    all_subs = set(sub_atp) | set(sub_nadph)
+    subsystems = []
+    for s in all_subs:
+        inputs, outputs = [], []
+        for mid, net in sub_met_bal[s].items():
+            if abs(net) < 1e-6:
+                continue
+            entry = {'met_id': mid,
+                     'met_name': met_names.get(mid, mid),
+                     'amount': round(abs(net) / tf, 4)}
+            (inputs if net < 0 else outputs).append(entry)
+        inputs.sort( key=lambda x: x['amount'], reverse=True)
+        outputs.sort(key=lambda x: x['amount'], reverse=True)
+        subsystems.append({
+            'name':      s,
+            'atp_net':   round(sub_atp.get(s,   0) / tf, 4),
+            'nadph_net': round(sub_nadph.get(s, 0) / tf, 4),
+            'rxn_count': sub_rxns.get(s, 0),
+            'inputs':    inputs[:6],
+            'outputs':   outputs[:6],
+        })
+
+    subsystems.sort(key=lambda x: abs(x['atp_net']) + abs(x['nadph_net']), reverse=True)
+
+    return {
+        'photons_per_unit': _ec(photon_id),
+        'o2_per_unit':      _ec(o2_id),
+        'co2_per_unit':     _ec(co2_id),
+        'no3_per_unit':     _ec(no3_id),
+        'atp_per_unit':     atp_consumed,
+        'nadph_per_unit':   nadph_consumed,
+        'subsystems':       subsystems,
+    }
+
+
+def _energetics_inner(data, constrained, target_rxn, target_met,
+                      mode, use_pfba, growth_rate):
+    from cobra.flux_analysis import pfba as cobra_pfba
+
+    # Independent mode: use the photoautotrophic (constrained) model so that
+    # glucose and other organic carbon sources are closed, but un-force the
+    # photon lower bound so pFBA can minimise photon uptake to exactly what
+    # the target synthesis needs.  The constrained model otherwise fixes
+    # photon flux at ~554 µmol/gDW/h, which forces growth as a mandatory
+    # ATP/NADPH sink and inflates all per-molecule costs.
+    # Dependent mode follows the simulation conditions (constrained or not).
+    effective_constrained = constrained if mode == 'dependent' else True
+    m = _get_model(effective_constrained).copy()
+    _apply_custom_reactions(m, data.get('custom_reactions', []))
+
+    demand_added = False
+
+    if target_met and not target_rxn:
+        try:
+            met = m.metabolites.get_by_id(target_met)
+        except KeyError:
+            return jsonify({'error': f'Metabolite {target_met!r} not found'}), 404
+        ex_rxn = None
+        for rxn in met.reactions:
+            if len(rxn.metabolites) == 1 and (rxn.metabolites[met] < 0 or rxn.upper_bound > 0):
+                ex_rxn = rxn
+                break
+        if ex_rxn:
+            target_rxn = ex_rxn.id
+        else:
+            import cobra as _cobra
+            drain = _cobra.Reaction(f'_DEMAND_{met.id}')
+            drain.name = f'Demand for {met.name}'
+            drain.lower_bound = 0
+            drain.upper_bound = 1000
+            drain.add_metabolites({met: -1})
+            m.add_reactions([drain])
+            target_rxn = drain.id
+            demand_added = True
+
+    try:
+        target = m.reactions.get_by_id(target_rxn)
     except KeyError:
         return jsonify({'error': f'Reaction {target_rxn!r} not found'}), 404
+
+    # If the target is an internal (non-exchange) reaction, maximising it
+    # directly lets growth absorb the product.  Instead, add a drain for the
+    # biosynthetic product and maximise that, so all synthesised product is
+    # exported and growth is not coupled to the cost calculation.
+    # Exclude common waste metabolites (CO2, HCO3) in addition to _FLOW_EXCLUDE.
+    _INTERNAL_EXCLUDE = _FLOW_EXCLUDE | {'co2_c', 'hco3_c', 'co2_e'}
+    if not target_rxn.startswith('EX_') and not demand_added:
+        # Prefer the user-specified metabolite if it is produced by this reaction
+        prod_met = None
+        if target_met:
+            try:
+                _tm = m.metabolites.get_by_id(target_met)
+                if target.metabolites.get(_tm, 0) > 0:
+                    prod_met = _tm
+            except KeyError:
+                pass
+        if prod_met is None:
+            # Fall back: pick the produced metabolite with fewest reactions
+            # (most pathway-specific), excluding currency/waste metabolites
+            candidates = [
+                met for met, coeff in target.metabolites.items()
+                if coeff > 0 and met.id not in _INTERNAL_EXCLUDE
+            ]
+            if candidates:
+                prod_met = min(candidates, key=lambda met: len(met.reactions))
+        if prod_met is not None:
+            # Reuse existing single-metabolite exchange/drain if available
+            ex_rxn = next(
+                (r for r in prod_met.reactions if len(r.metabolites) == 1),
+                None
+            )
+            if ex_rxn:
+                target_rxn = ex_rxn.id
+            else:
+                import cobra as _cobra
+                drain = _cobra.Reaction(f'_DEMAND_{prod_met.id}')
+                drain.name = f'Demand for {prod_met.name}'
+                drain.lower_bound = 0
+                drain.upper_bound = 1000
+                drain.add_metabolites({prod_met: -1})
+                m.add_reactions([drain])
+                target_rxn = drain.id
+                demand_added = True
 
     photon_id  = _find_rxn(m, ('EX_photon_e1_e', 'EX_photon_e'))
     o2_id      = _find_rxn(m, ('EX_o2_e', 'EX_O2_e'))
@@ -1011,60 +1188,107 @@ def energetics():
     no3_id     = _find_rxn(m, ('EX_no3_e', 'EX_NO3_e'))
     biomass_id = _objective_rxn_id(m)
 
-    with m:
-        # Block growth; maximize target product
-        if biomass_id:
-            bm = m.reactions.get_by_id(biomass_id)
-            bm.lower_bound = 0
-            bm.upper_bound = 0
-        m.objective = target_rxn
-        m.objective_direction = 'max'
-        sol = m.optimize()
+    # In independent mode we use the constrained (photoautotrophic) model to
+    # block organic carbon, but the forced photon lower bound must be removed so
+    # pFBA can set photon uptake to exactly what the target synthesis needs.
+    if mode == 'independent' and photon_id:
+        m.reactions.get_by_id(photon_id).lower_bound = -1000
 
-        if sol.status != 'optimal':
-            return jsonify({'error': f'Infeasible under growth-blocked conditions: {sol.status}'}), 400
+    # Build metabolite name lookup once (outside with-block for both solvers)
+    met_names = {met.id: met.name for met in m.metabolites}
 
-        target_flux = sol.fluxes.get(target_rxn, 0)
-        if abs(target_flux) < 1e-9:
-            return jsonify({'error': 'Target reaction carries zero flux'}), 400
+    atp_met = nadph_met = None
+    try: atp_met  = m.metabolites.get_by_id('atp_c')
+    except KeyError: pass
+    try: nadph_met = m.metabolites.get_by_id('nadph_c')
+    except KeyError: pass
 
-        def ex_cost(rxn_id):
-            if not rxn_id:
-                return None
-            v = sol.fluxes.get(rxn_id, 0)
-            return round(abs(v) / abs(target_flux), 4)
+    results = {}
+    zero_flux_error = None
 
-        # ATP cost: net consumption from mass balance on atp_c
-        atp_cost = nadph_cost = None
-        for met_id, key in (('atp_c', 'atp'), ('nadph_c', 'nadph')):
-            try:
-                met = m.metabolites.get_by_id(met_id)
-                # In steady-state FBA, net = 0. Here we measure gross consumption
-                # as the sum of |stoich * flux| for reactions where stoich*flux < 0
-                gross_consumed = sum(
-                    abs(coeff * sol.fluxes.get(rxn.id, 0))
-                    for rxn, coeff in met.reactions.items()
-                    if coeff * sol.fluxes.get(rxn.id, 0) < 0
-                )
-                cost = round(gross_consumed / abs(target_flux), 4)
-                if key == 'atp':
-                    atp_cost = cost
-                else:
-                    nadph_cost = cost
-            except KeyError:
-                pass
+    for label, do_pfba in [('fba', False), ('pfba', True)]:
+        with m:
+            biomass_rxn = m.reactions.get_by_id(biomass_id) if biomass_id else None
+            if mode == 'dependent' and biomass_rxn and growth_rate > 0:
+                biomass_rxn.lower_bound = growth_rate
+                biomass_rxn.upper_bound = growth_rate
+            # Independent mode: leave biomass free (lb=0 in base model).
+            # pFBA minimises growth to ~0 naturally since photon flux is not
+            # forced in the base model — blocking it causes cascade infeasibility.
+
+            m.objective = target_rxn
+            m.objective_direction = 'max'
+
+            if do_pfba:
+                try:
+                    sol = cobra_pfba(m)
+                except Exception as exc:
+                    results[label] = {'error': f'pFBA failed: {exc}'}
+                    continue
+            else:
+                sol = m.optimize()
+
+            if sol.status != 'optimal':
+                results[label] = {'error': f'Infeasible ({label.upper()}): {sol.status}'}
+                continue
+
+            tf = abs(sol.fluxes.get(target_rxn, 0))
+            if tf < 1e-9:
+                dir_hint = (' Check that the selected reaction PRODUCES the target'
+                            ' (positive stoichiometry / forward direction), not consumes it.'
+                            if not (target.lower_bound >= 0 and target.upper_bound > 0) else '')
+                zero_flux_error = ('Target carries zero flux under these conditions.' + dir_hint +
+                                   ' Try unchecking Photoautotrophic constraints or'
+                                   ' selecting a different reaction.')
+                results[label] = {'error': zero_flux_error}
+                continue
+
+            results[label] = _compute_sol_metrics(
+                m, sol, tf, photon_id, o2_id, co2_id, no3_id,
+                atp_met, nadph_met, met_names)
+
+    # If both failed with the same zero-flux message, surface it directly
+    if all('error' in v for v in results.values()):
+        return jsonify({'error': zero_flux_error or results['fba'].get('error', 'Unknown error')}), 400
 
     return jsonify({
-        'target_rxn':        target_rxn,
-        'target_flux':       round(target_flux, 4),
-        'photons_per_unit':  ex_cost(photon_id),
-        'o2_per_unit':       ex_cost(o2_id),
-        'co2_per_unit':      ex_cost(co2_id),
-        'no3_per_unit':      ex_cost(no3_id),
-        'atp_per_unit':      atp_cost,
-        'nadph_per_unit':    nadph_cost,
-        'photon_rxn':        photon_id,
+        'target_rxn':  target_rxn,
+        'target_met':  target_met,
+        'demand_added': demand_added,
+        'mode':        mode,
+        'growth_rate': growth_rate,
+        'photon_rxn':  photon_id,
+        'fba':         results.get('fba'),
+        'pfba':        results.get('pfba'),
     })
+
+
+@metabolic_bp.route('/api/metabolic/met_reactions/<met_id>')
+def met_reactions(met_id):
+    """Return all reactions involving a metabolite, with stoichiometry and subsystem."""
+    m = _get_model()
+    try:
+        met = m.metabolites.get_by_id(met_id)
+    except KeyError:
+        return jsonify({'error': f'Metabolite {met_id!r} not found'}), 404
+
+    result = []
+    for rxn in met.reactions:
+        coeff = rxn.metabolites[met]
+        result.append({
+            'id':        rxn.id,
+            'name':      rxn.name,
+            'subsystem': _get_subsystem(rxn),
+            'stoich':    coeff,          # >0 = metabolite produced, <0 = consumed
+            'equation':  rxn.build_reaction_string(use_metabolite_names=True),
+            'lb':        rxn.lower_bound,
+            'ub':        rxn.upper_bound,
+            'is_exchange': len(rxn.metabolites) == 1,
+        })
+
+    # Sort: exchange/demand first, then by subsystem name
+    result.sort(key=lambda r: (0 if r['is_exchange'] else 1, r['subsystem'] or '', r['id']))
+    return jsonify(result)
 
 
 @metabolic_bp.route('/api/metabolic/kegg_search')
