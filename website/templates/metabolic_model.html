@@ -702,19 +702,42 @@
                         </div>
                     </div><!-- /sim-batch-params -->
 
-                    <!-- sim-pg-product: Product yield (visible in Culture Productivity tab only) -->
+                    <!-- sim-pg-product: Product productivity (visible in Culture Productivity tab only) -->
                     <div class="sim-pg mt-2 pt-2 border-top" id="sim-pg-product" data-tabs="productivity" style="display:none;">
-                        <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">Product yield</p>
-                        <div class="mb-1">
+                        <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">Product Productivity</p>
+                        <input type="text" id="sim-product-name" class="form-control form-control-sm mb-2" placeholder="Product name (e.g. ethylene)" value="">
+                        <!-- Source selector -->
+                        <div class="btn-group btn-group-sm d-flex mb-2" role="group" id="product-source-group">
+                            <button type="button" class="btn btn-outline-secondary active" id="prod-src-manual-btn" onclick="setProductSource('manual')" title="Fixed growth-coupled yield (approximation)">Manual Y<sub>X</sub></button>
+                            <button type="button" class="btn btn-outline-secondary" id="prod-src-fba-btn" onclick="setProductSource('fba_sweep')" disabled title="v_product(I₀) from FBA light sweep">FBA sweep</button>
+                            <button type="button" class="btn btn-outline-secondary" id="prod-src-empirical-btn" onclick="setProductSource('empirical')" disabled title="Empirical Monod fit to q_product data">Empirical</button>
+                        </div>
+                        <!-- Manual Y_X section -->
+                        <div id="prod-manual-section">
                             <div class="d-flex justify-content-between"><label class="small mb-0">Y<sub>X</sub> — specific yield <small class="text-muted">(mmol·gCDM⁻¹)</small></label><span class="small font-weight-bold" id="sim-yx-val">0</span></div>
-                            <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center mb-1">
                                 <button class="btn btn-sm btn-outline-secondary px-1 py-0 mr-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-yx','sim-yx-val',-1)">−</button>
                                 <input type="range" class="custom-range flex-fill" id="sim-yx" min="0" max="200" step="1" value="0" oninput="simSlider(this,'sim-yx-val')">
                                 <button class="btn btn-sm btn-outline-secondary px-1 py-0 ml-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-yx','sim-yx-val',1)">+</button>
                             </div>
+                            <p class="text-muted mb-0" style="font-size:0.72em;">Growth-coupled approximation: P<sub>product</sub> = Y<sub>X</sub> × P<sub>biomass</sub>. Set Y<sub>X</sub> &gt; 0 to activate.</p>
                         </div>
-                        <input type="text" id="sim-product-name" class="form-control form-control-sm" placeholder="Product name (e.g. ethylene)" value="">
-                        <p class="text-muted mt-1 mb-0" style="font-size:0.72em;">Set Y<sub>X</sub> > 0 to add a product line to the chart.</p>
+                        <!-- FBA sweep section -->
+                        <div id="prod-fba-section" style="display:none;">
+                            <div class="alert alert-success py-1 px-2 mb-1" style="font-size:0.78em;">
+                                <i class="fa fa-check-circle"></i> Tracking: <strong id="prod-fba-rxn-name">—</strong>
+                                <br><span class="text-muted">P<sub>product</sub> = v<sub>product</sub>(I<sub>local</sub>) × ρ<sub>A</sub> — decoupled from biomass growth</span>
+                            </div>
+                            <p class="text-muted mb-0" style="font-size:0.72em;">v<sub>product</sub>(I₀) is interpolated from the FBA light sweep at the Beer-Lambert depth-averaged light intensity inside the culture.</p>
+                        </div>
+                        <!-- Empirical section -->
+                        <div id="prod-empirical-section" style="display:none;">
+                            <div class="alert alert-info py-1 px-2 mb-1" style="font-size:0.78em;">
+                                <i class="fa fa-line-chart"></i> Empirical Monod fit: q<sub>max</sub> × I₀ / (K<sub>prod</sub> + I₀)
+                                <div id="prod-empirical-quality" class="text-muted mt-1"></div>
+                            </div>
+                            <p class="text-muted mb-0" style="font-size:0.72em;">Fitted to uploaded <code>q_product</code> vs <code>I0</code> experimental data. Independent of FBA.</p>
+                        </div>
                     </div><!-- /sim-pg-product -->
 
                     <!-- sim-pg-sweep-range: FBA sweep range (visible in Light Sweep tab only) -->
@@ -737,6 +760,14 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="sim-ls-constrained" checked>
                             <label class="form-check-label small" for="sim-ls-constrained">Photoautotrophic constraints</label>
+                        </div>
+                        <!-- Track product reaction for Culture Productivity -->
+                        <div id="sim-pg-track-product" class="mt-2 pt-2 border-top" style="display:none;">
+                            <label class="small font-weight-bold text-muted mb-1" style="font-size:0.78em;">Track reaction for Culture Productivity:</label>
+                            <select class="form-control form-control-sm" id="sweep-track-rxn-select" onchange="setTrackedProductReaction(this.value)">
+                                <option value="">— none —</option>
+                            </select>
+                            <p class="text-muted mt-1 mb-0" style="font-size:0.72em;">Select a custom reaction — its flux will be recorded at each light level and used as v<sub>product</sub>(I₀) in the Culture tab.</p>
                         </div>
                     </div><!-- /sim-pg-sweep-range -->
 
@@ -1093,8 +1124,9 @@
                                     <div class="card-body py-2 px-3">
                                         <p class="text-muted mb-1" style="font-size:0.8em;">
                                             Paste tab-separated data from Excel. Required columns: <code>I0</code>, <code>mu</code>.
-                                            Optional: <code>mu_err</code>, <code>X_A</code> (g·m⁻²), or compute X_A from <code>rho</code> (g·L⁻¹), <code>V</code> (L), <code>A</code> (m²).
+                                            Optional: <code>mu_err</code>, <code>X_A</code> (g·m⁻²), <code>q_product</code> (mmol·gDW⁻¹·h⁻¹), or compute X_A from <code>rho</code> (g·L⁻¹), <code>V</code> (L), <code>A</code> (m²).
                                             Header row is optional — if omitted, columns are assumed to be <code>I0</code>, <code>mu</code>, <code>mu_err</code>, <code>X_A</code> in that order.
+                                            If <code>q_product</code> is provided, an empirical Monod fit is computed and made available as a product source in the Culture Productivity tab.
                                         </p>
                                         <textarea id="exp-data-paste" class="form-control mb-2" rows="5" style="font-size:0.8em;font-family:monospace;"></textarea>
                                         <div class="d-flex align-items-center" style="gap:0.5rem;">
@@ -1227,6 +1259,13 @@
                                                 <div class="d-flex justify-content-end mb-1 mt-2"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-o2-chart','fba_o2_evolution')"><i class="fa fa-download"></i> PNG</button></div>
                                                 <canvas id="sim-fba-o2-chart" style="max-height:200px;"></canvas>
                                             </div>
+                                            <div id="sim-fba-product-wrap" style="display:none;">
+                                                <div class="d-flex justify-content-between align-items-center mb-1 mt-2">
+                                                    <span class="small text-muted">Product flux: <strong id="sim-fba-product-rxn-label"></strong></span>
+                                                    <button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-fba-product-chart','fba_product_flux')"><i class="fa fa-download"></i> PNG</button>
+                                                </div>
+                                                <canvas id="sim-fba-product-chart" style="max-height:200px;"></canvas>
+                                            </div>
                                         </div>
                                     </div>
                                 </div><!-- /left chart col -->
@@ -1292,27 +1331,100 @@
                             <!-- Content (hidden until Static FBA run) -->
                             <div id="productivity-gated-content" style="display:none;">
 
-                            <!-- Collapsible info box -->
-                            <div class="mb-3">
-                                <a class="text-muted" data-toggle="collapse" href="#info-productivity" style="font-size:0.8em;"><i class="fa fa-info-circle"></i> What this tab shows</a>
-                                <div class="collapse" id="info-productivity">
-                                    <div class="alert alert-light border py-2 px-3 mt-1" style="font-size:0.81em;">
-                                        Predicts areal biomass productivity P_A (gCDM·m⁻²·d⁻¹) for a flat-panel photobioreactor using the calibrated Höper 2024 kinetic model. Self-shading (τ = α·X_A) limits light penetration through the culture — productivity peaks at an optimal biomass density, then declines as the culture becomes too dense.
-                                        <strong>Chemostat:</strong> At steady state, dilution rate D = growth rate μ. Productivity peaks at D_opt (lower than in heterotrophic cultures due to light limitation). Use this to find the optimal operating point.
-                                        <strong>Batch:</strong> Growth rate decelerates as biomass accumulates and self-shading increases. The simulation shows the trade-off between fast initial growth and the eventual light-limited plateau.
-                                        <strong>Parameters</strong> are set on the left: I₀ sets incident irradiance, X<sub>A</sub> sets initial/operating areal biomass density. Biophysical parameters (α, k<sub>d</sub> etc.) are configured in Tab ③.
+                            <!-- Fitted model parameters card — updates live with sliders -->
+                            <div class="card mb-3" id="prod-param-card">
+                                <div class="card-header py-1 px-3 d-flex align-items-center" style="cursor:pointer;background:#f0f4f8;" data-toggle="collapse" data-target="#prod-param-body">
+                                    <span class="small font-weight-bold"><i class="fa fa-sliders text-primary"></i> Fitted kinetic model — parameter interpretation</span>
+                                    <i class="fa fa-chevron-down ml-auto" style="font-size:0.8em;"></i>
+                                </div>
+                                <div class="collapse show" id="prod-param-body">
+                                    <div class="card-body py-2 px-3" style="font-size:0.82em;">
+                                        <p class="text-muted mb-2">Fitted in the <strong>FBA Light Response</strong> tab. All productivity curves are computed directly from these values.</p>
+                                        <table class="table table-sm table-borderless mb-2" style="font-size:0.97em;">
+                                            <thead><tr style="border-bottom:1px solid #dee2e6;">
+                                                <th style="width:26%;">Parameter</th>
+                                                <th style="width:14%;">Value</th>
+                                                <th>Engineering interpretation</th>
+                                            </tr></thead>
+                                            <tbody>
+                                            <tr>
+                                                <td><strong>α</strong> <small class="text-muted">(m²·µmol⁻¹)</small><br><small class="text-muted">Specific absorption cross-section</small></td>
+                                                <td id="pp-alpha" class="font-weight-bold text-primary">—</td>
+                                                <td>Light capture efficiency per unit biomass. Sets the self-shading depth: optical depth τ = α·ρ<sub>A</sub>. Determines at what biomass density the back of the panel goes dark and sets the optimal operating density.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>K<sub>L</sub></strong> <small class="text-muted">(mmol·gDW⁻¹·h⁻¹)</small><br><small class="text-muted">Half-saturation photon flux</small></td>
+                                                <td id="pp-KL" class="font-weight-bold text-primary">—</td>
+                                                <td>Photon flux at half-maximal growth. <span id="pp-KL-badge"></span> Low K<sub>L</sub>: growth saturates at low I₀ (dim-light adapted). High K<sub>L</sub>: requires high irradiance to approach µ<sub>max</sub>. Determines the optimal incident irradiance for reactor design.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Y<sub>BM</sub></strong> <small class="text-muted">(gCDW·mmol⁻¹)</small><br><small class="text-muted">Biomass yield on photons</small></td>
+                                                <td id="pp-YBM" class="font-weight-bold text-primary">—</td>
+                                                <td>Photon-to-biomass conversion efficiency — the primary determinant of P<sub>A,max</sub>. <span id="pp-YBM-badge"></span> The gap to the FBA stoichiometric ceiling (1.84 gCDW·mmol⁻¹) is the maximum gain achievable by metabolic engineering.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>k<sub>d</sub></strong> <small class="text-muted">(dimensionless)</small><br><small class="text-muted">Photodamage coefficient</small></td>
+                                                <td id="pp-kd" class="font-weight-bold text-primary">—</td>
+                                                <td>Fraction of absorbed photons lost to PSII photodamage and repair. High k<sub>d</sub> causes photoinhibition at elevated I₀ — the productivity peak shifts to lower irradiance and becomes narrower. Reducing k<sub>d</sub> (e.g. improved repair kinetics) broadens the optimal operating range.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>NGAM<sub>photon</sub></strong> <small class="text-muted">(mmol·gDW⁻¹·h⁻¹)</small><br><small class="text-muted">Non-growth associated maintenance</small></td>
+                                                <td id="pp-ngam" class="font-weight-bold text-primary">—</td>
+                                                <td>Maintenance photon demand — the light compensation point below which no net growth occurs. Analogous to dark respiration in heterotrophs. Sets the minimum viable irradiance in any operation mode.</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <!-- Practical Q&A -->
+                                        <div class="border-top pt-2 mt-1">
+                                            <p class="font-weight-bold mb-1"><i class="fa fa-question-circle text-info"></i> What to read from the charts</p>
+                                            <div class="row" style="row-gap:0.35rem;">
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#f8f9fa;">
+                                                        <strong>Optimal dilution rate (chemostat)</strong><br>
+                                                        <span class="text-muted">D<sub>opt</sub> = D at peak P<sub>A</sub>. Above D<sub>opt</sub>: washout; below D<sub>opt</sub>: self-shading losses dominate.</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#f8f9fa;">
+                                                        <strong>Optimal biomass density (chemostat)</strong><br>
+                                                        <span class="text-muted">ρ<sub>A,opt</sub> = ρ<sub>A</sub> at D<sub>opt</sub> (orange curve). The target operating density balancing light penetration and biomass concentration.</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#f8f9fa;">
+                                                        <strong>Optimal irradiance</strong><br>
+                                                        <span class="text-muted">Vary I₀ (left sidebar). P<sub>A,max</sub> rises with I₀ until photoinhibition (governed by k<sub>d</sub>) causes it to fall. The peak I₀ is the reactor design target.</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="border rounded p-2" style="background:#f8f9fa;">
+                                                        <strong>Metabolic engineering headroom</strong><br>
+                                                        <span class="text-muted">Raise Y<sub>BM</sub> toward 1.84 gCDW·mmol⁻¹ and observe P<sub>A</sub> gain. The current gap to ceiling is the theoretical maximum improvement from central-metabolism engineering.</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Hidden element needed for JS show/hide -->
+                                        <span id="pp-product-legend-row" style="display:none;"></span>
                                     </div>
                                 </div>
                             </div>
 
                             <div id="sim-card-prod">
-                                <!-- Mode toggle -->
-                                <div class="d-flex align-items-center mb-2" style="gap:0.4rem;">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button class="btn btn-outline-secondary active" id="sim-btn-chemo" onclick="simSetMode('chemo')">Chemostat</button>
-                                        <button class="btn btn-outline-secondary" id="sim-btn-batch" onclick="simSetMode('batch')">Batch</button>
-                                    </div>
-                                </div>
+                                <!-- Sub-sub-tabs: Chemostat / Batch -->
+                                <ul class="nav nav-tabs mb-3" id="prod-mode-tabs" style="font-size:0.88em;">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="sim-tab-chemo" href="#" onclick="simSetMode('chemo');return false;">
+                                            <i class="fa fa-rotate-right"></i> Chemostat
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="sim-tab-batch" href="#" onclick="simSetMode('batch');return false;">
+                                            <i class="fa fa-play"></i> Batch
+                                        </a>
+                                    </li>
+                                </ul>
 
                                 <div id="sim-prod-placeholder" class="text-center text-muted py-3" style="display:none; border:1px dashed #dee2e6; border-radius:4px;">
                                     <i class="fa fa-area-chart fa-2x mb-2 d-block" style="opacity:0.3;"></i>

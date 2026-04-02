@@ -853,6 +853,7 @@ def light_sweep():
     m = _get_model(constrained).copy()
     _apply_custom_reactions(m, data.get('custom_reactions', []))
     _apply_knockouts(m, data.get('knockout_genes', []))
+    tracked_rxn = data.get('tracked_reaction') or None
 
     photon_id = data.get('photon_rxn') or _find_rxn(
         m, ('EX_photon_e1_e', 'EX_photon_e', 'R_EX_photon_e'))
@@ -895,20 +896,23 @@ def light_sweep():
 
         sol = m.optimize()
         if sol.status == 'optimal':
-            growth   = sol.objective_value
-            o2_flux  = sol.fluxes.get(o2_id,  0) if o2_id  else None
-            co2_flux = sol.fluxes.get(co2_id, 0) if co2_id else None
-            yield_v  = growth / photon_val if photon_val > 0 else 0
+            growth        = sol.objective_value
+            o2_flux       = sol.fluxes.get(o2_id,  0) if o2_id  else None
+            co2_flux      = sol.fluxes.get(co2_id, 0) if co2_id else None
+            yield_v       = growth / photon_val if photon_val > 0 else 0
+            product_flux  = round(float(sol.fluxes.get(tracked_rxn, 0)), 6) if tracked_rxn else None
         else:
             growth = yield_v = 0
-            o2_flux  = 0 if o2_id  else None
-            co2_flux = 0 if co2_id else None
+            o2_flux       = 0 if o2_id  else None
+            co2_flux      = 0 if co2_id else None
+            product_flux  = 0.0 if tracked_rxn else None
         results.append({
-            'photon': round(photon_val, 2),
-            'growth': round(growth,   6),
-            'o2':     round(o2_flux,  6) if o2_flux  is not None else None,
-            'co2':    round(co2_flux, 6) if co2_flux is not None else None,
-            'yield':  round(yield_v,  8),
+            'photon':       round(photon_val, 2),
+            'growth':       round(growth,     6),
+            'o2':           round(o2_flux,    6) if o2_flux  is not None else None,
+            'co2':          round(co2_flux,   6) if co2_flux is not None else None,
+            'yield':        round(yield_v,    8),
+            'product_flux': product_flux,
         })
 
     return jsonify({'points': results, 'photon_rxn': photon_id, 'o2_rxn': o2_id,

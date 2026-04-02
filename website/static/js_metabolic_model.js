@@ -2071,6 +2071,14 @@ let _sweepAugPts   = null;   // FBA sweep points augmented with I0 + hoperMu
 let _fbaYieldXMode   = 'photon';   // 'photon' | 'mu'  — left yield/O2 charts
 let _hoperYieldXMode = 'photon';   // 'photon' | 'mu'  — right yield/O2 charts
 
+// ── Product tracking globals ───────────────────────────────────────────────────
+let _trackedProductReaction = null;    // reaction ID selected for product tracking
+let _sweepProductFlux       = null;    // [{I0, v}] I0 µmol·m⁻²·s⁻¹, v mmol·gDW⁻¹·h⁻¹
+let _expProductData         = null;    // [{I0, q_product}] from experimental upload
+let _empiricalProductFit    = null;    // {q_max, K_prod} Monod fit params
+let _productFluxSource      = 'manual';// 'manual' | 'fba_sweep' | 'empirical'
+let simFbaProductChart      = null;
+
 // Plugin: pin chartArea.top so the plot area height is identical regardless of legend size
 const fixedPlotTopPlugin = {
     id: 'fixedPlotTop',
@@ -2092,6 +2100,144 @@ function toggleSweepLock() {
         lockBtn.classList.toggle('btn-outline-secondary', !_sweepLocked);
     }
     if (runBtn) runBtn.disabled = _sweepLocked;
+}
+
+// ── Product tracking functions ─────────────────────────────────────────────────
+
+function setTrackedProductReaction(rxnId) {
+    _trackedProductReaction = rxnId || null;
+    _sweepProductFlux = null;   // old sweep data no longer valid for new tracked rxn
+    updateProductSourceUI();
+    simRecompute();
+}
+
+function setProductSource(src) {
+    _productFluxSource = src;
+    updateProductSourceUI();
+    simRecompute();
+}
+
+function updateProductSourceUI() {
+    // Populate tracking dropdown from current custom reactions
+    const trackSelect = document.getElementById('sweep-track-rxn-select');
+    const trackWrap   = document.getElementById('sim-pg-track-product');
+    if (trackSelect && trackWrap) {
+        trackWrap.style.display = customReactions.length > 0 ? '' : 'none';
+        const prevVal = _trackedProductReaction;
+        trackSelect.innerHTML = '<option value="">— none —</option>' +
+            customReactions.map(r =>
+                `<option value="${esc(r.id)}"${r.id === prevVal ? ' selected' : ''}>${esc(r.id)}${r.name ? ' \u2014 ' + esc(r.name) : ''}</option>`
+            ).join('');
+    }
+
+    // Enable/disable source buttons
+    const fbaSrcBtn = document.getElementById('prod-src-fba-btn');
+    const empSrcBtn = document.getElementById('prod-src-empirical-btn');
+    if (fbaSrcBtn) fbaSrcBtn.disabled = !(_sweepProductFlux && _sweepProductFlux.length >= 2);
+    if (empSrcBtn) empSrcBtn.disabled = !_empiricalProductFit;
+
+    // If currently selected source became unavailable, revert to manual
+    if (_productFluxSource === 'fba_sweep' && !(fbaSrcBtn && !fbaSrcBtn.disabled)) _productFluxSource = 'manual';
+    if (_productFluxSource === 'empirical' && !(empSrcBtn && !empSrcBtn.disabled)) _productFluxSource = 'manual';
+
+    // Active state on buttons
+    ['manual', 'fba_sweep', 'empirical'].forEach(s => {
+        const key = s === 'fba_sweep' ? 'fba' : s;
+        const btn = document.getElementById(`prod-src-${key}-btn`);
+        if (btn) btn.classList.toggle('active', _productFluxSource === s);
+    });
+
+    // Show/hide sections
+    const show = id => { const el = document.getElementById(id); if (el) el.style.display = ''; };
+    const hide = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+    if (_productFluxSource === 'manual')     { show('prod-manual-section'); hide('prod-fba-section'); hide('prod-empirical-section'); }
+    else if (_productFluxSource === 'fba_sweep') { hide('prod-manual-section'); show('prod-fba-section'); hide('prod-empirical-section'); }
+    else                                     { hide('prod-manual-section'); hide('prod-fba-section'); show('prod-empirical-section'); }
+
+    // Update FBA section reaction name badge
+    const rxnNameEl = document.getElementById('prod-fba-rxn-name');
+    if (rxnNameEl) rxnNameEl.textContent = _trackedProductReaction || '—';
+}
+
+// Returns specific product flux (mmol·gDW⁻¹·h⁻¹) at local irradiance I0_local (µmol·m⁻²·s⁻¹).
+// Returns null when source is 'manual' (caller falls back to Y_X).
+function getProductFluxAtI0(I0_local) {
+    if (_productFluxSource === 'empirical' && _empiricalProductFit) {
+        const { q_max, K_prod } = _empiricalProductFit;
+        return Math.max(0, q_max * I0_local / (K_prod + I0_local));
+    }
+    if (_productFluxSource === 'fba_sweep' && _sweepProductFlux && _sweepProductFlux.length >= 2) {
+        const pts = _sweepProductFlux;
+        if (I0_local <= pts[0].I0)                return Math.max(0, pts[0].v);
+        if (I0_local >= pts[pts.length - 1].I0)   return Math.max(0, pts[pts.length - 1].v);
+        for (let i = 1; i < pts.length; i++) {
+            if (I0_local <= pts[i].I0) {
+                const t = (I0_local - pts[i-1].I0) / (pts[i].I0 - pts[i-1].I0);
+                return Math.max(0, pts[i-1].v + t * (pts[i].v - pts[i-1].v));
+            }
+        }
+    }
+    return null;
+}
+
+function fitEmpiricalProductModel() {
+    if (!_expProductData || _expProductData.length < 2) return;
+    const pts = _expProductData.filter(p => p.q_product > 0 && p.I0 > 0);
+    if (pts.length < 2) return;
+
+    // Grid search for Monod fit: q_max * I0 / (K_prod + I0)
+    let bestCost = Infinity, bestQ = 0.1, bestK = 100;
+    for (let qi = 0; qi < 30; qi++) {
+        const q = 0.0001 * Math.pow(100000, qi / 29);
+        for (let ki = 0; ki < 30; ki++) {
+            const k = 0.5 * Math.pow(4000, ki / 29);
+            const cost = pts.reduce((s, p) => { const pred = q * p.I0 / (k + p.I0); return s + (pred - p.q_product) ** 2; }, 0);
+            if (cost < bestCost) { bestCost = cost; bestQ = q; bestK = k; }
+        }
+    }
+    // Nelder-Mead refinement in log space
+    const logCost = ([lq, lk]) => {
+        const q = Math.exp(lq), k = Math.exp(lk);
+        return pts.reduce((s, p) => { const pred = q * p.I0 / (k + p.I0); return s + (pred - p.q_product) ** 2; }, 0);
+    };
+    const nm = nelderMead2D(logCost, [Math.log(bestQ), Math.log(bestK)]);
+    bestQ = Math.exp(nm[0]);
+    bestK = Math.exp(nm[1]);
+
+    _empiricalProductFit = { q_max: bestQ, K_prod: bestK };
+
+    // Compute R² for display
+    const muMean = pts.reduce((s, p) => s + p.q_product, 0) / pts.length;
+    const ssTot  = pts.reduce((s, p) => s + (p.q_product - muMean) ** 2, 0);
+    const ssRes  = pts.reduce((s, p) => { const pred = bestQ * p.I0 / (bestK + p.I0); return s + (pred - p.q_product) ** 2; }, 0);
+    const r2     = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+
+    const qualEl = document.getElementById('prod-empirical-quality');
+    if (qualEl) qualEl.textContent = `q_max = ${bestQ.toFixed(4)} mmol·gDW⁻¹·h⁻¹,  K = ${bestK.toFixed(0)} µmol·m⁻²·s⁻¹,  R² = ${r2.toFixed(3)}`;
+
+    updateProductSourceUI();
+}
+
+// Simple 2-parameter Nelder-Mead for the empirical fit
+function nelderMead2D(f, x0, maxIter = 400) {
+    const α = 1, γ = 2, ρ = 0.5, σ = 0.5;
+    let s = [x0, [x0[0] + 0.3, x0[1]], [x0[0], x0[1] + 0.3]];
+    for (let iter = 0; iter < maxIter; iter++) {
+        s.sort((a, b) => f(a) - f(b));
+        const c = [(s[0][0] + s[1][0]) / 2, (s[0][1] + s[1][1]) / 2];
+        const xr = [c[0] + α * (c[0] - s[2][0]), c[1] + α * (c[1] - s[2][1])];
+        if (f(xr) < f(s[0])) {
+            const xe = [c[0] + γ * (xr[0] - c[0]), c[1] + γ * (xr[1] - c[1])];
+            s[2] = f(xe) < f(xr) ? xe : xr;
+        } else if (f(xr) < f(s[1])) {
+            s[2] = xr;
+        } else {
+            const xc = [c[0] + ρ * (s[2][0] - c[0]), c[1] + ρ * (s[2][1] - c[1])];
+            if (f(xc) < f(s[2])) { s[2] = xc; }
+            else { s = [s[0], [s[0][0] + σ*(s[1][0]-s[0][0]), s[0][1] + σ*(s[1][1]-s[0][1])], [s[0][0] + σ*(s[2][0]-s[0][0]), s[0][1] + σ*(s[2][1]-s[0][1])]]; }
+        }
+    }
+    return s[0];
 }
 
 function runLightSweep() {
@@ -2121,6 +2267,7 @@ function runLightSweep() {
             knockout_genes,
             alpha,
             KL,
+            tracked_reaction: _trackedProductReaction || null,
         }),
     })
     .then(r => r.json())
@@ -2137,7 +2284,18 @@ function runLightSweep() {
         simFbaPoints = d.points
             .filter(p => p.growth > 1e-4)
             .map(p => ({ I: p.photon / (alpha * 3.6), mu: p.growth }));
+        // Extract product flux table when a reaction was tracked
+        if (_trackedProductReaction && d.points.some(p => p.product_flux != null)) {
+            _sweepProductFlux = d.points
+                .filter(p => p.growth > 1e-4 && p.product_flux != null)
+                .map(p => ({ I0: p.photon / (alpha * 3.6), v: Math.max(0, p.product_flux) }));
+            if (_sweepProductFlux.length < 2) _sweepProductFlux = null;
+            if (_sweepProductFlux && _productFluxSource === 'manual') _productFluxSource = 'fba_sweep';
+        } else {
+            _sweepProductFlux = null;
+        }
         renderSimFbaSweep(d);
+        updateProductSourceUI();
         simRecompute();   // redraw growth curve with FBA overlay
         _lightSweepHasRun = true;
         updateTabGates();
@@ -2312,6 +2470,74 @@ function renderSimFbaSweep(d) {
     _buildFbaYieldCharts();
     _buildHoperYieldCharts();
     expDataUpdateCharts();
+    renderSweepProductChart(d, alpha);
+}
+
+function renderSweepProductChart(d, alpha) {
+    const wrap    = document.getElementById('sim-fba-product-wrap');
+    const ctx     = document.getElementById('sim-fba-product-chart')?.getContext('2d');
+    const labelEl = document.getElementById('sim-fba-product-rxn-label');
+    if (!wrap || !ctx) return;
+
+    const hasProd = _trackedProductReaction && d.points.some(p => p.product_flux != null);
+    wrap.style.display = hasProd ? '' : 'none';
+    if (!hasProd) { if (simFbaProductChart) { simFbaProductChart.destroy(); simFbaProductChart = null; } return; }
+
+    if (labelEl) labelEl.textContent = _trackedProductReaction;
+    if (simFbaProductChart) { simFbaProductChart.destroy(); simFbaProductChart = null; }
+
+    const fbaFluxPts = d.points
+        .filter(p => p.growth > 1e-4 && p.product_flux != null)
+        .map(p => ({ x: p.photon / (alpha * 3.6), y: Math.max(0, p.product_flux) }));
+
+    const datasets = [{
+        label: `FBA — v(${_trackedProductReaction}) (mmol·gDW⁻¹·h⁻¹)`,
+        data: fbaFluxPts,
+        borderColor: 'rgba(111,66,193,0.9)',
+        backgroundColor: 'rgba(111,66,193,0.08)',
+        fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
+    }];
+
+    // Overlay empirical fit if available
+    if (_empiricalProductFit) {
+        const { q_max, K_prod } = _empiricalProductFit;
+        const fitX = fbaFluxPts.map(p => p.x);
+        datasets.push({
+            label: `Empirical fit — Monod (mmol·gDW⁻¹·h⁻¹)`,
+            data: fitX.map(x => ({ x, y: q_max * x / (K_prod + x) })),
+            borderColor: 'rgba(230,126,34,0.85)',
+            borderDash: [5, 3],
+            fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
+        });
+    }
+
+    // Overlay experimental data if available
+    if (_expProductData) {
+        datasets.push({
+            label: `Experimental q_product`,
+            data: _expProductData.map(p => ({ x: p.I0, y: p.q_product })),
+            type: 'scatter',
+            borderColor: 'rgba(230,126,34,0.9)',
+            backgroundColor: 'rgba(230,126,34,0.8)',
+            pointRadius: 5, pointStyle: 'circle', showLine: false,
+        });
+    }
+
+    simFbaProductChart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 14 } },
+                title: { display: true, text: `Product flux: ${_trackedProductReaction}`, font: { size: 11 } },
+            },
+            scales: {
+                x: { type: 'linear', title: { display: true, text: 'I₀ (µmol·m⁻²·s⁻¹)', font: { size: 11 } } },
+                y: { min: 0, title: { display: true, text: 'v_product (mmol·gDW⁻¹·h⁻¹)', font: { size: 11 } } },
+            },
+        },
+    });
 }
 
 function _buildFbaYieldCharts() {
@@ -2804,8 +3030,12 @@ function simNudge(id, valId, dir) {
 
 function simSetMode(mode) {
     simMode = mode;
-    document.getElementById('sim-btn-chemo').classList.toggle('active', mode === 'chemo');
-    document.getElementById('sim-btn-batch').classList.toggle('active',  mode === 'batch');
+    // Keep legacy btn-group elements in sync if present
+    document.getElementById('sim-btn-chemo')?.classList.toggle('active', mode === 'chemo');
+    document.getElementById('sim-btn-batch')?.classList.toggle('active',  mode === 'batch');
+    // Nav-tab active state
+    document.getElementById('sim-tab-chemo')?.classList.toggle('active', mode === 'chemo');
+    document.getElementById('sim-tab-batch')?.classList.toggle('active',  mode === 'batch');
     document.getElementById('sim-chemo-charts').style.display  = mode === 'chemo' ? '' : 'none';
     document.getElementById('sim-batch-charts').style.display  = mode === 'batch' ? '' : 'none';
     const ins = document.getElementById('sim-insight-text');
@@ -2856,9 +3086,41 @@ function simRecompute() {
     updateFbaGrowthOverlay();   // refresh Höper curve + I₀ marker on FBA sweep chart
     if (simMode === 'chemo') simRenderChemostat(simComputeChemostat(p));
     else                     simRenderBatch(simComputeBatch(p));
+    updateProdParamCard(p);
     // Live R²/RMSE update whenever result panel is visible
     const fitOut = document.getElementById('sim-fit-result');
     if (fitOut && fitOut.style.display !== 'none') computeFitQuality();
+}
+
+function updateProdParamCard(p) {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const show = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v ? '' : 'none'; };
+
+    set('pp-alpha', p.alpha.toFixed(4));
+    set('pp-KL',    p.KL.toFixed(1));
+    set('pp-YBM',   p.YBM.toFixed(3));
+    set('pp-kd',    p.kd.toFixed(4));
+    set('pp-ngam',  p.ngam_photon.toFixed(2));
+
+    // KL badge: < 150 = low-light adapted, > 300 = high-light requiring
+    const klBadge = document.getElementById('pp-KL-badge');
+    if (klBadge) {
+        if (p.KL < 150)      klBadge.innerHTML = '<span class="badge badge-success">Low-light adapted</span>';
+        else if (p.KL < 300) klBadge.innerHTML = '<span class="badge badge-warning">Moderate light requirement</span>';
+        else                 klBadge.innerHTML = '<span class="badge badge-danger">High-light requiring</span>';
+    }
+
+    // YBM badge: compare to FBA ceiling 1.84
+    const ybmBadge = document.getElementById('pp-YBM-badge');
+    if (ybmBadge) {
+        const fba_ceil = 1.84;
+        const pct = Math.min(100, (p.YBM / fba_ceil * 100)).toFixed(0);
+        const cls = pct >= 85 ? 'badge-success' : pct >= 60 ? 'badge-warning' : 'badge-danger';
+        ybmBadge.innerHTML = `<span class="badge ${cls}">${pct}% of FBA ceiling (${fba_ceil} gCDW·mmol⁻¹)</span>`;
+    }
+
+    // Show/hide purple product legend row
+    show('pp-product-legend-row', _productFluxSource !== 'manual' || p.Y_X > 0);
 }
 
 function simUpdateDerived(p) {
@@ -3107,13 +3369,21 @@ function crRender() {
 }
 
 function crRemove(i) {
+    if (customReactions[i]?.id === _trackedProductReaction) {
+        _trackedProductReaction = null;
+        _sweepProductFlux = null;
+    }
     customReactions.splice(i, 1);
     crRender();
+    updateProductSourceUI();
 }
 
 function crClearAll() {
+    _trackedProductReaction = null;
+    _sweepProductFlux = null;
     customReactions = [];
     crRender();
+    updateProductSourceUI();
 }
 
 function crAddTemplate() {
@@ -3131,6 +3401,7 @@ function crAddTemplate() {
         }
     });
     crRender();
+    updateProductSourceUI();
     crFlashNote(`<i class="fa fa-check-circle text-success"></i> <strong>${esc(tmpl.label)}</strong> added — will be included in the next FBA run.`);
 }
 
@@ -3173,6 +3444,7 @@ function crAddManual() {
     }
     customReactions.push({ id, name, lb, ub, stoich, new_mets });
     crRender();
+    updateProductSourceUI();
     // Clear fields and hide form
     ['cr-man-id', 'cr-man-name', 'cr-man-stoich', 'cr-man-newmets'].forEach(elId =>
         document.getElementById(elId).value = '');
@@ -3551,12 +3823,12 @@ function expDataLoad() {
     const firstCells = lines[0].split('\t');
     const firstIsNumeric = firstCells.every(c => !isNaN(parseFloat(c.trim())) && c.trim() !== '');
 
-    let iI0, iMu, iErr, iXA, iRho, iV, iA, dataStart;
+    let iI0, iMu, iErr, iXA, iRho, iV, iA, iQprod, dataStart;
     if (firstIsNumeric) {
         // No header row — assign columns positionally: I0, mu, [mu_err], [X_A]
         iI0 = 0; iMu = 1; iErr = firstCells.length >= 3 ? 2 : -1;
         iXA = firstCells.length >= 4 ? 3 : -1;
-        iRho = -1; iV = -1; iA = -1;
+        iRho = -1; iV = -1; iA = -1; iQprod = -1;
         dataStart = 0;
     } else {
         const headers = lines[0].split('\t').map(h => h.trim().toLowerCase());
@@ -3564,6 +3836,7 @@ function expDataLoad() {
         iI0 = col('i0'); iMu = col('mu');
         if (iI0 < 0 || iMu < 0) { if(statusEl) { statusEl.textContent = 'Missing required columns: I0, mu'; statusEl.className = 'small text-danger'; } return; }
         iErr = col('mu_err'); iXA = col('x_a'); iRho = col('rho'); iV = col('v'); iA = col('a');
+        iQprod = col('q_product');
         dataStart = 1;
     }
 
@@ -3573,14 +3846,15 @@ function expDataLoad() {
         const I0  = parseFloat(cells[iI0]);
         const mu  = parseFloat(cells[iMu]);
         if (isNaN(I0) || isNaN(mu)) continue;
-        const mu_err = iErr >= 0 ? parseFloat(cells[iErr]) || null : null;
+        const mu_err   = iErr   >= 0 ? parseFloat(cells[iErr])   || null : null;
+        const q_product = iQprod >= 0 ? parseFloat(cells[iQprod]) || null : null;
         let X_A = iXA >= 0 ? parseFloat(cells[iXA]) || null : null;
         // compute X_A from rho, V, A if not provided directly
         if (X_A == null && iRho >= 0 && iV >= 0 && iA >= 0) {
             const rho = parseFloat(cells[iRho]), V = parseFloat(cells[iV]), A = parseFloat(cells[iA]);
             if (!isNaN(rho) && !isNaN(V) && !isNaN(A) && A > 0) X_A = rho * V / A;
         }
-        rows.push({ I0, mu, mu_err, X_A });
+        rows.push({ I0, mu, mu_err, X_A, q_product });
     }
 
     if (rows.length === 0) { if(statusEl) { statusEl.textContent = 'No valid rows parsed.'; statusEl.className = 'small text-danger'; } return; }
@@ -3595,11 +3869,12 @@ function expDataLoad() {
         const cols = [
             { key: 'I0',     head: 'I₀',            fmt: v => v },
             { key: 'mu',     head: 'μ (h⁻¹)',        fmt: v => v.toFixed(4) },
-            { key: 'mu_err', head: '± μ',            fmt: v => v != null ? v.toFixed(4) : '—' },
-            { key: 'X_A',    head: 'X_A (g·m⁻²)',   fmt: v => v != null ? v.toFixed(2)  : '—' },
-            { key: 'rho',    head: 'ρ (g·L⁻¹)',      fmt: v => v != null ? v.toFixed(3)  : '—' },
-            { key: 'V',      head: 'V (L)',           fmt: v => v != null ? v.toFixed(3)  : '—' },
-            { key: 'A',      head: 'A (m²)',          fmt: v => v != null ? v.toFixed(4)  : '—' },
+            { key: 'mu_err',   head: '± μ',                      fmt: v => v != null ? v.toFixed(4) : '—' },
+            { key: 'X_A',      head: 'X_A (g·m⁻²)',             fmt: v => v != null ? v.toFixed(2)  : '—' },
+            { key: 'q_product', head: 'q_product (mmol·gDW⁻¹·h⁻¹)', fmt: v => v != null ? v.toFixed(5) : '—' },
+            { key: 'rho',      head: 'ρ (g·L⁻¹)',               fmt: v => v != null ? v.toFixed(3)  : '—' },
+            { key: 'V',        head: 'V (L)',                    fmt: v => v != null ? v.toFixed(3)  : '—' },
+            { key: 'A',        head: 'A (m²)',                   fmt: v => v != null ? v.toFixed(4)  : '—' },
         ];
         const th    = cols.map(c => `<th>${c.head}</th>`).join('');
         const tbody = rows.map(r => `<tr>${cols.map(c => `<td>${c.fmt(r[c.key])}</td>`).join('')}</tr>`).join('');
@@ -3607,13 +3882,28 @@ function expDataLoad() {
         previewEl.style.display = '';
     }
 
+    // Extract q_product data and fit empirical model if column present
+    const qRows = rows.filter(r => r.q_product != null && r.q_product > 0 && r.I0 > 0);
+    if (qRows.length >= 2) {
+        _expProductData = qRows.map(r => ({ I0: r.I0, q_product: r.q_product }));
+        fitEmpiricalProductModel();
+    } else {
+        _expProductData = null;
+        _empiricalProductFit = null;
+    }
+
     expDataUpdateCharts();
+    updateProductSourceUI();
+    // Refresh product chart overlay if sweep has already run
+    if (simFbaData) renderSweepProductChart(simFbaData, +document.getElementById('sim-alpha')?.value || 0.13);
     _updateFitBtn();
 }
 
 function expDataClear() {
     _expData = null;
     _expDataXA = 0;
+    _expProductData   = null;
+    _empiricalProductFit = null;
     const paste = document.getElementById('exp-data-paste');
     if (paste) paste.value = '';
     const statusEl = document.getElementById('exp-data-status');
@@ -3621,6 +3911,7 @@ function expDataClear() {
     const previewEl = document.getElementById('exp-data-preview');
     if (previewEl) { previewEl.style.display = 'none'; previewEl.innerHTML = ''; }
     expDataUpdateCharts();
+    updateProductSourceUI();
     _updateFitBtn();
 }
 
@@ -3687,10 +3978,6 @@ function computeFitQuality() {
     });
     const r2   = ss_tot > 0 ? (1 - ss_res / ss_tot) : 0;  // allow negative: bad fit < 0 < good fit ≤ 1
     const rmse = Math.sqrt(ss_res / pts.length);
-    console.group(`Fit quality  R²=${r2.toFixed(4)}  RMSE=${rmse.toFixed(5)}  n=${pts.length}`);
-    console.log('params:', { KL_draw, YBM_draw, kd_draw, ngam_draw, al_draw });
-    console.table(debugRows);
-    console.groupEnd();
 
     // Compensation point
     let iComp = null;
@@ -3870,9 +4157,18 @@ function simComputeChemostat(p) {
             const mid = (lo + hi) / 2;
             if (simHoperMu(I0, mid, alpha, KL, YBM, kd, ngam_photon, 0) > D) lo = mid; else hi = mid;
         }
-        const rho_A  = (lo + hi) / 2;
-        const P_A    = rho_A * D * 24;
-        const P_prod = Y_X > 0 ? Y_X * rho_A * D * 24 : null;
+        const rho_A = (lo + hi) / 2;
+        const P_A   = rho_A * D * 24;
+
+        // Product flux: FBA/empirical (decoupled) or manual Y_X (growth-coupled)
+        let P_prod = null;
+        const v_prod = getProductFluxAtI0(_beerlambertMeanI(I0, alpha, rho_A));
+        if (v_prod != null) {
+            P_prod = v_prod * rho_A * 24;   // mmol·m⁻²·d⁻¹
+        } else if (Y_X > 0) {
+            P_prod = Y_X * rho_A * D * 24;  // mmol·m⁻²·d⁻¹ (growth-coupled approx)
+        }
+
         points.push({ D, rho_A, P_A, P_prod });
         if (P_A > P_max) { P_max = P_A; D_opt = D; }
     }
@@ -3881,6 +4177,12 @@ function simComputeChemostat(p) {
 }
 
 /** Batch culture ODE: dρ_A/dt = simHoperMu(I₀, ρ, …) · ρ — integrated via RK4. */
+// Beer-Lambert depth-averaged irradiance: mean light seen by all cells at density rho_A
+function _beerlambertMeanI(I0, alpha, rho_A) {
+    const tau = alpha * rho_A;
+    return tau > 1e-4 ? I0 * (1 - Math.exp(-tau)) / tau : I0;
+}
+
 function simComputeBatch(p) {
     const { I0, alpha, KL, YBM, kd, ngam_photon, rho0, t_end, Y_X } = p;
     const steps = 600;
@@ -3896,7 +4198,15 @@ function simComputeBatch(p) {
         const mu     = simHoperMu(I0, rho, alpha, KL, YBM, kd, ngam_photon, 0);
         const P_inst = Math.max(0, mu * rho);
         const I_bot  = I0 * Math.exp(-alpha * rho);
-        const P_prod = Y_X > 0 ? Y_X * P_inst : null;
+
+        // Product flux: FBA/empirical (decoupled) or manual Y_X (growth-coupled)
+        let P_prod = null;
+        const v_prod = getProductFluxAtI0(_beerlambertMeanI(I0, alpha, rho));
+        if (v_prod != null) {
+            P_prod = v_prod * rho;   // mmol·m⁻²·h⁻¹
+        } else if (Y_X > 0) {
+            P_prod = Y_X * P_inst;   // mmol·m⁻²·h⁻¹ (growth-coupled approx)
+        }
 
         if (P_inst > P_max) { P_max = P_inst; t_Pmax = t; }
         points.push({ t, rho, mu, P_inst, I_bot, P_prod });
@@ -3939,7 +4249,7 @@ function simRenderChemostat(d) {
 
     const datasets = [
         {
-            label: 'P_A (gCDM·m⁻²·d⁻¹)',
+            label: 'P_A — Areal biomass productivity (g CDM·m⁻²·d⁻¹)',
             data: d.points.map(pt => pt.P_A),
             borderColor: 'rgba(40,167,69,0.9)',
             backgroundColor: 'rgba(40,167,69,0.08)',
@@ -3947,7 +4257,7 @@ function simRenderChemostat(d) {
             yAxisID: 'y',
         },
         {
-            label: 'ρ_A (gCDM·m⁻²)',
+            label: 'ρ_A — Areal biomass density (g CDM·m⁻²)',
             data: d.points.map(pt => pt.rho_A),
             borderColor: 'rgba(255,140,0,0.9)',
             borderDash: [5, 3],
@@ -3967,15 +4277,27 @@ function simRenderChemostat(d) {
         });
     }
 
-    if (p.Y_X > 0 && d.points[0]?.P_prod != null) {
+    const hasDecoupledProduct = d.points[0]?.P_prod != null && _productFluxSource !== 'manual';
+    const hasCoupledProduct   = d.points[0]?.P_prod != null && _productFluxSource === 'manual' && p.Y_X > 0;
+
+    if (hasDecoupledProduct || hasCoupledProduct) {
         datasets.push({
             label: `${p.productName || 'Product'} (mmol·m⁻²·d⁻¹)`,
             data: d.points.map(pt => pt.P_prod),
             borderColor: 'rgba(111,66,193,0.85)',
-            borderDash: [3, 3],
+            borderDash: hasDecoupledProduct ? [] : [3, 3],
             fill: false, tension: 0.3, pointRadius: 0,
-            yAxisID: 'y',
+            yAxisID: 'y3',
         });
+    }
+
+    const scales = {
+        x:  { title: { display: true, text: 'Dilution rate D (h⁻¹)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+        y:  { title: { display: true, text: 'P_A — Areal biomass productivity (g CDM·m⁻²·d⁻¹)', font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
+        y2: { title: { display: true, text: 'ρ_A — Areal biomass density (g CDM·m⁻²)',          font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+    };
+    if (hasDecoupledProduct || hasCoupledProduct) {
+        scales.y3 = { title: { display: true, text: `${p.productName || 'Product'} (mmol·m⁻²·d⁻¹)`, font: { size: 11 }, color: 'rgba(111,66,193,0.9)' }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: 'rgba(111,66,193,0.9)' } };
     }
 
     simChemoChart = new Chart(ctx, {
@@ -3988,11 +4310,7 @@ function simRenderChemostat(d) {
                 legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
                 title: { display: true, text: 'Chemostat: Productivity & Biomass vs Dilution Rate', font: { size: 12 } },
             },
-            scales: {
-                x:  { title: { display: true, text: 'Dilution rate D (h⁻¹)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-                y:  { title: { display: true, text: 'P_A (gCDM·m⁻²·d⁻¹)',   font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
-                y2: { title: { display: true, text: 'ρ_A (gCDM·m⁻²)',        font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
-            }
+            scales,
         }
     });
 }
@@ -4022,14 +4340,14 @@ function simRenderBatch(d) {
     if (simBatchDensityChart) { simBatchDensityChart.destroy(); simBatchDensityChart = null; }
     const densDatasets = [
         {
-            label: 'ρ_A (gCDM·m⁻²)',
+            label: 'ρ_A — Areal biomass density (g CDM·m⁻²)',
             data: pts.map(pt => pt.rho),
             borderColor: 'rgba(255,140,0,0.9)',
             fill: false, tension: 0.3, pointRadius: 0,
             yAxisID: 'y',
         },
         {
-            label: 'I_bottom (µmol·m⁻²·s⁻¹)',
+            label: 'I_bottom — Back-face irradiance (µmol photons·m⁻²·s⁻¹)',
             data: pts.map(pt => pt.I_bot),
             borderColor: 'rgba(255,193,7,0.85)',
             borderDash: [4, 3],
@@ -4060,8 +4378,8 @@ function simRenderBatch(d) {
             },
             scales: {
                 x:  { title: { display: true, text: 'Time (h)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-                y:  { title: { display: true, text: 'ρ_A (gCDM·m⁻²)',           font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
-                y2: { title: { display: true, text: 'I_bottom (µmol·m⁻²·s⁻¹)', font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+                y:  { title: { display: true, text: 'ρ_A — Areal biomass density (g CDM·m⁻²)',              font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
+                y2: { title: { display: true, text: 'I_bottom — Back-face irradiance (µmol photons·m⁻²·s⁻¹)', font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
             },
         },
     });
@@ -4070,7 +4388,7 @@ function simRenderBatch(d) {
     if (simBatchProdChart) { simBatchProdChart.destroy(); simBatchProdChart = null; }
     const prodDatasets = [
         {
-            label: 'P_A (gCDM·m⁻²·h⁻¹)',
+            label: 'P_A — Areal biomass productivity (g CDM·m⁻²·h⁻¹)',
             data: pts.map(pt => pt.P_inst),
             borderColor: 'rgba(40,167,69,0.9)',
             backgroundColor: 'rgba(40,167,69,0.08)',
@@ -4078,7 +4396,7 @@ function simRenderBatch(d) {
             yAxisID: 'y',
         },
         {
-            label: 'μ (h⁻¹)',
+            label: 'μ — Specific growth rate (h⁻¹)',
             data: pts.map(pt => pt.mu),
             borderColor: 'rgba(0,123,255,0.8)',
             fill: false, tension: 0.3, pointRadius: 0,
@@ -4095,15 +4413,26 @@ function simRenderBatch(d) {
             yAxisID: 'y',
         });
     }
-    if (p.Y_X > 0 && pts[0]?.P_prod != null) {
+    const batchHasDecoupledProduct = pts[0]?.P_prod != null && _productFluxSource !== 'manual';
+    const batchHasCoupledProduct   = pts[0]?.P_prod != null && _productFluxSource === 'manual' && p.Y_X > 0;
+
+    if (batchHasDecoupledProduct || batchHasCoupledProduct) {
         prodDatasets.push({
             label: `${p.productName || 'Product'} (mmol·m⁻²·h⁻¹)`,
             data: pts.map(pt => pt.P_prod),
             borderColor: 'rgba(111,66,193,0.85)',
-            borderDash: [3, 3],
+            borderDash: batchHasDecoupledProduct ? [] : [3, 3],
             fill: false, tension: 0.3, pointRadius: 0,
-            yAxisID: 'y',
+            yAxisID: 'y3',
         });
+    }
+    const batchProdScales = {
+        x:  { title: { display: true, text: 'Time (h)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+        y:  { title: { display: true, text: 'P_A — Areal biomass productivity (g CDM·m⁻²·h⁻¹)', font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
+        y2: { title: { display: true, text: 'μ — Specific growth rate (h⁻¹)',                    font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+    };
+    if (batchHasDecoupledProduct || batchHasCoupledProduct) {
+        batchProdScales.y3 = { title: { display: true, text: `${p.productName || 'Product'} (mmol·m⁻²·h⁻¹)`, font: { size: 11 }, color: 'rgba(111,66,193,0.9)' }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: 'rgba(111,66,193,0.9)' } };
     }
     simBatchProdChart = new Chart(
         document.getElementById('sim-batch-prod-chart').getContext('2d'), {
@@ -4116,11 +4445,7 @@ function simRenderBatch(d) {
                 legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
                 title: { display: true, text: 'Batch: Productivity & Growth rate', font: { size: 12 } },
             },
-            scales: {
-                x:  { title: { display: true, text: 'Time (h)', font: { size: 11 } }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-                y:  { title: { display: true, text: 'P_A (gCDM·m⁻²·h⁻¹)', font: { size: 11 } }, position: 'left',  ticks: { font: { size: 10 } } },
-                y2: { title: { display: true, text: 'μ (h⁻¹)',              font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
-            },
+            scales: batchProdScales,
         },
     });
 }

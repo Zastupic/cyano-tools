@@ -552,7 +552,7 @@ def _process_aquapen(files, protocol_key, upload_folder):
     # Fv = Fm' - Ft
     fv_data = fm_prime_data.values - ft_lookup.values
     # qN = (Fm - Fm') / (Fm - Fo)
-    fo_first = fo_row.iloc[0, 1:].astype(float).values
+    fo_first = fo_row.iloc[0].astype(float).values
     qn_data = (fm_first.values - fm_prime_data.values) / (fm_first.values - fo_first)
     # NPQ using Fm_max = (Fm_max - Fm') / Fm'
     npq_fmmax_data = (fm_max.values - fm_prime_data.values) / fm_prime_data.values

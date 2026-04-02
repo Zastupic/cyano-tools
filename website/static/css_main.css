@@ -27,7 +27,8 @@
   --color-cat-image:        #0984e3;
   --color-cat-spectroscopy: #6c5ce7;
   --color-cat-stats:        #00cec9;
-  --color-cat-pbr:          #e17055;
+  --color-cat-modelling:    #e17055;
+  --color-cat-pbr:          #00b894;
   --color-cat-other:        #636e72;
 
   /* --- Alert / badge colours --- */
@@ -1353,6 +1354,7 @@ footer {
 .cat-image        .features-category-header { background: linear-gradient(90deg, var(--color-cat-image),        var(--color-accent)); }
 .cat-spectroscopy .features-category-header { background: linear-gradient(90deg, var(--color-cat-spectroscopy), var(--color-accent)); }
 .cat-stats        .features-category-header { background: linear-gradient(90deg, var(--color-cat-stats),        var(--color-accent)); }
+.cat-modelling    .features-category-header { background: linear-gradient(90deg, var(--color-cat-modelling),    var(--color-accent)); }
 .cat-pbr          .features-category-header { background: linear-gradient(90deg, var(--color-cat-pbr),          var(--color-accent)); }
 .cat-other        .features-category-header { background: linear-gradient(90deg, var(--color-cat-other),        var(--color-dark));   }
 

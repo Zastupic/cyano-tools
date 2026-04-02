@@ -171,7 +171,7 @@
                 </div>
             </div>
 
-            <!-- === Row: Spectroscopy (2) + Modelling (2) === -->
+            <!-- === Row: Spectroscopy (2) + Photobioreactors (2) === -->
             <div class="tool-category-row">
 
             <!-- === Spectroscopy & Mass Spectrometry (2 tools) === -->
@@ -195,28 +195,28 @@
                 </div>
             </div>
 
-            <!-- === Modelling (2 tools) === -->
-            <div class="tool-category cat-modelling">
-                <div class="features-category-header">&#9881; Modelling</div>
+            <!-- === Photobioreactors (2 tools) === -->
+            <div class="tool-category cat-pbr">
+                <div class="features-category-header">&#127981; Photobioreactors</div>
                 <div class="tool-tiles">
-                    <a class="feature" href="{{ url_for('metabolic_bp.metabolic_model_page') }}">
-                        <img src="{{ url_for('static', filename='images/hoeper2024_fig1.png') }}" alt="Metabolic model" class="feature-thumb">
+                    <a class="feature" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/PBRtool2_1.jpg') }}" alt="Photobioreactors data analysis" class="feature-thumb">
                         <div class="feature-text">
-                            <h3><b>Metabolic Model</b>{% if updated_tools.get('metabolic_model') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('metabolic_model') }}">Updated</span>{% endif %}</h3>
-                            <p>Flux balance analysis of <i>Synechocystis</i> sp. PCC 6803.</p>
+                            <h3><b>Photobioreactors</b></h3>
+                            <p>Batch, turbidostat and periodic data analysis for FMT-150 photobioreactors.</p>
                         </div>
                     </a>
-                    <a class="feature" href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">
-                        <img src="{{ url_for('static', filename='images/ecyanobacterium_1.JPG') }}" alt="E-cyanobacterium" class="feature-thumb">
+                    <a class="feature" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/PBRscripts2_1.JPG') }}" alt="PBR control scripts" class="feature-thumb">
                         <div class="feature-text">
-                            <h3><b>E-cyanobacterium</b></h3>
-                            <p>Sharing, annotation, analysis, and visualisation of multiple models and wet-lab experiments.</p>
+                            <h3><b>PBR control scripts</b></h3>
+                            <p>FMT-150 control scripts including growth optimizer and PI curves measurement.</p>
                         </div>
                     </a>
                 </div>
             </div>
 
-            </div><!-- /.tool-category-row (Spectroscopy + Modelling) -->
+            </div><!-- /.tool-category-row (Spectroscopy + Photobioreactors) -->
 
             <!-- === Statistics & Calculators (3 tools) === -->
             <div class="tool-category cat-stats">
@@ -295,25 +295,25 @@
                 </div>
             </div>
 
-            <!-- === Row: Photobioreactors (2) + Other Platforms (1) === -->
+            <!-- === Row: Modelling (2) + Other Platforms (1) === -->
             <div class="tool-category-row">
 
-            <!-- === Photobioreactors (2 tools) === -->
-            <div class="tool-category cat-pbr">
-                <div class="features-category-header">&#127981; Photobioreactors</div>
+            <!-- === Modelling (2 tools) === -->
+            <div class="tool-category cat-modelling">
+                <div class="features-category-header">&#9881; Modelling</div>
                 <div class="tool-tiles">
-                    <a class="feature" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" rel="noopener">
-                        <img src="{{ url_for('static', filename='images/PBRtool2_1.jpg') }}" alt="Photobioreactors data analysis" class="feature-thumb">
+                    <a class="feature" href="{{ url_for('metabolic_bp.metabolic_model_page') }}">
+                        <img src="{{ url_for('static', filename='images/hoeper2024_fig1.png') }}" alt="Metabolic model" class="feature-thumb">
                         <div class="feature-text">
-                            <h3><b>Photobioreactors</b></h3>
-                            <p>Batch, turbidostat and periodic data analysis for FMT-150 photobioreactors.</p>
+                            <h3><b>Metabolic Model</b>{% if updated_tools.get('metabolic_model') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('metabolic_model') }}">Updated</span>{% endif %}</h3>
+                            <p>Flux balance analysis of <i>Synechocystis</i> sp. PCC 6803.</p>
                         </div>
                     </a>
-                    <a class="feature" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" rel="noopener">
-                        <img src="{{ url_for('static', filename='images/PBRscripts2_1.JPG') }}" alt="PBR control scripts" class="feature-thumb">
+                    <a class="feature" href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/ecyanobacterium_1.JPG') }}" alt="E-cyanobacterium" class="feature-thumb">
                         <div class="feature-text">
-                            <h3><b>PBR control scripts</b></h3>
-                            <p>FMT-150 control scripts including growth optimizer and PI curves measurement.</p>
+                            <h3><b>E-cyanobacterium</b></h3>
+                            <p>Sharing, annotation, analysis, and visualisation of multiple models and wet-lab experiments.</p>
                         </div>
                     </a>
                 </div>
@@ -333,7 +333,7 @@
                 </div>
             </div>
 
-            </div><!-- /.tool-category-row (Photobioreactors + Other Platforms) -->
+            </div><!-- /.tool-category-row (Modelling + Other Platforms) -->
 
         </div>
     </div>
