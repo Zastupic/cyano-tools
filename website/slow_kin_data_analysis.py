@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, jsonify
-import os, io, time
+from flask import Blueprint, render_template, request, jsonify, send_file
+import os, io, time, base64
 import pandas as pd
 import numpy as np
 try:
@@ -9,6 +9,7 @@ except ImportError:
     _SCIPY_OK = False
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.drawing.image import Image as XLImage
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
 
@@ -526,7 +527,7 @@ def _process_aquapen(files, protocol_key, upload_folder):
     fm_prime_data = fm_prime_data.astype(float)
 
     fm_max = fm_prime_data.max()
-    fm_first = fm_prime_data.iloc[0]
+    fm_first = fm_prime_data.iloc[0].to_numpy(dtype=float)
 
     # ── Compute all parameters per sample ──────────────────────────────────
     # Numeric-only rows for raw trace
@@ -552,8 +553,8 @@ def _process_aquapen(files, protocol_key, upload_folder):
     # Fv = Fm' - Ft
     fv_data = fm_prime_data.values - ft_lookup.values
     # qN = (Fm - Fm') / (Fm - Fo)
-    fo_first = fo_row.iloc[0].astype(float).values
-    qn_data = (fm_first.values - fm_prime_data.values) / (fm_first.values - fo_first)
+    fo_first = fo_row.iloc[0].to_numpy(dtype=float)
+    qn_data = (fm_first - fm_prime_data.values) / (fm_first - fo_first)
     # NPQ using Fm_max = (Fm_max - Fm') / Fm'
     npq_fmmax_data = (fm_max.values - fm_prime_data.values) / fm_prime_data.values
 
@@ -824,8 +825,7 @@ def slow_kin_export():
         param_labels = data.get('param_labels', {})
 
         wb = Workbook()
-        if wb.active is not None:
-            wb.remove(wb.active)  # remove default sheet
+        default_sheet = wb.active  # remove after all real sheets are added
 
         def _write_sheet(wb, title, time_list, series_dict, time_label='Time', labels=None):
             ws = wb.create_sheet(title=title[:31])
@@ -854,7 +854,7 @@ def slow_kin_export():
         if has_params and params:
             param_keys = [
                 ('ft', 'Ft', param_time, param_labels.get('ft')),
-                ('fm', "Fm'", param_time, param_labels.get('fm')),
+                ('fm', "Fm\u2032", param_time, param_labels.get('fm')),
                 ('fv', 'Fv', param_time, param_labels.get('fv')),
                 ('npq', 'NPQ (Fm)', param_time_npq, param_labels.get('npq')),
                 ('npq_fmmax', 'NPQ (Fm_max)', param_time, param_labels.get('npq')),
@@ -905,12 +905,58 @@ def slow_kin_export():
                         note,
                     ])
 
-        out_path = os.path.join(upload_folder, f'{file_stem}_results.xlsx').replace('\\', '/')
-        wb.save(out_path)
+        # Charts sheet (images captured from Chart.js on the client)
+        charts = data.get('charts', [])
+        if charts:
+            ws_ch = wb.create_sheet(title='Charts')
+            row = 1
+            for c in charts:
+                url = c.get('data_url', '')
+                if not url or ',' not in url:
+                    continue
+                b64 = url.split(',', 1)[1]
+                if not b64:
+                    continue
+                try:
+                    img_bytes = base64.b64decode(b64)
+                except Exception:
+                    continue
+                if len(img_bytes) < 8:
+                    continue
+                img_buf = io.BytesIO(img_bytes)
+                try:
+                    xl_img = XLImage(img_buf)
+                except Exception:
+                    continue
+                img_buf.seek(0)
+                TARGET_W = 700
+                orig_w = xl_img.width or 0
+                orig_h = xl_img.height or 400
+                if orig_w > 0:
+                    scale = TARGET_W / orig_w
+                    xl_img.width  = TARGET_W
+                    xl_img.height = round(orig_h * scale)
+                else:
+                    xl_img.width, xl_img.height = TARGET_W, 400
+                title = c.get('title', '')
+                if title:
+                    ws_ch.cell(row=row, column=1, value=title)
+                    row += 1
+                xl_img.anchor = f'A{row}'
+                ws_ch.add_image(xl_img)
+                row += round(xl_img.height / 20) + 2
 
-        _cleanup_old_files(upload_folder)
-
-        return jsonify({'status': 'success', 'xlsx_path': f'uploads/{file_stem}_results.xlsx'})
+        if default_sheet in wb.worksheets:
+            wb.remove(default_sheet)
+        buf = io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+        return send_file(
+            buf,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f'{file_stem}_results.xlsx',
+        )
 
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500

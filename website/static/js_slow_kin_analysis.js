@@ -55,6 +55,33 @@ function makeChart(id, cfg) {
   return chartInst[id];
 }
 
+// ── canvas capture for xlsx export ────────────────────────────────────────
+var _SK_MAX_CHART_PX = 1200;
+function _skChartToDataUrl(canvas) {
+  var w = canvas.width, h = canvas.height;
+  if (w > _SK_MAX_CHART_PX) { h = Math.round(h * _SK_MAX_CHART_PX / w); w = _SK_MAX_CHART_PX; }
+  var tmp = document.createElement('canvas');
+  tmp.width = w; tmp.height = h;
+  var ctx = tmp.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(canvas, 0, 0, w, h);
+  return tmp.toDataURL('image/jpeg', 0.88);
+}
+function _captureSkCanvas(id) {
+  if (!chartInst[id]) return null;
+  var canvas = document.getElementById(id);
+  if (!canvas) return null;
+  var pane = canvas.closest('.tab-pane');
+  var wasHidden = pane && getComputedStyle(pane).display === 'none';
+  if (wasHidden) {
+    pane.style.display = 'block'; pane.style.visibility = 'hidden';
+    void pane.offsetWidth; chartInst[id].resize();
+  }
+  var du = _skChartToDataUrl(canvas);
+  if (wasHidden) { pane.style.display = ''; pane.style.visibility = ''; }
+  return (du && du.includes(',') && du.split(',')[1]) ? du : null;
+}
+
 function _withPaneVisible(paneId, fn) {
   const pane = document.getElementById(paneId);
   if (!pane) { fn(); return; }
@@ -471,11 +498,11 @@ function renderResults() {
   if (xlsxLink) {
     xlsxLink.style.display = '';
     xlsxLink.href = '#';
-    xlsxLink.onclick = function(e) { e.preventDefault(); downloadXlsx(); };
+    xlsxLink.onclick = function(e) { e.preventDefault(); downloadXlsx(true); };
   }
   if (xlsxFullBtn) {
     xlsxFullBtn.style.display = '';
-    xlsxFullBtn.onclick = downloadXlsx;
+    xlsxFullBtn.onclick = function() { downloadXlsx(false); };
   }
 
   // Render visible Traces tab
@@ -1402,35 +1429,71 @@ function _confirmExportToStatistics() {
 }
 
 // ── download xlsx ─────────────────────────────────────────────────────────
-async function downloadXlsx() {
+async function downloadXlsx(asZip) {
   var statusEl = document.getElementById('sk-download-status');
   var xlsxLink = document.getElementById('sk-xlsx-download-link');
   if (statusEl) statusEl.textContent = 'Preparing download…';
   if (xlsxLink) xlsxLink.style.pointerEvents = 'none';
 
   try {
-    var payload = JSON.stringify(skData);
-    var resp    = await fetch('/api/slow_kin_export', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload,
-    });
-    var data = await resp.json();
+    var xlsxName = (skData.file_stem || 'slow_kin') + '_results.xlsx';
 
-    if (data.status !== 'success') {
-      if (statusEl) statusEl.textContent = 'Export failed: ' + data.message;
-      return;
+    // Pre-render hidden tabs so all charts exist before capture
+    if (skData.has_params) {
+      _withPaneVisible('sk-tab-ftfm',    function() { renderFtFmChart('ft'); });
+      _withPaneVisible('sk-tab-derived', function() { renderDerivedChart('npq'); });
+      _withPaneVisible('sk-tab-params',  function() { renderParamsChart(); });
+    }
+    if (skData.has_state_transitions) {
+      _withPaneVisible('sk-tab-st', function() { renderStTab(); });
     }
 
-    const xlsxResp  = await fetch('/static/' + data.xlsx_path);
-    const xlsxBytes = await xlsxResp.arrayBuffer();
-    const zip = new JSZip();
-    zip.file(data.xlsx_path.split('/').pop(), xlsxBytes);
-    zip.file('Methods_section.html', _buildMethodsHtml('Slow Kinetics Analyzer', generateSKMethodsText()));
-    const blob = await zip.generateAsync({ type: 'blob' });
-    const dlA  = document.createElement('a');
+    // Capture all chart canvases
+    var skCaptures = [
+      { id: 'sk-traces-chart',       title: 'Raw Fluorescence' },
+      { id: 'sk-ftfm-chart',         title: 'Ft and Fm\u2032' },
+      { id: 'sk-derived-chart',      title: 'Derived Parameters' },
+      { id: 'sk-params-chart',       title: 'Summary Parameters' },
+      { id: 'sk-group-traces-chart', title: 'Group Traces' },
+      { id: 'sk-group-derived-chart', title: 'Group Derived Parameters' },
+      { id: 'sk-group-params-chart', title: 'Group Summary Parameters' },
+      { id: 'sk-st-chart',           title: 'State Transitions' },
+      { id: 'sk-group-st-chart',     title: 'Group State Transitions' },
+    ];
+    var charts = [];
+    skCaptures.forEach(function(c) {
+      var du = _captureSkCanvas(c.id);
+      if (du) charts.push({ title: c.title, data_url: du });
+    });
+
+    var resp = await fetch('/api/slow_kin_export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({}, skData, { charts: charts })),
+    });
+    if (!resp.ok) {
+      var errMsg = 'Export failed';
+      try { var e = await resp.json(); errMsg = e.message || errMsg; } catch (_) {}
+      if (statusEl) statusEl.textContent = errMsg;
+      return;
+    }
+    const xlsxBytes = new Uint8Array(await resp.arrayBuffer());
+
+    var blob, dlName;
+    if (asZip) {
+      const zip = new JSZip();
+      zip.file(xlsxName, xlsxBytes);
+      zip.file('Methods_section.html', _buildMethodsHtml('Slow Kinetics Analyzer', generateSKMethodsText()));
+      blob   = await zip.generateAsync({ type: 'blob' });
+      dlName = (skData.file_stem || 'slow_kin') + '_analysis.zip';
+    } else {
+      blob   = new Blob([xlsxBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      dlName = xlsxName;
+    }
+
+    const dlA = document.createElement('a');
     dlA.href     = URL.createObjectURL(blob);
-    dlA.download = (skData.file_stem || data.xlsx_path.split('/').pop().replace('.xlsx', '')) + '_analysis.zip';
+    dlA.download = dlName;
     dlA.click();
     setTimeout(function() { URL.revokeObjectURL(dlA.href); }, 1000);
     if (statusEl) statusEl.textContent = '';
