@@ -9,6 +9,12 @@ let groups      = {};     // {filename: groupName}
 let chartInst   = {};     // {chartId: Chart instance}
 let dirtyTabs   = new Set();
 let stIncludeD1 = false;  // checkbox: include first dark-recovery point
+let skTracesNorm      = 'raw';  // 'raw' | 'normalized'
+let skTracesNormTime  = 0;      // reference time for normalization
+let skTracesJitter    = 0;      // time offset between successive traces
+let skGrpTracesNorm      = 'raw';
+let skGrpTracesNormTime  = 0;
+let skGrpTracesJitter    = 0;   // time offset between successive groups
 
 // ── parameter metadata ────────────────────────────────────────────────────
 const SK_SUMMARY_KEYS   = ['fv_fm', 'rfd', 'npq_max', 'actinic_intensity'];
@@ -159,6 +165,20 @@ function timeAxisLabel(timeUnit) {
   return 'Time';
 }
 
+// ── normalization helper ──────────────────────────────────────────────────
+// Returns a new array of values divided by the value at the time point
+// nearest to refTime. Returns the original array if refVal is 0 or null.
+function normalizeTraceArr(values, times, refTime) {
+  var refIdx = 0, minDist = Infinity;
+  for (var j = 0; j < times.length; j++) {
+    var d = Math.abs(times[j] - refTime);
+    if (d < minDist) { minDist = d; refIdx = j; }
+  }
+  var refVal = values[refIdx];
+  if (!refVal || refVal === 0) return values.slice();
+  return values.map(function(v) { return v != null ? v / refVal : null; });
+}
+
 // ── tab dirty tracking ────────────────────────────────────────────────────
 function markTabsDirty() {
   for (var i = 0; i < arguments.length; i++) dirtyTabs.add(arguments[i]);
@@ -303,6 +323,64 @@ document.addEventListener('DOMContentLoaded', function() {
   if (showIndivCheck) showIndivCheck.addEventListener('change', function() {
     if (hasGroups()) renderGroupTracesChart();
   });
+
+  // Traces normalization
+  var tracesNormBtns = document.getElementById('sk-traces-norm-btns');
+  if (tracesNormBtns) {
+    tracesNormBtns.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-norm]'); if (!btn) return;
+      setActiveBtn('sk-traces-norm-btns', btn);
+      skTracesNorm = btn.dataset.norm;
+      var box = document.getElementById('sk-traces-norm-time-box');
+      if (box) box.style.display = skTracesNorm === 'normalized' ? '' : 'none';
+      if (skData) renderTracesChart();
+    });
+  }
+  var tracesNormTimeInp = document.getElementById('sk-traces-norm-time');
+  if (tracesNormTimeInp) {
+    tracesNormTimeInp.addEventListener('change', function() {
+      skTracesNormTime = parseFloat(this.value) || 0;
+      if (skData && skTracesNorm === 'normalized') renderTracesChart();
+    });
+  }
+
+  // Group traces normalization
+  var grpTracesNormBtns = document.getElementById('sk-group-traces-norm-btns');
+  if (grpTracesNormBtns) {
+    grpTracesNormBtns.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-gnorm]'); if (!btn) return;
+      setActiveBtn('sk-group-traces-norm-btns', btn);
+      skGrpTracesNorm = btn.dataset.gnorm;
+      var box = document.getElementById('sk-group-traces-norm-time-box');
+      if (box) box.style.display = skGrpTracesNorm === 'normalized' ? '' : 'none';
+      if (skData && hasGroups()) renderGroupTracesChart();
+    });
+  }
+  var grpTracesNormTimeInp = document.getElementById('sk-group-traces-norm-time');
+  if (grpTracesNormTimeInp) {
+    grpTracesNormTimeInp.addEventListener('change', function() {
+      skGrpTracesNormTime = parseFloat(this.value) || 0;
+      if (skData && skGrpTracesNorm === 'normalized' && hasGroups()) renderGroupTracesChart();
+    });
+  }
+
+  // Traces jitter
+  var tracesJitterInp = document.getElementById('sk-traces-jitter');
+  if (tracesJitterInp) {
+    tracesJitterInp.addEventListener('change', function() {
+      skTracesJitter = parseFloat(this.value) || 0;
+      if (skData) renderTracesChart();
+    });
+  }
+
+  // Group traces jitter
+  var grpTracesJitterInp = document.getElementById('sk-group-traces-jitter');
+  if (grpTracesJitterInp) {
+    grpTracesJitterInp.addEventListener('change', function() {
+      skGrpTracesJitter = parseFloat(this.value) || 0;
+      if (skData && hasGroups()) renderGroupTracesChart();
+    });
+  }
 
   // Export to statistics
   var exportBtn = document.getElementById('sk-export-stats-btn');
@@ -505,6 +583,33 @@ function renderResults() {
     xlsxFullBtn.onclick = function() { downloadXlsx(false); };
   }
 
+  // Reset normalization and jitter state on new data load
+  skTracesNorm = 'raw'; skTracesNormTime = 0; skTracesJitter = 0;
+  skGrpTracesNorm = 'raw'; skGrpTracesNormTime = 0; skGrpTracesJitter = 0;
+  var jitterInp = document.getElementById('sk-traces-jitter');
+  if (jitterInp) jitterInp.value = 0;
+  var grpJitterInp = document.getElementById('sk-group-traces-jitter');
+  if (grpJitterInp) grpJitterInp.value = 0;
+  ['sk-traces-norm-btns', 'sk-group-traces-norm-btns'].forEach(function(id) {
+    var btns = document.getElementById(id);
+    if (!btns) return;
+    btns.querySelectorAll('.btn').forEach(function(b) {
+      var isRaw = b.dataset.norm === 'raw' || b.dataset.gnorm === 'raw';
+      b.classList.toggle('btn-primary', isRaw);
+      b.classList.toggle('btn-outline-primary', !isRaw);
+    });
+  });
+  var tBox = document.getElementById('sk-traces-norm-time-box');
+  if (tBox) tBox.style.display = 'none';
+  var gBox = document.getElementById('sk-group-traces-norm-time-box');
+  if (gBox) gBox.style.display = 'none';
+  // Populate time unit labels (normalization ref + jitter)
+  var unit = skData.time_unit === 'us' ? 'µs' : (skData.time_unit || 's');
+  ['sk-traces-norm-time-unit', 'sk-group-traces-norm-time-unit',
+   'sk-traces-jitter-unit', 'sk-group-traces-jitter-unit'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = unit;
+  });
+
   // Render visible Traces tab
   renderTracesChart();
 
@@ -541,13 +646,20 @@ function renderResults() {
 // ── traces chart ──────────────────────────────────────────────────────────
 function renderTracesChart() {
   if (!skData) return;
-  var files = skData.files;
-  var t     = skData.raw_time;
-  var n     = files.length;
+  var files    = skData.files;
+  var t        = skData.raw_time;
+  var n        = files.length;
+  var norm     = skTracesNorm === 'normalized';
+  var normTime = skTracesNormTime;
+  var yLabel   = norm ? 'F / F(ref)' : 'Fluorescence (a.u.)';
+
   var datasets = files.map(function(fname, i) {
+    var raw    = skData.raw_traces[fname] || [];
+    var vals   = norm ? normalizeTraceArr(raw, t, normTime) : raw;
+    var offset = i * skTracesJitter;
     return {
       label:           fname,
-      data:            (skData.raw_traces[fname] || []).map(function(y, j) { return { x: t[j], y: y }; }),
+      data:            vals.map(function(y, j) { return { x: t[j] + offset, y: y }; }),
       borderColor:     sampleColor(i, n),
       backgroundColor: 'transparent',
       borderWidth: 1.5, pointRadius: 0, showLine: true,
@@ -556,7 +668,7 @@ function renderTracesChart() {
   makeChart('sk-traces-chart', {
     type: 'scatter',
     data: { datasets: datasets },
-    options: linearScatterOpts(timeAxisLabel(skData.time_unit), 'Fluorescence (a.u.)'),
+    options: linearScatterOpts(timeAxisLabel(skData.time_unit), yLabel),
   });
 }
 
@@ -882,50 +994,70 @@ function calcGroupSummaryStats() {
 // ── group traces chart ────────────────────────────────────────────────────
 function renderGroupTracesChart() {
   if (!skData) return;
-  var traceStats  = calcGroupTraceStats();
-  var grpNames    = Object.keys(traceStats);
-  var t           = skData.raw_time;
-  var showIndiv   = (document.getElementById('sk-show-individual-check') || {}).checked !== false;
-  var datasets    = [];
+  var t          = skData.raw_time;
+  var showIndiv  = (document.getElementById('sk-show-individual-check') || {}).checked !== false;
+  var norm       = skGrpTracesNorm === 'normalized';
+  var normTime   = skGrpTracesNormTime;
+  var yLabel     = norm ? 'F / F(ref)' : 'Fluorescence (a.u.)';
+  var datasets   = [];
+
+  // Helper: get (optionally normalized) trace for a file
+  function getTrace(fname) {
+    var raw = skData.raw_traces[fname] || [];
+    return norm ? normalizeTraceArr(raw, t, normTime) : raw;
+  }
+
+  var grpFilesMap = _grpFiles();
+  var grpNames    = Object.keys(grpFilesMap);
 
   grpNames.forEach(function(grp, gi) {
-    var means = traceStats[grp].means;
-    var sds   = traceStats[grp].sds;
-    var files = traceStats[grp].files;
-    var c  = groupColor(gi, grpNames.length);
-    var ca = groupColor(gi, grpNames.length, 0.18);
+    var files  = grpFilesMap[grp];
+    var arrs   = files.map(getTrace);
+    var n_pts  = t.length;
+    var means  = [], sds = [];
+    for (var j = 0; j < n_pts; j++) {
+      var vals = arrs.map(function(a) { return a[j]; }).filter(function(v) { return v != null && isFinite(v); });
+      var mu   = vals.length ? vals.reduce(function(s, v) { return s + v; }, 0) / vals.length : null;
+      var sd   = mu !== null ? Math.sqrt(vals.reduce(function(s, v) { return s + (v - mu) * (v - mu); }, 0) / vals.length) : null;
+      means.push(mu); sds.push(sd);
+    }
+
+    var c      = groupColor(gi, grpNames.length);
+    var ca     = groupColor(gi, grpNames.length, 0.18);
+    var offset = gi * skGrpTracesJitter;
 
     datasets.push({
       label: '', showLine: true, pointRadius: 0, borderWidth: 0,
       borderColor: 'transparent', backgroundColor: ca,
-      data: means.map(function(m, j) { return { x: t[j], y: m !== null ? m + (sds[j] || 0) : null }; }),
+      data: means.map(function(m, j) { return { x: t[j] + offset, y: m !== null ? m + (sds[j] || 0) : null }; }),
       fill: '+1',
     });
     datasets.push({
       label: '', showLine: true, pointRadius: 0, borderWidth: 0,
       borderColor: 'transparent', backgroundColor: ca,
-      data: means.map(function(m, j) { return { x: t[j], y: m !== null ? m - (sds[j] || 0) : null }; }),
+      data: means.map(function(m, j) { return { x: t[j] + offset, y: m !== null ? m - (sds[j] || 0) : null }; }),
       fill: false,
     });
     datasets.push({
       label: grp, showLine: true, pointRadius: 0, borderWidth: 2.5,
       borderColor: c, backgroundColor: c,
-      data: means.map(function(m, j) { return { x: t[j], y: m }; }),
+      data: means.map(function(m, j) { return { x: t[j] + offset, y: m }; }),
       fill: false,
     });
     if (showIndiv) {
       files.forEach(function(fname) {
+        var vals = getTrace(fname);
         datasets.push({
           label: '', showLine: true, pointRadius: 0, borderWidth: 0.8,
           borderColor: groupColor(gi, grpNames.length, 0.4), backgroundColor: 'transparent',
-          data: (skData.raw_traces[fname] || []).map(function(y, j) { return { x: t[j], y: y }; }),
+          data: vals.map(function(y, j) { return { x: t[j] + offset, y: y }; }),
           fill: false,
         });
       });
     }
   });
 
-  var opts = linearScatterOpts(timeAxisLabel(skData.time_unit), 'Fluorescence (a.u.)');
+  var opts = linearScatterOpts(timeAxisLabel(skData.time_unit), yLabel);
   opts.plugins.legend.labels.filter = function(item) { return item.text !== ''; };
   makeChart('sk-group-traces-chart', { type: 'scatter', data: { datasets: datasets }, options: opts });
 }
@@ -1115,7 +1247,7 @@ function _buildExportCheckGroup(containerId, items) {
       var lbl = (skData.param_labels && skData.param_labels[item.key] && skData.param_labels[item.key][idx] != null)
         ? String(skData.param_labels[item.key][idx]) : String(tv);
       return '<label class="mr-2 mb-0" style="font-size:0.8em;cursor:pointer;white-space:nowrap">' +
-        '<input type="checkbox" class="sk-export-tp-check" data-metric="' + item.key + '" data-idx="' + idx + '" checked> ' +
+        '<input type="checkbox" class="sk-export-tp-check" data-metric="' + item.key + '" data-idx="' + idx + '" data-steplbl="' + lbl + '" checked> ' +
         lbl + '</label>';
     }).join('');
     return '<div class="mb-2">' +
@@ -1123,9 +1255,9 @@ function _buildExportCheckGroup(containerId, items) {
         '<input type="checkbox" class="sk-export-metric-check mr-1" id="sk-expchk-' + item.key + '" data-metric="' + item.key + '" checked>' +
         '<label class="font-weight-bold mb-0 mr-2" for="sk-expchk-' + item.key + '">' + item.label + '</label>' +
         '<span class="badge badge-primary mr-2" id="sk-tp-count-' + item.key + '">' + n + '/' + n + '</span>' +
-        '<a href="#" class="text-muted sk-tp-toggle" data-tptarget="' + item.key + '" style="font-size:0.8em">▾ time points</a>' +
+        '<a href="#" class="text-muted sk-tp-toggle" data-tptarget="' + item.key + '" style="font-size:0.8em">▴ time points</a>' +
       '</div>' +
-      '<div id="sk-exptp-' + item.key + '" class="mt-1 ml-3" style="display:none">' + tpHtml + '</div>' +
+      '<div id="sk-exptp-' + item.key + '" class="mt-1 ml-3">' + tpHtml + '</div>' +
     '</div>';
   }).join('');
 }
@@ -1271,44 +1403,6 @@ function _initExportModalEvents() {
     _updateExportColCount();
   });
 
-  // Apply single step to all metrics
-  var tpApplyBtn = document.getElementById('sk-export-tp-apply');
-  if (tpApplyBtn) tpApplyBtn.addEventListener('click', function() {
-    var tpSel = document.getElementById('sk-export-tp-select');
-    if (!tpSel || !skData) return;
-    var selectedLbl = (tpSel.options[tpSel.selectedIndex] || {}).dataset && tpSel.options[tpSel.selectedIndex].dataset.lbl;
-    if (selectedLbl == null) return;
-
-    modal.querySelectorAll('.sk-export-metric-check').forEach(function(metricCb) {
-      var metric = metricCb.dataset.metric;
-      var tpList = document.getElementById('sk-exptp-' + metric);
-      if (!tpList) return;
-      var matched = false;
-      tpList.querySelectorAll('.sk-export-tp-check').forEach(function(tpCb) {
-        var idx = parseInt(tpCb.dataset.idx, 10);
-        var isNpq = _NPQ_METRICS_SET.indexOf(metric) >= 0 && skData.param_time_npq;
-        var t = isNpq ? skData.param_time_npq : skData.param_time;
-        var lbl = (skData.param_labels && skData.param_labels[metric] && skData.param_labels[metric][idx] != null)
-          ? String(skData.param_labels[metric][idx])
-          : (t && t[idx] != null ? String(t[idx]) : String(idx));
-        var match = (lbl === selectedLbl);
-        tpCb.checked = match;
-        if (match) matched = true;
-      });
-      metricCb.checked = matched;
-      metricCb.indeterminate = false;
-      _updateTpCountBadge(metric);
-      // Expand the time point list so user can see the selection
-      var tpDiv = document.getElementById('sk-exptp-' + metric);
-      var toggleA = modal.querySelector('.sk-tp-toggle[data-tptarget="' + metric + '"]');
-      if (tpDiv && tpDiv.style.display === 'none') {
-        tpDiv.style.display = '';
-        if (toggleA) toggleA.textContent = '▴ time points';
-      }
-    });
-    _updateExportColCount();
-  });
-
   // Confirm button
   var confirmBtn = document.getElementById('sk-export-confirm-btn');
   if (confirmBtn) confirmBtn.addEventListener('click', _confirmExportToStatistics);
@@ -1324,17 +1418,6 @@ function exportToStatistics() {
   _buildExportCheckGroup('sk-export-derived-checks', _EXPORT_METRIC_DEFS.derived);
   _buildExportSummaryCheckGroup(assignedFiles);
   _buildExportStCheckGroup(assignedFiles);
-
-  // Populate step dropdown from param_time labels (ft labels cover all steps incl. Dark)
-  var tpSel = document.getElementById('sk-export-tp-select');
-  if (tpSel && skData.param_time) {
-    var opts = skData.param_time.map(function(tv, idx) {
-      var lbl = (skData.param_labels && skData.param_labels.ft && skData.param_labels.ft[idx] != null)
-        ? String(skData.param_labels.ft[idx]) : String(tv);
-      return '<option value="' + idx + '" data-lbl="' + lbl + '">' + lbl + '</option>';
-    });
-    tpSel.innerHTML = opts.join('');
-  }
 
   _updateExportColCount();
   $('#sk-export-modal').modal('show');

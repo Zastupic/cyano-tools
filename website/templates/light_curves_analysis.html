@@ -497,7 +497,12 @@
 
       <!-- Group results (visible only after ≥2 groups defined) -->
       <div id="group-results" style="display:none">
-        <h6 class="font-weight-bold">Mean ± SD ETR curves</h6>
+        <div class="d-flex align-items-center mb-1" style="gap:8px;">
+          <h6 class="font-weight-bold mb-0">Mean ± SD ETR curves</h6>
+          <button class="btn btn-sm btn-outline-secondary ml-auto" id="toggle-indiv-btn" title="Show or hide individual traces">
+            <i class="fa fa-eye mr-1"></i>Individual traces
+          </button>
+        </div>
         <p class="text-muted small mb-2">
           Mean ± SD rETR (shaded band) with individual Platt-fitted curves (thin lines) per group.
         </p>

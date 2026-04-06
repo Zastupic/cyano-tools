@@ -4,10 +4,11 @@
 // ============================================================
 
 // ── state ─────────────────────────────────────────────────────────────────
-let lcData    = null;    // full JSON from /api/lc_process
-let groups    = {};      // {filename: groupName}
-let chartInst = {};      // {chartId: Chart instance}
-let dirtyTabs = new Set();
+let lcData         = null;    // full JSON from /api/lc_process
+let groups         = {};      // {filename: groupName}
+let chartInst      = {};      // {chartId: Chart instance}
+let dirtyTabs      = new Set();
+let showIndivTraces = true;   // individual traces visibility in Groups & Averages
 
 // ── parameter metadata ────────────────────────────────────────────────────
 const PARAM_KEYS = ['alpha', 'beta', 'etr_max_measured', 'etr_max_from_ab', 'etr_mpot', 'ik', 'ib'];
@@ -200,6 +201,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Export to statistics
   document.getElementById('export-stats-btn')?.addEventListener('click', exportToStatistics);
+
+  // Toggle individual traces in Group ETR chart
+  document.getElementById('toggle-indiv-btn')?.addEventListener('click', () => {
+    showIndivTraces = !showIndivTraces;
+    const btn = document.getElementById('toggle-indiv-btn');
+    btn.querySelector('i').className = showIndivTraces ? 'fa fa-eye mr-1' : 'fa fa-eye-slash mr-1';
+    btn.classList.toggle('btn-outline-secondary', showIndivTraces);
+    btn.classList.toggle('btn-secondary', !showIndivTraces);
+    const chart = chartInst['group-etr-chart'];
+    if (chart) {
+      chart.data.datasets.forEach(ds => { if (ds._isIndividual) ds.hidden = !showIndivTraces; });
+      chart.update('none');
+    }
+  });
 
   // Tab shown → resize charts & render dirty
   document.getElementById('lcTabs')?.addEventListener('shown.bs.tab', e => {
@@ -652,16 +667,20 @@ function renderGroupEtrChart() {
     // Individual fitted curves (thin, semi-transparent)
     stats[grp].files.forEach(fname => {
       datasets.push({
-        label: '', showLine: true, pointRadius: 0, borderWidth: 0.8,
-        borderColor: groupColor(gi, grpNames.length, 0.4), backgroundColor: 'transparent',
+        label: fname.replace(/\.[^.]+$/, ''), showLine: true, pointRadius: 0, borderWidth: 0.8,
+        borderColor: groupColor(gi, grpNames.length, 0.5), backgroundColor: 'transparent',
         data: lcData.step_data[fname].etr_fitted.map((y, j) => ({ x: par[j], y })),
         fill: false,
+        hidden: !showIndivTraces,
+        _isIndividual: true,
       });
     });
   });
 
   const opts = linearScatterOpts('PAR (µmol photons m⁻² s⁻¹)', 'rETR (µmol e⁻ m⁻² s⁻¹)');
-  opts.plugins.legend.labels.filter = item => item.text !== '';
+  // Only show group mean lines in the legend (hide SD-band datasets and individual traces)
+  opts.plugins.legend.labels.filter = (item, chart) =>
+    item.text !== '' && !chart.data.datasets[item.datasetIndex]?._isIndividual;
   makeChart('group-etr-chart', { type: 'scatter', data: { datasets }, options: opts });
 }
 
