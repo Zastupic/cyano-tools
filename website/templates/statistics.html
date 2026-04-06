@@ -1198,11 +1198,11 @@
                                                         <div class="col-12">
                                                             <label class="font-weight-bold mb-1 d-block">Plot type <span class="text-muted font-weight-normal">(applied to all ANOVA charts)</span></label>
                                                             <div class="btn-group btn-group-toggle flex-wrap" data-toggle="buttons" id="pubPlotTypeGroup">
-                                                                <label class="btn btn-outline-primary btn-sm">
-                                                                    <input type="radio" name="pubPlotType" value="bar_dot" autocomplete="off"> Bar+Dots
-                                                                </label>
                                                                 <label class="btn btn-outline-primary btn-sm active">
-                                                                    <input type="radio" name="pubPlotType" value="bar" autocomplete="off" checked> Bar
+                                                                    <input type="radio" name="pubPlotType" value="bar_dot" autocomplete="off" checked> Bar+Dots
+                                                                </label>
+                                                                <label class="btn btn-outline-primary btn-sm">
+                                                                    <input type="radio" name="pubPlotType" value="bar" autocomplete="off"> Bar
                                                                 </label>
                                                                 <label class="btn btn-outline-primary btn-sm">
                                                                     <input type="radio" name="pubPlotType" value="dot" autocomplete="off"> Dot
@@ -1233,8 +1233,8 @@
                                                             <label class="font-weight-bold mb-1 d-block">Aspect ratio (w : h)</label>
                                                             <select class="form-select form-select-sm" id="pubAspectRatioPreset">
                                                                 <option value="16:9">16 : 9 &nbsp;(wide)</option>
-                                                                <option value="3:2">3 : 2 &nbsp;(standard)</option>
-                                                                <option value="4:3" selected>4 : 3 &nbsp;(classic)</option>
+                                                                <option value="3:2" selected>3 : 2 &nbsp;(standard)</option>
+                                                                <option value="4:3">4 : 3 &nbsp;(classic)</option>
                                                                 <option value="1:1">1 : 1 &nbsp;(square)</option>
                                                                 <option value="3:4">3 : 4 &nbsp;(portrait)</option>
                                                                 <option value="2:3">2 : 3 &nbsp;(tall)</option>
@@ -1268,7 +1268,7 @@
                                                             </div>
                                                             <div class="d-flex align-items-center gap-1">
                                                                 <label class="small mb-0" for="pubYHeadroom">Y-axis headroom:</label>
-                                                                <input type="number" class="form-control form-control-sm" id="pubYHeadroom" value="30" min="0" max="100" style="width:62px;">
+                                                                <input type="number" class="form-control form-control-sm" id="pubYHeadroom" value="15" min="0" max="100" style="width:62px;">
                                                                 <small class="text-muted">%</small>
                                                             </div>
                                                         </div>
@@ -1304,19 +1304,19 @@
                                                         <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Font sizes (pt)</strong></div>
                                                         <div class="col-6 col-md-3">
                                                             <label class="mb-1 d-block">Axis title</label>
-                                                            <input type="number" class="form-control form-control-sm" id="pubAxisTitleSize" value="15" min="6" max="28">
+                                                            <input type="number" class="form-control form-control-sm" id="pubAxisTitleSize" value="12" min="6" max="28">
                                                         </div>
                                                         <div class="col-6 col-md-3">
                                                             <label class="mb-1 d-block">Tick labels</label>
-                                                            <input type="number" class="form-control form-control-sm" id="pubTickLabelSize" value="15" min="5" max="22">
+                                                            <input type="number" class="form-control form-control-sm" id="pubTickLabelSize" value="12" min="5" max="22">
                                                         </div>
                                                         <div class="col-6 col-md-3">
                                                             <label class="mb-1 d-block">Letter annotations</label>
-                                                            <input type="number" class="form-control form-control-sm" id="pubAnnotationSize" value="15" min="5" max="20">
+                                                            <input type="number" class="form-control form-control-sm" id="pubAnnotationSize" value="12" min="5" max="20">
                                                         </div>
                                                         <div class="col-6 col-md-3">
                                                             <label class="mb-1 d-block">Legend</label>
-                                                            <input type="number" class="form-control form-control-sm" id="pubLegendSize" value="10" min="5" max="18">
+                                                            <input type="number" class="form-control form-control-sm" id="pubLegendSize" value="11" min="5" max="18">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1349,8 +1349,8 @@
                                                                 <input class="form-check-input" type="checkbox" id="pubUnifyColor" checked>
                                                                 <label class="form-check-label small" for="pubUnifyColor">Single color for all groups</label>
                                                             </div>
-                                                            <div id="pubUnifyFillColorWrap" style="display:none;">
-                                                                <input type="color" class="form-control form-control-sm form-control-color" id="pubUnifyFillColor" value="#555555" style="width:36px;" title="Unified fill color">
+                                                            <div id="pubUnifyFillColorWrap" style="display:inline-flex;">
+                                                                <input type="color" class="form-control form-control-sm form-control-color" id="pubUnifyFillColor" value="#d3d3d3" style="width:36px;" title="Unified fill color">
                                                             </div>
                                                         </div>
 
@@ -1360,7 +1360,7 @@
                                                             <div>
                                                                 <label class="small mb-0">Border color &amp; width</label>
                                                                 <div class="d-flex align-items-center gap-1 mt-1">
-                                                                    <input type="color" class="form-control form-control-sm form-control-color" id="pubBarBorderColor" value="#333333" style="width:36px;">
+                                                                    <input type="color" class="form-control form-control-sm form-control-color" id="pubBarBorderColor" value="#000000" style="width:36px;">
                                                                     <input type="range" class="form-range" id="pubBarBorderWidth" min="0" max="3" step="0.5" value="1" style="width:70px;">
                                                                     <small id="pubBarBorderWidthVal" class="text-muted">1px</small>
                                                                 </div>
@@ -1368,7 +1368,7 @@
                                                             <div>
                                                                 <label class="small mb-0">Error bar color / thickness / cap</label>
                                                                 <div class="d-flex align-items-center gap-1 mt-1">
-                                                                    <input type="color" class="form-control form-control-sm form-control-color" id="pubErrBarColor" value="#333333" style="width:36px;" title="Error bar color">
+                                                                    <input type="color" class="form-control form-control-sm form-control-color" id="pubErrBarColor" value="#000000" style="width:36px;" title="Error bar color">
                                                                     <input type="number" class="form-control form-control-sm" id="pubErrBarThickness" value="1.5" min="0.5" max="5" step="0.5" style="width:55px;" title="Thickness">
                                                                     <input type="number" class="form-control form-control-sm" id="pubErrBarCap" value="5" min="0" max="20" style="width:50px;" title="Cap width">
                                                                 </div>
@@ -1419,8 +1419,8 @@
                                                                     <option value="x">× X mark</option>
                                                                 </select>
                                                             </div>
-                                                            <div><label class="form-label small mb-0">Size</label><input type="number" class="form-control form-control-sm" id="pubPointSize" value="8" min="2" max="24" style="width:58px;"></div>
-                                                            <div><label class="form-label small mb-0">Color</label><input type="color" class="form-control form-control-sm form-control-color" id="pubPointColor" value="#333333" style="width:36px;"></div>
+                                                            <div><label class="form-label small mb-0">Size</label><input type="number" class="form-control form-control-sm" id="pubPointSize" value="7" min="2" max="24" style="width:58px;"></div>
+                                                            <div><label class="form-label small mb-0">Color</label><input type="color" class="form-control form-control-sm form-control-color" id="pubPointColor" value="#000000" style="width:36px;"></div>
                                                             <div>
                                                                 <label class="form-label small mb-0">Opacity</label>
                                                                 <div class="d-flex align-items-center gap-1">
@@ -1481,14 +1481,14 @@
                                                         </div>
                                                         <div class="col-auto d-flex align-items-center gap-2">
                                                             <label class="small mb-0" for="pubLetterOffset">Letter spacing above data:</label>
-                                                            <input type="range" class="form-range" id="pubLetterOffset" min="1" max="30" value="8" style="width:90px;">
+                                                            <input type="range" class="form-range" id="pubLetterOffset" min="1" max="30" value="7" style="width:90px;">
                                                             <small id="pubLetterOffsetVal" class="text-muted">7%</small>
                                                         </div>
 
                                                         <!-- Test info & background -->
                                                         <div class="col-12"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Other annotations</strong></div>
                                                         <div class="col-auto d-flex align-items-center gap-3 flex-wrap">
-                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubShowTestInfo"><label class="form-check-label small" for="pubShowTestInfo">Show test info (test, p, effect size)</label></div>
+                                                            <div class="form-check form-check-inline mb-0"><input class="form-check-input" type="checkbox" id="pubShowTestInfo" checked><label class="form-check-label small" for="pubShowTestInfo">Show test info (test, p, effect size)</label></div>
                                                             <div class="d-flex align-items-center gap-2">
                                                                 <label class="small mb-0">Background color</label>
                                                                 <input type="color" class="form-control form-control-sm form-control-color" id="pubBgColor" value="#ffffff" style="width:36px;" title="Plot background color">

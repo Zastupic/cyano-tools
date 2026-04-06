@@ -906,19 +906,19 @@ const PUB_PALETTES = {
     pastel: ['#FFB347','#87CEEB','#98FB98','#FFB6C1','#DDA0DD','#F0E68C','#B0E0E6','#FFDAB9'],
 };
 const PUB_PLOT_DEFAULTS = {
-    plotType: 'bar', sizePreset: 'single',
+    plotType: 'bar_dot', sizePreset: 'single',
     exportWidth: 85, aspectRatio: 1.5, exportDPI: 300, exportFormat: 'png',
-    fontFamily: 'Arial', axisTitleSize: 12, tickLabelSize: 10, annotationSize: 11, legendSize: 10,
-    showGridY: true, showGridX: false, gridStyle: 'solid', gridColor: '#e0e0e0',
+    fontFamily: 'Arial', axisTitleSize: 12, tickLabelSize: 12, annotationSize: 12, legendSize: 11,
+    showGridY: false, showGridX: false, gridStyle: 'solid', gridColor: '#e0e0e0',
     tickPosition: 'outside', tickLen: 5, showAxisLine: true,
-    showPlotFrame: false, showPaperBorder: false,
-    yStartZero: false, yHeadroom: 15,
-    colorScheme: 'okabe', fillOpacity: 85, unifyColor: false, unifyFillColor: '#4DBBD5',
-    barBorderColor: '#333333', barBorderWidth: 1,
-    errBarColor: '#333333', errBarThickness: 1.5, errBarCap: 5,
-    pointSymbol: 'circle', pointSize: 7, pointColor: '#333333', pointOpacity: 70, jitter: 20,
+    showPlotFrame: true, showPaperBorder: false,
+    yStartZero: true, yHeadroom: 15,
+    colorScheme: 'okabe', fillOpacity: 85, unifyColor: true, unifyFillColor: '#d3d3d3',
+    barBorderColor: '#000000', barBorderWidth: 1,
+    errBarColor: '#000000', errBarThickness: 1.5, errBarCap: 5,
+    pointSymbol: 'circle', pointSize: 7, pointColor: '#000000', pointOpacity: 70, jitter: 20,
     showLegend: false, legendPosition: 'top-right', legendOrientation: 'v',
-    showLetters: true, letterBold: true, letterOffset: 7, letterPerBar: false, showTestInfo: true, bgColor: '#ffffff',
+    showLetters: true, letterBold: true, letterOffset: 7, letterPerBar: true, showTestInfo: true, bgColor: '#ffffff',
 };
 let pubPlotSettings = Object.assign({}, PUB_PLOT_DEFAULTS);
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4745,23 +4745,17 @@ function computeYRange(letterGroups, rawGroups, s) {
     if (s.showLetters) {
         if (allNeg) {
             // Letters placed below bars; compute required space below floor.
-            if (s.letterPerBar) {
-                const fixedOffset = Math.abs(floor) * (s.letterOffset / 100) + 0.001;
-                const minLetterY  = Math.min(...letterGroups.map(g => groupBottomY(g, rawGroups))) - fixedOffset;
-                const required    = (floor - minLetterY + fixedOffset * 0.3) / span;
-                if (required > botFrac) botFrac = required;
-            } else {
+            if (!s.letterPerBar) {
+                // Per-bar: letters sit within the fixed headroom — no axis expansion needed.
+                // Non-per-bar: all letters at the same depth, may need to push the floor down.
                 const letterFrac = (s.letterOffset / 100) * 1.4;
                 if (letterFrac > botFrac) botFrac = letterFrac;
             }
         } else {
             // Letters placed above bars; compute required space above ceil.
-            if (s.letterPerBar) {
-                const fixedOffset = Math.abs(ceil) * (s.letterOffset / 100) + 0.001;
-                const maxLetterY  = Math.max(...letterGroups.map(g => groupTopY(g, rawGroups))) + fixedOffset;
-                const required    = (maxLetterY + fixedOffset * 0.3 - ceil) / span;
-                if (required > topFrac) topFrac = required;
-            } else {
+            if (!s.letterPerBar) {
+                // Per-bar: letters sit within the fixed headroom — no axis expansion needed.
+                // Non-per-bar: all letters at the same height, may need to push the ceiling up.
                 const letterFrac = (s.letterOffset / 100) * 1.4;
                 if (letterFrac > topFrac) topFrac = letterFrac;
             }
@@ -4811,15 +4805,23 @@ function buildPubLetterAnnotations(letterGroups, rawGroups, s) {
     if (s.letterPerBar) {
         if (allNeg) {
             // Each letter below its own bar/whisker/point cloud.
-            const fixedOffset = Math.abs(floor) * (s.letterOffset / 100) + 0.001;
+            // Offset is a fraction of the available headroom below the shortest bar.
+            const globalBottom = Math.min(...letterGroups.map(g => groupBottomY(g, rawGroups)));
+            const yMin = floor - span * Math.max(s.yHeadroom / 100, 0.05);
+            const headroom = Math.max(globalBottom - yMin, span * 0.001);
+            const offset = headroom * (s.letterOffset / 100) + 0.001;
             return letterGroups.map(g =>
-                makeAnnotation(g.group, groupBottomY(g, rawGroups) - fixedOffset, g.letter, 'top')
+                makeAnnotation(g.group, groupBottomY(g, rawGroups) - offset, g.letter, 'top')
             );
         } else {
             // Each letter above its own bar/whisker/point cloud.
-            const fixedOffset = Math.abs(ceil) * (s.letterOffset / 100) + 0.001;
+            // Offset is a fraction of the available headroom above the tallest bar.
+            const globalTop = Math.max(...letterGroups.map(g => groupTopY(g, rawGroups)));
+            const yMax = ceil + span * Math.max(s.yHeadroom / 100, 0.05);
+            const headroom = Math.max(yMax - globalTop, span * 0.001);
+            const offset = headroom * (s.letterOffset / 100) + 0.001;
             return letterGroups.map(g =>
-                makeAnnotation(g.group, groupTopY(g, rawGroups) + fixedOffset, g.letter, 'bottom')
+                makeAnnotation(g.group, groupTopY(g, rawGroups) + offset, g.letter, 'bottom')
             );
         }
     } else {
@@ -4917,22 +4919,14 @@ function buildPubLayout(res, groups, extraAnnotations, s, yRange) {
 /** Apply the current aspectRatio and sizePreset to all ANOVA chart container dimensions. */
 function applyAspectRatioToCharts() {
     const ratio = pubPlotSettings.aspectRatio || 1.5;
-    const s = pubPlotSettings;
-    // Map size preset to on-screen width fraction (single=85mm, half=120mm, double=175mm)
-    const presetWidthsMm = { single: 85, half: 120, double: 175 };
-    const maxMm = 175;
-    const widthMm = presetWidthsMm[s.sizePreset] != null
-        ? presetWidthsMm[s.sizePreset]
-        : Math.min(s.exportWidth || maxMm, maxMm);
-    const widthFrac = Math.min(widthMm / maxMm, 1.0);
-    const widthPct = Math.round(widthFrac * 100);
-    // Use the anovaResults wrapper width as reference (always accessible)
+    // On-screen: always use full container width so charts don't shrink when export
+    // size preset changes. The preset only affects the exported image dimensions.
     const wrapper = document.querySelector('#anovaResults .anova-results-wrapper');
     const refW = wrapper ? wrapper.clientWidth : (document.getElementById('anovaResults') || {clientWidth: 700}).clientWidth;
-    const chartW = Math.max(Math.round((refW || 600) * widthFrac), 200);
+    const chartW = Math.max(refW || 600, 200);
     const newH = Math.max(Math.round(chartW / ratio), 120);
     document.querySelectorAll('#anovaResults .anova-bar-chart-placeholder').forEach(div => {
-        div.style.width = widthPct + '%';
+        div.style.width = '100%';
         div.style.height = newH + 'px';
     });
 }
