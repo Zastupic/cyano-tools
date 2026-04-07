@@ -8,7 +8,12 @@ let lcData         = null;    // full JSON from /api/lc_process
 let groups         = {};      // {filename: groupName}
 let chartInst      = {};      // {chartId: Chart instance}
 let dirtyTabs      = new Set();
-let showIndivTraces = true;   // individual traces visibility in Groups & Averages
+let showIndivTraces = true;   // individual ETR traces visibility in Groups & Averages
+let showIndivRaw    = true;   // individual raw fluorescence traces visibility
+let lcEtrJitter     = 0;      // PAR jitter between groups in ETR chart
+let lcRawGrpJitter  = 0;      // time jitter between groups in raw fluorescence chart
+let lcRawGrpNorm     = 'raw'; // 'raw' | 'normalized'
+let lcRawGrpNormTime = 1;     // reference time (s) for group raw normalization
 
 // ── parameter metadata ────────────────────────────────────────────────────
 const PARAM_KEYS = ['alpha', 'beta', 'etr_max_measured', 'etr_max_from_ab', 'etr_mpot', 'ik', 'ib'];
@@ -28,6 +33,284 @@ const LC_PARAM_GROUPS = {
   rates:        ['etr_max_measured', 'etr_max_from_ab', 'etr_mpot', 'ik', 'ib'],
 };
 
+function _lcKeyToId(key) { return key.replace(/_/g, '-'); }
+
+// ── raw chart normalisation / jitter state ────────────────────────────────
+let lcRawNorm     = 'raw';  // 'raw' | 'normalized'
+let lcRawNormTime = 1;      // reference time (µs) for normalization
+let lcRawJitter   = 0;      // x-offset per successive trace (µs)
+
+function normalizeTraceArr(values, times, refTime) {
+  let refIdx = 0, minDist = Infinity;
+  for (let j = 0; j < times.length; j++) {
+    const d = Math.abs(times[j] - refTime);
+    if (d < minDist) { minDist = d; refIdx = j; }
+  }
+  const refVal = values[refIdx];
+  if (!refVal) return values;
+  return values.map(v => v / refVal);
+}
+
+// ── per-chart settings (group ETR only) ───────────────────────────────────
+const LC_PC_DEFAULTS = {
+  groupEtr: { yStartZero: false, yHeadroom: 5, xTitle: '', yTitle: '' },
+};
+let lcPc = JSON.parse(JSON.stringify(LC_PC_DEFAULTS));
+
+function readLcPcSettings() {
+  function readPc(chartKey) {
+    const pre = 'lc-pc-' + chartKey + '-';
+    const yz = document.getElementById(pre + 'y-start-zero');
+    const yh = document.getElementById(pre + 'y-headroom');
+    const xt = document.getElementById(pre + 'x-title');
+    const yt = document.getElementById(pre + 'y-title');
+    return {
+      yStartZero: yz ? yz.checked : false,
+      yHeadroom:  yh ? (parseFloat(yh.value) || 5) : 5,
+      xTitle:     xt ? xt.value.trim() : '',
+      yTitle:     yt ? yt.value.trim() : '',
+    };
+  }
+  lcPc.groupEtr = readPc('group-etr');
+}
+
+// ── publication / figure style settings ──────────────────────────────────
+const LC_PUB_DEFAULTS = {
+  sizePreset:     'single',
+  exportWidth:    85,
+  aspectRatio:    1.5,
+  exportDPI:      300,
+  fontFamily:     'Arial',
+  axisTitleSize:  12,
+  tickLabelSize:  11,
+  legendSize:     10,
+  colorScheme:    'default',
+  legendPosition: 'right',
+  showGridY:      true,
+  showGridX:      false,
+  bgColor:        '#ffffff',
+  showBorder:     false,
+  borderColor:    '#000000',
+  borderWidth:    1,
+  lineWidthMean:  2.5,
+  lineWidthIndiv: 0.8,
+  sdBandOpacity:  18,
+};
+
+const LC_PUB_PALETTES = {
+  colorblind: ['#0072B2','#E69F00','#009E73','#CC79A7','#56B4E9','#D55E00','#F0E442','#000000'],
+  grayscale:  ['#111111','#444444','#777777','#aaaaaa','#cccccc'],
+  paired:     ['#1f77b4','#aec7e8','#ff7f0e','#ffbb78','#2ca02c','#98df8a','#d62728','#ff9896'],
+};
+
+function _makeLcPub() {
+  let pub = Object.assign({}, LC_PUB_DEFAULTS);
+  try {
+    const saved = JSON.parse(localStorage.getItem('lc_grp_pub') || 'null');
+    if (saved) Object.keys(LC_PUB_DEFAULTS).forEach(k => { if (k in saved) pub[k] = saved[k]; });
+  } catch(e) {}
+  return pub;
+}
+let lcPub = _makeLcPub();
+
+function _lcPubColor(gi, n, alpha) {
+  const palette = LC_PUB_PALETTES[lcPub.colorScheme];
+  if (!palette) return groupColor(gi, n, alpha);
+  const hex = palette[gi % palette.length];
+  if (alpha === undefined) return hex;
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function _lcPubBgPlugin() {
+  return {
+    id: 'lcPubBg',
+    beforeDraw(chart) {
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.fillStyle = lcPub.bgColor || '#ffffff';
+      ctx.fillRect(0, 0, chart.width, chart.height);
+      ctx.restore();
+    },
+  };
+}
+
+function _lcPubBorderPlugin() {
+  return {
+    id: 'lcPubBorder',
+    afterDraw(chart) {
+      if (!lcPub.showBorder) return;
+      const ca = chart.chartArea, ctx = chart.ctx;
+      ctx.save();
+      ctx.strokeStyle = lcPub.borderColor || '#000000';
+      ctx.lineWidth   = lcPub.borderWidth  || 1;
+      ctx.strokeRect(ca.left, ca.top, ca.right - ca.left, ca.bottom - ca.top);
+      ctx.restore();
+    },
+  };
+}
+
+function _applyLcPubToOpts(opts, isBar, pc) {
+  const s = lcPub, fam = s.fontFamily;
+  const sc = opts.scales || {};
+  if (sc.x) {
+    if (!sc.x.title) sc.x.title = { display: true };
+    sc.x.title.font = { family: fam, size: s.axisTitleSize, weight: 'bold' };
+    if (!sc.x.ticks) sc.x.ticks = {};
+    sc.x.ticks.font = { family: fam, size: s.tickLabelSize };
+    if (!isBar) sc.x.grid = { display: s.showGridX };
+    if (pc && pc.xTitle) sc.x.title.text = pc.xTitle;
+  }
+  if (sc.y) {
+    if (!sc.y.title) sc.y.title = { display: true };
+    sc.y.title.font = { family: fam, size: s.axisTitleSize, weight: 'bold' };
+    if (!sc.y.ticks) sc.y.ticks = {};
+    sc.y.ticks.font = { family: fam, size: s.tickLabelSize };
+    if (!isBar) sc.y.grid = { display: s.showGridY };
+    if (pc && pc.yTitle) sc.y.title.text = pc.yTitle;
+    if (pc && pc.yStartZero) sc.y.min = 0;
+  }
+  if (opts.plugins && opts.plugins.legend) {
+    opts.plugins.legend.position = s.legendPosition;
+    if (!opts.plugins.legend.labels) opts.plugins.legend.labels = {};
+    opts.plugins.legend.labels.font = { family: fam, size: s.legendSize };
+  }
+  return opts;
+}
+
+function _applyLcPubAspectRatio() {
+  const ratio = lcPub.aspectRatio || 1.5;
+  const presetWidths = { single: 85, half: 120, double: 175 };
+  const widthMm = lcPub.sizePreset !== 'custom'
+    ? (presetWidths[lcPub.sizePreset] || 85)
+    : (lcPub.exportWidth || 85);
+  const maxWPx = Math.round(widthMm * 96 / 25.4);
+  document.querySelectorAll('.lc-pub-ch').forEach(cont => {
+    cont.style.maxWidth = maxWPx + 'px';
+    const w = cont.offsetWidth;
+    if (w > 0) cont.style.height = Math.round(w / ratio) + 'px';
+    const cid = cont.dataset.cid;
+    const ch  = cid && chartInst && chartInst[cid];
+    if (ch) ch.resize();
+  });
+}
+
+function readLcPubSettings() {
+  const g = id => document.getElementById(id);
+  const sizePreset = (g('lc-pub-size-preset') || {}).value || 'single';
+  lcPub.sizePreset   = sizePreset;
+  lcPub.exportWidth  = sizePreset !== 'custom'
+    ? ({ single: 85, half: 120, double: 175 }[sizePreset] || 85)
+    : (parseFloat((g('lc-pub-export-width') || {}).value) || 85);
+  const aspectVal = (g('lc-pub-aspect-preset') || {}).value || '1.50';
+  lcPub.aspectRatio  = aspectVal === 'custom'
+    ? (parseFloat((g('lc-pub-aspect-custom') || {}).value) || 1.5)
+    : (parseFloat(aspectVal) || 1.5);
+  lcPub.exportDPI      = parseInt((g('lc-pub-dpi') || {}).value)              || 300;
+  lcPub.bgColor        = (g('lc-pub-bg-color') || {}).value                   || '#ffffff';
+  lcPub.fontFamily     = (g('lc-pub-font-family') || {}).value                || 'Arial';
+  lcPub.axisTitleSize  = parseInt((g('lc-pub-axis-title-size') || {}).value)  || 12;
+  lcPub.tickLabelSize  = parseInt((g('lc-pub-tick-size') || {}).value)        || 11;
+  lcPub.legendSize     = parseInt((g('lc-pub-legend-size') || {}).value)      || 10;
+  lcPub.colorScheme    = (g('lc-pub-color-scheme') || {}).value               || 'default';
+  lcPub.legendPosition = (g('lc-pub-legend-pos') || {}).value                 || 'right';
+  lcPub.showGridY      = !!(g('lc-pub-grid-y') || {}).checked;
+  lcPub.showGridX      = !!(g('lc-pub-grid-x') || {}).checked;
+  lcPub.showBorder     = !!(g('lc-pub-show-border') || {}).checked;
+  lcPub.borderColor    = (g('lc-pub-border-color') || {}).value               || '#000000';
+  lcPub.borderWidth    = parseFloat((g('lc-pub-border-width') || {}).value)   || 1;
+  lcPub.lineWidthMean  = parseFloat((g('lc-pub-line-width-mean')  || {}).value) || 2.5;
+  lcPub.lineWidthIndiv = parseFloat((g('lc-pub-line-width-indiv') || {}).value) || 0.8;
+  lcPub.sdBandOpacity  = parseInt((g('lc-pub-sd-opacity')          || {}).value) || 18;
+  try { localStorage.setItem('lc_grp_pub', JSON.stringify(lcPub)); } catch(e) {}
+}
+
+function syncDomFromLcPub() {
+  const g  = id => document.getElementById(id);
+  const sv = (id, v) => { const el = g(id); if (el) el.value = v; };
+  const sc = (id, v) => { const el = g(id); if (el) el.checked = v; };
+  sv('lc-pub-size-preset',    lcPub.sizePreset);
+  sv('lc-pub-export-width',   lcPub.exportWidth);
+  const ratioStr = lcPub.aspectRatio.toFixed(2);
+  const knownRatios = ['1.78','1.50','1.33','1.00','0.75'];
+  sv('lc-pub-aspect-preset', knownRatios.includes(ratioStr) ? ratioStr : 'custom');
+  sv('lc-pub-aspect-custom',  ratioStr);
+  const cwWrap = g('lc-pub-custom-width-wrap');
+  if (cwWrap) cwWrap.style.display = lcPub.sizePreset === 'custom' ? '' : 'none';
+  const crWrap = g('lc-pub-custom-ratio-wrap');
+  if (crWrap) crWrap.style.display = knownRatios.includes(ratioStr) ? 'none' : '';
+  sv('lc-pub-dpi',            lcPub.exportDPI);
+  sv('lc-pub-bg-color',       lcPub.bgColor);
+  sv('lc-pub-font-family',    lcPub.fontFamily);
+  sv('lc-pub-axis-title-size', lcPub.axisTitleSize);
+  sv('lc-pub-tick-size',      lcPub.tickLabelSize);
+  sv('lc-pub-legend-size',    lcPub.legendSize);
+  sv('lc-pub-color-scheme',   lcPub.colorScheme);
+  sv('lc-pub-legend-pos',     lcPub.legendPosition);
+  sc('lc-pub-grid-y',         lcPub.showGridY);
+  sc('lc-pub-grid-x',         lcPub.showGridX);
+  sc('lc-pub-show-border',    lcPub.showBorder);
+  sv('lc-pub-border-color',   lcPub.borderColor);
+  sv('lc-pub-border-width',   lcPub.borderWidth);
+  const bOpts = g('lc-pub-border-opts');
+  if (bOpts) bOpts.style.display = lcPub.showBorder ? '' : 'none';
+  sv('lc-pub-line-width-mean',  lcPub.lineWidthMean);
+  sv('lc-pub-line-width-indiv', lcPub.lineWidthIndiv);
+  sv('lc-pub-sd-opacity',       lcPub.sdBandOpacity);
+  const mVal = g('lc-pub-line-width-mean-val');  if (mVal) mVal.textContent = lcPub.lineWidthMean + ' px';
+  const iVal = g('lc-pub-line-width-indiv-val'); if (iVal) iVal.textContent = lcPub.lineWidthIndiv + ' px';
+  const sVal = g('lc-pub-sd-opacity-val');       if (sVal) sVal.textContent = lcPub.sdBandOpacity + '%';
+  const badge = g('lc-pub-badge');
+  if (badge) {
+    const isDefault = JSON.stringify(lcPub) === JSON.stringify(LC_PUB_DEFAULTS);
+    badge.style.display = isDefault ? 'none' : '';
+  }
+}
+
+function _renderAllGroupCharts() {
+  renderGroupRawChart();
+  renderGroupEtrChart();
+  renderGroupParamsCharts();
+}
+
+function _reRenderGroupCharts() {
+  if (!lcData || !hasGroups()) return;
+  if (activeTabId() === 'tab-groups') {
+    _applyLcPubAspectRatio();
+    _renderAllGroupCharts();
+  } else {
+    _withPaneVisible('tab-groups', () => {
+      const gr = document.getElementById('group-results');
+      if (gr) { gr.style.display = ''; void gr.offsetWidth; }
+      _applyLcPubAspectRatio();
+      _renderAllGroupCharts();
+    });
+  }
+}
+
+function _lcPubExportPng() {
+  const canvas = document.getElementById('group-etr-chart');
+  if (!canvas || !chartInst['group-etr-chart']) return;
+  const s = lcPub;
+  const mmToPx = dpi => mm => Math.round(mm * dpi / 25.4);
+  const toP = mmToPx(s.exportDPI);
+  const widthMm  = s.sizePreset !== 'custom' ? ({ single: 85, half: 120, double: 175 }[s.sizePreset] || 85) : (s.exportWidth || 85);
+  const w = toP(widthMm);
+  const h = Math.round(w / (s.aspectRatio || 1.5));
+  const tmp = document.createElement('canvas');
+  tmp.width = w; tmp.height = h;
+  const ctx = tmp.getContext('2d');
+  ctx.fillStyle = s.bgColor || '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(canvas, 0, 0, w, h);
+  const a = document.createElement('a');
+  a.href = tmp.toDataURL('image/png');
+  a.download = 'lc_group_etr.png';
+  a.click();
+}
+
 // ── colour helpers ────────────────────────────────────────────────────────
 function sampleColor(i, n, alpha) {
   const h = Math.round((i / Math.max(n, 1)) * 320);
@@ -45,7 +328,12 @@ function destroyChart(id) {
 }
 function makeChart(id, cfg) {
   destroyChart(id);
-  chartInst[id] = new Chart(document.getElementById(id), cfg);
+  const el = document.getElementById(id);
+  if (!el) return null;
+  // Destroy any orphaned Chart.js instance left on this canvas element
+  const orphan = Chart.getChart(el);
+  if (orphan) orphan.destroy();
+  chartInst[id] = new Chart(el, cfg);
   return chartInst[id];
 }
 
@@ -89,10 +377,10 @@ function renderDirtyTab(tabId) {
   } else if (tabId === 'tab-groups') {
     refreshGroupSummary();
     if (hasGroups()) {
-      document.getElementById('group-results').style.display = '';
-      renderGroupEtrChart();
-      const gpg = document.querySelector('#group-param-btns .btn-primary')?.dataset?.gpgroup || 'efficiencies';
-      renderGroupParamsChart(gpg);
+      const gr = document.getElementById('group-results');
+      if (gr) { gr.style.display = ''; void gr.offsetWidth; }
+      _applyLcPubAspectRatio();   // tab is now active so offsetWidth is real
+      _renderAllGroupCharts();
     }
   }
 }
@@ -175,10 +463,80 @@ document.addEventListener('DOMContentLoaded', () => {
     renderParamsChart(btn.dataset.pgroup);
     renderParamsTable();
   });
-  document.getElementById('group-param-btns')?.addEventListener('click', e => {
-    const btn = e.target.closest('[data-gpgroup]'); if (!btn) return;
-    setActiveBtn('group-param-btns', btn);
-    renderGroupParamsChart(btn.dataset.gpgroup);
+  // Raw chart — normalisation toggle
+  document.getElementById('lc-raw-norm-btns')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-norm]'); if (!btn) return;
+    setActiveBtn('lc-raw-norm-btns', btn);
+    lcRawNorm = btn.dataset.norm;
+    const box = document.getElementById('lc-raw-norm-time-box');
+    if (box) box.style.display = lcRawNorm === 'normalized' ? '' : 'none';
+    if (lcData) renderRawChart();
+  });
+  document.getElementById('lc-raw-norm-time')?.addEventListener('change', () => {
+    lcRawNormTime = parseFloat(document.getElementById('lc-raw-norm-time').value) || 1;
+    if (lcData && lcRawNorm === 'normalized') renderRawChart();
+  });
+  document.getElementById('lc-raw-jitter')?.addEventListener('change', () => {
+    lcRawJitter = parseFloat(document.getElementById('lc-raw-jitter').value) || 0;
+    if (lcData) renderRawChart();
+  });
+  // Per-chart settings — group ETR chart
+  ['lc-pc-group-etr-y-start-zero','lc-pc-group-etr-y-headroom','lc-pc-group-etr-x-title','lc-pc-group-etr-y-title'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => { readLcPcSettings(); if (lcData && hasGroups()) renderGroupEtrChart(); });
+  });
+
+  // Figure Style pub card — any change re-reads, re-renders, re-saves
+  const _pubInputIds = [
+    'lc-pub-size-preset','lc-pub-export-width','lc-pub-aspect-preset','lc-pub-aspect-custom',
+    'lc-pub-dpi','lc-pub-bg-color','lc-pub-font-family','lc-pub-axis-title-size',
+    'lc-pub-tick-size','lc-pub-legend-size','lc-pub-color-scheme','lc-pub-legend-pos',
+    'lc-pub-grid-y','lc-pub-grid-x','lc-pub-show-border','lc-pub-border-color','lc-pub-border-width',
+    'lc-pub-line-width-mean','lc-pub-line-width-indiv','lc-pub-sd-opacity',
+  ];
+  _pubInputIds.forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => { readLcPubSettings(); syncDomFromLcPub(); _reRenderGroupCharts(); });
+    document.getElementById(id)?.addEventListener('change', () => { readLcPubSettings(); syncDomFromLcPub(); _reRenderGroupCharts(); });
+  });
+  document.getElementById('lc-pub-export-btn')?.addEventListener('click', _lcPubExportPng);
+  document.getElementById('lc-pub-reset-btn')?.addEventListener('click', () => {
+    lcPub = Object.assign({}, LC_PUB_DEFAULTS);
+    try { localStorage.removeItem('lc_grp_pub'); } catch(e) {}
+    syncDomFromLcPub(); _reRenderGroupCharts();
+  });
+  document.getElementById('lc-pub-show-border')?.addEventListener('change', e => {
+    const bOpts = document.getElementById('lc-pub-border-opts');
+    if (bOpts) bOpts.style.display = e.target.checked ? '' : 'none';
+  });
+  // Show/hide custom width/ratio fields
+  document.getElementById('lc-pub-size-preset')?.addEventListener('change', e => {
+    const w = document.getElementById('lc-pub-custom-width-wrap');
+    if (w) w.style.display = e.target.value === 'custom' ? '' : 'none';
+  });
+  document.getElementById('lc-pub-aspect-preset')?.addEventListener('change', e => {
+    const w = document.getElementById('lc-pub-custom-ratio-wrap');
+    if (w) w.style.display = e.target.value === 'custom' ? '' : 'none';
+  });
+  // Slider live value labels
+  document.getElementById('lc-pub-line-width-mean')?.addEventListener('input', e => {
+    const el = document.getElementById('lc-pub-line-width-mean-val');
+    if (el) el.textContent = e.target.value + ' px';
+  });
+  document.getElementById('lc-pub-line-width-indiv')?.addEventListener('input', e => {
+    const el = document.getElementById('lc-pub-line-width-indiv-val');
+    if (el) el.textContent = e.target.value + ' px';
+  });
+  document.getElementById('lc-pub-sd-opacity')?.addEventListener('input', e => {
+    const el = document.getElementById('lc-pub-sd-opacity-val');
+    if (el) el.textContent = e.target.value + '%';
+  });
+  // Pub card collapse chevron
+  document.getElementById('lc-pub-body')?.addEventListener('show.bs.collapse', () => {
+    const ch = document.getElementById('lc-pub-chevron');
+    if (ch) ch.style.transform = 'rotate(180deg)';
+  });
+  document.getElementById('lc-pub-body')?.addEventListener('hide.bs.collapse', () => {
+    const ch = document.getElementById('lc-pub-chevron');
+    if (ch) ch.style.transform = 'rotate(0deg)';
   });
 
   // Derived metric segmented control
@@ -202,18 +560,46 @@ document.addEventListener('DOMContentLoaded', () => {
   // Export to statistics
   document.getElementById('export-stats-btn')?.addEventListener('click', exportToStatistics);
 
-  // Toggle individual traces in Group ETR chart
-  document.getElementById('toggle-indiv-btn')?.addEventListener('click', () => {
-    showIndivTraces = !showIndivTraces;
-    const btn = document.getElementById('toggle-indiv-btn');
-    btn.querySelector('i').className = showIndivTraces ? 'fa fa-eye mr-1' : 'fa fa-eye-slash mr-1';
-    btn.classList.toggle('btn-outline-secondary', showIndivTraces);
-    btn.classList.toggle('btn-secondary', !showIndivTraces);
+  // Toggle individual traces — ETR chart (checkbox)
+  document.getElementById('toggle-indiv-etr-btn')?.addEventListener('change', e => {
+    showIndivTraces = e.target.checked;
     const chart = chartInst['group-etr-chart'];
     if (chart) {
       chart.data.datasets.forEach(ds => { if (ds._isIndividual) ds.hidden = !showIndivTraces; });
       chart.update('none');
     }
+  });
+  // Toggle individual traces — raw fluorescence chart (checkbox)
+  document.getElementById('toggle-indiv-raw-btn')?.addEventListener('change', e => {
+    showIndivRaw = e.target.checked;
+    const chart = chartInst['group-raw-chart'];
+    if (chart) {
+      chart.data.datasets.forEach(ds => { if (ds._isIndividual) ds.hidden = !showIndivRaw; });
+      chart.update('none');
+    }
+  });
+  // Jitter — ETR chart
+  document.getElementById('lc-etr-jitter')?.addEventListener('change', () => {
+    lcEtrJitter = parseFloat(document.getElementById('lc-etr-jitter').value) || 0;
+    if (lcData && hasGroups()) renderGroupEtrChart();
+  });
+  // Jitter — raw fluorescence group chart
+  document.getElementById('lc-raw-grp-jitter')?.addEventListener('change', () => {
+    lcRawGrpJitter = parseFloat(document.getElementById('lc-raw-grp-jitter').value) || 0;
+    if (lcData && hasGroups()) renderGroupRawChart();
+  });
+  // Normalisation toggle — group raw chart
+  document.getElementById('lc-raw-grp-norm-btns')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-gnorm]'); if (!btn) return;
+    setActiveBtn('lc-raw-grp-norm-btns', btn);
+    lcRawGrpNorm = btn.dataset.gnorm;
+    const box = document.getElementById('lc-raw-grp-norm-time-box');
+    if (box) box.style.display = lcRawGrpNorm === 'normalized' ? '' : 'none';
+    if (lcData && hasGroups()) renderGroupRawChart();
+  });
+  document.getElementById('lc-raw-grp-norm-time')?.addEventListener('change', () => {
+    lcRawGrpNormTime = parseFloat(document.getElementById('lc-raw-grp-norm-time').value) || 1;
+    if (lcData && hasGroups() && lcRawGrpNorm === 'normalized') renderGroupRawChart();
   });
 
   // Tab shown → resize charts & render dirty
@@ -221,15 +607,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!lcData) return;
     const tabId = (e.target.getAttribute('href') || '').slice(1);
     renderDirtyTab(tabId);
-    const resizeIds = {
-      'tab-raw':     ['raw-chart'],
-      'tab-ftfm':    ['ftfm-chart'],
-      'tab-etr':     ['etr-chart'],
-      'tab-derived': ['derived-chart'],
-      'tab-params':  ['params-chart'],
-      'tab-groups':  ['group-etr-chart', 'group-params-chart'],
-    };
-    (resizeIds[tabId] || []).forEach(id => chartInst[id]?.resize());
+    if (tabId === 'tab-groups') {
+      if (hasGroups()) {
+        const gr = document.getElementById('group-results');
+        if (gr) { gr.style.display = ''; void gr.offsetWidth; }
+        _applyLcPubAspectRatio();
+        _renderAllGroupCharts();
+      }
+    } else {
+      const resizeIds = {
+        'tab-raw':     ['raw-chart'],
+        'tab-ftfm':    ['ftfm-chart'],
+        'tab-etr':     ['etr-chart'],
+        'tab-derived': ['derived-chart'],
+        'tab-params':  ['params-chart'],
+      };
+      (resizeIds[tabId] || []).forEach(id => chartInst[id]?.resize());
+    }
   });
 
   // Advanced params chevron
@@ -339,6 +733,40 @@ function renderResults() {
   xlsxFullLink.onclick  = e => { e.preventDefault(); downloadFullData(); };
   xlsxFullLink.style.display = '';
 
+  // Sync Figure Style card from saved/default settings
+  lcPub = _makeLcPub();
+  syncDomFromLcPub();
+
+  // Reset group chart state
+  showIndivTraces = true; showIndivRaw = true;
+  lcEtrJitter = 0; lcRawGrpJitter = 0;
+  lcRawGrpNorm = 'raw'; lcRawGrpNormTime = 1;
+  const _grpNormBtn = document.querySelector('#lc-raw-grp-norm-btns [data-gnorm="raw"]');
+  if (_grpNormBtn) setActiveBtn('lc-raw-grp-norm-btns', _grpNormBtn);
+  const _grpNormBox = document.getElementById('lc-raw-grp-norm-time-box');
+  if (_grpNormBox) _grpNormBox.style.display = 'none';
+  const _grpNormInp = document.getElementById('lc-raw-grp-norm-time');
+  if (_grpNormInp) _grpNormInp.value = '1';
+  const _etrCb = document.getElementById('toggle-indiv-etr-btn');
+  if (_etrCb) _etrCb.checked = true;
+  const _rawCb = document.getElementById('toggle-indiv-raw-btn');
+  if (_rawCb) _rawCb.checked = true;
+  const _etrJitterInp = document.getElementById('lc-etr-jitter');
+  if (_etrJitterInp) _etrJitterInp.value = '0';
+  const _rawGrpJitterInp = document.getElementById('lc-raw-grp-jitter');
+  if (_rawGrpJitterInp) _rawGrpJitterInp.value = '0';
+
+  // Reset raw trace controls to defaults
+  lcRawNorm = 'raw'; lcRawNormTime = 1; lcRawJitter = 0;
+  const _rawNormBtn = document.querySelector('#lc-raw-norm-btns [data-norm="raw"]');
+  if (_rawNormBtn) setActiveBtn('lc-raw-norm-btns', _rawNormBtn);
+  const _rawNormBox = document.getElementById('lc-raw-norm-time-box');
+  if (_rawNormBox) _rawNormBox.style.display = 'none';
+  const _rawNormInp = document.getElementById('lc-raw-norm-time');
+  if (_rawNormInp) _rawNormInp.value = '1';
+  const _rawJitterInp = document.getElementById('lc-raw-jitter');
+  if (_rawJitterInp) _rawJitterInp.value = '0';
+
   // Render visible tab immediately
   renderRawChart();
 
@@ -355,22 +783,29 @@ function renderResults() {
 
 // ── raw fluorescence chart ────────────────────────────────────────────────
 function renderRawChart() {
-  const files = lcData.files;
-  const t     = lcData.raw_time_us;
-  const n     = files.length;
+  const files  = lcData.files;
+  const t_s    = lcData.raw_time_us.map(v => v / 1e6);   // µs → seconds
+  const n      = files.length;
+  const norm   = lcRawNorm === 'normalized';
+  const yLabel = norm ? 'F / F(ref)' : 'Fluorescence intensity (a.u.)';
 
-  const datasets = files.map((fname, i) => ({
-    label:           fname,
-    data:            lcData.raw_curves[fname].map((y, j) => ({ x: t[j], y })),
-    borderColor:     sampleColor(i, n),
-    backgroundColor: 'transparent',
-    borderWidth: 1.5, pointRadius: 0, showLine: true,
-  }));
+  const datasets = files.map((fname, i) => {
+    const raw    = lcData.raw_curves[fname] || [];
+    const vals   = norm ? normalizeTraceArr(raw, t_s, lcRawNormTime) : raw;
+    const offset = i * lcRawJitter;
+    return {
+      label:           fname,
+      data:            vals.map((y, j) => ({ x: t_s[j] + offset, y })),
+      borderColor:     sampleColor(i, n),
+      backgroundColor: 'transparent',
+      borderWidth: 1.5, pointRadius: 0, showLine: true,
+    };
+  });
 
   makeChart('raw-chart', {
     type: 'scatter',
     data: { datasets },
-    options: linearScatterOpts('Time (μs)', 'Fluorescence intensity (a.u.)'),
+    options: linearScatterOpts('Time (s)', yLabel),
   });
 }
 
@@ -583,17 +1018,23 @@ function refreshGroupSummary() {
 function hasGroups() { return new Set(Object.values(groups)).size >= 2; }
 
 function checkGroupsReady() {
+  const gr = document.getElementById('group-results');
   if (hasGroups()) {
-    document.getElementById('group-results').style.display = '';
+    if (gr) { gr.style.display = ''; void gr.offsetWidth; }
     if (activeTabId() === 'tab-groups') {
-      renderGroupEtrChart();
-      const gpg = document.querySelector('#group-param-btns .btn-primary')?.dataset?.gpgroup || 'efficiencies';
-      renderGroupParamsChart(gpg);
+      _applyLcPubAspectRatio();
+      _renderAllGroupCharts();
     } else {
-      markTabsDirty('tab-groups');
+      // Make tab pane AND group-results visible before measuring/rendering
+      _withPaneVisible('tab-groups', () => {
+        const innerGr = document.getElementById('group-results');
+        if (innerGr) { innerGr.style.display = ''; void innerGr.offsetWidth; }
+        _applyLcPubAspectRatio();   // must run AFTER pane is visible so offsetWidth is real
+        _renderAllGroupCharts();
+      });
     }
   } else {
-    document.getElementById('group-results').style.display = 'none';
+    if (gr) gr.style.display = 'none';
     dirtyTabs.delete('tab-groups');
   }
 }
@@ -631,45 +1072,136 @@ function calcGroupStats() {
   return st;
 }
 
-// ── group ETR chart ───────────────────────────────────────────────────────
-function renderGroupEtrChart() {
-  const stats    = calcGroupStats();
-  const grpNames = Object.keys(stats);
-  const par      = lcData.light_intensities;
+// ── group raw fluorescence stats ──────────────────────────────────────────
+function calcGroupRawStats() {
+  const grpFiles = {};
+  for (const [f, g] of Object.entries(groups)) (grpFiles[g] = grpFiles[g] || []).push(f);
+  const t_s  = lcData.raw_time_us.map(v => v / 1e6);
+  const n_t  = t_s.length;
+  const st   = {};
+  for (const [grp, files] of Object.entries(grpFiles)) {
+    const arrs  = files.map(f => lcData.raw_curves[f] || []);
+    const means = [], sds = [];
+    for (let j = 0; j < n_t; j++) {
+      const vals = arrs.map(a => a[j]).filter(v => v != null && isFinite(v));
+      const mu   = vals.reduce((s, v) => s + v, 0) / (vals.length || 1);
+      const sd   = Math.sqrt(vals.reduce((s, v) => s + (v - mu) ** 2, 0) / (vals.length || 1));
+      means.push(mu); sds.push(sd);
+    }
+    st[grp] = { files, means, sds };
+  }
+  return { stats: st, t_s };
+}
+
+// ── group raw fluorescence chart ──────────────────────────────────────────
+function renderGroupRawChart() {
+  const { stats: st, t_s } = calcGroupRawStats();
+  const grpNames = Object.keys(st);
+  const sdAlpha  = lcPub.sdBandOpacity / 100;
+  const norm     = lcRawGrpNorm === 'normalized';
+  const yLabel   = norm ? 'F / F(ref)' : 'Fluorescence intensity (a.u.)';
   const datasets = [];
 
   grpNames.forEach((grp, gi) => {
-    const { means, sds } = stats[grp].etr;
-    const c  = groupColor(gi, grpNames.length);
-    const ca = groupColor(gi, grpNames.length, 0.18);
+    const { means, sds, files } = st[grp];
+    const c   = _lcPubColor(gi, grpNames.length);
+    const ca  = _lcPubColor(gi, grpNames.length, sdAlpha);
+    const off = gi * lcRawGrpJitter;
+
+    const normMeans = norm ? normalizeTraceArr(means, t_s, lcRawGrpNormTime) : means;
+    const normSds   = norm
+      ? (function() {
+          const refIdx = t_s.reduce((best, t, j) =>
+            Math.abs(t - lcRawGrpNormTime) < Math.abs(t_s[best] - lcRawGrpNormTime) ? j : best, 0);
+          const refVal = means[refIdx] || 1;
+          return sds.map(s => s / refVal);
+        })()
+      : sds;
 
     // Upper SD band
     datasets.push({
       label: '', showLine: true, pointRadius: 0, borderWidth: 0,
       borderColor: 'transparent', backgroundColor: ca,
-      data: means.map((m, j) => ({ x: par[j], y: m + sds[j] })),
+      data: normMeans.map((m, j) => ({ x: t_s[j] + off, y: m + normSds[j] })),
       fill: '+1',
     });
     // Lower SD band
     datasets.push({
       label: '', showLine: true, pointRadius: 0, borderWidth: 0,
       borderColor: 'transparent', backgroundColor: ca,
-      data: means.map((m, j) => ({ x: par[j], y: m - sds[j] })),
+      data: normMeans.map((m, j) => ({ x: t_s[j] + off, y: m - normSds[j] })),
       fill: false,
     });
     // Mean line
     datasets.push({
-      label: grp, showLine: true, pointRadius: 4, borderWidth: 2.5,
+      label: grp, showLine: true, pointRadius: 0, borderWidth: lcPub.lineWidthMean,
       borderColor: c, backgroundColor: c,
-      data: means.map((m, j) => ({ x: par[j], y: m })),
+      data: normMeans.map((m, j) => ({ x: t_s[j] + off, y: m })),
+      fill: false,
+    });
+    // Individual raw traces
+    files.forEach(fname => {
+      const raw  = lcData.raw_curves[fname] || [];
+      const vals = norm ? normalizeTraceArr(raw, t_s, lcRawGrpNormTime) : raw;
+      datasets.push({
+        label: fname.replace(/\.[^.]+$/, ''), showLine: true, pointRadius: 0, borderWidth: lcPub.lineWidthIndiv,
+        borderColor: _lcPubColor(gi, grpNames.length, 0.4), backgroundColor: 'transparent',
+        data: vals.map((y, j) => ({ x: t_s[j] + off, y })),
+        fill: false,
+        hidden: !showIndivRaw,
+        _isIndividual: true,
+      });
+    });
+  });
+
+  const opts = linearScatterOpts('Time (s)', yLabel);
+  opts.plugins.legend.labels.filter = (item, data) =>
+    item.text !== '' && !data.datasets[item.datasetIndex]?._isIndividual;
+  _applyLcPubToOpts(opts, false, null);
+  makeChart('group-raw-chart', { type: 'scatter', data: { datasets }, options: opts, plugins: [_lcPubBgPlugin(), _lcPubBorderPlugin()] });
+}
+
+// ── group ETR chart ───────────────────────────────────────────────────────
+function renderGroupEtrChart() {
+  const stats    = calcGroupStats();
+  const grpNames = Object.keys(stats);
+  const par      = lcData.light_intensities;
+  const sdAlpha  = lcPub.sdBandOpacity / 100;
+  const datasets = [];
+
+  grpNames.forEach((grp, gi) => {
+    const { means, sds } = stats[grp].etr;
+    const c   = _lcPubColor(gi, grpNames.length);
+    const ca  = _lcPubColor(gi, grpNames.length, sdAlpha);
+    const off = gi * lcEtrJitter;
+
+    // Upper SD band
+    datasets.push({
+      label: '', showLine: true, pointRadius: 0, borderWidth: 0,
+      borderColor: 'transparent', backgroundColor: ca,
+      data: means.map((m, j) => ({ x: par[j] + off, y: m + sds[j] })),
+      fill: '+1',
+    });
+    // Lower SD band
+    datasets.push({
+      label: '', showLine: true, pointRadius: 0, borderWidth: 0,
+      borderColor: 'transparent', backgroundColor: ca,
+      data: means.map((m, j) => ({ x: par[j] + off, y: m - sds[j] })),
+      fill: false,
+    });
+    // Mean line
+    datasets.push({
+      label: grp, showLine: true, pointRadius: 4, borderWidth: lcPub.lineWidthMean,
+      borderColor: c, backgroundColor: c,
+      data: means.map((m, j) => ({ x: par[j] + off, y: m })),
       fill: false,
     });
     // Individual fitted curves (thin, semi-transparent)
     stats[grp].files.forEach(fname => {
       datasets.push({
-        label: fname.replace(/\.[^.]+$/, ''), showLine: true, pointRadius: 0, borderWidth: 0.8,
-        borderColor: groupColor(gi, grpNames.length, 0.5), backgroundColor: 'transparent',
-        data: lcData.step_data[fname].etr_fitted.map((y, j) => ({ x: par[j], y })),
+        label: fname.replace(/\.[^.]+$/, ''), showLine: true, pointRadius: 0, borderWidth: lcPub.lineWidthIndiv,
+        borderColor: _lcPubColor(gi, grpNames.length, 0.4), backgroundColor: 'transparent',
+        data: lcData.step_data[fname].etr_fitted.map((y, j) => ({ x: par[j] + off, y })),
         fill: false,
         hidden: !showIndivTraces,
         _isIndividual: true,
@@ -677,39 +1209,54 @@ function renderGroupEtrChart() {
     });
   });
 
-  const opts = linearScatterOpts('PAR (µmol photons m⁻² s⁻¹)', 'rETR (µmol e⁻ m⁻² s⁻¹)');
-  // Only show group mean lines in the legend (hide SD-band datasets and individual traces)
-  opts.plugins.legend.labels.filter = (item, chart) =>
-    item.text !== '' && !chart.data.datasets[item.datasetIndex]?._isIndividual;
-  makeChart('group-etr-chart', { type: 'scatter', data: { datasets }, options: opts });
+  const pc   = lcPc.groupEtr;
+  const opts = linearScatterOpts(
+    pc.xTitle || 'PAR (µmol photons m⁻² s⁻¹)',
+    pc.yTitle || 'rETR (µmol e⁻ m⁻² s⁻¹)'
+  );
+  if (pc.yStartZero) opts.scales.y.min = 0;
+  opts.plugins.legend.labels.filter = (item, data) =>
+    item.text !== '' && !data.datasets[item.datasetIndex]?._isIndividual;
+  _applyLcPubToOpts(opts, false, null);
+  makeChart('group-etr-chart', { type: 'scatter', data: { datasets }, options: opts, plugins: [_lcPubBgPlugin(), _lcPubBorderPlugin()] });
 }
 
-// ── group params chart (error bars) ──────────────────────────────────────
-function renderGroupParamsChart(pgroup) {
-  const keys     = LC_PARAM_GROUPS[pgroup] || PARAM_KEYS;
+// ── group params charts (error bars, one canvas per parameter) ───────────
+function renderGroupParamsCharts() {
+  PARAM_KEYS.forEach(k => renderGroupParamChart(k));
+}
+
+function renderGroupParamChart(key) {
+  const canvasId = 'group-params-' + _lcKeyToId(key) + '-chart';
+  if (!document.getElementById(canvasId)) return;
+
   const stats    = calcGroupStats();
   const grpNames = Object.keys(stats);
-  const labels   = keys.map(k => PARAM_LABELS[k] || k);
+  const label    = PARAM_LABELS[key] || key;
 
-  const datasets = grpNames.map((grp, gi) => ({
-    label: grp,
-    data: keys.map(k => {
-      const s = stats[grp].params[k];
-      return s ? { y: s.mean, yMin: s.mean - s.sd, yMax: s.mean + s.sd } : null;
-    }),
-    backgroundColor: groupColor(gi, grpNames.length, 0.65),
-    borderColor:     groupColor(gi, grpNames.length),
-    borderWidth: 1,
-    errorBarColor:        groupColor(gi, grpNames.length),
-    errorBarWhiskerColor: groupColor(gi, grpNames.length),
-    errorBarLineWidth: 2,
-    errorBarWhiskerSize: 8,
-  }));
+  const datasets = grpNames.map((grp, gi) => {
+    const s = stats[grp].params[key];
+    const c = _lcPubColor(gi, grpNames.length);
+    return {
+      label: grp,
+      data: [s ? { y: s.mean, yMin: s.mean - s.sd, yMax: s.mean + s.sd } : { y: NaN, yMin: NaN, yMax: NaN }],
+      backgroundColor: _lcPubColor(gi, grpNames.length, 0.65),
+      borderColor:     c,
+      borderWidth: 1,
+      errorBarColor:        c,
+      errorBarWhiskerColor: c,
+      errorBarLineWidth: 2,
+      errorBarWhiskerSize: 8,
+    };
+  });
 
-  makeChart('group-params-chart', {
+  const opts = barOpts(label);
+  _applyLcPubToOpts(opts, true, null);
+  makeChart(canvasId, {
     type: 'barWithErrorBars',
-    data: { labels, datasets },
-    options: barOpts(),
+    data: { labels: [label], datasets },
+    options: opts,
+    plugins: [_lcPubBgPlugin(), _lcPubBorderPlugin()],
   });
 }
 
@@ -783,22 +1330,35 @@ async function downloadXlsxWithCharts() {
     renderDerivedChart(m);
   });
   _withPaneVisible('tab-params',  () => { renderParamsChart('efficiencies'); renderParamsTable(); });
+  if (hasGroups()) {
+    _withPaneVisible('tab-groups', () => {
+      const gr = document.getElementById('group-results');
+      if (gr) { gr.style.display = ''; void gr.offsetWidth; }
+      _renderAllGroupCharts();
+    });
+  }
 
   const charts = [];
   const caps = [
-    { id: 'raw-chart',          title: 'Raw Fluorescence' },
-    { id: 'ftfm-chart',         title: 'Ft and Fm' },
-    { id: 'etr-chart',          title: 'ETR Curves' },
-    { id: 'derived-chart',      title: 'Derived Parameters' },
-    { id: 'params-chart',       title: 'Parameters' },
-    { id: 'group-etr-chart',    title: 'Group ETR Curves' },
-    { id: 'group-params-chart', title: 'Group Parameters' },
+    { id: 'raw-chart',       title: 'Raw Fluorescence' },
+    { id: 'ftfm-chart',      title: 'Ft and Fm' },
+    { id: 'etr-chart',       title: 'ETR Curves' },
+    { id: 'derived-chart',   title: 'Derived Parameters' },
+    { id: 'params-chart',    title: 'Parameters' },
+    { id: 'group-raw-chart', title: 'Group Fluorescence' },
+    { id: 'group-etr-chart', title: 'Group ETR Curves' },
   ];
   for (const { id, title } of caps) {
     const du = captureCanvas(id);
     if (du) charts.push({ title, data_url: du });
   }
-
+  // Per-key group param charts
+  if (hasGroups()) {
+    PARAM_KEYS.forEach(k => {
+      const du = captureCanvas('group-params-' + _lcKeyToId(k) + '-chart');
+      if (du) charts.push({ title: 'Group ' + (PARAM_LABELS[k] || k), data_url: du });
+    });
+  }
   // Group export data
   let group_export = null;
   if (hasGroups()) {

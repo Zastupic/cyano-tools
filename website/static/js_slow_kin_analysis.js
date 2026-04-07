@@ -16,6 +16,56 @@ let skGrpTracesNorm      = 'raw';
 let skGrpTracesNormTime  = 0;
 let skGrpTracesJitter    = 0;   // time offset between successive groups
 
+// ── publication export — group fluorescence traces ─────────────────────────
+const SK_PUB_DEFAULTS = {
+  // shared across all group charts
+  sizePreset:      'single',
+  exportWidth:     85,
+  aspectRatio:     1.5,
+  exportDPI:       300,
+  fontFamily:      'Arial',
+  axisTitleSize:   12,
+  tickLabelSize:   11,
+  legendSize:      10,
+  colorScheme:     'default',
+  legendPosition:  'right',
+  showGridY:       true,
+  showGridX:       false,
+  bgColor:         '#ffffff',
+  showBorder:      false,
+  borderColor:     '#000000',
+  borderWidth:     1,
+  lineWidthMean:   2.5,
+  lineWidthIndiv:  0.8,
+  sdBandOpacity:   18,
+};
+
+// Per-chart individual defaults (line charts: traces + derived; bar charts: params + st)
+const SK_PER_CHART_DEFAULTS = {
+  traces:  { yStartZero: false, yHeadroom: 5,  xTitle: '', yTitle: '' },
+  derived: { yStartZero: false, yHeadroom: 5  },
+  params:  { yStartZero: true,  yHeadroom: 15 },
+  st:      { yStartZero: false, yHeadroom: 15 },
+};
+
+function _makeSkPub() {
+  var pub = Object.assign({}, SK_PUB_DEFAULTS);
+  pub.perChart = {
+    traces:  Object.assign({}, SK_PER_CHART_DEFAULTS.traces),
+    derived: Object.assign({}, SK_PER_CHART_DEFAULTS.derived),
+    params:  Object.assign({}, SK_PER_CHART_DEFAULTS.params),
+    st:      Object.assign({}, SK_PER_CHART_DEFAULTS.st),
+  };
+  return pub;
+}
+var skPub = _makeSkPub();
+
+const SK_PUB_PALETTES = {
+  colorblind: ['#0072B2','#E69F00','#009E73','#CC79A7','#56B4E9','#D55E00','#F0E442','#000000'],
+  grayscale:  ['#111111','#444444','#777777','#aaaaaa','#cccccc'],
+  paired:     ['#1f77b4','#aec7e8','#ff7f0e','#ffbb78','#2ca02c','#98df8a','#d62728','#ff9896'],
+};
+
 // ── parameter metadata ────────────────────────────────────────────────────
 const SK_SUMMARY_KEYS   = ['fv_fm', 'rfd', 'npq_max', 'actinic_intensity'];
 const SK_SUMMARY_LABELS = {
@@ -34,6 +84,12 @@ const SK_DERIVED_YLABELS = {
   etr:       'rETR',
 };
 
+// Keys shown as individual split charts in the Groups tab
+const SK_DERIVED_GROUP_KEYS = ['npq', 'qy', 'qp', 'etr'];
+const SK_ST_GROUP_KEYS      = ['delta_fm_pct', 'tau', 'half_time'];
+
+function _skKeyToId(key) { return key.replace(/_/g, '-'); }
+
 // ── colour helpers ────────────────────────────────────────────────────────
 function sampleColor(i, n, alpha) {
   const h = Math.round((i / Math.max(n, 1)) * 320);
@@ -43,6 +99,16 @@ function groupColor(i, n, alpha) {
   const palette = [210, 30, 120, 270, 60, 180, 330];
   const h = palette[i % palette.length];
   return alpha !== undefined ? `hsla(${h},65%,42%,${alpha})` : `hsl(${h},65%,42%)`;
+}
+function _skPubColor(gi, n, alpha) {
+  var palette = SK_PUB_PALETTES[skPub.colorScheme];
+  if (!palette) return groupColor(gi, n, alpha);
+  var hex = palette[gi % palette.length];
+  if (alpha === undefined) return hex;
+  var r = parseInt(hex.slice(1,3), 16);
+  var g = parseInt(hex.slice(3,5), 16);
+  var b = parseInt(hex.slice(5,7), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
 }
 
 // ── chart helpers ─────────────────────────────────────────────────────────
@@ -86,6 +152,27 @@ function _captureSkCanvas(id) {
   var du = _skChartToDataUrl(canvas);
   if (wasHidden) { pane.style.display = ''; pane.style.visibility = ''; }
   return (du && du.includes(',') && du.split(',')[1]) ? du : null;
+}
+
+// Render each variant of a segmented chart in sequence and capture all.
+// variants: [{key, title, renderFn}]  renderFn(key) draws onto canvasId.
+function _captureVariants(paneId, canvasId, variants) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return [];
+  var pane = canvas.closest('.tab-pane') || document.getElementById(paneId);
+  var wasHidden = pane && getComputedStyle(pane).display === 'none';
+  if (wasHidden) { pane.style.display = 'block'; pane.style.visibility = 'hidden'; void pane.offsetWidth; }
+  var results = [];
+  variants.forEach(function(v) {
+    v.renderFn(v.key);
+    if (chartInst[canvasId]) chartInst[canvasId].resize();
+    var du = _skChartToDataUrl(canvas);
+    if (du && du.includes(',') && du.split(',')[1]) {
+      results.push({ title: v.title, data_url: du });
+    }
+  });
+  if (wasHidden) { pane.style.display = ''; pane.style.visibility = ''; }
+  return results;
 }
 
 function _withPaneVisible(paneId, fn) {
@@ -151,6 +238,89 @@ function barOpts(yLabel) {
   };
 }
 
+// ── publication style helpers ─────────────────────────────────────────────
+// White/custom background fill plugin
+function _skPubBgPlugin() {
+  return {
+    id: 'skPubBg',
+    beforeDraw: function(chart) {
+      var ctx = chart.ctx;
+      ctx.save();
+      ctx.fillStyle = skPub.bgColor || '#ffffff';
+      ctx.fillRect(0, 0, chart.width, chart.height);
+      ctx.restore();
+    },
+  };
+}
+
+// Border drawn around the chart area (inside axes)
+function _skPubBorderPlugin() {
+  return {
+    id: 'skPubBorder',
+    afterDraw: function(chart) {
+      if (!skPub.showBorder) return;
+      var ca = chart.chartArea;
+      var ctx = chart.ctx;
+      ctx.save();
+      ctx.strokeStyle = skPub.borderColor || '#000000';
+      ctx.lineWidth   = skPub.borderWidth  || 1;
+      ctx.strokeRect(ca.left, ca.top, ca.right - ca.left, ca.bottom - ca.top);
+      ctx.restore();
+    },
+  };
+}
+
+// Apply skPub typography, grid, legend to any Chart.js opts.
+// isBar=true: skip per-axis grid toggles.
+// pc: per-chart opts (yStartZero, yHeadroom, xTitle, yTitle) — optional, applied when provided.
+function _applyPubToOpts(opts, isBar, pc) {
+  var s = skPub, fam = s.fontFamily;
+  var sc = opts.scales || {};
+  if (sc.x) {
+    if (!sc.x.title) sc.x.title = { display: true };
+    sc.x.title.font = { family: fam, size: s.axisTitleSize, weight: 'bold' };
+    if (!sc.x.ticks) sc.x.ticks = {};
+    sc.x.ticks.font = { family: fam, size: s.tickLabelSize };
+    if (!isBar) sc.x.grid = { display: s.showGridX };
+    if (pc && pc.xTitle) sc.x.title.text = pc.xTitle;
+  }
+  if (sc.y) {
+    if (!sc.y.title) sc.y.title = { display: true };
+    sc.y.title.font = { family: fam, size: s.axisTitleSize, weight: 'bold' };
+    if (!sc.y.ticks) sc.y.ticks = {};
+    sc.y.ticks.font = { family: fam, size: s.tickLabelSize };
+    if (!isBar) sc.y.grid = { display: s.showGridY };
+    if (pc && pc.yTitle) sc.y.title.text = pc.yTitle;
+    if (pc && pc.yStartZero) sc.y.min = 0;
+  }
+  if (opts.plugins && opts.plugins.legend) {
+    opts.plugins.legend.position = s.legendPosition;
+    if (!opts.plugins.legend.labels) opts.plugins.legend.labels = {};
+    opts.plugins.legend.labels.font = { family: fam, size: s.legendSize };
+  }
+  return opts;
+}
+
+// Resize all 4 group chart containers to match skPub.aspectRatio and width preset.
+// Uses mm → screen px (96 dpi) for max-width; reading offsetWidth after setting
+// max-width forces a synchronous reflow so height is computed from actual display width.
+function _applyPubAspectRatio() {
+  var ratio = skPub.aspectRatio || 1.5;
+  var presetWidths = { single: 85, half: 120, double: 175 };
+  var widthMm = skPub.sizePreset !== 'custom'
+    ? (presetWidths[skPub.sizePreset] || 85)
+    : (skPub.exportWidth || 85);
+  var maxWPx = Math.round(widthMm * 96 / 25.4);  // 96 dpi screen
+  document.querySelectorAll('.sk-pub-ch').forEach(function(cont) {
+    cont.style.maxWidth = maxWPx + 'px';
+    var w = cont.offsetWidth;  // force reflow → returns actual constrained width
+    if (w > 0) cont.style.height = Math.round(w / ratio) + 'px';
+    var cid = cont.dataset.cid;
+    var ch = cid && chartInst && chartInst[cid];
+    if (ch) ch.resize();
+  });
+}
+
 // ── format helpers ────────────────────────────────────────────────────────
 function fmt(v, d) {
   d = d !== undefined ? d : 4;
@@ -193,7 +363,7 @@ function renderDirtyTab(tabId) {
     var m = (document.querySelector('#sk-derived-btns .btn-primary') || {}).dataset;
     renderDerivedChart((m && m.derived) || 'npq'); return;
   }
-  if (tabId === 'sk-tab-params')  { renderParamsChart(); renderParamsTable(); return; }
+  if (tabId === 'sk-tab-params')  { renderParamsCharts(); renderParamsTable(); return; }
   if (tabId === 'sk-tab-st')      { renderStTab(); return; }
   if (tabId === 'sk-tab-groups')  {
     refreshGroupSummary();
@@ -201,20 +371,9 @@ function renderDirtyTab(tabId) {
       var gr = document.getElementById('sk-group-results');
       if (gr) { gr.style.display = ''; void gr.offsetWidth; }
       renderGroupTracesChart();
-      if (skData.has_params) {
-        var gdb = document.querySelector('#sk-group-derived-btns .btn-primary');
-        renderGroupDerivedChart((gdb && gdb.dataset && gdb.dataset.gderived) || 'npq');
-      }
-      if (skData.has_summary) renderGroupParamsChart();
-      if (skData.has_state_transitions) {
-        var gsb = document.querySelector('#sk-group-st-btns .btn-primary');
-        renderGroupStChart((gsb && gsb.dataset && gsb.dataset.gst) || 'delta_fm_pct');
-      }
-      setTimeout(function() {
-        ['sk-group-traces-chart', 'sk-group-derived-chart', 'sk-group-params-chart', 'sk-group-st-chart'].forEach(function(id) {
-          if (chartInst[id]) chartInst[id].resize();
-        });
-      }, 0);
+      if (skData.has_params) renderGroupDerivedCharts();
+      if (skData.has_summary) renderGroupParamsCharts();
+      if (skData.has_state_transitions) renderGroupStCharts();
     }
   }
 }
@@ -276,23 +435,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Group ST segmented control
-  var gStBtns = document.getElementById('sk-group-st-btns');
-  if (gStBtns) {
-    gStBtns.addEventListener('click', function(e) {
-      var btn = e.target.closest('[data-gst]'); if (!btn) return;
-      setActiveBtn('sk-group-st-btns', btn);
-      renderGroupStChart(btn.dataset.gst);
-    });
-  }
-
-  // Group derived segmented control
-  var gDerivedBtns = document.getElementById('sk-group-derived-btns');
-  if (gDerivedBtns) {
-    gDerivedBtns.addEventListener('click', function(e) {
-      var btn = e.target.closest('[data-gderived]'); if (!btn) return;
-      setActiveBtn('sk-group-derived-btns', btn);
-      renderGroupDerivedChart(btn.dataset.gderived);
+  // Scalar params segmented control
+  var paramsBtns = document.getElementById('sk-params-btns');
+  if (paramsBtns) {
+    paramsBtns.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-params]'); if (!btn) return;
+      setActiveBtn('sk-params-btns', btn);
+      renderParamChart(btn.dataset.params);
     });
   }
 
@@ -408,6 +557,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Export modal (event delegation, wired once)
   _initExportModalEvents();
 
+  // Publication figure settings UI
+  initSkPubSettingsUI();
+
   // Tab shown → resize and render dirty
   var tabs = document.getElementById('skTabs');
   if (tabs) {
@@ -420,7 +572,11 @@ document.addEventListener('DOMContentLoaded', function() {
         'sk-tab-ftfm':    ['sk-ftfm-chart'],
         'sk-tab-derived': ['sk-derived-chart'],
         'sk-tab-params':  ['sk-params-chart'],
-        'sk-tab-groups':  ['sk-group-traces-chart', 'sk-group-derived-chart', 'sk-group-params-chart', 'sk-group-st-chart'],
+        'sk-tab-groups':  ['sk-group-traces-chart'].concat(
+          SK_DERIVED_GROUP_KEYS.map(function(m){ return 'sk-group-derived-'+_skKeyToId(m)+'-chart'; }),
+          SK_SUMMARY_KEYS.map(function(k){ return 'sk-group-params-'+_skKeyToId(k)+'-chart'; }),
+          SK_ST_GROUP_KEYS.map(function(m){ return 'sk-group-st-'+_skKeyToId(m)+'-chart'; })
+        ),
         'sk-tab-st':      ['sk-st-chart'],
       };
       (resizeMap[tabId] || []).forEach(function(id) { if (chartInst[id]) chartInst[id].resize(); });
@@ -617,7 +773,7 @@ function renderResults() {
   if (!isRawOnly) {
     _withPaneVisible('sk-tab-ftfm',    function() { renderFtFmChart('ft'); });
     _withPaneVisible('sk-tab-derived', function() { renderDerivedChart('npq'); });
-    _withPaneVisible('sk-tab-params',  function() { renderParamsChart(); renderParamsTable(); });
+    _withPaneVisible('sk-tab-params',  function() { renderParamsCharts(); renderParamsTable(); });
   }
 
   // Groups tab is lazy
@@ -729,30 +885,33 @@ function renderDerivedChart(metric) {
   });
 }
 
-// ── parameters (summary scalars) chart ───────────────────────────────────
-function renderParamsChart() {
+// ── parameters (summary scalars) chart — single canvas, switched by seg-ctrl
+function renderParamsCharts() {
+  // Render whichever key is currently active in the segmented control
+  var btn = document.querySelector('#sk-params-btns .btn-primary');
+  var key = (btn && btn.dataset && btn.dataset.params) || SK_SUMMARY_KEYS[0];
+  renderParamChart(key);
+}
+
+function renderParamChart(key) {
   if (!skData || !skData.has_summary) return;
-  var files  = skData.files;
-  var n      = files.length;
-  var keys   = SK_SUMMARY_KEYS.filter(function(k) {
-    return files.some(function(f) { return skData.summary[f] && skData.summary[f][k] != null; });
-  });
-  var labels = keys.map(function(k) { return SK_SUMMARY_LABELS[k] || k; });
+  key = key || SK_SUMMARY_KEYS[0];
+  var files = skData.files;
+  var n     = files.length;
+  var label = SK_SUMMARY_LABELS[key] || key;
 
   var datasets = files.map(function(fname, i) {
+    var v = skData.summary[fname] && skData.summary[fname][key];
     return {
       label:           fname,
-      data:            keys.map(function(k) {
-        var v = skData.summary[fname] && skData.summary[fname][k];
-        return (v != null && isFinite(v)) ? v : null;
-      }),
+      data:            [(v != null && isFinite(v)) ? v : null],
       backgroundColor: sampleColor(i, n, 0.7),
       borderColor:     sampleColor(i, n),
-      borderWidth: 1,
+      borderWidth:     1,
     };
   });
 
-  makeChart('sk-params-chart', { type: 'bar', data: { labels: labels, datasets: datasets }, options: barOpts() });
+  makeChart('sk-params-chart', { type: 'bar', data: { labels: [label], datasets: datasets }, options: barOpts(label) });
 }
 
 // ── parameters table ──────────────────────────────────────────────────────
@@ -876,39 +1035,23 @@ function checkGroupsReady() {
   var gr = document.getElementById('sk-group-results');
   if (hasGroups()) {
     if (gr) { gr.style.display = ''; void gr.offsetWidth; }
+    _applyPubAspectRatio();
     var _activeEl  = document.querySelector('#skTabs .nav-link.active');
     var activeHref = _activeEl ? _activeEl.getAttribute('href') : '';
     if (activeHref === '#sk-tab-groups') {
       renderGroupTracesChart();
-      if (skData && skData.has_params) {
-        var gdb = document.querySelector('#sk-group-derived-btns .btn-primary');
-        renderGroupDerivedChart((gdb && gdb.dataset && gdb.dataset.gderived) || 'npq');
-      }
-      if (skData && skData.has_summary) renderGroupParamsChart();
-      if (skData && skData.has_state_transitions) {
-        var gsb2 = document.querySelector('#sk-group-st-btns .btn-primary');
-        renderGroupStChart((gsb2 && gsb2.dataset && gsb2.dataset.gst) || 'delta_fm_pct');
-      }
-      setTimeout(function() {
-        ['sk-group-traces-chart', 'sk-group-derived-chart', 'sk-group-params-chart', 'sk-group-st-chart'].forEach(function(id) {
-          if (chartInst[id]) chartInst[id].resize();
-        });
-      }, 0);
+      if (skData && skData.has_params) renderGroupDerivedCharts();
+      if (skData && skData.has_summary) renderGroupParamsCharts();
+      if (skData && skData.has_state_transitions) renderGroupStCharts();
     } else {
       // Pre-render while tab pane is temporarily visible so canvases have correct dimensions
       _withPaneVisible('sk-tab-groups', function() {
         var innerGr = document.getElementById('sk-group-results');
         if (innerGr) { innerGr.style.display = ''; void innerGr.offsetWidth; }
         renderGroupTracesChart();
-        if (skData && skData.has_params) {
-          var gdb2 = document.querySelector('#sk-group-derived-btns .btn-primary');
-          renderGroupDerivedChart((gdb2 && gdb2.dataset && gdb2.dataset.gderived) || 'npq');
-        }
-        if (skData && skData.has_summary) renderGroupParamsChart();
-        if (skData && skData.has_state_transitions) {
-          var gsb3 = document.querySelector('#sk-group-st-btns .btn-primary');
-          renderGroupStChart((gsb3 && gsb3.dataset && gsb3.dataset.gst) || 'delta_fm_pct');
-        }
+        if (skData && skData.has_params) renderGroupDerivedCharts();
+        if (skData && skData.has_summary) renderGroupParamsCharts();
+        if (skData && skData.has_state_transitions) renderGroupStCharts();
       });
       // sk-group-results remains visible (inline display:none was cleared inside fn above)
     }
@@ -994,14 +1137,25 @@ function calcGroupSummaryStats() {
 // ── group traces chart ────────────────────────────────────────────────────
 function renderGroupTracesChart() {
   if (!skData) return;
-  var t          = skData.raw_time;
-  var showIndiv  = (document.getElementById('sk-show-individual-check') || {}).checked !== false;
-  var norm       = skGrpTracesNorm === 'normalized';
-  var normTime   = skGrpTracesNormTime;
-  var yLabel     = norm ? 'F / F(ref)' : 'Fluorescence (a.u.)';
-  var datasets   = [];
+  var cfg = _buildGrpTracesChartConfig();
+  if (cfg) makeChart('sk-group-traces-chart', cfg);
+}
 
-  // Helper: get (optionally normalized) trace for a file
+// Shared config builder — used by screen render (no args) and export (ptToPx = DPI/72)
+function _buildGrpTracesChartConfig(exportPtToPx) {
+  if (!skData) return null;
+  var s        = skPub;
+  var pc       = s.perChart.traces;
+  var forExport = exportPtToPx !== undefined;
+  var t        = skData.raw_time;
+  var norm     = skGrpTracesNorm === 'normalized';
+  var normTime = skGrpTracesNormTime;
+  var showIndiv = (document.getElementById('sk-show-individual-check') || {}).checked !== false;
+  var yLabel   = (pc.yTitle || (norm ? 'F / F(ref)' : 'Fluorescence (a.u.)'));
+  var xLabel   = (pc.xTitle || timeAxisLabel(skData.time_unit));
+  var sdAlpha  = skPub.sdBandOpacity / 100;
+  var datasets = [];
+
   function getTrace(fname) {
     var raw = skData.raw_traces[fname] || [];
     return norm ? normalizeTraceArr(raw, t, normTime) : raw;
@@ -1011,19 +1165,18 @@ function renderGroupTracesChart() {
   var grpNames    = Object.keys(grpFilesMap);
 
   grpNames.forEach(function(grp, gi) {
-    var files  = grpFilesMap[grp];
-    var arrs   = files.map(getTrace);
-    var n_pts  = t.length;
-    var means  = [], sds = [];
+    var files = grpFilesMap[grp];
+    var arrs  = files.map(getTrace);
+    var n_pts = t.length;
+    var means = [], sds = [];
     for (var j = 0; j < n_pts; j++) {
       var vals = arrs.map(function(a) { return a[j]; }).filter(function(v) { return v != null && isFinite(v); });
-      var mu   = vals.length ? vals.reduce(function(s, v) { return s + v; }, 0) / vals.length : null;
-      var sd   = mu !== null ? Math.sqrt(vals.reduce(function(s, v) { return s + (v - mu) * (v - mu); }, 0) / vals.length) : null;
+      var mu   = vals.length ? vals.reduce(function(sum, v) { return sum + v; }, 0) / vals.length : null;
+      var sd   = mu !== null ? Math.sqrt(vals.reduce(function(sum, v) { return sum + (v - mu) * (v - mu); }, 0) / vals.length) : null;
       means.push(mu); sds.push(sd);
     }
-
-    var c      = groupColor(gi, grpNames.length);
-    var ca     = groupColor(gi, grpNames.length, 0.18);
+    var c      = _skPubColor(gi, grpNames.length);
+    var ca     = _skPubColor(gi, grpNames.length, sdAlpha);
     var offset = gi * skGrpTracesJitter;
 
     datasets.push({
@@ -1039,7 +1192,7 @@ function renderGroupTracesChart() {
       fill: false,
     });
     datasets.push({
-      label: grp, showLine: true, pointRadius: 0, borderWidth: 2.5,
+      label: grp, showLine: true, pointRadius: 0, borderWidth: skPub.lineWidthMean,
       borderColor: c, backgroundColor: c,
       data: means.map(function(m, j) { return { x: t[j] + offset, y: m }; }),
       fill: false,
@@ -1048,8 +1201,8 @@ function renderGroupTracesChart() {
       files.forEach(function(fname) {
         var vals = getTrace(fname);
         datasets.push({
-          label: '', showLine: true, pointRadius: 0, borderWidth: 0.8,
-          borderColor: groupColor(gi, grpNames.length, 0.4), backgroundColor: 'transparent',
+          label: '', showLine: true, pointRadius: 0, borderWidth: skPub.lineWidthIndiv,
+          borderColor: _skPubColor(gi, grpNames.length, 0.4), backgroundColor: 'transparent',
           data: vals.map(function(y, j) { return { x: t[j] + offset, y: y }; }),
           fill: false,
         });
@@ -1057,26 +1210,180 @@ function renderGroupTracesChart() {
     }
   });
 
-  var opts = linearScatterOpts(timeAxisLabel(skData.time_unit), yLabel);
-  opts.plugins.legend.labels.filter = function(item) { return item.text !== ''; };
-  makeChart('sk-group-traces-chart', { type: 'scatter', data: { datasets: datasets }, options: opts });
+  // Compute Y max across all datasets for headroom
+  var allY = [];
+  datasets.forEach(function(ds) {
+    ds.data.forEach(function(pt) {
+      if (pt && pt.y != null && isFinite(pt.y)) allY.push(pt.y);
+    });
+  });
+  var dataYMax = allY.length ? Math.max.apply(null, allY) : null;
+
+  // Font size helper: returns scaled px for export, pt value for screen preview
+  function fs(pt) { return forExport ? Math.round(pt * exportPtToPx) : pt; }
+  var fam = s.fontFamily;
+  var legendPos = s.legendPosition;
+
+  var opts = {
+    animation: false, parsing: false,
+    responsive: !forExport, maintainAspectRatio: false,
+    scales: {
+      x: {
+        type: 'linear',
+        title: {
+          display: true, text: xLabel,
+          font: { family: fam, size: fs(s.axisTitleSize), weight: 'bold' },
+        },
+        ticks: { font: { family: fam, size: fs(s.tickLabelSize) } },
+        grid: { display: s.showGridX },
+      },
+      y: {
+        title: {
+          display: true, text: yLabel,
+          font: { family: fam, size: fs(s.axisTitleSize), weight: 'bold' },
+        },
+        ticks: { font: { family: fam, size: fs(s.tickLabelSize) } },
+        grid: { display: s.showGridY },
+        min: pc.yStartZero ? 0 : undefined,
+        max: dataYMax !== null ? dataYMax * (1 + pc.yHeadroom / 100) : undefined,
+      },
+    },
+    plugins: {
+      legend: {
+        display: legendPos !== 'hidden',
+        position: legendPos !== 'hidden' ? legendPos : 'right',
+        labels: {
+          font: { family: fam, size: fs(s.legendSize) },
+          filter: function(item) { return item.text !== ''; },
+          boxWidth: 20, boxHeight: 4, padding: 6,
+        },
+      },
+      tooltip: { mode: 'nearest', intersect: false },
+    },
+    elements: { line: { tension: 0 } },
+  };
+
+  return { type: 'scatter', data: { datasets: datasets }, options: opts, plugins: [_skPubBgPlugin(), _skPubBorderPlugin()] };
 }
 
-// ── group derived chart ───────────────────────────────────────────────────
+// ── PNG DPI metadata injection ────────────────────────────────────────────
+var _skCrc32TableCache = null;
+function _skCrc32Table() {
+  if (_skCrc32TableCache) return _skCrc32TableCache;
+  var t = new Uint32Array(256);
+  for (var i = 0; i < 256; i++) {
+    var c = i;
+    for (var j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c;
+  }
+  return (_skCrc32TableCache = t);
+}
+function _skCrc32(data) {
+  var tbl = _skCrc32Table(), crc = 0xFFFFFFFF;
+  for (var i = 0; i < data.length; i++) crc = (crc >>> 8) ^ tbl[(crc ^ data[i]) & 0xFF];
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function _injectSkPngDpi(b64, dpi) {
+  try {
+    var raw = atob(b64), src = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) src[i] = raw.charCodeAt(i);
+    var ppm = Math.round(dpi / 0.0254);
+    // Build pHYs chunk: 4-byte length + 4-byte type + 9-byte data + 4-byte CRC
+    var phys = new Uint8Array(21);
+    phys[0]=0; phys[1]=0; phys[2]=0; phys[3]=9;                           // length = 9
+    phys[4]=112; phys[5]=72; phys[6]=89; phys[7]=115;                     // 'pHYs'
+    phys[8]=(ppm>>24)&0xff; phys[9]=(ppm>>16)&0xff;                       // X ppm
+    phys[10]=(ppm>>8)&0xff; phys[11]=ppm&0xff;
+    phys[12]=(ppm>>24)&0xff; phys[13]=(ppm>>16)&0xff;                     // Y ppm
+    phys[14]=(ppm>>8)&0xff; phys[15]=ppm&0xff;
+    phys[16]=1;                                                             // unit: meter
+    var crcBuf = new Uint8Array(13);
+    for (var k = 0; k < 13; k++) crcBuf[k] = phys[4 + k];
+    var crc = _skCrc32(crcBuf);
+    phys[17]=(crc>>24)&0xff; phys[18]=(crc>>16)&0xff;
+    phys[19]=(crc>>8)&0xff;  phys[20]=crc&0xff;
+    // Insert after IHDR (offset 33 = 8-byte sig + 4+4+13+4 IHDR chunk)
+    var out = new Uint8Array(src.length + 21);
+    out.set(src.slice(0, 33)); out.set(phys, 33); out.set(src.slice(33), 54);
+    var bin = '';
+    for (var m = 0; m < out.length; m++) bin += String.fromCharCode(out[m]);
+    return btoa(bin);
+  } catch(e) { return b64; }
+}
+
+// ── publication PNG export ─────────────────────────────────────────────────
+async function exportGroupTracesPubPng() {
+  if (!skData || !hasGroups()) { alert('Assign files to at least 2 groups first.'); return; }
+  var btn     = document.getElementById('sk-pub-export-btn');
+  var spinner = document.getElementById('sk-pub-export-spinner');
+  var status  = document.getElementById('sk-pub-export-status');
+  if (btn) btn.disabled = true;
+  if (spinner) spinner.style.display = '';
+  if (status) status.textContent = 'Rendering…';
+  try {
+    var s = skPub;
+    var presetWidths = { single: 85, half: 120, double: 175 };
+    var widthMm  = s.sizePreset !== 'custom' ? (presetWidths[s.sizePreset] || 85) : (s.exportWidth || 85);
+    var widthPx  = Math.round((widthMm / 25.4) * s.exportDPI);
+    var heightPx = Math.round(widthPx / Math.max(s.aspectRatio, 0.2));
+    var ptToPx   = s.exportDPI / 72;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = widthPx; canvas.height = heightPx;
+    canvas.style.cssText = 'position:fixed;top:-9999px;left:-9999px;pointer-events:none;';
+    document.body.appendChild(canvas);
+
+    var cfg = _buildGrpTracesChartConfig(ptToPx);
+    var tmpChart = new Chart(canvas, cfg);
+
+    // Two rAF cycles so the canvas is composited before capture
+    await new Promise(function(res) { requestAnimationFrame(function() { requestAnimationFrame(res); }); });
+
+    var dataUrl = canvas.toDataURL('image/png');
+    tmpChart.destroy();
+    document.body.removeChild(canvas);
+
+    var b64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+    b64 = _injectSkPngDpi(b64, s.exportDPI);
+
+    var a = document.createElement('a');
+    a.href = 'data:image/png;base64,' + b64;
+    a.download = 'group_fluorescence_traces.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+    var heightMm = Math.round(widthMm / s.aspectRatio);
+    if (status) status.textContent = widthMm + '\u202f\u00d7\u202f' + heightMm + '\u202fmm \u2022 ' + s.exportDPI + '\u202fdpi';
+  } catch(err) {
+    alert('Export error: ' + err.message);
+    if (status) status.textContent = '';
+  } finally {
+    if (btn) btn.disabled = false;
+    if (spinner) spinner.style.display = 'none';
+  }
+}
+
+// ── group derived charts (one per metric) ────────────────────────────────
+function renderGroupDerivedCharts() {
+  SK_DERIVED_GROUP_KEYS.forEach(function(m) { renderGroupDerivedChart(m); });
+}
+
 function renderGroupDerivedChart(metric) {
   if (!skData || !skData.has_params) return;
   metric = metric || 'npq';
+  var canvasId = 'sk-group-derived-' + _skKeyToId(metric) + '-chart';
   var result    = calcGroupDerivedStats(metric);
   var stats     = result.stats;
   var t         = result.t;
   var grpNames  = Object.keys(stats);
   var datasets  = [];
 
+  var pc      = skPub.perChart.derived;
+  var sdAlpha = skPub.sdBandOpacity / 100;
   grpNames.forEach(function(grp, gi) {
     var means = stats[grp].means;
     var sds   = stats[grp].sds;
-    var c  = groupColor(gi, grpNames.length);
-    var ca = groupColor(gi, grpNames.length, 0.18);
+    var c  = _skPubColor(gi, grpNames.length);
+    var ca = _skPubColor(gi, grpNames.length, sdAlpha);
 
     datasets.push({
       label: '', showLine: true, pointRadius: 0, borderWidth: 0,
@@ -1091,49 +1398,70 @@ function renderGroupDerivedChart(metric) {
       fill: false,
     });
     datasets.push({
-      label: grp, showLine: true, pointRadius: 3, borderWidth: 2.5,
+      label: grp, showLine: true, pointRadius: 3, borderWidth: skPub.lineWidthMean,
       borderColor: c, backgroundColor: c,
       data: means.map(function(m, j) { return { x: t[j], y: m }; }),
       fill: false,
     });
   });
 
-  var opts = linearScatterOpts(timeAxisLabel(skData.time_unit), SK_DERIVED_YLABELS[metric] || metric);
+  // Y headroom
+  var allY2 = []; datasets.forEach(function(ds) { ds.data.forEach(function(pt) { if (pt && pt.y != null && isFinite(pt.y)) allY2.push(pt.y); }); });
+  var dYMax2 = allY2.length ? Math.max.apply(null, allY2) : null;
+
+  var opts = linearScatterOpts(pc.xTitle || timeAxisLabel(skData.time_unit), pc.yTitle || SK_DERIVED_YLABELS[metric] || metric);
   opts.plugins.legend.labels.filter = function(item) { return item.text !== ''; };
-  makeChart('sk-group-derived-chart', { type: 'scatter', data: { datasets: datasets }, options: opts });
+  if (pc.yStartZero) opts.scales.y.min = 0;
+  if (dYMax2 !== null) opts.scales.y.max = dYMax2 * (1 + pc.yHeadroom / 100);
+  _applyPubToOpts(opts, false, pc);
+  makeChart(canvasId, { type: 'scatter', data: { datasets: datasets }, options: opts, plugins: [_skPubBgPlugin(), _skPubBorderPlugin()] });
 }
 
-// ── group scalar params chart (error bars) ────────────────────────────────
-function renderGroupParamsChart() {
+// ── group scalar params charts (one per parameter) ────────────────────────
+function renderGroupParamsCharts() {
   if (!skData || !skData.has_summary) return;
   var stats    = calcGroupSummaryStats();
   var grpNames = Object.keys(stats);
-  var keys     = SK_SUMMARY_KEYS.filter(function(k) {
-    return grpNames.some(function(g) { return stats[g].params[k]; });
+  SK_SUMMARY_KEYS.forEach(function(k) {
+    if (grpNames.some(function(g) { return stats[g].params[k]; })) {
+      renderGroupParamChart(k, stats, grpNames);
+    }
   });
-  var labels = keys.map(function(k) { return SK_SUMMARY_LABELS[k] || k; });
+}
+
+function renderGroupParamChart(key, stats, grpNames) {
+  if (!skData || !skData.has_summary) return;
+  if (!stats)    { stats    = calcGroupSummaryStats(); }
+  if (!grpNames) { grpNames = Object.keys(stats); }
+  var canvasId = 'sk-group-params-' + _skKeyToId(key) + '-chart';
+  var label    = SK_SUMMARY_LABELS[key] || key;
 
   var datasets = grpNames.map(function(grp, gi) {
+    var c  = _skPubColor(gi, grpNames.length);
+    var ca = _skPubColor(gi, grpNames.length, 0.65);
+    var s  = stats[grp].params[key];
     return {
       label: grp,
-      data: keys.map(function(k) {
-        var s = stats[grp].params[k];
-        return s ? { y: s.mean, yMin: s.mean - s.sd, yMax: s.mean + s.sd } : null;
-      }),
-      backgroundColor: groupColor(gi, grpNames.length, 0.65),
-      borderColor:     groupColor(gi, grpNames.length),
+      data: [s ? { y: s.mean, yMin: s.mean - s.sd, yMax: s.mean + s.sd } : null],
+      backgroundColor: ca,
+      borderColor:     c,
       borderWidth: 1,
-      errorBarColor:        groupColor(gi, grpNames.length),
-      errorBarWhiskerColor: groupColor(gi, grpNames.length),
+      errorBarColor:        c,
+      errorBarWhiskerColor: c,
       errorBarLineWidth: 2,
       errorBarWhiskerSize: 8,
     };
   });
 
-  makeChart('sk-group-params-chart', {
+  var pc   = skPub.perChart.params;
+  var opts = barOpts(pc.yTitle || label);
+  if (pc.yStartZero) { if (!opts.scales.y) opts.scales.y = {}; opts.scales.y.min = 0; }
+  _applyPubToOpts(opts, true, pc);
+  makeChart(canvasId, {
     type: 'barWithErrorBars',
-    data: { labels: labels, datasets: datasets },
-    options: barOpts(),
+    data: { labels: [label], datasets: datasets },
+    options: opts,
+    plugins: [_skPubBgPlugin(), _skPubBorderPlugin()],
   });
 }
 
@@ -1176,15 +1504,22 @@ function calcGroupStStats(metric) {
   return { stats: stats, phases: phaseLabels };
 }
 
+function renderGroupStCharts() {
+  SK_ST_GROUP_KEYS.forEach(function(m) { renderGroupStChart(m); });
+}
+
 function renderGroupStChart(metric) {
   if (!skData || !skData.has_state_transitions) return;
   metric = metric || 'delta_fm_pct';
+  var canvasId = 'sk-group-st-' + _skKeyToId(metric) + '-chart';
   var result   = calcGroupStStats(metric);
   var stats    = result.stats;
   var phases   = result.phases;
   var grpNames = Object.keys(stats);
 
   var datasets = grpNames.map(function(grp, gi) {
+    var c = _skPubColor(gi, grpNames.length);
+    var ca = _skPubColor(gi, grpNames.length, 0.65);
     return {
       label: grp,
       data: phases.map(function(pl) {
@@ -1192,20 +1527,25 @@ function renderGroupStChart(metric) {
         return s ? { y: s.mean, yMin: s.mean - s.sd, yMax: s.mean + s.sd }
                  : { y: NaN, yMin: NaN, yMax: NaN };
       }),
-      backgroundColor:      groupColor(gi, grpNames.length, 0.65),
-      borderColor:          groupColor(gi, grpNames.length),
+      backgroundColor:      ca,
+      borderColor:          c,
       borderWidth:          1,
-      errorBarColor:        groupColor(gi, grpNames.length),
-      errorBarWhiskerColor: groupColor(gi, grpNames.length),
+      errorBarColor:        c,
+      errorBarWhiskerColor: c,
       errorBarLineWidth:    2,
       errorBarWhiskerSize:  8,
     };
   });
 
-  makeChart('sk-group-st-chart', {
+  var pc = skPub.perChart.st;
+  var opts = barOpts(pc.yTitle || _ST_METRIC_LABELS[metric] || metric);
+  if (pc.yStartZero) { if (!opts.scales.y) opts.scales.y = {}; opts.scales.y.min = 0; }
+  _applyPubToOpts(opts, true, pc);
+  makeChart(canvasId, {
     type: 'barWithErrorBars',
     data: { labels: phases, datasets: datasets },
-    options: barOpts(_ST_METRIC_LABELS[metric] || metric),
+    options: opts,
+    plugins: [_skPubBgPlugin(), _skPubBorderPlugin()],
   });
 }
 
@@ -1521,33 +1861,89 @@ async function downloadXlsx(asZip) {
   try {
     var xlsxName = (skData.file_stem || 'slow_kin') + '_results.xlsx';
 
-    // Pre-render hidden tabs so all charts exist before capture
-    if (skData.has_params) {
-      _withPaneVisible('sk-tab-ftfm',    function() { renderFtFmChart('ft'); });
-      _withPaneVisible('sk-tab-derived', function() { renderDerivedChart('npq'); });
-      _withPaneVisible('sk-tab-params',  function() { renderParamsChart(); });
-    }
-    if (skData.has_state_transitions) {
-      _withPaneVisible('sk-tab-st', function() { renderStTab(); });
-    }
+    // Read which variant is currently active on each segmented chart
+    var _activeFtfm    = (document.querySelector('#sk-ftfm-btns .btn-primary')    || {}).dataset;
+    var _activeDerived = (document.querySelector('#sk-derived-btns .btn-primary') || {}).dataset;
 
-    // Capture all chart canvases
-    var skCaptures = [
-      { id: 'sk-traces-chart',       title: 'Raw Fluorescence' },
-      { id: 'sk-ftfm-chart',         title: 'Ft and Fm\u2032' },
-      { id: 'sk-derived-chart',      title: 'Derived Parameters' },
-      { id: 'sk-params-chart',       title: 'Summary Parameters' },
-      { id: 'sk-group-traces-chart', title: 'Group Traces' },
-      { id: 'sk-group-derived-chart', title: 'Group Derived Parameters' },
-      { id: 'sk-group-params-chart', title: 'Group Summary Parameters' },
-      { id: 'sk-st-chart',           title: 'State Transitions' },
-      { id: 'sk-group-st-chart',     title: 'Group State Transitions' },
-    ];
+    // Pre-render single-canvas charts that may be on hidden tabs
+    _withPaneVisible('sk-tab-params', function() { if (skData.has_params) renderParamsCharts(); });
+    _withPaneVisible('sk-tab-st',     function() { if (skData.has_state_transitions) renderStTab(); });
+
     var charts = [];
-    skCaptures.forEach(function(c) {
+
+    // Single-canvas charts (no variants)
+    var _singleCaptures = [
+      { id: 'sk-traces-chart',       title: 'Raw Fluorescence' },
+      { id: 'sk-group-traces-chart', title: 'Group Traces' },
+      { id: 'sk-st-chart',           title: 'State Transitions' },
+    ];
+    _singleCaptures.forEach(function(c) {
       var du = _captureSkCanvas(c.id);
       if (du) charts.push({ title: c.title, data_url: du });
     });
+
+    // Ft & Fm — all three variants
+    if (skData.has_params) {
+      var _ftfmVariants = [
+        { key: 'ft',  title: 'Ft',    renderFn: renderFtFmChart },
+        { key: 'fm',  title: "Fm\u2032", renderFn: renderFtFmChart },
+        { key: 'fv',  title: "Fv\u2032", renderFn: renderFtFmChart },
+      ];
+      charts = charts.concat(_captureVariants('sk-tab-ftfm', 'sk-ftfm-chart', _ftfmVariants));
+      // Restore active variant
+      _withPaneVisible('sk-tab-ftfm', function() { renderFtFmChart((_activeFtfm && _activeFtfm.ftfm) || 'ft'); });
+    }
+
+    // Derived time series — all six variants
+    if (skData.has_params) {
+      var _derivedVariants = [
+        { key: 'npq',       title: 'NPQ (Fm)',     renderFn: renderDerivedChart },
+        { key: 'npq_fmmax', title: 'NPQ (Fm,max)', renderFn: renderDerivedChart },
+        { key: 'qn',        title: 'qN',           renderFn: renderDerivedChart },
+        { key: 'qp',        title: 'qP',           renderFn: renderDerivedChart },
+        { key: 'qy',        title: 'Y(II)',         renderFn: renderDerivedChart },
+        { key: 'etr',       title: 'rETR',          renderFn: renderDerivedChart },
+      ];
+      charts = charts.concat(_captureVariants('sk-tab-derived', 'sk-derived-chart', _derivedVariants));
+      _withPaneVisible('sk-tab-derived', function() { renderDerivedChart((_activeDerived && _activeDerived.derived) || 'npq'); });
+    }
+
+    // Group derived — one canvas per metric (always rendered)
+    if (hasGroups() && skData.has_params) {
+      SK_DERIVED_GROUP_KEYS.forEach(function(m) {
+        var cid = 'sk-group-derived-' + _skKeyToId(m) + '-chart';
+        var du  = _captureSkCanvas(cid);
+        if (du) charts.push({ title: 'Group ' + (SK_DERIVED_YLABELS[m] || m), data_url: du });
+      });
+    }
+
+    // Group params — one canvas per parameter (always rendered)
+    if (hasGroups() && skData.has_summary) {
+      SK_SUMMARY_KEYS.forEach(function(k) {
+        var cid = 'sk-group-params-' + _skKeyToId(k) + '-chart';
+        var du  = _captureSkCanvas(cid);
+        if (du) charts.push({ title: 'Group ' + (SK_SUMMARY_LABELS[k] || k), data_url: du });
+      });
+    }
+
+    // Group state transitions — one canvas per metric (always rendered)
+    if (hasGroups() && skData.has_state_transitions) {
+      SK_ST_GROUP_KEYS.forEach(function(m) {
+        var cid = 'sk-group-st-' + _skKeyToId(m) + '-chart';
+        var du  = _captureSkCanvas(cid);
+        if (du) charts.push({ title: 'Group ' + (_ST_METRIC_LABELS[m] || m), data_url: du });
+      });
+    }
+
+    // Individual-sample scalar params — render each key to single canvas
+    if (skData.has_summary) {
+      var _activeParams = (document.querySelector('#sk-params-btns .btn-primary') || {}).dataset;
+      var _paramsVariants = SK_SUMMARY_KEYS.map(function(k) {
+        return { key: k, title: SK_SUMMARY_LABELS[k] || k, renderFn: renderParamChart };
+      });
+      charts = charts.concat(_captureVariants('sk-tab-params', 'sk-params-chart', _paramsVariants));
+      _withPaneVisible('sk-tab-params', function() { renderParamChart((_activeParams && _activeParams.params) || SK_SUMMARY_KEYS[0]); });
+    }
 
     var resp = await fetch('/api/slow_kin_export', {
       method: 'POST',
@@ -1885,4 +2281,237 @@ function generateSKMethodsText() {
     }
 
     return lines.join('\n\n');
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// PUBLICATION FIGURE SETTINGS UI
+// ══════════════════════════════════════════════════════════════════════════
+function initSkPubSettingsUI() {
+  try {
+    var saved = localStorage.getItem('sk_grp_traces_pub');
+    if (saved) {
+      var parsed = JSON.parse(saved);
+      skPub = _makeSkPub();
+      // restore shared keys
+      Object.keys(SK_PUB_DEFAULTS).forEach(function(k) { if (k in parsed) skPub[k] = parsed[k]; });
+      // restore per-chart keys
+      if (parsed.perChart) {
+        ['traces','derived','params','st'].forEach(function(ch) {
+          if (parsed.perChart[ch]) Object.assign(skPub.perChart[ch], parsed.perChart[ch]);
+        });
+      }
+    }
+  } catch(e) {}
+
+  function g(id) { return document.getElementById(id); }
+
+  // ── read shared settings from DOM ────────────────────────────────────────
+  function readSettings() {
+    var sizePreset = (g('sk-pub-size-preset') || {}).value || 'single';
+    var presetWidths = { single: 85, half: 120, double: 175 };
+    skPub.sizePreset   = sizePreset;
+    skPub.exportWidth  = sizePreset !== 'custom'
+      ? (presetWidths[sizePreset] || 85)
+      : (parseFloat((g('sk-pub-export-width') || {}).value) || 85);
+    var aspectVal = (g('sk-pub-aspect-preset') || {}).value || '1.50';
+    skPub.aspectRatio  = aspectVal === 'custom'
+      ? (parseFloat((g('sk-pub-aspect-custom') || {}).value) || 1.5)
+      : (parseFloat(aspectVal) || 1.5);
+    skPub.exportDPI     = parseInt((g('sk-pub-dpi') || {}).value)             || 300;
+    skPub.bgColor       = (g('sk-pub-bg-color') || {}).value                  || '#ffffff';
+    skPub.fontFamily    = (g('sk-pub-font-family') || {}).value               || 'Arial';
+    skPub.axisTitleSize = parseInt((g('sk-pub-axis-title-size') || {}).value)  || 12;
+    skPub.tickLabelSize = parseInt((g('sk-pub-tick-size') || {}).value)        || 11;
+    skPub.legendSize    = parseInt((g('sk-pub-legend-size') || {}).value)      || 10;
+    skPub.colorScheme   = (g('sk-pub-color-scheme') || {}).value               || 'default';
+    skPub.legendPosition= (g('sk-pub-legend-pos') || {}).value                || 'right';
+    skPub.showGridY     = !!(g('sk-pub-grid-y') || {}).checked;
+    skPub.showGridX     = !!(g('sk-pub-grid-x') || {}).checked;
+    skPub.showBorder    = !!(g('sk-pub-show-border') || {}).checked;
+    skPub.borderColor   = (g('sk-pub-border-color') || {}).value               || '#000000';
+    skPub.borderWidth   = parseFloat((g('sk-pub-border-width') || {}).value)   || 1;
+    skPub.lineWidthMean  = parseFloat((g('sk-pub-line-width-mean')  || {}).value) || 2.5;
+    skPub.lineWidthIndiv = parseFloat((g('sk-pub-line-width-indiv') || {}).value) || 0.8;
+    skPub.sdBandOpacity  = parseInt((g('sk-pub-sd-opacity')         || {}).value) || 18;
+
+    // per-chart settings
+    var pcDefs = {
+      traces:  ['yStartZero','yHeadroom','xTitle','yTitle'],
+      derived: ['yStartZero','yHeadroom'],
+      params:  ['yStartZero','yHeadroom'],
+      st:      ['yStartZero','yHeadroom'],
+    };
+    Object.keys(pcDefs).forEach(function(ch) {
+      var pc = skPub.perChart[ch];
+      var pi = function(id) { return parseInt((g('sk-pc-'+ch+'-'+id) || {}).value); };
+      var ps = function(id) { return ((g('sk-pc-'+ch+'-'+id) || {}).value || '').trim(); };
+      var pb = function(id) { return !!(g('sk-pc-'+ch+'-'+id) || {}).checked; };
+      pc.yStartZero = pb('y-start-zero');
+      pc.yHeadroom  = pi('y-headroom') || 5;
+      if (pcDefs[ch].indexOf('yTitle') >= 0) pc.yTitle = ps('y-title');
+      if (pcDefs[ch].indexOf('xTitle') >= 0) pc.xTitle = ps('x-title');
+    });
+
+    try { localStorage.setItem('sk_grp_traces_pub', JSON.stringify(skPub)); } catch(e) {}
+  }
+
+  // ── sync DOM from skPub ───────────────────────────────────────────────────
+  var RATIO_PRESETS = ['0.75', '1.00', '1.33', '1.50', '1.78'];
+  function syncUI() {
+    function setVal(id, v) { var el = g(id); if (el) el.value = v; }
+    function setChk(id, v) { var el = g(id); if (el) el.checked = v; }
+    setVal('sk-pub-size-preset',    skPub.sizePreset);
+    setVal('sk-pub-export-width',   skPub.exportWidth);
+    var ratioStr = skPub.aspectRatio.toFixed(2);
+    var isPreset = RATIO_PRESETS.indexOf(ratioStr) >= 0;
+    setVal('sk-pub-aspect-preset',  isPreset ? ratioStr : 'custom');
+    setVal('sk-pub-aspect-custom',  ratioStr);
+    setVal('sk-pub-dpi',            skPub.exportDPI);
+    setVal('sk-pub-bg-color',       skPub.bgColor);
+    setVal('sk-pub-font-family',    skPub.fontFamily);
+    setVal('sk-pub-axis-title-size',skPub.axisTitleSize);
+    setVal('sk-pub-tick-size',      skPub.tickLabelSize);
+    setVal('sk-pub-legend-size',    skPub.legendSize);
+    setVal('sk-pub-color-scheme',   skPub.colorScheme);
+    setVal('sk-pub-legend-pos',     skPub.legendPosition);
+    setChk('sk-pub-grid-y',         skPub.showGridY);
+    setChk('sk-pub-grid-x',         skPub.showGridX);
+    setChk('sk-pub-show-border',    skPub.showBorder);
+    setVal('sk-pub-border-color',   skPub.borderColor);
+    setVal('sk-pub-border-width',   skPub.borderWidth);
+    setVal('sk-pub-line-width-mean',  skPub.lineWidthMean);
+    setVal('sk-pub-line-width-indiv', skPub.lineWidthIndiv);
+    setVal('sk-pub-sd-opacity',       skPub.sdBandOpacity);
+    var lwmEl = g('sk-pub-line-width-mean-val');  if (lwmEl) lwmEl.textContent = skPub.lineWidthMean + ' px';
+    var lwiEl = g('sk-pub-line-width-indiv-val'); if (lwiEl) lwiEl.textContent = skPub.lineWidthIndiv + ' px';
+    var sdoEl = g('sk-pub-sd-opacity-val');       if (sdoEl) sdoEl.textContent = skPub.sdBandOpacity + '%';
+    var cw = g('sk-pub-custom-width-wrap');
+    if (cw) cw.style.display = skPub.sizePreset === 'custom' ? '' : 'none';
+    var cr = g('sk-pub-custom-ratio-wrap');
+    if (cr) cr.style.display = isPreset ? 'none' : '';
+    var bo = g('sk-pub-border-opts');
+    if (bo) bo.style.display = skPub.showBorder ? '' : 'none';
+
+    // per-chart sync
+    ['traces','derived','params','st'].forEach(function(ch) {
+      var pc = skPub.perChart[ch];
+      function sv(id, v) { setVal('sk-pc-'+ch+'-'+id, v); }
+      function sc(id, v) { setChk('sk-pc-'+ch+'-'+id, v); }
+      sc('y-start-zero', pc.yStartZero);
+      sv('y-headroom',   pc.yHeadroom);
+      sv('y-title',      pc.yTitle);
+      if (pc.xTitle !== undefined) sv('x-title', pc.xTitle);
+    });
+  }
+
+  function updatePcRangeLabel(ch, field, text) {
+    var el = g('sk-pc-'+ch+'-'+field+'-val');
+    if (el) el.textContent = text;
+  }
+
+  function updateBadge() {
+    var badge = g('sk-grp-pub-badge');
+    if (!badge) return;
+    var isCustom = Object.keys(SK_PUB_DEFAULTS).some(function(k) { return skPub[k] !== SK_PUB_DEFAULTS[k]; });
+    if (!isCustom) {
+      isCustom = ['traces','derived','params','st'].some(function(ch) {
+        var pc = skPub.perChart[ch], def = SK_PER_CHART_DEFAULTS[ch];
+        return Object.keys(def).some(function(k) { return pc[k] !== def[k]; });
+      });
+    }
+    badge.style.display = isCustom ? '' : 'none';
+  }
+
+  var _reRenderTimer = null;
+  function triggerReRender(chartKey) {
+    clearTimeout(_reRenderTimer);
+    _reRenderTimer = setTimeout(function() {
+      if (!skData || !hasGroups()) return;
+      _applyPubAspectRatio();
+      if (!chartKey || chartKey === 'traces')  renderGroupTracesChart();
+      if (!chartKey || chartKey === 'derived') { if (skData.has_params) renderGroupDerivedCharts(); }
+      if (!chartKey || chartKey === 'params')  { if (skData.has_summary) renderGroupParamsCharts(); }
+      if (!chartKey || chartKey === 'st')      { if (skData.has_state_transitions) renderGroupStCharts(); }
+    }, 80);
+  }
+
+  // ── shared control events ─────────────────────────────────────────────────
+  var sizePresetSel = g('sk-pub-size-preset');
+  if (sizePresetSel) sizePresetSel.addEventListener('change', function() {
+    var cw = g('sk-pub-custom-width-wrap');
+    if (cw) cw.style.display = this.value === 'custom' ? '' : 'none';
+    readSettings(); updateBadge(); triggerReRender();
+  });
+  var aspectPresetSel = g('sk-pub-aspect-preset');
+  if (aspectPresetSel) aspectPresetSel.addEventListener('change', function() {
+    var cr = g('sk-pub-custom-ratio-wrap');
+    if (cr) cr.style.display = this.value === 'custom' ? '' : 'none';
+    readSettings(); updateBadge(); triggerReRender();
+  });
+  var showBorderChk = g('sk-pub-show-border');
+  if (showBorderChk) showBorderChk.addEventListener('change', function() {
+    var bo = g('sk-pub-border-opts');
+    if (bo) bo.style.display = this.checked ? '' : 'none';
+    readSettings(); updateBadge(); triggerReRender();
+  });
+  ['sk-pub-export-width','sk-pub-aspect-custom','sk-pub-dpi','sk-pub-bg-color',
+   'sk-pub-font-family','sk-pub-axis-title-size','sk-pub-tick-size','sk-pub-legend-size',
+   'sk-pub-color-scheme','sk-pub-legend-pos',
+   'sk-pub-grid-y','sk-pub-grid-x',
+   'sk-pub-border-color','sk-pub-border-width',
+  ].forEach(function(id) {
+    var el = g(id);
+    if (el) el.addEventListener('change', function() { readSettings(); updateBadge(); triggerReRender(); });
+  });
+  // shared range sliders (line weights / SD opacity)
+  [
+    { id: 'sk-pub-line-width-mean',  labelId: 'sk-pub-line-width-mean-val',  fmt: function(v){ return v + ' px'; } },
+    { id: 'sk-pub-line-width-indiv', labelId: 'sk-pub-line-width-indiv-val', fmt: function(v){ return v + ' px'; } },
+    { id: 'sk-pub-sd-opacity',       labelId: 'sk-pub-sd-opacity-val',       fmt: function(v){ return v + '%'; } },
+  ].forEach(function(cfg) {
+    var el = g(cfg.id);
+    if (el) el.addEventListener('input', function() {
+      var lbl = g(cfg.labelId); if (lbl) lbl.textContent = cfg.fmt(parseFloat(this.value));
+      readSettings(); updateBadge(); triggerReRender();
+    });
+  });
+
+  // ── per-chart control events ──────────────────────────────────────────────
+  var _pcFields = {
+    traces:  ['y-start-zero','y-headroom','x-title','y-title'],
+    derived: ['y-start-zero','y-headroom'],
+    params:  ['y-start-zero','y-headroom'],
+    st:      ['y-start-zero','y-headroom'],
+  };
+  Object.keys(_pcFields).forEach(function(ch) {
+    _pcFields[ch].forEach(function(field) {
+      var el = g('sk-pc-'+ch+'-'+field);
+      if (el) el.addEventListener('change', function() { readSettings(); updateBadge(); triggerReRender(ch); });
+    });
+  });
+
+  // Export button
+  var exportBtn = g('sk-pub-export-btn');
+  if (exportBtn) exportBtn.addEventListener('click', exportGroupTracesPubPng);
+
+  // Reset button
+  var resetBtn = g('sk-pub-reset-btn');
+  if (resetBtn) resetBtn.addEventListener('click', function() {
+    skPub = _makeSkPub();
+    syncUI(); updateBadge();
+    try { localStorage.removeItem('sk_grp_traces_pub'); } catch(e) {}
+    triggerReRender();
+  });
+
+  // Chevron
+  var pubBody = g('sk-grp-pub-body');
+  if (pubBody) {
+    $(pubBody).on('show.bs.collapse', function() {
+      var chev = g('sk-grp-pub-chevron'); if (chev) chev.style.transform = 'rotate(180deg)';
+    }).on('hide.bs.collapse', function() {
+      var chev = g('sk-grp-pub-chevron'); if (chev) chev.style.transform = '';
+    });
+  }
+
+  syncUI(); updateBadge();
 }

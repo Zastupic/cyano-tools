@@ -467,7 +467,13 @@
       </div>
       <div id="sk-params-content">
         <div class="d-flex flex-wrap align-items-center mb-2">
-          <span class="mr-2 font-weight-bold">Parameter summary</span>
+          <span class="mr-2 font-weight-bold">Metric:</span>
+          <div class="ojip-seg-ctrl mr-3" id="sk-params-btns">
+            <button class="btn btn-primary" data-params="fv_fm">Fv/Fm</button>
+            <button class="btn btn-outline-primary" data-params="rfd">Rfd</button>
+            <button class="btn btn-outline-primary" data-params="npq_max">NPQ max</button>
+            <button class="btn btn-outline-primary" data-params="actinic_intensity">Actinic</button>
+          </div>
           <button class="btn btn-outline-secondary btn-sm ml-auto" id="sk-copy-params-btn">
             <i class="fa fa-clipboard mr-1"></i>Copy table
           </button>
@@ -522,6 +528,218 @@
 
       <!-- Group results -->
       <div id="sk-group-results" style="display:none">
+
+        <!-- ═══ Publication Figure Style & Export Card ═══ -->
+        <div class="card border-0 shadow-sm mb-3" id="sk-grp-pub-card" style="border:1px solid #c8d8f0 !important; border-left:4px solid #0d6efd !important;">
+          <div class="card-header py-1 px-3 d-flex align-items-center justify-content-between"
+               style="background: linear-gradient(to right,#eef2ff,#e4ecf8); cursor:pointer;"
+               data-toggle="collapse" data-target="#sk-grp-pub-body"
+               aria-expanded="false" aria-controls="sk-grp-pub-body">
+            <div>
+              <p class="font-weight-bold mb-0 text-dark" style="font-size:0.85rem;">
+                <i class="fa fa-paint-brush text-primary mr-1"></i> Figure Style &amp; Export
+                <span id="sk-grp-pub-badge" class="badge badge-primary ml-1" style="display:none; font-size:0.60rem; vertical-align:middle;">
+                  <i class="fa fa-check-circle mr-1"></i> Custom
+                </span>
+              </p>
+              <p class="mb-0 mt-1 text-muted" style="font-size:0.70rem;">Shared settings for <strong>all group charts below</strong> — colour scheme, line weights, typography, size and export. Settings are saved automatically.</p>
+            </div>
+            <div class="d-flex align-items-center ml-3">
+              <span id="sk-grp-pub-spinner" style="display:none; align-items:center; font-size:0.75rem; font-weight:600; color:#0d6efd; white-space:nowrap;">
+                <span class="spinner-border spinner-border-sm" style="width:0.8rem;height:0.8rem;border-width:0.13em;" role="status"></span>
+                Updating&hellip;
+              </span>
+              <i class="fa fa-chevron-down text-muted ml-2" id="sk-grp-pub-chevron" style="font-size:1rem; transition:transform 0.2s;"></i>
+            </div>
+          </div>
+          <div id="sk-grp-pub-body" class="collapse">
+            <div class="card-body p-3">
+              <!-- Sub-tabs -->
+              <ul class="nav nav-tabs mb-3" id="skPubSubTabs" role="tablist" style="font-size:0.78rem;">
+                <li class="nav-item"><a class="nav-link active py-1 px-2" data-toggle="tab" href="#skPubTabLayout" role="tab"><i class="fa fa-th-large mr-1"></i>Layout &amp; Export</a></li>
+                <li class="nav-item"><a class="nav-link py-1 px-2" data-toggle="tab" href="#skPubTabTypo" role="tab"><i class="fa fa-font mr-1"></i>Typography</a></li>
+                <li class="nav-item"><a class="nav-link py-1 px-2" data-toggle="tab" href="#skPubTabStyle" role="tab"><i class="fa fa-paint-brush mr-1"></i>Colors &amp; Style</a></li>
+                <li class="nav-item"><a class="nav-link py-1 px-2" data-toggle="tab" href="#skPubTabAxes" role="tab"><i class="fa fa-list-alt mr-1"></i>Legend &amp; Axes</a></li>
+              </ul>
+              <div class="tab-content" id="skPubSubTabContent">
+
+                <!-- ── Layout & Export tab ── -->
+                <div class="tab-pane fade show active" id="skPubTabLayout" role="tabpanel">
+                  <div class="row" style="font-size:0.78rem;">
+                    <div class="col-12 col-md-4 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Figure width preset</label>
+                      <select class="form-control form-control-sm" id="sk-pub-size-preset">
+                        <option value="single" selected>Single column — 85 mm</option>
+                        <option value="half">1.5 column — 120 mm</option>
+                        <option value="double">Double column — 175 mm</option>
+                        <option value="custom">Custom…</option>
+                      </select>
+                    </div>
+                    <div class="col-6 col-md-2 mb-2" id="sk-pub-custom-width-wrap" style="display:none;">
+                      <label class="font-weight-bold mb-1 d-block">Width (mm)</label>
+                      <input type="number" class="form-control form-control-sm" id="sk-pub-export-width" value="85" min="30" max="300">
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Aspect ratio (w : h)</label>
+                      <select class="form-control form-control-sm" id="sk-pub-aspect-preset">
+                        <option value="1.78">16 : 9 &nbsp;(wide)</option>
+                        <option value="1.50" selected>3 : 2 &nbsp;(standard)</option>
+                        <option value="1.33">4 : 3 &nbsp;(classic)</option>
+                        <option value="1.00">1 : 1 &nbsp;(square)</option>
+                        <option value="0.75">3 : 4 &nbsp;(portrait)</option>
+                        <option value="custom">Custom…</option>
+                      </select>
+                    </div>
+                    <div class="col-auto mb-2" id="sk-pub-custom-ratio-wrap" style="display:none;">
+                      <label class="font-weight-bold mb-1 d-block">Ratio (w/h)</label>
+                      <input type="number" class="form-control form-control-sm" id="sk-pub-aspect-custom" value="1.50" min="0.2" max="5" step="0.05" style="width:80px;">
+                    </div>
+                    <div class="col-6 col-md-2 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Resolution</label>
+                      <select class="form-control form-control-sm" id="sk-pub-dpi">
+                        <option value="150">150 dpi</option>
+                        <option value="300" selected>300 dpi</option>
+                        <option value="600">600 dpi</option>
+                      </select>
+                    </div>
+                    <div class="col-6 col-md-2 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Background</label>
+                      <input type="color" class="form-control form-control-sm form-control-color" id="sk-pub-bg-color" value="#ffffff" style="width:48px;" title="Background color">
+                    </div>
+                    <div class="col-12 mb-1"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Plot border</strong></div>
+                    <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:0.75rem;">
+                      <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="checkbox" id="sk-pub-show-border">
+                        <label class="form-check-label small" for="sk-pub-show-border">Show border around plot area</label>
+                      </div>
+                      <div id="sk-pub-border-opts" class="d-flex align-items-center" style="display:none; gap:0.4rem;">
+                        <input type="color" class="form-control form-control-sm form-control-color" id="sk-pub-border-color" value="#000000" style="width:36px;" title="Border color">
+                        <input type="number" class="form-control form-control-sm" id="sk-pub-border-width" value="1" min="0.5" max="5" step="0.5" style="width:60px;" title="Border width (px)">
+                        <small class="text-muted">px</small>
+                      </div>
+                    </div>
+                    <div class="col-12 mb-2 mt-1">
+                      <button id="sk-pub-export-btn" class="btn btn-primary btn-sm">
+                        <i class="fa fa-download mr-1"></i> Export fluorescence traces PNG
+                      </button>
+                      <span id="sk-pub-export-spinner" class="ml-2" style="display:none;">
+                        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                        <span class="small text-muted ml-1">Rendering…</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ── Typography tab ── -->
+                <div class="tab-pane fade" id="skPubTabTypo" role="tabpanel">
+                  <div class="row" style="font-size:0.78rem;">
+                    <div class="col-12 col-md-5 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Font family</label>
+                      <select class="form-control form-control-sm" id="sk-pub-font-family">
+                        <option value="Arial" selected>Arial</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Georgia">Georgia</option>
+                      </select>
+                    </div>
+                    <div class="col-12 mb-1"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Font sizes (pt)</strong></div>
+                    <div class="col-6 col-md-3 mb-2">
+                      <label class="mb-1 d-block">Axis title</label>
+                      <input type="number" class="form-control form-control-sm" id="sk-pub-axis-title-size" value="12" min="6" max="28">
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                      <label class="mb-1 d-block">Tick labels</label>
+                      <input type="number" class="form-control form-control-sm" id="sk-pub-tick-size" value="11" min="5" max="22">
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                      <label class="mb-1 d-block">Legend</label>
+                      <input type="number" class="form-control form-control-sm" id="sk-pub-legend-size" value="10" min="5" max="18">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ── Colors & Style tab ── -->
+                <div class="tab-pane fade" id="skPubTabStyle" role="tabpanel">
+                  <div class="row align-items-end" style="font-size:0.78rem;">
+                    <div class="col-12 col-md-5 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Color scheme</label>
+                      <select class="form-control form-control-sm" id="sk-pub-color-scheme">
+                        <option value="default" selected>Default (Chart.js)</option>
+                        <option value="colorblind">Colorblind-safe (Okabe-Ito)</option>
+                        <option value="grayscale">Grayscale</option>
+                        <option value="paired">Paired</option>
+                      </select>
+                    </div>
+                    <div class="col-12 mb-1"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Line weights</strong></div>
+                    <div class="col-auto mb-2">
+                      <label class="mb-1 d-block">Mean line width</label>
+                      <div class="d-flex align-items-center" style="gap:0.4rem;">
+                        <input type="range" class="form-range" id="sk-pub-line-width-mean" min="0.5" max="6" step="0.5" value="2.5" style="width:90px;">
+                        <small id="sk-pub-line-width-mean-val" class="text-muted">2.5 px</small>
+                      </div>
+                    </div>
+                    <div class="col-auto mb-2">
+                      <label class="mb-1 d-block">Individual trace width</label>
+                      <div class="d-flex align-items-center" style="gap:0.4rem;">
+                        <input type="range" class="form-range" id="sk-pub-line-width-indiv" min="0.3" max="3" step="0.1" value="0.8" style="width:90px;">
+                        <small id="sk-pub-line-width-indiv-val" class="text-muted">0.8 px</small>
+                      </div>
+                    </div>
+                    <div class="col-auto mb-2">
+                      <label class="mb-1 d-block">SD band opacity</label>
+                      <div class="d-flex align-items-center" style="gap:0.4rem;">
+                        <input type="range" class="form-range" id="sk-pub-sd-opacity" min="0" max="60" step="2" value="18" style="width:90px;">
+                        <small id="sk-pub-sd-opacity-val" class="text-muted">18%</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ── Legend & Axes tab ── -->
+                <div class="tab-pane fade" id="skPubTabAxes" role="tabpanel">
+                  <div class="row" style="font-size:0.78rem;">
+                    <div class="col-12 mb-1"><strong style="font-size:0.74rem;">Legend</strong></div>
+                    <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                      <div>
+                        <label class="small mb-0">Position</label>
+                        <select class="form-control form-control-sm mt-1" id="sk-pub-legend-pos" style="width:auto;">
+                          <option value="top">Top</option>
+                          <option value="right" selected>Right</option>
+                          <option value="bottom">Bottom</option>
+                          <option value="left">Left</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-12 mb-1"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Gridlines</strong></div>
+                    <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                      <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="checkbox" id="sk-pub-grid-y" checked>
+                        <label class="form-check-label small" for="sk-pub-grid-y">Y grid</label>
+                      </div>
+                      <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="checkbox" id="sk-pub-grid-x">
+                        <label class="form-check-label small" for="sk-pub-grid-x">X grid</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /tab-content -->
+
+              <div class="d-flex flex-wrap mt-3 pt-2 border-top" style="gap:0.5rem;">
+                <button id="sk-pub-reset-btn" class="btn btn-sm btn-outline-secondary">
+                  <i class="fa fa-times-circle mr-1"></i> Reset Defaults
+                </button>
+              </div>
+
+            </div><!-- /card-body -->
+          </div><!-- /collapse -->
+        </div>
+        <!-- ══════════════════════════════════════════════════════════════ -->
+
         <h6 class="font-weight-bold">Mean ± SD — raw fluorescence traces</h6>
         <div class="d-flex flex-wrap align-items-center mb-2">
           <div class="form-check form-check-inline mr-3 mb-0">
@@ -545,43 +763,193 @@
             <small class="ml-1 text-muted" id="sk-group-traces-jitter-unit"></small>
           </div>
         </div>
-        <div style="position:relative; height:360px;">
+        <!-- per-chart settings: traces -->
+        <div class="card mt-2 mb-1 border-0" style="background:transparent;">
+          <div class="card-header py-1 px-2" style="background:#e8f0fe; border:1px solid #b8d0f8; border-radius:6px; cursor:pointer;" data-toggle="collapse" data-target="#sk-pc-traces-panel">
+            <span style="font-size:0.78rem; font-weight:600; color:#2c5fb3;"><i class="fa fa-sliders mr-1"></i>Chart settings</span>
+            <span class="text-muted ml-1" style="font-size:0.72rem; font-weight:400;">— applies to the plot below only</span>
+            <i class="fa fa-chevron-down float-right mt-1" style="font-size:0.7rem; color:#5a7abf;"></i>
+          </div>
+          <div id="sk-pc-traces-panel" class="collapse">
+            <div class="card-body py-2 px-3" style="font-size:0.78rem; background:#f4f7ff; border:1px solid #b8d0f8; border-top:none; border-radius:0 0 6px 6px;">
+              <div class="row" style="gap:0;">
+                <div class="col-12 mb-1"><strong style="font-size:0.74rem;">Y-axis scaling</strong></div>
+                <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                  <div class="form-check form-check-inline mb-0">
+                    <input class="form-check-input" type="checkbox" id="sk-pc-traces-y-start-zero">
+                    <label class="form-check-label small" for="sk-pc-traces-y-start-zero">Start at zero</label>
+                  </div>
+                  <div class="d-flex align-items-center" style="gap:0.35rem;">
+                    <label class="small mb-0" for="sk-pc-traces-y-headroom">Y headroom:</label>
+                    <input type="number" class="form-control form-control-sm" id="sk-pc-traces-y-headroom" value="5" min="0" max="50" style="width:60px;">
+                    <small class="text-muted">%</small>
+                  </div>
+                </div>
+                <div class="col-12 mb-1"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Axis title overrides</strong> <span class="text-muted font-weight-normal">(blank = auto)</span></div>
+                <div class="col-12 col-md-5 mb-2">
+                  <label class="small mb-1 d-block">X-axis title</label>
+                  <input type="text" class="form-control form-control-sm" id="sk-pc-traces-x-title" placeholder="e.g. Time (s)">
+                </div>
+                <div class="col-12 col-md-5 mb-2">
+                  <label class="small mb-1 d-block">Y-axis title</label>
+                  <input type="text" class="form-control form-control-sm" id="sk-pc-traces-y-title" placeholder="e.g. Fluorescence (a.u.)">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="sk-grp-traces-container" class="sk-pub-ch" data-cid="sk-group-traces-chart" style="position:relative; height:360px;">
           <canvas id="sk-group-traces-chart"></canvas>
         </div>
 
         <div id="sk-group-derived-section">
           <h6 class="font-weight-bold mt-4">Mean ± SD — derived parameters by group</h6>
-          <div class="d-flex flex-wrap align-items-center mb-2">
-            <div class="ojip-seg-ctrl" id="sk-group-derived-btns">
-              <button class="btn btn-primary" data-gderived="npq">NPQ</button>
-              <button class="btn btn-outline-primary" data-gderived="qy">Y(II)</button>
-              <button class="btn btn-outline-primary" data-gderived="qp">q<sub>P</sub></button>
-              <button class="btn btn-outline-primary" data-gderived="etr">rETR</button>
+          <!-- per-chart settings: derived -->
+          <div class="card mt-2 mb-1 border-0" style="background:transparent;">
+            <div class="card-header py-1 px-2" style="background:#e8f0fe; border:1px solid #b8d0f8; border-radius:6px; cursor:pointer;" data-toggle="collapse" data-target="#sk-pc-derived-panel">
+              <span style="font-size:0.78rem; font-weight:600; color:#2c5fb3;"><i class="fa fa-sliders mr-1"></i>Chart settings</span>
+              <span class="text-muted ml-1" style="font-size:0.72rem; font-weight:400;">— applies to all plots below</span>
+              <i class="fa fa-chevron-down float-right mt-1" style="font-size:0.7rem; color:#5a7abf;"></i>
+            </div>
+            <div id="sk-pc-derived-panel" class="collapse">
+              <div class="card-body py-2 px-3" style="font-size:0.78rem; background:#f4f7ff; border:1px solid #b8d0f8; border-top:none; border-radius:0 0 6px 6px;">
+                <div class="row" style="gap:0;">
+                  <div class="col-12 mb-1"><strong style="font-size:0.74rem;">Y-axis scaling</strong></div>
+                  <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                    <div class="form-check form-check-inline mb-0">
+                      <input class="form-check-input" type="checkbox" id="sk-pc-derived-y-start-zero">
+                      <label class="form-check-label small" for="sk-pc-derived-y-start-zero">Start at zero</label>
+                    </div>
+                    <div class="d-flex align-items-center" style="gap:0.35rem;">
+                      <label class="small mb-0" for="sk-pc-derived-y-headroom">Y headroom:</label>
+                      <input type="number" class="form-control form-control-sm" id="sk-pc-derived-y-headroom" value="5" min="0" max="50" style="width:60px;">
+                      <small class="text-muted">%</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div style="position:relative; height:360px;">
-            <canvas id="sk-group-derived-chart"></canvas>
+          <div class="row no-gutters">
+            <div class="col-12 col-md-6 pr-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-derived-npq-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-derived-npq-chart"></canvas>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 pl-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-derived-qy-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-derived-qy-chart"></canvas>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 pr-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-derived-qp-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-derived-qp-chart"></canvas>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 pl-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-derived-etr-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-derived-etr-chart"></canvas>
+              </div>
+            </div>
           </div>
         </div>
 
         <div id="sk-group-params-section" class="mt-4">
           <h6 class="font-weight-bold">Scalar parameters by group (mean ± SD)</h6>
-          <div style="position:relative; height:300px;">
-            <canvas id="sk-group-params-chart"></canvas>
+          <!-- per-chart settings: params -->
+          <div class="card mt-2 mb-1 border-0" style="background:transparent;">
+            <div class="card-header py-1 px-2" style="background:#e8f0fe; border:1px solid #b8d0f8; border-radius:6px; cursor:pointer;" data-toggle="collapse" data-target="#sk-pc-params-panel">
+              <span style="font-size:0.78rem; font-weight:600; color:#2c5fb3;"><i class="fa fa-sliders mr-1"></i>Chart settings</span>
+              <span class="text-muted ml-1" style="font-size:0.72rem; font-weight:400;">— applies to the plot below only</span>
+              <i class="fa fa-chevron-down float-right mt-1" style="font-size:0.7rem; color:#5a7abf;"></i>
+            </div>
+            <div id="sk-pc-params-panel" class="collapse">
+              <div class="card-body py-2 px-3" style="font-size:0.78rem; background:#f4f7ff; border:1px solid #b8d0f8; border-top:none; border-radius:0 0 6px 6px;">
+                <div class="row" style="gap:0;">
+                  <div class="col-12 mb-1"><strong style="font-size:0.74rem;">Y-axis scaling</strong></div>
+                  <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                    <div class="form-check form-check-inline mb-0">
+                      <input class="form-check-input" type="checkbox" id="sk-pc-params-y-start-zero" checked>
+                      <label class="form-check-label small" for="sk-pc-params-y-start-zero">Start at zero</label>
+                    </div>
+                    <div class="d-flex align-items-center" style="gap:0.35rem;">
+                      <label class="small mb-0" for="sk-pc-params-y-headroom">Y headroom:</label>
+                      <input type="number" class="form-control form-control-sm" id="sk-pc-params-y-headroom" value="15" min="0" max="50" style="width:60px;">
+                      <small class="text-muted">%</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row no-gutters">
+            <div class="col-12 col-md-6 pr-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-params-fv-fm-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-params-fv-fm-chart"></canvas>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 pl-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-params-rfd-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-params-rfd-chart"></canvas>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 pr-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-params-npq-max-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-params-npq-max-chart"></canvas>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 pl-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-params-actinic-intensity-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-params-actinic-intensity-chart"></canvas>
+              </div>
+            </div>
           </div>
         </div>
 
         <div id="sk-group-st-section" class="mt-4" style="display:none;">
           <h6 class="font-weight-bold">State transitions by group (mean ± SD)</h6>
-          <div class="d-flex flex-wrap align-items-center mb-2">
-            <div class="ojip-seg-ctrl" id="sk-group-st-btns">
-              <button class="btn btn-primary" data-gst="delta_fm_pct">&#916;Fm&prime; (%)</button>
-              <button class="btn btn-outline-primary" data-gst="tau">&#964; (s)</button>
-              <button class="btn btn-outline-primary" data-gst="half_time">t&#189; (s)</button>
+          <!-- per-chart settings: st -->
+          <div class="card mt-2 mb-1 border-0" style="background:transparent;">
+            <div class="card-header py-1 px-2" style="background:#e8f0fe; border:1px solid #b8d0f8; border-radius:6px; cursor:pointer;" data-toggle="collapse" data-target="#sk-pc-st-panel">
+              <span style="font-size:0.78rem; font-weight:600; color:#2c5fb3;"><i class="fa fa-sliders mr-1"></i>Chart settings</span>
+              <span class="text-muted ml-1" style="font-size:0.72rem; font-weight:400;">— applies to all plots below</span>
+              <i class="fa fa-chevron-down float-right mt-1" style="font-size:0.7rem; color:#5a7abf;"></i>
+            </div>
+            <div id="sk-pc-st-panel" class="collapse">
+              <div class="card-body py-2 px-3" style="font-size:0.78rem; background:#f4f7ff; border:1px solid #b8d0f8; border-top:none; border-radius:0 0 6px 6px;">
+                <div class="row" style="gap:0;">
+                  <div class="col-12 mb-1"><strong style="font-size:0.74rem;">Y-axis scaling</strong></div>
+                  <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                    <div class="form-check form-check-inline mb-0">
+                      <input class="form-check-input" type="checkbox" id="sk-pc-st-y-start-zero">
+                      <label class="form-check-label small" for="sk-pc-st-y-start-zero">Start at zero</label>
+                    </div>
+                    <div class="d-flex align-items-center" style="gap:0.35rem;">
+                      <label class="small mb-0" for="sk-pc-st-y-headroom">Y headroom:</label>
+                      <input type="number" class="form-control form-control-sm" id="sk-pc-st-y-headroom" value="15" min="0" max="50" style="width:60px;">
+                      <small class="text-muted">%</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div style="position:relative; height:300px;">
-            <canvas id="sk-group-st-chart"></canvas>
+          <div class="row no-gutters">
+            <div class="col-12 col-md-6 pr-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-st-delta-fm-pct-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-st-delta-fm-pct-chart"></canvas>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 pl-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-st-tau-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-st-tau-chart"></canvas>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 pr-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-st-half-time-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-st-half-time-chart"></canvas>
+              </div>
+            </div>
           </div>
         </div>
 

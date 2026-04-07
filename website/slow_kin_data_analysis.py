@@ -107,7 +107,7 @@ def _safe(v):
     return v
 
 
-def _series_to_list(s):
+def _series_to_list(s) -> list:
     return [_safe(x) for x in s]
 
 
@@ -655,11 +655,11 @@ def _process_aquapen(files, protocol_key, upload_folder):
         'files': file_stems,
         'file_stem': file_stems[0] if file_stems else '',
         'time_unit': 's',
-        'raw_time': [t / 1e6 for t in raw_time],
+        'raw_time': [float(t) / 1e6 for t in raw_time],
         'raw_traces': raw_traces,
         'has_params': True,
-        'param_time': [t / 1e6 for t in _series_to_list(timing_fm.astype(float))],
-        'param_time_npq': [t / 1e6 for t in _series_to_list(timing_npq.astype(float))],
+        'param_time': [float(t) / 1e6 for t in _series_to_list(timing_fm.astype(float))],
+        'param_time_npq': [float(t) / 1e6 for t in _series_to_list(timing_npq.astype(float))],
         'param_labels': {
             'fm':        proto['fm_labels'],
             'ft':        proto['ft_labels'],
