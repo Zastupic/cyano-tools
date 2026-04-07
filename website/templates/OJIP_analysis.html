@@ -112,25 +112,27 @@
             <tr><td><u>Parameter</u></td><td><u>Formula</u></td><td><u>Meaning</u></td></tr>
             <tr><td colspan="3"><i>Technical parameters</i></td></tr>
             <tr><td>F<sub>O</sub>, F<sub>M</sub></td><td></td><td>Initial and maximal fluorescence intensity</td></tr>
+            <tr><td>F<sub>V</sub></td><td>F<sub>M</sub> – F<sub>O</sub></td><td>Maximum variable fluorescence</td></tr>
             <tr><td>F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub></td><td></td><td>Fluorescence at 300 μs, 2 ms and 30 ms, respectively</td></tr>
             <tr><td>V<sub>J</sub></td><td>(F<sub>J</sub>–F<sub>O</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Relative variable fluorescence at J point</td></tr>
             <tr><td>V<sub>I</sub></td><td>(F<sub>I</sub>–F<sub>O</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Relative variable fluorescence at I point</td></tr>
             <tr><td>M<sub>0</sub></td><td>4(F<sub>0.3ms</sub>–F<sub>0.05ms</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Initial slope of O-J rise (ms<sup>–1</sup>)</td></tr>
-            <tr><td colspan="3"><i>Efficiencies</i></td></tr>
-            <tr><td>ψE<sub>0</sub></td><td>1–V<sub>J</sub></td><td>Efficiency of QA<sup>−</sup> → PQ electron transfer</td></tr>
-            <tr><td>ψR<sub>0</sub></td><td>1–V<sub>I</sub></td><td>Efficiency of electron transfer from Q<sub>A</sub><sup>−</sup> to final PSI acceptors</td></tr>
-            <tr><td>δR<sub>0</sub></td><td>ψR<sub>0</sub>/ψE<sub>0</sub></td><td>Probability that an electron transported to PQ will reach the final PSI acceptors</td></tr>
-            <tr><td>φP<sub>0</sub></td><td>F<sub>V</sub>/F<sub>M</sub></td><td>Maximum quantum yield of PSII photochemistry</td></tr>
-            <tr><td>φE<sub>0</sub></td><td>φP<sub>0</sub>×ψE<sub>0</sub></td><td>Quantum yield of electron transport Q<sub>A</sub><sup>−</sup>→PQ</td></tr>
-            <tr><td>φR<sub>0</sub></td><td>φP<sub>0</sub>×ψR<sub>0</sub></td><td>Quantum yield of electron transport from Q<sub>A</sub><sup>−</sup> to final PSI acceptors</td></tr>
+            <tr><td>S<sub>m</sub></td><td>Area/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Normalized area between the OJIP curve and F = F<sub>M</sub>; proxy of the number of electron carriers per electron transport chain</td></tr>
+            <tr><td>N</td><td>S<sub>m</sub>×M<sub>0</sub>/V<sub>J</sub></td><td>Q<sub>A</sub> turnover number</td></tr>
+            <tr><td colspan="3"><i>Efficiencies and quantum yields</i></td></tr>
+            <tr><td>ψE<sub>0</sub> = ET<sub>0</sub>/TR<sub>0</sub></td><td>1–V<sub>J</sub></td><td>Efficiency with which a PSII trapped electron is transferred from Q<sub>A</sub><sup>−</sup> to PQ</td></tr>
+            <tr><td>ψR<sub>0</sub> = RE<sub>0</sub>/TR<sub>0</sub></td><td>1–V<sub>I</sub></td><td>Efficiency with which a PSII trapped electron is transferred to final PSI acceptors</td></tr>
+            <tr><td>δR<sub>0</sub> = RE<sub>0</sub>/ET<sub>0</sub></td><td>ψR<sub>0</sub>/ψE<sub>0</sub></td><td>Efficiency with which an electron from PQH<sub>2</sub> is transferred to final PSI acceptors</td></tr>
+            <tr><td>φP<sub>0</sub> = TR<sub>0</sub>/ABS</td><td>F<sub>V</sub>/F<sub>M</sub></td><td>Maximum quantum yield of primary PSII photochemistry</td></tr>
+            <tr><td>φE<sub>0</sub> = ET<sub>0</sub>/ABS</td><td>φP<sub>0</sub>×ψE<sub>0</sub></td><td>Quantum yield of electron transport from Q<sub>A</sub><sup>−</sup> to PQ</td></tr>
+            <tr><td>φR<sub>0</sub> = RE<sub>0</sub>/ABS</td><td>φP<sub>0</sub>×ψR<sub>0</sub></td><td>Quantum yield of electron transport from Q<sub>A</sub><sup>−</sup> to final PSI acceptors</td></tr>
+            <tr><td>φD<sub>0</sub> = DI<sub>0</sub>/ABS</td><td>1–φP<sub>0</sub></td><td>Quantum yield of energy dissipation in PSII antenna</td></tr>
             <tr><td colspan="3"><i>Specific energy fluxes per active PSII</i></td></tr>
             <tr><td>ABS/RC</td><td>(M<sub>0</sub>/V<sub>J</sub>)/φP<sub>0</sub></td><td>Apparent antenna size of active PSII</td></tr>
             <tr><td>TR<sub>0</sub>/RC</td><td>M<sub>0</sub>/V<sub>J</sub></td><td>Maximum trapped exciton flux per active PSII</td></tr>
-            <tr><td>ET<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψE<sub>0</sub></td><td>Electron flux QA<sup>−</sup>→PQ per active PSII</td></tr>
+            <tr><td>ET<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψE<sub>0</sub></td><td>Electron flux from Q<sub>A</sub><sup>−</sup> to PQ per active PSII</td></tr>
             <tr><td>RE<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψR<sub>0</sub></td><td>Electron flux from Q<sub>A</sub><sup>−</sup> to final PSI acceptors per active PSII</td></tr>
-            <tr><td>DI<sub>0</sub>/RC</td><td>ABS/RC – TR<sub>0</sub>/RC</td><td>Dissipated energy per active PSII</td></tr>
-            <tr><td>S<sub>m</sub></td><td>∫(F<sub>M</sub>−F(t))dt / (F<sub>M</sub>−F<sub>O</sub>)</td><td>Normalized complementary area above the O–P transient; proportional to the pool of electron carriers available per active PSII</td></tr>
-            <tr><td>N</td><td>S<sub>m</sub>×M<sub>0</sub>/V<sub>J</sub></td><td>Q<sub>A</sub> turnover number</td></tr>
+            <tr><td>DI<sub>0</sub>/RC</td><td>ABS/RC – TR<sub>0</sub>/RC</td><td>Dissipated energy flux per active PSII</td></tr>
           </table>
           <p style="font-size:75%; line-height:1.3;">
             References: Tsimilli-Michael (2020) Photosynthetica 58:275–292 · Stirbet et al. (2018) Photosynthetica 56:86–104 ·
