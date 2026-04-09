@@ -912,7 +912,7 @@ const PUB_PLOT_DEFAULTS = {
     showGridY: false, showGridX: false, gridStyle: 'solid', gridColor: '#e0e0e0',
     tickPosition: 'outside', tickLen: 5, showAxisLine: true,
     showPlotFrame: true, showPaperBorder: false,
-    yStartZero: true, yHeadroom: 15,
+    yStartZero: true, yHeadroom: 15, globalYMin: null, globalYMax: null,
     colorScheme: 'okabe', fillOpacity: 85, unifyColor: true, unifyFillColor: '#d3d3d3',
     barBorderColor: '#000000', barBorderWidth: 1,
     errBarColor: '#000000', errBarThickness: 1.5, errBarCap: 5,
@@ -5012,6 +5012,13 @@ function renderAnovaBarChart(containerId, letterGroups, res) {
     }
 
     const yRange           = computeYRange(letterGroups, rawGroups, s);
+    // Apply y-axis overrides: global (from pub plot style card) first, per-chart second (takes precedence)
+    if (s.globalYMin !== null && s.globalYMin !== undefined && !isNaN(s.globalYMin)) yRange.min = s.globalYMin;
+    if (s.globalYMax !== null && s.globalYMax !== undefined && !isNaN(s.globalYMax)) yRange.max = s.globalYMax;
+    const storedYMin = parseFloat(el.dataset.customYMin);
+    const storedYMax = parseFloat(el.dataset.customYMax);
+    if (!isNaN(storedYMin)) yRange.min = storedYMin;
+    if (!isNaN(storedYMax)) yRange.max = storedYMax;
     const letterAnnotations = buildPubLetterAnnotations(letterGroups, rawGroups, s);
     const layout = buildPubLayout(res, groups, letterAnnotations, s, yRange);
     // Restore custom y-axis title if the user previously edited it for this chart
@@ -5206,6 +5213,67 @@ function renderPendingAnovaCharts(pane) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Per-chart Y-axis min/max inputs — event delegation ───────────────────────
+// Inputs are injected dynamically by buildVariableChartHTML, so we delegate from
+// the stable #anovaResults container.
+(function () {
+    const container = document.getElementById('anovaResults');
+    if (!container) return;
+
+    function _applyYRange(chartId) {
+        const chartEl = document.getElementById(chartId);
+        if (!chartEl || !chartEl.classList.contains('js-plotly-plot')) return;
+        const minVal = parseFloat(chartEl.dataset.customYMin);
+        const maxVal = parseFloat(chartEl.dataset.customYMax);
+        const hasMin = !isNaN(minVal);
+        const hasMax = !isNaN(maxVal);
+        if (hasMin || hasMax) {
+            // Compute auto range so we can fill in whichever end is still "auto"
+            const letterGroups = JSON.parse(decodeURIComponent(chartEl.dataset.letterGroups || '[]'));
+            const autoRange = computeYRange(letterGroups, null, pubPlotSettings);
+            const lo = hasMin ? minVal : (autoRange.min ?? null);
+            const hi = hasMax ? maxVal : autoRange.max;
+            Plotly.relayout(chartId, { 'yaxis.range': [lo, hi], 'yaxis.autorange': false });
+        } else {
+            Plotly.relayout(chartId, { 'yaxis.autorange': true });
+        }
+    }
+
+    container.addEventListener('input', function (e) {
+        const input = e.target;
+        if (!input.classList.contains('anova-ymin-input') && !input.classList.contains('anova-ymax-input')) return;
+        const chartId = input.dataset.chartId;
+        const chartEl = document.getElementById(chartId);
+        if (!chartEl) return;
+        const val = input.value.trim();
+        if (input.classList.contains('anova-ymin-input')) {
+            if (val === '') delete chartEl.dataset.customYMin;
+            else chartEl.dataset.customYMin = val;
+        } else {
+            if (val === '') delete chartEl.dataset.customYMax;
+            else chartEl.dataset.customYMax = val;
+        }
+        _applyYRange(chartId);
+    });
+
+    container.addEventListener('click', function (e) {
+        const btn = e.target && e.target.closest && e.target.closest('.anova-yreset-btn');
+        if (!btn) return;
+        const chartId = btn.dataset.chartId;
+        const chartEl = document.getElementById(chartId);
+        if (!chartEl) return;
+        delete chartEl.dataset.customYMin;
+        delete chartEl.dataset.customYMax;
+        // Clear the input fields
+        const wrap = btn.closest('.d-flex');
+        if (wrap) {
+            wrap.querySelectorAll('.anova-ymin-input, .anova-ymax-input').forEach(inp => { inp.value = ''; });
+        }
+        Plotly.relayout(chartId, { 'yaxis.autorange': true });
+    });
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Helper: build chart-only HTML for one variable (one tab) ─────────────────
 function buildVariableChartHTML(varResults, varName, varIdx) {
     let html = '';
@@ -5232,7 +5300,21 @@ function buildVariableChartHTML(varResults, varName, varIdx) {
                          data-res-effect-label="${encodeURIComponent(res.effect_size_label || 'η²')}"
                          style="width:100%; height:380px;">
                     </div>
-                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2" style="font-size:0.78rem;">
+                    <div class="d-flex align-items-center gap-2 mt-1 mb-1" style="font-size:0.78rem;">
+                        <span class="text-muted" style="white-space:nowrap;">Y-axis:</span>
+                        <input type="number" step="any" placeholder="Min (auto)"
+                               class="form-control form-control-sm anova-ymin-input"
+                               data-chart-id="${chartId}"
+                               style="width:110px; font-size:0.75rem; padding:2px 6px; height:26px;">
+                        <input type="number" step="any" placeholder="Max (auto)"
+                               class="form-control form-control-sm anova-ymax-input"
+                               data-chart-id="${chartId}"
+                               style="width:110px; font-size:0.75rem; padding:2px 6px; height:26px;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm anova-yreset-btn"
+                                data-chart-id="${chartId}"
+                                style="font-size:0.72rem; padding:1px 8px; height:26px;">Reset</button>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-1" style="font-size:0.78rem;">
                         <span class="badge ${isSig ? 'bg-success' : 'bg-secondary'}">
                             p = ${pVal}${isSig ? ' ✓ Significant' : ' n.s.'}
                         </span>
@@ -5782,6 +5864,8 @@ function initPubPlotSettingsUI() {
 
         s.yStartZero    = chk('pubYStartZero');
         s.yHeadroom     = nt('pubYHeadroom') ?? 15;
+        const rawGMin = val('pubGlobalYMin'); s.globalYMin = (rawGMin !== '' && rawGMin !== null) ? parseFloat(rawGMin) : null;
+        const rawGMax = val('pubGlobalYMax'); s.globalYMax = (rawGMax !== '' && rawGMax !== null) ? parseFloat(rawGMax) : null;
 
         s.colorScheme    = val('pubColorScheme') || 'okabe';
         s.fillOpacity    = nt('pubFillOpacity') || 85;
@@ -5858,6 +5942,8 @@ function initPubPlotSettingsUI() {
 
         setChk('pubYStartZero', s.yStartZero);
         setVal('pubYHeadroom', s.yHeadroom);
+        setVal('pubGlobalYMin', s.globalYMin !== null && s.globalYMin !== undefined ? s.globalYMin : '');
+        setVal('pubGlobalYMax', s.globalYMax !== null && s.globalYMax !== undefined ? s.globalYMax : '');
 
         setVal('pubColorScheme', s.colorScheme);
         setVal('pubFillOpacity', s.fillOpacity);
