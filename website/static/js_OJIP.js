@@ -39,6 +39,198 @@ function groupColor(i, n, alpha) {
   return alpha !== undefined ? `hsla(${h},65%,42%,${alpha})` : `hsl(${h},65%,42%)`;
 }
 
+// ── OJIP publication figure style ─────────────────────────────────────────
+const OJIP_PUB_DEFAULTS = {
+  sizePreset: 'single', exportWidth: 85, aspectRatio: 1.5, exportDPI: 300,
+  fontFamily: 'Arial', axisTitleSize: 12, tickLabelSize: 11, legendSize: 10,
+  colorScheme: 'default', legendPosition: 'right',
+  showGridY: true, showGridX: false,
+  bgColor: '#ffffff', showBorder: false, borderColor: '#000000', borderWidth: 1,
+  lineWidthMean: 2.5, lineWidthIndiv: 0.8, sdBandOpacity: 18,
+};
+const OJIP_PER_CHART_DEFAULTS = {
+  raw:           { yStartZero: false, yHeadroom: 5,  xTitle: '', yTitle: '' },
+  shifted_F0:    { yStartZero: false, yHeadroom: 5,  xTitle: '', yTitle: '' },
+  shifted_FM:    { yStartZero: false, yHeadroom: 5,  xTitle: '', yTitle: '' },
+  double_norm:   { yStartZero: false, yHeadroom: 5,  xTitle: '', yTitle: '' },
+  params_yields: { yStartZero: true,  yHeadroom: 15 },
+  params_fluxes: { yStartZero: true,  yHeadroom: 15 },
+  params_areas:  { yStartZero: true,  yHeadroom: 15 },
+  params_tech:   { yStartZero: true,  yHeadroom: 15 },
+};
+const OJIP_PUB_PALETTES = {
+  colorblind: ['#0072B2','#E69F00','#009E73','#CC79A7','#56B4E9','#D55E00','#F0E442','#000000'],
+  grayscale:  ['#111111','#444444','#777777','#aaaaaa','#cccccc'],
+  paired:     ['#1f77b4','#aec7e8','#ff7f0e','#ffbb78','#2ca02c','#98df8a','#d62728','#ff9896'],
+};
+function _makeOjipPub() {
+  const pub = Object.assign({}, OJIP_PUB_DEFAULTS);
+  pub.perChart = {};
+  for (const [k, v] of Object.entries(OJIP_PER_CHART_DEFAULTS)) pub.perChart[k] = Object.assign({}, v);
+  try {
+    const saved = JSON.parse(localStorage.getItem('ojip_grp_pub') || 'null');
+    if (saved) {
+      Object.keys(OJIP_PUB_DEFAULTS).forEach(k => { if (k in saved) pub[k] = saved[k]; });
+      if (saved.perChart) {
+        for (const k of Object.keys(OJIP_PER_CHART_DEFAULTS)) {
+          if (saved.perChart[k]) Object.assign(pub.perChart[k], saved.perChart[k]);
+        }
+      }
+    }
+  } catch(e) {}
+  return pub;
+}
+let ojipPub = _makeOjipPub();
+
+function _ojipPubColor(gi, n, alpha) {
+  const pal = OJIP_PUB_PALETTES[ojipPub.colorScheme];
+  if (!pal) return groupColor(gi, n, alpha);
+  const hex = pal[gi % pal.length];
+  if (alpha === undefined) return hex;
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function _ojipPubBgPlugin() {
+  return { id:'ojipPubBg', beforeDraw(ch) {
+    const c=ch.ctx; c.save(); c.fillStyle=ojipPub.bgColor||'#fff';
+    c.fillRect(0,0,ch.width,ch.height); c.restore();
+  }};
+}
+function _ojipPubBorderPlugin() {
+  return { id:'ojipPubBorder', afterDraw(ch) {
+    if (!ojipPub.showBorder) return;
+    const a=ch.chartArea, c=ch.ctx; c.save();
+    c.strokeStyle=ojipPub.borderColor||'#000'; c.lineWidth=ojipPub.borderWidth||1;
+    c.strokeRect(a.left,a.top,a.right-a.left,a.bottom-a.top); c.restore();
+  }};
+}
+function _applyOjipPubToOpts(opts, isBar, pc) {
+  const s=ojipPub, fam=s.fontFamily, sc=opts.scales||{};
+  if (sc.x) {
+    if (!sc.x.title) sc.x.title={display:true};
+    sc.x.title.font={family:fam,size:s.axisTitleSize,weight:'bold'};
+    if (!sc.x.ticks) sc.x.ticks={};
+    sc.x.ticks.font={family:fam,size:s.tickLabelSize};
+    if (!isBar) sc.x.grid={display:s.showGridX};
+    if (pc?.xTitle) sc.x.title.text=pc.xTitle;
+  }
+  if (sc.y) {
+    if (!sc.y.title) sc.y.title={display:true};
+    sc.y.title.font={family:fam,size:s.axisTitleSize,weight:'bold'};
+    if (!sc.y.ticks) sc.y.ticks={};
+    sc.y.ticks.font={family:fam,size:s.tickLabelSize};
+    if (!isBar) sc.y.grid={display:s.showGridY};
+    if (pc?.yTitle) sc.y.title.text=pc.yTitle;
+    if (pc?.yStartZero) sc.y.min=0;
+  }
+  if (opts.plugins?.legend) {
+    opts.plugins.legend.position=s.legendPosition;
+    if (!opts.plugins.legend.labels) opts.plugins.legend.labels={};
+    opts.plugins.legend.labels.font={family:fam,size:s.legendSize};
+  }
+  return opts;
+}
+function _applyOjipPubAspectRatio() {
+  const ratio=ojipPub.aspectRatio||1.5;
+  const pw={single:85,half:120,double:175};
+  const wMm=ojipPub.sizePreset!=='custom'?(pw[ojipPub.sizePreset]||85):(ojipPub.exportWidth||85);
+  const maxW=Math.round(wMm*96/25.4);
+  document.querySelectorAll('.ojip-pub-ch').forEach(cont=>{
+    cont.style.maxWidth=maxW+'px';
+    const w=cont.offsetWidth;
+    if(w>0) cont.style.height=Math.round(w/ratio)+'px';
+    const cid=cont.dataset.cid;
+    if(cid&&chartInst[cid]) chartInst[cid].resize();
+  });
+}
+function readOjipPubSettings() {
+  const g=id=>document.getElementById(id);
+  const sp=(g('ojip-pub-size-preset')||{}).value||'single';
+  ojipPub.sizePreset=sp;
+  ojipPub.exportWidth=sp!=='custom'?({single:85,half:120,double:175}[sp]||85):(parseFloat((g('ojip-pub-export-width')||{}).value)||85);
+  const av=(g('ojip-pub-aspect-preset')||{}).value||'1.50';
+  ojipPub.aspectRatio=av==='custom'?(parseFloat((g('ojip-pub-aspect-custom')||{}).value)||1.5):(parseFloat(av)||1.5);
+  ojipPub.exportDPI=parseInt((g('ojip-pub-dpi')||{}).value)||300;
+  ojipPub.bgColor=(g('ojip-pub-bg-color')||{}).value||'#ffffff';
+  ojipPub.fontFamily=(g('ojip-pub-font-family')||{}).value||'Arial';
+  ojipPub.axisTitleSize=parseInt((g('ojip-pub-axis-title-size')||{}).value)||12;
+  ojipPub.tickLabelSize=parseInt((g('ojip-pub-tick-size')||{}).value)||11;
+  ojipPub.legendSize=parseInt((g('ojip-pub-legend-size')||{}).value)||10;
+  ojipPub.colorScheme=(g('ojip-pub-color-scheme')||{}).value||'default';
+  ojipPub.legendPosition=(g('ojip-pub-legend-pos')||{}).value||'right';
+  ojipPub.showGridY=!!(g('ojip-pub-grid-y')||{}).checked;
+  ojipPub.showGridX=!!(g('ojip-pub-grid-x')||{}).checked;
+  ojipPub.showBorder=!!(g('ojip-pub-show-border')||{}).checked;
+  ojipPub.borderColor=(g('ojip-pub-border-color')||{}).value||'#000000';
+  ojipPub.borderWidth=parseFloat((g('ojip-pub-border-width')||{}).value)||1;
+  ojipPub.lineWidthMean=parseFloat((g('ojip-pub-line-width-mean')||{}).value)||2.5;
+  ojipPub.lineWidthIndiv=parseFloat((g('ojip-pub-line-width-indiv')||{}).value)||0.8;
+  ojipPub.sdBandOpacity=parseInt((g('ojip-pub-sd-opacity')||{}).value)||18;
+  for (const [nm,key] of [['raw','raw'],['f0','shifted_F0'],['fm','shifted_FM'],['dn','double_norm']]) {
+    const pc=ojipPub.perChart[key];
+    pc.yStartZero=!!(g(`ojip-pc-${nm}-y-start-zero`)||{}).checked;
+    pc.yHeadroom=parseFloat((g(`ojip-pc-${nm}-y-headroom`)||{}).value)||5;
+    pc.xTitle=(g(`ojip-pc-${nm}-x-title`)||{}).value||'';
+    pc.yTitle=(g(`ojip-pc-${nm}-y-title`)||{}).value||'';
+  }
+  for (const [nm,key] of [['yields','params_yields'],['fluxes','params_fluxes'],['areas','params_areas'],['tech','params_tech']]) {
+    const pc=ojipPub.perChart[key];
+    pc.yStartZero=!!(g(`ojip-pc-${nm}-y-start-zero`)||{}).checked;
+    pc.yHeadroom=parseFloat((g(`ojip-pc-${nm}-y-headroom`)||{}).value)||15;
+  }
+  try{localStorage.setItem('ojip_grp_pub',JSON.stringify(ojipPub));}catch(e){}
+}
+function syncDomFromOjipPub() {
+  const g=id=>document.getElementById(id);
+  const sv=(id,v)=>{const el=g(id);if(el)el.value=v;};
+  const sc=(id,v)=>{const el=g(id);if(el)el.checked=v;};
+  sv('ojip-pub-size-preset',ojipPub.sizePreset);
+  sv('ojip-pub-export-width',ojipPub.exportWidth);
+  const rs=ojipPub.aspectRatio.toFixed(2);
+  const kr=['1.78','1.50','1.33','1.00','0.75'];
+  sv('ojip-pub-aspect-preset',kr.includes(rs)?rs:'custom');
+  sv('ojip-pub-aspect-custom',rs);
+  const cw=g('ojip-pub-custom-width-wrap'); if(cw)cw.style.display=ojipPub.sizePreset==='custom'?'':'none';
+  const cr=g('ojip-pub-custom-ratio-wrap'); if(cr)cr.style.display=kr.includes(rs)?'none':'';
+  sv('ojip-pub-dpi',ojipPub.exportDPI);
+  sv('ojip-pub-bg-color',ojipPub.bgColor);
+  sv('ojip-pub-font-family',ojipPub.fontFamily);
+  sv('ojip-pub-axis-title-size',ojipPub.axisTitleSize);
+  sv('ojip-pub-tick-size',ojipPub.tickLabelSize);
+  sv('ojip-pub-legend-size',ojipPub.legendSize);
+  sv('ojip-pub-color-scheme',ojipPub.colorScheme);
+  sv('ojip-pub-legend-pos',ojipPub.legendPosition);
+  sc('ojip-pub-grid-y',ojipPub.showGridY);
+  sc('ojip-pub-grid-x',ojipPub.showGridX);
+  sc('ojip-pub-show-border',ojipPub.showBorder);
+  sv('ojip-pub-border-color',ojipPub.borderColor);
+  sv('ojip-pub-border-width',ojipPub.borderWidth);
+  const bo=g('ojip-pub-border-opts'); if(bo)bo.style.display=ojipPub.showBorder?'':'none';
+  sv('ojip-pub-line-width-mean',ojipPub.lineWidthMean);
+  sv('ojip-pub-line-width-indiv',ojipPub.lineWidthIndiv);
+  sv('ojip-pub-sd-opacity',ojipPub.sdBandOpacity);
+  const mv=g('ojip-pub-line-width-mean-val');  if(mv)mv.textContent=ojipPub.lineWidthMean+' px';
+  const iv=g('ojip-pub-line-width-indiv-val'); if(iv)iv.textContent=ojipPub.lineWidthIndiv+' px';
+  const sv2=g('ojip-pub-sd-opacity-val');      if(sv2)sv2.textContent=ojipPub.sdBandOpacity+'%';
+  for(const[nm,key]of[['raw','raw'],['f0','shifted_F0'],['fm','shifted_FM'],['dn','double_norm']]){
+    const pc=ojipPub.perChart[key];
+    sc(`ojip-pc-${nm}-y-start-zero`,pc.yStartZero);
+    sv(`ojip-pc-${nm}-y-headroom`,pc.yHeadroom);
+    sv(`ojip-pc-${nm}-x-title`,pc.xTitle||'');
+    sv(`ojip-pc-${nm}-y-title`,pc.yTitle||'');
+  }
+  for(const[nm,key]of[['yields','params_yields'],['fluxes','params_fluxes'],['areas','params_areas'],['tech','params_tech']]){
+    const pc=ojipPub.perChart[key];
+    sc(`ojip-pc-${nm}-y-start-zero`,pc.yStartZero);
+    sv(`ojip-pc-${nm}-y-headroom`,pc.yHeadroom);
+  }
+  const badge=g('ojip-pub-badge');
+  if(badge){
+    const copy=Object.assign({},ojipPub); delete copy.perChart;
+    badge.style.display=JSON.stringify(copy)===JSON.stringify(OJIP_PUB_DEFAULTS)?'none':'';
+  }
+}
+
 // ── chart helpers ─────────────────────────────────────────────────────────
 function destroyChart(id) {
   if (chartInst[id]) { chartInst[id].destroy(); delete chartInst[id]; }
@@ -86,10 +278,7 @@ function renderDirtyTab(tabId) {
     refreshGroupSummary();
     if (hasGroups()) {
       document.getElementById('group-results').style.display = '';
-      const norm = document.querySelector('#group-norm-btns .btn-primary')?.dataset?.gnorm || 'raw';
-      const pgrp = document.querySelector('#group-param-btns .btn-primary')?.dataset?.gpgroup || 'yields';
-      renderGroupCurvesChart(norm);
-      renderGroupParamsChart(pgrp);
+      _renderAllOjipGroupCharts();
     }
   } else if (tabId === 'tab-diag') {
     renderDiagnostics();
@@ -288,25 +477,63 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('clear-groups-btn').addEventListener('click', clearAllGroups);
   document.getElementById('assign-group-btn').addEventListener('click', assignGroup);
 
-  // Group norm buttons
-  document.getElementById('group-norm-btns').addEventListener('click', e => {
-    const btn = e.target.closest('[data-gnorm]'); if (!btn) return;
-    setActiveBtn('group-norm-btns', btn);
-    renderGroupCurvesChart(btn.dataset.gnorm);
+  // Pub settings card — any input re-renders all group charts
+  const ojipPubBody = document.getElementById('ojip-pub-body');
+  if (ojipPubBody) {
+    const _onPubChange = () => { readOjipPubSettings(); syncDomFromOjipPub(); if (hasGroups()) _renderAllOjipGroupCharts(); };
+    ojipPubBody.addEventListener('input',  _onPubChange);
+    ojipPubBody.addEventListener('change', _onPubChange);
+  }
+  document.getElementById('ojip-pub-reset-btn')?.addEventListener('click', () => {
+    ojipPub = Object.assign({}, OJIP_PUB_DEFAULTS);
+    ojipPub.perChart = {};
+    for (const [k, v] of Object.entries(OJIP_PER_CHART_DEFAULTS)) ojipPub.perChart[k] = Object.assign({}, v);
+    try { localStorage.removeItem('ojip_grp_pub'); } catch(e) {}
+    syncDomFromOjipPub();
+    if (hasGroups()) _renderAllOjipGroupCharts();
   });
-
-  // Group param buttons
-  document.getElementById('group-param-btns').addEventListener('click', e => {
-    const btn = e.target.closest('[data-gpgroup]'); if (!btn) return;
-    setActiveBtn('group-param-btns', btn);
-    renderGroupParamsChart(btn.dataset.gpgroup);
-  });
-
-  // Show individual toggle
-  document.getElementById('show-individual-check').addEventListener('change', () => {
-    const norm = document.querySelector('#group-norm-btns .btn-primary')?.dataset?.gnorm || 'raw';
-    renderGroupCurvesChart(norm);
-  });
+  // Per-chart settings — curve charts (re-render only that chart)
+  for (const [nm, renderFn, bodyId] of [
+    ['raw', renderGrpCurvesRaw, 'grp-raw-body'],
+    ['f0',  renderGrpCurvesF0,  'grp-f0-body'],
+    ['fm',  renderGrpCurvesFM,  'grp-fm-body'],
+    ['dn',  renderGrpCurvesDN,  null],
+  ]) {
+    const panel = document.getElementById(`ojip-pc-${nm}-panel`);
+    if (panel) {
+      const _onPc = () => { readOjipPubSettings(); if (hasGroups()) { _withVisible(bodyId ? document.getElementById(bodyId) : null, renderFn); _applyOjipPubAspectRatio(); } };
+      panel.addEventListener('input',  _onPc);
+      panel.addEventListener('change', _onPc);
+    }
+  }
+  // Per-chart settings — param bar charts
+  for (const [nm, renderFn] of [
+    ['yields', renderGrpParamsYields], ['fluxes', renderGrpParamsFluxes],
+    ['areas',  renderGrpParamsAreas],  ['tech',   renderGrpParamsTech],
+  ]) {
+    const panel = document.getElementById(`ojip-pc-${nm}-panel`);
+    if (panel) {
+      const _onPc = () => { readOjipPubSettings(); if (hasGroups()) renderFn(); };
+      panel.addEventListener('input',  _onPc);
+      panel.addEventListener('change', _onPc);
+    }
+  }
+  // Individual trace toggles
+  document.getElementById('show-indiv-raw-check')?.addEventListener('change', () => { if (hasGroups()) _withVisible(document.getElementById('grp-raw-body'), renderGrpCurvesRaw); });
+  document.getElementById('show-indiv-f0-check') ?.addEventListener('change', () => { if (hasGroups()) _withVisible(document.getElementById('grp-f0-body'),  renderGrpCurvesF0); });
+  document.getElementById('show-indiv-fm-check') ?.addEventListener('change', () => { if (hasGroups()) _withVisible(document.getElementById('grp-fm-body'),  renderGrpCurvesFM); });
+  document.getElementById('show-indiv-dn-check') ?.addEventListener('change', () => { if (hasGroups()) renderGrpCurvesDN(); });
+  // Resize charts when their collapsed section is expanded
+  for (const [bodyId, chartId] of [
+    ['grp-raw-body','grp-curves-raw-chart'],
+    ['grp-f0-body', 'grp-curves-f0-chart'],
+    ['grp-fm-body', 'grp-curves-fm-chart'],
+  ]) {
+    document.getElementById(bodyId)?.addEventListener('shown.bs.collapse', () => {
+      chartInst[chartId]?.resize();
+      _applyOjipPubAspectRatio();
+    });
+  }
 
   // Export to statistics
   document.getElementById('export-stats-btn').addEventListener('click', exportToStatistics);
@@ -325,6 +552,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('fjtable').addEventListener('change', _onFJTableChange);
   document.getElementById('group-assign-table').addEventListener('click', _onGroupAssignClick);
 
+  // Sync pub settings panel from saved state
+  syncDomFromOjipPub();
+
   // On tab open: re-render if dirty (data changed while tab was hidden),
   // then resize so Chart.js picks up the now-visible canvas dimensions.
   document.getElementById('ojipTabs').addEventListener('shown.bs.tab', e => {
@@ -337,8 +567,10 @@ document.addEventListener('DOMContentLoaded', () => {
       ['diag-recon-chart', 'diag-resid-chart', 'diag-d2-chart', 'diag-poly-chart', 'diag-poly-fi-chart']
         .forEach(id => chartInst[id]?.resize());
     } else if (tabId === 'tab-groups') {
-      chartInst['group-curves-chart']?.resize();
-      chartInst['group-params-chart']?.resize();
+      ['grp-curves-raw-chart','grp-curves-f0-chart','grp-curves-fm-chart','grp-curves-dn-chart',
+       'grp-params-yields-chart','grp-params-fluxes-chart','grp-params-areas-chart','grp-params-tech-chart']
+        .forEach(id => chartInst[id]?.resize());
+      _applyOjipPubAspectRatio();
     }
   });
 });
@@ -643,7 +875,7 @@ function _onFJTableChange(e) {
   if (activeTabId() === 'tab-params') { renderParamsChart(activeGroup); renderParamsTable(activeGroup); }
   else markTabsDirty('tab-params');
   if (hasGroups()) {
-    if (activeTabId() === 'tab-groups') renderGroupParamsChart(document.querySelector('#group-param-btns .btn-primary')?.dataset?.gpgroup || 'yields');
+    if (activeTabId() === 'tab-groups') _renderAllOjipGroupCharts();
     else markTabsDirty('tab-groups');
   }
 }
@@ -777,14 +1009,8 @@ function hasGroups() { return new Set(Object.values(groups)).size >= 2; }
 function checkGroupsReady() {
   if (hasGroups()) {
     document.getElementById('group-results').style.display = '';
-    if (activeTabId() === 'tab-groups') {
-      const norm = document.querySelector('#group-norm-btns  .btn-primary')?.dataset?.gnorm   || 'raw';
-      const pgrp = document.querySelector('#group-param-btns .btn-primary')?.dataset?.gpgroup || 'yields';
-      renderGroupCurvesChart(norm);
-      renderGroupParamsChart(pgrp);
-    } else {
-      markTabsDirty('tab-groups');
-    }
+    if (activeTabId() === 'tab-groups') _renderAllOjipGroupCharts();
+    else markTabsDirty('tab-groups');
   } else {
     document.getElementById('group-results').style.display = 'none';
     dirtyTabs.delete('tab-groups');
@@ -827,85 +1053,86 @@ function calcGroupStats() {
   return stats;
 }
 
-// ── group curves chart ────────────────────────────────────────────────────
-function renderGroupCurvesChart(norm) {
-  const stats      = calcGroupStats();
-  const grpNames   = Object.keys(stats);
-  const t          = ojipData.time_raw_ms;
-  const showIndiv  = document.getElementById('show-individual-check').checked;
-  const datasets   = [];
+// ── helper: force a collapsed element visible so Chart.js can measure it ──
+function _withVisible(el, fn) {
+  if (!el) { fn(); return; }
+  const hidden = getComputedStyle(el).display === 'none';
+  if (hidden) { el.style.display='block'; el.style.visibility='hidden'; void el.offsetWidth; }
+  fn();
+  if (hidden) { el.style.display=''; el.style.visibility=''; }
+}
 
-  grpNames.forEach((grp, gi) => {
-    const { means, sds } = stats[grp].curves[norm];
-    const c = groupColor(gi, grpNames.length);
-    const ca = groupColor(gi, grpNames.length, 0.18);
-
-    // upper SD band
-    datasets.push({
-      label: '', showLine: true, pointRadius: 0, borderWidth: 0,
-      borderColor: 'transparent', backgroundColor: ca,
-      data: means.map((m, j) => ({ x: t[j], y: m + sds[j] })),
-      fill: '+1',
-    });
-    // lower SD band
-    datasets.push({
-      label: '', showLine: true, pointRadius: 0, borderWidth: 0,
-      borderColor: 'transparent', backgroundColor: ca,
-      data: means.map((m, j) => ({ x: t[j], y: m - sds[j] })),
-      fill: false,
-    });
-    // mean line
-    datasets.push({
-      label: grp, showLine: true, pointRadius: 0, borderWidth: 2.5,
-      borderColor: c, backgroundColor: 'transparent',
-      data: means.map((m, j) => ({ x: t[j], y: m })),
-      fill: false,
-    });
-
-    // individual curves
+// ── group curve dataset builder ───────────────────────────────────────────
+function _buildGrpCurveDatasets(norm, showIndiv) {
+  const stats=calcGroupStats(), grps=Object.keys(stats), t=ojipData.time_raw_ms;
+  const s=ojipPub, sdOp=(s.sdBandOpacity||18)/100;
+  const ds=[];
+  grps.forEach((grp,gi)=>{
+    const {means,sds}=stats[grp].curves[norm];
+    const c=_ojipPubColor(gi,grps.length), ca=_ojipPubColor(gi,grps.length,sdOp);
+    ds.push({label:'',showLine:true,pointRadius:0,borderWidth:0,borderColor:'transparent',backgroundColor:ca,
+             data:means.map((m,j)=>({x:t[j],y:m+sds[j]})),fill:'+1'});
+    ds.push({label:'',showLine:true,pointRadius:0,borderWidth:0,borderColor:'transparent',backgroundColor:ca,
+             data:means.map((m,j)=>({x:t[j],y:m-sds[j]})),fill:false});
+    ds.push({label:grp,showLine:true,pointRadius:0,borderWidth:s.lineWidthMean||2.5,
+             borderColor:c,backgroundColor:'transparent',data:means.map((m,j)=>({x:t[j],y:m})),fill:false});
     if (showIndiv) {
-      stats[grp].files.forEach(fname => {
-        datasets.push({
-          label: '', showLine: true, pointRadius: 0, borderWidth: 0.8,
-          borderColor: groupColor(gi, grpNames.length, 0.4), backgroundColor: 'transparent',
-          data: ojipData.curves[fname][norm].map((y, j) => ({ x: t[j], y })),
-          fill: false,
-        });
+      const ci=_ojipPubColor(gi,grps.length,0.35);
+      stats[grp].files.forEach(fname=>{
+        ds.push({label:'',showLine:true,pointRadius:0,borderWidth:s.lineWidthIndiv||0.8,
+                 borderColor:ci,backgroundColor:'transparent',
+                 data:ojipData.curves[fname][norm].map((y,j)=>({x:t[j],y})),fill:false});
       });
     }
   });
-
-  const yLabel = norm === 'double_norm' ? 'Normalised fluorescence (r.u.)' : 'Fluorescence';
-  makeChart('group-curves-chart', { type: 'scatter', data: { datasets }, options: logScatterOpts('Time (ms)', yLabel) });
+  return ds;
 }
 
-// ── group params chart (error bars) ──────────────────────────────────────
-function renderGroupParamsChart(pgroup) {
-  const stats    = calcGroupStats();
-  const grpNames = Object.keys(stats);
-  const params   = PARAM_GROUPS[pgroup];
-  const labels   = params.map(p => PARAM_LABELS[p] || p);
+function _makeGrpCurveChart(chartId, norm, showIndiv, pc) {
+  const yLabel = pc?.yTitle || (norm==='double_norm' ? 'Normalised fluorescence (r.u.)' : 'Fluorescence');
+  const opts   = logScatterOpts('Time (ms)', yLabel);
+  _applyOjipPubToOpts(opts, false, pc);
+  makeChart(chartId, { type:'scatter', data:{datasets:_buildGrpCurveDatasets(norm,showIndiv)},
+    options:opts, plugins:[_ojipPubBgPlugin(),_ojipPubBorderPlugin()] });
+}
 
-  const datasets = grpNames.map((grp, gi) => ({
-    label: grp,
-    data: params.map(p => {
-      const s = stats[grp].params[p];
-      return s ? { y: s.mean, yMin: s.mean - s.sd, yMax: s.mean + s.sd } : null;
-    }),
-    backgroundColor: groupColor(gi, grpNames.length, 0.65),
-    borderColor:     groupColor(gi, grpNames.length),
-    borderWidth: 1,
-    errorBarColor:         groupColor(gi, grpNames.length),
-    errorBarWhiskerColor:  groupColor(gi, grpNames.length),
-    errorBarLineWidth: 2,
-    errorBarWhiskerSize: 8,
+function _makeGrpParamChart(chartId, pgroup, pc) {
+  const stats=calcGroupStats(), grps=Object.keys(stats);
+  const params=PARAM_GROUPS[pgroup], labels=params.map(p=>PARAM_LABELS[p]||p);
+  const ds=grps.map((grp,gi)=>({
+    label:grp,
+    data:params.map(p=>{const st=stats[grp].params[p]; return st?{y:st.mean,yMin:st.mean-st.sd,yMax:st.mean+st.sd}:null;}),
+    backgroundColor:_ojipPubColor(gi,grps.length,0.65), borderColor:_ojipPubColor(gi,grps.length), borderWidth:1,
+    errorBarColor:_ojipPubColor(gi,grps.length), errorBarWhiskerColor:_ojipPubColor(gi,grps.length),
+    errorBarLineWidth:2, errorBarWhiskerSize:8,
   }));
+  const opts=barOpts();
+  _applyOjipPubToOpts(opts, true, pc);
+  makeChart(chartId, { type:'barWithErrorBars', data:{labels,datasets:ds},
+    options:opts, plugins:[_ojipPubBgPlugin(),_ojipPubBorderPlugin()] });
+}
 
-  makeChart('group-params-chart', {
-    type: 'barWithErrorBars',
-    data: { labels, datasets },
-    options: barOpts(),
-  });
+function _checkIndiv(id) { return document.getElementById(id)?.checked !== false; }
+
+function renderGrpCurvesRaw()    { _makeGrpCurveChart('grp-curves-raw-chart','raw',        _checkIndiv('show-indiv-raw-check'), ojipPub.perChart.raw); }
+function renderGrpCurvesF0()     { _makeGrpCurveChart('grp-curves-f0-chart', 'shifted_F0', _checkIndiv('show-indiv-f0-check'),  ojipPub.perChart.shifted_F0); }
+function renderGrpCurvesFM()     { _makeGrpCurveChart('grp-curves-fm-chart', 'shifted_FM', _checkIndiv('show-indiv-fm-check'),  ojipPub.perChart.shifted_FM); }
+function renderGrpCurvesDN()     { _makeGrpCurveChart('grp-curves-dn-chart', 'double_norm',_checkIndiv('show-indiv-dn-check'),  ojipPub.perChart.double_norm); }
+function renderGrpParamsYields() { _makeGrpParamChart('grp-params-yields-chart','yields',ojipPub.perChart.params_yields); }
+function renderGrpParamsFluxes() { _makeGrpParamChart('grp-params-fluxes-chart','fluxes',ojipPub.perChart.params_fluxes); }
+function renderGrpParamsAreas()  { _makeGrpParamChart('grp-params-areas-chart', 'areas', ojipPub.perChart.params_areas); }
+function renderGrpParamsTech()   { _makeGrpParamChart('grp-params-tech-chart',  'tech',  ojipPub.perChart.params_tech); }
+
+function _renderAllOjipGroupCharts() {
+  _withVisible(document.getElementById('grp-raw-body'), renderGrpCurvesRaw);
+  _withVisible(document.getElementById('grp-f0-body'),  renderGrpCurvesF0);
+  _withVisible(document.getElementById('grp-fm-body'),  renderGrpCurvesFM);
+  renderGrpCurvesDN();
+  renderGrpParamsYields();
+  renderGrpParamsFluxes();
+  renderGrpParamsAreas();
+  renderGrpParamsTech();
+  _applyOjipPubAspectRatio();
 }
 
 // ── diagnostics ───────────────────────────────────────────────────────────
@@ -1094,10 +1321,8 @@ function resetFJFI() {
   if (tab === 'tab-params') { renderParamsChart(pgroup); renderParamsTable(pgroup); }
   else markTabsDirty('tab-params');
   if (hasGroups()) {
-    if (tab === 'tab-groups') {
-      renderGroupCurvesChart(document.querySelector('#group-norm-btns .btn-primary')?.dataset?.gnorm || 'raw');
-      renderGroupParamsChart(document.querySelector('#group-param-btns .btn-primary')?.dataset?.gpgroup || 'yields');
-    } else markTabsDirty('tab-groups');
+    if (tab === 'tab-groups') _renderAllOjipGroupCharts();
+    else markTabsDirty('tab-groups');
   }
 }
 
@@ -1111,10 +1336,8 @@ function _refreshAfterTimingChange() {
   if (tab === 'tab-params') { renderParamsChart(pgroup); renderParamsTable(pgroup); }
   else markTabsDirty('tab-params');
   if (hasGroups()) {
-    if (tab === 'tab-groups') {
-      renderGroupCurvesChart(document.querySelector('#group-norm-btns .btn-primary')?.dataset?.gnorm || 'raw');
-      renderGroupParamsChart(document.querySelector('#group-param-btns .btn-primary')?.dataset?.gpgroup || 'yields');
-    } else markTabsDirty('tab-groups');
+    if (tab === 'tab-groups') _renderAllOjipGroupCharts();
+    else markTabsDirty('tab-groups');
   }
 }
 
@@ -1256,7 +1479,6 @@ async function downloadXlsxWithCharts() {
     { id: 'diag-d2-chart',      title: '2nd Derivative' },
     { id: 'diag-poly-chart',    title: 'FJ Polynomial Derivatives' },
     { id: 'diag-poly-fi-chart', title: 'FI Polynomial Derivatives' },
-    { id: 'group-curves-chart', title: 'Group Curves' },
   ];
   for (const { id, title } of simpleCaps) {
     const data_url = captureCanvas(id);
@@ -1288,9 +1510,8 @@ async function downloadXlsxWithCharts() {
   }
   renderParamsChart(savedPgroup); // restore
 
-  // Group params: same approach over all sub-tabs (only when groups exist).
+  // Group charts — capture directly from their permanent chart instances.
   if (hasGroups()) {
-    const savedGpgroup = document.querySelector('#group-param-btns .btn-primary')?.dataset?.gpgroup || 'yields';
     const groupPane = document.getElementById('tab-groups');
     const groupWasHidden = getComputedStyle(groupPane).display === 'none';
     if (groupWasHidden) {
@@ -1298,17 +1519,36 @@ async function downloadXlsxWithCharts() {
       groupPane.style.visibility = 'hidden';
       void groupPane.offsetWidth;
     }
-    for (const grp of pGroupKeys) {
-      renderGroupParamsChart(grp);
-      chartInst['group-params-chart']?.resize();
-      const data_url = captureCanvas('group-params-chart');
-      if (data_url) charts.push({ title: `Group Parameters — ${pGroupTitles[grp]}`, data_url });
+    // Curve charts — force their collapse sections visible for capture
+    for (const [bodyId, chartId, title] of [
+      ['grp-raw-body', 'grp-curves-raw-chart', 'Group Curves — Raw'],
+      ['grp-f0-body',  'grp-curves-f0-chart',  'Group Curves — →F₀'],
+      ['grp-fm-body',  'grp-curves-fm-chart',  'Group Curves — ←FM'],
+      [null,           'grp-curves-dn-chart',  'Group Curves — Double norm'],
+    ]) {
+      const body = bodyId && document.getElementById(bodyId);
+      const bodyWasHidden = body && getComputedStyle(body).display === 'none';
+      if (bodyWasHidden) { body.style.display='block'; body.style.visibility='hidden'; void body.offsetWidth; }
+      chartInst[chartId]?.resize();
+      const data_url = captureCanvas(chartId);
+      if (data_url) charts.push({ title, data_url });
+      if (bodyWasHidden) { body.style.display=''; body.style.visibility=''; }
+    }
+    // Parameter bar charts
+    for (const [chartId, title] of [
+      ['grp-params-yields-chart', 'Group Parameters — Quantum yields'],
+      ['grp-params-fluxes-chart', 'Group Parameters — Energy fluxes'],
+      ['grp-params-areas-chart',  'Group Parameters — Areas & indices'],
+      ['grp-params-tech-chart',   'Group Parameters — Technical'],
+    ]) {
+      chartInst[chartId]?.resize();
+      const data_url = captureCanvas(chartId);
+      if (data_url) charts.push({ title, data_url });
     }
     if (groupWasHidden) {
       groupPane.style.display = '';
       groupPane.style.visibility = '';
     }
-    renderGroupParamsChart(savedGpgroup); // restore
   }
 
   // Collect group statistics + individual sample data when groups are defined

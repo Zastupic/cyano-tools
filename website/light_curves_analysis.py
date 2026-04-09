@@ -234,9 +234,9 @@ def lc_process():
         beta      = slope2
         beta_abs  = abs(slope2)
 
-        # ETRmax from alpha/beta formula
-        if (alpha + beta) > 0 and alpha > 0:
-            etr_max_from_ab = ETRmPot_fit * (alpha / (alpha + beta)) * (beta / (alpha + beta)) ** (beta / alpha)
+        # ETRmax from alpha/beta formula (Platt 1980; β must be positive)
+        if (alpha + beta_abs) > 0 and alpha > 0 and beta_abs > 0:
+            etr_max_from_ab = ETRmPot_fit * (alpha / (alpha + beta_abs)) * (beta_abs / (alpha + beta_abs)) ** (beta_abs / alpha)
         else:
             etr_max_from_ab = float('nan')
 
@@ -245,7 +245,7 @@ def lc_process():
 
         params_out[fname] = {
             'alpha':              _safe(alpha),
-            'beta':               _safe(beta),
+            'beta':               _safe(beta_abs),
             'etr_max_measured':   _safe(etr_max_obs),
             'etr_max_from_ab':    _safe(etr_max_from_ab),
             'etr_mpot':           _safe(ETRmPot_fit),
