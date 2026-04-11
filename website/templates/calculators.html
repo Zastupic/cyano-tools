@@ -576,6 +576,15 @@
                     </div>
                 </div>
                 <br>
+                <p style="font-size:0.92em; margin-bottom:0.3em;">
+                    <i class="fa fa-info-circle" style="color:#0a3c58;"></i>
+                    If &mu; was calculated from OD<sub>720</sub> in the non-linear range (&gt;&nbsp;0.4), the value may be underestimated and should be corrected:
+                    <br>&nbsp;&middot;&nbsp;
+                    <a href="#od-mu-simple" onclick="openODSection('od-mu-simple'); return false;" style="white-space:nowrap;">Quick correction from known &mu;<sub>raw</sub></a>
+                    <br>&nbsp;&middot;&nbsp;
+                    <a href="#od-mu-corr" onclick="openODSection('od-mu-corr'); return false;" style="white-space:nowrap;">Recalculate from two OD measurements</a>
+                </p>
+                <br>
                 <details>
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Typical growth rates for reference</summary>
                     <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
@@ -686,7 +695,7 @@
                 </details>
                 <br>
                 <!-- 3. Quick μ recalculator -->
-                <details>
+                <details id="od-mu-simple">
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Quick recalculation of already-calculated &mu; (from known &mu;<sub>raw</sub>)</summary>
                     <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
                         <p class="mb-1">If you already have a &mu; value (calculated from raw OD<sub>720</sub>) and want to correct it without re-entering the original OD measurements.
@@ -727,7 +736,7 @@
                 </details>
                 <br>
                 <!-- 4. Corrected growth rate from two OD measurements -->
-                <details>
+                <details id="od-mu-corr">
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Corrected specific growth rate from two OD<sub>720</sub> measurements</summary>
                     <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
                         <p class="mb-1">If specific growth rate &mu; was calculated from two OD<sub>720</sub> measurements both falling in the <strong>non-linear range (OD<sub>720</sub> &gt; 0.4)</strong>,

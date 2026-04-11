@@ -497,6 +497,23 @@ function calculateDilutionPlot() {
     });
 }
 
+function openODSection(id) {
+    // 1. Open the outer Bootstrap accordion for the OD correction card
+    var $collapse = $('#collapseODcorr');
+    if (!$collapse.hasClass('show')) {
+        $collapse.collapse('show');
+    }
+    // 2. Open the target <details> element and scroll to it
+    // Delay accounts for Bootstrap collapse transition (~350ms)
+    setTimeout(function () {
+        var el = document.getElementById(id);
+        if (el) {
+            el.open = true;
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, $collapse.hasClass('show') ? 0 : 380);
+}
+
 (function () {
     // Run all calculators so results are visible immediately when a section is opened
     function runAll() {
