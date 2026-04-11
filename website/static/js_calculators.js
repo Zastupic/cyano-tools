@@ -167,6 +167,92 @@ function correct_OD_720_AquaPen(){
   
   document.getElementById('corrected_OD_720_AquaPen_for_span').innerHTML = "<b>"+corrected_OD_720_AquaPen_for_span.toFixed(3)+"</b>";
 }
+//------------------------------------------//
+//--- CORRECTED SPECIFIC GROWTH RATE -------//
+//------------------------------------------//
+document.getElementById('mu_corr_result_span').innerHTML = "<b>...</b>";
+
+function correctOD720(od, device) {
+    if (od <= 0.4) return od;
+    if (device === 'FMT-150')  return 0.23  * Math.exp(1.83  * od);
+    if (device === 'MC-1000')  return 0.029 + 0.143 * Math.exp(2.497 * od);
+    if (device === 'AquaPen')  return 0.247 * Math.exp(1.677 * od);
+    return od;
+}
+
+function calculateCorrectedGrowthRate() {
+    const device = document.getElementById('mu_corr_device').value;
+    const OD1    = parseFloat(document.getElementById('mu_corr_OD1').value);
+    const OD2    = parseFloat(document.getElementById('mu_corr_OD2').value);
+    const dt     = parseFloat(document.getElementById('mu_corr_dt').value);
+    const unit   = document.getElementById('mu_corr_unit').value;
+    const resultSpan = document.getElementById('mu_corr_result_span');
+    const detailSpan = document.getElementById('mu_corr_detail_span');
+
+    if (isNaN(OD1) || isNaN(OD2) || isNaN(dt) || dt <= 0 || OD1 <= 0 || OD2 <= 0) {
+        resultSpan.innerHTML = "<b>—</b> (enter valid positive values)";
+        detailSpan.innerHTML = "";
+        return;
+    }
+    if (OD2 <= OD1) {
+        resultSpan.innerHTML = "<b>—</b> (OD<sub>2</sub> must be greater than OD<sub>1</sub>)";
+        detailSpan.innerHTML = "";
+        return;
+    }
+
+    const mu_raw  = Math.log(OD2 / OD1) / dt;
+    const OD1c = correctOD720(OD1, device);
+    const OD2c = correctOD720(OD2, device);
+    const mu_corr = Math.log(OD2c / OD1c) / dt;
+
+    const inLinear = (OD1 <= 0.4 && OD2 <= 0.4);
+    const note = inLinear
+        ? ' <span style="color:#666;">(both OD values are in the linear range — no correction applied)</span>'
+        : '';
+
+    resultSpan.innerHTML =
+        "&mu;<sub>raw</sub> = <b>" + mu_raw.toFixed(4)  + "</b> " + unit + "<sup>-1</sup>" +
+        "&nbsp;&nbsp;&rarr;&nbsp;&nbsp;" +
+        "&mu;<sub>corrected</sub> = <b>" + mu_corr.toFixed(4) + "</b> " + unit + "<sup>-1</sup>" + note;
+
+    detailSpan.innerHTML =
+        "OD<sub>720,1</sub> corrected: <b>" + OD1c.toFixed(3) + "</b>" +
+        "&nbsp;&nbsp;|&nbsp;&nbsp;" +
+        "OD<sub>720,2</sub> corrected: <b>" + OD2c.toFixed(3) + "</b>" +
+        "&nbsp;&nbsp;|&nbsp;&nbsp;" +
+        "Device: <b>" + device + "</b>";
+}
+
+document.getElementById('mu_simple_result_span').innerHTML = "<b>...</b>";
+
+function calculateSimpleMuCorrection() {
+    const device  = document.getElementById('mu_simple_device').value;
+    const mu_raw  = parseFloat(document.getElementById('mu_simple_raw').value);
+    const unit    = document.getElementById('mu_simple_unit').value;
+    const resultSpan = document.getElementById('mu_simple_result_span');
+    const detailSpan = document.getElementById('mu_simple_detail_span');
+
+    if (isNaN(mu_raw) || mu_raw <= 0) {
+        resultSpan.innerHTML = "<b>—</b> (enter a positive &mu; value)";
+        detailSpan.innerHTML = "";
+        return;
+    }
+
+    const kMap = { 'FMT-150': 1.83, 'AquaPen': 1.677, 'MC-1000': 2.497 };
+    const k = kMap[device];
+    const mu_corr = k * mu_raw;
+    const isApprox = (device === 'MC-1000');
+
+    resultSpan.innerHTML =
+        "&mu;<sub>raw</sub> = <b>" + mu_raw.toFixed(4) + "</b> " + unit + "<sup>-1</sup>" +
+        "&nbsp;&nbsp;&rarr;&nbsp;&nbsp;" +
+        "&mu;<sub>corrected</sub> " + (isApprox ? "&asymp;" : "=") + " <b>" + mu_corr.toFixed(4) + "</b> " + unit + "<sup>-1</sup>";
+
+    detailSpan.innerHTML =
+        "k = <b>" + k + "</b> (" + device + ")" +
+        (isApprox ? '&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:#b06000;">Approximate — use the OD-based calculator above for an exact result with MC-1000.</span>' : '');
+}
+
 //--------------------------------------//
 //--- ABSORBANCE AND OD RECALCULATOR ---//
 //--------------------------------------//
@@ -422,6 +508,8 @@ function calculateDilutionPlot() {
         correct_OD_720_PBRFMT150();
         correct_OD_720_MC1000();
         correct_OD_720_AquaPen();
+        calculateCorrectedGrowthRate();
+        calculateSimpleMuCorrection();
         calculate_A2();
         recalculate_OD();
         calculateDilutionPlot();

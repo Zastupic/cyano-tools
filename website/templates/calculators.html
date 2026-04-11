@@ -620,124 +620,7 @@
                     due to the use of an exponential correction model with discrete initial conditions (OD<sub>720</sub> = 0.4; below this value, correction is not applied).
                     To correct OD<sub>720</sub> signal across the entire measuring range, i.e. across both linear and non-linear ranges, a polynomial correction would be required.
                 </p>
-                <p> OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener"> photobioreactor PBR FMT-150</b></u></a>, based on the following equation<sup>1</sup>:
-                    <p style="line-height: 0.9"><i style="font-size:80%">
-                        $$
-                        \begin{multline}
-                        \shoveleft OD_{720}\ corrected = 0.23\ e^{1.83\ OD_{720}\ measured}
-                        \end{multline}
-                        $$
-                    </i></p>
-
-                </p>
-                <div class="gallery_5">
-                    <div class="ggallery__item--1">
-                        <a>&nbsp OD<sub>720</sub> measured:</a>
-                    </div>
-                    <div class="gallery__img gallery__item--2">
-                        <div class="form-inline">
-                            <div class="input-group">
-                                <input
-                                class="form-control"
-                                type="number"
-                                id="OD_720_measured_PBR"
-                                min = "0"
-                                step="0.01"
-                                value="0.6"
-                                onkeypress="return isNumberKey(event)"
-                                oninput="correct_OD_720_PBRFMT150()"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected:
-                            <span id="corrected_OD_720_PBRFMT150_for_span"></span></span></a>
-                        </button>
-                    </div>
-                </div>
-                <br>
-                <p> OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank" rel="noopener">Multi-Cultivator MC-1000-OD</b></u></a>, based on the following equation<sup>2</sup>:
-                    <p style="line-height: 0.9"><i style="font-size:80%">
-                        $$
-                        \begin{multline}
-                        \shoveleft OD_{720}\ corrected = 0.029 + 0.143\ e^{2.497\ OD_{720}\ measured}
-                        \end{multline}
-                        $$
-                    </i></p>
-                </p>
-                <div class="gallery_5">
-                    <div class="gallery__item--1">
-                        <a>&nbsp OD<sub>720</sub> measured:</a>
-                    </div>
-                    <div class="gallery__img gallery__item--2">
-                        <div class="form-inline">
-                            <div class="input-group">
-                                <input
-                                class="form-control"
-                                type="number"
-                                id="OD_720_measured_MC1000"
-                                min = "0"
-                                step="0.01"
-                                value="0.6"
-                                onkeypress="return isNumberKey(event)"
-                                oninput="correct_OD_720_MC1000()"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected:
-                            <span id="corrected_OD_720_MC1000_for_span"></span></span></a>
-                        </button>
-                    </div>
-                </div>
-                <br>
-                <p> OD<sub>720</sub> correction for <a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank" rel="noopener"><b><u>AquaPen</b></u></a>, based on the following equation:
-                    <p style="line-height: 0.9"><i style="font-size:80%">
-                        $$
-                        \begin{multline}
-                        \shoveleft OD_{720}\ corrected = 0.247\ e^{1.677\ OD_{720}\ measured}
-                        \end{multline}
-                        $$
-                    </i></p>
-                </p>
-                <div class="gallery_5">
-                    <div class="gallery__item--1">
-                        <a>&nbsp OD<sub>720</sub> measured:</a>
-                    </div>
-                    <div class="gallery__img gallery__item--2">
-                        <div class="form-inline">
-                            <div class="input-group">
-                                <input
-                                class="form-control"
-                                type="number"
-                                id="OD_720_measured_AquaPen"
-                                min = "0"
-                                step="0.01"
-                                value="0.12"
-                                onkeypress="return isNumberKey(event)"
-                                oninput="correct_OD_720_AquaPen()"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-info"><a>OD<sub>720</sub> corrected:
-                            <span id="corrected_OD_720_AquaPen_for_span"></span></span></a>
-                        </button>
-                    </div>
-                </div>
-                <p style="font-size:80%"><i><b>References:</b>
-                    <br><sup>1</sup>Zavřel et al., (2021): Algal Research, 56: 1-15, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926421001478?dgcid=coauthor", target="blank" rel="noopener">10.1016/j.algal.2021.102328</a>
-                    <br><sup>2</sup>Sukačová et al., (2023): Algal Research, 71: 1-10, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926423000887", target="blank" rel="noopener">10.1016/j.algal.2023.103055</a></i>
-                </p>
-                <details id="odNonlinearityDetails">
-                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0 !important;">OD<sub>720</sub> non-linearity — measured data (<i>Synechocystis</i> sp. PCC 6803)</summary>
-                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-                        <div style="background:#fff; border-radius:4px; padding:8px; width:50%;">
-                            <canvas id="odNonlinearityChart" style="width:100%; max-height:270px;"></canvas>
-                        </div>
-                    </div>
-                </details>
-                <br>
+                <!-- 1. When to apply OD correction -->
                 <details>
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">When to apply OD correction</summary>
                     <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
@@ -748,6 +631,172 @@
                         </ul>
                     </div>
                 </details>
+                <br>
+                <!-- 2. OD correction calculators -->
+                <details>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">OD<sub>720</sub> correction calculator — FMT-150, MC-1000, AquaPen</summary>
+                    <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <p class="mb-0">OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener">photobioreactor PBR FMT-150</a></u></b>, equation<sup>1</sup>:
+                            <i style="font-size:80%">\( OD_{720,corr} = 0.23\, e^{1.83\, OD_{720,meas}} \)</i>
+                        </p>
+                        <div class="form-row align-items-center mb-2">
+                            <div class="col-auto"><small>OD<sub>720</sub> measured:</small></div>
+                            <div class="col-auto">
+                                <input class="form-control form-control-sm" type="number" id="OD_720_measured_PBR"
+                                    min="0" step="0.01" value="0.6" style="width:90px;"
+                                    onkeypress="return isNumberKey(event)" oninput="correct_OD_720_PBRFMT150()"/>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info btn-sm">OD<sub>720</sub> corrected:&nbsp;<span id="corrected_OD_720_PBRFMT150_for_span"></span></button>
+                            </div>
+                        </div>
+                        <p class="mb-0">OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank" rel="noopener">Multi-Cultivator MC-1000-OD</a></u></b>, equation<sup>2</sup>:
+                            <i style="font-size:80%">\( OD_{720,corr} = 0.029 + 0.143\, e^{2.497\, OD_{720,meas}} \)</i>
+                        </p>
+                        <div class="form-row align-items-center mb-2">
+                            <div class="col-auto"><small>OD<sub>720</sub> measured:</small></div>
+                            <div class="col-auto">
+                                <input class="form-control form-control-sm" type="number" id="OD_720_measured_MC1000"
+                                    min="0" step="0.01" value="0.6" style="width:90px;"
+                                    onkeypress="return isNumberKey(event)" oninput="correct_OD_720_MC1000()"/>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info btn-sm">OD<sub>720</sub> corrected:&nbsp;<span id="corrected_OD_720_MC1000_for_span"></span></button>
+                            </div>
+                        </div>
+                        <p class="mb-0">OD<sub>720</sub> correction for <b><u><a href="https://handheld.psi.cz/products/aquapen-c-and-aquapen-p/" target="_blank" rel="noopener">AquaPen</a></u></b>, equation<sup>3</sup>:
+                            <i style="font-size:80%">\( OD_{720,corr} = 0.247\, e^{1.677\, OD_{720,meas}} \)</i>
+                        </p>
+                        <div class="form-row align-items-center mb-1">
+                            <div class="col-auto"><small>OD<sub>720</sub> measured:</small></div>
+                            <div class="col-auto">
+                                <input class="form-control form-control-sm" type="number" id="OD_720_measured_AquaPen"
+                                    min="0" step="0.01" value="0.12" style="width:90px;"
+                                    onkeypress="return isNumberKey(event)" oninput="correct_OD_720_AquaPen()"/>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info btn-sm">OD<sub>720</sub> corrected:&nbsp;<span id="corrected_OD_720_AquaPen_for_span"></span></button>
+                            </div>
+                        </div>
+                        <p class="mb-0" style="font-size:80%"><i><b>References:</b>
+                            <br><sup>1</sup>Zavřel et al., (2021): Algal Research, 56: 1-15, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926421001478?dgcid=coauthor" target="blank" rel="noopener">10.1016/j.algal.2021.102328</a>
+                            <br><sup>2</sup>Sukačová et al., (2023): Algal Research, 71: 1-10, DOI: <a href="https://www.sciencedirect.com/science/article/abs/pii/S2211926423000887" target="blank" rel="noopener">10.1016/j.algal.2023.103055</a></i>
+                        </p>
+                    </div>
+                </details>
+                <br>
+                <!-- 3. Quick μ recalculator -->
+                <details>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Quick recalculation of already-calculated &mu; (from known &mu;<sub>raw</sub>)</summary>
+                    <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <p class="mb-1">If you already have a &mu; value (calculated from raw OD<sub>720</sub>) and want to correct it without re-entering the original OD measurements.
+                        For FMT-150 and AquaPen (pure-exponential correction), the relation is exact: &mu;<sub>corrected</sub>&nbsp;=&nbsp;<i>k</i>&nbsp;&middot;&nbsp;&mu;<sub>raw</sub>.
+                        For MC-1000 (additive constant in correction), the simplification does not apply exactly — the result shown is an approximation valid when both OD values are well within the non-linear range.</p>
+                        <p class="mb-1" style="line-height:0.9"><i style="font-size:80%">
+                            \( \mu_{corrected} = k \cdot \mu_{raw} \qquad k_{\text{FMT-150}} = 1.83,\quad k_{\text{AquaPen}} = 1.677,\quad k_{\text{MC-1000}} \approx 2.497 \)
+                        </i></p>
+                        <div class="form-row align-items-end mb-1">
+                            <div class="col-auto">
+                                <label class="mb-0" style="font-size:0.9em;">Device</label>
+                                <select class="form-control form-control-sm" id="mu_simple_device" oninput="calculateSimpleMuCorrection()">
+                                    <option value="FMT-150">FMT-150</option>
+                                    <option value="MC-1000">MC-1000</option>
+                                    <option value="AquaPen">AquaPen</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <label class="mb-0" style="font-size:0.9em;">&mu;<sub>raw</sub></label>
+                                <input type="number" class="form-control form-control-sm" id="mu_simple_raw" min="0" step="0.001" value="0.04"
+                                       style="width:90px;" onkeypress="return isNumberKey(event)" oninput="calculateSimpleMuCorrection()">
+                            </div>
+                            <div class="col-auto">
+                                <label class="mb-0" style="font-size:0.9em;">Time unit</label>
+                                <select class="form-control form-control-sm" id="mu_simple_unit" oninput="calculateSimpleMuCorrection()">
+                                    <option value="h">h<sup>-1</sup></option>
+                                    <option value="d">d<sup>-1</sup></option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info btn-sm">
+                                    <span id="mu_simple_result_span">...</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="mu_simple_detail_span" style="font-size:0.88em; color:#555;"></div>
+                    </div>
+                </details>
+                <br>
+                <!-- 4. Corrected growth rate from two OD measurements -->
+                <details>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Corrected specific growth rate from two OD<sub>720</sub> measurements</summary>
+                    <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <p class="mb-1">If specific growth rate &mu; was calculated from two OD<sub>720</sub> measurements both falling in the <strong>non-linear range (OD<sub>720</sub> &gt; 0.4)</strong>,
+                        the raw &mu; underestimates the true value. Correcting both OD readings first yields the true growth rate:
+                        <i style="font-size:80%">\( \mu_{corrected} = \ln\!\left(OD_{720,2}^{corr} / OD_{720,1}^{corr}\right) / \Delta t \)</i></p>
+                        <details style="margin-bottom:0.4em;">
+                            <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.2em 0;">Mathematical insight — simplified formula for exponential correction models</summary>
+                            <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.3em;">
+                                <p class="mb-1">For FMT-150 and AquaPen, the correction has the pure exponential form <i>OD<sub>corr</sub> = A &middot; e<sup>k &middot; OD<sub>meas</sub></sup></i>.
+                                The constant <i>A</i> cancels in the ratio, giving a simple closed form:</p>
+                                <p class="mb-1" style="line-height:0.9"><i style="font-size:80%">
+                                    \( \mu_{corrected} = \dfrac{\ln\!\left(A e^{k\,OD_2} / A e^{k\,OD_1}\right)}{\Delta t} = \dfrac{k\,(OD_2 - OD_1)}{\Delta t} = k\cdot\mu_{raw} \)
+                                </i></p>
+                                <p class="mb-0">The corrected growth rate is simply the raw growth rate scaled by the correction exponent <i>k</i>:
+                                <strong>k&nbsp;=&nbsp;1.83</strong> for FMT-150 and <strong>k&nbsp;=&nbsp;1.677</strong> for AquaPen.
+                                For MC-1000 (form <i>0.029 + 0.143&middot;e<sup>2.497&middot;OD</sup></i>), the additive constant breaks the cancellation, so the full formula is used.</p>
+                            </div>
+                        </details>
+                        <div class="form-row align-items-end mb-1">
+                            <div class="col-auto">
+                                <label class="mb-0" style="font-size:0.9em;">Device</label>
+                                <select class="form-control form-control-sm" id="mu_corr_device" oninput="calculateCorrectedGrowthRate()">
+                                    <option value="FMT-150">FMT-150</option>
+                                    <option value="MC-1000">MC-1000</option>
+                                    <option value="AquaPen">AquaPen</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <label class="mb-0" style="font-size:0.9em;">OD<sub>720</sub> at t<sub>1</sub></label>
+                                <input type="number" class="form-control form-control-sm" id="mu_corr_OD1" min="0" step="0.01" value="0.5"
+                                       style="width:90px;" onkeypress="return isNumberKey(event)" oninput="calculateCorrectedGrowthRate()">
+                            </div>
+                            <div class="col-auto">
+                                <label class="mb-0" style="font-size:0.9em;">OD<sub>720</sub> at t<sub>2</sub></label>
+                                <input type="number" class="form-control form-control-sm" id="mu_corr_OD2" min="0" step="0.01" value="0.9"
+                                       style="width:90px;" onkeypress="return isNumberKey(event)" oninput="calculateCorrectedGrowthRate()">
+                            </div>
+                            <div class="col-auto">
+                                <label class="mb-0" style="font-size:0.9em;">&Delta;t</label>
+                                <input type="number" class="form-control form-control-sm" id="mu_corr_dt" min="0.001" step="0.1" value="24"
+                                       style="width:80px;" onkeypress="return isNumberKey(event)" oninput="calculateCorrectedGrowthRate()">
+                            </div>
+                            <div class="col-auto">
+                                <label class="mb-0" style="font-size:0.9em;">Time unit</label>
+                                <select class="form-control form-control-sm" id="mu_corr_unit" oninput="calculateCorrectedGrowthRate()">
+                                    <option value="h">hours (h)</option>
+                                    <option value="d">days (d)</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info btn-sm">
+                                    <span id="mu_corr_result_span">...</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="mu_corr_detail_span" style="font-size:0.88em; color:#555;"></div>
+                    </div>
+                </details>
+                <br>
+                <!-- 5. OD nonlinearity chart -->
+                <details id="odNonlinearityDetails">
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0 !important;">OD<sub>720</sub> non-linearity — measured data (<i>Synechocystis</i> sp. PCC 6803)</summary>
+                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <div style="background:#fff; border-radius:4px; padding:8px; width:50%;">
+                            <canvas id="odNonlinearityChart" style="width:100%; max-height:270px;"></canvas>
+                        </div>
+                    </div>
+                </details>
+
             </div>
         </div>
     </div>
