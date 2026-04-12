@@ -3128,6 +3128,10 @@ let simBatchProdChart   = null;
 let simChemoI0Chart     = null;   // design: light-response operational envelope
 let simChemoPvChart     = null;   // design: volumetric productivity P_V vs reactor depth z
 let simChemoRobustChart = null;   // design: normalised operating window / robustness
+let simChemoRhoChart    = null;   // productivity vs culture density (chemostat, parametric in D)
+let simTurbRhoChart     = null;   // productivity vs culture density (turbidostat, family of I₀ curves, areal)
+let simTurbVolChart     = null;   // volumetric productivity vs volumetric density (turbidostat, family of I₀ curves)
+let simBatchRhoChart    = null;   // productivity vs culture density (batch)
 
 // FBA single-point marker (from FBA tab single-run)
 let simFbaMarker = null;   // { I0, mu }
@@ -3204,8 +3208,10 @@ function simSetMode(mode) {
     document.getElementById('sim-btn-batch')?.classList.toggle('active',  mode === 'batch');
     // Nav-tab active state
     document.getElementById('sim-tab-chemo')?.classList.toggle('active', mode === 'chemo');
+    document.getElementById('sim-tab-turb')?.classList.toggle('active',  mode === 'turb');
     document.getElementById('sim-tab-batch')?.classList.toggle('active',  mode === 'batch');
     document.getElementById('sim-chemo-charts').style.display      = mode === 'chemo' ? '' : 'none';
+    document.getElementById('sim-turb-charts').style.display       = mode === 'turb'  ? '' : 'none';
     document.getElementById('sim-batch-charts').style.display      = mode === 'batch' ? '' : 'none';
     document.getElementById('prod-insight-chemo').style.display    = mode === 'chemo' ? '' : 'none';
     document.getElementById('prod-insight-batch').style.display    = mode === 'batch' ? '' : 'none';
@@ -3214,7 +3220,9 @@ function simSetMode(mode) {
     const inProductivity = activeTabHref === '#sim-sub-productivity';
     const batchParams = document.getElementById('sim-batch-params');
     if (batchParams) batchParams.style.display = (mode === 'batch' && inProductivity) ? '' : 'none';
-    simRecompute();
+    // When switching to turbidostat tab, render charts if a simulation has been run
+    if (mode === 'turb') simRenderTurbCharts();
+    else simRecompute();
 }
 
 /** Show/hide left-panel parameter groups based on the active sub-tab. */
@@ -4486,6 +4494,7 @@ function simRenderChemostat(d) {
     });
 
     simRenderChemostatNew(d, p);
+    simRenderChemoRhoChart(d);
 }
 
 /**
@@ -4758,7 +4767,7 @@ function simRenderBatch(d) {
         return;
     }
     if (placeholder) placeholder.style.display = 'none';
-    if (batchWrap)   batchWrap.style.display   = '';
+    if (batchWrap)   batchWrap.style.display   = simMode === 'batch' ? '' : 'none';
 
     const pts    = d.points;
     const p      = simGetParams();
@@ -4879,6 +4888,370 @@ function simRenderBatch(d) {
                 title: { display: true, text: 'Batch: Productivity & Growth rate', font: { size: 12 } },
             },
             scales: batchProdScales,
+        },
+    });
+
+    simRenderBatchRhoChart(d);
+}
+
+/**
+ * Chemostat: P_A vs ρ_A — productivity envelope.
+ * x = steady-state areal biomass density, y = areal productivity.
+ * As D sweeps 0→D_max, ρ_A sweeps from high→0, tracing a dome.
+ * The peak (orange triangle) marks the optimal operating point.
+ */
+function simRenderChemoRhoChart(d) {
+    const ctx = document.getElementById('sim-chemo-rho-chart')?.getContext('2d');
+    if (!ctx || !d.points.length) return;
+    if (simChemoRhoChart) { simChemoRhoChart.destroy(); simChemoRhoChart = null; }
+
+    // Sort ascending by ρ_A so the line traces left→right
+    const sorted = [...d.points].sort((a, b) => a.rho_A - b.rho_A);
+
+    simChemoRhoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'P_A — Areal productivity (g CDM·m⁻²·d⁻¹)',
+                    data: sorted.map(pt => ({ x: pt.rho_A, y: pt.P_A })),
+                    borderColor: 'rgba(40,167,69,0.9)',
+                    backgroundColor: 'rgba(40,167,69,0.08)',
+                    fill: true, tension: 0.3, pointRadius: 0,
+                    yAxisID: 'y',
+                },
+                {
+                    // Optimal operating point marker
+                    label: `Peak P_A = ${d.P_max.toFixed(1)} g·m⁻²·d⁻¹ at ρ_A = ${d.rho_A_opt.toFixed(1)} g·m⁻²`,
+                    data: [{ x: d.rho_A_opt, y: d.P_max }],
+                    type: 'scatter',
+                    borderColor: 'rgba(255,140,0,1)',
+                    backgroundColor: 'rgba(255,140,0,1)',
+                    pointRadius: 8, pointHoverRadius: 10,
+                    pointStyle: 'triangle',
+                    yAxisID: 'y',
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'nearest', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
+                title: { display: true, text: 'Chemostat: Productivity vs Culture Density', font: { size: 12 } },
+            },
+            scales: {
+                x:  { type: 'linear', title: { display: true, text: 'ρ_A — Areal biomass density (g CDM·m⁻²)', font: { size: 11 } }, min: 0, ticks: { font: { size: 10 } } },
+                y:  { title: { display: true, text: ['P_A — Areal productivity', '(g CDM·m⁻²·d⁻¹)'], font: { size: 11 } }, position: 'left', min: 0, ticks: { font: { size: 10 } } },
+            },
+        },
+    });
+}
+
+/**
+ * Turbidostat: P_A vs ρ_A — family of curves for reference I₀ values + current I₀ highlighted.
+ * x = ρ_A setpoint (what the turbidostat controller holds fixed),
+ * y = P_A = μ(I₀, ρ_A) · ρ_A · 24  (g CDM·m⁻²·d⁻¹).
+ * Each curve is computed directly — no bisection, no ODE.
+ * The dome peak of each curve marks the optimal density for that irradiance.
+ */
+/**
+ * Depth-averaged specific product flux for turbidostat parametric sweep.
+ * Returns mmol·gDW⁻¹·h⁻¹ (areal product flux per unit biomass), or null if
+ * no product source is active.
+ *   - manual Y_X > 0 (growth-coupled): returns Y_X · μ  (not a depth average — exact)
+ *   - fba_sweep / empirical (decoupled): integrates v_prod(I_local) over depth via N samples
+ */
+function turbProductFluxPerGDW(I0_val, rho, alpha, mu, Y_X) {
+    if (_productFluxSource === 'manual') {
+        return Y_X > 0 ? Y_X * mu : null;   // mmol·gDW⁻¹·h⁻¹, growth-coupled
+    }
+    // Decoupled: depth-average the irradiance-dependent flux through the culture
+    const tau = alpha * rho;
+    const N   = 24;
+    let sum = 0;
+    for (let k = 0; k < N; k++) {
+        const I_local = I0_val * Math.exp(-(k + 0.5) / N * (tau < 1e-6 ? 0 : tau));
+        const v = getProductFluxAtI0(I_local);
+        if (v === null) return null;
+        sum += v;
+    }
+    return sum / N;
+}
+
+function simRenderTurbRhoChart(p) {
+    const ctx = document.getElementById('sim-turb-rho-chart')?.getContext('2d');
+    if (!ctx) return;
+    if (simTurbRhoChart) { simTurbRhoChart.destroy(); simTurbRhoChart = null; }
+
+    const { alpha, KL, YBM, kd, ngam_photon, I0: curI0, Y_X } = p;
+    const RHO_STEPS = 250;
+    const RHO_MIN   = 0.05;   // g CDM·m⁻²
+
+    // Dynamic scan limit: find highest ρ_A where P_A > 1% of peak, add 5% headroom
+    let xMax = 0;
+    const scanData = [];
+    for (let j = 0; j <= RHO_STEPS; j++) {
+        const rho  = RHO_MIN + (j / RHO_STEPS) * (400 - RHO_MIN);
+        const mu   = simHoperMu(curI0, rho, alpha, KL, YBM, kd, ngam_photon, 0);
+        const P_A  = Math.max(0, mu * rho * 24);
+        const vp   = turbProductFluxPerGDW(curI0, rho, alpha, mu, Y_X);
+        scanData.push({ x: rho, P_A, P_prod: vp !== null ? Math.max(0, vp * rho * 24) : null });
+    }
+    const peakPA = Math.max(...scanData.map(pt => pt.P_A));
+    const thresh = peakPA * 0.01;
+    const last   = [...scanData].reverse().find(pt => pt.P_A > thresh);
+    if (last) xMax = Math.ceil(last.x * 1.05);
+    if (xMax < 1) xMax = 10;
+
+    const trimmed = scanData.filter(pt => pt.x <= xMax);
+    const curPeak = trimmed.reduce((best, pt) => pt.P_A > best.P_A ? pt : best, trimmed[0]);
+
+    // Build datasets
+    const datasets = [
+        {
+            label: `P_A — Areal productivity (g CDM·m⁻²·d⁻¹)  |  I₀ = ${curI0} µmol·m⁻²·s⁻¹`,
+            data: trimmed.map(pt => ({ x: pt.x, y: pt.P_A })),
+            borderColor: 'rgba(40,167,69,0.9)',
+            backgroundColor: 'rgba(40,167,69,0.07)',
+            fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
+            yAxisID: 'y',
+        },
+        {
+            label: `Peak P_A = ${curPeak.P_A.toFixed(1)} g·m⁻²·d⁻¹ at ρ_A = ${curPeak.x.toFixed(1)} g·m⁻²`,
+            data: [{ x: curPeak.x, y: curPeak.P_A }],
+            type: 'scatter', yAxisID: 'y',
+            borderColor: 'rgba(40,167,69,1)', backgroundColor: 'rgba(40,167,69,1)',
+            pointRadius: 8, pointHoverRadius: 10, pointStyle: 'triangle',
+        },
+    ];
+
+    const scales = {
+        x: { type: 'linear', min: 0, max: xMax,
+             title: { display: true, text: 'ρ_A — Areal biomass density / turbidostat setpoint (g CDM·m⁻²)', font: { size: 11 } },
+             ticks: { font: { size: 10 } } },
+        y: { min: 0, position: 'left',
+             title: { display: true, text: ['P_A — Areal productivity', '(g CDM·m⁻²·d⁻¹)'], font: { size: 11 } },
+             ticks: { font: { size: 10 } } },
+    };
+
+    // Product curve — only when a product source is configured
+    const hasProd = trimmed[0]?.P_prod !== null;
+    if (hasProd) {
+        const prodPeak = trimmed.reduce((best, pt) => (pt.P_prod ?? 0) > (best.P_prod ?? 0) ? pt : best, trimmed[0]);
+        const prodLabel = _productFluxSource === 'manual'
+            ? `${p.productName || 'Product'} (Y_X=${Y_X} mmol·gCDM⁻¹, growth-coupled)`
+            : `${p.productName || 'Product'} (decoupled, mmol·m⁻²·d⁻¹)`;
+        datasets.push({
+            label: prodLabel,
+            data: trimmed.map(pt => ({ x: pt.x, y: pt.P_prod ?? 0 })),
+            borderColor: 'rgba(111,66,193,0.85)', borderDash: _productFluxSource === 'manual' ? [3,3] : [],
+            fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
+            yAxisID: 'y2',
+        });
+        datasets.push({
+            label: `Peak = ${(prodPeak.P_prod ?? 0).toFixed(1)} mmol·m⁻²·d⁻¹ at ρ_A = ${prodPeak.x.toFixed(1)} g·m⁻²`,
+            data: [{ x: prodPeak.x, y: prodPeak.P_prod ?? 0 }],
+            type: 'scatter', yAxisID: 'y2',
+            borderColor: 'rgba(111,66,193,1)', backgroundColor: 'rgba(111,66,193,1)',
+            pointRadius: 7, pointHoverRadius: 9, pointStyle: 'triangle',
+        });
+        scales.y2 = {
+            min: 0, position: 'right', grid: { drawOnChartArea: false },
+            title: { display: true, text: [`${p.productName || 'Product'} productivity`, '(mmol·m⁻²·d⁻¹)'], font: { size: 11 }, color: 'rgba(111,66,193,0.9)' },
+            ticks: { font: { size: 10 }, color: 'rgba(111,66,193,0.9)' },
+        };
+    }
+
+    simTurbRhoChart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            interaction: { mode: 'nearest', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 20 } },
+                title: {
+                    display: true,
+                    text: `Turbidostat: Areal Productivity vs Culture Density  (I₀ = ${curI0} µmol·m⁻²·s⁻¹)`,
+                    font: { size: 12 },
+                },
+            },
+            scales,
+        },
+    });
+}
+
+/**
+ * Turbidostat: P_V vs X — volumetric productivity vs volumetric density.
+ * Uses current I₀ only. Product productivity added on y2 when Y_X > 0 or decoupled source active.
+ *   X [g·L⁻¹]        = ρ_A [g·m⁻²] / (z [m] × 1000)
+ *   P_V [g·L⁻¹·d⁻¹] = μ × X × 24
+ */
+function simRenderTurbVolChart(p) {
+    const ctx = document.getElementById('sim-turb-vol-chart')?.getContext('2d');
+    if (!ctx) return;
+    if (simTurbVolChart) { simTurbVolChart.destroy(); simTurbVolChart = null; }
+
+    const { alpha, KL, YBM, kd, ngam_photon, I0: curI0, Y_X } = p;
+    const z    = Math.max(0.01, p.z_reactor || 0.10);
+    const toX  = (rho) => rho / (z * 1000);   // g·m⁻² → g·L⁻¹
+
+    const X_MAX     = 20;
+    const RHO_STEPS = 300;
+    const RHO_MAX   = X_MAX * z * 1000;
+    const RHO_MIN   = 0.05;
+
+    const scanData = [];
+    for (let j = 0; j <= RHO_STEPS; j++) {
+        const rho  = RHO_MIN + (j / RHO_STEPS) * (RHO_MAX - RHO_MIN);
+        const mu   = simHoperMu(curI0, rho, alpha, KL, YBM, kd, ngam_photon, 0);
+        const X    = toX(rho);
+        const P_V  = Math.max(0, mu * X * 24);
+        const vp   = turbProductFluxPerGDW(curI0, rho, alpha, mu, Y_X);
+        // Volumetric product: mmol·gDW⁻¹·h⁻¹ × gDW·L⁻¹ × 24 h/d = mmol·L⁻¹·d⁻¹
+        const P_prodV = vp !== null ? Math.max(0, vp * X * 24) : null;
+        scanData.push({ x: X, P_V, P_prod: P_prodV });
+    }
+
+    const curPeak = scanData.reduce((best, pt) => pt.P_V > best.P_V ? pt : best, scanData[0]);
+
+    const datasets = [
+        {
+            label: `P_V — Volumetric productivity (g CDM·L⁻¹·d⁻¹)  |  I₀ = ${curI0} µmol·m⁻²·s⁻¹`,
+            data: scanData.map(pt => ({ x: pt.x, y: pt.P_V })),
+            borderColor: 'rgba(40,167,69,0.9)',
+            backgroundColor: 'rgba(40,167,69,0.07)',
+            fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
+            yAxisID: 'y',
+        },
+        {
+            label: `Peak P_V = ${curPeak.P_V.toFixed(3)} g·L⁻¹·d⁻¹ at X = ${curPeak.x.toFixed(3)} g·L⁻¹`,
+            data: [{ x: curPeak.x, y: curPeak.P_V }],
+            type: 'scatter', yAxisID: 'y',
+            borderColor: 'rgba(40,167,69,1)', backgroundColor: 'rgba(40,167,69,1)',
+            pointRadius: 8, pointHoverRadius: 10, pointStyle: 'triangle',
+        },
+    ];
+
+    const scales = {
+        x: { type: 'linear', min: 0, max: X_MAX,
+             title: { display: true, text: 'X — Biomass concentration / turbidostat setpoint (g CDM·L⁻¹)', font: { size: 11 } },
+             ticks: { font: { size: 10 } } },
+        y: { min: 0, position: 'left',
+             title: { display: true, text: ['P_V — Volumetric productivity', '(g CDM·L⁻¹·d⁻¹)'], font: { size: 11 } },
+             ticks: { font: { size: 10 } } },
+    };
+
+    const hasProd = scanData[0]?.P_prod !== null;
+    if (hasProd) {
+        const prodPeak = scanData.reduce((best, pt) => (pt.P_prod ?? 0) > (best.P_prod ?? 0) ? pt : best, scanData[0]);
+        const prodLabel = _productFluxSource === 'manual'
+            ? `${p.productName || 'Product'} (Y_X=${Y_X} mmol·gCDM⁻¹, growth-coupled)`
+            : `${p.productName || 'Product'} (decoupled, mmol·L⁻¹·d⁻¹)`;
+        datasets.push({
+            label: prodLabel,
+            data: scanData.map(pt => ({ x: pt.x, y: pt.P_prod ?? 0 })),
+            borderColor: 'rgba(111,66,193,0.85)', borderDash: _productFluxSource === 'manual' ? [3,3] : [],
+            fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
+            yAxisID: 'y2',
+        });
+        datasets.push({
+            label: `Peak = ${(prodPeak.P_prod ?? 0).toFixed(2)} mmol·L⁻¹·d⁻¹ at X = ${prodPeak.x.toFixed(3)} g·L⁻¹`,
+            data: [{ x: prodPeak.x, y: prodPeak.P_prod ?? 0 }],
+            type: 'scatter', yAxisID: 'y2',
+            borderColor: 'rgba(111,66,193,1)', backgroundColor: 'rgba(111,66,193,1)',
+            pointRadius: 7, pointHoverRadius: 9, pointStyle: 'triangle',
+        });
+        scales.y2 = {
+            min: 0, position: 'right', grid: { drawOnChartArea: false },
+            title: { display: true, text: [`${p.productName || 'Product'} productivity`, '(mmol·L⁻¹·d⁻¹)'], font: { size: 11 }, color: 'rgba(111,66,193,0.9)' },
+            ticks: { font: { size: 10 }, color: 'rgba(111,66,193,0.9)' },
+        };
+    }
+
+    simTurbVolChart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            interaction: { mode: 'nearest', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 20 } },
+                title: {
+                    display: true,
+                    text: [
+                        `Turbidostat: Volumetric Productivity vs Biomass Concentration  (I₀ = ${curI0} µmol·m⁻²·s⁻¹)`,
+                        `z = ${(z * 100).toFixed(0)} cm`,
+                    ],
+                    font: { size: 12 },
+                },
+            },
+            scales,
+        },
+    });
+}
+
+/**
+ * Batch: P_A vs ρ_A — productivity trajectory through time.
+ * x = areal biomass density (grows monotonically left→right),
+ * y = instantaneous productivity P_inst = μ·ρ_A (dome shape).
+ * Second axis: μ (h⁻¹) showing how growth rate declines as density builds.
+ * Peak P_A marked with an orange triangle.
+ */
+function simRenderBatchRhoChart(d) {
+    const ctx = document.getElementById('sim-batch-rho-chart')?.getContext('2d');
+    if (!ctx || !d.points.length) return;
+    if (simBatchRhoChart) { simBatchRhoChart.destroy(); simBatchRhoChart = null; }
+
+    const pts   = d.points;
+    // Find point of maximum P_inst for the marker
+    const maxPt = pts.reduce((best, pt) => pt.P_inst > best.P_inst ? pt : best, pts[0]);
+
+    simBatchRhoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'P_A — Areal productivity (g CDM·m⁻²·h⁻¹)',
+                    data: pts.map(pt => ({ x: pt.rho, y: pt.P_inst })),
+                    borderColor: 'rgba(40,167,69,0.9)',
+                    backgroundColor: 'rgba(40,167,69,0.08)',
+                    fill: true, tension: 0.3, pointRadius: 0,
+                    yAxisID: 'y',
+                },
+                {
+                    label: 'μ — Specific growth rate (h⁻¹)',
+                    data: pts.map(pt => ({ x: pt.rho, y: pt.mu })),
+                    borderColor: 'rgba(0,123,255,0.8)',
+                    fill: false, tension: 0.3, pointRadius: 0,
+                    yAxisID: 'y2',
+                },
+                {
+                    // Peak productivity marker
+                    label: `Peak P_A = ${d.P_max.toFixed(3)} g·m⁻²·h⁻¹ at ρ_A = ${maxPt.rho.toFixed(1)} g·m⁻²`,
+                    data: [{ x: maxPt.rho, y: maxPt.P_inst }],
+                    type: 'scatter',
+                    borderColor: 'rgba(255,140,0,1)',
+                    backgroundColor: 'rgba(255,140,0,1)',
+                    pointRadius: 8, pointHoverRadius: 10,
+                    pointStyle: 'triangle',
+                    yAxisID: 'y',
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'nearest', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { font: { size: 11 } } },
+                title: { display: true, text: 'Batch: Productivity vs Culture Density', font: { size: 12 } },
+            },
+            scales: {
+                x:  { type: 'linear', title: { display: true, text: 'ρ_A — Areal biomass density (g CDM·m⁻²)', font: { size: 11 } }, min: 0, ticks: { font: { size: 10 } } },
+                y:  { title: { display: true, text: ['P_A — Areal productivity', '(g CDM·m⁻²·h⁻¹)'], font: { size: 11 } }, position: 'left',  min: 0, ticks: { font: { size: 10 } } },
+                y2: { title: { display: true, text: 'μ — Specific growth rate (h⁻¹)', font: { size: 11 } }, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+            },
         },
     });
 }
@@ -5598,12 +5971,27 @@ function simSubTabChanged(href) {
     if (href === '#sim-sub-sweep') updateLightSweepSummary();
 }
 
+/** Re-render both turbidostat charts from current params.
+ *  Called on tab switch, or when I₀ / z sliders change.
+ *  Guards against running before the kinetic model has been fitted (gated content hidden). */
+function simRenderTurbCharts() {
+    const gate = document.getElementById('productivity-gated-content');
+    if (!gate || gate.style.display === 'none') return;
+    const p = simGetParams();
+    simRenderTurbRhoChart(p);
+    simRenderTurbVolChart(p);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     sensParamChanged();
 
     // Initialise card visibility (Static FBA is active by default)
     simSubTabChanged('#sim-sub-static');
     updateTabGates();
+
+    // Auto-refresh turbidostat charts when I₀ or reactor depth changes
+    document.getElementById('sim-I0')?.addEventListener('input', simRenderTurbCharts);
+    document.getElementById('sim-reactor-depth')?.addEventListener('input', simRenderTurbCharts);
 
     // Listen to sub-tab switches (use jQuery — Bootstrap 4 fires shown.bs.tab via jQuery)
     $('#sim-sub-tabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {

@@ -390,7 +390,7 @@
 
             <!-- About this tool + Sub-tab nav (full width, above columns) -->
             <div class="mb-2">
-                <a class="text-muted" data-toggle="collapse" href="#sim-workflow-info" style="font-size:0.8em;"><i class="fa fa-info-circle"></i> About this tool</a>
+                <a class="text-muted" data-toggle="collapse" href="#sim-workflow-info" style="font-size:0.8em;"><i class="fa fa-info-circle"></i> How to use this tool</a>
                 <div class="collapse" id="sim-workflow-info">
                     <p class="small text-muted mb-0 mt-1" style="font-size:0.82em; line-height:1.6;">
                         <strong>iRH783</strong> is a genome-scale metabolic reconstruction of <em>Synechocystis</em> sp. PCC 6803.
@@ -1365,87 +1365,17 @@
                             <!-- Content (hidden until Static FBA run) -->
                             <div id="productivity-gated-content" style="display:none;">
 
-                            <!-- Fitted model parameters card — updates live with sliders -->
-                            <div class="card mb-3" id="prod-param-card">
-                                <div class="card-header py-1 px-3 d-flex align-items-center" style="cursor:pointer;background:#f0f4f8;" data-toggle="collapse" data-target="#prod-param-body">
-                                    <span class="small font-weight-bold"><i class="fa fa-sliders text-primary"></i> Fitted kinetic model — parameter interpretation</span>
-                                    <i class="fa fa-chevron-down ml-auto" style="font-size:0.8em;"></i>
-                                </div>
-                                <div class="collapse show" id="prod-param-body">
-                                    <div class="card-body py-2 px-3" style="font-size:0.82em;">
-                                        <p class="text-muted mb-2">Fitted in the <strong>② FBA Light Response</strong> tab using experimental or reference growth data. These values drive all productivity curves below. Typical reference ranges are given for context.</p>
-                                        <table class="table table-sm mb-1" style="font-size:0.9em;">
-                                            <thead><tr style="border-bottom:2px solid #dee2e6;background:#f8f9fa;">
-                                                <th style="width:22%;">Parameter</th>
-                                                <th style="width:10%;">Value</th>
-                                                <th style="width:28%;">Typical range</th>
-                                                <th>Interpretation</th>
-                                            </tr></thead>
-                                            <tbody>
-                                            <tr>
-                                                <td>
-                                                    <strong style="font-size:1.08em;">α</strong>
-                                                    <span class="text-muted" style="font-size:0.9em;"> (m²·µmol⁻¹)</span><br>
-                                                    <span class="text-muted" style="font-size:0.85em;">Specific absorption cross-section</span>
-                                                </td>
-                                                <td id="pp-alpha" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
-                                                <td class="text-muted" style="font-size:0.85em;">0.05–0.30 m²·µmol⁻¹<br>Low-pigment mutants → high-pigment wild-types</td>
-                                                <td>Light capture efficiency per unit biomass. Determines how rapidly the culture self-shades: optical depth τ = α·ρ<sub>A</sub>. When τ ≈ 1 the culture absorbs ~63% of incident light; at τ &gt; 3 the interior receives negligible light. The optimal operating density ρ<sub>A,opt</sub> scales roughly as 1/α — higher α requires lower operating density to keep interior cells illuminated.</td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <strong style="font-size:1.08em;">K<sub>L</sub></strong>
-                                                    <span class="text-muted" style="font-size:0.9em;"> (mmol·gDW⁻¹·h⁻¹)</span><br>
-                                                    <span class="text-muted" style="font-size:0.85em;">Half-saturation photon flux</span>
-                                                </td>
-                                                <td id="pp-KL" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
-                                                <td class="text-muted" style="font-size:0.85em;">50–400 mmol·gDW⁻¹·h⁻¹<br><em>Synechocystis</em> PCC 6803 ≈ 100–200</td>
-                                                <td>Absorbed photon flux at half-maximal growth. Low K<sub>L</sub>: growth saturates at low irradiance — efficient in dim light, well suited to high-density self-shaded cultures. High K<sub>L</sub>: growth saturates at high irradiance — requires intense illumination; less suitable for dense, self-shaded reactors.</td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <strong style="font-size:1.08em;">Y<sub>BM</sub></strong>
-                                                    <span class="text-muted" style="font-size:0.9em;"> (gCDW·mmol⁻¹)</span><br>
-                                                    <span class="text-muted" style="font-size:0.85em;">Biomass yield on photons</span>
-                                                </td>
-                                                <td id="pp-YBM" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
-                                                <td class="text-muted" style="font-size:0.85em;">0.5–1.8 gCDW·mmol⁻¹<br>WT cultures 0.8–1.2; optimised strains up to ~1.6<br>FBA ceiling: 1.84 gCDW·mmol⁻¹<br><span id="pp-YBM-badge"></span></td>
-                                                <td>Photon-to-biomass conversion efficiency — the primary determinant of maximum areal biomass productivity P<sub>A,max</sub> (g CDM·m⁻²·d⁻¹). The FBA stoichiometric ceiling (≈1.84 gCDW·mmol⁻¹) is the theoretical metabolic maximum — the gap between the fitted value and this ceiling is the maximum gain achievable by metabolic engineering of central metabolism.</td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <strong style="font-size:1.08em;">k<sub>d</sub></strong>
-                                                    <span class="text-muted" style="font-size:0.9em;"> (dimensionless)</span><br>
-                                                    <span class="text-muted" style="font-size:0.85em;">Photodamage coefficient</span>
-                                                </td>
-                                                <td id="pp-kd" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
-                                                <td class="text-muted" style="font-size:0.85em;">0.01–0.15<br>Moderate light ≈ 0.03–0.08<br>Photoinhibition-sensitive strains &gt; 0.10</td>
-                                                <td>Fraction of absorbed photons diverted to PSII photodamage and repair rather than growth. High k<sub>d</sub> causes photoinhibition: maximum productivity is achieved at lower irradiance and the productive irradiance range narrows. Cultures with high k<sub>d</sub> benefit from moderate, well-distributed illumination; improving PSII repair kinetics would lower k<sub>d</sub>.</td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <strong style="font-size:1.08em;">NGAM<sub>photon</sub></strong>
-                                                    <span class="text-muted" style="font-size:0.9em;"> (mmol·gDW⁻¹·h⁻¹)</span><br>
-                                                    <span class="text-muted" style="font-size:0.85em;">Non-growth associated maintenance</span>
-                                                </td>
-                                                <td id="pp-ngam" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
-                                                <td class="text-muted" style="font-size:0.85em;">0.5–5 mmol·gDW⁻¹·h⁻¹<br>≈ 1–15 µmol·m⁻²·s⁻¹ at typical α<br>Not irradiance-dependent</td>
-                                                <td>Constant photon flux consumed for cellular maintenance regardless of growth rate — analogous to basal metabolic rate. Subtracted from the available photon budget at every irradiance. Below this threshold net growth cannot occur, defining the minimum viable irradiance (light compensation point) for the culture.</td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                        <!-- Hidden element needed for JS show/hide -->
-                                        <span id="pp-product-legend-row" style="display:none;"></span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div id="sim-card-prod">
-                                <!-- Sub-sub-tabs: Chemostat / Batch -->
+                                <!-- Sub-sub-tabs: Chemostat / Turbidostat / Batch -->
                                 <ul class="nav nav-tabs mb-3" id="prod-mode-tabs" style="font-size:0.88em;">
                                     <li class="nav-item">
                                         <a class="nav-link active" id="sim-tab-chemo" href="#" onclick="simSetMode('chemo');return false;">
                                             <i class="fa fa-rotate-right"></i> Chemostat
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="sim-tab-turb" href="#" onclick="simSetMode('turb');return false;">
+                                            <i class="fa fa-tachometer"></i> Turbidostat
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -1462,9 +1392,90 @@
 
                                 <!-- Chemostat insight panel (shown in chemostat mode) -->
                                 <div id="prod-insight-chemo" class="mb-3">
+
+                                    <!-- Fitted model parameters card -->
+                                    <div class="card mb-2" id="prod-param-card">
+                                        <div class="card-header py-1 px-3 d-flex align-items-center" style="cursor:pointer;background:#f0f4f8;" data-toggle="collapse" data-target="#prod-param-body">
+                                            <span class="small font-weight-bold"><i class="fa fa-sliders text-primary"></i> Fitted kinetic model — parameter interpretation</span>
+                                            <i class="fa fa-chevron-down ml-auto" style="font-size:0.8em;"></i>
+                                        </div>
+                                        <div class="collapse" id="prod-param-body">
+                                            <div class="card-body py-2 px-3" style="font-size:0.82em;">
+                                                <p class="text-muted mb-2">Fitted in the <strong>② FBA Light Response</strong> tab using experimental or reference growth data. These values drive all productivity curves below. Typical reference ranges are given for context.</p>
+                                                <table class="table table-sm mb-1" style="font-size:0.9em;">
+                                                    <thead><tr style="border-bottom:2px solid #dee2e6;background:#f8f9fa;">
+                                                        <th style="width:22%;">Parameter</th>
+                                                        <th style="width:10%;">Value</th>
+                                                        <th style="width:28%;">Typical range</th>
+                                                        <th>Interpretation</th>
+                                                    </tr></thead>
+                                                    <tbody>
+                                                    <tr>
+                                                        <td>
+                                                            <strong style="font-size:1.08em;">α</strong>
+                                                            <span class="text-muted" style="font-size:0.9em;"> (m²·µmol⁻¹)</span><br>
+                                                            <span class="text-muted" style="font-size:0.85em;">Specific absorption cross-section</span>
+                                                        </td>
+                                                        <td id="pp-alpha" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                        <td class="text-muted" style="font-size:0.85em;">0.05–0.30 m²·µmol⁻¹<br>Low-pigment mutants → high-pigment wild-types</td>
+                                                        <td>Light capture efficiency per unit biomass. Determines how rapidly the culture self-shades: optical depth τ = α·ρ<sub>A</sub>. When τ ≈ 1 the culture absorbs ~63% of incident light; at τ &gt; 3 the interior receives negligible light. The optimal operating density ρ<sub>A,opt</sub> scales roughly as 1/α — higher α requires lower operating density to keep interior cells illuminated.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <strong style="font-size:1.08em;">K<sub>L</sub></strong>
+                                                            <span class="text-muted" style="font-size:0.9em;"> (mmol·gDW⁻¹·h⁻¹)</span><br>
+                                                            <span class="text-muted" style="font-size:0.85em;">Half-saturation photon flux</span>
+                                                        </td>
+                                                        <td id="pp-KL" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                        <td class="text-muted" style="font-size:0.85em;">50–400 mmol·gDW⁻¹·h⁻¹<br><em>Synechocystis</em> PCC 6803 ≈ 100–200</td>
+                                                        <td>Absorbed photon flux at half-maximal growth. Low K<sub>L</sub>: growth saturates at low irradiance — efficient in dim light, well suited to high-density self-shaded cultures. High K<sub>L</sub>: growth saturates at high irradiance — requires intense illumination; less suitable for dense, self-shaded reactors.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <strong style="font-size:1.08em;">Y<sub>BM</sub></strong>
+                                                            <span class="text-muted" style="font-size:0.9em;"> (gCDW·mmol⁻¹)</span><br>
+                                                            <span class="text-muted" style="font-size:0.85em;">Biomass yield on photons</span>
+                                                        </td>
+                                                        <td id="pp-YBM" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                        <td class="text-muted" style="font-size:0.85em;">0.5–1.8 gCDW·mmol⁻¹<br>WT cultures 0.8–1.2; optimised strains up to ~1.6<br>FBA ceiling: 1.84 gCDW·mmol⁻¹<br><span id="pp-YBM-badge"></span></td>
+                                                        <td>Photon-to-biomass conversion efficiency — the primary determinant of maximum areal biomass productivity P<sub>A,max</sub> (g CDM·m⁻²·d⁻¹). The FBA stoichiometric ceiling (≈1.84 gCDW·mmol⁻¹) is the theoretical metabolic maximum — the gap between the fitted value and this ceiling is the maximum gain achievable by metabolic engineering of central metabolism.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <strong style="font-size:1.08em;">k<sub>d</sub></strong>
+                                                            <span class="text-muted" style="font-size:0.9em;"> (dimensionless)</span><br>
+                                                            <span class="text-muted" style="font-size:0.85em;">Photodamage coefficient</span>
+                                                        </td>
+                                                        <td id="pp-kd" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                        <td class="text-muted" style="font-size:0.85em;">0.01–0.15<br>Moderate light ≈ 0.03–0.08<br>Photoinhibition-sensitive strains &gt; 0.10</td>
+                                                        <td>Fraction of absorbed photons diverted to PSII photodamage and repair rather than growth. High k<sub>d</sub> causes photoinhibition: maximum productivity is achieved at lower irradiance and the productive irradiance range narrows. Cultures with high k<sub>d</sub> benefit from moderate, well-distributed illumination; improving PSII repair kinetics would lower k<sub>d</sub>.</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <strong style="font-size:1.08em;">NGAM<sub>photon</sub></strong>
+                                                            <span class="text-muted" style="font-size:0.9em;"> (mmol·gDW⁻¹·h⁻¹)</span><br>
+                                                            <span class="text-muted" style="font-size:0.85em;">Non-growth associated maintenance</span>
+                                                        </td>
+                                                        <td id="pp-ngam" class="font-weight-bold text-primary" style="font-size:1.05em;">—</td>
+                                                        <td class="text-muted" style="font-size:0.85em;">0.5–5 mmol·gDW⁻¹·h⁻¹<br>≈ 1–15 µmol·m⁻²·s⁻¹ at typical α<br>Not irradiance-dependent</td>
+                                                        <td>Constant photon flux consumed for cellular maintenance regardless of growth rate — analogous to basal metabolic rate. Subtracted from the available photon budget at every irradiance. Below this threshold net growth cannot occur, defining the minimum viable irradiance (light compensation point) for the culture.</td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                                <!-- Hidden element needed for JS show/hide -->
+                                                <span id="pp-product-legend-row" style="display:none;"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- How to read the chemostat chart (collapsed by default) -->
                                     <div class="card border-0" style="background:#f8fbff;">
-                                        <div class="card-body py-2 px-3" style="font-size:0.81em;">
-                                            <p class="font-weight-bold mb-2 text-primary" style="font-size:0.95em;"><i class="fa fa-info-circle"></i> How to read the chemostat chart</p>
+                                        <div class="card-header py-1 px-3 d-flex align-items-center" style="cursor:pointer;background:#f8fbff;border:none;" data-toggle="collapse" data-target="#chemo-how-to-read">
+                                            <span class="small font-weight-bold text-primary"><i class="fa fa-info-circle"></i> How to read the chemostat chart</span>
+                                            <i class="fa fa-chevron-down ml-auto" style="font-size:0.8em;"></i>
+                                        </div>
+                                        <div class="collapse" id="chemo-how-to-read">
+                                            <div class="card-body py-2 px-3" style="font-size:0.81em;">
                                             <div class="row" style="row-gap:0.4rem;">
                                                 <div class="col-md-6">
                                                     <div class="border rounded p-2" style="background:#fff;">
@@ -1531,13 +1542,18 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                            </div><!-- /card-body -->
+                                        </div><!-- /collapse #chemo-how-to-read -->
+                                    </div><!-- /card How to read -->
+                                </div><!-- /prod-insight-chemo -->
 
                                 <div id="sim-chemo-charts">
                                     <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-chemo-chart','chemostat_productivity')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-chemo-chart" style="max-height:320px;"></canvas>
+
+                                    <!-- Chemostat: productivity vs density (parametric in D) -->
+                                    <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-chemo-rho-chart','chemostat_productivity_vs_density')"><i class="fa fa-download"></i> PNG</button></div>
+                                    <canvas id="sim-chemo-rho-chart" style="max-height:300px;"></canvas>
 
                                     <!-- Design & operating charts -->
                                     <hr class="my-3">
@@ -1555,11 +1571,28 @@
                                     <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-chemo-robust-chart','chemostat_robustness')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-chemo-robust-chart" style="max-height:320px;"></canvas>
                                 </div>
+                                <div id="sim-turb-charts" style="display:none;">
+                                    <p class="text-muted mb-2 mt-1" style="font-size:0.8em;">
+                                        <i class="fa fa-info-circle"></i>
+                                        Charts update live with the <strong>I₀</strong> and <strong>z (reactor depth)</strong> sliders.
+                                        Kinetic parameters (α, K<sub>L</sub>, Y<sub>BM</sub>, k<sub>d</sub>, NGAM) are taken from the fitted model.
+                                    </p>
+                                    <!-- Turbidostat: P_A vs ρ_A — areal -->
+                                    <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-turb-rho-chart','turbidostat_productivity_vs_density')"><i class="fa fa-download"></i> PNG</button></div>
+                                    <canvas id="sim-turb-rho-chart" style="max-height:320px;"></canvas>
+
+                                    <!-- Turbidostat: P_V vs X — volumetric -->
+                                    <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-turb-vol-chart','turbidostat_volumetric_productivity_vs_density')"><i class="fa fa-download"></i> PNG</button></div>
+                                    <canvas id="sim-turb-vol-chart" style="max-height:320px;"></canvas>
+                                </div>
                                 <div id="sim-batch-charts" style="display:none;">
 <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-batch-density-chart','batch_density')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-batch-density-chart" style="max-height:280px;"></canvas>
                                     <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-batch-prod-chart','batch_productivity')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-batch-prod-chart" style="max-height:280px;"></canvas>
+                                    <!-- Productivity vs density -->
+                                    <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-batch-rho-chart','batch_productivity_vs_density')"><i class="fa fa-download"></i> PNG</button></div>
+                                    <canvas id="sim-batch-rho-chart" style="max-height:280px;"></canvas>
                                 </div>
                             </div><!-- /sim-card-prod -->
 
