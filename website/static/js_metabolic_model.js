@@ -3129,8 +3129,9 @@ let simChemoI0Chart     = null;   // design: light-response operational envelope
 let simChemoPvChart     = null;   // design: volumetric productivity P_V vs reactor depth z
 let simChemoRobustChart = null;   // design: normalised operating window / robustness
 let simChemoRhoChart    = null;   // productivity vs culture density (chemostat, parametric in D)
-let simTurbRhoChart     = null;   // productivity vs culture density (turbidostat, family of I₀ curves, areal)
-let simTurbVolChart     = null;   // volumetric productivity vs volumetric density (turbidostat, family of I₀ curves)
+let simTurbRhoChart     = null;   // productivity vs culture density (turbidostat, areal)
+let simTurbVolChart     = null;   // volumetric productivity vs volumetric density (turbidostat)
+let simTurbI0Chart      = null;   // volumetric productivity vs I₀ at fixed ρ_A (turbidostat)
 let simBatchRhoChart    = null;   // productivity vs culture density (batch)
 
 // FBA single-point marker (from FBA tab single-run)
@@ -5193,6 +5194,140 @@ function simRenderTurbVolChart(p) {
 }
 
 /**
+ * Turbidostat: P_V vs I₀ at fixed ρ_A (XA slider setpoint).
+ * x = incident irradiance I₀ (µmol·m⁻²·s⁻¹), swept 0 → I0_MAX
+ * y (left)  = P_V volumetric biomass productivity (g CDM·L⁻¹·d⁻¹)
+ * y (right) = product productivity (mmol·L⁻¹·d⁻¹) if configured
+ * Vertical dashed line marks the current I₀ slider value.
+ * Culture density setpoint ρ_A comes from the XA (areal biomass) slider.
+ */
+function simRenderTurbI0Chart(p) {
+    const ctx = document.getElementById('sim-turb-i0-chart')?.getContext('2d');
+    if (!ctx) return;
+    if (simTurbI0Chart) { simTurbI0Chart.destroy(); simTurbI0Chart = null; }
+
+    const { alpha, KL, YBM, kd, ngam_photon, I0: curI0, XA: rho, Y_X } = p;
+    const z    = Math.max(0.01, p.z_reactor || 0.10);
+    const X    = rho / (z * 1000);   // g·m⁻² → g·L⁻¹
+
+    const I0_STEPS = 300;
+    const I0_MAX   = 2000;   // µmol·m⁻²·s⁻¹
+
+    const scanData = [];
+    for (let j = 0; j <= I0_STEPS; j++) {
+        const I0_val = (j / I0_STEPS) * I0_MAX;
+        const mu     = simHoperMu(I0_val, rho, alpha, KL, YBM, kd, ngam_photon, 0);
+        const P_V    = Math.max(0, mu * X * 24);
+        const vp     = turbProductFluxPerGDW(I0_val, rho, alpha, mu, Y_X);
+        const P_prodV = vp !== null ? Math.max(0, vp * X * 24) : null;
+        scanData.push({ x: I0_val, P_V, P_prod: P_prodV });
+    }
+
+    const curPt  = scanData.reduce((best, pt) => Math.abs(pt.x - curI0) < Math.abs(best.x - curI0) ? pt : best, scanData[0]);
+    const peakPt = scanData.reduce((best, pt) => pt.P_V > best.P_V ? pt : best, scanData[0]);
+
+    // Inline plugin: vertical dashed line at current I₀
+    const curI0Line = {
+        id: 'curI0line',
+        afterDraw(chart) {
+            const ds = chart.getDatasetMeta(0);
+            if (!ds.data.length) return;
+            let idx = 0, minD = Infinity;
+            scanData.forEach((pt, i) => { const d = Math.abs(pt.x - curI0); if (d < minD) { minD = d; idx = i; } });
+            const x = ds.data[idx]?.x;
+            if (x == null) return;
+            const { ctx: c, chartArea: { top, bottom } } = chart;
+            c.save();
+            c.setLineDash([4, 3]);
+            c.strokeStyle = 'rgba(255,140,0,0.8)';
+            c.lineWidth = 1.5;
+            c.beginPath(); c.moveTo(x, top); c.lineTo(x, bottom); c.stroke();
+            c.setLineDash([]);
+            c.fillStyle = 'rgba(255,140,0,0.9)';
+            c.font = '9px sans-serif';
+            c.fillText(`I₀ = ${curI0}`, x + 3, top + 10);
+            c.restore();
+        },
+    };
+
+    const datasets = [
+        {
+            label: `P_V — Volumetric productivity (g CDM·L⁻¹·d⁻¹)  |  ρ_A = ${rho.toFixed(1)} g·m⁻², X = ${X.toFixed(3)} g·L⁻¹`,
+            data: scanData.map(pt => ({ x: pt.x, y: pt.P_V })),
+            borderColor: 'rgba(40,167,69,0.9)',
+            backgroundColor: 'rgba(40,167,69,0.07)',
+            fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
+            yAxisID: 'y',
+        },
+        {
+            label: `Peak P_V = ${peakPt.P_V.toFixed(3)} g·L⁻¹·d⁻¹ at I₀ = ${peakPt.x.toFixed(0)} µmol·m⁻²·s⁻¹`,
+            data: [{ x: peakPt.x, y: peakPt.P_V }],
+            type: 'scatter', yAxisID: 'y',
+            borderColor: 'rgba(40,167,69,1)', backgroundColor: 'rgba(40,167,69,1)',
+            pointRadius: 8, pointHoverRadius: 10, pointStyle: 'triangle',
+        },
+    ];
+
+    const scales = {
+        x: { type: 'linear', min: 0, max: I0_MAX,
+             title: { display: true, text: 'I₀ — Incident irradiance (µmol·m⁻²·s⁻¹)', font: { size: 11 } },
+             ticks: { font: { size: 10 } } },
+        y: { min: 0, position: 'left',
+             title: { display: true, text: ['P_V — Volumetric productivity', '(g CDM·L⁻¹·d⁻¹)'], font: { size: 11 } },
+             ticks: { font: { size: 10 } } },
+    };
+
+    const hasProd = scanData[0]?.P_prod !== null;
+    if (hasProd) {
+        const prodPeak = scanData.reduce((best, pt) => (pt.P_prod ?? 0) > (best.P_prod ?? 0) ? pt : best, scanData[0]);
+        datasets.push({
+            label: _productFluxSource === 'manual'
+                ? `${p.productName || 'Product'} (Y_X=${Y_X} mmol·gCDM⁻¹, growth-coupled)`
+                : `${p.productName || 'Product'} (decoupled, mmol·L⁻¹·d⁻¹)`,
+            data: scanData.map(pt => ({ x: pt.x, y: pt.P_prod ?? 0 })),
+            borderColor: 'rgba(111,66,193,0.85)',
+            borderDash: _productFluxSource === 'manual' ? [3,3] : [],
+            fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5,
+            yAxisID: 'y2',
+        });
+        datasets.push({
+            label: `Peak = ${(prodPeak.P_prod ?? 0).toFixed(2)} mmol·L⁻¹·d⁻¹ at I₀ = ${prodPeak.x.toFixed(0)} µmol·m⁻²·s⁻¹`,
+            data: [{ x: prodPeak.x, y: prodPeak.P_prod ?? 0 }],
+            type: 'scatter', yAxisID: 'y2',
+            borderColor: 'rgba(111,66,193,1)', backgroundColor: 'rgba(111,66,193,1)',
+            pointRadius: 7, pointHoverRadius: 9, pointStyle: 'triangle',
+        });
+        scales.y2 = {
+            min: 0, position: 'right', grid: { drawOnChartArea: false },
+            title: { display: true, text: [`${p.productName || 'Product'} productivity`, '(mmol·L⁻¹·d⁻¹)'], font: { size: 11 }, color: 'rgba(111,66,193,0.9)' },
+            ticks: { font: { size: 10 }, color: 'rgba(111,66,193,0.9)' },
+        };
+    }
+
+    simTurbI0Chart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        plugins: [curI0Line],
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 20 } },
+                title: {
+                    display: true,
+                    text: [
+                        `Turbidostat: Volumetric Productivity vs Irradiance`,
+                        `ρ_A = ${rho.toFixed(1)} g CDM·m⁻²  |  X = ${X.toFixed(3)} g CDM·L⁻¹  |  z = ${(z*100).toFixed(0)} cm`,
+                    ],
+                    font: { size: 12 },
+                },
+            },
+            scales,
+        },
+    });
+}
+
+/**
  * Batch: P_A vs ρ_A — productivity trajectory through time.
  * x = areal biomass density (grows monotonically left→right),
  * y = instantaneous productivity P_inst = μ·ρ_A (dome shape).
@@ -5980,6 +6115,7 @@ function simRenderTurbCharts() {
     const p = simGetParams();
     simRenderTurbRhoChart(p);
     simRenderTurbVolChart(p);
+    simRenderTurbI0Chart(p);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -5989,8 +6125,9 @@ document.addEventListener('DOMContentLoaded', () => {
     simSubTabChanged('#sim-sub-static');
     updateTabGates();
 
-    // Auto-refresh turbidostat charts when I₀ or reactor depth changes
+    // Auto-refresh turbidostat charts when I₀, XA (density setpoint) or reactor depth changes
     document.getElementById('sim-I0')?.addEventListener('input', simRenderTurbCharts);
+    document.getElementById('sim-XA')?.addEventListener('input', simRenderTurbCharts);
     document.getElementById('sim-reactor-depth')?.addEventListener('input', simRenderTurbCharts);
 
     // Listen to sub-tab switches (use jQuery — Bootstrap 4 fires shown.bs.tab via jQuery)

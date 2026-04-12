@@ -1574,7 +1574,7 @@
                                 <div id="sim-turb-charts" style="display:none;">
                                     <p class="text-muted mb-2 mt-1" style="font-size:0.8em;">
                                         <i class="fa fa-info-circle"></i>
-                                        Charts update live with the <strong>I₀</strong> and <strong>z (reactor depth)</strong> sliders.
+                                        Charts update live with the <strong>I₀</strong>, <strong>X<sub>A</sub></strong> and <strong>z (reactor depth)</strong> sliders.
                                         Kinetic parameters (α, K<sub>L</sub>, Y<sub>BM</sub>, k<sub>d</sub>, NGAM) are taken from the fitted model.
                                     </p>
                                     <!-- Turbidostat: P_A vs ρ_A — areal -->
@@ -1584,6 +1584,10 @@
                                     <!-- Turbidostat: P_V vs X — volumetric -->
                                     <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-turb-vol-chart','turbidostat_volumetric_productivity_vs_density')"><i class="fa fa-download"></i> PNG</button></div>
                                     <canvas id="sim-turb-vol-chart" style="max-height:320px;"></canvas>
+
+                                    <!-- Turbidostat: P_V vs I₀ at fixed ρ_A (XA slider) -->
+                                    <div class="d-flex justify-content-end mb-1 mt-3"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-turb-i0-chart','turbidostat_volumetric_productivity_vs_I0')"><i class="fa fa-download"></i> PNG</button></div>
+                                    <canvas id="sim-turb-i0-chart" style="max-height:320px;"></canvas>
                                 </div>
                                 <div id="sim-batch-charts" style="display:none;">
 <div class="d-flex justify-content-end mb-1"><button class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.75em;" onclick="exportChart('sim-batch-density-chart','batch_density')"><i class="fa fa-download"></i> PNG</button></div>
