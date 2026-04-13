@@ -906,9 +906,9 @@ const PUB_PALETTES = {
     pastel: ['#FFB347','#87CEEB','#98FB98','#FFB6C1','#DDA0DD','#F0E68C','#B0E0E6','#FFDAB9'],
 };
 const PUB_PLOT_DEFAULTS = {
-    plotType: 'bar_dot', sizePreset: 'single',
-    exportWidth: 85, aspectRatio: 1.5, exportDPI: 300, exportFormat: 'png',
-    fontFamily: 'Arial', axisTitleSize: 12, tickLabelSize: 12, annotationSize: 12, legendSize: 11,
+    plotType: 'bar_dot', sizePreset: 'double',
+    exportWidth: 175, aspectRatio: 4/3, exportDPI: 300, exportFormat: 'png',
+    fontFamily: 'Arial', axisTitleSize: 20, tickLabelSize: 18, annotationSize: 40, legendSize: 11,
     showGridY: false, showGridX: false, gridStyle: 'solid', gridColor: '#e0e0e0',
     tickPosition: 'outside', tickLen: 5, showAxisLine: true,
     showPlotFrame: true, showPaperBorder: false,
@@ -918,7 +918,7 @@ const PUB_PLOT_DEFAULTS = {
     errBarColor: '#000000', errBarThickness: 1.5, errBarCap: 5,
     pointSymbol: 'circle', pointSize: 7, pointColor: '#000000', pointOpacity: 70, jitter: 20,
     showLegend: false, legendPosition: 'top-right', legendOrientation: 'v',
-    showLetters: true, letterBold: true, letterOffset: 7, letterPerBar: true, showTestInfo: true, bgColor: '#ffffff',
+    showLetters: true, letterBold: true, letterOffset: 8, letterPerBar: true, showTestInfo: true, bgColor: '#ffffff',
 };
 let pubPlotSettings = Object.assign({}, PUB_PLOT_DEFAULTS);
 // ─────────────────────────────────────────────────────────────────────────────
@@ -5196,6 +5196,8 @@ function renderAnovaBarChart(containerId, letterGroups, res) {
 // Charts are marked with .anova-chart-rendered once drawn to avoid double-rendering.
 function renderPendingAnovaCharts(pane) {
     if (!pane) return;
+    // Ensure container heights reflect the current aspect ratio before Plotly measures them.
+    applyAspectRatioToCharts();
     pane.querySelectorAll('.anova-bar-chart-placeholder:not(.anova-chart-rendered)').forEach(div => {
         try {
             const letterGroups = JSON.parse(decodeURIComponent(div.dataset.letterGroups || '[]'));
@@ -5638,6 +5640,10 @@ function renderAnovaResults(data) {
 
     wrapper.innerHTML = navHTML + contentHTML;
     anovaResults.appendChild(wrapper);
+
+    // Apply the current aspect ratio to chart placeholder heights immediately after
+    // inserting the DOM, so the first lazy-render uses the correct height.
+    applyAspectRatioToCharts();
 
     // Lazy-render ANOVA charts: render only when a variable tab is first shown.
     // Rendering into hidden tab panes (display:none) gives Plotly a width of 0,
