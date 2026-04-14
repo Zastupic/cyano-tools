@@ -430,6 +430,14 @@ def lc_export():
                         sample_row.append(round(v, 6) if v is not None else None)
                     ws_sp.append(sample_row)
 
+        # ── Methods sheet ─────────────────────────────────────────────────────
+        methods_text = data.get('methods_text', '')
+        if methods_text:
+            ws_meth = wb.create_sheet('Methods')
+            ws_meth.column_dimensions['A'].width = 120
+            for line in methods_text.split('\n'):
+                ws_meth.append([line])
+
         wb.save(out_path)
         _cleanup_old_files(UPLOAD_FOLDER)
         return jsonify({'status': 'success', 'xlsx_path': out_static})

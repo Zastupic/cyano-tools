@@ -722,16 +722,11 @@ function renderResults() {
     `${n} file${n > 1 ? 's' : ''} processed — ${lcData.fluorometer} — Protocol ${lcData.protocol}` +
     ` — PAR: ${lcData.light_intensities.join(', ')} µmol photons m⁻² s⁻¹`;
 
-  // Wire download buttons
+  // Wire download button
   const xlsxSummaryLink = document.getElementById('xlsx-summary-link');
   xlsxSummaryLink.href    = '#';
   xlsxSummaryLink.onclick = e => { e.preventDefault(); downloadXlsxWithCharts(); };
   xlsxSummaryLink.style.display = '';
-
-  const xlsxFullLink    = document.getElementById('xlsx-full-link');
-  xlsxFullLink.href     = '#';
-  xlsxFullLink.onclick  = e => { e.preventDefault(); downloadFullData(); };
-  xlsxFullLink.style.display = '';
 
   // Sync Figure Style card from saved/default settings
   lcPub = _makeLcPub();
@@ -1400,6 +1395,7 @@ async function downloadXlsxWithCharts() {
     raw_time_us:        lcData.raw_time_us,
     charts,
     group_export,
+    methods_text:       generateLCMethodsText(),
   });
 
   const payloadSize = new Blob([payload]).size;
@@ -1429,86 +1425,16 @@ async function downloadXlsxWithCharts() {
       return;
     }
     if (result.status === 'error') throw new Error(result.message);
-    const xlsxResp  = await fetch('/static/' + result.xlsx_path);
-    const xlsxBytes = await xlsxResp.arrayBuffer();
-    const zip = new JSZip();
-    zip.file((lcData.file_stem || 'LC') + '_analysis.xlsx', xlsxBytes);
-    zip.file('Methods_section.html', _buildMethodsHtml('Rapid Light Curve Analyzer', generateLCMethodsText()));
-    const blob = await zip.generateAsync({ type: 'blob' });
     const dlA  = document.createElement('a');
-    dlA.href     = URL.createObjectURL(blob);
-    dlA.download = (lcData.file_stem || 'LC') + '_analysis.zip';
+    dlA.href     = '/static/' + result.xlsx_path;
+    dlA.download = (lcData.file_stem || 'LC') + '_analysis.xlsx';
     dlA.click();
-    setTimeout(function() { URL.revokeObjectURL(dlA.href); }, 1000);
   } catch (err) {
     alert('Export failed: ' + err.message);
   } finally {
     link.style.pointerEvents = '';
-    link.innerHTML = '<i class="fa fa-download"></i> Download .zip';
+    link.innerHTML = '<i class="fa fa-download"></i> Download .xlsx';
   }
-}
-
-// ── download full data xlsx (client-side, SheetJS) ────────────────────────
-function downloadFullData() {
-  const btn = document.getElementById('xlsx-full-link');
-  btn.style.pointerEvents = 'none';
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-1"></span> Building…';
-
-  setTimeout(() => {
-    try {
-      const wb     = XLSX.utils.book_new();
-      const files  = lcData.files;
-      const par    = lcData.light_intensities;
-
-      function makeStepSheet(key) {
-        const aoa = [['PAR', ...files]];
-        par.forEach((p, i) => {
-          const row = [p];
-          for (const f of files) {
-            const vals = lcData.step_data[f]?.[key] || [];
-            row.push(vals[i] ?? null);
-          }
-          aoa.push(row);
-        });
-        return XLSX.utils.aoa_to_sheet(aoa);
-      }
-
-      XLSX.utils.book_append_sheet(wb, makeStepSheet('etr_measured'), 'ETR_measured');
-      XLSX.utils.book_append_sheet(wb, makeStepSheet('etr_fitted'),   'ETR_fitted');
-      XLSX.utils.book_append_sheet(wb, makeStepSheet('ft'),           'Ft');
-      XLSX.utils.book_append_sheet(wb, makeStepSheet('fm'),           'Fm');
-      XLSX.utils.book_append_sheet(wb, makeStepSheet('qy'),           'QY');
-      XLSX.utils.book_append_sheet(wb, makeStepSheet('npq'),          'NPQ');
-      XLSX.utils.book_append_sheet(wb, makeStepSheet('qp'),           'qP');
-      XLSX.utils.book_append_sheet(wb, makeStepSheet('qn'),           'qN');
-
-      // Raw fluorescence
-      const t = lcData.raw_time_us;
-      const rawAoa = [['time_us', ...files]];
-      t.forEach((tv, i) => {
-        const row = [tv];
-        for (const f of files) row.push(lcData.raw_curves[f]?.[i] ?? null);
-        rawAoa.push(row);
-      });
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rawAoa), 'Raw_fluorescence');
-
-      // Parameters
-      const paramAoa = [['Sample', ...PARAM_KEYS.map(k => PARAM_LABELS[k] || k)]];
-      for (const fname of files) {
-        const p   = lcData.params[fname] || {};
-        const row = [fname, ...PARAM_KEYS.map(k => p[k] ?? null)];
-        paramAoa.push(row);
-      }
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(paramAoa), 'Parameters');
-
-      XLSX.writeFile(wb, `${lcData.file_stem}_lc_full_data.xlsx`);
-    } catch (err) {
-      alert('Full data export failed: ' + err.message);
-    } finally {
-      btn.style.pointerEvents = '';
-      btn.innerHTML = '<i class="fa fa-file-excel-o"></i> Download full data .xlsx';
-    }
-  }, 30);
 }
 
 function _buildMethodsHtml(toolTitle, plainText) {

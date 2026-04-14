@@ -687,17 +687,11 @@ function renderResults() {
   document.getElementById('results-summary').textContent =
     `${n} file${n > 1 ? 's' : ''} processed — ${ojipData.fluorometer} — FJ ${ojipData.fj_time_ms} ms / FI ${ojipData.fi_time_ms} ms`;
 
-  // Summary xlsx — Parameters + normalized curves + charts (compact)
+  // Single xlsx — all data, charts, and methods
   const link = document.getElementById('xlsx-download-link');
   link.href = '#';
   link.onclick = e => { e.preventDefault(); downloadXlsxWithCharts(); };
   link.style.display = '';
-
-  // Full data xlsx — built client-side on demand via SheetJS
-  const rawLink = document.getElementById('xlsx-rawdata-link');
-  rawLink.href = '#';
-  rawLink.onclick = e => { e.preventDefault(); downloadFullData(); };
-  rawLink.style.display = '';
 
   renderCurvesChart('raw');
   buildFJTable();
@@ -1608,9 +1602,20 @@ async function downloadXlsxWithCharts() {
     }),
   };
 
+  // Append full curve data so the server can write all raw data sheets.
+  const curve_data = {
+    time_raw_ms: ojipData.time_raw_ms,
+    time_log_ms: ojipData.time_log_ms,
+    files:       ojipData.files,
+    curves:      ojipData.curves,
+  };
+
+  // Methods text — embedded as a sheet instead of a separate HTML file.
+  const methods_text = generateOJIPMethodsText();
+
   // Pre-flight: check JSON payload size before sending (same issue as file upload —
   // server closes connection on oversize, browser sees NetworkError not 413).
-  const payload    = JSON.stringify({ file_stem: ojipData.file_stem, charts, group_export, params_table });
+  const payload    = JSON.stringify({ file_stem: ojipData.file_stem, charts, group_export, params_table, curve_data, methods_text });
   const payloadBytes = new Blob([payload]).size;
   const payloadMB    = (payloadBytes / 1024 / 1024).toFixed(2);
   console.log(`[OJIP export] charts: ${charts.length}, payload: ${payloadMB} MB`,
@@ -1641,89 +1646,17 @@ async function downloadXlsxWithCharts() {
       return;
     }
     if (result.status === 'error') throw new Error(result.message);
-    const xlsxResp  = await fetch('/static/' + result.xlsx_path);
-    const xlsxBytes = await xlsxResp.arrayBuffer();
-    const zip = new JSZip();
-    zip.file((ojipData.file_stem || 'OJIP') + '_analysis.xlsx', xlsxBytes);
-    zip.file('Methods_section.html', _buildMethodsHtml('OJIP Analyzer', generateOJIPMethodsText()));
-    const blob = await zip.generateAsync({ type: 'blob' });
     const dlA  = document.createElement('a');
-    dlA.href     = URL.createObjectURL(blob);
-    dlA.download = (ojipData.file_stem || 'OJIP') + '_analysis.zip';
+    dlA.href     = '/static/' + result.xlsx_path;
+    dlA.download = (ojipData.file_stem || 'OJIP') + '_analysis.xlsx';
     dlA.click();
-    setTimeout(function() { URL.revokeObjectURL(dlA.href); }, 1000);
   } catch (err) {
     console.error('[OJIP export] fetch threw:', err);
     alert('Chart export failed: ' + err.message);
   } finally {
     link.style.pointerEvents = '';
-    link.innerHTML = '<i class="fa fa-download"></i> Download .zip';
+    link.innerHTML = '<i class="fa fa-download"></i> Download .xlsx';
   }
-}
-
-// ── download full curve data xlsx client-side via SheetJS ─────────────────
-function downloadFullData() {
-  const btn = document.getElementById('xlsx-rawdata-link');
-  btn.style.pointerEvents = 'none';
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-1"></span> Building…';
-
-  // Defer to next tick so the spinner renders before the synchronous xlsx build
-  setTimeout(() => {
-    try {
-      const wb   = XLSX.utils.book_new();
-      const files = ojipData.files;
-      const tRaw  = ojipData.time_raw_ms;
-      const tLog  = ojipData.time_log_ms;
-
-      // Build a sheet from a time array + one value array per file
-      function makeSheet(timeArr, getVals) {
-        const aoa = [['time_ms', ...files]];
-        for (let r = 0; r < timeArr.length; r++) {
-          const row = [timeArr[r]];
-          for (const f of files) row.push(getVals(f)?.[r] ?? null);
-          aoa.push(row);
-        }
-        return XLSX.utils.aoa_to_sheet(aoa);
-      }
-
-      XLSX.utils.book_append_sheet(wb, makeSheet(tRaw, f => ojipData.curves[f]?.raw),           'OJIP_raw');
-      XLSX.utils.book_append_sheet(wb, makeSheet(tRaw, f => ojipData.curves[f]?.shifted_F0),    'OJIP_to_zero');
-      XLSX.utils.book_append_sheet(wb, makeSheet(tRaw, f => ojipData.curves[f]?.shifted_FM),    'OJIP_to_max');
-      XLSX.utils.book_append_sheet(wb, makeSheet(tRaw, f => ojipData.curves[f]?.double_norm),   'OJIP_norm');
-      XLSX.utils.book_append_sheet(wb, makeSheet(tLog, f => ojipData.curves[f]?.reconstructed), 'OJIP_reconstructed');
-      XLSX.utils.book_append_sheet(wb, makeSheet(tLog, f => ojipData.curves[f]?.d1),            '1st_derivatives');
-      XLSX.utils.book_append_sheet(wb, makeSheet(tLog, f => ojipData.curves[f]?.d2),            '2nd_derivatives');
-      XLSX.utils.book_append_sheet(wb, makeSheet(tRaw, f => ojipData.curves[f]?.residuals),     'Residuals');
-
-      // Parameters sheet
-      const allParamKeys = Object.values(PARAM_GROUPS).flat();
-      const kvFields = ['F0', 'FM', 'FK', 'FJ', 'FI',
-                        'FM_time_ms', 'FJ_time_user_ms', 'FI_time_user_ms',
-                        'FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms',
-                        'Area_OJ', 'Area_JI', 'Area_IP', 'Area_OP'];
-      const paramAoa = [['Sample', ...allParamKeys.map(p => PARAM_LABELS[p] || p), ...kvFields]];
-      for (const fname of files) {
-        const row = [fname];
-        for (const p of allParamKeys) {
-          const v = paramData[fname]?.[p];
-          row.push(v != null && isFinite(v) ? v : null);
-        }
-        for (const f of kvFields) {
-          const v = ojipData.key_values[fname]?.[f];
-          row.push(v != null ? v : null);
-        }
-        paramAoa.push(row);
-      }
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(paramAoa), 'Parameters');
-
-      XLSX.writeFile(wb, `${ojipData.file_stem}_full_data.xlsx`);
-    } catch (err) {
-      alert('Full data export failed: ' + err.message);
-    } finally {
-      btn.style.pointerEvents = '';
-      btn.innerHTML = '<i class="fa fa-file-excel-o"></i> Download full data .xlsx';
-    }
-  }, 30);
 }
 
 // ── export to statistics page ─────────────────────────────────────────────

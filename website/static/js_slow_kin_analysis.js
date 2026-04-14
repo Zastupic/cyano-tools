@@ -726,17 +726,12 @@ function renderResults() {
   var gss = document.getElementById('sk-group-st-section');
   if (gss) gss.style.display = skData.has_state_transitions ? '' : 'none';
 
-  // Wire download buttons
-  var xlsxLink    = document.getElementById('sk-xlsx-download-link');
-  var xlsxFullBtn = document.getElementById('sk-xlsx-fulldata-btn');
+  // Wire download button
+  var xlsxLink = document.getElementById('sk-xlsx-download-link');
   if (xlsxLink) {
     xlsxLink.style.display = '';
     xlsxLink.href = '#';
-    xlsxLink.onclick = function(e) { e.preventDefault(); downloadXlsx(true); };
-  }
-  if (xlsxFullBtn) {
-    xlsxFullBtn.style.display = '';
-    xlsxFullBtn.onclick = function() { downloadXlsx(false); };
+    xlsxLink.onclick = function(e) { e.preventDefault(); downloadXlsx(); };
   }
 
   // Reset normalization and jitter state on new data load
@@ -1852,7 +1847,7 @@ function _confirmExportToStatistics() {
 }
 
 // ── download xlsx ─────────────────────────────────────────────────────────
-async function downloadXlsx(asZip) {
+async function downloadXlsx() {
   var statusEl = document.getElementById('sk-download-status');
   var xlsxLink = document.getElementById('sk-xlsx-download-link');
   if (statusEl) statusEl.textContent = 'Preparing download…';
@@ -1948,7 +1943,7 @@ async function downloadXlsx(asZip) {
     var resp = await fetch('/api/slow_kin_export', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({}, skData, { charts: charts })),
+      body: JSON.stringify(Object.assign({}, skData, { charts: charts, methods_text: generateSKMethodsText() })),
     });
     if (!resp.ok) {
       var errMsg = 'Export failed';
@@ -1957,22 +1952,10 @@ async function downloadXlsx(asZip) {
       return;
     }
     const xlsxBytes = new Uint8Array(await resp.arrayBuffer());
-
-    var blob, dlName;
-    if (asZip) {
-      const zip = new JSZip();
-      zip.file(xlsxName, xlsxBytes);
-      zip.file('Methods_section.html', _buildMethodsHtml('Slow Kinetics Analyzer', generateSKMethodsText()));
-      blob   = await zip.generateAsync({ type: 'blob' });
-      dlName = (skData.file_stem || 'slow_kin') + '_analysis.zip';
-    } else {
-      blob   = new Blob([xlsxBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      dlName = xlsxName;
-    }
-
-    const dlA = document.createElement('a');
+    const blob = new Blob([xlsxBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const dlA  = document.createElement('a');
     dlA.href     = URL.createObjectURL(blob);
-    dlA.download = dlName;
+    dlA.download = xlsxName;
     dlA.click();
     setTimeout(function() { URL.revokeObjectURL(dlA.href); }, 1000);
     if (statusEl) statusEl.textContent = '';

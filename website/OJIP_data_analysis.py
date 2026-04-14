@@ -740,6 +740,41 @@ def ojip_add_charts():
                         sample_row.append(round(v, 6) if v is not None else None)
                     ws_sp.append(sample_row)
 
+        # ── 4. Raw curve data sheets ───────────────────────────────────────────
+        curve_data = data.get('curve_data')
+        if curve_data:
+            time_raw = curve_data.get('time_raw_ms', [])
+            time_log = curve_data.get('time_log_ms', [])
+            cd_files = curve_data.get('files', [])
+            curves   = curve_data.get('curves', {})
+
+            def make_curve_sheet(sheet_name, time_arr, key):
+                ws = wb.create_sheet(sheet_name)
+                ws.append(['time_ms'] + cd_files)
+                for i, t in enumerate(time_arr):
+                    row = [t]
+                    for f in cd_files:
+                        arr = curves.get(f, {}).get(key)
+                        row.append(arr[i] if arr and i < len(arr) else None)
+                    ws.append(row)
+
+            make_curve_sheet('OJIP_raw',           time_raw, 'raw')
+            make_curve_sheet('OJIP_to_zero',       time_raw, 'shifted_F0')
+            make_curve_sheet('OJIP_to_max',        time_raw, 'shifted_FM')
+            make_curve_sheet('OJIP_norm',          time_raw, 'double_norm')
+            make_curve_sheet('OJIP_reconstructed', time_log, 'reconstructed')
+            make_curve_sheet('1st_derivatives',    time_log, 'd1')
+            make_curve_sheet('2nd_derivatives',    time_log, 'd2')
+            make_curve_sheet('Residuals',          time_raw, 'residuals')
+
+        # ── 5. Methods sheet ───────────────────────────────────────────────────
+        methods_text = data.get('methods_text', '')
+        if methods_text:
+            ws_meth = wb.create_sheet('Methods')
+            ws_meth.column_dimensions['A'].width = 120
+            for line in methods_text.split('\n'):
+                ws_meth.append([line])
+
         wb.save(summary_full)
         return jsonify({'status': 'success', 'xlsx_path': summary_static})
     except Exception as e:

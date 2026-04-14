@@ -948,6 +948,14 @@ def slow_kin_export():
                 ws_ch.add_image(xl_img)
                 row += round(xl_img.height / 20) + 2
 
+        # ── Methods sheet ─────────────────────────────────────────────────────
+        methods_text = data.get('methods_text', '')
+        if methods_text:
+            ws_meth = wb.create_sheet(title='Methods')
+            ws_meth.column_dimensions['A'].width = 120
+            for line in methods_text.split('\n'):
+                ws_meth.append([line])
+
         if default_sheet in wb.worksheets:
             wb.remove(default_sheet)
         buf = io.BytesIO()

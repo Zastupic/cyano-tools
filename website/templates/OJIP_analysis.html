@@ -1112,17 +1112,13 @@
   <!-- Download bar -->
   <div class="d-flex flex-wrap align-items-center mt-3 mb-4 gap-2">
     <a id="xlsx-download-link" href="#" class="btn btn-success mr-2" style="display:none">
-      <i class="fa fa-download"></i> Download .zip
-    </a>
-    <a id="xlsx-rawdata-link" href="#" class="btn btn-outline-success mr-3" style="display:none">
-      <i class="fa fa-file-excel-o"></i> Download full data .xlsx
+      <i class="fa fa-download"></i> Download .xlsx
     </a>
     <button class="btn btn-outline-info btn-sm" onclick="showOJIPMethodsModal()">
       <i class="fa fa-file-text-o mr-1"></i> Methods text
     </button>
     <small class="text-muted">
-      <strong>Summary</strong>: JIP parameters + normalized curves + charts (compact).<br>
-      <strong>Full data</strong>: raw &amp; normalized fluorescence curves, derivatives, reconstructed curves (large file; use "Reduce data size" checkbox to keep manageable).
+      Contains JIP parameters, raw &amp; normalized fluorescence curves, derivatives, charts, group statistics, and a Methods section — all in one file.
     </small>
   </div>
 
@@ -1158,9 +1154,7 @@
 <!-- Chart.js (minimal bundles) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.4.3/build/index.umd.min.js"></script>
-<!-- JSZip for client-side ZIP bundling -->
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<!-- SheetJS for client-side xlsx export -->
+<!-- SheetJS for client-side xlsx export (statistics export) -->
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="{{ url_for('static', filename='js_OJIP.js') }}"></script>
 
