@@ -7,9 +7,10 @@ import urllib.parse
 import json
 from datetime import datetime, timedelta, timezone
 
-GITHUB_REPO = "Zastupic/tools-py.e-cyanobacterium.org"
-BADGE_DAYS  = 21   # badge visible this many days after the last commit to the tool file
-_CACHE_TTL  = timedelta(hours=6)
+GITHUB_REPO    = "Zastupic/tools-py.e-cyanobacterium.org"
+BADGE_DAYS     = 21   # "Updated" badge visible this many days after the last commit to the tool file
+NEW_BADGE_DAYS = 60   # "New" badge visible this many days after the tool's addition date
+_CACHE_TTL     = timedelta(hours=6)
 
 # Map home-page tile key → list of repo paths to track (badge shows if any was recently committed)
 # Tracks .py (backend logic) and .js (frontend features); .html excluded (minor layout changes too frequent)
@@ -27,6 +28,15 @@ TOOL_FILES = {
     'cell_size_filament':      ['website/cell_size_filament.py',          'website/static/js_cell_size_filament.js'],
     'pixel_profiles':          ['website/pixel_profiles_round_cells.py',  'website/static/js_pixel_profies_round_cells.js'],
     'pixel_profiles_filament': ['website/pixel_profiles_filament.py',     'website/static/js_pixel_profies_filaments.js'],
+    'metabolic_model':         ['website/metabolic_model.py',              'website/static/js_metabolic_model.js'],
+    'sigma':                   ['website/sigma_analysis.py',               'website/static/js_sigma.js'],
+}
+
+# Static addition dates for tools — used to drive the "New" badge.
+# Date format: 'YYYY-MM-DD' (the date the tool was first deployed/committed).
+TOOL_ADDED_DATES = {
+    'metabolic_model': '2026-03-23',
+    'sigma':           '2026-04-16',
 }
 
 _cache      = {}
@@ -73,4 +83,24 @@ def get_updated_tools():
 
     _cache      = result
     _cache_time = now
+    return result
+
+
+def get_new_tools():
+    """Return dict {tool_key: True | None} for recently added tools.
+
+    A tool is considered 'new' if its entry in TOOL_ADDED_DATES is within
+    NEW_BADGE_DAYS of today.  Returns True when the badge should be shown,
+    None (falsy) otherwise.  No network calls are made — purely date arithmetic.
+    """
+    now     = datetime.now(timezone.utc).date()
+    cutoff  = now - timedelta(days=NEW_BADGE_DAYS)
+    result  = {}
+    for key, date_str in TOOL_ADDED_DATES.items():
+        try:
+            added = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            result[key] = None
+            continue
+        result[key] = True if added >= cutoff else None
     return result

@@ -172,7 +172,7 @@
                     <a class="feature" href="{{ url_for('sigma_analysis.sigma_analysis') }}">
                         <img src="{{ url_for('static', filename='images/sigma_plot.jpg') }}" alt="Sigma(II) absorption cross-section" class="feature-thumb">
                         <div class="feature-text">
-                            <h3><b>Sigma(II)</b>{% if updated_tools.get('sigma') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('sigma') }}">Updated</span>{% endif %}</h3>
+                            <h3><b>Sigma(II)</b>{% if new_tools.get('sigma') %} <span class="badge-new" data-toggle="tooltip" title="New tool">New</span>{% elif updated_tools.get('sigma') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('sigma') }}">Updated</span>{% endif %}</h3>
                             <p>Wavelength-dependent functional absorption cross-section of photosystem II.</p>
                         </div>
                     </a>
@@ -313,7 +313,7 @@
                     <a class="feature" href="{{ url_for('metabolic_bp.metabolic_model_page') }}">
                         <img src="{{ url_for('static', filename='images/hoeper2024_fig1.png') }}" alt="Metabolic model" class="feature-thumb">
                         <div class="feature-text">
-                            <h3><b>Metabolic Model</b>{% if updated_tools.get('metabolic_model') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('metabolic_model') }}">Updated</span>{% endif %}</h3>
+                            <h3><b>Metabolic Model</b>{% if new_tools.get('metabolic_model') %} <span class="badge-new" data-toggle="tooltip" title="New tool">New</span>{% elif updated_tools.get('metabolic_model') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('metabolic_model') }}">Updated</span>{% endif %}</h3>
                             <p>Flux balance analysis of <i>Synechocystis</i> sp. PCC 6803.</p>
                         </div>
                     </a>
