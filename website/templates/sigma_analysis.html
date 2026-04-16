@@ -1,0 +1,812 @@
+{% extends "base.html" %}
+
+{% block title %}Sigma(II) Analyzer – Functional Absorption Cross-Section of PSII | CyanoTools{% endblock %}
+
+{% block description %}Analyze wavelength-dependent functional absorption cross-section of photosystem II [σ(II)λ] from Multi-Color PAM fluorometer data. Upload CSV files and get σ(II) spectra, per-wavelength comparison plots and group statistics.{% endblock %}
+
+{% block keywords %}sigma PSII, functional absorption cross-section, Multi-Color PAM, Walz, chlorophyll fluorescence, photosystem II, sigma(II), O-I1 kinetics, reversible radical pair model, QA reduction, tau PSII, PSII cross-section spectrum{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "CyanoTools Sigma(II) Analyzer",
+  "operatingSystem": "Web",
+  "applicationCategory": "ScientificSoftware",
+  "description": "Online analysis of functional absorption cross-section of PSII from Multi-Color PAM fluorometer data.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": "Sigma(II) spectrum plotting, Per-wavelength comparison, Group mean ± SD, Excel export"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Sigma(II) main tabs (identical pattern to OJIP / LC / SK) ── */
+  #sigmaTabs { border-bottom: 2px solid #dee2e6; margin-bottom: 0; padding-bottom: 0; }
+  #sigmaTabs .nav-link {
+    border: 1px solid #dee2e6; border-bottom: none; background: #f8f9fa;
+    padding: 0.35rem 1.1rem; font-weight: 600; font-size: 0.85rem;
+    border-radius: 6px 6px 0 0; color: #495057;
+    margin-right: 3px; margin-bottom: -2px;
+    transition: background 0.12s, color 0.12s;
+  }
+  #sigmaTabs .nav-link:hover:not(.active) { background: #e2e6ea; color: #212529; }
+  #sigmaTabs .nav-link.active {
+    background: #004085; color: #fff; border-color: #004085;
+    border-bottom: 2px solid #004085;
+  }
+  /* shared segmented-control (re-use project-wide class) */
+  .ojip-seg-ctrl {
+    display: inline-flex; background: #e8edf2; border-radius: 10px;
+    padding: 4px; gap: 3px; border: 1px solid #c8d3de;
+  }
+  .ojip-seg-ctrl .btn {
+    border: none !important; border-radius: 7px !important;
+    padding: 5px 13px !important; font-size: 0.79rem !important;
+    font-weight: 600; line-height: 1.3; transition: all 0.17s ease;
+  }
+  .ojip-seg-ctrl .btn-outline-primary {
+    background: transparent !important; color: #5a6a7a !important; box-shadow: none !important;
+  }
+  .ojip-seg-ctrl .btn-outline-primary:hover { background: #d4dde7 !important; color: #003566 !important; }
+  .ojip-seg-ctrl .btn-primary {
+    background: #ffffff !important; color: #004085 !important;
+    box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
+  }
+  .sigma-wl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 1.2rem; }
+  .sigma-table th { background: #0a3c58; color: #fff; font-size: 0.82rem; }
+  #upload-card .gallery_6_img img { width: 165px; height: 165px; }
+  #upload-card .gallery_6_img img:hover { height: 158px; }
+  .sigma-table td { font-size: 0.83rem; }
+</style>
+
+<!-- Banner -->
+<div id="banner-content">
+  <div class="banner-desktop">
+    <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
+         alt="CyanoTools analytical tools for algae and cyanobacteria" style="width:100%;">
+  </div>
+  <div class="banner-mobile">
+    <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
+         alt="CyanoTools mobile banner" style="width:100%;">
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     INTRO CARD
+═══════════════════════════════════════════════════════════════════ -->
+<div class="p-4 border rounded shadow-sm bg-white mb-4">
+  <h2 class="font-weight-bold mb-3">
+    <i class="fa fa-bar-chart text-primary mr-2"></i>Sigma(II) Analyzer
+    <small class="text-muted" style="font-size:0.55em;">Functional Absorption Cross-Section of PSII</small>
+  </h2>
+  <div class="alert alert-info mb-3" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload <code>.csv</code> files exported from the
+    <strong>Multi-Color PAM</strong> fluorometer (Heinz Walz GmbH) to visualize the
+    wavelength-dependent functional absorption cross-section of photosystem II [σ(II)λ].
+    Compare samples with interactive spectra and per-wavelength scatter plots,
+    assign replicates to groups for mean ± SD statistics, and export results to .xlsx.
+  </div>
+  <p class="mb-3">
+    The functional absorption cross-section of PSII, σ(II)λ (nm²), describes the effective
+    light-harvesting area of a single PSII reaction centre at a given excitation wavelength λ.
+    It integrates both the physical antenna size and the quantum efficiency of energy transfer
+    to the reaction centre, providing a wavelength-resolved picture of how efficiently each
+    PSII unit collects light. Measurements are performed simultaneously at five excitation
+    wavelengths (440, 480, 540, 590 and 625 nm) using a brief single-turnover flash, from which
+    the O–I₁ fluorescence rise kinetics are recorded and fitted.
+  </p>
+
+  <div class="accordion" id="sigmaInfoAccordion">
+
+    <!-- Parameter reference table -->
+    <div class="card">
+      <div class="card-header py-2" id="headingParamTable">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseParamTable"
+                  aria-expanded="false" aria-controls="collapseParamTable">
+            <i class="fa fa-table mr-2"></i>Parameter reference table
+          </button>
+        </h6>
+      </div>
+      <div id="collapseParamTable" class="collapse" aria-labelledby="headingParamTable" data-parent="#sigmaInfoAccordion">
+        <div class="card-body p-2">
+          <table style="width:98%; font-size:89%; margin-top:0.4em;">
+            <colgroup><col style="width:13%"><col style="width:18%"><col style="width:10%"><col style="width:59%"></colgroup>
+            <tr><td><u>Parameter</u></td><td><u>Formula</u></td><td><u>Unit</u></td><td><u>Meaning</u></td></tr>
+            <tr><td colspan="4"><i>Primary output</i></td></tr>
+            <tr>
+              <td>σ(II)λ</td>
+              <td>k(II) / (L · PAR<sub>λ</sub>)</td>
+              <td>nm²</td>
+              <td>Functional absorption cross-section of PSII at excitation wavelength λ; effective light-harvesting area of one PSII unit</td>
+            </tr>
+            <tr><td colspan="4"><i>&nbsp;</i></td></tr>
+            <tr><td colspan="4"><i>Kinetic parameters from O–I₁ fit (reversible radical pair model)</i></td></tr>
+            <tr>
+              <td>Tau (τ)</td>
+              <td>1 / k(II)</td>
+              <td>ms</td>
+              <td>Time constant of Q<sub>A</sub> reduction (O–I₁ fluorescence rise); τ = 1/k(II)</td>
+            </tr>
+            <tr>
+              <td>1.r.Tau</td>
+              <td></td>
+              <td>ms</td>
+              <td>First Q<sub>A</sub>⁻ reoxidation time constant (Q<sub>A</sub>⁻ → Q<sub>B</sub> electron transfer)</td>
+            </tr>
+            <tr>
+              <td>p</td>
+              <td></td>
+              <td>—</td>
+              <td>Joliot's connectivity parameter; sigmoidicity of the O–I₁ rise (0 = no connectivity between PSII units)</td>
+            </tr>
+            <tr>
+              <td>J</td>
+              <td>p / (1 − p)</td>
+              <td>—</td>
+              <td>Connectance parameter equivalent to p</td>
+            </tr>
+            <tr><td colspan="4"><i>&nbsp;</i></td></tr>
+            <tr><td colspan="4"><i>Technical parameters</i></td></tr>
+            <tr>
+              <td>F<sub>o</sub></td>
+              <td></td>
+              <td>V</td>
+              <td>Minimal (dark-adapted) fluorescence yield at the measurement wavelength</td>
+            </tr>
+            <tr>
+              <td>I₁</td>
+              <td></td>
+              <td>V</td>
+              <td>Fluorescence yield at the I₁ inflection (≈ Q<sub>A</sub>⁻ accumulation endpoint)</td>
+            </tr>
+            <tr>
+              <td>PAR</td>
+              <td></td>
+              <td>µE m⁻² s⁻¹</td>
+              <td>Actinic photon flux density used for the σ(II) measurement at wavelength λ</td>
+            </tr>
+            <tr>
+              <td>Error</td>
+              <td></td>
+              <td>rel.</td>
+              <td>Relative root mean square error of the O–I₁ kinetic fit (lower = better fit quality)</td>
+            </tr>
+          </table>
+          <p style="font-size:76%; line-height:1.3; margin-top:0.5em;">
+            References:
+            Schreiber et al. (2012) Photosynth Res <strong>113</strong>:127–144 &nbsp;·&nbsp;
+            Schatz et al. (1988) Biophys J <strong>54</strong>:397–405 &nbsp;·&nbsp;
+            Lavergne &amp; Trissl (1995) Biophys J <strong>68</strong>:2474–2492
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- How to use -->
+    <div class="card">
+      <div class="card-header py-2" id="headingHowTo">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseHowTo"
+                  aria-expanded="false" aria-controls="collapseHowTo">
+            <i class="fa fa-question-circle mr-2"></i>How to use this tool
+          </button>
+        </h6>
+      </div>
+      <div id="collapseHowTo" class="collapse" aria-labelledby="headingHowTo" data-parent="#sigmaInfoAccordion">
+        <div class="card-body">
+          <ol class="mt-2">
+            <li>Export the Sigma results table from <strong>WinControl-3</strong> as a <code>.csv</code> file
+                (one file per sample — each file contains 5 rows, one per measurement wavelength)</li>
+            <li>Upload one or more <code>.csv</code> files and click <em>Upload &amp; Analyze</em></li>
+            <li>Explore σ(II) spectra and per-wavelength scatter plots in the interactive tabs</li>
+            <li>Optionally assign files to groups to compare replicates with mean ± SD</li>
+            <li>Download results as .xlsx or export parameters to the Statistics page</li>
+          </ol>
+          <p style="font-size:90%;">
+            <i class="fa fa-info-circle mr-1 text-info"></i>
+            Accepted file format: <strong>.csv</strong> exported by
+            <a href="https://www.walz.com/products/multi-color-pam-ii/" target="_blank" rel="noopener">Multi-Color PAM</a>
+            (Heinz Walz GmbH) — semicolon-delimited, with a header row containing column names
+            (Nr., Filename, Comment, Fo, I1, PAR, p, J, Tau, 1.r.Tau, Sigma, Error).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Protocol overview -->
+    <div class="card">
+      <div class="card-header py-2" id="headingProtocol">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseProtocol"
+                  aria-expanded="false" aria-controls="collapseProtocol">
+            <i class="fa fa-image mr-2"></i>Protocol overview
+          </button>
+        </h6>
+      </div>
+      <div id="collapseProtocol" class="collapse" aria-labelledby="headingProtocol" data-parent="#sigmaInfoAccordion">
+        <div class="card-body">
+          <div class="row align-items-start">
+
+            <!-- Protocol diagram from MC-PAM manual -->
+            <div class="col-md-6 text-center mb-3 mb-md-0">
+              <img src="static/images/sigma_protocol.jpg"
+                   alt="O–I₁ fluorescence rise kinetics measured at five excitation wavelengths by Multi-Color PAM"
+                   class="img-fluid rounded shadow-sm" style="max-width:340px;">
+              <p class="text-muted mt-1 mb-0" style="font-size:0.78rem;">
+                Representative σ(II) spectrum or O–I₁ rise kinetics.<br>
+                <em>Figure: Schreiber et al. (2012) Photosynth Res <strong>113</strong>:127–144.</em>
+              </p>
+            </div>
+
+            <!-- Description -->
+            <div class="col-md-6" style="font-size:0.91rem;">
+              <p>
+                The <strong>Multi-Color PAM</strong> (Walz GmbH) uses five actinic LEDs (440, 480, 540, 590,
+                625 nm) to measure σ(II)λ at each wavelength using the <em>Sigma1000</em> protocol.
+                For each wavelength, a series of single-turnover actinic flashes is applied to the sample
+                while recording the fast O–I₁ fluorescence rise.
+              </p>
+              <p class="mb-0">
+                The kinetics are fitted by the <strong>reversible radical pair (RRP) model</strong>
+                (Schatz et al. 1988; Lavergne &amp; Trissl 1995), yielding τ (time constant of Q<sub>A</sub>
+                reduction) and connectivity parameter p, from which
+                σ(II)λ = k(II) / (L · PAR<sub>λ</sub>) is calculated.
+                Results are exported via <em>WinControl-3</em> as a semicolon-delimited CSV.
+              </p>
+              <p class="mt-2 mb-0" style="font-size:0.78rem; color:#6c757d;">
+                <i class="fa fa-book mr-1"></i>
+                Walz GmbH (2015) <em>Multi-Color-PAM, Photosynthesis Yield Analyzer —
+                Handbook of Operation.</em> Heinz Walz GmbH, Effeltrich, Germany.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /accordion -->
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     UPLOAD CARD
+═══════════════════════════════════════════════════════════════════ -->
+<div class="card mb-4 shadow-sm" id="upload-card">
+  <div class="card-header font-weight-bold">
+    <i class="fa fa-upload text-primary mr-2"></i>Upload &amp; Analyze Sigma(II) Files
+  </div>
+  <div class="card-body">
+
+    <!-- Step 1: Fluorometer -->
+    <div class="form-group mb-3">
+      <label for="sigma-fluorometer"><span class="badge badge-primary mr-1">1</span> Select fluorometer</label>
+      <select id="sigma-fluorometer" class="form-control" style="width:100%">
+        <option value="MC-PAM">MULTI-COLOR-PAM (Heinz Walz GmbH)</option>
+      </select>
+      <small class="text-muted">Currently only Multi-Color PAM <code>.csv</code> files are supported.</small>
+      <div class="mt-2">
+        <p class="text-muted small mb-1">
+          <i class="fa fa-info-circle mr-1"></i>Supported device — click the image to visit the manufacturer's website:
+        </p>
+        <div class="gallery_6_img">
+          <a href="https://www.walz.com/products/multi-color-pam-ii/" target="_blank" rel="noopener" class="gallery__item--1">
+            <i style="font-size:80%">MULTI-COLOR-PAM &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+            <img src="static/images/MC_PAM.jpg" alt="MULTI-COLOR PAM Walz" class="gallery__item--1">
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Select files -->
+    <label><span class="badge badge-primary mr-1">2</span> Select files (.csv from WinControl-3 Sigma export; one file per sample)</label>
+    <div id="drop-zone" class="border rounded p-4 text-center mb-2"
+         style="border-style:dashed !important; cursor:pointer; background:#f8f9fa; transition:background 0.2s;">
+      <i class="fa fa-upload fa-2x text-muted mb-2"></i>
+      <p class="mb-1 text-muted">Drag &amp; drop files here, or click to browse</p>
+      <small class="text-muted" id="file-count-label">No files selected</small>
+      <input type="file" id="sigma-files" multiple accept=".csv,.CSV" style="display:none">
+    </div>
+    <div id="file-list" class="mb-3" style="max-height:120px; overflow-y:auto; font-size:0.85em; display:flex; flex-wrap:wrap; gap:0.3rem 0.8rem;"></div>
+
+    <!-- Buttons -->
+    <div class="d-flex flex-wrap align-items-center">
+      <button id="analyze-btn" class="btn btn-primary mr-2" disabled>
+        <span id="analyze-spinner" class="spinner-border spinner-border-sm mr-1" role="status" style="display:none"></span>
+        Upload &amp; Analyze
+      </button>
+      <div id="upload-error" class="alert alert-danger mt-2 mb-0 py-1 px-2 w-100" style="display:none; font-size:0.9em;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     RESULTS SECTION
+═══════════════════════════════════════════════════════════════════ -->
+<div id="results-section" style="display:none">
+
+  <div class="alert alert-success mb-3 py-2" id="results-summary"></div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="sigmaTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" id="tab-spectrum-lnk" data-toggle="tab"
+         href="#tab-spectrum" role="tab">
+        <i class="fa fa-line-chart"></i> Spectrum
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-perwl-lnk" data-toggle="tab"
+         href="#tab-perwl" role="tab">
+        <i class="fa fa-th-large"></i> Per Wavelength
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-groups-lnk" data-toggle="tab"
+         href="#tab-groups" role="tab">
+        <i class="fa fa-object-group"></i> Groups &amp; Averages
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-table-lnk" data-toggle="tab"
+         href="#tab-table" role="tab">
+        <i class="fa fa-table"></i> Data Table
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white" id="sigmaTabContent">
+
+    <!-- ── TAB: Spectrum ──────────────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="tab-spectrum" role="tabpanel">
+      <div class="d-flex flex-wrap align-items-center mb-2 mt-1">
+        <span class="mr-2 font-weight-bold">Parameter:</span>
+        <div class="ojip-seg-ctrl" id="spectrum-param-ctrl">
+          <button class="btn btn-primary"         data-param="sigma">σ(II) (nm²)</button>
+          <button class="btn btn-outline-primary" data-param="tau">Tau (ms)</button>
+          <button class="btn btn-outline-primary" data-param="tau_reox">1.r.Tau (ms)</button>
+          <button class="btn btn-outline-primary" data-param="p">p</button>
+          <button class="btn btn-outline-primary" data-param="j">J</button>
+          <button class="btn btn-outline-primary" data-param="error">Error (rel.)</button>
+        </div>
+      </div>
+      <div style="position:relative; height:400px;">
+        <canvas id="chart-spectrum"></canvas>
+      </div>
+    </div>
+
+    <!-- ── TAB: Per Wavelength ────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-perwl" role="tabpanel">
+      <div class="d-flex flex-wrap align-items-center mb-2 mt-1">
+        <span class="mr-2 font-weight-bold">Parameter:</span>
+        <div class="ojip-seg-ctrl" id="perwl-param-ctrl">
+          <button class="btn btn-primary"         data-param="sigma">σ(II) (nm²)</button>
+          <button class="btn btn-outline-primary" data-param="tau">Tau (ms)</button>
+          <button class="btn btn-outline-primary" data-param="tau_reox">1.r.Tau (ms)</button>
+          <button class="btn btn-outline-primary" data-param="p">p</button>
+          <button class="btn btn-outline-primary" data-param="j">J</button>
+          <button class="btn btn-outline-primary" data-param="error">Error (rel.)</button>
+        </div>
+      </div>
+      <div id="perwl-charts" class="sigma-wl-grid mt-2"></div>
+    </div>
+
+    <!-- ── TAB: Groups & Averages ────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-groups" role="tabpanel">
+
+      <!-- Assignment panel -->
+      <div class="card mb-3">
+        <div class="card-header py-2 font-weight-bold">Assign files to groups</div>
+        <div class="card-body py-2">
+          <div class="d-flex flex-wrap align-items-center mb-2">
+            <button class="btn btn-sm btn-outline-secondary mr-1" id="sigma-sort-asc-btn">Sort A→Z</button>
+            <button class="btn btn-sm btn-outline-secondary mr-2" id="sigma-sort-desc-btn">Sort Z→A</button>
+            <button class="btn btn-sm btn-outline-secondary mr-2" id="sigma-auto-detect-btn">Auto-detect from filename prefix</button>
+            <button class="btn btn-sm btn-outline-danger mr-2" id="sigma-clear-groups-btn">Clear all groups</button>
+          </div>
+          <div style="overflow-x:auto; font-size:0.85em;">
+            <table class="table table-sm table-bordered mb-2" id="sigma-group-assign-table">
+              <thead class="thead-light">
+                <tr>
+                  <th style="width:40px"><input type="checkbox" id="sigma-select-all-check"></th>
+                  <th>Sample name</th>
+                  <th>Current group</th>
+                  <th>Remove</th>
+                </tr>
+              </thead>
+              <tbody id="sigma-group-assign-body"></tbody>
+            </table>
+          </div>
+          <div class="input-group input-group-sm" style="max-width:400px;">
+            <input type="text" id="sigma-group-name-input" class="form-control" placeholder="Group name (e.g. Control)">
+            <div class="input-group-append">
+              <button class="btn btn-primary" id="sigma-assign-group-btn">Assign selected</button>
+            </div>
+          </div>
+          <div id="sigma-groups-summary" class="mt-2"></div>
+        </div>
+      </div>
+
+      <!-- Group results (shown after ≥1 group defined and charts updated) -->
+      <div id="sigma-group-results" style="display:none">
+
+        <div class="d-flex flex-wrap align-items-center mb-2">
+          <span class="mr-2 font-weight-bold">Parameter:</span>
+          <div class="ojip-seg-ctrl" id="groups-param-ctrl">
+            <button class="btn btn-primary"         data-param="sigma">σ(II) (nm²)</button>
+            <button class="btn btn-outline-primary" data-param="tau">Tau (ms)</button>
+            <button class="btn btn-outline-primary" data-param="tau_reox">1.r.Tau (ms)</button>
+            <button class="btn btn-outline-primary" data-param="p">p</button>
+            <button class="btn btn-outline-primary" data-param="j">J</button>
+            <button class="btn btn-outline-primary" data-param="error">Error (rel.)</button>
+          </div>
+          <button id="sigma-apply-groups-btn" class="btn btn-primary btn-sm ml-auto">
+            <i class="fa fa-refresh mr-1"></i>Update charts
+          </button>
+        </div>
+
+        <!-- ═══ Publication Figure Style & Export Card ═══ -->
+        <div class="card border-0 shadow-sm mb-3" id="sigma-grp-pub-card"
+             style="border:1px solid #c8d8f0 !important; border-left:4px solid #0d6efd !important;">
+          <div class="card-header py-1 px-3 d-flex align-items-center justify-content-between"
+               style="background: linear-gradient(to right,#eef2ff,#e4ecf8); cursor:pointer;"
+               data-toggle="collapse" data-target="#sigma-grp-pub-body"
+               aria-expanded="false" aria-controls="sigma-grp-pub-body">
+            <div>
+              <p class="font-weight-bold mb-0 text-dark" style="font-size:0.85rem;">
+                <i class="fa fa-paint-brush text-primary mr-1"></i> Figure Style &amp; Export
+                <span id="sigma-grp-pub-badge" class="badge badge-primary ml-1"
+                      style="display:none; font-size:0.60rem; vertical-align:middle;">
+                  <i class="fa fa-check-circle mr-1"></i> Custom
+                </span>
+              </p>
+              <p class="mb-0 mt-1 text-muted" style="font-size:0.70rem;">
+                Shared settings for <strong>all group charts below</strong> — colour scheme, line weights,
+                typography, size and export. Settings are saved automatically.
+              </p>
+            </div>
+            <div class="d-flex align-items-center ml-3">
+              <i class="fa fa-chevron-down text-muted ml-2" id="sigma-grp-pub-chevron"
+                 style="font-size:1rem; transition:transform 0.2s;"></i>
+            </div>
+          </div>
+          <div id="sigma-grp-pub-body" class="collapse">
+            <div class="card-body p-3">
+              <!-- Sub-tabs -->
+              <ul class="nav nav-tabs mb-3" id="sigmaPubSubTabs" role="tablist" style="font-size:0.78rem;">
+                <li class="nav-item"><a class="nav-link active py-1 px-2" data-toggle="tab" href="#sigmaPubTabLayout" role="tab"><i class="fa fa-th-large mr-1"></i>Layout &amp; Export</a></li>
+                <li class="nav-item"><a class="nav-link py-1 px-2" data-toggle="tab" href="#sigmaPubTabTypo" role="tab"><i class="fa fa-font mr-1"></i>Typography</a></li>
+                <li class="nav-item"><a class="nav-link py-1 px-2" data-toggle="tab" href="#sigmaPubTabStyle" role="tab"><i class="fa fa-paint-brush mr-1"></i>Colors &amp; Style</a></li>
+                <li class="nav-item"><a class="nav-link py-1 px-2" data-toggle="tab" href="#sigmaPubTabAxes" role="tab"><i class="fa fa-list-alt mr-1"></i>Legend &amp; Axes</a></li>
+              </ul>
+              <div class="tab-content" id="sigmaPubSubTabContent">
+
+                <!-- ── Layout & Export ── -->
+                <div class="tab-pane fade show active" id="sigmaPubTabLayout" role="tabpanel">
+                  <div class="row" style="font-size:0.78rem;">
+                    <div class="col-12 col-md-4 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Figure width preset</label>
+                      <select class="form-control form-control-sm" id="sigma-pub-size-preset">
+                        <option value="single" selected>Single column — 85 mm</option>
+                        <option value="half">1.5 column — 120 mm</option>
+                        <option value="double">Double column — 175 mm</option>
+                        <option value="custom">Custom…</option>
+                      </select>
+                    </div>
+                    <div class="col-6 col-md-2 mb-2" id="sigma-pub-custom-width-wrap" style="display:none;">
+                      <label class="font-weight-bold mb-1 d-block">Width (mm)</label>
+                      <input type="number" class="form-control form-control-sm" id="sigma-pub-export-width" value="85" min="30" max="300">
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Aspect ratio (w : h)</label>
+                      <select class="form-control form-control-sm" id="sigma-pub-aspect-preset">
+                        <option value="1.78">16 : 9 &nbsp;(wide)</option>
+                        <option value="1.50" selected>3 : 2 &nbsp;(standard)</option>
+                        <option value="1.33">4 : 3 &nbsp;(classic)</option>
+                        <option value="1.00">1 : 1 &nbsp;(square)</option>
+                        <option value="0.75">3 : 4 &nbsp;(portrait)</option>
+                        <option value="custom">Custom…</option>
+                      </select>
+                    </div>
+                    <div class="col-auto mb-2" id="sigma-pub-custom-ratio-wrap" style="display:none;">
+                      <label class="font-weight-bold mb-1 d-block">Ratio (w/h)</label>
+                      <input type="number" class="form-control form-control-sm" id="sigma-pub-aspect-custom"
+                             value="1.50" min="0.2" max="5" step="0.05" style="width:80px;">
+                    </div>
+                    <div class="col-6 col-md-2 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Background</label>
+                      <input type="color" class="form-control form-control-sm form-control-color"
+                             id="sigma-pub-bg-color" value="#ffffff" style="width:48px;" title="Background color">
+                    </div>
+                    <div class="col-12 mb-1"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Plot border</strong></div>
+                    <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:0.75rem;">
+                      <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="checkbox" id="sigma-pub-show-border">
+                        <label class="form-check-label small" for="sigma-pub-show-border">Show border around plot area</label>
+                      </div>
+                      <div id="sigma-pub-border-opts" class="d-flex align-items-center" style="display:none; gap:0.4rem;">
+                        <input type="color" class="form-control form-control-sm form-control-color"
+                               id="sigma-pub-border-color" value="#000000" style="width:36px;" title="Border color">
+                        <input type="number" class="form-control form-control-sm" id="sigma-pub-border-width"
+                               value="1" min="0.5" max="5" step="0.5" style="width:60px;" title="Border width (px)">
+                        <small class="text-muted">px</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ── Typography ── -->
+                <div class="tab-pane fade" id="sigmaPubTabTypo" role="tabpanel">
+                  <div class="row" style="font-size:0.78rem;">
+                    <div class="col-12 col-md-5 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Font family</label>
+                      <select class="form-control form-control-sm" id="sigma-pub-font-family">
+                        <option value="Arial" selected>Arial</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Georgia">Georgia</option>
+                      </select>
+                    </div>
+                    <div class="col-12 mb-1"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Font sizes (pt)</strong></div>
+                    <div class="col-6 col-md-3 mb-2">
+                      <label class="mb-1 d-block">Axis title</label>
+                      <input type="number" class="form-control form-control-sm" id="sigma-pub-axis-title-size" value="12" min="6" max="28">
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                      <label class="mb-1 d-block">Tick labels</label>
+                      <input type="number" class="form-control form-control-sm" id="sigma-pub-tick-size" value="11" min="5" max="22">
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                      <label class="mb-1 d-block">Legend</label>
+                      <input type="number" class="form-control form-control-sm" id="sigma-pub-legend-size" value="10" min="5" max="18">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ── Colors & Style ── -->
+                <div class="tab-pane fade" id="sigmaPubTabStyle" role="tabpanel">
+                  <div class="row align-items-end" style="font-size:0.78rem;">
+                    <div class="col-12 col-md-5 mb-2">
+                      <label class="font-weight-bold mb-1 d-block">Color scheme</label>
+                      <select class="form-control form-control-sm" id="sigma-pub-color-scheme">
+                        <option value="default" selected>Default (Chart.js)</option>
+                        <option value="colorblind">Colorblind-safe (Okabe-Ito)</option>
+                        <option value="grayscale">Grayscale</option>
+                        <option value="paired">Paired</option>
+                      </select>
+                    </div>
+                    <div class="col-12 mb-1"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Line &amp; bar weights</strong></div>
+                    <div class="col-auto mb-2">
+                      <label class="mb-1 d-block">Spectrum line width</label>
+                      <div class="d-flex align-items-center" style="gap:0.4rem;">
+                        <input type="range" class="form-range" id="sigma-pub-line-width" min="0.5" max="6" step="0.5" value="2.5" style="width:90px;">
+                        <small id="sigma-pub-line-width-val" class="text-muted">2.5 px</small>
+                      </div>
+                    </div>
+                    <div class="col-auto mb-2">
+                      <label class="mb-1 d-block">Error bar line width</label>
+                      <div class="d-flex align-items-center" style="gap:0.4rem;">
+                        <input type="range" class="form-range" id="sigma-pub-errbar-width" min="0.5" max="5" step="0.5" value="1.5" style="width:90px;">
+                        <small id="sigma-pub-errbar-width-val" class="text-muted">1.5 px</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ── Legend & Axes ── -->
+                <div class="tab-pane fade" id="sigmaPubTabAxes" role="tabpanel">
+                  <div class="row" style="font-size:0.78rem;">
+                    <div class="col-12 mb-1"><strong style="font-size:0.74rem;">Legend</strong></div>
+                    <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                      <div>
+                        <label class="small mb-0">Position</label>
+                        <select class="form-control form-control-sm mt-1" id="sigma-pub-legend-pos" style="width:auto;">
+                          <option value="top">Top</option>
+                          <option value="right" selected>Right</option>
+                          <option value="bottom">Bottom</option>
+                          <option value="left">Left</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-12 mb-1"><hr class="my-1" style="opacity:0.25;"><strong style="font-size:0.74rem;">Gridlines</strong></div>
+                    <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                      <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="checkbox" id="sigma-pub-grid-y" checked>
+                        <label class="form-check-label small" for="sigma-pub-grid-y">Y grid</label>
+                      </div>
+                      <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="checkbox" id="sigma-pub-grid-x">
+                        <label class="form-check-label small" for="sigma-pub-grid-x">X grid</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /tab-content -->
+
+              <div class="d-flex flex-wrap mt-3 pt-2 border-top" style="gap:0.5rem;">
+                <button id="sigma-pub-reset-btn" class="btn btn-sm btn-outline-secondary">
+                  <i class="fa fa-times-circle mr-1"></i> Reset Defaults
+                </button>
+              </div>
+
+            </div><!-- /card-body -->
+          </div><!-- /collapse -->
+        </div>
+        <!-- ══════════════════════════════════════════════════════════════ -->
+
+        <!-- Mean spectrum with error bars -->
+        <h6 class="font-weight-bold">Mean ± SD — σ(II) spectrum by group</h6>
+        <!-- per-chart settings: spectrum -->
+        <div class="card mt-2 mb-1 border-0" style="background:transparent;">
+          <div class="card-header py-1 px-2"
+               style="background:#e8f0fe; border:1px solid #b8d0f8; border-radius:6px; cursor:pointer;"
+               data-toggle="collapse" data-target="#sigma-pc-spectrum-panel">
+            <span style="font-size:0.78rem; font-weight:600; color:#2c5fb3;">
+              <i class="fa fa-sliders mr-1"></i>Chart settings
+            </span>
+            <span class="text-muted ml-1" style="font-size:0.72rem; font-weight:400;">— applies to the plot below only</span>
+            <i class="fa fa-chevron-down float-right mt-1" style="font-size:0.7rem; color:#5a7abf;"></i>
+          </div>
+          <div id="sigma-pc-spectrum-panel" class="collapse">
+            <div class="card-body py-2 px-3"
+                 style="font-size:0.78rem; background:#f4f7ff; border:1px solid #b8d0f8; border-top:none; border-radius:0 0 6px 6px;">
+              <div class="row" style="gap:0;">
+                <div class="col-12 mb-1"><strong style="font-size:0.74rem;">Y-axis scaling</strong></div>
+                <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                  <div class="form-check form-check-inline mb-0">
+                    <input class="form-check-input" type="checkbox" id="sigma-pc-spectrum-y-start-zero">
+                    <label class="form-check-label small" for="sigma-pc-spectrum-y-start-zero">Start at zero</label>
+                  </div>
+                  <div class="d-flex align-items-center" style="gap:0.35rem;">
+                    <label class="small mb-0" for="sigma-pc-spectrum-y-headroom">Y headroom:</label>
+                    <input type="number" class="form-control form-control-sm" id="sigma-pc-spectrum-y-headroom"
+                           value="5" min="0" max="50" style="width:60px;">
+                    <small class="text-muted">%</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sigma-pub-ch" data-cid="chart-grp-spectrum" style="position:relative; height:360px;">
+          <canvas id="chart-grp-spectrum"></canvas>
+        </div>
+
+        <!-- Per-wavelength bar charts -->
+        <h6 class="font-weight-bold mt-4">Mean ± SD — per wavelength</h6>
+        <!-- per-chart settings: per wavelength -->
+        <div class="card mt-2 mb-1 border-0" style="background:transparent;">
+          <div class="card-header py-1 px-2"
+               style="background:#e8f0fe; border:1px solid #b8d0f8; border-radius:6px; cursor:pointer;"
+               data-toggle="collapse" data-target="#sigma-pc-perWl-panel">
+            <span style="font-size:0.78rem; font-weight:600; color:#2c5fb3;">
+              <i class="fa fa-sliders mr-1"></i>Chart settings
+            </span>
+            <span class="text-muted ml-1" style="font-size:0.72rem; font-weight:400;">— applies to all per-wavelength plots below</span>
+            <i class="fa fa-chevron-down float-right mt-1" style="font-size:0.7rem; color:#5a7abf;"></i>
+          </div>
+          <div id="sigma-pc-perWl-panel" class="collapse">
+            <div class="card-body py-2 px-3"
+                 style="font-size:0.78rem; background:#f4f7ff; border:1px solid #b8d0f8; border-top:none; border-radius:0 0 6px 6px;">
+              <div class="row" style="gap:0;">
+                <div class="col-12 mb-1"><strong style="font-size:0.74rem;">Y-axis scaling</strong></div>
+                <div class="col-auto d-flex align-items-center flex-wrap mb-2" style="gap:1rem;">
+                  <div class="form-check form-check-inline mb-0">
+                    <input class="form-check-input" type="checkbox" id="sigma-pc-perWl-y-start-zero" checked>
+                    <label class="form-check-label small" for="sigma-pc-perWl-y-start-zero">Start at zero</label>
+                  </div>
+                  <div class="d-flex align-items-center" style="gap:0.35rem;">
+                    <label class="small mb-0" for="sigma-pc-perWl-y-headroom">Y headroom:</label>
+                    <input type="number" class="form-control form-control-sm" id="sigma-pc-perWl-y-headroom"
+                           value="15" min="0" max="50" style="width:60px;">
+                    <small class="text-muted">%</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="grp-perwl-charts" class="sigma-wl-grid mt-2"></div>
+
+        <div class="mt-3">
+          <button class="btn btn-outline-primary btn-sm mr-2" id="sigma-export-stats-btn">
+            <i class="fa fa-external-link mr-1"></i>Export to Statistics page
+          </button>
+          <small class="text-muted">Opens the Statistics tool with σ(II) parameters pre-loaded for comparison analysis.</small>
+        </div>
+
+      </div><!-- /sigma-group-results -->
+
+    </div><!-- /tab-groups -->
+
+    <!-- ── TAB: Data Table ───────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-table" role="tabpanel">
+      <div class="mt-2" style="overflow-x:auto;">
+        <table class="table table-sm table-hover sigma-table" id="sigma-data-table">
+          <thead>
+            <tr>
+              <th>Sample</th>
+              <th>λ (nm)</th>
+              <th>σ(II) (nm²)</th>
+              <th>Tau (ms)</th>
+              <th>1.r.Tau (ms)</th>
+              <th>p</th>
+              <th>J</th>
+              <th>Fo (V)</th>
+              <th>I₁ (V)</th>
+              <th>PAR (µE m⁻² s⁻¹)</th>
+              <th>Error (rel.)</th>
+            </tr>
+          </thead>
+          <tbody id="sigma-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-content -->
+
+  <!-- Download bar -->
+  <div class="d-flex flex-wrap align-items-center mt-3 mb-4">
+    <button id="sigma-xlsx-download-link" class="btn btn-success mr-2" style="display:none" onclick="downloadXlsxWithCharts()">
+      <i class="fa fa-download mr-1"></i>Download .xlsx
+    </button>
+    <button class="btn btn-outline-info btn-sm mr-3" onclick="showSigmaMethodsModal()">
+      <i class="fa fa-file-text-o mr-1"></i>Methods text
+    </button>
+    <small class="text-muted">
+      Contains all parameters (σ(II), Tau, p, J, Error) for all samples and wavelengths.
+    </small>
+  </div>
+
+</div><!-- /results-section -->
+
+<br><br><br>
+
+<!-- ── Methods modal ── -->
+<div class="modal fade" id="sigmaMethodsModal" tabindex="-1" role="dialog" aria-labelledby="sigmaMethodsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title font-weight-bold" id="sigmaMethodsModalLabel">
+          <i class="fa fa-file-text-o mr-2"></i>Methods section text
+        </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body py-3">
+        <p class="text-muted small mb-2">
+          Ready-to-use methods paragraph. Edit as needed — add your specific instrument model, cell culture
+          conditions, dark-adaptation time, and adjust citations to your reference style.
+        </p>
+        <textarea id="sigma-methods-text-area" class="form-control" rows="16"
+                  style="font-size:0.86em; font-family:Georgia, serif; line-height:1.6;"></textarea>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="copySigmaMethodsText()">
+          <i class="fa fa-clipboard mr-1"></i>Copy to clipboard
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js 4.4.7 + error bars -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.4.3/build/index.umd.min.js"></script>
+<!-- SheetJS -->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="{{ url_for('static', filename='js_sigma.js') }}"></script>
+{% endblock %}

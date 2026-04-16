@@ -89,7 +89,7 @@ def create_app():
         '/cell_size_round_cells', '/cell_size_filament',
         '/light_curves_analysis', '/MIMS_data_analysis',
         '/MIMS_data_analysis_periodic', '/statistics',
-        '/calculators',
+        '/calculators', '/sigma_analysis',
     ])
 
     @app.before_request
@@ -142,6 +142,7 @@ def create_app():
     from .deploy import deploy
     from .pixel_size_api import pixel_size_api
     from .metabolic_model import metabolic_bp
+    from .sigma_analysis import sigma_bp
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
@@ -164,6 +165,7 @@ def create_app():
     app.register_blueprint(deploy, url_prefix='/')
     app.register_blueprint(pixel_size_api, url_prefix='/')
     app.register_blueprint(metabolic_bp, url_prefix='/')
+    app.register_blueprint(sigma_bp, url_prefix='/')
 
     #### DATABASE ####
     with app.app_context(): # creating the database

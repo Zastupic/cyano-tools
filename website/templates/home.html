@@ -60,8 +60,9 @@
                             <div style="font-size:0.82em;color:#444;line-height:1.5;">
                                 <a href="{{ url_for('light_curves_analysis.analyze_light_curves') }}">Rapid Light Curves</a>,
                                 <a href="{{ url_for('OJIP_data_analysis.ojip_page') }}">OJIP transients</a>,
-                                <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Kautsky kinetics</a>
-                                — ETR, NPQ, JIP-test, state transitions.<br>
+                                <a href="{{ url_for('slow_kin_data_analysis.analyze_slow_kin_data') }}">Kautsky kinetics</a>,
+                                <a href="{{ url_for('sigma_analysis.sigma_analysis') }}">Sigma(II) cross-section</a>
+                                — ETR, NPQ, JIP-test, state transitions, σ(II)λ.<br>
                                 <span style="color:#888;font-size:0.9em;">Walz PAM, FluorPen, AquaPen, FL-6000</span>
                             </div>
                         </div>
@@ -166,6 +167,13 @@
                         <div class="feature-text">
                             <h3><b>Kautsky kinetics</b>{% if updated_tools.get('slow_kin') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('slow_kin') }}">Updated</span>{% endif %}</h3>
                             <p>ETR efficiency, NPQ, state transitions and more.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('sigma_analysis.sigma_analysis') }}">
+                        <img src="{{ url_for('static', filename='images/sigma_plot.jpg') }}" alt="Sigma(II) absorption cross-section" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Sigma(II)</b>{% if updated_tools.get('sigma') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('sigma') }}">Updated</span>{% endif %}</h3>
+                            <p>Wavelength-dependent functional absorption cross-section of photosystem II.</p>
                         </div>
                     </a>
                 </div>
