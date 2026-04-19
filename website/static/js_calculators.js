@@ -138,6 +138,7 @@ function calculateDoublingTime() {
 document.getElementById('corrected_OD_720_PBRFMT150_for_span').innerHTML = "<b>...</b>";
 document.getElementById('corrected_OD_720_MC1000_for_span').innerHTML = "<b>...</b>";
 document.getElementById('corrected_OD_720_AquaPen_for_span').innerHTML = "<b>...</b>";
+document.getElementById('corrected_OD_680_PBRFMT150_for_span').innerHTML = "<b>...</b>";
 // Calculate doubling time
 function correct_OD_720_PBRFMT150() { 
   var OD_720_measured_PBR = parseFloat(document.getElementById("OD_720_measured_PBR").value);
@@ -164,15 +165,26 @@ function correct_OD_720_AquaPen(){
   } else {
     var corrected_OD_720_AquaPen_for_span = OD_720_measured_AquaPen;
   }
-  
   document.getElementById('corrected_OD_720_AquaPen_for_span').innerHTML = "<b>"+corrected_OD_720_AquaPen_for_span.toFixed(3)+"</b>";
+}
+//------------------------//
+//--- OD680 CORRECTION ---//
+//------------------------//
+function correct_OD_680_PBRFMT150() {
+    var od = parseFloat(document.getElementById("OD_680_measured_PBRFMT150").value);
+    var corrected = od >= 0.6 ? 0.4228 * Math.exp(0.9296 * od) : od;
+    document.getElementById('corrected_OD_680_PBRFMT150_for_span').innerHTML = "<b>" + corrected.toFixed(3) + "</b>";
 }
 //------------------------------------------//
 //--- CORRECTED SPECIFIC GROWTH RATE -------//
 //------------------------------------------//
 document.getElementById('mu_corr_result_span').innerHTML = "<b>...</b>";
 
-function correctOD720(od, device) {
+function correctOD(od, device) {
+    if (device === 'FMT-150 (OD680)') {
+        if (od <= 0.6) return od;
+        return 0.4228 * Math.exp(0.9296 * od);
+    }
     if (od <= 0.4) return od;
     if (device === 'FMT-150')  return 0.23  * Math.exp(1.83  * od);
     if (device === 'MC-1000')  return 0.029 + 0.143 * Math.exp(2.497 * od);
@@ -200,12 +212,15 @@ function calculateCorrectedGrowthRate() {
         return;
     }
 
+    const threshold = device === 'FMT-150 (OD680)' ? 0.6 : 0.4;
+    const odLabel   = device === 'FMT-150 (OD680)' ? 'OD<sub>680</sub>' : 'OD<sub>720</sub>';
+
     const mu_raw  = Math.log(OD2 / OD1) / dt;
-    const OD1c = correctOD720(OD1, device);
-    const OD2c = correctOD720(OD2, device);
+    const OD1c = correctOD(OD1, device);
+    const OD2c = correctOD(OD2, device);
     const mu_corr = Math.log(OD2c / OD1c) / dt;
 
-    const inLinear = (OD1 <= 0.4 && OD2 <= 0.4);
+    const inLinear = (OD1 <= threshold && OD2 <= threshold);
     const note = inLinear
         ? ' <span style="color:#666;">(both OD values are in the linear range — no correction applied)</span>'
         : '';
@@ -216,9 +231,9 @@ function calculateCorrectedGrowthRate() {
         "&mu;<sub>corrected</sub> = <b>" + mu_corr.toFixed(4) + "</b> " + unit + "<sup>-1</sup>" + note;
 
     detailSpan.innerHTML =
-        "OD<sub>720,1</sub> corrected: <b>" + OD1c.toFixed(3) + "</b>" +
+        odLabel + ",1 corrected: <b>" + OD1c.toFixed(3) + "</b>" +
         "&nbsp;&nbsp;|&nbsp;&nbsp;" +
-        "OD<sub>720,2</sub> corrected: <b>" + OD2c.toFixed(3) + "</b>" +
+        odLabel + ",2 corrected: <b>" + OD2c.toFixed(3) + "</b>" +
         "&nbsp;&nbsp;|&nbsp;&nbsp;" +
         "Device: <b>" + device + "</b>";
 }
@@ -238,19 +253,20 @@ function calculateSimpleMuCorrection() {
         return;
     }
 
-    const kMap = { 'FMT-150': 1.83, 'AquaPen': 1.677, 'MC-1000': 2.497 };
+    const kMap = { 'FMT-150': 1.83, 'AquaPen': 1.677, 'MC-1000': 2.497, 'FMT-150 (OD680)': 1.58 };
     const k = kMap[device];
     const mu_corr = k * mu_raw;
-    const isApprox = (device === 'MC-1000');
+    const isApprox = (device === 'MC-1000' || device === 'FMT-150 (OD680)');
 
     resultSpan.innerHTML =
         "&mu;<sub>raw</sub> = <b>" + mu_raw.toFixed(4) + "</b> " + unit + "<sup>-1</sup>" +
         "&nbsp;&nbsp;&rarr;&nbsp;&nbsp;" +
-        "&mu;<sub>corrected</sub> " + (isApprox ? "&asymp;" : "=") + " <b>" + mu_corr.toFixed(4) + "</b> " + unit + "<sup>-1</sup>";
+        "&mu;<sub>corrected</sub> &asymp; <b>" + mu_corr.toFixed(4) + "</b> " + unit + "<sup>-1</sup>";
 
     detailSpan.innerHTML =
         "k = <b>" + k + "</b> (" + device + ")" +
-        (isApprox ? '&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:#b06000;">Approximate — use the OD-based calculator above for an exact result with MC-1000.</span>' : '');
+        (device === 'MC-1000' ? '&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:#b06000;">Approximate — use the OD-based calculator above for an exact result with MC-1000.</span>' : '') +
+        (device === 'FMT-150 (OD680)' ? '&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:#b06000;">Power-law approximation (k&nbsp;=&nbsp;1.385): &asymp;10% OD error vs. the exponential model. For exact results use the two-OD calculator below.</span>' : '');
 }
 
 //--------------------------------------//
@@ -525,6 +541,7 @@ function openODSection(id) {
         correct_OD_720_PBRFMT150();
         correct_OD_720_MC1000();
         correct_OD_720_AquaPen();
+        correct_OD_680_PBRFMT150();
         calculateCorrectedGrowthRate();
         calculateSimpleMuCorrection();
         calculate_A2();
@@ -541,8 +558,9 @@ function openODSection(id) {
         if (collapseDiv) { $(collapseDiv).collapse('show'); }
     }
 
-    // OD720 non-linearity chart — data and init function
+    // OD non-linearity charts (OD720 and OD680) — data and init function
     var odChartInstance = null;
+    var od680ChartInstance = null;
     var odNonlinearityDetails = document.getElementById('odNonlinearityDetails');
 
     function initOdChart() {
@@ -612,10 +630,55 @@ function openODSection(id) {
                     scales: {
                         x: {
                             title: { display: true, text: 'Chlorophyll a (µg mL⁻¹)', font: {size: 12} },
-                            min: 0
+                            min: 0, max: 130
                         },
                         y: {
-                            title: { display: true, text: 'OD₇₂₀ measured', font: {size: 12} }
+                            title: { display: true, text: 'OD₇₂₀ measured', font: {size: 12} },
+                            min: 0, max: 3
+                        }
+                    }
+                }
+            });
+
+            // OD680 chart — FMT-150: measured data only
+            var fmt150OD680Raw = [
+                {x: 0.015, y: 0.050}, {x: 0.283, y: 0.099}, {x: 0.791, y: 0.191},
+                {x: 1.724, y: 0.366}, {x: 3.732, y: 0.677}, {x: 7.597, y: 1.233},
+                {x: 14.773, y: 1.996}, {x: 29.231, y: 2.793}
+            ];
+            od680ChartInstance = new Chart(document.getElementById('od680NonlinearityChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'FMT-150',
+                            data: fmt150OD680Raw,
+                            borderColor: '#cc0044', backgroundColor: 'transparent',
+                            showLine: false, pointRadius: 5, borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.dataset.label + ': Chl ' + ctx.parsed.x.toFixed(3) +
+                                        ' µg/mL → OD₆₈₀ ' + ctx.parsed.y.toFixed(3);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Chlorophyll a (µg mL⁻¹)', font: {size: 12} },
+                            min: 0, max: 130
+                        },
+                        y: {
+                            title: { display: true, text: 'OD₆₈₀ measured', font: {size: 12} },
+                            min: 0, max: 3
                         }
                     }
                 }

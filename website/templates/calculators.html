@@ -603,7 +603,7 @@
         </div>
     </div>
 
-    <!-- Section 4: OD720 correction -->
+    <!-- Section 4: OD nonlinearity correction — OD720 and OD680 -->
     <div class="card" id="OD720_correction">
         <div class="card-header" id="headingODcorr">
             <h4 class="mb-0">
@@ -613,8 +613,8 @@
                     <span class="accordion-header-inner">
                         <i class="fa fa-adjust fa-fw accordion-icon" aria-hidden="true"></i>
                         <span>
-                            <strong>Correcting OD<sub>720</sub> signal non-linearity (FMT-150, MC-1000, AquaPen)</strong>
-                            <span class="accordion-subtitle">Correct OD₇₂₀ readings above 0.4 for FMT-150, MC-1000, and AquaPen instruments</span>
+                            <strong>Correcting OD signal non-linearity — OD<sub>720</sub> and OD<sub>680</sub></strong>
+                            <span class="accordion-subtitle">Correct OD₇₂₀ readings (FMT-150, MC-1000, AquaPen) and OD₆₈₀ readings (FMT-150) above their respective linearity thresholds</span>
                         </span>
                     </span>
                 </button>
@@ -622,26 +622,33 @@
         </div>
         <div id="collapseODcorr" class="collapse" aria-labelledby="headingODcorr" data-parent="#calculatorsAccordion">
             <div class="card-body bg-light">
-                <p>The values of optical density (OD), mesured in the liquid cultures of algae or cyanobacteria, require correction at higher densities due to scattering
-                    of the measuring light caused by increasing concentration of cells. The OD correction is specific for each instrument. For the instruments listed below,
-                    it appliesfor OD meaured at 720 nm, <b>OD<sub>720</sub> > 0.4</b>. Below this value, the OD sensors measure linearly.
-                    Please note that for optical densites only slightly above OD<sub>720</sub> > 0.4, the corrected OD may not exactly match the expected value,
-                    due to the use of an exponential correction model with discrete initial conditions (OD<sub>720</sub> = 0.4; below this value, correction is not applied).
-                    To correct OD<sub>720</sub> signal across the entire measuring range, i.e. across both linear and non-linear ranges, a polynomial correction would be required.
+                <p>The optical density (OD) signal measured in liquid cultures of algae or cyanobacteria becomes non-linear at higher cell densities,
+                    due to multiple scattering of the measuring light beam within the dense culture suspension.
+                    The deviation from linearity is instrument-specific and wavelength-specific.
+                    For the instruments listed below, correction is required above the following thresholds:
+                    <strong>OD<sub>720</sub> &gt; 0.4</strong> for the FMT-150, MC-1000-OD, and AquaPen (exponential correction model);
+                    <strong>OD<sub>680</sub> &gt; 0.6</strong> for the FMT-150 (exponential correction model).
+                    Below these values, the sensors measure linearly and no correction is needed.
+                    Note that at OD values only slightly above the threshold, small discrepancies may appear
+                    due to the discrete boundary conditions of the correction models.
                 </p>
+
+                <p class="mb-1 mt-1" style="font-size:0.78em; font-weight:bold; color:#5a7a8a; letter-spacing:0.07em; text-transform:uppercase; border-bottom:1px solid #bee5eb; padding-bottom:0.2em;">OD Correction Calculators</p>
+
                 <!-- 1. When to apply OD correction -->
                 <details>
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">When to apply OD correction</summary>
                     <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
                         <ul class="mb-0">
-                            <li>Correction is only needed and valid for <strong>OD₇₂₀ &gt; 0.4</strong>. Below this threshold, sensors in these instruments measure linearly — no correction is required.</li>
-                            <li>At OD₇₂₀ slightly above 0.4, small discrepancies may appear due to the discrete boundary conditions of the exponential model.</li>
-                            <li>The corrected OD is useful for accurately tracking culture growth and comparing densities across time or experiments. Raw (uncorrected) values will underestimate true cell density at high densities.</li>
+                            <li><strong>OD<sub>720</sub> (FMT-150, MC-1000, AquaPen):</strong> Correction is needed for <strong>OD<sub>720</sub> &gt; 0.4</strong>. Below this threshold, these instruments measure linearly. The non-linearity at 720 nm is driven primarily by light scattering, and the correction follows an <em>exponential</em> model.</li>
+                            <li><strong>OD<sub>680</sub> (FMT-150):</strong> Correction is needed for <strong>OD<sub>680</sub> &gt; 0.6</strong>. The linear range extends further than for OD<sub>720</sub> because at 680 nm both scattering and chlorophyll <em>a</em> absorption contribute to the signal — the measured OD rises more steeply per unit biomass, but the onset of scattering-induced deviation occurs at a higher measured value (0.6 vs. 0.4). The correction follows an <em>exponential</em> model calibrated against chlorophyll <em>a</em> concentration.</li>
+                            <li>At OD values slightly above the respective threshold, small discrepancies may appear at the boundary due to the discrete initial conditions of the correction models.</li>
+                            <li>Corrected OD values are necessary for accurately tracking culture density and comparing measurements across time points or experiments at high densities.</li>
                         </ul>
                     </div>
                 </details>
                 <br>
-                <!-- 2. OD correction calculators -->
+                <!-- 2. OD720 correction calculators — FMT-150, MC-1000, AquaPen -->
                 <details>
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">OD<sub>720</sub> correction calculator — FMT-150, MC-1000, AquaPen</summary>
                     <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
@@ -694,23 +701,79 @@
                     </div>
                 </details>
                 <br>
-                <!-- 3. Quick μ recalculator -->
+                <!-- 3. OD680 correction calculator — FMT-150 -->
+                <details id="od680CorrDetails">
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">OD<sub>680</sub> correction calculator — FMT-150</summary>
+                    <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <p class="mb-1">OD<sub>680</sub> is measured at 680 nm, coinciding with the chlorophyll <em>a</em> absorption maximum (Q<sub>y</sub> band).
+                            At this wavelength, both cell scattering and pigment absorption contribute to the measured signal,
+                            and the non-linear range begins at a higher measured value (OD<sub>680</sub> = 0.6) compared to OD<sub>720</sub>.
+                            The correction for the FMT-150 follows an <em>exponential</em> model, calibrated against
+                            chlorophyll <em>a</em> concentration in <em>Synechocystis</em> sp. PCC 6803 cultures across both the linear and non-linear range:
+                        </p>
+                        <p class="mb-1" style="line-height:0.9"><i style="font-size:80%">
+                            \( OD_{680,corr} = 0.4228\, e^{0.9296\, OD_{680,meas}} \quad \text{if } OD_{680,meas} \geq 0.6 \)
+                        </i></p>
+                        <p class="mb-1" style="font-size:0.9em; color:#555;">Below OD<sub>680</sub> = 0.6 the signal is linear — no correction is applied.</p>
+                        <div class="form-row align-items-center mb-1">
+                            <div class="col-auto"><small>OD<sub>680</sub> measured:</small></div>
+                            <div class="col-auto">
+                                <input class="form-control form-control-sm" type="number" id="OD_680_measured_PBRFMT150"
+                                    min="0" step="0.01" value="0.8" style="width:90px;"
+                                    onkeypress="return isNumberKey(event)" oninput="correct_OD_680_PBRFMT150()"/>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info btn-sm">OD<sub>680</sub> corrected:&nbsp;<span id="corrected_OD_680_PBRFMT150_for_span"></span></button>
+                            </div>
+                        </div>
+                        <p class="mb-0" style="font-size:80%"><i><b>Note:</b> Calibration data for <em>Synechocystis</em> sp. PCC 6803, FMT-150 (unpublished data).</i></p>
+                    </div>
+                </details>
+                <br>
+                <!-- 4. OD nonlinearity charts — OD720 and OD680 measured calibration data -->
+                <details id="odNonlinearityDetails">
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0 !important;">OD non-linearity — measured calibration data (<i>Synechocystis</i> sp. PCC 6803)</summary>
+                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
+                        <p class="mb-1"><strong>OD<sub>720</sub> vs. Chlorophyll <em>a</em></strong> — AquaPen, MC-1000-OD, FMT-150</p>
+                        <div style="background:#fff; border-radius:4px; padding:8px; width:50%;">
+                            <canvas id="odNonlinearityChart" style="width:100%; max-height:270px;"></canvas>
+                        </div>
+                        <p class="mb-1 mt-3"><strong>OD<sub>680</sub> measured vs. Chlorophyll <em>a</em></strong> — FMT-150</p>
+                        <div style="background:#fff; border-radius:4px; padding:8px; width:50%;">
+                            <canvas id="od680NonlinearityChart" style="width:100%; max-height:270px;"></canvas>
+                        </div>
+                    </div>
+                </details>
+
+                <hr>
+                <p class="mb-1 mt-1" style="font-size:0.78em; font-weight:bold; color:#5a7a8a; letter-spacing:0.07em; text-transform:uppercase; border-bottom:1px solid #bee5eb; padding-bottom:0.2em;">Growth Rate Corrections Using Corrected OD</p>
+
+                <!-- 5. Quick μ recalculator -->
                 <details id="od-mu-simple">
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Quick recalculation of already-calculated &mu; (from known &mu;<sub>raw</sub>)</summary>
                     <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-                        <p class="mb-1">If you already have a &mu; value (calculated from raw OD<sub>720</sub>) and want to correct it without re-entering the original OD measurements.
-                        For FMT-150 and AquaPen (pure-exponential correction), the relation is exact: &mu;<sub>corrected</sub>&nbsp;=&nbsp;<i>k</i>&nbsp;&middot;&nbsp;&mu;<sub>raw</sub>.
-                        For MC-1000 (additive constant in correction), the simplification does not apply exactly — the result shown is an approximation valid when both OD values are well within the non-linear range.</p>
+                        <p class="mb-1">If you already have a &mu; value (calculated from raw OD) and want to correct it without re-entering the original OD measurements.
+                        The shortcut &mu;<sub>corrected</sub>&nbsp;=&nbsp;<i>k</i>&nbsp;&middot;&nbsp;&mu;<sub>raw</sub> is exact only for a <em>power-law</em> correction form
+                        (<i>OD<sub>true</sub></i>&nbsp;=&nbsp;<i>C&nbsp;&middot;&nbsp;OD<sub>meas</sub><sup>k</sup></i>), because the exponent <i>k</i> factors out of the ln-ratio.
+                        <br>
+                        <strong>OD<sub>720</sub> (FMT-150, AquaPen):</strong> The pure-exponential correction (<i>A&nbsp;&middot;&nbsp;e<sup>k&nbsp;OD</sup></i>) behaves closely enough to a power law in the relevant range that &mu;<sub>corrected</sub>&nbsp;=&nbsp;<i>k</i>&nbsp;&middot;&nbsp;&mu;<sub>raw</sub> is a good approximation.
+                        <strong>OD<sub>680</sub> (FMT-150):</strong> The exponential correction (k&nbsp;=&nbsp;0.9296&nbsp;&lt;&nbsp;1) cannot be used as a multiplier — it gives &mu;<sub>corrected</sub>&nbsp;&lt;&nbsp;&mu;<sub>raw</sub>, which is physically wrong.
+                        Instead, a <em>power-law fit</em> to the same calibration data
+                        (<i style="font-size:90%">\( OD_{true} = 1.05 \cdot OD_{meas}^{1.58} \)</i>, k&nbsp;=&nbsp;1.58) is used here as a quick approximation.
+                        For an exact result, use the two-OD calculator below.
+                        <br>
+                        <strong>MC-1000:</strong> Additive constant in correction — shortcut is approximate only.</p>
                         <p class="mb-1" style="line-height:0.9"><i style="font-size:80%">
-                            \( \mu_{corrected} = k \cdot \mu_{raw} \qquad k_{\text{FMT-150}} = 1.83,\quad k_{\text{AquaPen}} = 1.677,\quad k_{\text{MC-1000}} \approx 2.497 \)
+                            \( \mu_{corrected} \approx k \cdot \mu_{raw} \qquad k_{\text{FMT-150, OD}_{720}} = 1.83,\quad k_{\text{AquaPen}} = 1.677,\quad k_{\text{MC-1000}} \approx 2.497,\quad k_{\text{FMT-150, OD}_{680}} \approx 1.58 \)
                         </i></p>
                         <div class="form-row align-items-end mb-1">
                             <div class="col-auto">
                                 <label class="mb-0" style="font-size:0.9em;">Device</label>
                                 <select class="form-control form-control-sm" id="mu_simple_device" oninput="calculateSimpleMuCorrection()">
-                                    <option value="FMT-150">FMT-150</option>
-                                    <option value="MC-1000">MC-1000</option>
-                                    <option value="AquaPen">AquaPen</option>
+                                    <option value="FMT-150">FMT-150 (OD₇₂₀)</option>
+                                    <option value="MC-1000">MC-1000 (OD₇₂₀)</option>
+                                    <option value="AquaPen">AquaPen (OD₇₂₀)</option>
+                                    <option value="FMT-150 (OD680)">FMT-150 (OD₆₈₀)</option>
                                 </select>
                             </div>
                             <div class="col-auto">
@@ -735,13 +798,14 @@
                     </div>
                 </details>
                 <br>
-                <!-- 4. Corrected growth rate from two OD measurements -->
+                <!-- 6. Corrected specific growth rate from two OD720 measurements -->
                 <details id="od-mu-corr">
-                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Corrected specific growth rate from two OD<sub>720</sub> measurements</summary>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Corrected specific growth rate from two OD measurements</summary>
                     <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-                        <p class="mb-1">If specific growth rate &mu; was calculated from two OD<sub>720</sub> measurements both falling in the <strong>non-linear range (OD<sub>720</sub> &gt; 0.4)</strong>,
+                        <p class="mb-1">If specific growth rate &mu; was calculated from two OD measurements both falling in the <strong>non-linear range</strong>
+                        (OD<sub>720</sub> &gt; 0.4, or OD<sub>680</sub> &gt; 0.6 for FMT-150),
                         the raw &mu; underestimates the true value. Correcting both OD readings first yields the true growth rate:
-                        <i style="font-size:80%">\( \mu_{corrected} = \ln\!\left(OD_{720,2}^{corr} / OD_{720,1}^{corr}\right) / \Delta t \)</i></p>
+                        <i style="font-size:80%">\( \mu_{corrected} = \ln\!\left(OD_{2}^{corr} / OD_{1}^{corr}\right) / \Delta t \)</i></p>
                         <details style="margin-bottom:0.4em;">
                             <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.2em 0;">Mathematical insight — simplified formula for exponential correction models</summary>
                             <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.3em;">
@@ -759,18 +823,19 @@
                             <div class="col-auto">
                                 <label class="mb-0" style="font-size:0.9em;">Device</label>
                                 <select class="form-control form-control-sm" id="mu_corr_device" oninput="calculateCorrectedGrowthRate()">
-                                    <option value="FMT-150">FMT-150</option>
-                                    <option value="MC-1000">MC-1000</option>
-                                    <option value="AquaPen">AquaPen</option>
+                                    <option value="FMT-150">FMT-150 (OD₇₂₀)</option>
+                                    <option value="MC-1000">MC-1000 (OD₇₂₀)</option>
+                                    <option value="AquaPen">AquaPen (OD₇₂₀)</option>
+                                    <option value="FMT-150 (OD680)">FMT-150 (OD₆₈₀)</option>
                                 </select>
                             </div>
                             <div class="col-auto">
-                                <label class="mb-0" style="font-size:0.9em;">OD<sub>720</sub> at t<sub>1</sub></label>
+                                <label class="mb-0" style="font-size:0.9em;">OD at t<sub>1</sub></label>
                                 <input type="number" class="form-control form-control-sm" id="mu_corr_OD1" min="0" step="0.01" value="0.5"
                                        style="width:90px;" onkeypress="return isNumberKey(event)" oninput="calculateCorrectedGrowthRate()">
                             </div>
                             <div class="col-auto">
-                                <label class="mb-0" style="font-size:0.9em;">OD<sub>720</sub> at t<sub>2</sub></label>
+                                <label class="mb-0" style="font-size:0.9em;">OD at t<sub>2</sub></label>
                                 <input type="number" class="form-control form-control-sm" id="mu_corr_OD2" min="0" step="0.01" value="0.9"
                                        style="width:90px;" onkeypress="return isNumberKey(event)" oninput="calculateCorrectedGrowthRate()">
                             </div>
@@ -796,15 +861,6 @@
                     </div>
                 </details>
                 <br>
-                <!-- 5. OD nonlinearity chart -->
-                <details id="odNonlinearityDetails">
-                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0 !important;">OD<sub>720</sub> non-linearity — measured data (<i>Synechocystis</i> sp. PCC 6803)</summary>
-                    <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-                        <div style="background:#fff; border-radius:4px; padding:8px; width:50%;">
-                            <canvas id="odNonlinearityChart" style="width:100%; max-height:270px;"></canvas>
-                        </div>
-                    </div>
-                </details>
 
             </div>
         </div>
