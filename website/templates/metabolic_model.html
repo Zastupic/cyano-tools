@@ -254,13 +254,13 @@
     <!-- Tabs -->
     <ul class="nav nav-tabs" id="main-tabs" role="tablist">
         <li class="nav-item">
-            <a class="nav-link active" data-toggle="tab" href="#tab-network" role="tab">
-                <i class="fa fa-share-alt"></i> Network
+            <a class="nav-link active" data-toggle="tab" href="#tab-simulations" role="tab">
+                <i class="fa fa-flask"></i> Flux Balance Analysis (FBA)
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" href="#tab-simulations" role="tab">
-                <i class="fa fa-flask"></i> Flux Balance Analysis (FBA)
+            <a class="nav-link" data-toggle="tab" href="#tab-network" role="tab">
+                <i class="fa fa-share-alt"></i> Network
             </a>
         </li>
 
@@ -274,7 +274,7 @@
     <div class="tab-content pt-3">
 
         <!-- ── Network tab ───────────────────────────────────────────── -->
-        <div id="tab-network" class="tab-pane fade show active" role="tabpanel">
+        <div id="tab-network" class="tab-pane fade" role="tabpanel">
 
             <!-- Sub-tabs: Pathways | Reactions | Metabolites -->
             <ul class="nav nav-tabs mb-3" id="network-sub-tabs" role="tablist">
@@ -386,7 +386,7 @@
         <!-- ── Genes tab ─────────────────────────────────────────────── -->
 
         <!-- ── Simulations tab ──────────────────────────────────────── -->
-        <div id="tab-simulations" class="tab-pane fade" role="tabpanel">
+        <div id="tab-simulations" class="tab-pane fade show active" role="tabpanel">
 
             <!-- About this tool + Sub-tab nav (full width, above columns) -->
             <div class="mb-2">
@@ -446,34 +446,6 @@
                                 <button class="btn btn-sm btn-outline-secondary px-1 py-0 mr-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-XA','sim-XA-val',-1)">−</button>
                                 <input type="range" class="custom-range flex-fill" id="sim-XA" min="0" max="200" step="1" value="30" oninput="simSlider(this,'sim-XA-val')">
                                 <button class="btn btn-sm btn-outline-secondary px-1 py-0 ml-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-XA','sim-XA-val',1)">+</button>
-                            </div>
-                            <div class="mt-1">
-                                <a href="#sim-xa-calc" data-toggle="collapse"
-                                   class="btn btn-sm btn-outline-secondary btn-block py-0"
-                                   style="font-size:0.78em;text-align:left;">
-                                    <i class="fa fa-calculator"></i> Calculate X<sub>A</sub> from reactor geometry
-                                </a>
-                            </div>
-                            <div class="collapse" id="sim-xa-calc">
-                                <div class="border rounded p-2 mt-1 mb-1" style="background:#f0f4fa;font-size:0.82em;">
-                                    <p class="text-muted mb-2" style="font-size:0.88em;">X<sub>A</sub> [g·m⁻²] = ρ [g·L⁻¹] × V [L] / A [m²]</p>
-                                    <div class="d-flex align-items-center mb-1" style="gap:4px;">
-                                        <label class="small text-muted mb-0" style="width:90px;flex-shrink:0;" title="Illuminated surface area of the reactor">A — area (m²)</label>
-                                        <input type="number" class="form-control form-control-sm flex-fill" id="med-reactor-area" placeholder="e.g. 0.1" step="0.001" min="0.0001">
-                                    </div>
-                                    <div class="d-flex align-items-center mb-1" style="gap:4px;">
-                                        <label class="small text-muted mb-0" style="width:90px;flex-shrink:0;" title="Total culture volume">V — volume (L)</label>
-                                        <input type="number" class="form-control form-control-sm flex-fill" id="med-reactor-vol" placeholder="e.g. 5" step="0.1" min="0.001">
-                                    </div>
-                                    <div class="d-flex align-items-center mb-2" style="gap:4px;">
-                                        <label class="small text-muted mb-0" style="width:90px;flex-shrink:0;" title="Volumetric biomass concentration (g dry cell weight per litre)">ρ — biomass (g·L⁻¹)</label>
-                                        <input type="number" class="form-control form-control-sm flex-fill" id="med-reactor-rho" placeholder="e.g. 1.5" step="0.1" min="0.001">
-                                    </div>
-                                    <div class="d-flex align-items-center" style="gap:0.4rem;">
-                                        <button class="btn btn-sm btn-primary py-0 px-2" onclick="medCalcXA()">→ set X<sub>A</sub></button>
-                                        <span class="text-muted small" id="med-xa-calc-result"></span>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                         <div class="alert alert-light py-1 px-2 mb-0" style="font-size:0.78em;" id="sim-derived"
@@ -725,11 +697,27 @@
                     <!-- Reactor geometry (chemostat extra plots) -->
                     <div id="sim-reactor-params" class="sim-pg mt-2 pt-2 border-top" data-tabs="productivity" style="display:none;">
                         <p class="small font-weight-bold mb-1 text-muted text-uppercase" style="font-size:0.71em;">Reactor geometry</p>
+                        <div class="border rounded p-2 mb-2" style="background:#f0f4fa;font-size:0.82em;">
+                            <p class="text-muted mb-1" style="font-size:0.88em;">X<sub>A</sub> [g·m⁻²] = ρ × V / A &nbsp;·&nbsp; z [m] = V [L] / (A [m²] × 1000)</p>
+                            <div class="d-flex align-items-center mb-1" style="gap:4px;">
+                                <label class="small text-muted mb-0" style="width:90px;flex-shrink:0;" title="Illuminated surface area of the reactor">A — area (m²)</label>
+                                <input type="number" class="form-control form-control-sm flex-fill" id="med-reactor-area" placeholder="e.g. 0.1" step="0.001" min="0.0001" oninput="medCalcXA()">
+                            </div>
+                            <div class="d-flex align-items-center mb-1" style="gap:4px;">
+                                <label class="small text-muted mb-0" style="width:90px;flex-shrink:0;" title="Total culture volume">V — volume (L)</label>
+                                <input type="number" class="form-control form-control-sm flex-fill" id="med-reactor-vol" placeholder="e.g. 5" step="0.1" min="0.001" oninput="medCalcXA()">
+                            </div>
+                            <div class="d-flex align-items-center mb-1" style="gap:4px;">
+                                <label class="small text-muted mb-0" style="width:90px;flex-shrink:0;" title="Volumetric biomass concentration">ρ — biomass (g·L⁻¹)</label>
+                                <input type="number" class="form-control form-control-sm flex-fill" id="med-reactor-rho" placeholder="e.g. 1.5" step="0.1" min="0.001" oninput="medCalcXA()">
+                            </div>
+                            <div class="small text-muted" id="med-xa-calc-result" style="min-height:1.2em;"></div>
+                        </div>
                         <div class="mb-1">
                             <div class="d-flex justify-content-between"><label class="small mb-0">z — reactor depth <small class="text-muted">(m)</small></label><span class="small font-weight-bold" id="sim-reactor-depth-val">0.10</span></div>
                             <div class="d-flex align-items-center">
                                 <button class="btn btn-sm btn-outline-secondary px-1 py-0 mr-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-reactor-depth','sim-reactor-depth-val',-1)">−</button>
-                                <input type="range" class="custom-range flex-fill" id="sim-reactor-depth" min="0.01" max="0.50" step="0.01" value="0.10" oninput="simSlider(this,'sim-reactor-depth-val')">
+                                <input type="range" class="custom-range flex-fill" id="sim-reactor-depth" min="0.001" max="0.50" step="0.001" value="0.10" oninput="simSlider(this,'sim-reactor-depth-val')">
                                 <button class="btn btn-sm btn-outline-secondary px-1 py-0 ml-1" style="font-size:0.8em;line-height:1.3;" onclick="simNudge('sim-reactor-depth','sim-reactor-depth-val',1)">+</button>
                             </div>
                             <p class="text-muted mb-0" style="font-size:0.75em;">Used to compute volumetric productivity P<sub>V</sub> = P<sub>A</sub> / z</p>

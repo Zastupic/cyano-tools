@@ -348,20 +348,33 @@ function medCalcXA() {
     const V   = parseFloat(document.getElementById('med-reactor-vol')?.value);
     const rho = parseFloat(document.getElementById('med-reactor-rho')?.value);
     const res = document.getElementById('med-xa-calc-result');
-    if (!A || !V || !rho || A <= 0) {
-        if (res) res.textContent = 'Enter A, V and ρ';
-        return;
+    if (!A || !V || A <= 0) { if (res) res.textContent = 'Enter A and V'; return; }
+    const z  = V / (A * 1000);
+    const XA = rho > 0 ? (rho * V) / A : null;
+
+    // Push z to its slider
+    const zSlider = document.getElementById('sim-reactor-depth');
+    const zVal    = document.getElementById('sim-reactor-depth-val');
+    if (zSlider) zSlider.value = Math.min(Math.max(z, parseFloat(zSlider.min)), parseFloat(zSlider.max));
+    if (zVal)    zVal.textContent = z.toFixed(3);
+
+    // Push XA to its slider (only when ρ is filled in)
+    if (XA !== null) {
+        const xaSlider = document.getElementById('sim-XA');
+        const xaVal    = document.getElementById('sim-XA-val');
+        if (xaSlider) xaSlider.value = Math.min(XA, parseFloat(xaSlider.max || 200));
+        if (xaVal)    xaVal.textContent = XA.toFixed(1);
+        const xaConvInput = document.getElementById('med-conv-xa');
+        if (xaConvInput) xaConvInput.value = XA.toFixed(1);
+        medUpdateX();
     }
-    const XA = (rho * V) / A;
-    // Set both the main XA slider and the conversion panel input
-    const slider = document.getElementById('sim-XA');
-    const sliderVal = document.getElementById('sim-XA-val');
-    if (slider) { slider.value = Math.min(XA, parseFloat(slider.max || 200)).toFixed(1); }
-    if (sliderVal) sliderVal.textContent = XA.toFixed(1);
-    const xaConvInput = document.getElementById('med-conv-xa');
-    if (xaConvInput) xaConvInput.value = XA.toFixed(1);
-    medUpdateX();   // refresh X [g/L] display
-    if (res) res.textContent = `= ${XA.toFixed(1)} gCDM·m⁻²`;
+
+    if (res) res.textContent = XA !== null
+        ? `X\u2090 = ${XA.toFixed(1)} gCDM·m⁻²  ·  z = ${z.toFixed(3)} m`
+        : `z = ${z.toFixed(3)} m`;
+
+    simRecompute();
+    if (simMode === 'turb') simRenderTurbCharts();
 }
 
 /** Re-compute and display X whenever XA or d changes. */
@@ -3189,6 +3202,7 @@ function simGetParams() {
 function simSlider(input, valId) {
     document.getElementById(valId).textContent = input.value;
     simRecompute();
+    if (simMode === 'turb') simRenderTurbCharts();
 }
 
 function simNudge(id, valId, dir) {
@@ -6125,10 +6139,9 @@ document.addEventListener('DOMContentLoaded', () => {
     simSubTabChanged('#sim-sub-static');
     updateTabGates();
 
-    // Auto-refresh turbidostat charts when I₀, XA (density setpoint) or reactor depth changes
-    document.getElementById('sim-I0')?.addEventListener('input', simRenderTurbCharts);
-    document.getElementById('sim-XA')?.addEventListener('input', simRenderTurbCharts);
-    document.getElementById('sim-reactor-depth')?.addEventListener('input', simRenderTurbCharts);
+    // Auto-refresh turbidostat charts when any biophysical or culture parameter changes
+    ['sim-I0','sim-XA','sim-reactor-depth','sim-alpha','sim-KL','sim-YBM','sim-kd','sim-ngam-photon','sim-yx']
+        .forEach(id => document.getElementById(id)?.addEventListener('input', simRenderTurbCharts));
 
     // Listen to sub-tab switches (use jQuery — Bootstrap 4 fires shown.bs.tab via jQuery)
     $('#sim-sub-tabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
