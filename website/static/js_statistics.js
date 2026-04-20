@@ -2914,6 +2914,8 @@ document.getElementById('updateAnalysisBtn').addEventListener('click', function(
     // anova-tab is always visible in the Compare group — no need to hide
     const downloadAnovaExcelBtn = document.getElementById('downloadAnovaExcelBtn');
     if (downloadAnovaExcelBtn) downloadAnovaExcelBtn.style.display = 'none';
+    const methodBtnReset = document.getElementById('methodSummaryBtn');
+    if (methodBtnReset) { methodBtnReset.style.display = 'none'; $('#methodSummaryBox').collapse('hide'); }
     lastAnovaResults = null;
 
     // PCA
@@ -4384,6 +4386,8 @@ document.getElementById('runTestsBtn').addEventListener('click', function() {
     if (pubPlotsBtn2) pubPlotsBtn2.style.display = 'none';
     const pubCard2 = document.getElementById('pubPlotStyleCard');
     if (pubCard2) pubCard2.style.display = 'none';
+    const methodBtn2 = document.getElementById('methodSummaryBtn');
+    if (methodBtn2) { methodBtn2.style.display = 'none'; $('#methodSummaryBox').collapse('hide'); }
     lastAnovaResults = null;
     lastAnovaRawData = null;
     anovaVarSortModes = {};
@@ -4536,6 +4540,14 @@ document.getElementById('runAnovaBtn').addEventListener('click', function() {
         if (pubPlotsBtn4) pubPlotsBtn4.style.display = 'inline-flex';
         const pubCard4 = document.getElementById('pubPlotStyleCard');
         if (pubCard4) pubCard4.style.display = '';
+
+        // Show method summary button and populate text
+        const methodBtn = document.getElementById('methodSummaryBtn');
+        if (methodBtn) {
+            methodBtn.style.display = 'inline-flex';
+            const textEl = document.getElementById('methodSummaryText');
+            if (textEl) textEl.innerHTML = _buildMethodSummaryHTML(data);
+        }
 
         if (!data.results || data.results.length === 0) {
             anovaResults.innerHTML = `
@@ -8283,4 +8295,90 @@ function _renderPcaEllipsesToggle(pcaResults, showEllipses) {
     observer.observe(pcaResultsEl, { childList: true, subtree: true });
 })();
 
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ══ Method Summary ═══════════════════════════════════════════════════════════
+
+function _buildMethodSummaryHTML(_data) {
+    const c = n => `<sup>[${n}]</sup>`;
+
+    const lines = [
+        `Prior to group comparisons, data normality within each group is assessed using the Shapiro\u2013Wilk test${c(1)}, and homogeneity of variances is evaluated using Levene\u2019s test${c(2)}.`,
+
+        `The overall statistical test is selected automatically based on the number of grouping factors and the outcome of these assumption tests. `
+          + `For single-factor designs, one-way ANOVA${c(3)} is applied when both assumptions are met, Welch\u2019s ANOVA${c(4)} when only normality is satisfied (unequal variances), `
+          + `or the Kruskal\u2013Wallis H-test${c(5)} when normality is violated. `
+          + `For two-factor designs, two-way ANOVA${c(3)} is used when assumptions are met, or the Scheirer\u2013Ray\u2013Hare test${c(6)} otherwise. `
+          + `For three or more factors, MANOVA (Pillai\u2019s trace)${c(3)} is applied when assumptions are met, or Aligned Rank Transform ANOVA (ART-ANOVA)${c(7)} otherwise.`,
+
+        `When the overall test is significant (<em>p</em> &lt; 0.05), post-hoc pairwise comparisons are performed using `
+          + `Tukey\u2019s Honestly Significant Difference (HSD) test${c(8)} (parametric, equal variances), `
+          + `Games\u2013Howell test${c(9)} (parametric, unequal variances), `
+          + `or Dunn\u2019s test${c(10)}${c(16)} (non-parametric), with <em>p</em>-values adjusted using the Benjamini\u2013Hochberg false discovery rate (FDR) procedure${c(11)} for pairwise comparisons, `
+          + `or Bonferroni correction${c(16)} for multi-factor designs. `
+          + `Statistically homogeneous subsets are indicated by compact letter display (CLD); groups sharing a letter are not significantly different (<em>p</em> &gt; 0.05).`,
+
+        `All analyses are performed in Python using NumPy${c(12)}, pandas${c(13)}, SciPy${c(14)}, and statsmodels${c(3)}. `
+          + `Interactive visualisations are rendered using Plotly.js${c(15)}.`,
+    ];
+
+    const refs = [
+        `Shapiro, S.S., & Wilk, M.B. (1965). An analysis of variance test for normality (complete samples). <em>Biometrika</em>, 52(3\u20134), 591\u2013611. https://doi.org/10.1093/biomet/52.3-4.591`,
+        `Levene, H. (1960). Robust tests for equality of variances. In I. Olkin (Ed.), <em>Contributions to Probability and Statistics</em> (pp. 278\u2013292). Stanford University Press.`,
+        `Seabold, S., & Perktold, J. (2010). Statsmodels: Econometric and statistical modeling with Python. <em>Proc. 9th Python in Science Conf.</em>, 57\u201361. https://doi.org/10.25080/Majora-92bf1922-011`,
+        `Welch, B.L. (1951). On the comparison of several mean values: An alternative approach. <em>Biometrika</em>, 38(3\u20134), 330\u2013336. https://doi.org/10.1093/biomet/38.3-4.330`,
+        `Kruskal, W.H., & Wallis, W.A. (1952). Use of ranks in one-criterion variance analysis. <em>Journal of the American Statistical Association</em>, 47(260), 583\u2013621. https://doi.org/10.1080/01621459.1952.10483441`,
+        `Scheirer, C.J., Ray, W.S., & Hare, N. (1976). The analysis of ranked data derived from completely randomized factorial designs. <em>Biometrics</em>, 32(2), 429\u2013434. https://doi.org/10.2307/2529511`,
+        `Wobbrock, J.O., Findlater, L., Gergle, D., & Higgins, J.J. (2011). The aligned rank transform for nonparametric factorial analyses using only ANOVA procedures. <em>Proc. CHI \u201911</em>, 143\u2013146. https://doi.org/10.1145/1978942.1978963`,
+        `Tukey, J.W. (1949). Comparing individual means in the analysis of variance. <em>Biometrics</em>, 5(2), 99\u2013114. https://doi.org/10.2307/3001913`,
+        `Games, P.A., & Howell, J.F. (1976). Pairwise multiple comparison procedures with unequal N\u2019s and/or variances. <em>Journal of Educational Statistics</em>, 1(2), 113\u2013125. https://doi.org/10.3102/10769986001002113`,
+        `Dunn, O.J. (1964). Multiple comparisons using rank sums. <em>Technometrics</em>, 6(3), 241\u2013252. https://doi.org/10.1080/00401706.1964.10490181`,
+        `Benjamini, Y., & Hochberg, Y. (1995). Controlling the false discovery rate: A practical and powerful approach to multiple testing. <em>Journal of the Royal Statistical Society: Series B</em>, 57(1), 289\u2013300. https://doi.org/10.1111/j.2517-6161.1995.tb02031.x`,
+        `Harris, C.R., et al. (2020). Array programming with NumPy. <em>Nature</em>, 585, 357\u2013362. https://doi.org/10.1038/s41586-020-2649-2`,
+        `The pandas development team (2020). pandas-dev/pandas: Pandas. Zenodo. https://doi.org/10.5281/zenodo.3509134`,
+        `Virtanen, P., et al. (2020). SciPy 1.0: Fundamental algorithms for scientific computing in Python. <em>Nature Methods</em>, 17, 261\u2013272. https://doi.org/10.1038/s41592-019-0686-2`,
+        `Plotly Technologies Inc. (2015). <em>Collaborative data science</em>. Montr\xe9al, QC. https://plotly.com`,
+        `Dunn, O.J. (1961). Multiple comparisons among means. <em>Journal of the American Statistical Association</em>, 56(293), 52\u201364. https://doi.org/10.1080/01621459.1961.10482090`,
+    ];
+
+    const refItems = refs.map((r, i) =>
+        `<li style="margin-bottom:0.25rem; padding-left:1.6em; text-indent:-1.6em;">[${i+1}]&nbsp;${r}</li>`
+    ).join('');
+
+    const refSection = `
+        <div class="mt-3 pt-2" style="border-top:1px solid #dee2e6;">
+            <strong style="font-size:0.78rem; color:#495057;">References</strong>
+            <ul style="list-style:none; padding-left:0; margin-top:0.35rem; font-size:0.71rem; color:#495057; line-height:1.55;">
+                ${refItems}
+            </ul>
+        </div>`;
+
+    return lines.map(l => `<p class="mb-2">${l.trim()}</p>`).join('\n') + refSection;
+}
+
+// Copy-to-clipboard handler for method summary
+document.addEventListener('DOMContentLoaded', function() {
+    const copyBtn = document.getElementById('copyMethodSummaryBtn');
+    if (!copyBtn) return;
+    copyBtn.addEventListener('click', function() {
+        const el = document.getElementById('methodSummaryText');
+        if (!el) return;
+        const plain = el.innerText || el.textContent;
+        navigator.clipboard.writeText(plain).then(() => {
+            const orig = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fa fa-check mr-1"></i> Copied!';
+            copyBtn.classList.replace('btn-outline-secondary', 'btn-success');
+            setTimeout(() => {
+                copyBtn.innerHTML = orig;
+                copyBtn.classList.replace('btn-success', 'btn-outline-secondary');
+            }, 2000);
+        }).catch(() => {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        });
+    });
+});
 // ─────────────────────────────────────────────────────────────────────────────

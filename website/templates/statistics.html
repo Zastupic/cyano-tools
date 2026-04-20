@@ -608,22 +608,16 @@
                 <div id="resultsArea" style="display: none;">
                     <!-- Category row -->
                     <div class="d-flex align-items-end flex-wrap" id="statsCategoryRow">
-                        <button class="stats-cat-btn active" data-cat="visualise"><i class="fa fa-eye mr-1"></i>Visualise</button>
-                        <button class="stats-cat-btn" data-cat="compare"><i class="fa fa-flask mr-1"></i>Compare (ANOVA)</button>
+                        <button class="stats-cat-btn active" data-cat="compare"><i class="fa fa-flask mr-1"></i>Compare (ANOVA)</button>
                         <button class="stats-cat-btn" data-cat="multivariate"><i class="fa fa-th mr-1"></i>Correlations &amp;  Multivariate (PCA, PLS, OPLS)</button>
+                        <button class="stats-cat-btn" data-cat="visualise"><i class="fa fa-eye mr-1"></i>Visualise</button>
                     </div>
 
                     <!-- Sub-tab row (one group visible at a time) -->
                     <ul class="nav nav-tabs" id="statsSubTabRow" role="tablist">
-                        <!-- Visualise -->
-                        <li class="nav-item stats-subtab-group stats-subtab-visualise">
-                            <button class="nav-link active font-weight-bold" id="viz-tab" data-toggle="tab" data-target="#viz-content" role="tab">
-                                <i class="fa fa-bar-chart mr-1"></i>Box Plots
-                            </button>
-                        </li>
                         <!-- Compare -->
-                        <li class="nav-item stats-subtab-group stats-subtab-compare" style="display:none;">
-                            <button class="nav-link font-weight-bold" id="assumptions-tab" data-toggle="tab" data-target="#assumptions-content" role="tab">
+                        <li class="nav-item stats-subtab-group stats-subtab-compare">
+                            <button class="nav-link active font-weight-bold" id="assumptions-tab" data-toggle="tab" data-target="#assumptions-content" role="tab">
                                 <i class="fa fa-calculator mr-1"></i>Normality &amp; Variance
                             </button>
                         </li>
@@ -657,10 +651,16 @@
                                 <i class="fa fa-lock mr-1"></i>OPLS / OPLS-DA
                             </button>
                         </li>
+                        <!-- Visualise -->
+                        <li class="nav-item stats-subtab-group stats-subtab-visualise" style="display:none;">
+                            <button class="nav-link font-weight-bold" id="viz-tab" data-toggle="tab" data-target="#viz-content" role="tab">
+                                <i class="fa fa-bar-chart mr-1"></i>Box Plots
+                            </button>
+                        </li>
                     </ul>
 
                     <div class="tab-content border border-top-0 p-3 rounded-bottom bg-white shadow-sm" id="statsTabContent">
-                        <div class="tab-pane fade show active" id="viz-content" role="tabpanel">
+                        <div class="tab-pane fade" id="viz-content" role="tabpanel">
                             <div class="p-3">
                                 <h5 class="font-weight-bold mb-3">Data Visualizations</h5>
                                 <p class="text-muted small">Generate box plots with swarm overlays for selected variables grouped by factors.</p>
@@ -701,7 +701,7 @@
                                 <div id="statsContent" class="row"></div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="assumptions-content" role="tabpanel">
+                        <div class="tab-pane fade show active" id="assumptions-content" role="tabpanel">
                             <div class="p-3">
                                 <h5 class="font-weight-bold mb-2">Normality &amp; Variance Tests</h5>
                                 <p class="text-muted small mb-3">Before any significance test, each variable must be checked for the two core ANOVA assumptions: <strong>normality</strong> of group distributions and <strong>homogeneity</strong> of variances across groups. Results here determine the appropriate test in the next step.</p>
@@ -1516,12 +1516,16 @@
                                 </div>
                                 <!-- ══════════════════════════════════ -->
 
-                                <div class="mt-3 mb-4 d-flex flex-wrap align-items-center" style="gap: 0.75rem;">
+                                <div class="mt-3 mb-2 d-flex flex-wrap align-items-center" style="gap: 0.75rem;">
                                     <button id="exportPubPlotsBtn" class="btn btn-outline-primary btn-sm" style="display: none;">
                                         <i class="fa fa-file-archive-o"></i> Export Plots in Publication Quality
                                     </button>
                                     <button id="exportFullReportBtn" class="btn btn-outline-success btn-sm" style="display: none;">
                                         <i class="fa fa-file-excel-o"></i> Export Full Report
+                                    </button>
+                                    <button id="methodSummaryBtn" class="btn btn-outline-secondary btn-sm" style="display: none;"
+                                            data-toggle="collapse" data-target="#methodSummaryBox" aria-expanded="false">
+                                        <i class="fa fa-file-text-o mr-1"></i> Method Summary
                                     </button>
                                     <span id="pubExportSpinner" style="display:none;">
                                         <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
@@ -1531,6 +1535,25 @@
                                         <span class="spinner-border spinner-border-sm text-success" role="status"></span>
                                         <span class="small text-muted ml-1">Generating report…</span>
                                     </span>
+                                </div>
+
+                                <!-- Method Summary collapsible box -->
+                                <div id="methodSummaryBox" class="collapse mb-4">
+                                    <div class="card border-0 shadow-sm" style="border:1px solid #c8d8e8 !important; border-left:4px solid #6c757d !important;">
+                                        <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between"
+                                             style="background: linear-gradient(to right,#f4f6f9,#eaecef);">
+                                            <span style="font-size:0.82rem; font-weight:600; color:#495057;">
+                                                <i class="fa fa-file-text-o mr-1"></i> Methods Section Text
+                                                <span class="text-muted font-weight-normal" style="font-size:0.72rem;"> — ready to copy into your manuscript</span>
+                                            </span>
+                                            <button id="copyMethodSummaryBtn" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem;">
+                                                <i class="fa fa-clipboard mr-1"></i> Copy
+                                            </button>
+                                        </div>
+                                        <div class="card-body py-3 px-3">
+                                            <div id="methodSummaryText" style="font-size:0.84rem; line-height:1.6; color:#212529;"></div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div id="anovaSpinner" class="text-center py-4" style="display: none;">
