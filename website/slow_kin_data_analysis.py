@@ -367,13 +367,30 @@ def _process_mcpam_params(files):
                 'par':       _series_to_list(par_all[stem].astype(float)),
             }
 
-    # Summary scalar params: Fv/Fm at t=0, Rfd = (Fp-Fs)/Fs computed from raw trace max/last
+    # Summary scalar params: Fv/Fm, NPQ_max, Rfd, actinic_intensity
     summary_params = {}
     for stem in file_stems:
         fv_fm = _safe(float(fv_all[stem].iloc[0]) / float(fm_all[stem].iloc[0])) if stem in fv_all.columns else None
+        rfd_mc = None
+        actinic_mc = None
+        try:
+            ft_series = ft_all[stem].dropna().astype(float)
+            fp_mc = float(ft_series.max())
+            fs_mc = float(ft_series.iloc[-1])
+            if fs_mc > 0:
+                rfd_mc = _safe((fp_mc - fs_mc) / fs_mc)
+        except Exception:
+            pass
+        try:
+            par_series = par_all[stem].dropna().astype(float)
+            actinic_mc = _safe(float(par_series.max()))
+        except Exception:
+            pass
         summary_params[stem] = {
             'fv_fm': fv_fm,
             'npq_max': _safe(float(npq_fm[stem].max())) if stem in npq_fm.columns else None,
+            'rfd': rfd_mc,
+            'actinic_intensity': actinic_mc,
         }
 
     # ── State transitions ───────────────────────────────────────────────────
@@ -602,9 +619,15 @@ def _process_aquapen(files, protocol_key, upload_folder):
                 rfd_val = _safe((fp_val - fs_val) / fs_val)
         except Exception:
             pass
+        npq_max_val = None
+        try:
+            npq_max_val = _safe(float(npq_fm_data.iloc[:, j].max()))
+        except Exception:
+            pass
         summary_scalars[stem] = {
             'fv_fm': fv_fm,
             'rfd':   rfd_val,
+            'npq_max': npq_max_val,
             'actinic_intensity': actinic_val,
         }
 
@@ -859,7 +882,7 @@ def slow_kin_export():
                 ('fm', "Fm\u2032", param_time, param_labels.get('fm')),
                 ('fv', 'Fv', param_time, param_labels.get('fv')),
                 ('npq', 'NPQ (Fm)', param_time_npq, param_labels.get('npq')),
-                ('npq_fmmax', 'NPQ (Fm_max)', param_time, param_labels.get('npq')),
+                ('npq_fmmax', 'NPQ (Fm_max)', param_time, param_labels.get('npq_fmmax')),
                 ('qn', 'qN', param_time, param_labels.get('fm')),
                 ('qp', 'qP', param_time_npq, param_labels.get('qp')),
                 ('qy', 'Y(II)', param_time, param_labels.get('qy')),

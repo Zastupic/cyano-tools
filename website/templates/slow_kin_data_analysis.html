@@ -140,17 +140,29 @@
               <tr><td>NPQ</td><td>(F<sub>m</sub>−F<sub>m</sub>')/F<sub>m</sub>'</td><td>(F<sub>m</sub>'<sub>(max)</sub>−F<sub>m</sub>')/F<sub>m</sub>'</td><td>Non-photochemical quenching</td></tr>
               <tr><td>q<sub>N</sub></td><td>(F<sub>m</sub>−F<sub>m</sub>')/(F<sub>m</sub>−F<sub>0</sub>)</td><td></td><td>Coefficient of non-photochemical quenching</td></tr>
               <tr><td>q<sub>P</sub></td><td>(F<sub>m</sub>'−F<sub>t</sub>)/(F<sub>m</sub>'−F<sub>0</sub>')</td><td>(F<sub>m</sub>'−F<sub>t</sub>)/(F<sub>m</sub>'−F<sub>0</sub>) <sup>†</sup></td><td>Coefficient of photochemical quenching; fraction of open PSII centers</td></tr>
+              <tr><td>q<sub>L</sub></td><td>q<sub>P</sub> × (F<sub>0</sub>′/F<sub>t</sub>)</td><td></td><td>Fraction of open PSII centers in the lake model (Kramer et al. 2004) — requires F<sub>0</sub>′; <em>not calculated</em> (F<sub>0</sub>′ not available in standard exports)</td></tr>
               <tr><td>R<sub>fd</sub></td><td>(F<sub>p</sub>−F<sub>s</sub>)/F<sub>s</sub></td><td></td><td>Fluorescence decrease ratio (vitality index)</td></tr>
+              <tr><td colspan="4"><i>&nbsp;</i></td></tr>
+              <tr><td colspan="4"><i>Scalar summaries</i></td></tr>
+              <tr><td>NPQ<sub>max</sub></td><td>max(NPQ(t))</td><td></td><td>Maximum NPQ value reached during the measurement</td></tr>
+              <tr><td>Actinic</td><td></td><td></td><td>Actinic light intensity during illumination (= max PAR; µmol<sub>photons</sub> m<sup>−2</sup> s<sup>−1</sup>)</td></tr>
+              <tr><td colspan="4"><i>&nbsp;</i></td></tr>
+              <tr><td colspan="4"><i>State transition kinetics (mono-exponential fit to Fm′ per phase)</i></td></tr>
+              <tr><td>ΔFm′ (%)</td><td>(Fm′<sub>last</sub>−Fm′<sub>first</sub>) / |Fm′<sub>first</sub>| × 100</td><td></td><td>Relative change in Fm′ amplitude within a phase</td></tr>
+              <tr><td>τ (s)</td><td>1/k &nbsp; from &nbsp; A·e<sup>−k·(t−t<sub>0</sub>)</sup> + C</td><td></td><td>Exponential time constant of Fm′ relaxation</td></tr>
+              <tr><td>t½ (s)</td><td>τ × ln 2</td><td></td><td>Half-time of Fm′ relaxation</td></tr>
+              <tr><td>R²</td><td></td><td></td><td>Coefficient of determination of the exponential fit</td></tr>
             </table>
             <p style="font-size:78%; margin-top:0.3em;">
-              <sup>†</sup> F<sub>0</sub>′ is the minimum fluorescence in the light-adapted state. For MC-PAM / Dual PAM, F<sub>0</sub>′ is measured directly (by briefly switching off the actinic light). For AquaPen / FluorPen, F<sub>0</sub>′ is not available from the protocol and is approximated by the dark-adapted F<sub>0</sub> (van Kooten &amp; Snel 1990).
+              <sup>†</sup> F<sub>0</sub>′ is the minimum fluorescence in the light-adapted state. For both MC-PAM / Dual PAM and AquaPen / FluorPen, F<sub>0</sub>′ is not available in the standard parameter file export and is approximated by the dark-adapted F<sub>0</sub> (van Kooten &amp; Snel 1990). Note: the Dual-PAM can measure F<sub>0</sub>′ directly by briefly switching off the actinic light, but this requires a specific protocol step and the value is not extracted by the current parser.
             </p>
             <p style="font-size:78%; margin-top:0.5em;">
               <i>References:</i><br>
               Ruban (2016) Plant Physiology 170:1903–1916 &nbsp;·&nbsp;
               Baker (2008) Annu. Rev. Plant Biol. 59:89–113 &nbsp;·&nbsp;
               Lichtenthaler et al. (2005) Photosynthetica 43:379–393 &nbsp;·&nbsp;
-              Roháček (2002) Photosynthetica 40:13–29
+              Roháček (2002) Photosynthetica 40:13–29 &nbsp;·&nbsp;
+              Kramer et al. (2004) Photosynth. Res. 79:209–218
             </p>
           </div>
         </div>
