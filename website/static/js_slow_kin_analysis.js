@@ -86,7 +86,7 @@ const SK_DERIVED_YLABELS = {
 
 // Keys shown as individual split charts in the Groups tab
 const SK_DERIVED_GROUP_KEYS = ['npq', 'qy', 'qp', 'etr'];
-const SK_ST_GROUP_KEYS      = ['delta_fm_pct', 'tau', 'half_time'];
+const SK_ST_GROUP_KEYS      = ['delta_abs', 'delta_pct', 'tau', 'half_time'];
 
 function _skKeyToId(key) { return key.replace(/_/g, '-'); }
 
@@ -1462,7 +1462,7 @@ function renderGroupParamChart(key, stats, grpNames) {
 
 // ── group state-transition chart ──────────────────────────────────────────
 
-var _ST_METRIC_LABELS = { delta_fm_pct: "\u0394Fm\u2032 (%)", tau: '\u03c4 (s)', half_time: 't\u00bd (s)' };
+var _ST_METRIC_LABELS = { delta_abs: "\u0394Fm\u2032 (a.u.)", delta_pct: "\u0394Fm\u2032 (%)", tau: '\u03c4 (s)', half_time: 't\u00bd (s)' };
 
 function calcGroupStStats(metric) {
   var grpFilesMap = _grpFiles();
@@ -1505,7 +1505,7 @@ function renderGroupStCharts() {
 
 function renderGroupStChart(metric) {
   if (!skData || !skData.has_state_transitions) return;
-  metric = metric || 'delta_fm_pct';
+  metric = metric || 'delta_abs';
   var canvasId = 'sk-group-st-' + _skKeyToId(metric) + '-chart';
   var result   = calcGroupStStats(metric);
   var stats    = result.stats;
@@ -1628,9 +1628,10 @@ function _buildExportStCheckGroup(assignedFiles) {
   if (!phaseLabels.length) { if (sec) sec.style.display = 'none'; return; }
 
   var stMetrics = [
-    { key: 'delta_fm_pct', label: '\u0394Fm\u2032 (%)' },
-    { key: 'tau',          label: '\u03c4 (s)' },
-    { key: 'half_time',    label: 't\u00bd (s)' },
+    { key: 'delta_abs', label: '\u0394Fm\u2032 (a.u.)' },
+    { key: 'delta_pct', label: '\u0394Fm\u2032 (%)' },
+    { key: 'tau',       label: '\u03c4 (s)' },
+    { key: 'half_time', label: 't\u00bd (s)' },
   ];
   el.innerHTML = phaseLabels.map(function(phLabel) {
     return '<div class="mb-1"><strong style="font-size:0.88em">' + phLabel + ':</strong> ' +
@@ -1813,7 +1814,7 @@ function _confirmExportToStatistics() {
   document.querySelectorAll('#sk-export-modal .sk-export-st-check:checked').forEach(function(cb) {
     var phLabel = cb.dataset.stlabel;
     var mKey    = cb.dataset.stmet;
-    var stHdr   = { delta_fm_pct: 'dFm%', tau: 'tau_s', half_time: 'thalf_s' };
+    var stHdr   = { delta_abs: 'dFm_au', delta_pct: 'dFm_pct', tau: 'tau_s', half_time: 'thalf_s' };
     cols.push({
       header: 'ST_' + phLabel + '_' + (stHdr[mKey] || mKey),
       get: (function(pl, mk) {
@@ -2028,7 +2029,7 @@ function renderStTable() {
 
   headRow.innerHTML =
     '<th>Sample</th><th>Phase</th><th>PAR</th><th>n pts</th>' +
-    '<th>&#916;Fm&prime; (%)</th><th>&#964; (s)</th><th>t&#189; (s)</th><th>R&#178;</th><th></th>';
+    '<th>&#916;Fm&prime; (a.u.)</th><th>&#916;Fm&prime; (%)</th><th>&#964; (s)</th><th>t&#189; (s)</th><th>R&#178;</th><th></th>';
 
   var rows = [];
   var files = skData.files || [];
@@ -2049,7 +2050,8 @@ function renderStTable() {
         '<td><strong>' + ph.label + '</strong></td>' +
         '<td>' + parLbl + '</td>' +
         '<td>' + ph.n_points + '</td>' +
-        '<td>' + fmt(ph.delta_fm_pct, 1) + '</td>' +
+        '<td>' + fmt(ph.delta_abs, 2) + '</td>' +
+        '<td>' + fmt(ph.delta_pct, 1) + '</td>' +
         '<td>' + fmt(ph.tau, 1) + '</td>' +
         '<td>' + fmt(ph.half_time, 1) + '</td>' +
         '<td class="' + r2cls + '">' + fmt(ph.r_sq, 3) + '</td>' +

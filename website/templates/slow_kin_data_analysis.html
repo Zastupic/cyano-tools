@@ -147,14 +147,18 @@
               <tr><td>NPQ<sub>max</sub></td><td>max(NPQ(t))</td><td></td><td>Maximum NPQ value reached during the measurement</td></tr>
               <tr><td>Actinic</td><td></td><td></td><td>Actinic light intensity during illumination (= max PAR; µmol<sub>photons</sub> m<sup>−2</sup> s<sup>−1</sup>)</td></tr>
               <tr><td colspan="4"><i>&nbsp;</i></td></tr>
-              <tr><td colspan="4"><i>State transition kinetics (mono-exponential fit to Fm′ per phase)</i></td></tr>
-              <tr><td>ΔFm′ (%)</td><td>(Fm′<sub>last</sub>−Fm′<sub>first</sub>) / |Fm′<sub>first</sub>| × 100</td><td></td><td>Relative change in Fm′ amplitude within a phase</td></tr>
-              <tr><td>τ (s)</td><td>1/k &nbsp; from &nbsp; A·e<sup>−k·(t−t<sub>0</sub>)</sup> + C</td><td></td><td>Exponential time constant of Fm′ relaxation</td></tr>
-              <tr><td>t½ (s)</td><td>τ × ln 2</td><td></td><td>Half-time of Fm′ relaxation</td></tr>
+              <tr><td colspan="4"><i>State transition kinetics (mono-exponential fit to Fm′ per phase) <sup>‡</sup></i></td></tr>
+              <tr><td>ΔFm′ (a.u.)</td><td>Fm′<sub>initial</sub> − Fm′<sub>last</sub></td><td></td><td>Absolute drop in Fm′ within phase; positive = Fm′ decreased (State 2 direction) <sup>‡</sup></td></tr>
+              <tr><td>ΔFm′ (%)</td><td>(Fm′<sub>initial</sub> − Fm′<sub>last</sub>) / Fm′<sub>initial</sub> × 100</td><td></td><td>Relative drop normalized to initial Fm′; positive = State 2 direction <sup>‡</sup></td></tr>
+              <tr><td>τ (s)</td><td>1/k &nbsp; from &nbsp; A·e<sup>−k·(t−t<sub>0</sub>)</sup> + C</td><td></td><td>Exponential time constant of Fm′ relaxation <sup>‡</sup></td></tr>
+              <tr><td>t½ (s)</td><td>τ × ln 2</td><td></td><td>Half-time of Fm′ relaxation <sup>‡</sup></td></tr>
               <tr><td>R²</td><td></td><td></td><td>Coefficient of determination of the exponential fit</td></tr>
             </table>
             <p style="font-size:78%; margin-top:0.3em;">
               <sup>†</sup> F<sub>0</sub>′ is the minimum fluorescence in the light-adapted state. For both MC-PAM / Dual PAM and AquaPen / FluorPen, F<sub>0</sub>′ is not available in the standard parameter file export and is approximated by the dark-adapted F<sub>0</sub> (van Kooten &amp; Snel 1990). Note: the Dual-PAM can measure F<sub>0</sub>′ directly by briefly switching off the actinic light, but this requires a specific protocol step and the value is not extracted by the current parser.
+            </p>
+            <p style="font-size:78%; margin-top:0.3em;">
+              <sup>‡</sup> State transitions redistribute excitation energy between PSI and PSII by relocating light-harvesting antenna; this is reflected in Fm′ changes (Allen 1992; Mullineaux &amp; Emlyn-Jones 2005). Fm′ relaxation kinetics are described by a mono-exponential decay model (Mullineaux &amp; Allen 1990).
             </p>
             <p style="font-size:78%; margin-top:0.5em;">
               <i>References:</i><br>
@@ -162,7 +166,10 @@
               Baker (2008) Annu. Rev. Plant Biol. 59:89–113 &nbsp;·&nbsp;
               Lichtenthaler et al. (2005) Photosynthetica 43:379–393 &nbsp;·&nbsp;
               Roháček (2002) Photosynthetica 40:13–29 &nbsp;·&nbsp;
-              Kramer et al. (2004) Photosynth. Res. 79:209–218
+              Kramer et al. (2004) Photosynth. Res. 79:209–218 &nbsp;·&nbsp;
+              Allen (1992) Biochim. Biophys. Acta 1098:275–335 &nbsp;·&nbsp;
+              Mullineaux &amp; Allen (1990) Photosynth. Res. 23:297–311 &nbsp;·&nbsp;
+              Mullineaux &amp; Emlyn-Jones (2005) J. Exp. Bot. 56:389–393
             </p>
           </div>
         </div>
@@ -948,16 +955,21 @@
           </div>
           <div class="row no-gutters">
             <div class="col-12 col-md-6 pr-md-1 mb-2">
-              <div class="sk-pub-ch" data-cid="sk-group-st-delta-fm-pct-chart" style="position:relative; height:260px;">
-                <canvas id="sk-group-st-delta-fm-pct-chart"></canvas>
+              <div class="sk-pub-ch" data-cid="sk-group-st-delta-abs-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-st-delta-abs-chart"></canvas>
               </div>
             </div>
             <div class="col-12 col-md-6 pl-md-1 mb-2">
+              <div class="sk-pub-ch" data-cid="sk-group-st-delta-pct-chart" style="position:relative; height:260px;">
+                <canvas id="sk-group-st-delta-pct-chart"></canvas>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 pr-md-1 mb-2">
               <div class="sk-pub-ch" data-cid="sk-group-st-tau-chart" style="position:relative; height:260px;">
                 <canvas id="sk-group-st-tau-chart"></canvas>
               </div>
             </div>
-            <div class="col-12 col-md-6 pr-md-1 mb-2">
+            <div class="col-12 col-md-6 pl-md-1 mb-2">
               <div class="sk-pub-ch" data-cid="sk-group-st-half-time-chart" style="position:relative; height:260px;">
                 <canvas id="sk-group-st-half-time-chart"></canvas>
               </div>

@@ -133,8 +133,9 @@ def _fit_single_exp(t_arr, y_arr):
     t, y = t[valid], y[valid]
     n = int(len(t))
 
-    delta_pct = _safe(float((y[-1] - y[0]) / abs(y[0]) * 100)) if n >= 2 and y[0] != 0 else None
-    base = dict(n_points=n, delta_fm_pct=delta_pct,
+    delta_abs = _safe(float(y[0] - y[-1])) if n >= 2 else None
+    delta_pct = _safe(float((y[0] - y[-1]) / y[0] * 100)) if n >= 2 and y[0] != 0 else None
+    base = dict(n_points=n, delta_abs=delta_abs, delta_pct=delta_pct,
                 tau=None, k=None, half_time=None, r_sq=None,
                 fit_t=[], fit_y=[], fit_ok=False,
                 low_confidence=False, insufficient_data=(n < 4))
@@ -166,7 +167,7 @@ def _fit_single_exp(t_arr, y_arr):
         t_dense   = np.linspace(0.0, float(tn[-1]), 120)
         y_dense   = _f(t_dense, *popt)
         return dict(
-            n_points=n, delta_fm_pct=delta_pct,
+            n_points=n, delta_abs=delta_abs, delta_pct=delta_pct,
             tau=_safe(tau), k=_safe(float(k_fit)), half_time=_safe(half_time),
             r_sq=_safe(r_sq),
             fit_t=[_safe(float(v)) for v in (t_dense + t0).tolist()],
@@ -912,7 +913,7 @@ def slow_kin_export():
         if st_data:
             ws_st = wb.create_sheet(title='State Transitions')
             ws_st.append(['Sample', 'Phase', 'PAR (µmol m⁻² s⁻¹)', 'n points',
-                          'ΔFm\' (%)', 'τ (s)', 't½ (s)', 'R²', 'Notes'])
+                          'ΔFm′ (a.u.)', 'ΔFm′ (%)', 'τ (s)', 't½ (s)', 'R²', 'Notes'])
             for fname, ph_list in st_data.items():
                 for ph in (ph_list or []):
                     note = ('low confidence' if ph.get('low_confidence') else
@@ -923,7 +924,8 @@ def slow_kin_export():
                         ph.get('label'),
                         ph.get('par'),
                         ph.get('n_points'),
-                        ph.get('delta_fm_pct'),
+                        ph.get('delta_abs'),
+                        ph.get('delta_pct'),
                         ph.get('tau'),
                         ph.get('half_time'),
                         ph.get('r_sq'),
