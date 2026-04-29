@@ -144,6 +144,33 @@ const REACTION_TEMPLATES = {
     },
 };
 
+// ── EFE protein synthesis constants ──────────────────────────────────────────
+// UniProt P32021 — EFE from Pseudomonas savastanoi pv. phaseolicola, 350 aa
+const EFE_SEQUENCE = 'MTNLQTFELPTEVTGCAADISLGRALIQAWQKDGIFQIKTDSEQDRKTQEAMAASKQFCKEPLTFKSSCVSDLTYSGYVASGEEVTAGKPDFPEIFTVCKDLSVGDQRVKAGWPCHGPVPWPNNTYQKSMKTFMEELGLAGERLLKLTALGFELPINTFTDLTRDGWHHMRVLRFPPQTSTLSRGIGAHTDYGLLVIAAQDDVGGLYIRPPVEGEKRNRNWLPGESSAGMFEHDEPWTFVTPTPGVWTVFPGDILQFMTGGQLLSTPHKVKLNTRERFACAYFHEPNFEASAYPLFEPSANERIHYGEHFTNMFMRCYPDRITTQRINKENRLAHLEDLKKYSDTRATGS';
+
+// One-letter code → cytoplasmic BiGG metabolite ID (iRH783)
+const AA_BIGG = {
+    A: 'ala__L_c', R: 'arg__L_c', N: 'asn__L_c', D: 'asp__L_c', C: 'cys__L_c',
+    E: 'glu__L_c', Q: 'gln__L_c', G: 'gly_c',    H: 'his__L_c', I: 'ile__L_c',
+    L: 'leu__L_c', K: 'lys__L_c', M: 'met__L_c', F: 'phe__L_c', P: 'pro__L_c',
+    S: 'ser__L_c', T: 'thr__L_c', W: 'trp__L_c', Y: 'tyr__L_c', V: 'val__L_c',
+};
+
+// ── Biosynthetic Cost — recombinant product lookup ────────────────────────────
+const BC_RECOMB_PRODUCTS = {
+    ethylene_efe:   { met: 'ethy_c', name: 'Ethylene', target_rxn: 'EX_ethy_e'  },
+    isoprene_isps:  { met: 'isop_c', name: 'Isoprene', target_rxn: 'EX_isop_e'  },
+    sucrose_export: { met: 'sucr_c', name: 'Sucrose',  target_rxn: 'DM_sucr_c'  },
+    phb_pha:        { met: 'phb_c',  name: 'PHB',      target_rxn: 'DM_phb_c'   },
+};
+
+// Currency / cofactor metabolite IDs excluded from auto-detection of product
+const BC_CURRENCY_METS = new Set([
+    'atp_c','adp_c','amp_c','nadph_c','nadp_c','nadh_c','nad_c',
+    'h_c','h2o_c','pi_c','ppi_c','co2_c','o2_c','hco3_c',
+    'h_e','h2o_e','co2_e','o2_e','pi_e',
+]);
+
 // ── Experimental reference data ───────────────────────────────────────────────
 // Zavřel et al. 2019 (eLife 42508) — Synechocystis PCC 6803 turbidostat
 // Light intensity (µmol·m⁻²·s⁻¹) vs specific growth rate (h⁻¹) ± SD
@@ -1943,6 +1970,10 @@ function filterTable(tableId, inputId, countLabelId) {
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('run-en-btn').addEventListener('click', runEnergetics);
     document.getElementById('run-en-btn-met')?.addEventListener('click', runEnergeticsFromMet);
+    document.getElementById('run-en-recomb-btn')?.addEventListener('click', runEnergeticsRecomb);
+    document.getElementById('bc-recomb-template')?.addEventListener('change', bcRecombOnTemplateChange);
+    document.getElementById('bc-recomb-apply-btn')?.addEventListener('click', bcRecombApplyCustom);
+    document.getElementById('run-efe-protein-btn')?.addEventListener('click', runEfeProteinCost);
 
     // Reference lock / clear buttons
     document.getElementById('en-lock-btn').addEventListener('click',  () => lockRef('en'));
@@ -2680,12 +2711,18 @@ let bcSimState    = null;   // {D_opt, I0} — stored when a chemostat sim is re
 let bcMetSelRxn   = null;   // reaction ID selected via metabolite browser
 let bcMetSelMetId = null;   // metabolite ID currently browsed
 
+// Recombinant product state — scoped to BC calculation only
+let bcRecombReactions   = [];
+let bcRecombProductMet  = null;
+let bcRecombTargetRxn   = null;
+let bcRecombProductName = '';
+
 function _bcCommonBody() {
     const mode = document.querySelector('input[name="bc-mode"]:checked')?.value || 'independent';
     return {
         mode,
         constrained:      document.getElementById('en-constrained').checked,
-        custom_reactions: customReactions,
+        custom_reactions: customReactions.concat(bcRecombReactions),
         growth_rate:      (mode === 'dependent' && bcSimState) ? bcSimState.D_opt : 0,
     };
 }
@@ -2733,6 +2770,194 @@ function runEnergeticsFromMet() {
     if (!bcMetSelRxn) { showAnalysisError('en-error', 'Select a reaction from the metabolite table.'); return; }
     _bcRunWithBody({ ...(_bcCommonBody()), target_rxn: bcMetSelRxn, target_met: bcMetSelMetId },
                    document.getElementById('run-en-btn-met'));
+}
+
+// ── Biosynthetic Cost — recombinant product helpers ───────────────────────────
+
+function bcRecombOnTemplateChange() {
+    const val = document.getElementById('bc-recomb-template').value;
+    document.getElementById('bc-recomb-custom').style.display = val === 'custom' ? '' : 'none';
+    if (val && val !== 'custom') {
+        bcRecombApplyTemplate(val);
+    } else if (!val) {
+        bcRecombClear();
+    }
+    // 'custom' waits for Apply button
+}
+
+function bcRecombApplyTemplate(key) {
+    const tpl  = REACTION_TEMPLATES[key];
+    const prod = BC_RECOMB_PRODUCTS[key];
+    if (!tpl || !prod) return;
+    bcRecombReactions   = tpl.reactions.map(r => ({ ...r, stoich: { ...r.stoich }, new_mets: { ...r.new_mets } }));
+    bcRecombProductMet  = prod.met;
+    bcRecombTargetRxn   = prod.target_rxn;
+    bcRecombProductName = prod.name;
+    bcRecombUpdateUI();
+}
+
+function bcRecombApplyCustom() {
+    const rxnId     = (document.getElementById('bc-recomb-rxn-id')?.value    || '').trim();
+    const stoichRaw = (document.getElementById('bc-recomb-stoich')?.value     || '').trim();
+    const newName   = (document.getElementById('bc-recomb-new-met-name')?.value || '').trim();
+    const errEl     = document.getElementById('bc-recomb-custom-error');
+    const errWrap   = document.getElementById('bc-recomb-custom-error-wrap');
+
+    function showErr(msg) { errEl.textContent = msg; errWrap.style.display = ''; }
+    errWrap.style.display = 'none';
+
+    if (!rxnId)     { showErr('Reaction ID is required.');    return; }
+    if (!stoichRaw) { showErr('Stoichiometry is required.'); return; }
+
+    const stoich = {};
+    try {
+        for (const part of stoichRaw.split(',')) {
+            const idx = part.indexOf(':');
+            if (idx < 0) throw new Error();
+            const metId = part.slice(0, idx).trim();
+            const v     = parseFloat(part.slice(idx + 1).trim());
+            if (!metId || isNaN(v)) throw new Error();
+            stoich[metId] = v;
+        }
+    } catch {
+        showErr('Cannot parse stoichiometry. Use format: met_id: coeff, met_id: coeff'); return;
+    }
+
+    const candidates = Object.entries(stoich)
+        .filter(([id, v]) => v > 0 && !BC_CURRENCY_METS.has(id))
+        .map(([id]) => id);
+
+    if (candidates.length === 0) {
+        showErr('No product detected. Provide a non-currency metabolite with a positive coefficient.'); return;
+    }
+    const productMet = candidates[0];
+
+    const new_mets = {};
+    if (newName) {
+        new_mets[productMet] = { name: newName, formula: '', compartment: productMet.slice(-1) };
+    }
+
+    bcRecombReactions   = [{ id: rxnId, name: rxnId, lb: 0, ub: 1000, stoich, new_mets }];
+    bcRecombProductMet  = productMet;
+    bcRecombTargetRxn   = rxnId;
+    bcRecombProductName = newName || productMet;
+    bcRecombUpdateUI();
+}
+
+function bcRecombClear() {
+    bcRecombReactions   = [];
+    bcRecombProductMet  = null;
+    bcRecombTargetRxn   = null;
+    bcRecombProductName = '';
+    bcRecombUpdateUI();
+}
+
+function bcRecombUpdateUI() {
+    const active   = bcRecombReactions.length > 0 && !!bcRecombProductMet;
+    const badges   = document.getElementById('bc-recomb-badges');
+    const calcWrap = document.getElementById('bc-recomb-calc-wrap');
+    const ttRow    = document.getElementById('bc-target-type-row');
+    const rxnSec   = document.getElementById('bc-rxn-section');
+    const metSec   = document.getElementById('bc-met-section');
+    const descWrap = document.getElementById('bc-recomb-desc-wrap');
+    const descEl   = document.getElementById('bc-recomb-desc');
+
+    const efePanel = document.getElementById('bc-efe-protein-panel');
+    const key      = document.getElementById('bc-recomb-template')?.value;
+
+    if (active) {
+        document.getElementById('bc-recomb-rxn-badge').textContent     = bcRecombTargetRxn;
+        document.getElementById('bc-recomb-product-badge').textContent = bcRecombProductName;
+        badges.style.display    = '';
+        calcWrap.style.display  = '';
+        const tpl = (key && key !== 'custom') ? REACTION_TEMPLATES[key] : null;
+        if (tpl?.description) {
+            descEl.textContent     = tpl.description;
+            descWrap.style.display = '';
+        } else {
+            descWrap.style.display = 'none';
+        }
+        if (efePanel) efePanel.style.display = key === 'ethylene_efe' ? '' : 'none';
+        if (ttRow)  ttRow.style.display  = 'none';
+        if (rxnSec) rxnSec.style.display = 'none';
+        if (metSec) metSec.style.display = 'none';
+    } else {
+        badges.style.display   = 'none';
+        calcWrap.style.display = 'none';
+        descWrap.style.display = 'none';
+        if (efePanel) efePanel.style.display = 'none';
+        if (ttRow) ttRow.style.display = '';
+        const targetType = document.querySelector('input[name="bc-target-type"]:checked')?.value || 'reaction';
+        if (rxnSec) rxnSec.style.display = targetType === 'reaction'   ? '' : 'none';
+        if (metSec) metSec.style.display = targetType === 'metabolite' ? '' : 'none';
+    }
+}
+
+function runEnergeticsRecomb() {
+    if (!bcRecombTargetRxn) return;
+    _bcRunWithBody({ ...(_bcCommonBody()), target_rxn: bcRecombTargetRxn, target_met: bcRecombProductMet },
+                   document.getElementById('run-en-recomb-btn'));
+}
+
+function buildEfeProteinStoich() {
+    const inclAa      = document.getElementById('bc-efe-aa')?.checked     ?? true;
+    const inclTransl  = document.getElementById('bc-efe-transl')?.checked  ?? true;
+    const inclTranscr = document.getElementById('bc-efe-transcr')?.checked ?? true;
+
+    const n      = EFE_SEQUENCE.length;  // 350
+    const stoich = {};
+    function add(met, delta) { stoich[met] = (stoich[met] || 0) + delta; }
+
+    // Amino acid procurement: model traces back biosynthesis cost from central metabolites
+    if (inclAa) {
+        const counts = {};
+        for (const aa of EFE_SEQUENCE) counts[aa] = (counts[aa] || 0) + 1;
+        for (const [aa, cnt] of Object.entries(counts)) {
+            const bigg = AA_BIGG[aa];
+            if (bigg) add(bigg, -cnt);
+        }
+    }
+
+    // Translation: 2 ATP for aminoacyl-tRNA charging + 2 GTP for elongation ≈ 4 ATP-eq per aa
+    if (inclTransl) {
+        add('atp_c', -4 * n);
+        add('adp_c', +4 * n);
+        add('pi_c',  +4 * n);
+    }
+
+    // Transcription: ~2 ATP-eq per nucleotide × 3 nt per codon (NTPs proxied as ATP)
+    if (inclTranscr) {
+        add('atp_c', -6 * n);
+        add('adp_c', +6 * n);
+        add('pi_c',  +6 * n);
+    }
+
+    stoich['efe_protein_c'] = 1;
+    const new_mets = {
+        efe_protein_c: { name: 'EFE protein (P32021, 350 aa)', formula: '', compartment: 'c' },
+    };
+    return { id: 'EFE_PROTEIN_SYNTH', name: 'EFE protein synthesis', lb: 0, ub: 1000, stoich, new_mets };
+}
+
+function runEfeProteinCost() {
+    const rxn  = buildEfeProteinStoich();
+    const drain = {
+        id: 'DM_efe_protein_c', name: 'EFE protein demand sink',
+        lb: 0, ub: 1000,
+        stoich:   { efe_protein_c: -1 },
+        new_mets: {},
+    };
+    const mode = document.querySelector('input[name="bc-mode"]:checked')?.value || 'independent';
+    const body = {
+        mode,
+        constrained:      document.getElementById('en-constrained').checked,
+        // Only base custom reactions — protein synthesis is independent of the EFE enzymatic reaction
+        custom_reactions: customReactions.concat([rxn, drain]),
+        growth_rate:      (mode === 'dependent' && bcSimState) ? bcSimState.D_opt : 0,
+        target_rxn:       'DM_efe_protein_c',
+        target_met:       'efe_protein_c',
+    };
+    _bcRunWithBody(body, document.getElementById('run-efe-protein-btn'));
 }
 
 // ── Metabolite browser ────────────────────────────────────────────────────────
@@ -2860,13 +3085,6 @@ function filterMetRxnTable(subFilter) {
                 rxn ? `${rxn.id} — ${rxn.name || ''}` : bcMetSelRxn;
         });
     });
-}
-
-function runEnergetics() {
-    const rxn = document.getElementById('en-rxn').value.trim();
-    if (!rxn) { showAnalysisError('en-error', 'Select a target reaction.'); return; }
-    _bcRunWithBody({ ...(_bcCommonBody()), target_rxn: rxn },
-                   document.getElementById('run-en-btn'));
 }
 
 function renderEnergetics(d) {

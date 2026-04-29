@@ -1758,11 +1758,21 @@
                             <p class="font-weight-bold mb-1">Pathway / subsystem breakdown</p>
                             <p class="mb-2">Reactions are grouped by their annotated pathway (using the model's internal prefix codes: PP = Calvin cycle, GS = glycolysis, AA = aromatic amino acids, etc.). For each group the <em>net</em> ATP and NADPH balance is reported — positive means the pathway <em>produces</em> that currency (e.g. photosynthetic reactions generate ATP), negative means it <em>consumes</em> it. The sum across all pathways is zero by mass balance.</p>
 
+                            <p class="font-weight-bold mb-1">Recombinant and heterologous products</p>
+                            <p class="mb-1">Products synthesised by a heterologous enzyme (e.g. ethylene via the <em>Pseudomonas syringae</em> ethylene-forming enzyme, EFE) are not present in the native <em>Synechocystis</em> model and therefore require two additional steps before running the cost calculation:</p>
+                            <ol class="mb-2 pl-4">
+                                <li class="mb-1"><strong>Add the heterologous reaction.</strong> In the <em>Simulation</em> tab, expand <em>Custom Reaction Engineering</em> and either choose a pre-built template (e.g. "Ethylene via Efe") or enter the stoichiometry manually. The reaction is then injected into every subsequent FBA run, including the biosynthetic cost calculation. Example stoichiometry for EFE: <code>akg_c:−1, o2_c:−1, ethy_c:1, co2_c:3</code> (2-oxoglutarate + O₂ → ethylene + 3 CO₂).</li>
+                                <li class="mb-1"><strong>Ensure an exchange drain exists.</strong> If the product is not already exchangeable (i.e. has no exchange reaction in the model), the tool automatically adds a demand drain when you target it in the Biosynthetic Cost calculation. For volatile products such as ethylene, no additional transport step is required; for larger molecules or polar compounds, a specific export reaction may need to be included in the custom reaction set.</li>
+                                <li class="mb-1"><strong>Select the product reaction or metabolite.</strong> Switch to the <em>Biosynthetic Cost</em> tab, choose the target by reaction (e.g. the EFE reaction or its demand drain) or by metabolite (e.g. ethylene), and click <em>Calculate</em>.</li>
+                            </ol>
+                            <p class="mb-2">The resulting cost reflects the minimum photosynthetic resources (photons, CO₂, ATP, NADPH) required to sustain one mmol of net product flux through the heterologous pathway, with all native metabolism adjusted by the solver. Because EFE consumes 2-oxoglutarate — a central TCA/Calvin-cycle intermediate — its biosynthetic cost includes the full upstream carbon-fixation and energy cost of synthesising that substrate from CO₂ and light, minus the three CO₂ molecules released per ethylene produced.</p>
+
                             <p class="font-weight-bold mb-1">Caveats</p>
                             <ul class="mb-0 pl-4">
                                 <li class="mb-1">FBA is a steady-state, constraint-based model. It does not capture kinetics, enzyme capacities, or regulatory effects.</li>
                                 <li class="mb-1">The result is a <em>lower bound</em> on the true in-vivo cost; actual cells have thermodynamic inefficiencies and maintenance requirements not fully captured here.</li>
-                                <li>Costs depend on which metabolic route the solver selects. If multiple routes are equally efficient, pFBA picks one arbitrarily; the true in-vivo route may differ.</li>
+                                <li class="mb-1">Costs depend on which metabolic route the solver selects. If multiple routes are equally efficient, pFBA picks one arbitrarily; the true in-vivo route may differ.</li>
+                                <li>For heterologous pathways, the cost assumes the heterologous enzyme operates with no kinetic limitation and that all required cofactors are supplied by the native network — deviations in real cells may substantially increase the actual resource demand.</li>
                             </ul>
 
                         </div>
@@ -1805,8 +1815,126 @@
                         <span id="bc-mode-desc-text"><i class="fa fa-info-circle"></i> Growth blocked — all metabolic capacity directed to product. Cost normalised to 1 mmol of target reaction flux.</span>
                     </p>
 
+                    <!-- Recombinant / heterologous product panel -->
+                    <div class="border rounded p-2 mb-3" id="bc-recomb-panel" style="border-color:#17a2b8 !important; background:rgba(23,162,184,0.04);">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fa fa-flask text-info mr-1" style="font-size:0.95em;"></i>
+                            <strong class="small">Recombinant / heterologous product</strong>
+                            <span class="text-muted small ml-2">— define a heterologous pathway (scoped to this BC calculation only)</span>
+                        </div>
+                        <div class="form-row align-items-end">
+                            <div class="col-auto">
+                                <label class="small text-muted mb-1">Pathway template</label>
+                                <select class="form-control form-control-sm" id="bc-recomb-template" style="min-width:240px;">
+                                    <option value="">— none (use standard target below) —</option>
+                                    <option value="ethylene_efe">Ethylene via Efe (P. syringae)</option>
+                                    <option value="isoprene_isps">Isoprene via IspS (poplar)</option>
+                                    <option value="sucrose_export">Sucrose export sink</option>
+                                    <option value="phb_pha">PHB via PhaABC pathway</option>
+                                    <option value="custom">Custom stoichiometry…</option>
+                                </select>
+                            </div>
+                            <div class="col-auto align-self-end pb-1" id="bc-recomb-badges" style="display:none;">
+                                <span class="badge badge-info mr-1" id="bc-recomb-rxn-badge" style="font-size:0.78em;"></span>
+                                <i class="fa fa-long-arrow-right text-muted mx-1" style="font-size:0.75em;"></i>
+                                <span class="badge badge-success" id="bc-recomb-product-badge" style="font-size:0.78em;"></span>
+                            </div>
+                            <div class="col-auto" id="bc-recomb-calc-wrap" style="display:none;">
+                                <button class="btn btn-success btn-sm" id="run-en-recomb-btn">
+                                    <i class="fa fa-play"></i> Calculate
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Custom stoichiometry form -->
+                        <div id="bc-recomb-custom" class="mt-2 pt-2 border-top" style="display:none;">
+                            <div class="form-row align-items-end">
+                                <div class="col-md-2">
+                                    <label class="small text-muted mb-1">Reaction ID</label>
+                                    <input type="text" class="form-control form-control-sm" id="bc-recomb-rxn-id" placeholder="e.g. MY_RXN">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="small text-muted mb-1">Stoichiometry <small class="text-muted">(met_id: coeff, …)</small></label>
+                                    <input type="text" class="form-control form-control-sm" id="bc-recomb-stoich" placeholder="e.g. akg_c:-1, o2_c:-1, ethy_c:1">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small text-muted mb-1">New met name <small class="text-muted">(optional)</small></label>
+                                    <input type="text" class="form-control form-control-sm" id="bc-recomb-new-met-name" placeholder="e.g. Ethylene">
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-outline-info btn-sm" id="bc-recomb-apply-btn">
+                                        <i class="fa fa-check"></i> Apply
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-1" id="bc-recomb-custom-error-wrap" style="display:none;">
+                                <span class="small text-danger" id="bc-recomb-custom-error"></span>
+                            </div>
+                        </div>
+                        <div class="mt-1" id="bc-recomb-desc-wrap" style="display:none;">
+                            <small class="text-muted" id="bc-recomb-desc"></small>
+                        </div>
+                        <!-- EFE protein synthesis cost (shown only for ethylene_efe template) -->
+                        <div id="bc-efe-protein-panel" class="mt-2 pt-2 border-top" style="display:none;">
+                            <div class="d-flex align-items-center mb-1">
+                                <strong class="small">EFE protein synthesis cost</strong>
+                                <span class="text-muted small ml-2">— cost per mmol enzyme synthesized (separate from catalytic cost)</span>
+                            </div>
+                            <div class="form-row align-items-center">
+                                <div class="col-auto">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-efe-aa" checked>
+                                        <label class="form-check-label small" for="bc-efe-aa">
+                                            Amino acid biosynthesis
+                                            <span class="text-muted" style="font-size:0.85em;">(de novo from CO₂/NO₃⁻)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-efe-transl" checked>
+                                        <label class="form-check-label small" for="bc-efe-transl">
+                                            Translation
+                                            <span class="text-muted" style="font-size:0.85em;">(ribosomal elongation, 4 ATP/aa = 1 400 ATP)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-efe-transcr" checked>
+                                        <label class="form-check-label small" for="bc-efe-transcr">
+                                            Transcription
+                                            <span class="text-muted" style="font-size:0.85em;">(mRNA synthesis, ~6 NTP/aa ≈ 2 100 ATP-eq; NTP = ATP/GTP/CTP/UTP)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-auto ml-1">
+                                    <button class="btn btn-outline-success btn-sm" id="run-efe-protein-btn">
+                                        <i class="fa fa-play"></i> Calculate protein synthesis
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Collapsible calculation details -->
+                            <div class="mt-1">
+                                <a class="small text-muted" data-toggle="collapse" href="#bc-efe-details" role="button" aria-expanded="false" style="text-decoration:none;">
+                                    <i class="fa fa-info-circle"></i> Calculation details
+                                    <i class="fa fa-chevron-down" style="font-size:0.75em;"></i>
+                                </a>
+                                <div class="collapse" id="bc-efe-details">
+                                    <div class="mt-2 p-2 rounded" style="background:rgba(0,0,0,0.03); font-size:0.82em; line-height:1.6;">
+                                        <p class="mb-1"><strong>What this calculates:</strong> the photosynthetic resources (ATP, NADPH, photons) required to produce one mmol of EFE enzyme from inorganic precursors (CO₂, H₂O, NO₃⁻, SO₄²⁻). This is the <em>expression burden</em> — the cellular investment in the heterologous enzyme itself, independent of its catalytic activity.</p>
+                                        <p class="mb-1"><strong>Amino acid biosynthesis</strong> — the stoichiometry of all 20 amino acids in the EFE sequence (UniProt P32021, 350 aa, <em>Pseudomonas savastanoi</em> pv. <em>phaseolicola</em>) is added as substrates to the synthesis reaction. The FBA solver then traces back the full metabolic cost of producing each amino acid de novo from CO₂ fixation and nitrogen assimilation through the Synechocystis network.</p>
+                                        <p class="mb-1"><strong>Translation</strong> — each peptide bond requires 2 GTP for the ribosomal elongation cycle (EF-Tu + EF-G) and 2 ATP equivalents for aminoacyl-tRNA charging, giving <strong>4 ATP-equivalents per amino acid</strong>. For 350 aa: 4 × 350 = 1 400 ATP consumed → ADP + Pᵢ. Initiation GTP (~3 total) and termination are negligible and omitted.</p>
+                                        <p class="mb-1"><strong>Transcription</strong> — RNA polymerase extends the mRNA chain by incorporating one <strong>NTP</strong> (nucleoside triphosphate: ATP, GTP, CTP, or UTP, depending on the template base) per nucleotide and releasing pyrophosphate (PPᵢ). PPᵢ is immediately hydrolysed to 2 Pᵢ by inorganic pyrophosphatase, making the reaction irreversible and providing a net cost of <strong>2 high-energy phosphate bonds per nucleotide</strong> (≈ 2 ATP-equivalents). For 350 codons: 350 × 3 nt × 2 = 2 100 ATP-equivalents. Because the four NTP types differ slightly in biosynthetic cost (purines ATP/GTP require more NADPH than pyrimidines CTP/UTP), all are approximated as ATP in the stoichiometry here — the resulting error is small (&lt; 5 %).</p>
+                                        <p class="mb-0 text-muted">Note: ribosome biogenesis, chaperone-assisted folding, post-translational modifications, and protein turnover are not included. The result gives a lower-bound estimate of the expression cost.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Target type toggle -->
-                    <div class="mb-2">
+                    <div class="mb-2" id="bc-target-type-row">
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" name="bc-target-type" id="bc-tt-rxn" value="reaction" class="d-none" checked>
                             <label class="btn btn-outline-secondary active py-1 px-2" for="bc-tt-rxn" style="font-size:0.82em;"><i class="fa fa-exchange"></i> By reaction</label>
