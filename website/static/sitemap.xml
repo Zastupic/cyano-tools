@@ -1,87 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/</loc>
+    <loc>https://www.cyano.tools/</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/OJIP_data_analysis</loc>
+    <loc>https://www.cyano.tools/OJIP_data_analysis</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/light_curves_analysis</loc>
+    <loc>https://www.cyano.tools/light_curves_analysis</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/slow_kin_data_analysis</loc>
+    <loc>https://www.cyano.tools/slow_kin_data_analysis</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/MIMS_data_analysis</loc>
+    <loc>https://www.cyano.tools/MIMS_data_analysis</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/MIMS_data_analysis_periodic</loc>
+    <loc>https://www.cyano.tools/MIMS_data_analysis_periodic</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/ex_em_spectra_analysis</loc>
+    <loc>https://www.cyano.tools/ex_em_spectra_analysis</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/cell_count</loc>
+    <loc>https://www.cyano.tools/cell_count</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/cell_count_filament</loc>
+    <loc>https://www.cyano.tools/cell_count_filament</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/cell_size_round_cells</loc>
+    <loc>https://www.cyano.tools/cell_size_round_cells</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/cell_size_filament</loc>
+    <loc>https://www.cyano.tools/cell_size_filament</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/pixel_profiles_round_cells</loc>
+    <loc>https://www.cyano.tools/pixel_profiles_round_cells</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/pixel_profiles_filament</loc>
+    <loc>https://www.cyano.tools/pixel_profiles_filament</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/P700_kin_data_analysis</loc>
+    <loc>https://www.cyano.tools/P700_kin_data_analysis</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/calculators</loc>
+    <loc>https://www.cyano.tools/calculators</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/statistics</loc>
+    <loc>https://www.cyano.tools/statistics</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://tools-py.e-cyanobacterium.org/development_log</loc>
+    <loc>https://www.cyano.tools/development_log</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
