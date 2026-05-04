@@ -1740,7 +1740,7 @@ function generateOJIPMethodsText() {
     lines.push(
         'Fast chlorophyll fluorescence induction kinetics (OJIP transients) were measured using a ' + fluoro + '. ' +
         'Raw data files were analyzed using the OJIP Analyzer module of CyanoTools ' +
-        '(https://tools-py.e-cyanobacterium.org/OJIP_data_analysis). ' +
+        '(https://www.cyano.tools/OJIP_data_analysis). ' +
         'A total of ' + n + ' transient' + (n !== 1 ? 's were' : ' was') + ' processed (' + fList + ').'
     );
 

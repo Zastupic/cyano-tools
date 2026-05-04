@@ -1,6 +1,6 @@
 # CyanoTools
 
-[![Website](https://img.shields.io/badge/Website-tools--py.e--cyanobacterium.org-blue)](https://tools-py.e-cyanobacterium.org/)
+[![Website](https://img.shields.io/badge/Website-cyano.tools-blue)](https://www.cyano.tools/)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen)](#)
 [![Stack](https://img.shields.io/badge/Stack-Python%20|%20Flask-lightgrey)](https://www.pythonanywhere.com/)
 

@@ -2224,7 +2224,7 @@ function generateSKMethodsText() {
         intro += fluoro + ' (parameter file export).';
     }
     intro += ' Data were analyzed using the Slow Kinetics Analyzer module of CyanoTools ' +
-             '(https://tools-py.e-cyanobacterium.org/slow_kin_data_analysis). ' +
+             '(https://www.cyano.tools/slow_kin_data_analysis). ' +
              'A total of ' + n + ' measurement' + (n !== 1 ? 's were' : ' was') + ' processed (' + fList + ').';
     lines.push(intro);
 

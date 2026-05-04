@@ -7,7 +7,7 @@ import urllib.parse
 import json
 from datetime import datetime, timedelta, timezone
 
-GITHUB_REPO    = "Zastupic/tools-py.e-cyanobacterium.org"
+GITHUB_REPO    = "Zastupic/cyano-tools"
 BADGE_DAYS     = 21   # "Updated" badge visible this many days after the last commit to the tool file
 NEW_BADGE_DAYS = 60   # "New" badge visible this many days after the tool's addition date
 _CACHE_TTL     = timedelta(hours=6)

@@ -1160,7 +1160,7 @@ For each excitation wavelength, a series of brief single-turnover flashes was ap
 
     σ(II)λ = k(II) / (L × PARλ)
 
-where L is the Avogadro constant (6.022 × 10²³ mol⁻¹) and PARλ is the actinic photon flux density at wavelength λ (µmol photons m⁻² s⁻¹), converted to photons nm⁻² s⁻¹. All calculations were performed by WinControl-3 software (Heinz Walz GmbH). The resulting σ(II)λ values (nm²) were exported as semicolon-delimited CSV files and analysed using the CyanoTools Sigma(II) Analyzer (https://tools-py.e-cyanobacterium.org/sigma_analysis).
+where L is the Avogadro constant (6.022 × 10²³ mol⁻¹) and PARλ is the actinic photon flux density at wavelength λ (µmol photons m⁻² s⁻¹), converted to photons nm⁻² s⁻¹. All calculations were performed by WinControl-3 software (Heinz Walz GmbH). The resulting σ(II)λ values (nm²) were exported as semicolon-delimited CSV files and analysed using the CyanoTools Sigma(II) Analyzer (https://www.cyano.tools/sigma_analysis).
 
 Additional kinetic parameters extracted from the fit include the Joliot connectivity parameter p (sigmoidicity of the O–I₁ rise) and the first QA⁻ reoxidation time constant 1.r.τ (ms), reflecting the rate of electron transfer from QA⁻ to QB.
 

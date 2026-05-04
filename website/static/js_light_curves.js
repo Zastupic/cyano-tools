@@ -1498,7 +1498,7 @@ function generateLCMethodsText() {
         'Rapid light curves (photosynthesis-irradiance curves) were measured using an AquaPen/FluorPen ' +
         'fluorometer (Photon Systems Instruments) following ' + protoDesc + '. ' +
         'Data were analyzed using the Rapid Light Curve Analyzer module of CyanoTools ' +
-        '(https://tools-py.e-cyanobacterium.org/light_curves_analysis). ' +
+        '(https://www.cyano.tools/light_curves_analysis). ' +
         'A total of ' + n + ' light curve' + (n !== 1 ? 's were' : ' was') + ' processed (' + fList + ').'
     );
 
