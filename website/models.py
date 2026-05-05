@@ -9,6 +9,12 @@ class User(db.Model, UserMixin):
     name = db.Column(db.String(150))
     institution = db.Column(db.String(150))
 
+    def __init__(self, email: str, name: str, institution: str, password: str):
+        self.email = email
+        self.name = name
+        self.institution = institution
+        self.password = password
+
 class PageView(db.Model):
     __tablename__ = 'page_view'
     id        = db.Column(db.Integer, primary_key=True)
