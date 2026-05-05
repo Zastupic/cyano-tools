@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_uploads import IMAGES, UploadSet, configure_uploads
@@ -80,6 +80,20 @@ def create_app():
     from .pixel_profiles_round_cells import pixel_profiles_round_cells
     from .pixel_profiles_filament import pixel_profiles_filament
     from .models import User, PageView
+
+    ALLOWED_HOSTS = frozenset([
+        'www.cyano.tools',
+        'webapp-30413.eu.pythonanywhere.com',
+    ])
+
+    @app.before_request
+    def redirect_unknown_subdomains():
+        host = request.host.split(':')[0]
+        if host in ('localhost', '127.0.0.1'):
+            return
+        if host not in ALLOWED_HOSTS:
+            target = 'https://www.cyano.tools' + request.full_path.rstrip('?')
+            return redirect(target, 301)
 
     TRACKED_PATHS = frozenset([
         '/', '/cell_count', '/cell_count_filament',

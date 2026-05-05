@@ -58,20 +58,16 @@
         crossorigin="anonymous">
     </script>
     -->
-    <!-- Google Analytics — loaded only after cookie consent -->
+    <!-- Google Analytics — always active -->
     <script>
-        function loadGA() {
-            window.dataLayer = window.dataLayer || [];
-            function gtag() { dataLayer.push(arguments); }
-            window.gtag = gtag;
-            gtag('js', new Date());
-            gtag('config', 'G-V1B3ZCRT9S');
-            var s = document.createElement('script');
-            s.async = true;
-            s.src = 'https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S';
-            document.head.appendChild(s);
-        }
-        if (localStorage.getItem('cyanotools_cookie_consent') === 'accepted') { loadGA(); }
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-V1B3ZCRT9S');
+        var _gas = document.createElement('script');
+        _gas.async = true;
+        _gas.src = 'https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S';
+        document.head.appendChild(_gas);
     </script>
     <!-- Custom JS -->
     <script src="{{url_for('static', filename='js_index.js')}}"></script>
@@ -250,7 +246,7 @@
                         <h4>Contact</h4>
                         <a href="mailto:zavrel.t@czechglobe.cz">Contact Us</a><br>
                         <a href="mailto:zavrel.t@czechglobe.cz"><i>zavrel.t@czechglobe.cz</i></a><br>
-                        <a href="#" id="cookie-settings-link" style="font-size:0.8rem; opacity:0.7;">Cookie settings</a> &middot;
+                        <a href="https://policies.google.com/technologies/cookies" target="_blank" rel="noopener" style="font-size:0.8rem; opacity:0.7;">Cookie policy</a> &middot;
                         <a href="/site_stats" style="font-size:0.8rem; opacity:0.7;">Site statistics</a><br>
                     </div>
                 </div>
@@ -258,129 +254,29 @@
         </footer>
     </div>  
 
-<!-- ── Cookie consent banner ───────────────────────────────────────────────── -->
+<!-- ── Cookie notice banner ───────────────────────────────────────────────── -->
 <div id="cookie-consent-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#1a1a2e; color:#d1d1d1; padding:12px 20px; box-shadow:0 -2px 10px rgba(0,0,0,0.4);">
     <div style="max-width:1200px; margin:0 auto; display:flex; align-items:center; flex-wrap:wrap; gap:10px;">
         <div style="flex:1; min-width:200px; font-size:0.875rem; line-height:1.5;">
-            We use <strong style="color:#fff;">strictly necessary</strong> cookies for session management and optional
-            <strong style="color:#fff;">analytics cookies</strong> (Google Analytics) to understand how the tools are used.
-            <a href="#" id="cookie-policy-link" style="color:#00b894; white-space:nowrap;">Cookie policy</a>
+            This site uses cookies from Google to deliver its services and to analyze traffic. Information about your use of this site is shared with Google. By using this site, you agree to its use of cookies.
+            <a href="https://policies.google.com/technologies/cookies" target="_blank" rel="noopener" style="color:#00b894; white-space:nowrap;">Learn more</a>
         </div>
-        <div style="display:flex; gap:8px; flex-shrink:0;">
-            <button id="cookie-decline-btn" type="button" class="btn btn-sm" style="color:#aaa; background:transparent; border:1px solid #555;">Decline analytics</button>
-            <button id="cookie-accept-btn" type="button" class="btn btn-sm" style="background:#00b894; color:#fff; border:none;">Accept analytics</button>
+        <div style="flex-shrink:0;">
+            <button id="cookie-got-it-btn" type="button" class="btn btn-sm" style="background:#00b894; color:#fff; border:none;">Got it</button>
         </div>
     </div>
 </div>
 
-<!-- ── Cookie policy modal ────────────────────────────────────────────────── -->
-<div class="modal fade" id="cookiePolicyModal" tabindex="-1" role="dialog" aria-labelledby="cookiePolicyModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="cookiePolicyModalLabel">Cookie Policy</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body" style="font-size:0.875rem; padding:1.25rem;">
-        <p class="text-muted mb-3">CyanoTools uses cookies and browser storage listed below. You can review and change your analytics consent at any time.</p>
-
-        <!-- ── Always active ── -->
-        <p class="mb-1" style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#28a745;">Always active</p>
-
-        <div style="border-left:4px solid #28a745; background:#f8f9fa; border-radius:4px; padding:12px 14px; margin-bottom:16px;">
-          <strong>Strictly necessary &amp; functional</strong>
-          <p class="text-muted mb-2 mt-1" style="font-size:0.82rem;">Required for the site to function or to remember your preferences locally. Never sent to our server. Cannot be disabled.</p>
-          <details>
-            <summary style="cursor:pointer; color:#555; font-size:0.82rem;">Show details</summary>
-            <table class="table table-sm table-striped mb-0 mt-2">
-              <thead class="thead-light"><tr><th>Name / Key</th><th>Purpose</th><th>Duration</th></tr></thead>
-              <tbody>
-                <tr><td><code>session</code></td><td>Flask session — stores temporary analysis data between page requests</td><td>Session</td></tr>
-                <tr><td><code>remember_token</code></td><td>Keeps you logged in if you use the login feature</td><td>Session</td></tr>
-                <tr><td><code>cc_pixel_size</code></td><td>Last pixel size (nm) entered in the cell counter</td><td>Persistent</td></tr>
-                <tr><td><code>cc_chamber_depth</code></td><td>Last chamber depth setting</td><td>Persistent</td></tr>
-                <tr><td><code>cc_minimal_diameter</code></td><td>Last minimum cell diameter setting</td><td>Persistent</td></tr>
-                <tr><td><code>cc_threshold_filter</code></td><td>Last selected threshold method</td><td>Persistent</td></tr>
-                <tr><td><code>cyanotools_cookie_consent</code></td><td>Your cookie consent decision</td><td>Persistent</td></tr>
-              </tbody>
-            </table>
-          </details>
-        </div>
-
-        <!-- ── Analytical ── -->
-        <p class="mb-1" style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#fd7e14;">Analytical</p>
-
-        <div style="border-left:4px solid #fd7e14; background:#f8f9fa; border-radius:4px; padding:12px 14px; margin-bottom:4px;">
-          <strong>Analytics (Google Analytics)</strong>
-          <p class="text-muted mb-2 mt-1" style="font-size:0.82rem;">Helps us understand which tools are used so we can improve them. No personally identifiable information is collected or shared.</p>
-          <details>
-            <summary style="cursor:pointer; color:#555; font-size:0.82rem;">Show cookies</summary>
-            <table class="table table-sm table-striped mb-0 mt-2">
-              <thead class="thead-light"><tr><th>Name</th><th>Purpose</th><th>Duration</th></tr></thead>
-              <tbody>
-                <tr><td><code>_ga</code></td><td>Distinguishes unique users</td><td>2 years</td></tr>
-                <tr><td><code>_gid</code></td><td>Distinguishes users (session-level)</td><td>24 hours</td></tr>
-                <tr><td><code>_ga_*</code></td><td>Persists session state for the GA4 property</td><td>2 years</td></tr>
-              </tbody>
-            </table>
-          </details>
-        </div>
-
-        <p class="text-muted mt-3 mb-0" style="font-size:0.8rem;">You can withdraw your analytics consent at any time using the button below — this will remove your choice and show the banner again on your next visit.</p>
-      </div>
-      <div class="modal-footer" style="justify-content:space-between;">
-        <button type="button" id="cookie-reset-btn" class="btn btn-sm btn-outline-secondary">Reset my choice</button>
-        <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ── Cookie consent logic ───────────────────────────────────────────────── -->
+<!-- ── Cookie notice logic ────────────────────────────────────────────────── -->
 <script>
 (function () {
     var KEY    = 'cyanotools_cookie_consent';
     var banner = document.getElementById('cookie-consent-banner');
-
-    function showBanner() { if (banner) banner.style.display = 'block'; }
-
-    if (!localStorage.getItem(KEY)) showBanner();
-
-    document.getElementById('cookie-accept-btn').addEventListener('click', function () {
-        localStorage.setItem(KEY, 'accepted');
-        banner.style.display = 'none';
-        loadGA();
-    });
-
-    document.getElementById('cookie-decline-btn').addEventListener('click', function () {
-        localStorage.setItem(KEY, 'declined');
+    if (!localStorage.getItem(KEY)) banner.style.display = 'block';
+    document.getElementById('cookie-got-it-btn').addEventListener('click', function () {
+        localStorage.setItem(KEY, 'dismissed');
         banner.style.display = 'none';
     });
-
-    var policyLink = document.getElementById('cookie-policy-link');
-    if (policyLink) {
-        policyLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            $('#cookiePolicyModal').modal('show');
-        });
-    }
-
-    var footerLink = document.getElementById('cookie-settings-link');
-    if (footerLink) {
-        footerLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            $('#cookiePolicyModal').modal('show');
-        });
-    }
-
-    var resetBtn = document.getElementById('cookie-reset-btn');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function () {
-            localStorage.removeItem(KEY);
-            $('#cookiePolicyModal').modal('hide');
-            showBanner();
-        });
-    }
 })();
 </script>
 
