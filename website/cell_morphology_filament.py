@@ -24,7 +24,6 @@ except ImportError:
 
 cell_morphology_filament = Blueprint('cell_morphology_filament', __name__)
 
-
 def _morph_histogram(values, xlabel, title):
     fig, ax = plt.subplots(figsize=(5, 3.5))
     if len(values) > 1:

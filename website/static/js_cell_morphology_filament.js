@@ -5,7 +5,6 @@
    Web Worker (OpenCV.js) provides live threshold preview + rough contour estimate.
    Full watershed segmentation + morphology runs server-side.
    ============================================================ */
-
 // ── Inline Web Worker (OpenCV.js) ─────────────────────────────────────────────
 var WORKER_URL = (function () {
     var src = 'self.Module = {\n' +

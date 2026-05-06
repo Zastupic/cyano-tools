@@ -14,7 +14,6 @@ ALLOWED_EXTENSIONS = set(['.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.gi
 
 images = UploadSet('images', IMAGES)
 
-
 def _start_metanetx_download():
     """Background thread: download MetaNetX TSV files if not already present."""
     import importlib
