@@ -159,6 +159,7 @@ def count_cells():
                     ############################
                     h_img, w_img = img_th.shape[:2]
                     # Convert ROI percentages → pixel bounds
+                    roi_x1 = roi_y1 = roi_x2 = roi_y2 = 0
                     if use_roi:
                         roi_x1 = int(roi_x_pct * w_img)
                         roi_y1 = int(roi_y_pct * h_img)
@@ -192,7 +193,7 @@ def count_cells():
                             cv2.watershed(ws_src, markers)
                             final_contours = []
                             for lbl in range(2, int(markers.max()) + 1):
-                                mask = np.uint8(markers == lbl) * 255
+                                mask = (markers == lbl).astype(np.uint8) * 255
                                 cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
                                 if cnts:
                                     final_contours.append(max(cnts, key=cv2.contourArea))

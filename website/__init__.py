@@ -86,14 +86,20 @@ def create_app():
         'webapp-30413.eu.pythonanywhere.com',
     ])
 
+    OLD_DOMAIN = 'tools-py.e-cyanobacterium.org'
+
     @app.before_request
     def redirect_unknown_subdomains():
         host = request.host.split(':')[0]
-        if host in ('localhost', '127.0.0.1'):
+        
+        # 1. Allow internal/local traffic
+        if host in ('localhost', '127.0.0.1') or host in ALLOWED_HOSTS:
             return
-        if host not in ALLOWED_HOSTS:
-            target = 'https://www.cyano.tools' + request.full_path.rstrip('?')
-            return redirect(target, 301)
+
+        # 2. Redirect the old domain (or any other unknown alias) to the new domain
+        # This captures 'tools-py.e-cyanobacterium.org'
+        target = 'https://www.cyano.tools' + request.full_path.rstrip('?')
+        return redirect(target, 301)
 
     TRACKED_PATHS = frozenset([
         '/', '/cell_count', '/cell_count_filament',
@@ -147,6 +153,7 @@ def create_app():
     from .ex_em_spectra_analysis import ex_em_spectra_analysis
     from .cell_size_round_cells import cell_size_round_cells
     from .cell_size_filament import cell_size_filament
+    from .cell_morphology_filament import cell_morphology_filament
     from .settings import settings 
     from .light_curves_analysis import light_curves_analysis 
     from .calculators import calculators
@@ -169,7 +176,8 @@ def create_app():
     app.register_blueprint(P700_kin_data_analysis, url_prefix='/')
     app.register_blueprint(ex_em_spectra_analysis, url_prefix='/')
     app.register_blueprint(cell_size_round_cells, url_prefix='/')
-    app.register_blueprint(cell_size_filament, url_prefix='/') 
+    app.register_blueprint(cell_size_filament, url_prefix='/')
+    app.register_blueprint(cell_morphology_filament, url_prefix='/')
     app.register_blueprint(settings, url_prefix='/') 
     app.register_blueprint(light_curves_analysis, url_prefix='/') 
     app.register_blueprint(calculators, url_prefix='/') 

@@ -1,0 +1,889 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Cell Morphology – Filaments | Shape Analysis | CyanoTools
+{% endblock %}
+
+{% block description %}
+Automated morphology analysis for filamentous cyanobacteria and algae. Measures aspect ratio, circularity, and eccentricity per cell and per filament.
+{% endblock %}
+
+{% block keywords %}
+    filamentous cell morphology, aspect ratio, circularity, eccentricity, cyanobacteria shape analysis, algae morphology, cell shape
+{% endblock %}
+
+{% block content %}
+<!-- Loading overlay -->
+<div id="loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.88); z-index:9999; text-align:center; padding-top:180px;">
+    <div class="custom-spinner mx-auto" style="margin-bottom:1em;"></div>
+    <p style="font-size:1.1em; color:#333; margin-top:0.5em;">Analysing cell morphology, please wait…</p>
+</div>
+
+<!-- Hover tooltip -->
+<div id="cc-tooltip" style="display:none; position:fixed; background:#333; color:#fff; padding:3px 8px; border-radius:3px; font-size:0.82em; pointer-events:none; z-index:8000;"></div>
+
+<!-- Toast notification -->
+<div id="cc-toast" style="position:fixed; bottom:24px; right:24px; background:#333; color:#fff; padding:8px 16px; border-radius:4px; opacity:0; transition:opacity 0.3s; z-index:9000; pointer-events:none;"></div>
+
+<!-- Banner -->
+<div id="banner-content">
+    <div class="banner-desktop">
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
+             alt="CyanoTools" style="width:100%;">
+    </div>
+    <div class="banner-mobile">
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
+             alt="CyanoTools mobile" style="width:100%;">
+    </div>
+</div>
+<br>
+<h1>Cell morphology — filamentous strains</h1>
+<div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload a fluorescence or brightfield image of filamentous algae or cyanobacteria. The tool automatically segments individual cells and measures <strong>aspect ratio</strong>, <strong>circularity</strong>, and <strong>eccentricity</strong> per cell and per filament. Results are colour-coded on the image and exported to XLSX.
+</div>
+
+<div style="margin-bottom:0.5em;">
+    <button type="button" class="btn btn-sm btn-outline-secondary"
+            data-toggle="collapse" data-target="#how-to-use-collapse"
+            aria-expanded="false" aria-controls="how-to-use-collapse">
+        &#9432; How to use this tool &#9660;
+    </button>
+    <div class="collapse" id="how-to-use-collapse">
+        <div class="card card-body py-2" style="font-size:0.9em; margin-top:0.4em;">
+            <ol class="mb-0" style="padding-left:1.2em;">
+                <li>Upload your image — live preview appears automatically</li>
+                <li>Enter <strong>pixel size (nm)</strong></li>
+                <li>Tune pre-processing and segmentation parameters; <strong>separate filaments</strong> must be enabled for per-cell shape measurements</li>
+                <li>Click <strong>Run morphology analysis</strong> — the server segments cells and computes shape metrics</li>
+                <li>Review the colour-coded image (green = rod-like, red = sphere-like) and switch <strong>Colour by</strong> to inspect circularity or eccentricity</li>
+                <li>Manually correct missed or spurious cells, then <strong>download XLSX</strong></li>
+            </ol>
+        </div>
+    </div>
+</div>
+<br>
+
+<!-- ═══ FORM ════════════════════════════════════════════════════════════════ -->
+<form method="POST" enctype="multipart/form-data"
+      action="{{ url_for('cell_morphology_filament.analyze_cell_morphology_filament') }}"
+      id="cell-morph-filament-form">
+
+    <!-- Hidden inputs -->
+    <input type="hidden" id="roi_x_pct"         name="roi_x_pct"         value="0">
+    <input type="hidden" id="roi_y_pct"         name="roi_y_pct"         value="0">
+    <input type="hidden" id="roi_w_pct"         name="roi_w_pct"         value="0">
+    <input type="hidden" id="roi_h_pct"         name="roi_h_pct"         value="0">
+    <input type="hidden" id="threshold_filter"  name="threshold_filter"  value="{{ threshold | default('Binary + Otsu') }}">
+    <input type="hidden" id="cached_image_key"  name="cached_image_key"  value="{{ cached_image_key | default('') }}">
+    <input type="hidden" id="cached_image_name" name="cached_image_name" value="{{ image_name | default('') }}">
+
+    <!-- ── Upload zone ───────────────────────────────────────────────────── -->
+    <p class="font-weight-bold mb-1">Upload your image</p>
+    <div id="upload-drop-zone"
+         style="border:2px dashed {% if cached_image_key %}#28a745{% else %}#adb5bd{% endif %}; border-radius:8px; padding:1.5em 1em; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; background:{% if cached_image_key %}#f0fff4{% else %}#fafbfc{% endif %}; margin-bottom:0.5em;">
+        <div style="font-size:2em; line-height:1;">{% if cached_image_key %}&#128190;{% else %}&#128247;{% endif %}</div>
+        <p style="margin:0.3em 0 0; color:#495057; font-size:0.95em;">
+            {% if cached_image_key %}
+                Image <strong>{{ image_name | default('') }}</strong> is cached &mdash; click to replace, or just click <em>Run analysis</em>
+            {% else %}
+                Drop your image here, or <strong>click to browse</strong>
+            {% endif %}
+        </p>
+        <p style="margin:0.2em 0 0; font-size:0.78em; color:#adb5bd;">PNG · JPG · TIFF · BMP · GIF</p>
+        <p id="drop-zone-filename" style="margin:0.5em 0 0; font-weight:600; font-size:0.9em; color:#17a2b8; display:none;"></p>
+        <input type="file" name="selected_images" id="selected_image"
+               accept=".png,.jpg,.jpeg,.tif,.tiff,.bmp,.gif" style="display:none;">
+    </div>
+
+    <!-- ═══ LIVE PREVIEW ════════════════════════════════════════════════════ -->
+    <div id="img-upload-preview-box" style="display:none; margin-top:1em; background:#f0f2f4; border-radius:8px; padding:1em 1.25em;">
+        <h5 style="margin-bottom:0.35em;">Live Preview</h5>
+        <p class="text-muted" style="font-size:0.87em; margin-bottom:0.75em;">
+            Adjust threshold and pre-processing in real time. Watershed segmentation runs on the server when you click <em>Run morphology analysis</em>.
+        </p>
+
+        <!-- Pixel size -->
+        <div class="mb-2">
+            <div class="d-flex align-items-center flex-wrap" style="gap:0.5em; margin-bottom:0.15em;">
+                <label class="mb-0" style="font-size:0.9em;" for="pixel_size">
+                    <strong>Pixel size (nm)</strong>
+                </label>
+                <input type="number" id="pixel_size" name="pixel_size"
+                       class="form-control form-control-sm"
+                       value="{{ pixel_size_nm | default('') }}" step="0.01" style="width:120px;">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="px-calc-toggle">
+                    &#128300; Calculator
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info" id="px-detect-btn"
+                        title="Try to read pixel size from TIFF/EXIF metadata">
+                    &#128269; Detect from image
+                </button>
+                <span id="px-detect-status" style="font-size:0.8em; color:#6c757d; display:none;"></span>
+            </div>
+            <div id="px-volume-error" style="display:none; color:#dc3545; font-size:0.82em; margin-top:0.25em;"></div>
+            <div id="px-calc-box" style="display:none; margin-top:0.5em; padding:0.8em 1em; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; max-width:440px;">
+                <p style="margin-bottom:0.5em; font-size:0.88em; color:#555;">
+                    Pixel size (nm) = camera pixel pitch (µm) &times; 1000 &divide; (objective mag &times; relay mag)
+                </p>
+                <div class="form-group row mb-2">
+                    <label class="col-sm-6 col-form-label col-form-label-sm">Objective magnification (&times;)</label>
+                    <div class="col-sm-6"><input type="number" id="px-obj-mag" class="form-control form-control-sm" placeholder="e.g. 40" min="1" step="0.1"></div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label class="col-sm-6 col-form-label col-form-label-sm">Camera pixel pitch (µm)</label>
+                    <div class="col-sm-6"><input type="number" id="px-cam-pitch" class="form-control form-control-sm" placeholder="e.g. 6.5" min="0.1" step="0.01"></div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label class="col-sm-6 col-form-label col-form-label-sm">Relay/adapter magnification (&times;)</label>
+                    <div class="col-sm-6"><input type="number" id="px-crop-factor" class="form-control form-control-sm" placeholder="1.0" value="1.0" min="0.1" step="0.01"></div>
+                </div>
+                <p style="margin-bottom:0.4em; font-size:0.92em;">Calculated pixel size: <strong id="px-calc-result">—</strong></p>
+                <button type="button" class="btn btn-sm btn-primary" id="px-calc-apply">Apply to pixel size field</button>
+            </div>
+        </div>
+
+        <!-- Three-column image row -->
+        <div class="row mb-2">
+            <div class="col-md-4 mb-2">
+                <div style="display:inline-block; font-size:0.75em; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#6c757d; background:#e9ecef; border-radius:12px; padding:2px 10px; margin-bottom:5px;">Uploaded image</div>
+                <div style="position:relative; display:block;">
+                    <img id="img-upload-preview" src="" alt="Preview"
+                         style="width:100%; display:block; border:1px solid #dee2e6; border-radius:4px; min-height:60px; cursor:zoom-in;">
+                    <canvas id="roi-canvas"
+                            style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; border-radius:4px;"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div style="display:inline-block; font-size:0.75em; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#6c757d; background:#e9ecef; border-radius:12px; padding:2px 10px; margin-bottom:5px;">
+                    Threshold &mdash; <span id="selected-thresh-label" style="font-weight:400; text-transform:none; letter-spacing:0;">{{ threshold | default('Binary + Otsu') }}</span>
+                </div>
+                <canvas id="live-preview-canvas"
+                        style="width:100%; border:1px solid #dee2e6; border-radius:4px; display:block; min-height:60px; background:#f0f0f0; cursor:zoom-in;"></canvas>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div style="display:inline-block; font-size:0.75em; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#6c757d; background:#e9ecef; border-radius:12px; padding:2px 10px; margin-bottom:5px;">Identified cells (estimate)</div>
+                <canvas id="live-counted-canvas"
+                        style="width:100%; border:1px solid #dee2e6; border-radius:4px; display:block; min-height:60px; background:#f0f0f0; cursor:zoom-in;"></canvas>
+            </div>
+        </div>
+        <p class="text-muted" style="font-size:0.78em; margin-bottom:0.5em;">
+            &#9432; Live count uses simple contour detection — filaments may appear as single blobs. Click <strong>Run morphology analysis</strong> for accurate watershed-based segmentation.
+        </p>
+
+        <!-- Identified cells counter -->
+        <div class="d-flex align-items-center mb-2" style="gap:0.6em;">
+            <span style="font-size:0.8em; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:#6c757d;">Identified Cells (estimate)</span>
+            <span id="live-cell-count" style="background:#17a2b8; color:#fff; font-size:1.15em; font-weight:700; padding:0.1em 0.65em; border-radius:20px; min-width:2.5em; text-align:center; display:inline-block; line-height:1.6;">—</span>
+            <span id="live-count-spinner" style="display:none;">
+                <span class="custom-spinner-sm"></span>
+                <span style="font-size:0.82em; color:#888; font-style:italic; margin-left:3px;">updating…</span>
+            </span>
+            <span id="live-pixel-size-hint" style="display:none; font-size:0.8em; color:#868e96; font-style:italic;">&#8592; enter pixel size (nm) first</span>
+        </div>
+
+        <!-- Controls row -->
+        <div class="d-flex flex-wrap align-items-center mb-1" style="gap:0.4em;">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="roi-toggle-btn"
+                    title="Drag on the image to restrict analysis to a rectangular area">
+                &#9701; Draw ROI
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="roi-clear-btn"
+                    title="Remove the region of interest">
+                &#10005; Clear ROI
+            </button>
+            <button type="button" class="btn btn-sm btn-info active" id="live-preview-btn" disabled
+                    title="Toggle live threshold preview">
+                &#128065; Live preview: ON
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="multi-thresh-btn"
+                    title="Preview all threshold filters side by side">
+                &#9706; Compare all thresholds
+            </button>
+            <style>
+                #microscopy-mode-group .btn-mode-fluor         { border-color:#17a2b8; color:#17a2b8; }
+                #microscopy-mode-group .btn-mode-fluor.active  { background:#17a2b8; color:#fff; border-color:#17a2b8; }
+                #microscopy-mode-group .btn-mode-bright        { border-color:#e67e22; color:#e67e22; }
+                #microscopy-mode-group .btn-mode-bright.active { background:#e67e22; color:#fff; border-color:#e67e22; }
+            </style>
+            <div class="btn-group btn-group-toggle btn-group-sm" data-toggle="buttons" id="microscopy-mode-group">
+                <label class="btn btn-sm btn-mode-fluor{% if not microscopy_mode or microscopy_mode == 'fluorescence' %} active{% endif %}">
+                    <input type="radio" name="microscopy_mode" id="mode_fluorescence" value="fluorescence"
+                           {% if not microscopy_mode or microscopy_mode == 'fluorescence' %}checked{% endif %}>
+                    &#128294; Fluorescence
+                </label>
+                <label class="btn btn-sm btn-mode-bright{% if microscopy_mode == 'brightfield' %} active{% endif %}">
+                    <input type="radio" name="microscopy_mode" id="mode_brightfield" value="brightfield"
+                           {% if microscopy_mode == 'brightfield' %}checked{% endif %}>
+                    &#9728; Brightfield
+                </label>
+            </div>
+        </div>
+
+        <!-- ── Analysis parameters card ─────────────────────────────────── -->
+        <style>
+            #params-card-header .params-chevron { display:inline-block; transition:transform 0.2s ease; }
+            #params-card-header.collapsed .params-chevron { transform:rotate(-90deg); }
+        </style>
+        <div class="card mb-3" style="border-color:#dee2e6;">
+            <div class="card-header py-2 collapsed" id="params-card-header"
+                 data-toggle="collapse" data-target="#params-card-body"
+                 aria-expanded="false" aria-controls="params-card-body"
+                 style="font-size:0.95em; font-weight:bold; background:#f8f9fa; cursor:pointer; user-select:none;">
+                Analysis parameters
+                <small class="text-muted font-weight-normal" style="font-size:0.78em;">
+                    — adjust and preview live; all values sent with the full analysis
+                </small>
+                <span class="params-chevron float-right">&#9660;</span>
+            </div>
+            <div id="params-card-body" class="collapse">
+            <div class="card-body py-2 px-3">
+
+                <!-- Checkboxes -->
+                <div class="mb-2 d-flex flex-wrap" style="gap:0.5em 1.5em;">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="exclude_stripes_check"
+                               name="exclude_stripes" value="1" {% if exclude_stripes %}checked{% endif %}>
+                        <label class="custom-control-label" for="exclude_stripes_check" style="font-size:0.88em;">
+                            <strong>Exclude counting chamber grid lines</strong>
+                            <span class="text-muted" style="font-size:0.88em;">— removes Bürker chamber horizontal/vertical lines</span>
+                        </label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="bilateral_filter_check"
+                               name="bilateral_filter" value="1" {% if bilateral_filter %}checked{% endif %}>
+                        <label class="custom-control-label" for="bilateral_filter_check" style="font-size:0.88em;">
+                            <strong>Edge-preserving (bilateral) blur</strong>
+                            <span class="text-muted" style="font-size:0.88em;">— smooths noise while keeping cell boundaries sharp</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Pre-processing sliders -->
+                <div class="row no-gutters" style="margin:0 -6px;">
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Min cell diameter (µm): <strong><span id="minimal_diameter"></span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">smaller objects are excluded (debris)</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0.5</small>
+                            <input type="range" min="0.5" max="30.0" step="0.1"
+                                   value="{{ minimal_expected_size | default(1.0) }}"
+                                   class="slider" name="minimal_diameter_range" id="minimal_diameter_range"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">30</small>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Max cell diameter (µm): <strong><span id="max_diameter_val">{{ max_diam_um | default(0) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = no limit</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                            <input type="range" min="0" max="100" step="1"
+                                   value="{{ max_diam_um | default(0) }}"
+                                   class="slider" name="max_diam_range" id="max_diam_range"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">100</small>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Pre-blur radius (px): <strong><span id="blur_radius_val">{{ blur_radius | default(3) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">1 = no blur</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                            <input type="range" min="1" max="20" step="1"
+                                   value="{{ blur_radius | default(3) }}"
+                                   class="slider" name="blur_radius" id="blur_radius_range"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">20</small>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">CLAHE contrast: <strong><span id="clahe_clip_val">{{ clahe_clip | default(0) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = off; boosts local contrast</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                            <input type="range" min="0" max="8" step="0.5"
+                                   value="{{ clahe_clip | default(0) }}"
+                                   class="slider" name="clahe_clip" id="clahe_clip"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">8</small>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Erosion &larr; 0 &rarr; Dilation: <strong><span id="morph_iter_val">{{ morph_iter | default(0) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">negative = erode; positive = dilate</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">−5</small>
+                            <input type="range" min="-5" max="5" step="1"
+                                   value="{{ morph_iter | default(0) }}"
+                                   class="slider" name="morph_iter" id="morph_iter"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">+5</small>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Min circularity (filter): <strong><span id="circularity_val">{{ circularity_min | default(0) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = off; excludes non-circular objects</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                            <input type="range" min="0" max="1" step="0.05"
+                                   value="{{ circularity_min | default(0) }}"
+                                   class="slider" name="circularity_min" id="circularity_min"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Max aspect ratio (filter): <strong><span id="max_aspect_ratio_val">{{ max_aspect_ratio | default(0) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = off; excludes very elongated debris</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                            <input type="range" min="0" max="20" step="0.5"
+                                   value="{{ max_aspect_ratio | default(0) }}"
+                                   class="slider" name="max_aspect_ratio" id="max_aspect_ratio_range"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">20</small>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Manual threshold (0–255): <strong><span id="manual_thresh_val">{{ manual_thresh | default(0) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = auto; &gt;0 overrides with fixed pixel value</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                            <input type="range" min="0" max="255" step="1"
+                                   value="{{ manual_thresh | default(0) }}"
+                                   class="slider" name="manual_thresh" id="manual_thresh"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">255</small>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Adaptive block size: <strong><span id="adaptive_block_val">{{ adaptive_block_size | default(51) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">used only with Adaptive Mean/Gaussian methods</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">3</small>
+                            <input type="range" min="3" max="201" step="2"
+                                   value="{{ adaptive_block_size | default(51) }}"
+                                   class="slider" name="adaptive_block_size" id="adaptive_block_size"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">201</small>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 mb-2 px-2">
+                        <div style="font-size:0.88em;">Adaptive C constant: <strong><span id="adaptive_c_val">{{ adaptive_c | default(2) }}</span></strong></div>
+                        <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">subtracted from mean/Gaussian; higher = less sensitive</div>
+                        <div class="d-flex align-items-center" style="gap:3px;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">−20</small>
+                            <input type="range" min="-20" max="20" step="1"
+                                   value="{{ adaptive_c | default(2) }}"
+                                   class="slider" name="adaptive_c" id="adaptive_c"
+                                   style="flex:1; min-width:0;">
+                            <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">+20</small>
+                        </div>
+                    </div>
+
+                </div><!-- end pre-processing sliders -->
+
+                <!-- ── Filament segmentation sub-section ────────────────── -->
+                <div id="filament-seg-section" class="mt-2 pt-2" style="border-top:1px solid #e9ecef;">
+                    <div style="font-size:0.88em; font-weight:600; margin-bottom:0.5em; color:#495057;">
+                        &#128260; Filament segmentation (watershed) parameters
+                        <small class="text-muted font-weight-normal" style="font-size:0.82em;">— only applied during full analysis</small>
+                    </div>
+
+                    <div class="mb-2 d-flex flex-wrap align-items-center" style="gap:0.25em 1.2em; font-size:0.88em;">
+                        <strong>Method:</strong>
+                        <div class="custom-control custom-radio d-inline-flex align-items-center">
+                            <input type="radio" class="custom-control-input" id="seg_plm"
+                                   name="seg_method" value="peak_local_max"
+                                   {% if seg_method == 'peak_local_max' or not seg_method %}checked{% endif %}>
+                            <label class="custom-control-label" for="seg_plm">
+                                Peak local max <span class="text-muted" style="font-size:0.85em;">(single-pass, faster)</span>
+                            </label>
+                        </div>
+                        <div class="custom-control custom-radio d-inline-flex align-items-center">
+                            <input type="radio" class="custom-control-input" id="seg_skeleton"
+                                   name="seg_method" value="skeleton"
+                                   {% if seg_method == 'skeleton' %}checked{% endif %}>
+                            <label class="custom-control-label" for="seg_skeleton">
+                                Skeleton-guided <span class="text-muted" style="font-size:0.85em;">(recommended for uniform filaments)</span>
+                            </label>
+                        </div>
+                        <div class="custom-control custom-radio d-inline-flex align-items-center">
+                            <input type="radio" class="custom-control-input" id="seg_iterative"
+                                   name="seg_method" value="iterative"
+                                   {% if seg_method == 'iterative' %}checked{% endif %}>
+                            <label class="custom-control-label" for="seg_iterative">Iterative watershed</label>
+                        </div>
+                    </div>
+
+                    <!-- Separate filaments — default checked; required for per-cell morphology -->
+                    <div class="mb-2">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="separate_filaments_check"
+                                   name="separate_filaments" value="1"
+                                   {% if separate_filaments is not defined or separate_filaments %}checked{% endif %}>
+                            <label class="custom-control-label" for="separate_filaments_check" style="font-size:0.88em;">
+                                <strong>Separate touching filaments</strong>
+                                <span class="text-muted" style="font-size:0.88em;">— required for per-cell morphology; disabling will measure whole-filament blobs</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-2" id="hmax-row">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="use_hmax_check"
+                                   name="use_hmax" value="1"
+                                   {% if use_hmax is not defined or use_hmax %}checked{% endif %}>
+                            <label class="custom-control-label" for="use_hmax_check" style="font-size:0.88em;">
+                                <strong>H-maxima seeding</strong>
+                                <span class="text-muted" style="font-size:0.88em;">— better seed separation in distance transform</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="row no-gutters" style="margin:0 -6px;">
+
+                        <div class="col-12 col-sm-6 mb-2 px-2">
+                            <div style="font-size:0.88em;">Threshold factor: <strong><span id="factor_1_mult_val">{{ factor_multiplying | default(1.4) }}</span></strong></div>
+                            <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">higher = fewer cell splits</div>
+                            <div class="d-flex align-items-center" style="gap:3px;">
+                                <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0.1</small>
+                                <input type="range" min="0.1" max="2.0" step="0.1"
+                                       value="{{ factor_multiplying | default(1.4) }}"
+                                       class="slider" name="factor_1_multiplication_range" id="factor_1_multiplication_range"
+                                       style="flex:1; min-width:0;">
+                                <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">2.0</small>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 mb-2 px-2">
+                            <div style="font-size:0.88em;">Distance factor (px): <strong><span id="factor_2_dist_val">{{ factor_distance_centers | default(28) }}</span></strong></div>
+                            <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">min centre-to-centre distance; lower = more splits</div>
+                            <div class="d-flex align-items-center" style="gap:3px;">
+                                <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                                <input type="range" min="1" max="100" step="1"
+                                       value="{{ factor_distance_centers | default(28) }}"
+                                       class="slider" name="factor_2_distance_range" id="factor_2_distance_range"
+                                       style="flex:1; min-width:0;">
+                                <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">100</small>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 mb-2 px-2" id="iterations-row">
+                            <div style="font-size:0.88em;">Iterations: <strong><span id="iterations_range_val">{{ number_of_iterations | default(4) }}</span></strong></div>
+                            <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">iterative watershed only</div>
+                            <div class="d-flex align-items-center" style="gap:3px;">
+                                <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                                <input type="range" min="1" max="20" step="1"
+                                       value="{{ number_of_iterations | default(4) }}"
+                                       class="slider" name="iterations_range" id="iterations_range"
+                                       style="flex:1; min-width:0;">
+                                <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">20</small>
+                            </div>
+                        </div>
+
+                    </div>
+                </div><!-- end filament seg section -->
+
+                <div class="mt-2 pt-2" style="border-top:1px solid #f0f0f0;">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="params-reset-btn"
+                            title="Reset all parameters to defaults">
+                        &#8635; Reset to defaults
+                    </button>
+                </div>
+
+            </div>
+            </div><!-- end params collapse -->
+        </div><!-- end params card -->
+
+        <!-- Threshold comparison thumbnails -->
+        <div id="multi-thresh-box" style="display:none; margin-bottom:0.75em;">
+            <p style="font-size:0.88em; font-weight:bold; margin-bottom:0.25em;">
+                Threshold comparison
+                <small class="text-muted">(click a thumbnail to select that filter)</small>
+                <span id="multi-thresh-spinner" style="display:none; margin-left:6px;">
+                    <span class="custom-spinner-sm"></span>
+                    <em style="vertical-align:middle; font-size:0.82em; color:#888; font-weight:normal;">updating…</em>
+                </span>
+            </p>
+            <div id="multi-thresh-container" style="display:flex; flex-wrap:wrap; gap:6px; align-items:flex-start;"></div>
+        </div>
+
+    </div><!-- end live preview box -->
+
+    <!-- Submit -->
+    <div id="submit-box" style="display:{% if cached_image_key %}block{% else %}none{% endif %}; margin-top:1em;">
+        <button type="submit" class="btn btn-primary">
+            &#128202; {% if cached_image_key %}Re-run morphology analysis{% else %}Run morphology analysis{% endif %}
+        </button>
+        <p class="text-muted" style="font-size:0.81em; margin-top:0.4em; margin-bottom:0;">
+            {% if cached_image_key %}
+                Adjust parameters above and click to re-run — image is cached, no re-upload needed.
+            {% else %}
+                Runs watershed segmentation and computes per-cell and per-filament shape metrics.
+            {% endif %}
+        </p>
+    </div>
+</form>
+
+<!-- ═══ RESULTS ══════════════════════════════════════════════════════════════ -->
+{% if n_cells is defined and n_cells is not none %}
+<script>
+    var morphology_data_val  = {{ morphology_data | tojson }};
+    var pixels_x             = {{ x_pixels }};
+    var pixels_y             = {{ y_pixels }};
+    var size_of_pixel        = {{ pixel_size_nm }};
+    var n_cells_val          = {{ n_cells }};
+    var cells_counted_autom  = {{ n_cells }};
+    var filament_stats_val   = {{ filament_summary | tojson }};
+    var upload_image_name    = "{{ image_name | default('') }}";
+    var microscopy_mode_val  = "{{ microscopy_mode | default('fluorescence') }}";
+    // Re-run param echo
+    var seg_method_val       = "{{ seg_method | default('peak_local_max') }}";
+    var iterations_val       = {{ number_of_iterations | default(4) }};
+    var factor_mult_val      = {{ factor_multiplying | default(1.4) }};
+    var factor_dist_val      = {{ factor_distance_centers | default(28) }};
+    var use_hmax_val         = {{ 'true' if use_hmax else 'false' }};
+    var bilateral_filter_val = {{ 'true' if bilateral_filter else 'false' }};
+</script>
+
+<div class="card mt-3" style="border:1px solid #dee2e6; border-radius:8px;">
+<div class="card-body pb-3">
+
+<!-- Summary stat cards -->
+<div class="row mb-3" style="padding-bottom:0.75em; border-bottom:1px solid #f0f0f0;">
+    <div class="col-6 col-md-4 col-lg-2 mb-2">
+        <div class="card h-100 text-center py-2 px-1" style="border-color:#dee2e6;">
+            <div style="font-size:0.72em; font-weight:600; text-transform:uppercase; color:#6c757d; letter-spacing:0.06em;">Cells detected</div>
+            <div style="font-size:1.6em; font-weight:700; color:#0a3c58; line-height:1.2;" id="total_cells_count">{{ n_cells }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2 mb-2">
+        <div class="card h-100 text-center py-2 px-1" style="border-color:#dee2e6;">
+            <div style="font-size:0.72em; font-weight:600; text-transform:uppercase; color:#6c757d; letter-spacing:0.06em;">Filaments</div>
+            <div style="font-size:1.6em; font-weight:700; color:#0a3c58; line-height:1.2;">{{ n_filaments }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3 mb-2" id="morph-stat-ar" style="display:none;">
+        <div class="card h-100 text-center py-2 px-1" style="border-color:#dee2e6;">
+            <div style="font-size:0.72em; font-weight:600; text-transform:uppercase; color:#6c757d; letter-spacing:0.06em;">Mean aspect ratio</div>
+            <div style="font-size:1.4em; font-weight:700; color:#0a3c58; line-height:1.3;"><span id="stat-mean-ar">{{ mean_ar }}</span> <span style="font-size:0.6em; font-weight:400; color:#6c757d;">&plusmn; <span id="stat-std-ar">{{ std_ar }}</span></span></div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2 mb-2" id="morph-stat-circ" style="display:none;">
+        <div class="card h-100 text-center py-2 px-1" style="border-color:#dee2e6;">
+            <div style="font-size:0.72em; font-weight:600; text-transform:uppercase; color:#6c757d; letter-spacing:0.06em;">Mean circularity</div>
+            <div style="font-size:1.4em; font-weight:700; color:#0a3c58; line-height:1.3;"><span id="stat-mean-circ">{{ mean_circ }}</span> <span style="font-size:0.6em; font-weight:400; color:#6c757d;">&plusmn; <span id="stat-std-circ">{{ std_circ }}</span></span></div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3 mb-2" id="morph-stat-ecc" style="display:none;">
+        <div class="card h-100 text-center py-2 px-1" style="border-color:#dee2e6;">
+            <div style="font-size:0.72em; font-weight:600; text-transform:uppercase; color:#6c757d; letter-spacing:0.06em;">Mean eccentricity</div>
+            <div style="font-size:1.4em; font-weight:700; color:#0a3c58; line-height:1.3;"><span id="stat-mean-ecc">{{ mean_ecc }}</span> <span style="font-size:0.6em; font-weight:400; color:#6c757d;">&plusmn; <span id="stat-std-ecc">{{ std_ecc }}</span></span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Manual correction controls -->
+<div style="margin-bottom:0.6em;">
+    <button type="button" class="btn btn-sm btn-outline-warning"
+            data-toggle="collapse" data-target="#manual-correction-collapse"
+            aria-expanded="false" aria-controls="manual-correction-collapse">
+        &#9998; Manual correction &amp; circle settings &#9660;
+    </button>
+    <div class="collapse" id="manual-correction-collapse">
+        <div class="card card-body py-2 px-3" style="margin-top:0.4em; font-size:0.9em;">
+            <div class="mb-2" style="display:flex; flex-direction:column; gap:4px;">
+                <div><span class="badge badge-success" style="font-size:0.88em;">&#10133; Left-click</span> on any missed cell to add it.</div>
+                <div><span class="badge badge-danger" style="font-size:0.88em;">&#10006; Right-click</span> on a circle to remove it.</div>
+                <div><kbd>Ctrl+Z</kbd> to undo.</div>
+            </div>
+            <div class="d-flex flex-wrap align-items-center" style="gap:1.5em;">
+                <div>
+                    <small class="text-muted" style="font-size:0.82em;">Circle diameter:</small>
+                    <div class="d-flex align-items-center" style="gap:4px; margin-top:2px;">
+                        <small class="text-muted" style="font-size:0.8em;">1</small>
+                        <input type="range" min="1" max="100" value="10" step="1"
+                               class="slider" name="expected_cell_size_range"
+                               id="expected_cell_size_px_range" style="width:120px;">
+                        <small class="text-muted" style="font-size:0.8em;">100</small>
+                        <strong style="font-size:0.9em;"><span id="expected_cell_size_px"></span> px</strong>
+                    </div>
+                </div>
+                <div>
+                    <small class="text-muted" style="font-size:0.82em;">Line width:</small>
+                    <div class="d-flex align-items-center" style="gap:4px; margin-top:2px;">
+                        <small class="text-muted" style="font-size:0.8em;">1</small>
+                        <input type="range" min="1" max="5" value="1" step="1"
+                               class="slider" id="circle_line_width_range" style="width:80px;">
+                        <small class="text-muted" style="font-size:0.8em;">5</small>
+                        <strong style="font-size:0.9em;"><span id="circle_line_width_val">1</span> px</strong>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-warning" onclick="undoLastCell()" title="Ctrl+Z">
+                    &#8630; Undo last
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Annotated image + colorbar + filament table -->
+<div class="row mb-3">
+    <!-- Annotated image with canvas overlay -->
+    <div class="col-md-8 mb-2">
+        <!-- Phase-1 alert: review detected cells and confirm -->
+        <div id="phase1-alert" class="alert alert-info py-2 mb-2" role="alert" style="font-size:0.87em;">
+            <strong>Step 1 &mdash; Review detected cells</strong> (shown as yellow circles).<br>
+            <span class="badge badge-success">Left-click</span> to add a missed cell &nbsp;
+            <span class="badge badge-danger">Right-click</span> to remove a false positive &nbsp;
+            <kbd>Ctrl+Z</kbd> to undo<br>
+            <button type="button" class="btn btn-sm btn-primary mt-1" onclick="confirmSelection()">
+                &#10003; Confirm cell selection &amp; calculate morphology
+            </button>
+        </div>
+        <!-- Color-by toggle (Phase 2 only) -->
+        <div id="color-by-controls" style="display:none;">
+        <div class="d-flex align-items-center mb-2" style="gap:0.5em; flex-wrap:wrap;">
+            <span style="font-size:0.85em; font-weight:600; color:#495057;">Colour by:</span>
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-secondary active" id="color-by-ar"
+                        onclick="setColorMetric('aspect_ratio', this)">Aspect ratio</button>
+                <button type="button" class="btn btn-outline-secondary" id="color-by-circ"
+                        onclick="setColorMetric('circularity', this)">Circularity</button>
+                <button type="button" class="btn btn-outline-secondary" id="color-by-ecc"
+                        onclick="setColorMetric('eccentricity', this)">Eccentricity</button>
+            </div>
+            <span style="font-size:0.78em; color:#888;">&#9650; green = high &nbsp; &#9660; red = low</span>
+        </div>
+        </div><!-- /#color-by-controls -->
+        <div class="imgbox" id="imgbox" style="overflow:hidden;">
+            <div class="insideWrapper" style="transform-origin:top left; transition:transform 0.08s linear; will-change:transform;">
+                <img src="data:image/jpeg;base64,{{ img_orig_decoded_from_memory }}"
+                     class="center-fit" id="Identified_cells"
+                     alt="Cell morphology — annotated image" style="width:100%; display:block;">
+                <canvas class="coveringCanvas" id="canvas_mouse_clicking"></canvas>
+            </div>
+        </div>
+        <p class="text-muted" style="font-size:0.78em; margin-top:0.3em; margin-bottom:0.5em;">
+            <span class="badge badge-success">Left-click</span> add cell &nbsp;
+            <span class="badge badge-danger">Right-click</span> remove &nbsp;
+            <kbd>Ctrl+Z</kbd> undo &nbsp; | &nbsp; Scroll to zoom, drag to pan, double-click to reset
+        </p>
+        <div class="d-flex flex-wrap align-items-center" style="gap:0.4em;">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="roi-toggle-btn-res"
+                    onclick="document.getElementById('roi-toggle-btn').click()">&#9701; Draw ROI</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="roi-clear-btn-res"
+                    onclick="document.getElementById('roi-clear-btn').click()">&#10005; Clear ROI</button>
+        </div>
+    </div>
+
+    <!-- Colorbar + per-filament summary (Phase 2 only) -->
+    <div class="col-md-4 mb-2" id="colorbar-section" style="display:none;">
+        <div class="d-flex flex-column h-100">
+            <div class="mb-2 text-center">
+                <img src="data:image/jpeg;base64,{{ colorbar_from_memory }}"
+                     id="colorbar-img"
+                     alt="Aspect ratio colorbar"
+                     style="height:180px; border:1px solid #dee2e6; border-radius:4px; cursor:zoom-in;"
+                     data-enlargeable>
+                <div style="font-size:0.75em; color:#6c757d; margin-top:3px;" id="colorbar-label">Aspect Ratio</div>
+            </div>
+            {% if n_filaments and n_filaments > 0 %}
+            <div style="flex:1; overflow:hidden;">
+                <div style="font-size:0.82em; font-weight:600; margin-bottom:0.3em; color:#495057;">Per-filament summary</div>
+                <div style="overflow-x:auto; max-height:220px; overflow-y:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.78em;">
+                        <thead>
+                            <tr style="background:#f0f2f4; position:sticky; top:0;">
+                                <th style="padding:3px 5px; white-space:nowrap;">Fil.</th>
+                                <th style="padding:3px 5px; text-align:right; white-space:nowrap;">Cells</th>
+                                <th style="padding:3px 5px; text-align:right; white-space:nowrap;">AR</th>
+                                <th style="padding:3px 5px; text-align:right; white-space:nowrap;">Circ.</th>
+                                <th style="padding:3px 5px; text-align:right; white-space:nowrap;">Ecc.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filament-table-body">
+                        {% for fs in filament_summary %}
+                            <tr style="border-top:1px solid #f0f0f0;">
+                                <td style="padding:2px 5px;">{{ fs.filament_id }}</td>
+                                <td style="padding:2px 5px; text-align:right;">{{ fs.cell_count }}</td>
+                                <td style="padding:2px 5px; text-align:right;">{{ fs.mean_ar }}</td>
+                                <td style="padding:2px 5px; text-align:right;">{{ fs.mean_circ }}</td>
+                                <td style="padding:2px 5px; text-align:right;">{{ fs.mean_ecc }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- After-correction cell count -->
+<div class="mb-2" style="font-size:0.88em; color:#495057;">
+    Auto: <strong><span id="server_cells_count">{{ n_cells }}</span></strong> &nbsp;|&nbsp;
+    Manual additions: <strong><span id="identified_cells">0</span></strong> &nbsp;|&nbsp;
+    Total: <strong><span id="total_cells_display">{{ n_cells }}</span></strong>
+</div>
+
+<!-- Histograms (Phase 2 only) -->
+<div id="histograms-section" style="display:none;">
+<div class="row mb-3">
+    <div class="col-md-4 mb-2">
+        <p style="font-size:0.85em; font-weight:600; margin-bottom:0.3em;">Aspect Ratio</p>
+        <img src="data:image/jpeg;base64,{{ hist_ar_from_memory }}"
+             alt="Aspect ratio histogram" data-enlargeable
+             style="width:100%; border:1px solid #dee2e6; border-radius:4px; cursor:zoom-in;">
+    </div>
+    <div class="col-md-4 mb-2">
+        <p style="font-size:0.85em; font-weight:600; margin-bottom:0.3em;">Circularity</p>
+        <img src="data:image/jpeg;base64,{{ hist_circ_from_memory }}"
+             alt="Circularity histogram" data-enlargeable
+             style="width:100%; border:1px solid #dee2e6; border-radius:4px; cursor:zoom-in;">
+    </div>
+    <div class="col-md-4 mb-2">
+        <p style="font-size:0.85em; font-weight:600; margin-bottom:0.3em;">Eccentricity</p>
+        <img src="data:image/jpeg;base64,{{ hist_ecc_from_memory }}"
+             alt="Eccentricity histogram" data-enlargeable
+             style="width:100%; border:1px solid #dee2e6; border-radius:4px; cursor:zoom-in;">
+    </div>
+</div>
+</div><!-- /#histograms-section -->
+
+<!-- Analysis details -->
+<div style="margin-bottom:0.75em;">
+    <button type="button" class="btn btn-sm btn-outline-secondary"
+            data-toggle="collapse" data-target="#results-info-collapse"
+            aria-expanded="false" aria-controls="results-info-collapse">
+        &#128202; Analysis details &#9660;
+    </button>
+    <div class="collapse" id="results-info-collapse">
+        <div class="card card-body py-2 px-3" style="margin-top:0.4em;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.87em;">
+                <tbody>
+                    <tr><td class="text-muted" style="width:42%; padding:2px 6px 2px 0;">Cells detected</td>
+                        <td style="padding:2px 0;">{{ n_cells }}</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Filaments</td>
+                        <td style="padding:2px 0;">{{ n_filaments }}</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Image resolution</td>
+                        <td style="padding:2px 0;">{{ x_pixels }} &times; {{ y_pixels }} px</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Pixel size</td>
+                        <td style="padding:2px 0;">{{ pixel_size_nm }} nm</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Microscopy mode</td>
+                        <td style="padding:2px 0;">{{ microscopy_mode }}</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Threshold method</td>
+                        <td style="padding:2px 0;">{{ threshold }}</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Segmentation method</td>
+                        <td style="padding:2px 0;">{{ {'skeleton':'Skeleton-guided','peak_local_max':'Peak local max'}.get(seg_method,'Iterative watershed') }}</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Min cell diameter</td>
+                        <td style="padding:2px 0;">{{ minimal_expected_size }} µm</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Pre-blur radius</td>
+                        <td style="padding:2px 0;">{{ blur_radius | default(3) }} px</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Separate filaments</td>
+                        <td style="padding:2px 0;">{{ 'Yes' if separate_filaments else 'No' }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Download (Phase 2 only) -->
+<div id="download-section" style="display:none;">
+<p><b>Download results</b></p>
+<div class="d-flex flex-wrap mb-4" style="gap:0.5em;">
+    <a href="{{ url_for('static', filename=xlsx_file_path) }}"
+       class="btn btn-success" download>
+        &#128194; Download XLSX
+        <small style="font-size:0.78em; opacity:0.85;">per-cell + per-filament + images</small>
+    </a>
+    <button type="button" class="btn btn-outline-secondary" onclick="exportWithOverlay()"
+            title="Export annotated image with manual corrections baked in">
+        Export image with corrections
+    </button>
+    <button type="button" class="btn btn-outline-secondary" onclick="downloadAll()"
+            title="Download XLSX + images as ZIP">
+        &#128194; Download .zip (XLSX + images)
+    </button>
+</div>
+</div><!-- /#download-section -->
+
+</div><!-- /.card-body -->
+</div><!-- /.card results -->
+
+<!-- Auto-restore live preview from server result -->
+<script>
+(function () {
+    var bgImg      = document.getElementById('Identified_cells');
+    var previewImg = document.getElementById('img-upload-preview');
+    var previewBox = document.getElementById('img-upload-preview-box');
+    var submitBox  = document.getElementById('submit-box');
+    if (!bgImg || !previewImg || !previewBox) return;
+    function restorePreview() {
+        previewImg.src = bgImg.src;
+        previewBox.style.display = 'block';
+        if (submitBox) submitBox.style.display = 'block';
+    }
+    if (bgImg.complete && bgImg.naturalWidth > 0) restorePreview();
+    else bgImg.addEventListener('load', restorePreview);
+})();
+</script>
+
+{% else %}
+<div style="min-height:12em;"></div>
+{% endif %}
+<div style="min-height:4em;"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
+<script src="{{ url_for('static', filename='js_cell_morphology_filament.js') }}"></script>
+
+<!-- Pixel-size detection from image metadata -->
+<script>
+(function () {
+    var btn       = document.getElementById('px-detect-btn');
+    var status    = document.getElementById('px-detect-status');
+    var pxInput   = document.getElementById('pixel_size');
+    var fileInput = document.getElementById('selected_image');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        var file      = fileInput && fileInput.files && fileInput.files[0];
+        var cachedKey = (document.getElementById('cached_image_key') || {}).value || '';
+        if (!file && !cachedKey) {
+            if (status) { status.style.display='inline'; status.style.color='#dc3545'; status.textContent='Upload an image first.'; }
+            return;
+        }
+        if (status) { status.style.display='inline'; status.style.color='#6c757d'; status.textContent='Detecting…'; }
+        var fd = new FormData();
+        if (file) { fd.append('image', file); } else { fd.append('cached_image_key', cachedKey); }
+        fetch('/api/pixel_size', { method:'POST', body:fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.pixel_size_nm) {
+                    if (pxInput) { pxInput.value = data.pixel_size_nm; pxInput.dispatchEvent(new Event('input')); }
+                    if (status) { status.style.color='#28a745'; status.textContent='✓ '+data.pixel_size_nm+' nm (from '+data.source+')'; }
+                } else {
+                    if (status) { status.style.color='#dc3545'; status.textContent=data.error||'Not found'; }
+                }
+            })
+            .catch(function () {
+                if (status) { status.style.color='#dc3545'; status.textContent='Request failed.'; }
+            });
+    });
+})();
+</script>
+
+{% endblock %}

@@ -17,7 +17,7 @@
     <meta property="og:title" content="{% block og_title %}CyanoTools - Tools for Cyanobacteria and Algal Research{% endblock %}">
     <meta property="og:description" content="{% block og_description %}CyanoTools is a web platform supporting advanced biological research through specialized tools for photosynthesis, microscopy, spectroscopy and mass spectrometry analysis.{% endblock %}">
     <meta property="og:image" content="{{ url_for('static', filename='img/cyano_preview.png') }}">
-    <meta property="og:url" content="{{ request.base_url|replace('http://', 'https://') }}">
+    <meta property="og:url" content="https://www.cyano.tools{{ request.path }}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="en_US">
     <!-- Twitter Card Meta Tags -->
@@ -31,7 +31,7 @@
     <link rel="icon" sizes="192x192" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
     <!-- Canonical Link -->
-    <link rel="canonical" href="{{ request.base_url|replace('http://', 'https://') }}">
+    <link rel="canonical" href="https://www.cyano.tools{{ request.path }}">
     <!-- Performance Hints -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -80,7 +80,7 @@
       "name": {{ _schema_name|tojson }},
       "operatingSystem": "Web",
       "applicationCategory": "ScientificSoftware",
-      "url": "{{ request.base_url|replace('http://', 'https://') }}",
+      "url": "https://www.cyano.tools{{ request.path }}",
       "description": {{ self.description()|tojson }},
       "offers": {
         "@type": "Offer",
@@ -141,6 +141,7 @@
                                             <a class="dropdown-item" href="/pixel_profiles_filament"> Pigment profiles - filaments </a>
                                             <a class="dropdown-item" href="/cell_size_round_cells"> Cell size - round cells </a>
                                             <a class="dropdown-item" href="/cell_size_filament"> Cell size - filaments </a>
+                                            <a class="dropdown-item" href="/cell_morphology_filament"> Cell morphology - filaments </a>
                                         </ul>
                                     </li>
                                 </ul>
