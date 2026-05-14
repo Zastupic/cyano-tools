@@ -382,7 +382,7 @@ function updateRawYAxisLabel() {
   let title = 'Signal';
   if (units.length === 1 && units[0]) title = `Signal (${units[0]})`;
   else if (units.length > 1) title = 'Signal (mixed units)';
-  else title = 'Signal (unit not found)';
+  else title = 'Signal (unit unknown)';
   Plotly.relayout('raw-plot-div', { 'yaxis.title.text': title }).catch(()=>{});
 }
 
@@ -391,7 +391,7 @@ function updateNormYAxisLabel() {
   let title = 'Drift-corrected signal';
   if (units.length === 1 && units[0]) title = `Drift-corrected signal (${units[0]})`;
   else if (units.length > 1) title = 'Drift-corrected signal (mixed units)';
-  else title = 'Drift-corrected signal (unit not found)';
+  else title = 'Drift-corrected signal (unit unknown)';
   Plotly.relayout('normalized-plot-div', { 'yaxis.title.text': title }).catch(()=>{});
 }
 
