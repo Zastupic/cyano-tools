@@ -382,7 +382,17 @@ function updateRawYAxisLabel() {
   let title = 'Signal';
   if (units.length === 1 && units[0]) title = `Signal (${units[0]})`;
   else if (units.length > 1) title = 'Signal (mixed units)';
+  else title = 'Signal (unit not found)';
   Plotly.relayout('raw-plot-div', { 'yaxis.title.text': title }).catch(()=>{});
+}
+
+function updateNormYAxisLabel() {
+  const units = Array.from(new Set(mimsYFields.map(f => mimsFieldUnits[f] || null)));
+  let title = 'Drift-corrected signal';
+  if (units.length === 1 && units[0]) title = `Drift-corrected signal (${units[0]})`;
+  else if (units.length > 1) title = 'Drift-corrected signal (mixed units)';
+  else title = 'Drift-corrected signal (unit not found)';
+  Plotly.relayout('normalized-plot-div', { 'yaxis.title.text': title }).catch(()=>{});
 }
 
 // ======================
@@ -513,7 +523,7 @@ function plotNormalizedData() {
   const normPlotTitle = {
     text: [
       'Normalized MIMS signals',
-      `<span style="font-size:0.85em;">divided by ${refField} signal, self-normalized at t = ${tpValue.toFixed(2)} min</span>`,
+      `<span style="font-size:0.85em;">drift-corrected using ${refField}, baseline at t = ${tpValue.toFixed(2)} min</span>`,
       `<span style="font-size:0.85em;">${selectedFile ? selectedFile.name : ''}</span>`
     ].join('<br>'),
     font: { size: 13 }
@@ -522,8 +532,9 @@ function plotNormalizedData() {
   Plotly.newPlot('normalized-plot-div', traces, {
     title: normPlotTitle,
     xaxis: { title: xField === 'min' ? 'Time (min)' : xField },
-    yaxis: { title: `Signal / ${refField} (r.u.)`, tickformat: '.1e' }
+    yaxis: { title: 'Drift-corrected signal', tickformat: '.1e' }
   }).then(() => {
+    updateNormYAxisLabel();
     const np = document.getElementById('normalized-plot-div');
     np.on('plotly_relayout', function(eventData) {
       if (eventData['xaxis.range[0]'] !== undefined && eventData['xaxis.range[1]'] !== undefined) {
