@@ -26,6 +26,7 @@ TOOL_FILES = {
     'cell_count_filament':     ['website/cell_count_filament.py',         'website/static/js_cell_count_filament.js'],
     'cell_size':               ['website/cell_size_round_cells.py',       'website/static/js_cell_size_round_cells.js'],
     'cell_size_filament':      ['website/cell_size_filament.py',          'website/static/js_cell_size_filament.js'],
+    'cell_morphology_filament':['website/cell_morphology_filament.py',    'website/static/js_cell_morphology_filament.js'],
     'pixel_profiles':          ['website/pixel_profiles_round_cells.py',  'website/static/js_pixel_profies_round_cells.js'],
     'pixel_profiles_filament': ['website/pixel_profiles_filament.py',     'website/static/js_pixel_profies_filaments.js'],
     'metabolic_model':         ['website/metabolic_model.py',              'website/static/js_metabolic_model.js'],

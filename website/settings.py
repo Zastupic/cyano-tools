@@ -20,6 +20,7 @@ PAGE_NAMES = {
     '/ex_em_spectra_analysis':    'Ex/Em Spectra Analysis',
     '/cell_size_round_cells':     'Cell Size (Round)',
     '/cell_size_filament':        'Cell Size (Filament)',
+    '/cell_morphology_filament':  'Cell Morphology (Filament)',
     '/light_curves_analysis':     'Light Curves Analysis',
     '/MIMS_data_analysis':        'MIMS Data Analysis',
     '/MIMS_data_analysis_periodic':'MIMS Periodic Analysis',

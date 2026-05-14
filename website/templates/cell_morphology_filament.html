@@ -42,6 +42,7 @@ Automated morphology analysis for filamentous cyanobacteria and algae. Measures 
 <div class="alert alert-info" role="alert" style="font-size:0.97em; border-left:4px solid #17a2b8;">
     <strong>At a glance:</strong> Upload a fluorescence or brightfield image of filamentous algae or cyanobacteria. The tool automatically segments individual cells and measures <strong>aspect ratio</strong>, <strong>circularity</strong>, and <strong>eccentricity</strong> per cell and per filament. Results are colour-coded on the image and exported to XLSX.
 </div>
+<p class="text-muted" style="font-size:0.93em;">Suitable for fluorescence and brightfield microscopy images of filamentous cyanobacteria and algae. Cells are automatically segmented using watershed-based algorithms and shape descriptors — <strong>aspect ratio</strong>, <strong>circularity</strong>, and <strong>eccentricity</strong> — are computed per cell and per filament.</p>
 
 <div style="margin-bottom:0.5em;">
     <button type="button" class="btn btn-sm btn-outline-secondary"
@@ -61,6 +62,11 @@ Automated morphology analysis for filamentous cyanobacteria and algae. Measures 
             </ol>
         </div>
     </div>
+</div>
+<div style="margin-top:0.5em; margin-bottom:1em;">
+    <a href="{{url_for('static', filename='files/cells_filamentous_example.rar')}}" download="example_morphology_image">
+        <button type="button" class="btn btn-sm btn-outline-secondary">&#128229; Download example image</button>
+    </a>
 </div>
 <br>
 
@@ -392,6 +398,40 @@ Automated morphology analysis for filamentous cyanobacteria and algae. Measures 
                         </div>
                     </div>
 
+                    <!-- ── Brightfield-only parameters ──────────────────── -->
+                    <div id="bf-params-section" class="col-12 mb-2 px-2" style="display:none;">
+                        <div style="font-size:0.88em; font-weight:600; margin-bottom:0.3em; color:#e67e22;">
+                            &#9728; Brightfield edge/ridge parameters
+                            <small class="text-muted font-weight-normal" style="font-size:0.82em;">— visible only in Brightfield mode</small>
+                        </div>
+                        <div class="row no-gutters" style="margin:0 -6px;">
+                            <div class="col-12 col-sm-6 mb-2 px-2">
+                                <div style="font-size:0.88em;">Ridge sigma (&micro;m): <strong><span id="ridge_sigma_val">{{ ridge_sigma_um | default(1.5) }}</span></strong></div>
+                                <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">scale for tubeness filter; match filament width</div>
+                                <div class="d-flex align-items-center" style="gap:3px;">
+                                    <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0.3</small>
+                                    <input type="range" min="0.3" max="5.0" step="0.1"
+                                           value="{{ ridge_sigma_um | default(1.5) }}"
+                                           class="slider" name="ridge_sigma" id="ridge_sigma_range"
+                                           style="flex:1; min-width:0;">
+                                    <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">5.0</small>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 mb-2 px-2">
+                                <div style="font-size:0.88em;">Edge weight: <strong><span id="edge_weight_val">{{ edge_weight | default(0.5) }}</span></strong></div>
+                                <div class="text-muted" style="font-size:0.75em; margin-bottom:2px;">0 = ridge only; 1 = edge only; 0.5 = balanced blend</div>
+                                <div class="d-flex align-items-center" style="gap:3px;">
+                                    <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">0</small>
+                                    <input type="range" min="0" max="1" step="0.05"
+                                           value="{{ edge_weight | default(0.5) }}"
+                                           class="slider" name="edge_weight" id="edge_weight_range"
+                                           style="flex:1; min-width:0;">
+                                    <small class="text-muted" style="font-size:0.75em; white-space:nowrap;">1</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div><!-- end pre-processing sliders -->
 
                 <!-- ── Filament segmentation sub-section ────────────────── -->
@@ -593,6 +633,24 @@ Automated morphology analysis for filamentous cyanobacteria and algae. Measures 
             <div style="font-size:1.4em; font-weight:700; color:#0a3c58; line-height:1.3;"><span id="stat-mean-ecc">{{ mean_ecc }}</span> <span style="font-size:0.6em; font-weight:400; color:#6c757d;">&plusmn; <span id="stat-std-ecc">{{ std_ecc }}</span></span></div>
         </div>
     </div>
+    <div class="col-6 col-md-4 col-lg-2 mb-2" id="morph-stat-area" style="display:none;">
+        <div class="card h-100 text-center py-2 px-1" style="border-color:#dee2e6;">
+            <div style="font-size:0.72em; font-weight:600; text-transform:uppercase; color:#6c757d; letter-spacing:0.06em;">Mean area (&micro;m&sup2;)</div>
+            <div style="font-size:1.4em; font-weight:700; color:#0a3c58; line-height:1.3;"><span id="stat-mean-area">{{ mean_area }}</span> <span style="font-size:0.6em; font-weight:400; color:#6c757d;">&plusmn; <span id="stat-std-area">{{ std_area }}</span></span></div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2 mb-2" id="morph-stat-major" style="display:none;">
+        <div class="card h-100 text-center py-2 px-1" style="border-color:#dee2e6;">
+            <div style="font-size:0.72em; font-weight:600; text-transform:uppercase; color:#6c757d; letter-spacing:0.06em;">Mean length (&micro;m)</div>
+            <div style="font-size:1.4em; font-weight:700; color:#0a3c58; line-height:1.3;"><span id="stat-mean-major">{{ mean_major }}</span> <span style="font-size:0.6em; font-weight:400; color:#6c757d;">&plusmn; <span id="stat-std-major">{{ std_major }}</span></span></div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2 mb-2" id="morph-stat-minor" style="display:none;">
+        <div class="card h-100 text-center py-2 px-1" style="border-color:#dee2e6;">
+            <div style="font-size:0.72em; font-weight:600; text-transform:uppercase; color:#6c757d; letter-spacing:0.06em;">Mean width (&micro;m)</div>
+            <div style="font-size:1.4em; font-weight:700; color:#0a3c58; line-height:1.3;"><span id="stat-mean-minor">{{ mean_minor }}</span> <span style="font-size:0.6em; font-weight:400; color:#6c757d;">&plusmn; <span id="stat-std-minor">{{ std_minor }}</span></span></div>
+        </div>
+    </div>
 </div>
 
 <!-- Manual correction controls -->
@@ -657,13 +715,19 @@ Automated morphology analysis for filamentous cyanobacteria and algae. Measures 
         <div id="color-by-controls" style="display:none;">
         <div class="d-flex align-items-center mb-2" style="gap:0.5em; flex-wrap:wrap;">
             <span style="font-size:0.85em; font-weight:600; color:#495057;">Colour by:</span>
-            <div class="btn-group btn-group-sm" role="group">
+            <div class="btn-group btn-group-sm" role="group" style="flex-wrap:wrap;">
                 <button type="button" class="btn btn-outline-secondary active" id="color-by-ar"
                         onclick="setColorMetric('aspect_ratio', this)">Aspect ratio</button>
                 <button type="button" class="btn btn-outline-secondary" id="color-by-circ"
                         onclick="setColorMetric('circularity', this)">Circularity</button>
                 <button type="button" class="btn btn-outline-secondary" id="color-by-ecc"
                         onclick="setColorMetric('eccentricity', this)">Eccentricity</button>
+                <button type="button" class="btn btn-outline-secondary" id="color-by-area"
+                        onclick="setColorMetric('area_um2', this)">Area</button>
+                <button type="button" class="btn btn-outline-secondary" id="color-by-major"
+                        onclick="setColorMetric('major_um', this)">Length</button>
+                <button type="button" class="btn btn-outline-secondary" id="color-by-minor"
+                        onclick="setColorMetric('minor_um', this)">Width</button>
             </div>
             <span style="font-size:0.78em; color:#888;">&#9650; green = high &nbsp; &#9660; red = low</span>
         </div>
@@ -762,6 +826,26 @@ Automated morphology analysis for filamentous cyanobacteria and algae. Measures 
              style="width:100%; border:1px solid #dee2e6; border-radius:4px; cursor:zoom-in;">
     </div>
 </div>
+<div class="row mb-3">
+    <div class="col-md-4 mb-2">
+        <p style="font-size:0.85em; font-weight:600; margin-bottom:0.3em;">Cell Area</p>
+        <img src="data:image/jpeg;base64,{{ hist_area_from_memory }}"
+             alt="Cell area histogram" data-enlargeable
+             style="width:100%; border:1px solid #dee2e6; border-radius:4px; cursor:zoom-in;">
+    </div>
+    <div class="col-md-4 mb-2">
+        <p style="font-size:0.85em; font-weight:600; margin-bottom:0.3em;">Cell Length (major axis)</p>
+        <img src="data:image/jpeg;base64,{{ hist_major_from_memory }}"
+             alt="Cell length histogram" data-enlargeable
+             style="width:100%; border:1px solid #dee2e6; border-radius:4px; cursor:zoom-in;">
+    </div>
+    <div class="col-md-4 mb-2">
+        <p style="font-size:0.85em; font-weight:600; margin-bottom:0.3em;">Cell Width (minor axis)</p>
+        <img src="data:image/jpeg;base64,{{ hist_minor_from_memory }}"
+             alt="Cell width histogram" data-enlargeable
+             style="width:100%; border:1px solid #dee2e6; border-radius:4px; cursor:zoom-in;">
+    </div>
+</div>
 </div><!-- /#histograms-section -->
 
 <!-- Analysis details -->
@@ -795,6 +879,12 @@ Automated morphology analysis for filamentous cyanobacteria and algae. Measures 
                         <td style="padding:2px 0;">{{ blur_radius | default(3) }} px</td></tr>
                     <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Separate filaments</td>
                         <td style="padding:2px 0;">{{ 'Yes' if separate_filaments else 'No' }}</td></tr>
+                    {% if microscopy_mode == 'brightfield' %}
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Ridge sigma</td>
+                        <td style="padding:2px 0;">{{ ridge_sigma_um | default(1.5) }} µm</td></tr>
+                    <tr><td class="text-muted" style="padding:2px 6px 2px 0;">Edge weight</td>
+                        <td style="padding:2px 0;">{{ edge_weight | default(0.5) }}</td></tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>

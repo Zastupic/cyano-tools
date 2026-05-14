@@ -91,6 +91,8 @@
                                 <a href="{{ url_for('cell_count.count_cells') }}">Round cell counting</a>,
                                 <a href="{{ url_for('cell_count_filament.count_filament_cells') }}">filament counting</a>,
                                 <a href="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">cell size</a>,
+                                <a href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}">cell size – filaments</a> (manual / brightfield),
+                                <a href="{{ url_for('cell_morphology_filament.analyze_cell_morphology_filament') }}">cell morphology – filaments</a> (automated / fluorescence),
                                 <a href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">pixel profiles</a>
                                 — fluorescence &amp; brightfield.<br>
                                 <span style="color:#888;font-size:0.9em;">PNG, JPG, TIF, BMP</span>
@@ -282,8 +284,15 @@
                     <a class="feature" href="{{ url_for('cell_size_filament.analyze_cell_size_filament') }}">
                         <img src="{{ url_for('static', filename='images/cell_size_filaments_analyzed_1.JPG') }}" alt="Cell size filaments" class="feature-thumb">
                         <div class="feature-text">
-                            <h3><b>Cell size &ndash; filaments</b>{% if updated_tools.get('cell_size_filament') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('cell_size_filament') }}">Updated</span>{% endif %}</h3>
-                            <p>Diameter of filamentous cells by manual detection.</p>
+                            <h3><b>Cell size &ndash; filaments (manual)</b>{% if updated_tools.get('cell_size_filament') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('cell_size_filament') }}">Updated</span>{% endif %}</h3>
+                            <p>Measure cell dimensions by drawing lines — precise, ideal for brightfield images.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="{{ url_for('cell_morphology_filament.analyze_cell_morphology_filament') }}">
+                        <img src="{{ url_for('static', filename='images/cell_morphology_example.jpg') }}" alt="Cell morphology filaments" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Cell morphology &ndash; filaments (automated)</b>{% if updated_tools.get('cell_morphology_filament') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('cell_morphology_filament') }}">Updated</span>{% endif %}</h3>
+                            <p>Automated shape analysis (aspect ratio, circularity, eccentricity) across all detected cells — designed for fluorescence images.</p>
                         </div>
                     </a>
                     <a class="feature" href="{{ url_for('pixel_profiles_round_cells.get_pixel_profiles') }}">
