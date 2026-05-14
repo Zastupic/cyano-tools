@@ -42,7 +42,7 @@ var WORKER_URL = (function () {
 '    \'Adaptive Mean\',\n' +
 '    \'Adaptive Gaussian\'\n' +
 '];\n' +
-'function buildGreyTh(imgBGR, microscopyMode, blurRadius, claheClip) {\n' +
+'function buildGreyTh(imgBGR, microscopyMode, blurRadius, claheClip, edgeWeight) {\n' +
 '    var kSize = Math.max(1, parseInt(blurRadius) || 3);\n' +
 '    var imgBlur  = new cv.Mat();\n' +
 '    var imgGrey  = new cv.Mat();\n' +
@@ -61,7 +61,28 @@ var WORKER_URL = (function () {
 '        } catch (e) {}\n' +
 '    }\n' +
 '    if (microscopyMode === \'brightfield\') {\n' +
-'        cv.bitwise_not(imgGrey, imgGreyTh);\n' +
+'        var ew = (edgeWeight !== undefined && edgeWeight !== null) ? edgeWeight : 0.5;\n' +
+'        ew = Math.max(0, Math.min(1, ew));\n' +
+'        var imgInv = new cv.Mat();\n' +
+'        cv.bitwise_not(imgGrey, imgInv);\n' +
+'        var sx = new cv.Mat();\n' +
+'        var sy = new cv.Mat();\n' +
+'        cv.Scharr(imgGrey, sx, cv.CV_64F, 1, 0);\n' +
+'        cv.Scharr(imgGrey, sy, cv.CV_64F, 0, 1);\n' +
+'        var sx2 = new cv.Mat(); var sy2 = new cv.Mat();\n' +
+'        cv.multiply(sx, sx, sx2); cv.multiply(sy, sy, sy2);\n' +
+'        var mag64 = new cv.Mat();\n' +
+'        cv.add(sx2, sy2, mag64);\n' +
+'        cv.sqrt(mag64, mag64);\n' +
+'        sx.delete(); sy.delete(); sx2.delete(); sy2.delete();\n' +
+'        var mag8 = new cv.Mat();\n' +
+'        cv.normalize(mag64, mag8, 0, 255, cv.NORM_MINMAX, cv.CV_8U);\n' +
+'        mag64.delete();\n' +
+'        var edgeInv = new cv.Mat();\n' +
+'        cv.bitwise_not(mag8, edgeInv);\n' +
+'        mag8.delete();\n' +
+'        cv.addWeighted(imgInv, 1.0 - ew, edgeInv, ew, 0, imgGreyTh);\n' +
+'        imgInv.delete(); edgeInv.delete();\n' +
 '        imgGrey.delete();\n' +
 '    } else {\n' +
 '        imgGreyTh = imgGrey;\n' +
@@ -163,7 +184,7 @@ var WORKER_URL = (function () {
 '    var imgBGR  = new cv.Mat();\n' +
 '    cv.cvtColor(src, imgBGR, cv.COLOR_RGBA2BGR);\n' +
 '    src.delete();\n' +
-'    var imgGreyTh = buildGreyTh(imgBGR, microscopyMode, params.blurRadius, claheClip);\n' +
+'    var imgGreyTh = buildGreyTh(imgBGR, microscopyMode, params.blurRadius, claheClip, params.edgeWeight);\n' +
 '    var imgGrey = new cv.Mat();\n' +
 '    cv.blur(imgBGR, imgGrey, new cv.Size(3, 3));\n' +
 '    var imgGreyForViz = new cv.Mat();\n' +
@@ -265,7 +286,7 @@ var WORKER_URL = (function () {
 '    var imgBGR   = new cv.Mat();\n' +
 '    cv.cvtColor(src, imgBGR, cv.COLOR_RGBA2BGR);\n' +
 '    src.delete();\n' +
-'    var imgGreyTh = buildGreyTh(imgBGR, params.microscopyMode || \'fluorescence\', params.blurRadius, claheClip);\n' +
+'    var imgGreyTh = buildGreyTh(imgBGR, params.microscopyMode || \'fluorescence\', params.blurRadius, claheClip, params.edgeWeight);\n' +
 '    imgBGR.delete();\n' +
 '    var imgTh = applyThreshold(imgGreyTh, params.thresholdName, manualThresh, adaptiveBlockSize, adaptiveC);\n' +
 '    imgGreyTh.delete();\n' +
@@ -286,7 +307,7 @@ var WORKER_URL = (function () {
 '    var imgBGR   = new cv.Mat();\n' +
 '    cv.cvtColor(src, imgBGR, cv.COLOR_RGBA2BGR);\n' +
 '    src.delete();\n' +
-'    var imgGreyTh = buildGreyTh(imgBGR, params.microscopyMode || \'fluorescence\', params.blurRadius, claheClip);\n' +
+'    var imgGreyTh = buildGreyTh(imgBGR, params.microscopyMode || \'fluorescence\', params.blurRadius, claheClip, params.edgeWeight);\n' +
 '    imgBGR.delete();\n' +
 '    var results = [];\n' +
 '    for (var i = 0; i < ALL_THRESHOLDS.length; i++) {\n' +
@@ -333,7 +354,7 @@ var WORKER_URL = (function () {
 
 // ── Colormap globals ──────────────────────────────────────────────────────────
 var colorByMetric = 'aspect_ratio';
-var metricIndex   = { aspect_ratio: 5, circularity: 6, eccentricity: 7 };
+var metricIndex   = { aspect_ratio: 5, circularity: 6, eccentricity: 7, area_um2: 8, major_um: 3, minor_um: 4 };
 
 function getMetricMinMax() {
     var idx  = metricIndex[colorByMetric] !== undefined ? metricIndex[colorByMetric] : 5;
@@ -360,12 +381,15 @@ function metricToColor(value, vmin, vmax) {
 
 function setColorMetric(metric, btn) {
     colorByMetric = metric;
-    ['color-by-ar', 'color-by-circ', 'color-by-ecc'].forEach(function (id) {
+    ['color-by-ar', 'color-by-circ', 'color-by-ecc', 'color-by-area', 'color-by-major', 'color-by-minor'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.classList.remove('active');
     });
     if (btn) btn.classList.add('active');
-    var labels = { aspect_ratio: 'Aspect Ratio', circularity: 'Circularity', eccentricity: 'Eccentricity' };
+    var labels = {
+        aspect_ratio: 'Aspect Ratio', circularity: 'Circularity', eccentricity: 'Eccentricity',
+        area_um2: 'Area (µm²)', major_um: 'Length (µm)', minor_um: 'Width (µm)'
+    };
     var lbl = document.getElementById('colorbar-label');
     if (lbl) lbl.textContent = labels[metric] || metric;
     redrawAllCircles();
@@ -407,6 +431,8 @@ $('img[data-enlargeable]').addClass('img-enlargeable').on('click', function () {
     bindSlider('factor_1_multiplication_range', 'factor_1_mult_val');
     bindSlider('factor_2_distance_range',       'factor_2_dist_val');
     bindSlider('max_aspect_ratio_range',        'max_aspect_ratio_val');
+    bindSlider('ridge_sigma_range',             'ridge_sigma_val');
+    bindSlider('edge_weight_range',             'edge_weight_val');
 })();
 
 // ── Reset analysis parameters to defaults ─────────────────────────────────────
@@ -424,6 +450,8 @@ var PARAM_DEFAULTS = {
     factor_1_multiplication_range: 1.4,
     factor_2_distance_range:       28,
     max_aspect_ratio_range:        0,
+    ridge_sigma_range:             1.5,
+    edge_weight_range:             0.5,
 };
 var PARAM_OUTPUTS = {
     minimal_diameter_range:        'minimal_diameter',
@@ -439,6 +467,8 @@ var PARAM_OUTPUTS = {
     factor_1_multiplication_range: 'factor_1_mult_val',
     factor_2_distance_range:       'factor_2_dist_val',
     max_aspect_ratio_range:        'max_aspect_ratio_val',
+    ridge_sigma_range:             'ridge_sigma_val',
+    edge_weight_range:             'edge_weight_val',
 };
 (function () {
     var btn = document.getElementById('params-reset-btn');
@@ -988,6 +1018,7 @@ function getFormParams() {
         bilateralFilter:   bv('bilateral_filter_check'),
         useHmax:           bv('use_hmax_check'),
         segMethod:         (document.querySelector('input[name="seg_method"]:checked') || {}).value || 'peak_local_max',
+        edgeWeight:        fv('edge_weight_range'),
     };
 }
 
@@ -1168,7 +1199,8 @@ function highlightMultiSelected(name) {
         'minimal_diameter_range', 'blur_radius_range',
         'max_diam_range', 'clahe_clip', 'morph_iter', 'circularity_min',
         'max_aspect_ratio_range', 'manual_thresh',
-        'adaptive_block_size', 'adaptive_c'
+        'adaptive_block_size', 'adaptive_c',
+        'edge_weight_range'
     ];
     paramIds.forEach(function (id) {
         var el = document.getElementById(id);
@@ -1182,7 +1214,8 @@ function highlightMultiSelected(name) {
         'minimal_diameter_range', 'blur_radius_range',
         'max_diam_range', 'clahe_clip', 'morph_iter', 'circularity_min',
         'max_aspect_ratio_range', 'manual_thresh',
-        'adaptive_block_size', 'adaptive_c'
+        'adaptive_block_size', 'adaptive_c',
+        'edge_weight_range'
     ];
     multiParamIds.forEach(function (id) {
         var el = document.getElementById(id);
@@ -1196,8 +1229,16 @@ function highlightMultiSelected(name) {
         stripesChk.addEventListener('change', triggerMultiIfVisible);
     }
 
+    function updateBfParamsVisibility() {
+        var mode = (document.querySelector('input[name="microscopy_mode"]:checked') || {}).value || 'fluorescence';
+        var bfSec = document.getElementById('bf-params-section');
+        if (bfSec) bfSec.style.display = (mode === 'brightfield') ? '' : 'none';
+    }
+    updateBfParamsVisibility();
+
     document.querySelectorAll('#microscopy-mode-group label').forEach(function (label) {
         label.addEventListener('click', function () {
+            setTimeout(updateBfParamsVisibility, 30);
             setTimeout(triggerAutoCount, 50);
             setTimeout(triggerMultiIfVisible, 50);
         });
@@ -1529,23 +1570,36 @@ function computeMeanStd(vals) {
 
 function updateMorphologyStats() {
     var arVals = [], circVals = [], eccVals = [];
+    var areaVals = [], majorVals = [], minorVals = [];
     for (var i = 0; i < serverCells.length; i++) {
         var d = serverCells[i].data;
         if (!d) continue;
         arVals.push(d[5]);
         circVals.push(d[6]);
         eccVals.push(d[7]);
+        areaVals.push(d[8]);
+        majorVals.push(d[3]);
+        minorVals.push(d[4]);
     }
-    var ar   = computeMeanStd(arVals);
-    var circ = computeMeanStd(circVals);
-    var ecc  = computeMeanStd(eccVals);
+    var ar    = computeMeanStd(arVals);
+    var circ  = computeMeanStd(circVals);
+    var ecc   = computeMeanStd(eccVals);
+    var area  = computeMeanStd(areaVals);
+    var major = computeMeanStd(majorVals);
+    var minor = computeMeanStd(minorVals);
     var el;
-    el = document.getElementById('stat-mean-ar');   if (el) el.textContent = ar.mean.toFixed(2);
-    el = document.getElementById('stat-std-ar');    if (el) el.textContent = ar.std.toFixed(2);
-    el = document.getElementById('stat-mean-circ'); if (el) el.textContent = circ.mean.toFixed(3);
-    el = document.getElementById('stat-std-circ');  if (el) el.textContent = circ.std.toFixed(3);
-    el = document.getElementById('stat-mean-ecc');  if (el) el.textContent = ecc.mean.toFixed(3);
-    el = document.getElementById('stat-std-ecc');   if (el) el.textContent = ecc.std.toFixed(3);
+    el = document.getElementById('stat-mean-ar');    if (el) el.textContent = ar.mean.toFixed(2);
+    el = document.getElementById('stat-std-ar');     if (el) el.textContent = ar.std.toFixed(2);
+    el = document.getElementById('stat-mean-circ');  if (el) el.textContent = circ.mean.toFixed(3);
+    el = document.getElementById('stat-std-circ');   if (el) el.textContent = circ.std.toFixed(3);
+    el = document.getElementById('stat-mean-ecc');   if (el) el.textContent = ecc.mean.toFixed(3);
+    el = document.getElementById('stat-std-ecc');    if (el) el.textContent = ecc.std.toFixed(3);
+    el = document.getElementById('stat-mean-area');  if (el) el.textContent = area.mean.toFixed(3);
+    el = document.getElementById('stat-std-area');   if (el) el.textContent = area.std.toFixed(3);
+    el = document.getElementById('stat-mean-major'); if (el) el.textContent = major.mean.toFixed(3);
+    el = document.getElementById('stat-std-major');  if (el) el.textContent = major.std.toFixed(3);
+    el = document.getElementById('stat-mean-minor'); if (el) el.textContent = minor.mean.toFixed(3);
+    el = document.getElementById('stat-std-minor');  if (el) el.textContent = minor.std.toFixed(3);
     rebuildFilamentTable();
 }
 
@@ -1587,7 +1641,8 @@ function confirmSelection() {
     el = document.getElementById('phase1-alert');
     if (el) el.style.display = 'none';
     ['color-by-controls', 'colorbar-section', 'histograms-section', 'download-section',
-     'morph-stat-ar', 'morph-stat-circ', 'morph-stat-ecc'].forEach(function (id) {
+     'morph-stat-ar', 'morph-stat-circ', 'morph-stat-ecc',
+     'morph-stat-area', 'morph-stat-major', 'morph-stat-minor'].forEach(function (id) {
         el = document.getElementById(id);
         if (el) el.style.display = '';
     });

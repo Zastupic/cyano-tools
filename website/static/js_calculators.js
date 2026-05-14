@@ -136,11 +136,13 @@ function calculateDoublingTime() {
 //------------------------//
 // set default values 
 document.getElementById('corrected_OD_720_PBRFMT150_for_span').innerHTML = "<b>...</b>";
+document.getElementById('corrected_OD_720_PBRFMT150_EFE_for_span').innerHTML = "<b>...</b>";
 document.getElementById('corrected_OD_720_MC1000_for_span').innerHTML = "<b>...</b>";
 document.getElementById('corrected_OD_720_AquaPen_for_span').innerHTML = "<b>...</b>";
 document.getElementById('corrected_OD_680_PBRFMT150_for_span').innerHTML = "<b>...</b>";
+document.getElementById('corrected_OD_680_PBRFMT150_EFE_for_span').innerHTML = "<b>...</b>";
 // Calculate doubling time
-function correct_OD_720_PBRFMT150() { 
+function correct_OD_720_PBRFMT150() {   // FMT-150 WT
   var OD_720_measured_PBR = parseFloat(document.getElementById("OD_720_measured_PBR").value);
   if (OD_720_measured_PBR > 0.4) {
     var corrected_OD_720_PBRFMT150_for_span = 0.23 * Math.exp(1.83 * OD_720_measured_PBR);
@@ -148,6 +150,15 @@ function correct_OD_720_PBRFMT150() {
     var corrected_OD_720_PBRFMT150_for_span = OD_720_measured_PBR;
   }
   document.getElementById('corrected_OD_720_PBRFMT150_for_span').innerHTML = "<b>"+corrected_OD_720_PBRFMT150_for_span.toFixed(3)+"</b>";
+}
+function correct_OD_720_PBRFMT150_EFE() {   // FMT-150 EFE
+  var OD_720_measured_PBR_EFE = parseFloat(document.getElementById("OD_720_measured_PBR_EFE").value);
+  if (OD_720_measured_PBR_EFE > 0.4) {
+    var corrected_OD_720_PBRFMT150_EFE_for_span = 0.3201 * Math.exp(1.6376 * OD_720_measured_PBR_EFE);
+  } else {
+    var corrected_OD_720_PBRFMT150_EFE_for_span = OD_720_measured_PBR_EFE;
+  }
+  document.getElementById('corrected_OD_720_PBRFMT150_EFE_for_span').innerHTML = "<b>"+corrected_OD_720_PBRFMT150_EFE_for_span.toFixed(3)+"</b>";
 }
 function correct_OD_720_MC1000(){
   var OD_720_measured_MC1000 = parseFloat(document.getElementById("OD_720_measured_MC1000").value);
@@ -170,10 +181,15 @@ function correct_OD_720_AquaPen(){
 //------------------------//
 //--- OD680 CORRECTION ---//
 //------------------------//
-function correct_OD_680_PBRFMT150() {
+function correct_OD_680_PBRFMT150() {   // FMT-150 WT
     var od = parseFloat(document.getElementById("OD_680_measured_PBRFMT150").value);
     var corrected = od >= 0.6 ? 0.4228 * Math.exp(0.9296 * od) : od;
     document.getElementById('corrected_OD_680_PBRFMT150_for_span').innerHTML = "<b>" + corrected.toFixed(3) + "</b>";
+}
+function correct_OD_680_PBRFMT150_EFE() {   // FMT-150 EFE
+    var od = parseFloat(document.getElementById("OD_680_measured_PBRFMT150_EFE").value);
+    var corrected = od >= 0.6 ? 0.7622 * Math.exp(0.6223 * od) : od;
+    document.getElementById('corrected_OD_680_PBRFMT150_EFE_for_span').innerHTML = "<b>" + corrected.toFixed(3) + "</b>";
 }
 //------------------------------------------//
 //--- CORRECTED SPECIFIC GROWTH RATE -------//
@@ -181,14 +197,19 @@ function correct_OD_680_PBRFMT150() {
 document.getElementById('mu_corr_result_span').innerHTML = "<b>...</b>";
 
 function correctOD(od, device) {
-    if (device === 'FMT-150 (OD680)') {
+    if (device === 'FMT-150 WT (OD680)') {
         if (od <= 0.6) return od;
         return 0.4228 * Math.exp(0.9296 * od);
     }
+    if (device === 'FMT-150 EFE (OD680)') {
+        if (od <= 0.6) return od;
+        return 0.7622 * Math.exp(0.6223 * od);
+    }
     if (od <= 0.4) return od;
-    if (device === 'FMT-150')  return 0.23  * Math.exp(1.83  * od);
-    if (device === 'MC-1000')  return 0.029 + 0.143 * Math.exp(2.497 * od);
-    if (device === 'AquaPen')  return 0.247 * Math.exp(1.677 * od);
+    if (device === 'FMT-150 WT')  return 0.23 * Math.exp(1.83 * od);
+    if (device === 'FMT-150 EFE') return 0.3201 * Math.exp(1.6376 * od);
+    if (device === 'MC-1000')     return 0.029 + 0.143 * Math.exp(2.497 * od);
+    if (device === 'AquaPen')     return 0.247 * Math.exp(1.677 * od);
     return od;
 }
 
@@ -212,8 +233,9 @@ function calculateCorrectedGrowthRate() {
         return;
     }
 
-    const threshold = device === 'FMT-150 (OD680)' ? 0.6 : 0.4;
-    const odLabel   = device === 'FMT-150 (OD680)' ? 'OD<sub>680</sub>' : 'OD<sub>720</sub>';
+    const isOD680   = device === 'FMT-150 WT (OD680)' || device === 'FMT-150 EFE (OD680)';
+    const threshold = isOD680 ? 0.6 : 0.4;
+    const odLabel   = isOD680 ? 'OD<sub>680</sub>' : 'OD<sub>720</sub>';
 
     const mu_raw  = Math.log(OD2 / OD1) / dt;
     const OD1c = correctOD(OD1, device);
@@ -253,10 +275,11 @@ function calculateSimpleMuCorrection() {
         return;
     }
 
-    const kMap = { 'FMT-150': 1.83, 'AquaPen': 1.677, 'MC-1000': 2.497, 'FMT-150 (OD680)': 1.58 };
+    const kMap = { 'FMT-150 WT': 1.83, 'FMT-150 EFE': 1.6376, 'AquaPen': 1.677, 'MC-1000': 2.497, 'FMT-150 WT (OD680)': 1.58, 'FMT-150 EFE (OD680)': 1.4315 };
     const k = kMap[device];
     const mu_corr = k * mu_raw;
-    const isApprox = (device === 'MC-1000' || device === 'FMT-150 (OD680)');
+    const isOD680simple = device === 'FMT-150 WT (OD680)' || device === 'FMT-150 EFE (OD680)';
+    const isApprox = (device === 'MC-1000' || isOD680simple);
 
     resultSpan.innerHTML =
         "&mu;<sub>raw</sub> = <b>" + mu_raw.toFixed(4) + "</b> " + unit + "<sup>-1</sup>" +
@@ -266,7 +289,7 @@ function calculateSimpleMuCorrection() {
     detailSpan.innerHTML =
         "k = <b>" + k + "</b> (" + device + ")" +
         (device === 'MC-1000' ? '&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:#b06000;">Approximate — use the OD-based calculator above for an exact result with MC-1000.</span>' : '') +
-        (device === 'FMT-150 (OD680)' ? '&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:#b06000;">Power-law approximation (k&nbsp;=&nbsp;1.385): &asymp;10% OD error vs. the exponential model. For exact results use the two-OD calculator below.</span>' : '');
+        (isOD680simple ? '&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:#b06000;">Power-law approximation: &asymp;10% OD error vs. the exponential model. For exact results use the two-OD calculator below.</span>' : '');
 }
 
 //--------------------------------------//
@@ -539,9 +562,11 @@ function openODSection(id) {
         calculateGrowthRate();
         calculateDoublingTime();
         correct_OD_720_PBRFMT150();
+        correct_OD_720_PBRFMT150_EFE();
         correct_OD_720_MC1000();
         correct_OD_720_AquaPen();
         correct_OD_680_PBRFMT150();
+        correct_OD_680_PBRFMT150_EFE();
         calculateCorrectedGrowthRate();
         calculateSimpleMuCorrection();
         calculate_A2();
@@ -582,13 +607,21 @@ function openODSection(id) {
                 {x: 3.209, y: 0.18}, {x: 2.800, y: 0.16}, {x: 2.481, y: 0.14},
                 {x: 2.286, y: 0.13}, {x: 1.880, y: 0.11}, {x: 1.604, y: 0.10}
             ];
-            var fmt150Data = [
-                {x: 0.00, y: 0}, {x: 0.40, y: 0.082}, {x: 1.00, y: 0.194167},
+            var fmt150WTData = [
+                {x: 0.40, y: 0.082}, {x: 1.00, y: 0.194167},
                 {x: 1.79, y: 0.32}, {x: 2.57, y: 0.428667}, {x: 3.36, y: 0.5195},
                 {x: 3.75, y: 0.563}, {x: 4.14, y: 0.602333}, {x: 4.52, y: 0.641833},
                 {x: 4.91, y: 0.677833}, {x: 5.68, y: 0.742167}, {x: 7.21, y: 0.858167},
                 {x: 9.10, y: 0.979167}, {x: 12.81, y: 1.176667}, {x: 16.42, y: 1.327667},
                 {x: 21.68, y: 1.510667}, {x: 26.74, y: 1.657167}
+            ];
+            var fmt150Data = [
+                {x: 11.037, y: 1.65}, {x: 8.830, y: 1.48}, {x: 7.064, y: 1.35},
+                {x: 5.651, y: 1.18}, {x: 4.521, y: 1.07}, {x: 3.617, y: 0.93},
+                {x: 2.893, y: 0.82}, {x: 2.315, y: 0.70}, {x: 1.852, y: 0.61},
+                {x: 1.481, y: 0.53}, {x: 1.185, y: 0.44}, {x: 0.948, y: 0.38},
+                {x: 0.758, y: 0.31}, {x: 0.607, y: 0.26}, {x: 0.485, y: 0.22},
+                {x: 0.388, y: 0.18}, {x: 0.311, y: 0.15}
             ];
             odChartInstance = new Chart(document.getElementById('odNonlinearityChart'), {
                 type: 'scatter',
@@ -607,17 +640,24 @@ function openODSection(id) {
                             showLine: false, pointRadius: 4, borderWidth: 2
                         },
                         {
-                            label: 'FMT-150',
+                            label: 'FMT-150 WT',
+                            data: fmt150WTData,
+                            borderColor: '#660099', backgroundColor: 'transparent',
+                            showLine: false, pointRadius: 4, borderWidth: 2
+                        },
+                        {
+                            label: 'FMT-150 EFE',
                             data: fmt150Data,
-                            borderColor: '#9900cc', backgroundColor: 'transparent',
+                            borderColor: '#cc44ff', backgroundColor: 'transparent',
                             showLine: false, pointRadius: 4, borderWidth: 2
                         }
                     ]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'right' },
+                        legend: { position: 'bottom' },
                         tooltip: {
                             callbacks: {
                                 label: function(ctx) {
@@ -629,29 +669,43 @@ function openODSection(id) {
                     },
                     scales: {
                         x: {
-                            title: { display: true, text: 'Chlorophyll a (µg mL⁻¹)', font: {size: 12} },
+                            title: { display: true, text: 'Chlorophyll a (µg mL⁻¹)', font: {size: 11} },
                             min: 0, max: 130
                         },
                         y: {
-                            title: { display: true, text: 'OD₇₂₀ measured', font: {size: 12} },
+                            title: { display: true, text: 'OD₇₂₀ measured', font: {size: 11} },
                             min: 0, max: 3
                         }
                     }
                 }
             });
 
-            // OD680 chart — FMT-150: measured data only
-            var fmt150OD680Raw = [
+            // OD680 chart — FMT-150 WT and EFE measured data
+            var fmt150WTOd680 = [
                 {x: 0.015, y: 0.050}, {x: 0.283, y: 0.099}, {x: 0.791, y: 0.191},
                 {x: 1.724, y: 0.366}, {x: 3.732, y: 0.677}, {x: 7.597, y: 1.233},
                 {x: 14.773, y: 1.996}, {x: 29.231, y: 2.793}
+            ];
+            var fmt150OD680Raw = [
+                {x: 11.037, y: 3.65}, {x: 8.830, y: 3.27}, {x: 7.064, y: 2.81},
+                {x: 5.651, y: 2.34}, {x: 4.521, y: 2.05}, {x: 3.617, y: 1.74},
+                {x: 2.893, y: 1.46}, {x: 2.315, y: 1.21}, {x: 1.852, y: 1.01},
+                {x: 1.481, y: 0.85}, {x: 1.185, y: 0.71}, {x: 0.948, y: 0.60},
+                {x: 0.758, y: 0.48}, {x: 0.607, y: 0.40}, {x: 0.485, y: 0.34},
+                {x: 0.388, y: 0.27}, {x: 0.311, y: 0.23}
             ];
             od680ChartInstance = new Chart(document.getElementById('od680NonlinearityChart'), {
                 type: 'scatter',
                 data: {
                     datasets: [
                         {
-                            label: 'FMT-150',
+                            label: 'FMT-150 WT',
+                            data: fmt150WTOd680,
+                            borderColor: '#990033', backgroundColor: 'transparent',
+                            showLine: false, pointRadius: 5, borderWidth: 2
+                        },
+                        {
+                            label: 'FMT-150 EFE',
                             data: fmt150OD680Raw,
                             borderColor: '#cc0044', backgroundColor: 'transparent',
                             showLine: false, pointRadius: 5, borderWidth: 2
@@ -660,8 +714,9 @@ function openODSection(id) {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'right' },
+                        legend: { position: 'bottom' },
                         tooltip: {
                             callbacks: {
                                 label: function(ctx) {
@@ -673,12 +728,12 @@ function openODSection(id) {
                     },
                     scales: {
                         x: {
-                            title: { display: true, text: 'Chlorophyll a (µg mL⁻¹)', font: {size: 12} },
+                            title: { display: true, text: 'Chlorophyll a (µg mL⁻¹)', font: {size: 11} },
                             min: 0, max: 130
                         },
                         y: {
-                            title: { display: true, text: 'OD₆₈₀ measured', font: {size: 12} },
-                            min: 0, max: 3
+                            title: { display: true, text: 'OD₆₈₀ measured', font: {size: 11} },
+                            min: 0, max: 4
                         }
                     }
                 }

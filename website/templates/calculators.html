@@ -652,7 +652,8 @@
                 <details>
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">OD<sub>720</sub> correction calculator — FMT-150, MC-1000, AquaPen</summary>
                     <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-                        <p class="mb-0">OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener">photobioreactor PBR FMT-150</a></u></b>, equation<sup>1</sup>:
+                        <p class="mb-0">OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener">photobioreactor PBR FMT-150</a></u></b>, equation<sup>1</sup>
+                            &mdash; <em>Synechocystis</em> sp. PCC 6803 <strong>WT</strong>:
                             <i style="font-size:80%">\( OD_{720,corr} = 0.23\, e^{1.83\, OD_{720,meas}} \)</i>
                         </p>
                         <div class="form-row align-items-center mb-2">
@@ -664,6 +665,21 @@
                             </div>
                             <div class="col-auto">
                                 <button type="button" class="btn btn-info btn-sm">OD<sub>720</sub> corrected:&nbsp;<span id="corrected_OD_720_PBRFMT150_for_span"></span></button>
+                            </div>
+                        </div>
+                        <p class="mb-0">OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/photobioreactors/#info" target="_blank" rel="noopener">photobioreactor PBR FMT-150</a></u></b>
+                            &mdash; <em>Synechocystis</em> sp. PCC 6803 <strong>EFE</strong>:
+                            <i style="font-size:80%">\( OD_{720,corr} = 0.3201\, e^{1.6376\, OD_{720,meas}} \)</i>
+                        </p>
+                        <div class="form-row align-items-center mb-2">
+                            <div class="col-auto"><small>OD<sub>720</sub> measured:</small></div>
+                            <div class="col-auto">
+                                <input class="form-control form-control-sm" type="number" id="OD_720_measured_PBR_EFE"
+                                    min="0" step="0.01" value="0.6" style="width:90px;"
+                                    onkeypress="return isNumberKey(event)" oninput="correct_OD_720_PBRFMT150_EFE()"/>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info btn-sm">OD<sub>720</sub> corrected:&nbsp;<span id="corrected_OD_720_PBRFMT150_EFE_for_span"></span></button>
                             </div>
                         </div>
                         <p class="mb-0">OD<sub>720</sub> correction for the <b><u><a href="https://photo-bio-reactors.com/products/multi-cultivators/" target="_blank" rel="noopener">Multi-Cultivator MC-1000-OD</a></u></b>, equation<sup>2</sup>:
@@ -711,12 +727,12 @@
                             The correction for the FMT-150 follows an <em>exponential</em> model, calibrated against
                             chlorophyll <em>a</em> concentration in <em>Synechocystis</em> sp. PCC 6803 cultures across both the linear and non-linear range:
                         </p>
+                        <p class="mb-0"><strong>WT</strong> (<em>Synechocystis</em> sp. PCC 6803 wild type):</p>
                         <p class="mb-1" style="line-height:0.9"><i style="font-size:80%">
                             \( OD_{680,corr} = 0.4228\, e^{0.9296\, OD_{680,meas}} \quad \text{if } OD_{680,meas} \geq 0.6 \)
                         </i></p>
-                        <p class="mb-1" style="font-size:0.9em; color:#555;">Below OD<sub>680</sub> = 0.6 the signal is linear — no correction is applied.</p>
-                        <div class="form-row align-items-center mb-1">
-                            <div class="col-auto"><small>OD<sub>680</sub> measured:</small></div>
+                        <div class="form-row align-items-center mb-2">
+                            <div class="col-auto"><small>OD<sub>680</sub> measured (WT):</small></div>
                             <div class="col-auto">
                                 <input class="form-control form-control-sm" type="number" id="OD_680_measured_PBRFMT150"
                                     min="0" step="0.01" value="0.8" style="width:90px;"
@@ -726,6 +742,22 @@
                                 <button type="button" class="btn btn-info btn-sm">OD<sub>680</sub> corrected:&nbsp;<span id="corrected_OD_680_PBRFMT150_for_span"></span></button>
                             </div>
                         </div>
+                        <p class="mb-0"><strong>EFE</strong> (<em>Synechocystis</em> sp. PCC 6803 EFE strain):</p>
+                        <p class="mb-1" style="line-height:0.9"><i style="font-size:80%">
+                            \( OD_{680,corr} = 0.7622\, e^{0.6223\, OD_{680,meas}} \quad \text{if } OD_{680,meas} \geq 0.6 \)
+                        </i></p>
+                        <div class="form-row align-items-center mb-2">
+                            <div class="col-auto"><small>OD<sub>680</sub> measured (EFE):</small></div>
+                            <div class="col-auto">
+                                <input class="form-control form-control-sm" type="number" id="OD_680_measured_PBRFMT150_EFE"
+                                    min="0" step="0.01" value="0.8" style="width:90px;"
+                                    onkeypress="return isNumberKey(event)" oninput="correct_OD_680_PBRFMT150_EFE()"/>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info btn-sm">OD<sub>680</sub> corrected:&nbsp;<span id="corrected_OD_680_PBRFMT150_EFE_for_span"></span></button>
+                            </div>
+                        </div>
+                        <p class="mb-1" style="font-size:0.9em; color:#555;">Below OD<sub>680</sub> = 0.6 the signal is linear — no correction is applied.</p>
                         <p class="mb-0" style="font-size:80%"><i><b>Note:</b> Calibration data for <em>Synechocystis</em> sp. PCC 6803, FMT-150 (unpublished data).</i></p>
                     </div>
                 </details>
@@ -734,13 +766,13 @@
                 <details id="odNonlinearityDetails">
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0 !important;">OD non-linearity — measured calibration data (<i>Synechocystis</i> sp. PCC 6803)</summary>
                     <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-                        <p class="mb-1"><strong>OD<sub>720</sub> vs. Chlorophyll <em>a</em></strong> — AquaPen, MC-1000-OD, FMT-150</p>
-                        <div style="background:#fff; border-radius:4px; padding:8px; width:50%;">
-                            <canvas id="odNonlinearityChart" style="width:100%; max-height:270px;"></canvas>
+                        <p class="mb-1"><strong>OD<sub>720</sub> vs. Chlorophyll <em>a</em></strong> — AquaPen, MC-1000-OD, FMT-150 WT, FMT-150 EFE</p>
+                        <div style="background:#fff; border-radius:4px; padding:8px; width:clamp(280px, 50%, 100%);">
+                            <canvas id="odNonlinearityChart" style="width:100%; height:280px;"></canvas>
                         </div>
-                        <p class="mb-1 mt-3"><strong>OD<sub>680</sub> measured vs. Chlorophyll <em>a</em></strong> — FMT-150</p>
-                        <div style="background:#fff; border-radius:4px; padding:8px; width:50%;">
-                            <canvas id="od680NonlinearityChart" style="width:100%; max-height:270px;"></canvas>
+                        <p class="mb-1 mt-3"><strong>OD<sub>680</sub> measured vs. Chlorophyll <em>a</em></strong> — FMT-150 WT, FMT-150 EFE</p>
+                        <div style="background:#fff; border-radius:4px; padding:8px; width:clamp(280px, 50%, 100%);">
+                            <canvas id="od680NonlinearityChart" style="width:100%; height:260px;"></canvas>
                         </div>
                     </div>
                 </details>
@@ -757,23 +789,40 @@
                         (<i>OD<sub>true</sub></i>&nbsp;=&nbsp;<i>C&nbsp;&middot;&nbsp;OD<sub>meas</sub><sup>k</sup></i>), because the exponent <i>k</i> factors out of the ln-ratio.
                         <br>
                         <strong>OD<sub>720</sub> (FMT-150, AquaPen):</strong> The pure-exponential correction (<i>A&nbsp;&middot;&nbsp;e<sup>k&nbsp;OD</sup></i>) behaves closely enough to a power law in the relevant range that &mu;<sub>corrected</sub>&nbsp;=&nbsp;<i>k</i>&nbsp;&middot;&nbsp;&mu;<sub>raw</sub> is a good approximation.
-                        <strong>OD<sub>680</sub> (FMT-150):</strong> The exponential correction (k&nbsp;=&nbsp;0.9296&nbsp;&lt;&nbsp;1) cannot be used as a multiplier — it gives &mu;<sub>corrected</sub>&nbsp;&lt;&nbsp;&mu;<sub>raw</sub>, which is physically wrong.
-                        Instead, a <em>power-law fit</em> to the same calibration data
-                        (<i style="font-size:90%">\( OD_{true} = 1.05 \cdot OD_{meas}^{1.58} \)</i>, k&nbsp;=&nbsp;1.58) is used here as a quick approximation.
+                        <strong>OD<sub>680</sub> (FMT-150):</strong> The exponential correction exponent (&lt;&nbsp;1 for both strains) cannot be used as a multiplier — it gives &mu;<sub>corrected</sub>&nbsp;&lt;&nbsp;&mu;<sub>raw</sub>, which is physically wrong.
+                        Instead, a <em>power-law fit</em> to the same calibration data is used as a quick approximation:
+                        WT: (<i style="font-size:90%">\( OD_{true} \approx C \cdot OD_{meas}^{1.58} \)</i>, k&nbsp;=&nbsp;1.58);
+                        EFE: (<i style="font-size:90%">\( OD_{true} = 1.0884 \cdot OD_{meas}^{1.4315} \)</i>, k&nbsp;=&nbsp;1.4315).
                         For an exact result, use the two-OD calculator below.
                         <br>
                         <strong>MC-1000:</strong> Additive constant in correction — shortcut is approximate only.</p>
                         <p class="mb-1" style="line-height:0.9"><i style="font-size:80%">
-                            \( \mu_{corrected} \approx k \cdot \mu_{raw} \qquad k_{\text{FMT-150, OD}_{720}} = 1.83,\quad k_{\text{AquaPen}} = 1.677,\quad k_{\text{MC-1000}} \approx 2.497,\quad k_{\text{FMT-150, OD}_{680}} \approx 1.58 \)
+                            \( \mu_{corrected} \approx k \cdot \mu_{raw} \)
                         </i></p>
+                        <table class="table table-sm table-borderless mb-2" style="font-size:0.85em; width:auto;">
+                            <thead><tr>
+                                <th style="padding:0.15rem 0.6rem 0.15rem 0; color:#555; font-weight:600;">Device</th>
+                                <th style="padding:0.15rem 0.6rem 0.15rem 0; color:#555; font-weight:600;"><i>k</i></th>
+                            </tr></thead>
+                            <tbody>
+                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">FMT-150 WT &nbsp;(OD<sub>720</sub>)</td><td style="padding:0.1rem 0;">1.83</td></tr>
+                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">FMT-150 EFE &nbsp;(OD<sub>720</sub>)</td><td style="padding:0.1rem 0;">1.6376</td></tr>
+                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">AquaPen &nbsp;(OD<sub>720</sub>)</td><td style="padding:0.1rem 0;">1.677</td></tr>
+                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">MC-1000 &nbsp;(OD<sub>720</sub>)</td><td style="padding:0.1rem 0;">&asymp;&nbsp;2.497</td></tr>
+                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">FMT-150 WT &nbsp;(OD<sub>680</sub>)</td><td style="padding:0.1rem 0;">&asymp;&nbsp;1.58</td></tr>
+                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">FMT-150 EFE &nbsp;(OD<sub>680</sub>)</td><td style="padding:0.1rem 0;">&asymp;&nbsp;1.4315</td></tr>
+                            </tbody>
+                        </table>
                         <div class="form-row align-items-end mb-1">
                             <div class="col-auto">
                                 <label class="mb-0" style="font-size:0.9em;">Device</label>
                                 <select class="form-control form-control-sm" id="mu_simple_device" oninput="calculateSimpleMuCorrection()">
-                                    <option value="FMT-150">FMT-150 (OD₇₂₀)</option>
+                                    <option value="FMT-150 WT">FMT-150 WT (OD₇₂₀)</option>
+                                    <option value="FMT-150 EFE">FMT-150 EFE (OD₇₂₀)</option>
                                     <option value="MC-1000">MC-1000 (OD₇₂₀)</option>
                                     <option value="AquaPen">AquaPen (OD₇₂₀)</option>
-                                    <option value="FMT-150 (OD680)">FMT-150 (OD₆₈₀)</option>
+                                    <option value="FMT-150 WT (OD680)">FMT-150 WT (OD₆₈₀)</option>
+                                    <option value="FMT-150 EFE (OD680)">FMT-150 EFE (OD₆₈₀)</option>
                                 </select>
                             </div>
                             <div class="col-auto">
@@ -811,11 +860,13 @@
                             <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.3em;">
                                 <p class="mb-1">For FMT-150 and AquaPen, the correction has the pure exponential form <i>OD<sub>corr</sub> = A &middot; e<sup>k &middot; OD<sub>meas</sub></sup></i>.
                                 The constant <i>A</i> cancels in the ratio, giving a simple closed form:</p>
-                                <p class="mb-1" style="line-height:0.9"><i style="font-size:80%">
+                                <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px;">
+                                <p class="mb-1" style="line-height:0.9; white-space:nowrap;"><i style="font-size:80%">
                                     \( \mu_{corrected} = \dfrac{\ln\!\left(A e^{k\,OD_2} / A e^{k\,OD_1}\right)}{\Delta t} = \dfrac{k\,(OD_2 - OD_1)}{\Delta t} = k\cdot\mu_{raw} \)
                                 </i></p>
+                                </div>
                                 <p class="mb-0">The corrected growth rate is simply the raw growth rate scaled by the correction exponent <i>k</i>:
-                                <strong>k&nbsp;=&nbsp;1.83</strong> for FMT-150 and <strong>k&nbsp;=&nbsp;1.677</strong> for AquaPen.
+                                <strong>k&nbsp;=&nbsp;1.83</strong> (FMT-150 WT) or <strong>k&nbsp;=&nbsp;1.6376</strong> (FMT-150 EFE) and <strong>k&nbsp;=&nbsp;1.677</strong> for AquaPen.
                                 For MC-1000 (form <i>0.029 + 0.143&middot;e<sup>2.497&middot;OD</sup></i>), the additive constant breaks the cancellation, so the full formula is used.</p>
                             </div>
                         </details>
@@ -823,10 +874,12 @@
                             <div class="col-auto">
                                 <label class="mb-0" style="font-size:0.9em;">Device</label>
                                 <select class="form-control form-control-sm" id="mu_corr_device" oninput="calculateCorrectedGrowthRate()">
-                                    <option value="FMT-150">FMT-150 (OD₇₂₀)</option>
+                                    <option value="FMT-150 WT">FMT-150 WT (OD₇₂₀)</option>
+                                    <option value="FMT-150 EFE">FMT-150 EFE (OD₇₂₀)</option>
                                     <option value="MC-1000">MC-1000 (OD₇₂₀)</option>
                                     <option value="AquaPen">AquaPen (OD₇₂₀)</option>
-                                    <option value="FMT-150 (OD680)">FMT-150 (OD₆₈₀)</option>
+                                    <option value="FMT-150 WT (OD680)">FMT-150 WT (OD₆₈₀)</option>
+                                    <option value="FMT-150 EFE (OD680)">FMT-150 EFE (OD₆₈₀)</option>
                                 </select>
                             </div>
                             <div class="col-auto">

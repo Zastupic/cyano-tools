@@ -13,6 +13,8 @@ h_maxima: Any = None
 skeletonize: Any = None
 peak_local_max: Any = None
 skimage_watershed: Any = None
+sato: Any = None
+meijering: Any = None
 
 try:
     from skimage.morphology import h_maxima, skeletonize
@@ -21,6 +23,12 @@ try:
     SKIMAGE_AVAILABLE = True
 except ImportError:
     SKIMAGE_AVAILABLE = False
+
+try:
+    from skimage.filters import sato, meijering
+    RIDGE_AVAILABLE = True
+except ImportError:
+    RIDGE_AVAILABLE = False
 
 cell_morphology_filament = Blueprint('cell_morphology_filament', __name__)
 
@@ -94,6 +102,8 @@ def analyze_cell_morphology_filament():
             separate_filaments      = request.form.get('separate_filaments', '') == '1'
             max_aspect_ratio        = float(request.form.get('max_aspect_ratio') or 0)
             microscopy_mode         = request.form.get('microscopy_mode', 'fluorescence')
+            ridge_sigma_um          = float(request.form.get('ridge_sigma') or 1.5)
+            edge_weight             = float(request.form.get('edge_weight') or 0.5)
 
             roi_x_pct = float(request.form.get('roi_x_pct') or 0)
             roi_y_pct = float(request.form.get('roi_y_pct') or 0)
@@ -158,7 +168,28 @@ def analyze_cell_morphology_filament():
                         img_grey = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY)
 
                     if microscopy_mode == 'brightfield':
-                        img_grey_th = cv2.bitwise_not(img_grey)
+                        # --- BF two-stage: ridge filament map + Scharr edge septa ---
+                        img_inv = cv2.bitwise_not(img_grey)
+                        if RIDGE_AVAILABLE:
+                            ridge_sigma_px = max(0.5, ridge_sigma_um * 1000 / pixel_size_nm)
+                            sigmas = [ridge_sigma_px * f for f in (0.5, 1.0, 1.5)]
+                            ridge_map = sato(img_grey.astype(np.float64) / 255.0,
+                                             sigmas=sigmas, black_ridges=False)
+                            ridge_map = (ridge_map / max(ridge_map.max(), 1e-6) * 255).astype(np.uint8)
+                        else:
+                            ridge_map = img_inv
+
+                        # Scharr edge magnitude for septa / cell boundaries
+                        sx = cv2.Scharr(img_grey, cv2.CV_64F, 1, 0)
+                        sy = cv2.Scharr(img_grey, cv2.CV_64F, 0, 1)
+                        edge_mag = np.sqrt(sx ** 2 + sy ** 2)
+                        edge_mag = (edge_mag / max(edge_mag.max(), 1e-6) * 255).astype(np.uint8)
+
+                        # Blend: ridge body + inverted edges (septa become dark gaps)
+                        ew = max(0.0, min(1.0, edge_weight))
+                        edge_inv = cv2.bitwise_not(edge_mag)
+                        img_grey_th = cv2.addWeighted(ridge_map, 1.0 - ew,
+                                                      edge_inv, ew, 0)
                     else:
                         img_grey_th = img_grey.copy()
 
@@ -506,20 +537,32 @@ def analyze_cell_morphology_filament():
                         })
                     n_filaments = len(filament_summary)
 
-                    all_arv  = [cd[5] for cd in morphology_data]
-                    all_circ = [cd[6] for cd in morphology_data]
-                    all_ecc  = [cd[7] for cd in morphology_data]
-                    mean_ar,   std_ar   = _mean_std(all_arv)
-                    mean_circ, std_circ = _mean_std(all_circ)
-                    mean_ecc,  std_ecc  = _mean_std(all_ecc)
+                    all_arv   = [cd[5] for cd in morphology_data]
+                    all_circ  = [cd[6] for cd in morphology_data]
+                    all_ecc   = [cd[7] for cd in morphology_data]
+                    all_area  = [cd[8] for cd in morphology_data]
+                    all_major = [cd[3] for cd in morphology_data]
+                    all_minor = [cd[4] for cd in morphology_data]
+                    mean_ar,    std_ar    = _mean_std(all_arv)
+                    mean_circ,  std_circ  = _mean_std(all_circ)
+                    mean_ecc,   std_ecc   = _mean_std(all_ecc)
+                    mean_area,  std_area  = _mean_std(all_area)
+                    mean_major, std_major = _mean_std(all_major)
+                    mean_minor, std_minor = _mean_std(all_minor)
 
                     # ── Histograms ─────────────────────────────────────────
-                    hist_ar_from_memory   = _morph_histogram(
-                        all_arv,  'Aspect ratio (major/minor)', 'Aspect Ratio Distribution')
-                    hist_circ_from_memory = _morph_histogram(
-                        all_circ, 'Circularity (4πA/P²)', 'Circularity Distribution')
-                    hist_ecc_from_memory  = _morph_histogram(
-                        all_ecc,  'Eccentricity', 'Eccentricity Distribution')
+                    hist_ar_from_memory    = _morph_histogram(
+                        all_arv,   'Aspect ratio (major/minor)', 'Aspect Ratio Distribution')
+                    hist_circ_from_memory  = _morph_histogram(
+                        all_circ,  'Circularity (4πA/P²)', 'Circularity Distribution')
+                    hist_ecc_from_memory   = _morph_histogram(
+                        all_ecc,   'Eccentricity', 'Eccentricity Distribution')
+                    hist_area_from_memory  = _morph_histogram(
+                        all_area,  'Area (µm²)', 'Cell Area Distribution')
+                    hist_major_from_memory = _morph_histogram(
+                        all_major, 'Length (µm)', 'Cell Length Distribution')
+                    hist_minor_from_memory = _morph_histogram(
+                        all_minor, 'Width (µm)', 'Cell Width Distribution')
 
                     # ── Colorbar ───────────────────────────────────────────
                     fig_cb, ax_cb = plt.subplots(figsize=(1.2, 4))
@@ -574,6 +617,12 @@ def analyze_cell_morphology_filament():
                             'image_data': io.BytesIO(base64.b64decode(hist_circ_from_memory))})
                         ws_hists.insert_image('S1', 'Eccentricity', {
                             'image_data': io.BytesIO(base64.b64decode(hist_ecc_from_memory))})
+                        ws_hists.insert_image('A20', 'Area', {
+                            'image_data': io.BytesIO(base64.b64decode(hist_area_from_memory))})
+                        ws_hists.insert_image('J20', 'Length', {
+                            'image_data': io.BytesIO(base64.b64decode(hist_major_from_memory))})
+                        ws_hists.insert_image('S20', 'Width', {
+                            'image_data': io.BytesIO(base64.b64decode(hist_minor_from_memory))})
                     xlsx_file_path = f'uploads/{image_name}_morphology.xlsx'
 
                     return render_template('cell_morphology_filament.html',
@@ -584,13 +633,19 @@ def analyze_cell_morphology_filament():
                         hist_ar_from_memory=hist_ar_from_memory,
                         hist_circ_from_memory=hist_circ_from_memory,
                         hist_ecc_from_memory=hist_ecc_from_memory,
+                        hist_area_from_memory=hist_area_from_memory,
+                        hist_major_from_memory=hist_major_from_memory,
+                        hist_minor_from_memory=hist_minor_from_memory,
                         morphology_data=morphology_data,
                         filament_summary=filament_summary,
                         n_cells=n_cells,
                         n_filaments=n_filaments,
-                        mean_ar=mean_ar,   std_ar=std_ar,
+                        mean_ar=mean_ar,     std_ar=std_ar,
                         mean_circ=mean_circ, std_circ=std_circ,
                         mean_ecc=mean_ecc,   std_ecc=std_ecc,
+                        mean_area=mean_area, std_area=std_area,
+                        mean_major=mean_major, std_major=std_major,
+                        mean_minor=mean_minor, std_minor=std_minor,
                         pixel_size_nm=pixel_size_nm,
                         x_pixels=x_pixels,
                         y_pixels=y_pixels,
@@ -617,6 +672,8 @@ def analyze_cell_morphology_filament():
                         seg_method=seg_method,
                         separate_filaments=separate_filaments,
                         max_aspect_ratio=max_aspect_ratio,
+                        ridge_sigma_um=ridge_sigma_um,
+                        edge_weight=edge_weight,
                     )
                 else:
                     flash('Please select an image file.', category='error')
