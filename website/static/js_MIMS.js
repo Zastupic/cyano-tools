@@ -1113,13 +1113,245 @@ document.getElementById('download-xlsx').addEventListener('click', async functio
       return canvas.toDataURL('image/png').split(',')[1];
     };
 
+    // --- Capture raw + normalized plots (reset zoom to show all data and regression lines) ---
+    await Plotly.relayout('raw-plot-div',        { 'xaxis.autorange': true, 'yaxis.autorange': true });
+    await Plotly.relayout('normalized-plot-div', { 'xaxis.autorange': true, 'yaxis.autorange': true });
+    await new Promise(r => requestAnimationFrame(r));
+
+    const chartImages = []; // [{sheetName, base64, totalW, totalH}] — Data plots first
+    try {
+      const rawPng  = await Plotly.toImage(document.getElementById('raw-plot-div'),        { format: 'png', width: CHART_W, height: CHART_H, scale: 1 });
+      const normPng = await Plotly.toImage(document.getElementById('normalized-plot-div'), { format: 'png', width: CHART_W, height: CHART_H, scale: 1 });
+      const dataPlot = await stitchImages([rawPng.split(',')[1], normPng.split(',')[1]]);
+      if (dataPlot) chartImages.push({ sheetName: 'Data plots', base64: dataPlot, totalW: CHART_W * 2, totalH: CHART_H });
+    } catch(e) { /* skip if plot capture fails */ }
+
+    // --- Capture per-signal zoomed raw plots ---
+    if (mimsYFields.length > 0 && mimsRawData && mimsRawData.length > 0) {
+      const zoomedRawPngs = [];
+
+      for (const field of mimsYFields) {
+        const unit = mimsFieldUnits[field] || null;
+        const yAxisTitleRZ = unit ? `Signal (${unit})` : 'Signal (unit unknown)';
+
+        // Raw trace for this signal only
+        const sigRawTraces = [{
+          x: mimsRawData.map(row => row[mimsXField]),
+          y: mimsRawData.map(row => row[field]),
+          mode: 'lines',
+          name: field,
+          line: { width: 2, color: mimsFieldColors[field] || undefined }
+        }];
+
+        // Raw regression line traces (recompute intercept from data mean)
+        const sigRawRegs = regressionResults.filter(
+          r => r.signal === field && typeof r.slopeRaw === 'number' && !isNaN(r.slopeRaw)
+        );
+        for (const reg of sigRawRegs) {
+          const rawPts = mimsRawData
+            .filter(row => { const t = row[mimsXField]; return typeof t === 'number' && t >= reg.start_time && t <= reg.end_time; })
+            .map(row => (typeof row[field] === 'number' ? { x: row[mimsXField], y: row[field] } : null))
+            .filter(Boolean);
+          if (rawPts.length < 2) continue;
+          const xMeanR = rawPts.reduce((s, p) => s + p.x, 0) / rawPts.length;
+          const yMeanR = rawPts.reduce((s, p) => s + p.y, 0) / rawPts.length;
+          const interceptR = yMeanR - reg.slopeRaw * xMeanR;
+          sigRawTraces.push({
+            x: [reg.start_time, reg.end_time],
+            y: [reg.slopeRaw * reg.start_time + interceptR, reg.slopeRaw * reg.end_time + interceptR],
+            mode: 'lines',
+            name: `Sel ${reg.selectionId} fit`,
+            line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'black' },
+            showlegend: false
+          });
+        }
+
+        // Determine x zoom range (same logic as normalized)
+        let xAxisRangeRZ = null;
+        if (currentZoomRange) {
+          xAxisRangeRZ = [currentZoomRange.x0, currentZoomRange.x1];
+        } else if (sigRawRegs.length > 0) {
+          const minT = Math.min(...sigRawRegs.map(r => r.start_time));
+          const maxT = Math.max(...sigRawRegs.map(r => r.end_time));
+          const pad  = Math.max(0.05 * (maxT - minT), 0.1);
+          xAxisRangeRZ = [minT - pad, maxT + pad];
+        }
+
+        // Compute y range for visible x data
+        let yAxisRangeRZ = null;
+        if (xAxisRangeRZ) {
+          let yMin3 = Infinity, yMax3 = -Infinity;
+          for (const trace of sigRawTraces) {
+            if (!trace.x || !trace.y) continue;
+            for (let i = 0; i < trace.x.length; i++) {
+              const xv = trace.x[i], yv = trace.y[i];
+              if (typeof yv !== 'number' || !isFinite(yv)) continue;
+              if (xv < xAxisRangeRZ[0] || xv > xAxisRangeRZ[1]) continue;
+              if (yv < yMin3) yMin3 = yv;
+              if (yv > yMax3) yMax3 = yv;
+            }
+          }
+          if (isFinite(yMin3) && isFinite(yMax3) && yMax3 >= yMin3) {
+            const ypadR = Math.max((yMax3 - yMin3) * 0.12, Math.abs(yMax3) * 0.02, 1e-30);
+            yAxisRangeRZ = [yMin3 - ypadR, yMax3 + ypadR];
+          }
+        }
+
+        // Off-screen temp div → plot → capture → destroy
+        const tempDivR = document.createElement('div');
+        tempDivR.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:900px;height:420px;';
+        document.body.appendChild(tempDivR);
+        try {
+          await Plotly.newPlot(tempDivR, sigRawTraces, {
+            title: { text: field, font: { size: 12 } },
+            xaxis: { title: 'Time (min)', ...(xAxisRangeRZ ? { range: xAxisRangeRZ } : { autorange: true }) },
+            yaxis: { title: yAxisTitleRZ, tickformat: '.1e', ...(yAxisRangeRZ ? { range: yAxisRangeRZ } : { autorange: true }) },
+            showlegend: true,
+            margin: { t: 45, r: 20, b: 50, l: 90 }
+          }, { responsive: false, staticPlot: true });
+          await new Promise(r => requestAnimationFrame(r));
+          const png = await Plotly.toImage(tempDivR, { format: 'png', width: CHART_W, height: CHART_H, scale: 1 });
+          zoomedRawPngs.push(png.split(',')[1]);
+        } catch(e) { /* skip this signal */ }
+        Plotly.purge(tempDivR);
+        document.body.removeChild(tempDivR);
+      }
+
+      if (zoomedRawPngs.length > 0) {
+        const zoomedRawCombined = await stitchImages(zoomedRawPngs);
+        if (zoomedRawCombined) {
+          const colsR = Math.min(COLS, zoomedRawPngs.length);
+          const rowsR = Math.ceil(zoomedRawPngs.length / colsR);
+          chartImages.push({ sheetName: 'Zoomed raw plots', base64: zoomedRawCombined, totalW: CHART_W * colsR, totalH: CHART_H * rowsR });
+        }
+      }
+    }
+
+    // --- Capture per-signal zoomed plots ---
+    if (mimsYFields.length > 0 && mimsRawData && mimsRawData.length > 0) {
+      const refField2 = document.getElementById('normalize-by-select').value;
+      const tpValue2  = parseFloat(document.getElementById('norm-timepoint').value);
+      let refRowIdx2 = 0, bestDiff2 = Infinity;
+      mimsRawData.forEach((row, i) => {
+        const d = Math.abs((row[mimsXField] || 0) - tpValue2);
+        if (d < bestDiff2) { bestDiff2 = d; refRowIdx2 = i; }
+      });
+      const refInitVal2 = mimsRawData[refRowIdx2] ? mimsRawData[refRowIdx2][refField2] : NaN;
+
+      if (typeof refInitVal2 === 'number' && refInitVal2 !== 0 && !isNaN(refInitVal2)) {
+        const zoomedPngs = [];
+
+        for (const field of mimsYFields) {
+          const unit = mimsFieldUnits[field] || null;
+          const yAxisTitleZ = unit ? `Drift-corrected signal (${unit})` : 'Drift-corrected signal (unit unknown)';
+
+          // Normalized trace for this signal only
+          const sigTraces = [{
+            x: mimsRawData.map(row => row[mimsXField]),
+            y: mimsRawData.map(row => {
+              const val = row[field], refVal = row[refField2];
+              return (typeof val === 'number' && typeof refVal === 'number' && refVal !== 0)
+                ? val / (refVal / refInitVal2) : null;
+            }),
+            mode: 'lines',
+            name: field,
+            line: { width: 2, color: mimsFieldColors[field] || undefined }
+          }];
+
+          // Regression line traces for this signal (recompute intercept from data mean)
+          const sigRegs = regressionResults.filter(
+            r => r.signal === field && typeof r.slopeNorm === 'number' && !isNaN(r.slopeNorm)
+          );
+          for (const reg of sigRegs) {
+            const normPts = mimsRawData
+              .filter(row => { const t = row[mimsXField]; return typeof t === 'number' && t >= reg.start_time && t <= reg.end_time; })
+              .map(row => {
+                const val = row[field], refVal = row[refField2];
+                return (typeof val === 'number' && typeof refVal === 'number' && refVal !== 0)
+                  ? { x: row[mimsXField], y: val / (refVal / refInitVal2) } : null;
+              }).filter(Boolean);
+            if (normPts.length < 2) continue;
+            const xMean = normPts.reduce((s, p) => s + p.x, 0) / normPts.length;
+            const yMean = normPts.reduce((s, p) => s + p.y, 0) / normPts.length;
+            const intercept = yMean - reg.slopeNorm * xMean;
+            sigTraces.push({
+              x: [reg.start_time, reg.end_time],
+              y: [reg.slopeNorm * reg.start_time + intercept, reg.slopeNorm * reg.end_time + intercept],
+              mode: 'lines',
+              name: `Sel ${reg.selectionId} fit`,
+              line: { dash: 'dot', width: 2, color: mimsFieldColors[field] || 'black' },
+              showlegend: false
+            });
+          }
+
+          // Determine x zoom range
+          let xAxisRangeZ = null;
+          if (currentZoomRange) {
+            xAxisRangeZ = [currentZoomRange.x0, currentZoomRange.x1];
+          } else if (sigRegs.length > 0) {
+            const minT = Math.min(...sigRegs.map(r => r.start_time));
+            const maxT = Math.max(...sigRegs.map(r => r.end_time));
+            const pad  = Math.max(0.05 * (maxT - minT), 0.1);
+            xAxisRangeZ = [minT - pad, maxT + pad];
+          }
+
+          // Compute y range for visible x data (avoids whitespace from off-screen points)
+          let yAxisRangeZ = null;
+          if (xAxisRangeZ) {
+            let yMin2 = Infinity, yMax2 = -Infinity;
+            for (const trace of sigTraces) {
+              if (!trace.x || !trace.y) continue;
+              for (let i = 0; i < trace.x.length; i++) {
+                const xv = trace.x[i], yv = trace.y[i];
+                if (typeof yv !== 'number' || !isFinite(yv)) continue;
+                if (xv < xAxisRangeZ[0] || xv > xAxisRangeZ[1]) continue;
+                if (yv < yMin2) yMin2 = yv;
+                if (yv > yMax2) yMax2 = yv;
+              }
+            }
+            if (isFinite(yMin2) && isFinite(yMax2) && yMax2 >= yMin2) {
+              const ypad = Math.max((yMax2 - yMin2) * 0.12, Math.abs(yMax2) * 0.02, 1e-30);
+              yAxisRangeZ = [yMin2 - ypad, yMax2 + ypad];
+            }
+          }
+
+          // Off-screen temp div → plot → capture → destroy
+          const tempDiv = document.createElement('div');
+          tempDiv.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:900px;height:420px;';
+          document.body.appendChild(tempDiv);
+          try {
+            await Plotly.newPlot(tempDiv, sigTraces, {
+              title: { text: field, font: { size: 12 } },
+              xaxis: { title: 'Time (min)', ...(xAxisRangeZ ? { range: xAxisRangeZ } : { autorange: true }) },
+              yaxis: { title: yAxisTitleZ, tickformat: '.1e', ...(yAxisRangeZ ? { range: yAxisRangeZ } : { autorange: true }) },
+              showlegend: true,
+              margin: { t: 45, r: 20, b: 50, l: 90 }
+            }, { responsive: false, staticPlot: true });
+            await new Promise(r => requestAnimationFrame(r));
+            const png = await Plotly.toImage(tempDiv, { format: 'png', width: CHART_W, height: CHART_H, scale: 1 });
+            zoomedPngs.push(png.split(',')[1]);
+          } catch(e) { /* skip this signal */ }
+          Plotly.purge(tempDiv);
+          document.body.removeChild(tempDiv);
+        }
+
+        if (zoomedPngs.length > 0) {
+          const zoomedCombined = await stitchImages(zoomedPngs);
+          if (zoomedCombined) {
+            const cols2 = Math.min(COLS, zoomedPngs.length);
+            const rows2 = Math.ceil(zoomedPngs.length / cols2);
+            chartImages.push({ sheetName: 'Zoomed plots', base64: zoomedCombined, totalW: CHART_W * cols2, totalH: CHART_H * rows2 });
+          }
+        }
+      }
+    }
+
     const chartSections = [
       { id: 'slope-charts-section',      sheetName: 'Slope plots' },
       { id: 'photo-rates-plots-section', sheetName: 'Photo rate plots' },
       { id: 'calibrated-plots-section',  sheetName: 'Calibrated plots' },
       { id: 'recalc-section',            sheetName: 'Recalculated plots' }
     ];
-    const chartImages = []; // [{sheetName, base64, totalW, totalH}]
     for (const { id, sheetName } of chartSections) {
       const sec = document.getElementById(id);
       if (!sec) continue;

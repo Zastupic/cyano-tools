@@ -2126,18 +2126,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('bc-recomb-apply-btn')?.addEventListener('click', bcRecombApplyCustom);
     document.getElementById('run-efe-protein-btn')?.addEventListener('click', runEfeProteinCost);
 
-    // Native structural components
-    document.getElementById('bc-native-template')?.addEventListener('change', bcNativeOnTemplateChange);
-    document.getElementById('run-en-native-btn')?.addEventListener('click', runEnergeticsNative);
-    document.getElementById('bc-pbs-rods')?.addEventListener('input', function () {
-        const v = document.getElementById('bc-pbs-rod-val');
-        if (v) v.textContent = this.value;
-    });
-
-    // Futile cycles
-    document.getElementById('bc-futile-template')?.addEventListener('change', bcFutileOnTemplateChange);
-    document.getElementById('run-en-futile-btn')?.addEventListener('click', runEnergeticsFutile);
-
     // Reference lock / clear buttons
     document.getElementById('en-lock-btn').addEventListener('click',  () => lockRef('en'));
     document.getElementById('en-clear-btn').addEventListener('click', () => clearRef('en'));

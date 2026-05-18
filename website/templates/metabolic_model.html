@@ -1933,6 +1933,147 @@
                         </div>
                     </div>
 
+                    <!-- Native structural components panel -->
+                    <div class="border rounded p-2 mb-3" id="bc-native-panel" style="border-color:#28a745 !important; background:rgba(40,167,69,0.04);">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fa fa-leaf text-success mr-1" style="font-size:0.95em;"></i>
+                            <strong class="small">Native structural components</strong>
+                            <span class="text-muted small ml-2">— biosynthetic cost of Synechocystis PCC 6803 cellular structures</span>
+                        </div>
+                        <div class="form-row align-items-end">
+                            <div class="col-auto">
+                                <label class="small text-muted mb-1">Component</label>
+                                <select class="form-control form-control-sm" id="bc-native-template" style="min-width:300px;">
+                                    <option value="">— select component —</option>
+                                    <optgroup label="Light-harvesting &amp; electron transport">
+                                        <option value="pbs">Phycobilisome (PBS)</option>
+                                        <option value="psii">Photosystem II (PSII, monomer)</option>
+                                        <option value="psi">Photosystem I (PSI, monomer)</option>
+                                        <option value="cytb6f">Cytochrome b6f complex</option>
+                                        <option value="atpsyn">ATP synthase (CF0-CF1)</option>
+                                        <option value="stoich_unit">Photosynthetic unit (2PSII:1PSI:1b6f:1ATPsyn)</option>
+                                    </optgroup>
+                                    <optgroup label="Translation machinery">
+                                        <option value="ribosome">Ribosome (70S)</option>
+                                    </optgroup>
+                                    <optgroup label="Storage &amp; pigments">
+                                        <option value="lipid_avg">Membrane lipids (weighted average)</option>
+                                        <option value="glycogen">Glycogen (per glucose unit)</option>
+                                        <option value="chla">Chlorophyll a</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="col-auto" id="bc-native-calc-wrap" style="display:none;">
+                                <button class="btn btn-success btn-sm" id="run-en-native-btn">
+                                    <i class="fa fa-play"></i> Calculate
+                                </button>
+                            </div>
+                        </div>
+                        <!-- PBS rod slider -->
+                        <div id="bc-native-pbs-opts" class="mt-2 pt-2 border-top" style="display:none;">
+                            <div class="form-row align-items-center">
+                                <div class="col-auto mr-3">
+                                    <label class="small text-muted mb-0">PC rods per PBS: <strong id="bc-pbs-rod-val">6</strong></label>
+                                    <input type="range" class="form-control-range" id="bc-pbs-rods" min="1" max="6" value="6" style="width:150px;">
+                                    <small class="text-muted d-block">APC core fixed + rods × 2 PC hexamers</small>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-pbs-chromophore" checked>
+                                        <label class="form-check-label small" for="bc-pbs-chromophore">Include phycocyanobilin chromophores <span class="text-muted" style="font-size:0.85em;">(phycnbn_c)</span></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Protein cost toggles -->
+                        <div id="bc-native-protein-opts" class="mt-2 pt-2 border-top" style="display:none;">
+                            <div class="form-row align-items-center">
+                                <div class="col-auto">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-native-aa" checked>
+                                        <label class="form-check-label small" for="bc-native-aa">AA biosynthesis <span class="text-muted" style="font-size:0.85em;">(de novo from CO₂/NO₃⁻)</span></label>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-native-transl" checked>
+                                        <label class="form-check-label small" for="bc-native-transl">Translation <span class="text-muted" style="font-size:0.85em;">(4 ATP/aa)</span></label>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-native-transcr" checked>
+                                        <label class="form-check-label small" for="bc-native-transcr">Transcription <span class="text-muted" style="font-size:0.85em;">(~6 ATP/aa)</span></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Cofactor cost toggles -->
+                        <div id="bc-native-cofactor-opts" class="mt-2 pt-2 border-top" style="display:none;">
+                            <div class="form-row align-items-center">
+                                <span class="col-12 small text-muted mb-1">Cofactor costs (iRH783 metabolite IDs):</span>
+                                <div class="col-auto">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-native-cof-chla" checked>
+                                        <label class="form-check-label small" for="bc-native-cof-chla">Chlorophyll a <span class="text-muted" style="font-size:0.85em;">(cholphya_c)</span></label>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-native-cof-pq" checked>
+                                        <label class="form-check-label small" for="bc-native-cof-pq">Plastoquinone Q<sub>A/B</sub> <span class="text-muted" style="font-size:0.85em;">(pq_um)</span></label>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="bc-native-cof-phllq" checked>
+                                        <label class="form-check-label small" for="bc-native-cof-phllq">Phylloquinone A₁ <span class="text-muted" style="font-size:0.85em;">(phllqne_c)</span></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- rRNA toggle (ribosome only) -->
+                        <div id="bc-native-rrna-opts" class="mt-2 pt-2 border-top" style="display:none;">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="bc-native-rrna" checked>
+                                <label class="form-check-label small" for="bc-native-rrna">rRNA synthesis cost <span class="text-muted" style="font-size:0.85em;">(16S+23S+5S = 4 566 nt, 2 ATP-eq/nt ≈ 9 132 ATP)</span></label>
+                            </div>
+                        </div>
+                        <div class="mt-1" id="bc-native-desc-wrap" style="display:none;">
+                            <small class="text-muted" id="bc-native-desc"></small>
+                        </div>
+                    </div>
+
+                    <!-- Futile cycles panel -->
+                    <div class="border rounded p-2 mb-3" id="bc-futile-panel" style="border-color:#fd7e14 !important; background:rgba(253,126,20,0.04);">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fa fa-recycle text-warning mr-1" style="font-size:0.95em;"></i>
+                            <strong class="small">Futile cycles</strong>
+                            <span class="text-muted small ml-2">— ATP/NADPH dissipated per mmol cycle flux</span>
+                        </div>
+                        <div class="form-row align-items-end">
+                            <div class="col-auto">
+                                <label class="small text-muted mb-1">Cycle</label>
+                                <select class="form-control form-control-sm" id="bc-futile-template" style="min-width:300px;">
+                                    <option value="">— select cycle —</option>
+                                    <option value="sucrose_cycle">Sucrose synthesis–hydrolysis</option>
+                                    <option value="polyp_cycle">Polyphosphate turnover</option>
+                                    <option value="ci_cycling">CO₂/HCO₃⁻ cycling (CCM leakage)</option>
+                                    <option value="glycogen_cycle">Glycogen synthesis–degradation</option>
+                                    <option value="n_cycle">N-assimilation (GS/GOGAT–GDH)</option>
+                                </select>
+                            </div>
+                            <div class="col-auto" id="bc-futile-calc-wrap" style="display:none;">
+                                <button class="btn btn-warning btn-sm" id="run-en-futile-btn" style="color:#fff;">
+                                    <i class="fa fa-play"></i> Calculate
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-1" id="bc-futile-desc-wrap" style="display:none;">
+                            <small class="text-muted" id="bc-futile-desc"></small>
+                        </div>
+                    </div>
+
                     <!-- Target type toggle -->
                     <div class="mb-2" id="bc-target-type-row">
                         <div class="btn-group btn-group-sm" role="group">
@@ -2073,5 +2214,5 @@
     </div><!-- /tab-content -->
     <br><br><br><br><br><br><br><br><br>    
 </div>
-<script src="{{ url_for('static', filename='js_metabolic_model.js') }}?v=25"></script>
+<script src="{{ url_for('static', filename='js_metabolic_model.js') }}?v=26"></script>
 {% endblock %}
