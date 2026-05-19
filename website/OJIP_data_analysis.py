@@ -328,7 +328,8 @@ def ojip_process():
             if file_number == 0:
                 Summary_file = df.iloc[:, 0:2].rename(columns={df.columns[1]: fname_no_ext})
             else:
-                Summary_file[fname_no_ext] = df.iloc[:, 1].values
+                tmp = df.iloc[:, 0:2].rename(columns={df.columns[1]: fname_no_ext})
+                Summary_file = pd.merge(Summary_file, tmp, on='time/ms', how='outer')
 
         elif fluorometer in ('Aquapen', 'FL6000'):
             raw = file.read().decode('utf-8', errors='replace').splitlines(keepends=True)
@@ -339,10 +340,19 @@ def ojip_process():
                 if not df[0].astype(str).str.strip().str.contains('FluorPen|AquaPen', case=False).any():
                     return jsonify({'status': 'error',
                                     'message': f'{fname_full}: not a valid AquaPen/FluorPen file.'}), 400
+                if df.shape[1] < 2:
+                    return jsonify({'status': 'error',
+                                    'message': f'{fname_full}: file contains no measurement data (empty recording).'}), 400
+                # Strip header rows and convert types before merging to avoid Cartesian product
+                good = df[0].astype(str).str.isnumeric()
+                df_clean = df[good].rename(columns={df.columns[0]: 'time_us', df.columns[1]: fname_no_ext}).copy()
+                df_clean['time_us'] = df_clean['time_us'].astype(int)
+                df_clean[fname_no_ext] = pd.to_numeric(df_clean[fname_no_ext], errors='coerce')
+                df_clean = df_clean.iloc[1:]  # skip t=0 row
                 if file_number == 0:
-                    Summary_file = df.iloc[:, :].rename(columns={df.columns[0]: 'time_us', df.columns[1]: fname_no_ext})
+                    Summary_file = df_clean
                 else:
-                    Summary_file[fname_no_ext] = df.iloc[:, 1].values
+                    Summary_file = pd.merge(Summary_file, df_clean[['time_us', fname_no_ext]], on='time_us', how='outer')
             else:  # FL6000
                 if not df[0].astype(str).str.strip().str.contains('Fluorometer', case=False).any():
                     return jsonify({'status': 'error',
@@ -352,21 +362,33 @@ def ojip_process():
                 if file_number == 0:
                     Summary_file = df.rename(columns={df.columns[0]: 'time_s', df.columns[1]: fname_no_ext})
                 else:
-                    Summary_file[fname_no_ext] = df.iloc[:, 1].values
+                    tmp = df.rename(columns={df.columns[0]: 'time_s', df.columns[1]: fname_no_ext})
+                    Summary_file = pd.merge(Summary_file, tmp[['time_s', fname_no_ext]], on='time_s', how='outer')
 
         file_names_list.append(fname_no_ext)
 
     # ── clean data ───────────────────────────────────────────────────────────
-    if fluorometer == 'Aquapen':
-        good = Summary_file['time_us'].astype(str).str.isnumeric()
-        Summary_file = Summary_file[good].iloc[1:].astype(int)
-    elif fluorometer == 'FL6000':
+    # (Aquapen: header stripping and type conversion done per-file inside the loop above)
+    if fluorometer == 'FL6000':
         Summary_file = Summary_file.rename(columns={Summary_file.columns[0]: 'time_s'})
         for col in Summary_file.columns:
             Summary_file[col] = pd.to_numeric(Summary_file[col], errors='coerce')
         Summary_file = Summary_file.dropna(subset=['time_s'])
 
-    Summary_file = Summary_file.reset_index(drop=True)
+    # Sort by time and interpolate any NaN values introduced by outer-join merging
+    # of files with different time axes.
+    # - interpolate(method='index'): fills interior gaps using actual time values as weights
+    # - ffill/bfill: fills trailing/leading NaN (beyond a file's measurement range)
+    #   with the last/first real value so spline fitting never receives NaN inputs.
+    time_col_name = Summary_file.columns[0]
+    Summary_file = (Summary_file
+                    .sort_values(time_col_name)
+                    .set_index(time_col_name)
+                    .interpolate(method='index')
+                    .ffill()
+                    .bfill()
+                    .reset_index()
+                    .reset_index(drop=True))
 
     # ── reduce MC-PAM data ───────────────────────────────────────────────────
     # MC-PAM records at 0.01 ms resolution (~73 000 pts/file). For OJIP analysis,
