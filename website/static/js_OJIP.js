@@ -1514,28 +1514,28 @@ async function downloadXlsxWithCharts() {
       void groupPane.offsetWidth;
     }
     // Curve charts — force their collapse sections visible for capture
-    for (const [bodyId, chartId, title] of [
-      ['grp-raw-body', 'grp-curves-raw-chart', 'Group Curves — Raw'],
-      ['grp-f0-body',  'grp-curves-f0-chart',  'Group Curves — →F₀'],
-      ['grp-fm-body',  'grp-curves-fm-chart',  'Group Curves — ←FM'],
-      [null,           'grp-curves-dn-chart',  'Group Curves — Double norm'],
+    for (const [bodyId, chartId, title, renderFn] of [
+      ['grp-raw-body', 'grp-curves-raw-chart', 'Group Curves — Raw',         renderGrpCurvesRaw],
+      ['grp-f0-body',  'grp-curves-f0-chart',  'Group Curves — →F₀',         renderGrpCurvesF0],
+      ['grp-fm-body',  'grp-curves-fm-chart',  'Group Curves — ←FM',         renderGrpCurvesFM],
+      [null,           'grp-curves-dn-chart',  'Group Curves — Double norm', renderGrpCurvesDN],
     ]) {
       const body = bodyId && document.getElementById(bodyId);
       const bodyWasHidden = body && getComputedStyle(body).display === 'none';
       if (bodyWasHidden) { body.style.display='block'; body.style.visibility='hidden'; void body.offsetWidth; }
-      chartInst[chartId]?.resize();
+      renderFn(); // re-render from current UI state (reads checkboxes/settings at export time)
       const data_url = captureCanvas(chartId);
       if (data_url) charts.push({ title, data_url });
       if (bodyWasHidden) { body.style.display=''; body.style.visibility=''; }
     }
     // Parameter bar charts
-    for (const [chartId, title] of [
-      ['grp-params-yields-chart', 'Group Parameters — Quantum yields'],
-      ['grp-params-fluxes-chart', 'Group Parameters — Energy fluxes'],
-      ['grp-params-areas-chart',  'Group Parameters — Areas & indices'],
-      ['grp-params-tech-chart',   'Group Parameters — Technical'],
+    for (const [chartId, title, renderFn] of [
+      ['grp-params-yields-chart', 'Group Parameters — Quantum yields', renderGrpParamsYields],
+      ['grp-params-fluxes-chart', 'Group Parameters — Energy fluxes',  renderGrpParamsFluxes],
+      ['grp-params-areas-chart',  'Group Parameters — Areas & indices', renderGrpParamsAreas],
+      ['grp-params-tech-chart',   'Group Parameters — Technical',       renderGrpParamsTech],
     ]) {
-      chartInst[chartId]?.resize();
+      renderFn(); // re-render from current UI state
       const data_url = captureCanvas(chartId);
       if (data_url) charts.push({ title, data_url });
     }
