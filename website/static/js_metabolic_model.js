@@ -2160,8 +2160,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) { el.value = bcSimState.D_opt.toFixed(4); if (mcLastSynthData) _mcRenderLive(); }
         }
     });
-    // Restore maintenance UI on page refresh
+    // Restore maintenance UI on page refresh (DOMContentLoaded path)
     { const t = document.getElementById('mc-native-template'); if (t?.value) { mcKey = t.value; bcMaintUpdateUI(); } }
+
+    // Also restore on bfcache navigation (pageshow fires after DOMContentLoaded on back/forward)
+    window.addEventListener('pageshow', () => {
+        const t = document.getElementById('mc-native-template');
+        if (t?.value && t.value !== (mcKey || '')) { mcKey = t.value; bcMaintUpdateUI(); }
+        const b = document.getElementById('bc-native-template');
+        if (b?.value && b.value !== (bcNativeKey || '')) { bcNativeKey = b.value; bcNativeUpdateUI(); }
+    });
 
     // Futile cycles
     document.getElementById('bc-futile-template')?.addEventListener('change', bcFutileOnTemplateChange);
@@ -3496,6 +3504,7 @@ function bcMaintClear() {
      'mc-calc-wrap','mc-results','mc-error'].forEach(id => {
         const el = document.getElementById(id); if (el) el.style.display = 'none';
     });
+    const hint = document.getElementById('mc-select-hint'); if (hint) hint.style.display = '';
 }
 
 function bcMaintUpdateUI() {
@@ -3517,7 +3526,8 @@ function bcMaintUpdateUI() {
         show('mc-native-desc-wrap');
     }
 
-    // Turnover panel: set default k_deg and populate hint
+    // Hide "select a component" placeholder, show turnover + calc panels
+    hide('mc-select-hint');
     show('mc-turnover-panel');
     show('mc-calc-wrap');
     const h = _mcHints();
