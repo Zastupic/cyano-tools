@@ -70,6 +70,14 @@
         font-weight: 600;
     }
     #sim-sub-tabs .nav-link:not(.active):hover { color: #00b894; border-color: transparent; }
+    /* Biosynthetic Cost sub-tabs */
+    #bc-sub-tabs .nav-link.active {
+        color: #5a32a3;
+        background-color: rgba(111,66,193,0.07);
+        border-color: #6f42c1 #6f42c1 #fff;
+        font-weight: 600;
+    }
+    #bc-sub-tabs .nav-link:not(.active):hover { color: #6f42c1; border-color: transparent; }
     /* FBA Light Response section headers */
     .sim-section-header {
         display: flex; align-items: baseline; gap: 0.4rem;
@@ -1724,6 +1732,25 @@
         <!-- ── Biosynthetic Cost tab ─────────────────────────────────── -->
         <div id="tab-bc" class="tab-pane fade" role="tabpanel">
 
+            <!-- Sub-tabs: Synthesis cost | Maintenance cost -->
+            <ul class="nav nav-tabs mb-3" id="bc-sub-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#bc-sub-synthesis" role="tab">
+                        <i class="fa fa-bolt"></i> Synthesis cost
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#bc-sub-maintenance" role="tab">
+                        <i class="fa fa-recycle"></i> Maintenance cost
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+
+            <!-- ── Synthesis cost sub-tab (existing content) ─────────── -->
+            <div id="bc-sub-synthesis" class="tab-pane fade show active" role="tabpanel">
+
             <!-- Methodology accordion -->
             <div class="accordion mb-3" id="bc-method-accordion">
                 <div class="card border" style="border-radius:4px;">
@@ -1980,7 +2007,7 @@
                                 <div class="col-auto">
                                     <div class="form-check mb-0">
                                         <input class="form-check-input" type="checkbox" id="bc-pbs-chromophore" checked>
-                                        <label class="form-check-label small" for="bc-pbs-chromophore">Include phycocyanobilin chromophores <span class="text-muted" style="font-size:0.85em;">(phycnbn_c)</span></label>
+                                        <label class="form-check-label small" for="bc-pbs-chromophore">Include phycocyanobilin chromophores <span class="text-muted" style="font-size:0.85em;">(phycynbn_c)</span></label>
                                     </div>
                                 </div>
                             </div>
@@ -2208,6 +2235,228 @@
                     </div><!-- /en-results -->
                 </div>
             </div>
+
+            </div><!-- /bc-sub-synthesis -->
+
+            <!-- ── Maintenance cost sub-tab ──────────────────────────── -->
+            <div id="bc-sub-maintenance" class="tab-pane fade" role="tabpanel">
+
+                <!-- Info accordion -->
+                <div class="accordion mb-3" id="mc-method-accordion">
+                    <div class="card border" style="border-radius:4px;">
+                        <div class="card-header py-2 px-3" id="mc-method-heading" style="background:#f8f9fa; cursor:pointer;"
+                             data-toggle="collapse" data-target="#mc-method-body" aria-expanded="false" aria-controls="mc-method-body">
+                            <span class="font-weight-600 small"><i class="fa fa-info-circle text-muted mr-1"></i> How is maintenance cost calculated?</span>
+                            <i class="fa fa-chevron-down float-right text-muted mt-1" style="font-size:0.8em;"></i>
+                        </div>
+                        <div id="mc-method-body" class="collapse" aria-labelledby="mc-method-heading">
+                            <div class="card-body py-3 px-3" style="font-size:0.87em; line-height:1.6;">
+                                <p class="mb-2">The tool first runs the same FBA/pFBA procedure as the <em>Synthesis cost</em> tab to obtain the ATP, NADPH, and photon cost per mmol of complex synthesised. It then applies the user-supplied turnover rate to derive three outputs:</p>
+                                <ol class="mb-2 pl-4">
+                                    <li class="mb-1"><strong>Maintenance cost</strong> = synthesis cost × k<sub>deg</sub> [mmol ATP / mmol complex / h]. The energy needed per hour to continuously replace degraded copies.</li>
+                                    <li class="mb-1"><strong>Maintenance fraction</strong> f<sub>repair</sub> = k<sub>deg</sub> / (µ + k<sub>deg</sub>). The share of total synthesis ATP that is pure replacement overhead (independent of light intensity; requires only growth rate µ).</li>
+                                </ol>
+                                <p class="mb-0 text-muted small">The k<sub>deg</sub> slider updates both outputs <em>live</em> without re-running the FBA. Literature default values and ranges are pre-loaded per complex; adjust them to match your experimental conditions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header py-2">
+                        <strong><i class="fa fa-recycle"></i> Maintenance Cost</strong>
+                        <small class="text-muted ml-2">ATP &amp; NADPH to continuously replace degraded complexes in a growing cell</small>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- Component selector panel -->
+                        <div class="border rounded p-2 mb-3" id="mc-native-panel" style="border-color:#6f42c1 !important; background:rgba(111,66,193,0.04);">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fa fa-cubes mr-1" style="color:#6f42c1; font-size:0.95em;"></i>
+                                <strong class="small">Protein complex</strong>
+                                <span class="text-muted small ml-2">— protein complexes only (turnover not applicable to lipids / small metabolites)</span>
+                            </div>
+                            <div class="form-row align-items-end">
+                                <div class="col-auto">
+                                    <label class="small text-muted mb-1">Component</label>
+                                    <select class="form-control form-control-sm" id="mc-native-template" style="min-width:300px;">
+                                        <option value="">— select component —</option>
+                                        <optgroup label="Light-harvesting &amp; electron transport">
+                                            <option value="pbs">Phycobilisome (PBS)</option>
+                                            <option value="psii">Photosystem II (PSII, monomer)</option>
+                                            <option value="psi">Photosystem I (PSI, monomer)</option>
+                                            <option value="cytb6f">Cytochrome b6f complex</option>
+                                            <option value="atpsyn">ATP synthase (CF0-CF1)</option>
+                                            <option value="stoich_unit">Photosynthetic unit (2PSII:1PSI:1b6f:1ATPsyn)</option>
+                                        </optgroup>
+                                        <optgroup label="Translation machinery">
+                                            <option value="ribosome">Ribosome (70S)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- PBS rod slider -->
+                            <div id="mc-native-pbs-opts" class="mt-2 pt-2 border-top" style="display:none;">
+                                <div class="form-row align-items-center">
+                                    <div class="col-auto mr-3">
+                                        <label class="small text-muted mb-0">PC rods per PBS: <strong id="mc-pbs-rod-val">6</strong></label>
+                                        <input type="range" class="form-control-range" id="mc-pbs-rods" min="1" max="6" value="6" style="width:150px;">
+                                        <small class="text-muted d-block">APC core fixed + rods × 2 PC hexamers</small>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input" type="checkbox" id="mc-pbs-chromophore" checked>
+                                            <label class="form-check-label small" for="mc-pbs-chromophore">Include phycocyanobilin chromophores <span class="text-muted" style="font-size:0.85em;">(phycynbn_c)</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Protein cost toggles -->
+                            <div id="mc-native-protein-opts" class="mt-2 pt-2 border-top" style="display:none;">
+                                <div class="form-row align-items-center">
+                                    <div class="col-auto">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="checkbox" id="mc-native-aa" checked>
+                                            <label class="form-check-label small" for="mc-native-aa">AA biosynthesis <span class="text-muted" style="font-size:0.85em;">(de novo from CO₂/NO₃⁻)</span></label>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="checkbox" id="mc-native-transl" checked>
+                                            <label class="form-check-label small" for="mc-native-transl">Translation <span class="text-muted" style="font-size:0.85em;">(4 ATP/aa)</span></label>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="checkbox" id="mc-native-transcr" checked>
+                                            <label class="form-check-label small" for="mc-native-transcr">Transcription <span class="text-muted" style="font-size:0.85em;">(~6 ATP/aa)</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Cofactor toggles -->
+                            <div id="mc-native-cofactor-opts" class="mt-2 pt-2 border-top" style="display:none;">
+                                <div class="form-row align-items-center">
+                                    <span class="col-12 small text-muted mb-1">Cofactor costs (iRH783 metabolite IDs):</span>
+                                    <div class="col-auto">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="checkbox" id="mc-native-cof-chla" checked>
+                                            <label class="form-check-label small" for="mc-native-cof-chla">Chlorophyll a <span class="text-muted" style="font-size:0.85em;">(cholphya_c)</span></label>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="checkbox" id="mc-native-cof-pq" checked>
+                                            <label class="form-check-label small" for="mc-native-cof-pq">Plastoquinone Q<sub>A/B</sub> <span class="text-muted" style="font-size:0.85em;">(pq_um)</span></label>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="checkbox" id="mc-native-cof-phllq" checked>
+                                            <label class="form-check-label small" for="mc-native-cof-phllq">Phylloquinone A₁ <span class="text-muted" style="font-size:0.85em;">(phllqne_c)</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- rRNA toggle (ribosome only) -->
+                            <div id="mc-native-rrna-opts" class="mt-2 pt-2 border-top" style="display:none;">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" id="mc-native-rrna" checked>
+                                    <label class="form-check-label small" for="mc-native-rrna">rRNA synthesis cost <span class="text-muted" style="font-size:0.85em;">(16S+23S+5S = 4 566 nt, 2 ATP-eq/nt ≈ 9 132 ATP)</span></label>
+                                </div>
+                            </div>
+                            <!-- Component description -->
+                            <div class="mt-1" id="mc-native-desc-wrap" style="display:none;">
+                                <small class="text-muted" id="mc-native-desc"></small>
+                            </div>
+                        </div><!-- /mc-native-panel -->
+
+                        <!-- Turnover parameters panel -->
+                        <div id="mc-turnover-panel" class="border rounded p-2 mb-3" style="display:none; border-color:#6f42c1 !important; background:rgba(111,66,193,0.04);">
+                            <strong class="small d-block mb-2"><i class="fa fa-clock-o"></i> Turnover parameters</strong>
+
+                            <!-- k_deg slider -->
+                            <div class="form-row align-items-center mb-2">
+                                <div class="col-auto">
+                                    <label class="small text-muted mb-0">
+                                        Turnover rate (k<sub>deg</sub>): <strong id="mc-kdeg-display">0.100</strong> h⁻¹
+                                        &nbsp;→&nbsp; t½ = <strong id="mc-thl-display">6.9</strong> h
+                                    </label>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <input type="range" class="form-control-range mr-2" id="mc-kdeg-slider" min="0" max="1000" value="500" style="width:180px;">
+                                        <input type="number" class="form-control form-control-sm" id="mc-kdeg-input" step="0.001" style="width:90px; font-size:0.85em;" placeholder="h⁻¹">
+                                    </div>
+                                    <small class="text-muted d-block mt-1" id="mc-kdeg-range-hint">range: 0.01 – 0.50 h⁻¹</small>
+                                </div>
+                            </div>
+
+                            <!-- Literature hint -->
+                            <div id="mc-lit-hint" class="small p-2 rounded mb-3" style="background:rgba(0,0,0,0.035); border-left:3px solid #6f42c1; line-height:1.55;"></div>
+
+                            <!-- µ input -->
+                            <div class="form-row align-items-center">
+                                <div class="col-auto">
+                                    <label class="small text-muted mb-0">Growth rate (µ):</label>
+                                    <div class="input-group input-group-sm mt-1" style="width:160px;">
+                                        <input type="number" class="form-control" id="mc-mu-input" value="0.040" min="0.001" max="0.30" step="0.001" style="font-size:0.85em;">
+                                        <div class="input-group-append"><span class="input-group-text" style="font-size:0.85em;">h⁻¹</span></div>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">used for f<sub>repair</sub> = k<sub>deg</sub> / (µ + k<sub>deg</sub>)</small>
+                                </div>
+                                <div class="col-auto ml-2 align-self-center" id="mc-mu-autofill-wrap" style="display:none;">
+                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="mc-mu-autofill-btn" style="font-size:0.8em;">
+                                        <i class="fa fa-magic"></i> Use simulation D<sub>opt</sub>
+                                    </button>
+                                </div>
+                            </div>
+                        </div><!-- /mc-turnover-panel -->
+
+                        <!-- Calculate row -->
+                        <div id="mc-calc-wrap" class="form-row align-items-center mb-3" style="display:none;">
+                            <div class="col-auto">
+                                <button class="btn btn-success btn-sm" id="run-mc-btn">
+                                    <i class="fa fa-play"></i> Calculate
+                                </button>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted">Uses the same model settings (mode &amp; constraints) as the Synthesis tab. Applies k<sub>deg</sub> and µ live after calculation.</small>
+                            </div>
+                        </div>
+
+                        <!-- Error -->
+                        <div id="mc-error" class="alert alert-danger py-1 small" style="display:none;"></div>
+
+                        <!-- Results -->
+                        <div id="mc-results" style="display:none;">
+
+                            <!-- Maintenance fraction — hero -->
+                            <div class="border rounded p-3 mb-2" style="border-color:#6f42c1 !important; background:rgba(111,66,193,0.04);">
+                                <div id="mc-fraction-display"></div>
+                            </div>
+
+                            <!-- Combined synthesis + maintenance table -->
+                            <div class="border rounded p-2" style="background:#f8f9fa;">
+                                <table class="table table-sm table-bordered mb-0" style="font-size:0.82em;">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Resource</th>
+                                            <th>Synthesis cost<br><small class="text-muted font-weight-normal">per mmol complex</small></th>
+                                            <th>Maintenance cost<br><small class="text-muted font-weight-normal">per mmol complex · h &nbsp;<i class="fa fa-refresh" style="color:#6f42c1;" title="updates live with slider"></i></small></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mc-combined-rows"></tbody>
+                                </table>
+                            </div>
+
+                        </div><!-- /mc-results -->
+
+                    </div><!-- /card-body -->
+                </div><!-- /card -->
+
+            </div><!-- /bc-sub-maintenance -->
+
+            </div><!-- /tab-content (bc sub-tabs) -->
 
         </div><!-- /tab-bc -->
 

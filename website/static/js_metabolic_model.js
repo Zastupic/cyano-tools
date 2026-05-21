@@ -2133,6 +2133,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const v = document.getElementById('bc-pbs-rod-val');
         if (v) v.textContent = this.value;
     });
+    // Restore UI if browser has pre-populated the select (e.g. after page refresh)
+    { const t = document.getElementById('bc-native-template'); if (t?.value) { bcNativeKey = t.value; bcNativeUpdateUI(); } }
+
+    // Maintenance cost sub-tab
+    document.getElementById('mc-native-template')?.addEventListener('change', bcMaintOnTemplateChange);
+    document.getElementById('run-mc-btn')?.addEventListener('click', runMaintenanceCost);
+    document.getElementById('mc-pbs-rods')?.addEventListener('input', function () {
+        const v = document.getElementById('mc-pbs-rod-val'); if (v) v.textContent = this.value;
+    });
+    document.getElementById('mc-kdeg-slider')?.addEventListener('input', _mcSyncKdegDisplay);
+    document.getElementById('mc-kdeg-input')?.addEventListener('input', function () {
+        // Sync numeric input → slider
+        const h = _mcHints();
+        const k = Math.min(h.kMax, Math.max(h.kMin, parseFloat(this.value) || h.kDef));
+        const slider = document.getElementById('mc-kdeg-slider');
+        if (slider) slider.value = _mcKdegToSlider(k, h.kMin, h.kMax);
+        _mcSyncKdegDisplay();
+    });
+    document.getElementById('mc-mu-input')?.addEventListener('input', () => {
+        if (mcLastSynthData) _mcRenderLive();
+    });
+    document.getElementById('mc-mu-autofill-btn')?.addEventListener('click', () => {
+        if (bcSimState) {
+            const el = document.getElementById('mc-mu-input');
+            if (el) { el.value = bcSimState.D_opt.toFixed(4); if (mcLastSynthData) _mcRenderLive(); }
+        }
+    });
+    // Restore maintenance UI on page refresh
+    { const t = document.getElementById('mc-native-template'); if (t?.value) { mcKey = t.value; bcMaintUpdateUI(); } }
 
     // Futile cycles
     document.getElementById('bc-futile-template')?.addEventListener('change', bcFutileOnTemplateChange);
@@ -3157,18 +3186,18 @@ function _applyProteinCost(stoich, aa, totalLen, opts) {
     if (opts.inclTranscr) { add('atp_c', -6 * totalLen); add('adp_c', +6 * totalLen); add('pi_c', +6 * totalLen); }
 }
 
-function _getNativeProteinOpts() {
+function _getNativeProteinOpts(pfx = 'bc') {
     return {
-        inclAa:     document.getElementById('bc-native-aa')?.checked     ?? true,
-        inclTransl: document.getElementById('bc-native-transl')?.checked  ?? true,
-        inclTranscr: document.getElementById('bc-native-transcr')?.checked ?? true,
+        inclAa:     document.getElementById(`${pfx}-native-aa`)?.checked     ?? true,
+        inclTransl: document.getElementById(`${pfx}-native-transl`)?.checked  ?? true,
+        inclTranscr: document.getElementById(`${pfx}-native-transcr`)?.checked ?? true,
     };
 }
 
-function buildPbsStoich() {
-    const rods      = parseInt(document.getElementById('bc-pbs-rods')?.value || '6');
-    const inclChrom = document.getElementById('bc-pbs-chromophore')?.checked ?? true;
-    const opts      = _getNativeProteinOpts();
+function buildPbsStoich(pfx = 'bc') {
+    const rods      = parseInt(document.getElementById(`${pfx}-pbs-rods`)?.value || '6');
+    const inclChrom = document.getElementById(`${pfx}-pbs-chromophore`)?.checked ?? true;
+    const opts      = _getNativeProteinOpts(pfx);
     const rodSubs   = PBS_ROD_SUBS.map(s => ({ ...s, cp: s.cp * rods }));
     const { aa, totalLen } = _sumSubunits([...PBS_CORE_SUBS, ...rodSubs]);
     const stoich = {};
@@ -3177,7 +3206,7 @@ function buildPbsStoich() {
     if (inclChrom) {
         // PCB: ApcA(1)×6 + ApcB(1)×6 + ApcD(1)×2 + ApcF(1)×2 + ApcE(3)×1 = 19 core
         // + (CpcA(1)×6 + CpcB(2)×6) per rod = 18 per rod
-        add('phycnbn_c', -(19 + 18 * rods));
+        add('phycynbn_c', -(19 + 18 * rods));
     }
     const metId = 'pbs_c';
     stoich[metId] = 1;
@@ -3185,9 +3214,9 @@ function buildPbsStoich() {
              new_mets: { [metId]: { name: `Phycobilisome (${rods} rods)`, formula: '', compartment: 'c' } } };
 }
 
-function buildRibosomeStoich() {
-    const opts     = _getNativeProteinOpts();
-    const inclRrna = document.getElementById('bc-native-rrna')?.checked ?? true;
+function buildRibosomeStoich(pfx = 'bc') {
+    const opts     = _getNativeProteinOpts(pfx);
+    const inclRrna = document.getElementById(`${pfx}-native-rrna`)?.checked ?? true;
     const { aa, totalLen } = _sumSubunits([...RIB30S_SUBS, ...RIB50S_SUBS]);
     const stoich = {};
     function add(met, d) { stoich[met] = (stoich[met] || 0) + d; }
@@ -3201,10 +3230,10 @@ function buildRibosomeStoich() {
              new_mets: { [metId]: { name: '70S ribosome', formula: '', compartment: 'c' } } };
 }
 
-function buildPsiiStoich() {
-    const opts      = _getNativeProteinOpts();
-    const inclChla  = document.getElementById('bc-native-cof-chla')?.checked ?? true;
-    const inclPq    = document.getElementById('bc-native-cof-pq')?.checked   ?? true;
+function buildPsiiStoich(pfx = 'bc') {
+    const opts      = _getNativeProteinOpts(pfx);
+    const inclChla  = document.getElementById(`${pfx}-native-cof-chla`)?.checked ?? true;
+    const inclPq    = document.getElementById(`${pfx}-native-cof-pq`)?.checked   ?? true;
     const { aa, totalLen } = _sumSubunits(PSII_SUBS);
     const stoich = {};
     function add(met, d) { stoich[met] = (stoich[met] || 0) + d; }
@@ -3217,10 +3246,10 @@ function buildPsiiStoich() {
              new_mets: { [metId]: { name: 'Photosystem II (monomer)', formula: '', compartment: 'c' } } };
 }
 
-function buildPsiStoich() {
-    const opts      = _getNativeProteinOpts();
-    const inclChla  = document.getElementById('bc-native-cof-chla')?.checked  ?? true;
-    const inclPhllq = document.getElementById('bc-native-cof-phllq')?.checked ?? true;
+function buildPsiStoich(pfx = 'bc') {
+    const opts      = _getNativeProteinOpts(pfx);
+    const inclChla  = document.getElementById(`${pfx}-native-cof-chla`)?.checked  ?? true;
+    const inclPhllq = document.getElementById(`${pfx}-native-cof-phllq`)?.checked ?? true;
     const { aa, totalLen } = _sumSubunits(PSI_SUBS);
     const stoich = {};
     function add(met, d) { stoich[met] = (stoich[met] || 0) + d; }
@@ -3233,9 +3262,9 @@ function buildPsiStoich() {
              new_mets: { [metId]: { name: 'Photosystem I (monomer)', formula: '', compartment: 'c' } } };
 }
 
-function buildCytb6fStoich() {
-    const opts     = _getNativeProteinOpts();
-    const inclChla = document.getElementById('bc-native-cof-chla')?.checked ?? true;
+function buildCytb6fStoich(pfx = 'bc') {
+    const opts     = _getNativeProteinOpts(pfx);
+    const inclChla = document.getElementById(`${pfx}-native-cof-chla`)?.checked ?? true;
     const { aa, totalLen } = _sumSubunits(CYTB6F_SUBS);
     const stoich = {};
     function add(met, d) { stoich[met] = (stoich[met] || 0) + d; }
@@ -3247,8 +3276,8 @@ function buildCytb6fStoich() {
              new_mets: { [metId]: { name: 'Cytochrome b6f (monomer)', formula: '', compartment: 'c' } } };
 }
 
-function buildAtpSynStoich() {
-    const opts = _getNativeProteinOpts();
+function buildAtpSynStoich(pfx = 'bc') {
+    const opts = _getNativeProteinOpts(pfx);
     const { aa, totalLen } = _sumSubunits(ATPSYN_SUBS);
     const stoich = {};
     _applyProteinCost(stoich, aa, totalLen, opts);
@@ -3258,12 +3287,12 @@ function buildAtpSynStoich() {
              new_mets: { [metId]: { name: 'ATP synthase CF0-CF1', formula: '', compartment: 'c' } } };
 }
 
-function buildPsUnitStoich() {
+function buildPsUnitStoich(pfx = 'bc') {
     // 2 × PSII + 1 × PSI + 1 × Cyt b6f + 1 × ATP synthase
-    const opts      = _getNativeProteinOpts();
-    const inclChla  = document.getElementById('bc-native-cof-chla')?.checked  ?? true;
-    const inclPq    = document.getElementById('bc-native-cof-pq')?.checked    ?? true;
-    const inclPhllq = document.getElementById('bc-native-cof-phllq')?.checked ?? true;
+    const opts      = _getNativeProteinOpts(pfx);
+    const inclChla  = document.getElementById(`${pfx}-native-cof-chla`)?.checked  ?? true;
+    const inclPq    = document.getElementById(`${pfx}-native-cof-pq`)?.checked    ?? true;
+    const inclPhllq = document.getElementById(`${pfx}-native-cof-phllq`)?.checked ?? true;
     const allSubs   = [
         ...PSII_SUBS.map(s => ({ ...s, cp: s.cp * 2 })),
         ...PSI_SUBS,
@@ -3283,8 +3312,66 @@ function buildPsUnitStoich() {
              new_mets: { [metId]: { name: 'Photosynthetic unit (2PSII:1PSI:1Cytb6f:1ATPsyn)', formula: '', compartment: 'c' } } };
 }
 
+// ── Native component turnover data (literature k_deg values) ─────────────────
+// kDef: default k_deg [h⁻¹]; kMin/kMax: log-scale slider range; hint: HTML
+const NATIVE_TURNOVER_HINTS = {
+    pbs: {
+        kDef: 0.10, kMin: 0.01, kMax: 0.50,
+        hint: `<strong>PBS in <em>Synechocystis</em> PCC 6803</strong><br>
+Balanced growth (50–150 µmol&nbsp;m⁻²&nbsp;s⁻¹): k<sub>deg</sub> ≈ 0.05–0.14 h⁻¹ (t½ 5–14 h).<br>
+N-starvation (NblS/NblR/NblB signalling): k<sub>deg</sub> &gt; 0.5 h⁻¹; PBS largely degraded within 2 h.<br>
+High-light acclimation: rod complement reduced, turnover accelerates.<br>
+<em class="text-muted">Baier et al. 2001 Mol Microbiol 41:1347; Karradt et al. 2008 J Biol Chem 283:1025</em>`,
+    },
+    psii: {
+        kDef: 0.08, kMin: 0.01, kMax: 0.50,
+        hint: `<strong>PSII in <em>Synechocystis</em> PCC 6803</strong><br>
+D1 (PsbA) is the fastest-turning subunit (photodamage–repair cycle).<br>
+Moderate light (100 µmol&nbsp;m⁻²&nbsp;s⁻¹): k<sub>deg</sub>(D1) ≈ 0.03–0.10 h⁻¹; whole PSII ≈ 0.02–0.08 h⁻¹.<br>
+High light (≥500 µmol&nbsp;m⁻²&nbsp;s⁻¹): k<sub>deg</sub>(D1) up to 0.3–0.5 h⁻¹.<br>
+<em class="text-muted">Aro et al. 1993 BBA 1143:113; Nixon et al. 2010 PNAS 107:9164; Komenda et al. 2012 Plant Cell 24:4951</em>`,
+    },
+    psi: {
+        kDef: 0.02, kMin: 0.001, kMax: 0.20,
+        hint: `<strong>PSI in <em>Synechocystis</em> PCC 6803</strong><br>
+Much more stable than PSII under normal conditions: k<sub>deg</sub> ≈ 0.01–0.05 h⁻¹ (t½ 14–70 h).<br>
+Iron deficiency triggers rapid PSI degradation (Ycf48-dependent).<br>
+High-light PSI damage occurs but repair is slower than PSII.<br>
+<em class="text-muted">Sonoike 2011 Plant Cell Physiol 52:794; Wittenberg &amp; Kallas 2019 Plant Physiol 181:2</em>`,
+    },
+    cytb6f: {
+        kDef: 0.03, kMin: 0.001, kMax: 0.20,
+        hint: `<strong>Cytochrome b6f in <em>Synechocystis</em> PCC 6803</strong><br>
+Moderately stable: k<sub>deg</sub> ≈ 0.01–0.05 h⁻¹ (t½ 14–70 h).<br>
+Some regulatory disassembly occurs during state transitions and iron stress.<br>
+<em class="text-muted">Stöckel &amp; Oelmüller 2004 J Biol Chem 279:10243</em>`,
+    },
+    atpsyn: {
+        kDef: 0.015, kMin: 0.001, kMax: 0.10,
+        hint: `<strong>ATP synthase CF0-CF1 in <em>Synechocystis</em> PCC 6803</strong><br>
+Among the most stable thylakoid complexes: k<sub>deg</sub> ≈ 0.005–0.03 h⁻¹ (t½ 23–140 h).<br>
+Largely constitutive; turnover dominated by dilution at growth rate µ.<br>
+<em class="text-muted">Kirchhoff et al. 2000 Biochemistry 39:10306</em>`,
+    },
+    stoich_unit: {
+        kDef: 0.04, kMin: 0.005, kMax: 0.30,
+        hint: `<strong>Photosynthetic unit (2PSII:1PSI:1Cyt b6f:1ATPsyn)</strong><br>
+Composite turnover dominated by PSII (fastest component).<br>
+Range spans from PSI/ATPsyn-like stability to PSII-like turnover depending on light intensity.<br>
+Adjust k<sub>deg</sub> based on PSII/PSI stoichiometry and growth light conditions.`,
+    },
+    ribosome: {
+        kDef: 0.04, kMin: 0.005, kMax: 0.20,
+        hint: `<strong>70S ribosome in <em>Synechocystis</em> PCC 6803</strong><br>
+Active ribosomes are very stable; k<sub>deg</sub> is dominated by dilution (k<sub>deg</sub> ≈ µ during balanced growth).<br>
+At µ = 0.04 h⁻¹ (typical <em>Synechocystis</em> exponential phase): k<sub>deg</sub> ≈ 0.03–0.06 h⁻¹.<br>
+Additional quality-control proteolysis of inactive ribosomes is small.<br>
+<em class="text-muted">Scott et al. 2010 Science 330:1099; Dai et al. 2016 Nat Microbiol 1:16231</em>`,
+    },
+};
+
 const NATIVE_COMPONENT_DESCS = {
-    pbs:         'Phycobilisome: tricylindrical APC core (fixed) + adjustable PC rods (2 hexamers each). Protein sequences from Synechocystis UP000001425. Optionally includes phycocyanobilin chromophores (phycnbn_c).',
+    pbs:         'Phycobilisome: tricylindrical APC core (fixed) + adjustable PC rods (2 hexamers each). Protein sequences from Synechocystis UP000001425. Optionally includes phycocyanobilin chromophores (phycynbn_c).',
     ribosome:    '70S ribosome: 23 × 30S proteins + 33 × 50S proteins (Synechocystis PCC 6803, UP000001425). Optional rRNA synthesis: 16S+23S+5S = 4 566 nt at 2 ATP-eq/nt.',
     psii:        'Photosystem II (22 subunits, monomer). Optional cofactors: ~36 Chl a (cholphya_c), 2 plastoquinone QA/QB (pq_um).',
     psi:         'Photosystem I (12 subunits, monomer). Optional cofactors: ~96 Chl a (cholphya_c), 2 phylloquinone A₁ (phllqne_c).',
@@ -3373,6 +3460,243 @@ function runEnergeticsNative() {
         target_rxn: targetRxn,
         target_met: targetMet,
     }, btn);
+}
+
+// ── Maintenance cost sub-tab ──────────────────────────────────────────────────
+
+let mcKey          = null;   // currently selected component key
+let mcLastSynthData = null;  // last FBA result from maintenance tab
+
+// Log-scale slider helpers (slider range 0–1000 maps to [kMin, kMax] log-uniformly)
+function _mcSliderToKdeg(val, kMin, kMax) {
+    return kMin * Math.pow(kMax / kMin, val / 1000);
+}
+function _mcKdegToSlider(kdeg, kMin, kMax) {
+    return Math.round(Math.log(kdeg / kMin) / Math.log(kMax / kMin) * 1000);
+}
+function _mcFmtK(k)   { return k < 0.01 ? k.toFixed(4) : k.toFixed(3); }
+function _mcFmtThl(k) { const t = Math.LN2 / k; return t >= 100 ? t.toFixed(0) : t >= 10 ? t.toFixed(1) : t.toFixed(2); }
+
+function _mcHints() { return NATIVE_TURNOVER_HINTS[mcKey] || { kMin: 0.001, kMax: 1.0, kDef: 0.05 }; }
+
+function _mcGetKdeg() {
+    const h = _mcHints();
+    const slider = document.getElementById('mc-kdeg-slider');
+    return slider ? _mcSliderToKdeg(parseInt(slider.value), h.kMin, h.kMax) : h.kDef;
+}
+function _mcGetMu() {
+    return Math.max(0.001, parseFloat(document.getElementById('mc-mu-input')?.value || '0.04') || 0.04);
+}
+
+function bcMaintClear() {
+    mcKey = null;
+    mcLastSynthData = null;
+    ['mc-native-pbs-opts','mc-native-protein-opts','mc-native-cofactor-opts',
+     'mc-native-rrna-opts','mc-native-desc-wrap','mc-turnover-panel',
+     'mc-calc-wrap','mc-results','mc-error'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+}
+
+function bcMaintUpdateUI() {
+    const key = mcKey;
+    if (!key) { bcMaintClear(); return; }
+    const show = id => { const el = document.getElementById(id); if (el) el.style.display = ''; };
+    const hide = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+
+    const hasProtein = ['pbs','ribosome','psii','psi','cytb6f','atpsyn','stoich_unit'].includes(key);
+    const hasCofact  = ['psii','psi','cytb6f','stoich_unit'].includes(key);
+    hasProtein ? show('mc-native-protein-opts') : hide('mc-native-protein-opts');
+    hasCofact  ? show('mc-native-cofactor-opts') : hide('mc-native-cofactor-opts');
+    key === 'pbs'      ? show('mc-native-pbs-opts')  : hide('mc-native-pbs-opts');
+    key === 'ribosome' ? show('mc-native-rrna-opts') : hide('mc-native-rrna-opts');
+
+    const descEl = document.getElementById('mc-native-desc');
+    if (descEl && NATIVE_COMPONENT_DESCS[key]) {
+        descEl.textContent = NATIVE_COMPONENT_DESCS[key];
+        show('mc-native-desc-wrap');
+    }
+
+    // Turnover panel: set default k_deg and populate hint
+    show('mc-turnover-panel');
+    show('mc-calc-wrap');
+    const h = _mcHints();
+    const hintEl = document.getElementById('mc-lit-hint');
+    if (hintEl) hintEl.innerHTML = h.hint;
+    const rangeEl = document.getElementById('mc-kdeg-range-hint');
+    if (rangeEl) rangeEl.textContent = `range: ${h.kMin} – ${h.kMax} h⁻¹`;
+    const slider = document.getElementById('mc-kdeg-slider');
+    if (slider) {
+        slider.value = _mcKdegToSlider(h.kDef, h.kMin, h.kMax);
+        _mcSyncKdegDisplay();
+    }
+
+    // Auto-fill µ button: show only when simulation state is available
+    const muWrap = document.getElementById('mc-mu-autofill-wrap');
+    if (muWrap) muWrap.style.display = bcSimState ? '' : 'none';
+
+    // Clear stale results from a previous component
+    mcLastSynthData = null;
+    const res = document.getElementById('mc-results'); if (res) res.style.display = 'none';
+    const err = document.getElementById('mc-error');   if (err) err.style.display = 'none';
+}
+
+function bcMaintOnTemplateChange() {
+    mcKey = document.getElementById('mc-native-template')?.value || null;
+    if (!mcKey) { bcMaintClear(); return; }
+    bcMaintUpdateUI();
+}
+
+function _mcSyncKdegDisplay() {
+    const h = _mcHints();
+    const k = _mcGetKdeg();
+    const dEl = document.getElementById('mc-kdeg-display');
+    const tEl = document.getElementById('mc-thl-display');
+    if (dEl) dEl.textContent = _mcFmtK(k);
+    if (tEl) tEl.textContent = _mcFmtThl(k);
+    // Live-update results if already computed
+    if (mcLastSynthData) _mcRenderLive();
+}
+
+function runMaintenanceCost() {
+    const key = mcKey;
+    if (!key) { showAnalysisError('mc-error', 'Select a component.'); return; }
+    const btn = document.getElementById('run-mc-btn');
+
+    const builders = {
+        pbs:         () => buildPbsStoich('mc'),
+        ribosome:    () => buildRibosomeStoich('mc'),
+        psii:        () => buildPsiiStoich('mc'),
+        psi:         () => buildPsiStoich('mc'),
+        cytb6f:      () => buildCytb6fStoich('mc'),
+        atpsyn:      () => buildAtpSynStoich('mc'),
+        stoich_unit: () => buildPsUnitStoich('mc'),
+    };
+    if (!builders[key]) { showAnalysisError('mc-error', 'Component not supported for maintenance analysis.'); return; }
+
+    const synthRxn  = builders[key]();
+    const metId     = Object.keys(synthRxn.new_mets)[0];
+    const drainId   = `DM_${metId}`;
+    const extraRxns = [
+        synthRxn,
+        { id: drainId, name: `${synthRxn.name} drain`, lb: 0, ub: 1000,
+          stoich: { [metId]: -1 }, new_mets: {} },
+    ];
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Calculating…';
+    const errEl = document.getElementById('mc-error');
+    const resEl = document.getElementById('mc-results');
+    if (errEl) errEl.style.display = 'none';
+    if (resEl) resEl.style.display = 'none';
+    mcLastSynthData = null;
+
+    const mode = document.querySelector('input[name="bc-mode"]:checked')?.value || 'independent';
+    fetch('/api/metabolic/energetics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            mode,
+            constrained:      document.getElementById('en-constrained')?.checked ?? true,
+            custom_reactions: extraRxns,
+            target_rxn:       drainId,
+            target_met:       metId,
+            growth_rate:      (mode === 'dependent' && bcSimState) ? bcSimState.D_opt : 0,
+        }),
+    })
+    .then(r => r.json())
+    .then(d => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-play"></i> Calculate synthesis cost';
+        if (d.error) { showAnalysisError('mc-error', d.error); return; }
+        mcLastSynthData = d;
+        if (resEl) resEl.style.display = '';
+        _mcRenderLive();
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-play"></i> Calculate synthesis cost';
+        showAnalysisError('mc-error', err.message);
+    });
+}
+
+function _mcRenderLive() {
+    const d = mcLastSynthData;
+    if (!d) return;
+    const kdeg = _mcGetKdeg();
+    const mu   = _mcGetMu();
+    const pfba = d.pfba || {};
+
+    // Fraction bar — hero metric at the top
+    const fracEl = document.getElementById('mc-fraction-display');
+    if (fracEl) {
+        const frep   = kdeg / (mu + kdeg);
+        const pctRep = (frep * 100).toFixed(1);
+        const pctGro = (100 - frep * 100).toFixed(1);
+        const barPct     = Math.round(frep * 100);
+        const ratio      = kdeg / mu;
+        const synthRate  = (mu + kdeg).toFixed(3);   // total synthesis rate h⁻¹
+        const ratioFmt   = ratio.toFixed(2);
+        const genTime    = (Math.LN2 / mu).toFixed(1);  // doubling time in h
+        fracEl.innerHTML = `
+            <div class="d-flex align-items-baseline mb-2">
+                <span style="font-size:2.2em; font-weight:700; color:#6f42c1; line-height:1;">${pctRep}%</span>
+                <span class="ml-2 small text-muted">of synthesis goes to replacement</span>
+            </div>
+            <div class="d-flex rounded overflow-hidden mb-1" style="height:12px;">
+                <div style="flex:${barPct}; background:#6f42c1; min-width:2px;" title="${pctRep}% replacement"></div>
+                <div style="flex:${100 - barPct}; background:#dee2e6; min-width:2px;" title="${pctGro}% growth"></div>
+            </div>
+            <div class="d-flex small text-muted mb-3">
+                <span><span style="color:#6f42c1;">■</span> ${pctRep}% replaces degraded copies</span>
+                <span class="ml-3"><span style="color:#adb5bd;">■</span> ${pctGro}% expands the pool for cell division</span>
+            </div>
+            <table class="table table-sm mb-2" style="font-size:0.82em; width:auto;">
+                <tbody>
+                    <tr>
+                        <td class="text-muted pr-3">k<sub>deg</sub> = ${_mcFmtK(kdeg)} h⁻¹</td>
+                        <td>degradation rate — the fraction of the complex pool that is broken down and resynthesised every hour</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted pr-3">t½ = ${_mcFmtThl(kdeg)} h</td>
+                        <td>half-life — time after which half of the existing molecules have been degraded (= ln 2 / k<sub>deg</sub>)</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted pr-3">µ = ${mu.toFixed(3)} h⁻¹</td>
+                        <td>growth rate — the cell doubles every ${genTime} h; the complex pool must also double each generation</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="small text-muted mb-0">
+                <i class="fa fa-info-circle"></i>
+                To keep a steady-state pool, the cell must synthesise new copies at rate
+                µ + k<sub>deg</sub> = ${mu.toFixed(3)} + ${_mcFmtK(kdeg)} = <strong>${synthRate} h⁻¹</strong>.
+                Of this, k<sub>deg</sub> / (µ + k<sub>deg</sub>) = <strong>${pctRep}%</strong> offsets degradation
+                and only ${pctGro}% actually enlarges the pool.
+                Equivalently, for every 1 complex assembled to support cell division,
+                <strong>${ratioFmt}</strong> more are assembled just to replace degraded copies
+                (k<sub>deg</sub> / µ = ${ratioFmt}).
+            </p>`;
+    }
+
+    // Combined synthesis + maintenance table
+    const tbody = document.getElementById('mc-combined-rows');
+    if (tbody) {
+        const rows = [
+            { label: 'ATP',     key: 'atp_per_unit',     sUnit: 'mmol/mmol',  mUnit: 'mmol/mmol·h' },
+            { label: 'NADPH',   key: 'nadph_per_unit',   sUnit: 'mmol/mmol',  mUnit: 'mmol/mmol·h' },
+            { label: 'Photons', key: 'photons_per_unit', sUnit: 'µmol/mmol',  mUnit: 'µmol/mmol·h' },
+        ].map(r => {
+            const vs = pfba[r.key];
+            if (!vs || vs === 0) return '';
+            return `<tr>
+                <td>${r.label}</td>
+                <td><strong>${vs}</strong> <small class="text-muted">${r.sUnit}</small></td>
+                <td><strong>${(vs * kdeg).toFixed(3)}</strong> <small class="text-muted">${r.mUnit}</small></td>
+            </tr>`;
+        }).join('');
+        tbody.innerHTML = rows || '<tr><td colspan="3" class="text-muted">No data</td></tr>';
+    }
 }
 
 // ── Futile cycles — helpers ───────────────────────────────────────────────────
