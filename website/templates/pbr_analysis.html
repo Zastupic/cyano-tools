@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+
+{% block title %}
+    PBR Data Analysis — FMT-150 &amp; MC-1000 | CyanoTools
+{% endblock %}
+
+{% block description %}
+    Analyze photobioreactor (FMT-150) and multi-cultivator (MC-1000) time-series data online. Upload .ods export files, select signals, and apply OD non-linearity correction.
+{% endblock %}
+
+{% block keywords %}
+    PBR data analysis, FMT-150, MC-1000, photobioreactor, multi-cultivator, OD correction, OD720, OD680, cyanobacteria growth, PSI photobioreactor, bioreactor data viewer
+{% endblock %}
+
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "CyanoTools PBR Data Analysis",
+  "operatingSystem": "Web",
+  "applicationCategory": "ScientificSoftware",
+  "description": "Upload and visualize PSI photobioreactor (FMT-150) and multi-cultivator (MC-1000) ODS export files with interactive signal selection and OD non-linearity correction.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Banner ─────────────────────────────────────────────────────────────── -->
+<div id="banner-content">
+    <div class="banner-desktop">
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
+             alt="CyanoTools analytical tools for algae and cyanobacteria"
+             style="width:100%;">
+    </div>
+    <div class="banner-mobile">
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
+             alt="CyanoTools mobile banner"
+             style="width:100%;">
+    </div>
+</div>
+<br>
+
+<h1>Photobioreactor Data Analysis — FMT-150 &amp; MC-1000
+    <span class="badge badge-warning" style="font-size:0.5em; vertical-align:middle;">Beta</span>
+</h1>
+<div class="alert alert-warning" role="alert"
+     style="font-size:0.9em; border-left:4px solid #ffc107; padding:0.6em 1em;">
+    <strong>Beta notice:</strong> This tool is under active development. Results should be verified independently. Please <a href="mailto:zavrel.t@czechglobe.cz">report any issues</a>.
+</div>
+
+<div class="alert alert-info" role="alert"
+     style="font-size:0.97em; border-left:4px solid #17a2b8;">
+    <strong>At a glance:</strong> Upload an <code>.ods</code> export file from a PSI
+    FMT-150 photobioreactor or MC-1000 multi-cultivator. Select signals to plot on an
+    interactive time-series chart. OD<sub>720</sub> and OD<sub>680</sub> readings above
+    the linearity threshold can be corrected automatically; per-channel strain selection
+    is available for the MC-1000. Download the full-resolution dataset with corrected OD
+    columns appended as XLSX.
+</div>
+
+<!-- ── How to use ────────────────────────────────────────────────────────── -->
+<details class="mb-2">
+    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.35em 0;">
+        How to use &#9660;
+    </summary>
+    <div class="card card-body mt-1" style="font-size:0.92em; background:#f8f9fa;">
+        <ol class="mb-0">
+            <li>Export your experiment data from the PSI control software as an <code>.ods</code> file.</li>
+            <li>Upload the file using the drop zone below — device type (FMT-150 or MC-1000) is detected automatically from the file.</li>
+            <li>Use the <strong>Signal Selector</strong> to choose which channels and signal types to display. For the MC-1000, select individual culture channels (1–8).</li>
+            <li>If OD<sub>720</sub> or OD<sub>680</sub> signals are selected and values exceed the linearity threshold (0.4 for OD<sub>720</sub>; 0.6 for OD<sub>680</sub>), open the <strong>OD Correction</strong> panel, choose the appropriate strain (WT or EFE) per channel, and select whether to show the raw signal, the corrected signal, or both.</li>
+            <li>Logged experiment events are overlaid as vertical lines on the chart (toggle with the <em>Show events</em> checkbox).</li>
+            <li>Click <strong>Download XLSX</strong> to export the full-resolution dataset. Corrected OD columns are appended next to the originals.</li>
+        </ol>
+        <p class="mt-2 mb-0" style="font-size:0.9em; color:#555;">
+            <strong>Note on large files:</strong> Files with more than 3 000 rows are automatically
+            downsampled for display. The downloaded XLSX always contains the full-resolution data.
+        </p>
+    </div>
+</details>
+
+<!-- ── Supported devices ─────────────────────────────────────────────────── -->
+<details class="mb-3">
+    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.35em 0;">
+        Supported devices &#9660;
+    </summary>
+    <div class="card card-body mt-1" style="font-size:0.92em; background:#f8f9fa;">
+        <div class="row">
+            <div class="col-sm-6 mb-2">
+                <strong>
+                    <a href="https://photo-bio-reactors.com/products/photobioreactors/#info"
+                       target="_blank" rel="noopener">PSI Photobioreactor PBR FMT-150</a>
+                </strong>
+                <ul class="mb-0 mt-1">
+                    <li>Single-vessel continuous-culture system</li>
+                    <li>OD<sub>720</sub> + OD<sub>680</sub> sensors, actinic lights (Blue/Red), temperature, pumps, fluorescence (Qy, Ft, Fm), pH, O<sub>2</sub>, CO<sub>2</sub> probes</li>
+                    <li>OD correction: WT strain (<em>k</em> = 1.83) or EFE strain (<em>k</em> = 1.6376) for OD<sub>720</sub></li>
+                </ul>
+            </div>
+            <div class="col-sm-6 mb-2">
+                <strong>
+                    <a href="https://photo-bio-reactors.com/products/multi-cultivators/"
+                       target="_blank" rel="noopener">PSI Multi-Cultivator MC-1000-OD</a>
+                </strong>
+                <ul class="mb-0 mt-1">
+                    <li>8-channel parallel cultivation system</li>
+                    <li>Per-channel OD<sub>720</sub> + OD<sub>680</sub>, multi-wavelength actinic lights (8 × 9 wavelengths), temperature, turbidostat regulation</li>
+                    <li>OD correction selectable per channel (WT or EFE strain)</li>
+                </ul>
+            </div>
+        </div>
+        <p class="mb-0 mt-1" style="font-size:0.9em; color:#555;">
+            OD correction equations are described in the
+            <a href="/calculators#OD720_correction">Calculators page</a>.
+        </p>
+    </div>
+</details>
+
+<!-- ── Upload zone ───────────────────────────────────────────────────────── -->
+<div id="pbr-upload-zone"
+     style="border:2px dashed #adb5bd; border-radius:8px; padding:2em 1.5em;
+            text-align:center; cursor:pointer; background:#fafafa; margin-bottom:1em;"
+     onclick="document.getElementById('pbr-file-input').click();">
+    <input type="file" id="pbr-file-input" accept=".ods" style="display:none;">
+    <p style="font-size:2em; margin:0;" id="pbr-upload-icon">&#128194;</p>
+    <p style="margin:0.4em 0 0; color:#555;">
+        Drop an <code>.ods</code> file here or <strong>click to browse</strong>
+    </p>
+    <p id="pbr-upload-filename" style="margin:0.3em 0 0; font-size:0.88em; color:#888;"></p>
+</div>
+
+<div style="margin-bottom:1.2em;">
+    <span style="font-size:0.88em; color:#555;">Example data: </span>
+    <a class="btn btn-sm btn-outline-secondary"
+       href="{{ url_for('static', filename='files/PBR eample data/Example data FMT-150.ods') }}"
+       download>FMT-150</a>
+    <a class="btn btn-sm btn-outline-secondary"
+       href="{{ url_for('static', filename='files/PBR eample data/Example data MC-1000.ods') }}"
+       download>MC-1000</a>
+</div>
+
+<!-- ── Error banner ──────────────────────────────────────────────────────── -->
+<div id="pbr-error-banner" class="alert alert-danger" role="alert"
+     style="display:none; font-size:0.95em;"></div>
+
+<!-- ── Results panel (hidden until file parsed) ──────────────────────────── -->
+<div id="pbr-results-panel" style="display:none;">
+
+    <!-- Experiment info bar -->
+    <div class="card mb-3" style="background:#e8f4f8; border:1px solid #bee5eb;">
+        <div class="card-body py-2 px-3" style="font-size:0.9em;">
+            <span id="pbr-info-device" class="badge badge-info mr-2" style="font-size:0.9em;"></span>
+            <strong id="pbr-info-name"></strong>
+            <span class="text-muted mx-2">|</span>
+            Start: <span id="pbr-info-start"></span>
+            <span class="text-muted mx-2">|</span>
+            <span id="pbr-info-rows"></span>
+        </div>
+    </div>
+
+    <!-- Experiment info details (collapsible, populated by JS) -->
+    <details id="pbr-info-details" class="mb-3" style="display:none;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58;
+                        padding:0.35em 0; font-size:0.9em;">
+            Experiment details &#9660;
+        </summary>
+        <div class="card card-body mt-1 py-2" style="font-size:0.88em; background:#f8f9fa;">
+            <div id="pbr-info-table-wrap"></div>
+        </div>
+    </details>
+
+    <!-- Signal selector card -->
+    <div class="card mb-3">
+        <div class="card-header" style="background:#d1ecf1; border-bottom:1px solid #bee5eb;">
+            <strong style="color:#0a3c58;">&#9776; Signal Selector</strong>
+        </div>
+        <div class="card-body bg-light py-2">
+
+            <!-- MC-1000 channel selector (hidden for FMT-150) -->
+            <div id="pbr-channel-selector" style="display:none; margin-bottom:0.8em;">
+                <span style="font-size:0.88em; font-weight:600; color:#5a7a8a;
+                             text-transform:uppercase; letter-spacing:0.06em;">Channels:</span>
+                <div id="pbr-channel-checkboxes" class="d-inline-flex flex-wrap ml-2"
+                     style="gap:4px;"></div>
+                <button class="btn btn-xs btn-outline-secondary ml-2"
+                        style="font-size:0.78em; padding:1px 6px;"
+                        onclick="PBR.toggleAllChannels(true)">All</button>
+                <button class="btn btn-xs btn-outline-secondary"
+                        style="font-size:0.78em; padding:1px 6px;"
+                        onclick="PBR.toggleAllChannels(false)">None</button>
+            </div>
+
+            <!-- Signal groups accordion -->
+            <div id="pbr-signal-groups"></div>
+
+        </div>
+    </div>
+
+    <!-- OD Correction panel (hidden until OD column selected) -->
+    <div id="pbr-od-correction-panel" class="card mb-3" style="display:none;">
+        <div class="card-header" style="background:#d1ecf1; border-bottom:1px solid #bee5eb;">
+            <strong style="color:#0a3c58;">
+                <i class="fa fa-adjust fa-fw" aria-hidden="true"></i>
+                OD Correction
+            </strong>
+            <small class="text-muted ml-2">
+                OD<sub>720</sub> threshold: 0.4 &nbsp;|&nbsp; OD<sub>680</sub> threshold: 0.6
+                (dashed lines on chart)
+            </small>
+        </div>
+        <div class="card-body bg-light py-2">
+
+            <!-- FMT-150: single strain select -->
+            <div id="pbr-corr-fmt150" style="display:none;">
+                <div class="form-inline mb-1">
+                    <label class="mr-2" style="font-size:0.9em;">Strain:</label>
+                    <select id="pbr-strain-fmt150" class="form-control form-control-sm"
+                            onchange="PBR.updatePlot()">
+                        <option value="FMT-150 WT">FMT-150 WT</option>
+                        <option value="FMT-150 EFE">FMT-150 EFE</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- MC-1000: per-channel strain selects -->
+            <div id="pbr-corr-mc1000" style="display:none;">
+                <p style="font-size:0.88em; color:#555; margin-bottom:0.5em;">
+                    Select strain for each channel:
+                </p>
+                <div id="pbr-channel-strains" class="d-flex flex-wrap" style="gap:8px;"></div>
+            </div>
+
+            <!-- Display mode -->
+            <div class="mt-2">
+                <label style="font-size:0.88em; font-weight:600; color:#5a7a8a;
+                               text-transform:uppercase; letter-spacing:0.06em;">Show:</label>
+                <div class="btn-group btn-group-sm ml-2" role="group">
+                    <button type="button" id="pbr-show-raw"
+                            class="btn btn-outline-secondary active"
+                            onclick="PBR.setShowMode('raw')">Raw</button>
+                    <button type="button" id="pbr-show-corrected"
+                            class="btn btn-outline-secondary"
+                            onclick="PBR.setShowMode('corrected')">Corrected</button>
+                    <button type="button" id="pbr-show-both"
+                            class="btn btn-outline-secondary"
+                            onclick="PBR.setShowMode('both')">Both</button>
+                </div>
+            </div>
+            <p class="mt-2 mb-0" style="font-size:0.82em; color:#777;">
+                <em>Corrected trace is offset by &delta; = formula(threshold)&minus;threshold so it
+                joins the raw curve at the threshold (display stitching for continuity).
+                The <strong>downloaded XLSX</strong> always contains the original calibration
+                formula values without this offset.</em>
+            </p>
+        </div>
+    </div>
+
+    <!-- Action row -->
+    <div class="mb-3 d-flex flex-wrap align-items-center" style="gap:8px;">
+        <button type="button" class="btn btn-info btn-sm"
+                onclick="PBR.updatePlot()">&#8635; Update Plot</button>
+        <button type="button" class="btn btn-success btn-sm"
+                onclick="PBR.exportData()">&#11015; Download XLSX</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+                id="pbr-reset-zoom" style="display:none;"
+                onclick="PBR.resetZoom()">&#8646; Reset zoom</button>
+        <div class="form-check ml-3 mb-0" id="pbr-events-toggle-wrap" style="display:none;">
+            <input class="form-check-input" type="checkbox" id="pbr-show-events"
+                   checked onchange="PBR.updatePlot()">
+            <label class="form-check-label" for="pbr-show-events"
+                   style="font-size:0.9em;">Show events</label>
+        </div>
+        <div class="form-check ml-3 mb-0">
+            <input class="form-check-input" type="checkbox" id="pbr-show-tooltips"
+                   checked onchange="PBR.toggleTooltips(this.checked)">
+            <label class="form-check-label" for="pbr-show-tooltips"
+                   style="font-size:0.9em;">Show tooltips</label>
+        </div>
+    </div>
+
+    <!-- Resolution selector -->
+    <div class="mb-2 d-flex align-items-center flex-wrap" style="gap:6px; font-size:0.88em; color:#555;">
+        <span>Display resolution:</span>
+        <select id="pbr-resolution" class="form-control form-control-sm"
+                style="width:auto;" onchange="PBR.changeResolution(+this.value)">
+            <option value="3000">Auto (≤ 3 000 pts)</option>
+            <option value="10000">High (≤ 10 000 pts)</option>
+            <option value="0" selected>Full dataset</option>
+        </select>
+        <span id="pbr-resolution-note" style="color:#888;"></span>
+    </div>
+
+    <!-- Chart area -->
+    <div style="background:#fff; border-radius:6px; padding:10px;
+                box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <canvas id="pbr-chart" style="width:100%; max-height:500px;"></canvas>
+    </div>
+    <p id="pbr-chart-note" style="font-size:0.8em; color:#888; margin-top:0.3em;"></p>
+
+    <!-- Events table (collapsible, populated by JS) -->
+    <details id="pbr-events-details" class="mt-3" style="display:none;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58;
+                        padding:0.35em 0; font-size:0.9em;">
+            Experiment events (<span id="pbr-events-count">0</span>) &#9660;
+        </summary>
+        <div class="card mt-1 p-0" style="font-size:0.88em; overflow-x:auto;">
+            <table class="table table-sm table-striped mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width:80px;">Time (h)</th>
+                        <th style="width:130px;">User</th>
+                        <th>Event</th>
+                    </tr>
+                </thead>
+                <tbody id="pbr-events-tbody"></tbody>
+            </table>
+        </div>
+    </details>
+
+    <!-- ── Growth Rate Analysis panel ─────────────────────────────────────── -->
+    <details id="pbr-mu-panel" class="mt-3" style="display:none;">
+        <summary style="cursor:pointer; font-weight:bold; color:#0a3c58;
+                        padding:0.35em 0; font-size:0.9em;">
+            Growth Rate Analysis — &mu; (h<sup>&minus;1</sup>) &#9660;
+        </summary>
+        <div class="card mt-1" style="font-size:0.9em;">
+            <div class="card-body py-2 px-3">
+
+                <!-- Mode tabs -->
+                <div class="btn-group btn-group-sm mb-3" role="group">
+                    <button type="button" id="pbr-mu-tab-1"
+                            class="btn btn-outline-primary active"
+                            onclick="PBR.muSetMode(1)">Manual fit</button>
+                    <button type="button" id="pbr-mu-tab-2"
+                            class="btn btn-outline-primary"
+                            onclick="PBR.muSetMode(2)">Moving window</button>
+                    <button type="button" id="pbr-mu-tab-3"
+                            class="btn btn-outline-primary"
+                            onclick="PBR.muSetMode(3)">Turbidostat</button>
+                </div>
+
+                <!-- ── Mode 1: Manual fit ──────────────────────────────── -->
+                <div id="pbr-mu-mode1">
+                    <div class="form-inline mb-2" style="gap:8px; flex-wrap:wrap;">
+                        <label style="font-size:0.88em;">Window&nbsp;(h):</label>
+                        <input type="number" id="pbr-mu-window1" class="form-control form-control-sm"
+                               value="2" min="0.1" step="0.1" style="width:75px;">
+                        <button type="button" id="pbr-mu-click-btn"
+                                class="btn btn-sm btn-outline-secondary"
+                                onclick="PBR.muToggleClickMode()">
+                            &#128247; Enable click mode
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="PBR.muClearFits()">&#10005; Clear all</button>
+                        <button type="button" id="pbr-mu-export1-btn"
+                                class="btn btn-sm btn-outline-success"
+                                style="display:none;"
+                                onclick="PBR.muExport(1)">&#11015; Export XLSX</button>
+                    </div>
+                    <p style="font-size:0.82em; color:#666; margin-bottom:0.5em;">
+                        Enable click mode, then click anywhere on the chart to fit an exponential
+                        curve&nbsp;(ln OD = ln<em>a</em>&nbsp;+&nbsp;&mu;&thinsp;<em>t</em>)
+                        centred on that time point.
+                    </p>
+                    <div id="pbr-mu-table1-wrap" style="display:none; overflow-x:auto;">
+                        <table class="table table-sm table-bordered mb-0" style="font-size:0.85em;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Signal</th>
+                                    <th>t<sub>center</sub>&nbsp;(h)</th>
+                                    <th>Window&nbsp;(h)</th>
+                                    <th>&mu;&nbsp;(h<sup>&minus;1</sup>)</th>
+                                    <th>t<sub>d</sub>&nbsp;(h)</th>
+                                    <th>R<sup>2</sup></th>
+                                    <th>n&nbsp;pts</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="pbr-mu-tbody1"></tbody>
+                        </table>
+                    </div>
+                </div><!-- /mode1 -->
+
+                <!-- ── Mode 2: Moving window ───────────────────────────── -->
+                <div id="pbr-mu-mode2" style="display:none;">
+                    <div class="form-inline mb-2" style="gap:8px; flex-wrap:wrap;">
+                        <label style="font-size:0.88em;">Window&nbsp;(h):</label>
+                        <input type="number" id="pbr-mu-window2" class="form-control form-control-sm"
+                               value="2" min="0.1" step="0.1" style="width:75px;">
+                        <label style="font-size:0.88em;">Step&nbsp;(h):</label>
+                        <input type="number" id="pbr-mu-step2" class="form-control form-control-sm"
+                               value="0.5" min="0.05" step="0.05" style="width:75px;">
+                        <button type="button" class="btn btn-sm btn-primary"
+                                onclick="PBR.muRunMode2()">&#9654; Calculate</button>
+                        <button type="button" id="pbr-mu-export2-btn"
+                                class="btn btn-sm btn-outline-success"
+                                style="display:none;"
+                                onclick="PBR.muExport(2)">&#11015; Export XLSX</button>
+                    </div>
+                    <p style="font-size:0.82em; color:#666; margin-bottom:0.5em;">
+                        Sweeps the entire time range with a sliding window and plots &mu;(t) for each
+                        visible OD signal. Useful for detecting transitions in batch cultures.
+                    </p>
+                    <div id="pbr-mu-chart2-wrap" style="display:none; background:#fff;
+                         border-radius:4px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                        <canvas id="pbr-mu-chart2" style="width:100%; max-height:300px;"></canvas>
+                    </div>
+                </div><!-- /mode2 -->
+
+                <!-- ── Mode 3: Turbidostat ─────────────────────────────── -->
+                <div id="pbr-mu-mode3" style="display:none;">
+                    <div class="form-inline mb-2" style="gap:8px; flex-wrap:wrap;">
+                        <label style="font-size:0.88em;">Pump column:</label>
+                        <select id="pbr-mu-pump-sel" class="form-control form-control-sm"
+                                style="width:auto;"></select>
+                        <label style="font-size:0.88em;">t<sub>0</sub>&nbsp;(h):</label>
+                        <input type="number" id="pbr-mu-t0" class="form-control form-control-sm"
+                               value="0" step="0.5" style="width:75px;">
+                        <label style="font-size:0.88em;">t<sub>1</sub>&nbsp;(h):</label>
+                        <input type="number" id="pbr-mu-t1" class="form-control form-control-sm"
+                               step="0.5" style="width:75px;" placeholder="end">
+                        <label style="font-size:0.88em;">Min&nbsp;gap&nbsp;(h):</label>
+                        <input type="number" id="pbr-mu-mingap" class="form-control form-control-sm"
+                               value="0.05" min="0.01" step="0.01" style="width:70px;">
+                        <button type="button" class="btn btn-sm btn-primary"
+                                onclick="PBR.muRunMode3()">&#9654; Detect &amp; fit</button>
+                        <button type="button" id="pbr-mu-export3-btn"
+                                class="btn btn-sm btn-outline-success"
+                                style="display:none;"
+                                onclick="PBR.muExport(3)">&#11015; Export XLSX</button>
+                    </div>
+                    <p style="font-size:0.82em; color:#666; margin-bottom:0.5em;">
+                        Detects pump-OFF intervals (pump&nbsp;flow&nbsp;=&nbsp;0) and fits an
+                        exponential growth curve in each interval. Suitable for turbidostat experiments
+                        where growth rate equals dilution rate.
+                    </p>
+                    <div id="pbr-mu-warn3" class="alert alert-warning py-1 px-2 mb-2"
+                         style="display:none; font-size:0.85em;"></div>
+                    <div id="pbr-mu-table3-wrap" style="display:none; overflow-x:auto;">
+                        <table class="table table-sm table-bordered mb-1" style="font-size:0.85em;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Segment</th>
+                                    <th>t<sub>start</sub>&nbsp;(h)</th>
+                                    <th>t<sub>end</sub>&nbsp;(h)</th>
+                                    <th>Duration&nbsp;(h)</th>
+                                    <th>Signal</th>
+                                    <th>&mu;&nbsp;(h<sup>&minus;1</sup>)</th>
+                                    <th>t<sub>d</sub>&nbsp;(h)</th>
+                                    <th>R<sup>2</sup></th>
+                                    <th>n&nbsp;pts</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pbr-mu-tbody3"></tbody>
+                        </table>
+                        <div id="pbr-mu-summary3" style="font-size:0.88em;"></div>
+                    </div>
+                </div><!-- /mode3 -->
+
+            </div>
+        </div>
+    </details>
+
+</div><!-- end results panel -->
+
+<!-- ── Loading overlay ───────────────────────────────────────────────────── -->
+<div id="pbr-loading-overlay"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(255,255,255,0.75); z-index:9999;
+            display:flex; align-items:center; justify-content:center; flex-direction:column;">
+    <div class="spinner-border text-info" role="status" style="width:3rem; height:3rem;"></div>
+    <p style="margin-top:1em; color:#0a3c58; font-weight:600;">Parsing file&hellip;</p>
+</div>
+
+<!-- ── Page styles ───────────────────────────────────────────────────────── -->
+<style>
+    #pbr-upload-zone:hover { border-color:#17a2b8; background:#f0fafc; }
+    #pbr-upload-zone.dragover { border-color:#17a2b8; background:#e8f4f8; }
+    .pbr-group-header {
+        font-size:0.78em; font-weight:700; color:#5a7a8a;
+        text-transform:uppercase; letter-spacing:0.07em;
+        border-bottom:1px solid #bee5eb; padding-bottom:0.2em;
+        margin-bottom:0.4em; margin-top:0.7em;
+        cursor:pointer; user-select:none;
+    }
+    .pbr-group-header:first-child { margin-top:0; }
+    .pbr-group-cols { margin-bottom:0.3em; }
+    .pbr-signal-cb { margin-right:1em; font-size:0.88em; white-space:nowrap; }
+    .pbr-channel-badge {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:26px; height:26px; border-radius:4px; font-size:0.82em;
+        font-weight:700; cursor:pointer; border:2px solid #adb5bd;
+        background:#fff; color:#333;
+        transition:background 0.15s, border-color 0.15s;
+    }
+    .pbr-channel-badge.active { border-color:#17a2b8; background:#d1ecf1; color:#0a3c58; }
+</style>
+
+<!-- ── Scripts ────────────────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="{{ url_for('static', filename='js_pbr_analysis.js') }}"></script>
+
+{% endblock %}

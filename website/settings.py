@@ -17,7 +17,7 @@ PAGE_NAMES = {
     '/OJIP_data_analysis':        'OJIP Data Analysis',
     '/slow_kin_data_analysis':    'Slow Kinetics Analysis',
     '/P700_kin_data_analysis':    'P700 Kinetics Analysis',
-    '/ex_em_spectra_analysis':    'Ex/Em Spectra Analysis',
+    '/fluorescence_spectra':      'Ex/Em Spectra Analysis',
     '/cell_size_round_cells':     'Cell Size (Round)',
     '/cell_size_filament':        'Cell Size (Filament)',
     '/cell_morphology_filament':  'Cell Morphology (Filament)',
@@ -26,7 +26,6 @@ PAGE_NAMES = {
     '/MIMS_data_analysis_periodic':'MIMS Periodic Analysis',
     '/statistics':                'Statistics',
     '/calculators':               'Calculators',
-    '/development_log':           'Development Log',
 }
 
 @settings.route('/settings', methods=['GET', 'POST'])

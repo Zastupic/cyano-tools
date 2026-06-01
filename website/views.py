@@ -1,10 +1,23 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, Response
 from flask_login import login_required, current_user
 from .github_updates import get_updated_tools, get_new_tools
 import subprocess
 import os
 
 views = Blueprint('views', __name__)
+
+@views.route('/robots.txt')
+def robots():
+    content = (
+        "User-agent: *\n"
+        "Disallow: /api/\n"
+        "Disallow: /static/files/\n"
+        "Disallow: /cdn-cgi/\n"
+        "\n"
+        "Sitemap: https://www.cyano.tools/sitemap.xml\n"
+    )
+    return Response(content, mimetype='text/plain')
+
 
 @views.route('/')
 #@login_required

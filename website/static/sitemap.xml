@@ -31,7 +31,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.cyano.tools/ex_em_spectra_analysis</loc>
+    <loc>https://www.cyano.tools/fluorescence_spectra</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -81,8 +81,23 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.cyano.tools/development_log</loc>
+    <loc>https://www.cyano.tools/metabolic_model</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.cyano.tools/sigma_analysis</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.cyano.tools/cell_morphology_filament</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.cyano.tools/pbr_analysis</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>
