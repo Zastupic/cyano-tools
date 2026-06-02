@@ -34,6 +34,16 @@ const PBR = (() => {
         '#fcd34d','#fca5a5','#67e8f9','#bef264',
     ];
 
+    // Fit overlay colours – contrasting to CH_COLORS so fits are visually distinct
+    const FIT_COLORS = [
+        '#f97316','#22c55e','#14b8a6','#ef4444',
+        '#6366f1','#06b6d4','#f59e0b','#a855f7',
+    ];
+    const FIT_COLORS_LIGHT = [
+        '#fdba74','#86efac','#5eead4','#fca5a5',
+        '#a5b4fc','#67e8f9','#fde68a','#e9d5ff',
+    ];
+
     // Colours for non-OD groups (FMT-150 & MC-1000 shared signals)
     const GROUP_COLORS = {
         temperature: '#f97316',
@@ -768,8 +778,28 @@ const PBR = (() => {
                     plugins: {
                         annotation: { annotations },
                         legend: {
-                            labels: { font: { size: 11 }, boxWidth: 16,
-                                      filter: (item) => item.text !== '__hidden__' },
+                            labels: {
+                                font: { size: 11 }, boxWidth: 16,
+                                // hide internal sentinel labels; 'Growth rate fits' passes through
+                                filter: (item) => !item.text.startsWith('__'),
+                            },
+                            onClick: (e, legendItem, legend) => {
+                                const chart = legend.chart;
+                                const ds    = chart.data.datasets[legendItem.datasetIndex];
+                                const meta  = chart.getDatasetMeta(legendItem.datasetIndex);
+                                if (ds._fitSentinel) {
+                                    // toggle sentinel AND all hidden fit overlay datasets together
+                                    const nowHidden = !meta.hidden;
+                                    meta.hidden = nowHidden;
+                                    chart.data.datasets.forEach((d, i) => {
+                                        if (d.label === '__fit__')
+                                            chart.getDatasetMeta(i).hidden = nowHidden;
+                                    });
+                                } else {
+                                    meta.hidden = !meta.hidden;
+                                }
+                                chart.update('none');
+                            },
                         },
                         tooltip: {
                             callbacks: {
@@ -1009,9 +1039,11 @@ const PBR = (() => {
     // ══════════════════════════════════════════════════════════════════════
 
     let _muClickMode = false;
+    let _muFitBasis  = 'corrected'; // 'raw' | 'corrected' – which OD values are used for fitting
     let _muFits      = [];   // Mode 1: [{id, tCenter, windowH, results:[{col,mu,lnA,r2,n,fitPts,color}]}]
     let _muNextId    = 0;
     let _muChart2    = null;
+    let _muChart3    = null;
     let _muMode2Data = null; // { results, odCols }
     let _muMode3Rows = null; // rows for export
     let _muMode3Ann  = {};   // phase box annotations
@@ -1073,12 +1105,28 @@ const PBR = (() => {
         return GROUP_COLORS[_getGroupForCol(col)] || '#6b7280';
     }
 
+    function _muGetFitColor(col) {
+        const odType  = _getODType(col);
+        const chMatch = col.match(/od-sensors-(\d+)\./);
+        const chIdx   = chMatch ? parseInt(chMatch[1]) - 1 : -1;
+        if (odType && chIdx >= 0)
+            return odType === '720'
+                ? FIT_COLORS[chIdx % FIT_COLORS.length]
+                : FIT_COLORS_LIGHT[chIdx % FIT_COLORS_LIGHT.length];
+        return odType === '720' ? '#f97316' : '#fdba74';
+    }
+
     function _muExtractWindow(col, tMin, tMax) {
         const times = [], vals = [];
+        const odType  = _getODType(col);
+        // Use corrected values according to the dedicated fit-basis selector
+        const useCorr = odType && _muFitBasis !== 'raw';
+        const strain  = useCorr ? _getStrainForCol(col) : null;
         for (const row of _state.data) {
             const t = parseFloat(row['time']);
             if (isNaN(t) || t < tMin || t > tMax) continue;
-            const v = parseFloat(row[col]);
+            let v = parseFloat(row[col]);
+            if (useCorr && !isNaN(v)) v = applyODCorrection(v, strain, odType);
             times.push(t);
             vals.push(isNaN(v) ? null : v);
         }
@@ -1089,6 +1137,21 @@ const PBR = (() => {
     function _muGetOverlays() {
         const datasets    = [];
         const annotations = Object.assign({}, _muMode3Ann);
+
+        // Common dataset properties for every fit overlay line
+        const _fitDs = (data, color) => ({
+            label:           '__fit__',   // hidden from legend; group-toggled via sentinel
+            data,
+            borderColor:     color,
+            backgroundColor: 'transparent',
+            borderWidth:     2.5,
+            borderDash:      [4, 2],      // short cycle (6 px) visible at any zoom level
+            pointRadius:     0,
+            spanGaps:        true,
+            yAxisID:         'y',
+            tension:         0,
+        });
+
         _muFits.forEach(fg => {
             annotations[`mu_box_${fg.id}`] = {
                 type: 'box',
@@ -1098,41 +1161,89 @@ const PBR = (() => {
                 borderColor:     'rgba(16,163,127,0.5)',
                 borderWidth:     1,
             };
-            fg.results.forEach((r, ri) => {
-                datasets.push({
-                    label:           `__mu_${fg.id}_${ri}__`,
-                    data:            r.fitPts,
-                    borderColor:     r.color,
-                    backgroundColor: 'transparent',
-                    borderWidth:     2,
-                    borderDash:      [6, 3],
-                    pointRadius:     0,
-                    spanGaps:        true,
-                    yAxisID:         'y',
-                    tension:         0,
-                });
-            });
+            fg.results.forEach(r => datasets.push(_fitDs(r.fitPts, r.color)));
         });
+
+        // Mode 3: one dashed fit curve per segment × signal
+        if (_muMode3Rows) {
+            _muMode3Rows.forEach(r => {
+                if (r.fitPts) datasets.push(_fitDs(r.fitPts, r.fitColor));
+            });
+        }
+
+        // ONE sentinel legend entry that group-toggles every fit overlay
+        const hasFits = _muFits.length > 0 || (_muMode3Rows && _muMode3Rows.length > 0);
+        if (hasFits) {
+            datasets.push({
+                label:           'Growth rate fits',
+                data:            [],          // no rendered points — legend entry only
+                borderColor:     '#6b7280',
+                backgroundColor: 'transparent',
+                borderWidth:     2,
+                borderDash:      [4, 2],
+                pointRadius:     0,
+                _fitSentinel:    true,        // flag read by legend onClick
+            });
+        }
+
         return { datasets, annotations };
+    }
+
+    // Recalculate all active μ analyses when show-mode changes (raw ↔ corrected)
+    function _muRefreshAll() {
+        // Mode 1 – recalculate every stored manual fit group
+        if (_muFits.length > 0) {
+            _muFits = _muFits.map(fg => {
+                const tMin = fg.tCenter - fg.windowH / 2;
+                const tMax = fg.tCenter + fg.windowH / 2;
+                const results = fg.results.reduce((acc, r) => {
+                    const { times, vals } = _muExtractWindow(r.col, tMin, tMax);
+                    const fit = _expFit(times, vals);
+                    if (fit) acc.push({
+                        ...r,
+                        mu: fit.mu, lnA: fit.lnA, r2: fit.r2, n: fit.n,
+                        fitPts: _muFitCurvePoints(tMin, tMax, fit.mu, fit.lnA),
+                    });
+                    return acc;
+                }, []);
+                return { ...fg, results };
+            });
+            _muRefreshTable1();
+        }
+        // Mode 2 – re-run with the same window/step (reads current UI inputs)
+        if (_muMode2Data) _muRunMode2();
+        // Mode 3 – re-run if there are existing results and OD cols are still selected
+        if (_muMode3Rows && _muGetODCols().length > 0) _muRunMode3();
+        // Update basis badge (mode 2/3 calls above already call _muUpdateBasisNote,
+        // but do it here too for the mode-1-only case)
+        _muUpdateBasisNote();
     }
 
     // ── Mode 1: manual click-to-fit ───────────────────────────────────────
     function _muToggleClickMode() {
         _muClickMode = !_muClickMode;
+        // Disable zoom drag while in click mode so clicks register cleanly
+        if (_state.chart) {
+            _state.chart.options.plugins.zoom.zoom.drag.enabled = !_muClickMode;
+            _state.chart.update('none');
+        }
         const btn = document.getElementById('pbr-mu-click-btn');
         if (!btn) return;
         if (_muClickMode) {
-            btn.classList.replace('btn-outline-info', 'btn-info');
-            btn.textContent = '⏹ Click mode ON';
+            btn.classList.remove('btn-outline-secondary');
+            btn.classList.add('btn-info');
+            btn.textContent = '⏹ Click mode ON – click chart to fit';
         } else {
-            btn.classList.replace('btn-info', 'btn-outline-info');
-            btn.textContent = '▶ Enable click mode';
+            btn.classList.remove('btn-info');
+            btn.classList.add('btn-outline-secondary');
+            btn.textContent = '📷 Enable click mode';
         }
     }
 
     function _muHandleClick(tClick) {
         const wEl = document.getElementById('pbr-mu-window1');
-        const windowH = wEl && parseFloat(wEl.value) > 0 ? parseFloat(wEl.value) : 2;
+        // Input is in minutes; convert to hours for internal calculations
+        const windowH = wEl && parseFloat(wEl.value) > 0 ? parseFloat(wEl.value) / 60 : 2;
         _muAddFitGroup(tClick, windowH);
     }
 
@@ -1153,7 +1264,7 @@ const PBR = (() => {
             results.push({
                 col, mu: fit.mu, lnA: fit.lnA, r2: fit.r2, n: fit.n,
                 fitPts: _muFitCurvePoints(tMin, tMax, fit.mu, fit.lnA),
-                color:  _muGetSignalColor(col),
+                color:  _muGetFitColor(col),
             });
         });
         if (results.length === 0) {
@@ -1162,6 +1273,7 @@ const PBR = (() => {
         }
         _muFits.push({ id, tCenter, windowH, results });
         _muRefreshTable1();
+        _muUpdateBasisNote();
         updatePlot();
     }
 
@@ -1200,7 +1312,10 @@ const PBR = (() => {
                                onclick="PBR.muRemoveFitGroup(${fg.id})">✕</button>`
                     : '';
                 return `<tr${warnCls}>
-                    <td style="font-size:0.82em;">${_colLabel(r.col)}</td>
+                    <td style="font-size:0.82em;">
+                        <span style="display:inline-block;width:12px;height:12px;border-radius:2px;
+                              background:${r.color};vertical-align:middle;margin-right:4px;"></span>
+                        ${_colLabel(r.col)}</td>
                     <td>${fg.tCenter.toFixed(3)}</td>
                     <td>${fg.windowH.toFixed(2)}</td>
                     <td><strong>${r.mu.toFixed(4)}</strong></td>
@@ -1215,8 +1330,9 @@ const PBR = (() => {
 
     // ── Mode 2: moving window ─────────────────────────────────────────────
     function _muRunMode2() {
-        const windowH = parseFloat(document.getElementById('pbr-mu-window2').value) || 2;
-        const stepH   = parseFloat(document.getElementById('pbr-mu-step2').value)   || 0.5;
+        // Inputs are in minutes; convert to hours for internal calculations
+        const windowH = (parseFloat(document.getElementById('pbr-mu-window2').value) || 120) / 60;
+        const stepH   = (parseFloat(document.getElementById('pbr-mu-step2').value)   || 30)  / 60;
         const odCols  = _muGetODCols();
         if (odCols.length === 0) { alert('No OD signals selected.'); return; }
         if (_state.data.length === 0) return;
@@ -1236,6 +1352,7 @@ const PBR = (() => {
         });
         _muMode2Data = { results, odCols, windowH, stepH };
         _muBuildChart2(results, odCols);
+        _muUpdateBasisNote();
         const expBtn = document.getElementById('pbr-mu-export2-btn');
         if (expBtn) expBtn.style.display = '';
     }
@@ -1280,12 +1397,94 @@ const PBR = (() => {
                                 item.parsed.y != null ? item.parsed.y.toFixed(4) : 'N/A'} h⁻¹`,
                         },
                     },
+                    zoom: {
+                        zoom: {
+                            drag: {
+                                enabled:         true,
+                                backgroundColor: 'rgba(23,162,184,0.08)',
+                                borderColor:     'rgba(23,162,184,0.6)',
+                                borderWidth:     1,
+                            },
+                            wheel: { enabled: true, speed: 0.1 },
+                            pinch: { enabled: true },
+                            mode: 'xy',
+                        },
+                    },
                 },
             },
         });
     }
 
+    function _muResetZoom2() { if (_muChart2) _muChart2.resetZoom(); }
+
     // ── Mode 3: turbidostat ───────────────────────────────────────────────
+    function _muBuildChart3(rows, odCols) {
+        const wrap = document.getElementById('pbr-mu-chart3-wrap');
+        if (!wrap) return;
+        if (rows.length === 0) { wrap.style.display = 'none'; return; }
+        wrap.style.display = '';
+        if (_muChart3) { _muChart3.destroy(); _muChart3 = null; }
+
+        const datasets = odCols.map(col => {
+            const colRows = rows.filter(r => r.col === col);
+            const color   = _muGetSignalColor(col);
+            return {
+                label:           _colLabel(col),
+                data:            colRows.map(r => ({ x: (r.tStart + r.tEnd) / 2, y: r.mu })),
+                borderColor:     color,
+                backgroundColor: color,
+                borderWidth:     1.5,
+                pointRadius:     5,
+                pointHoverRadius:7,
+                spanGaps:        false,
+                showLine:        true,
+                tension:         0,
+            };
+        });
+
+        _muChart3 = new Chart(document.getElementById('pbr-mu-chart3'), {
+            type: 'scatter',
+            data: { datasets },
+            options: {
+                animation:   false,
+                responsive:  true,
+                interaction: { mode: 'nearest', intersect: false },
+                scales: {
+                    x: { type: 'linear',
+                         title: { display: true, text: 'Time (h)', font: { size: 11 } },
+                         ticks: { font: { size: 10 } } },
+                    y: { type: 'linear',
+                         title: { display: true, text: 'μ (h⁻¹)', font: { size: 11 } },
+                         ticks: { font: { size: 10 } } },
+                },
+                plugins: {
+                    legend: { labels: { font: { size: 11 }, boxWidth: 14 } },
+                    tooltip: {
+                        callbacks: {
+                            title: items => `t = ${items[0].parsed.x.toFixed(3)} h`,
+                            label: item  => `${item.dataset.label}: μ = ${
+                                item.parsed.y != null ? item.parsed.y.toFixed(4) : 'N/A'} h⁻¹`,
+                        },
+                    },
+                    zoom: {
+                        zoom: {
+                            drag: {
+                                enabled:         true,
+                                backgroundColor: 'rgba(23,162,184,0.08)',
+                                borderColor:     'rgba(23,162,184,0.6)',
+                                borderWidth:     1,
+                            },
+                            wheel: { enabled: true, speed: 0.1 },
+                            pinch: { enabled: true },
+                            mode: 'xy',
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    function _muResetZoom3() { if (_muChart3) _muChart3.resetZoom(); }
     function _muPopulatePumpCols() {
         const sel = document.getElementById('pbr-mu-pump-sel');
         if (!sel) return;
@@ -1361,8 +1560,11 @@ const PBR = (() => {
                 allRows.push({
                     phase: si + 1, tStart: seg.tStart, tEnd: seg.tEnd,
                     dur: seg.tEnd - seg.tStart, col,
-                    mu: fit.mu, td: fit.mu > 0 ? Math.LN2 / fit.mu : null,
+                    mu: fit.mu, lnA: fit.lnA,
+                    td: fit.mu > 0 ? Math.LN2 / fit.mu : null,
                     r2: fit.r2, n: fit.n, r2Low: fit.r2 < 0.8,
+                    fitPts: _muFitCurvePoints(seg.tStart, seg.tEnd, fit.mu, fit.lnA),
+                    fitColor: _muGetFitColor(col),
                 });
             });
             if (anyFit) {
@@ -1376,7 +1578,9 @@ const PBR = (() => {
 
         _muMode3Ann  = newAnn;
         _muMode3Rows = allRows;
+        _muBuildChart3(allRows, odCols);
         _muBuildTable3(allRows, perSignalMu, odCols);
+        _muUpdateBasisNote();
         if (_state.chart) updatePlot();
         const expBtn = document.getElementById('pbr-mu-export3-btn');
         if (expBtn) expBtn.style.display = '';
@@ -1433,9 +1637,11 @@ const PBR = (() => {
     // ── XLSX export ───────────────────────────────────────────────────────
     function _muExport(mode) {
         if (typeof XLSX === 'undefined') { alert('XLSX library not loaded.'); return; }
-        const wb = XLSX.utils.book_new();
+        const wb    = XLSX.utils.book_new();
+        const basis = _muFitBasis === 'raw' ? 'raw' : 'corr';   // stamped into headers
         if (mode === 1) {
-            const hdr  = ['Signal','t-center (h)','Window (h)','mu (h-1)','td (h)','R2','n'];
+            const hdr  = ['Signal','t-center (h)','Window (h)',
+                          `mu (h-1) [${basis}]`,`td (h) [${basis}]`,'R2','n'];
             const data = _muFits.flatMap(fg => fg.results.map(r => [
                 r.col, +fg.tCenter.toFixed(4), +fg.windowH.toFixed(4),
                 +r.mu.toFixed(5), r.mu > 0 ? +(Math.LN2 / r.mu).toFixed(3) : null,
@@ -1446,8 +1652,9 @@ const PBR = (() => {
         } else if (mode === 2 && _muMode2Data) {
             const { results, odCols } = _muMode2Data;
             const ref  = results[odCols[0]] || [];
-            const hdr  = ['t (h)', ...odCols.map(c => `mu_${_colLabel(c)} (h-1)`),
-                                    ...odCols.map(c => `R2_${_colLabel(c)}`)];
+            const hdr  = ['t (h)',
+                          ...odCols.map(c => `mu_${_colLabel(c)} (h-1) [${basis}]`),
+                          ...odCols.map(c => `R2_${_colLabel(c)} [${basis}]`)];
             const data = ref.map((pt, i) => [
                 +pt.t.toFixed(4),
                 ...odCols.map(col => { const v = results[col][i]; return v && v.mu != null ? +v.mu.toFixed(5) : null; }),
@@ -1456,7 +1663,8 @@ const PBR = (() => {
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([hdr, ...data]), 'Moving Window');
             XLSX.writeFile(wb, 'PBR_mu_moving_window.xlsx');
         } else if (mode === 3 && _muMode3Rows) {
-            const hdr  = ['Phase','t start (h)','t end (h)','dt (h)','Signal','mu (h-1)','td (h)','R2','n'];
+            const hdr  = ['Phase','t start (h)','t end (h)','dt (h)','Signal',
+                          `mu (h-1) [${basis}]`,`td (h) [${basis}]`,'R2','n'];
             const data = _muMode3Rows.map(r => [
                 r.phase, +r.tStart.toFixed(4), +r.tEnd.toFixed(4), +r.dur.toFixed(4),
                 r.col, +r.mu.toFixed(5), r.td != null ? +r.td.toFixed(3) : null,
@@ -1467,17 +1675,54 @@ const PBR = (() => {
         }
     }
 
+    // ── Fit-basis selector ────────────────────────────────────────────────
+    function _muSetFitBasis(basis) {
+        _muFitBasis = basis;
+        ['raw', 'corrected'].forEach(b => {
+            const btn = document.getElementById(`pbr-mu-fitbasis-${b}`);
+            if (btn) btn.classList.toggle('active', b === basis);
+        });
+        _muRefreshAll();
+    }
+
+    // ── Basis indicator ───────────────────────────────────────────────────
+    function _muUpdateBasisNote() {
+        const note  = document.getElementById('pbr-mu-basis-note');
+        const badge = document.getElementById('pbr-mu-basis-badge');
+        if (!note || !badge) return;
+        const hasResults = _muFits.length > 0 || _muMode2Data !== null || _muMode3Rows !== null;
+        if (!hasResults) { note.style.display = 'none'; return; }
+        note.style.display = '';
+        if (_muFitBasis === 'raw') {
+            badge.textContent = 'Raw OD';
+            badge.className   = 'badge badge-secondary';
+        } else {
+            badge.textContent = 'Corrected OD';
+            badge.className   = 'badge badge-success';
+        }
+    }
+
     // ── Init (called on new file load) ────────────────────────────────────
     function _muInit() {
-        _muClickMode = false; _muFits = []; _muNextId = 0;
+        _muClickMode = false; _muFitBasis = 'corrected'; _muFits = []; _muNextId = 0;
         _muMode3Ann = {}; _muMode3Rows = null; _muMode2Data = null;
+        // Sync fit-basis buttons to default state
+        ['raw', 'corrected'].forEach(b => {
+            const btn = document.getElementById(`pbr-mu-fitbasis-${b}`);
+            if (btn) btn.classList.toggle('active', b === 'corrected');
+        });
         if (_muChart2) { _muChart2.destroy(); _muChart2 = null; }
+        if (_muChart3) { _muChart3.destroy(); _muChart3 = null; }
 
         const btn = document.getElementById('pbr-mu-click-btn');
-        if (btn) { btn.classList.replace('btn-info', 'btn-outline-info');
-                   btn.textContent = '▶ Enable click mode'; }
+        if (btn) {
+            btn.classList.remove('btn-info');
+            btn.classList.add('btn-outline-secondary');
+            btn.textContent = '📷 Enable click mode';
+        }
         ['pbr-mu-tbody1'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
-        ['pbr-mu-table1-wrap','pbr-mu-table3-wrap','pbr-mu-chart2-wrap','pbr-mu-warn3'].forEach(id => {
+        ['pbr-mu-table1-wrap','pbr-mu-table3-wrap','pbr-mu-chart2-wrap','pbr-mu-chart3-wrap','pbr-mu-warn3',
+         'pbr-mu-basis-note'].forEach(id => {
             const el = document.getElementById(id); if (el) el.style.display = 'none';
         });
         ['pbr-mu-export1-btn','pbr-mu-export2-btn','pbr-mu-export3-btn'].forEach(id => {
@@ -1506,6 +1751,9 @@ const PBR = (() => {
         muRemoveFitGroup: _muRemoveFitGroup,
         muClearFits:      _muClearFits,
         muExport:         _muExport,
+        muResetZoom2:     _muResetZoom2,
+        muResetZoom3:     _muResetZoom3,
+        muSetFitBasis:    _muSetFitBasis,
     };
 
 })();

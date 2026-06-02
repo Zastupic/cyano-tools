@@ -329,25 +329,43 @@
         <div class="card mt-1" style="font-size:0.9em;">
             <div class="card-body py-2 px-3">
 
-                <!-- Mode tabs -->
-                <div class="btn-group btn-group-sm mb-3" role="group">
-                    <button type="button" id="pbr-mu-tab-1"
-                            class="btn btn-outline-primary active"
-                            onclick="PBR.muSetMode(1)">Manual fit</button>
-                    <button type="button" id="pbr-mu-tab-2"
-                            class="btn btn-outline-primary"
-                            onclick="PBR.muSetMode(2)">Moving window</button>
-                    <button type="button" id="pbr-mu-tab-3"
-                            class="btn btn-outline-primary"
-                            onclick="PBR.muSetMode(3)">Turbidostat</button>
+                <!-- Mode tabs + fit-basis selector -->
+                <div class="d-flex align-items-center flex-wrap mb-3" style="gap:10px;">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" id="pbr-mu-tab-1"
+                                class="btn btn-outline-primary active"
+                                onclick="PBR.muSetMode(1)">Manual fit</button>
+                        <button type="button" id="pbr-mu-tab-2"
+                                class="btn btn-outline-primary"
+                                onclick="PBR.muSetMode(2)">Moving window</button>
+                        <button type="button" id="pbr-mu-tab-3"
+                                class="btn btn-outline-primary"
+                                onclick="PBR.muSetMode(3)">Turbidostat</button>
+                    </div>
+                    <!-- Dedicated control: which OD values to fit -->
+                    <div class="d-flex align-items-center" style="gap:5px; border-left:1px solid #dee2e6; padding-left:10px;">
+                        <span style="font-size:0.82em; color:#555; white-space:nowrap;">Fit&nbsp;on:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" id="pbr-mu-fitbasis-raw"
+                                    class="btn btn-outline-secondary"
+                                    onclick="PBR.muSetFitBasis('raw')">Raw&nbsp;OD</button>
+                            <button type="button" id="pbr-mu-fitbasis-corrected"
+                                    class="btn btn-outline-secondary active"
+                                    onclick="PBR.muSetFitBasis('corrected')">Corrected&nbsp;OD</button>
+                        </div>
+                    </div>
+                    <!-- Confirms the basis used for the most recent calculation -->
+                    <span id="pbr-mu-basis-note" style="display:none; font-size:0.82em; color:#555;">
+                        Calculated&nbsp;on:&nbsp;<span id="pbr-mu-basis-badge" class="badge badge-secondary"></span>
+                    </span>
                 </div>
 
                 <!-- ── Mode 1: Manual fit ──────────────────────────────── -->
                 <div id="pbr-mu-mode1">
                     <div class="form-inline mb-2" style="gap:8px; flex-wrap:wrap;">
-                        <label style="font-size:0.88em;">Window&nbsp;(h):</label>
+                        <label style="font-size:0.88em;">Window&nbsp;(min):</label>
                         <input type="number" id="pbr-mu-window1" class="form-control form-control-sm"
-                               value="2" min="0.1" step="0.1" style="width:75px;">
+                               value="120" min="1" step="1" style="width:75px;">
                         <button type="button" id="pbr-mu-click-btn"
                                 class="btn btn-sm btn-outline-secondary"
                                 onclick="PBR.muToggleClickMode()">
@@ -387,12 +405,12 @@
                 <!-- ── Mode 2: Moving window ───────────────────────────── -->
                 <div id="pbr-mu-mode2" style="display:none;">
                     <div class="form-inline mb-2" style="gap:8px; flex-wrap:wrap;">
-                        <label style="font-size:0.88em;">Window&nbsp;(h):</label>
+                        <label style="font-size:0.88em;">Window&nbsp;(min):</label>
                         <input type="number" id="pbr-mu-window2" class="form-control form-control-sm"
-                               value="2" min="0.1" step="0.1" style="width:75px;">
-                        <label style="font-size:0.88em;">Step&nbsp;(h):</label>
+                               value="120" min="1" step="1" style="width:75px;">
+                        <label style="font-size:0.88em;">Step&nbsp;(min):</label>
                         <input type="number" id="pbr-mu-step2" class="form-control form-control-sm"
-                               value="0.5" min="0.05" step="0.05" style="width:75px;">
+                               value="30" min="1" step="1" style="width:75px;">
                         <button type="button" class="btn btn-sm btn-primary"
                                 onclick="PBR.muRunMode2()">&#9654; Calculate</button>
                         <button type="button" id="pbr-mu-export2-btn"
@@ -406,6 +424,11 @@
                     </p>
                     <div id="pbr-mu-chart2-wrap" style="display:none; background:#fff;
                          border-radius:4px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                        <div style="text-align:right; margin-bottom:2px;">
+                            <button class="btn btn-xs btn-outline-secondary"
+                                    onclick="PBR.muResetZoom2()"
+                                    style="font-size:0.78em; padding:1px 6px;">&#8646; Reset zoom</button>
+                        </div>
                         <canvas id="pbr-mu-chart2" style="width:100%; max-height:300px;"></canvas>
                     </div>
                 </div><!-- /mode2 -->
@@ -439,6 +462,20 @@
                     </p>
                     <div id="pbr-mu-warn3" class="alert alert-warning py-1 px-2 mb-2"
                          style="display:none; font-size:0.85em;"></div>
+                    <!-- Specific growth rate chart (populated by JS after fitting) -->
+                    <div id="pbr-mu-chart3-wrap" style="display:none; background:#fff;
+                         border-radius:4px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);
+                         margin-bottom:0.6em;">
+                        <div style="text-align:right; margin-bottom:2px;">
+                            <span style="font-size:0.8em; color:#555; margin-right:auto;">
+                                Specific growth rate per pump-OFF phase
+                            </span>
+                            <button class="btn btn-xs btn-outline-secondary"
+                                    onclick="PBR.muResetZoom3()"
+                                    style="font-size:0.78em; padding:1px 6px;">&#8646; Reset zoom</button>
+                        </div>
+                        <canvas id="pbr-mu-chart3" style="width:100%; max-height:250px;"></canvas>
+                    </div>
                     <div id="pbr-mu-table3-wrap" style="display:none; overflow-x:auto;">
                         <table class="table table-sm table-bordered mb-1" style="font-size:0.85em;">
                             <thead class="thead-light">
@@ -479,6 +516,14 @@
 <style>
     #pbr-upload-zone:hover { border-color:#17a2b8; background:#f0fafc; }
     #pbr-upload-zone.dragover { border-color:#17a2b8; background:#e8f4f8; }
+    /* Make the turbidostat μ chart the same width as the main OD chart.
+       The chart sits inside .card-body.px-3 (1rem each side) + .card border (1px each side),
+       so negative margins cancel those offsets and the element spans the full results-panel width. */
+    #pbr-mu-chart3-wrap {
+        margin-left:  calc(-1rem - 1px);
+        margin-right: calc(-1rem - 1px);
+        width:        calc(100% + 2rem + 2px);
+    }
     .pbr-group-header {
         font-size:0.78em; font-weight:700; color:#5a7a8a;
         text-transform:uppercase; letter-spacing:0.07em;

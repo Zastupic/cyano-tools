@@ -340,12 +340,14 @@ function plotMIMSData({ data, xField, yFields }) {
   // create traces with unit in legend but keep canonical field identifiers in mimsYFields
   const traces = yFields.map((field) => {
     const unit = mimsFieldUnits[field] || null;
+    const xLabel = xField === 'min' ? 'Time (min)' : xField;
     return {
       x: data.map(row => row[xField]),
       y: data.map(row => row[field]),
       mode: 'lines',
       name: unit ? `${field} [${unit}]` : field,
-      line: { width: 2 }
+      line: { width: 2 },
+      hovertemplate: `<b>%{fullData.name}</b><br>${xLabel}: %{x:.4f}<br>Signal: %{y:.4e}<extra></extra>`
     };
   });
 
@@ -511,12 +513,14 @@ function plotNormalizedData() {
     const unit = mimsFieldUnits[field] || null; const refUnit = mimsFieldUnits[refField] || null;
     const left = unit ? `${field} [${unit}]` : field;
     const right = refUnit ? `${refField} [${refUnit}]` : refField;
+    const xLabel = xField === 'min' ? 'Time (min)' : xField;
     return {
       x: data.map(row => row[xField]),
       y: yValues,
       mode: 'lines',
       name: `${left} / ${right}`,
-      line: { width: 2, dash: field === refField ? 'dot' : 'solid', color: mimsFieldColors[field] || undefined }
+      line: { width: 2, dash: field === refField ? 'dot' : 'solid', color: mimsFieldColors[field] || undefined },
+      hovertemplate: `<b>%{fullData.name}</b><br>${xLabel}: %{x:.4f}<br>Value: %{y:.4e}<extra></extra>`
     };
   });
 
