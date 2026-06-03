@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block description %}
-Generate longitudinal pixel profiles along microbial filaments to analyze signal intensity variation and cell-to-cell heterogeneity in filamentous cyanobacteria and algae from fluorescence microscopy.
+Extract longitudinal fluorescence intensity profiles along individual filaments of cyanobacteria and algae — including Anabaena, Nostoc, and other trichome-forming species. Compare chlorophyll and phycobilisome autofluorescence channel by channel, detect heterocysts, and quantify cell-to-cell pigment heterogeneity from multi-channel confocal microscopy images.
 {% endblock %}
 
 {% block keywords %}
@@ -58,7 +58,7 @@ Generate longitudinal pixel profiles along microbial filaments to analyze signal
     Up to four images from different microscope channels can be uploaded — including fluorescence or brightfield channels. 
     For each selected profile, the tool does not only analyze individual channels, but also calculates 
     the difference in fluorescence intensity between the channels, using a shared selection mask.
-    Typical application involves analysis of chlorophyll or phycobilisomes autofluorescence signal across individual cells of filamentous algae or cyanoabacteria.</p>
+    Typical application involves analysis of chlorophyll or phycobilisomes autofluorescence signal across individual cells of filamentous algae or cyanobacteria.</p>
 <p>The following example illustrates the full workflow using TCS SP8 DMI 
     <a href="https://www.leica-microsystems.com/products/confocal-microscopes/" target="_blank" rel="noopener">confocal laser scanning microscope</a> 
      (Leica Microsystems) and cells of a unicellular cyanobacterium <i>Nostoc</i> sp. CCAP 1453/38.
@@ -250,6 +250,15 @@ Generate longitudinal pixel profiles along microbial filaments to analyze signal
 
 {% endif %}
 <br><br><br><br><br><br><br>
+
+<hr style="margin-top:2em;">
+<h5>See also — other filament analysis tools</h5>
+<ul>
+    <li><a href="/pixel_profiles_round_cells">Pigment profiles — round cells</a>: cross-sectional fluorescence profiles for unicellular algae and cyanobacteria</li>
+    <li><a href="/cell_count_filament">Cell counting — filaments</a>: automated segmentation and cell enumeration in filamentous strains</li>
+    <li><a href="/cell_size_filament">Cell size — filaments</a>: measure individual cell length and width along trichomes</li>
+    <li><a href="/cell_morphology_filament">Cell morphology — filaments</a>: automated aspect ratio, circularity, and eccentricity analysis</li>
+</ul>
 
 <script src="{{url_for('static', filename='js_pixel_profies_filaments.js')}}"></script>
 
