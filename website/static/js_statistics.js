@@ -5696,6 +5696,19 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
             if (wasHidden) { pane.style.display = ''; pane.style.visibility = ''; }
         });
 
+        // Temporarily reveal hidden assumption sub-tab panes so Plotly.toImage can capture them.
+        // These panes have display:none when the user is on the ANOVA tab or a different sub-tab.
+        const assumptionPaneIds = [
+            '#assumptions-content',
+            '#assumptions-boxplots',
+            '#assumptions-residuals',
+            '#assumptions-qq'
+        ];
+        const hiddenAssumptionPanes = assumptionPaneIds
+            .map(id => document.querySelector(id))
+            .filter(el => el && window.getComputedStyle(el).display === 'none');
+        hiddenAssumptionPanes.forEach(el => { el.style.display = 'block'; el.style.visibility = 'hidden'; });
+
         // Capture Plotly plots as base64 PNG
         const plotCaptures = [];
         const plotSelectors = [
@@ -5723,6 +5736,9 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
                 } catch(e) { /* skip non-Plotly divs */ }
             }
         }
+
+        // Restore assumption panes to their original hidden state
+        hiddenAssumptionPanes.forEach(el => { el.style.display = ''; el.style.visibility = ''; });
 
         const originalData = globalData;
         const analysedData = buildTransformedData(globalData, appliedTransformations);
