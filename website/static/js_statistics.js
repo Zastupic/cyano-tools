@@ -5312,6 +5312,7 @@ function buildVariableChartHTML(varResults, varName, varIdx) {
                          data-res-p="${res.overall_p !== null ? res.overall_p : ''}"
                          data-res-effect="${res.effect_size !== null && res.effect_size !== undefined ? res.effect_size : ''}"
                          data-res-effect-label="${encodeURIComponent(res.effect_size_label || 'η²')}"
+                         data-slice-label="${encodeURIComponent(res.slice_label || '')}"
                          style="width:100%; height:380px;">
                     </div>
                     <div class="d-flex align-items-center gap-2 mt-1 mb-1" style="font-size:0.78rem;">
@@ -5709,8 +5710,13 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
             for (const div of divs) {
                 try {
                     const img = await Plotly.toImage(div, { format: 'png', width: 700, height: 380 });
+                    const varName = div.dataset.resVariable ? decodeURIComponent(div.dataset.resVariable) : '';
+                    const sliceLabel = div.dataset.sliceLabel ? decodeURIComponent(div.dataset.sliceLabel) : '';
+                    const descriptiveLabel = varName
+                        ? (sliceLabel && sliceLabel !== 'All' ? `${varName} (${sliceLabel})` : varName)
+                        : (div.id || div.getAttribute('data-var') || type);
                     plotCaptures.push({
-                        label: div.id || div.getAttribute('data-var') || type,
+                        label: descriptiveLabel,
                         type,
                         image: img.split(',')[1]
                     });
