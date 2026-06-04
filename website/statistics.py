@@ -2349,8 +2349,13 @@ def export_full_report():
 
         type_labels = {'box': 'Box Plot', 'residuals': 'Residuals vs Fitted', 'qq': 'Normal Q-Q'}
         col_positions = [1, 12]   # Two plots per row (columns A and L)
+        DISPLAY_W = 500           # fixed display width in Excel (pixels)
+        PX_PER_ROW = 20           # approximate Excel row height in pixels
+        LABEL_ROWS = 1            # rows reserved for the label above each image
+        ROW_PADDING = 2           # extra blank rows between image blocks
         cur_plot_row = 3
         cur_col_idx = 0
+        row_max_display_h = 0     # tracks tallest image in the current pair
 
         if not plot_captures:
             ws6.cell(3, 1, 'No plots captured. Run assumption tests before exporting.').fill = fills['note']
@@ -2360,6 +2365,10 @@ def export_full_report():
                 label = pc.get('label', '')
                 ptype = pc.get('type', '')
                 type_label = type_labels.get(ptype, ptype)
+                # Compute display height that preserves the image's original aspect ratio
+                src_w = pc.get('imgW') or 700
+                src_h = pc.get('imgH') or 380
+                display_h = round(DISPLAY_W * src_h / src_w)
 
                 label_cell = ws6.cell(cur_plot_row, col_positions[cur_col_idx],
                                        f'{type_label}: {label}')
@@ -2370,18 +2379,21 @@ def export_full_report():
                     try:
                         img_bytes = base64.b64decode(img_b64)
                         xl_img = XLImage(io.BytesIO(img_bytes))
-                        xl_img.width = 500 # type: ignore
-                        xl_img.height = 300 # type: ignore
+                        xl_img.width = DISPLAY_W  # type: ignore
+                        xl_img.height = display_h  # type: ignore
                         cell_addr = f'{get_column_letter(col_positions[cur_col_idx])}{cur_plot_row + 1}'
                         ws6.add_image(xl_img, cell_addr)
                     except Exception as img_err:
                         ws6.cell(cur_plot_row + 1, col_positions[cur_col_idx],
                                   f'[Image error: {img_err}]')
 
+                row_max_display_h = max(row_max_display_h, display_h)
                 cur_col_idx += 1
                 if cur_col_idx >= len(col_positions):
                     cur_col_idx = 0
-                    cur_plot_row += 22   # rows per image block
+                    rows_needed = math.ceil(row_max_display_h / PX_PER_ROW) + LABEL_ROWS + ROW_PADDING
+                    cur_plot_row += rows_needed
+                    row_max_display_h = 0
 
         # ── Serialise ─────────────────────────────────────────────────────────
         output = io.BytesIO()

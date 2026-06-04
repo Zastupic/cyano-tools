@@ -5687,6 +5687,9 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
     if (exportSpinner) exportSpinner.style.display = 'inline-flex';
 
     try {
+        // Flush any unsaved UI state into pubPlotSettings before capturing charts
+        readPubSettings();
+
         // Pre-render any ANOVA variable charts the user never opened (hidden tab panes).
         // Temporarily display each pane so Plotly can measure the container width.
         document.querySelectorAll('#anovaResults .anova-var-section').forEach(pane => {
@@ -5718,11 +5721,15 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
             { selector: '#anovaResults .anova-bar-chart-placeholder.js-plotly-plot', type: 'anova' }
         ];
 
+        const xlsxExportW = 700;
+        const xlsxAnovaH = Math.round(xlsxExportW / (pubPlotSettings.aspectRatio || 4 / 3));
+
         for (const { selector, type } of plotSelectors) {
             const divs = document.querySelectorAll(selector);
             for (const div of divs) {
                 try {
-                    const img = await Plotly.toImage(div, { format: 'png', width: 700, height: 380 });
+                    const exportH = type === 'anova' ? xlsxAnovaH : 380;
+                    const img = await Plotly.toImage(div, { format: 'png', width: xlsxExportW, height: exportH });
                     const varName = div.dataset.resVariable ? decodeURIComponent(div.dataset.resVariable) : '';
                     const sliceLabel = div.dataset.sliceLabel ? decodeURIComponent(div.dataset.sliceLabel) : '';
                     const descriptiveLabel = varName
@@ -5731,7 +5738,9 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
                     plotCaptures.push({
                         label: descriptiveLabel,
                         type,
-                        image: img.split(',')[1]
+                        image: img.split(',')[1],
+                        imgW: xlsxExportW,
+                        imgH: exportH
                     });
                 } catch(e) { /* skip non-Plotly divs */ }
             }
@@ -5855,83 +5864,81 @@ document.addEventListener('click', function(e) {
 // PUBLICATION PLOT SETTINGS UI + ZIP EXPORT
 // ══════════════════════════════════════════════════════════════════════════════
 
+// ── Read all UI controls → pubPlotSettings (module-scope so export handlers can call it) ──
+function readPubSettings() {
+    const s = pubPlotSettings;
+    const g  = id => document.getElementById(id);
+    const val = id => { const el = g(id); return el ? el.value : null; };
+    const num = id => { const el = g(id); return el ? parseFloat(el.value) : null; };
+    const nt  = id => { const el = g(id); return el ? parseInt(el.value, 10) : null; };
+    const chk = id => { const el = g(id); return el ? el.checked : false; };
+    const radio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : null; };
+
+    s.plotType      = radio('pubPlotType') || 'bar';
+    s.sizePreset    = val('pubSizePreset') || 'single';
+    const presetWidths = { single: 85, half: 120, double: 175 };
+    s.exportWidth   = presetWidths[s.sizePreset] ?? (num('pubExportWidth') || 85);
+    const ratioPresets = { '16:9': 16/9, '3:2': 1.5, '4:3': 4/3, '1:1': 1, '3:4': 0.75, '2:3': 2/3 };
+    const ratioSel = val('pubAspectRatioPreset') || '3:2';
+    s.aspectRatio   = ratioSel === 'custom'
+        ? (num('pubAspectRatioCustom') || 1.5)
+        : (ratioPresets[ratioSel] ?? 1.5);
+    s.exportDPI     = nt('pubExportDPI') || 300;
+    s.exportFormat  = val('pubExportFormat') || 'png';
+
+    s.fontFamily     = val('pubFontFamily') || 'Arial';
+    s.axisTitleSize  = nt('pubAxisTitleSize') || 12;
+    s.tickLabelSize  = nt('pubTickLabelSize') || 10;
+    s.annotationSize = nt('pubAnnotationSize') || 11;
+    s.legendSize     = nt('pubLegendSize') || 10;
+
+    s.showGridY     = chk('pubGridY');
+    s.showGridX     = chk('pubGridX');
+    s.gridStyle     = val('pubGridStyle') || 'solid';
+    s.gridColor     = val('pubGridColor') || '#e0e0e0';
+    s.tickPosition  = val('pubTickPosition') ?? 'outside';
+    s.tickLen       = nt('pubTickLen') || 5;
+    s.showAxisLine  = chk('pubShowAxisLine');
+    s.showPlotFrame = chk('pubShowPlotFrame');
+    s.showPaperBorder = chk('pubShowPaperBorder');
+
+    s.yStartZero    = chk('pubYStartZero');
+    s.yHeadroom     = nt('pubYHeadroom') ?? 15;
+    const rawGMin = val('pubGlobalYMin'); s.globalYMin = (rawGMin !== '' && rawGMin !== null) ? parseFloat(rawGMin) : null;
+    const rawGMax = val('pubGlobalYMax'); s.globalYMax = (rawGMax !== '' && rawGMax !== null) ? parseFloat(rawGMax) : null;
+
+    s.colorScheme    = val('pubColorScheme') || 'okabe';
+    s.fillOpacity    = nt('pubFillOpacity') || 85;
+    s.unifyColor     = chk('pubUnifyColor');
+    s.unifyFillColor = val('pubUnifyFillColor') || '#4DBBD5';
+    s.barBorderColor = val('pubBarBorderColor') || '#333333';
+    s.barBorderWidth = parseFloat(val('pubBarBorderWidth') || '1');
+    s.errBarColor    = val('pubErrBarColor') || '#333333';
+    s.errBarThickness = parseFloat(val('pubErrBarThickness') || '1.5');
+    s.errBarCap      = nt('pubErrBarCap') || 5;
+    s.pointSymbol    = val('pubPointSymbol') || 'circle';
+    s.pointSize      = nt('pubPointSize') || 7;
+    s.pointColor     = val('pubPointColor') || '#333333';
+    s.pointOpacity   = nt('pubPointOpacity') || 70;
+    s.jitter         = nt('pubJitter') || 20;
+
+    s.showLegend        = chk('pubShowLegend');
+    s.legendPosition    = val('pubLegendPosition') || 'top-right';
+    s.legendOrientation = val('pubLegendOrientation') || 'v';
+    s.showLetters       = chk('pubShowLetters');
+    s.letterBold        = chk('pubLetterBold');
+    s.letterOffset      = nt('pubLetterOffset') ?? 7;
+    s.letterPerBar      = chk('pubLetterPerBar');
+    s.showTestInfo      = chk('pubShowTestInfo');
+    s.bgColor           = val('pubBgColor') || '#ffffff';
+}
+
 function initPubPlotSettingsUI() {
     // ── Load saved settings from localStorage ─────────────────────────────────
     try {
         const saved = localStorage.getItem('pubPlotSettings');
         if (saved) pubPlotSettings = Object.assign({}, PUB_PLOT_DEFAULTS, JSON.parse(saved));
     } catch(e) {}
-
-    // ── Helper: read all UI controls → pubPlotSettings ───────────────────────
-    function readSettings() {
-        const s = pubPlotSettings;
-        const g  = id => document.getElementById(id);
-        const val = id => { const el = g(id); return el ? el.value : null; };
-        const num = id => { const el = g(id); return el ? parseFloat(el.value) : null; };
-        const nt  = id => { const el = g(id); return el ? parseInt(el.value, 10) : null; };
-        const chk = id => { const el = g(id); return el ? el.checked : false; };
-        const radio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : null; };
-
-        s.plotType      = radio('pubPlotType') || 'bar';
-        s.sizePreset    = val('pubSizePreset') || 'single';
-        // Width from preset or custom input
-        const presetWidths = { single: 85, half: 120, double: 175 };
-        s.exportWidth   = presetWidths[s.sizePreset] ?? (num('pubExportWidth') || 85);
-        // Aspect ratio: from preset or custom number input
-        const ratioPresets = { '16:9': 16/9, '3:2': 1.5, '4:3': 4/3, '1:1': 1, '3:4': 0.75, '2:3': 2/3 };
-        const ratioSel = val('pubAspectRatioPreset') || '3:2';
-        s.aspectRatio   = ratioSel === 'custom'
-            ? (num('pubAspectRatioCustom') || 1.5)
-            : (ratioPresets[ratioSel] ?? 1.5);
-        s.exportDPI     = nt('pubExportDPI') || 300;
-        s.exportFormat  = val('pubExportFormat') || 'png';
-
-        s.fontFamily     = val('pubFontFamily') || 'Arial';
-        s.axisTitleSize  = nt('pubAxisTitleSize') || 12;
-        s.tickLabelSize  = nt('pubTickLabelSize') || 10;
-        s.annotationSize = nt('pubAnnotationSize') || 11;
-        s.legendSize     = nt('pubLegendSize') || 10;
-
-        s.showGridY     = chk('pubGridY');
-        s.showGridX     = chk('pubGridX');
-        s.gridStyle     = val('pubGridStyle') || 'solid';
-        s.gridColor     = val('pubGridColor') || '#e0e0e0';
-        s.tickPosition  = val('pubTickPosition') ?? 'outside';
-        s.tickLen       = nt('pubTickLen') || 5;
-        s.showAxisLine  = chk('pubShowAxisLine');
-        s.showPlotFrame = chk('pubShowPlotFrame');
-        s.showPaperBorder = chk('pubShowPaperBorder');
-
-        s.yStartZero    = chk('pubYStartZero');
-        s.yHeadroom     = nt('pubYHeadroom') ?? 15;
-        const rawGMin = val('pubGlobalYMin'); s.globalYMin = (rawGMin !== '' && rawGMin !== null) ? parseFloat(rawGMin) : null;
-        const rawGMax = val('pubGlobalYMax'); s.globalYMax = (rawGMax !== '' && rawGMax !== null) ? parseFloat(rawGMax) : null;
-
-        s.colorScheme    = val('pubColorScheme') || 'okabe';
-        s.fillOpacity    = nt('pubFillOpacity') || 85;
-        s.unifyColor     = chk('pubUnifyColor');
-        s.unifyFillColor = val('pubUnifyFillColor') || '#4DBBD5';
-        s.barBorderColor = val('pubBarBorderColor') || '#333333';
-        s.barBorderWidth = parseFloat(val('pubBarBorderWidth') || '1');
-        s.errBarColor    = val('pubErrBarColor') || '#333333';
-        s.errBarThickness = parseFloat(val('pubErrBarThickness') || '1.5');
-        s.errBarCap      = nt('pubErrBarCap') || 5;
-        s.pointSymbol    = val('pubPointSymbol') || 'circle';
-        s.pointSize      = nt('pubPointSize') || 7;
-        s.pointColor     = val('pubPointColor') || '#333333';
-        s.pointOpacity   = nt('pubPointOpacity') || 70;
-        s.jitter         = nt('pubJitter') || 20;
-
-        s.showLegend        = chk('pubShowLegend');
-        s.legendPosition    = val('pubLegendPosition') || 'top-right';
-        s.legendOrientation = val('pubLegendOrientation') || 'v';
-        s.showLetters       = chk('pubShowLetters');
-        s.letterBold        = chk('pubLetterBold');
-        s.letterOffset      = nt('pubLetterOffset') ?? 7;
-        s.letterPerBar      = chk('pubLetterPerBar');
-        s.showTestInfo      = chk('pubShowTestInfo');
-        s.bgColor           = val('pubBgColor') || '#ffffff';
-    }
 
     // ── Helper: sync UI controls ← pubPlotSettings ───────────────────────────
     function syncUI() {
@@ -6070,7 +6077,7 @@ function initPubPlotSettingsUI() {
         const ufcWrapOac = document.getElementById('pubUnifyFillColorWrap');
         if (ucChk && ufcWrapOac) ufcWrapOac.style.display = ucChk.checked ? '' : 'none';
         // Read & save
-        readSettings();
+        readPubSettings();
         try { localStorage.setItem('pubPlotSettings', JSON.stringify(pubPlotSettings)); } catch(e) {}
         updateBadge();
         // Apply aspect ratio immediately to on-screen chart heights
@@ -6144,6 +6151,8 @@ document.getElementById('exportPubPlotsBtn').addEventListener('click', async fun
     if (spinner) spinner.style.display = 'inline-flex';
 
     try {
+        // Flush any unsaved UI state into pubPlotSettings before export
+        readPubSettings();
         const s = pubPlotSettings;
         const presetWidths = { single: 85, half: 120, double: 175 };
         const widthMm  = presetWidths[s.sizePreset] ?? s.exportWidth;
