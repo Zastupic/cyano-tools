@@ -2625,7 +2625,9 @@ document.getElementById('resetTransformBtn').addEventListener('click', function(
 });
 
 // ── Bulk-transform select ─────────────────────────────────────────────────────
-document.getElementById('bulkTransformSelect').addEventListener('change', function() {
+const _bulkTransformSelect = document.getElementById('bulkTransformSelect');
+if (_bulkTransformSelect) {
+_bulkTransformSelect.addEventListener('change', function() {
     const value = this.value;
     if (!value) return;
 
@@ -2655,6 +2657,7 @@ document.getElementById('bulkTransformSelect').addEventListener('change', functi
     updateTransformBadge();
     if (lastTestResults) populateTransformationPanel(lastTestResults.results, selectedVars);
 });
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ════════════════════════════════════════════════════════════════════════════
