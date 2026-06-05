@@ -181,7 +181,35 @@
                 </div>
             </div>
 
-            <!-- === Row: Spectroscopy (2) + Photobioreactors (2) === -->
+            <!-- === Photobioreactors (3 tools) === -->
+            <div class="tool-category cat-pbr">
+                <div class="features-category-header">&#127981; Photobioreactors</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="{{ url_for('pbr_analysis.pbr_page') }}">
+                        <img src="{{ url_for('static', filename='images/OD720_PBR_signal.JPG') }}" alt="Photobioreactor OD correction and data viewer" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>OD correction &amp; growth rate</b>{% if new_tools.get('pbr_analysis') %} <span class="badge-new" data-toggle="tooltip" title="New tool">New</span>{% elif updated_tools.get('pbr_analysis') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('pbr_analysis') }}">Updated</span>{% endif %}</h3>
+                            <p>Batch and turbidostat data analysis for FMT-150 and MC-1000 data, with correction for non-linearity in the recorded OD signal.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/PBRtool2_1.jpg') }}" alt="Photobioreactors data analysis" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Photobioreactors data analysis</b></h3>
+                            <p>Batch, turbidostat and periodic data analysis for FMT-150 photobioreactors.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/PBRscripts2_1.JPG') }}" alt="PBR control scripts" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Photobioreactors control scripts</b></h3>
+                            <p>FMT-150 control scripts including growth optimizer and PI curves measurement.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- === Row: Spectroscopy (2) + Statistics & Calculators (2) === -->
             <div class="tool-category-row">
 
             <!-- === Spectroscopy & Mass Spectrometry (2 tools) === -->
@@ -205,30 +233,7 @@
                 </div>
             </div>
 
-            <!-- === Photobioreactors (2 tools) === -->
-            <div class="tool-category cat-pbr">
-                <div class="features-category-header">&#127981; Photobioreactors</div>
-                <div class="tool-tiles">
-                    <a class="feature" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" rel="noopener">
-                        <img src="{{ url_for('static', filename='images/PBRtool2_1.jpg') }}" alt="Photobioreactors data analysis" class="feature-thumb">
-                        <div class="feature-text">
-                            <h3><b>Photobioreactors</b></h3>
-                            <p>Batch, turbidostat and periodic data analysis for FMT-150 photobioreactors.</p>
-                        </div>
-                    </a>
-                    <a class="feature" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" rel="noopener">
-                        <img src="{{ url_for('static', filename='images/PBRscripts2_1.JPG') }}" alt="PBR control scripts" class="feature-thumb">
-                        <div class="feature-text">
-                            <h3><b>PBR control scripts</b></h3>
-                            <p>FMT-150 control scripts including growth optimizer and PI curves measurement.</p>
-                        </div>
-                    </a>
-                </div>
-            </div>
-
-            </div><!-- /.tool-category-row (Spectroscopy + Photobioreactors) -->
-
-            <!-- === Statistics & Calculators (3 tools) === -->
+            <!-- === Statistics & Calculators (2 tools) === -->
             <div class="tool-category cat-stats">
                 <div class="features-category-header">&#128202; Statistics &amp; Calculators</div>
                 <div class="tool-tiles">
@@ -236,7 +241,7 @@
                         <img src="{{ url_for('static', filename='images/boxplot.jpg') }}" alt="Statistical analysis" class="feature-thumb">
                         <div class="feature-text">
                             <h3><b>Statistics</b>{% if updated_tools.get('statistics') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('statistics') }}">Updated</span>{% endif %}</h3>
-                            <p>ANOVA, pairwise comparisons, normality tests, correlation analysis, PCA and boxplot visualisation for experimental datasets.</p>
+                            <p>ANOVA, pairwise comparisons, normality, correlation, PCA and boxplot visualisation.</p>
                         </div>
                     </a>
                     <a class="feature" href="{{ url_for('calculators.run_calculators') }}">
@@ -244,6 +249,32 @@
                         <div class="feature-text">
                             <h3><b>Calculators</b>{% if updated_tools.get('calculators') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('calculators') }}">Updated</span>{% endif %}</h3>
                             <p>Dissolved O<sub>2</sub>, doubling time, OD correction and recalculation, and more.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            </div><!-- /.tool-category-row (Spectroscopy + Statistics & Calculators) -->
+
+            <!-- === Row: Modelling (3/4) + Other Platforms (1/4) === -->
+            <div class="tool-category-row">
+
+            <!-- === Modelling (3 tools) === -->
+            <div class="tool-category cat-modelling" style="flex: 3 1 0;">
+                <div class="features-category-header">&#9881; Modelling</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="{{ url_for('metabolic_bp.metabolic_model_page') }}">
+                        <img src="{{ url_for('static', filename='images/hoeper2024_fig1.png') }}" alt="Metabolic model" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Metabolic Model</b>{% if new_tools.get('metabolic_model') %} <span class="badge-new" data-toggle="tooltip" title="New tool">New</span>{% elif updated_tools.get('metabolic_model') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('metabolic_model') }}">Updated</span>{% endif %}</h3>
+                            <p>Flux balance analysis of <i>Synechocystis</i> sp. PCC 6803.</p>
+                        </div>
+                    </a>
+                    <a class="feature" href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/ecyanobacterium_1.JPG') }}" alt="E-cyanobacterium" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>E-cyanobacterium</b></h3>
+                            <p>Sharing, annotation, analysis, and visualisation of multiple models and wet-lab experiments.</p>
                         </div>
                     </a>
                     <a class="feature" href="https://czechglobe-doab.shinyapps.io/SeawaterCarbonateSystem/" target="_blank" rel="noopener">
@@ -255,6 +286,22 @@
                     </a>
                 </div>
             </div>
+
+            <!-- === Other Platforms (1 tool) === -->
+            <div class="tool-category cat-other" style="flex: 1 1 0;">
+                <div class="features-category-header">&#127760; Other Platforms</div>
+                <div class="tool-tiles">
+                    <a class="feature" href="https://www.optimalga.com/" target="_blank" rel="noopener">
+                        <img src="{{ url_for('static', filename='images/optimalga_logo_1.jpg') }}" alt="Optimalga platform" class="feature-thumb">
+                        <div class="feature-text">
+                            <h3><b>Optimalga</b></h3>
+                            <p>Centralized platform for data collection, transformation and sharing.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            </div><!-- /.tool-category-row (Modelling + Other Platforms) -->
 
             <!-- === Image Analysis (6 tools) === -->
             <div class="tool-category cat-image">
@@ -312,45 +359,6 @@
                 </div>
             </div>
 
-            <!-- === Row: Modelling (2) + Other Platforms (1) === -->
-            <div class="tool-category-row">
-
-            <!-- === Modelling (2 tools) === -->
-            <div class="tool-category cat-modelling">
-                <div class="features-category-header">&#9881; Modelling</div>
-                <div class="tool-tiles">
-                    <a class="feature" href="{{ url_for('metabolic_bp.metabolic_model_page') }}">
-                        <img src="{{ url_for('static', filename='images/hoeper2024_fig1.png') }}" alt="Metabolic model" class="feature-thumb">
-                        <div class="feature-text">
-                            <h3><b>Metabolic Model</b>{% if new_tools.get('metabolic_model') %} <span class="badge-new" data-toggle="tooltip" title="New tool">New</span>{% elif updated_tools.get('metabolic_model') %} <span class="badge-updated" data-toggle="tooltip" title="Updated {{ updated_tools.get('metabolic_model') }}">Updated</span>{% endif %}</h3>
-                            <p>Flux balance analysis of <i>Synechocystis</i> sp. PCC 6803.</p>
-                        </div>
-                    </a>
-                    <a class="feature" href="https://www.e-cyanobacterium.org/" target="_blank" rel="noopener">
-                        <img src="{{ url_for('static', filename='images/ecyanobacterium_1.JPG') }}" alt="E-cyanobacterium" class="feature-thumb">
-                        <div class="feature-text">
-                            <h3><b>E-cyanobacterium</b></h3>
-                            <p>Sharing, annotation, analysis, and visualisation of multiple models and wet-lab experiments.</p>
-                        </div>
-                    </a>
-                </div>
-            </div>
-
-            <!-- === Other Platforms (1 tool) === -->
-            <div class="tool-category cat-other">
-                <div class="features-category-header">&#127760; Other Platforms</div>
-                <div class="tool-tiles">
-                    <a class="feature" href="https://www.optimalga.com/" target="_blank" rel="noopener">
-                        <img src="{{ url_for('static', filename='images/optimalga_logo_1.jpg') }}" alt="Optimalga platform" class="feature-thumb">
-                        <div class="feature-text">
-                            <h3><b>Optimalga</b></h3>
-                            <p>Centralized platform for data collection, transformation and sharing.</p>
-                        </div>
-                    </a>
-                </div>
-            </div>
-
-            </div><!-- /.tool-category-row (Modelling + Other Platforms) -->
 
         </div>
     </div>

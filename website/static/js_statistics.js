@@ -90,6 +90,7 @@ let usePerVarMode = false;   // false = single global transform; true = per-vari
 
 // ── Transformation state ──────────────────────────────────────────────────────
 let appliedTransformations = {};  // { varName: { type: 'ln1p'|'sqrt'|'power'|'reciprocal'|'arcsin', power: Number } }
+let lastSuggestions = {};         // { varName: suggestedType } — updated each time the panel is populated
 let lastTestResults = null;       // Cached after each run-tests call
 let lastOriginalTestResults = null;  // When transforms active: results on original data
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2433,6 +2434,8 @@ function populateTransformationPanel(testResults, selectedVars) {
         candidates.push({ varName, issues, suggestion });
     });
 
+    lastSuggestions = suggestions;
+
     // ── Render candidates summary ────────────────────────────────────────────
     if (candidates.length === 0) {
         candidatesDiv.innerHTML = `
@@ -2504,25 +2507,24 @@ function populateTransformationPanel(testResults, selectedVars) {
                             <i class="fa fa-times-circle"></i> ${parts.join('<br>')}</span>`;
         }
 
-        // Suggested action column — static text only, no click
+        // Suggested action column — always shows the suggestion from test data, never the applied transform
         let suggestCell;
-        if (isActive) {
-            suggestCell = `<span class="text-success extra-small font-weight-bold">
-                            <i class="fa fa-check-circle mr-1"></i>${getTransformLabel(currentTf.type, currentTf.power)}
-                           </span>`;
-        } else if (suggestion) {
+        if (suggestion) {
             suggestCell = `<span class="extra-small text-warning font-weight-bold">${getTransformLabel(suggestion)}</span>`;
         } else {
             suggestCell = `<span class="extra-small text-muted">—</span>`;
         }
 
-        // "Used" column — shows the last applied transformation (from appliedTransformations state)
+        // "Used" column — color-coded: green if matches suggestion, red if differs, muted if none
         const usedTf = appliedTransformations[varName];
         const usedActive = usedTf && usedTf.type && usedTf.type !== 'none';
         let usedCell;
         if (usedActive) {
-            usedCell = `<span class="extra-small font-weight-bold" style="color:#0a6640;">
-                            <i class="fa fa-check-circle mr-1"></i>${getTransformLabel(usedTf.type, usedTf.power)}
+            const matchesSuggestion = suggestion && usedTf.type === suggestion;
+            const color = matchesSuggestion ? '#0a6640' : '#b91c1c';
+            const icon  = matchesSuggestion ? 'fa-check-circle' : 'fa-times-circle';
+            usedCell = `<span class="extra-small font-weight-bold" style="color:${color};">
+                            <i class="fa ${icon} mr-1"></i>${getTransformLabel(usedTf.type, usedTf.power)}
                         </span>`;
         } else {
             usedCell = `<span class="extra-small text-muted">—</span>`;
@@ -2572,13 +2574,13 @@ window.onTransformTypeChange = function(varName, type) {
     if (powerEl) powerEl.style.display = type === 'power' ? 'block' : 'none';
     updateTransformBadge();
     // Update the "Suggested" cell for this row to show "Applied" state
-    if (lastTestResults) populateTransformationPanel(lastTestResults, _currentSelectedVars());
+    if (lastTestResults) populateTransformationPanel(lastTestResults.results, _currentSelectedVars());
 };
 
 /** Pre-select a suggested transformation (inline click). */
 window.quickApplySuggestion = function(varName, type) {
     appliedTransformations[varName] = { type, power: 2 };
-    if (lastTestResults) populateTransformationPanel(lastTestResults, _currentSelectedVars());
+    if (lastTestResults) populateTransformationPanel(lastTestResults.results, _currentSelectedVars());
 };
 
 // Delegated click for Apply buttons (avoids broken onclick when varName/suggestion contain quotes)
@@ -2621,6 +2623,39 @@ document.getElementById('resetTransformBtn').addEventListener('click', function(
     updateTransformBadge();
     document.getElementById('runTestsBtn').click();
 });
+
+// ── Bulk-transform select ─────────────────────────────────────────────────────
+document.getElementById('bulkTransformSelect').addEventListener('change', function() {
+    const value = this.value;
+    if (!value) return;
+
+    const selectedVars = _currentSelectedVars();
+    if (value === 'auto') {
+        // Apply each variable's suggested transformation (or none if no suggestion)
+        selectedVars.forEach(varName => {
+            const suggestion = lastSuggestions[varName];
+            if (suggestion) {
+                appliedTransformations[varName] = { type: suggestion, power: 2 };
+            } else {
+                delete appliedTransformations[varName];
+            }
+        });
+    } else if (value === 'none') {
+        appliedTransformations = {};
+    } else {
+        // Apply the chosen transformation to every variable
+        selectedVars.forEach(varName => {
+            appliedTransformations[varName] = { type: value, power: 2 };
+        });
+    }
+
+    // Reset the select back to placeholder so it can be re-used
+    this.value = '';
+
+    updateTransformBadge();
+    if (lastTestResults) populateTransformationPanel(lastTestResults.results, selectedVars);
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ════════════════════════════════════════════════════════════════════════════
 

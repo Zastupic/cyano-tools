@@ -830,6 +830,24 @@
                                             <!-- Candidates summary + When to use guide (filled by JS) -->
                                             <div id="transformCandidates" class="mb-2"></div>
 
+                                            <!-- Bulk action control -->
+                                            <div class="d-flex align-items-center mb-2" style="gap:0.5rem;">
+                                                <span style="font-size:0.78rem; font-weight:600; color:#555; flex-shrink:0;">
+                                                    <i class="fa fa-magic mr-1 text-muted"></i>Apply to all:
+                                                </span>
+                                                <select id="bulkTransformSelect" class="form-select form-select-sm"
+                                                        style="font-size:0.76rem; max-width:260px;">
+                                                    <option value="">— Set all variables to —</option>
+                                                    <option value="auto">Auto-apply suggested transformation</option>
+                                                    <option value="none">None (remove all transformations)</option>
+                                                    <option value="ln1p">ln(x+1)</option>
+                                                    <option value="sqrt">√x (Square root)</option>
+                                                    <option value="power">xⁿ (Power, n=2)</option>
+                                                    <option value="reciprocal">1/x (Reciprocal)</option>
+                                                    <option value="arcsin">arcsin(√x)</option>
+                                                </select>
+                                            </div>
+
                                             <!-- Per-variable transform controls (filled by JS) -->
                                             <div class="rounded border bg-white mb-3" style="overflow:hidden;">
                                                 <div class="row g-0 py-1 px-2 border-bottom"
