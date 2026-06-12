@@ -31,6 +31,7 @@ TOOL_FILES = {
     'pixel_profiles_filament': ['website/pixel_profiles_filament.py',     'website/static/js_pixel_profies_filaments.js'],
     'metabolic_model':         ['website/metabolic_model.py',              'website/static/js_metabolic_model.js'],
     'sigma':                   ['website/sigma_analysis.py',               'website/static/js_sigma.js'],
+    'pbr_analysis':            ['website/pbr_analysis.py',                 'website/static/js_pbr_analysis.js'],
 }
 
 # Static addition dates for tools — used to drive the "New" badge.
@@ -38,6 +39,7 @@ TOOL_FILES = {
 TOOL_ADDED_DATES = {
     'metabolic_model': '2026-03-23',
     'sigma':           '2026-04-16',
+    'pbr_analysis':    '2026-06-12',
 }
 
 _cache      = {}
