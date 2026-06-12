@@ -1545,13 +1545,27 @@
                                             data-toggle="collapse" data-target="#methodSummaryBox" aria-expanded="false">
                                         <i class="fa fa-file-text-o mr-1"></i> Method Summary
                                     </button>
-                                    <span id="pubExportSpinner" style="display:none;">
-                                        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
-                                        <span class="small text-muted ml-1">Exporting plots…</span>
+                                    <span id="pubExportSpinner" style="display:none; flex-direction:column; align-items:flex-start; gap:0.2rem;">
+                                        <span class="d-flex align-items-center" style="gap:0.4rem;">
+                                            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                                            <span id="pubExportSpinnerText" class="small text-muted">Exporting plots…</span>
+                                        </span>
+                                        <div id="pubExportProgress" style="display:none; width:220px;">
+                                            <div class="progress" style="height:6px;">
+                                                <div id="pubExportProgressBar" class="progress-bar bg-primary" role="progressbar" style="width:0%"></div>
+                                            </div>
+                                        </div>
                                     </span>
-                                    <span id="exportSpinner" style="display:none;">
-                                        <span class="spinner-border spinner-border-sm text-success" role="status"></span>
-                                        <span class="small text-muted ml-1">Generating report…</span>
+                                    <span id="exportSpinner" style="display:none; flex-direction:column; align-items:flex-start; gap:0.2rem;">
+                                        <span class="d-flex align-items-center" style="gap:0.4rem;">
+                                            <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                                            <span id="exportSpinnerText" class="small text-muted">Generating report…</span>
+                                        </span>
+                                        <div id="exportProgress" style="display:none; width:220px;">
+                                            <div class="progress" style="height:6px;">
+                                                <div id="exportProgressBar" class="progress-bar bg-success" role="progressbar" style="width:0%"></div>
+                                            </div>
+                                        </div>
                                     </span>
                                 </div>
 

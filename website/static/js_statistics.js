@@ -3114,7 +3114,7 @@ document.getElementById('downloadExcelBtn').addEventListener('click', async func
         const plotDivs = document.querySelectorAll('#statsContent .js-plotly-plot');
         for (const div of plotDivs) {
             try {
-                const img = await Plotly.toImage(div, { format: 'png', width: 700, height: 380 });
+                const img = await Plotly.toImage(div, { format: 'png', width: 370, height: 200 });
                 const varLabel = div.id || '';
                 plotCaptures.push({ id: varLabel, image: img.split(',')[1] });
             } catch(e) { /* skip if not a Plotly plot */ }
@@ -5713,6 +5713,29 @@ function renderAnovaResults(data) {
     });
 }
 
+// Run async thunks one at a time with a browser yield between each.
+// progressBar: optional <div class="progress-bar"> element to update.
+// onProgress(done, total): optional label callback called before each item.
+async function captureSequentially(thunks, onProgress, progressBar) {
+    const results = [];
+    const total = thunks.length;
+    if (progressBar && total > 0) {
+        progressBar.parentElement.parentElement.style.display = 'block'; // show progress wrapper
+        progressBar.style.width = '0%';
+    }
+    for (let i = 0; i < total; i++) {
+        if (onProgress) onProgress(i, total);
+        if (progressBar) progressBar.style.width = `${Math.round((i / total) * 100)}%`;
+        await new Promise(r => setTimeout(r, 50)); // 50 ms — ~3 paint frames for the browser
+        results.push(await thunks[i]());
+    }
+    if (progressBar) {
+        progressBar.style.width = '100%';
+        progressBar.parentElement.parentElement.style.display = 'none';
+    }
+    return results;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // FULL REPORT EXPORT
 // ══════════════════════════════════════════════════════════════════════════════
@@ -5720,16 +5743,22 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
     if (!lastAnovaResults) return;
 
     const exportSpinner = document.getElementById('exportSpinner');
+    const exportSpinnerText2 = document.getElementById('exportSpinnerText');
     const btn = this;
     btn.disabled = true;
     if (exportSpinner) exportSpinner.style.display = 'inline-flex';
+    if (exportSpinnerText2) exportSpinnerText2.textContent = 'Preparing charts…';
+
+    // Yield so the browser repaints the spinner before any heavy work starts
+    await new Promise(r => setTimeout(r, 50));
 
     try {
         // Flush any unsaved UI state into pubPlotSettings before capturing charts
         readPubSettings();
 
         // Pre-render any ANOVA variable charts the user never opened (hidden tab panes).
-        // Temporarily display each pane so Plotly can measure the container width.
+        // Must stay synchronous — yielding here causes Bootstrap/Plotly layout disruption
+        // because the browser repaints during the show/hide cycle.
         document.querySelectorAll('#anovaResults .anova-var-section').forEach(pane => {
             const wasHidden = window.getComputedStyle(pane).display === 'none';
             if (wasHidden) { pane.style.display = 'block'; pane.style.visibility = 'hidden'; }
@@ -5748,7 +5777,17 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
         const hiddenAssumptionPanes = assumptionPaneIds
             .map(id => document.querySelector(id))
             .filter(el => el && window.getComputedStyle(el).display === 'none');
-        hiddenAssumptionPanes.forEach(el => { el.style.display = 'block'; el.style.visibility = 'hidden'; });
+        // position:fixed takes them out of document flow so they don't push the ANOVA
+        // section out of view during the async capture phase (visibility:hidden still
+        // occupies layout space, but fixed elements don't).
+        hiddenAssumptionPanes.forEach(el => {
+            el.style.position   = 'fixed';
+            el.style.top        = '-9999px';
+            el.style.left       = '-9999px';
+            el.style.width      = '800px';
+            el.style.display    = 'block';
+            el.style.visibility = 'hidden';
+        });
 
         // Capture Plotly plots as base64 PNG
         const plotCaptures = [];
@@ -5759,33 +5798,45 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
             { selector: '#anovaResults .anova-bar-chart-placeholder.js-plotly-plot', type: 'anova' }
         ];
 
-        const xlsxExportW = 700;
+        const xlsxExportW = 370;
         const xlsxAnovaH = Math.round(xlsxExportW / (pubPlotSettings.aspectRatio || 4 / 3));
 
+        // Collect all divs, then capture in small batches to stay responsive
+        const captureTasks = [];
         for (const { selector, type } of plotSelectors) {
-            const divs = document.querySelectorAll(selector);
-            for (const div of divs) {
+            for (const div of document.querySelectorAll(selector)) {
+                captureTasks.push({ div, type, exportH: type === 'anova' ? xlsxAnovaH : 200 });
+            }
+        }
+        const exportSpinnerText = document.getElementById('exportSpinnerText');
+        const exportProgressBar = document.getElementById('exportProgressBar');
+        const captureResults = await captureSequentially(
+            captureTasks.map(({ div, type, exportH }) => async () => {
                 try {
-                    const exportH = type === 'anova' ? xlsxAnovaH : 380;
                     const img = await Plotly.toImage(div, { format: 'png', width: xlsxExportW, height: exportH });
                     const varName = div.dataset.resVariable ? decodeURIComponent(div.dataset.resVariable) : '';
                     const sliceLabel = div.dataset.sliceLabel ? decodeURIComponent(div.dataset.sliceLabel) : '';
                     const descriptiveLabel = varName
                         ? (sliceLabel && sliceLabel !== 'All' ? `${varName} (${sliceLabel})` : varName)
                         : (div.id || div.getAttribute('data-var') || type);
-                    plotCaptures.push({
-                        label: descriptiveLabel,
-                        type,
-                        image: img.split(',')[1],
-                        imgW: xlsxExportW,
-                        imgH: exportH
-                    });
-                } catch(e) { /* skip non-Plotly divs */ }
-            }
-        }
+                    return { label: descriptiveLabel, type, image: img.split(',')[1], imgW: xlsxExportW, imgH: exportH };
+                } catch(e) { return null; }
+            }),
+            (done, total) => { if (exportSpinnerText) exportSpinnerText.textContent = `Capturing chart ${done + 1} of ${total}…`; },
+            exportProgressBar
+        );
+        plotCaptures.push(...captureResults.filter(Boolean));
+        if (exportSpinnerText) exportSpinnerText.textContent = 'Sending to server…';
 
         // Restore assumption panes to their original hidden state
-        hiddenAssumptionPanes.forEach(el => { el.style.display = ''; el.style.visibility = ''; });
+        hiddenAssumptionPanes.forEach(el => {
+            el.style.position   = '';
+            el.style.top        = '';
+            el.style.left       = '';
+            el.style.width      = '';
+            el.style.display    = '';
+            el.style.visibility = '';
+        });
 
         const originalData = globalData;
         const analysedData = buildTransformedData(globalData, appliedTransformations);
@@ -5833,6 +5884,8 @@ document.getElementById('exportFullReportBtn').addEventListener('click', async f
     } finally {
         btn.disabled = false;
         if (exportSpinner) exportSpinner.style.display = 'none';
+        const t = document.getElementById('exportSpinnerText');
+        if (t) t.textContent = 'Generating report…';
     }
 });
 
@@ -6184,9 +6237,14 @@ document.getElementById('exportPubPlotsBtn').addEventListener('click', async fun
     if (typeof JSZip === 'undefined') { alert('JSZip not loaded — please refresh the page.'); return; }
 
     const spinner = document.getElementById('pubExportSpinner');
+    const pubSpinnerTextEarly = document.getElementById('pubExportSpinnerText');
     const btn = this;
     btn.disabled = true;
     if (spinner) spinner.style.display = 'inline-flex';
+    if (pubSpinnerTextEarly) pubSpinnerTextEarly.textContent = 'Preparing charts…';
+
+    // Yield so the browser repaints the spinner before any heavy work starts
+    await new Promise(r => setTimeout(r, 50));
 
     try {
         // Flush any unsaved UI state into pubPlotSettings before export
@@ -6200,13 +6258,15 @@ document.getElementById('exportPubPlotsBtn').addEventListener('click', async fun
         const zip    = new JSZip();
         const folder = zip.folder('publication_plots');
 
-        // Apply aspect ratio to chart heights first, then force re-render all panes.
-        // Record each chart's on-screen dimensions to preserve ratio + font scale in export.
+        // Apply aspect ratio and purge existing renders so charts re-render at correct size
         applyAspectRatioToCharts();
         document.querySelectorAll('#anovaResults .anova-bar-chart-placeholder').forEach(div => {
             div.classList.remove('anova-chart-rendered');
             if (window.Plotly) { try { Plotly.purge(div); } catch(e) {} }
         });
+
+        // Re-render each pane synchronously — yielding here causes Bootstrap/Plotly layout
+        // disruption because the browser repaints during the show/hide cycle.
         const screenDims = new Map(); // div → { w, h }
         document.querySelectorAll('#anovaResults .anova-var-section').forEach(pane => {
             const hidden = window.getComputedStyle(pane).display === 'none';
@@ -6218,7 +6278,6 @@ document.getElementById('exportPubPlotsBtn').addEventListener('click', async fun
                 if (innerHidden) { innerChart.style.display = 'block'; innerChart.style.visibility = 'hidden'; }
             }
             renderPendingAnovaCharts(pane);
-            // Capture screen dimensions while pane is visible
             pane.querySelectorAll('.anova-bar-chart-placeholder.js-plotly-plot').forEach(div => {
                 screenDims.set(div, { w: div.clientWidth || 600, h: div.clientHeight || 380 });
             });
@@ -6230,38 +6289,45 @@ document.getElementById('exportPubPlotsBtn').addEventListener('click', async fun
             '#anovaResults .anova-bar-chart-placeholder.js-plotly-plot'
         );
 
-        let exported = 0;
-        for (const div of chartDivs) {
-            const rawVar = div.getAttribute('data-res-variable') || `plot_${exported}`;
-            let decoded = rawVar;
-            try { decoded = decodeURIComponent(rawVar); } catch(e) {}
-            const safeName = decoded.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
-            const fname = `${String(exported + 1).padStart(2, '0')}_${safeName}.${fmt}`;
-
-            try {
-                // Scale from on-screen size → target print size, preserving all proportions
-                // (aspect ratio, font sizes, margins — everything looks identical to screen, at high-res)
-                const dims  = screenDims.get(div) || { w: 600, h: 380 };
-                const scale = Math.max(targetWidthPx / dims.w, 1);
-                const dataUrl = await Plotly.toImage(div, { format: fmt, width: dims.w, height: dims.h, scale });
-
-                if (fmt === 'svg') {
-                    // Plotly returns SVG as a URL-encoded data URL (not base64)
-                    let svgText;
-                    if (dataUrl.startsWith('data:image/svg+xml;base64,')) {
-                        svgText = atob(dataUrl.replace('data:image/svg+xml;base64,', ''));
+        // Capture charts one at a time, yielding to the browser between each
+        const pubSpinnerText = document.getElementById('pubExportSpinnerText');
+        const pubProgressBar = document.getElementById('pubExportProgressBar');
+        const pubCaptureResults = await captureSequentially(
+            Array.from(chartDivs).map((div, i) => async () => {
+                const rawVar = div.getAttribute('data-res-variable') || `plot_${i}`;
+                let decoded = rawVar;
+                try { decoded = decodeURIComponent(rawVar); } catch(e) {}
+                const safeName = decoded.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
+                const fname = `${String(i + 1).padStart(2, '0')}_${safeName}.${fmt}`;
+                try {
+                    const dims  = screenDims.get(div) || { w: 600, h: 380 };
+                    const scale = Math.max(targetWidthPx / dims.w, 1);
+                    const dataUrl = await Plotly.toImage(div, { format: fmt, width: dims.w, height: dims.h, scale });
+                    if (fmt === 'svg') {
+                        let svgText;
+                        if (dataUrl.startsWith('data:image/svg+xml;base64,')) {
+                            svgText = atob(dataUrl.replace('data:image/svg+xml;base64,', ''));
+                        } else {
+                            svgText = decodeURIComponent(dataUrl.replace(/^data:image\/svg\+xml,/, ''));
+                        }
+                        return { fname, content: svgText, base64: false };
                     } else {
-                        svgText = decodeURIComponent(dataUrl.replace(/^data:image\/svg\+xml,/, ''));
+                        let b64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+                        b64 = injectPngDpi(b64, s.exportDPI);
+                        return { fname, content: b64, base64: true };
                     }
-                    folder.file(fname, svgText); // store as plain text (UTF-8)
-                } else {
-                    // PNG: strip prefix, inject pHYs DPI metadata, store as binary
-                    let b64 = dataUrl.replace(/^data:image\/png;base64,/, '');
-                    b64 = injectPngDpi(b64, s.exportDPI);
-                    folder.file(fname, b64, { base64: true });
-                }
-                exported++;
-            } catch(e) { console.warn('Could not export', fname, e); }
+                } catch(e) { console.warn('Could not export', fname, e); return null; }
+            }),
+            (done, total) => { if (pubSpinnerText) pubSpinnerText.textContent = `Capturing chart ${done + 1} of ${total}…`; },
+            pubProgressBar
+        );
+        if (pubSpinnerText) pubSpinnerText.textContent = 'Building ZIP…';
+
+        let exported = 0;
+        for (const r of pubCaptureResults) {
+            if (!r) continue;
+            folder.file(r.fname, r.content, r.base64 ? { base64: true } : {});
+            exported++;
         }
 
         if (exported === 0) {
@@ -6305,6 +6371,8 @@ document.getElementById('exportPubPlotsBtn').addEventListener('click', async fun
     } finally {
         btn.disabled = false;
         if (spinner) spinner.style.display = 'none';
+        const pt = document.getElementById('pubExportSpinnerText');
+        if (pt) pt.textContent = 'Exporting plots…';
     }
 });
 

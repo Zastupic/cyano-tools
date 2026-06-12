@@ -5,11 +5,11 @@
 {% endblock %}
 
 {% block description %}
-    Analyze photobioreactor (FMT-150) and multi-cultivator (MC-1000) time-series data online. Upload .ods export files, select signals, and apply OD non-linearity correction.
+    Free online tool for PSI photobioreactor (FMT-150) and multi-cultivator (MC-1000) data analysis. Upload .ods export files, plot OD720/OD680 and other signals, apply OD non-linearity correction, fit Logistic/Gompertz/Baranyi growth curves, and export results to XLSX or PNG.
 {% endblock %}
 
 {% block keywords %}
-    PBR data analysis, FMT-150, MC-1000, photobioreactor, multi-cultivator, OD correction, OD720, OD680, cyanobacteria growth, PSI photobioreactor, bioreactor data viewer
+    PBR data analysis, FMT-150, MC-1000, photobioreactor, multi-cultivator, OD correction, OD720, OD680, cyanobacteria growth, PSI photobioreactor, bioreactor data viewer, growth curve fitting, logistic growth, Gompertz model, Baranyi model, µmax, specific growth rate, lag phase, carrying capacity
 {% endblock %}
 
 {% block extra_schema %}
@@ -20,7 +20,16 @@
   "name": "CyanoTools PBR Data Analysis",
   "operatingSystem": "Web",
   "applicationCategory": "ScientificSoftware",
-  "description": "Upload and visualize PSI photobioreactor (FMT-150) and multi-cultivator (MC-1000) ODS export files with interactive signal selection and OD non-linearity correction.",
+  "description": "Upload and visualize PSI photobioreactor (FMT-150) and multi-cultivator (MC-1000) ODS export files. Interactive signal selection, OD non-linearity correction, growth rate analysis, and growth curve model fitting (Logistic, Gompertz, Baranyi, Richards) to extract µmax, lag time and carrying capacity.",
+  "featureList": [
+    "OD720/OD680 signal visualisation",
+    "OD non-linearity correction with calibration curves",
+    "Specific growth rate (µ) calculation",
+    "Growth curve model fitting: Logistic, Gompertz, Baranyi-Roberts, Richards",
+    "µmax, lag time and carrying capacity extraction",
+    "Multi-channel MC-1000 support",
+    "XLSX and PNG export"
+  ],
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
 }
 </script>
@@ -43,13 +52,7 @@
 </div>
 <br>
 
-<h1>Photobioreactor Data Analysis — FMT-150 &amp; MC-1000
-    <span class="badge badge-warning" style="font-size:0.5em; vertical-align:middle;">Beta</span>
-</h1>
-<div class="alert alert-warning" role="alert"
-     style="font-size:0.9em; border-left:4px solid #ffc107; padding:0.6em 1em;">
-    <strong>Beta notice:</strong> This tool is under active development. Results should be verified independently. Please <a href="mailto:zavrel.t@czechglobe.cz">report any issues</a>.
-</div>
+<h1>Photobioreactor Data Analysis — FMT-150 &amp; MC-1000</h1>
 
 <div class="alert alert-info" role="alert"
      style="font-size:0.97em; border-left:4px solid #17a2b8;">
@@ -73,7 +76,8 @@
             <li>Use the <strong>Signal Selector</strong> to choose which channels and signal types to display. For the MC-1000, select individual culture channels (1–8).</li>
             <li>If OD<sub>720</sub> or OD<sub>680</sub> signals are selected and values exceed the linearity threshold (0.4 for OD<sub>720</sub>; 0.6 for OD<sub>680</sub>), open the <strong>OD Correction</strong> panel, choose the appropriate strain (WT or EFE) per channel, and select whether to show the raw signal, the corrected signal, or both.</li>
             <li>Logged experiment events are overlaid as vertical lines on the chart (toggle with the <em>Show events</em> checkbox).</li>
-            <li>Click <strong>Download XLSX</strong> to export the full-resolution dataset. Corrected OD columns are appended next to the originals.</li>
+            <li>Click <strong>Download XLSX</strong> to export the full-resolution dataset. Corrected OD columns are appended next to the originals. Use <strong>Save PNG</strong> to export the chart as an image.</li>
+            <li>For growth kinetics, open the <strong>Growth Rate Analysis</strong> panel and switch to the <strong>Growth curves</strong> tab (mode 4). Select the signal and OD type, choose a model (Logistic, Gompertz, Baranyi-Roberts, or Richards), set the time window, and click <strong>&#9654; Fit model</strong>. The fitted curve and extracted parameters (&micro;max, lag time &lambda;, carrying capacity A) are shown below the chart.</li>
         </ol>
         <p class="mt-2 mb-0" style="font-size:0.9em; color:#555;">
             <strong>Note on large files:</strong> Files with more than 3 000 rows are automatically
@@ -132,14 +136,20 @@
     <p id="pbr-upload-filename" style="margin:0.3em 0 0; font-size:0.88em; color:#888;"></p>
 </div>
 
-<div style="margin-bottom:1.2em;">
-    <span style="font-size:0.88em; color:#555;">Example data: </span>
-    <a class="btn btn-sm btn-outline-secondary"
-       href="{{ url_for('static', filename='files/PBR eample data/Example data FMT-150.ods') }}"
-       download>FMT-150</a>
-    <a class="btn btn-sm btn-outline-secondary"
-       href="{{ url_for('static', filename='files/PBR eample data/Example data MC-1000.ods') }}"
-       download>MC-1000</a>
+<div style="margin-bottom:1.2em; display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+    <span style="font-size:0.88em; color:#555;">Try with example data:</span>
+    <button type="button" class="btn btn-sm btn-outline-success" data-example="FMT-150"
+        onclick="PBR.loadExampleData('{{ url_for('static', filename='files/PBR eample data/Example data FMT-150.ods') }}', 'FMT-150')">
+        &#9654; FMT-150</button>
+    <button type="button" class="btn btn-sm btn-outline-success" data-example="MC-1000"
+        onclick="PBR.loadExampleData('{{ url_for('static', filename='files/PBR eample data/Example data MC-1000.ods') }}', 'MC-1000')">
+        &#9654; MC-1000</button>
+    <a style="font-size:0.82em; color:#888; margin-left:4px;"
+       href="{{ url_for('static', filename='files/PBR eample data/Example data FMT-150.ods') }}" download
+       title="Download example file">&#11015; FMT-150</a>
+    <a style="font-size:0.82em; color:#888;"
+       href="{{ url_for('static', filename='files/PBR eample data/Example data MC-1000.ods') }}" download
+       title="Download example file">&#11015; MC-1000</a>
 </div>
 
 <!-- ── Error banner ──────────────────────────────────────────────────────── -->
@@ -227,9 +237,18 @@
 
             <!-- MC-1000: per-channel strain selects -->
             <div id="pbr-corr-mc1000" style="display:none;">
-                <p style="font-size:0.88em; color:#555; margin-bottom:0.5em;">
-                    Select strain for each channel:
-                </p>
+                <div class="d-flex align-items-center flex-wrap mb-1" style="gap:6px;">
+                    <p style="font-size:0.88em; color:#555; margin:0;">
+                        Select strain for each channel:
+                    </p>
+                    <span style="font-size:0.82em; color:#888; margin-left:4px;">Set all:</span>
+                    <button class="btn btn-xs btn-outline-secondary"
+                            style="font-size:0.78em; padding:1px 7px;"
+                            onclick="PBR.setAllStrains('FMT-150 WT')">WT</button>
+                    <button class="btn btn-xs btn-outline-secondary"
+                            style="font-size:0.78em; padding:1px 7px;"
+                            onclick="PBR.setAllStrains('FMT-150 EFE')">EFE</button>
+                </div>
                 <div id="pbr-channel-strains" class="d-flex flex-wrap" style="gap:8px;"></div>
             </div>
 
@@ -249,21 +268,35 @@
                             onclick="PBR.setShowMode('both')">Both</button>
                 </div>
             </div>
-            <p class="mt-2 mb-0" style="font-size:0.82em; color:#777;">
-                <em>Corrected trace is offset by &delta; = formula(threshold)&minus;threshold so it
-                joins the raw curve at the threshold (display stitching for continuity).
-                The <strong>downloaded XLSX</strong> always contains the original calibration
-                formula values without this offset.</em>
+            <div class="mt-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="pbr-od-stitch-offset"
+                           checked onchange="PBR.setODStitchOffset(this.checked)">
+                    <label class="form-check-label" for="pbr-od-stitch-offset"
+                           style="font-size:0.82em; color:#555;">
+                        Apply display stitching offset (join corrected curve to raw at threshold)
+                    </label>
+                </div>
+            </div>
+            <p class="mt-1 mb-0" style="font-size:0.82em; color:#777;">
+                <em>When unchecked (default), the corrected OD shows the full calibration formula
+                output — identical to the <strong>downloaded XLSX</strong>.
+                When checked, a &delta; offset is applied so the corrected trace joins the
+                raw curve at the threshold for visual continuity.</em>
             </p>
         </div>
     </div>
 
     <!-- Action row -->
-    <div class="mb-3 d-flex flex-wrap align-items-center" style="gap:8px;">
+    <div class="mb-1 d-flex flex-wrap align-items-center" style="gap:8px;">
         <button type="button" class="btn btn-info btn-sm"
                 onclick="PBR.updatePlot()">&#8635; Update Plot</button>
         <button type="button" class="btn btn-success btn-sm"
                 onclick="PBR.exportData()">&#11015; Download XLSX</button>
+        <button type="button" class="btn btn-outline-success btn-sm"
+                onclick="PBR.exportAll()" title="Export raw data + corrected OD + growth analysis into one XLSX file">&#128230; Export all (XLSX)</button>
+        <button type="button" class="btn btn-outline-primary btn-sm"
+                onclick="PBR.exportChartPNG()">&#128247; Save PNG</button>
         <button type="button" class="btn btn-outline-secondary btn-sm"
                 id="pbr-reset-zoom" style="display:none;"
                 onclick="PBR.resetZoom()">&#8646; Reset zoom</button>
@@ -278,6 +311,19 @@
                    checked onchange="PBR.toggleTooltips(this.checked)">
             <label class="form-check-label" for="pbr-show-tooltips"
                    style="font-size:0.9em;">Show tooltips</label>
+        </div>
+    </div>
+
+    <!-- Export progress bar (shown during combined export) -->
+    <div id="pbr-export-progress" class="mb-2" style="display:none;">
+        <div class="d-flex align-items-center" style="gap:8px;">
+            <div class="spinner-border spinner-border-sm text-success" role="status" aria-hidden="true"></div>
+            <span id="pbr-export-msg" style="font-size:0.85em; color:#555;">Exporting&hellip;</span>
+        </div>
+        <div class="progress mt-1" style="height:5px; border-radius:3px;">
+            <div id="pbr-export-bar" class="progress-bar bg-success" role="progressbar"
+                 style="width:0%; transition:width 0.25s ease;" aria-valuenow="0"
+                 aria-valuemin="0" aria-valuemax="100"></div>
         </div>
     </div>
 
@@ -341,6 +387,9 @@
                         <button type="button" id="pbr-mu-tab-3"
                                 class="btn btn-outline-primary"
                                 onclick="PBR.muSetMode(3)">Turbidostat</button>
+                        <button type="button" id="pbr-mu-tab-4"
+                                class="btn btn-outline-primary"
+                                onclick="PBR.muSetMode(4)">Growth curves</button>
                     </div>
                     <!-- Dedicated control: which OD values to fit -->
                     <div class="d-flex align-items-center" style="gap:5px; border-left:1px solid #dee2e6; padding-left:10px;">
@@ -369,7 +418,7 @@
                         <button type="button" id="pbr-mu-click-btn"
                                 class="btn btn-sm btn-outline-secondary"
                                 onclick="PBR.muToggleClickMode()">
-                            &#128247; Enable click mode
+                            &#128393; Enable click mode
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-danger"
                                 onclick="PBR.muClearFits()">&#10005; Clear all</button>
@@ -379,9 +428,12 @@
                                 onclick="PBR.muExport(1)">&#11015; Export XLSX</button>
                     </div>
                     <p style="font-size:0.82em; color:#666; margin-bottom:0.5em;">
-                        Enable click mode, then click anywhere on the chart to fit an exponential
-                        curve&nbsp;(ln OD = ln<em>a</em>&nbsp;+&nbsp;&mu;&thinsp;<em>t</em>)
-                        centred on that time point.
+                        Click <em>Enable click mode</em>, then click anywhere on the main chart
+                        to fit an exponential curve
+                        (ln&nbsp;OD&nbsp;=&nbsp;ln&nbsp;<em>a</em>&nbsp;+&nbsp;&mu;&thinsp;<em>t</em>)
+                        centred on that point using the specified window. The fit line is overlaid
+                        on the chart; multiple fits can be added in sequence. Results appear in the
+                        table below.
                     </p>
                     <div id="pbr-mu-table1-wrap" style="display:none; overflow-x:auto;">
                         <table class="table table-sm table-bordered mb-0" style="font-size:0.85em;">
@@ -418,6 +470,12 @@
                                 style="display:none;"
                                 onclick="PBR.muExport(2)">&#11015; Export XLSX</button>
                     </div>
+                    <div id="pbr-mu2-spinner"
+                         style="display:none; align-items:center; gap:8px; padding:0.4em 0;
+                                color:#555; font-size:0.88em;">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span>Calculating growth rates&hellip;</span>
+                    </div>
                     <p style="font-size:0.82em; color:#666; margin-bottom:0.5em;">
                         Sweeps the entire time range with a sliding window and plots &mu;(t) for each
                         visible OD signal. Useful for detecting transitions in batch cultures.
@@ -425,6 +483,9 @@
                     <div id="pbr-mu-chart2-wrap" style="display:none; background:#fff;
                          border-radius:4px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
                         <div style="text-align:right; margin-bottom:2px;">
+                            <button class="btn btn-xs btn-outline-secondary mr-1"
+                                    onclick="PBR.muToggleAllLines2()"
+                                    style="font-size:0.78em; padding:1px 6px;">&#9634; Toggle all</button>
                             <button class="btn btn-xs btn-outline-secondary"
                                     onclick="PBR.muResetZoom2()"
                                     style="font-size:0.78em; padding:1px 6px;">&#8646; Reset zoom</button>
@@ -441,13 +502,13 @@
                                 style="width:auto;"></select>
                         <label style="font-size:0.88em;">t<sub>0</sub>&nbsp;(h):</label>
                         <input type="number" id="pbr-mu-t0" class="form-control form-control-sm"
-                               value="0" step="0.5" style="width:75px;">
+                               value="0" step="0.5" style="width:75px;" autocomplete="off">
                         <label style="font-size:0.88em;">t<sub>1</sub>&nbsp;(h):</label>
                         <input type="number" id="pbr-mu-t1" class="form-control form-control-sm"
-                               step="0.5" style="width:75px;" placeholder="end">
+                               step="0.5" style="width:75px;" placeholder="end" autocomplete="off">
                         <label style="font-size:0.88em;">Min&nbsp;gap&nbsp;(h):</label>
                         <input type="number" id="pbr-mu-mingap" class="form-control form-control-sm"
-                               value="0.05" min="0.01" step="0.01" style="width:70px;">
+                               value="0.05" min="0.01" step="0.01" style="width:70px;" autocomplete="off">
                         <button type="button" class="btn btn-sm btn-primary"
                                 onclick="PBR.muRunMode3()">&#9654; Detect &amp; fit</button>
                         <button type="button" id="pbr-mu-export3-btn"
@@ -460,8 +521,14 @@
                         exponential growth curve in each interval. Suitable for turbidostat experiments
                         where growth rate equals dilution rate.
                     </p>
-                    <div id="pbr-mu-warn3" class="alert alert-warning py-1 px-2 mb-2"
+                    <div id="pbr-mu-warn3" class="alert alert-warning py-1 px-2 mb-1"
                          style="display:none; font-size:0.85em;"></div>
+                    <div id="pbr-mu3-spinner"
+                         style="display:none; align-items:center; gap:8px; padding:0.4em 0;
+                                color:#555; font-size:0.88em;">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span>Detecting pump-OFF phases&hellip;</span>
+                    </div>
                     <!-- Specific growth rate chart (populated by JS after fitting) -->
                     <div id="pbr-mu-chart3-wrap" style="display:none; background:#fff;
                          border-radius:4px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);
@@ -496,6 +563,92 @@
                         <div id="pbr-mu-summary3" style="font-size:0.88em;"></div>
                     </div>
                 </div><!-- /mode3 -->
+
+                <!-- ── Mode 4: Growth curve fitting ────────────────────── -->
+                <div id="pbr-mu-mode4" style="display:none;">
+                    <!-- Signal selector (OD type + channels) built by JS on file load -->
+                    <div id="pbr-mu4-signal-sel" class="mb-2"
+                         style="padding:6px 8px; background:#f8f9fa; border-radius:4px;
+                                border:1px solid #dee2e6;"></div>
+                    <!-- Time range + model radio + action buttons -->
+                    <div class="form-inline mb-2" style="gap:8px; flex-wrap:wrap; align-items:center;">
+                        <label style="font-size:0.88em;">t<sub>0</sub>&nbsp;(h):</label>
+                        <input type="number" id="pbr-mu4-t0" class="form-control form-control-sm"
+                               value="0" step="0.5" style="width:75px;">
+                        <label style="font-size:0.88em;">t<sub>1</sub>&nbsp;(h):</label>
+                        <input type="number" id="pbr-mu4-t1" class="form-control form-control-sm"
+                               step="0.5" style="width:75px;" placeholder="end">
+                        <span style="font-size:0.88em; margin-left:4px; margin-right:2px; white-space:nowrap;">Model:</span>
+                        <label class="mb-0" style="font-size:0.88em;">
+                            <input type="radio" name="pbr-mu4-model" value="logistic" checked class="mr-1">
+                            <span style="color:#f97316; font-weight:700;">&#9644;</span> Logistic
+                        </label>
+                        <label class="mb-0" style="font-size:0.88em;">
+                            <input type="radio" name="pbr-mu4-model" value="gompertz" class="mr-1">
+                            <span style="color:#22c55e; font-weight:700;">&#9146;</span> Gompertz
+                        </label>
+                        <label class="mb-0" style="font-size:0.88em;">
+                            <input type="radio" name="pbr-mu4-model" value="baranyi" class="mr-1">
+                            <span style="color:#8b5cf6; font-weight:700;">&#8943;</span> Baranyi
+                        </label>
+                        <label class="mb-0" style="font-size:0.88em;">
+                            <input type="radio" name="pbr-mu4-model" value="richards" class="mr-1">
+                            <span style="color:#ef4444; font-weight:700;">&#8212;&#8212;</span> Richards
+                        </label>
+                        <button type="button" id="pbr-mu4-fit-btn"
+                                class="btn btn-sm btn-primary ml-1"
+                                onclick="PBR.muRunMode4()">&#9654; Fit model</button>
+                        <button type="button" id="pbr-mu-export4-btn"
+                                class="btn btn-sm btn-outline-success"
+                                style="display:none;"
+                                onclick="PBR.muExport(4)">&#11015; Export XLSX</button>
+                    </div>
+                    <p style="font-size:0.82em; color:#666; margin-bottom:0.5em;">
+                        Fits a sigmoidal growth model to the OD time series in the selected range.
+                        Extracts <em>A</em>&nbsp;(carrying capacity),
+                        &mu;<sub>max</sub>&nbsp;(h<sup>&minus;1</sup>), and
+                        &lambda;&nbsp;(lag time, h). Fitted curves are shown in the chart below;
+                        rows highlighted in <span style="background:#fff3cd;padding:0 3px;">yellow</span>
+                        have R<sup>2</sup>&nbsp;&lt;&nbsp;0.9.
+                    </p>
+                    <!-- Spinner shown while fitting runs -->
+                    <div id="pbr-mu4-spinner"
+                         style="display:none; align-items:center; gap:10px; padding:0.8em 0; color:#555; font-size:0.88em;">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span>Fitting model&hellip; (Nelder-Mead optimisation)</span>
+                    </div>
+                    <!-- Fit + observed data chart -->
+                    <div id="pbr-mu-chart4-wrap" style="display:none; background:#fff;
+                         border-radius:4px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);
+                         margin-bottom:0.6em;">
+                        <div style="text-align:right; margin-bottom:2px;">
+                            <button class="btn btn-xs btn-outline-secondary"
+                                    onclick="PBR.muResetZoom4()"
+                                    style="font-size:0.78em; padding:1px 6px;">&#8646; Reset zoom</button>
+                        </div>
+                        <canvas id="pbr-mu-chart4" style="width:100%; max-height:480px;"></canvas>
+                    </div>
+                    <!-- Results table -->
+                    <div id="pbr-mu4-table-wrap" style="display:none; overflow-x:auto;">
+                        <table class="table table-sm table-bordered mb-1" style="font-size:0.85em;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Signal</th>
+                                    <th>Model</th>
+                                    <th><em>A</em>&nbsp;(OD)</th>
+                                    <th>&mu;<sub>max</sub>&nbsp;(h<sup>&minus;1</sup>)</th>
+                                    <th>t<sub>d</sub>&nbsp;(h)</th>
+                                    <th>&lambda;&nbsp;(h)</th>
+                                    <th>R<sup>2</sup></th>
+                                    <th>RMSE</th>
+                                    <th>n&nbsp;pts</th>
+                                    <th>Extra</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pbr-mu4-tbody"></tbody>
+                        </table>
+                    </div>
+                </div><!-- /mode4 -->
 
             </div>
         </div>
