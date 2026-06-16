@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.cm as mcm
 import pandas as pd
-from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
+from werkzeug.utils import secure_filename
+from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, safe_cache_key
 
 h_maxima: Any = None
 skeletonize: Any = None
@@ -81,7 +82,11 @@ def _encode_grey(img_grey_arr):
 @cell_morphology_filament.route('/cell_morphology_filament', methods=['GET', 'POST'])
 def analyze_cell_morphology_filament():
     if request.method == 'POST':
-        cached_image_key = request.form.get('cached_image_key', '').strip()
+        _raw_key = request.form.get('cached_image_key', '').strip()
+        cached_image_key: str = (safe_cache_key(_raw_key) or '') if _raw_key else ''
+        if _raw_key and not cached_image_key:
+            flash('Invalid image reference. Please upload the image again.', category='error')
+            return render_template("cell_morphology_filament.html", image_name='')
         cached_image_name_form = request.form.get('cached_image_name', '').strip()
         if request.form.get('pixel_size') == '':
             flash('Please enter pixel size', category='error')
@@ -127,8 +132,9 @@ def analyze_cell_morphology_filament():
             _new_image = request.files.get('selected_images')
             _new_image = _new_image if (_new_image and _new_image.filename) else None
             if _new_image is not None:
-                image_name      = str.lower(os.path.splitext(str(_new_image.filename))[0])
-                image_extension = str.lower(os.path.splitext(str(_new_image.filename))[1])
+                _safe_fname     = secure_filename(str(_new_image.filename))
+                image_name      = str.lower(os.path.splitext(_safe_fname)[0]) or 'image'
+                image_extension = str.lower(os.path.splitext(_safe_fname)[1])
             elif cached_image_key:
                 image_name      = cached_image_name_form or 'image'
                 image_extension = os.path.splitext(cached_image_key)[1]

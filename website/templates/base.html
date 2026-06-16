@@ -58,16 +58,25 @@
             crossorigin="anonymous">
         </script>
     -->
-    <!-- Google Analytics — always active -->
+    <!-- Google Analytics — loaded only after cookie consent -->
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-V1B3ZCRT9S');
-        var _gas = document.createElement('script');
-        _gas.async = true;
-        _gas.src = 'https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S';
-        document.head.appendChild(_gas);
+    (function () {
+        function _loadGA() {
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+            gtag('config', 'G-V1B3ZCRT9S');
+            var _gas = document.createElement('script');
+            _gas.async = true;
+            _gas.src = 'https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S';
+            document.head.appendChild(_gas);
+        }
+        if (localStorage.getItem('cyanotools_cookie_consent')) {
+            _loadGA();
+        } else {
+            document.addEventListener('cookieConsentGiven', _loadGA);
+        }
+    })();
     </script>
     <!-- Custom JS -->
     <script src="{{url_for('static', filename='js_index.js')}}"></script>
@@ -278,6 +287,7 @@
     document.getElementById('cookie-got-it-btn').addEventListener('click', function () {
         localStorage.setItem(KEY, 'dismissed');
         banner.style.display = 'none';
+        document.dispatchEvent(new Event('cookieConsentGiven'));
     });
 })();
 </script>

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
-from flask_login import current_user
+from flask_login import current_user, login_required
 from .shared import db
 from .models import PageView
 from sqlalchemy import func
@@ -37,6 +37,7 @@ def user_section_functions():
 #        return redirect("/login")
 
 @settings.route('/site_stats')
+@login_required
 def site_stats():
     now = datetime.utcnow()
     base_q = PageView.query.filter(PageView.path != '/site_stats')

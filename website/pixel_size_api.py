@@ -1,5 +1,6 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 import io, os
+from . import safe_cache_key
 
 pixel_size_api = Blueprint('pixel_size_api', __name__)
 
@@ -37,9 +38,12 @@ def detect_pixel_size():
     Returns: JSON {'pixel_size_nm': float, 'source': str} or {'error': str}
     """
     f = request.files.get('image')
-    cached_key = request.form.get('cached_image_key', '').strip()
+    _raw_key   = request.form.get('cached_image_key', '').strip()
+    cached_key: str = (safe_cache_key(_raw_key) or '') if _raw_key else ''
 
     if f is None and not cached_key:
+        if _raw_key and not cached_key:
+            return jsonify({'error': 'Invalid image reference. Upload the image again.'}), 400
         return jsonify({'error': 'No image provided'}), 400
 
     try:
@@ -98,5 +102,6 @@ def detect_pixel_size():
 
         return jsonify({'pixel_size_nm': round(pixel_size_nm, 2), 'source': source})
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        current_app.logger.exception('pixel_size detection failed')
+        return jsonify({'error': 'An internal error occurred. Please try again.'}), 500

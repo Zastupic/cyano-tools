@@ -42,8 +42,14 @@ def webhook():
             timeout=60,
         )
 
-        # 3. Clean untracked files (This fixes the 'untracked working tree files' error)
-        subprocess.run(['git', 'clean', '-fd'], cwd=REPO_DIR, check=True)
+        # 3. Clean untracked files — exclude uploads and the SQLite database so
+        #    they are never wiped by a deployment.
+        subprocess.run(
+            ['git', 'clean', '-fd',
+             '--exclude=website/static/uploads/',
+             '--exclude=instance/'],
+            cwd=REPO_DIR, check=True,
+        )
 
         # 4. AUTO-RELOAD PythonAnywhere (Crucial!)
         # Replace 'yourusername' and 'yourdomain_com' with your actual details
@@ -55,8 +61,9 @@ def webhook():
 
     except subprocess.CalledProcessError as e:
         current_app.logger.error('Git command failed: %s', e.stderr)
-        return {'status': 'error', 'detail': str(e.stderr)}, 500
+        return {'status': 'error', 'detail': 'Git command failed — check server logs'}, 500
     except subprocess.TimeoutExpired:
-        return {'status': 'error', 'detail': 'git operation timed out'}, 500
+        current_app.logger.error('Webhook deploy timed out')
+        return {'status': 'error', 'detail': 'Git operation timed out'}, 500
 
     return {'status': 'ok', 'detail': 'Server updated and reloaded'}, 200

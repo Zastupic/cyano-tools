@@ -5,7 +5,13 @@ Used to drive the 'Updated' badge on the home page.
 import urllib.request
 import urllib.parse
 import json
+import os
 from datetime import datetime, timedelta, timezone
+
+# Optional GitHub personal access token (read-only public repos).
+# Set the GITHUB_TOKEN environment variable to raise the rate limit
+# from 60 req/h (unauthenticated) to 5 000 req/h.
+_GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN', '')
 
 GITHUB_REPO    = "Zastupic/cyano-tools"
 BADGE_DAYS     = 21   # "Updated" badge visible this many days after the last commit to the tool file
@@ -62,6 +68,8 @@ def get_updated_tools():
     result  = {}
     cutoff  = now - timedelta(days=BADGE_DAYS)
     headers = {'Accept': 'application/vnd.github.v3+json'}
+    if _GITHUB_TOKEN:
+        headers['Authorization'] = f'Bearer {_GITHUB_TOKEN}'
 
     for key, paths in TOOL_FILES.items():
         latest_dt = None

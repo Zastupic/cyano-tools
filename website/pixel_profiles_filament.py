@@ -74,9 +74,9 @@ def get_pixel_profiles():
                         # empty final profiles
                         Final_profiles = []
                         # get image names
-                        image_name_without_extension = str.lower(os.path.splitext(str(image.filename))[0]) # for single image: image = (request.files['image']) 
-                        image_extension = str.lower(os.path.splitext(str(image.filename))[1])
-                        image_name_full = secure_filename(str(image.filename))
+                        image_name_full              = secure_filename(str(image.filename))
+                        image_name_without_extension = str.lower(os.path.splitext(image_name_full)[0]) or 'image'
+                        image_extension              = str.lower(os.path.splitext(image_name_full)[1])
                         image_name_full_copy = f'original_{image_name_full}'
                         # save image name to variable for HTML
                         dictionary_arrays_all_results['image_name_{0}'.format(image_number)] = image_name_full

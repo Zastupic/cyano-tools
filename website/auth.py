@@ -3,6 +3,7 @@ from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from .shared import db
 from flask_login import login_user, login_required, logout_user, current_user
+from . import limiter
 
 auth = Blueprint('auth', __name__)
 
@@ -12,9 +13,9 @@ def index():
     return render_template("index.html")
 
 @auth.route('/login', methods=['GET', 'POST']) # GET: initiated by typing the http address, POST:initiated by hitting a button
+@limiter.limit("10 per minute; 50 per hour")
 def login():
     if request.method == 'POST':
-        next = request.args.get('next')
         email = request.form.get('email')
         password = str(request.form.get('password'))
 

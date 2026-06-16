@@ -19,8 +19,9 @@ def get_pixel_profiles():
         ####################################
         if 'image' in request.files:
             image = (request.files['image'])
-            image_name = str.lower(os.path.splitext(str(image.filename))[0])
-            image_extension = str.lower(os.path.splitext(str(image.filename))[1])
+            _safe_fname     = secure_filename(str(image.filename))
+            image_name      = str.lower(os.path.splitext(_safe_fname)[0]) or 'image'
+            image_extension = str.lower(os.path.splitext(_safe_fname)[1])
             if image_extension in ALLOWED_EXTENSIONS:
                 upload_folder = UPLOAD_FOLDER
                 if os.path.isdir(upload_folder) == False:

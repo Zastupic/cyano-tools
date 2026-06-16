@@ -6,13 +6,42 @@ from .shared import db
 from os import path
 import hashlib
 from datetime import datetime
-import os, glob, time, threading
+import os, glob, time, threading, re
+# Flask-Limiter: install with  pip install Flask-Limiter
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 DB_NAME = "database.db"
 UPLOAD_FOLDER = 'website/static/uploads/'
 ALLOWED_EXTENSIONS = set(['.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.gif'])
 
 images = UploadSet('images', IMAGES)
+
+# ── Rate limiter (module-level so blueprints can import and decorate with it) ─
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
+
+# ── Cache-key validator — prevents path-traversal via cached_image_key ────────
+_SAFE_KEY_RE = re.compile(
+    r'^[a-zA-Z0-9_-]{1,220}\.(png|jpg|jpeg|tif|tiff|bmp|gif)$',
+    re.IGNORECASE,
+)
+
+def safe_cache_key(key: str) -> 'str | None':
+    """Return key if it is a safe upload-folder filename, else None.
+
+    Rejects anything that contains path separators, '..' sequences, or
+    characters outside the expected UUID/alphanumeric set so that a
+    malicious cached_image_key cannot traverse outside UPLOAD_FOLDER.
+    """
+    key = key.strip()
+    if not _SAFE_KEY_RE.match(key):
+        return None
+    # Belt-and-suspenders: verify the resolved path stays inside the upload dir
+    upload_abs = os.path.abspath(UPLOAD_FOLDER)
+    resolved   = os.path.abspath(os.path.join(UPLOAD_FOLDER, key))
+    if not resolved.startswith(upload_abs + os.sep):
+        return None
+    return key
 
 def _start_metanetx_download():
     """Background thread: download MetaNetX TSV files if not already present."""
@@ -60,17 +89,24 @@ def create_app():
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
     app.config['UPLOADED_IMAGES_DEST'] = UPLOAD_FOLDER # if UploadSet ("invoices", INVOICES) --> app.config[UPLOADED_INVOICES_DEST]
-    app.config['SECRET_KEY'] = 'TotallySecretKey' 
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}' 
+    _secret_key = os.environ.get('SECRET_KEY')
+    if not _secret_key:
+        raise RuntimeError(
+            "SECRET_KEY environment variable is not set. "
+            "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+    app.config['SECRET_KEY'] = _secret_key
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
-    
-    # Konfigurace session cookies
+
+    # Session cookie configuration
     app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB — allow large OJIP batch uploads
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None'    # Použijte 'None' pro třetí strany, 'Strict' pro silné omezení
-    app.config['SESSION_COOKIE_SECURE'] = True       # Pouze pro HTTPS
-    app.config['SESSION_COOKIE_HTTPONLY'] = True     # Zabrání přístupu JavaScriptem
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'    # Lax prevents cross-site POST (CSRF protection)
+    app.config['SESSION_COOKIE_SECURE'] = True       # HTTPS only
+    app.config['SESSION_COOKIE_HTTPONLY'] = True     # Not accessible from JavaScript
 
     db.init_app(app)
+    limiter.init_app(app)
 
     from .views import views
     from .auth import auth

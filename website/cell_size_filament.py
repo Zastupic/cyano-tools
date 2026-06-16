@@ -24,8 +24,9 @@ def analyze_cell_size_filament():
             ##################
             if 'image' in request.files:
                 image = (request.files['image'])
-                image_name = str.lower(os.path.splitext(image.filename)[0]) # type: ignore
-                image_extension = str.lower(os.path.splitext(image.filename)[1]) # type: ignore
+                _safe_fname     = secure_filename(image.filename) # type: ignore
+                image_name      = str.lower(os.path.splitext(_safe_fname)[0]) or 'image'
+                image_extension = str.lower(os.path.splitext(_safe_fname)[1])
                 if image_extension in ALLOWED_EXTENSIONS:
                     upload_folder = UPLOAD_FOLDER
                     if os.path.isdir(upload_folder) == False:
