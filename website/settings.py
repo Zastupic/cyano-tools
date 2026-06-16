@@ -37,7 +37,6 @@ def user_section_functions():
 #        return redirect("/login")
 
 @settings.route('/site_stats')
-@login_required
 def site_stats():
     now = datetime.utcnow()
     base_q = PageView.query.filter(PageView.path != '/site_stats')
