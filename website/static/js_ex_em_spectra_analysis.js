@@ -2692,7 +2692,96 @@ function renderDeconvBatchTable(preset, files) {
     });
 
     html += '</tbody></table></div>';
+
+    // Chart gallery — one thumbnail per fitted sample
+    var fittedFiles = files.filter(function(f) { return results[f] && results[f].xArr; });
+    if (fittedFiles.length > 0) {
+        html += '<div class="mt-3"><p class="mb-1" style="font-size:0.82rem; font-weight:600; color:#555;">Fitted Spectra</p>' +
+            '<div class="row">';
+        fittedFiles.forEach(function(fname, idx) {
+            var res = results[fname];
+            var r2cls = res.r2 >= 0.95 ? 'badge-success' : res.r2 >= 0.90 ? 'badge-warning text-dark' : 'badge-danger';
+            var cid = 'dct-' + preset + '-' + idx;
+            html += '<div class="col-6 col-md-4 col-lg-3 mb-2">' +
+                '<div class="card" style="padding:5px 6px 3px;">' +
+                '<div style="font-size:0.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;" title="' + fname + '">' +
+                fname + ' <span class="badge ' + r2cls + '" style="font-size:0.65rem;">R²\u202f=\u202f' + res.r2.toFixed(3) + '</span></div>' +
+                '<canvas id="' + cid + '" width="260" height="90" style="width:100%; height:72px; display:block;"></canvas>' +
+                '</div></div>';
+        });
+        html += '</div></div>';
+    }
+
     container.innerHTML = html;
+
+    // Draw thumbnails after DOM is updated
+    if (fittedFiles.length > 0) {
+        setTimeout(function() {
+            fittedFiles.forEach(function(fname, idx) {
+                var res = results[fname];
+                var canvas = document.getElementById('dct-' + preset + '-' + idx);
+                if (canvas && res.xArr) drawDeconvThumbnail(canvas, res.xArr, res.yArr, res.fitParams);
+            });
+        }, 0);
+    }
+}
+
+// Draw a lightweight spectrum + gaussian-peak thumbnail onto a canvas element
+function drawDeconvThumbnail(canvas, xArr, yArr, fitParams) {
+    var ctx = canvas.getContext('2d');
+    var W = canvas.offsetWidth || canvas.width;
+    var H = canvas.offsetHeight || canvas.height;
+    canvas.width  = W;
+    canvas.height = H;
+    ctx.clearRect(0, 0, W, H);
+    if (!xArr || !xArr.length || !fitParams) return;
+    var nPeaks = fitParams.length / 3;
+    var xMin = xArr[0], xMax = xArr[xArr.length - 1];
+    var yMax = Math.max.apply(null, yArr) * 1.08 || 1;
+    var padL = 2, padR = 2, padT = 3, padB = 2;
+    var pw = W - padL - padR, ph = H - padT - padB;
+    function cx(x) { return padL + (x - xMin) / (xMax - xMin) * pw; }
+    function cy(y) { return padT + ph - Math.max(0, y / yMax) * ph; }
+    // Individual peak fills
+    for (var i = 0; i < nPeaks; i++) {
+        var A = fitParams[i * 3], mu = fitParams[i * 3 + 1], sig = fitParams[i * 3 + 2];
+        var color = PEAK_COLORS[i % PEAK_COLORS.length];
+        ctx.beginPath();
+        ctx.moveTo(cx(xArr[0]), cy(0));
+        for (var j = 0; j < xArr.length; j++) {
+            var d = (xArr[j] - mu) / sig;
+            ctx.lineTo(cx(xArr[j]), cy(A * Math.exp(-0.5 * d * d)));
+        }
+        ctx.lineTo(cx(xArr[xArr.length - 1]), cy(0));
+        ctx.closePath();
+        ctx.fillStyle = color.replace('rgb(', 'rgba(').replace(')', ',0.28)');
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 0.8;
+        ctx.setLineDash([]);
+        ctx.stroke();
+    }
+    // Total fit — red dashed
+    ctx.setLineDash([3, 2]);
+    ctx.strokeStyle = '#cc2200';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (var j = 0; j < xArr.length; j++) {
+        var yf = gaussianSum(fitParams, xArr[j]);
+        if (j === 0) ctx.moveTo(cx(xArr[j]), cy(yf));
+        else ctx.lineTo(cx(xArr[j]), cy(yf));
+    }
+    ctx.stroke();
+    // Measured — black solid
+    ctx.setLineDash([]);
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (var j = 0; j < yArr.length; j++) {
+        if (j === 0) ctx.moveTo(cx(xArr[j]), cy(yArr[j]));
+        else ctx.lineTo(cx(xArr[j]), cy(yArr[j]));
+    }
+    ctx.stroke();
 }
 
 // Tracks which preset/sample opened the Custom tab via Adjust (null = opened directly)
@@ -3963,7 +4052,13 @@ function _fetchSSE(url, payload, onEvent, onDone, onError, signal) {
         signal: signal
     })
     .then(function(resp) {
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        if (!resp.ok) {
+            return resp.json().then(function(body) {
+                throw new Error(body && body.error ? body.error : 'HTTP ' + resp.status);
+            }, function() {
+                throw new Error('HTTP ' + resp.status);
+            });
+        }
         var reader = resp.body.getReader();
         var decoder = new TextDecoder();
         var buf = '';
@@ -4067,7 +4162,7 @@ function runParafacDiagnostic() {
         },
         function onError(e) {
             _diagReset();
-            if (e.name !== 'AbortError') _parafacShowError('Request failed: ' + e);
+            if (e.name !== 'AbortError') _parafacShowError(e.message || ('Request failed: ' + e));
         },
         _parafacDiagController.signal
     );
@@ -4282,7 +4377,7 @@ function runParafac() {
         },
         function onError(e) {
             _fitReset();
-            if (e.name !== 'AbortError') _parafacShowError('Request failed: ' + e);
+            if (e.name !== 'AbortError') _parafacShowError(e.message || ('Request failed: ' + e));
         },
         _parafacFitController.signal
     );
