@@ -1,16 +1,17 @@
-from flask import Blueprint, render_template, request, flash, redirect, session, json
+from flask import Blueprint, render_template, request, flash, redirect, session, json, jsonify
 from PIL import Image as im
-import os, cv2, base64, io, time, openpyxl
+import os, cv2, base64, io, time, uuid, openpyxl
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from werkzeug.utils import secure_filename
-from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
+from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, limiter
 #from flask_login import current_user
 
 cell_size_round_cells = Blueprint('cell_size_round_cells', __name__)
 
 @cell_size_round_cells.route('/cell_size_round_cells', methods=['GET', 'POST'])
+@limiter.limit("20 per minute; 100 per hour")
 def analyze_cell_size():
 #    if current_user.is_authenticated:
     if request.method == "POST":               
@@ -35,7 +36,15 @@ def analyze_cell_size():
                     filename2 = f'original_{filename}'
                     # saving original image
                     image.save(os.path.join(upload_folder, f'original_{filename}').replace("\\","/"))
+                    _saved_path = os.path.join(upload_folder, f'original_{filename}').replace("\\","/")
+                    if os.path.getsize(_saved_path) > 20 * 1024 * 1024:
+                        os.remove(_saved_path)
+                        return jsonify({'error': 'File too large (max 20 MB)'}), 413
                     img_orig = cv2.imread(f'{upload_folder}/{filename2}')
+                    if img_orig is None:
+                        return jsonify({'error': 'Could not decode image'}), 400
+                    if img_orig.shape[0] * img_orig.shape[1] > 100_000_000:
+                        return jsonify({'error': 'Image dimensions too large (max 100 MP)'}), 413
                     img_orig_copy = img_orig.copy()
                     # resolution of original image (in pixels)
                     y_pixels, x_pixels, channels = img_orig.shape
@@ -165,7 +174,8 @@ def analyze_cell_size():
                     ### Saving results and images to excel ###
                     ##########################################
                     # Save dataframe and images in Excel using xlsxwriter
-                    xlsx_full_path = os.path.join(f'{upload_folder}/{image_name}_cell_sizes.xlsx')
+                    _xlsx_prefix = uuid.uuid4().hex[:8]
+                    xlsx_full_path = os.path.join(f'{upload_folder}/{_xlsx_prefix}_{image_name}_cell_sizes.xlsx')
                     with pd.ExcelWriter(xlsx_full_path, engine='xlsxwriter') as writer:
                         # Create new sheet for images
                         workbook = writer.book
@@ -184,7 +194,7 @@ def analyze_cell_size():
                         worksheet_processed_image.insert_image('A1', 'Annotated Image', {'image_data': download_img_bytes})
                         worksheet_Results.insert_image('E1', 'Histogram Plot', {'image_data': plot_img_bytes})
                     
-                    xlsx_file_path = f'uploads/{image_name}_cell_sizes.xlsx'
+                    xlsx_file_path = f'uploads/{_xlsx_prefix}_{image_name}_cell_sizes.xlsx'
                     
                     ################################################
                     # Deleting files + temporary files from server #

@@ -1,356 +1,12 @@
-/* ============================================================
+﻿/* ============================================================
    js_cell_morphology_filament.js
    Filamentous Cell Morphology UX — all client-side logic.
    Depends on: jQuery (global $), SheetJS (global XLSX), JSZip (global JSZip).
    Web Worker (OpenCV.js) provides live threshold preview + rough contour estimate.
    Full watershed segmentation + morphology runs server-side.
    ============================================================ */
-// ── Inline Web Worker (OpenCV.js) ─────────────────────────────────────────────
-var WORKER_URL = (function () {
-    var src = 'self.Module = {\n' +
-'    onRuntimeInitialized: function () {\n' +
-'        self.postMessage({ type: \'ready\' });\n' +
-'    }\n' +
-'};\n' +
-'try {\n' +
-'    importScripts(\'https://docs.opencv.org/4.8.0/opencv.js\');\n' +
-'} catch (e) {\n' +
-'    self.postMessage({ type: \'error\', message: \'Failed to load OpenCV.js: \' + e.message });\n' +
-'}\n' +
-'function getThreshType(name) {\n' +
-'    switch (name) {\n' +
-'        case \'Triangle + Binary\':  return cv.THRESH_TRIANGLE    | cv.THRESH_BINARY;\n' +
-'        case \'To zero + Triangle\': return cv.THRESH_TOZERO      | cv.THRESH_TRIANGLE;\n' +
-'        case \'Binary + Otsu\':      return cv.THRESH_BINARY      | cv.THRESH_OTSU;\n' +
-'        case \'Binary Inv + Otsu\':  return cv.THRESH_BINARY_INV  | cv.THRESH_OTSU;\n' +
-'        case \'Binary\':             return cv.THRESH_BINARY;\n' +
-'        case \'To zero\':            return cv.THRESH_TOZERO;\n' +
-'        case \'Triangle\':           return cv.THRESH_TRIANGLE;\n' +
-'        case \'Otsu\':               return cv.THRESH_OTSU;\n' +
-'        default:                   return cv.THRESH_BINARY | cv.THRESH_OTSU;\n' +
-'    }\n' +
-'}\n' +
-'var ALL_THRESHOLDS = [\n' +
-'    \'Triangle + Binary\',\n' +
-'    \'Binary + Otsu\',\n' +
-'    \'Binary Inv + Otsu\',\n' +
-'    \'To zero + Triangle\',\n' +
-'    \'Binary\',\n' +
-'    \'To zero\',\n' +
-'    \'Triangle\',\n' +
-'    \'Otsu\',\n' +
-'    \'Adaptive Mean\',\n' +
-'    \'Adaptive Gaussian\'\n' +
-'];\n' +
-'function buildGreyTh(imgBGR, microscopyMode, blurRadius, claheClip, edgeWeight) {\n' +
-'    var kSize = Math.max(1, parseInt(blurRadius) || 3);\n' +
-'    var imgBlur  = new cv.Mat();\n' +
-'    var imgGrey  = new cv.Mat();\n' +
-'    var imgGreyTh = new cv.Mat();\n' +
-'    cv.blur(imgBGR, imgBlur, new cv.Size(kSize, kSize));\n' +
-'    cv.cvtColor(imgBlur, imgGrey, cv.COLOR_BGR2GRAY);\n' +
-'    imgBlur.delete();\n' +
-'    if (claheClip && claheClip > 0) {\n' +
-'        try {\n' +
-'            var clahe = cv.createCLAHE(claheClip, new cv.Size(8, 8));\n' +
-'            var imgClahe = new cv.Mat();\n' +
-'            clahe.apply(imgGrey, imgClahe);\n' +
-'            imgGrey.delete();\n' +
-'            imgGrey = imgClahe;\n' +
-'            clahe.delete();\n' +
-'        } catch (e) {}\n' +
-'    }\n' +
-'    if (microscopyMode === \'brightfield\') {\n' +
-'        var ew = (edgeWeight !== undefined && edgeWeight !== null) ? edgeWeight : 0.5;\n' +
-'        ew = Math.max(0, Math.min(1, ew));\n' +
-'        var imgInv = new cv.Mat();\n' +
-'        cv.bitwise_not(imgGrey, imgInv);\n' +
-'        var sx = new cv.Mat();\n' +
-'        var sy = new cv.Mat();\n' +
-'        cv.Scharr(imgGrey, sx, cv.CV_64F, 1, 0);\n' +
-'        cv.Scharr(imgGrey, sy, cv.CV_64F, 0, 1);\n' +
-'        var sx2 = new cv.Mat(); var sy2 = new cv.Mat();\n' +
-'        cv.multiply(sx, sx, sx2); cv.multiply(sy, sy, sy2);\n' +
-'        var mag64 = new cv.Mat();\n' +
-'        cv.add(sx2, sy2, mag64);\n' +
-'        cv.sqrt(mag64, mag64);\n' +
-'        sx.delete(); sy.delete(); sx2.delete(); sy2.delete();\n' +
-'        var mag8 = new cv.Mat();\n' +
-'        cv.normalize(mag64, mag8, 0, 255, cv.NORM_MINMAX, cv.CV_8U);\n' +
-'        mag64.delete();\n' +
-'        var edgeInv = new cv.Mat();\n' +
-'        cv.bitwise_not(mag8, edgeInv);\n' +
-'        mag8.delete();\n' +
-'        cv.addWeighted(imgInv, 1.0 - ew, edgeInv, ew, 0, imgGreyTh);\n' +
-'        imgInv.delete(); edgeInv.delete();\n' +
-'        imgGrey.delete();\n' +
-'    } else {\n' +
-'        imgGreyTh = imgGrey;\n' +
-'    }\n' +
-'    return imgGreyTh;\n' +
-'}\n' +
-'function applyThreshold(imgGreyTh, threshName, manualThresh, adaptiveBlockSize, adaptiveC) {\n' +
-'    var imgTh = new cv.Mat();\n' +
-'    if (manualThresh && manualThresh > 0) {\n' +
-'        cv.threshold(imgGreyTh, imgTh, manualThresh, 255, cv.THRESH_BINARY);\n' +
-'    } else if (threshName === \'Adaptive Mean\' || threshName === \'Adaptive Gaussian\') {\n' +
-'        var block = Math.max(3, Math.round(adaptiveBlockSize || 51));\n' +
-'        if (block % 2 === 0) block++;\n' +
-'        var cVal  = (adaptiveC !== undefined && adaptiveC !== null) ? Math.round(adaptiveC) : 2;\n' +
-'        var method = (threshName === \'Adaptive Mean\') ? cv.ADAPTIVE_THRESH_MEAN_C : cv.ADAPTIVE_THRESH_GAUSSIAN_C;\n' +
-'        cv.adaptiveThreshold(imgGreyTh, imgTh, 255, method, cv.THRESH_BINARY, block, cVal);\n' +
-'    } else {\n' +
-'        cv.threshold(imgGreyTh, imgTh, 0, 255, getThreshType(threshName));\n' +
-'    }\n' +
-'    return imgTh;\n' +
-'}\n' +
-'function applyMorphology(imgTh, morphIter) {\n' +
-'    if (!morphIter || morphIter === 0) return imgTh;\n' +
-'    var kernel = cv.Mat.ones(3, 3, cv.CV_8U);\n' +
-'    var result = new cv.Mat();\n' +
-'    if (morphIter > 0) {\n' +
-'        cv.dilate(imgTh, result, kernel, new cv.Point(-1, -1), morphIter);\n' +
-'    } else {\n' +
-'        cv.erode(imgTh, result, kernel, new cv.Point(-1, -1), -morphIter);\n' +
-'    }\n' +
-'    kernel.delete();\n' +
-'    imgTh.delete();\n' +
-'    return result;\n' +
-'}\n' +
-'function removeGridLines(imgTh) {\n' +
-'    var w = imgTh.cols, h = imgTh.rows;\n' +
-'    var hW = Math.max(20, Math.round(w / 8));\n' +
-'    var vH = Math.max(20, Math.round(h / 8));\n' +
-'    var hK = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(hW, 1));\n' +
-'    var hL = new cv.Mat();\n' +
-'    cv.morphologyEx(imgTh, hL, cv.MORPH_OPEN, hK);\n' +
-'    hK.delete();\n' +
-'    var vK = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(1, vH));\n' +
-'    var vL = new cv.Mat();\n' +
-'    cv.morphologyEx(imgTh, vL, cv.MORPH_OPEN, vK);\n' +
-'    vK.delete();\n' +
-'    var mask = new cv.Mat();\n' +
-'    cv.add(hL, vL, mask);\n' +
-'    hL.delete(); vL.delete();\n' +
-'    var notMask = new cv.Mat();\n' +
-'    cv.bitwise_not(mask, notMask);\n' +
-'    mask.delete();\n' +
-'    var result = new cv.Mat();\n' +
-'    cv.bitwise_and(imgTh, notMask, result);\n' +
-'    notMask.delete();\n' +
-'    imgTh.delete();\n' +
-'    return result;\n' +
-'}\n' +
-'function buildVizBase(imgBGR, imgGrey, microscopyMode) {\n' +
-'    var imgViz = new cv.Mat();\n' +
-'    if (microscopyMode === \'brightfield\') {\n' +
-'        imgBGR.copyTo(imgViz);\n' +
-'    } else {\n' +
-'        var imgTOZTRI = new cv.Mat();\n' +
-'        cv.threshold(imgGrey, imgTOZTRI, 0, 255, cv.THRESH_TOZERO | cv.THRESH_TRIANGLE);\n' +
-'        cv.cvtColor(imgTOZTRI, imgViz, cv.COLOR_GRAY2BGR);\n' +
-'        imgTOZTRI.delete();\n' +
-'    }\n' +
-'    return imgViz;\n' +
-'}\n' +
-'function matToRGBA(mat) {\n' +
-'    var rgba = new cv.Mat();\n' +
-'    if (mat.channels() === 1) {\n' +
-'        cv.cvtColor(mat, rgba, cv.COLOR_GRAY2RGBA);\n' +
-'    } else if (mat.channels() === 3) {\n' +
-'        cv.cvtColor(mat, rgba, cv.COLOR_BGR2RGBA);\n' +
-'    } else {\n' +
-'        mat.copyTo(rgba);\n' +
-'    }\n' +
-'    var arr = new Uint8ClampedArray(rgba.data);\n' +
-'    rgba.delete();\n' +
-'    return arr;\n' +
-'}\n' +
-'function countCells(imageData, params) {\n' +
-'    var pixelSizeNm    = params.pixelSizeNm;\n' +
-'    var minDiamUm      = params.minDiamUm;\n' +
-'    var maxDiamUm      = params.maxDiamUm || 0;\n' +
-'    var threshName     = params.thresholdName;\n' +
-'    var microscopyMode = params.microscopyMode || \'fluorescence\';\n' +
-'    var roi            = params.roi || null;\n' +
-'    var claheClip         = params.claheClip || 0;\n' +
-'    var morphIter         = params.morphIter || 0;\n' +
-'    var circularityMin    = params.circularityMin || 0;\n' +
-'    var manualThresh      = params.manualThresh || 0;\n' +
-'    var excludeStripes    = params.excludeStripes || false;\n' +
-'    var adaptiveBlockSize = params.adaptiveBlockSize || 51;\n' +
-'    var adaptiveC         = (params.adaptiveC !== undefined) ? params.adaptiveC : 2;\n' +
-'    var src     = cv.matFromImageData(imageData);\n' +
-'    var imgBGR  = new cv.Mat();\n' +
-'    cv.cvtColor(src, imgBGR, cv.COLOR_RGBA2BGR);\n' +
-'    src.delete();\n' +
-'    var imgGreyTh = buildGreyTh(imgBGR, microscopyMode, params.blurRadius, claheClip, params.edgeWeight);\n' +
-'    var imgGrey = new cv.Mat();\n' +
-'    cv.blur(imgBGR, imgGrey, new cv.Size(3, 3));\n' +
-'    var imgGreyForViz = new cv.Mat();\n' +
-'    cv.cvtColor(imgGrey, imgGreyForViz, cv.COLOR_BGR2GRAY);\n' +
-'    imgGrey.delete();\n' +
-'    var imgTh = applyThreshold(imgGreyTh, threshName, manualThresh, adaptiveBlockSize, adaptiveC);\n' +
-'    imgGreyTh.delete();\n' +
-'    imgTh = applyMorphology(imgTh, morphIter);\n' +
-'    if (excludeStripes) {\n' +
-'        imgTh = removeGridLines(imgTh);\n' +
-'    }\n' +
-'    var imgViz  = buildVizBase(imgBGR, imgGreyForViz, microscopyMode);\n' +
-'    imgGreyForViz.delete();\n' +
-'    var h = imgTh.rows, w = imgTh.cols;\n' +
-'    var useRoi = roi && roi.w > 0 && roi.h > 0;\n' +
-'    var roiX1 = 0, roiY1 = 0, roiX2 = w, roiY2 = h;\n' +
-'    if (useRoi) {\n' +
-'        roiX1 = Math.round(roi.x * w);\n' +
-'        roiY1 = Math.round(roi.y * h);\n' +
-'        roiX2 = Math.round((roi.x + roi.w) * w);\n' +
-'        roiY2 = Math.round((roi.y + roi.h) * h);\n' +
-'    }\n' +
-'    var minDiamPx = minDiamUm * 1000 / pixelSizeNm;\n' +
-'    var minArea   = Math.PI * Math.pow(minDiamPx / 2, 2);\n' +
-'    var maxArea   = 0;\n' +
-'    if (maxDiamUm > 0) {\n' +
-'        var maxDiamPx = maxDiamUm * 1000 / pixelSizeNm;\n' +
-'        maxArea = Math.PI * Math.pow(maxDiamPx / 2, 2);\n' +
-'    }\n' +
-'    var circleColor = (microscopyMode === \'brightfield\')\n' +
-'        ? new cv.Scalar(0, 0, 0, 255)\n' +
-'        : new cv.Scalar(0, 255, 0, 255);\n' +
-'    var contours  = new cv.MatVector();\n' +
-'    var hierarchy = new cv.Mat();\n' +
-'    cv.findContours(imgTh, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);\n' +
-'    hierarchy.delete();\n' +
-'    var cellCountNum  = 0;\n' +
-'    var contourData   = [];\n' +
-'    for (var i = 0; i < contours.size(); i++) {\n' +
-'        var cnt  = contours.get(i);\n' +
-'        var area = cv.contourArea(cnt);\n' +
-'        if (area <= minArea) { cnt.delete(); continue; }\n' +
-'        if (maxArea > 0 && area > maxArea) { cnt.delete(); continue; }\n' +
-'        if (circularityMin > 0) {\n' +
-'            var perim = cv.arcLength(cnt, true);\n' +
-'            var circ  = perim > 0 ? (4 * Math.PI * area) / (perim * perim) : 0;\n' +
-'            if (circ < circularityMin) { cnt.delete(); continue; }\n' +
-'        }\n' +
-'        if (params.maxAspectRatio > 0) {\n' +
-'            var brect = cv.boundingRect(cnt);\n' +
-'            var ar = Math.max(brect.width, brect.height) / Math.max(1, Math.min(brect.width, brect.height));\n' +
-'            if (ar > params.maxAspectRatio) { cnt.delete(); continue; }\n' +
-'        }\n' +
-'        var rect   = cv.boundingRect(cnt);\n' +
-'        var xCoord = Math.round(rect.x + rect.width  / 2);\n' +
-'        var yCoord = Math.round(rect.y + rect.height / 2);\n' +
-'        var radius = Math.max(1, Math.round(rect.width / 2));\n' +
-'        if (useRoi && !(xCoord >= roiX1 && xCoord <= roiX2 && yCoord >= roiY1 && yCoord <= roiY2)) {\n' +
-'            cnt.delete();\n' +
-'            continue;\n' +
-'        }\n' +
-'        cellCountNum++;\n' +
-'        var cntVec = new cv.MatVector();\n' +
-'        cntVec.push_back(cnt);\n' +
-'        cv.drawContours(imgViz, cntVec, 0, circleColor, 1);\n' +
-'        cntVec.delete();\n' +
-'        contourData.push([xCoord, yCoord, radius]);\n' +
-'        cnt.delete();\n' +
-'    }\n' +
-'    contours.delete();\n' +
-'    if (useRoi) {\n' +
-'        cv.rectangle(imgViz,\n' +
-'            new cv.Point(roiX1, roiY1),\n' +
-'            new cv.Point(roiX2, roiY2),\n' +
-'            new cv.Scalar(255, 165, 0, 255), 2);\n' +
-'    }\n' +
-'    var countedData = matToRGBA(imgViz);\n' +
-'    var threshData  = matToRGBA(imgTh);\n' +
-'    imgViz.delete();\n' +
-'    imgTh.delete();\n' +
-'    imgBGR.delete();\n' +
-'    return {\n' +
-'        countedData: countedData,\n' +
-'        threshData: threshData,\n' +
-'        width:  w,\n' +
-'        height: h,\n' +
-'        count:  cellCountNum,\n' +
-'        contourData: contourData,\n' +
-'    };\n' +
-'}\n' +
-'function previewThreshold(imageData, params) {\n' +
-'    var claheClip         = params.claheClip || 0;\n' +
-'    var morphIter         = params.morphIter || 0;\n' +
-'    var manualThresh      = params.manualThresh || 0;\n' +
-'    var excludeStripes    = params.excludeStripes || false;\n' +
-'    var adaptiveBlockSize = params.adaptiveBlockSize || 51;\n' +
-'    var adaptiveC         = (params.adaptiveC !== undefined) ? params.adaptiveC : 2;\n' +
-'    var src      = cv.matFromImageData(imageData);\n' +
-'    var imgBGR   = new cv.Mat();\n' +
-'    cv.cvtColor(src, imgBGR, cv.COLOR_RGBA2BGR);\n' +
-'    src.delete();\n' +
-'    var imgGreyTh = buildGreyTh(imgBGR, params.microscopyMode || \'fluorescence\', params.blurRadius, claheClip, params.edgeWeight);\n' +
-'    imgBGR.delete();\n' +
-'    var imgTh = applyThreshold(imgGreyTh, params.thresholdName, manualThresh, adaptiveBlockSize, adaptiveC);\n' +
-'    imgGreyTh.delete();\n' +
-'    imgTh = applyMorphology(imgTh, morphIter);\n' +
-'    if (excludeStripes) {\n' +
-'        imgTh = removeGridLines(imgTh);\n' +
-'    }\n' +
-'    var threshData = matToRGBA(imgTh);\n' +
-'    var w = imgTh.cols, h = imgTh.rows;\n' +
-'    imgTh.delete();\n' +
-'    return { threshData: threshData, width: w, height: h };\n' +
-'}\n' +
-'function multiThreshold(imageData, params) {\n' +
-'    var claheClip         = params.claheClip || 0;\n' +
-'    var adaptiveBlockSize = params.adaptiveBlockSize || 51;\n' +
-'    var adaptiveC         = (params.adaptiveC !== undefined) ? params.adaptiveC : 2;\n' +
-'    var src      = cv.matFromImageData(imageData);\n' +
-'    var imgBGR   = new cv.Mat();\n' +
-'    cv.cvtColor(src, imgBGR, cv.COLOR_RGBA2BGR);\n' +
-'    src.delete();\n' +
-'    var imgGreyTh = buildGreyTh(imgBGR, params.microscopyMode || \'fluorescence\', params.blurRadius, claheClip, params.edgeWeight);\n' +
-'    imgBGR.delete();\n' +
-'    var results = [];\n' +
-'    for (var i = 0; i < ALL_THRESHOLDS.length; i++) {\n' +
-'        var name  = ALL_THRESHOLDS[i];\n' +
-'        var imgTh = applyThreshold(imgGreyTh, name, 0, adaptiveBlockSize, adaptiveC);\n' +
-'        results.push({\n' +
-'            name:       name,\n' +
-'            threshData: matToRGBA(imgTh),\n' +
-'            width:  imgTh.cols,\n' +
-'            height: imgTh.rows\n' +
-'        });\n' +
-'        imgTh.delete();\n' +
-'    }\n' +
-'    imgGreyTh.delete();\n' +
-'    return results;\n' +
-'}\n' +
-'self.onmessage = function (e) {\n' +
-'    var msg = e.data;\n' +
-'    try {\n' +
-'        if (msg.type === \'count\') {\n' +
-'            var r = countCells(msg.data.imageData, msg.data.params);\n' +
-'            self.postMessage({ type: \'result\', result: r },\n' +
-'                [r.countedData.buffer, r.threshData.buffer]);\n' +
-'        } else if (msg.type === \'preview\') {\n' +
-'            var p = previewThreshold(msg.data.imageData, msg.data.params);\n' +
-'            self.postMessage({ type: \'preview\', threshData: p.threshData, width: p.width, height: p.height },\n' +
-'                [p.threshData.buffer]);\n' +
-'        } else if (msg.type === \'multi\') {\n' +
-'            var results = multiThreshold(msg.data.imageData, msg.data.params);\n' +
-'            var transfers = results.map(function (r) { return r.threshData.buffer; });\n' +
-'            self.postMessage({ type: \'multi\', results: results }, transfers);\n' +
-'        }\n' +
-'    } catch (err) {\n' +
-'        self.postMessage({ type: \'error\', message: err.message || String(err) });\n' +
-'    }\n' +
-'};\n';
-    try {
-        return URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
-    } catch (e) {
-        console.warn('Could not create inline worker Blob:', e);
-        return null;
-    }
-})();
+// ── Web Worker — loaded from static file so browser can cache compiled WASM ─────
+var WORKER_URL = '/static/cv_worker.js';
 
 // ── Colormap globals ──────────────────────────────────────────────────────────
 var colorByMetric = 'aspect_ratio';
@@ -891,17 +547,28 @@ var liveEnabled   = true;
 var _tiffPreviewCanvas = null;
 
 (function () {
-    if (!WORKER_URL) return;
+    var btn = document.getElementById('live-preview-btn');
+    if (!WORKER_URL) {
+        if (btn) { btn.innerHTML = '&#128065; Live preview unavailable'; btn.disabled = true; }
+        return;
+    }
     try {
         worker = new Worker(WORKER_URL);
-    } catch (e) { return; }
+    } catch (e) {
+        if (btn) { btn.innerHTML = '&#128065; Live preview unavailable (worker blocked)'; btn.disabled = true; }
+        return;
+    }
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="custom-spinner-sm" style="display:inline-block;width:0.9em;height:0.9em;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px;"></span> Loading OpenCV…';
+    }
 
     worker.onmessage = function (e) {
         var msg = e.data;
         if (msg.type === 'ready') {
             workerReady = true;
-            var btn = document.getElementById('live-preview-btn');
-            if (btn) { btn.disabled = false; }
+            var b = document.getElementById('live-preview-btn');
+            if (b) { b.innerHTML = '&#128065; Live preview: ON'; b.disabled = false; }
             if (previewPending) { previewPending = false; triggerLivePreview(); }
             autoRunCount();
 
@@ -932,6 +599,8 @@ var _tiffPreviewCanvas = null;
     worker.onerror = function (e) {
         workerBusy = false;
         console.warn('Worker load error:', e);
+        var b = document.getElementById('live-preview-btn');
+        if (b) { b.innerHTML = '&#128065; Live preview unavailable (worker error)'; b.disabled = true; }
         setSpinner(false);
     };
 })();

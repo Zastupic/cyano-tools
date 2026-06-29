@@ -220,9 +220,10 @@ def lc_process():
                 bounds=((0, 0, 0), (etrmPot_init, 25, 25)),
                 maxfev=2000
             )
-        except Exception as e:
+        except Exception:
+            import traceback; traceback.print_exc()
             return jsonify({'status': 'error',
-                            'message': f'Curve fitting failed for {fname}: {e}'}), 400
+                            'message': f'Curve fitting failed for {fname}.'}), 400
 
         ETRmPot_fit, _, _ = popt
         fit_etr = model_platt(par_arr, *popt)
@@ -442,5 +443,6 @@ def lc_export():
         _cleanup_old_files(UPLOAD_FOLDER)
         return jsonify({'status': 'success', 'xlsx_path': out_static})
 
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 500

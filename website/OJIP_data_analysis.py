@@ -8,6 +8,7 @@ from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline
 from scipy.ndimage import gaussian_filter1d
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
+from .ojip_interpretation import interpret_ojip, generate_narrative, summarise_findings, compare_ojip_params
 
 OJIP_data_analysis = Blueprint('OJIP_data_analysis', __name__)
 
@@ -298,8 +299,9 @@ def ojip_process():
 
     try:
         x_col, x_unit, y_unit, _, allowed_ext, ranges = _axis_cfg(fluorometer)
-    except ValueError as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
+    except ValueError:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
 
     ms = _ms_factor(fluorometer)
     FJ_time = FJ_time_ms / ms   # native units
@@ -441,8 +443,9 @@ def ojip_process():
     try:
         Raw_recon_DF, D1_DF, D2_DF, Resid_DF, Infl_DF, log_time = _fit_splines(
             OJIP_double_normalized, x_col, kr)
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': f'Spline fitting failed: {e}'}), 400
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'Spline fitting failed.'}), 400
 
     poly_oj = _fit_oj_polynomial(OJIP_double_normalized, x_col, ms)                          # FJ window 0.5–5 ms
     poly_oi = _fit_oj_polynomial(OJIP_double_normalized, x_col, ms, oj_lo_ms=10.0, oj_hi_ms=100.0)  # FI window 10–100 ms
@@ -451,8 +454,9 @@ def ojip_process():
     try:
         FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl = _find_fjfifp(
             D2_DF, x_col, ranges, data_cols, Infl_DF)
-    except ValueError as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
+    except ValueError:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
 
     # ── reference time indexes ───────────────────────────────────────────────
     def tidx(t): return Summary_file[x_col].sub(t).abs().idxmin()
@@ -601,8 +605,9 @@ def ojip_refit():
 
     try:
         x_col, _, _, _, _, ranges = _axis_cfg(fluorometer)
-    except ValueError as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
+    except ValueError:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
 
     ms = _ms_factor(fluorometer)
     time_native = [t / ms for t in time_raw_ms]
@@ -614,8 +619,9 @@ def ojip_refit():
 
     try:
         Raw_recon_DF, D1_DF, D2_DF, Resid_DF, Infl_DF, log_time = _fit_splines(dn_df, x_col, kr)
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': f'Refit failed: {e}'}), 400
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'Refit failed.'}), 400
 
     poly_oj = _fit_oj_polynomial(dn_df, x_col, ms)
     poly_oi = _fit_oj_polynomial(dn_df, x_col, ms, oj_lo_ms=10.0, oj_hi_ms=100.0)
@@ -623,8 +629,9 @@ def ojip_refit():
     try:
         FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl = _find_fjfifp(
             D2_DF, x_col, ranges, file_names, Infl_DF)
-    except ValueError as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
+    except ValueError:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
 
     time_log_ms = (log_time.astype(float) * ms).tolist()
     updated_curves = {}
@@ -799,5 +806,99 @@ def ojip_add_charts():
 
         wb.save(summary_full)
         return jsonify({'status': 'success', 'xlsx_path': summary_static})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 500
+
+
+@OJIP_data_analysis.route('/api/ojip_interpret', methods=['POST'])
+def ojip_interpret():
+    """
+    Biological interpretation of JIP-test parameters for one sample.
+
+    Receives JSON:
+      {
+        "params":          { FVFM, VJ, VI, M0, PSIE0, … F0, FM, FK, FJ, FI, … },
+        "organism_class":  "cyanobacteria"|"green_alga"|"plant"|"unknown"|null,
+        "reference":       { same keys as params } | null,
+        "measurement": {
+          "instrument":           "aquapen"|"fl6000"|"multicolor_pam"|…,
+          "uses_measuring_light": bool,
+          "sp_intensity_umol":    float,
+          "culture_density":      float,
+          "acclimation":          "dark"|"light"|"partial_dark",
+          "dcmu":                 bool,
+          "fj_timing_ms":         float
+        }
+      }
+
+    Returns JSON:
+      {
+        "status":    "success",
+        "findings":  { … structured interpret_ojip output … },
+        "narrative": "Plain-language text (LLM or template fallback)"
+      }
+
+    Only named scalar parameter values are sent to any LLM; raw transient
+    data is never transmitted.
+    """
+    data = request.get_json(force=True) or {}
+    params        = data.get('params', {}) or {}
+    organism_class = data.get('organism_class')
+    reference     = data.get('reference')
+    measurement   = data.get('measurement', {}) or {}
+
+    if not params:
+        return jsonify({'status': 'error', 'message': 'No params supplied.'}), 400
+
+    try:
+        # Sample interpretation (standalone — no reference for its own assessment)
+        sample_findings = interpret_ojip(
+            params,
+            organism_class=organism_class,
+            reference=None,
+            measurement=measurement,
+        )
+        # Comparative interpretation (sample vs reference, when reference is present)
+        comparison_findings = interpret_ojip(
+            params,
+            organism_class=organism_class,
+            reference=reference,
+            measurement=measurement,
+        )
+        # suppress "no reference provided" sentence in standalone cards when comparison IS present
+        _standalone = reference is not None
+        sample_narrative = summarise_findings(sample_findings, suppress_no_ref_caveat=_standalone)
+
+        # Reference interpretation standalone (only when reference is present)
+        ref_findings = None
+        ref_narrative = None
+        comparison_paragraph = None
+        if reference:
+            ref_findings = interpret_ojip(
+                reference,
+                organism_class=organism_class,
+                reference=None,
+                measurement=measurement,
+            )
+            ref_narrative = summarise_findings(ref_findings, suppress_no_ref_caveat=True)
+            comparison_paragraph = compare_ojip_params(params, reference, organism_class)
+
+        narrative = generate_narrative(comparison_findings, params, reference)
+        if narrative is None:
+            narrative = summarise_findings(comparison_findings)
+
+        return jsonify({
+            'status':               'success',
+            'findings':             comparison_findings,   # backward-compat: comparison context embedded
+            'sample_findings':      sample_findings,
+            'sample_narrative':     sample_narrative,
+            'ref_findings':         ref_findings,
+            'ref_narrative':        ref_narrative,
+            'narrative':            narrative,
+            'has_reference':        reference is not None,
+            'comparison_paragraph': comparison_paragraph,
+        })
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 500

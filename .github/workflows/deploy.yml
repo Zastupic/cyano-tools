@@ -13,6 +13,6 @@ jobs:
         env:
           DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
-          curl -s -X POST \
+          curl -s --fail -X POST \
             --header "X-Deploy-Token: $DEPLOY_TOKEN" \
             "https://www.cyano.tools/deploy"

@@ -4,8 +4,8 @@
 // ============================================================
 
 // ── state ─────────────────────────────────────────────────────────────────
-let ojipData  = null;   // full JSON from /api/ojip_process
-let paramData = {};     // {filename: {FVFM, VJ, ...}} — recalculated per sample
+var ojipData  = null;   // full JSON from /api/ojip_process (var so window.ojipData is accessible from other scripts)
+var paramData = {};     // {filename: {FVFM, VJ, ...}} — recalculated per sample (var so window.paramData is accessible)
 let groups    = {};     // {filename: groupName}
 let chartInst = {};     // {chartId: Chart instance}
 let dirtyTabs = new Set(); // tabs whose charts need rendering on first visit

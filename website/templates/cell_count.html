@@ -95,6 +95,7 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
 </div>
 
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count.count_cells') }}" id="cell-count-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <!-- Hidden ROI inputs — filled by the live-preview ROI drawing tool -->
     <input type="hidden" id="roi_x_pct" name="roi_x_pct" value="0">
     <input type="hidden" id="roi_y_pct" name="roi_y_pct" value="0">

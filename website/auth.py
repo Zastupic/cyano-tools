@@ -24,12 +24,12 @@ def login():
         if user:
             if check_password_hash(user.password, password): # compare the hashed password with password of user
                 flash('Logged in successfully!', category='success')
-                login_user(user, remember=True) # keeps the user logged in
+                login_user(user, remember=False)
                 return redirect(url_for('views.home')) # type: ignore
             else:
-                flash('Incorrect password, try again', category='error')
+                flash('Invalid email or password.', category='error')
         else:
-            flash('Email does not exist, please try again or create an account', category='error') 
+            flash('Invalid email or password.', category='error')
     return render_template("login.html", user=current_user)
 
 @auth.route('/logout')
@@ -41,6 +41,7 @@ def logout():
     return redirect (url_for('auth.login'))
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
+@limiter.limit("5 per minute; 20 per hour")
 def sign_up():
     if request.method == 'POST':
         email = str(request.form.get('email'))
@@ -56,6 +57,8 @@ def sign_up():
             flash('Please enter your email.', category='error')
         elif len(email) != 0 and len(email) < 4:
             flash('Email must be longer than 4 characters.', category='error')
+        elif '@' not in email or '.' not in email.split('@')[-1]:
+            flash('Please enter a valid email address.', category='error')
         elif len(name) == 0:
             flash('Please enter your name.', category='error')
         elif len(name) != 0 and len(name) < 2:
@@ -73,7 +76,7 @@ def sign_up():
         elif password1 != password2:
             flash('Passwords don\'t match.', category='error')
         else:
-           new_user = User(email=email, name=name, institution=institution, password=generate_password_hash(password1, method='sha256')) # password encrypted with algorithm 'sha256'
+           new_user = User(email=email, name=name, institution=institution, password=generate_password_hash(password1, method='pbkdf2:sha256:600000'))
            db.session.add(new_user)
            db.session.commit() # update the database
            flash('Account created!', category='success')

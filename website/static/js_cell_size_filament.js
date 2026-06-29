@@ -25,19 +25,43 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // -------------------------------------------- //
-  // --- Fill file names to the selection box --- //
-  // -------------------------------------------- //
-  const fileInput = document.getElementById('image');
-  if (fileInput) {
-    fileInput.addEventListener('change', function () {
-      const fileName = Array.from(this.files).map(file => file.name).join(', ');
-      const label = this.nextElementSibling;
-      if (label) {
-        label.innerText = fileName || 'Select files';
+  // ── Drag-and-drop upload zone ───────────────────────────────────────────────
+  (function () {
+    var zone = document.getElementById('upload-drop-zone');
+    var inp  = document.getElementById('image');
+    var fn   = document.getElementById('drop-zone-filename');
+    if (!zone || !inp) return;
+
+    zone.addEventListener('click', function () { inp.click(); });
+
+    zone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      zone.style.borderColor = '#17a2b8';
+      zone.style.background  = '#f0faff';
+    });
+    zone.addEventListener('dragleave', function () {
+      zone.style.borderColor = '#adb5bd';
+      zone.style.background  = '#fafbfc';
+    });
+    zone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      zone.style.borderColor = '#adb5bd';
+      zone.style.background  = '#fafbfc';
+      if (e.dataTransfer.files.length) {
+        inp.files = e.dataTransfer.files;
+        showFile(e.dataTransfer.files[0]);
       }
     });
-  }
+    inp.addEventListener('change', function () {
+      if (this.files.length) showFile(this.files[0]);
+    });
+
+    function showFile(file) {
+      if (fn) { fn.textContent = file.name; fn.style.display = 'block'; }
+      zone.style.borderColor = '#28a745';
+      zone.style.background  = '#f0fff4';
+    }
+  })();
 
   // --------------------------------------------- //
   // --- DRAWING LINES BY MOUSE CLICK IN CANVAS--- //
@@ -128,10 +152,12 @@ document.addEventListener("DOMContentLoaded", function () {
       img_size_y
     });
 
+    var csrfToken = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
     $.ajax({
       url: "/cell_size_filament/coordinates",
       type: "POST",
       contentType: "application/json",
+      headers: { 'X-CSRFToken': csrfToken },
       data: JSON.stringify(JSON.stringify(coordinates)), // Flask expects double-stringified JSON
       success: function () {
         console.log("Coordinates sent to server.");

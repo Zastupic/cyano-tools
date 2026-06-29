@@ -1280,15 +1280,16 @@
 
             <!-- Group results — auto-shown when ≥2 groups defined -->
             <div id="eem-group-results" style="display:none;">
+                <div class="mb-3">
+                    <button class="btn btn-outline-primary btn-sm mr-2" onclick="exportToStatistics()">
+                        <i class="fa fa-external-link"></i> Export to Statistics page
+                    </button>
+                    <small class="text-muted">Opens the <a href="/statistics">Statistics tool</a> with group parameters pre-loaded for ANOVA / Kruskal-Wallis analysis.</small>
+                </div>
                 <hr>
                 <h6 class="font-weight-bold mb-2">Group statistics (mean ± SD)</h6>
                 <div id="group-table-container" style="overflow-x:auto;" class="mb-3"></div>
                 <div class="row" id="group-charts-container"></div>
-                <div class="mt-2">
-                    <button class="btn btn-sm btn-outline-primary" onclick="exportToStatistics()">
-                        <i class="fa fa-share"></i> Export to Statistics
-                    </button>
-                </div>
             </div>
         </div>
 

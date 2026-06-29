@@ -78,31 +78,32 @@ Extract longitudinal fluorescence intensity profiles along individual filaments 
     <li>Confirm selection and analyze fluorescence intensity across the selected cells</li>
 </ol> 
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('pixel_profiles_filament.get_pixel_profiles') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="pixel_size"><p><b>1. Enter width of the profile line (in pixels)</b></p></label>
-        <input  
+        <input
             type="number"
-            id="line_width" 
+            id="line_width"
             class="form-control"
             name="line_width"
             value="2"
             step="1"
-            min="1" 
-            max="100" 
+            min="1"
+            max="100"
         />
     <br>
     <p class="font-weight-bold">2. Select images (up to 4 files)</p>
-    <div class="custom-file">
-        <input 
-            type="file" 
-            class="custom-file-input" 
-            name="image"
-            id="image"
-            style="width:100%"
-            multiple=""
-            accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif">
-        <label class="custom-file-label" for="customFile">Select files</label>
+    <div id="upload-drop-zone"
+         style="border:2px dashed #adb5bd; border-radius:8px; padding:1.5em 1em; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; background:#fafbfc; margin-bottom:0.5em;">
+        <div style="font-size:2em; line-height:1;">&#128247;</div>
+        <p style="margin:0.3em 0 0; color:#495057; font-size:0.95em;">
+            Drop your image(s) here, or <strong>click to browse</strong>
+        </p>
+        <p style="margin:0.2em 0 0; font-size:0.78em; color:#adb5bd;">PNG · JPG · TIFF · BMP · GIF &nbsp;·&nbsp; up to 4 files</p>
+        <p id="drop-zone-filename" style="margin:0.5em 0 0; font-weight:600; font-size:0.9em; color:#17a2b8; display:none;"></p>
+        <input type="file" name="image" id="image"
+               multiple accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif" style="display:none;">
     </div>
-    <br><br>
+    <br>
     <button id="show-image-button" type="submit" class="btn btn-primary">Upload images and select individual cells</button>
     <a href="{{url_for('static', filename='files/cells_filamentous_example.rar')}}" download="example_image">
         <button type="button" class="btn btn-outline-primary">Download example images</button>
@@ -254,7 +255,7 @@ Extract longitudinal fluorescence intensity profiles along individual filaments 
 <hr style="margin-top:2em;">
 <h5>See also — other filament analysis tools</h5>
 <ul>
-    <li><a href="/pixel_profiles_round_cells">Pigment profiles — round cells</a>: cross-sectional fluorescence profiles for unicellular algae and cyanobacteria</li>
+    <li><a href="/pixel_profiles_round_cells">Pigment profiles — round cells</a></li>
     <li><a href="/cell_count_filament">Cell counting — filaments</a>: automated segmentation and cell enumeration in filamentous strains</li>
     <li><a href="/cell_size_filament">Cell size — filaments</a>: measure individual cell length and width along trichomes</li>
     <li><a href="/cell_morphology_filament">Cell morphology — filaments</a>: automated aspect ratio, circularity, and eccentricity analysis</li>

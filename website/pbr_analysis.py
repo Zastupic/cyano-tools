@@ -269,9 +269,10 @@ def parse_file():
 
     try:
         sheets = parse_ods(filepath)
-    except Exception as e:
+    except Exception:
+        import traceback; traceback.print_exc()
         _safe_remove(filepath)
-        return jsonify({'error': f'Failed to parse file: {str(e)}'}), 400
+        return jsonify({'error': 'Failed to parse file.'}), 400
 
     device  = detect_device(sheets)
     info    = parse_info(sheets)
@@ -314,6 +315,12 @@ def parse_file():
         'all_data': all_data,
         'anchors':  anchors,
     }
+    if len(_pbr_cache) > 100:
+        oldest_key = next(iter(_pbr_cache))
+        del _pbr_cache[oldest_key]
+
+    # Clean up the uploaded file after successful parsing
+    _safe_remove(filepath)
 
     return jsonify({
         'cache_key':     key,
@@ -404,8 +411,9 @@ def export_file():
             if events:
                 pd.DataFrame(events).to_excel(writer, sheet_name='Events', index=False)
         out.seek(0)
-    except Exception as e:
-        return jsonify({'error': f'Export failed: {str(e)}'}), 500
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': 'An internal server error occurred.'}), 500
 
     from datetime import datetime
     fname = f'PBR_{cached["device"]}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'

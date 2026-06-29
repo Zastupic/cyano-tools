@@ -96,6 +96,7 @@ Specialized cell counting tool for filamentous cyanobacteria and algae. Automati
 </div>
 
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count_filament.count_filament_cells') }}" id="cell-count-filament-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <!-- Hidden ROI inputs -->
     <input type="hidden" id="roi_x_pct" name="roi_x_pct" value="0">
     <input type="hidden" id="roi_y_pct" name="roi_y_pct" value="0">

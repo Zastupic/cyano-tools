@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash
+from flask import Blueprint, render_template, request, flash, jsonify
 import math, os, cv2, base64, io, uuid, glob, time
 from typing import Any
 import numpy as np
@@ -8,7 +8,7 @@ import matplotlib.colors as mcolors
 import matplotlib.cm as mcm
 import pandas as pd
 from werkzeug.utils import secure_filename
-from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, safe_cache_key
+from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, safe_cache_key, limiter
 
 h_maxima: Any = None
 skeletonize: Any = None
@@ -80,6 +80,7 @@ def _encode_grey(img_grey_arr):
 
 
 @cell_morphology_filament.route('/cell_morphology_filament', methods=['GET', 'POST'])
+@limiter.limit("20 per minute; 100 per hour")
 def analyze_cell_morphology_filament():
     if request.method == 'POST':
         _raw_key = request.form.get('cached_image_key', '').strip()
@@ -96,7 +97,7 @@ def analyze_cell_morphology_filament():
             minimum_area = math.pi * ((minimal_expected_size * 1000 / pixel_size_nm) / 2) ** 2
             min_diameter_px = minimal_expected_size / (pixel_size_nm / 1000)
 
-            number_of_iterations    = int(request.form.get('iterations_range') or 4)
+            number_of_iterations    = min(int(request.form.get('iterations_range') or 4), 30)
             factor_multiplying      = float(request.form.get('factor_1_multiplication_range') or 1.4)
             factor_distance_centers = int(request.form.get('factor_2_distance_range') or 28)
             bilateral_filter        = request.form.get('bilateral_filter', '') == '1'
@@ -116,10 +117,10 @@ def analyze_cell_morphology_filament():
             roi_h_pct = float(request.form.get('roi_h_pct') or 0)
             use_roi   = roi_w_pct > 0 and roi_h_pct > 0
 
-            blur_radius        = max(1, int(request.form.get('blur_radius') or 3))
+            blur_radius        = min(max(int(request.form.get('blur_radius') or 3), 1), 100)
             max_diam_um        = float(request.form.get('max_diam_range') or 0)
             clahe_clip         = float(request.form.get('clahe_clip') or 0)
-            morph_iter         = int(request.form.get('morph_iter') or 0)
+            morph_iter         = min(int(request.form.get('morph_iter') or 0), 20)
             circularity_min    = float(request.form.get('circularity_min') or 0)
             manual_thresh      = int(request.form.get('manual_thresh') or 0)
             exclude_stripes    = request.form.get('exclude_stripes') == '1'
@@ -145,8 +146,14 @@ def analyze_cell_morphology_filament():
                 if image_extension in ALLOWED_EXTENSIONS:
                     if _new_image is not None:
                         img_bytes = _new_image.read()
+                        if len(img_bytes) > 20 * 1024 * 1024:
+                            return jsonify({'error': 'File too large (max 20 MB)'}), 413
                         nparr = np.frombuffer(img_bytes, np.uint8)
                         img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        if img_orig is None:
+                            return jsonify({'error': 'Could not decode image'}), 400
+                        if img_orig.shape[0] * img_orig.shape[1] > 100_000_000:
+                            return jsonify({'error': 'Image dimensions too large (max 100 MP)'}), 413
                         cached_image_key = 'morphfil_cache_' + uuid.uuid4().hex + image_extension
                         try:
                             for _old in glob.glob(os.path.join(UPLOAD_FOLDER, 'morphfil_cache_*')):
@@ -161,8 +168,16 @@ def analyze_cell_morphology_filament():
                         if not os.path.exists(_cache_path):
                             flash('Cached image not found. Please upload again.', category='error')
                             return render_template('cell_morphology_filament.html', image_name='')
-                        nparr = np.frombuffer(open(_cache_path, 'rb').read(), np.uint8)
+                        with open(_cache_path, 'rb') as _f:
+                            _img_bytes = _f.read()
+                        if len(_img_bytes) > 20 * 1024 * 1024:
+                            return jsonify({'error': 'File too large (max 20 MB)'}), 413
+                        nparr = np.frombuffer(_img_bytes, np.uint8)
                         img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        if img_orig is None:
+                            return jsonify({'error': 'Could not decode image'}), 400
+                        if img_orig.shape[0] * img_orig.shape[1] > 100_000_000:
+                            return jsonify({'error': 'Image dimensions too large (max 100 MP)'}), 413
 
                     # ── Preprocessing ──────────────────────────────────────
                     img_grey_raw = cv2.cvtColor(img_orig, cv2.COLOR_BGR2GRAY)

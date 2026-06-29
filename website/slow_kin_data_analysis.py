@@ -748,10 +748,12 @@ def slow_kin_process():
         else:
             return jsonify({'status': 'error', 'message': f'Unknown fluorometer: {fluorometer}'}), 400
 
-    except ValueError as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': f'Processing error: {e}'}), 500
+    except ValueError:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 500
 
     _cleanup_old_files(upload_folder)
 
@@ -817,8 +819,9 @@ def slow_kin_st_refit():
         return jsonify({'status': 'success',
                         'state_transitions': st_result,
                         'st_phases_meta': st_phases_meta})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 500
 
 
 @slow_kin_data_analysis.route('/api/slow_kin_export', methods=['POST'])
@@ -993,5 +996,6 @@ def slow_kin_export():
             download_name=f'{file_stem}_results.xlsx',
         )
 
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 500

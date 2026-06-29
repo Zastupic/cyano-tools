@@ -7,6 +7,7 @@ import urllib.request
 import urllib.parse
 from flask import Blueprint, render_template, jsonify, request
 from . import metanetx_lookup
+from . import limiter
 
 # ── External gene annotation cache ───────────────────────────────────────────
 # Populated in a background thread on first /api/metabolic/genes request.
@@ -773,6 +774,7 @@ def kegg_url():
 # ── iPath3 global overview ────────────────────────────────────────────────────
 
 @metabolic_bp.route('/api/metabolic/ipath3', methods=['POST'])
+@limiter.limit("30 per minute")
 def ipath3():
     data   = request.json or {}
     fluxes = data.get('fluxes', {})
@@ -821,9 +823,14 @@ def ipath3():
         )
         with urllib.request.urlopen(req, timeout=20) as resp:
             svg = resp.read().decode('utf-8')
+        import re as _re
+        # Strip script tags and event handlers from SVG for XSS prevention
+        svg = _re.sub(r'<script[^>]*>.*?</script>', '', svg, flags=_re.DOTALL | _re.IGNORECASE)
+        svg = _re.sub(r'\son\w+\s*=\s*(["\'])[^"\']*\1', '', svg, flags=_re.IGNORECASE)
         return jsonify({'svg': svg, 'reactions_colored': len(lines)})
-    except Exception as e:
-        return jsonify({'error': f'iPath3 request failed: {e}'}), 502
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': 'An internal server error occurred.'}), 502
 
 
 # ── Light sweep ────────────────────────────────────────────────────────────────
@@ -945,7 +952,7 @@ def energetics():
     except Exception:
         tb = traceback.format_exc()
         print(f'[energetics] unhandled exception:\n{tb}')
-        return jsonify({'error': f'Server error: {tb.splitlines()[-1]}'}), 500
+        return jsonify({'error': 'An internal server error occurred.'}), 500
 
 
 # Fallback subsystem names derived from the model's internal old_id prefix
@@ -1222,8 +1229,9 @@ def _energetics_inner(data, constrained, target_rxn, target_met,
             if do_pfba:
                 try:
                     sol = cobra_pfba(m)
-                except Exception as exc:
-                    results[label] = {'error': f'pFBA failed: {exc}'}
+                except Exception:
+                    import traceback; traceback.print_exc()
+                    results[label] = {'error': 'pFBA solver failed.'}
                     continue
             else:
                 sol = m.optimize()
@@ -1292,6 +1300,7 @@ def met_reactions(met_id):
 
 
 @metabolic_bp.route('/api/metabolic/kegg_search')
+@limiter.limit("30 per minute")
 def kegg_reaction_search():
     """Proxy KEGG reaction full-text search to avoid browser CORS restrictions."""
     query = request.args.get('q', '').strip()
@@ -1310,8 +1319,9 @@ def kegg_reaction_search():
                 name = parts[1]
                 results.append({'id': rid, 'name': name})
         return jsonify(results[:20])
-    except Exception as exc:
-        return jsonify({'error': str(exc)}), 503
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': 'An internal server error occurred.'}), 503
 
 
 @metabolic_bp.route('/api/metabolic/kegg_reaction', methods=['POST'])

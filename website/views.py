@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, Response, current_app
 from flask_login import login_required, current_user
 from .github_updates import get_updated_tools, get_new_tools
+from . import csrf, limiter
 import subprocess
 import os
 import hmac
@@ -28,6 +29,8 @@ def home():
     return render_template("home.html", user=current_user, updated_tools=updated_tools, new_tools=new_tools)
 
 @views.route('/deploy', methods=['POST'])
+@csrf.exempt
+@limiter.limit("5 per minute")
 def deploy():
     token    = request.headers.get('X-Deploy-Token', '')
     expected = os.environ.get('DEPLOY_TOKEN', '')

@@ -215,6 +215,11 @@ def main():
     for idx, (pid, pname) in enumerate(pathways, 1):
         print(f'\n[{idx}/{total}] {pid}: {pname}')
 
+        # Validate pathway ID to prevent path traversal via malformed KEGG response
+        if not re.match(r'^syn\d{5}$', pid):
+            print(f'  SKIPPED: invalid pathway ID format: {pid!r}')
+            continue
+
         # Download PNG
         png_path = os.path.join(OUT_DIR, f'{pid}.png')
         if os.path.isfile(png_path):

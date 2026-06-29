@@ -1,13 +1,14 @@
-from flask import Blueprint, render_template, request, flash
+from flask import Blueprint, render_template, request, flash, jsonify
 import math, os, cv2, base64, io, uuid, glob, time
 import numpy as np
 from PIL import Image as im
 from werkzeug.utils import secure_filename
-from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, safe_cache_key
+from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, safe_cache_key, limiter
 
 cell_count = Blueprint('cell_count', __name__)
 
 @cell_count.route('/cell_count', methods=['GET', 'POST'])
+@limiter.limit("20 per minute; 100 per hour")
 def count_cells():
     if request.method == "POST":
         _raw_key = request.form.get('cached_image_key', '').strip()
@@ -37,12 +38,12 @@ def count_cells():
             use_roi = roi_w_pct > 0 and roi_h_pct > 0
 
             # Pre-blur radius (cv2.blur is a box filter — any positive integer is valid)
-            blur_radius = max(1, int(request.form.get('blur_radius') or 3))
+            blur_radius = min(max(int(request.form.get('blur_radius') or 3), 1), 100)
 
             # New analysis parameters
             max_diam_um     = float(request.form.get('max_diam_range') or 0)
             clahe_clip      = float(request.form.get('clahe_clip') or 0)
-            morph_iter      = int(request.form.get('morph_iter') or 0)
+            morph_iter      = min(int(request.form.get('morph_iter') or 0), 20)
             circularity_min = float(request.form.get('circularity_min') or 0)
             manual_thresh   = int(request.form.get('manual_thresh') or 0)
             exclude_stripes = request.form.get('exclude_stripes') == '1'
@@ -69,8 +70,14 @@ def count_cells():
                 if image_extension in ALLOWED_EXTENSIONS:
                     if _new_image is not None:
                         img_bytes = _new_image.read()
+                        if len(img_bytes) > 20 * 1024 * 1024:
+                            return jsonify({'error': 'File too large (max 20 MB)'}), 413
                         nparr = np.frombuffer(img_bytes, np.uint8)
                         img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        if img_orig is None:
+                            return jsonify({'error': 'Could not decode image'}), 400
+                        if img_orig.shape[0] * img_orig.shape[1] > 100_000_000:
+                            return jsonify({'error': 'Image dimensions too large (max 100 MP)'}), 413
                         # Cache to disk so the user can re-run without re-uploading
                         cached_image_key = 'round_cache_' + uuid.uuid4().hex + image_extension
                         try:
@@ -86,8 +93,15 @@ def count_cells():
                         if not os.path.exists(_cache_path):
                             flash('Cached image not found. Please upload again.', category='error')
                             return render_template("cell_count.html")
-                        nparr = np.frombuffer(open(_cache_path, 'rb').read(), np.uint8)
+                        _cache_bytes = open(_cache_path, 'rb').read()
+                        if len(_cache_bytes) > 20 * 1024 * 1024:
+                            return jsonify({'error': 'File too large (max 20 MB)'}), 413
+                        nparr = np.frombuffer(_cache_bytes, np.uint8)
                         img_orig = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        if img_orig is None:
+                            return jsonify({'error': 'Could not decode image'}), 400
+                        if img_orig.shape[0] * img_orig.shape[1] > 100_000_000:
+                            return jsonify({'error': 'Image dimensions too large (max 100 MP)'}), 413
 
                     img_blur = cv2.blur(img_orig, (blur_radius, blur_radius))
                     img_grey = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY)

@@ -966,21 +966,100 @@ const PBR = (() => {
     // ── Export ────────────────────────────────────────────────────────────
     function exportData() {
         if (!_state.cacheKey) { alert('No data loaded.'); return; }
+        _showError(null);  // clear any stale error from a previous attempt
 
-        // Build corrections map from current UI
+        // Build corrections map from current UI  { col: { device, type } }
         const corrections = {};
         _state.headers.forEach(col => {
             const odType = _getODType(col);
             if (!odType) return;
-            const strain = _getStrainForCol(col);
-            corrections[col] = { device: strain, signal_type: `od-${odType}` };
+            corrections[col] = { device: _getStrainForCol(col), type: odType };
+        });
+
+        // ── Client-side XLSX path (all rows already in memory) ──────────────
+        // Used whenever _state.data is the full dataset (default resolution).
+        // Avoids a slow server round-trip + openpyxl write.
+        if (typeof XLSX !== 'undefined' && _state.data.length >= _state.totalRows) {
+            _setLoading(true);
+            // Defer heavy work by one tick so the overlay renders first
+            setTimeout(() => {
+                try {
+                    // ── Sheet 1 "Data": all raw columns, no corrected ──────────
+                    const rawAoa = [_state.headers];
+                    for (const row of _state.data) {
+                        rawAoa.push(_state.headers.map(h => row[h] ?? null));
+                    }
+
+                    // ── Sheet 2 "OD data": time + raw OD + corrected OD ────────
+                    // Corrected column sits immediately after each raw OD column.
+                    const odHdrs = ['time'];
+                    for (const h of _state.headers) {
+                        if (corrections[h]) {
+                            odHdrs.push(h);
+                            odHdrs.push(h + '_corrected [' + corrections[h].device + ']');
+                        }
+                    }
+
+                    const odAoa = [odHdrs];
+                    for (const row of _state.data) {
+                        const vals = [row['time'] ?? null];
+                        for (const h of _state.headers) {
+                            if (!corrections[h]) continue;
+                            vals.push(row[h] ?? null);
+                            const od = parseFloat(row[h]);
+                            let corr = null;
+                            if (!isNaN(od)) {
+                                const { device, type } = corrections[h];
+                                if (type === '720') {
+                                    if (od <= 0.4) { corr = od; }
+                                    else { const c = OD_CORR[device]; corr = c ? c['720'](od) : od; }
+                                } else {
+                                    if (od < 0.6) { corr = od; }
+                                    else { const fn = OD680_CORR[device]; corr = fn ? fn(od) : od; }
+                                }
+                            }
+                            vals.push(corr);
+                        }
+                        odAoa.push(vals);
+                    }
+
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rawAoa), 'Data');
+                    if (odHdrs.length > 1) {  // only add OD sheet if file has OD columns
+                        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(odAoa), 'OD data');
+                    }
+
+                    if (_state.events && _state.events.length > 0) {
+                        const evKeys = Object.keys(_state.events[0]);
+                        const evAoa  = [
+                            evKeys,
+                            ..._state.events.map(e => evKeys.map(k => e[k] ?? null)),
+                        ];
+                        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(evAoa), 'Events');
+                    }
+
+                    XLSX.writeFile(wb, `PBR_${_state.device || 'analysis'}_data.xlsx`);
+                    _showExportSuccess('XLSX saved — check your Downloads folder.');
+                } catch (e) {
+                    _showError('Export failed: ' + e.message);
+                } finally {
+                    _setLoading(false);
+                }
+            }, 50);
+            return;
+        }
+
+        // ── Server-side fallback (display is downsampled; need full data) ───
+        const serverCorr = {};
+        Object.entries(corrections).forEach(([col, info]) => {
+            serverCorr[col] = { device: info.device, signal_type: `od-${info.type}` };
         });
 
         _setLoading(true);
         fetch('/pbr_analysis/export', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ cache_key: _state.cacheKey, corrections }),
+            body:    JSON.stringify({ cache_key: _state.cacheKey, corrections: serverCorr }),
         })
         .then(r => {
             _setLoading(false);
@@ -991,13 +1070,13 @@ const PBR = (() => {
             const url = URL.createObjectURL(blob);
             const a   = document.createElement('a');
             a.href    = url;
-            a.download = `PBR_${_state.device}_data.xlsx`;
+            a.download = `PBR_${_state.device || 'analysis'}_data.xlsx`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         })
-        .catch(err => _showError('Export failed: ' + err.message));
+        .catch(err => { _setLoading(false); _showError('Export failed: ' + err.message); });
     }
 
     // ── Combined export (raw data + corrected OD + growth analysis) ──────
@@ -1114,6 +1193,20 @@ const PBR = (() => {
         if (!el) return;
         if (msg) { el.textContent = msg; el.style.display = ''; }
         else        { el.style.display = 'none'; }
+    }
+
+    let _successTimer = null;
+    function _showExportSuccess(msg) {
+        const el = document.getElementById('pbr-error-banner');
+        if (!el) return;
+        el.className = 'alert alert-success';
+        el.textContent = msg;
+        el.style.display = '';
+        clearTimeout(_successTimer);
+        _successTimer = setTimeout(() => {
+            el.style.display = 'none';
+            el.className = 'alert alert-danger';
+        }, 4000);
     }
 
     // ── Init ──────────────────────────────────────────────────────────────

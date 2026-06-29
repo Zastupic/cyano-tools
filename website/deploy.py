@@ -3,6 +3,7 @@ import hmac
 import os
 import subprocess
 from flask import Blueprint, abort, current_app, request
+from . import csrf, limiter
 
 deploy = Blueprint('deploy', __name__)
 
@@ -21,6 +22,8 @@ def _verify_signature(payload: bytes, signature_header: str) -> bool:
 
 
 @deploy.route('/webhook-deploy', methods=['POST'])
+@csrf.exempt
+@limiter.limit("5 per minute")
 def webhook():
     payload = request.get_data()
     signature = request.headers.get('X-Hub-Signature-256', '')
@@ -51,9 +54,8 @@ def webhook():
             cwd=REPO_DIR, check=True,
         )
 
-        # 4. AUTO-RELOAD PythonAnywhere (Crucial!)
-        # Replace 'yourusername' and 'yourdomain_com' with your actual details
-        wsgi_file = "/var/www/yourusername_pythonanywhere_com_wsgi.py"
+        # 4. AUTO-RELOAD PythonAnywhere — set WSGI_FILE_PATH env var to the correct path
+        wsgi_file = os.environ.get('WSGI_FILE_PATH', '/var/www/www_cyano_tools_wsgi.py')
         if os.path.exists(wsgi_file):
             os.utime(wsgi_file, None)
 

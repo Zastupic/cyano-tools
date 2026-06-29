@@ -303,7 +303,7 @@
       </div>
     </div>
 
-    <!-- Step 3: Select files -->
+    <!-- Step 4: Select files -->
     <label><span class="badge badge-primary mr-1">3</span> Select files (up to 100; .csv for MULTI-COLOR-PAM, .txt for AquaPen/FluorPen/FL6000)</label>
     <div id="drop-zone" class="border rounded p-4 text-center mb-2"
          style="border-style:dashed !important; cursor:pointer; background:#f8f9fa; transition:background 0.2s;">
@@ -355,6 +355,11 @@
     <li class="nav-item">
       <a class="nav-link" id="tab-diag-link" data-toggle="tab" href="#tab-diag" role="tab">
         <i class="fa fa-stethoscope"></i> Diagnostics
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-interp-link" data-toggle="tab" href="#tab-interp" role="tab">
+        <i class="fa fa-flask"></i> Interpretation
       </a>
     </li>
   </ul>
@@ -1108,6 +1113,349 @@
       </div>
     </div>
 
+    <!-- ── Interpretation tab ─────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-interp" role="tabpanel">
+
+      <!-- Controls row -->
+      <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
+        <div class="d-flex align-items-center mr-3">
+          <label class="mb-0 mr-2 font-weight-bold" for="interp-sample-sel">Sample:</label>
+          <select id="interp-sample-sel" class="form-control form-control-sm" style="min-width:180px;"></select>
+        </div>
+        <div class="d-flex align-items-center mr-3">
+          <label class="mb-0 mr-2" for="interp-reference-sel">vs. Reference:</label>
+          <select id="interp-reference-sel" class="form-control form-control-sm" style="min-width:180px;">
+            <option value="">&mdash; none &mdash;</option>
+          </select>
+        </div>
+        <button id="interp-run-btn" class="btn btn-primary btn-sm">
+          <span id="interp-spinner" class="spinner-border spinner-border-sm mr-1" style="display:none;" role="status"></span>
+          <i class="fa fa-flask mr-1"></i> Interpret
+        </button>
+        <div class="d-flex align-items-center mr-3">
+          <label class="mb-0 mr-2" for="ojip-organism">Organism:</label>
+          <select id="ojip-organism" class="form-control form-control-sm" style="min-width:200px;">
+            <option value="unknown">Unknown / not specified</option>
+            <option value="cyanobacteria">Cyanobacteria</option>
+            <option value="green_alga">Green alga (Chlorophyta)</option>
+            <option value="plant">Vascular plant</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Interpretation output area -->
+      <div id="interp-output" style="display:none;">
+
+        <!-- Validity banner -->
+        <div id="interp-validity-banner" class="alert mb-3 py-2" role="alert" style="display:none;"></div>
+
+        <!-- Cyanobacteria banner -->
+        <div id="interp-cyano-banner" class="alert alert-warning mb-3 py-2" role="alert" style="display:none;">
+          <strong><i class="fa fa-exclamation-triangle mr-1"></i>Cyanobacteria detected.</strong>
+          Apparent Fv/Fm = (F<sub>M</sub> − F<sub>in</sub>)/F<sub>M</sub> is NOT the true PSII quantum yield in cyanobacteria — phycobilisome and PSI fluorescence inflate F<sub>in</sub>. Standard JIP-test stress thresholds (calibrated for vascular plants) do not apply.
+        </div>
+
+        <!-- No-reference notice -->
+        <div id="interp-noref-banner" class="alert alert-info mb-3 py-2" role="alert" style="display:none;">
+          <strong><i class="fa fa-info-circle mr-1"></i>No reference/control sample.</strong>
+          JIP-test parameters are comparative (Tsimilli-Michael 2020). Without a reference, findings are indicative — framed as "consistent with…" rather than diagnostic.
+        </div>
+
+        <!-- Narrative (prominent, standalone only) -->
+        <div id="interp-narrative-card" class="card mb-3" style="border-left: 4px solid #004085;">
+          <div class="card-body py-3">
+            <h6 class="font-weight-bold text-primary mb-2"><i class="fa fa-align-left mr-1"></i>Interpretation</h6>
+            <p id="interp-narrative" class="mb-0" style="font-size:0.97em; line-height:1.65;"></p>
+          </div>
+        </div>
+
+        <!-- Reference sample summary (shown only when reference is selected) -->
+        <div id="interp-ref-section" style="display:none;" class="mb-3">
+          <div class="card" style="border-left: 4px solid #6c757d;">
+            <div class="card-header py-2 d-flex align-items-center justify-content-between"
+                 style="cursor:pointer;" data-toggle="collapse" data-target="#interp-ref-body">
+              <span class="font-weight-bold text-secondary">
+                <i class="fa fa-arrow-right mr-1"></i>Reference: <span id="interp-ref-label" class="text-dark"></span>
+              </span>
+              <i class="fa fa-chevron-down text-muted" style="font-size:0.8rem;"></i>
+            </div>
+            <div id="interp-ref-body" class="collapse">
+              <div class="card-body py-2">
+                <p id="interp-ref-narrative" class="mb-2 text-muted" style="font-size:0.9em;"></p>
+                <table class="table table-sm table-bordered mb-0" style="font-size:0.88em;">
+                  <thead class="thead-light">
+                    <tr><th style="width:40%">Finding</th><th>Status</th><th>Key value</th></tr>
+                  </thead>
+                  <tbody id="interp-ref-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sample compact summary card (shown when reference is present — mirrors ref card) -->
+        <div id="interp-sample-section" style="display:none;" class="mb-3">
+          <div class="card" style="border-left: 4px solid #004085;">
+            <div class="card-header py-2 d-flex align-items-center justify-content-between"
+                 style="cursor:pointer;" data-toggle="collapse" data-target="#interp-sample-body">
+              <span class="font-weight-bold text-primary">
+                <i class="fa fa-flask mr-1"></i>Sample: <span id="interp-sample-label" class="text-dark"></span>
+              </span>
+              <i class="fa fa-chevron-down text-muted" style="font-size:0.8rem;"></i>
+            </div>
+            <div id="interp-sample-body" class="collapse">
+              <div class="card-body py-2">
+                <p id="interp-sample-narrative-card" class="mb-2 text-muted" style="font-size:0.9em;"></p>
+                <table class="table table-sm table-bordered mb-0" style="font-size:0.88em;">
+                  <thead class="thead-light">
+                    <tr><th style="width:40%">Finding</th><th>Status</th><th>Key value</th></tr>
+                  </thead>
+                  <tbody id="interp-sample-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparison narrative (shown when reference is present; replaces narrative card above) -->
+        <div id="interp-comparison-narrative-section" style="display:none; border-left:4px solid #155724;" class="card mb-3">
+          <div class="card-body py-3">
+            <h6 class="font-weight-bold text-success mb-2"><i class="fa fa-balance-scale mr-1"></i>Comparison summary</h6>
+            <p id="interp-comparison-narrative" class="mb-0" style="font-size:0.97em; line-height:1.65;"></p>
+          </div>
+        </div>
+
+        <!-- Parameter comparison delta table (shown when reference is present) -->
+        <div id="interp-delta-section" style="display:none;" class="card mb-3">
+          <div class="card-header py-2 d-flex align-items-center justify-content-between"
+               style="cursor:pointer;" data-toggle="collapse" data-target="#interp-delta-body">
+            <span class="font-weight-bold" style="font-size:0.95em;">
+              <i class="fa fa-table mr-1"></i>Parameter Comparison Table
+            </span>
+            <span class="text-muted" style="font-size:0.82em;">
+              <span id="interp-delta-ref-label" class="text-secondary"></span>
+              <i class="fa fa-arrow-right mx-1"></i>
+              <span id="interp-delta-smp-label" class="text-primary"></span>
+              <i class="fa fa-chevron-down ml-2"></i>
+            </span>
+          </div>
+          <div id="interp-delta-body" class="collapse">
+            <div class="card-body p-2">
+              <p class="text-muted mb-2" style="font-size:0.82em;">
+                <span class="badge" style="background:#d4edda;color:#155724;border:1px solid #c3e6cb;">green</span> increase &nbsp;
+                <span class="badge" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;">red</span> decline &nbsp;
+                <span class="badge" style="background:#fff3cd;color:#856404;border:1px solid #ffeeba;">yellow</span> neutral (threshold: |Δ%| &lt; 5%)
+              </p>
+              <div id="interp-delta-table" class="table-responsive"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed findings wrapper (standalone only, collapsed by default) -->
+        <div id="interp-detail-wrapper-card" class="card mb-0">
+          <div class="card-header py-2 d-flex align-items-center justify-content-between"
+               style="cursor:pointer;" data-toggle="collapse" data-target="#interp-detail-wrapper-body">
+            <span class="font-weight-bold text-muted" style="font-size:0.93em;">
+              <i class="fa fa-list-alt mr-1"></i>Detailed findings
+              <span id="interp-detail-wrapper-label" class="font-weight-normal text-secondary ml-1" style="font-size:0.88em;"></span>
+            </span>
+            <i class="fa fa-chevron-down text-muted" style="font-size:0.8rem;"></i>
+          </div>
+          <div id="interp-detail-wrapper-body" class="collapse">
+            <div class="card-body p-2">
+
+        <!-- Detail findings (collapsible) -->
+        <div class="accordion" id="interp-findings-accordion">
+
+          <!-- PQ-redox poise -->
+          <div class="card" id="interp-card-pq">
+            <div class="card-header py-2" id="interp-head-pq">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-pq" aria-expanded="false">
+                  <span id="interp-badge-pq" class="badge mr-2"></span>
+                  PQ-pool redox poise <small class="text-muted font-weight-normal ml-1">(primary — VJ / VJ′)</small>
+                </button>
+                <span id="interp-conf-pq" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-pq" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-pq" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+          <!-- PSII quantum yield -->
+          <div class="card" id="interp-card-psii">
+            <div class="card-header py-2" id="interp-head-psii">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-psii" aria-expanded="false">
+                  <span id="interp-badge-psii" class="badge mr-2"></span>
+                  PSII max quantum yield (Fv/Fm)
+                </button>
+                <span id="interp-conf-psii" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-psii" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-psii" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+          <!-- Electron transport QA -->
+          <div class="card" id="interp-card-et">
+            <div class="card-header py-2">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-et" aria-expanded="false">
+                  <span id="interp-badge-et" class="badge mr-2"></span>
+                  Electron transport / QA→QB <small class="text-muted font-weight-normal ml-1">(ψE0, VJ)</small>
+                </button>
+                <span id="interp-conf-et" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-et" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-et" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+          <!-- Initial slope M0 -->
+          <div class="card">
+            <div class="card-header py-2">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-m0" aria-expanded="false">
+                  <span id="interp-badge-m0" class="badge mr-2"></span>
+                  Initial closure rate <small class="text-muted font-weight-normal ml-1">(M₀ — O→J slope)</small>
+                </button>
+                <span id="interp-conf-m0" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-m0" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-m0" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+          <!-- PQ pool JI phase -->
+          <div class="card">
+            <div class="card-header py-2">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-ji" aria-expanded="false">
+                  PQ pool / J–I phase <small class="text-muted font-weight-normal ml-1">(VI, Sm, Area J–I)</small>
+                </button>
+                <span id="interp-conf-ji" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-ji" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-ji" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+          <!-- PSI acceptor side -->
+          <div class="card" id="interp-card-psi">
+            <div class="card-header py-2">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-psi" aria-expanded="false">
+                  <span id="interp-badge-psi" class="badge mr-2"></span>
+                  PSI acceptor side / I–P phase <small class="text-muted font-weight-normal ml-1">(δR0, φR0)</small>
+                </button>
+                <span id="interp-conf-psi" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-psi" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-psi" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+          <!-- Donor side / OEC -->
+          <div class="card" id="interp-card-oec">
+            <div class="card-header py-2">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-oec" aria-expanded="false">
+                  <span id="interp-badge-oec" class="badge mr-2"></span>
+                  Donor side / OEC integrity <small class="text-muted font-weight-normal ml-1">(K-step, W_OJ)</small>
+                </button>
+                <span id="interp-conf-oec" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-oec" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-oec" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+          <!-- Antenna & RCs -->
+          <div class="card">
+            <div class="card-header py-2">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-ant" aria-expanded="false">
+                  Specific fluxes per RC <small class="text-muted font-weight-normal ml-1">(ABS/RC, TR₀/RC, ET₀/RC, RE₀/RC, DI₀/RC)</small>
+                </button>
+                <span id="interp-conf-ant" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-ant" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-ant" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+          <!-- Energetic connectivity -->
+          <div class="card">
+            <div class="card-header py-2">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-conn" aria-expanded="false">
+                  Energetic connectivity / L-band <small class="text-muted font-weight-normal ml-1">(requires reference)</small>
+                </button>
+                <span id="interp-conf-conn" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-conn" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-conn" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+          <!-- Overall performance -->
+          <div class="card">
+            <div class="card-header py-2">
+              <h6 class="mb-0 d-flex align-items-center">
+                <button class="btn btn-link collapsed p-0 text-left flex-grow-1" data-toggle="collapse" data-target="#interp-body-pi" aria-expanded="false">
+                  Overall photosynthetic performance <small class="text-muted font-weight-normal ml-1">(PI<sub>abs</sub>; comparative only)</small>
+                </button>
+                <span id="interp-conf-pi" class="badge badge-secondary ml-auto" style="font-size:0.68rem;"></span>
+              </h6>
+            </div>
+            <div id="interp-body-pi" class="collapse" data-parent="#interp-findings-accordion">
+              <div class="card-body py-2" id="interp-detail-pi" style="font-size:0.9em;"></div>
+            </div>
+          </div>
+
+        </div><!-- /findings accordion -->
+
+        <!-- Caveats -->
+        <div class="mt-3" id="interp-caveats-wrap" style="display:none;">
+          <h6 class="font-weight-bold text-muted"><i class="fa fa-exclamation-circle mr-1"></i>Interpretation caveats</h6>
+          <ul id="interp-caveats-list" class="small text-muted mb-0" style="padding-left:1.2rem;"></ul>
+        </div>
+
+        <!-- Shape flags -->
+        <div class="mt-2" id="interp-flags-wrap" style="display:none;">
+          <small class="text-muted"><strong>Shape flags detected:</strong> <span id="interp-flags-text"></span></small>
+        </div>
+
+        <!-- Validity details (collapsible) -->
+        <div class="mt-2" id="interp-validity-details-wrap" style="display:none;">
+          <button class="btn btn-link btn-sm p-0 text-muted" data-toggle="collapse" data-target="#interp-validity-details">
+            <i class="fa fa-info-circle mr-1"></i>Validity / acquisition notes
+          </button>
+          <div id="interp-validity-details" class="collapse">
+            <ul id="interp-validity-notes-list" class="small text-muted mt-1 mb-0" style="padding-left:1.2rem;"></ul>
+          </div>
+        </div>
+
+            </div><!-- /detail-wrapper card-body -->
+          </div><!-- /interp-detail-wrapper-body -->
+        </div><!-- /detail-wrapper card -->
+
+      </div><!-- /interp-output -->
+
+      <div id="interp-error" class="alert alert-danger mt-2" style="display:none;"></div>
+
+    </div><!-- /tab-interp -->
+
   </div><!-- /tab-content -->
 
   <!-- Download bar -->
@@ -1123,40 +1471,17 @@
     </small>
   </div>
 
-  <!-- Result interpretation -->
-  <div class="accordion mb-3" id="interpretAccordion">
-    <div class="card">
-      <div class="card-header py-2" id="headingInterpret">
-        <h6 class="mb-0">
-          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
-                  data-toggle="collapse" data-target="#collapseInterpret"
-                  aria-expanded="false" aria-controls="collapseInterpret">
-            <i class="fa fa-book mr-2"></i>How to interpret your results (for plants and algae)
-          </button>
-        </h6>
-      </div>
-      <div id="collapseInterpret" class="collapse" aria-labelledby="headingInterpret" data-parent="#interpretAccordion">
-        <div class="card-body" style="font-size:0.92em; background:#f8f9fa;">
-          <ul class="mb-0">
-            <li><strong>Fv/Fm</strong> — max PSII efficiency. Unstressed: 0.75–0.82; mild stress: 0.60–0.74; severe: &lt;0.55.</li>
-            <li><strong>ABS/RC</strong> — effective antenna per active RC. Values &gt;3–4 may indicate photoinhibition.</li>
-            <li><strong>ET₀/RC and TR₀/RC</strong> — electron transport and energy trapping per RC. Declining relative to ABS/RC indicates downstream blockage.</li>
-            <li><strong>ψE₀</strong> — efficiency of QA<sup>−</sup>→PQ electron transfer; decreases with PQ pool over-reduction.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div><!-- /results-section -->
 
 <br><br><br>
 
+<!-- DOMPurify — sanitize all HTML before inserting into DOM -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a" crossorigin="anonymous"></script>
 <!-- Chart.js (minimal bundles) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.4.3/build/index.umd.min.js"></script>
-<!-- SheetJS for client-side xlsx export (statistics export) -->
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.4.3/build/index.umd.min.js" integrity="sha384-sFm3gtVOu8tj9+CNeq4Ixnoa7bK89awxU5I9ZNyB1rFG3MX0IskcIeSmKY4TbrXd" crossorigin="anonymous"></script>
+<!-- SheetJS — pinned to 0.20.3, not the mutable "xlsx-latest" tag -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js_OJIP.js') }}"></script>
 
 <!-- ── Methods section text modal ── -->
@@ -1194,5 +1519,575 @@ $(document).ready(function () {
     .on('show.bs.collapse', function () { $chevron.css('transform', 'rotate(180deg)'); })
     .on('hide.bs.collapse', function () { $chevron.css('transform', 'rotate(0deg)'); });
 });
+</script>
+
+<!-- ── OJIP Interpretation Tab Logic ───────────────────────────────────── -->
+<script>
+(function () {
+'use strict';
+
+// ── colour helpers ──────────────────────────────────────────────────────────
+const POISE_BADGE = {
+  oxidised:          ['badge-success',  'Oxidised'],
+  balanced:          ['badge-success',  'Balanced'],
+  partially_reduced: ['badge-warning',  'Partly reduced'],
+  slightly_reduced:  ['badge-warning',  'Slightly reduced'],
+  reduced:           ['badge-danger',   'Reduced'],
+  severely_reduced:  ['badge-danger',   'Severely reduced (OJ-like)'],
+};
+const LEVEL_BADGE = {
+  ok:                  ['badge-success',  'OK'],
+  mild:                ['badge-warning',  'Mild'],
+  moderate:            ['badge-warning',  'Moderate'],
+  severe:              ['badge-danger',   'Severe'],
+  restricted:          ['badge-warning',  'Restricted'],
+  partial_restriction: ['badge-warning',  'Partial'],
+  efficient:           ['badge-success',  'Efficient'],
+  impaired:            ['badge-danger',   'Impaired'],
+  suppressed:          ['badge-danger',   'Suppressed'],
+  reduced:             ['badge-warning',  'Reduced'],
+  normal:              ['badge-success',  'Normal'],
+  not_applicable:      ['badge-secondary','N/A (cyano)'],
+};
+const CONF_BADGE = {
+  high:     'badge-primary',
+  moderate: 'badge-info',
+  low:      'badge-secondary',
+};
+
+function applyBadge(spanId, cls, text) {
+  const el = document.getElementById(spanId);
+  if (!el) return;
+  el.className = 'badge mr-2 ' + (cls || 'badge-secondary');
+  el.textContent = text || '';
+}
+
+function applyConf(spanId, conf) {
+  const el = document.getElementById(spanId);
+  if (!el) return;
+  el.className = 'badge ml-auto ' + (CONF_BADGE[conf] || 'badge-secondary');
+  el.textContent = conf ? (conf.charAt(0).toUpperCase() + conf.slice(1) + ' confidence') : '';
+}
+
+function setText(elId, html) {
+  const el = document.getElementById(elId);
+  if (el) el.innerHTML = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(html) : html;
+}
+
+function setVisible(elId, show) {
+  const el = document.getElementById(elId);
+  if (el) el.style.display = show ? '' : 'none';
+}
+
+// ── populate sample selector when analysis data is available ────────────────
+function _syncSampleSelector() {
+  if (!window.ojipData || !window.ojipData.files) return;
+  const files = window.ojipData.files;
+
+  // ── sample selector ───────────────────────────────────────────────────────
+  const sel = document.getElementById('interp-sample-sel');
+  if (sel) {
+    const prev = sel.value;
+    sel.innerHTML = '';
+    files.forEach(function (f) {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f;
+      if (f === prev) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── reference selector ────────────────────────────────────────────────────
+  const ref = document.getElementById('interp-reference-sel');
+  if (ref) {
+    const prevRef = ref.value;
+    ref.innerHTML = '<option value="">\u2014 none \u2014</option>';
+    files.forEach(function (f) {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f;
+      if (f === prevRef) opt.selected = true;
+      ref.appendChild(opt);
+    });
+  }
+}
+
+// Rebuild selector whenever results section becomes visible
+$(document).on('show.bs.tab', 'a[href="#tab-interp"]', function () {
+  _syncSampleSelector();
+});
+
+// Also rebuild after ojipData updates (hook into js_OJIP.js global)
+var _origRecalc = window.recalcAllParams;
+if (typeof _origRecalc === 'function') {
+  window.recalcAllParams = function () {
+    _origRecalc.apply(this, arguments);
+    _syncSampleSelector();
+  };
+}
+
+// ── main interpret function ─────────────────────────────────────────────────
+document.getElementById('interp-run-btn').addEventListener('click', function () {
+  if (!window.ojipData || !window.ojipData.files || !window.ojipData.files.length) {
+    document.getElementById('interp-error').textContent = 'No analysis results available. Please upload and analyse files first.';
+    setVisible('interp-error', true);
+    return;
+  }
+
+  _syncSampleSelector();
+  const fname = document.getElementById('interp-sample-sel').value;
+  const organism = document.getElementById('ojip-organism').value || 'unknown';
+
+  if (!fname || !window.paramData || !window.paramData[fname]) {
+    document.getElementById('interp-error').textContent = 'Sample data not found.';
+    setVisible('interp-error', true);
+    return;
+  }
+
+  setVisible('interp-error', false);
+  setVisible('interp-output', false);
+  document.getElementById('interp-spinner').style.display = '';
+  document.getElementById('interp-run-btn').disabled = true;
+
+  const p = window.paramData[fname];
+  const kv = window.ojipData.key_values[fname] || {};
+
+  // Helper: build a params object from a filename
+  function _buildParams(fn) {
+    const pd = window.paramData[fn];
+    const kd = window.ojipData.key_values[fn] || {};
+    if (!pd) return null;
+    return {
+      F0: pd.F0, FM: pd.FM, FK: pd.FK, FJ: pd.FJ, FI: pd.FI, FV: pd.FV,
+      FVFM: pd.FVFM, VJ: pd.VJ, VI: pd.VI, M0: pd.M0,
+      PSIE0: pd.PSIE0, PSIR0: pd.PSIR0, DELTAR0: pd.DELTAR0,
+      PHIE0: pd.PHIE0, PHIR0: pd.PHIR0,
+      ABSRC: pd.ABSRC, TR0RC: pd.TR0RC, ET0RC: pd.ET0RC, RE0RC: pd.RE0RC, DI0RC: pd.DI0RC,
+      SM: pd.SM, N: pd.N,
+      Area_OJ: kd.Area_OJ, Area_JI: kd.Area_JI, Area_IP: kd.Area_IP, Area_OP: kd.Area_OP,
+      FJ_time_user_ms: kd.FJ_time_user_ms,
+      FI_time_user_ms: kd.FI_time_user_ms,
+      FM_time_ms: kd.FM_time_ms,
+    };
+  }
+
+  const params = _buildParams(fname);
+
+  // Reference sample (null if "— none —" is selected)
+  const refFname = (document.getElementById('interp-reference-sel') || {}).value || '';
+  const reference = (refFname && refFname !== fname) ? _buildParams(refFname) : null;
+
+  // Assemble measurement metadata from what the pipeline knows
+  const fluorometer = window.ojipData.fluorometer || '';
+  let instrument = 'unknown';
+  if (fluorometer.includes('MULTI-COLOR')) instrument = 'multicolor_pam';
+  else if (fluorometer.toLowerCase().includes('aquapen') || fluorometer.toLowerCase().includes('fluorpen')) instrument = 'aquapen';
+  else if (fluorometer.includes('FL6000')) instrument = 'fl6000';
+
+  const measurement = {
+    instrument: instrument,
+    uses_measuring_light: false,  // OJIP is driven by saturation pulse only — ML is off regardless of instrument type
+    fj_timing_ms: kv.FJ_time_user_ms || window.ojipData.fj_time_ms || 2.0,
+    acclimation: 'dark',  // conservative default; user can extend later
+  };
+
+  fetch('/api/ojip_interpret', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      params: params,
+      organism_class: organism,
+      reference: reference,
+      measurement: measurement,
+    }),
+  })
+  .then(function (r) { return r.json(); })
+  .then(function (data) {
+    document.getElementById('interp-spinner').style.display = 'none';
+    document.getElementById('interp-run-btn').disabled = false;
+
+    if (data.status !== 'success') {
+      document.getElementById('interp-error').textContent = data.message || 'Interpretation failed.';
+      setVisible('interp-error', true);
+      return;
+    }
+
+    const hasRef = !!(data.has_reference && data.ref_findings);
+
+    // Comparative mode: show paragraph + delta table, hide standalone cards
+    setVisible('interp-comparison-narrative-section', hasRef);
+    setVisible('interp-delta-section', hasRef);
+    // Standalone mode: show narrative card + detailed findings accordion
+    setVisible('interp-narrative-card', !hasRef);
+    setVisible('interp-detail-wrapper-card', !hasRef);
+    // Reference / sample compact cards: permanently hidden (removed from UX)
+    setVisible('interp-ref-section', false);
+    setVisible('interp-sample-section', false);
+
+    if (hasRef) {
+      setText('interp-delta-ref-label', refFname);
+      setText('interp-delta-smp-label', fname);
+      setText('interp-comparison-narrative', data.comparison_paragraph || '');
+      renderDeltaTable(fname, refFname, organism);
+    }
+    renderInterpretation(data.findings, data.narrative, organism, fname, hasRef ? refFname : null);
+  })
+  .catch(function (err) {
+    document.getElementById('interp-spinner').style.display = 'none';
+    document.getElementById('interp-run-btn').disabled = false;
+    document.getElementById('interp-error').textContent = 'Request failed: ' + err;
+    setVisible('interp-error', true);
+  });
+});
+
+// ── Shared label/badge maps for compact summary tables ────────────────────────
+const _POISE_LABELS = {
+  'oxidised': 'Oxidised', 'balanced': 'Balanced',
+  'partially_reduced': 'Partially reduced', 'slightly_reduced': 'Slightly reduced',
+  'reduced': 'Reduced',
+};
+const _LEVEL_LABELS = {
+  'ok': 'Normal', 'mild': 'Mild reduction', 'moderate': 'Moderate reduction',
+  'severe': 'Severe reduction', 'restricted': 'Restricted', 'partial_restriction': 'Partial restriction',
+  'efficient': 'Efficient', 'suppressed': 'Suppressed', 'reduced': 'Reduced', 'normal': 'Normal',
+  'impaired': 'Impaired', 'not_applicable': 'n/a (cyano)',
+};
+const _BADGE_MAP = {
+  'oxidised': 'badge-success', 'balanced': 'badge-success',
+  'partially_reduced': 'badge-info', 'slightly_reduced': 'badge-warning', 'reduced': 'badge-warning', 'severely_reduced': 'badge-danger',
+  'ok': 'badge-success', 'normal': 'badge-success', 'efficient': 'badge-success',
+  'mild': 'badge-warning', 'partial_restriction': 'badge-warning',
+  'moderate': 'badge-warning', 'restricted': 'badge-danger',
+  'severe': 'badge-danger', 'suppressed': 'badge-danger', 'impaired': 'badge-danger',
+  'not_applicable': 'badge-secondary',
+};
+
+// Builds the rows HTML for a compact findings summary table (shared by ref & sample)
+function _buildSummaryTableRows(findings_obj) {
+  const fgs = findings_obj.findings || {};
+  const validity = findings_obj.validity || {};
+  const acqValid = validity.acquisition_valid !== false;
+
+  function row(label, key, statusKey, valueKey) {
+    const f = fgs[key] || {};
+    if (f.available === false) {
+      return `<tr><td>${label}</td><td><span class="badge badge-secondary">N/A</span></td><td class="text-muted small">${f.note || ''}</td></tr>`;
+    }
+    const status = f[statusKey] || '';
+    const bc = _BADGE_MAP[status] || 'badge-secondary';
+    const lbl = _POISE_LABELS[status] || _LEVEL_LABELS[status] || status;
+    const val = f[valueKey];
+    const valStr = (val !== null && val !== undefined) ? parseFloat(val).toFixed(3) : '—';
+    return `<tr><td>${label}</td><td><span class="badge ${bc}">${lbl}</span></td><td>${valStr}</td></tr>`;
+  }
+
+  const pq = fgs.pq_redox_poise || {};
+  const pqRow = pq.available === false
+    ? `<tr><td>PQ-pool redox poise</td><td><span class="badge badge-secondary">N/A</span></td><td></td></tr>`
+    : (function () {
+        const bc = _BADGE_MAP[pq.poise] || 'badge-secondary';
+        const lbl = _POISE_LABELS[pq.poise] || pq.poise || '';
+        const v = (pq.value !== null && pq.value !== undefined) ? parseFloat(pq.value).toFixed(3) : '—';
+        return `<tr><td>PQ-pool redox poise (VJ)</td><td><span class="badge ${bc}">${lbl}</span></td><td>${v}</td></tr>`;
+      })();
+
+  const rows = [
+    pqRow,
+    row('PSII max yield (Fv/Fm)', 'psii_max_quantum_yield', 'level', 'value'),
+    row('Electron transport (ψE0)', 'electron_transport_qa', 'level', 'psiE0'),
+    row('Donor side / OEC', 'donor_side_oec', 'level', 'w_ok'),
+    row('PSI acceptor side', 'psi_acceptor_side', 'level', 'deltaR0'),
+  ];
+
+  const warnRow = !acqValid
+    ? `<tr class="table-warning"><td colspan="3" class="small"><i class="fa fa-exclamation-triangle mr-1"></i>Acquisition validity warning.</td></tr>`
+    : '';
+
+  return warnRow + rows.join('');
+}
+
+// ── Reference summary card ────────────────────────────────────────────────────
+function renderRefSummary(ref_findings, ref_narrative) {
+  setText('interp-ref-narrative', ref_narrative || '');
+  document.getElementById('interp-ref-table').innerHTML = _buildSummaryTableRows(ref_findings);
+}
+
+// ── Sample summary card (compact, same format as reference) ───────────────────
+function renderSampleSummary(sample_findings, sample_narrative) {
+  setText('interp-sample-narrative-card', sample_narrative || '');
+  document.getElementById('interp-sample-table').innerHTML = _buildSummaryTableRows(sample_findings);
+}
+
+// ── Parameter comparison delta table ─────────────────────────────────────────
+// dir: +1 = higher is better, -1 = lower is better, 0 = neutral/informational
+function renderDeltaTable(fname, refFname, organism) {
+  const p   = paramData[fname]   || {};
+  const pr  = paramData[refFname]  || {};
+  const kv  = (ojipData && ojipData.key_values && ojipData.key_values[fname])    || {};
+  const kvr = (ojipData && ojipData.key_values && ojipData.key_values[refFname]) || {};
+
+  function row(label, rv, sv, dir, dp) {
+    const valid = v => (v != null && !isNaN(v));
+    const fmt   = (v, d) => valid(v) ? (+v).toFixed(d) : '—';
+    if (!valid(rv) && !valid(sv)) {
+      return `<tr><td>${label}</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
+    }
+    if (!valid(rv) || !valid(sv)) {
+      return `<tr><td>${label}</td><td>${fmt(rv,dp)}</td><td>${fmt(sv,dp)}</td><td>—</td><td>—</td></tr>`;
+    }
+    const delta    = sv - rv;
+    const deltaPct = rv !== 0 ? (delta / Math.abs(rv)) * 100 : null;
+    const dStr     = (delta >= 0 ? '+' : '') + delta.toFixed(dp);
+    const pStr     = deltaPct != null ? (deltaPct >= 0 ? '+' : '') + deltaPct.toFixed(1) + '%' : '—';
+    let cls = '';
+    if (deltaPct != null) {
+      if (Math.abs(deltaPct) < 5) cls = 'table-warning';       // yellow: neutral / small change
+      else if (deltaPct > 0)      cls = 'table-success';        // green:  increase
+      else                        cls = 'table-danger';          // red:    decrease
+    }
+    return `<tr class="${cls}"><td>${label}</td><td>${fmt(rv,dp)}</td><td>${fmt(sv,dp)}</td><td>${dStr}</td><td>${pStr}</td></tr>`;
+  }
+  function grp(label) {
+    return `<tr class="table-secondary"><th colspan="5" class="py-1 px-2" style="font-size:0.82em;font-weight:600;">${label}</th></tr>`;
+  }
+
+  // Truncate long filenames for column headers
+  const refShort = refFname.length > 28 ? refFname.slice(0, 26) + '…' : refFname;
+  const smpShort = fname.length > 28    ? fname.slice(0, 26) + '…'    : fname;
+
+  let html = `<table class="table table-sm table-bordered mb-0" style="font-size:0.86em;">
+<thead class="thead-light"><tr>
+  <th style="width:30%;">Parameter</th>
+  <th title="${refFname}">${refShort}</th>
+  <th title="${fname}">${smpShort}</th>
+  <th>Δ</th><th>Δ%</th>
+</tr></thead><tbody>`;
+
+  // ── Quantum yields & energy partitioning
+  html += grp('Quantum yields &amp; energy partitioning');
+  html += row('Fv/Fm (φP₀)', pr.FVFM,    p.FVFM,    +1, 3);
+  html += row('VJ',           pr.VJ,      p.VJ,      -1, 3);
+  html += row('VI',           pr.VI,      p.VI,      -1, 3);
+  html += row('M₀',           pr.M0,      p.M0,      -1, 3);
+  html += row('ψE₀',          pr.PSIE0,   p.PSIE0,   +1, 3);
+  html += row('ψR₀',          pr.PSIR0,   p.PSIR0,   +1, 3);
+  html += row('δR₀',          pr.DELTAR0, p.DELTAR0, +1, 3);
+  html += row('φE₀',          pr.PHIE0,   p.PHIE0,   +1, 3);
+  html += row('φR₀',          pr.PHIR0,   p.PHIR0,   +1, 3);
+
+  // ── Specific energy fluxes per RC
+  html += grp('Specific energy fluxes per RC');
+  html += row('ABS/RC', pr.ABSRC,  p.ABSRC,  -1, 3);
+  html += row('TR₀/RC', pr.TR0RC,  p.TR0RC,   0, 3);
+  html += row('ET₀/RC', pr.ET0RC,  p.ET0RC,  +1, 3);
+  html += row('RE₀/RC', pr.RE0RC,  p.RE0RC,  +1, 3);
+  html += row('DI₀/RC', pr.DI0RC,  p.DI0RC,  -1, 3);
+
+  // ── PQ-pool size & QA turnover
+  html += grp('PQ-pool size &amp; QA turnover');
+  html += row('Sm',             pr.SM,       p.SM,       +1, 2);
+  html += row('N (QA turnover)', pr.N,       p.N,        +1, 2);
+  html += row('Area O-J',       pr.Area_OJ,  p.Area_OJ,   0, 0);
+  html += row('Area J-I',       pr.Area_JI,  p.Area_JI,   0, 0);
+  html += row('Area I-P',       pr.Area_IP,  p.Area_IP,   0, 0);
+  html += row('Area O-P',       pr.Area_OP,  p.Area_OP,   0, 0);
+
+  // ── Raw fluorescence levels
+  html += grp('Raw fluorescence levels');
+  html += row('F₀', pr.F0, p.F0,  0, 0);
+  html += row('FK', pr.FK, p.FK,  0, 0);
+  html += row('FJ', pr.FJ, p.FJ,  0, 0);
+  html += row('FI', pr.FI, p.FI,  0, 0);
+  html += row('FM', pr.FM, p.FM,  0, 0);
+  html += row('FV', pr.FV, p.FV, +1, 0);
+
+  // ── Phase timing (ms)
+  html += grp('Phase timing (ms)');
+  html += row('t(FJ)', kvr.FJ_time_user_ms, kv.FJ_time_user_ms, 0, 2);
+  html += row('t(FI)', kvr.FI_time_user_ms, kv.FI_time_user_ms, 0, 1);
+  html += row('t(FP / FM)', kvr.FM_time_ms, kv.FM_time_ms,       0, 1);
+
+  html += '</tbody></table>';
+  document.getElementById('interp-delta-table').innerHTML = html;
+}
+
+function renderInterpretation(findings, narrative, organism, fname, refFname) {
+  const fgs = findings.findings || {};
+  const validity = findings.validity || {};
+  const flags = findings.shape_flags || [];
+  const caveats = findings.caveats || [];
+  const refUsed = findings.reference_used || false;
+
+  // ── label: which sample these detailed findings describe ──────────────────
+  const labelEl = document.getElementById('interp-detail-wrapper-label');
+  if (labelEl) {
+    if (fname) {
+      const short = fname.length > 32 ? fname.slice(0, 30) + '…' : fname;
+      labelEl.textContent = refFname
+        ? `— ${short} vs. reference`
+        : `— ${short}`;
+    } else {
+      labelEl.textContent = '';
+    }
+  }
+
+  // ── organism banners ──────────────────────────────────────────────────────
+  setVisible('interp-cyano-banner', organism === 'cyanobacteria');
+  setVisible('interp-noref-banner', !refUsed);
+
+  // ── validity banner ───────────────────────────────────────────────────────
+  const acqValid = validity.acquisition_valid !== false;
+  const withinPhys = validity.within_physiological_limits !== false;
+  const vBanner = document.getElementById('interp-validity-banner');
+  if (!acqValid || !withinPhys) {
+    vBanner.className = 'alert alert-danger mb-3 py-2';
+    const issues = (validity.blocking_issues || []).join('; ') || 'See validity notes below.';
+    var _bannerHtml = '<strong><i class="fa fa-exclamation-triangle mr-1"></i>Acquisition / validity warning.</strong> ' +
+      (!withinPhys ? 'Sample may be outside physiological limits. ' : '') +
+      (!acqValid ? 'Acquisition gate(s) failed: ' + issues : '');
+    vBanner.innerHTML = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(_bannerHtml) : _bannerHtml;
+    setVisible('interp-validity-banner', true);
+  } else {
+    setVisible('interp-validity-banner', false);
+  }
+
+  // ── narrative ─────────────────────────────────────────────────────────────
+  setText('interp-narrative', narrative || '');
+
+  // ── PQ-redox poise ────────────────────────────────────────────────────────
+  var pq = fgs.pq_redox_poise || {};
+  if (pq.available === false) {
+    applyBadge('interp-badge-pq', 'badge-secondary', 'N/A');
+    setText('interp-detail-pq', '<em>' + (pq.note || 'Not available.') + '</em>');
+  } else {
+    var poiseInfo = POISE_BADGE[pq.poise] || ['badge-secondary', pq.poise || ''];
+    applyBadge('interp-badge-pq', poiseInfo[0], poiseInfo[1]);
+    applyConf('interp-conf-pq', pq.confidence);
+    var pqHtml = '<p>' + (pq.detail || '') + '</p>';
+    if (pq.state_note) pqHtml += '<p class="text-muted small mb-0">' + pq.state_note + '</p>';
+    if (pq.photoactive_pool_note) pqHtml += '<p class="text-muted small mb-0"><i class="fa fa-info-circle mr-1"></i>' + pq.photoactive_pool_note + '</p>';
+    if (pq.validity_warning) pqHtml += '<div class="alert alert-warning py-1 mt-1 mb-0 small">' + pq.validity_warning + '</div>';
+    setText('interp-detail-pq', pqHtml);
+  }
+
+  // ── PSII quantum yield ────────────────────────────────────────────────────
+  var psii = fgs.psii_max_quantum_yield || {};
+  if (psii.available === false) {
+    applyBadge('interp-badge-psii', 'badge-secondary', 'N/A');
+    setText('interp-detail-psii', '<em>Not available.</em>');
+  } else {
+    var lvlInfo = LEVEL_BADGE[psii.level] || ['badge-secondary', psii.level || ''];
+    applyBadge('interp-badge-psii', lvlInfo[0], lvlInfo[1]);
+    applyConf('interp-conf-psii', psii.confidence);
+    var psiiHtml = '<p>' + (psii.detail || '') + '</p>';
+    if (psii.caveats && psii.caveats.length) {
+      psiiHtml += '<ul class="small text-muted mb-0">' + psii.caveats.map(function(c){return '<li>'+c+'</li>';}).join('') + '</ul>';
+    }
+    if (psii.validity_warning) psiiHtml += '<div class="alert alert-warning py-1 mt-1 mb-0 small">' + psii.validity_warning + '</div>';
+    setText('interp-detail-psii', psiiHtml);
+  }
+
+  // ── Electron transport QA ─────────────────────────────────────────────────
+  var et = fgs.electron_transport_qa || {};
+  if (et.available !== false) {
+    var etInfo = LEVEL_BADGE[et.level] || ['badge-secondary', et.level || ''];
+    applyBadge('interp-badge-et', etInfo[0], etInfo[1]);
+    applyConf('interp-conf-et', et.confidence);
+    setText('interp-detail-et', '<p>' + (et.detail || '') + (et.note ? ' <em>' + et.note + '</em>' : '') + '</p>');
+  } else {
+    applyBadge('interp-badge-et', 'badge-secondary', 'N/A');
+    setText('interp-detail-et', '<em>Not available.</em>');
+  }
+
+  // ── Initial slope M₀ ─────────────────────────────────────────────────────
+  var m0f = fgs.initial_slope_m0 || {};
+  if (m0f.available !== false) {
+    var m0Info = LEVEL_BADGE[m0f.level] || ['badge-secondary', m0f.level || ''];
+    applyBadge('interp-badge-m0', m0Info[0], m0Info[1]);
+    applyConf('interp-conf-m0', m0f.confidence);
+    setText('interp-detail-m0', '<p>' + (m0f.detail || '') + '</p>');
+  } else {
+    applyBadge('interp-badge-m0', 'badge-secondary', 'N/A');
+    setText('interp-detail-m0', '<em>Not available.</em>');
+  }
+
+  // ── PQ pool / JI ─────────────────────────────────────────────────────────
+  var ji = fgs.pq_pool_reduction || {};
+  applyConf('interp-conf-ji', ji.confidence);
+  setText('interp-detail-ji', ji.available !== false ? '<p>' + (ji.detail || '') + '</p>' : '<em>Not available.</em>');
+
+  // ── PSI acceptor side ─────────────────────────────────────────────────────
+  var psi = fgs.psi_acceptor_side || {};
+  if (psi.available !== false) {
+    var psiInfo = LEVEL_BADGE[psi.level] || ['badge-secondary', psi.level || ''];
+    applyBadge('interp-badge-psi', psiInfo[0], psiInfo[1]);
+    applyConf('interp-conf-psi', psi.confidence);
+    setText('interp-detail-psi', '<p>' + (psi.detail || '') + '</p>');
+  } else {
+    applyBadge('interp-badge-psi', 'badge-secondary', 'N/A');
+    setText('interp-detail-psi', '<em>Not available.</em>');
+  }
+
+  // ── Donor side / OEC ──────────────────────────────────────────────────────
+  var oec = fgs.donor_side_oec || {};
+  if (oec.available !== false) {
+    var oecInfo = LEVEL_BADGE[oec.level] || ['badge-secondary', oec.level || ''];
+    applyBadge('interp-badge-oec', oecInfo[0], oecInfo[1]);
+    applyConf('interp-conf-oec', oec.confidence);
+    setText('interp-detail-oec', '<p>' + (oec.detail || '') + '</p>');
+  } else {
+    applyBadge('interp-badge-oec', 'badge-secondary', 'N/A');
+    setText('interp-detail-oec', '<em>Not available.</em>');
+  }
+
+  // ── Antenna & RCs ─────────────────────────────────────────────────────────
+  var ant = fgs.antenna_and_rcs || {};
+  applyConf('interp-conf-ant', ant.confidence);
+  setText('interp-detail-ant', ant.available !== false ? '<p>' + (ant.detail || '') + '</p>' : '<em>Not available.</em>');
+
+  // ── Energetic connectivity ────────────────────────────────────────────────
+  var conn = fgs.energetic_connectivity || {};
+  applyConf('interp-conf-conn', conn.confidence);
+  if (conn.available === false) {
+    setText('interp-detail-conn', '<em>' + (conn.note || 'Not available — requires a reference sample.') + '</em>');
+  } else {
+    setText('interp-detail-conn', '<p>' + (conn.detail || '') + '</p>');
+  }
+
+  // ── Overall performance ───────────────────────────────────────────────────
+  var perf = fgs.overall_performance || {};
+  applyConf('interp-conf-pi', perf.confidence);
+  setText('interp-detail-pi', '<p>' + (perf.detail || '') + '</p>');
+
+  // ── Caveats ───────────────────────────────────────────────────────────────
+  var cavUl = document.getElementById('interp-caveats-list');
+  if (cavUl) {
+    var _cavHtml = caveats.map(function(c) { return '<li>'+c+'</li>'; }).join('');
+    cavUl.innerHTML = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(_cavHtml) : _cavHtml;
+    setVisible('interp-caveats-wrap', caveats.length > 0);
+  }
+
+  // ── Shape flags ───────────────────────────────────────────────────────────
+  if (flags.length) {
+    setText('interp-flags-text', flags.join(', '));
+    setVisible('interp-flags-wrap', true);
+  } else {
+    setVisible('interp-flags-wrap', false);
+  }
+
+  // ── Validity notes ────────────────────────────────────────────────────────
+  var notes = (validity.notes || []).concat(validity.blocking_issues || []);
+  var vUl = document.getElementById('interp-validity-notes-list');
+  if (vUl) {
+    var _notesHtml = notes.map(function(n) { return '<li>'+n+'</li>'; }).join('');
+    vUl.innerHTML = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(_notesHtml) : _notesHtml;
+    setVisible('interp-validity-details-wrap', notes.length > 0);
+  }
+
+  setVisible('interp-output', true);
+}
+
+})();
 </script>
 {% endblock %}

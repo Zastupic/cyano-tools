@@ -10,6 +10,8 @@
     <meta name="author" content="Department of Adaptive Biotechnologies, CzechGlobe">
     <meta name="robots" content="index, follow">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    <!-- CSRF token for AJAX requests -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0a3c58">
     <meta name="copyright" content="© 2025 CzechGlobe - Department of Adaptive Biotechnologies">
     <meta name="publisher" content="CzechGlobe">
@@ -39,19 +41,41 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
     <!-- Font Awesome CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous" />
     <!-- Animate CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css" integrity="sha384-xyZLiqnBEFn1hDkS8VeG/YHoqOjS/ucimT8TI6GDr9+ZP1UNbZr6d/q0ldMi/xvL" crossorigin="anonymous">
     <!-- Custom CSS -->
-    <link rel="stylesheet" type="text/css" href="static/css_main.css" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css_main.css') }}" />
     <!-- MathJax -->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" crossorigin="anonymous"></script>
     <!-- jQuery -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
     <!-- Popper Js -->
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
     <!-- Bootstrap Js -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+    <!-- CSRF auto-injection: adds X-CSRFToken header to all same-origin non-GET fetch calls -->
+    <script>
+    (function () {
+        var _csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (!_csrfToken) return;
+        var token = _csrfToken.getAttribute('content');
+        var _origFetch = window.fetch;
+        window.fetch = function (url, opts) {
+            opts = opts || {};
+            var method = (opts.method || 'GET').toUpperCase();
+            if (method !== 'GET' && method !== 'HEAD') {
+                var urlStr = (typeof url === 'string') ? url : (url.url || '');
+                var isSameOrigin = !urlStr.match(/^https?:\/\//) ||
+                                   urlStr.indexOf(window.location.origin) === 0;
+                if (isSameOrigin) {
+                    opts.headers = Object.assign({'X-CSRFToken': token}, opts.headers || {});
+                }
+            }
+            return _origFetch.call(this, url, opts);
+        };
+    })();
+    </script>
     <!-- Bootstrap Bundle for later version 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" 
             integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+Ue0jt8z5PJm3Ib0bQ4Bl+f2QUaIH" 
@@ -166,8 +190,8 @@
                                 <ul class="dropdown-menu">
                                     <a class="dropdown-item" href="/pbr_analysis"> PBR Data Analysis</a>
                                     <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank"> PSI PBR data analysis (Shiny) </a>
-                                    <a class="dropdown-item" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank"> PSI PBR control scripts </a>
+                                    <a class="dropdown-item" href="https://czechglobe-doab.shinyapps.io/PBR-DataAnalysis/" target="_blank" rel="noopener noreferrer"> PSI PBR data analysis (Shiny) </a>
+                                    <a class="dropdown-item" href="https://smartbiotech.github.io/PBR-ControlScripts/" target="_blank" rel="noopener noreferrer"> PSI PBR control scripts </a>
                                 </ul>
                             </li>
                             <li class="nav-item">
@@ -190,10 +214,10 @@
                                     <li class="dropdown-submenu">
                                         <a class="dropdown-item dropdown-toggle" href="#">DoAB</a>
                                         <ul class="dropdown-menu">
-                                            <a class="dropdown-item" href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">DoAB home page</a>
-                                            <a class="dropdown-item" href="http://www.pracovistedrasov.pano3d.eu/" target="_blank">DoAB research infrastructure</a>
-                                            <a class="dropdown-item" href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank">DoAB results and publications</a>
-                                            <a class="dropdown-item" href="https://twitter.com/CzechGlobe_DoAB" target="_blank">DoAB social media channel</a>
+                                            <a class="dropdown-item" href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank" rel="noopener noreferrer">DoAB home page</a>
+                                            <a class="dropdown-item" href="https://www.pracovistedrasov.pano3d.eu/" target="_blank" rel="noopener noreferrer">DoAB research infrastructure</a>
+                                            <a class="dropdown-item" href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank" rel="noopener noreferrer">DoAB results and publications</a>
+                                            <a class="dropdown-item" href="https://twitter.com/CzechGlobe_DoAB" target="_blank" rel="noopener noreferrer">DoAB social media channel</a>
                                         </ul>
                                     </li>
                                 </ul>
@@ -241,17 +265,17 @@
                 <div class="footer-content">
                     <div class="footer-section">
                         <h4>About DoAB</h4>
-                        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/research-group-of-adaptive-biotechnologies/" target="blank">Department of Adaptive Biotechnologies</a><br>
-                        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/" target="blank">Domain of Adaptive and Innovative Techniques</a><br>
+                        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/research-group-of-adaptive-biotechnologies/" target="_blank" rel="noopener noreferrer">Department of Adaptive Biotechnologies</a><br>
+                        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/" target="_blank" rel="noopener noreferrer">Domain of Adaptive and Innovative Techniques</a><br>
                     </div>
                     <div class="footer-section">
                         <h4>Documentation</h4>
-                        <a href="https://github.com/Zastupic/cyano-tools" target="blank">Documentation (GitHub)</a><br>
+                        <a href="https://github.com/Zastupic/cyano-tools" target="_blank" rel="noopener noreferrer">Documentation (GitHub)</a><br>
                     </div>
                     <div class="footer-section">
                         <h4>Quick Links</h4>
-                        <a href="https://www.czechglobe.cz/en/" target="blank">CzechGlobe</a><br>
-                        <a href="https://www.avcr.cz/en/" target="blank">Czech Academy of Sciences</a><br>
+                        <a href="https://www.czechglobe.cz/en/" target="_blank" rel="noopener noreferrer">CzechGlobe</a><br>
+                        <a href="https://www.avcr.cz/en/" target="_blank" rel="noopener noreferrer">Czech Academy of Sciences</a><br>
                     </div>
                     <div class="footer-section">
                         <h4>Contact</h4>

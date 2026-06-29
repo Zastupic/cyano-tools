@@ -254,8 +254,9 @@ def run_tests():
             test_results.append(result_entry)
 
         return jsonify({"results": _sanitize(test_results)})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 @stats_bp.route('/run-statistics', methods=['POST'])
 def run_analysis():
@@ -332,9 +333,9 @@ def run_analysis():
             })
 
         return jsonify({"mode": "results", "factors": factors, "results": _sanitize(results)})
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 @stats_bp.route('/export-excel', methods=['POST'])
 def export_excel():
@@ -382,8 +383,9 @@ def export_excel():
         output.seek(0)
         return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                          as_attachment=True, download_name='Box_plots.xlsx')
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 def confidence_ellipse(x, y, ax, n_std=2.0, facecolor: Any = 'none', **kwargs):
     """
@@ -810,9 +812,9 @@ def run_pca():
             "vars_used":           selected_vars,
             "hue_col":             hue_col,
         }))
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 @stats_bp.route('/export-pca-excel', methods=['POST'])
 def export_pca_excel():
@@ -859,8 +861,9 @@ def export_pca_excel():
             as_attachment=True,
             download_name='PCA_Full_Analysis.xlsx'
         )
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 @stats_bp.route('/run-opls', methods=['POST'])
 def run_opls():
@@ -1021,9 +1024,9 @@ def run_opls():
             'class_labels': class_labels,
             'vars_used': selected_vars,
         })
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 @stats_bp.route('/export-opls-excel', methods=['POST'])
 def export_opls_excel():
@@ -1098,8 +1101,9 @@ def export_opls_excel():
             as_attachment=True,
             download_name='OPLS_Analysis.xlsx'
         )
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 @stats_bp.route('/run-pls', methods=['POST'])
 def run_pls():
@@ -1248,9 +1252,9 @@ def run_pls():
             'class_labels': class_labels,
             'vars_used': selected_vars,
         })
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 
 @stats_bp.route('/export-pls-excel', methods=['POST'])
@@ -1316,8 +1320,9 @@ def export_pls_excel():
             as_attachment=True,
             download_name='PLS_Analysis.xlsx'
         )
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 
 @stats_bp.route('/run-anova', methods=['POST'])
@@ -1416,9 +1421,9 @@ def run_anova():
             "test_rationale": test_rationale
         }))
 
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -1821,8 +1826,9 @@ def _run_two_way_anova(df, selected_vars, factors, all_normal, homogeneous):
                 "letter_groups": letter_groups, "posthoc": posthoc,
             }
             all_results.append(result)
-        except Exception as e:
-            all_results.append({"variable": var, "slice_label": "All", "error": str(e)})
+        except Exception:
+            traceback.print_exc()
+            all_results.append({"variable": var, "slice_label": "All", "error": "Analysis failed for this variable."})
 
     return all_results
 
@@ -2406,9 +2412,9 @@ def export_full_report():
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
 
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 
 # ================== CORRELATION ANALYSIS ==================
@@ -2509,9 +2515,10 @@ def run_correlation():
                 'color_list': dend['color_list'],
                 'ivl':        dend['ivl'],
             }
-        except Exception as e:
+        except Exception:
+            traceback.print_exc()
             hclust_order = list(range(n_vars))
-            hclust_error = str(e)
+            hclust_error = 'Clustering failed.'
 
         # Compute redundant pairs for Step 4 (variable reduction)
         corr_threshold = float(request_data.get('corr_threshold', 0.80))
@@ -2544,9 +2551,9 @@ def run_correlation():
             "corr_threshold":      corr_threshold,
         }))
 
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 
 @stats_bp.route('/run-normalization', methods=['POST'])
@@ -2606,9 +2613,9 @@ def run_normalization():
             "method": method,
             "variables": variables,
         }))
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 
 @stats_bp.route('/export-correlation-excel', methods=['POST'])
@@ -2769,9 +2776,9 @@ def export_correlation_excel():
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
 
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500
 
 
 # ================== HELPER FUNCTIONS ==================
@@ -3070,6 +3077,6 @@ def export_anova_excel():
             download_name="Significance_Report_With_Assumptions.xlsx"
         )
 
-    except Exception as e:
-        print(f"Excel Export Error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "An internal server error occurred."}), 500

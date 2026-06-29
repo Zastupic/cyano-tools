@@ -2,6 +2,7 @@ from flask import Flask, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_uploads import IMAGES, UploadSet, configure_uploads
+from flask_wtf.csrf import CSRFProtect
 from .shared import db
 from os import path
 import hashlib
@@ -18,7 +19,10 @@ ALLOWED_EXTENSIONS = set(['.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.gi
 images = UploadSet('images', IMAGES)
 
 # ── Rate limiter (module-level so blueprints can import and decorate with it) ─
-limiter = Limiter(key_func=get_remote_address, default_limits=[])
+limiter = Limiter(key_func=get_remote_address, default_limits=["200 per minute", "2000 per hour"])
+
+# ── CSRF protection (module-level so blueprints can import csrf.exempt) ───────
+csrf = CSRFProtect()
 
 # ── Cache-key validator — prevents path-traversal via cached_image_key ────────
 _SAFE_KEY_RE = re.compile(
@@ -42,6 +46,31 @@ def safe_cache_key(key: str) -> 'str | None':
     if not resolved.startswith(upload_abs + os.sep):
         return None
     return key
+
+def _ensure_opencv_js():
+    """Download opencv.js to static folder if not already present (runs in background thread)."""
+    import urllib.request
+    import ssl
+    dest = os.path.join(os.path.dirname(__file__), 'static', 'opencv.js')
+    if os.path.exists(dest):
+        return
+    url = 'https://docs.opencv.org/4.8.0/opencv.js'
+    print('[opencv] Downloading opencv.js (~8 MB), live cell count will be available shortly…')
+    try:
+        ctx = ssl.create_default_context()
+        try:
+            urllib.request.urlretrieve(url, dest)
+        except Exception:
+            # Fallback: skip SSL verification (matches pip --trusted-host behaviour)
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, context=ctx, timeout=120) as r, open(dest, 'wb') as f:
+                f.write(r.read())
+        print('[opencv] opencv.js downloaded successfully.')
+    except Exception as exc:
+        print(f'[opencv] Failed to download opencv.js: {exc}')
+
 
 def _start_metanetx_download():
     """Background thread: download MetaNetX TSV files if not already present."""
@@ -102,11 +131,16 @@ def create_app():
     # Session cookie configuration
     app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB — allow large OJIP batch uploads
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'    # Lax prevents cross-site POST (CSRF protection)
-    app.config['SESSION_COOKIE_SECURE'] = True       # HTTPS only
+    app.config['SESSION_COOKIE_SECURE'] = not app.debug  # HTTPS only in production
     app.config['SESSION_COOKIE_HTTPONLY'] = True     # Not accessible from JavaScript
+    # Remember-me cookie — same security flags as session cookie
+    app.config['REMEMBER_COOKIE_SECURE'] = not app.debug
+    app.config['REMEMBER_COOKIE_HTTPONLY'] = True
+    app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 
     db.init_app(app)
     limiter.init_app(app)
+    csrf.init_app(app)
 
     from .views import views
     from .auth import auth
@@ -183,6 +217,36 @@ def create_app():
             db.session.commit()
         except Exception:
             db.session.rollback()
+
+    @app.after_request
+    def set_security_headers(response):
+        # Long cache for opencv.js and cv_worker.js — large static files that never change
+        if request.path in ('/static/opencv.js', '/static/cv_worker.js'):
+            response.headers['Cache-Control'] = 'public, max-age=2592000, immutable'  # 30 days
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+        # Only set HSTS on HTTPS responses to avoid breaking local HTTP dev
+        if request.is_secure:
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        # Content-Security-Policy — permissive but blocks inline event handlers from CDN compromise
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' blob: 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net cdn.sheetjs.com "
+            "ajax.googleapis.com maxcdn.bootstrapcdn.com cdn.plot.ly cdnjs.cloudflare.com "
+            "docs.opencv.org www.googletagmanager.com www.google-analytics.com; "
+            "worker-src blob: 'self'; "
+            "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net stackpath.bootstrapcdn.com "
+            "cdnjs.cloudflare.com; "
+            "img-src 'self' data: blob: www.czechglobe.cz www.googletagmanager.com; "
+            "connect-src 'self' data: blob: cdn.jsdelivr.net maxcdn.bootstrapcdn.com "
+            "cdn.sheetjs.com cdnjs.cloudflare.com https://*.google-analytics.com https://*.analytics.google.com; "
+            "font-src 'self' stackpath.bootstrapcdn.com cdnjs.cloudflare.com cdn.jsdelivr.net; "
+            "frame-ancestors 'self';"
+        )
+        return response
+
     from .OJIP_data_analysis import OJIP_data_analysis
     from .slow_kin_data_analysis import slow_kin_data_analysis
     from .P700_kin_data_analysis import P700_kin_data_analysis
@@ -249,6 +313,7 @@ def create_app():
     # Werkzeug reloader watcher (which would otherwise start two threads).
     if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         _start_upload_cleanup(UPLOAD_FOLDER, max_age_minutes=30, interval_hours=2)
+        threading.Thread(target=_ensure_opencv_js, daemon=True).start()
         from . import metanetx_lookup
         if not metanetx_lookup.files_available():
             _start_metanetx_download()

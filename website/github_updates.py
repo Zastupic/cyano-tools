@@ -2,11 +2,16 @@
 Fetches last-commit dates per tool file from GitHub and caches results for 6 hours.
 Used to drive the 'Updated' badge on the home page.
 """
+import ssl
+import urllib.error
 import urllib.request
 import urllib.parse
 import json
+import logging
 import os
 from datetime import datetime, timedelta, timezone
+
+logger = logging.getLogger(__name__)
 
 # Optional GitHub personal access token (read-only public repos).
 # Set the GITHUB_TOKEN environment variable to raise the rate limit
@@ -50,6 +55,39 @@ TOOL_ADDED_DATES = {
 
 _cache      = {}
 _cache_time = None
+_CACHE_FILE = os.path.join(os.path.dirname(__file__), '..', 'github_badge_cache.json')
+
+# Extended backoff after a rate-limit response — avoid hammering the API
+# on repeated server restarts when already over quota.
+_RATELIMIT_TTL = timedelta(hours=1)
+_rate_limited_until = None
+
+
+def _load_disk_cache():
+    """Read cache from disk on cold start (survives server restarts)."""
+    global _cache, _cache_time
+    try:
+        with open(_CACHE_FILE, 'r') as f:
+            data = json.load(f)
+        ts = datetime.fromisoformat(data['ts'])
+        if (datetime.now(timezone.utc) - ts) < _CACHE_TTL:
+            _cache      = data['cache']
+            _cache_time = ts
+    except Exception:
+        pass
+
+
+def _save_disk_cache():
+    if _cache_time is None:
+        return
+    try:
+        with open(_CACHE_FILE, 'w') as f:
+            json.dump({'ts': _cache_time.isoformat(), 'cache': _cache}, f)
+    except Exception:
+        pass
+
+
+_load_disk_cache()
 
 
 def get_updated_tools():
@@ -60,14 +98,19 @@ def get_updated_tools():
     Results are cached for CACHE_TTL to avoid hammering the GitHub API.
     On any network or API error the tool key maps to None (badge hidden).
     """
-    global _cache, _cache_time
+    global _cache, _cache_time, _rate_limited_until
     now = datetime.now(timezone.utc)
+
+    # Return stale cache during in-memory or rate-limit backoff window
     if _cache_time and (now - _cache_time) < _CACHE_TTL:
         return _cache
+    if _rate_limited_until and now < _rate_limited_until:
+        return _cache
 
-    result  = {}
-    cutoff  = now - timedelta(days=BADGE_DAYS)
-    headers = {'Accept': 'application/vnd.github.v3+json'}
+    result      = {}
+    cutoff      = now - timedelta(days=BADGE_DAYS)
+    headers     = {'Accept': 'application/vnd.github.v3+json'}
+    rate_limited = False
     if _GITHUB_TOKEN:
         headers['Authorization'] = f'Bearer {_GITHUB_TOKEN}'
 
@@ -85,6 +128,14 @@ def get_updated_tools():
                     commit_dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
                     if latest_dt is None or commit_dt > latest_dt:
                         latest_dt = commit_dt
+            except urllib.error.HTTPError as e:
+                if e.code == 403:
+                    rate_limited = True
+                    logger.warning("GitHub API rate limit hit for %s — backing off 1 h", path)
+                else:
+                    logger.warning("GitHub API HTTP error for %s: %s", path, e)
+            except (ssl.SSLError, urllib.error.URLError) as e:
+                logger.warning("GitHub API network/TLS error for %s: %s", path, e)
             except Exception:
                 pass
         if latest_dt and latest_dt > cutoff:
@@ -92,8 +143,16 @@ def get_updated_tools():
         else:
             result[key] = None
 
+    if rate_limited:
+        _rate_limited_until = now + _RATELIMIT_TTL
+        # Keep previous cache rather than overwriting with incomplete data
+        if not _cache:
+            _cache = result
+        return _cache
+
     _cache      = result
     _cache_time = now
+    _save_disk_cache()
     return result
 
 

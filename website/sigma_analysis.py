@@ -205,8 +205,9 @@ def sigma_process():
         raw_name = os.path.splitext(os.path.basename(f.filename))[0]
         try:
             data = _parse_sigma_csv(f.read())
-        except Exception as exc:
-            errors.append(f'{raw_name}: {exc}')
+        except Exception:
+            import traceback; traceback.print_exc()
+            errors.append(f'{raw_name}: parse error')
             continue
         if not data['wavelengths']:
             errors.append(f'{raw_name}: no recognisable wavelength rows found')
@@ -220,8 +221,9 @@ def sigma_process():
         return jsonify({'error': msg}), 400
 
     # Build xlsx and save to uploads folder
+    import uuid
     xlsx_bytes = _build_xlsx(samples)
-    xlsx_name = 'sigma_summary.xlsx'
+    xlsx_name = f'{uuid.uuid4().hex[:8]}_sigma_summary.xlsx'
     xlsx_path = os.path.join(UPLOAD_FOLDER, xlsx_name)
     with open(xlsx_path, 'wb') as fh:
         fh.write(xlsx_bytes)
@@ -246,10 +248,12 @@ def sigma_export():
 
     try:
         xlsx_bytes = _build_xlsx(samples, charts)
-    except Exception as exc:
-        return jsonify({'error': str(exc)}), 500
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': 'An internal server error occurred.'}), 500
 
-    xlsx_name = 'sigma_summary.xlsx'
+    import uuid
+    xlsx_name = f'{uuid.uuid4().hex[:8]}_sigma_summary.xlsx'
     xlsx_path = os.path.join(UPLOAD_FOLDER, xlsx_name)
     with open(xlsx_path, 'wb') as fh:
         fh.write(xlsx_bytes)

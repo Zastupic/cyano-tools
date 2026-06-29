@@ -31,15 +31,43 @@ $(function() {
   });
 });
 
-//--------------------------------------------// 
-//--- Fill file names to the selection box ---//
-//--------------------------------------------// 
-document.getElementById('image').addEventListener('change', function() {
-  let fileName = Array.from(this.files)
-      .map(file => file.name)
-      .join(', ');
-  this.nextElementSibling.innerText = fileName || 'Select files';
-});
+// ── Drag-and-drop upload zone ─────────────────────────────────────────────────
+(function () {
+    var zone = document.getElementById('upload-drop-zone');
+    var inp  = document.getElementById('image');
+    var fn   = document.getElementById('drop-zone-filename');
+    if (!zone || !inp) return;
+
+    zone.addEventListener('click', function () { inp.click(); });
+
+    zone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        zone.style.borderColor = '#17a2b8';
+        zone.style.background  = '#f0faff';
+    });
+    zone.addEventListener('dragleave', function () {
+        zone.style.borderColor = '#adb5bd';
+        zone.style.background  = '#fafbfc';
+    });
+    zone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        zone.style.borderColor = '#adb5bd';
+        zone.style.background  = '#fafbfc';
+        if (e.dataTransfer.files.length) {
+            inp.files = e.dataTransfer.files;
+            showFile(e.dataTransfer.files[0]);
+        }
+    });
+    inp.addEventListener('change', function () {
+        if (this.files.length) showFile(this.files[0]);
+    });
+
+    function showFile(file) {
+        if (fn) { fn.textContent = file.name; fn.style.display = 'block'; }
+        zone.style.borderColor = '#28a745';
+        zone.style.background  = '#f0fff4';
+    }
+})();
 
 // SLIDERS //
 if (document.getElementById("expected_cell_size_range") != null){
@@ -60,61 +88,63 @@ if (document.getElementById("expected_cell_size_range") != null){
 const canvas = document.getElementById("canvas_mouse_clicking");
 const img = document.getElementById("img_orig_decoded_from_memory");
 
-let img_size_y = img.height;
-let img_size_x = img.width;
+if (canvas && img) {
+  let img_size_y = img.height;
+  let img_size_x = img.width;
 
-coordinates = [];
+  coordinates = [];
 
-function getMousePosition(canvas, event) {
-  let rect = canvas.getBoundingClientRect();
+  function getMousePosition(canvas, event) {
+    let rect = canvas.getBoundingClientRect();
 
-  canvas.height = rect.height;
-  canvas.width = rect.width;
+    canvas.height = rect.height;
+    canvas.width = rect.width;
 
-  let canvas_size_y = canvas.height;
-  let canvas_size_x = canvas.width;
+    let canvas_size_y = canvas.height;
+    let canvas_size_x = canvas.width;
 
-  const context = canvas.getContext("2d");
+    const context = canvas.getContext("2d");
 
-  let x = (event.clientX - rect.left).toFixed(0); //.toFixed(0) = zero digits
-  let y = (event.clientY - rect.top).toFixed(0);
+    let x = (event.clientX - rect.left).toFixed(0);
+    let y = (event.clientY - rect.top).toFixed(0);
 
-  console.log(x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y, radius);
-  coordinates.push({x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y, radius});
- 
-  // DRAWING A CIRCLE//
-  var circle_size = slider_1.value;
+    console.log(x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y, radius);
+    coordinates.push({x, y, canvas_size_x, canvas_size_y, img_size_x, img_size_y, radius});
 
-  context.beginPath();
-  context.arc(x, y, circle_size, 0, 2*Math.PI, false);  
-  context.lineWidth = 1;
-  context.strokeStyle = '#FF0000';
-  context.stroke();
+    // DRAWING A CIRCLE//
+    var circle_size = slider_1.value;
 
-  // DRAWING ALL CIRCLES//
-  for (let i = 0; i < coordinates.length; i++){ 
     context.beginPath();
-    context.arc(coordinates[i].x, coordinates[i].y, circle_size, 0, 2*Math.PI, false);  
+    context.arc(x, y, circle_size, 0, 2*Math.PI, false);
     context.lineWidth = 1;
     context.strokeStyle = '#FF0000';
     context.stroke();
+
+    // DRAWING ALL CIRCLES//
+    for (let i = 0; i < coordinates.length; i++) {
+      context.beginPath();
+      context.arc(coordinates[i].x, coordinates[i].y, circle_size, 0, 2*Math.PI, false);
+      context.lineWidth = 1;
+      context.strokeStyle = '#FF0000';
+      context.stroke();
+    }
+
+    // SENDING COORDINATES TO FLASK
+    const coordinates_for_flask = JSON.stringify(coordinates);
+    var csrfToken = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
+    $.ajax({
+      url: "/cell_size/coordinates",
+      type: "POST",
+      contentType: "application/json",
+      headers: { 'X-CSRFToken': csrfToken },
+      data: JSON.stringify(coordinates_for_flask)
+    });
   }
 
-  //document.getElementById("box_width").innerHTML = ("Resolution of displayed image is " + canvas_size_x + " x " + canvas_size_y + " pixels.");
-
-  // SENDING COORDINATES TO FLASK
-const coordinates_for_flask = JSON.stringify(coordinates); // Stringify converts a JavaScript object or value to a JSON string
-
-$.ajax({
-    url:"/cell_size/coordinates",
-    type:"POST",
-    contentType: "application/json",
-    data: JSON.stringify(coordinates_for_flask)});
+  // define mouse click event
+  canvas.addEventListener("mousedown", function(e) {
+    getMousePosition(canvas, e);
+  });
 }
-
-// define mouse click event
-canvas.addEventListener("mousedown", function(e){
-  getMousePosition(canvas, e);
-});
 
 

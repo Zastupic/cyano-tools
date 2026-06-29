@@ -30,36 +30,64 @@ $('img[data-enlargeable]').addClass('img-enlargeable').click(function() {
     });
   });
   
-//--------------------------------------------// 
-//--- Fill file names to the selection box ---//
-//--------------------------------------------// 
-document.getElementById('image').addEventListener('change', function() {
-  let fileName = Array.from(this.files)
-      .map(file => file.name)
-      .join(', ');
-  this.nextElementSibling.innerText = fileName || 'Select files';
-});
+// ── Drag-and-drop upload zone ─────────────────────────────────────────────────
+(function () {
+    var zone = document.getElementById('upload-drop-zone');
+    var inp  = document.getElementById('image');
+    var fn   = document.getElementById('drop-zone-filename');
+    if (!zone || !inp) return;
+
+    zone.addEventListener('click', function () { inp.click(); });
+
+    zone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        zone.style.borderColor = '#17a2b8';
+        zone.style.background  = '#f0faff';
+    });
+    zone.addEventListener('dragleave', function () {
+        zone.style.borderColor = '#adb5bd';
+        zone.style.background  = '#fafbfc';
+    });
+    zone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        zone.style.borderColor = '#adb5bd';
+        zone.style.background  = '#fafbfc';
+        if (e.dataTransfer.files.length) {
+            inp.files = e.dataTransfer.files;
+            showFile(e.dataTransfer.files);
+        }
+    });
+    inp.addEventListener('change', function () {
+        if (this.files.length) showFile(this.files);
+    });
+
+    function showFile(files) {
+        var names = Array.from(files).map(function (f) { return f.name; }).join(', ');
+        if (fn) { fn.textContent = names; fn.style.display = 'block'; }
+        zone.style.borderColor = '#28a745';
+        zone.style.background  = '#f0fff4';
+    }
+})();
 
 //---------------------------------------------//
 //--- DRAWING LINES BY MOUSE CLICK IN CANVAS---//
 //---------------------------------------------//
-//-------------------------//
-//--- DEFINING VARIABLES---//
-//-------------------------//
 const canvas = document.getElementById("canvas_mouse_clicking");
-var context = canvas.getContext("2d");
 const img = document.getElementById("img_orig_decoded_from_memory");
-let img_size_y = img.height;
-let img_size_x = img.width;
-var storedLines = [];
-var isDown;
 
-coordinates = [];
+if (canvas && img) {
+  var context = canvas.getContext("2d");
+  let img_size_y = img.height;
+  let img_size_x = img.width;
+  var storedLines = [];
+  var isDown;
 
-$("#canvas_mouse_clicking").mousedown(function (e) {handleMouseDown(e);});
-$("#canvas_mouse_clicking").mousemove(function (e) {handleMouseMove(e);});
-$("#canvas_mouse_clicking").mouseup(function (e) {handleMouseUp(e);});
-$("#canvas_mouse_clicking").mouseout(function (e) {handleMouseOut(e);});
+  coordinates = [];
+
+  $("#canvas_mouse_clicking").mousedown(function (e) {handleMouseDown(e);});
+  $("#canvas_mouse_clicking").mousemove(function (e) {handleMouseMove(e);});
+  $("#canvas_mouse_clicking").mouseup(function (e) {handleMouseUp(e);});
+  $("#canvas_mouse_clicking").mouseout(function (e) {handleMouseOut(e);});
 $("#clear_selection").click(function () {
     context.clearRect(0, 0, canvas.width, canvas.height);
     storedLines = [];
@@ -154,16 +182,20 @@ function handleMouseUp(e){
      y_coord_final: mouseY
     });
 
-    // Jsonify data to send it to server as ajax 
-    const coordinates_for_flask = JSON.stringify(coordinates); // Stringify converts a JavaScript object or value to a JSON string
+    // Jsonify data to send it to server as ajax
+    const coordinates_for_flask = JSON.stringify(coordinates);
+    var csrfToken = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
     $.ajax({
-      url:"/pixel_profiles/coordinates",
-      type:"POST",
+      url: "/pixel_profiles/coordinates",
+      type: "POST",
       contentType: "application/json",
-      data: JSON.stringify(coordinates_for_flask)});
+      headers: { 'X-CSRFToken': csrfToken },
+      data: JSON.stringify(coordinates_for_flask)
+    });
 
     redrawStoredLines();
 }
+} // end if (canvas && img)
 
 //-----------------//
 //--- MOUSE OUT ---//

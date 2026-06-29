@@ -37,50 +37,64 @@
 {% block content %}
     <br><br>
     <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <h3 allign="center">Sign up</h3>
         <div class="form-group">
             <label for="email">Email address</label>
-            <input  
+            <input
                 type="email"
                 class="form-control"
                 id="email"
                 name="email"
                 placeholder="Enter email"
+                autocomplete="email"
+                required
         />
         <div class="form-group">
             <label for="name">Name</label>
-            <input  
+            <input
                 type="text"
                 class="form-control"
                 id="name"
                 name="name"
                 placeholder="Enter full name"
+                autocomplete="name"
+                required
+                minlength="2"
         />
         <div class="form-group">
             <label for="institution">Institution</label>
-            <input  
+            <input
                 type="text"
                 class="form-control"
                 id="institution"
                 name="institution"
                 placeholder="Enter institution"
+                required
+                minlength="4"
         />
         <div class="form-group">
         <label for="password1">Password</label>
-        <input  
+        <input
             type="password"
             class="form-control"
             id="password1"
             name="password1"
-            placeholder="Enter password (6 characters minimum)"
+            placeholder="Enter password (7 characters minimum)"
+            autocomplete="new-password"
+            required
+            minlength="7"
         />
         <label for="password2">Password</label>
-        <input  
+        <input
             type="password"
             class="form-control"
             id="password2"
             name="password2"
             placeholder="Confirm password"
+            autocomplete="new-password"
+            required
+            minlength="7"
         />
         </div>
         <br />

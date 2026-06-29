@@ -43,10 +43,10 @@
 <br> <br> 
 <div class="container">
     <div class="gallery_4">
-        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">
+        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank" rel="noopener noreferrer">
             <p><i>DoAB home page</i></p>
         </a>
-        <a href="http://www.pracovistedrasov.pano3d.eu/" target="_blank" rel="noopener">
+        <a href="https://www.pracovistedrasov.pano3d.eu/" target="_blank" rel="noopener noreferrer">
             <p><i>DoAB research infrastructure</i></p>
         </a>
         <a href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank" rel="noopener">
@@ -59,12 +59,12 @@
 </div>
 <div class="container">
     <div class="gallery_4">
-        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank">
-            <img src="static/images/drasov_1.jpg" alt="Bioreactors" class="gallery__img gallery__item--1">
+        <a href="https://www.czechglobe.cz/en/institute-structure/research-sector/v-domain-adaptive-and-innovative-techniques/department-of-adaptive-biotechnologies/" target="_blank" rel="noopener noreferrer">
+            <img src="{{ url_for('static', filename='images/drasov_1.jpg') }}" alt="Bioreactors" class="gallery__img gallery__item--1">
         </a>
-        <a href="http://www.pracovistedrasov.pano3d.eu/" target="_blank" rel="noopener">
-            <img src="http://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png" 
-            srcset="https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png 400w, 
+        <a href="https://www.pracovistedrasov.pano3d.eu/" target="_blank" rel="noopener noreferrer">
+            <img src="https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png"
+            srcset="https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final.png 400w,
             https://www.czechglobe.cz/wp-content/uploads/2020/02/drasov_pano3d_final-300x191.png 300w" class="gallery__img gallery__item--2">
         </a>
         <a href="https://www.researchgate.net/lab/Jan-Cerveny-Lab" target="_blank" rel="noopener">
@@ -105,24 +105,27 @@
         <br>If you are a new visitor, please <a href="{{ url_for('auth.sign_up') }}">create an account</a></p>
     <div id="form">
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="email">Email address</label>
-                <input  
+                <input
                     type="email"
                     class="form-control"
                     id="email"
                     name="email"
                     placeholder="Enter email"
+                    autocomplete="email"
             />
-            </div> 
+            </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input  
+                <input
                     type="password"
                     class="form-control"
                     id="password"
                     name="password"
                     placeholder="Enter password"
+                    autocomplete="current-password"
             />
             </div>
             <button type="submit" class="btn btn-primary">Login</button>

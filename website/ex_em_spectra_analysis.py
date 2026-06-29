@@ -769,8 +769,9 @@ def eem_process():
                 ex_wl_arr = np.asarray(ex_wl_arr, dtype=np.float64)
                 em_wl_arr = np.asarray(em_wl_arr, dtype=np.float64)
                 intensity = np.asarray(intensity,  dtype=np.float64)
-            except Exception as e:
-                result['warnings'].append(f'{fname_raw}: parse error – {e}')
+            except Exception:
+                import traceback; traceback.print_exc()
+                result['warnings'].append(f'{fname_raw}: parse error')
                 continue
             process_eem(fname, ex_wl_arr, em_wl_arr, intensity)
 
@@ -779,8 +780,9 @@ def eem_process():
                 spc = parse_horiba_spc(file, fname_raw,
                                        ex_start_override=spc_ex_start,
                                        ex_inc_override=spc_ex_increment)
-            except Exception as e:
-                result['warnings'].append(f'{fname_raw}: parse error – {e}')
+            except Exception:
+                import traceback; traceback.print_exc()
+                result['warnings'].append(f'{fname_raw}: parse error')
                 continue
             spc_slices[fname] = spc
 
@@ -870,8 +872,9 @@ def eem_parafac_diagnostic():
 
     try:
         X, ex_wl, em_wl, names = _build_tensor(maps_dict, crop or None)
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+    except ValueError:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': 'An internal server error occurred.'}), 400
 
     if len(names) < 3:
         return jsonify({'error': 'At least 3 samples are required for PARAFAC.'}), 400
@@ -890,9 +893,10 @@ def eem_parafac_diagnostic():
                 cc = round(_corcondia(X, A, B, C), 1)
                 result = {'f': f, 'f_total': f_total,
                           'corcondia': cc, 'explained_variance': exp_var}
-            except Exception as e:
+            except Exception:
+                import traceback; traceback.print_exc()
                 result = {'f': f, 'f_total': f_total,
-                          'corcondia': None, 'explained_variance': None, 'error': str(e)}
+                          'corcondia': None, 'explained_variance': None, 'error': 'PARAFAC fitting failed for this component count.'}
             yield f"data: {_json.dumps(result)}\n\n"
         yield 'data: {"done": true}\n\n'
 
@@ -915,8 +919,9 @@ def eem_parafac():
 
     try:
         X, ex_wl, em_wl, names = _build_tensor(maps_dict, crop or None)
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+    except ValueError:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': 'An internal server error occurred.'}), 400
 
     if len(names) < rank + 1:
         return jsonify({'error':
@@ -944,8 +949,9 @@ def eem_parafac():
                 try:
                     A, B, C, err = _parafac_als_one_restart(
                         X_clean, rank, rng, max_iter, tol, X1, X2, X3, X_norm)
-                except Exception as e:
-                    yield f"data: {_json.dumps({'error': 'ALS error: ' + str(e)})}\n\n"
+                except Exception:
+                    import traceback; traceback.print_exc()
+                    yield f"data: {_json.dumps({'error': 'ALS convergence error.'})}\n\n"
                     return
                 if err < best_err:
                     best_err = err
@@ -975,9 +981,10 @@ def eem_parafac():
             scores_by_sample = [[scores[r][i] for r in range(rank)] for i in range(len(names))]
 
             yield f"data: {_json.dumps({'done': True, 'ex_wl': ex_wl.tolist(), 'em_wl': em_wl.tolist(), 'sample_names': names, 'ex_loadings': ex_loadings, 'em_loadings': em_loadings, 'scores': scores_by_sample, 'scores_by_component': scores, 'explained_variance': exp_var, 'rmse': rmse, 'annotations': annotations, 'n_components': rank})}\n\n"
-        except Exception as e:
+        except Exception:
             import traceback
-            yield f"data: {_json.dumps({'error': 'Server error: ' + str(e), 'traceback': traceback.format_exc()})}\n\n"
+            traceback.print_exc()  # log server-side only
+            yield f"data: {_json.dumps({'error': 'An internal server error occurred during processing.'})}\n\n"
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream',
                     headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})

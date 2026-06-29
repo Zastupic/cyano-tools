@@ -3410,10 +3410,33 @@
     sessionStorage.removeItem('ojip_export');
     // Wait for js_statistics.js to finish initialising before populating
     window.addEventListener('load', function () {
-      const box = document.getElementById('excelPasteBox');
-      const btn = document.getElementById('processDataBtn');
-      if (!box || !btn) return;
+      const box       = document.getElementById('excelPasteBox');
+      const btn       = document.getElementById('processDataBtn');
+      const container = document.getElementById('checkboxContainer');
+      if (!box || !btn || !container) return;
       box.value = payload.tsv;
+
+      // Once processDataBtn populates variable checkboxes, auto-select all
+      // enabled ones and confirm so the user lands on the analysis view
+      // without having to manually tick every variable first.
+      var observer = new MutationObserver(function () {
+        if (!container.querySelector('.var-check')) return;
+        observer.disconnect();
+        // Allow updateVariableCheckboxes() to finish disabling factor columns
+        setTimeout(function () {
+          var selectAll = document.getElementById('selectAllVars');
+          if (selectAll) {
+            selectAll.checked = true;
+            selectAll.dispatchEvent(new Event('change'));
+          }
+          setTimeout(function () {
+            var confirmBtn = document.getElementById('updateAnalysisBtn');
+            if (confirmBtn) confirmBtn.click();
+          }, 150);
+        }, 150);
+      });
+      observer.observe(container, { childList: true });
+
       // Small delay so any statistics.js listeners are ready
       setTimeout(function () { btn.click(); }, 150);
       // Scroll to input panel

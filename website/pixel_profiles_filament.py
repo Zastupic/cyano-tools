@@ -1,17 +1,18 @@
-from flask import Blueprint, render_template, request, flash, redirect, session, json
+from flask import Blueprint, render_template, request, flash, redirect, session, json, jsonify
 from PIL import Image as im
-import os, cv2, base64, io, time
+import os, cv2, base64, io, time, uuid
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage.measure import profile_line 
 from werkzeug.utils import secure_filename
-from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
+from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, limiter
 #from flask_login import current_user
 
 pixel_profiles_filament = Blueprint('pixel_profiles_filament', __name__)
 
 @pixel_profiles_filament.route('/pixel_profiles_filament', methods=['GET', 'POST'])
+@limiter.limit("20 per minute; 100 per hour")
 def get_pixel_profiles():
 #    if current_user.is_authenticated:
     if request.method == "POST":
@@ -87,7 +88,15 @@ def get_pixel_profiles():
                                 os.mkdir(upload_folder)
                             # saving original image
                             image.save(os.path.join(upload_folder, image_name_full_copy).replace("\\","/"))
+                            _saved_path = os.path.join(upload_folder, image_name_full_copy).replace("\\","/")
+                            if os.path.getsize(_saved_path) > 20 * 1024 * 1024:
+                                os.remove(_saved_path)
+                                return jsonify({'error': 'File too large (max 20 MB)'}), 413
                             img_orig = cv2.imread(f'{upload_folder}/{image_name_full_copy}')
+                            if img_orig is None:
+                                return jsonify({'error': 'Could not decode image'}), 400
+                            if img_orig.shape[0] * img_orig.shape[1] > 100_000_000:
+                                return jsonify({'error': 'Image dimensions too large (max 100 MP)'}), 413
                             img_orig_copy = img_orig.copy()
                             # resolution of original image (in pixels)
                             y_pixels, x_pixels, channels = img_orig.shape
@@ -273,7 +282,8 @@ def get_pixel_profiles():
                     ######################################################
                     ### Saving the result into specific sheets in excel ###
                     #######################################################
-                    xlsx_full_path = os.path.join(f'{upload_folder}/{image_name_without_extension}_results.xlsx')
+                    _xlsx_prefix = uuid.uuid4().hex[:8]
+                    xlsx_full_path = os.path.join(f'{upload_folder}/{_xlsx_prefix}_{image_name_without_extension}_results.xlsx')
                     with pd.ExcelWriter(xlsx_full_path, engine='xlsxwriter') as writer:
                         # Create new sheet for images
                         workbook = writer.book
@@ -322,7 +332,7 @@ def get_pixel_profiles():
                         worksheet_original_image.insert_image('A1', 'Original Image', {'image_data': orig_img_bytes})
 
                     
-                    xlsx_file_path = f'uploads/{image_name_without_extension}_results.xlsx'
+                    xlsx_file_path = f'uploads/{_xlsx_prefix}_{image_name_without_extension}_results.xlsx'
 
                     #####################################
                     ### Plotting profiles differences ###

@@ -85,6 +85,7 @@ Measure cell diameter, biovolume, and size distribution of unicellular cyanobact
 </ol> 
 <br>
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_size_round_cells.analyze_cell_size') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
         <p><b>1. Enter pixel size (nm)</b></p>
         <input  
@@ -96,20 +97,22 @@ Measure cell diameter, biovolume, and size distribution of unicellular cyanobact
             step="0.01"/>
         <br>
         <p><b>2. Select your image</b></p>
-        <div class="custom-file">
-            <input 
-                type="file" 
-                class="custom-file-input" 
-                name="image"
-                id="image"
-                style="width:100%"
-                accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif">
-            <label class="custom-file-label" id="show-image-button" for="customFile">Select files</label>
+        <div id="upload-drop-zone"
+             style="border:2px dashed #adb5bd; border-radius:8px; padding:1.5em 1em; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; background:#fafbfc; margin-bottom:0.5em;">
+            <div style="font-size:2em; line-height:1;">&#128247;</div>
+            <p style="margin:0.3em 0 0; color:#495057; font-size:0.95em;">
+                Drop your image here, or <strong>click to browse</strong>
+            </p>
+            <p style="margin:0.2em 0 0; font-size:0.78em; color:#adb5bd;">PNG · JPG · TIFF · BMP · GIF</p>
+            <p id="drop-zone-filename" style="margin:0.5em 0 0; font-weight:600; font-size:0.9em; color:#17a2b8; display:none;"></p>
+            <input type="file" name="image" id="image"
+                   accept=".png, .jpg, .jpeg, .tif, .tiff, .bmp, .gif"
+                   style="display:none;">
         </div>
     </div>
     <br>
     <button type="submit" class="btn btn-primary">Upload image and select individual cells</button>
-    <a href="{{url_for('static', filename='images/round_cells_example.jpg')}}" download="example_image">
+    <a href="{{url_for('static', filename='images/round_cells_example.jpg')}}" download="example_round_cells">
         <button type="button" class="btn btn-outline-primary">Download an example image</button>
     </a>
 </form>
