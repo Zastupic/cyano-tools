@@ -4,7 +4,7 @@
 # %% Web framework %%
 Flask>=2.3.0
 Flask-Login>=0.6.0
-Flask-Reuploaded==1.3.0
+Flask-Reuploaded>=1.5.0
 Flask-SQLAlchemy>=3.0.0
 Flask-Limiter>=3.3.0
 Flask-WTF>=1.2.0
