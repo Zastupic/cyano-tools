@@ -16,6 +16,11 @@ var deconvFitParams = null;
 var deconvCurrentData = null;
 var analysisMode = '77K';
 
+// ---- XLSX matrix import state ----
+var xlsxWorkbooks    = {};   // { "filename.xlsx": XLSX_workbook }
+var xlsxSheetsFlat   = [];   // [{ fname, fnameNoExt, wb, sheetName, selected, orientation, detected, detectSource }]
+var xlsxGlobalOrient = 'auto'; // 'auto' | 'rows_em' | 'rows_ex'
+
 // ---- Color palettes ----
 var spectraColorPalette = 'default';
 var spectraSection = 'emission';
@@ -174,15 +179,87 @@ var MODE_DEFAULTS = {
 // File handling / drop zone
 // ============================================================
 function handleFiles(files) {
-    selectedFiles = Array.from(files).filter(function(f) {
-        var n = f.name.toLowerCase();
-        return n.endsWith('.csv') || n.endsWith('.spc') || n.endsWith('.txt');
-    });
-    var label = document.getElementById('eem-file-count-label');
+    var spectro = (document.getElementById('eem-spectrofluorometer') || {}).value || 'jasco';
+    var label  = document.getElementById('eem-file-count-label');
     var listEl = document.getElementById('eem-file-list');
-    var btn = document.getElementById('eem-analyze-btn');
+    var btn    = document.getElementById('eem-analyze-btn');
+
+    if (spectro === 'xlsx_matrix') {
+        var allFiles   = Array.from(files);
+        var xlsxFiles  = allFiles.filter(function(f) { return f.name.toLowerCase().endsWith('.xlsx'); });
+        var wrongFiles = allFiles.filter(function(f) { return !f.name.toLowerCase().endsWith('.xlsx'); });
+        var errEl      = document.getElementById('eem-upload-error');
+        var xlsxPanel  = document.getElementById('xlsx-params');
+
+        // Show or clear file-type error
+        if (wrongFiles.length > 0) {
+            var names = wrongFiles.map(function(f) { return f.name; }).join(', ');
+            if (errEl) {
+                errEl.textContent = 'Wrong file type: ' + names +
+                    '. Only .xlsx files are accepted in "Custom EEM matrix" mode.';
+                errEl.style.display = 'block';
+            }
+        } else {
+            if (errEl) errEl.style.display = 'none';
+        }
+
+        selectedFiles = xlsxFiles;
+        listEl.innerHTML = '';
+        if (xlsxFiles.length === 0) {
+            label.textContent = wrongFiles.length > 0 ? 'No valid .xlsx files — see error above' : 'No files selected';
+            btn.disabled = true;
+            if (xlsxPanel) xlsxPanel.style.display = 'none';
+            return;
+        }
+        label.textContent = 'Reading ' + xlsxFiles.length + ' file(s)\u2026';
+        btn.disabled = true;
+        if (xlsxPanel) xlsxPanel.style.display = 'none';
+        xlsxWorkbooks = {}; xlsxSheetsFlat = [];
+        readXlsxFiles(xlsxFiles);
+        return;
+    }
+
+    // Determine accepted extensions and human-readable label for the current mode
+    var acceptedExts, modeLabel;
+    if (spectro === 'jasco') {
+        acceptedExts = ['.csv'];
+        modeLabel = 'Jasco FP-8050/8550 (.csv)';
+    } else if (spectro === 'aminco') {
+        acceptedExts = ['.txt'];
+        modeLabel = 'AMINCO-Bowman Series 2 (.txt)';
+    } else if (spectro === 'horiba') {
+        acceptedExts = ['.spc'];
+        modeLabel = 'Horiba FluoroMax-P (.spc)';
+    } else {
+        acceptedExts = ['.csv', '.spc', '.txt'];
+        modeLabel = 'the selected instrument';
+    }
+
+    var allFilesArr = Array.from(files);
+    selectedFiles   = allFilesArr.filter(function(f) {
+        var n = f.name.toLowerCase();
+        return acceptedExts.some(function(ext) { return n.endsWith(ext); });
+    });
+    var wrongFiles  = allFilesArr.filter(function(f) {
+        var n = f.name.toLowerCase();
+        return !acceptedExts.some(function(ext) { return n.endsWith(ext); });
+    });
+
+    var errEl = document.getElementById('eem-upload-error');
+    if (wrongFiles.length > 0) {
+        var names = wrongFiles.map(function(f) { return f.name; }).join(', ');
+        var extList = acceptedExts.join(' / ');
+        if (errEl) {
+            errEl.textContent = 'Wrong file type: ' + names +
+                '. Only ' + extList + ' files are accepted for ' + modeLabel + '.';
+            errEl.style.display = 'block';
+        }
+    } else {
+        if (errEl) errEl.style.display = 'none';
+    }
+
     if (selectedFiles.length === 0) {
-        label.textContent = 'No files selected';
+        label.textContent = wrongFiles.length > 0 ? 'No valid files — see error above' : 'No files selected';
         listEl.innerHTML = '';
         btn.disabled = true;
         return;
@@ -202,17 +279,388 @@ function handleFiles(files) {
 // Spectrofluorometer hint
 // ============================================================
 var SPECTROFLUOROMETER_HINTS = {
-    'jasco':  'Upload one .csv file per sample (full EEM exported from Jasco FP-8050/8550 EEM mode).',
-    'aminco': 'Upload one .txt file per sample (native AMINCO-Bowman Series 2 EEM export — whitespace-delimited, multiple emission scans at successive excitation wavelengths).',
-    'horiba': 'Upload all .spc files for each sample together (Galactic SPC K-format). Each file = one emission scan at one excitation wavelength. Files with the same name prefix (e.g. DISC_00.spc … DISC_50.spc) are automatically combined into one 2D EEM. Multiple sample sets can be uploaded at once.'
+    'jasco':       'Upload one .csv file per sample (full EEM exported from Jasco FP-8050/8550 EEM mode).',
+    'aminco':      'Upload one .txt file per sample (native AMINCO-Bowman Series 2 EEM export — whitespace-delimited, multiple emission scans at successive excitation wavelengths).',
+    'horiba':      'Upload all .spc files for each sample together (Galactic SPC K-format). Each file = one emission scan at one excitation wavelength. Files with the same name prefix (e.g. DISC_00.spc \u2026 DISC_50.spc) are automatically combined into one 2D EEM. Multiple sample sets can be uploaded at once.',
+    'xlsx_matrix': 'Upload one or more .xlsx files. Each sheet = one sample. After upload, select which sheets to include and confirm excitation/emission orientation. See the format guide below for template and layout rules.'
 };
 function updateSpectrofluorometerHint() {
     var sel = document.getElementById('eem-spectrofluorometer');
     var hint = document.getElementById('eem-spectrofluorometer-hint');
     if (!sel || !hint) return;
     hint.textContent = SPECTROFLUOROMETER_HINTS[sel.value] || '';
-    var spcParams = document.getElementById('spc-ex-params');
-    if (spcParams) spcParams.style.display = sel.value === 'horiba' ? 'block' : 'none';
+
+    var spcParams  = document.getElementById('spc-ex-params');
+    var xlsxParams = document.getElementById('xlsx-params');
+    var fileInput  = document.getElementById('eem-files');
+
+    if (spcParams)  spcParams.style.display = sel.value === 'horiba' ? 'block' : 'none';
+    // xlsx-params panel is revealed only after files are read (by renderXlsxSheetSelector)
+    if (xlsxParams) xlsxParams.style.display = 'none';
+    if (fileInput) {
+        // For xlsx_matrix: allow any file (validation happens in handleFiles with an error message)
+        fileInput.accept = sel.value === 'xlsx_matrix'
+            ? ''
+            : '.csv,.CSV,.spc,.SPC,.txt,.TXT';
+    }
+    // Clear xlsx state when switching away from xlsx_matrix
+    if (sel.value !== 'xlsx_matrix') {
+        xlsxWorkbooks = {}; xlsxSheetsFlat = []; xlsxGlobalOrient = 'auto';
+    }
+}
+
+// ============================================================
+// XLSX matrix import — helper utilities
+// ============================================================
+function _xlsxEscHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Orientation detection from cell A1 ──────────────────────
+function detectXlsxOrientFromA1(ws) {
+    var a1 = ws['A1'];
+    if (!a1) return null;
+    var t = String(a1.v !== undefined ? a1.v : (a1.w || '')).toLowerCase();
+    // "Rows: emission, columns: excitation" → rows_em
+    if (/row[s]?[^a-z]*emiss/.test(t) && /col[s]?[^a-z]*excit/.test(t)) return 'rows_em';
+    // "Rows: excitation, columns: emission" → rows_ex
+    if (/row[s]?[^a-z]*excit/.test(t) && /col[s]?[^a-z]*emiss/.test(t)) return 'rows_ex';
+    return null;
+}
+
+// ── Orientation detection from Rayleigh scatter pattern ─────
+function _xlsxRayleighScore(data, rowsAreEmission) {
+    // Score how well blank cells align with the ex >= em diagonal.
+    // Returns value 0..1; higher = blank cells more concentrated on diagonal.
+    var headerRow = data[0] || [];
+    var colWls = [], rowWls = [];
+    for (var j = 1; j < headerRow.length; j++) {
+        var v = parseFloat(headerRow[j]);
+        if (!isNaN(v)) colWls.push(v);
+    }
+    for (var i = 1; i < data.length; i++) {
+        var v = parseFloat((data[i] || [])[0]);
+        if (!isNaN(v)) rowWls.push(v);
+    }
+    if (colWls.length < 2 || rowWls.length < 2) return 0;
+    var blankDiag = 0, totalDiag = 0;
+    for (var ri = 0; ri < rowWls.length; ri++) {
+        for (var ci = 0; ci < colWls.length; ci++) {
+            var exWl = rowsAreEmission ? colWls[ci] : rowWls[ri];
+            var emWl = rowsAreEmission ? rowWls[ri]  : colWls[ci];
+            if (exWl >= emWl) {
+                totalDiag++;
+                var val = ((data[ri + 1] || [])[ci + 1]);
+                if (val === null || val === undefined || val === '' || isNaN(parseFloat(val))) blankDiag++;
+            }
+        }
+    }
+    return totalDiag > 0 ? blankDiag / totalDiag : 0;
+}
+
+function detectXlsxOrientFromRayleigh(ws) {
+    var data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+    if (data.length < 3) return null;
+    var scoreEm = _xlsxRayleighScore(data, true);   // rows = emission
+    var scoreEx = _xlsxRayleighScore(data, false);  // rows = excitation
+    if (scoreEm < 0.25 && scoreEx < 0.25) return null; // not enough blank cells to determine
+    if (scoreEm >= scoreEx + 0.15) return 'rows_em';
+    if (scoreEx >= scoreEm + 0.15) return 'rows_ex';
+    return null; // too close to call
+}
+
+// ── Parse one worksheet into { ex_wl, em_wl, intensity } ────
+function parseXlsxSheet(wb, sheetName, orientation) {
+    var ws = wb.Sheets[sheetName];
+    if (!ws) throw new Error('Sheet not found: ' + sheetName);
+    var data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+    if (data.length < 2) throw new Error('Too few rows in sheet "' + sheetName + '"');
+
+    var headerRow = data[0] || [];
+    var ex_wl = [], em_wl = [], matrix = [];
+
+    if (orientation === 'rows_em') {
+        // Header row → excitation wavelengths; column A → emission wavelengths
+        for (var j = 1; j < headerRow.length; j++) {
+            var v = parseFloat(headerRow[j]);
+            if (!isNaN(v)) ex_wl.push(v);
+        }
+        for (var i = 1; i < data.length; i++) {
+            var row = data[i] || [];
+            var em = parseFloat(row[0]);
+            if (isNaN(em)) continue;
+            em_wl.push(em);
+            var matRow = [];
+            for (var j = 0; j < ex_wl.length; j++) {
+                var val = row[j + 1];
+                matRow.push((val === null || val === undefined || isNaN(parseFloat(val))) ? 0 : parseFloat(val));
+            }
+            matrix.push(matRow);
+        }
+    } else {
+        // rows_ex: Header row → emission wavelengths; column A → excitation wavelengths
+        for (var j = 1; j < headerRow.length; j++) {
+            var v = parseFloat(headerRow[j]);
+            if (!isNaN(v)) em_wl.push(v);
+        }
+        var exRows = [];
+        for (var i = 1; i < data.length; i++) {
+            var row = data[i] || [];
+            var ex = parseFloat(row[0]);
+            if (isNaN(ex)) continue;
+            ex_wl.push(ex);
+            exRows.push(row.slice(1));
+        }
+        // Transpose: backend expects [n_em, n_ex]
+        for (var ei = 0; ei < em_wl.length; ei++) {
+            var matRow = [];
+            for (var xi = 0; xi < ex_wl.length; xi++) {
+                var val = (exRows[xi] || [])[ei];
+                matRow.push((val === null || val === undefined || isNaN(parseFloat(val))) ? 0 : parseFloat(val));
+            }
+            matrix.push(matRow);
+        }
+    }
+
+    if (ex_wl.length === 0 || em_wl.length === 0) throw new Error('No numeric wavelength headers found in "' + sheetName + '"');
+    if (matrix.length === 0) throw new Error('No data rows found in "' + sheetName + '"');
+    return { ex_wl: ex_wl, em_wl: em_wl, intensity: matrix };
+}
+
+// ── Read xlsx files with SheetJS ─────────────────────────────
+function readXlsxFiles(files) {
+    var pending = files.length;
+    xlsxWorkbooks = {}; xlsxSheetsFlat = [];
+
+    files.forEach(function(file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var wb = XLSX.read(e.target.result, { type: 'array' });
+                xlsxWorkbooks[file.name] = wb;
+            } catch(err) {
+                console.error('XLSX read error for', file.name, err);
+            }
+            if (--pending === 0) renderXlsxSheetSelector();
+        };
+        reader.onerror = function() {
+            console.error('FileReader error for', file.name);
+            if (--pending === 0) renderXlsxSheetSelector();
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+// ── Render the per-file / per-sheet selector UI ───────────────
+function renderXlsxSheetSelector() {
+    var container  = document.getElementById('xlsx-sheet-selector');
+    var xlsxPanel  = document.getElementById('xlsx-params');
+    var label      = document.getElementById('eem-file-count-label');
+    if (!container) return;
+
+    // Rebuild the flat sheet list
+    xlsxSheetsFlat = [];
+    Object.keys(xlsxWorkbooks).forEach(function(fname) {
+        var wb = xlsxWorkbooks[fname];
+        var fnameNoExt = fname.replace(/\.xlsx$/i, '');
+        (wb.SheetNames || []).forEach(function(sheetName) {
+            var ws = wb.Sheets[sheetName];
+            var detected     = detectXlsxOrientFromA1(ws);
+            var detectSource = 'a1';
+            if (!detected) {
+                detected     = detectXlsxOrientFromRayleigh(ws);
+                detectSource = detected ? 'rayleigh' : null;
+            }
+            // Apply global override if set
+            var orient = (xlsxGlobalOrient !== 'auto') ? xlsxGlobalOrient : (detected || 'rows_em');
+            xlsxSheetsFlat.push({
+                fname: fname, fnameNoExt: fnameNoExt, wb: wb,
+                sheetName: sheetName, selected: true,
+                orientation: orient, detected: detected, detectSource: detectSource
+            });
+        });
+    });
+
+    if (xlsxSheetsFlat.length === 0) {
+        container.innerHTML = '<span class="text-danger"><i class="fa fa-exclamation-triangle mr-1"></i>No sheets found in uploaded files.</span>';
+        if (xlsxPanel) xlsxPanel.style.display = 'block';
+        if (label) label.textContent = 'No sheets found';
+        document.getElementById('eem-analyze-btn').disabled = true;
+        return;
+    }
+    if (xlsxPanel) xlsxPanel.style.display = 'block';
+
+    // Render HTML
+    var html = '';
+    var currentFile = null;
+    xlsxSheetsFlat.forEach(function(sheet, idx) {
+        if (sheet.fname !== currentFile) {
+            if (currentFile !== null) html += '</div>';
+            currentFile = sheet.fname;
+            html += '<div class="mb-1">';
+            html += '<div style="font-weight:600; color:#0a3c58; font-size:0.82rem; border-bottom:1px solid #dee2e6; padding-bottom:2px; margin-bottom:3px;">' +
+                    '<i class="fa fa-file-excel-o mr-1" style="color:#217346;"></i>' + _xlsxEscHtml(sheet.fnameNoExt) + '</div>';
+        }
+        // Detection badge
+        var badge = '';
+        if (sheet.detectSource === 'a1') {
+            badge = '<span title="Orientation auto-detected from cell A1" style="color:#5a8ab0; font-size:0.72rem; margin-left:3px;" tabindex="0">\u2713 A1</span>';
+        } else if (sheet.detectSource === 'rayleigh') {
+            badge = '<span title="Orientation auto-detected from Rayleigh scatter pattern" style="color:#5a8ab0; font-size:0.72rem; margin-left:3px;" tabindex="0">\u2713 scatter</span>';
+        } else {
+            badge = '<span title="Could not auto-detect \u2014 select orientation manually" style="color:#dc3545; font-size:0.72rem; margin-left:3px;" tabindex="0">\u26a0 select</span>';
+        }
+        var orientEmActive = sheet.orientation === 'rows_em';
+        html += '<div class="d-flex align-items-center flex-wrap mb-1" style="gap:0.3rem; font-size:0.8rem;">' +
+            '<input type="checkbox" id="xls-cb-' + idx + '" ' + (sheet.selected ? 'checked' : '') +
+            ' onchange="xlsxSheetToggle(' + idx + ')" style="margin:0; cursor:pointer;">' +
+            '<label for="xls-cb-' + idx + '" style="margin:0; cursor:pointer; font-weight:normal;">' + _xlsxEscHtml(sheet.sheetName) + '</label>' +
+            '<span style="color:#888; font-size:0.72rem; margin-left:4px;">rows=</span>' +
+            '<button type="button" class="btn btn-sm py-0 px-1" style="font-size:0.7rem; line-height:1.6; border-radius:4px; ' +
+                (orientEmActive ? 'background:#004085;color:#fff;border-color:#004085;' : 'background:#e8edf2;color:#4a5568;border-color:#c8d3de;') +
+            '" onclick="xlsxSetOrient(' + idx + ',\'rows_em\')">emission</button>' +
+            '<button type="button" class="btn btn-sm py-0 px-1" style="font-size:0.7rem; line-height:1.6; border-radius:4px; ' +
+                (!orientEmActive ? 'background:#004085;color:#fff;border-color:#004085;' : 'background:#e8edf2;color:#4a5568;border-color:#c8d3de;') +
+            '" onclick="xlsxSetOrient(' + idx + ',\'rows_ex\')">excitation</button>' +
+            badge +
+            '</div>';
+    });
+    if (currentFile !== null) html += '</div>';
+    container.innerHTML = html;
+    xlsxUpdateAnalyzeBtn();
+}
+
+// ── Toggle sheet checkbox ─────────────────────────────────────
+function xlsxSheetToggle(idx) {
+    if (!xlsxSheetsFlat[idx]) return;
+    xlsxSheetsFlat[idx].selected = !xlsxSheetsFlat[idx].selected;
+    xlsxUpdateAnalyzeBtn();
+}
+
+// ── Set per-sheet orientation ─────────────────────────────────
+function xlsxSetOrient(idx, orient) {
+    if (!xlsxSheetsFlat[idx]) return;
+    xlsxSheetsFlat[idx].orientation = orient;
+    renderXlsxSheetSelector(); // re-render to update button highlight
+}
+
+// ── Set global orientation override ──────────────────────────
+function setXlsxGlobalOrient(orient) {
+    xlsxGlobalOrient = orient;
+    // Apply to all sheets
+    xlsxSheetsFlat.forEach(function(s) {
+        s.orientation = (orient !== 'auto') ? orient : (s.detected || 'rows_em');
+    });
+    // Update button styles in global override control
+    document.querySelectorAll('#xlsx-global-orient-btns .btn').forEach(function(btn) {
+        var isActive = btn.dataset.orient === orient;
+        btn.className = isActive
+            ? 'btn btn-sm btn-primary'
+            : 'btn btn-sm btn-outline-primary';
+    });
+    renderXlsxSheetSelector();
+}
+
+// ── Update analyze button based on selection count ────────────
+function xlsxUpdateAnalyzeBtn() {
+    var n = xlsxSheetsFlat.filter(function(s) { return s.selected; }).length;
+    var btn   = document.getElementById('eem-analyze-btn');
+    var label = document.getElementById('eem-file-count-label');
+    if (btn)   btn.disabled = (n === 0);
+    if (label) {
+        var nFiles = Object.keys(xlsxWorkbooks).length;
+        label.textContent = n === 0
+            ? 'No sheets selected'
+            : n + ' sheet(s) selected across ' + nFiles + ' file(s)';
+    }
+}
+
+// ── Upload & analyze for xlsx_matrix ─────────────────────────
+function uploadAndAnalyzeXlsx() {
+    var selected = xlsxSheetsFlat.filter(function(s) { return s.selected; });
+    if (selected.length === 0) { showError('Select at least one sheet.'); return; }
+
+    var fd = new FormData();
+    fd.append('analysis_mode', analysisMode);
+    fd.append('spectrofluorometer', 'xlsx_matrix');
+    fd.append('checkbox_pigmentation', getPigmentation());
+    for (var i = 1; i <= 6; i++) {
+        fd.append('ex_' + i, (document.getElementById('eem-ex-' + i) || {}).value || '');
+        fd.append('em_' + i, (document.getElementById('eem-em-' + i) || {}).value || '');
+    }
+    fd.append('ex_for_norm', document.getElementById('eem-ex-norm').value || '');
+    fd.append('em_for_norm', document.getElementById('eem-em-norm').value || '');
+
+    // Parse sheets client-side
+    var samples = [], parseWarnings = [];
+    selected.forEach(function(sheet) {
+        try {
+            var parsed = parseXlsxSheet(sheet.wb, sheet.sheetName, sheet.orientation);
+            // Name: filename if only one sheet selected from this file, else filename — sheetname
+            var nFromFile = selected.filter(function(s) { return s.fname === sheet.fname; }).length;
+            var sampleName = (nFromFile > 1)
+                ? sheet.fnameNoExt + ' \u2014 ' + sheet.sheetName
+                : sheet.fnameNoExt;
+            samples.push({ name: sampleName, ex_wl: parsed.ex_wl, em_wl: parsed.em_wl, intensity: parsed.intensity });
+        } catch(err) {
+            parseWarnings.push(sheet.fnameNoExt + '/' + sheet.sheetName + ': ' + err.message);
+        }
+    });
+
+    if (samples.length === 0) {
+        showError('No sheets could be parsed.' + (parseWarnings.length ? ' ' + parseWarnings.join('; ') : ''));
+        return;
+    }
+    fd.append('xlsx_preparse', JSON.stringify(samples));
+
+    var btn     = document.getElementById('eem-analyze-btn');
+    var spinner = document.getElementById('eem-spinner');
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+    document.getElementById('eem-results-section').style.display = 'none';
+    document.getElementById('eem-upload-error').style.display = 'none';
+
+    fetch('/api/eem_process', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            spinner.style.display = 'none';
+            btn.disabled = false;
+            if (data.error) { showError(data.error); return; }
+            eemData = data;
+            groups = {}; chartInst = {};
+            dirtyTabs = new Set(['spectra', 'map', 'derived', 'groups']);
+            parafacResults = null; parafacDiagResults = null;
+            groupFileOrder = data.files.slice();
+            focusExWl = null;
+            deconvFitParams = null; deconvCurrentData = null;
+            deconvBatchResults = { 'ex440': {}, 'ex620': {}, 'ex560': {} };
+
+            var summary = document.getElementById('eem-results-summary');
+            summary.innerHTML = '<strong>' + data.files.length + ' sample(s) processed:</strong> ' +
+                data.files.join(', ') +
+                (data.warnings && data.warnings.length
+                    ? '<br><span class="text-warning"><i class="fa fa-exclamation-triangle"></i> ' +
+                      data.warnings.join('; ') + '</span>' : '')  +
+                (parseWarnings.length
+                    ? '<br><span class="text-warning"><i class="fa fa-exclamation-triangle"></i> Parse warnings: ' +
+                      parseWarnings.join('; ') + '</span>' : '');
+
+            var grid = document.getElementById('eem-maps-grid');
+            if (grid) grid.innerHTML = '';
+            document.getElementById('eem-results-section').style.display = '';
+            detectSingleEx();
+            recomputeParamsFromMaps();
+            initDeconvUI(true);
+            autoDetectAllEmEdges();
+            updateParafacRankSuggestion(getPigmentation());
+            document.getElementById('eem-spectra-tab').click();
+            renderSpectraTab();
+        })
+        .catch(function(e) {
+            document.getElementById('eem-spinner').style.display = 'none';
+            document.getElementById('eem-analyze-btn').disabled = false;
+            showError('Upload failed: ' + e.message);
+        });
 }
 
 // ============================================================
@@ -399,6 +847,10 @@ function switchAnalysisMode(mode) {
 // Upload & Process
 // ============================================================
 function uploadAndAnalyze() {
+    if ((document.getElementById('eem-spectrofluorometer') || {}).value === 'xlsx_matrix') {
+        uploadAndAnalyzeXlsx();
+        return;
+    }
     if (!selectedFiles.length) return;
 
     var fd = new FormData();

@@ -1770,3 +1770,32 @@ function generateOJIPMethodsText() {
 
     return lines.join('\n\n');
 }
+
+// ── Annotation tab integration ────────────────────────────────────────────────
+// Called by the "Populate annotation grid" button in the Annotation tab.
+// Collects already-computed OJIP results from memory and POSTs them to
+// /api/fluorescence_annotation/ingest_from_ojip (no file re-upload needed).
+function populateAnnotationFromOJIP() {
+    if (!ojipData || !ojipData.files || !ojipData.files.length) {
+        var eb = document.getElementById('ann-error-banner');
+        if (eb) { eb.textContent = 'Run OJIP analysis first, then come back here.'; eb.classList.remove('d-none'); }
+        return;
+    }
+    if (typeof ANN === 'undefined') return;
+
+    var payload = {
+        ojip_results: {
+            files:       ojipData.files,
+            fluorometer: ojipData.fluorometer || null,
+            fj_time_ms:  ojipData.fj_time_ms  || 2.0,
+            fi_time_ms:  ojipData.fi_time_ms  || 30.0,
+            key_values:  ojipData.key_values  || {},
+            param_data:  window.paramData     || {},
+            time_raw_ms: ojipData.time_raw_ms || [],
+            curves:      ojipData.curves      || {},
+        },
+        tier_json: ANN.collectTiers(),
+    };
+
+    ANN.ingestFromOJIP(payload);
+}

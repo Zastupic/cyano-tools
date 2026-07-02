@@ -116,7 +116,7 @@
             <div id="collapseHowTo" class="collapse" aria-labelledby="headingHowTo" data-parent="#eemInfoAccordion">
                 <div class="card-body">
                     <ol class="mt-2">
-                        <li>Select your spectrofluorometer, upload up to 50 .csv files, and click <em>Analyze</em></li>
+                        <li>Select your spectrofluorometer (or <em>Custom EEM matrix (.xlsx)</em> for instrument-independent import), upload files, and click <em>Analyze</em></li>
                         <li><strong>Spectra</strong> tab — adjust excitation/emission wavelengths to plot and normalization mode; click <em>Re-extract spectra</em> to update without re-uploading</li>
                         <li><strong>2D Map</strong> tab — view full EEM maps for all samples; select colorscale and optionally crop the display range</li>
                         <li><strong>Derived Parameters</strong> tab — select analysis mode (77K / RT) and pigmentation type; parameters update instantly</li>
@@ -126,9 +126,108 @@
                     <p style="font-size:90%;"><i class="fa fa-info-circle mr-1 text-info"></i>
                         Accepted file formats:
                         <strong>.csv</strong> (Jasco FP-8050/8550),
-                        <strong>.txt</strong> (AMINCO-Bowman Series 2 native EEM export), and
-                        <strong>.spc</strong> (Horiba FluoroMax-P, Galactic SPC K-format — upload all files per sample together; files with the same name prefix are combined into one EEM).
+                        <strong>.txt</strong> (AMINCO-Bowman Series 2 native EEM export),
+                        <strong>.spc</strong> (Horiba FluoroMax-P, Galactic SPC K-format — upload all files per sample together; files with the same name prefix are combined into one EEM), and
+                        <strong>.xlsx</strong> (Custom EEM matrix — any instrument; one sheet per sample;
+                        see <a href="#collapseXlsxGuide" data-toggle="collapse" style="color:#0a3c58;">format guide</a>).
                     </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom .xlsx format guide -->
+        <div class="card">
+            <div class="card-header py-2" id="headingXlsxGuide">
+                <h6 class="mb-0">
+                    <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                            data-toggle="collapse" data-target="#collapseXlsxGuide"
+                            aria-expanded="false" aria-controls="collapseXlsxGuide">
+                        <i class="fa fa-file-excel-o mr-2" style="color:#217346;"></i>Preparing a Custom EEM matrix (.xlsx)
+                    </button>
+                </h6>
+            </div>
+            <div id="collapseXlsxGuide" class="collapse" aria-labelledby="headingXlsxGuide" data-parent="#eemInfoAccordion">
+                <div class="card-body" style="font-size:0.92em;">
+                    <p class="mb-2">
+                        The <strong>Custom EEM matrix (.xlsx)</strong> option accepts any excitation-emission fluorescence matrix
+                        organized in a spreadsheet — regardless of instrument. One sheet = one sample.
+                        Upload multiple files or multi-sheet workbooks to process a batch.
+                    </p>
+
+                    <h6 class="font-weight-bold mt-3 mb-1" style="color:#0a3c58;">Required layout</h6>
+                    <div class="table-responsive mb-2">
+                        <table class="table table-sm table-bordered" style="font-size:0.85em; max-width:480px;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th style="background:#217346; color:#fff;">A1</th>
+                                    <th style="background:#217346; color:#fff;">B1</th>
+                                    <th style="background:#217346; color:#fff;">C1</th>
+                                    <th style="background:#217346; color:#fff;">…</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="font-style:italic; font-size:0.8em;">descriptor</td>
+                                    <td><strong>Ex₁</strong> (nm)</td>
+                                    <td><strong>Ex₂</strong> (nm)</td>
+                                    <td>…</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Em₁</strong> (nm)</td>
+                                    <td>intensity</td>
+                                    <td>intensity</td>
+                                    <td>…</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Em₂</strong> (nm)</td>
+                                    <td>intensity</td>
+                                    <td>intensity</td>
+                                    <td>…</td>
+                                </tr>
+                                <tr>
+                                    <td>…</td><td>…</td><td>…</td><td>…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <ul class="mb-2" style="line-height:1.7;">
+                        <li><strong>Cell A1</strong> — optional text descriptor, e.g.
+                            <code>Rows: emission, columns: excitation</code>. Used for automatic orientation detection.</li>
+                        <li><strong>Row 1</strong> (B1 onward) — excitation wavelengths in nm (numeric, no units).</li>
+                        <li><strong>Column A</strong> (row 2 onward) — emission wavelengths in nm (numeric, no units).</li>
+                        <li><strong>Data cells</strong> — fluorescence intensity (any numeric unit; consistent across the matrix).</li>
+                        <li><strong>Blank cells</strong> — leave empty where excitation ≥ emission (Rayleigh scatter region). Blanks are treated as zero and handled the same as in other supported formats.</li>
+                        <li><strong>Orientation</strong> — rows can be emission <em>or</em> excitation wavelengths; select or override in the sheet selector after upload.</li>
+                        <li><strong>Step size</strong> — any uniform or non-uniform spacing is accepted (1 nm, 5 nm, 10 nm, …).</li>
+                    </ul>
+
+                    <h6 class="font-weight-bold mt-3 mb-1" style="color:#0a3c58;">Multi-sample workbooks</h6>
+                    <p class="mb-2">
+                        Place each sample in a separate sheet. Name sheets descriptively (e.g. <em>Control</em>, <em>Treatment_1</em>).
+                        After upload the tool shows a <strong>sheet selector</strong> — check the sheets to include.
+                        If multiple sheets from the same file are selected, the sample name will be
+                        <em>filename — sheetname</em>; otherwise just the filename.
+                    </p>
+
+                    <h6 class="font-weight-bold mt-3 mb-1" style="color:#0a3c58;">Orientation auto-detection</h6>
+                    <p class="mb-2">
+                        The tool reads cell A1 for an orientation hint. If A1 contains recognizable text
+                        (e.g. <code>Rows: emission, columns: excitation</code>), the correct orientation is pre-selected.
+                        If not, the tool tries to infer orientation from the pattern of blank cells (Rayleigh scatter).
+                        If neither succeeds, a warning is shown and you must select orientation manually per sheet.
+                    </p>
+
+                    <div class="mt-3">
+                        <a href="{{ url_for('static', filename='files/EEM_matrix_template.xlsx') }}"
+                           download="EEM_matrix_template.xlsx"
+                           class="btn btn-outline-success btn-sm">
+                            <i class="fa fa-download mr-1"></i>Download .xlsx template
+                        </a>
+                        <span class="text-muted ml-2" style="font-size:0.82em;">
+                            Contains README sheet, two example samples, and correct layout.
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -640,6 +739,7 @@
                 <option value="jasco">FP-8050 / FP-8550 Series (Jasco Inc.) — .csv</option>
                 <option value="aminco">AMINCO-Bowman Series 2 (native .txt export)</option>
                 <option value="horiba">Horiba FluoroMax-P — .spc</option>
+                <option value="xlsx_matrix">Custom EEM matrix (.xlsx)</option>
             </select>
             <small id="eem-spectrofluorometer-hint" class="d-block text-muted mt-1" style="font-size:0.82rem;"></small>
         </div>
@@ -690,6 +790,14 @@
                     <i style="font-size:80%">Horiba FluoroMax-P &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
                     <img src="{{ url_for('static', filename='images/Fluoromax.jpg') }}" alt="Horiba FluoroMax-P spectrofluorometer" class="gallery__item--3">
                 </a>
+                <a href="#collapseXlsxGuide" class="gallery__item--4"
+                   onclick="event.preventDefault(); document.getElementById('eem-spectrofluorometer').value='xlsx_matrix'; updateSpectrofluorometerHint(); document.getElementById('eemInfoAccordion').querySelectorAll('.collapse.show').forEach(function(el){$(el).collapse('hide')}); setTimeout(function(){$('#collapseXlsxGuide').collapse('show'); document.getElementById('collapseXlsxGuide').scrollIntoView({behavior:'smooth',block:'start'});},150);"
+                   style="text-decoration:none; cursor:pointer;">
+                    <i style="font-size:80%">Custom matrix (.xlsx)</i>
+                    <img src="{{ url_for('static', filename='images/excel_icon.png') }}"
+                         alt="Custom EEM matrix .xlsx" class="gallery__item--4">
+
+                </a>
             </div>
         </div>
 
@@ -702,7 +810,45 @@
             <small class="text-muted" id="eem-file-count-label">No files selected</small>
             <input type="file" id="eem-files" multiple accept=".csv,.CSV,.spc,.SPC,.txt,.TXT" style="display:none">
         </div>
-        <div id="eem-file-list" class="mb-3" style="max-height:120px; overflow-y:auto; font-size:0.85em;"></div>
+        <div id="eem-file-list" class="mb-2" style="max-height:120px; overflow-y:auto; font-size:0.85em;"></div>
+
+        <!-- Custom .xlsx sheet selector (appears after file read, xlsx_matrix only) -->
+        <div id="xlsx-params" style="display:none" class="mb-3">
+            <div class="border rounded px-3 pt-2 pb-3" style="background:#f0f4f8; border-color:#b8cfe8 !important;">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="font-weight-bold" style="font-size:0.9rem;">
+                        <i class="fa fa-table text-primary mr-1"></i>Sheet selector &amp; orientation
+                    </span>
+                    <span class="badge badge-info ml-2" style="font-size:0.72rem; font-weight:700;">Each sheet = one sample</span>
+                </div>
+
+                <!-- Global orientation override -->
+                <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem; font-size:0.82rem;">
+                    <span style="color:#4a6278; white-space:nowrap;">Global override:</span>
+                    <div id="xlsx-global-orient-btns" style="display:inline-flex; background:#e8edf2; border-radius:8px; padding:3px; gap:2px; border:1px solid #c8d3de;">
+                        <button class="btn btn-sm btn-primary"         data-orient="auto"    onclick="setXlsxGlobalOrient('auto')"    style="border-radius:5px; padding:2px 9px; font-size:0.75rem; font-weight:600;">Auto-detect</button>
+                        <button class="btn btn-sm btn-outline-primary" data-orient="rows_em" onclick="setXlsxGlobalOrient('rows_em')" style="border-radius:5px; padding:2px 9px; font-size:0.75rem; font-weight:600;">Rows = Em</button>
+                        <button class="btn btn-sm btn-outline-primary" data-orient="rows_ex" onclick="setXlsxGlobalOrient('rows_ex')" style="border-radius:5px; padding:2px 9px; font-size:0.75rem; font-weight:600;">Rows = Ex</button>
+                    </div>
+                </div>
+
+                <!-- Dynamic sheet list (populated by JS after file read) -->
+                <div id="xlsx-sheet-selector" style="font-size:0.83rem; max-height:220px; overflow-y:auto; border:1px solid #d0dce8; border-radius:5px; background:#fff; padding:6px 8px;"></div>
+
+                <div class="mt-2" style="font-size:0.79rem; color:#4a6278; line-height:1.5;">
+                    <i class="fa fa-info-circle mr-1" style="color:#5a8ab0;"></i>
+                    Orientation is auto-detected from cell A1. Override per-sheet or globally above.
+                    Blank cells (Rayleigh scatter region) are treated the same as other formats.
+                    <a href="#collapseXlsxGuide"
+                       onclick="event.preventDefault(); document.getElementById('eemInfoAccordion').querySelectorAll('.collapse.show').forEach(function(el){$(el).collapse('hide')}); setTimeout(function(){$('#collapseXlsxGuide').collapse('show'); document.getElementById('collapseXlsxGuide').scrollIntoView({behavior:'smooth', block:'start'});}, 150);"
+                       style="color:#004085;">Format guide &amp; template &#8599;</a>
+                </div>
+                <div class="mt-2 d-flex align-items-center" style="font-size:0.82rem; color:#004085; font-weight:600;">
+                    <i class="fa fa-arrow-down mr-1"></i>
+                    When selection is ready, click <strong>&nbsp;Analyze&nbsp;</strong> below to start processing.
+                </div>
+            </div>
+        </div>
 
         <!-- Buttons -->
         <div class="d-flex flex-wrap align-items-center">

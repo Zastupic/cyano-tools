@@ -265,6 +265,7 @@ def create_app():
     from .metabolic_model import metabolic_bp
     from .sigma_analysis import sigma_bp
     from .pbr_analysis import pbr_analysis_bp
+    from .fluorescence_annotation import fluorescence_annotation
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
@@ -290,6 +291,7 @@ def create_app():
     app.register_blueprint(metabolic_bp, url_prefix='/')
     app.register_blueprint(sigma_bp, url_prefix='/')
     app.register_blueprint(pbr_analysis_bp, url_prefix='/')
+    app.register_blueprint(fluorescence_annotation, url_prefix='/')
 
     #### DATABASE ####
     with app.app_context(): # creating the database

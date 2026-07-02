@@ -362,6 +362,11 @@
         <i class="fa fa-flask"></i> Interpretation
       </a>
     </li>
+    <li class="nav-item">
+      <a class="nav-link" id="tab-annot-link" data-toggle="tab" href="#tab-annot" role="tab">
+        <i class="fa fa-tags"></i> Annotation
+      </a>
+    </li>
   </ul>
 
   <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white" id="ojipTabContent">
@@ -1456,6 +1461,136 @@
 
     </div><!-- /tab-interp -->
 
+    <!-- ── Annotation tab ─────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-annot" role="tabpanel">
+<style>
+  /* Provenance badge colours — shared with js_fluorescence_annotation.js */
+  .ann-prov { display:inline-block; font-size:.65rem; font-weight:700;
+              padding:1px 5px; border-radius:3px; margin-left:3px;
+              vertical-align:middle; cursor:default; user-select:none; }
+  .ann-prov-T { background:#cfe2ff; color:#084298; }
+  .ann-prov-H { background:#d1e7dd; color:#0f5132; }
+  .ann-prov-F { background:#fff3cd; color:#664d03; }
+  .ann-prov-I { background:#e2e3e5; color:#41464b; }
+  .ann-prov-C { background:#e9d7f7; color:#5c2d91; }
+  .ann-cell-editable { cursor:pointer; }
+  .ann-cell-editable:hover { background:#f0f4ff !important; outline:1px dashed #6ea8fe; }
+  .ann-cell-null { color:#bbb; font-style:italic; }
+  .ann-score-bar  { display:inline-block; width:46px; height:7px;
+                    background:#dee2e6; border-radius:4px;
+                    vertical-align:middle; margin-right:4px; }
+  .ann-score-fill { height:100%; border-radius:4px; background:#28a745; }
+  .ann-score-fill.mid { background:#ffc107; }
+  .ann-score-fill.low { background:#dc3545; }
+  #ann-grid-wrap { overflow-x:auto; max-height:55vh; overflow-y:auto; }
+  #ann-grid-table { font-size:.8rem; white-space:nowrap; }
+  #ann-grid-table thead th {
+    position:sticky; top:0; z-index:2;
+    background:#fff; border-bottom:2px solid #dee2e6; padding:4px 8px; font-weight:600; }
+  #ann-grid-table tbody td { padding:3px 8px; }
+  #ann-grid-table tbody tr:nth-child(odd) { background:#fafafa; }
+  #ann-grid-table tbody tr:hover { background:#f5f7ff !important; }
+  #ann-grid-table td.ann-jip,  #ann-grid-table th.ann-jip  { background:#faf6ff; }
+  #ann-grid-table td.ann-tech, #ann-grid-table th.ann-tech { background:#fffdf0; }
+  #ann-tier-tabs { border-bottom:2px solid #dee2e6; margin-bottom:0; }
+  #ann-tier-tabs .nav-link {
+    border:1px solid #dee2e6; border-bottom:none; background:#f8f9fa;
+    padding:.35rem 1.1rem; font-weight:600; font-size:.85rem;
+    border-radius:6px 6px 0 0; color:#495057;
+    margin-right:3px; margin-bottom:-2px; transition:background .12s,color .12s; }
+  #ann-tier-tabs .nav-link:hover:not(.active) { background:#e2e6ea; color:#212529; }
+  #ann-tier-tabs .nav-link.active {
+    background:#004085; color:#fff; border-color:#004085;
+    border-bottom:2px solid #004085; }
+  #ann-token-table th, #ann-token-table td {
+    font-size:.82rem; padding:4px 6px; vertical-align:middle; }
+  #ann-token-table select, #ann-token-table input { font-size:.82rem; padding:2px 4px; }
+</style>
+
+      <div class="alert alert-info mb-3" style="border-left:4px solid #17a2b8; font-size:.93em;">
+        <strong>Annotate these results:</strong> Fill in experiment metadata below, then click
+        <em>Populate annotation grid</em> to build a MIAPPE-compatible, ML-ready dataset from
+        the OJIP results already computed above. No file re-processing — JIP parameters are
+        taken directly from the current analysis (including any edited F<sub>J</sub>/F<sub>I</sub>
+        timings). Download as a ZIP bundle for archiving or downstream analysis.
+      </div>
+
+      <div class="d-flex flex-wrap align-items-center mb-3" style="gap:8px;">
+        <button class="btn btn-primary" id="ann-ojip-populate-btn"
+                onclick="populateAnnotationFromOJIP()">
+          <i class="fa fa-tags mr-1"></i>Populate annotation grid
+        </button>
+        <button class="btn btn-outline-secondary btn-sm"
+                onclick="document.getElementById('ann-bundle-input').click()">
+          <i class="fa fa-folder-open mr-1"></i>Load existing bundle
+        </button>
+        <input type="file" id="ann-bundle-input" accept=".zip" class="d-none">
+        <small class="text-muted">
+          Uses JIP parameters already computed above &mdash; no re-upload needed.
+        </small>
+      </div>
+
+      <!-- Metadata tier forms (shared partial) -->
+      <div class="card mb-3">
+        <div class="card-header py-2 font-weight-bold" style="background:#e9ecef;">
+          <i class="fa fa-list-alt mr-2 text-primary"></i>Experiment metadata
+        </div>
+        <div class="card-body pb-0">
+          {% include '_ann_tier_forms.html' %}
+        </div>
+      </div>
+
+      <!-- Error / warning banners -->
+      <div id="ann-error-banner"   class="alert alert-danger  d-none" role="alert"></div>
+      <div id="ann-warning-banner" class="alert alert-warning d-none" role="alert"></div>
+
+      <!-- Reconciliation grid -->
+      <div class="card mb-3 d-none" id="ann-grid-card">
+        <div class="card-header py-2 d-flex align-items-center flex-wrap font-weight-bold"
+             style="background:#e9ecef; gap:8px;">
+          <span><i class="fa fa-table mr-2 text-primary"></i>Reconciliation grid</span>
+          <span id="ann-summary-badges" class="ml-1"></span>
+          <div class="ml-auto d-flex align-items-center flex-wrap" style="gap:10px;">
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input"
+                     id="ann-toggle-jip" checked
+                     onchange="ANN.toggleJip(this.checked)">
+              <label class="custom-control-label" for="ann-toggle-jip"
+                     style="font-size:.85rem; font-weight:600;">JIP params</label>
+            </div>
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input"
+                     id="ann-toggle-tech"
+                     onchange="ANN.toggleTech(this.checked)">
+              <label class="custom-control-label" for="ann-toggle-tech"
+                     style="font-size:.85rem; font-weight:600;">Extra per-curve</label>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="ANN.downloadBundle()">
+              <i class="fa fa-download mr-1"></i>Download bundle
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-2">
+          <div class="mb-2" style="font-size:.82rem;">
+            <strong class="mr-1">Provenance:</strong>
+            <span class="ann-prov ann-prov-T">T</span> Typed &nbsp;
+            <span class="ann-prov ann-prov-H">H</span> File header &nbsp;
+            <span class="ann-prov ann-prov-F">F</span> Filename &nbsp;
+            <span class="ann-prov ann-prov-I">I</span> Inherited &nbsp;
+            <span class="ann-prov ann-prov-C">C</span> Computed
+            <span class="text-muted ml-2">&mdash; click a cell to edit</span>
+          </div>
+          <div id="ann-grid-wrap">
+            <table class="table table-sm table-bordered mb-0" id="ann-grid-table">
+              <thead id="ann-grid-head"></thead>
+              <tbody id="ann-grid-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-annot -->
+
   </div><!-- /tab-content -->
 
   <!-- Download bar -->
@@ -1483,6 +1618,7 @@
 <!-- SheetJS — pinned to 0.20.3, not the mutable "xlsx-latest" tag -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js_OJIP.js') }}"></script>
+<script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}"></script>
 
 <!-- ── Methods section text modal ── -->
 <div class="modal fade" id="ojip-methods-modal" tabindex="-1" role="dialog" aria-labelledby="ojipMethodsModalLabel" aria-hidden="true">

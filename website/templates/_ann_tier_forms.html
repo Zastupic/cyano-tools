@@ -1,0 +1,261 @@
+{# _ann_tier_forms.html — shared partial: Investigation / Study / Assay / Filename-token tabs.
+   Included by fluorescence_annotation.html and OJIP_analysis.html (Annotation tab).
+   Requires: Bootstrap 4, Font Awesome 4, js_fluorescence_annotation.js (ANN module).
+#}
+<ul class="nav nav-tabs" id="ann-tier-tabs" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" id="tab-inv-lnk"
+       data-toggle="tab" href="#tab-inv" role="tab">Investigation</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="tab-study-lnk"
+       data-toggle="tab" href="#tab-study" role="tab">Study</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="tab-assay-lnk"
+       data-toggle="tab" href="#tab-assay" role="tab">Assay</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="tab-token-lnk"
+       data-toggle="tab" href="#tab-token" role="tab">
+      <i class="fa fa-code mr-1"></i>Filename tokens
+    </a>
+  </li>
+</ul>
+
+<div class="tab-content border border-top-0 p-3 mb-3" style="background:#fff;">
+
+  <!-- Investigation -->
+  <div class="tab-pane fade show active" id="tab-inv" role="tabpanel">
+    <div class="form-row">
+      <div class="form-group col-md-6">
+        <label for="inv-project_title">
+          Project title <span class="text-danger">*</span>
+        </label>
+        <input type="text" class="form-control form-control-sm"
+               id="inv-project_title"
+               placeholder="e.g. Photoacclimation in Synechocystis">
+      </div>
+      <div class="form-group col-md-6">
+        <label for="inv-institution">Institution</label>
+        <input type="text" class="form-control form-control-sm"
+               id="inv-institution" placeholder="e.g. CzechGlobe">
+      </div>
+      <div class="form-group col-md-4">
+        <label for="inv-contact_name">Contact name</label>
+        <input type="text" class="form-control form-control-sm"
+               id="inv-contact_name">
+      </div>
+      <div class="form-group col-md-4">
+        <label for="inv-contact_email">Contact e-mail</label>
+        <input type="email" class="form-control form-control-sm"
+               id="inv-contact_email">
+      </div>
+      <div class="form-group col-md-4">
+        <label for="inv-license">Licence</label>
+        <select class="form-control form-control-sm" id="inv-license">
+          <option value="">— select —</option>
+          <option>CC-BY-4.0</option>
+          <option>CC-BY-NC-4.0</option>
+          <option>CC0-1.0</option>
+          <option>Proprietary</option>
+        </select>
+      </div>
+      <div class="form-group col-12">
+        <label for="inv-project_description">Description</label>
+        <textarea class="form-control form-control-sm"
+                  id="inv-project_description" rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Study -->
+  <div class="tab-pane fade" id="tab-study" role="tabpanel">
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="study-organism">
+          Organism <span class="text-danger">*</span>
+        </label>
+        <select class="form-control form-control-sm" id="study-organism">
+          <option value="">— select —</option>
+          <option>Synechocystis sp. PCC 6803</option>
+          <option>Synechococcus sp. PCC 7942</option>
+          <option>Anabaena sp. PCC 7120</option>
+          <option>Thermosynechococcus elongatus BP-1</option>
+          <option>Chlamydomonas reinhardtii</option>
+          <option>Chlorella vulgaris</option>
+          <option>Arabidopsis thaliana</option>
+          <option>Spinacia oleracea</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="study-taxonomic_group">
+          Taxonomic group <span class="text-danger">*</span>
+        </label>
+        <select class="form-control form-control-sm" id="study-taxonomic_group">
+          <option value="">— select —</option>
+          <option>Cyanobacteria</option>
+          <option>Green alga</option>
+          <option>Diatom</option>
+          <option>Red alga</option>
+          <option>Plant</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="study-instrument">
+          Instrument <span class="text-danger">*</span>
+        </label>
+        <select class="form-control form-control-sm" id="study-instrument">
+          <option value="">— auto-detect —</option>
+          <option>MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
+          <option>Aquapen</option>
+          <option>FL6000</option>
+        </select>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="study-strain">Strain</label>
+        <input type="text" class="form-control form-control-sm"
+               id="study-strain" placeholder="e.g. WT, &Delta;mutX">
+      </div>
+      <div class="form-group col-md-4">
+        <label for="study-culture_collection_id">Culture collection ID</label>
+        <input type="text" class="form-control form-control-sm"
+               id="study-culture_collection_id" placeholder="e.g. ATCC 27184">
+      </div>
+      <div class="form-group col-md-4">
+        <label for="study-growth_medium">Growth medium</label>
+        <input type="text" class="form-control form-control-sm"
+               id="study-growth_medium" placeholder="e.g. BG-11">
+      </div>
+      <div class="form-group col-md-3">
+        <label for="study-dark_adaptation_min">Dark adaptation (min)</label>
+        <input type="number" class="form-control form-control-sm"
+               id="study-dark_adaptation_min" min="0" step="1">
+      </div>
+      <div class="form-group col-md-3">
+        <label for="study-measuring_light_wavelength_nm">
+          Meas. light wavelength (nm)
+        </label>
+        <input type="number" class="form-control form-control-sm"
+               id="study-measuring_light_wavelength_nm" min="0" step="1">
+      </div>
+      <div class="form-group col-md-3">
+        <label for="study-measuring_light_intensity_umol">
+          Meas. light (&micro;mol&nbsp;m<sup>-2</sup>&nbsp;s<sup>-1</sup>)
+        </label>
+        <input type="number" class="form-control form-control-sm"
+               id="study-measuring_light_intensity_umol" min="0" step="any">
+      </div>
+      <div class="form-group col-md-3">
+        <label for="study-actinic_light_wavelength_nm">
+          Actinic light wavelength (nm)
+        </label>
+        <input type="number" class="form-control form-control-sm"
+               id="study-actinic_light_wavelength_nm" min="0" step="1">
+      </div>
+      <div class="form-group col-md-3">
+        <label for="study-actinic_light_intensity_umol">
+          Actinic light (&micro;mol&nbsp;m<sup>-2</sup>&nbsp;s<sup>-1</sup>)
+        </label>
+        <input type="number" class="form-control form-control-sm"
+               id="study-actinic_light_intensity_umol" min="0" step="any">
+      </div>
+      <div class="form-group col-md-3">
+        <label for="study-saturating_pulse_intensity_umol">
+          Sat. pulse (&micro;mol&nbsp;m<sup>-2</sup>&nbsp;s<sup>-1</sup>)
+        </label>
+        <input type="number" class="form-control form-control-sm"
+               id="study-saturating_pulse_intensity_umol" min="0" step="any">
+      </div>
+      <div class="form-group col-md-3">
+        <label for="study-saturating_pulse_duration_ms">
+          Sat. pulse duration (ms)
+        </label>
+        <input type="number" class="form-control form-control-sm"
+               id="study-saturating_pulse_duration_ms" min="0" step="any">
+      </div>
+      <div class="form-group col-12">
+        <label for="study-growth_conditions">Growth conditions</label>
+        <textarea class="form-control form-control-sm"
+                  id="study-growth_conditions" rows="2"
+                  placeholder="e.g. 30&deg;C, 50 &micro;mol photons m&minus;2 s&minus;1, 5% CO&sub2;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assay -->
+  <div class="tab-pane fade" id="tab-assay" role="tabpanel">
+    <div class="form-row">
+      <div class="form-group col-md-3">
+        <label for="assay-measurement_type">
+          Measurement type <span class="text-danger">*</span>
+        </label>
+        <select class="form-control form-control-sm" id="assay-measurement_type">
+          <option value="OJIP" selected>OJIP</option>
+          <option>PAM_induction</option>
+          <option>RLC</option>
+          <option>P700</option>
+          <option>Sigma</option>
+        </select>
+      </div>
+      <div class="form-group col-md-9">
+        <label for="assay-assay_description">Assay description</label>
+        <input type="text" class="form-control form-control-sm"
+               id="assay-assay_description"
+               placeholder="Brief description of the measurement assay">
+      </div>
+    </div>
+  </div>
+
+  <!-- Filename tokens -->
+  <div class="tab-pane fade" id="tab-token" role="tabpanel">
+    <p class="text-muted small mb-2">
+      Define how per-file metadata is encoded in filenames. Each token decodes one
+      positional segment after splitting the filename stem by the separator
+      (position 0 = first segment, 1 = second, etc.).
+    </p>
+    <div class="form-row mb-3 align-items-center">
+      <div class="col-auto">
+        <label class="col-form-label col-form-label-sm mb-0">Separator</label>
+      </div>
+      <div class="col-auto">
+        <input type="text" id="ann-token-sep"
+               class="form-control form-control-sm" value="_"
+               style="width:64px;" maxlength="5" autocomplete="off">
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-sm btn-outline-primary"
+                onclick="ANN.addToken()">
+          <i class="fa fa-plus mr-1"></i>Add token
+        </button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered mb-2" id="ann-token-table">
+        <thead class="thead-light">
+          <tr>
+            <th style="width:72px;">Position</th>
+            <th>Field</th>
+            <th>Strip prefix</th>
+            <th>Strip suffix</th>
+            <th style="width:40px;"></th>
+          </tr>
+        </thead>
+        <tbody id="ann-token-body">
+          <!-- rows injected by ANN.addToken() -->
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-muted small mb-0">
+      Example: file <code>ctrl_rep2_t24.txt</code> with separator <code>_</code>
+      and tokens at positions 0&nbsp;=&nbsp;treatment, 1&nbsp;=&nbsp;replicate_id
+      (prefix&nbsp;<code>rep</code>), 2&nbsp;=&nbsp;timepoint_h (prefix&nbsp;<code>t</code>)
+      &rarr; treatment=ctrl, replicate_id=2, timepoint_h=24.
+    </p>
+  </div>
+
+</div><!-- /tab-content -->

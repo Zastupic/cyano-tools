@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, Response, stream_with_context
+import json
 import os
 import re
 import struct
@@ -561,15 +562,17 @@ def eem_process():
     except ValueError:
         spc_ex_increment = None
 
-    if '77K_files' not in request.files:
-        return jsonify({'error': 'No files uploaded'}), 400
+    spectrofluorometer = request.form.get('spectrofluorometer', 'jasco')
 
-    files = request.files.getlist('77K_files')
-    if not files or secure_filename(files[0].filename or '') == '':
-        return jsonify({'error': 'No files selected'}), 400
-
-    if len(files) > max_files:
-        return jsonify({'error': f'Maximum {max_files} files allowed'}), 400
+    # For xlsx_matrix the client sends pre-parsed JSON — no file upload needed
+    if spectrofluorometer != 'xlsx_matrix':
+        if '77K_files' not in request.files:
+            return jsonify({'error': 'No files uploaded'}), 400
+        files = request.files.getlist('77K_files')
+        if not files or secure_filename(files[0].filename or '') == '':
+            return jsonify({'error': 'No files selected'}), 400
+        if len(files) > max_files:
+            return jsonify({'error': f'Maximum {max_files} files allowed'}), 400
 
     result = {
         'files': [],
@@ -747,6 +750,32 @@ def eem_process():
 
         result['params'][fname] = params
     # ── end helper ────────────────────────────────────────────────────────────
+
+    # ── xlsx_matrix: client pre-parsed the matrix; no file loop needed ────────
+    if spectrofluorometer == 'xlsx_matrix':
+        xlsx_raw = request.form.get('xlsx_preparse', '')
+        if not xlsx_raw:
+            return jsonify({'error': 'No pre-parsed xlsx data received'}), 400
+        try:
+            xlsx_samples = json.loads(xlsx_raw)
+        except (json.JSONDecodeError, ValueError) as exc:
+            return jsonify({'error': f'Invalid xlsx data: {exc}'}), 400
+        for sample in xlsx_samples:
+            try:
+                fname    = str(sample.get('name', 'unknown'))
+                ex_wl_arr = np.asarray(sample['ex_wl'],    dtype=np.float64)
+                em_wl_arr = np.asarray(sample['em_wl'],    dtype=np.float64)
+                intensity  = np.asarray(sample['intensity'], dtype=np.float64)
+                process_eem(fname, ex_wl_arr, em_wl_arr, intensity)
+            except Exception:
+                import traceback; traceback.print_exc()
+                result['warnings'].append(f"{sample.get('name', '?')}: parse error")
+        if not result['files']:
+            msg = 'No xlsx sheets were successfully processed.'
+            if result['warnings']:
+                msg += ' ' + '; '.join(result['warnings'])
+            return jsonify({'error': msg}), 400
+        return jsonify(result)
 
     # ── First pass: separate CSV and SPC files ────────────────────────────────
     spc_slices = {}   # {fname_lower: {'ex_wl': float, 'em_wl_arr': arr, 'y_arr': arr}}

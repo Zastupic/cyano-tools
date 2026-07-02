@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}
+    MIMS Periodic Data Analyzer | Dissolved Gas Monitoring | CyanoTools
+{% endblock %}
+
+{% block description %}
+Analyze periodic MIMS (Membrane Inlet Mass Spectrometry) measurements of dissolved gases and volatiles in photosynthetic cultures.
+{% endblock %}
+
+{% block content %}
+<div id="banner-content">
+    <div class="banner-desktop">
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_1.jpg') }}"
+             alt="CyanoTools analytical tools for algae and cyanobacteria"
+             style="width: 100%;">
+    </div>
+    <div class="banner-mobile">
+        <img src="{{ url_for('static', filename='images/homepage_upper_banner_2.jpg') }}"
+             alt="CyanoTools mobile banner"
+             style="width: 100%;">
+    </div>
+</div>
+<br>
+<h1>MIMS periodic data analysis</h1>
+<div class="alert alert-warning" role="alert" style="font-size:0.97em; border-left:4px solid #ffc107;">
+    <strong>Coming soon:</strong> This tool is currently under development. Please check back later.
+</div>
+<p>For continuous MIMS data analysis, please use the standard
+    <a href="{{ url_for('MIMS_data_analysis.analyze_MIMS_data') }}">MIMS Data Analyzer</a>.
+</p>
+<br><br><br><br><br><br><br>
+{% endblock %}
