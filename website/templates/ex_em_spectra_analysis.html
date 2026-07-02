@@ -131,23 +131,15 @@
                         <strong>.xlsx</strong> (Custom EEM matrix — any instrument; one sheet per sample;
                         see <a href="#collapseXlsxGuide" data-toggle="collapse" style="color:#0a3c58;">format guide</a>).
                     </p>
-                </div>
-            </div>
-        </div>
 
-        <!-- Custom .xlsx format guide -->
-        <div class="card">
-            <div class="card-header py-2" id="headingXlsxGuide">
-                <h6 class="mb-0">
-                    <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
-                            data-toggle="collapse" data-target="#collapseXlsxGuide"
-                            aria-expanded="false" aria-controls="collapseXlsxGuide">
-                        <i class="fa fa-file-excel-o mr-2" style="color:#217346;"></i>Preparing a Custom EEM matrix (.xlsx)
-                    </button>
-                </h6>
-            </div>
-            <div id="collapseXlsxGuide" class="collapse" aria-labelledby="headingXlsxGuide" data-parent="#eemInfoAccordion">
-                <div class="card-body" style="font-size:0.92em;">
+                    <div class="mt-2 pt-1 border-top">
+                        <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#217346; font-size:0.93em;"
+                                data-toggle="collapse" data-target="#collapseXlsxGuide"
+                                aria-expanded="false" aria-controls="collapseXlsxGuide">
+                            <i class="fa fa-file-excel-o mr-2"></i>Preparing a Custom EEM matrix (.xlsx)
+                        </button>
+                        <div id="collapseXlsxGuide" class="collapse">
+                            <div class="mt-2" style="font-size:0.92em;">
                     <p class="mb-2">
                         The <strong>Custom EEM matrix (.xlsx)</strong> option accepts any excitation-emission fluorescence matrix
                         organized in a spreadsheet — regardless of instrument. One sheet = one sample.
@@ -227,6 +219,9 @@
                         <span class="text-muted ml-2" style="font-size:0.82em;">
                             Contains README sheet, two example samples, and correct layout.
                         </span>
+                    </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -791,7 +786,7 @@
                     <img src="{{ url_for('static', filename='images/Fluoromax.jpg') }}" alt="Horiba FluoroMax-P spectrofluorometer" class="gallery__item--3">
                 </a>
                 <a href="#collapseXlsxGuide" class="gallery__item--4"
-                   onclick="event.preventDefault(); document.getElementById('eem-spectrofluorometer').value='xlsx_matrix'; updateSpectrofluorometerHint(); document.getElementById('eemInfoAccordion').querySelectorAll('.collapse.show').forEach(function(el){$(el).collapse('hide')}); setTimeout(function(){$('#collapseXlsxGuide').collapse('show'); document.getElementById('collapseXlsxGuide').scrollIntoView({behavior:'smooth',block:'start'});},150);"
+                   onclick="event.preventDefault(); document.getElementById('eem-spectrofluorometer').value='xlsx_matrix'; updateSpectrofluorometerHint(); document.getElementById('eemInfoAccordion').querySelectorAll('.collapse.show').forEach(function(el){$(el).collapse('hide')}); setTimeout(function(){$('#collapseHowTo').collapse('show'); setTimeout(function(){$('#collapseXlsxGuide').collapse('show'); document.getElementById('collapseXlsxGuide').scrollIntoView({behavior:'smooth',block:'start'});},300);},150);"
                    style="text-decoration:none; cursor:pointer;">
                     <i style="font-size:80%">Custom matrix (.xlsx)</i>
                     <img src="{{ url_for('static', filename='images/excel_icon.png') }}"
@@ -840,7 +835,7 @@
                     Orientation is auto-detected from cell A1. Override per-sheet or globally above.
                     Blank cells (Rayleigh scatter region) are treated the same as other formats.
                     <a href="#collapseXlsxGuide"
-                       onclick="event.preventDefault(); document.getElementById('eemInfoAccordion').querySelectorAll('.collapse.show').forEach(function(el){$(el).collapse('hide')}); setTimeout(function(){$('#collapseXlsxGuide').collapse('show'); document.getElementById('collapseXlsxGuide').scrollIntoView({behavior:'smooth', block:'start'});}, 150);"
+                       onclick="event.preventDefault(); document.getElementById('eemInfoAccordion').querySelectorAll('.collapse.show').forEach(function(el){$(el).collapse('hide')}); setTimeout(function(){$('#collapseHowTo').collapse('show'); setTimeout(function(){$('#collapseXlsxGuide').collapse('show'); document.getElementById('collapseXlsxGuide').scrollIntoView({behavior:'smooth', block:'start'});},300);}, 150);"
                        style="color:#004085;">Format guide &amp; template &#8599;</a>
                 </div>
                 <div class="mt-2 d-flex align-items-center" style="font-size:0.82rem; color:#004085; font-weight:600;">
