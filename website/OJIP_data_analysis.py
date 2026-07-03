@@ -531,6 +531,14 @@ def ojip_process():
     ]
 
     # ── build JSON payload ───────────────────────────────────────────────────
+    # Ensure all data-column labels are plain Python strings so JSON serialises
+    # them as strings (not numbers). Pandas may carry numpy scalar column names
+    # when filenames consist of digits only, causing the JS to receive numeric
+    # file identifiers and breaking curve_id hashing in the annotation tool.
+    data_cols = [str(c) for c in data_cols]
+    new_cols = [Summary_file.columns[0]] + data_cols   # preserve time-axis name
+    Summary_file.columns = new_cols
+
     time_raw_ms = (Summary_file.iloc[:, 0].astype(float) * ms).tolist()
     time_log_ms = (log_time.astype(float) * ms).tolist()
 

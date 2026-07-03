@@ -2,34 +2,16 @@
 
 {% block title %}Fluorescence Data Annotation Tool | CyanoTools{% endblock %}
 
-{% block description %}Annotate OJIP fluorescence measurement datasets with MIAPPE-compatible, tiered metadata. Batch file upload, JIP-test parameter computation, and exportable annotation bundles.{% endblock %}
+{% block description %}Annotate OJIP fluorescence measurement datasets with MIAPPE-compatible, tiered metadata. Batch file upload, reconciliation grid with provenance tracking, and exportable annotation bundles.{% endblock %}
 
-{% block keywords %}fluorescence annotation, OJIP dataset, MIAPPE metadata, JIP-test parameters, chlorophyll fluorescence database, dataset export, tiered metadata{% endblock %}
+{% block keywords %}fluorescence annotation, OJIP dataset, MIAPPE metadata, chlorophyll fluorescence, dataset export, tiered metadata, MICF{% endblock %}
 
 {% block content %}
 <style>
-  /* ── Provenance badges ─────────────────────────────────────────────────── */
-  .ann-prov { display:inline-block; font-size:0.65rem; font-weight:700;
-              padding:1px 5px; border-radius:3px; margin-left:3px;
-              vertical-align:middle; cursor:default; user-select:none; }
-  .ann-prov-T { background:#cfe2ff; color:#084298; }
-  .ann-prov-H { background:#d1e7dd; color:#0f5132; }
-  .ann-prov-F { background:#fff3cd; color:#664d03; }
-  .ann-prov-I { background:#e2e3e5; color:#41464b; }
-  .ann-prov-C { background:#e9d7f7; color:#5c2d91; }
-
-  /* ── Grid cells ─────────────────────────────────────────────────────────── */
+  /* ── Provenance (left-border stripe) ──────────────────────────────────────── */
   .ann-cell-editable { cursor:pointer; }
   .ann-cell-editable:hover { background:#f0f4ff !important; outline:1px dashed #6ea8fe; }
-  .ann-cell-null { color:#bbb; font-style:italic; }
-
-  /* ── Completeness bar ────────────────────────────────────────────────────── */
-  .ann-score-bar  { display:inline-block; width:46px; height:7px;
-                    background:#dee2e6; border-radius:4px; vertical-align:middle;
-                    margin-right:4px; }
-  .ann-score-fill { height:100%; border-radius:4px; background:#28a745; }
-  .ann-score-fill.mid { background:#ffc107; }
-  .ann-score-fill.low { background:#dc3545; }
+  .ann-cell-null { color:#adb5bd; font-style:italic; }
 
   /* ── Drop zone ───────────────────────────────────────────────────────────── */
   #ann-drop-zone { border:2px dashed #6c757d; border-radius:8px;
@@ -45,7 +27,7 @@
     padding:.35rem 1.1rem; font-weight:600; font-size:.85rem;
     border-radius:6px 6px 0 0; color:#495057;
     margin-right:3px; margin-bottom:-2px;
-    transition:background .12s,color .12s;
+    transition:background .12s, color .12s;
   }
   #ann-tier-tabs .nav-link:hover:not(.active) { background:#e2e6ea; color:#212529; }
   #ann-tier-tabs .nav-link.active {
@@ -53,26 +35,31 @@
     border-bottom:2px solid #004085;
   }
 
-  /* ── Token table ─────────────────────────────────────────────────────────── */
-  #ann-token-table th, #ann-token-table td {
+  /* ── Token / treatment table ───────────────────────────────────────────── */
+  #ann-token-table th, #ann-token-table td,
+  #ann-treatment-table th, #ann-treatment-table td {
     font-size:.82rem; padding:4px 6px; vertical-align:middle; }
-  #ann-token-table select, #ann-token-table input { font-size:.82rem; padding:2px 4px; }
+  #ann-token-table select, #ann-token-table input,
+  #ann-treatment-table select, #ann-treatment-table input {
+    font-size:.82rem; padding:2px 4px; }
 
-  /* ── Reconciliation grid ─────────────────────────────────────────────────── */
-  #ann-grid-wrap { overflow-x:auto; max-height:62vh; overflow-y:auto; }
-  #ann-grid-table { font-size:.8rem; white-space:nowrap; }
+  /* ── Reconciliation grid ──────────────────────────────────────────────────── */
+  #ann-grid-wrap { overflow-x:auto; max-height:65vh; overflow-y:auto; }
+  #ann-grid-table { font-size:.8rem; white-space:nowrap; border-collapse:separate; border-spacing:0; }
   #ann-grid-table thead th {
     position:sticky; top:0; z-index:2;
     background:#fff; border-bottom:2px solid #dee2e6;
-    padding:4px 8px; font-weight:600;
+    padding:3px 6px; font-weight:600;
   }
-  #ann-grid-table tbody td { padding:3px 8px; }
+  #ann-grid-table thead tr:first-child th { top:0; }
+  #ann-grid-table thead tr:last-child  th { top:22px; }
+  #ann-grid-table tbody td { padding:2px 6px; }
   #ann-grid-table tbody tr:nth-child(odd)  { background:#fafafa; }
   #ann-grid-table tbody tr:hover           { background:#f5f7ff !important; }
-  #ann-grid-table td.ann-jip  { background:#faf6ff; }
-  #ann-grid-table th.ann-jip  { background:#f3eaff; }
-  #ann-grid-table td.ann-tech { background:#fffdf0; }
-  #ann-grid-table th.ann-tech { background:#fff8e6; }
+
+  /* Toolbar */
+  #ann-toolbar { background:#f8f9fa; border:1px solid #dee2e6;
+                 border-radius:6px; padding:8px 12px; margin-bottom:10px; }
 </style>
 
 <!-- Banner -->
@@ -94,10 +81,10 @@
   </h2>
   <div class="alert alert-info mb-3" role="alert"
        style="font-size:.97em; border-left:4px solid #17a2b8;">
-    <strong>At a glance:</strong> Upload raw OJIP fluorescence files, fill in experiment metadata
-    once (per investigation / study / assay), then review and complete the auto-populated
-    reconciliation grid. Download the annotated dataset as a MIAPPE-compatible ZIP bundle
-    containing metadata, JIP-test parameters, and raw transient data in Parquet format.
+    <strong>At a glance:</strong> Upload raw OJIP fluorescence files, fill in experiment
+    metadata once per tier (Investigation / Study / Treatment / Fluorometer settings), then
+    review the auto-populated reconciliation grid. Download a MIAPPE-compatible ZIP bundle
+    containing per-curve JSON sidecars and a one-row-per-curve <code>summary.parquet</code>.
   </div>
 
   <!-- How-to collapsible -->
@@ -118,47 +105,72 @@
         <div class="card-body" style="font-size:.93em;">
           <ol class="mb-0">
             <li class="mb-2">
-              <strong>Fill in experiment metadata</strong> &mdash; Enter information common to all
-              files in the <em>Investigation</em>, <em>Study</em>, and <em>Assay</em> tabs below.
-              Use <em>Filename tokens</em> to define a per-file decoding pattern if your filenames
-              encode sample information (e.g. <code>ctrl_rep1_t0.txt</code>).
+              <strong>Fill in experiment metadata</strong> &mdash; Enter information common to
+              all files in the <em>Investigation</em>, <em>Study</em>,
+              <em>Treatment</em>, and <em>Fluorometer settings</em> tabs below.
+              Use <em>Filename tokens</em> to decode per-file metadata from filenames
+              (e.g. <code>ctrl_rep1_t0.txt</code>).
             </li>
             <li class="mb-2">
-              <strong>Upload fluorescence files</strong> &mdash; Drag &amp; drop or click to select
-              one or more OJIP transient files (<code>.csv</code> or <code>.txt</code>). Supported
-              instruments: MULTI-COLOR-PAM / Dual-PAM (Walz), AquaPen/FluorPen, FL6000.
+              <strong>Upload fluorescence files</strong> &mdash; Drag &amp; drop or click to
+              select one or more OJIP files (<code>.csv</code> or <code>.txt</code>).
+              Supported instruments: MULTI-COLOR-PAM / Dual-PAM (Walz), AquaPen/FluorPen, FL6000.
+              Alternatively, download an <strong>XLSX template</strong> to pre-fill metadata
+              in a spreadsheet, then upload the filled workbook.
             </li>
             <li class="mb-2">
-              <strong>Review the reconciliation grid</strong> &mdash; Each row is one file.
-              Cells are colour-coded by provenance:
-              <span class="ann-prov ann-prov-H">H</span> auto-detected from file header,
-              <span class="ann-prov ann-prov-F">F</span> decoded from filename,
-              <span class="ann-prov ann-prov-I">I</span> inherited from your tier forms,
-              <span class="ann-prov ann-prov-C">C</span> computed (JIP-test),
-              <span class="ann-prov ann-prov-T">T</span> typed by you.
-              Click any editable cell to override a value.
+              <strong>Review the reconciliation grid</strong> &mdash; Each row is one curve.
+              Cells show a coloured left-border stripe and a corner glyph by provenance:
+              <span style="border-left:3px solid #00a884;padding-left:4px;margin:0 3px;font-size:.8rem;">&#10014; typed</span>
+              <span style="border-left:3px solid #0984e3;padding-left:4px;margin:0 3px;font-size:.8rem;">&equiv; file header</span>
+              <span style="border-left:3px solid #7d5fe6;padding-left:4px;margin:0 3px;font-size:.8rem;">&#x2317; filename</span>
+              <span style="border-left:3px solid #0f9b8e;padding-left:4px;margin:0 3px;font-size:.8rem;">&DownArrowBar; inherited</span>
+              <span style="border-left:3px solid #e07a4e;padding-left:4px;margin:0 3px;font-size:.8rem;"># computed</span>
+              <span style="border-left:3px solid #e0564a;padding-left:4px;margin:0 3px;font-size:.8rem;background:#fff5f4;">+ missing</span>.
+              Use &DownTeeArrow; in column headers to fill a value down to all visible rows.
+              Keyboard: <kbd>Enter</kbd> = commit + move down, <kbd>Tab</kbd> = commit + move right, <kbd>Esc</kbd> = cancel.
             </li>
             <li>
-              <strong>Download the bundle</strong> &mdash; Click <em>Download bundle</em> to save a
-              ZIP file containing MIAPPE metadata, JIP-test parameters, and the full dataset as
-              Parquet. Reload it any time with <em>Load bundle</em>.
+              <strong>Download the bundle</strong> &mdash; Click <em>Download bundle</em> to
+              save a ZIP with per-curve <code>annot_*.json</code> sidecars +
+              <code>summary.parquet</code>. Reload any time with <em>Load bundle</em>.
             </li>
           </ol>
+
+          <!-- XLSX format guide -->
+          <div class="mt-3 pt-2 border-top">
+            <strong>XLSX template format:</strong>
+            The downloadable template is a multi-sheet workbook with one sheet per metadata tier
+            (Investigation, Study, Fluorometer, Treatments, Per-curve). Each sheet has header
+            columns matching the field labels; cells with dropdown validation are pre-configured
+            for vocabulary fields. Fill in the template in any spreadsheet application, then
+            upload the <code>.xlsx</code> file to populate tier forms and per-curve overrides.
+          </div>
         </div>
       </div>
     </div>
   </div><!-- /accordion -->
 
-  <!-- Load bundle row -->
-  <div class="d-flex align-items-center">
-    <button class="btn btn-outline-secondary btn-sm mr-2" id="ann-load-btn"
+  <!-- Load bundle / XLSX row -->
+  <div class="d-flex align-items-center flex-wrap" style="gap:8px;">
+    <button class="btn btn-outline-secondary btn-sm" id="ann-load-btn"
             onclick="document.getElementById('ann-bundle-input').click()">
       <i class="fa fa-folder-open mr-1"></i>Load existing bundle
     </button>
+    <button class="btn btn-outline-info btn-sm"
+            onclick="ANN.downloadXlsxTemplate()">
+      <i class="fa fa-file-excel-o mr-1"></i>Download XLSX template
+    </button>
+    <button class="btn btn-outline-info btn-sm"
+            onclick="document.getElementById('ann-xlsx-input').click()">
+      <i class="fa fa-upload mr-1"></i>Upload filled XLSX
+    </button>
     <small class="text-muted">
-      Reload a previously downloaded <code>.zip</code> bundle to continue editing.
+      Load a <code>.zip</code> bundle to continue editing, or use the XLSX template
+      to pre-fill metadata in a spreadsheet.
     </small>
     <input type="file" id="ann-bundle-input" accept=".zip" class="d-none">
+    <input type="file" id="ann-xlsx-input" accept=".xlsx" class="d-none">
   </div>
 </div><!-- /title card -->
 
@@ -168,15 +180,14 @@
     <i class="fa fa-list-alt mr-2 text-primary"></i>Step 1 &mdash; Experiment metadata
   </div>
   <div class="card-body pb-0">
-
     {% include '_ann_tier_forms.html' %}
-  </div><!-- /card-body -->
-</div><!-- /Step 1 card -->
+  </div>
+</div>
 
-<!-- ── Step 2: Upload & process ───────────────────────────────────────────── -->
+<!-- ── Step 2: Upload & ingest ────────────────────────────────────────────── -->
 <div class="card mb-4">
   <div class="card-header py-2 font-weight-bold" style="background:#e9ecef;">
-    <i class="fa fa-upload mr-2 text-primary"></i>Step 2 &mdash; Upload files &amp; process
+    <i class="fa fa-upload mr-2 text-primary"></i>Step 2 &mdash; Upload files
   </div>
   <div class="card-body">
     <div id="ann-drop-zone"
@@ -194,35 +205,17 @@
            class="d-none" autocomplete="off">
     <div id="ann-file-list" class="mt-2 small text-muted"></div>
 
-    <div class="form-row mt-3 align-items-end">
-      <div class="form-group col-auto mb-0">
-        <label for="ann-FJ-ms" class="mb-1" style="font-size:.87rem;">
-          F<sub>J</sub> time (ms)
-        </label>
-        <input type="number" class="form-control form-control-sm"
-               id="ann-FJ-ms" value="2.0" min="0.1" max="20" step="0.1"
-               style="width:90px;" autocomplete="off">
-      </div>
-      <div class="form-group col-auto mb-0">
-        <label for="ann-FI-ms" class="mb-1" style="font-size:.87rem;">
-          F<sub>I</sub> time (ms)
-        </label>
-        <input type="number" class="form-control form-control-sm"
-               id="ann-FI-ms" value="30.0" min="1" max="100" step="1"
-               style="width:90px;" autocomplete="off">
-      </div>
-      <div class="col-auto mb-0">
-        <button class="btn btn-primary" id="ann-ingest-btn"
-                onclick="ANN.ingest()" disabled>
-          <i class="fa fa-play mr-1"></i>Ingest &amp; populate grid
-        </button>
-        <span id="ann-spinner" class="ml-2 d-none text-muted" style="font-size:.9rem;">
-          <i class="fa fa-spinner fa-spin mr-1"></i>Processing&hellip;
-        </span>
-      </div>
+    <div class="mt-3">
+      <button class="btn btn-primary" id="ann-ingest-btn"
+              onclick="ANN.ingest()" disabled>
+        <i class="fa fa-play mr-1"></i>Ingest &amp; populate grid
+      </button>
+      <span id="ann-spinner" class="ml-2 d-none text-muted" style="font-size:.9rem;">
+        <i class="fa fa-spinner fa-spin mr-1"></i>Processing&hellip;
+      </span>
     </div>
   </div>
-</div><!-- /Step 2 card -->
+</div>
 
 <!-- ── Error / warning banners ───────────────────────────────────────────── -->
 <div id="ann-error-banner"   class="alert alert-danger  d-none" role="alert"></div>
@@ -236,39 +229,16 @@
       <i class="fa fa-table mr-2 text-primary"></i>Step 3 &mdash; Reconciliation grid
     </span>
     <span id="ann-summary-badges" class="ml-1"></span>
-
-    <div class="ml-auto d-flex align-items-center flex-wrap" style="gap:10px;">
-      <div class="custom-control custom-switch">
-        <input type="checkbox" class="custom-control-input"
-               id="ann-toggle-jip" checked
-               onchange="ANN.toggleJip(this.checked)">
-        <label class="custom-control-label" for="ann-toggle-jip"
-               style="font-size:.85rem; font-weight:600;">JIP params</label>
-      </div>
-      <div class="custom-control custom-switch">
-        <input type="checkbox" class="custom-control-input"
-               id="ann-toggle-tech"
-               onchange="ANN.toggleTech(this.checked)">
-        <label class="custom-control-label" for="ann-toggle-tech"
-               style="font-size:.85rem; font-weight:600;">Extra per-curve</label>
-      </div>
+    <div class="ml-auto">
       <button class="btn btn-success btn-sm" onclick="ANN.downloadBundle()">
         <i class="fa fa-download mr-1"></i>Download bundle
       </button>
     </div>
-  </div><!-- /card-header -->
+  </div>
 
   <div class="card-body p-2">
-    <!-- Provenance legend -->
-    <div class="mb-2" style="font-size:.82rem;">
-      <strong class="mr-1">Provenance:</strong>
-      <span class="ann-prov ann-prov-T" title="Typed by user">T</span> Typed &nbsp;
-      <span class="ann-prov ann-prov-H" title="From file header">H</span> File header &nbsp;
-      <span class="ann-prov ann-prov-F" title="From filename token">F</span> Filename &nbsp;
-      <span class="ann-prov ann-prov-I" title="Inherited from tier form">I</span> Inherited &nbsp;
-      <span class="ann-prov ann-prov-C" title="Computed (JIP-test)">C</span> Computed
-      <span class="text-muted ml-2">&mdash; click a cell to edit</span>
-    </div>
+    <!-- Toolbar (populated by JS) -->
+    <div id="ann-toolbar" class="mb-2"></div>
 
     <div id="ann-grid-wrap">
       <table class="table table-sm table-bordered mb-0" id="ann-grid-table">
@@ -276,8 +246,17 @@
         <tbody id="ann-grid-body"></tbody>
       </table>
     </div>
+
+    <!-- Output description -->
+    <div class="mt-3 pt-2 border-top text-muted small">
+      <i class="fa fa-info-circle mr-1"></i>
+      Bundle contains: one <code>annot_*.json</code> sidecar per curve (full metadata
+      + provenance) and one <code>summary.parquet</code> (one row per curve, all metadata
+      columns). No computed fluorescence parameters &mdash; those live in the OJIP analysis tool.
+      Re-open and merge new files any time with <em>Load bundle</em>.
+    </div>
   </div>
-</div><!-- /Step 3 card -->
+</div>
 
 <script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}"></script>
 {% endblock %}

@@ -1,9 +1,16 @@
 /**
  * js_fluorescence_annotation.js
- * Fluorescence Data Annotation Tool — front-end module (M2).
+ * Fluorescence Data Annotation Tool — front-end module.
  *
  * Exposed global: ANN  (IIFE)
  * Entry point   : ANN.init()  — called on DOMContentLoaded
+ *
+ * Design: Investigation → Study → Treatment templates → Fluorometer → per-curve grid.
+ * Grid has column groups (Identity / Biological / Treatment / Conditions /
+ * Replicate+QC / Acquisition), sample_type-driven conditional columns,
+ * fill-down (⤓), inline edit with keyboard nav (Enter/Tab/Esc), treatment
+ * template assignment, NCBI organism typeahead, and XLSX import/export.
+ * Provenance shown as a left-border stripe + corner glyph.
  */
 'use strict';
 
@@ -11,101 +18,155 @@ const ANN = (function () {
     'use strict';
 
     // ── State ─────────────────────────────────────────────────────────────────
-    let _schema   = {};   // { schema_version, fields: { key: FieldDef } }
-    let _rows     = [];   // array of row objects from /ingest or /load_bundle
-    let _bundleId = null; // bundle_id returned by /ingest (used in /export)
-    let _files    = [];   // File objects from drop zone / file input
-    let _showJip  = true;
-    let _showTech = false;
+    let _schema     = {};   // { schema_version, fields: { key: FieldDef } }
+    let _rows       = [];   // array of row objects from /ingest or /load_bundle
+    let _bundleId   = null;
+    let _files      = [];   // File objects from drop zone / file input
+    let _sampleType = '';   // current sample_type (from study form or row data)
+    let _filterText = '';   // toolbar search string
+    let _filterIncomplete = false;
+    let _filterProv = '';   // provenance filter
+    let _sortKey    = '';   // sort field key
+    let _treatmentTemplates = []; // [{treatment_label, chem_treatment, ...}, ...]
+    let _ncbiTimer  = null; // debounce timer for NCBI search
 
-    // ── Column definitions ────────────────────────────────────────────────────
-    // group: 'core' always visible | 'tech' when _showTech | 'jip' when _showJip
-    const COLS = [
-        // core (always visible)
-        { key: 'curve_id',            label: 'Curve ID',      group: 'core', editable: true  },
-        { key: 'filename',            label: 'Filename',      group: 'core', editable: false },
-        { key: 'sample_id',           label: 'Sample ID',     group: 'core', editable: true  },
-        { key: 'replicate_id',        label: 'Replicate #',   group: 'core', editable: true  },
-        { key: 'treatment',           label: 'Treatment',     group: 'core', editable: true  },
-        { key: 'timepoint_h',         label: 'Timepoint (h)', group: 'core', editable: true  },
-        { key: 'completeness_score',  label: 'Complete',      group: 'core', editable: false },
-        // tech — extra per-curve fields (toggle)
-        { key: 'treatment_dose',      label: 'Dose',          group: 'tech', editable: true  },
-        { key: 'treatment_dose_unit', label: 'Dose unit',     group: 'tech', editable: true  },
-        { key: 'OD_at_measurement',   label: 'OD',            group: 'tech', editable: true  },
-        { key: 'timestamp',           label: 'Timestamp',     group: 'tech', editable: true  },
-        { key: 'gain',                label: 'Gain',          group: 'tech', editable: true  },
-        // jip — all JIP-test parameters (toggle)
-        { key: 'jip_F0',      label: 'F0',       group: 'jip', editable: false },
-        { key: 'jip_FM',      label: 'FM',       group: 'jip', editable: false },
-        { key: 'jip_FK',      label: 'FK',       group: 'jip', editable: false },
-        { key: 'jip_FJ',      label: 'FJ',       group: 'jip', editable: false },
-        { key: 'jip_FI',      label: 'FI',       group: 'jip', editable: false },
-        { key: 'jip_VJ',      label: 'VJ',       group: 'jip', editable: false },
-        { key: 'jip_VI',      label: 'VI',       group: 'jip', editable: false },
-        { key: 'jip_Fv_Fm',   label: 'Fv/Fm',    group: 'jip', editable: false },
-        { key: 'jip_M0',      label: 'M0',       group: 'jip', editable: false },
-        { key: 'jip_Sm',      label: 'Sm',       group: 'jip', editable: false },
-        { key: 'jip_N',       label: 'N',        group: 'jip', editable: false },
-        { key: 'jip_psiE0',   label: '\u03c8E0', group: 'jip', editable: false },
-        { key: 'jip_psiR0',   label: '\u03c8R0', group: 'jip', editable: false },
-        { key: 'jip_deltaR0', label: '\u03b4R0', group: 'jip', editable: false },
-        { key: 'jip_phiE0',   label: '\u03c6E0', group: 'jip', editable: false },
-        { key: 'jip_phiR0',   label: '\u03c6R0', group: 'jip', editable: false },
-        { key: 'jip_ABS_RC',  label: 'ABS/RC',   group: 'jip', editable: false },
-        { key: 'jip_TR0_RC',  label: 'TR0/RC',   group: 'jip', editable: false },
-        { key: 'jip_ET0_RC',  label: 'ET0/RC',   group: 'jip', editable: false },
-        { key: 'jip_RE0_RC',  label: 'RE0/RC',   group: 'jip', editable: false },
-        { key: 'jip_DI0_RC',  label: 'DI0/RC',   group: 'jip', editable: false },
-        { key: 'jip_Area_OJ', label: 'Area OJ',  group: 'jip', editable: false },
-        { key: 'jip_Area_JI', label: 'Area JI',  group: 'jip', editable: false },
-        { key: 'jip_Area_IP', label: 'Area IP',  group: 'jip', editable: false },
-        { key: 'jip_Area_OP', label: 'Area OP',  group: 'jip', editable: false },
-    ];
+    // Group toggles: true = visible
+    let _groupVis   = { conditions: true, replicate_qc: true };
 
-    // ── Provenance badge config ───────────────────────────────────────────────
-    const PROV = {
-        typed:         { cls: 'ann-prov-T', lbl: 'T', title: 'Typed by user'              },
-        from_header:   { cls: 'ann-prov-H', lbl: 'H', title: 'Auto-detected from file header' },
-        from_filename: { cls: 'ann-prov-F', lbl: 'F', title: 'Decoded from filename token' },
-        inherited:     { cls: 'ann-prov-I', lbl: 'I', title: 'Inherited from tier form'   },
-        computed:      { cls: 'ann-prov-C', lbl: 'C', title: 'Computed (JIP-test)'        },
+    // ── Column group definitions ──────────────────────────────────────────────
+    const COL_GROUPS = {
+        identity:     { label: 'Identity',       color: '#15455c' },
+        biological:   { label: 'Biological',     color: '#0f9b8e' },
+        treatment:    { label: 'Treatment',      color: '#7d5fe6' },
+        conditions:   { label: 'Conditions',     color: '#12a3b4' },
+        replicate_qc: { label: 'Replicate / QC', color: '#c98a2e' },
+        acquisition:  { label: 'Acquisition',    color: '#0984e3' },
     };
 
-    // Per-curve fields available as filename token targets
-    const TOKEN_FIELDS = [
-        'sample_id', 'replicate_id', 'treatment', 'treatment_dose',
-        'treatment_dose_unit', 'OD_at_measurement', 'timepoint_h', 'timestamp', 'gain',
+    // ── Column definitions ────────────────────────────────────────────────────
+    // sample_cond: '' = all | 'liquid_culture' | 'plant' | 'plant_or_leaf'
+    const COLS = [
+        // Sticky / always-visible
+        { key: '_complete', label: 'Complete',      group: '',            editable: false, sticky: true },
+        { key: 'filename',  label: 'Raw file',      group: 'identity',   editable: false, sticky: true },
+        // Identity
+        { key: 'curve_id',  label: 'Curve ID',      group: 'identity',   editable: false },
+        { key: 'sample_id', label: 'Sample ID',     group: 'identity',   editable: true  },
+        { key: 'sample_type', label: 'Sample type', group: 'identity',   editable: true  },
+        // Biological (inherited from Study)
+        { key: 'organism',  label: 'Organism',      group: 'biological', editable: true  },
+        { key: 'genotype',  label: 'Genotype',      group: 'biological', editable: true  },
+        { key: 'sub_strain_cultivar', label: 'Sub-strain / Cultivar', group: 'biological', editable: true },
+        // Treatment (template-assigned)
+        { key: 'treatment_label',   label: 'Treatment group',  group: 'treatment', editable: true },
+        { key: 'chem_treatment',    label: 'Chemical',         group: 'treatment', editable: true },
+        { key: 'chem_dose',         label: 'Chem. dose',       group: 'treatment', editable: true },
+        { key: 'chem_unit',         label: 'Chem. unit',       group: 'treatment', editable: true },
+        { key: 'chem_duration',     label: 'Chem. duration',   group: 'treatment', editable: true },
+        { key: 'chem_detail',       label: 'Chem. detail',     group: 'treatment', editable: true },
+        { key: 'stress_treatment',  label: 'Stress',           group: 'treatment', editable: true },
+        { key: 'stress_dose',       label: 'Stress dose',      group: 'treatment', editable: true },
+        { key: 'stress_unit',       label: 'Stress unit',      group: 'treatment', editable: true },
+        { key: 'stress_duration',   label: 'Stress dur.',      group: 'treatment', editable: true },
+        { key: 'stress_detail',     label: 'Stress detail',    group: 'treatment', editable: true },
+        { key: 'other_treatment',   label: 'Other treatment',  group: 'treatment', editable: true },
+        { key: 'other_dose',        label: 'Other dose',       group: 'treatment', editable: true },
+        { key: 'other_unit',        label: 'Other unit',       group: 'treatment', editable: true },
+        { key: 'other_duration',    label: 'Other dur.',       group: 'treatment', editable: true },
+        { key: 'other_detail',      label: 'Other detail',     group: 'treatment', editable: true },
+        { key: 'timepoint',         label: 'Time (h)',         group: 'treatment', editable: true },
+        // Conditions — shared (growth light quality, applies to all sample types)
+        { key: 'growth_light_type',       label: 'Light type',     group: 'conditions', editable: true },
+        { key: 'growth_light_peak_wl',    label: 'Light peak λ (nm)', group: 'conditions', editable: true },
+        { key: 'growth_light_peak_width', label: 'Light FWHM (nm)', group: 'conditions', editable: true },
+        { key: 'growth_light_color_cat',  label: 'Light category', group: 'conditions', editable: true },
+        { key: 'growth_light_note',       label: 'Light note',           group: 'conditions', editable: true },
+        { key: 'growth_light_intensity',  label: 'Growth light (µmol)',  group: 'conditions', editable: true },
+        { key: 'growth_temperature',      label: 'Growth temp (°C)',     group: 'conditions', editable: true },
+        { key: 'growth_co2',              label: 'Growth CO₂ (%)',       group: 'conditions', editable: true },
+        { key: 'temperature',             label: 'Meas. temp (°C)',      group: 'conditions', editable: true },
+        // Conditions — liquid culture
+        { key: 'medium',    label: 'Medium',        group: 'conditions', editable: true,  sample_cond: 'liquid_culture' },
+        { key: 'medium_modification', label: 'Med. mod.', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'trophic_mode',    label: 'Trophic mode',    group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'cultivator_type', label: 'Cultivator type', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_chla',  label: 'Chl a µg/mL', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_od',         label: 'OD (1 cm cuvette)', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_od_wl',      label: 'OD λ (nm)',         group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_other',      label: 'Other density',     group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_other_unit', label: 'Other density unit',group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'co2',       label: 'CO₂ %',         group: 'conditions', editable: true,  sample_cond: 'liquid_culture' },
+        { key: 'vessel',    label: 'Vessel',         group: 'conditions', editable: true,  sample_cond: 'liquid_culture' },
+        { key: 'agitation', label: 'Agitation',      group: 'conditions', editable: true,  sample_cond: 'liquid_culture' },
+        { key: 'growth_phase', label: 'Growth phase', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_age_h', label: 'Culture age (h)', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        // Conditions — vascular plant
+        { key: 'growth_facility', label: 'Facility',   group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'dev_stage',       label: 'Dev. stage', group: 'conditions', editable: true, sample_cond: 'plant_or_leaf' },
+        { key: 'plant_organ',     label: 'Organ',      group: 'conditions', editable: true, sample_cond: 'plant_or_leaf' },
+        { key: 'leaf_position',   label: 'Leaf pos.',  group: 'conditions', editable: true, sample_cond: 'plant_or_leaf' },
+        { key: 'leaf_surface',    label: 'Leaf surf.', group: 'conditions', editable: true, sample_cond: 'plant_or_leaf' },
+        { key: 'photoperiod',     label: 'Photoperiod',group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'humidity',        label: 'Humidity %', group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'substrate',       label: 'Substrate',  group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'watering_regime', label: 'Watering',   group: 'conditions', editable: true, sample_cond: 'plant' },
+        // Replicate / QC
+        { key: 'bio_rep',   label: 'Bio. rep.',     group: 'replicate_qc', editable: true  },
+        { key: 'tech_rep',  label: 'Tech. rep.',    group: 'replicate_qc', editable: true  },
+        { key: 'batch_id',  label: 'Batch ID',      group: 'replicate_qc', editable: true  },
+        { key: 'quality',   label: 'Quality',       group: 'replicate_qc', editable: true  },
+        // Acquisition
+        { key: 'instrument', label: 'Instrument',   group: 'acquisition',  editable: false },
+        { key: 'fo_timing',               label: 'F0 timing',          group: 'acquisition', editable: true },
+        { key: 'sat_pulse_intensity',     label: 'Sat. pulse (µmol)',  group: 'acquisition', editable: true },
+        { key: 'sat_pulse_wavelength_nm', label: 'Sat. pulse λ (nm)', group: 'acquisition', editable: true },
+        { key: 'sat_pulse_duration_s',    label: 'Sat. dur. (s)',      group: 'acquisition', editable: true },
+        { key: 'meas_light_intensity',    label: 'Meas. light (µmol)',  group: 'acquisition', editable: true },
+        { key: 'meas_light_wavelength_nm',label: 'Meas. light λ (nm)', group: 'acquisition', editable: true },
+        { key: 'gain',                    label: 'Gain',               group: 'acquisition', editable: true },
+        { key: 'timestamp',  label: 'Timestamp',    group: 'acquisition',  editable: true  },
+        { key: 'acclimation_min',             label: 'Dark pre-accl. (min)',     group: 'acquisition', editable: true },
+        { key: 'actinic_preaccl_intensity',   label: 'Actinic pre-OJIP (µmol)', group: 'acquisition', editable: true },
+        { key: 'actinic_preaccl_wavelength_nm', label: 'Actinic pre-OJIP λ (nm)', group: 'acquisition', editable: true },
+        { key: 'preaccl_temperature',         label: 'Pre-accl. temp (°C)',      group: 'acquisition', editable: true },
+        { key: 'preaccl_co2',                 label: 'Pre-accl. CO₂ (%)',        group: 'acquisition', editable: true },
     ];
+
+    // Per-curve fields available as filename-token targets
+    const TOKEN_FIELDS = [
+        'sample_id', 'bio_rep', 'tech_rep', 'treatment_label',
+        'timepoint', 'batch_id', 'temperature', 'timestamp', 'gain',
+    ];
+
+    // ── Provenance config (left-border stripe + corner glyph) ─────────────────
+    const PROV = {
+        typed:         { color: '#00a884', glyph: '✎', title: 'Typed by user'               },
+        from_header:   { color: '#0984e3', glyph: '≡', title: 'From file header'             },
+        from_filename: { color: '#7d5fe6', glyph: '⌗', title: 'From filename token'          },
+        inherited:     { color: '#0f9b8e', glyph: '↧', title: 'Inherited from tier form'     },
+        computed:      { color: '#e07a4e', glyph: '#', title: 'Auto-computed'                },
+        missing:       { color: '#e0564a', glyph: '+', title: 'Required — value missing'     },
+    };
 
     // ── Utilities ─────────────────────────────────────────────────────────────
     function _eid(id) { return document.getElementById(id); }
 
-    /** Escape HTML for use in attribute values and text content. */
     function _esc(s) {
         if (s === null || s === undefined) return '';
         return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+            .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    /** Format a numeric value to 4 significant figures; pass strings through. */
     function _fmt(v) {
         if (v === null || v === undefined || v === '') return null;
-        const n = parseFloat(v);
-        if (!isNaN(n) && String(v).trim() !== '') {
-            // trim trailing zeros after toPrecision
+        // Use Number() (strict) not parseFloat() (lenient). parseFloat('3f9e28c') = 3,
+        // which would silently truncate hex curve_ids that start with decimal digits.
+        // Number('3f9e28c') = NaN, so the full string is returned unchanged.
+        const n = Number(v);
+        if (!isNaN(n) && String(v).trim() !== '')
             return n.toPrecision(4).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
-        }
         return String(v);
-    }
-
-    function _provBadge(prov) {
-        const p = PROV[prov];
-        if (!p) return '';
-        return `<span class="ann-prov ${p.cls}" title="${p.title}">${p.lbl}</span>`;
     }
 
     function _val(id) {
@@ -113,24 +174,37 @@ const ANN = (function () {
         return el ? el.value.trim() : '';
     }
 
-    function _visibleCols() {
-        return COLS.filter(c => {
-            if (c.group === 'core') return true;
-            if (c.group === 'tech') return _showTech;
-            if (c.group === 'jip')  return _showJip;
-            return false;
-        });
+    // ── Sample-type helpers ───────────────────────────────────────────────────
+    function _isLiquid(st) { return (st || '').includes('liquid'); }
+    function _isPlant(st)  { return (st || '').includes('plant'); }
+    function _isLeaf(st)   { return (st || '').includes('leaf') || (st || '').includes('disc'); }
+
+    function _colVisible(col) {
+        if (col.sticky) return true;
+        const g  = col.group;
+        const sc = col.sample_cond || '';
+        // Group toggle
+        if (g && _groupVis[g] === false) return false;
+        // Sample-type conditional
+        if (sc === 'liquid_culture' && !_isLiquid(_sampleType)) return false;
+        if (sc === 'plant'          && !_isPlant(_sampleType))  return false;
+        if (sc === 'plant_or_leaf'  && !(_isPlant(_sampleType) || _isLeaf(_sampleType))) return false;
+        return true;
     }
+
+    function _visibleCols() { return COLS.filter(_colVisible); }
 
     // ── Banner helpers ────────────────────────────────────────────────────────
     function _showError(msg) {
         const el = _eid('ann-error-banner');
+        if (!el) return;
         el.textContent = msg;
         el.classList.remove('d-none');
     }
 
     function _clearError() {
         const el = _eid('ann-error-banner');
+        if (!el) return;
         el.textContent = '';
         el.classList.add('d-none');
     }
@@ -138,6 +212,7 @@ const ANN = (function () {
     function _showWarnings(msgs) {
         if (!msgs || !msgs.length) return;
         const el = _eid('ann-warning-banner');
+        if (!el) return;
         el.innerHTML = '<strong>Warnings:</strong><ul class="mb-0 mt-1">' +
             msgs.map(m => `<li>${_esc(m)}</li>`).join('') + '</ul>';
         el.classList.remove('d-none');
@@ -145,8 +220,247 @@ const ANN = (function () {
 
     function _clearWarnings() {
         const el = _eid('ann-warning-banner');
+        if (!el) return;
         el.innerHTML = '';
         el.classList.add('d-none');
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────────────
+    let _toastTimer = null;
+
+    function _toast(msg) {
+        let el = _eid('ann-toast');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'ann-toast';
+            el.style.cssText = [
+                'position:fixed', 'bottom:24px', 'left:50%',
+                'transform:translateX(-50%)',
+                'background:#1a2c35', 'color:#fff',
+                'padding:8px 20px', 'border-radius:20px',
+                'font-size:.85rem', 'z-index:9999',
+                'pointer-events:none', 'opacity:0',
+                'transition:opacity .2s',
+            ].join(';');
+            document.body.appendChild(el);
+        }
+        el.textContent = msg;
+        el.style.opacity = '1';
+        if (_toastTimer) clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 2800);
+    }
+
+    // ── Fluorometer field count chip ──────────────────────────────────────────
+    function updateFluorCount() {
+        const chip = _eid('fluor-fields-count');
+        if (!chip) return;
+        const total = document.querySelectorAll('.ann-fluor-field').length;
+        const filled = Array.from(document.querySelectorAll('.ann-fluor-field'))
+            .filter(el => el.value.trim() !== '').length;
+        chip.textContent = `${filled} / ${total} fields set`;
+        chip.className = filled === total ? 'badge badge-success' :
+                         filled > 0      ? 'badge badge-info' :
+                                           'badge badge-secondary';
+    }
+
+    // ── Sample-type propagation ───────────────────────────────────────────────
+    function onSampleTypeChange(val) {
+        _sampleType = val || '';
+        _updateStudyFieldVisibility();
+        if (_rows.length) _renderGrid();
+    }
+
+    /** Show/hide study-tier form fields based on sample_type. */
+    function _updateStudyFieldVisibility() {
+        const hasType = !!_sampleType;
+        const isLiq   = _isLiquid(_sampleType);
+        const isPlant = _isPlant(_sampleType) || _isLeaf(_sampleType);
+
+        // Show/hide the entire study fields block
+        document.querySelectorAll('.ann-study-fields').forEach(el => {
+            el.style.display = hasType ? '' : 'none';
+        });
+        // Hide the hint once a type is selected
+        document.querySelectorAll('.ann-study-hint').forEach(el => {
+            el.style.display = hasType ? 'none' : '';
+        });
+        // Liquid culture section
+        document.querySelectorAll('.ann-study-liquid').forEach(el => {
+            el.style.display = isLiq ? '' : 'none';
+        });
+        // Plant section
+        document.querySelectorAll('.ann-study-plant').forEach(el => {
+            el.style.display = isPlant ? '' : 'none';
+        });
+        // Contextual placeholder for sub-strain / cultivar
+        const subInput = _eid('study-sub_strain_cultivar');
+        if (subInput) {
+            if (isLiq)        subInput.placeholder = 'e.g. glucose tolerant (GT), motile';
+            else if (isPlant) subInput.placeholder = 'e.g. Col-0, Landsberg erecta';
+            else              subInput.placeholder = 'Sub-strain or cultivar name';
+        }
+    }
+
+    // ── Instrument change — measuring light N/A ──────────────────────────────
+    function onInstrumentChange(val) {
+        // AquaPen doesn't have user-configurable measuring light
+        const isAquapen = /aquapen|fluorpen/i.test(val || '');
+        document.querySelectorAll('.ann-fluor-meas-light').forEach(el => {
+            el.style.display = isAquapen ? 'none' : '';
+        });
+        document.querySelectorAll('.ann-fluor-meas-light-na').forEach(el => {
+            if (isAquapen) el.classList.remove('d-none');
+            else el.classList.add('d-none');
+        });
+        updateFluorCount();
+    }
+
+    // ── Growth light type — show/hide mono vs white sub-fields ───────────────
+    function onGrowthLightTypeChange(val) {
+        const isMono  = val === 'monochromatic LED';
+        const isWhite = val === 'white LED' || val === 'fluorescent lamp' || val === 'metal halide';
+        const isNote  = val === 'multi-color / broadband LED' || val === 'other';
+        document.querySelectorAll('.ann-light-mono').forEach(el => {
+            if (isMono) el.classList.remove('d-none'); else el.classList.add('d-none');
+        });
+        document.querySelectorAll('.ann-light-white').forEach(el => {
+            if (isWhite) el.classList.remove('d-none'); else el.classList.add('d-none');
+        });
+        document.querySelectorAll('.ann-light-note').forEach(el => {
+            if (isNote) el.classList.remove('d-none'); else el.classList.add('d-none');
+        });
+    }
+
+    // ── Instrument auto-detect display ─────────────────────────────────────
+    /** Set the instrument select and trigger measuring-light visibility. */
+    function _updateInstrumentDisplay(instrumentName) {
+        const sel = _eid('fluor-instrument');
+        if (sel) sel.value = instrumentName || '';
+        onInstrumentChange(instrumentName || '');
+    }
+
+    /** Detect instrument from grid rows and set the select.
+     *  AquaPen and FluorPen share the same file format, so they are treated
+     *  as compatible: if the user has already chosen one, the other won't
+     *  override it on subsequent uploads. */
+    function _detectInstrumentFromRows() {
+        if (!_rows.length) return;
+        const instruments = new Set(
+            _rows.map(r => (r.instrument || {}).value).filter(Boolean)
+        );
+        if (instruments.size === 1) {
+            const detected = [...instruments][0];
+            const sel      = _eid('fluor-instrument');
+            const current  = sel ? sel.value : '';
+            // "Aquapen" and "FluorPen" share one file format — don't override
+            // a user's FluorPen choice when AquaPen format is detected.
+            const aqFpFamily  = /aquapen|fluorpen/i;
+            const compatible  = aqFpFamily.test(detected) && aqFpFamily.test(current);
+            if (!current || !compatible) {
+                _updateInstrumentDisplay(detected);
+            }
+        } else if (instruments.size > 1) {
+            _updateInstrumentDisplay('');
+            _showWarnings(['Multiple instruments detected across files: ' +
+                [...instruments].join(', ') + '. Please verify the Fluorometer setting.']);
+        }
+    }
+
+    // ── NCBI Taxonomy typeahead ──────────────────────────────────────────────
+    // Predefined organisms (fallback when NCBI is unreachable)
+    const _PRESET_ORGANISMS = [
+        { taxid: 1148, name: 'Synechocystis sp. PCC 6803', rank: 'strain', division: 'cyanobacteria' },
+        { taxid: 1140, name: 'Synechococcus sp. PCC 7942', rank: 'strain', division: 'cyanobacteria' },
+        { taxid: 1163, name: 'Anabaena sp. PCC 7120',      rank: 'strain', division: 'cyanobacteria' },
+        { taxid: 197221, name: 'Thermosynechococcus elongatus BP-1', rank: 'strain', division: 'cyanobacteria' },
+        { taxid: 3055, name: 'Chlamydomonas reinhardtii',  rank: 'species', division: 'green algae' },
+        { taxid: 3077, name: 'Chlorella vulgaris',          rank: 'species', division: 'green algae' },
+        { taxid: 3702, name: 'Arabidopsis thaliana',        rank: 'species', division: 'eudicots' },
+        { taxid: 3562, name: 'Spinacia oleracea',           rank: 'species', division: 'eudicots' },
+    ];
+
+    function _showDropdown(dropdown) { dropdown.style.display = 'block'; }
+    function _hideDropdown(dropdown) { dropdown.style.display = 'none';  }
+
+    function _renderOrganismResults(results, dropdown) {
+        dropdown.innerHTML = results.map(r =>
+            `<a href="#" data-taxid="${r.taxid}" data-name="${_esc(r.name)}"
+                style="display:block;padding:5px 12px;font-size:.85rem;color:#212529;
+                       text-decoration:none;cursor:pointer;border-bottom:1px solid #f0f0f0;"
+                onmouseover="this.style.background='#e8f0fe'"
+                onmouseout="this.style.background='#fff'">
+                <strong>${_esc(r.name)}</strong>
+                <small style="color:#6c757d;margin-left:6px;">[${_esc(r.rank)}] taxID:${r.taxid}</small>
+            </a>`
+        ).join('');
+        _showDropdown(dropdown);
+        // Click handlers
+        dropdown.querySelectorAll('a').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                const inp = _eid('study-organism');
+                const hid = _eid('study-organism-taxid');
+                if (inp) inp.value = a.dataset.name;
+                if (hid) hid.value = a.dataset.taxid;
+                _hideDropdown(dropdown);
+            });
+        });
+    }
+
+    function searchOrganism(query) {
+        if (_ncbiTimer) clearTimeout(_ncbiTimer);
+        const dropdown = _eid('study-organism-dropdown');
+        if (!dropdown) return;
+
+        if (query.length < 2) { _hideDropdown(dropdown); return; }
+
+        // Immediate: filter preset list
+        const q = query.toLowerCase();
+        const presetMatches = _PRESET_ORGANISMS.filter(o =>
+            o.name.toLowerCase().includes(q)
+        );
+        if (presetMatches.length) {
+            _renderOrganismResults(presetMatches, dropdown);
+        }
+
+        // Debounced: NCBI API search (needs 3+ chars)
+        if (query.length < 3) return;
+        _ncbiTimer = setTimeout(() => {
+            fetch('/api/fluorescence_annotation/ncbi_taxon?q=' + encodeURIComponent(query))
+                .then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.json();
+                })
+                .then(results => {
+                    if (!Array.isArray(results) || !results.length) {
+                        // Keep preset results if NCBI returned nothing
+                        if (!presetMatches.length) _hideDropdown(dropdown);
+                        return;
+                    }
+                    // Merge: NCBI results first, then presets not already in NCBI results
+                    const ncbiIds = new Set(results.map(r => r.taxid));
+                    const merged = [
+                        ...results,
+                        ...presetMatches.filter(p => !ncbiIds.has(p.taxid)),
+                    ];
+                    _renderOrganismResults(merged, dropdown);
+                })
+                .catch(err => {
+                    console.warn('[ANN] NCBI search failed:', err);
+                    // Preset results remain visible as fallback
+                });
+        }, 350);
+    }
+
+    // Close organism dropdown on outside click
+    function _setupOrganismDropdown() {
+        document.addEventListener('click', e => {
+            const dropdown = _eid('study-organism-dropdown');
+            const inp = _eid('study-organism');
+            if (dropdown && !dropdown.contains(e.target) && e.target !== inp) {
+                _hideDropdown(dropdown);
+            }
+        });
     }
 
     // ── Schema fetch ──────────────────────────────────────────────────────────
@@ -161,36 +475,54 @@ const ANN = (function () {
     function _collectTiers() {
         return {
             investigation: {
-                project_title:       _val('inv-project_title'),
-                contact_name:        _val('inv-contact_name'),
-                contact_email:       _val('inv-contact_email'),
-                institution:         _val('inv-institution'),
-                license:             _val('inv-license'),
-                project_description: _val('inv-project_description'),
+                project_title:        _val('inv-project_title'),
+                contact_name:         _val('inv-contact_name'),
+                contact_email:        _val('inv-contact_email'),
+                institution:          _val('inv-institution'),
+                contributor_namespace: _val('inv-contributor_namespace'),
+                license:              _val('inv-license'),
+                project_description:  _val('inv-project_description'),
             },
             study: {
-                organism:                        _val('study-organism'),
-                taxonomic_group:                 _val('study-taxonomic_group'),
-                strain:                          _val('study-strain'),
-                culture_collection_id:           _val('study-culture_collection_id'),
-                growth_medium:                   _val('study-growth_medium'),
-                growth_conditions:               _val('study-growth_conditions'),
-                dark_adaptation_min:             _val('study-dark_adaptation_min'),
-                instrument:                      _val('study-instrument'),
-                measuring_light_wavelength_nm:   _val('study-measuring_light_wavelength_nm'),
-                measuring_light_intensity_umol:  _val('study-measuring_light_intensity_umol'),
-                actinic_light_wavelength_nm:     _val('study-actinic_light_wavelength_nm'),
-                actinic_light_intensity_umol:    _val('study-actinic_light_intensity_umol'),
-                saturating_pulse_intensity_umol: _val('study-saturating_pulse_intensity_umol'),
-                saturating_pulse_duration_ms:    _val('study-saturating_pulse_duration_ms'),
+                organism:              _val('study-organism'),
+                organism_taxid:        _val('study-organism-taxid'),
+                genotype:              _val('study-genotype'),
+                sub_strain_cultivar:   _val('study-sub_strain_cultivar'),
+                medium:                _val('study-medium'),
+                medium_modification:   _val('study-medium_modification'),
+                trophic_mode:          _val('study-trophic_mode'),
+                cultivator_type:       _val('study-cultivator_type'),
+                culture_density_chla:  _val('study-culture_density_chla'),
+                culture_density_od:    _val('study-culture_density_od'),
+                culture_density_od_wl: _val('study-culture_density_od_wl'),
+                culture_density_other:      _val('study-culture_density_other'),
+                culture_density_other_unit: _val('study-culture_density_other_unit'),
+                growth_light_intensity:    _val('study-growth_light_intensity'),
+                growth_light_type:         _val('study-growth_light_type'),
+                growth_light_peak_wl:      _val('study-growth_light_peak_wl'),
+                growth_light_peak_width:   _val('study-growth_light_peak_width'),
+                growth_light_color_cat:    _val('study-growth_light_color_cat'),
+                growth_light_note:         _val('study-growth_light_note'),
+                growth_temperature:        _val('study-growth_temperature'),
+                growth_co2:                _val('study-growth_co2'),
+                sample_type:               _val('study-sample_type'),
             },
-            assay: {
-                measurement_type:  _val('assay-measurement_type'),
-                assay_description: _val('assay-assay_description'),
+            fluor: {
+                instrument:              _val('fluor-instrument'),
+                fo_timing:               _val('fluor-fo_timing'),
+                acclimation_min:         _val('fluor-acclimation_min'),
+                sat_pulse_intensity:     _val('fluor-sat_pulse_intensity'),
+                sat_pulse_wavelength_nm: _val('fluor-sat_pulse_wavelength_nm'),
+                sat_pulse_duration_s:    _val('fluor-sat_pulse_duration_s'),
+                meas_light_intensity:         _val('fluor-meas_light_intensity'),
+                meas_light_wavelength_nm:     _val('fluor-meas_light_wavelength_nm'),
+                actinic_preaccl_intensity:    _val('fluor-actinic_preaccl_intensity'),
+                actinic_preaccl_wavelength_nm: _val('fluor-actinic_preaccl_wavelength_nm'),
+                preaccl_temperature:          _val('fluor-preaccl_temperature'),
+                preaccl_co2:                  _val('fluor-preaccl_co2'),
             },
-            token_dict:  _collectTokenDict(),
-            FJ_time_ms:  parseFloat(_val('ann-FJ-ms'))  || 2.0,
-            FI_time_ms:  parseFloat(_val('ann-FI-ms'))  || 30.0,
+            token_dict: _collectTokenDict(),
+            treatment_templates: _collectTreatmentTemplates(),
         };
     }
 
@@ -199,39 +531,289 @@ const ANN = (function () {
         if (!td) return;
         const inv   = td.investigation || {};
         const study = td.study         || {};
-        const assay = td.assay         || {};
+        const fluor = td.fluor || td.assay || {}; // back-compat
         const tok   = td.token_dict    || {};
 
-        ['project_title', 'contact_name', 'contact_email',
-         'institution', 'license', 'project_description'].forEach(k => {
-            const el = _eid('inv-' + k);
-            if (el && inv[k] !== undefined && inv[k] !== '') el.value = inv[k];
+        const _set = (id, val) => {
+            const el = _eid(id);
+            if (el && val !== undefined && val !== '') el.value = val;
+        };
+
+        ['project_title','contact_name','contact_email','institution',
+         'contributor_namespace','license','project_description'].forEach(k => _set('inv-'+k, inv[k]));
+
+        ['organism','genotype','sub_strain_cultivar','medium','medium_modification',
+         'trophic_mode','cultivator_type',
+         'culture_density_chla','culture_density_od',
+         'culture_density_od_wl','culture_density_other','culture_density_other_unit',
+         'growth_light_intensity','growth_light_type',
+         'growth_light_peak_wl','growth_light_peak_width',
+         'growth_light_color_cat','growth_light_note',
+         'growth_temperature','growth_co2',
+         'sample_type'].forEach(k => _set('study-'+k, study[k]));
+        onGrowthLightTypeChange(study.growth_light_type || '');
+        if (study.organism_taxid) _set('study-organism-taxid', study.organism_taxid);
+
+        ['fo_timing','acclimation_min','sat_pulse_intensity','sat_pulse_wavelength_nm',
+         'sat_pulse_duration_s','meas_light_intensity','meas_light_wavelength_nm',
+         'actinic_preaccl_intensity','actinic_preaccl_wavelength_nm',
+         'preaccl_temperature','preaccl_co2'].forEach(k => _set('fluor-'+k, fluor[k]));
+
+        if (study.sample_type) {
+            _sampleType = study.sample_type;
+            const stEl = _eid('study-sample_type');
+            if (stEl) stEl.value = study.sample_type;
+        }
+        _updateStudyFieldVisibility();
+
+        // Instrument: set hidden input + display (read-only, auto-detected)
+        _updateInstrumentDisplay(fluor.instrument || '');
+
+        if (tok.separator) { const el = _eid('ann-token-sep'); if (el) el.value = tok.separator; }
+        const tbody = _eid('ann-token-body');
+        if (tbody) {
+            tbody.innerHTML = '';
+            if (Array.isArray(tok.tokens)) tok.tokens.forEach(_addTokenRow);
+        }
+
+        // Treatment templates
+        _treatmentTemplates = td.treatment_templates || [];
+        _renderTreatmentTable();
+
+        updateFluorCount();
+    }
+
+    // ── Treatment templates ─────────────────────────────────────────────────
+
+    // Stress type → default unit
+    const _STRESS_UNITS = {
+        'high light':            '\u00b5mol photons m\u207b\u00b2 s\u207b\u00b9',
+        'low light':             '\u00b5mol photons m\u207b\u00b2 s\u207b\u00b9',
+        'heat':                  '\u00b0C',
+        'cold':                  '\u00b0C',
+        'UV-B':                  '\u00b5W cm\u207b\u00b2',
+        'salt stress':           'mM NaCl',
+        'drought':               '% field capacity',
+        'nitrogen starvation':   '',
+        'phosphorus starvation': '',
+        'sulfur starvation':     '',
+        'iron starvation':       '',
+        'other':                 '',
+    };
+
+    function _onStressTypeChange(sel) {
+        const tr = sel.closest('tr');
+        const unitSel = tr.querySelectorAll('select')[1]; // 2nd select in row = unit
+        const unit = _STRESS_UNITS[sel.value] || '';
+        if (unit && unitSel) unitSel.value = unit;
+    }
+
+    function _delBtn() {
+        return `<td><button class="btn btn-sm btn-outline-danger"
+                    onclick="ANN.removeTreatmentRow(this)" title="Remove">
+              <i class="fa fa-times"></i></button></td>`;
+    }
+
+    function addChemTreatmentRow(tmpl) {
+        tmpl = tmpl || {};
+        const tbody = _eid('ann-chem-treatment-body');
+        if (!tbody) return;
+        const chemOpts = ['','control','DCMU','methyl viologen','KCN',
+            'glycolaldehyde','DBMIB','hydroxylamine','lincomycin',
+            'atrazine','bentazon','paraquat','diuron','other']
+            .map(v => `<option value="${_esc(v)}"${tmpl.chem_treatment===v?' selected':''}>${_esc(v||'— select —')}</option>`)
+            .join('');
+        const unitOpts = ['','\u00b5M','mM','M','mg L\u207b\u00b9',
+            '\u00b5g L\u207b\u00b9','ng L\u207b\u00b9','%','other']
+            .map(v => `<option value="${_esc(v)}"${tmpl.chem_unit===v?' selected':''}>${v||'— select —'}</option>`)
+            .join('');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.treatment_label||'')}" placeholder="e.g. DCMU 10 µM 2h"></td>
+          <td><select class="form-control form-control-sm">${chemOpts}</select></td>
+          <td><input type="number" class="form-control form-control-sm"
+               value="${_esc(tmpl.chem_dose||'')}" placeholder="10" step="any" min="0"></td>
+          <td><select class="form-control form-control-sm">${unitOpts}</select></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.chem_duration||'')}" placeholder="e.g. 2 h"></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.chem_detail||'')}" placeholder="additional detail"></td>
+          ${_delBtn()}`;
+        tbody.appendChild(tr);
+    }
+
+    function addStressTreatmentRow(tmpl) {
+        tmpl = tmpl || {};
+        const tbody = _eid('ann-stress-treatment-body');
+        if (!tbody) return;
+        const stressOpts = ['','high light','low light','heat','cold','UV-B',
+            'nitrogen starvation','phosphorus starvation','sulfur starvation',
+            'iron starvation','salt stress','drought','other']
+            .map(v => `<option value="${_esc(v)}"${tmpl.stress_treatment===v?' selected':''}>${_esc(v||'— select —')}</option>`)
+            .join('');
+        const stressUnitVals = ['\u00b5mol photons m\u207b\u00b2 s\u207b\u00b9',
+            '\u00b0C','mM NaCl','\u00b5W cm\u207b\u00b2',
+            '% field capacity','% RH','other',''];
+        const unitOpts = stressUnitVals
+            .map(v => `<option value="${_esc(v)}"${tmpl.stress_unit===v?' selected':''}>${v||'— select —'}</option>`)
+            .join('');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.treatment_label||'')}" placeholder="e.g. High light 1 h"></td>
+          <td><select class="form-control form-control-sm"
+                      onchange="ANN._onStressTypeChange(this)">${stressOpts}</select></td>
+          <td><input type="number" class="form-control form-control-sm"
+               value="${_esc(tmpl.stress_dose||'')}" placeholder="1000" step="any" min="0"></td>
+          <td><select class="form-control form-control-sm">${unitOpts}</select></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.stress_duration||'')}" placeholder="e.g. 30 min"></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.stress_detail||'')}" placeholder="additional detail"></td>
+          ${_delBtn()}`;
+        tbody.appendChild(tr);
+    }
+
+    function addOtherTreatmentRow(tmpl) {
+        tmpl = tmpl || {};
+        const tbody = _eid('ann-other-treatment-body');
+        if (!tbody) return;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.treatment_label||'')}" placeholder="e.g. Control"></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.other_treatment||'')}" placeholder="treatment name"></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.other_dose||'')}" placeholder="dose / value"></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.other_unit||'')}" placeholder="unit"></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.other_duration||'')}" placeholder="e.g. 1 h"></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tmpl.other_detail||'')}" placeholder="additional detail"></td>
+          ${_delBtn()}`;
+        tbody.appendChild(tr);
+    }
+
+    // Keep alias for any old callers
+    function addTreatmentTemplate(tmpl) { addChemTreatmentRow(tmpl); }
+
+    function removeTreatmentRow(btn) { btn.closest('tr').remove(); }
+    function removeTreatmentTemplate(btn) { removeTreatmentRow(btn); } // back-compat
+
+    function _collectTreatmentTemplates() {
+        const templates = [];
+
+        // Chemical
+        const chemBody = _eid('ann-chem-treatment-body');
+        if (chemBody) {
+            chemBody.querySelectorAll('tr').forEach(tr => {
+                const inp = tr.querySelectorAll('input');
+                const sel = tr.querySelectorAll('select');
+                const t = {
+                    treatment_type:  'chemical',
+                    treatment_label: inp[0].value.trim(),
+                    chem_treatment:  sel[0] ? sel[0].value : '',
+                    chem_dose:       inp[1] ? inp[1].value.trim() : '',
+                    chem_unit:       sel[1] ? sel[1].value : '',
+                    chem_duration:   inp[2] ? inp[2].value.trim() : '',
+                    chem_detail:     inp[3] ? inp[3].value.trim() : '',
+                };
+                if (t.treatment_label) templates.push(t);
+            });
+        }
+
+        // Stress
+        const stressBody = _eid('ann-stress-treatment-body');
+        if (stressBody) {
+            stressBody.querySelectorAll('tr').forEach(tr => {
+                const inp = tr.querySelectorAll('input');
+                const sel = tr.querySelectorAll('select');
+                const t = {
+                    treatment_type:   'stress',
+                    treatment_label:  inp[0].value.trim(),
+                    stress_treatment: sel[0] ? sel[0].value : '',
+                    stress_dose:      inp[1] ? inp[1].value.trim() : '',
+                    stress_unit:      sel[1] ? sel[1].value : '',
+                    stress_duration:  inp[2] ? inp[2].value.trim() : '',
+                    stress_detail:    inp[3] ? inp[3].value.trim() : '',
+                };
+                if (t.treatment_label) templates.push(t);
+            });
+        }
+
+        // Other
+        const otherBody = _eid('ann-other-treatment-body');
+        if (otherBody) {
+            otherBody.querySelectorAll('tr').forEach(tr => {
+                const inp = tr.querySelectorAll('input');
+                const t = {
+                    treatment_type:  'other',
+                    treatment_label: inp[0] ? inp[0].value.trim() : '',
+                    other_treatment: inp[1] ? inp[1].value.trim() : '',
+                    other_dose:      inp[2] ? inp[2].value.trim() : '',
+                    other_unit:      inp[3] ? inp[3].value.trim() : '',
+                    other_duration:  inp[4] ? inp[4].value.trim() : '',
+                    other_detail:    inp[5] ? inp[5].value.trim() : '',
+                };
+                if (t.treatment_label) templates.push(t);
+            });
+        }
+
+        _treatmentTemplates = templates;
+        return templates;
+    }
+
+    function _renderTreatmentTable() {
+        const chemBody   = _eid('ann-chem-treatment-body');
+        const stressBody = _eid('ann-stress-treatment-body');
+        const otherBody  = _eid('ann-other-treatment-body');
+        if (chemBody)   chemBody.innerHTML   = '';
+        if (stressBody) stressBody.innerHTML = '';
+        if (otherBody)  otherBody.innerHTML  = '';
+
+        _treatmentTemplates.forEach(t => {
+            const type = t.treatment_type || 'chemical'; // back-compat with old bundles
+            if (type === 'stress')       addStressTreatmentRow(t);
+            else if (type === 'other')   addOtherTreatmentRow(t);
+            else                         addChemTreatmentRow(t);
         });
 
-        ['organism', 'taxonomic_group', 'strain', 'culture_collection_id',
-         'growth_medium', 'growth_conditions', 'dark_adaptation_min',
-         'instrument', 'measuring_light_wavelength_nm',
-         'measuring_light_intensity_umol', 'actinic_light_wavelength_nm',
-         'actinic_light_intensity_umol', 'saturating_pulse_intensity_umol',
-         'saturating_pulse_duration_ms'].forEach(k => {
-            const el = _eid('study-' + k);
-            if (el && study[k] !== undefined && study[k] !== '') el.value = study[k];
-        });
+        // Ensure at least one empty row per section on first render
+        if (chemBody   && !chemBody.querySelector('tr'))   addChemTreatmentRow();
+        if (stressBody && !stressBody.querySelector('tr')) addStressTreatmentRow();
+        if (otherBody  && !otherBody.querySelector('tr'))  addOtherTreatmentRow();
+    }
 
-        ['measurement_type', 'assay_description'].forEach(k => {
-            const el = _eid('assay-' + k);
-            if (el && assay[k] !== undefined && assay[k] !== '') el.value = assay[k];
-        });
+    /** Get treatment template labels for grid dropdown. */
+    function _getTreatmentLabels() {
+        _collectTreatmentTemplates();
+        return _treatmentTemplates
+            .map(t => t.treatment_label)
+            .filter(l => l);
+    }
 
-        if (tok.separator) _eid('ann-token-sep').value = tok.separator;
-        _eid('ann-token-body').innerHTML = '';
-        if (Array.isArray(tok.tokens)) tok.tokens.forEach(_addTokenRow);
+    /** Apply a treatment template to a row (fills sub-fields). */
+    function _applyTreatmentTemplate(row, label) {
+        _collectTreatmentTemplates();
+        const tmpl = _treatmentTemplates.find(t => t.treatment_label === label);
+        if (!tmpl) return;
+        const keys = ['chem_treatment','chem_dose','chem_duration',
+                      'stress_treatment','stress_dose','stress_duration'];
+        keys.forEach(k => {
+            if (tmpl[k]) {
+                row[k] = { value: tmpl[k], provenance: 'typed' };
+            }
+        });
     }
 
     // ── Token table ───────────────────────────────────────────────────────────
     function _addTokenRow(tok) {
         tok = tok || {};
         const tbody = _eid('ann-token-body');
+        if (!tbody) return;
         const tr    = document.createElement('tr');
         const flds  = _schema.fields || {};
         const optHtml = TOKEN_FIELDS.map(f => {
@@ -239,26 +821,17 @@ const ANN = (function () {
             return `<option value="${_esc(f)}"${tok.field === f ? ' selected' : ''}>${_esc(lbl)}</option>`;
         }).join('');
         tr.innerHTML = `
-          <td>
-            <input type="number" class="form-control form-control-sm"
-                   style="width:60px;" min="0" step="1"
-                   value="${tok.position !== undefined ? _esc(tok.position) : ''}">
-          </td>
+          <td><input type="number" class="form-control form-control-sm"
+               style="width:60px;" min="0" step="1"
+               value="${tok.position !== undefined ? _esc(tok.position) : ''}"></td>
           <td><select class="form-control form-control-sm">${optHtml}</select></td>
-          <td>
-            <input type="text" class="form-control form-control-sm"
-                   value="${_esc(tok.strip_prefix || '')}" placeholder="e.g. rep">
-          </td>
-          <td>
-            <input type="text" class="form-control form-control-sm"
-                   value="${_esc(tok.strip_suffix || '')}" placeholder="e.g. .0">
-          </td>
-          <td>
-            <button class="btn btn-sm btn-outline-danger"
-                    onclick="ANN.removeToken(this)" title="Remove token">
-              <i class="fa fa-times"></i>
-            </button>
-          </td>`;
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tok.strip_prefix || '')}" placeholder="e.g. rep"></td>
+          <td><input type="text" class="form-control form-control-sm"
+               value="${_esc(tok.strip_suffix || '')}" placeholder="e.g. h"></td>
+          <td><button class="btn btn-sm btn-outline-danger"
+                      onclick="ANN.removeToken(this)" title="Remove">
+                <i class="fa fa-times"></i></button></td>`;
         tbody.appendChild(tr);
     }
 
@@ -266,49 +839,48 @@ const ANN = (function () {
     function removeToken(btn) { btn.closest('tr').remove(); }
 
     function _collectTokenDict() {
-        const sep    = _eid('ann-token-sep').value || '_';
+        const sepEl = _eid('ann-token-sep');
+        const sep   = sepEl ? sepEl.value || '_' : '_';
         const tokens = [];
-        _eid('ann-token-body').querySelectorAll('tr').forEach(tr => {
+        const tbody  = _eid('ann-token-body');
+        if (!tbody) return { separator: sep, tokens: [] };
+        tbody.querySelectorAll('tr').forEach(tr => {
             const inputs = tr.querySelectorAll('input, select');
             const pos    = parseInt(inputs[0].value, 10);
             const fld    = inputs[1].value;
             const pre    = inputs[2].value.trim();
             const suf    = inputs[3].value.trim();
-            if (!isNaN(pos) && fld) {
-                tokens.push({ position: pos, field: fld,
-                              strip_prefix: pre, strip_suffix: suf });
-            }
+            if (!isNaN(pos) && fld)
+                tokens.push({ position: pos, field: fld, strip_prefix: pre, strip_suffix: suf });
         });
-        return { separator: sep, tokens: tokens };
+        return { separator: sep, tokens };
     }
 
     // ── Drag-drop & file input ────────────────────────────────────────────────
-    // Null-guarded: upload-zone elements are absent when the module is embedded
-    // inside the OJIP Annotation tab (no file upload needed there).
     function _setupDragDrop() {
         const zone  = _eid('ann-drop-zone');
         const input = _eid('ann-file-input');
-
         if (zone && input) {
-            zone.addEventListener('dragover', e => {
-                e.preventDefault();
-                zone.classList.add('dragover');
-            });
+            zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
             zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
             zone.addEventListener('drop', e => {
                 e.preventDefault();
                 zone.classList.remove('dragover');
                 _setFiles(Array.from(e.dataTransfer.files));
             });
-            input.addEventListener('change', function () {
-                _setFiles(Array.from(this.files));
-            });
+            input.addEventListener('change', function () { _setFiles(Array.from(this.files)); });
         }
-
         const bundleInput = _eid('ann-bundle-input');
         if (bundleInput) {
             bundleInput.addEventListener('change', function () {
                 if (this.files && this.files[0]) loadBundle(this.files[0]);
+            });
+        }
+        // XLSX upload input
+        const xlsxInput = _eid('ann-xlsx-input');
+        if (xlsxInput) {
+            xlsxInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) uploadXlsx(this.files[0]);
             });
         }
     }
@@ -317,93 +889,262 @@ const ANN = (function () {
         _files = fileArray;
         const zone = _eid('ann-drop-zone');
         const list = _eid('ann-file-list');
+        const btn  = _eid('ann-ingest-btn');
+        if (!zone) return;
         if (_files.length) {
             zone.classList.add('has-files');
-            list.innerHTML =
-                '<i class="fa fa-check text-success mr-1"></i>' +
-                `${_files.length} file(s) selected: ` +
+            if (list) list.innerHTML =
+                `<i class="fa fa-check text-success mr-1"></i>${_files.length} file(s) selected: ` +
                 _files.map(f => `<code>${_esc(f.name)}</code>`).join(', ');
-            _eid('ann-ingest-btn').disabled = false;
+            if (btn) btn.disabled = false;
         } else {
             zone.classList.remove('has-files');
-            list.innerHTML = '';
-            _eid('ann-ingest-btn').disabled = true;
+            if (list) list.innerHTML = '';
+            if (btn) btn.disabled = true;
         }
+    }
+
+    // ── Project title validation ──────────────────────────────────────────────
+    function _validateProjectTitle() {
+        const inp  = _eid('inv-project_title');
+        const help = _eid('inv-project_title-help');
+        if (!inp) return true;
+        const valid = inp.value.trim().length > 0;
+        if (help) {
+            help.classList.toggle('d-none', valid);
+        }
+        inp.classList.toggle('is-invalid', !valid);
+        return valid;
     }
 
     // ── Ingest ────────────────────────────────────────────────────────────────
     function ingest() {
         if (!_files.length) return;
-        _clearError();
-        _clearWarnings();
-
+        _clearError(); _clearWarnings();
         const spinner = _eid('ann-spinner');
         const btn     = _eid('ann-ingest-btn');
-        spinner.classList.remove('d-none');
-        btn.disabled = true;
+        if (spinner) spinner.classList.remove('d-none');
+        if (btn)     btn.disabled = true;
 
         const fd = new FormData();
         _files.forEach(f => fd.append('fluo_files', f));
         fd.append('tier_json', JSON.stringify(_collectTiers()));
 
         fetch('/api/fluorescence_annotation/ingest', { method: 'POST', body: fd })
-            .then(r => {
-                if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error'));
-                return r.json();
-            })
+            .then(r => { if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error')); return r.json(); })
             .then(data => {
-                spinner.classList.add('d-none');
-                btn.disabled = false;
-                if (data.status !== 'ok') {
-                    _showError(data.message || 'Ingest failed.');
-                    return;
+                if (spinner) spinner.classList.add('d-none');
+                if (btn)     btn.disabled = false;
+                if (data.status !== 'success' && data.status !== 'ok') {
+                    _showError(data.message || 'Ingest failed.'); return;
                 }
                 _rows     = data.rows || [];
                 _bundleId = data.bundle_id || null;
                 if (data.warnings && data.warnings.length) _showWarnings(data.warnings);
-                _renderGrid(_rows);
-                _eid('ann-grid-card').classList.remove('d-none');
-                _eid('ann-grid-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Detect sample_type from first row if not set in form
+                if (!_sampleType && _rows.length) {
+                    const st = (_rows[0].sample_type || {}).value || '';
+                    if (st) _sampleType = st;
+                }
+                // Auto-detect instrument from ingested files
+                _detectInstrumentFromRows();
+                _renderGrid();
+                const card = _eid('ann-grid-card');
+                if (card) { card.classList.remove('d-none'); card.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
             })
             .catch(err => {
-                spinner.classList.add('d-none');
-                btn.disabled = false;
+                if (spinner) spinner.classList.add('d-none');
+                if (btn)     btn.disabled = false;
                 _showError('Request failed: ' + err);
             });
     }
 
-    // ── Grid rendering ────────────────────────────────────────────────────────
-    function _renderGrid(rows) {
-        _rows = rows;
-        const visCols = _visibleCols();
-        _renderHead(visCols);
-        _renderBody(visCols, rows);
-        _updateSummary(rows);
+    // ── Filtering / sorting helpers ───────────────────────────────────────────
+    function _applyFilters(rows) {
+        let out = rows;
+        if (_filterText) {
+            const q = _filterText.toLowerCase();
+            out = out.filter(r => {
+                return ['filename','sample_id','treatment_label','organism','genotype'].some(k => {
+                    const v = ((r[k] || {}).value || '');
+                    return String(v).toLowerCase().includes(q);
+                });
+            });
+        }
+        if (_filterIncomplete) {
+            out = out.filter(r => {
+                const sc = ((r.completeness_score || {}).value || 0);
+                return parseFloat(sc) < 80;
+            });
+        }
+        if (_filterProv) {
+            out = out.filter(r =>
+                Object.values(r).some(cell =>
+                    typeof cell === 'object' && cell && cell.provenance === _filterProv
+                )
+            );
+        }
+        if (_sortKey === 'filename') {
+            out = [...out].sort((a, b) => String((a.filename||{}).value||'').localeCompare(String((b.filename||{}).value||'')));
+        } else if (_sortKey === 'least_complete') {
+            out = [...out].sort((a, b) => parseFloat(((a.completeness_score||{}).value||0)) - parseFloat(((b.completeness_score||{}).value||0)));
+        }
+        return out;
     }
 
-    function _renderHead(visCols) {
-        let html = '<tr>';
-        visCols.forEach(c => {
-            let extraCls = '';
-            if (c.group === 'jip')  extraCls = ' ann-jip';
-            if (c.group === 'tech') extraCls = ' ann-tech';
-            html += `<th class="${extraCls}" title="${_esc(c.key)}">${_esc(c.label)}</th>`;
+    // ── Sticky column offset fix ──────────────────────────────────────────────
+    // Both _complete (pos 0) and filename (pos 1) are sticky at left:0.
+    // After rendering we measure the first column's actual width and shift the
+    // second sticky column so they don't overlap on horizontal scroll.
+    function _fixStickyOffsets() {
+        const thead = _eid('ann-grid-head');
+        const tbody = _eid('ann-grid-body');
+        if (!thead || !tbody) return;
+        const headerTrs = thead.querySelectorAll('tr');
+        if (!headerTrs.length) return;
+        const colRow = headerTrs[headerTrs.length - 1]; // last tr = column labels
+        const allThs = colRow.querySelectorAll('th');
+        if (allThs.length < 2) return;
+
+        const col0w = allThs[0].getBoundingClientRect().width;
+
+        // Shift second column header
+        allThs[1].style.left = col0w + 'px';
+        // Shift second column in group header rows too
+        for (let i = 0; i < headerTrs.length - 1; i++) {
+            const gths = headerTrs[i].querySelectorAll('th');
+            if (gths[0]) { gths[0].style.cssText += 'position:sticky;left:0;z-index:3;'; }
+            if (gths[1]) { gths[1].style.cssText += `position:sticky;left:${col0w}px;z-index:3;`; }
+        }
+        // Shift second column body cells
+        tbody.querySelectorAll('tr').forEach(tr => {
+            const tds = tr.querySelectorAll('td');
+            if (tds[1]) tds[1].style.left = col0w + 'px';
         });
-        html += '</tr>';
-        _eid('ann-grid-head').innerHTML = html;
     }
 
-    function _renderBody(visCols, rows) {
+    // ── Grid rendering ────────────────────────────────────────────────────────
+    function _renderGrid() {
+        const visCols    = _visibleCols();
+        const visibleRows = _applyFilters(_rows);
+        _renderToolbar();
+        _renderHead(visCols);
+        _renderBody(visCols, visibleRows);
+        requestAnimationFrame(_fixStickyOffsets);
+        _updateSummary(_rows);
+    }
+
+    // ── Toolbar rendering ─────────────────────────────────────────────────────
+    function _renderToolbar() {
+        const tb = _eid('ann-toolbar');
+        if (!tb) return;
+        tb.innerHTML = `
+          <div class="d-flex flex-wrap align-items-center" style="gap:8px;">
+            <input type="text" class="form-control form-control-sm" id="ann-search"
+                   placeholder="Search filename / sample / treatment…"
+                   style="max-width:230px;" value="${_esc(_filterText)}">
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input" id="ann-incomplete-only"
+                     ${_filterIncomplete ? 'checked' : ''}>
+              <label class="custom-control-label" for="ann-incomplete-only"
+                     style="font-size:.82rem;">Incomplete only</label>
+            </div>
+            <select class="form-control form-control-sm" id="ann-prov-filter" style="max-width:170px;">
+              <option value="">All provenances</option>
+              <option value="missing"       ${_filterProv==='missing'       ?'selected':''}>Has missing</option>
+              <option value="from_header"   ${_filterProv==='from_header'   ?'selected':''}>Has from-header</option>
+              <option value="from_filename" ${_filterProv==='from_filename' ?'selected':''}>Has from-filename</option>
+              <option value="typed"         ${_filterProv==='typed'         ?'selected':''}>Has typed</option>
+            </select>
+            <select class="form-control form-control-sm" id="ann-sort" style="max-width:160px;">
+              <option value=""              ${_sortKey===''             ?'selected':''}>Sort: default</option>
+              <option value="filename"      ${_sortKey==='filename'     ?'selected':''}>Sort: filename</option>
+              <option value="least_complete"${_sortKey==='least_complete'?'selected':''}>Sort: least complete first</option>
+            </select>
+            <div class="ml-auto d-flex" style="gap:6px;">
+              <button class="btn btn-sm ${_groupVis.conditions!==false?'btn-outline-info':'btn-info'}"
+                      onclick="ANN.toggleGroup('conditions')"
+                      title="Show/hide Conditions columns">Conditions</button>
+              <button class="btn btn-sm ${_groupVis.replicate_qc!==false?'btn-outline-warning':'btn-warning'}"
+                      onclick="ANN.toggleGroup('replicate_qc')"
+                      title="Show/hide Replicate & QC columns">Rep. / QC</button>
+            </div>
+          </div>`;
+
+        _eid('ann-search').addEventListener('input', e => {
+            _filterText = e.target.value.trim();
+            _renderGrid();
+        });
+        _eid('ann-incomplete-only').addEventListener('change', e => {
+            _filterIncomplete = e.target.checked;
+            _renderGrid();
+        });
+        _eid('ann-prov-filter').addEventListener('change', e => {
+            _filterProv = e.target.value;
+            _renderGrid();
+        });
+        _eid('ann-sort').addEventListener('change', e => {
+            _sortKey = e.target.value;
+            _renderGrid();
+        });
+    }
+
+    function toggleGroup(name) {
+        _groupVis[name] = (_groupVis[name] === false) ? true : false;
+        if (_rows.length) _renderGrid();
+    }
+
+    // ── Grid head ─────────────────────────────────────────────────────────────
+    function _renderHead(visCols) {
+        const thead = _eid('ann-grid-head');
+        if (!thead) return;
+
+        // Group header row
+        let grpHtml = '';
+        let i = 0;
+        while (i < visCols.length) {
+            const g = visCols[i].group || '';
+            let span = 1;
+            while (i + span < visCols.length && (visCols[i + span].group || '') === g) span++;
+            if (g && COL_GROUPS[g]) {
+                const gc = COL_GROUPS[g];
+                grpHtml += `<th colspan="${span}" style="background:${gc.color};color:#fff;font-size:.75rem;text-align:center;padding:2px 4px;">${_esc(gc.label)}</th>`;
+            } else {
+                grpHtml += `<th colspan="${span}" style="background:#f8f9fa;"></th>`;
+            }
+            i += span;
+        }
+
+        // Column header row with fill-down ⤓ button
+        let colHtml = '';
+        visCols.forEach(c => {
+            let fillDown = '';
+            if (c.editable && c.key !== '_complete') {
+                fillDown = ` <button class="ann-fill-down btn btn-link p-0 ml-1" style="font-size:.75rem;line-height:1;vertical-align:middle;color:#888;" title="Fill down (copy first visible row value to all)" data-key="${_esc(c.key)}" onclick="ANN.fillDown('${_esc(c.key)}')">&#x2913;</button>`;
+            }
+            let style = 'white-space:nowrap;';
+            if (c.sticky) style += 'position:sticky;left:0;background:#fff;z-index:3;';
+            colHtml += `<th style="${style}" title="${_esc(c.key)}">${_esc(c.label)}${fillDown}</th>`;
+        });
+
+        thead.innerHTML = `<tr>${grpHtml}</tr><tr>${colHtml}</tr>`;
+    }
+
+    // ── Grid body ─────────────────────────────────────────────────────────────
+    function _renderBody(visCols, visibleRows) {
+        const tbody = _eid('ann-grid-body');
+        if (!tbody) return;
         let html = '';
-        rows.forEach((row, ri) => {
+        visibleRows.forEach((row, ri) => {
+            // Find original index in _rows for editing
+            const origIdx = _rows.indexOf(row);
             html += '<tr>';
-            visCols.forEach(col => { html += _cellHtml(col, row, ri); });
+            visCols.forEach(col => { html += _cellHtml(col, row, origIdx); });
             html += '</tr>';
         });
-        const tbody = _eid('ann-grid-body');
         tbody.innerHTML = html;
 
-        // Attach edit listeners to editable cells
+        // Attach edit listeners
         tbody.querySelectorAll('td.ann-cell-editable').forEach(td => {
             td.addEventListener('click', function () {
                 _startEdit(this, this.dataset.key, parseInt(this.dataset.ri, 10));
@@ -411,76 +1152,105 @@ const ANN = (function () {
         });
     }
 
-    /**
-     * Build the HTML for one table cell.
-     * For completeness_score: coloured progress bar + percentage.
-     * For editable cells:     value + provenance badge, click-to-edit.
-     * For computed/read-only: value + provenance badge, no click.
-     */
+    // ── Cell rendering ────────────────────────────────────────────────────────
     function _cellHtml(col, row, ri) {
+        // ── Completeness mini-bar ─────────────────────────────────────────────
+        if (col.key === '_complete') {
+            const cell  = row.completeness_score;
+            const score = (cell && typeof cell === 'object') ? (parseFloat(cell.value) || 0) : 0;
+            const color = score >= 80 ? '#00a884' : score >= 50 ? '#e0a12a' : '#e0564a';
+            return `<td style="white-space:nowrap;min-width:80px;position:sticky;left:0;background:#fff;z-index:2;">` +
+                `<div style="display:inline-block;width:42px;height:6px;background:#dee2e6;border-radius:3px;vertical-align:middle;margin-right:4px;">` +
+                `<div style="width:${Math.min(score,100)}%;height:100%;border-radius:3px;background:${color};"></div></div>` +
+                `<span style="font-size:.75rem;">${score.toFixed(0)}%</span></td>`;
+        }
+
         const cell = row[col.key];
         const val  = (cell && typeof cell === 'object') ? cell.value      : null;
         const prov = (cell && typeof cell === 'object') ? cell.provenance : null;
 
-        // ── Completeness bar ──────────────────────────────────────────────────
-        if (col.key === 'completeness_score') {
-            const score  = (val !== null && val !== undefined) ? parseFloat(val) : 0;
-            const barCls = score >= 75 ? '' : (score >= 40 ? ' mid' : ' low');
-            return `<td style="white-space:nowrap; min-width:90px;">` +
-                `<span class="ann-score-bar">` +
-                `<span class="ann-score-fill${barCls}" style="width:${Math.min(score,100)}%"></span>` +
-                `</span>${score.toFixed(1)}%</td>`;
-        }
+        // Detect missing: weighted field with no value
+        const fdef    = _schema.fields && _schema.fields[col.key];
+        const isMissing = (val === null || val === undefined || val === '') &&
+                          fdef && fdef.weight > 0 &&
+                          col.key !== '_complete' && col.key !== 'filename';
+
+        const effectiveProv = isMissing ? 'missing' : (prov || null);
+        const pc = effectiveProv ? PROV[effectiveProv] : null;
+
+        const borderStyle = pc ? `border-left:3px solid ${pc.color};` : 'border-left:3px solid transparent;';
+        const bgStyle     = isMissing ? 'background:#fff5f4;' : '';
+        const stickyStyle = col.sticky ? 'position:sticky;left:0;z-index:2;' : '';
 
         const disp  = _fmt(val);
-        const badge = prov ? _provBadge(prov) : '';
+        // Suppress the 'typed' (✎) glyph on read-only cells — it would imply editability.
+        const showGlyph = pc && (col.editable || prov !== 'typed');
+        const glyph = showGlyph ? `<span style="float:right;font-size:8px;opacity:.65;user-select:none;" title="${pc.title}">${pc.glyph}</span>` : '';
 
         if (col.editable) {
-            const nullCls = (disp === null || disp === '') ? 'ann-cell-null' : '';
-            const display = (disp !== null && disp !== '') ? _esc(disp) : '&mdash;';
-            let extraCls = '';
-            if (col.group === 'tech') extraCls = ' ann-tech';
-            return `<td class="ann-cell-editable ${nullCls}${extraCls}" ` +
-                `data-key="${_esc(col.key)}" data-ri="${ri}">${display}${badge}</td>`;
+            const nullCls = (disp === null || disp === '') ? ' ann-cell-null' : '';
+            const display = (disp !== null && disp !== '') ? _esc(disp) : '<span style="color:#e0564a">\u2014</span>';
+            return `<td class="ann-cell-editable${nullCls}" style="${borderStyle}${bgStyle}${stickyStyle}" data-key="${_esc(col.key)}" data-ri="${ri}">${glyph}${display}</td>`;
         }
 
-        // read-only
-        const nullCls = (disp === null || disp === '') ? 'ann-cell-null' : '';
+        // Read-only
+        const nullCls = (disp === null || disp === '') ? ' ann-cell-null' : '';
         const display = (disp !== null && disp !== '') ? _esc(disp) : '';
-        let extraCls = '';
-        if (col.group === 'jip')  extraCls = ' ann-jip';
-        if (col.group === 'tech') extraCls = ' ann-tech';
-        return `<td class="${nullCls}${extraCls}">${display}${badge}</td>`;
+        return `<td class="${nullCls}" style="${borderStyle}${bgStyle}${stickyStyle}">${glyph}${display}</td>`;
+    }
+
+    // ── Fill-down ⤓ ───────────────────────────────────────────────────────────
+    function fillDown(key) {
+        const visibleRows = _applyFilters(_rows);
+        if (!visibleRows.length) return;
+        const srcCell = visibleRows[0][key];
+        if (!srcCell || srcCell.value === null || srcCell.value === '') {
+            _toast('First row has no value to fill down.');
+            return;
+        }
+        let count = 0;
+        visibleRows.forEach(row => {
+            row[key] = { value: srcCell.value, provenance: 'typed' };
+            // If filling treatment_label, auto-apply template sub-fields
+            if (key === 'treatment_label') {
+                _applyTreatmentTemplate(row, srcCell.value);
+            }
+            row.completeness_score = { value: _clientScore(row), provenance: 'computed' };
+            count++;
+        });
+        _renderGrid();
+        _toast(`Filled ${count} cells in "${key}" with "${srcCell.value}".`);
     }
 
     // ── Inline cell editing ───────────────────────────────────────────────────
     function _startEdit(td, key, rowIdx) {
-        // Guard against double-click while already editing
         if (td.querySelector('input, select')) return;
 
-        const cell   = _rows[rowIdx][key] || {};
+        const cell   = _rows[rowIdx] && _rows[rowIdx][key] || {};
         const curVal = (cell.value !== undefined && cell.value !== null) ? cell.value : '';
         const fdef   = _schema.fields && _schema.fields[key];
-        const vocab  = (fdef && fdef.vocab && fdef.vocab.length) ? fdef.vocab : null;
+        let vocab  = (fdef && fdef.vocab && fdef.vocab.length) ? fdef.vocab : null;
+
+        // Special: treatment_label gets its vocab from defined templates
+        if (key === 'treatment_label') {
+            const labels = _getTreatmentLabels();
+            if (labels.length) vocab = labels;
+        }
 
         let inputHtml;
         if (vocab) {
             const opts = [`<option value=""></option>`].concat(
-                vocab.map(v =>
-                    `<option value="${_esc(v)}"${String(curVal) === String(v) ? ' selected' : ''}>${_esc(v)}</option>`
-                )
+                vocab.map(v => `<option value="${_esc(v)}"${String(curVal) === String(v) ? ' selected' : ''}>${_esc(v)}</option>`)
             ).join('');
-            inputHtml = `<select class="form-control form-control-sm p-0"
-                style="min-width:110px; font-size:.8rem;">${opts}</select>`;
+            inputHtml = `<select class="form-control form-control-sm p-0" style="min-width:110px;font-size:.8rem;">${opts}</select>`;
         } else {
-            inputHtml = `<input type="text" class="form-control form-control-sm p-0"
-                style="min-width:80px; font-size:.8rem;" value="${_esc(curVal)}">`;
+            inputHtml = `<input type="text" class="form-control form-control-sm p-0" style="min-width:80px;font-size:.8rem;" value="${_esc(curVal)}">`;
         }
 
         td.innerHTML = inputHtml;
         const input = td.querySelector('input, select');
         input.focus();
-        if (input.select) input.select(); // highlight text in text inputs
+        if (input.select) input.select();
 
         let _committed = false;
 
@@ -488,206 +1258,304 @@ const ANN = (function () {
             if (_committed) return;
             _committed = true;
             const newVal = input.value.trim();
-            if (!_rows[rowIdx][key] || typeof _rows[rowIdx][key] !== 'object') {
+            if (!_rows[rowIdx][key] || typeof _rows[rowIdx][key] !== 'object')
                 _rows[rowIdx][key] = {};
-            }
             _rows[rowIdx][key].value      = newVal;
             _rows[rowIdx][key].provenance = 'typed';
-            // Update completeness score client-side
-            const newScore = _clientScore(_rows[rowIdx]);
-            if (!_rows[rowIdx].completeness_score ||
-                typeof _rows[rowIdx].completeness_score !== 'object') {
-                _rows[rowIdx].completeness_score = {};
+            // Auto-apply treatment template when treatment_label changes
+            if (key === 'treatment_label' && newVal) {
+                _applyTreatmentTemplate(_rows[rowIdx], newVal);
             }
-            _rows[rowIdx].completeness_score.value = newScore;
-            _renderGrid(_rows);
+            _rows[rowIdx].completeness_score = { value: _clientScore(_rows[rowIdx]), provenance: 'computed' };
+            // Propagate sample_type change to column visibility
+            if (key === 'sample_type') _sampleType = newVal;
+            _renderGrid();
         }
 
-        input.addEventListener('blur',    _commit);
+        function _cancelEdit() {
+            _committed = true;
+            _renderGrid();
+        }
+
+        // Find visual position of this cell for keyboard navigation
+        const visCols     = _visibleCols();
+        const visibleRows = _applyFilters(_rows);
+        const colIdx = visCols.findIndex(c => c.key === key);
+        const rowPos = visibleRows.findIndex(r => r === _rows[rowIdx]);
+
+        input.addEventListener('blur', _commit);
         input.addEventListener('keydown', e => {
-            if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
-            if (e.key === 'Escape') { _committed = true; _renderGrid(_rows); }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                _committed = true;
+                const newVal = input.value.trim();
+                if (!_rows[rowIdx][key]) _rows[rowIdx][key] = {};
+                _rows[rowIdx][key].value      = newVal;
+                _rows[rowIdx][key].provenance = 'typed';
+                if (key === 'treatment_label' && newVal) _applyTreatmentTemplate(_rows[rowIdx], newVal);
+                _rows[rowIdx].completeness_score = { value: _clientScore(_rows[rowIdx]), provenance: 'computed' };
+                if (key === 'sample_type') _sampleType = newVal;
+                _renderGrid();
+                // Move to next row, same column
+                setTimeout(() => _activateCellAt(colIdx, rowPos + 1), 0);
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                _committed = true;
+                const newVal = input.value.trim();
+                if (!_rows[rowIdx][key]) _rows[rowIdx][key] = {};
+                _rows[rowIdx][key].value      = newVal;
+                _rows[rowIdx][key].provenance = 'typed';
+                if (key === 'treatment_label' && newVal) _applyTreatmentTemplate(_rows[rowIdx], newVal);
+                _rows[rowIdx].completeness_score = { value: _clientScore(_rows[rowIdx]), provenance: 'computed' };
+                if (key === 'sample_type') _sampleType = newVal;
+                _renderGrid();
+                // Move to next column, same row
+                setTimeout(() => _activateCellAt(colIdx + 1, rowPos), 0);
+            } else if (e.key === 'Escape') {
+                _cancelEdit();
+            }
         });
     }
 
-    /** Recompute completeness score client-side from current row values. */
+    /** Click the cell at (colIdx, rowIdx) in the rendered grid. */
+    function _activateCellAt(colIdx, rowIdx) {
+        const tbody = _eid('ann-grid-body');
+        if (!tbody) return;
+        const trs = tbody.querySelectorAll('tr');
+        if (rowIdx < 0 || rowIdx >= trs.length) return;
+        const editableCols = _visibleCols().filter(c => c.editable);
+        if (colIdx < 0 || colIdx >= editableCols.length) return;
+        const key = editableCols[colIdx].key;
+        const td = trs[rowIdx].querySelector(`td[data-key="${CSS.escape(key)}"]`);
+        if (td) td.click();
+    }
+
+    /** Recompute completeness score client-side (respects sample_type).
+     *  Simple field count: each field = 1, no weights.  Investigation-tier
+     *  fields are excluded (not in the per-curve grid). */
     function _clientScore(row) {
         if (!_schema.fields) return 0;
+        const st    = ((row.sample_type || {}).value || '') || _sampleType;
+        const isLiq = _isLiquid(st);
+        const isPlnt= _isPlant(st);
+        const isLf  = _isLeaf(st);
         let total = 0, earned = 0;
         Object.entries(_schema.fields).forEach(([k, fd]) => {
-            if (!fd.weight || fd.weight <= 0) return;
-            total += fd.weight;
+            if (fd.tier === 'investigation') return;  // not in per-curve grid
+            if (k === 'completeness_score')  return;
+            const sc = fd.sample_cond || '';
+            if (sc === 'liquid_culture'  && !isLiq)              return;
+            if (sc === 'plant'           && !isPlnt)             return;
+            if (sc === 'plant_or_leaf'   && !(isPlnt || isLf))   return;
+            total += 1;                               // simple count — no weights
             const cell = row[k];
             const v    = (cell && typeof cell === 'object') ? cell.value : null;
-            if (v !== null && v !== undefined && v !== '') earned += fd.weight;
+            if (v !== null && v !== undefined && v !== '') earned += 1;
         });
         return total > 0 ? parseFloat((100 * earned / total).toFixed(1)) : 0;
     }
 
     // ── Summary badges ────────────────────────────────────────────────────────
     function _updateSummary(rows) {
+        const el = _eid('ann-summary-badges');
+        if (!el) return;
         const n = rows.length;
-        let warnCount = 0;
-        let scoreSum  = 0;
+        let scoreSum = 0;
         rows.forEach(r => {
-            warnCount += (r._warnings && Array.isArray(r._warnings)) ? r._warnings.length : 0;
             const sc = r.completeness_score;
             scoreSum += (sc && typeof sc === 'object' && sc.value !== undefined)
                 ? parseFloat(sc.value) || 0 : 0;
         });
-        const avgScore = n > 0 ? (scoreSum / n).toFixed(1) : 0;
-
-        let html = `<span class="badge badge-primary">${n} file${n !== 1 ? 's' : ''}</span> `;
-        html    += `<span class="badge badge-secondary ml-1">avg ${avgScore}% complete</span>`;
-        if (warnCount > 0) {
-            html += `<span class="badge badge-warning ml-1">`
-                  + `${warnCount} warning${warnCount !== 1 ? 's' : ''}</span>`;
-        }
-        _eid('ann-summary-badges').innerHTML = html;
-    }
-
-    // ── Column toggles ────────────────────────────────────────────────────────
-    function toggleJip(show) {
-        _showJip = !!show;
-        if (_rows.length) _renderGrid(_rows);
-    }
-
-    function toggleTech(show) {
-        _showTech = !!show;
-        if (_rows.length) _renderGrid(_rows);
+        const avgScore = n > 0 ? Math.round(scoreSum / n) : 0;
+        const color    = avgScore >= 80 ? '#00a884' : avgScore >= 50 ? '#e0a12a' : '#e0564a';
+        el.innerHTML =
+            `<span class="badge badge-primary">${n} curve${n !== 1 ? 's' : ''}</span> ` +
+            `<span class="badge ml-1" style="background:${color};color:#fff;">${avgScore}% avg complete</span>`;
     }
 
     // ── Bundle download ───────────────────────────────────────────────────────
     function downloadBundle() {
-        if (!_rows.length) {
-            _showError('No data to export. Ingest files first.');
+        if (!_rows.length) { _showError('No data to export. Ingest files first.'); return; }
+        if (!_validateProjectTitle()) {
+            _showError('Project title is required before export.');
+            // Switch to Investigation tab
+            const tabLink = _eid('tab-inv-lnk');
+            if (tabLink) tabLink.click();
             return;
         }
         _clearError();
-
-        const payload = {
-            bundle_id:     _bundleId,
-            rows:          _rows,
-            tier_defaults: _collectTiers(),
-        };
+        const payload = { bundle_id: _bundleId, rows: _rows, tier_defaults: _collectTiers() };
 
         fetch('/api/fluorescence_annotation/export', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(payload),
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
         })
-            .then(r => {
-                if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error'));
-                return r.json();
-            })
+            .then(r => { if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error')); return r.json(); })
             .then(data => {
-                if (data.status !== 'ok') {
-                    _showError(data.message || 'Export failed.');
-                    return;
-                }
-                // Decode base64 → Blob → download
+                if (data.status !== 'ok' && data.status !== 'success') { _showError(data.message || 'Export failed.'); return; }
                 const bytes = atob(data.bundle_b64);
                 const arr   = new Uint8Array(bytes.length);
                 for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-                const blob  = new Blob([arr], { type: 'application/zip' });
-                const url   = URL.createObjectURL(blob);
-                const a     = document.createElement('a');
-                a.href      = url;
-                a.download  = data.filename || 'fluorescence_bundle.zip';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                const blob = new Blob([arr], { type: 'application/zip' });
+                const url  = URL.createObjectURL(blob);
+                const a    = document.createElement('a');
+                a.href = url; a.download = data.filename || 'fluorescence_bundle.zip';
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a); URL.revokeObjectURL(url);
+                _toast('Bundle downloaded — includes per-curve JSON sidecars + summary.parquet.');
             })
             .catch(err => _showError('Export failed: ' + err));
     }
 
     // ── Bundle load ───────────────────────────────────────────────────────────
     function loadBundle(file) {
-        _clearError();
-        _clearWarnings();
-
+        _clearError(); _clearWarnings();
         const fd = new FormData();
         fd.append('bundle_file', file);
 
         fetch('/api/fluorescence_annotation/load_bundle', { method: 'POST', body: fd })
-            .then(r => {
-                if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error'));
-                return r.json();
-            })
+            .then(r => { if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error')); return r.json(); })
             .then(data => {
-                if (data.status !== 'ok') {
-                    _showError(data.message || 'Failed to load bundle.');
-                    return;
-                }
+                if (data.status !== 'ok' && data.status !== 'success') { _showError(data.message || 'Failed to load bundle.'); return; }
                 if (data._version_warning) _showWarnings([data._version_warning]);
                 _rows     = data.rows || [];
-                _bundleId = null; // transient data not restored from bundle
+                _bundleId = null;
                 _populateTierForms(data.tier_defaults);
-                _renderGrid(_rows);
-                _eid('ann-grid-card').classList.remove('d-none');
-                _eid('ann-grid-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                _sampleType = _val('study-sample_type');
+                _detectInstrumentFromRows();
+                _renderGrid();
+                const card = _eid('ann-grid-card');
+                if (card) { card.classList.remove('d-none'); card.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+                _toast('Bundle loaded — ' + _rows.length + ' curve(s).');
             })
             .catch(err => _showError('Load failed: ' + err));
     }
 
-    // ── Ingest from pre-computed OJIP results ─────────────────────────────────
-    // Called by js_OJIP.js:populateAnnotationFromOJIP() — no file upload needed.
-    // payload: { ojip_results: {...}, tier_json: {...} }
-    function ingestFromOJIP(payload) {
+    // ── XLSX template download ──────────────────────────────────────────────
+    function downloadXlsxTemplate() {
         _clearError();
-        _clearWarnings();
+        const payload = { tier_defaults: _collectTiers() };
 
+        fetch('/api/fluorescence_annotation/xlsx_template', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        })
+            .then(r => { if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error')); return r.json(); })
+            .then(data => {
+                if (data.status !== 'ok') { _showError(data.message || 'Template generation failed.'); return; }
+                const bytes = atob(data.xlsx_b64);
+                const arr   = new Uint8Array(bytes.length);
+                for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+                const blob = new Blob([arr], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url  = URL.createObjectURL(blob);
+                const a    = document.createElement('a');
+                a.href = url; a.download = data.filename || 'annotation_template.xlsx';
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a); URL.revokeObjectURL(url);
+                _toast('XLSX template downloaded — fill in and upload back.');
+            })
+            .catch(err => _showError('Template download failed: ' + err));
+    }
+
+    // ── XLSX upload ──────────────────────────────────────────────────────────
+    function uploadXlsx(file) {
+        _clearError(); _clearWarnings();
+        const fd = new FormData();
+        fd.append('xlsx_file', file);
+
+        fetch('/api/fluorescence_annotation/xlsx_upload', { method: 'POST', body: fd })
+            .then(r => { if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error')); return r.json(); })
+            .then(data => {
+                if (data.status !== 'ok') { _showError(data.message || 'XLSX parse failed.'); return; }
+                // Merge parsed data into tier forms
+                const td = {
+                    investigation: data.investigation || {},
+                    study: data.study || {},
+                    fluor: data.fluor || {},
+                    treatment_templates: data.treatment_templates || [],
+                };
+                _populateTierForms(td);
+
+                // Apply per-curve overrides if grid has rows
+                const overrides = data.per_curve_overrides || [];
+                if (overrides.length && _rows.length) {
+                    overrides.forEach((ovr, i) => {
+                        if (i < _rows.length) {
+                            Object.entries(ovr).forEach(([k, v]) => {
+                                _rows[i][k] = { value: v, provenance: 'typed' };
+                            });
+                            _rows[i].completeness_score = { value: _clientScore(_rows[i]), provenance: 'computed' };
+                        }
+                    });
+                    _renderGrid();
+                }
+
+                _toast(`XLSX imported: ${Object.keys(data.investigation||{}).length + Object.keys(data.study||{}).length + Object.keys(data.fluor||{}).length} tier fields, ${overrides.length} per-curve rows, ${(data.treatment_templates||[]).length} treatment templates.`);
+            })
+            .catch(err => _showError('XLSX upload failed: ' + err));
+    }
+
+    // ── Ingest from pre-computed OJIP results ─────────────────────────────────
+    function ingestFromOJIP(payload) {
+        _clearError(); _clearWarnings();
         const btn = _eid('ann-ojip-populate-btn');
-        if (btn) {
-            btn.disabled  = true;
-            btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i>Processing\u2026';
-        }
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i>Processing\u2026'; }
 
         fetch('/api/fluorescence_annotation/ingest_from_ojip', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(payload),
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
         })
-            .then(r => {
-                if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error'));
-                return r.json();
-            })
+            .then(r => { if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error')); return r.json(); })
             .then(data => {
-                if (btn) {
-                    btn.disabled  = false;
-                    btn.innerHTML = '<i class="fa fa-tags mr-1"></i>Populate annotation grid';
-                }
-                if (data.status !== 'ok') { _showError(data.message || 'Ingest failed.'); return; }
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-tags mr-1"></i>Populate annotation grid'; }
+                if (data.status !== 'ok' && data.status !== 'success') { _showError(data.message || 'Ingest failed.'); return; }
                 if (data.warnings && data.warnings.length) _showWarnings(data.warnings);
                 populateFromPrecomputed(data.rows, data.bundle_id);
             })
             .catch(err => {
-                if (btn) {
-                    btn.disabled  = false;
-                    btn.innerHTML = '<i class="fa fa-tags mr-1"></i>Populate annotation grid';
-                }
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-tags mr-1"></i>Populate annotation grid'; }
                 _showError('Request failed: ' + err);
             });
     }
 
-    // ── Populate grid from externally-supplied rows ───────────────────────────
-    // Used by both ingestFromOJIP and loadBundle when called from the OJIP tab.
     function populateFromPrecomputed(rows, bundleId) {
         _rows     = rows || [];
         _bundleId = bundleId || null;
-        _renderGrid(_rows);
-        const card = _eid('ann-grid-card');
-        if (card) {
-            card.classList.remove('d-none');
-            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (!_sampleType && _rows.length) {
+            _sampleType = ((_rows[0].sample_type || {}).value || '') || _val('study-sample_type');
         }
+        _detectInstrumentFromRows();
+        _renderGrid();
+        const card = _eid('ann-grid-card');
+        if (card) { card.classList.remove('d-none'); card.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    }
+
+    // ── Pre-acclimation helpers ────────────────────────────────────────────────
+    /** Copy growth temperature and CO₂ from the Study tab into the
+     *  pre-acclimation fields on the Fluorometer tab. */
+    function copyPreacclFromStudy() {
+        const temp = _val('study-growth_temperature');
+        const co2  = _val('study-growth_co2');
+        if (temp !== '') { const el = _eid('fluor-preaccl_temperature'); if (el) el.value = temp; }
+        if (co2  !== '') { const el = _eid('fluor-preaccl_co2');         if (el) el.value = co2;  }
     }
 
     // ── Init ──────────────────────────────────────────────────────────────────
     function init() {
         _fetchSchema();
         _setupDragDrop();
+        _setupOrganismDropdown();
+        updateFluorCount();
+        _updateStudyFieldVisibility();
+        // Pick up sample_type if already set in form on page load
+        const stEl = _eid('study-sample_type');
+        if (stEl && stEl.value) {
+            _sampleType = stEl.value;
+            _updateStudyFieldVisibility();
+        }
+        // Instrument display is read-only; will be set after file upload
+        // (no need to check on init — auto-detected from files)
+        _renderTreatmentTable(); // show first empty row in each section
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -696,13 +1564,28 @@ const ANN = (function () {
         ingest,
         ingestFromOJIP,
         populateFromPrecomputed,
-        collectTiers:  _collectTiers,   // used by js_OJIP.js
+        collectTiers:      _collectTiers,   // used by js_OJIP.js
         addToken,
         removeToken,
-        toggleJip,
-        toggleTech,
+        fillDown,
+        toggleGroup,
+        updateFluorCount,
+        onSampleTypeChange,
+        onInstrumentChange,
+        onGrowthLightTypeChange,
+        copyPreacclFromStudy,
+        searchOrganism,
+        addTreatmentTemplate,
+        addChemTreatmentRow,
+        addStressTreatmentRow,
+        addOtherTreatmentRow,
+        removeTreatmentRow,
+        removeTreatmentTemplate,
+        _onStressTypeChange,
         downloadBundle,
         loadBundle,
+        downloadXlsxTemplate,
+        uploadXlsx,
     };
 })();
 

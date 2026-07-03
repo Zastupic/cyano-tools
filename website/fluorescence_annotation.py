@@ -25,6 +25,7 @@ Run  `python website/fluorescence_annotation.py`  for a smoke test.
 from __future__ import annotations
 
 import base64
+import hashlib
 import io
 import json
 import os
@@ -39,7 +40,7 @@ import pandas as pd
 from flask import Blueprint, jsonify, render_template, request
 from werkzeug.utils import secure_filename
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "2.0.0"
 
 # ── Provenance flag constants ─────────────────────────────────────────────────
 TYPED         = "typed"
@@ -47,160 +48,435 @@ FROM_HEADER   = "from_header"
 FROM_FILENAME = "from_filename"
 INHERITED     = "inherited"
 COMPUTED      = "computed"
+MISSING       = "missing"
 
 
 # ── Field registry ────────────────────────────────────────────────────────────
 
 @dataclass
 class FieldDef:
-    tier:      str              # investigation | study | assay | per_curve
-    required:  str              # mandatory | recommended | optional | conditional
-    dtype:     str              # str | float | int
-    label:     str = ""
-    vocab:     list = dc_field(default_factory=list)
-    condition: str = ""         # e.g. "measurement_type == 'PAM'"
-    miappe:    str = ""         # MIAPPE 1.1 / MICF mapping
-    weight:    float = 0.0      # completeness scoring (0 = not scored)
+    tier:        str              # investigation | study | fluorometer | per_curve
+    required:    str              # mandatory | recommended | optional | conditional
+    dtype:       str              # str | float | int
+    label:       str = ""
+    vocab:       list = dc_field(default_factory=list)
+    condition:   str = ""         # legacy condition expression (unused)
+    miappe:      str = ""         # MIAPPE 1.1 / MICF mapping
+    weight:      float = 0.0      # completeness scoring (0 = not scored)
+    group:       str = ""         # grid column group: identity|biological|treatment|conditions|replicate_qc|acquisition
+    sample_cond: str = ""         # conditional on sample_type: "" (all) | "liquid_culture" | "plant" | "plant_or_leaf"
 
 
 FIELDS: dict[str, FieldDef] = {
 
     # ── Investigation (once per project) ─────────────────────────────────────
-    "project_title":       FieldDef("investigation", "mandatory",    "str",
-                                    "Project title", weight=3.0,
-                                    miappe="Investigation title"),
-    "contact_name":        FieldDef("investigation", "recommended",  "str",
-                                    "Contact name", weight=1.0,
-                                    miappe="Investigation person name"),
-    "contact_email":       FieldDef("investigation", "recommended",  "str",
-                                    "Contact e-mail", weight=1.0,
-                                    miappe="Investigation person email"),
-    "institution":         FieldDef("investigation", "recommended",  "str",
-                                    "Institution", weight=1.0,
-                                    miappe="Investigation person affiliation"),
-    "license":             FieldDef("investigation", "optional",     "str",
-                                    "Licence",
-                                    vocab=["CC-BY-4.0", "CC-BY-NC-4.0", "CC0-1.0", "Proprietary"],
-                                    miappe="License"),
-    "project_description": FieldDef("investigation", "optional",     "str",
-                                    "Description", miappe="Investigation description"),
+    "project_title":          FieldDef("investigation", "mandatory", "str",
+                                       "Project title", weight=3.0,
+                                       miappe="Investigation title"),
+    "contact_name":           FieldDef("investigation", "recommended", "str",
+                                       "Contact name", weight=1.0,
+                                       miappe="Investigation person name"),
+    "contact_email":          FieldDef("investigation", "recommended", "str",
+                                       "Contact e-mail", weight=1.0,
+                                       miappe="Investigation person email"),
+    "institution":            FieldDef("investigation", "recommended", "str",
+                                       "Institution", weight=1.0,
+                                       miappe="Investigation person affiliation"),
+    "contributor_namespace":  FieldDef("investigation", "recommended", "str",
+                                       "Contributor namespace (ORCID / ROR)",
+                                       miappe="Investigation person id"),
+    "license":                FieldDef("investigation", "optional", "str",
+                                       "Licence",
+                                       vocab=["CC-BY-4.0", "CC-BY-NC-4.0",
+                                              "CC0-1.0", "Proprietary"],
+                                       miappe="License"),
+    "project_description":    FieldDef("investigation", "optional", "str",
+                                       "Description",
+                                       miappe="Investigation description"),
 
     # ── Study (once per experiment) ───────────────────────────────────────────
-    "organism":            FieldDef("study", "mandatory", "str", "Organism",
-                                    vocab=["Synechocystis sp. PCC 6803",
-                                           "Synechococcus sp. PCC 7942",
-                                           "Anabaena sp. PCC 7120",
-                                           "Thermosynechococcus elongatus BP-1",
-                                           "Chlamydomonas reinhardtii",
-                                           "Chlorella vulgaris",
-                                           "Arabidopsis thaliana",
-                                           "Spinacia oleracea", "Other"],
-                                    weight=3.0, miappe="Organism"),
-    "taxonomic_group":     FieldDef("study", "mandatory", "str", "Taxonomic group",
-                                    vocab=["Cyanobacteria", "Green alga", "Diatom",
-                                           "Red alga", "Plant", "Other"],
-                                    weight=3.0, miappe="Organism"),
-    "strain":              FieldDef("study", "recommended", "str", "Strain",
-                                    weight=1.0, miappe="Biological material source ID"),
-    "culture_collection_id": FieldDef("study", "optional", "str", "Culture collection ID",
-                                    miappe="Biological material source DOI"),
-    "growth_medium":       FieldDef("study", "recommended", "str", "Growth medium",
-                                    weight=1.0, miappe="Growth facility"),
-    "growth_conditions":   FieldDef("study", "optional",     "str", "Growth conditions",
-                                    miappe="Growth condition"),
-    "dark_adaptation_min": FieldDef("study", "recommended", "float",
-                                    "Dark adaptation (min)", weight=1.0,
-                                    miappe="MICF:darkAdaptationDuration"),
-    "instrument":          FieldDef("study", "mandatory", "str", "Instrument",
-                                    vocab=["MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)",
-                                           "Aquapen", "FL6000"],
-                                    weight=3.0, miappe="MICF:instrumentModel"),
-    "measuring_light_wavelength_nm":  FieldDef("study", "recommended", "float",
-                                    "Measuring light wavelength (nm)", weight=1.0,
-                                    miappe="MICF:measuringLightWavelength"),
-    "measuring_light_intensity_umol": FieldDef("study", "recommended", "float",
-                                    "Measuring light intensity (µmol m⁻² s⁻¹)", weight=1.0,
-                                    miappe="MICF:measuringLightIntensity"),
-    "actinic_light_wavelength_nm":    FieldDef("study", "optional", "float",
-                                    "Actinic light wavelength (nm)",
-                                    miappe="MICF:actinicLightWavelength"),
-    "actinic_light_intensity_umol":   FieldDef("study", "optional", "float",
-                                    "Actinic light intensity (µmol m⁻² s⁻¹)",
-                                    miappe="MICF:actinicLightIntensity"),
-    "saturating_pulse_intensity_umol": FieldDef("study", "conditional", "float",
-                                    "Sat. pulse intensity (µmol m⁻² s⁻¹)",
-                                    condition="measurement_type == 'PAM'", weight=1.0,
-                                    miappe="MICF:saturatingPulseIntensity"),
-    "saturating_pulse_duration_ms":   FieldDef("study", "conditional", "float",
-                                    "Sat. pulse duration (ms)",
-                                    condition="measurement_type == 'PAM'", weight=1.0,
-                                    miappe="MICF:saturatingPulseDuration"),
+    "organism":               FieldDef("study", "mandatory", "str", "Organism",
+                                       vocab=["Synechocystis sp. PCC 6803",
+                                              "Synechococcus sp. PCC 7942",
+                                              "Anabaena sp. PCC 7120",
+                                              "Thermosynechococcus elongatus BP-1",
+                                              "Chlamydomonas reinhardtii",
+                                              "Chlorella vulgaris",
+                                              "Arabidopsis thaliana",
+                                              "Spinacia oleracea", "Other"],
+                                       weight=2.0, miappe="Organism",
+                                       group="biological"),
+    "genotype":               FieldDef("study", "recommended", "str", "Genotype",
+                                       weight=2.0,
+                                       miappe="Biological material source ID",
+                                       group="biological"),
+    "sub_strain_cultivar":    FieldDef("study", "optional", "str",
+                                       "Sub-strain / Cultivar",
+                                       miappe="Infraspecific name",
+                                       group="biological"),
+    "medium":                 FieldDef("study", "recommended", "str", "Medium",
+                                       vocab=["BG-11", "BG-11\u2080", "M2", "TAP",
+                                              "f/2", "1/2 MS", "Hoagland", "Other"],
+                                       weight=1.0, miappe="Growth facility",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "medium_modification":    FieldDef("study", "optional", "str",
+                                       "Medium modification",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "trophic_mode":           FieldDef("study", "recommended", "str",
+                                       "Trophic mode",
+                                       vocab=["autotrophy", "mixotrophy",
+                                              "heterotrophy"],
+                                       weight=1.0, miappe="Growth condition",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "cultivator_type":        FieldDef("study", "optional", "str",
+                                       "Cultivator type",
+                                       vocab=["Erlenmeyer flask (orbital shaking)",
+                                              "Erlenmeyer flask (static)",
+                                              "flat-bottom flask",
+                                              "flat-panel photobioreactor",
+                                              "tubular photobioreactor",
+                                              "bubble-column photobioreactor",
+                                              "airlift bioreactor",
+                                              "stirred-tank bioreactor",
+                                              "multiwell plate (6-well)",
+                                              "multiwell plate (12-well)",
+                                              "multiwell plate (24-well)",
+                                              "multiwell plate (96-well)",
+                                              "Petri dish",
+                                              "test tube / culture tube",
+                                              "culture bag",
+                                              "raceway pond",
+                                              "thin-layer cascade",
+                                              "trough / tray",
+                                              "carboy",
+                                              "custom / other"],
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "growth_light_intensity": FieldDef("study", "recommended", "float",
+                                       "Growth light intensity (\u03bcmol m\u207b\u00b2 s\u207b\u00b9)",
+                                       weight=1.0, miappe="Growth condition",
+                                       group="conditions"),
+    "growth_temperature":     FieldDef("study", "recommended", "float",
+                                       "Growth temp (\u00b0C)", weight=1.0,
+                                       miappe="Growth condition",
+                                       group="conditions"),
+    "growth_co2":             FieldDef("study", "optional", "float",
+                                       "Growth CO\u2082 (%)",
+                                       miappe="Growth condition",
+                                       group="conditions"),
+    "growth_light_type":      FieldDef("study", "optional", "str",
+                                       "Growth light type",
+                                       vocab=["monochromatic LED",
+                                              "multi-color / broadband LED",
+                                              "white LED",
+                                              "fluorescent lamp",
+                                              "metal halide",
+                                              "sunlight / daylight",
+                                              "other"],
+                                       group="conditions"),
+    "growth_light_peak_wl":   FieldDef("study", "optional", "int",
+                                       "Growth light peak wavelength (nm)",
+                                       group="conditions"),
+    "growth_light_peak_width": FieldDef("study", "optional", "int",
+                                        "Growth light peak width / FWHM (nm)",
+                                        group="conditions"),
+    "growth_light_color_cat": FieldDef("study", "optional", "str",
+                                       "Growth light color category",
+                                       vocab=["warm white (<3300 K)",
+                                              "neutral white (3300\u20135000 K)",
+                                              "cool white (>5000 K)"],
+                                       group="conditions"),
+    "growth_light_note":      FieldDef("study", "optional", "str",
+                                       "Growth light source note",
+                                       group="conditions"),
+    "acclimation_min":        FieldDef("fluorometer", "recommended", "float",
+                                       "Dark pre-acclimation time (min)", weight=1.0,
+                                       miappe="MICF:darkAdaptationDuration",
+                                       group="acquisition"),
+    "actinic_preaccl_intensity":     FieldDef("fluorometer", "optional", "float",
+                                       "Actinic light intensity prior to OJIP",
+                                       group="acquisition"),
+    "actinic_preaccl_wavelength_nm": FieldDef("fluorometer", "optional", "int",
+                                       "Actinic light wavelength prior to OJIP (nm)",
+                                       group="acquisition"),
+    "preaccl_temperature":           FieldDef("fluorometer", "optional", "float",
+                                       "Pre-acclimation temperature (\u00b0C)",
+                                       group="acquisition"),
+    "preaccl_co2":                   FieldDef("fluorometer", "optional", "float",
+                                       "Pre-acclimation CO\u2082 (%)",
+                                       group="acquisition"),
+    "sample_type":            FieldDef("study", "mandatory", "str", "Sample type",
+                                       vocab=["liquid culture", "vascular plant",
+                                              "detached leaf / disc"],
+                                       weight=2.0,
+                                       miappe="Observation unit type",
+                                       group="identity"),
 
-    # ── Assay (per measurement type) ─────────────────────────────────────────
-    "measurement_type":    FieldDef("assay", "mandatory", "str", "Measurement type",
-                                    vocab=["OJIP", "PAM_induction", "RLC", "P700", "Sigma"],
-                                    weight=3.0, miappe="Observation unit type"),
-    "assay_description":   FieldDef("assay", "optional", "str", "Assay description",
-                                    miappe="Study design description"),
+    # ── Fluorometer settings (acquisition protocol, shared across a run) ──────
+    "instrument":             FieldDef("fluorometer", "mandatory", "str", "Instrument",
+                                       vocab=["MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)",
+                                              "Aquapen", "FL6000"],
+                                       weight=2.0, miappe="MICF:instrumentModel",
+                                       group="acquisition"),
+    "sat_pulse_intensity":    FieldDef("fluorometer", "recommended", "float",
+                                       "Sat. pulse intensity (\u03bcmol m\u207b\u00b2 s\u207b\u00b9)",
+                                       weight=1.0,
+                                       miappe="MICF:saturatingPulseIntensity",
+                                       group="acquisition"),
+    "sat_pulse_wavelength_nm": FieldDef("fluorometer", "optional", "float",
+                                        "Sat. pulse wavelength (nm)",
+                                        miappe="MICF:saturatingPulseWavelength",
+                                        group="acquisition"),
+    "sat_pulse_duration_s":   FieldDef("fluorometer", "optional", "float",
+                                       "Sat. pulse duration (s)",
+                                       miappe="MICF:saturatingPulseDuration",
+                                       group="acquisition"),
+    "meas_light_intensity":   FieldDef("fluorometer", "optional", "float",
+                                       "Measuring light (\u03bcmol m\u207b\u00b2 s\u207b\u00b9)",
+                                       miappe="MICF:measuringLightIntensity",
+                                       group="acquisition"),
+    "meas_light_wavelength_nm": FieldDef("fluorometer", "optional", "float",
+                                         "Measuring light peak \u03bb (nm)",
+                                         miappe="MICF:measuringLightWavelength",
+                                         group="acquisition"),
+    "fo_timing":              FieldDef("fluorometer", "recommended", "str",
+                                       "F0 timing convention",
+                                       vocab=["20 \u00b5s", "50 \u00b5s"],
+                                       weight=2.0,
+                                       miappe="MICF:F0TimingConvention",
+                                       group="acquisition"),
 
     # ── Per-curve (repeats per file) ──────────────────────────────────────────
-    "curve_id":            FieldDef("per_curve", "mandatory", "str", "Curve ID",
-                                    weight=3.0, miappe="MICF:curveID"),
-    "filename":            FieldDef("per_curve", "mandatory", "str", "Filename",
-                                    weight=3.0),
-    "sample_id":           FieldDef("per_curve", "recommended", "str", "Sample ID",
-                                    weight=1.0, miappe="Sample name"),
-    "replicate_id":        FieldDef("per_curve", "recommended", "int", "Replicate #",
-                                    weight=1.0, miappe="Biological replicate"),
-    "treatment":           FieldDef("per_curve", "recommended", "str", "Treatment",
-                                    vocab=["control", "high_light", "low_light",
-                                           "heat", "cold", "drought", "salt", "dark",
-                                           "CO2_limitation", "nitrogen_starvation",
-                                           "phosphorus_starvation", "other"],
-                                    weight=1.0, miappe="Factor value"),
-    "treatment_dose":      FieldDef("per_curve", "optional", "float", "Treatment dose",
-                                    miappe="Factor value"),
-    "treatment_dose_unit": FieldDef("per_curve", "optional", "str",  "Dose unit",
-                                    miappe="Factor unit"),
-    "OD_at_measurement":   FieldDef("per_curve", "optional", "float",
-                                    "OD at measurement", miappe="Sample description"),
-    "timepoint_h":         FieldDef("per_curve", "recommended", "float", "Timepoint (h)",
-                                    weight=1.0, miappe="Observation unit factor value"),
-    "timestamp":           FieldDef("per_curve", "optional", "str",  "Timestamp",
-                                    miappe="MICF:acquisitionTimestamp"),
-    "gain":                FieldDef("per_curve", "optional", "float", "Gain",
-                                    miappe="MICF:gain"),
 
-    # ── Computed JIP parameters (provenance = COMPUTED, weight = 0) ───────────
-    "jip_F0":      FieldDef("per_curve", "optional", "float", "F0 (Fin)",          miappe="MICF:derivedParameter"),
-    "jip_FM":      FieldDef("per_curve", "optional", "float", "FM (Fmax)",         miappe="MICF:derivedParameter"),
-    "jip_FK":      FieldDef("per_curve", "optional", "float", "FK",                miappe="MICF:derivedParameter"),
-    "jip_FJ":      FieldDef("per_curve", "optional", "float", "FJ",                miappe="MICF:derivedParameter"),
-    "jip_FI":      FieldDef("per_curve", "optional", "float", "FI",                miappe="MICF:derivedParameter"),
-    "jip_VJ":      FieldDef("per_curve", "optional", "float", "VJ",                miappe="MICF:derivedParameter"),
-    "jip_VI":      FieldDef("per_curve", "optional", "float", "VI",                miappe="MICF:derivedParameter"),
-    "jip_Fv_Fm":   FieldDef("per_curve", "optional", "float", "Fv/Fm",             miappe="MICF:derivedParameter"),
-    "jip_M0":      FieldDef("per_curve", "optional", "float", "M0",                miappe="MICF:derivedParameter"),
-    "jip_psiE0":   FieldDef("per_curve", "optional", "float", "\u03c8E0",          miappe="MICF:derivedParameter"),
-    "jip_psiR0":   FieldDef("per_curve", "optional", "float", "\u03c8R0",          miappe="MICF:derivedParameter"),
-    "jip_deltaR0": FieldDef("per_curve", "optional", "float", "\u03b4R0",          miappe="MICF:derivedParameter"),
-    "jip_phiE0":   FieldDef("per_curve", "optional", "float", "\u03c6E0",          miappe="MICF:derivedParameter"),
-    "jip_phiR0":   FieldDef("per_curve", "optional", "float", "\u03c6R0",          miappe="MICF:derivedParameter"),
-    "jip_ABS_RC":  FieldDef("per_curve", "optional", "float", "ABS/RC",            miappe="MICF:derivedParameter"),
-    "jip_TR0_RC":  FieldDef("per_curve", "optional", "float", "TR0/RC",            miappe="MICF:derivedParameter"),
-    "jip_ET0_RC":  FieldDef("per_curve", "optional", "float", "ET0/RC",            miappe="MICF:derivedParameter"),
-    "jip_RE0_RC":  FieldDef("per_curve", "optional", "float", "RE0/RC",            miappe="MICF:derivedParameter"),
-    "jip_DI0_RC":  FieldDef("per_curve", "optional", "float", "DI0/RC",            miappe="MICF:derivedParameter"),
-    "jip_Area_OJ": FieldDef("per_curve", "optional", "float", "Complementary area O-J", miappe="MICF:derivedParameter"),
-    "jip_Area_JI": FieldDef("per_curve", "optional", "float", "Complementary area J-I", miappe="MICF:derivedParameter"),
-    "jip_Area_IP": FieldDef("per_curve", "optional", "float", "Complementary area I-P", miappe="MICF:derivedParameter"),
-    "jip_Area_OP": FieldDef("per_curve", "optional", "float", "Complementary area O-P", miappe="MICF:derivedParameter"),
-    "jip_Sm":      FieldDef("per_curve", "optional", "float", "Sm (norm. area)",   miappe="MICF:derivedParameter"),
-    "jip_N":       FieldDef("per_curve", "optional", "float", "N (QA turnover)",   miappe="MICF:derivedParameter"),
+    # Identity
+    "curve_id":               FieldDef("per_curve", "mandatory", "str", "Curve ID",
+                                       weight=3.0, miappe="MICF:curveID",
+                                       group="identity"),
+    "filename":               FieldDef("per_curve", "mandatory", "str", "Filename",
+                                       weight=3.0, group="identity"),
+    "sample_id":              FieldDef("per_curve", "recommended", "str", "Sample ID",
+                                       weight=2.0, miappe="Sample name",
+                                       group="identity"),
 
-    # Scored last so it appears at the end of the grid
-    "completeness_score":  FieldDef("per_curve", "optional", "float",
-                                    "Completeness (%)"),
+    # Treatment (template-assigned or manual per-curve)
+    "treatment_label":        FieldDef("per_curve", "recommended", "str",
+                                       "Treatment group",
+                                       weight=3.0, miappe="Factor value",
+                                       group="treatment"),
+    "chem_treatment":         FieldDef("per_curve", "optional", "str",
+                                       "Chemical treatment",
+                                       vocab=["control", "DCMU",
+                                              "methyl viologen", "KCN",
+                                              "glycolaldehyde", "DBMIB",
+                                              "hydroxylamine", "lincomycin",
+                                              "other"],
+                                       miappe="Factor value", group="treatment"),
+    "chem_dose":              FieldDef("per_curve", "optional", "str",
+                                       "Chemical dose",
+                                       miappe="Factor value", group="treatment"),
+    "chem_duration":          FieldDef("per_curve", "optional", "str",
+                                       "Chemical duration",
+                                       miappe="Factor value", group="treatment"),
+    "chem_unit":              FieldDef("per_curve", "optional", "str",
+                                       "Chemical dose unit",
+                                       vocab=["\u00b5M", "mM", "M",
+                                              "mg L\u207b\u00b9",
+                                              "\u00b5g L\u207b\u00b9",
+                                              "ng L\u207b\u00b9", "%", "other"],
+                                       miappe="Factor value", group="treatment"),
+    "chem_detail":            FieldDef("per_curve", "optional", "str",
+                                       "Chemical treatment detail",
+                                       miappe="Factor value", group="treatment"),
+    "stress_treatment":       FieldDef("per_curve", "optional", "str",
+                                       "Stress treatment",
+                                       vocab=["high light", "low light",
+                                              "heat", "cold", "UV-B",
+                                              "nitrogen starvation",
+                                              "phosphorus starvation",
+                                              "sulfur starvation",
+                                              "iron starvation",
+                                              "salt stress", "drought",
+                                              "other"],
+                                       miappe="Factor value", group="treatment"),
+    "stress_dose":            FieldDef("per_curve", "optional", "str",
+                                       "Stress dose / intensity",
+                                       miappe="Factor value", group="treatment"),
+    "stress_duration":        FieldDef("per_curve", "optional", "str",
+                                       "Stress duration",
+                                       miappe="Factor value", group="treatment"),
+    "stress_unit":            FieldDef("per_curve", "optional", "str",
+                                       "Stress dose unit",
+                                       vocab=["\u00b5mol photons m\u207b\u00b2 s\u207b\u00b9",
+                                              "\u00b0C", "mM NaCl",
+                                              "\u00b5W cm\u207b\u00b2",
+                                              "% field capacity", "% RH",
+                                              "other"],
+                                       miappe="Factor value", group="treatment"),
+    "stress_detail":          FieldDef("per_curve", "optional", "str",
+                                       "Stress treatment detail",
+                                       miappe="Factor value", group="treatment"),
+    "other_treatment":        FieldDef("per_curve", "optional", "str",
+                                       "Other treatment",
+                                       miappe="Factor value", group="treatment"),
+    "other_dose":             FieldDef("per_curve", "optional", "str",
+                                       "Other treatment dose",
+                                       miappe="Factor value", group="treatment"),
+    "other_unit":             FieldDef("per_curve", "optional", "str",
+                                       "Other treatment unit",
+                                       miappe="Factor value", group="treatment"),
+    "other_duration":         FieldDef("per_curve", "optional", "str",
+                                       "Other treatment duration",
+                                       miappe="Factor value", group="treatment"),
+    "other_detail":           FieldDef("per_curve", "optional", "str",
+                                       "Other treatment detail",
+                                       miappe="Factor value", group="treatment"),
+    "timepoint":              FieldDef("per_curve", "recommended", "float",
+                                       "Time (h)", weight=2.0,
+                                       miappe="Observation unit factor value",
+                                       group="treatment"),
+
+    # Conditions — shared across all sample types
+    "temperature":            FieldDef("per_curve", "recommended", "float",
+                                       "Temp \u00b0C", weight=2.0,
+                                       miappe="MICF:measurementTemperature",
+                                       group="conditions"),
+
+    # Culture density (study tier — set once, inherited to all curves; override per-curve in grid)
+    "culture_density_chla":   FieldDef("study", "recommended", "float",
+                                       "Chl a (\u03bcg mL\u207b\u00b9)",
+                                       weight=1.0,
+                                       miappe="Sample description",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "culture_density_od":     FieldDef("study", "optional", "float",
+                                       "OD (1 cm cuvette)",
+                                       miappe="Sample description",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "culture_density_od_wl":  FieldDef("study", "optional", "int",
+                                       "OD wavelength (nm)",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "culture_density_other":  FieldDef("study", "optional", "str",
+                                       "Other density (value)",
+                                       miappe="Sample description",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "culture_density_other_unit": FieldDef("study", "optional", "str",
+                                       "Other density unit",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "co2":                    FieldDef("per_curve", "optional", "float",
+                                       "CO\u2082 (%)",
+                                       miappe="Growth condition",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "vessel":                 FieldDef("per_curve", "optional", "str",
+                                       "Culture vessel",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "agitation":              FieldDef("per_curve", "optional", "str",
+                                       "Agitation",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "growth_phase":           FieldDef("per_curve", "recommended", "str",
+                                       "Growth phase",
+                                       vocab=["lag", "exponential", "linear",
+                                              "stationary", "decline"],
+                                       weight=1.0, miappe="Growth condition",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+    "culture_age_h":          FieldDef("per_curve", "optional", "float",
+                                       "Culture age (h since dilution)",
+                                       miappe="Sample description",
+                                       group="conditions",
+                                       sample_cond="liquid_culture"),
+
+    # Conditions — vascular plant (MIAPPE-aligned)
+    "growth_facility":        FieldDef("per_curve", "recommended", "str",
+                                       "Growth facility",
+                                       vocab=["field", "greenhouse",
+                                              "growth chamber", "other"],
+                                       weight=1.0, miappe="Growth facility",
+                                       group="conditions", sample_cond="plant"),
+    "dev_stage":              FieldDef("per_curve", "optional", "str",
+                                       "Dev. stage",
+                                       vocab=["seedling", "young",
+                                              "adult / vegetative",
+                                              "flowering", "senescent"],
+                                       miappe="Developmental stage",
+                                       group="conditions",
+                                       sample_cond="plant_or_leaf"),
+    "plant_organ":            FieldDef("per_curve", "optional", "str",
+                                       "Plant organ",
+                                       vocab=["whole leaf", "leaf disc",
+                                              "cotyledon", "stem",
+                                              "root", "whole plant"],
+                                       miappe="Sample description",
+                                       group="conditions",
+                                       sample_cond="plant_or_leaf"),
+    "leaf_position":          FieldDef("per_curve", "optional", "str",
+                                       "Leaf position",
+                                       vocab=["1st true leaf", "2nd true leaf",
+                                              "3rd true leaf", "flag leaf",
+                                              "rosette centre", "rosette outer"],
+                                       miappe="Sample description",
+                                       group="conditions",
+                                       sample_cond="plant_or_leaf"),
+    "leaf_surface":           FieldDef("per_curve", "optional", "str",
+                                       "Leaf surface",
+                                       vocab=["adaxial", "abaxial"],
+                                       group="conditions",
+                                       sample_cond="plant_or_leaf"),
+    "photoperiod":            FieldDef("per_curve", "optional", "str",
+                                       "Photoperiod",
+                                       miappe="Growth condition",
+                                       group="conditions", sample_cond="plant"),
+    "humidity":               FieldDef("per_curve", "optional", "float",
+                                       "Humidity (%)",
+                                       miappe="Growth condition",
+                                       group="conditions", sample_cond="plant"),
+    "substrate":              FieldDef("per_curve", "optional", "str",
+                                       "Substrate / soil",
+                                       miappe="Growth condition",
+                                       group="conditions", sample_cond="plant"),
+    "watering_regime":        FieldDef("per_curve", "optional", "str",
+                                       "Watering regime",
+                                       miappe="Growth condition",
+                                       group="conditions", sample_cond="plant"),
+
+    # Replicate / QC
+    "bio_rep":                FieldDef("per_curve", "recommended", "int",
+                                       "Bio. rep.", weight=1.0,
+                                       miappe="Biological replicate",
+                                       group="replicate_qc"),
+    "tech_rep":               FieldDef("per_curve", "recommended", "int",
+                                       "Tech. rep.", weight=1.0,
+                                       miappe="Technical replicate",
+                                       group="replicate_qc"),
+    "batch_id":               FieldDef("per_curve", "optional", "str",
+                                       "Batch ID", weight=2.0,
+                                       miappe="Sample description",
+                                       group="replicate_qc"),
+    "quality":                FieldDef("per_curve", "optional", "str",
+                                       "Quality",
+                                       vocab=["ok", "noisy",
+                                              "saturation artifact",
+                                              "low signal", "exclude"],
+                                       weight=1.0, miappe="Quality",
+                                       group="replicate_qc"),
+
+    # Acquisition (per-curve; some inherited from fluorometer tier)
+    "gain":                   FieldDef("per_curve", "optional", "float",
+                                       "Gain", miappe="MICF:gain",
+                                       group="acquisition"),
+    "timestamp":              FieldDef("per_curve", "optional", "str",
+                                       "Timestamp",
+                                       miappe="MICF:acquisitionTimestamp",
+                                       group="acquisition"),
 }
 
 
@@ -212,14 +488,16 @@ def get_schema_json() -> dict:
         "schema_version": SCHEMA_VERSION,
         "fields": {
             name: {
-                "tier":      f.tier,
-                "required":  f.required,
-                "dtype":     f.dtype,
-                "label":     f.label,
-                "vocab":     f.vocab,
-                "condition": f.condition,
-                "miappe":    f.miappe,
-                "weight":    f.weight,
+                "tier":        f.tier,
+                "required":    f.required,
+                "dtype":       f.dtype,
+                "label":       f.label,
+                "vocab":       f.vocab,
+                "condition":   f.condition,
+                "miappe":      f.miappe,
+                "weight":      f.weight,
+                "group":       f.group,
+                "sample_cond": f.sample_cond,
             }
             for name, f in FIELDS.items()
         },
@@ -259,17 +537,37 @@ def validate_row(row: dict) -> list[str]:
 
 def _completeness_score(row: dict) -> float:
     """
-    Completeness score 0–100 based on non-null values for weighted fields.
-    Never rejects a row; score is informational only.
+    Completeness score 0–100: fraction of non-empty cells across all annotation
+    grid fields (study + fluorometer + per_curve tiers).  Investigation-tier fields
+    are excluded because they are entered in project-level forms, not in the per-curve
+    grid, so including them in per-curve completeness would be misleading.
+    Each field counts as 1 (simple field count, not weighted) so the score matches
+    the user's visual impression of 'how many cells in this row are filled'.
+    Conditional fields (sample_cond) are only counted when the row's sample_type matches.
     """
-    total = earned = 0.0
+    st_cell = row.get("sample_type")
+    sample_type: str = (st_cell.get("value", "") or "") if isinstance(st_cell, dict) else ""
+    is_liquid = "liquid" in sample_type
+    is_plant  = "vascular" in sample_type or "plant" in sample_type
+    is_leaf   = "leaf" in sample_type or "disc" in sample_type
+
+    total = earned = 0
     for field_name, fdef in FIELDS.items():
-        if fdef.weight <= 0:
+        if fdef.tier == "investigation":
+            continue           # investigation fields are not in the per-curve grid
+        if field_name == "completeness_score":
             continue
-        total += fdef.weight
+        sc = fdef.sample_cond
+        if sc == "liquid_culture" and not is_liquid:
+            continue
+        if sc == "plant" and not is_plant:
+            continue
+        if sc == "plant_or_leaf" and not (is_plant or is_leaf):
+            continue
+        total += 1             # every field counts as 1 — no weights
         cell = row.get(field_name)
         if isinstance(cell, dict) and cell.get("value") not in (None, "", []):
-            earned += fdef.weight
+            earned += 1
     return round(100.0 * earned / total, 1) if total > 0 else 0.0
 
 
@@ -590,14 +888,16 @@ def _parse_filename(stem: str, token_dict: dict) -> dict[str, tuple[Any, str]]:
 
 # ── Tier inheritance ──────────────────────────────────────────────────────────
 
-def _inherit_tiers(investigation: dict, study: dict, assay: dict) -> dict[str, tuple[Any, str]]:
+def _inherit_tiers(
+    investigation: dict, study: dict, fluor: dict
+) -> dict[str, tuple[Any, str]]:
     """
-    Merge the three tier blocks into a flat inherited dict.
-    Values from lower tiers (assay) override higher ones (investigation) on key collision.
+    Merge tier blocks into a flat inherited dict.
+    Order: investigation → study → fluorometer (later overrides earlier on collision).
     Returns {field_name: (value, INHERITED)}.
     """
     result: dict[str, tuple[Any, str]] = {}
-    for tier_data in (investigation, study, assay):
+    for tier_data in (investigation, study, fluor):
         for key, val in tier_data.items():
             if val not in (None, "", [], {}):
                 result[key] = (val, INHERITED)
@@ -612,8 +912,6 @@ def _build_row(
     fluorometer: str | None,
     inherited: dict,
     token_dict: dict,
-    FJ_ms: float = 2.0,
-    FI_ms: float = 30.0,
 ) -> dict:
     """
     Build a single reconciliation-grid row for one uploaded file.
@@ -621,9 +919,11 @@ def _build_row(
     Each field in the returned dict has the shape:
         {field_name: {"value": <any>, "provenance": <flag_constant>}}
 
-    Internal keys (stripped before sending to JS):
-        _meta      — parse metadata (fluorometer, n_points, parse_error)
-        _transient — downsampled {'time_ms': [...], 'fluorescence': [...]}
+    Internal key:
+        _meta — parse metadata (fluorometer, parse_error, curve_id)
+
+    Note: No JIP parameters are computed here; this is a metadata-only
+    annotation tool. Raw transient data is not stored.
     """
     stem = os.path.splitext(secure_filename(filename))[0].lower()
     row: dict[str, Any] = {}
@@ -637,50 +937,33 @@ def _build_row(
         if FIELDS.get(field_name, FieldDef("", "", "")).tier == "per_curve":
             row[field_name] = {"value": val, "provenance": prov}
 
-    # 3. Auto-detect instrument from file content if not supplied by study
+    # 3. Auto-detect instrument from file content if not supplied in fluor tier
     fluo = fluorometer or _detect_fluorometer(filename, raw_bytes)
     if fluo:
         row["instrument"] = {"value": fluo, "provenance": FROM_HEADER}
 
-    # 4. Mandatory auto-populated per-curve fields
-    curve_id = stem + "_" + uuid.uuid4().hex[:8]
+    # 4. curve_id = sha-256 content hash (globally unique without coordination)
+    curve_id = hashlib.sha256(raw_bytes).hexdigest()[:16]
     row["curve_id"] = {"value": curve_id, "provenance": COMPUTED}
     row["filename"] = {"value": filename,  "provenance": FROM_HEADER}
 
-    # 5. Parse transient + compute JIP parameters
-    transient_data: dict | None = None
-    parse_error: str | None = None
-    n_points: int | None = None
-
-    if fluo:
-        try:
-            df, x_col, ms_factor = _parse_transient(raw_bytes, filename, fluo)
-            n_points = len(df)
-            jip = _compute_jip_params(df, x_col, ms_factor, FJ_ms, FI_ms)
-            for k, v in jip.items():
-                if not k.startswith("jip_error"):
-                    row[k] = {"value": v, "provenance": COMPUTED}
-                else:
-                    parse_error = str(v)
-            transient_data = _downsample_transient(df, x_col, ms_factor)
-        except Exception as exc:
-            parse_error = str(exc)
-    else:
-        parse_error = "instrument not detected — set it manually in the Study block"
+    # 5. Default tech_rep = 1 (overridable per-curve)
+    if "tech_rep" not in row:
+        row["tech_rep"] = {"value": 1, "provenance": COMPUTED}
 
     # 6. Completeness score (computed last so all fields are present)
     row["completeness_score"] = {"value": _completeness_score(row), "provenance": COMPUTED}
 
-    # 7. Internal metadata (not a FIELDS entry; stripped before export to JS grid)
+    # 7. Internal metadata (not a FIELDS entry)
+    parse_error: str | None = None
+    if not fluo:
+        parse_error = "instrument not detected — set it in Fluorometer settings"
     row["_meta"] = {
-        "filename":   filename,
+        "filename":    filename,
         "fluorometer": fluo,
-        "n_points":   n_points,
         "parse_error": parse_error,
-        "curve_id":   curve_id,
+        "curve_id":    curve_id,
     }
-    if transient_data is not None:
-        row["_transient"] = transient_data
 
     return row
 
@@ -724,12 +1007,11 @@ def _read_transient_store(bundle_id: str) -> dict:
 
 # ── Parquet builder ────────────────────────────────────────────────────────────
 
-def _build_parquet(state: dict) -> bytes | None:
+def _build_summary_parquet(state: dict) -> bytes | None:
     """
-    Build a long-format ML-ready Parquet file from the annotation state.
-    One row per (curve_id, time_ms) point.  All metadata columns are repeated.
+    Build a summary Parquet with one row per curve (no time-series).
     Per-field provenance is embedded in Parquet file-level metadata as JSON.
-    Falls back to None (with a warning) when pyarrow is not installed.
+    Falls back to None when pyarrow is not installed.
     """
     try:
         import pyarrow as pa
@@ -737,32 +1019,21 @@ def _build_parquet(state: dict) -> bytes | None:
     except ImportError:
         return None
 
-    records: list[dict] = []
+    records:  list[dict]      = []
     prov_map: dict[str, dict] = {}
 
     for row in state.get("rows", []):
-        cid = row.get("curve_id", {}).get("value", "")
-        transient = row.get("_transient")
-
-        # Flatten metadata: value only (provenance goes to file metadata)
+        cid       = row.get("curve_id", {}).get("value", "")
         meta_flat: dict[str, Any] = {}
         prov_flat: dict[str, str] = {}
         for field_name, cell in row.items():
-            if field_name.startswith("_"):
+            if field_name.startswith("_") or field_name == "completeness_score":
                 continue
             if isinstance(cell, dict) and "value" in cell:
                 meta_flat[field_name] = cell["value"]
                 prov_flat[field_name] = cell.get("provenance", "")
-
         prov_map[cid] = prov_flat
-
-        if transient:
-            for t, f in zip(transient["time_ms"], transient["fluorescence"]):
-                records.append({"curve_id": cid, "time_ms": t, "fluorescence": f,
-                                 **meta_flat})
-        else:
-            records.append({"curve_id": cid, "time_ms": None, "fluorescence": None,
-                             **meta_flat})
+        records.append(meta_flat)
 
     if not records:
         return None
@@ -785,71 +1056,92 @@ def _build_parquet(state: dict) -> bytes | None:
 def bundle_serialise(state: dict) -> bytes:
     """
     Pack annotation state into a ZIP bundle:
-        MANIFEST.json   — bundle identity and counts
-        state.json      — tier blocks + token dict + per-curve rows with provenance
-        dataset.parquet — ML-ready long-format dataset (omitted if pyarrow absent)
-        dataset.csv     — CSV fallback when pyarrow is absent
+        MANIFEST.json               — bundle identity and counts
+        state.json                  — tier blocks + token dict + per-curve rows with provenance
+        annot/<curve_id>.json       — per-curve sidecar (full metadata + provenance)
+        summary.parquet             — one row per curve, all metadata (no time-series)
+        summary.csv                 — CSV fallback when pyarrow is absent
 
     state schema:
         {
           'investigation': {field: value, ...},
           'study':         {field: value, ...},
-          'assay':         {field: value, ...},
+          'fluor':         {field: value, ...},
           'token_dict':    { ... },
-          'rows': [
-              {field_name: {'value': ..., 'provenance': ...}, '_meta': {...},
-               '_transient': {'time_ms': [...], 'fluorescence': [...]}},
-              ...
-          ]
+          'rows': [{field_name: {'value': ..., 'provenance': ...}, '_meta': {...}}, ...]
         }
     """
     bundle_id = uuid.uuid4().hex
     buf = io.BytesIO()
 
+    rows = state.get("rows", [])
+
     with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
 
         # ── MANIFEST ──────────────────────────────────────────────────────────
-        manifest = {
+        manifest: dict[str, Any] = {
             "schema_version": SCHEMA_VERSION,
             "bundle_id":      bundle_id,
             "created":        pd.Timestamp.now().isoformat(timespec="seconds"),
-            "curve_count":    len(state.get("rows", [])),
+            "curve_count":    len(rows),
             "tool":           "cyano.tools/fluorescence_annotation",
         }
         zf.writestr("MANIFEST.json", json.dumps(manifest, indent=2))
 
-        # ── STATE (provenance-preserving; _transient stripped to save space) ──
+        # ── STATE (provenance-preserving) ─────────────────────────────────────
         rows_clean = [
-            {k: v for k, v in row.items() if k != "_transient"}
-            for row in state.get("rows", [])
+            {k: v for k, v in row.items() if not k.startswith("_")}
+            for row in rows
         ]
         state_out = {
-            "schema_version": SCHEMA_VERSION,
-            "investigation":  state.get("investigation", {}),
-            "study":          state.get("study", {}),
-            "assay":          state.get("assay", {}),
-            "token_dict":     state.get("token_dict", {}),
-            "rows":           rows_clean,
+            "schema_version":     SCHEMA_VERSION,
+            "investigation":      state.get("investigation", {}),
+            "study":              state.get("study", {}),
+            "fluor":              state.get("fluor", {}),
+            "token_dict":         state.get("token_dict", {}),
+            "treatment_templates": state.get("treatment_templates", []),
+            "rows":               rows_clean,
         }
         zf.writestr("state.json",
                     json.dumps(state_out, indent=2, ensure_ascii=False))
 
-        # ── PARQUET (or CSV fallback) ─────────────────────────────────────────
-        parquet_bytes = _build_parquet(state)
+        # ── PER-CURVE SIDECARS ────────────────────────────────────────────────
+        for row in rows:
+            cid = (row.get("curve_id") or {}).get("value") or ""
+            fname = (row.get("filename") or {}).get("value") or cid
+            sidecar = {
+                "schema_version": SCHEMA_VERSION,
+                "curve_id":       cid,
+                "source_file":    fname,
+                "investigation":  state.get("investigation", {}),
+                "study":          state.get("study", {}),
+                "fluor":          state.get("fluor", {}),
+                "metadata":       {
+                    k: v for k, v in row.items()
+                    if not k.startswith("_") and k not in ("completeness_score",)
+                },
+            }
+            safe = re.sub(r"[^a-zA-Z0-9_.-]", "_", fname)[:60]
+            zf.writestr(f"annot/annot_{safe}.json",
+                        json.dumps(sidecar, indent=2, ensure_ascii=False))
+
+        # ── SUMMARY PARQUET (or CSV fallback) ─────────────────────────────────
+        parquet_bytes = _build_summary_parquet(state)
         if parquet_bytes:
-            zf.writestr("dataset.parquet", parquet_bytes)
+            zf.writestr("summary.parquet", parquet_bytes)
             manifest["parquet_included"] = True
         else:
-            # CSV fallback: metadata only (no time-series)
+            # CSV fallback: flat metadata only
             rows_meta = []
-            for row in state.get("rows", []):
+            for row in rows:
                 flat = {k: v.get("value") for k, v in row.items()
-                        if isinstance(v, dict) and "value" in v}
+                        if isinstance(v, dict) and "value" in v
+                        and not k.startswith("_")}
                 rows_meta.append(flat)
             if rows_meta:
                 csv_buf = io.StringIO()
                 pd.DataFrame(rows_meta).to_csv(csv_buf, index=False)
-                zf.writestr("dataset.csv", csv_buf.getvalue())
+                zf.writestr("summary.csv", csv_buf.getvalue())
                 manifest["csv_fallback"] = True
 
     return buf.getvalue()
@@ -872,63 +1164,33 @@ def bundle_deserialise(data: bytes) -> dict:
 
     bundle_ver = state.get("schema_version", "0.0.0")
     if bundle_ver != SCHEMA_VERSION:
-        # Forward-compatibility: warn but continue
         state["_version_warning"] = (
             f"Bundle schema version {bundle_ver} differs from "
             f"current tool version {SCHEMA_VERSION}."
         )
+    # Back-compat: bundles saved with "assay" key (v1.x) → rename to "fluor"
+    if "assay" in state and "fluor" not in state:
+        state["fluor"] = state.pop("assay")
     return state
-
-
-# ── OJIP → annotation field name mapping ─────────────────────────────────────
-# Keys: names used in js_OJIP.js paramData / key_values objects.
-# Values: annotation FIELDS keys (jip_* prefix).
-
-_OJIP_TO_ANN: dict[str, str] = {
-    "F0":      "jip_F0",
-    "FM":      "jip_FM",
-    "FK":      "jip_FK",
-    "FJ":      "jip_FJ",
-    "FI":      "jip_FI",
-    "FVFM":    "jip_Fv_Fm",
-    "VJ":      "jip_VJ",
-    "VI":      "jip_VI",
-    "M0":      "jip_M0",
-    "PSIE0":   "jip_psiE0",
-    "PSIR0":   "jip_psiR0",
-    "DELTAR0": "jip_deltaR0",
-    "PHIE0":   "jip_phiE0",
-    "PHIR0":   "jip_phiR0",
-    "ABSRC":   "jip_ABS_RC",
-    "TR0RC":   "jip_TR0_RC",
-    "ET0RC":   "jip_ET0_RC",
-    "RE0RC":   "jip_RE0_RC",
-    "DI0RC":   "jip_DI0_RC",
-    "Area_OJ": "jip_Area_OJ",
-    "Area_JI": "jip_Area_JI",
-    "Area_IP": "jip_Area_IP",
-    "Area_OP": "jip_Area_OP",
-    "SM":      "jip_Sm",
-    "N":       "jip_N",
-}
 
 
 def _build_row_from_ojip_params(
     fname: str,
     fluorometer: str | None,
-    kv: dict,       # key_values[fname] from ojipData
-    params: dict,   # paramData[fname] from JS
     inherited: dict,
     token_dict: dict,
+    session_salt: str = "",
 ) -> dict:
     """
-    Build an annotation grid row from already-computed OJIP parameters.
-    Unlike _build_row, this requires no raw file bytes — all JIP values
-    are taken directly from the OJIP analysis result already in JS memory.
+    Build an annotation grid row from the OJIP analysis context.
+    No raw file bytes available; curve_id is a sha-256 of (session_salt + fname),
+    where session_salt is the per-ingest bundle UUID — guaranteeing global uniqueness
+    even when two sessions process identically-named files.
+    No JIP parameters are stored in the annotation table (metadata only).
     """
     row: dict = {}
 
-    # Apply inherited tier metadata (investigation + study + assay)
+    # Apply inherited tier metadata (investigation + study + fluorometer)
     for k, (v, p) in inherited.items():
         if v not in (None, "", []):
             row[k] = {"value": v, "provenance": p}
@@ -941,27 +1203,20 @@ def _build_row_from_ojip_params(
 
     # Core identifiers
     row["filename"] = {"value": fname, "provenance": FROM_HEADER}
-    row["curve_id"] = {"value": os.path.splitext(fname)[0], "provenance": COMPUTED}
+    # sha-256 of (session_salt + fname) — session_salt is the per-ingest bundle UUID,
+    # so two sessions that process the same filename still produce distinct curve_ids.
+    row["curve_id"] = {
+        "value":      hashlib.sha256((session_salt + fname).encode("utf-8")).hexdigest()[:16],
+        "provenance": COMPUTED,
+    }
 
-    # Instrument — from OJIP auto-detection (takes priority over inherited)
+    # Instrument — from OJIP auto-detection
     if fluorometer:
         row["instrument"] = {"value": fluorometer, "provenance": FROM_HEADER}
 
-    # Map OJIP parameter names → annotation jip_* fields
-    # paramData (JS-computed, reflects user-edited FJ/FI times) takes precedence
-    # over key_values (raw server output).
-    for ojip_key, ann_key in _OJIP_TO_ANN.items():
-        val = params.get(ojip_key)
-        if val is None:
-            val = kv.get(ojip_key)
-        if val is None:
-            continue
-        try:
-            fval = float(val)
-            if not np.isnan(fval):
-                row[ann_key] = {"value": round(fval, 6), "provenance": COMPUTED}
-        except (TypeError, ValueError):
-            pass
+    # Default tech_rep = 1
+    if "tech_rep" not in row:
+        row["tech_rep"] = {"value": 1, "provenance": COMPUTED}
 
     # Completeness score
     row["completeness_score"] = {
@@ -994,11 +1249,11 @@ def ingest_from_ojip():
     """
     Build annotation rows from already-computed OJIP results.
     Accepts a JSON body instead of raw file uploads, so no re-parsing is needed.
+    No JIP parameters are stored — this is a metadata-only annotation.
 
     JSON body:
-        ojip_results  — { files, fluorometer, fj_time_ms, fi_time_ms,
-                          key_values, param_data, time_raw_ms?, curves? }
-        tier_json     — { investigation, study, assay, token_dict }
+        ojip_results  — { files, fluorometer }
+        tier_json     — { investigation, study, fluor, token_dict }
     """
     payload = request.get_json(force=True, silent=True) or {}
     ojip    = payload.get("ojip_results", {})
@@ -1006,10 +1261,6 @@ def ingest_from_ojip():
 
     files       = ojip.get("files", [])
     fluorometer = ojip.get("fluorometer") or None
-    key_values  = ojip.get("key_values",  {})
-    param_data  = ojip.get("param_data",  {})
-    time_raw_ms = ojip.get("time_raw_ms", [])
-    curves      = ojip.get("curves",      {})
 
     if not files:
         return jsonify({"status": "error",
@@ -1017,38 +1268,27 @@ def ingest_from_ojip():
 
     investigation = tier.get("investigation", {})
     study         = tier.get("study",         {})
-    assay         = tier.get("assay",         {})
+    # Accept both "fluor" (new) and "assay" (legacy) key names
+    fluor         = tier.get("fluor") or tier.get("assay") or {}
     token_dict    = tier.get("token_dict",    {})
+    treatment_templates = tier.get("treatment_templates", [])
 
-    # If instrument wasn't typed in the study form, fill it from OJIP detection.
-    if fluorometer and not study.get("instrument"):
-        study = dict(study)
-        study["instrument"] = fluorometer
+    # If instrument not set in fluor tier, fill from OJIP detection.
+    if fluorometer and not fluor.get("instrument"):
+        fluor = dict(fluor)
+        fluor["instrument"] = fluorometer
 
-    inherited = _inherit_tiers(investigation, study, assay)
+    inherited = _inherit_tiers(investigation, study, fluor)
 
-    rows:            list[dict]        = []
-    warnings:        list[str]         = []
-    bundle_id:       str               = str(uuid.uuid4())
-    transient_store: dict[str, dict]   = {}
+    rows:     list[dict] = []
+    warnings: list[str]  = []
+    bundle_id: str       = str(uuid.uuid4())
 
     for fname in files:
-        kv     = key_values.get(fname, {})
-        params = param_data.get(fname,  {})
-
-        row = _build_row_from_ojip_params(
-            fname, fluorometer, kv, params, inherited, token_dict
-        )
-
-        # Store raw transient if curves were passed (needed for Parquet export)
-        curve_data = curves.get(fname, {})
-        raw_fluor  = curve_data.get("raw", [])
-        if time_raw_ms and raw_fluor and len(raw_fluor) == len(time_raw_ms):
-            cid = row["curve_id"]["value"]
-            transient_store[cid] = {
-                "time_ms":     list(time_raw_ms),
-                "fluorescence": list(raw_fluor),
-            }
+        # Coerce to str — Pandas may produce numeric column labels for digit-only
+        # filenames, which JSON serialises as numbers; str() restores them cleanly.
+        row = _build_row_from_ojip_params(str(fname), fluorometer, inherited, token_dict,
+                                          session_salt=bundle_id)
 
         issues = validate_row(row)
         row["_warnings"] = issues
@@ -1057,21 +1297,19 @@ def ingest_from_ojip():
 
         rows.append(row)
 
-    if transient_store:
-        _write_transient_store(bundle_id, transient_store)
-
     return jsonify({
-        "status":         "ok",
-        "bundle_id":      bundle_id,
-        "rows":           rows,
-        "tier_defaults":  {
-            "investigation": investigation,
-            "study":         study,
-            "assay":         assay,
-            "token_dict":    token_dict,
+        "status":        "ok",
+        "bundle_id":     bundle_id,
+        "rows":          rows,
+        "tier_defaults": {
+            "investigation":      investigation,
+            "study":              study,
+            "fluor":              fluor,
+            "token_dict":         token_dict,
+            "treatment_templates": treatment_templates,
         },
-        "warnings":        warnings,
-        "schema_version":  SCHEMA_VERSION,
+        "warnings":       warnings,
+        "schema_version": SCHEMA_VERSION,
     })
 
 
@@ -1104,58 +1342,49 @@ def ingest():
 
     investigation = tier_json.get("investigation", {})
     study         = tier_json.get("study", {})
-    assay         = tier_json.get("assay", {})
+    # Accept both "fluor" (new) and "assay" (legacy) key names
+    fluor         = tier_json.get("fluor") or tier_json.get("assay") or {}
     token_dict    = tier_json.get("token_dict", {})
-    FJ_ms = float(tier_json.get("FJ_time_ms", 2.0))
-    FI_ms = float(tier_json.get("FI_time_ms", 30.0))
+    treatment_templates = tier_json.get("treatment_templates", [])
 
-    # Instrument from study block (user may have already chosen it)
-    study_fluo = study.get("instrument") or None
-    inherited  = _inherit_tiers(investigation, study, assay)
+    # Instrument from fluor tier (user may have already chosen it)
+    fluor_instrument = fluor.get("instrument") or None
+    inherited = _inherit_tiers(investigation, study, fluor)
 
     rows: list[dict] = []
     warnings: list[str] = []
-    transient_store: dict[str, dict] = {}
 
     for file in files:
         fname = file.filename or "unknown"
         raw   = file.read()
-        fluo  = study_fluo or _detect_fluorometer(fname, raw)
+        fluo  = fluor_instrument or _detect_fluorometer(fname, raw)
 
         try:
-            row = _build_row(raw, fname, fluo, inherited, token_dict, FJ_ms, FI_ms)
+            row = _build_row(raw, fname, fluo, inherited, token_dict)
         except Exception as exc:
+            curve_id_err = hashlib.sha256(raw).hexdigest()[:16] if raw else fname + "_err"
             row = {
-                "filename":         {"value": fname,              "provenance": FROM_HEADER},
-                "curve_id":         {"value": fname + "_err",     "provenance": COMPUTED},
-                "completeness_score": {"value": 0.0,              "provenance": COMPUTED},
-                "_meta": {"filename": fname, "fluorometer": fluo,
-                          "n_points": None,  "parse_error": str(exc)},
+                "filename":           {"value": fname,        "provenance": FROM_HEADER},
+                "curve_id":           {"value": curve_id_err, "provenance": COMPUTED},
+                "completeness_score": {"value": 0.0,          "provenance": COMPUTED},
+                "_meta": {"filename": fname, "fluorometer": fluo, "parse_error": str(exc)},
             }
             warnings.append(f"{fname}: {exc}")
-
-        # Stash transient; strip from row before JSON serialisation
-        trans = row.pop("_transient", None)
-        if trans:
-            cid = row.get("curve_id", {}).get("value", "")
-            transient_store[cid] = trans
 
         rows.append(row)
 
     bundle_id = uuid.uuid4().hex
-    _write_transient_store(bundle_id, transient_store)
 
     return jsonify({
         "status":        "success",
         "bundle_id":     bundle_id,
         "rows":          rows,
         "tier_defaults": {
-            "investigation": investigation,
-            "study":         study,
-            "assay":         assay,
-            "token_dict":    token_dict,
-            "FJ_time_ms":    FJ_ms,
-            "FI_time_ms":    FI_ms,
+            "investigation":      investigation,
+            "study":              study,
+            "fluor":              fluor,
+            "token_dict":         token_dict,
+            "treatment_templates": treatment_templates,
         },
         "warnings":       warnings,
         "schema_version": SCHEMA_VERSION,
@@ -1174,23 +1403,17 @@ def export_bundle():
     if not data:
         return jsonify({"status": "error", "message": "No JSON body."}), 400
 
-    bundle_id    = data.get("bundle_id", "")
-    rows         = data.get("rows", [])
+    bundle_id     = data.get("bundle_id", "")
+    rows          = data.get("rows", [])
     tier_defaults = data.get("tier_defaults", {})
 
-    # Re-attach transients from the temp store
-    trans_store = _read_transient_store(bundle_id)
-    for row in rows:
-        cid = row.get("curve_id", {}).get("value", "")
-        if cid in trans_store:
-            row["_transient"] = trans_store[cid]
-
     state = {
-        "investigation": tier_defaults.get("investigation", {}),
-        "study":         tier_defaults.get("study", {}),
-        "assay":         tier_defaults.get("assay", {}),
-        "token_dict":    tier_defaults.get("token_dict", {}),
-        "rows":          rows,
+        "investigation":      tier_defaults.get("investigation", {}),
+        "study":              tier_defaults.get("study", {}),
+        "fluor":              tier_defaults.get("fluor") or tier_defaults.get("assay") or {},
+        "token_dict":         tier_defaults.get("token_dict", {}),
+        "treatment_templates": tier_defaults.get("treatment_templates", []),
+        "rows":               rows,
     }
 
     bundle_bytes = bundle_serialise(state)
@@ -1225,15 +1448,357 @@ def load_bundle():
         "status":    "success",
         "rows":      state.get("rows", []),
         "tier_defaults": {
-            "investigation": state.get("investigation", {}),
-            "study":         state.get("study", {}),
-            "assay":         state.get("assay", {}),
-            "token_dict":    state.get("token_dict", {}),
+            "investigation":      state.get("investigation", {}),
+            "study":              state.get("study", {}),
+            "fluor":              state.get("fluor", {}),
+            "token_dict":         state.get("token_dict", {}),
+            "treatment_templates": state.get("treatment_templates", []),
         },
-        "schema_version":  state.get("schema_version", ""),
-        "_manifest":       state.get("_manifest", {}),
+        "schema_version":   state.get("schema_version", ""),
+        "_manifest":        state.get("_manifest", {}),
         "_version_warning": state.get("_version_warning"),
     })
+
+
+# ── NCBI Taxonomy resolver ────────────────────────────────────────────────────
+
+@fluorescence_annotation.route("/api/fluorescence_annotation/ncbi_taxon", methods=["GET"])
+def ncbi_taxon_search():
+    """
+    Proxy typeahead search against NCBI Taxonomy (Entrez esearch + esummary).
+    Query param: q=<search term>
+    Returns JSON list of {taxid, name, rank, division}.
+    """
+    import urllib.request
+    import urllib.parse
+
+    query = request.args.get("q", "").strip()
+    if len(query) < 3:
+        return jsonify([])
+
+    try:
+        # Step 1: esearch to get taxon IDs
+        esearch_url = (
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?"
+            + urllib.parse.urlencode({
+                "db": "taxonomy",
+                "term": query + "[Scientific Name]",
+                "retmax": "8",
+                "retmode": "json",
+            })
+        )
+        with urllib.request.urlopen(esearch_url, timeout=6) as resp:
+            search_data = json.loads(resp.read().decode())
+        id_list = search_data.get("esearchresult", {}).get("idlist", [])
+        if not id_list:
+            return jsonify([])
+
+        # Step 2: esummary to get organism names
+        esummary_url = (
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?"
+            + urllib.parse.urlencode({
+                "db": "taxonomy",
+                "id": ",".join(id_list),
+                "retmode": "json",
+            })
+        )
+        with urllib.request.urlopen(esummary_url, timeout=6) as resp:
+            summary_data = json.loads(resp.read().decode())
+
+        results = []
+        for tid in id_list:
+            info = summary_data.get("result", {}).get(tid, {})
+            results.append({
+                "taxid":    int(tid),
+                "name":     info.get("scientificname", ""),
+                "rank":     info.get("rank", ""),
+                "division": info.get("division", ""),
+            })
+        return jsonify(results)
+
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 502
+
+
+# ── XLSX template ─────────────────────────────────────────────────────────────
+
+def _build_xlsx_template(tier_defaults: dict | None = None) -> bytes:
+    """
+    Generate a multi-sheet MIAPPE-style XLSX workbook for pre-filling
+    annotation fields.
+
+    Sheets:
+      Investigation — 1 row, 7 columns
+      Study         — 1 row, study fields
+      Fluorometer   — 1 row, fluorometer fields
+      Treatments    — N rows, one per treatment template
+      Per-curve     — N rows, one per file/curve (user fills in)
+
+    Data validation (dropdowns) are added for vocab fields.
+    If tier_defaults is provided, pre-fill cells from existing form values.
+    """
+    try:
+        from openpyxl import Workbook
+        from openpyxl.worksheet.datavalidation import DataValidation
+    except ImportError:
+        raise ImportError(
+            "openpyxl is required for XLSX template generation. "
+            "Install with: pip install openpyxl"
+        )
+
+    wb = Workbook()
+    td = tier_defaults or {}
+
+    def _add_sheet(name: str, tier: str, source_dict: dict | None = None):
+        ws = wb.create_sheet(title=name)
+        fields = [(k, f) for k, f in FIELDS.items() if f.tier == tier]
+        # Header row
+        for ci, (k, fdef) in enumerate(fields, 1):
+            cell = ws.cell(row=1, column=ci, value=fdef.label or k)
+            cell.font = cell.font.copy(bold=True)
+            # Dropdown validation for vocab fields
+            if fdef.vocab:
+                dv = DataValidation(
+                    type="list",
+                    formula1='"' + ",".join(str(v) for v in fdef.vocab) + '"',
+                    allow_blank=True,
+                )
+                dv.error = f"Please choose from: {', '.join(str(v) for v in fdef.vocab)}"
+                dv.errorTitle = fdef.label or k
+                ws.add_data_validation(dv)
+                dv.add(ws.cell(row=2, column=ci))
+            # Pre-fill from tier_defaults
+            if source_dict and k in source_dict:
+                val = source_dict[k]
+                if val not in (None, "", []):
+                    ws.cell(row=2, column=ci, value=str(val))
+        # Auto-width
+        for ci, (k, _) in enumerate(fields, 1):
+            ws.column_dimensions[ws.cell(row=1, column=ci).column_letter].width = 18
+        return ws
+
+    # Remove default sheet
+    wb.remove(wb.active)
+
+    _add_sheet("Investigation", "investigation", td.get("investigation"))
+    _add_sheet("Study", "study", td.get("study"))
+    _add_sheet("Fluorometer", "fluorometer", td.get("fluor"))
+
+    # Treatment sheets — one per treatment type
+    def _add_treatment_sheet(title: str, treat_type: str, sub_fields: list):
+        ws = wb.create_sheet(title=title)
+        all_keys = ["treatment_label"] + sub_fields
+        for ci, k in enumerate(all_keys, 1):
+            fdef = FIELDS.get(k)
+            label = (fdef.label if fdef else k) or k
+            cell = ws.cell(row=1, column=ci, value=label)
+            cell.font = cell.font.copy(bold=True)
+            if fdef and fdef.vocab:
+                dv = DataValidation(
+                    type="list",
+                    formula1='"' + ",".join(str(v) for v in fdef.vocab) + '"',
+                    allow_blank=True,
+                )
+                ws.add_data_validation(dv)
+                for ri in range(2, 51):
+                    dv.add(ws.cell(row=ri, column=ci))
+            ws.column_dimensions[ws.cell(row=1, column=ci).column_letter].width = 22
+        # Pre-fill existing templates of matching type
+        data_row = 2
+        for tmpl in td.get("treatment_templates", []):
+            if tmpl.get("treatment_type", "chemical") == treat_type:
+                for ci, k in enumerate(all_keys, 1):
+                    val = tmpl.get(k, "")
+                    if val:
+                        ws.cell(row=data_row, column=ci, value=str(val))
+                data_row += 1
+
+    _add_treatment_sheet(
+        "Chem. treatments", "chemical",
+        ["chem_treatment", "chem_dose", "chem_unit", "chem_duration", "chem_detail"],
+    )
+    _add_treatment_sheet(
+        "Stress treatments", "stress",
+        ["stress_treatment", "stress_dose", "stress_unit", "stress_duration", "stress_detail"],
+    )
+    _add_treatment_sheet(
+        "Other treatments", "other",
+        ["other_treatment", "other_dose", "other_unit", "other_duration", "other_detail"],
+    )
+
+    # Per-curve sheet
+    ws_curve = wb.create_sheet(title="Per-curve")
+    curve_fields = [(k, f) for k, f in FIELDS.items() if f.tier == "per_curve"]
+    for ci, (k, fdef) in enumerate(curve_fields, 1):
+        cell = ws_curve.cell(row=1, column=ci, value=fdef.label or k)
+        cell.font = cell.font.copy(bold=True)
+        if fdef.vocab:
+            dv = DataValidation(
+                type="list",
+                formula1='"' + ",".join(str(v) for v in fdef.vocab) + '"',
+                allow_blank=True,
+            )
+            ws_curve.add_data_validation(dv)
+            for ri in range(2, 201):
+                dv.add(ws_curve.cell(row=ri, column=ci))
+        ws_curve.column_dimensions[ws_curve.cell(row=1, column=ci).column_letter].width = 16
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def _parse_xlsx_upload(xlsx_bytes: bytes) -> dict:
+    """
+    Parse an uploaded XLSX template back into tier dicts + treatment templates
+    + per-curve overrides.
+
+    Returns:
+        {
+          'investigation': {field: value},
+          'study':         {field: value},
+          'fluor':         {field: value},
+          'treatment_templates': [{label, chem_*, stress_*}, ...],
+          'per_curve_overrides':  [{field: value, ...}, ...],
+        }
+    """
+    try:
+        from openpyxl import load_workbook
+    except ImportError:
+        raise ImportError("openpyxl is required. Install with: pip install openpyxl")
+
+    wb = load_workbook(io.BytesIO(xlsx_bytes), data_only=True)
+    result: dict[str, Any] = {}
+
+    def _read_tier_sheet(sheet_name: str, tier: str) -> dict:
+        if sheet_name not in wb.sheetnames:
+            return {}
+        ws = wb[sheet_name]
+        headers = [cell.value for cell in ws[1]]
+        tier_fields = {f.label or k: k for k, f in FIELDS.items() if f.tier == tier}
+        data = {}
+        if ws.max_row >= 2:
+            for ci, header in enumerate(headers):
+                if header and header in tier_fields:
+                    val = ws.cell(row=2, column=ci + 1).value
+                    if val is not None and str(val).strip():
+                        data[tier_fields[header]] = str(val).strip()
+        return data
+
+    result["investigation"] = _read_tier_sheet("Investigation", "investigation")
+    result["study"]         = _read_tier_sheet("Study", "study")
+    result["fluor"]         = _read_tier_sheet("Fluorometer", "fluorometer")
+
+    # Treatment templates — 3 separate sheets
+    templates = []
+
+    def _parse_treat_sheet(sheet_name: str, treat_type: str, sub_fields: list):
+        if sheet_name not in wb.sheetnames:
+            return
+        ws = wb[sheet_name]
+        headers = [cell.value for cell in ws[1]]
+        all_keys = ["treatment_label"] + sub_fields
+        lbl_to_key = {(FIELDS[k].label or k): k for k in all_keys if k in FIELDS}
+        col_map = {ci: lbl_to_key[h]
+                   for ci, h in enumerate(headers)
+                   if h and h in lbl_to_key}
+        for ri in range(2, ws.max_row + 1):
+            row_data: dict[str, Any] = {"treatment_type": treat_type}
+            for ci, fk in col_map.items():
+                val = ws.cell(row=ri, column=ci + 1).value
+                if val is not None and str(val).strip():
+                    row_data[fk] = str(val).strip()
+            if row_data.get("treatment_label"):
+                templates.append(row_data)
+
+    _parse_treat_sheet("Chem. treatments", "chemical",
+                       ["chem_treatment", "chem_dose", "chem_unit",
+                        "chem_duration", "chem_detail"])
+    _parse_treat_sheet("Stress treatments", "stress",
+                       ["stress_treatment", "stress_dose", "stress_unit",
+                        "stress_duration", "stress_detail"])
+    _parse_treat_sheet("Other treatments", "other",
+                       ["other_treatment", "other_dose", "other_unit",
+                        "other_duration", "other_detail"])
+    # Back-compat: old single "Treatments" sheet
+    if not templates and "Treatments" in wb.sheetnames:
+        _parse_treat_sheet("Treatments", "chemical",
+                           ["chem_treatment", "chem_dose", "chem_unit",
+                            "chem_duration", "stress_treatment",
+                            "stress_dose", "stress_duration"])
+
+    result["treatment_templates"] = templates
+
+    # Per-curve overrides
+    overrides = []
+    if "Per-curve" in wb.sheetnames:
+        ws = wb["Per-curve"]
+        headers = [cell.value for cell in ws[1]]
+        curve_fields = {(f.label or k): k for k, f in FIELDS.items()
+                        if f.tier == "per_curve"}
+        col_map = {}
+        for ci, h in enumerate(headers):
+            if h and h in curve_fields:
+                col_map[ci] = curve_fields[h]
+        for ri in range(2, ws.max_row + 1):
+            row_data = {}
+            for ci, field_key in col_map.items():
+                val = ws.cell(row=ri, column=ci + 1).value
+                if val is not None and str(val).strip():
+                    row_data[field_key] = str(val).strip()
+            if row_data:
+                overrides.append(row_data)
+    result["per_curve_overrides"] = overrides
+
+    return result
+
+
+@fluorescence_annotation.route(
+    "/api/fluorescence_annotation/xlsx_template", methods=["POST"]
+)
+def xlsx_template():
+    """
+    Generate and return a multi-sheet XLSX template.
+    Accepts optional JSON body with tier_defaults to pre-fill cells.
+    """
+    tier_defaults = None
+    data = request.get_json(silent=True)
+    if data:
+        tier_defaults = data.get("tier_defaults")
+
+    try:
+        xlsx_bytes = _build_xlsx_template(tier_defaults)
+    except ImportError as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+    b64 = base64.b64encode(xlsx_bytes).decode("ascii")
+    return jsonify({
+        "status":   "ok",
+        "xlsx_b64": b64,
+        "filename": "annotation_template.xlsx",
+    })
+
+
+@fluorescence_annotation.route(
+    "/api/fluorescence_annotation/xlsx_upload", methods=["POST"]
+)
+def xlsx_upload():
+    """
+    Upload a filled-in XLSX template. Returns parsed tier data + per-curve
+    overrides that the JS can merge into the current state.
+    """
+    if "xlsx_file" not in request.files:
+        return jsonify({"status": "error",
+                        "message": "No XLSX file received."}), 400
+    try:
+        parsed = _parse_xlsx_upload(request.files["xlsx_file"].read())
+    except ImportError as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 500
+    except Exception as exc:
+        return jsonify({"status": "error",
+                        "message": f"Failed to parse XLSX: {exc}"}), 400
+
+    return jsonify({"status": "ok", **parsed})
 
 
 # ── Smoke test ────────────────────────────────────────────────────────────────
@@ -1265,21 +1830,22 @@ if __name__ == "__main__":
     _inv   = {"project_title": "Smoke test project", "institution": "CzechGlobe",
                "contact_name": "T. Zavrel"}
     _study = {"organism": "Synechocystis sp. PCC 6803",
-               "taxonomic_group": "Cyanobacteria",
-               "dark_adaptation_min": 30,
-               "instrument": None}     # will be auto-detected
-    _assay = {"measurement_type": "OJIP"}
+               "genotype": "WT",
+               "sample_type": "liquid culture",
+               "acclimation_min": 30,
+               "medium": "BG-11"}
+    _fluor = {"instrument": None,    # will be auto-detected from file content
+              "fo_timing": "20 µs"}
     _tdict = {
         "separator": "_",
         "tokens": [
-            {"position": 0, "field": "strain"},
-            {"position": 1, "field": "treatment"},
-            {"position": 2, "field": "timepoint_h",  "strip_suffix": "h"},
-            {"position": 3, "field": "replicate_id", "strip_prefix": "rep"},
+            {"position": 0, "field": "treatment_label"},
+            {"position": 1, "field": "timepoint", "strip_suffix": "h"},
+            {"position": 2, "field": "bio_rep",   "strip_prefix": "rep"},
         ],
     }
 
-    _inherited = _inherit_tiers(_inv, _study, _assay)
+    _inherited = _inherit_tiers(_inv, _study, _fluor)
     print(f"Inherited fields ({len(_inherited)}): {list(_inherited.keys())}\n")
 
     _row = _build_row(_raw, _fname, None, _inherited, _tdict)
@@ -1315,7 +1881,7 @@ if __name__ == "__main__":
     _state = {
         "investigation": _inv,
         "study":         _study,
-        "assay":         _assay,
+        "fluor":         _fluor,
         "token_dict":    _tdict,
         "rows":          [_row],
     }

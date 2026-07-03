@@ -1,31 +1,50 @@
-{# _ann_tier_forms.html — shared partial: Investigation / Study / Assay / Filename-token tabs.
+{# _ann_tier_forms.html — shared partial: Investigation / Study / Treatment /
+   Fluorometer settings / Filename-token tabs.
    Included by fluorescence_annotation.html and OJIP_analysis.html (Annotation tab).
+   Tiers: Investigation → Study → Treatment → Fluorometer → (per-curve grid).
    Requires: Bootstrap 4, Font Awesome 4, js_fluorescence_annotation.js (ANN module).
 #}
 <ul class="nav nav-tabs" id="ann-tier-tabs" role="tablist">
   <li class="nav-item">
     <a class="nav-link active" id="tab-inv-lnk"
-       data-toggle="tab" href="#tab-inv" role="tab">Investigation</a>
+       data-toggle="tab" href="#tab-inv" role="tab">
+      Investigation
+      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">once / project</small>
+    </a>
   </li>
   <li class="nav-item">
     <a class="nav-link" id="tab-study-lnk"
-       data-toggle="tab" href="#tab-study" role="tab">Study</a>
+       data-toggle="tab" href="#tab-study" role="tab">
+      Study
+      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">once / experiment</small>
+    </a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" id="tab-assay-lnk"
-       data-toggle="tab" href="#tab-assay" role="tab">Assay</a>
+    <a class="nav-link" id="tab-treat-lnk"
+       data-toggle="tab" href="#tab-treat" role="tab">
+      Treatment
+      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">template groups</small>
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="tab-fluor-lnk"
+       data-toggle="tab" href="#tab-fluor" role="tab">
+      Fluorometer settings
+      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">acquisition protocol</small>
+    </a>
   </li>
   <li class="nav-item">
     <a class="nav-link" id="tab-token-lnk"
        data-toggle="tab" href="#tab-token" role="tab">
       <i class="fa fa-code mr-1"></i>Filename tokens
+      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">per-file metadata</small>
     </a>
   </li>
 </ul>
 
 <div class="tab-content border border-top-0 p-3 mb-3" style="background:#fff;">
 
-  <!-- Investigation -->
+  <!-- ── Investigation ──────────────────────────────────────────────────────── -->
   <div class="tab-pane fade show active" id="tab-inv" role="tabpanel">
     <div class="form-row">
       <div class="form-group col-md-6">
@@ -33,183 +52,755 @@
           Project title <span class="text-danger">*</span>
         </label>
         <input type="text" class="form-control form-control-sm"
-               id="inv-project_title"
+               id="inv-project_title" required
                placeholder="e.g. Photoacclimation in Synechocystis">
+        <small class="form-text text-danger d-none" id="inv-project_title-help">
+          Project title is required before export.
+        </small>
+        <small class="form-text text-muted">MIAPPE &ldquo;Investigation title&rdquo;</small>
       </div>
       <div class="form-group col-md-6">
         <label for="inv-institution">Institution</label>
         <input type="text" class="form-control form-control-sm"
                id="inv-institution" placeholder="e.g. CzechGlobe">
+        <small class="form-text text-muted">MIAPPE &ldquo;Investigation person affiliation&rdquo;</small>
       </div>
       <div class="form-group col-md-4">
         <label for="inv-contact_name">Contact name</label>
         <input type="text" class="form-control form-control-sm"
                id="inv-contact_name">
+        <small class="form-text text-muted">MIAPPE &ldquo;Investigation person name&rdquo;</small>
       </div>
       <div class="form-group col-md-4">
         <label for="inv-contact_email">Contact e-mail</label>
         <input type="email" class="form-control form-control-sm"
                id="inv-contact_email">
+        <small class="form-text text-muted">MIAPPE &ldquo;Investigation person email&rdquo;</small>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="inv-contributor_namespace">
+          Contributor namespace
+          <small class="text-muted">(ORCID / ROR)</small>
+        </label>
+        <input type="text" class="form-control form-control-sm"
+               id="inv-contributor_namespace"
+               placeholder="e.g. 0000-0002-1234-5678 or ror.org/…">
+        <small class="form-text text-muted">MIAPPE &ldquo;Investigation person id&rdquo;</small>
       </div>
       <div class="form-group col-md-4">
         <label for="inv-license">Licence</label>
         <select class="form-control form-control-sm" id="inv-license">
           <option value="">— select —</option>
-          <option>CC-BY-4.0</option>
+          <option selected>CC-BY-4.0</option>
           <option>CC-BY-NC-4.0</option>
           <option>CC0-1.0</option>
           <option>Proprietary</option>
         </select>
+        <small class="form-text text-muted">MIAPPE &ldquo;License&rdquo;</small>
       </div>
-      <div class="form-group col-12">
+      <div class="form-group col-8">
         <label for="inv-project_description">Description</label>
         <textarea class="form-control form-control-sm"
                   id="inv-project_description" rows="2"></textarea>
+        <small class="form-text text-muted">MIAPPE &ldquo;Investigation description&rdquo;</small>
       </div>
     </div>
   </div>
 
-  <!-- Study -->
+  <!-- ── Study ──────────────────────────────────────────────────────────────── -->
   <div class="tab-pane fade" id="tab-study" role="tabpanel">
+
+    <!-- Row 1: Sample type selector (always visible, prominent) -->
     <div class="form-row">
-      <div class="form-group col-md-4">
-        <label for="study-organism">
-          Organism <span class="text-danger">*</span>
+      <div class="form-group col-md-4 mb-2">
+        <label for="study-sample_type">
+          Sample type <span class="text-danger">*</span>
         </label>
-        <select class="form-control form-control-sm" id="study-organism">
-          <option value="">— select —</option>
-          <option>Synechocystis sp. PCC 6803</option>
-          <option>Synechococcus sp. PCC 7942</option>
-          <option>Anabaena sp. PCC 7120</option>
-          <option>Thermosynechococcus elongatus BP-1</option>
-          <option>Chlamydomonas reinhardtii</option>
-          <option>Chlorella vulgaris</option>
-          <option>Arabidopsis thaliana</option>
-          <option>Spinacia oleracea</option>
-          <option>Other</option>
+        <select class="form-control form-control-sm" id="study-sample_type"
+                onchange="ANN.onSampleTypeChange(this.value)">
+          <option value="">— select sample type first —</option>
+          <option value="liquid culture">liquid culture</option>
+          <option value="vascular plant">vascular plant</option>
+          <option value="detached leaf / disc">detached leaf / disc</option>
         </select>
+        <small class="form-text text-muted">MIAPPE &ldquo;Observation unit type&rdquo;</small>
+        <small class="form-text text-muted ann-study-hint">
+          <i class="fa fa-info-circle mr-1"></i>Select a sample type to reveal the fields below.
+        </small>
       </div>
-      <div class="form-group col-md-4">
-        <label for="study-taxonomic_group">
-          Taxonomic group <span class="text-danger">*</span>
-        </label>
-        <select class="form-control form-control-sm" id="study-taxonomic_group">
-          <option value="">— select —</option>
-          <option>Cyanobacteria</option>
-          <option>Green alga</option>
-          <option>Diatom</option>
-          <option>Red alga</option>
-          <option>Plant</option>
-          <option>Other</option>
-        </select>
+    </div>
+
+    <!-- All remaining study fields (hidden until sample_type is selected) -->
+    <div class="ann-study-fields" style="display:none;">
+
+      <!-- ── Biological identity ─────────────────────────────────────────── -->
+      <div style="background:#f8f9fa; border-left:3px solid #6c757d; border-radius:0 4px 4px 0; padding:10px 14px 4px 14px; margin-bottom:8px;">
+      <p class="mb-2" style="font-size:.8rem; font-weight:600; color:#495057; letter-spacing:.02em;">
+        <i class="fa fa-leaf mr-1 text-secondary"></i>Biological identity
+      </p>
+      <div class="form-row">
+        <div class="form-group col-md-5">
+          <label for="study-organism">
+            Organism <span class="text-danger">*</span>
+          </label>
+          <div style="position:relative;">
+            <input type="text" class="form-control form-control-sm"
+                   id="study-organism" autocomplete="off"
+                   placeholder="Start typing to search NCBI Taxonomy…"
+                   oninput="ANN.searchOrganism(this.value)">
+            <input type="hidden" id="study-organism-taxid">
+            <div id="study-organism-dropdown"
+                 style="display:none; position:absolute; top:100%; left:0; right:0;
+                        z-index:1050; background:#fff; border:1px solid #dee2e6;
+                        border-radius:0 0 4px 4px; box-shadow:0 4px 12px rgba(0,0,0,.15);
+                        max-height:220px; overflow-y:auto;">
+            </div>
+          </div>
+          <small class="form-text text-muted">Type 3+ chars to search NCBI Taxonomy, or enter a custom name. MIAPPE &ldquo;Organism&rdquo;</small>
+        </div>
+        <div class="form-group col-md-3">
+          <label for="study-genotype">
+            Genotype
+            <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+          </label>
+          <input type="text" class="form-control form-control-sm"
+                 id="study-genotype" value="WT"
+                 placeholder="WT or mutant, e.g. &Delta;psaA">
+          <small class="form-text text-muted">MIAPPE &ldquo;Biological material source ID&rdquo;</small>
+        </div>
+        <div class="form-group col-md-3">
+          <label for="study-sub_strain_cultivar">
+            Sub-strain / Cultivar
+            <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+          </label>
+          <input type="text" class="form-control form-control-sm"
+                 id="study-sub_strain_cultivar"
+                 placeholder="Sub-strain or cultivar name">
+          <small class="form-text text-muted" id="study-sub_strain_cultivar-hint">MIAPPE &ldquo;Infraspecific name&rdquo;</small>
+        </div>
       </div>
+      </div><!-- /biological identity card -->
+
+      <!-- ── Growth conditions ────────────────────────────────────────────── -->
+      <div style="background:#fffbf0; border-left:3px solid #fd7e14; border-radius:0 4px 4px 0; padding:10px 14px 4px 14px; margin-bottom:8px;">
+      <p class="mb-2" style="font-size:.8rem; font-weight:600; color:#7d4a00; letter-spacing:.02em;">
+        <i class="fa fa-sun-o mr-1" style="color:#fd7e14;"></i>Growth conditions
+        <span style="font-weight:400; color:#6c757d;">&mdash; apply to all sample types</span>
+      </p>
+
+      <!-- Intensity / temp / CO₂ -->
+      <div class="form-row">
+        <div class="form-group col-md-3">
+          <label for="study-growth_light_intensity">
+            Growth light intensity
+            <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+          </label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control form-control-sm"
+                   id="study-growth_light_intensity" min="0" step="any">
+            <div class="input-group-append">
+              <span class="input-group-text" style="font-size:.72rem;">&micro;mol&nbsp;m<sup>&minus;2</sup>&nbsp;s<sup>&minus;1</sup></span>
+            </div>
+          </div>
+          <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+        </div>
+        <div class="form-group col-md-2">
+          <label for="study-growth_temperature">Growth temp</label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control form-control-sm"
+                   id="study-growth_temperature" step="any">
+            <div class="input-group-append">
+              <span class="input-group-text">&deg;C</span>
+            </div>
+          </div>
+          <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+        </div>
+        <div class="form-group col-md-2">
+          <label for="study-growth_co2">Growth CO<sub>2</sub></label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control form-control-sm"
+                   id="study-growth_co2" min="0" max="100" step="any">
+            <div class="input-group-append">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+          <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+        </div>
+      </div>
+
+      <!-- Light quality (type + conditional sub-fields) -->
+      <div class="form-row align-items-end mb-2">
+        <div class="form-group col-md-3 mb-0">
+          <label for="study-growth_light_type">Growth light type</label>
+          <select class="form-control form-control-sm" id="study-growth_light_type"
+                  onchange="ANN.onGrowthLightTypeChange(this.value)">
+            <option value="">— select —</option>
+            <option value="monochromatic LED">monochromatic LED</option>
+            <option value="multi-color / broadband LED">multi-color / broadband LED</option>
+            <option value="white LED">white LED</option>
+            <option value="fluorescent lamp">fluorescent lamp</option>
+            <option value="metal halide">metal halide</option>
+            <option value="sunlight / daylight">sunlight / daylight</option>
+            <option value="other">other</option>
+          </select>
+          <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+        </div>
+        <!-- Monochromatic: peak λ + FWHM -->
+        <div class="ann-light-mono d-none col-md-5 px-0 mb-0">
+          <div class="form-row mx-0">
+            <div class="form-group col-md-6 mb-0">
+              <label for="study-growth_light_peak_wl">Peak wavelength</label>
+              <div class="input-group input-group-sm">
+                <input type="number" class="form-control form-control-sm"
+                       id="study-growth_light_peak_wl" min="300" max="800" step="1"
+                       placeholder="e.g. 680">
+                <div class="input-group-append">
+                  <span class="input-group-text">nm</span>
+                </div>
+              </div>
+            </div>
+            <div class="form-group col-md-6 mb-0">
+              <label for="study-growth_light_peak_width">FWHM</label>
+              <div class="input-group input-group-sm">
+                <input type="number" class="form-control form-control-sm"
+                       id="study-growth_light_peak_width" min="1" max="200" step="1"
+                       placeholder="e.g. 20">
+                <div class="input-group-append">
+                  <span class="input-group-text">nm</span>
+                </div>
+              </div>
+              <small class="form-text text-muted">Spectral width at 50% of peak intensity</small>
+            </div>
+          </div>
+        </div>
+        <!-- White / fluorescent / metal halide: colour category -->
+        <div class="ann-light-white d-none col-md-3 px-0 mb-0">
+          <div class="form-row mx-0">
+            <div class="form-group col-12 mb-0">
+              <label for="study-growth_light_color_cat">White light category</label>
+              <select class="form-control form-control-sm" id="study-growth_light_color_cat">
+                <option value="">— select —</option>
+                <option value="warm white (<3300 K)">warm white (&lt;3300 K)</option>
+                <option value="neutral white (3300–5000 K)">neutral white (3300&ndash;5000 K)</option>
+                <option value="cool white (>5000 K)">cool white (&gt;5000 K)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <!-- Multi-color / other: free-text note -->
+        <div class="ann-light-note d-none col-md-5 px-0 mb-0">
+          <div class="form-row mx-0">
+            <div class="form-group col-12 mb-0">
+              <label for="study-growth_light_note">Light source note</label>
+              <input type="text" class="form-control form-control-sm"
+                     id="study-growth_light_note"
+                     placeholder="e.g. spectrum, brand, filter settings…">
+            </div>
+          </div>
+        </div>
+      </div>
+      </div><!-- /growth conditions card -->
+
+      <!-- ── Liquid culture–specific fields ──────────────────────────────── -->
+      <div class="ann-study-liquid" style="display:none;">
+      <div style="background:#f0faf4; border-left:3px solid #28a745; border-radius:0 4px 4px 0; padding:10px 14px 4px 14px; margin-bottom:8px;">
+        <p class="mb-2" style="font-size:.8rem; font-weight:600; color:#155724; letter-spacing:.02em;">
+          <i class="fa fa-flask mr-1" style="color:#28a745;"></i>Liquid culture details
+        </p>
+
+        <!-- Medium / trophic / cultivator -->
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label for="study-medium">
+              Medium
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-medium" list="study-medium-list" autocomplete="off"
+                   placeholder="Type or select…">
+            <datalist id="study-medium-list">
+              <!-- Cyanobacteria / general freshwater -->
+              <option value="BG-11">
+              <option value="BG-11₀ (N-free)">
+              <option value="BG-11c (carbonate-free)">
+              <option value="BG-11M (marine)">
+              <option value="Z8">
+              <option value="Z8X (N-free)">
+              <option value="ASN-III">
+              <option value="MN medium (Allen &amp; Arnon)">
+              <option value="Zarrouk's medium">
+              <option value="MBL medium">
+              <!-- Green algae -->
+              <option value="TAP (Tris-Acetate-Phosphate)">
+              <option value="TP (Tris-Phosphate)">
+              <option value="M2 (Chlamydomonas)">
+              <option value="HSM (High Salt Medium)">
+              <option value="BBM (Bold's Basal Medium)">
+              <option value="Bristol's medium">
+              <option value="Chu No. 10">
+              <option value="COMBO medium">
+              <option value="WC medium">
+              <option value="Waris-H">
+              <option value="AF-6">
+              <option value="Proteose medium">
+              <!-- Marine microalgae -->
+              <option value="f/2 (Guillard &amp; Ryther)">
+              <option value="f/2+Si (diatoms)">
+              <option value="L1 medium">
+              <option value="K medium">
+              <option value="ESAW">
+              <option value="Provasoli's ES medium">
+              <option value="Erdschreiber medium">
+              <option value="ASW (Artificial Seawater)">
+              <!-- Euglena -->
+              <option value="ESM (Euglena Standard Medium)">
+              <option value="Hutner's medium">
+              <!-- Plant tissue culture / hydroponics -->
+              <option value="MS (Murashige &amp; Skoog)">
+              <option value="1/2 MS">
+              <option value="1/4 MS">
+              <option value="B5 (Gamborg)">
+              <option value="WPM (Woody Plant Medium)">
+              <option value="N6 (Chu)">
+              <option value="LS (Linsmaier &amp; Skoog)">
+              <option value="SH (Schenk &amp; Hildebrandt)">
+              <option value="Hoagland's solution">
+              <option value="Knop's solution">
+              <option value="Long Ashton solution">
+            </datalist>
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth facility&rdquo;</small>
+          </div>
+          <div class="form-group col-md-3">
+            <label for="study-medium_modification">Medium modification</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-medium_modification"
+                   placeholder="e.g. &minus;N, 2&times; Fe, +glucose 5 mM">
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-trophic_mode">
+              Trophic mode
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <select class="form-control form-control-sm" id="study-trophic_mode">
+              <option value="">— select —</option>
+              <option value="autotrophy">autotrophy</option>
+              <option value="mixotrophy">mixotrophy</option>
+              <option value="heterotrophy">heterotrophy</option>
+            </select>
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+          <div class="form-group col-md-4">
+            <label for="study-cultivator_type">Cultivator type</label>
+            <select class="form-control form-control-sm" id="study-cultivator_type">
+              <option value="">— select —</option>
+              <option value="Erlenmeyer flask (orbital shaking)">Erlenmeyer flask (orbital shaking)</option>
+              <option value="Erlenmeyer flask (static)">Erlenmeyer flask (static)</option>
+              <option value="flat-bottom flask">flat-bottom flask</option>
+              <option value="flat-panel photobioreactor">flat-panel photobioreactor</option>
+              <option value="tubular photobioreactor">tubular photobioreactor</option>
+              <option value="bubble-column photobioreactor">bubble-column photobioreactor</option>
+              <option value="airlift bioreactor">airlift bioreactor</option>
+              <option value="stirred-tank bioreactor">stirred-tank bioreactor</option>
+              <option value="multiwell plate (6-well)">multiwell plate (6-well)</option>
+              <option value="multiwell plate (12-well)">multiwell plate (12-well)</option>
+              <option value="multiwell plate (24-well)">multiwell plate (24-well)</option>
+              <option value="multiwell plate (96-well)">multiwell plate (96-well)</option>
+              <option value="Petri dish">Petri dish</option>
+              <option value="test tube / culture tube">test tube / culture tube</option>
+              <option value="culture bag">culture bag</option>
+              <option value="raceway pond">raceway pond</option>
+              <option value="thin-layer cascade">thin-layer cascade</option>
+              <option value="trough / tray">trough / tray</option>
+              <option value="carboy">carboy</option>
+              <option value="custom / other">custom / other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Culture density -->
+        <div style="background:#fff; border:1px solid #c3e6cb; border-radius:4px; padding:8px 12px 2px 12px; margin-top:4px;">
+        <p class="mb-2" style="font-size:.78rem; font-weight:600; color:#155724; letter-spacing:.02em;">
+          <i class="fa fa-tint mr-1" style="color:#17a2b8;"></i>Culture density
+          <span style="font-weight:400; color:#6c757d;">&mdash; inherited to all curves; override per-curve in grid</span>
+        </p>
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label for="study-culture_density_chla">
+              Chl <em>a</em>
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-culture_density_chla" min="0" step="any"
+                     placeholder="e.g. 5.2">
+              <div class="input-group-append">
+                <span class="input-group-text" style="font-size:.75rem;">&micro;g&nbsp;mL<sup>&minus;1</sup></span>
+              </div>
+            </div>
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-culture_density_od">
+              OD
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <input type="number" class="form-control form-control-sm"
+                   id="study-culture_density_od" min="0" step="any"
+                   placeholder="e.g. 0.8">
+            <small class="form-text text-muted">1 cm cuvette · MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-culture_density_od_wl">OD wavelength</label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-culture_density_od_wl" min="300" max="900" step="1"
+                     list="study-od-wl-list" placeholder="720">
+              <div class="input-group-append">
+                <span class="input-group-text">nm</span>
+              </div>
+            </div>
+            <datalist id="study-od-wl-list">
+              <option value="680">
+              <option value="720">
+              <option value="730">
+              <option value="750">
+            </datalist>
+          </div>
+          <div class="form-group col-md-3">
+            <label for="study-culture_density_other">
+              Other density
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-culture_density_other"
+                   placeholder="e.g. 3&times;10&sup8;">
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-culture_density_other_unit">Unit</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-culture_density_other_unit"
+                   placeholder="e.g. cells mL&minus;&sup1;">
+          </div>
+        </div><!-- /culture density inner box -->
+        </div><!-- /liquid culture card -->
+      </div><!-- /ann-study-liquid -->
+
+      <!-- ── Plant-specific fields ───────────────────────────────────────── -->
+      <div class="ann-study-plant" style="display:none;">
+      <div style="background:#f3fdf3; border-left:3px solid #20c997; border-radius:0 4px 4px 0; padding:10px 14px 4px 14px; margin-bottom:8px;">
+        <p class="mb-2" style="font-size:.8rem; font-weight:600; color:#155724; letter-spacing:.02em;">
+          <i class="fa fa-leaf mr-1" style="color:#20c997;"></i>Plant details
+        </p>
+        <p class="text-muted small mb-2">
+          Plant-specific per-curve fields (developmental stage, organ, leaf position)
+          are available in the reconciliation grid below.
+        </p>
+      </div><!-- /plant card -->
+      </div><!-- /ann-study-plant -->
+
+    </div><!-- /.ann-study-fields -->
+  </div><!-- /ann-study-fields outer -->
+  </div><!-- /tab-study -->
+
+  <!-- ── Treatment templates ──────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-treat" role="tabpanel">
+    <p class="text-muted small mb-3">
+      Define treatment groups here. The <strong>Group label</strong> appears as a
+      selectable option in the grid&rsquo;s <em>Treatment group</em> column &mdash;
+      selecting it auto-fills all sub-fields for that curve.
+      MIAPPE &ldquo;Factor value&rdquo;
+    </p>
+
+    <!-- ── Chemical treatments ── -->
+    <div class="mb-4">
+      <h6 class="font-weight-bold mb-2" style="font-size:.82rem;">
+        <i class="fa fa-flask mr-1 text-primary"></i>Chemical treatments
+      </h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-2" id="ann-chem-treatment-table">
+          <thead class="thead-light">
+            <tr>
+              <th style="min-width:130px;">Group label</th>
+              <th style="min-width:140px;">Chemical</th>
+              <th style="width:90px;">Dose</th>
+              <th style="width:100px;">Unit</th>
+              <th style="width:90px;">Duration</th>
+              <th>Additional detail</th>
+              <th style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody id="ann-chem-treatment-body">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-sm btn-outline-primary" onclick="ANN.addChemTreatmentRow()">
+        <i class="fa fa-plus mr-1"></i>Add chemical treatment
+      </button>
+    </div>
+
+    <!-- ── Stress treatments ── -->
+    <div class="mb-4">
+      <h6 class="font-weight-bold mb-2" style="font-size:.82rem;">
+        <i class="fa fa-sun-o mr-1 text-warning"></i>Stress treatments
+      </h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-2" id="ann-stress-treatment-table">
+          <thead class="thead-light">
+            <tr>
+              <th style="min-width:130px;">Group label</th>
+              <th style="min-width:160px;">Stress</th>
+              <th style="width:90px;">Dose</th>
+              <th style="min-width:160px;">Unit</th>
+              <th style="width:90px;">Duration</th>
+              <th>Additional detail</th>
+              <th style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody id="ann-stress-treatment-body">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-sm btn-outline-warning" onclick="ANN.addStressTreatmentRow()">
+        <i class="fa fa-plus mr-1"></i>Add stress treatment
+      </button>
+    </div>
+
+    <!-- ── Other treatments ── -->
+    <div class="mb-2">
+      <h6 class="font-weight-bold mb-2" style="font-size:.82rem;">
+        <i class="fa fa-tags mr-1 text-secondary"></i>Other treatments
+      </h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-2" id="ann-other-treatment-table">
+          <thead class="thead-light">
+            <tr>
+              <th style="min-width:130px;">Group label</th>
+              <th style="min-width:140px;">Treatment</th>
+              <th style="width:90px;">Dose</th>
+              <th style="width:100px;">Unit</th>
+              <th style="width:90px;">Duration</th>
+              <th>Additional detail</th>
+              <th style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody id="ann-other-treatment-body">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" onclick="ANN.addOtherTreatmentRow()">
+        <i class="fa fa-plus mr-1"></i>Add other treatment
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Fluorometer settings ───────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-fluor" role="tabpanel">
+    <div class="form-row">
+
       <div class="form-group col-md-4">
-        <label for="study-instrument">
+        <label for="fluor-instrument">
           Instrument <span class="text-danger">*</span>
         </label>
-        <select class="form-control form-control-sm" id="study-instrument">
-          <option value="">— auto-detect —</option>
-          <option>MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
-          <option>Aquapen</option>
-          <option>FL6000</option>
+        <select class="form-control form-control-sm" id="fluor-instrument"
+                onchange="ANN.onInstrumentChange(this.value)">
+          <option value="">— auto-detected on file upload —</option>
+          <option value="MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
+          <option value="Aquapen">AquaPen (Photon Systems Instruments)</option>
+          <option value="FluorPen">FluorPen (Photon Systems Instruments)</option>
+          <option value="FL6000">FL6000 (Photon Systems Instruments)</option>
         </select>
+        <small class="form-text text-muted">
+          Set automatically from file format on upload.
+          MICF &ldquo;instrumentModel&rdquo;
+        </small>
       </div>
+
+      <div class="form-group col-md-3">
+        <label for="fluor-fo_timing">
+          F0 timing convention
+        </label>
+        <select class="form-control form-control-sm" id="fluor-fo_timing">
+          <option value="">— select —</option>
+          <option value="20 µs">20 µs</option>
+          <option value="50 µs">50 µs</option>
+        </select>
+        <small class="form-text text-muted">MICF &ldquo;F0TimingConvention&rdquo;</small>
+      </div>
+
+      <div class="form-group col-md-5" id="fluor-fields-count-wrap">
+        <label class="d-block">&nbsp;</label>
+        <span class="badge badge-info" id="fluor-fields-count">0 / 6 fields set</span>
+      </div>
+
       <div class="form-group col-md-4">
-        <label for="study-strain">Strain</label>
-        <input type="text" class="form-control form-control-sm"
-               id="study-strain" placeholder="e.g. WT, &Delta;mutX">
+        <label for="fluor-sat_pulse_intensity">Sat. pulse intensity</label>
+        <div class="input-group input-group-sm">
+          <input type="number" class="form-control form-control-sm ann-fluor-field"
+                 id="fluor-sat_pulse_intensity" min="0" step="any"
+                 oninput="ANN.updateFluorCount()">
+          <div class="input-group-append">
+            <span class="input-group-text" style="font-size:.72rem;">&micro;mol&nbsp;m<sup>&minus;2</sup>&nbsp;s<sup>&minus;1</sup></span>
+          </div>
+        </div>
+        <small class="form-text text-muted">MICF &ldquo;saturatingPulseIntensity&rdquo;</small>
       </div>
-      <div class="form-group col-md-4">
-        <label for="study-culture_collection_id">Culture collection ID</label>
-        <input type="text" class="form-control form-control-sm"
-               id="study-culture_collection_id" placeholder="e.g. ATCC 27184">
-      </div>
-      <div class="form-group col-md-4">
-        <label for="study-growth_medium">Growth medium</label>
-        <input type="text" class="form-control form-control-sm"
-               id="study-growth_medium" placeholder="e.g. BG-11">
-      </div>
+
       <div class="form-group col-md-3">
-        <label for="study-dark_adaptation_min">Dark adaptation (min)</label>
-        <input type="number" class="form-control form-control-sm"
-               id="study-dark_adaptation_min" min="0" step="1">
+        <label for="fluor-sat_pulse_wavelength_nm">Sat. pulse wavelength</label>
+        <div class="input-group input-group-sm">
+          <input type="number" class="form-control form-control-sm ann-fluor-field"
+                 id="fluor-sat_pulse_wavelength_nm" min="300" max="800" step="1"
+                 oninput="ANN.updateFluorCount()">
+          <div class="input-group-append">
+            <span class="input-group-text">nm</span>
+          </div>
+        </div>
+        <small class="form-text text-muted">MICF &ldquo;saturatingPulseWavelength&rdquo;</small>
       </div>
+
       <div class="form-group col-md-3">
-        <label for="study-measuring_light_wavelength_nm">
-          Meas. light wavelength (nm)
-        </label>
-        <input type="number" class="form-control form-control-sm"
-               id="study-measuring_light_wavelength_nm" min="0" step="1">
+        <label for="fluor-sat_pulse_duration_s">Sat. pulse duration</label>
+        <div class="input-group input-group-sm">
+          <input type="number" class="form-control form-control-sm ann-fluor-field"
+                 id="fluor-sat_pulse_duration_s" min="0" step="any"
+                 oninput="ANN.updateFluorCount()">
+          <div class="input-group-append">
+            <span class="input-group-text">s</span>
+          </div>
+        </div>
+        <small class="form-text text-muted">MICF &ldquo;saturatingPulseDuration&rdquo;</small>
       </div>
-      <div class="form-group col-md-3">
-        <label for="study-measuring_light_intensity_umol">
-          Meas. light (&micro;mol&nbsp;m<sup>-2</sup>&nbsp;s<sup>-1</sup>)
-        </label>
-        <input type="number" class="form-control form-control-sm"
-               id="study-measuring_light_intensity_umol" min="0" step="any">
+
+      <div class="form-group col-md-4 ann-fluor-meas-light">
+        <label for="fluor-meas_light_intensity">Measuring light intensity</label>
+        <div class="input-group input-group-sm">
+          <input type="number" class="form-control form-control-sm ann-fluor-field"
+                 id="fluor-meas_light_intensity" min="0" step="any"
+                 oninput="ANN.updateFluorCount()">
+          <div class="input-group-append">
+            <span class="input-group-text" style="font-size:.72rem;">&micro;mol&nbsp;m<sup>&minus;2</sup>&nbsp;s<sup>&minus;1</sup></span>
+          </div>
+        </div>
+        <small class="form-text text-muted">MICF &ldquo;measuringLightIntensity&rdquo;</small>
       </div>
-      <div class="form-group col-md-3">
-        <label for="study-actinic_light_wavelength_nm">
-          Actinic light wavelength (nm)
-        </label>
-        <input type="number" class="form-control form-control-sm"
-               id="study-actinic_light_wavelength_nm" min="0" step="1">
+
+      <div class="form-group col-md-3 ann-fluor-meas-light">
+        <label for="fluor-meas_light_wavelength_nm">Measuring light wavelength</label>
+        <div class="input-group input-group-sm">
+          <input type="number" class="form-control form-control-sm ann-fluor-field"
+                 id="fluor-meas_light_wavelength_nm" min="300" max="800" step="1"
+                 oninput="ANN.updateFluorCount()">
+          <div class="input-group-append">
+            <span class="input-group-text">nm</span>
+          </div>
+        </div>
+        <small class="form-text text-muted">MICF &ldquo;measuringLightWavelength&rdquo;</small>
       </div>
-      <div class="form-group col-md-3">
-        <label for="study-actinic_light_intensity_umol">
-          Actinic light (&micro;mol&nbsp;m<sup>-2</sup>&nbsp;s<sup>-1</sup>)
-        </label>
-        <input type="number" class="form-control form-control-sm"
-               id="study-actinic_light_intensity_umol" min="0" step="any">
+
+      <div class="form-group col-md-4 ann-fluor-meas-light-na d-none">
+        <label class="d-block">&nbsp;</label>
+        <span class="badge badge-secondary">
+          <i class="fa fa-info-circle mr-1"></i>Measuring light: N/A for this instrument
+        </span>
       </div>
-      <div class="form-group col-md-3">
-        <label for="study-saturating_pulse_intensity_umol">
-          Sat. pulse (&micro;mol&nbsp;m<sup>-2</sup>&nbsp;s<sup>-1</sup>)
-        </label>
-        <input type="number" class="form-control form-control-sm"
-               id="study-saturating_pulse_intensity_umol" min="0" step="any">
+
+    </div><!-- /.form-row measurement settings -->
+
+    <!-- ── Pre-acclimation conditions ──────────────────────────────────── -->
+    <div class="border-top pt-3 mt-1">
+      <h6 class="font-weight-bold mb-2" style="font-size:.82rem;">
+        <i class="fa fa-clock-o mr-1 text-muted"></i>Pre-acclimation conditions
+        <small class="font-weight-normal text-muted">
+          &mdash; conditions during dark/light adaptation immediately before OJIP induction
+        </small>
+      </h6>
+      <div class="form-row">
+
+        <div class="form-group col-md-3">
+          <label for="fluor-acclimation_min">Dark pre-acclimation time</label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control form-control-sm ann-fluor-field"
+                   id="fluor-acclimation_min" min="0" step="1"
+                   oninput="ANN.updateFluorCount()">
+            <div class="input-group-append">
+              <span class="input-group-text">min</span>
+            </div>
+          </div>
+          <small class="form-text text-muted">MICF &ldquo;darkAdaptationDuration&rdquo;</small>
+        </div>
+
+        <div class="form-group col-md-3">
+          <label for="fluor-actinic_preaccl_intensity">Actinic light prior to OJIP</label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control form-control-sm ann-fluor-field"
+                   id="fluor-actinic_preaccl_intensity" min="0" step="any"
+                   oninput="ANN.updateFluorCount()">
+            <div class="input-group-append">
+              <span class="input-group-text" style="font-size:.72rem;">&micro;mol&nbsp;m<sup>&minus;2</sup>&nbsp;s<sup>&minus;1</sup></span>
+            </div>
+          </div>
+          <small class="form-text text-muted">0 or blank = dark pre-adapted</small>
+        </div>
+
+        <div class="form-group col-md-2">
+          <label for="fluor-actinic_preaccl_wavelength_nm">Actinic wavelength</label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control form-control-sm"
+                   id="fluor-actinic_preaccl_wavelength_nm" min="300" max="800" step="1"
+                   placeholder="e.g. 630">
+            <div class="input-group-append">
+              <span class="input-group-text">nm</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group col-md-2">
+          <label for="fluor-preaccl_temperature">Temperature</label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control form-control-sm"
+                   id="fluor-preaccl_temperature" step="any"
+                   placeholder="e.g. 25">
+            <div class="input-group-append">
+              <span class="input-group-text">&deg;C</span>
+            </div>
+          </div>
+          <small class="form-text text-muted">Fill only if different from growth temp</small>
+        </div>
+
+        <div class="form-group col-md-2">
+          <label for="fluor-preaccl_co2">CO<sub>2</sub></label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control form-control-sm"
+                   id="fluor-preaccl_co2" min="0" max="100" step="any"
+                   placeholder="e.g. 0.04">
+            <div class="input-group-append">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+          <small class="form-text text-muted">Fill only if different from growth CO<sub>2</sub></small>
+        </div>
+
       </div>
-      <div class="form-group col-md-3">
-        <label for="study-saturating_pulse_duration_ms">
-          Sat. pulse duration (ms)
-        </label>
-        <input type="number" class="form-control form-control-sm"
-               id="study-saturating_pulse_duration_ms" min="0" step="any">
-      </div>
-      <div class="form-group col-12">
-        <label for="study-growth_conditions">Growth conditions</label>
-        <textarea class="form-control form-control-sm"
-                  id="study-growth_conditions" rows="2"
-                  placeholder="e.g. 30&deg;C, 50 &micro;mol photons m&minus;2 s&minus;1, 5% CO&sub2;"></textarea>
+      <div class="form-row mb-1">
+        <div class="col-12">
+          <button type="button" class="btn btn-sm btn-outline-secondary"
+                  onclick="ANN.copyPreacclFromStudy()">
+            <i class="fa fa-copy mr-1"></i>Copy temp &amp; CO<sub>2</sub> from growth conditions
+          </button>
+          <small class="text-muted ml-2">
+            Leave blank if pre-acclimation was at the same temperature &amp; CO<sub>2</sub> as cultivation
+          </small>
+        </div>
       </div>
     </div>
+
   </div>
 
-  <!-- Assay -->
-  <div class="tab-pane fade" id="tab-assay" role="tabpanel">
-    <div class="form-row">
-      <div class="form-group col-md-3">
-        <label for="assay-measurement_type">
-          Measurement type <span class="text-danger">*</span>
-        </label>
-        <select class="form-control form-control-sm" id="assay-measurement_type">
-          <option value="OJIP" selected>OJIP</option>
-          <option>PAM_induction</option>
-          <option>RLC</option>
-          <option>P700</option>
-          <option>Sigma</option>
-        </select>
-      </div>
-      <div class="form-group col-md-9">
-        <label for="assay-assay_description">Assay description</label>
-        <input type="text" class="form-control form-control-sm"
-               id="assay-assay_description"
-               placeholder="Brief description of the measurement assay">
-      </div>
-    </div>
-  </div>
-
-  <!-- Filename tokens -->
+  <!-- ── Filename tokens ───────────────────────────────────────────────────── -->
   <div class="tab-pane fade" id="tab-token" role="tabpanel">
     <p class="text-muted small mb-2">
       Define how per-file metadata is encoded in filenames. Each token decodes one
@@ -252,9 +843,9 @@
 
     <p class="text-muted small mb-0">
       Example: file <code>ctrl_rep2_t24.txt</code> with separator <code>_</code>
-      and tokens at positions 0&nbsp;=&nbsp;treatment, 1&nbsp;=&nbsp;replicate_id
-      (prefix&nbsp;<code>rep</code>), 2&nbsp;=&nbsp;timepoint_h (prefix&nbsp;<code>t</code>)
-      &rarr; treatment=ctrl, replicate_id=2, timepoint_h=24.
+      and tokens at positions 0&nbsp;=&nbsp;treatment_label, 1&nbsp;=&nbsp;bio_rep
+      (prefix&nbsp;<code>rep</code>), 2&nbsp;=&nbsp;timepoint (prefix&nbsp;<code>t</code>)
+      &rarr; treatment_label=ctrl, bio_rep=2, timepoint=24.
     </p>
   </div>
 
