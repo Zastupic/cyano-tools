@@ -293,6 +293,19 @@ def create_app():
     app.register_blueprint(pbr_analysis_bp, url_prefix='/')
     app.register_blueprint(fluorescence_annotation, url_prefix='/')
 
+    # ── Stocks app (optional — loaded when stocks package is importable) ─────
+    _stocks_path = os.environ.get('STOCKS_APP_PATH')
+    if _stocks_path:
+        import sys
+        if _stocks_path not in sys.path:
+            sys.path.insert(0, _stocks_path)
+    try:
+        from stocks import bp as stocks_bp
+        app.register_blueprint(stocks_bp)
+        print('[stocks] Blueprint registered at /stocks')
+    except ImportError:
+        pass  # stocks package not installed — skip silently
+
     #### DATABASE ####
     with app.app_context(): # creating the database
         db.create_all()
