@@ -300,8 +300,13 @@ def create_app():
         if _stocks_path not in sys.path:
             sys.path.insert(0, _stocks_path)
     try:
-        from stocks import bp as stocks_bp
+        from stocks import bp as stocks_bp  # type: ignore[import]
+        from stocks.models import init_db, seed_tickers  # type: ignore[import]
         app.register_blueprint(stocks_bp)
+        
+        init_db(app)
+        with app.app_context():
+            seed_tickers()
         print('[stocks] Blueprint registered at /stocks')
     except ImportError:
         pass  # stocks package not installed — skip silently
