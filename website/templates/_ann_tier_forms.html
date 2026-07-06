@@ -675,7 +675,7 @@
         <small class="form-text text-muted">MICF &ldquo;saturatingPulseDuration&rdquo;</small>
       </div>
 
-      <div class="form-group col-md-4 ann-fluor-meas-light">
+      <div class="form-group col-md-4">
         <label for="fluor-meas_light_intensity">Measuring light intensity</label>
         <div class="input-group input-group-sm">
           <input type="number" class="form-control form-control-sm ann-fluor-field"
@@ -688,7 +688,7 @@
         <small class="form-text text-muted">MICF &ldquo;measuringLightIntensity&rdquo;</small>
       </div>
 
-      <div class="form-group col-md-3 ann-fluor-meas-light">
+      <div class="form-group col-md-3">
         <label for="fluor-meas_light_wavelength_nm">Measuring light wavelength</label>
         <div class="input-group input-group-sm">
           <input type="number" class="form-control form-control-sm ann-fluor-field"
@@ -701,11 +701,49 @@
         <small class="form-text text-muted">MICF &ldquo;measuringLightWavelength&rdquo;</small>
       </div>
 
-      <div class="form-group col-md-4 ann-fluor-meas-light-na d-none">
-        <label class="d-block">&nbsp;</label>
-        <span class="badge badge-secondary">
-          <i class="fa fa-info-circle mr-1"></i>Measuring light: N/A for this instrument
-        </span>
+      <div class="form-group col-md-2">
+        <label for="fluor-detector_gain">Detector gain</label>
+        <input type="number" class="form-control form-control-sm ann-fluor-field"
+               id="fluor-detector_gain" min="0" step="any"
+               oninput="ANN.updateFluorCount()">
+      </div>
+
+      <div class="form-group col-md-2">
+        <label for="fluor-damping">Damping</label>
+        <input type="number" class="form-control form-control-sm ann-fluor-field"
+               id="fluor-damping" min="0" step="any"
+               oninput="ANN.updateFluorCount()">
+      </div>
+
+      <div class="form-group col-md-3">
+        <label for="fluor-detector_bandpass_filter">Detector bandpass filter</label>
+        <input type="text" class="form-control form-control-sm ann-fluor-field"
+               id="fluor-detector_bandpass_filter"
+               placeholder="auto-filled from instrument"
+               oninput="ANN.updateFluorCount()">
+        <small class="form-text text-muted">Emission filter (auto-set on instrument selection)</small>
+      </div>
+
+      <div class="form-group col-md-3">
+        <label for="fluor-sample_holder_type">Sample holder</label>
+        <select class="form-control form-control-sm ann-fluor-field"
+                id="fluor-sample_holder_type"
+                oninput="ANN.updateFluorCount()">
+          <option value="cuvette" selected>Cuvette</option>
+          <option value="leaf-clip">Leaf-clip</option>
+          <option value="probe">Probe</option>
+          <option value="fiber optics">Fiber optics</option>
+        </select>
+      </div>
+
+      <div class="form-group col-md-2">
+        <label for="fluor-stirring">Stirring</label>
+        <select class="form-control form-control-sm ann-fluor-field"
+                id="fluor-stirring"
+                oninput="ANN.updateFluorCount()">
+          <option value="off" selected>Off</option>
+          <option value="on">On</option>
+        </select>
       </div>
 
     </div><!-- /.form-row measurement settings -->

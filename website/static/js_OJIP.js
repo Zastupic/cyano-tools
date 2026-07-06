@@ -657,6 +657,15 @@ async function uploadAndAnalyze() {
 
     ojipData = data;
     groups   = {};
+    // Sync annotation instrument select with the OJIP fluorometer selection so
+    // the field is pre-filled when the user switches to the Annotation tab.
+    if (data.fluorometer) {
+      const annSel = document.getElementById('fluor-instrument');
+      if (annSel) {
+        annSel.value = data.fluorometer;
+        if (typeof ANN !== 'undefined') ANN.onInstrumentChange(data.fluorometer);
+      }
+    }
     recalcAllParams();
     document.getElementById('results-section').style.display = '';
     renderResults();

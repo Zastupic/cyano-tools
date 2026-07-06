@@ -123,6 +123,11 @@ const ANN = (function () {
         { key: 'sat_pulse_duration_s',    label: 'Sat. dur. (s)',      group: 'acquisition', editable: true },
         { key: 'meas_light_intensity',    label: 'Meas. light (µmol)',  group: 'acquisition', editable: true },
         { key: 'meas_light_wavelength_nm',label: 'Meas. light λ (nm)', group: 'acquisition', editable: true },
+        { key: 'detector_gain',           label: 'Detector gain',      group: 'acquisition', editable: true },
+        { key: 'damping',                 label: 'Damping',            group: 'acquisition', editable: true },
+        { key: 'detector_bandpass_filter',label: 'Det. filter',        group: 'acquisition', editable: true },
+        { key: 'sample_holder_type',      label: 'Sample holder',      group: 'acquisition', editable: true },
+        { key: 'stirring',                label: 'Stirring',           group: 'acquisition', editable: true },
         { key: 'gain',                    label: 'Gain',               group: 'acquisition', editable: true },
         { key: 'timestamp',  label: 'Timestamp',    group: 'acquisition',  editable: true  },
         { key: 'acclimation_min',             label: 'Dark pre-accl. (min)',     group: 'acquisition', editable: true },
@@ -301,17 +306,26 @@ const ANN = (function () {
         }
     }
 
-    // ── Instrument change — measuring light N/A ──────────────────────────────
+    // ── Instrument change ─────────────────────────────────────────────────────
+    const _DETECTOR_FILTER_DEFAULTS = {
+        'aquapen':       '667–750 nm bandpass',
+        'fluorpen':      '667–750 nm bandpass',
+        'fl6000':        'RG695 (690–730 nm)',
+        'handy pea':     'RG9 (>700 nm)',
+        'pocket pea':    'RG9 (>700 nm)',
+        'multi-color-pam': 'RG665 (>665 nm) + SP710 (<710 nm)',
+        'dual pam':      'RG665 (>665 nm) + SP710 (<710 nm)',
+        'junior-pam':    'RG665 (>665 nm)',
+    };
     function onInstrumentChange(val) {
-        // AquaPen doesn't have user-configurable measuring light
-        const isAquapen = /aquapen|fluorpen/i.test(val || '');
-        document.querySelectorAll('.ann-fluor-meas-light').forEach(el => {
-            el.style.display = isAquapen ? 'none' : '';
-        });
-        document.querySelectorAll('.ann-fluor-meas-light-na').forEach(el => {
-            if (isAquapen) el.classList.remove('d-none');
-            else el.classList.add('d-none');
-        });
+        // Auto-fill detector bandpass filter from instrument defaults
+        const filterEl = _eid('fluor-detector_bandpass_filter');
+        if (filterEl) {
+            const v = (val || '').toLowerCase();
+            for (const [key, dflt] of Object.entries(_DETECTOR_FILTER_DEFAULTS)) {
+                if (v.includes(key)) { filterEl.value = dflt; break; }
+            }
+        }
         updateFluorCount();
     }
 
@@ -516,6 +530,11 @@ const ANN = (function () {
                 sat_pulse_duration_s:    _val('fluor-sat_pulse_duration_s'),
                 meas_light_intensity:         _val('fluor-meas_light_intensity'),
                 meas_light_wavelength_nm:     _val('fluor-meas_light_wavelength_nm'),
+                detector_gain:               _val('fluor-detector_gain'),
+                damping:                     _val('fluor-damping'),
+                detector_bandpass_filter:     _val('fluor-detector_bandpass_filter'),
+                sample_holder_type:          _val('fluor-sample_holder_type'),
+                stirring:                    _val('fluor-stirring'),
                 actinic_preaccl_intensity:    _val('fluor-actinic_preaccl_intensity'),
                 actinic_preaccl_wavelength_nm: _val('fluor-actinic_preaccl_wavelength_nm'),
                 preaccl_temperature:          _val('fluor-preaccl_temperature'),
@@ -556,6 +575,8 @@ const ANN = (function () {
 
         ['fo_timing','acclimation_min','sat_pulse_intensity','sat_pulse_wavelength_nm',
          'sat_pulse_duration_s','meas_light_intensity','meas_light_wavelength_nm',
+         'detector_gain','damping','detector_bandpass_filter',
+         'sample_holder_type','stirring',
          'actinic_preaccl_intensity','actinic_preaccl_wavelength_nm',
          'preaccl_temperature','preaccl_co2'].forEach(k => _set('fluor-'+k, fluor[k]));
 
