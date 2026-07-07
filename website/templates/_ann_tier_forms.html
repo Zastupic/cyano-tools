@@ -439,15 +439,30 @@
             </div>
             <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
           </div>
+          <div class="form-group col-md-3">
+            <label for="study-culture_density_cdw">
+              Cellular dry weight
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-culture_density_cdw" min="0" step="any"
+                     placeholder="e.g. 0.5">
+              <div class="input-group-append">
+                <span class="input-group-text" style="font-size:.75rem;">g&nbsp;L<sup>&minus;1</sup></span>
+              </div>
+            </div>
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
           <div class="form-group col-md-2">
             <label for="study-culture_density_od">
-              OD
+              OD (1 cm cuvette)
               <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
             </label>
             <input type="number" class="form-control form-control-sm"
                    id="study-culture_density_od" min="0" step="any"
                    placeholder="e.g. 0.8">
-            <small class="form-text text-muted">1 cm cuvette · MIAPPE &ldquo;Sample description&rdquo;</small>
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
           </div>
           <div class="form-group col-md-2">
             <label for="study-culture_density_od_wl">OD wavelength</label>
@@ -465,6 +480,7 @@
               <option value="730">
               <option value="750">
             </datalist>
+            <small class="form-text text-muted">Measurement wavelength (1 cm cuvette)</small>
           </div>
           <div class="form-group col-md-3">
             <label for="study-culture_density_other">
