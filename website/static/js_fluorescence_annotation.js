@@ -1406,6 +1406,25 @@ const ANN = (function () {
         }
         _clearError();
         const payload = { bundle_id: _bundleId, rows: _rows, tier_defaults: _collectTiers() };
+        if (typeof window._getOJIPCurvesForBundle === 'function') {
+            const ojipCurves = window._getOJIPCurvesForBundle();
+            if (ojipCurves) {
+                // Build stem → {curve_id, filename} map from annotation rows.
+                // Use original stem as-is; the backend normalises both sides when matching.
+                const stemToMeta = {};
+                for (const row of _rows) {
+                    const fname = (row.filename || {}).value || '';
+                    const cid   = (row.curve_id  || {}).value || '';
+                    // Only strip extension if suffix is purely alphabetic (1-4 chars).
+                    // Prevents "2.5mL" → "2" when there is no real extension.
+                    const extM  = fname.match(/\.([a-zA-Z]{1,4})$/);
+                    const stem  = extM ? fname.slice(0, -extM[0].length) : fname;
+                    if (stem) stemToMeta[stem] = { curve_id: cid, filename: fname };
+                }
+                ojipCurves.curve_meta = stemToMeta;
+                payload.ojip_curves = ojipCurves;
+            }
+        }
 
         fetch('/api/fluorescence_annotation/export', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },

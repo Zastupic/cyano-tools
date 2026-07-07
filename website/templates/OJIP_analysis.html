@@ -1564,7 +1564,7 @@
           <span id="ann-summary-badges" class="ml-1"></span>
           <div class="ml-auto d-flex align-items-center flex-wrap" style="gap:10px;">
             <button class="btn btn-success btn-sm" onclick="ANN.downloadBundle()">
-              <i class="fa fa-download mr-1"></i>Download bundle
+              <i class="fa fa-download mr-1"></i>Download annotated bundle
             </button>
           </div>
         </div>
@@ -1594,7 +1594,7 @@
   <!-- Download bar -->
   <div class="d-flex flex-wrap align-items-center mt-3 mb-4 gap-2">
     <a id="xlsx-download-link" href="#" class="btn btn-success mr-2" style="display:none">
-      <i class="fa fa-download"></i> Download .xlsx
+      <i class="fa fa-download"></i> Download OJIP analysis (.xlsx)
     </a>
     <button class="btn btn-outline-info btn-sm" onclick="showOJIPMethodsModal()">
       <i class="fa fa-file-text-o mr-1"></i> Methods text
@@ -1617,6 +1617,22 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js_OJIP.js') }}"></script>
 <script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}"></script>
+<script>
+// Provide raw OJIP curve data to the annotation bundle download.
+// Called by ANN.downloadBundle() when this hook is defined.
+window._getOJIPCurvesForBundle = function () {
+    if (!window.ojipData || !window.ojipData.files || !window.ojipData.files.length) return null;
+    var files = window.ojipData.files;
+    var time_raw_ms = window.ojipData.time_raw_ms || [];
+    var curves_raw = {};
+    for (var i = 0; i < files.length; i++) {
+        var f = files[i];
+        var c = window.ojipData.curves && window.ojipData.curves[f];
+        if (c && c.raw) curves_raw[f] = c.raw;
+    }
+    return { files: files, time_raw_ms: time_raw_ms, curves_raw: curves_raw };
+};
+</script>
 
 <!-- ── Methods section text modal ── -->
 <div class="modal fade" id="ojip-methods-modal" tabindex="-1" role="dialog" aria-labelledby="ojipMethodsModalLabel" aria-hidden="true">

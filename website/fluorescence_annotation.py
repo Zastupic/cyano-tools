@@ -1140,8 +1140,21 @@ def bundle_serialise(state: dict) -> bytes:
                     if not k.startswith("_") and k not in ("completeness_score",)
                 },
             }
-            safe = re.sub(r"[^a-zA-Z0-9_.-]", "_", fname)[:60]
-            zf.writestr(f"annot/annot_{safe}.json",
+            # Name: annot_{curve_id}_{original_stem}.json  (curve_id first)
+            # Only strip path-unsafe chars; preserve original case and spaces.
+            # Extension detection: only treat suffix as extension if it is 1-4 alpha chars.
+            if "." in fname:
+                _s, _x = fname.rsplit(".", 1)
+                f_stem = _s if re.match(r'^[a-zA-Z]{1,4}$', _x) else fname
+            else:
+                f_stem = fname
+            safe_f_stem = f_stem.replace("/", "_").replace("\\", "_").replace(":", "_")
+            safe_cid = re.sub(r"[^a-zA-Z0-9]", "", cid)
+            annot_name = (
+                f"annot_{safe_cid}_{safe_f_stem}.json" if safe_cid
+                else f"annot_{safe_f_stem}.json"
+            )
+            zf.writestr(f"files/{annot_name}",
                         json.dumps(sidecar, indent=2, ensure_ascii=False))
 
         # ── SUMMARY PARQUET (or CSV fallback) ─────────────────────────────────
@@ -1162,6 +1175,60 @@ def bundle_serialise(state: dict) -> bytes:
                 pd.DataFrame(rows_meta).to_csv(csv_buf, index=False)
                 zf.writestr("summary.csv", csv_buf.getvalue())
                 manifest["csv_fallback"] = True
+
+        # ── RAW OJIP CURVES (optional, when called from OJIP analysis page) ──
+        ojip_curves = state.get("ojip_curves")
+        if ojip_curves:
+            files       = ojip_curves.get("files", [])
+            time_raw_ms = ojip_curves.get("time_raw_ms", [])
+            curves_raw  = ojip_curves.get("curves_raw", {})
+            curve_meta  = ojip_curves.get("curve_meta", {})  # stem → {curve_id, filename}
+
+            # Build a case-insensitive / space-insensitive fallback lookup so that
+            # mismatches caused by werkzeug secure_filename (spaces→underscores, possible
+            # case differences across platforms) are resolved in the backend.
+            def _norm(s: str) -> str:
+                return s.lower().replace(" ", "_")
+
+            norm_meta = {_norm(k): v for k, v in curve_meta.items()}
+
+            if files and time_raw_ms:
+                for f in files:
+                    # Prefer exact key match; fall back to normalised match.
+                    meta     = curve_meta.get(f) or norm_meta.get(_norm(f), {})
+                    curve_id = re.sub(r"[^a-zA-Z0-9]", "", meta.get("curve_id", ""))
+                    orig_name = meta.get("filename", "")
+
+                    # Extension detection: only accept a suffix that is 1–4 alpha chars
+                    # to avoid splitting on dots inside names like "2.5mL".
+                    if orig_name:
+                        if "." in orig_name:
+                            _s, _x = orig_name.rsplit(".", 1)
+                            if re.match(r'^[a-zA-Z]{1,4}$', _x):
+                                stem, ext = _s, "." + _x
+                            else:
+                                stem, ext = orig_name, ".csv"
+                        else:
+                            stem, ext = orig_name, ".csv"
+                    else:
+                        # No metadata match — fall back to OJIP stem name with .csv
+                        stem, ext = f, ".csv"
+
+                    # Only strip path-unsafe chars; preserve original case and spaces.
+                    safe_stem = stem.replace("/", "_").replace("\\", "_").replace(":", "_")
+                    fname_out = (
+                        f"{curve_id}_{safe_stem}{ext}" if curve_id  # curve_id first
+                        else f"{safe_stem}{ext}"
+                    )
+                    vals = curves_raw.get(f, [])
+                    csv_buf = io.StringIO()
+                    csv_buf.write("time_ms,fluorescence\n")
+                    for i, t in enumerate(time_raw_ms):
+                        v = vals[i] if i < len(vals) else ""
+                        csv_buf.write(f"{t},{v}\n")
+                    zf.writestr(f"files/{fname_out}", csv_buf.getvalue())
+                manifest["ojip_raw_curves_included"] = True
+                manifest["ojip_curve_count"] = len(files)
 
     return buf.getvalue()
 
@@ -1425,6 +1492,7 @@ def export_bundle():
     bundle_id     = data.get("bundle_id", "")
     rows          = data.get("rows", [])
     tier_defaults = data.get("tier_defaults", {})
+    ojip_curves   = data.get("ojip_curves")  # optional: {files, time_raw_ms, curves_raw}
 
     state = {
         "investigation":      tier_defaults.get("investigation", {}),
@@ -1433,6 +1501,7 @@ def export_bundle():
         "token_dict":         tier_defaults.get("token_dict", {}),
         "treatment_templates": tier_defaults.get("treatment_templates", []),
         "rows":               rows,
+        "ojip_curves":        ojip_curves,
     }
 
     bundle_bytes = bundle_serialise(state)
