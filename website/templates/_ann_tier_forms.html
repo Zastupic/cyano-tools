@@ -8,15 +8,15 @@
   <li class="nav-item">
     <a class="nav-link active" id="tab-inv-lnk"
        data-toggle="tab" href="#tab-inv" role="tab">
-      Investigation
-      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">once / project</small>
+      Project
+      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">once per dataset</small>
     </a>
   </li>
   <li class="nav-item">
     <a class="nav-link" id="tab-study-lnk"
        data-toggle="tab" href="#tab-study" role="tab">
-      Study
-      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">once / experiment</small>
+      Experiment
+      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">organism &amp; growth</small>
     </a>
   </li>
   <li class="nav-item">
@@ -30,7 +30,7 @@
     <a class="nav-link" id="tab-fluor-lnk"
        data-toggle="tab" href="#tab-fluor" role="tab">
       Fluorometer settings
-      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">acquisition protocol</small>
+      <small class="d-block text-muted" style="font-size:.7rem; font-weight:400;">protocol &amp; pre-acclimation</small>
     </a>
   </li>
   <li class="nav-item">
@@ -226,6 +226,13 @@
           </div>
           <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
         </div>
+        <div class="form-group col-md-2">
+          <label for="study-photoperiod">Photoperiod</label>
+          <input type="text" class="form-control form-control-sm"
+                 id="study-photoperiod"
+                 placeholder="e.g. 16/8">
+          <small class="form-text text-muted">Light/dark hours · MIAPPE &ldquo;Growth condition&rdquo;</small>
+        </div>
       </div>
 
       <!-- Light quality (type + conditional sub-fields) -->
@@ -368,13 +375,14 @@
               <option value="Knop's solution">
               <option value="Long Ashton solution">
             </datalist>
-            <small class="form-text text-muted">MIAPPE &ldquo;Growth facility&rdquo;</small>
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
           </div>
           <div class="form-group col-md-3">
             <label for="study-medium_modification">Medium modification</label>
             <input type="text" class="form-control form-control-sm"
                    id="study-medium_modification"
                    placeholder="e.g. &minus;N, 2&times; Fe, +glucose 5 mM">
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
           </div>
           <div class="form-group col-md-2">
             <label for="study-trophic_mode">
@@ -384,6 +392,7 @@
             <select class="form-control form-control-sm" id="study-trophic_mode">
               <option value="">— select —</option>
               <option value="autotrophy">autotrophy</option>
+              <option value="photoheterotrophy">photoheterotrophy</option>
               <option value="mixotrophy">mixotrophy</option>
               <option value="heterotrophy">heterotrophy</option>
             </select>
@@ -414,14 +423,55 @@
               <option value="carboy">carboy</option>
               <option value="custom / other">custom / other</option>
             </select>
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth facility&rdquo;</small>
           </div>
         </div>
 
-        <!-- Culture density -->
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label for="study-cultivation_mode">
+              Cultivation mode
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <select class="form-control form-control-sm" id="study-cultivation_mode">
+              <option value="">— select —</option>
+              <option value="batch">batch</option>
+              <option value="fed-batch">fed-batch</option>
+              <option value="semi-continuous">semi-continuous</option>
+              <option value="continuous">continuous</option>
+              <option value="chemostat">chemostat</option>
+              <option value="turbidostat">turbidostat</option>
+              <option value="pH-stat">pH-stat</option>
+              <option value="other">other</option>
+            </select>
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-culture_age">
+              Culture age
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-culture_age" min="0" step="any"
+                     placeholder="e.g. 72">
+              <div class="input-group-append">
+                <select class="custom-select custom-select-sm" id="study-culture_age_unit"
+                        style="max-width:70px;">
+                  <option value="hours" selected>h</option>
+                  <option value="days">d</option>
+                </select>
+              </div>
+            </div>
+            <small class="form-text text-muted">At measurement · MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+        </div>
+
+        <!-- Culture density — growth vessel -->
         <div style="background:#fff; border:1px solid #c3e6cb; border-radius:4px; padding:8px 12px 2px 12px; margin-top:4px;">
-        <p class="mb-2" style="font-size:.78rem; font-weight:600; color:#155724; letter-spacing:.02em;">
-          <i class="fa fa-tint mr-1" style="color:#17a2b8;"></i>Culture density
-          <span style="font-weight:400; color:#6c757d;">&mdash; inherited to all curves; override per-curve in grid</span>
+        <p class="mb-1" style="font-size:.78rem; font-weight:600; color:#155724; letter-spacing:.02em;">
+          <i class="fa fa-tint mr-1" style="color:#17a2b8;"></i>Culture density &mdash; growth vessel
+          <span style="font-weight:400; color:#6c757d;">&mdash; density of the bulk culture at time of sampling; inherited to all curves; override per-curve in grid</span>
         </p>
         <div class="form-row">
           <div class="form-group col-md-3">
@@ -432,7 +482,8 @@
             <div class="input-group input-group-sm">
               <input type="number" class="form-control form-control-sm"
                      id="study-culture_density_chla" min="0" step="any"
-                     placeholder="e.g. 5.2">
+                     placeholder="e.g. 5.2"
+                     oninput="ANN.recalcSampleDensity()">
               <div class="input-group-append">
                 <span class="input-group-text" style="font-size:.75rem;">&micro;g&nbsp;mL<sup>&minus;1</sup></span>
               </div>
@@ -447,7 +498,8 @@
             <div class="input-group input-group-sm">
               <input type="number" class="form-control form-control-sm"
                      id="study-culture_density_cdw" min="0" step="any"
-                     placeholder="e.g. 0.5">
+                     placeholder="e.g. 0.5"
+                     oninput="ANN.recalcSampleDensity()">
               <div class="input-group-append">
                 <span class="input-group-text" style="font-size:.75rem;">g&nbsp;L<sup>&minus;1</sup></span>
               </div>
@@ -461,7 +513,8 @@
             </label>
             <input type="number" class="form-control form-control-sm"
                    id="study-culture_density_od" min="0" step="any"
-                   placeholder="e.g. 0.8">
+                   placeholder="e.g. 0.8"
+                   oninput="ANN.recalcSampleDensity()">
             <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
           </div>
           <div class="form-group col-md-2">
@@ -469,7 +522,8 @@
             <div class="input-group input-group-sm">
               <input type="number" class="form-control form-control-sm"
                      id="study-culture_density_od_wl" min="300" max="900" step="1"
-                     list="study-od-wl-list" placeholder="720">
+                     list="study-od-wl-list" placeholder="720"
+                     oninput="ANN.recalcSampleDensity()">
               <div class="input-group-append">
                 <span class="input-group-text">nm</span>
               </div>
@@ -498,7 +552,87 @@
                    id="study-culture_density_other_unit"
                    placeholder="e.g. cells mL&minus;&sup1;">
           </div>
-        </div><!-- /culture density inner box -->
+        </div>
+        </div><!-- /culture density growth vessel -->
+
+        <!-- Sample density — fluorometer cuvette -->
+        <div style="background:#fff; border:1px solid #b8daff; border-radius:4px; padding:8px 12px 2px 12px; margin-top:6px;">
+        <p class="mb-1" style="font-size:.78rem; font-weight:600; color:#004085; letter-spacing:.02em;">
+          <i class="fa fa-eyedropper mr-1" style="color:#0d6efd;"></i>Sample density &mdash; fluorometer cuvette
+          <span style="font-weight:400; color:#6c757d;">&mdash; density as placed in the fluorometer; inherited to all curves; override per-curve in grid</span>
+        </p>
+        <div class="form-row">
+          <div class="form-group col-md-2 mb-1">
+            <label for="study-sample_dilution_factor">
+              Dilution factor
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <input type="number" class="form-control form-control-sm"
+                   id="study-sample_dilution_factor" min="1" step="any"
+                   placeholder="e.g. 10"
+                   oninput="ANN.recalcSampleDensity()">
+            <small class="form-text text-muted">Culture ÷ factor &rarr; auto-fills fields below (1&nbsp;=&nbsp;undiluted)</small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label for="study-sample_density_chla">
+              Chl <em>a</em>
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-sample_density_chla" min="0" step="any"
+                     placeholder="auto or manual">
+              <div class="input-group-append">
+                <span class="input-group-text" style="font-size:.75rem;">&micro;g&nbsp;mL<sup>&minus;1</sup></span>
+              </div>
+            </div>
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-3">
+            <label for="study-sample_density_cdw">
+              Cellular dry weight
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-sample_density_cdw" min="0" step="any"
+                     placeholder="auto or manual">
+              <div class="input-group-append">
+                <span class="input-group-text" style="font-size:.75rem;">g&nbsp;L<sup>&minus;1</sup></span>
+              </div>
+            </div>
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-sample_density_od">
+              OD (1 cm cuvette)
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <input type="number" class="form-control form-control-sm"
+                   id="study-sample_density_od" min="0" step="any"
+                   placeholder="auto or manual">
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-sample_density_od_wl">OD wavelength</label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-sample_density_od_wl" min="300" max="900" step="1"
+                     list="study-od-wl-list" placeholder="720">
+              <div class="input-group-append">
+                <span class="input-group-text">nm</span>
+              </div>
+            </div>
+            <small class="form-text text-muted">Mirrored from growth vessel OD wavelength</small>
+          </div>
+        </div>
+        </div><!-- /sample density fluorometer cuvette -->
+
+        <p class="text-muted small mb-1 mt-2">
+          <i class="fa fa-info-circle mr-1"></i>Additional per-curve fields (vessel, agitation, growth phase, culture age) are available in the reconciliation grid.
+        </p>
         </div><!-- /liquid culture card -->
       </div><!-- /ann-study-liquid -->
 
@@ -508,15 +642,168 @@
         <p class="mb-2" style="font-size:.8rem; font-weight:600; color:#155724; letter-spacing:.02em;">
           <i class="fa fa-leaf mr-1" style="color:#20c997;"></i>Plant details
         </p>
+
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label for="study-growth_facility">Growth facility</label>
+            <select class="form-control form-control-sm" id="study-growth_facility">
+              <option value="">— select —</option>
+              <option value="growth chamber">growth chamber</option>
+              <option value="greenhouse">greenhouse</option>
+              <option value="phytotron">phytotron</option>
+              <option value="open field">open field</option>
+              <option value="climate room">climate room</option>
+              <option value="indoor windowsill">indoor windowsill</option>
+              <option value="other">other</option>
+            </select>
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth facility&rdquo;</small>
+          </div>
+          <div class="form-group col-md-3">
+            <label for="study-growth_facility_detail">Facility detail</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-growth_facility_detail"
+                   placeholder="e.g. Conviron E8, south-facing greenhouse">
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth facility&rdquo;</small>
+          </div>
+          <div class="form-group col-md-3">
+            <label for="study-substrate">Substrate</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-substrate" list="study-substrate-list" autocomplete="off"
+                   placeholder="Type or select…">
+            <datalist id="study-substrate-list">
+              <option value="potting soil">
+              <option value="vermiculite">
+              <option value="perlite">
+              <option value="perlite:vermiculite (1:1)">
+              <option value="peat">
+              <option value="sand">
+              <option value="field soil">
+              <option value="hydroponic">
+              <option value="agar">
+              <option value="rockwool">
+            </datalist>
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-pot_size">Pot / container</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-pot_size"
+                   placeholder="e.g. 0.5 L">
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-humidity">Humidity</label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-humidity" min="0" max="100" step="any"
+                     placeholder="e.g. 60">
+              <div class="input-group-append">
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <small class="form-text text-muted">Relative humidity · MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-plant_age">
+              Plant age
+              <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-plant_age" min="0" step="any"
+                     placeholder="e.g. 21">
+              <div class="input-group-append">
+                <select class="custom-select custom-select-sm" id="study-plant_age_unit"
+                        style="max-width:70px;">
+                  <option value="days" selected>d</option>
+                  <option value="weeks">wk</option>
+                </select>
+              </div>
+            </div>
+            <small class="form-text text-muted">At measurement · MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label for="study-watering_regime">Watering regime</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-watering_regime"
+                   placeholder="e.g. daily to field capacity">
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+          <div class="form-group col-md-4">
+            <label for="study-fertilization">Fertilization</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-fertilization"
+                   placeholder="e.g. Hoagland 1&times; weekly">
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-2">
+            <label for="study-dev_stage">Dev. stage</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-dev_stage"
+                   placeholder="e.g. vegetative">
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-plant_organ">Organ</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-plant_organ"
+                   placeholder="e.g. leaf, stem">
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-leaf_position">Leaf position</label>
+            <input type="text" class="form-control form-control-sm"
+                   id="study-leaf_position"
+                   placeholder="e.g. 3rd from top">
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-leaf_surface">Leaf surface</label>
+            <select class="form-control form-control-sm" id="study-leaf_surface">
+              <option value="">&mdash; select &mdash;</option>
+              <option value="adaxial">adaxial</option>
+              <option value="abaxial">abaxial</option>
+            </select>
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-leaf_age">Leaf age</label>
+            <select class="form-control form-control-sm" id="study-leaf_age">
+              <option value="">&mdash; select &mdash;</option>
+              <option value="young (expanding)">young (expanding)</option>
+              <option value="mature (fully expanded)">mature (fully expanded)</option>
+              <option value="senescent">senescent</option>
+              <option value="cotyledon">cotyledon</option>
+            </select>
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-meas_position">Meas. position</label>
+            <select class="form-control form-control-sm" id="study-meas_position">
+              <option value="">&mdash; select &mdash;</option>
+              <option value="tip">tip</option>
+              <option value="middle">middle</option>
+              <option value="base">base</option>
+              <option value="margin">margin</option>
+              <option value="midrib">midrib</option>
+            </select>
+            <small class="form-text text-muted">MIAPPE &ldquo;Sample description&rdquo;</small>
+          </div>
+        </div>
+
         <p class="text-muted small mb-2">
-          Plant-specific per-curve fields (developmental stage, organ, leaf position)
-          are available in the reconciliation grid below.
+          <i class="fa fa-info-circle mr-1"></i>These fields plus Plant ID are also editable per-curve in the reconciliation grid.
         </p>
       </div><!-- /plant card -->
       </div><!-- /ann-study-plant -->
 
     </div><!-- /.ann-study-fields -->
-  </div><!-- /ann-study-fields outer -->
   </div><!-- /tab-study -->
 
   <!-- ── Treatment templates ──────────────────────────────────────────────── -->

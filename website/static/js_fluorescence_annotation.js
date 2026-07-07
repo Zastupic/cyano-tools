@@ -90,32 +90,49 @@ const ANN = (function () {
         { key: 'medium_modification', label: 'Med. mod.', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
         { key: 'trophic_mode',    label: 'Trophic mode',    group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
         { key: 'cultivator_type', label: 'Cultivator type', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
-        { key: 'culture_density_chla',  label: 'Chl a µg/mL', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
-        { key: 'culture_density_cdw',   label: 'CDW g/L',      group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
-        { key: 'culture_density_od',         label: 'OD (1 cm cuvette)', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
-        { key: 'culture_density_od_wl',      label: 'OD λ (nm)',         group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
-        { key: 'culture_density_other',      label: 'Other density',     group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
-        { key: 'culture_density_other_unit', label: 'Other density unit',group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
-        { key: 'co2',       label: 'CO₂ %',         group: 'conditions', editable: true,  sample_cond: 'liquid_culture' },
+        { key: 'cultivation_mode', label: 'Cultivation mode', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_chla',  label: 'Culture Chl a µg/mL',  group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_cdw',   label: 'Culture CDW g/L',       group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_od',         label: 'Culture OD (1 cm)', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_od_wl',      label: 'Culture OD λ (nm)', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_other',      label: 'Culture other density',     group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_density_other_unit', label: 'Culture other density unit',group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'sample_density_chla',   label: 'Sample Chl a µg/mL',   group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'sample_density_cdw',    label: 'Sample CDW g/L',        group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'sample_density_od',     label: 'Sample OD (1 cm)',       group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'sample_density_od_wl',  label: 'Sample OD λ (nm)',       group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'sample_dilution_factor',label: 'Dilution factor',        group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'co2',       label: 'Measurement CO₂ %', group: 'conditions', editable: true,  sample_cond: 'liquid_culture' },
         { key: 'vessel',    label: 'Vessel',         group: 'conditions', editable: true,  sample_cond: 'liquid_culture' },
         { key: 'agitation', label: 'Agitation',      group: 'conditions', editable: true,  sample_cond: 'liquid_culture' },
         { key: 'growth_phase', label: 'Growth phase', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
-        { key: 'culture_age_h', label: 'Culture age (h)', group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_age',      label: 'Culture age',  group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        { key: 'culture_age_unit', label: 'Age unit',     group: 'conditions', editable: true, sample_cond: 'liquid_culture' },
+        // Conditions — shared (all sample types)
+        { key: 'photoperiod',     label: 'Photoperiod',group: 'conditions', editable: true, sample_cond: '' },
         // Conditions — vascular plant
         { key: 'growth_facility', label: 'Facility',   group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'growth_facility_detail', label: 'Facility detail', group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'substrate',       label: 'Substrate',  group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'pot_size',        label: 'Pot / container', group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'humidity',        label: 'Humidity %', group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'plant_age',       label: 'Plant age',  group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'plant_age_unit',  label: 'Age unit',   group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'watering_regime', label: 'Watering',   group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'fertilization',   label: 'Fertilization', group: 'conditions', editable: true, sample_cond: 'plant' },
         { key: 'dev_stage',       label: 'Dev. stage', group: 'conditions', editable: true, sample_cond: 'plant_or_leaf' },
         { key: 'plant_organ',     label: 'Organ',      group: 'conditions', editable: true, sample_cond: 'plant_or_leaf' },
         { key: 'leaf_position',   label: 'Leaf pos.',  group: 'conditions', editable: true, sample_cond: 'plant_or_leaf' },
-        { key: 'leaf_surface',    label: 'Leaf surf.', group: 'conditions', editable: true, sample_cond: 'plant_or_leaf' },
-        { key: 'photoperiod',     label: 'Photoperiod',group: 'conditions', editable: true, sample_cond: 'plant' },
-        { key: 'humidity',        label: 'Humidity %', group: 'conditions', editable: true, sample_cond: 'plant' },
-        { key: 'substrate',       label: 'Substrate',  group: 'conditions', editable: true, sample_cond: 'plant' },
-        { key: 'watering_regime', label: 'Watering',   group: 'conditions', editable: true, sample_cond: 'plant' },
+        { key: 'leaf_surface',    label: 'Leaf surf.', group: 'conditions', editable: true, sample_cond: 'plant_or_leaf', vocab: ['adaxial','abaxial'] },
+        { key: 'leaf_age',        label: 'Leaf age',   group: 'conditions', editable: true, sample_cond: 'plant_or_leaf', vocab: ['young (expanding)','mature (fully expanded)','senescent','cotyledon'] },
+        { key: 'meas_position',   label: 'Meas. pos.', group: 'conditions', editable: true, sample_cond: 'plant_or_leaf', vocab: ['tip','middle','base','margin','midrib'] },
+        { key: 'plant_individual_id', label: 'Plant ID', group: 'conditions', editable: true, sample_cond: 'plant_or_leaf' },
         // Replicate / QC
         { key: 'bio_rep',   label: 'Bio. rep.',     group: 'replicate_qc', editable: true  },
         { key: 'tech_rep',  label: 'Tech. rep.',    group: 'replicate_qc', editable: true  },
         { key: 'batch_id',  label: 'Batch ID',      group: 'replicate_qc', editable: true  },
         { key: 'quality',   label: 'Quality',       group: 'replicate_qc', editable: true  },
+        { key: 'curve_note', label: 'Note',         group: 'replicate_qc', editable: true  },
         // Acquisition
         { key: 'instrument', label: 'Instrument',   group: 'acquisition',  editable: false },
         { key: 'fo_timing',               label: 'F0 timing',          group: 'acquisition', editable: true },
@@ -274,6 +291,29 @@ const ANN = (function () {
         _sampleType = val || '';
         _updateStudyFieldVisibility();
         if (_rows.length) _renderGrid();
+    }
+
+    /** Auto-calculate sample density from culture density ÷ dilution factor. */
+    function recalcSampleDensity() {
+        const factor = parseFloat(document.getElementById('study-sample_dilution_factor').value);
+        if (!factor || factor <= 0) return;
+        const pairs = [
+            ['study-culture_density_chla', 'study-sample_density_chla'],
+            ['study-culture_density_cdw',  'study-sample_density_cdw'],
+            ['study-culture_density_od',   'study-sample_density_od'],
+        ];
+        pairs.forEach(([cId, sId]) => {
+            const cv = parseFloat(document.getElementById(cId).value);
+            if (!isNaN(cv) && cv >= 0) {
+                const result = cv / factor;
+                // Show up to 4 significant figures, strip trailing zeros
+                document.getElementById(sId).value =
+                    parseFloat(result.toPrecision(4));
+            }
+        });
+        // Mirror OD wavelength (same measurement, just different sample)
+        const wl = document.getElementById('study-culture_density_od_wl').value;
+        if (wl) document.getElementById('study-sample_density_od_wl').value = wl;
     }
 
     /** Show/hide study-tier form fields based on sample_type. */
@@ -507,12 +547,36 @@ const ANN = (function () {
                 medium_modification:   _val('study-medium_modification'),
                 trophic_mode:          _val('study-trophic_mode'),
                 cultivator_type:       _val('study-cultivator_type'),
+                cultivation_mode:      _val('study-cultivation_mode'),
                 culture_density_chla:  _val('study-culture_density_chla'),
                 culture_density_cdw:   _val('study-culture_density_cdw'),
                 culture_density_od:    _val('study-culture_density_od'),
                 culture_density_od_wl: _val('study-culture_density_od_wl'),
                 culture_density_other:      _val('study-culture_density_other'),
                 culture_density_other_unit: _val('study-culture_density_other_unit'),
+                sample_density_chla:   _val('study-sample_density_chla'),
+                sample_density_cdw:    _val('study-sample_density_cdw'),
+                sample_density_od:     _val('study-sample_density_od'),
+                sample_density_od_wl:  _val('study-sample_density_od_wl'),
+                sample_dilution_factor:_val('study-sample_dilution_factor'),
+                culture_age:               _val('study-culture_age'),
+                culture_age_unit:          _val('study-culture_age_unit'),
+                photoperiod:               _val('study-photoperiod'),
+                growth_facility:           _val('study-growth_facility'),
+                growth_facility_detail:    _val('study-growth_facility_detail'),
+                substrate:                 _val('study-substrate'),
+                pot_size:                  _val('study-pot_size'),
+                humidity:                  _val('study-humidity'),
+                plant_age:                 _val('study-plant_age'),
+                plant_age_unit:            _val('study-plant_age_unit'),
+                watering_regime:           _val('study-watering_regime'),
+                fertilization:             _val('study-fertilization'),
+                dev_stage:                 _val('study-dev_stage'),
+                plant_organ:               _val('study-plant_organ'),
+                leaf_position:             _val('study-leaf_position'),
+                leaf_surface:              _val('study-leaf_surface'),
+                leaf_age:                  _val('study-leaf_age'),
+                meas_position:             _val('study-meas_position'),
                 growth_light_intensity:    _val('study-growth_light_intensity'),
                 growth_light_type:         _val('study-growth_light_type'),
                 growth_light_peak_wl:      _val('study-growth_light_peak_wl'),
@@ -564,9 +628,16 @@ const ANN = (function () {
          'contributor_namespace','license','project_description'].forEach(k => _set('inv-'+k, inv[k]));
 
         ['organism','genotype','sub_strain_cultivar','medium','medium_modification',
-         'trophic_mode','cultivator_type',
+         'trophic_mode','cultivator_type','cultivation_mode',
          'culture_density_chla','culture_density_cdw','culture_density_od',
          'culture_density_od_wl','culture_density_other','culture_density_other_unit',
+         'sample_density_chla','sample_density_cdw','sample_density_od',
+         'sample_density_od_wl','sample_dilution_factor',
+         'culture_age','culture_age_unit',
+         'photoperiod',
+         'growth_facility','growth_facility_detail','substrate','pot_size','humidity',
+         'plant_age','plant_age_unit','watering_regime','fertilization',
+         'dev_stage','plant_organ','leaf_position','leaf_surface','leaf_age','meas_position',
          'growth_light_intensity','growth_light_type',
          'growth_light_peak_wl','growth_light_peak_width',
          'growth_light_color_cat','growth_light_note',
@@ -1253,6 +1324,11 @@ const ANN = (function () {
         const curVal = (cell.value !== undefined && cell.value !== null) ? cell.value : '';
         const fdef   = _schema.fields && _schema.fields[key];
         let vocab  = (fdef && fdef.vocab && fdef.vocab.length) ? fdef.vocab : null;
+        // Fallback: check column-level vocab (e.g. leaf_surface, leaf_age, meas_position)
+        if (!vocab) {
+            const colDef = COLS.find(c => c.key === key);
+            if (colDef && colDef.vocab && colDef.vocab.length) vocab = colDef.vocab;
+        }
 
         // Special: treatment_label gets its vocab from defined templates
         if (key === 'treatment_label') {
@@ -1613,6 +1689,7 @@ const ANN = (function () {
         toggleGroup,
         updateFluorCount,
         onSampleTypeChange,
+        recalcSampleDensity,
         onInstrumentChange,
         onGrowthLightTypeChange,
         copyPreacclFromStudy,
