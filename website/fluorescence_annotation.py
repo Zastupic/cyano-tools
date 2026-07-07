@@ -1637,6 +1637,33 @@ def _build_xlsx_template(tier_defaults: dict | None = None) -> bytes:
     wb = Workbook()
     td = tier_defaults or {}
 
+    # Hidden sheet for vocab lists that exceed Excel's 255-char inline limit
+    ws_vocab = wb.create_sheet(title="_Vocab")
+    ws_vocab.sheet_state = "hidden"
+    _vocab_col = [0]  # mutable counter for next free column
+
+    def _make_dv(vocab: list, label: str) -> DataValidation:
+        """Create a DataValidation for a vocab list, using the hidden _Vocab
+        sheet when the inline formula would exceed Excel's 255-char limit."""
+        inline = '"' + ",".join(str(v) for v in vocab) + '"'
+        if len(inline) <= 255:
+            formula1 = inline
+        else:
+            _vocab_col[0] += 1
+            col_idx = _vocab_col[0]
+            from openpyxl.utils import get_column_letter
+            col_letter = get_column_letter(col_idx)
+            ws_vocab.cell(row=1, column=col_idx, value=label)
+            for ri, v in enumerate(vocab, 2):
+                ws_vocab.cell(row=ri, column=col_idx, value=str(v))
+            last_row = len(vocab) + 1
+            formula1 = f"_Vocab!${col_letter}$2:${col_letter}${last_row}"
+        dv = DataValidation(type="list", formula1=formula1, allow_blank=True)
+        error_msg = f"Please choose from: {', '.join(str(v) for v in vocab)}"
+        dv.error      = error_msg[:255]
+        dv.errorTitle = label[:32]
+        return dv
+
     def _add_sheet(name: str, tier: str, source_dict: dict | None = None):
         ws = wb.create_sheet(title=name)
         fields = [(k, f) for k, f in FIELDS.items() if f.tier == tier]
@@ -1646,13 +1673,7 @@ def _build_xlsx_template(tier_defaults: dict | None = None) -> bytes:
             cell.font = cell.font.copy(bold=True)
             # Dropdown validation for vocab fields
             if fdef.vocab:
-                dv = DataValidation(
-                    type="list",
-                    formula1='"' + ",".join(str(v) for v in fdef.vocab) + '"',
-                    allow_blank=True,
-                )
-                dv.error = f"Please choose from: {', '.join(str(v) for v in fdef.vocab)}"
-                dv.errorTitle = fdef.label or k
+                dv = _make_dv(fdef.vocab, fdef.label or k)
                 ws.add_data_validation(dv)
                 dv.add(ws.cell(row=2, column=ci))
             # Pre-fill from tier_defaults
@@ -1682,11 +1703,7 @@ def _build_xlsx_template(tier_defaults: dict | None = None) -> bytes:
             cell = ws.cell(row=1, column=ci, value=label)
             cell.font = cell.font.copy(bold=True)
             if fdef and fdef.vocab:
-                dv = DataValidation(
-                    type="list",
-                    formula1='"' + ",".join(str(v) for v in fdef.vocab) + '"',
-                    allow_blank=True,
-                )
+                dv = _make_dv(fdef.vocab, label)
                 ws.add_data_validation(dv)
                 for ri in range(2, 51):
                     dv.add(ws.cell(row=ri, column=ci))
@@ -1721,11 +1738,7 @@ def _build_xlsx_template(tier_defaults: dict | None = None) -> bytes:
         cell = ws_curve.cell(row=1, column=ci, value=fdef.label or k)
         cell.font = cell.font.copy(bold=True)
         if fdef.vocab:
-            dv = DataValidation(
-                type="list",
-                formula1='"' + ",".join(str(v) for v in fdef.vocab) + '"',
-                allow_blank=True,
-            )
+            dv = _make_dv(fdef.vocab, fdef.label or k)
             ws_curve.add_data_validation(dv)
             for ri in range(2, 201):
                 dv.add(ws_curve.cell(row=ri, column=ci))
