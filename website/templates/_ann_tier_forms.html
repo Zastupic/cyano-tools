@@ -386,6 +386,42 @@
             <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
           </div>
           <div class="form-group col-md-2">
+            <label for="study-medium_ph">pH</label>
+            <input type="number" class="form-control form-control-sm"
+                   id="study-medium_ph" min="0" max="14" step="0.1"
+                   placeholder="e.g. 7.5">
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-medium_buffer_type">Buffer type</label>
+            <select class="form-control form-control-sm" id="study-medium_buffer_type">
+              <option value="">— select —</option>
+              <option value="phosphate">phosphate</option>
+              <option value="HEPES">HEPES</option>
+              <option value="Tris">Tris</option>
+              <option value="MOPS">MOPS</option>
+              <option value="MES">MES</option>
+              <option value="PIPES">PIPES</option>
+              <option value="bicarbonate">bicarbonate</option>
+              <option value="citrate">citrate</option>
+              <option value="acetate">acetate</option>
+              <option value="other">other</option>
+            </select>
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="study-medium_buffer_concentration">Buffer conc.</label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control form-control-sm"
+                     id="study-medium_buffer_concentration" min="0" step="any"
+                     placeholder="e.g. 25">
+              <div class="input-group-append">
+                <span class="input-group-text">mM</span>
+              </div>
+            </div>
+            <small class="form-text text-muted">MIAPPE &ldquo;Growth condition&rdquo;</small>
+          </div>
+          <div class="form-group col-md-2">
             <label for="study-trophic_mode">
               Trophic mode
               <small class="text-success ml-1" title="Inherits to all curves">&#x21E9;</small>

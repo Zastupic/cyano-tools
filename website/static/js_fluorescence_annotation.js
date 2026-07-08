@@ -725,6 +725,9 @@ const ANN = (function () {
                 sub_strain_cultivar:   _val('study-sub_strain_cultivar'),
                 medium:                _val('study-medium'),
                 medium_modification:   _val('study-medium_modification'),
+                medium_ph:             _val('study-medium_ph'),
+                medium_buffer_type:    _val('study-medium_buffer_type'),
+                medium_buffer_concentration: _val('study-medium_buffer_concentration'),
                 trophic_mode:          _val('study-trophic_mode'),
                 cultivator_type:       _val('study-cultivator_type'),
                 cultivation_mode:      _val('study-cultivation_mode'),
@@ -808,6 +811,7 @@ const ANN = (function () {
          'contributor_namespace','license','project_description'].forEach(k => _set('inv-'+k, inv[k]));
 
         ['organism','genotype','sub_strain_cultivar','medium','medium_modification',
+         'medium_ph','medium_buffer_type','medium_buffer_concentration',
          'trophic_mode','cultivator_type','cultivation_mode',
          'culture_density_chla','culture_density_cdw','culture_density_od',
          'culture_density_od_wl','culture_density_other','culture_density_other_unit',
