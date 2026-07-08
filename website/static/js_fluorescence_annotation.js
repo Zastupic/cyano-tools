@@ -171,6 +171,13 @@ const ANN = (function () {
         missing:       { color: '#e0564a', glyph: '+', title: 'Required — value missing'     },
     };
 
+    // ── Empty-field highlight (injected once) ──────────────────────────────────
+    (function _injectEmptyFieldStyle() {
+        const s = document.createElement('style');
+        s.textContent = '.ann-field-empty { background-color: #fff0f0 !important; }';
+        document.head.appendChild(s);
+    })();
+
     // ── Utilities ─────────────────────────────────────────────────────────────
     function _eid(id) { return document.getElementById(id); }
 
@@ -195,6 +202,38 @@ const ANN = (function () {
     function _val(id) {
         const el = _eid(id);
         return el ? el.value.trim() : '';
+    }
+
+    // ── Empty-field highlighting ────────────────────────────────────────────────
+    /** The tab pane IDs that contain annotation form fields. */
+    const _TIER_PANE_IDS = ['tab-inv', 'tab-study', 'tab-treat', 'tab-fluor'];
+
+    /** Toggle .ann-field-empty on a single control. */
+    function _markField(el) {
+        if (!el || el.type === 'hidden') return;
+        // Skip fields inside the token table (dynamic, not annotation metadata)
+        if (el.closest('#ann-token-table')) return;
+        const empty = (el.value || '').trim() === '';
+        el.classList.toggle('ann-field-empty', empty);
+    }
+
+    /** Scan all form controls in the tier panes and toggle highlight. */
+    function _highlightEmptyFields() {
+        _TIER_PANE_IDS.forEach(pid => {
+            const pane = _eid(pid);
+            if (!pane) return;
+            pane.querySelectorAll('input, select, textarea').forEach(_markField);
+        });
+    }
+
+    /** Attach delegated input/change listeners for real-time updates. */
+    function _setupEmptyFieldListeners() {
+        _TIER_PANE_IDS.forEach(pid => {
+            const pane = _eid(pid);
+            if (!pane) return;
+            pane.addEventListener('input',  e => { if (e.target.matches('input, select, textarea')) _markField(e.target); });
+            pane.addEventListener('change', e => { if (e.target.matches('input, select, textarea')) _markField(e.target); });
+        });
     }
 
     // ── Sample-type helpers ───────────────────────────────────────────────────
@@ -816,6 +855,7 @@ const ANN = (function () {
         _renderTreatmentTable();
 
         updateFluorCount();
+        _highlightEmptyFields();
     }
 
     // ── Treatment templates ─────────────────────────────────────────────────
@@ -876,6 +916,7 @@ const ANN = (function () {
                value="${_esc(tmpl.chem_detail||'')}" placeholder="additional detail"></td>
           ${_delBtn()}`;
         tbody.appendChild(tr);
+        _highlightEmptyFields();
     }
 
     function addStressTreatmentRow(tmpl) {
@@ -908,6 +949,7 @@ const ANN = (function () {
                value="${_esc(tmpl.stress_detail||'')}" placeholder="additional detail"></td>
           ${_delBtn()}`;
         tbody.appendChild(tr);
+        _highlightEmptyFields();
     }
 
     function addOtherTreatmentRow(tmpl) {
@@ -930,6 +972,7 @@ const ANN = (function () {
                value="${_esc(tmpl.other_detail||'')}" placeholder="additional detail"></td>
           ${_delBtn()}`;
         tbody.appendChild(tr);
+        _highlightEmptyFields();
     }
 
     // Keep alias for any old callers
@@ -1816,6 +1859,8 @@ const ANN = (function () {
         // Instrument display is read-only; will be set after file upload
         // (no need to check on init — auto-detected from files)
         _renderTreatmentTable(); // show first empty row in each section
+        _highlightEmptyFields();
+        _setupEmptyFieldListeners();
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
