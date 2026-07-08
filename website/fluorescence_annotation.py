@@ -2223,10 +2223,11 @@ def xlsx_template():
         return jsonify({"status": "error", "message": str(exc)}), 500
 
     b64 = base64.b64encode(xlsx_bytes).decode("ascii")
+    fname = "annotation_template_prefilled.xlsx" if tier_defaults else "annotation_template.xlsx"
     return jsonify({
         "status":   "ok",
         "xlsx_b64": b64,
-        "filename": "annotation_template.xlsx",
+        "filename": fname,
     })
 
 

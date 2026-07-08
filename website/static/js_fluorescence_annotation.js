@@ -224,15 +224,43 @@ const ANN = (function () {
             if (!pane) return;
             pane.querySelectorAll('input, select, textarea').forEach(_markField);
         });
+        _updatePrefilledBtn();
+    }
+
+    /** Enable/disable the pre-filled XLSX download button based on whether
+     *  any tier field contains user-entered data. */
+    function _updatePrefilledBtn() {
+        const btn = _eid('ann-download-prefilled-btn');
+        if (!btn) return;
+        let hasData = false;
+        for (const pid of _TIER_PANE_IDS) {
+            const pane = _eid(pid);
+            if (!pane) continue;
+            for (const el of pane.querySelectorAll('input, select, textarea')) {
+                if (el.type === 'hidden') continue;
+                if (el.closest('#ann-token-table')) continue;
+                if ((el.value || '').trim() !== '') { hasData = true; break; }
+            }
+            if (hasData) break;
+        }
+        btn.disabled = !hasData;
+        btn.title = hasData ? 'Download XLSX template pre-filled with current metadata'
+                            : 'Fill in metadata fields first';
     }
 
     /** Attach delegated input/change listeners for real-time updates. */
     function _setupEmptyFieldListeners() {
+        const _onFieldChange = e => {
+            if (e.target.matches('input, select, textarea')) {
+                _markField(e.target);
+                _updatePrefilledBtn();
+            }
+        };
         _TIER_PANE_IDS.forEach(pid => {
             const pane = _eid(pid);
             if (!pane) return;
-            pane.addEventListener('input',  e => { if (e.target.matches('input, select, textarea')) _markField(e.target); });
-            pane.addEventListener('change', e => { if (e.target.matches('input, select, textarea')) _markField(e.target); });
+            pane.addEventListener('input',  _onFieldChange);
+            pane.addEventListener('change', _onFieldChange);
         });
     }
 
@@ -1738,9 +1766,9 @@ const ANN = (function () {
     }
 
     // ── XLSX template download ──────────────────────────────────────────────
-    function downloadXlsxTemplate() {
+    function downloadXlsxTemplate(blank) {
         _clearError();
-        const payload = { tier_defaults: _collectTiers() };
+        const payload = blank ? {} : { tier_defaults: _collectTiers() };
 
         fetch('/api/fluorescence_annotation/xlsx_template', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },

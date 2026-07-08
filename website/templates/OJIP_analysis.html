@@ -206,7 +206,7 @@
             Download the XLSX annotation template to document your experimental metadata (sample info, cultivation conditions, measurement protocol, etc.).
             Fill in the template and upload it later in the <strong>Annotation</strong> section to build a MIAPPE-compatible, ML-ready dataset.
           </p>
-          <button class="btn btn-outline-info btn-sm" onclick="ANN.downloadXlsxTemplate()">
+          <button class="btn btn-outline-info btn-sm" onclick="ANN.downloadXlsxTemplate(true)">
             <i class="fa fa-download mr-1"></i>Download XLSX template
           </button>
         </div>
@@ -1545,12 +1545,17 @@
           <i class="fa fa-folder-open mr-1"></i>Load existing bundle
         </button>
         <button class="btn btn-outline-info btn-sm"
-                onclick="ANN.downloadXlsxTemplate()">
-          <i class="fa fa-file-excel-o mr-1"></i>Download XLSX template
+                onclick="ANN.downloadXlsxTemplate(true)">
+          <i class="fa fa-file-excel-o mr-1"></i>Download blank XLSX template
+        </button>
+        <button class="btn btn-outline-success btn-sm" id="ann-download-prefilled-btn"
+                onclick="ANN.downloadXlsxTemplate()"
+                disabled title="Fill in metadata fields first">
+          <i class="fa fa-file-excel-o mr-1"></i>Download XLSX with current metadata
         </button>
         <button class="btn btn-outline-info btn-sm"
                 onclick="document.getElementById('ann-xlsx-input').click()">
-          <i class="fa fa-upload mr-1"></i>Upload filled XLSX
+          <i class="fa fa-upload mr-1"></i>Upload XLSX with pre-filled metadata
         </button>
         <input type="file" id="ann-bundle-input" accept=".zip" class="d-none">
         <input type="file" id="ann-xlsx-input"   accept=".xlsx" class="d-none">
@@ -1640,7 +1645,7 @@
 <!-- SheetJS — pinned to 0.20.3, not the mutable "xlsx-latest" tag -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js_OJIP.js') }}"></script>
-<script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}?v=7"></script>
+<script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}?v=9"></script>
 <script>
 // Provide raw OJIP curve data to the annotation bundle download.
 // Called by ANN.downloadBundle() when this hook is defined.
