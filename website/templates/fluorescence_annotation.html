@@ -106,7 +106,7 @@
           <ol class="mb-0">
             <li class="mb-2">
               <strong>Fill in experiment metadata</strong> &mdash; Enter information common to
-              all files in the <em>Investigation</em>, <em>Study</em>,
+              all files in the <em>Project</em>, <em>Experiment</em>,
               <em>Treatment</em>, and <em>Fluorometer settings</em> tabs below.
               Use <em>Filename tokens</em> to decode per-file metadata from filenames
               (e.g. <code>ctrl_rep1_t0.txt</code>).
@@ -140,11 +140,16 @@
           <!-- XLSX format guide -->
           <div class="mt-3 pt-2 border-top">
             <strong>XLSX template format:</strong>
-            The downloadable template is a multi-sheet workbook with one sheet per metadata tier
-            (Investigation, Study, Fluorometer, Treatments, Per-curve). Each sheet has header
-            columns matching the field labels; cells with dropdown validation are pre-configured
-            for vocabulary fields. Fill in the template in any spreadsheet application, then
-            upload the <code>.xlsx</code> file to populate tier forms and per-curve overrides.
+            The downloadable template is a multi-sheet workbook organised to match the form:
+            <em>Project</em>, <em>Experiment-common</em> (organism &amp; growth conditions),
+            and one sheet per sample type &mdash; <em>Experiment-liquid&nbsp;culture</em>,
+            <em>Experiment-vascular&nbsp;plant</em>, <em>Experiment-detached&nbsp;leaf</em> &mdash;
+            plus <em>Fluorometer</em> (incl. pre-acclimation) and the three
+            <em>Treatments</em> sheets (add one row per treatment group; all rows load back).
+            Fill in <em>Experiment-common</em> and the single sample-type sheet that matches
+            your organism. Every column header carries its unit, and vocabulary cells have
+            dropdowns. Fill the template in any spreadsheet application, then upload the
+            <code>.xlsx</code> to populate the metadata forms.
           </div>
         </div>
       </div>

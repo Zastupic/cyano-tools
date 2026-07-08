@@ -805,7 +805,9 @@ def _compute_jip_params(
         if len(x_seg) < 2:
             return None
         rect = float(x_seg[-1] - x_seg[0]) * height
-        trap  = float(np.trapezoid(y_seg, x_seg))
+        # np.trapezoid (numpy >= 2.0) replaced np.trapz; support both.
+        _trapz = getattr(np, "trapezoid", None) or np.trapz
+        trap  = float(_trapz(y_seg, x_seg))
         return rect - trap
 
     Area_OJ = safe_area(x_ms[:FJ_idx + 1], y[:FJ_idx + 1], FM) if FJ_idx > 0 else None
@@ -1033,8 +1035,8 @@ def _build_summary_parquet(state: dict) -> bytes | None:
     Falls back to None when pyarrow is not installed.
     """
     try:
-        import pyarrow as pa
-        import pyarrow.parquet as pq
+        import pyarrow as pa            # type: ignore[import-not-found]
+        import pyarrow.parquet as pq    # type: ignore[import-not-found]
     except ImportError:
         return None
 
@@ -1610,24 +1612,307 @@ def ncbi_taxon_search():
 
 # ── XLSX template ─────────────────────────────────────────────────────────────
 
+# ── HTML-driven XLSX layout ───────────────────────────────────────────────────
+#
+# The downloadable XLSX template mirrors the annotation form defined in
+# templates/_ann_tier_forms.html.  Rather than maintain a drift-prone second
+# copy of the field list here, we parse that template and derive the workbook
+# layout from it, so adding / renaming / moving a form field automatically
+# updates both the generated template and the upload parser (which share this
+# layout).
+#
+#   #tab-inv                       -> "Project"
+#   #tab-study  (common fields)    -> "Experiment-common"
+#   #tab-study  .ann-study-liquid  -> "Experiment-liquid culture"
+#   #tab-study  .ann-study-plant   -> "Experiment-vascular plant"
+#                                      + "Experiment-detached leaf"
+#   #tab-fluor                     -> "Fluorometer"
+#
+# To make a plant field appear on only one of the two plant sheets, add class
+# `ann-plant-only` (vascular plant) or `ann-leaf-only` (detached leaf) to the
+# field's control or any ancestor wrapper inside .ann-study-plant.
+
+from html.parser import HTMLParser as _HTMLParser
+
+_VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input",
+              "link", "meta", "param", "source", "track", "wbr"}
+
+# Field keys whose HTML <label> is ambiguous or duplicated within a sheet.
+_XLSX_HEADER_OVERRIDES = {
+    "culture_density_chla":       "Culture Chl a",
+    "culture_density_cdw":        "Culture cellular dry weight",
+    "culture_density_od":         "Culture OD (1 cm cuvette)",
+    "culture_density_od_wl":      "Culture OD wavelength",
+    "culture_density_other":      "Culture other density value",
+    "culture_density_other_unit": "Culture other density unit",
+    "sample_density_chla":        "Sample Chl a",
+    "sample_density_cdw":         "Sample cellular dry weight",
+    "sample_density_od":          "Sample OD (1 cm cuvette)",
+    "sample_density_od_wl":       "Sample OD wavelength",
+    "sample_dilution_factor":     "Sample dilution factor",
+    "culture_age_unit":           "Culture age unit",
+    "plant_age_unit":             "Plant age unit",
+}
+
+_TIER_FORMS_HTML = os.path.join(
+    os.path.dirname(__file__), "templates", "_ann_tier_forms.html"
+)
+
+
+class _Node:
+    """A single element in the tiny form-template DOM."""
+    __slots__ = ("tag", "attrs", "parent", "content")
+
+    def __init__(self, tag, attrs, parent):
+        self.tag = tag
+        self.attrs = attrs
+        self.parent = parent
+        self.content = []          # ordered list of str | _Node
+
+    @property
+    def classes(self):
+        return set((self.attrs.get("class") or "").split())
+
+    @property
+    def id(self):
+        return self.attrs.get("id")
+
+    def children(self):
+        return [c for c in self.content if isinstance(c, _Node)]
+
+    def get_text(self):
+        out = []
+
+        def _walk(n):
+            for c in n.content:
+                if isinstance(c, str):
+                    out.append(c)
+                else:
+                    _walk(c)
+
+        _walk(self)
+        return re.sub(r"\s+", " ", "".join(out).replace("\xa0", " ")).strip()
+
+
+class _DOMBuilder(_HTMLParser):
+    """Minimal, tolerant HTML→tree builder.  Handles void <input> and the
+    optional end tag of <option> (the template's <datalist>s omit it)."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.root = _Node("__root__", {}, None)
+        self.stack = [self.root]
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "option" and self.stack[-1].tag == "option":
+            self.stack.pop()                       # close preceding <option>
+        node = _Node(tag, {k: (v or "") for k, v in attrs}, self.stack[-1])
+        self.stack[-1].content.append(node)
+        if tag not in _VOID_TAGS:
+            self.stack.append(node)
+
+    def handle_startendtag(self, tag, attrs):
+        node = _Node(tag, {k: (v or "") for k, v in attrs}, self.stack[-1])
+        self.stack[-1].content.append(node)
+
+    def handle_endtag(self, tag):
+        for i in range(len(self.stack) - 1, 0, -1):
+            if self.stack[i].tag == tag:
+                del self.stack[i:]
+                return                             # ignore unmatched end tags
+
+    def handle_data(self, data):
+        self.stack[-1].content.append(data)
+
+
+def _dom_find_by_id(node, id_):
+    for c in node.children():
+        if c.id == id_:
+            return c
+        found = _dom_find_by_id(c, id_)
+        if found is not None:
+            return found
+    return None
+
+
+def _dom_descendants(node):
+    for c in node.children():
+        yield c
+        yield from _dom_descendants(c)
+
+
+_LAYOUT_CACHE: dict = {}   # {mtime, layout} — avoids re-parsing on every request
+
+
+def _extract_form_layout() -> dict:
+    """Parse _ann_tier_forms.html and return the XLSX layout.
+
+    Returns ``{"sheets": [(sheet_name, tier, [field, ...]), ...]}`` where each
+    ``field`` is ``{key, header, vocab, vocab_source}`` and ``tier`` is one of
+    ``investigation`` | ``study`` | ``fluor`` (routes pre-fill and parsing).
+    Plant fields go to both plant sheets unless tagged ann-plant-only /
+    ann-leaf-only.  Result is cached on the template's mtime.
+    """
+    try:
+        mtime = os.path.getmtime(_TIER_FORMS_HTML)
+    except OSError:
+        mtime = None
+    if mtime is not None and _LAYOUT_CACHE.get("mtime") == mtime:
+        return _LAYOUT_CACHE["layout"]
+
+    with open(_TIER_FORMS_HTML, encoding="utf-8") as fh:
+        builder = _DOMBuilder()
+        builder.feed(fh.read())
+    root = builder.root
+
+    # label[for] -> cleaned label text (drop the required-* and inherit-⇩ marks)
+    label_map = {}
+    for node in _dom_descendants(root):
+        if node.tag == "label" and node.attrs.get("for"):
+            txt = node.get_text().replace("*", "").replace("⇩", "")
+            label_map[node.attrs["for"]] = re.sub(r"\s+", " ", txt).strip()
+
+    def _humanize(key):
+        return key.replace("_", " ").strip().capitalize()
+
+    def _unit_for(control):
+        """Unit string from the control's own input-group, if any."""
+        anc = control.parent
+        ig = None
+        while anc is not None:
+            if "input-group" in anc.classes:
+                ig = anc
+                break
+            if "form-group" in anc.classes:
+                break                              # don't cross into a sibling
+            anc = anc.parent
+        if ig is None:
+            return ""
+        for d in _dom_descendants(ig):
+            if d.tag == "span" and "input-group-text" in d.classes:
+                return d.get_text()
+        return ""
+
+    def _vocab_for(control):
+        if control.tag == "select":
+            vals = []
+            for d in _dom_descendants(control):
+                if d.tag == "option":
+                    v = d.attrs.get("value")
+                    if v is None:
+                        v = d.get_text()
+                    if v not in (None, ""):
+                        vals.append(v)
+            return vals, "select"
+        list_id = control.attrs.get("list")
+        if list_id:
+            dl = _dom_find_by_id(root, list_id)
+            if dl is not None:
+                vals = [d.attrs.get("value") for d in _dom_descendants(dl)
+                        if d.tag == "option" and d.attrs.get("value")]
+                return vals, "datalist"
+        return [], ""
+
+    def _field(key, control):
+        header = (_XLSX_HEADER_OVERRIDES.get(key)
+                  or label_map.get(control.id or "")
+                  or _humanize(key))
+        unit = _unit_for(control)
+        if unit and f"({unit})" not in header:
+            header = f"{header} ({unit})"
+        vocab, vsrc = _vocab_for(control)
+        return {"key": key, "header": header, "vocab": vocab, "vocab_source": vsrc}
+
+    def _pane_controls(pane, prefix):
+        out = []
+        if pane is None:
+            return out
+        for d in _dom_descendants(pane):
+            if d.tag not in ("input", "select", "textarea"):
+                continue
+            idv = d.id
+            if not idv or not idv.startswith(prefix):
+                continue
+            if d.attrs.get("type") == "hidden" or idv.endswith("-taxid"):
+                continue
+            out.append((idv[len(prefix):], d))
+        return out
+
+    def _dedup(fields):
+        seen = set()
+        for f in fields:
+            if f["header"] in seen:
+                f["header"] = f"{f['header']} [{f['key']}]"
+            seen.add(f["header"])
+        return fields
+
+    # ── Project (investigation) ─────────────────────────────────────────────
+    project_fields = [_field(k, c) for k, c in
+                      _pane_controls(_dom_find_by_id(root, "tab-inv"), "inv-")]
+
+    # ── Experiment (study) ──────────────────────────────────────────────────
+    common_f, liquid_f, vplant_f, leaf_f = [], [], [], []
+    for key, ctrl in _pane_controls(_dom_find_by_id(root, "tab-study"), "study-"):
+        if key in ("sample_type", "organism-dropdown"):
+            continue
+        section = "common"
+        plant_only = leaf_only = False
+        anc = ctrl.parent
+        while anc is not None:
+            cl = anc.classes
+            if "ann-study-liquid" in cl:
+                section = "liquid"
+            elif "ann-study-plant" in cl:
+                section = "plant"
+            if "ann-plant-only" in cl:
+                plant_only = True
+            if "ann-leaf-only" in cl:
+                leaf_only = True
+            anc = anc.parent
+        fld = _field(key, ctrl)
+        if section == "liquid":
+            liquid_f.append(fld)
+        elif section == "plant":
+            if not leaf_only:
+                vplant_f.append(dict(fld))
+            if not plant_only:
+                leaf_f.append(dict(fld))
+        else:
+            common_f.append(fld)
+
+    # ── Fluorometer ─────────────────────────────────────────────────────────
+    fluor_fields = [_field(k, c) for k, c in
+                    _pane_controls(_dom_find_by_id(root, "tab-fluor"), "fluor-")]
+
+    layout = {"sheets": [
+        ("Project",                   "investigation", _dedup(project_fields)),
+        ("Experiment-common",         "study",         _dedup(common_f)),
+        ("Experiment-liquid culture", "study",         _dedup(liquid_f)),
+        ("Experiment-vascular plant", "study",         _dedup(vplant_f)),
+        ("Experiment-detached leaf",  "study",         _dedup(leaf_f)),
+        ("Fluorometer",               "fluor",         _dedup(fluor_fields)),
+    ]}
+    if mtime is not None:
+        _LAYOUT_CACHE["mtime"] = mtime
+        _LAYOUT_CACHE["layout"] = layout
+    return layout
+
+
 def _build_xlsx_template(tier_defaults: dict | None = None) -> bytes:
     """
-    Generate a multi-sheet MIAPPE-style XLSX workbook for pre-filling
-    annotation fields.
+    Generate the multi-sheet XLSX template.
 
-    Sheets:
-      Investigation — 1 row, 7 columns
-      Study         — 1 row, study fields
-      Fluorometer   — 1 row, fluorometer fields
-      Treatments    — N rows, one per treatment template
-      Per-curve     — N rows, one per file/curve (user fills in)
-
-    Data validation (dropdowns) are added for vocab fields.
-    If tier_defaults is provided, pre-fill cells from existing form values.
+    Sheets: Project · Experiment-common · Experiment-liquid culture ·
+    Experiment-vascular plant · Experiment-detached leaf · Fluorometer ·
+    Chem./Stress/Other treatments.  Field set, order, labels (with units) and
+    dropdowns are derived from templates/_ann_tier_forms.html (see
+    _extract_form_layout), so the workbook always matches the on-page form.
+    If tier_defaults is provided, cells are pre-filled from current form values.
     """
     try:
         from openpyxl import Workbook
         from openpyxl.worksheet.datavalidation import DataValidation
+        from openpyxl.utils import get_column_letter
     except ImportError:
         raise ImportError(
             "openpyxl is required for XLSX template generation. "
@@ -1635,65 +1920,76 @@ def _build_xlsx_template(tier_defaults: dict | None = None) -> bytes:
         )
 
     wb = Workbook()
+    _default_ws = wb.worksheets[0]    # captured now for type-safe removal later
     td = tier_defaults or {}
+    _src = {"investigation": td.get("investigation") or {},
+            "study":         td.get("study") or {},
+            "fluor":         td.get("fluor") or {}}
 
     # Hidden sheet for vocab lists that exceed Excel's 255-char inline limit
+    # (or contain commas, which would break the inline formula).
     ws_vocab = wb.create_sheet(title="_Vocab")
     ws_vocab.sheet_state = "hidden"
     _vocab_col = [0]  # mutable counter for next free column
 
-    def _make_dv(vocab: list, label: str) -> DataValidation:
-        """Create a DataValidation for a vocab list, using the hidden _Vocab
-        sheet when the inline formula would exceed Excel's 255-char limit."""
-        inline = '"' + ",".join(str(v) for v in vocab) + '"'
-        if len(inline) <= 255:
+    def _make_dv(vocab: list, label: str, strict: bool = True) -> DataValidation:
+        vocab = [str(v) for v in vocab]
+        inline = '"' + ",".join(vocab) + '"'
+        if len(inline) <= 255 and not any("," in v for v in vocab):
             formula1 = inline
         else:
             _vocab_col[0] += 1
             col_idx = _vocab_col[0]
-            from openpyxl.utils import get_column_letter
             col_letter = get_column_letter(col_idx)
-            ws_vocab.cell(row=1, column=col_idx, value=label)
+            ws_vocab.cell(row=1, column=col_idx, value=label[:250])
             for ri, v in enumerate(vocab, 2):
-                ws_vocab.cell(row=ri, column=col_idx, value=str(v))
-            last_row = len(vocab) + 1
-            formula1 = f"_Vocab!${col_letter}$2:${col_letter}${last_row}"
+                ws_vocab.cell(row=ri, column=col_idx, value=v)
+            formula1 = f"_Vocab!${col_letter}$2:${col_letter}${len(vocab) + 1}"
         dv = DataValidation(type="list", formula1=formula1, allow_blank=True)
-        error_msg = f"Please choose from: {', '.join(str(v) for v in vocab)}"
-        dv.error      = error_msg[:255]
-        dv.errorTitle = label[:32]
+        dv.showErrorMessage = strict          # datalist-derived lists are hints
+        if strict:
+            dv.error      = (f"Please choose from: {', '.join(vocab)}")[:255]
+            dv.errorTitle = label[:32]
         return dv
 
-    def _add_sheet(name: str, tier: str, source_dict: dict | None = None):
-        ws = wb.create_sheet(title=name)
-        fields = [(k, f) for k, f in FIELDS.items() if f.tier == tier]
-        # Header row
-        for ci, (k, fdef) in enumerate(fields, 1):
-            cell = ws.cell(row=1, column=ci, value=fdef.label or k)
+    # Only pre-fill the sample-type sheet that matches the form's sample_type,
+    # so a downloaded+re-uploaded prefilled template is detected as the right
+    # sample type (the two plant sheets share identical columns).
+    _st = (_src["study"].get("sample_type") or "").lower()
+    _sheet_prefill_ok = {
+        "Experiment-liquid culture": "liquid" in _st,
+        "Experiment-vascular plant": "vascular" in _st or _st == "plant",
+        "Experiment-detached leaf":  "leaf" in _st or "disc" in _st,
+    }
+
+    def _add_form_sheet(name: str, tier: str, fields: list):
+        ws = wb.create_sheet(title=name[:31])
+        source = _src.get(tier, {})
+        prefill_ok = _sheet_prefill_ok.get(name, True)
+        for ci, f in enumerate(fields, 1):
+            cell = ws.cell(row=1, column=ci, value=f["header"])
             cell.font = cell.font.copy(bold=True)
-            # Dropdown validation for vocab fields
-            if fdef.vocab:
-                dv = _make_dv(fdef.vocab, fdef.label or k)
+            if f["vocab"]:
+                dv = _make_dv(f["vocab"], f["header"],
+                              strict=(f["vocab_source"] == "select"))
                 ws.add_data_validation(dv)
                 dv.add(ws.cell(row=2, column=ci))
-            # Pre-fill from tier_defaults
-            if source_dict and k in source_dict:
-                val = source_dict[k]
+            if prefill_ok:
+                val = source.get(f["key"])
                 if val not in (None, "", []):
                     ws.cell(row=2, column=ci, value=str(val))
-        # Auto-width
-        for ci, (k, _) in enumerate(fields, 1):
-            ws.column_dimensions[ws.cell(row=1, column=ci).column_letter].width = 18
+            ws.column_dimensions[cell.column_letter].width = \
+                max(14, min(42, len(f["header"]) + 2))
         return ws
 
     # Remove default sheet
-    wb.remove(wb.active)
+    wb.remove(_default_ws)
 
-    _add_sheet("Investigation", "investigation", td.get("investigation"))
-    _add_sheet("Study", "study", td.get("study"))
-    _add_sheet("Fluorometer", "fluorometer", td.get("fluor"))
+    for name, tier, fields in _extract_form_layout()["sheets"]:
+        _add_form_sheet(name, tier, fields)
 
-    # Treatment sheets — one per treatment type
+    # Treatment sheets — one row per template; every filled row loads back into
+    # the matching on-page table (chem / stress / other).
     def _add_treatment_sheet(title: str, treat_type: str, sub_fields: list):
         ws = wb.create_sheet(title=title)
         all_keys = ["treatment_label"] + sub_fields
@@ -1731,19 +2027,6 @@ def _build_xlsx_template(tier_defaults: dict | None = None) -> bytes:
         ["other_treatment", "other_dose", "other_unit", "other_duration", "other_detail"],
     )
 
-    # Per-curve sheet
-    ws_curve = wb.create_sheet(title="Per-curve")
-    curve_fields = [(k, f) for k, f in FIELDS.items() if f.tier == "per_curve"]
-    for ci, (k, fdef) in enumerate(curve_fields, 1):
-        cell = ws_curve.cell(row=1, column=ci, value=fdef.label or k)
-        cell.font = cell.font.copy(bold=True)
-        if fdef.vocab:
-            dv = _make_dv(fdef.vocab, fdef.label or k)
-            ws_curve.add_data_validation(dv)
-            for ri in range(2, 201):
-                dv.add(ws_curve.cell(row=ri, column=ci))
-        ws_curve.column_dimensions[ws_curve.cell(row=1, column=ci).column_letter].width = 16
-
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
@@ -1751,16 +2034,20 @@ def _build_xlsx_template(tier_defaults: dict | None = None) -> bytes:
 
 def _parse_xlsx_upload(xlsx_bytes: bytes) -> dict:
     """
-    Parse an uploaded XLSX template back into tier dicts + treatment templates
-    + per-curve overrides.
+    Parse an uploaded XLSX template back into tier dicts + treatment templates.
+
+    Sheet / field layout is derived from the same HTML form as the template
+    generator (see _extract_form_layout), so the two always agree.  The three
+    Experiment-* sheets collapse into a single study dict; sample_type is set
+    from whichever one the user filled.
 
     Returns:
         {
           'investigation': {field: value},
-          'study':         {field: value},
+          'study':         {field: value},   # incl. sample_type
           'fluor':         {field: value},
-          'treatment_templates': [{label, chem_*, stress_*}, ...],
-          'per_curve_overrides':  [{field: value, ...}, ...],
+          'treatment_templates': [{label, chem_*, stress_*, ...}, ...],
+          'per_curve_overrides':  [],
         }
     """
     try:
@@ -1771,24 +2058,68 @@ def _parse_xlsx_upload(xlsx_bytes: bytes) -> dict:
     wb = load_workbook(io.BytesIO(xlsx_bytes), data_only=True)
     result: dict[str, Any] = {}
 
-    def _read_tier_sheet(sheet_name: str, tier: str) -> dict:
-        if sheet_name not in wb.sheetnames:
+    sheets = {name: fields
+              for name, _tier, fields in _extract_form_layout()["sheets"]}
+
+    def _read_form_sheet(sheet_name: str) -> dict:
+        """Read the single data row (row 2) of a form sheet -> {key: value}."""
+        fields = sheets.get(sheet_name, [])
+        if sheet_name not in wb.sheetnames or not fields:
             return {}
         ws = wb[sheet_name]
+        if ws.max_row < 2:
+            return {}
+        header_to_key = {f["header"]: f["key"] for f in fields}
         headers = [cell.value for cell in ws[1]]
-        tier_fields = {f.label or k: k for k, f in FIELDS.items() if f.tier == tier}
         data = {}
-        if ws.max_row >= 2:
-            for ci, header in enumerate(headers):
-                if header and header in tier_fields:
-                    val = ws.cell(row=2, column=ci + 1).value
-                    if val is not None and str(val).strip():
-                        data[tier_fields[header]] = str(val).strip()
+        for ci, header in enumerate(headers):
+            if header in header_to_key:
+                val = ws.cell(row=2, column=ci + 1).value
+                if val is not None and str(val).strip():
+                    data[header_to_key[header]] = str(val).strip()
         return data
 
-    result["investigation"] = _read_tier_sheet("Investigation", "investigation")
-    result["study"]         = _read_tier_sheet("Study", "study")
-    result["fluor"]         = _read_tier_sheet("Fluorometer", "fluorometer")
+    result["investigation"] = _read_form_sheet("Project")
+    result["fluor"]         = _read_form_sheet("Fluorometer")
+
+    # Study = common + whichever sample-type sheet the user actually filled.
+    study = dict(_read_form_sheet("Experiment-common"))
+    liquid = _read_form_sheet("Experiment-liquid culture")
+    vplant = _read_form_sheet("Experiment-vascular plant")
+    leaf   = _read_form_sheet("Experiment-detached leaf")
+    if liquid:
+        study.update(liquid)
+        study["sample_type"] = "liquid culture"
+    elif vplant:
+        study.update(vplant)
+        study["sample_type"] = "vascular plant"
+    elif leaf:
+        study.update(leaf)
+        study["sample_type"] = "detached leaf / disc"
+    result["study"] = study
+
+    # Legacy back-compat: pre-restructure workbooks (Investigation / Study).
+    if (not result["investigation"] and not study
+            and ("Investigation" in wb.sheetnames or "Study" in wb.sheetnames)):
+        def _read_legacy_tier(sheet_name: str, tier: str) -> dict:
+            if sheet_name not in wb.sheetnames:
+                return {}
+            ws = wb[sheet_name]
+            headers = [cell.value for cell in ws[1]]
+            tier_fields = {f.label or k: k
+                           for k, f in FIELDS.items() if f.tier == tier}
+            data = {}
+            if ws.max_row >= 2:
+                for ci, header in enumerate(headers):
+                    if header and header in tier_fields:
+                        val = ws.cell(row=2, column=ci + 1).value
+                        if val is not None and str(val).strip():
+                            data[tier_fields[header]] = str(val).strip()
+            return data
+        result["investigation"] = _read_legacy_tier("Investigation", "investigation")
+        result["study"]         = _read_legacy_tier("Study", "study")
+        if not result["fluor"]:
+            result["fluor"]     = _read_legacy_tier("Fluorometer", "fluorometer")
 
     # Treatment templates — 3 separate sheets
     templates = []
