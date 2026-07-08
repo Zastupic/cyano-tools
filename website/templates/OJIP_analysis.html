@@ -189,6 +189,30 @@
       </div>
     </div>
 
+    <!-- Download annotation template -->
+    <div class="card">
+      <div class="card-header py-2" id="headingAnnotationTemplate">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseAnnotationTemplate"
+                  aria-expanded="false" aria-controls="collapseAnnotationTemplate">
+            <i class="fa fa-file-excel-o mr-2"></i>Download annotation file template
+          </button>
+        </h6>
+      </div>
+      <div id="collapseAnnotationTemplate" class="collapse" aria-labelledby="headingAnnotationTemplate" data-parent="#ojipInfoAccordion">
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            Download the XLSX annotation template to document your experimental metadata (sample info, cultivation conditions, measurement protocol, etc.).
+            Fill in the template and upload it later in the <strong>Annotation</strong> section to build a MIAPPE-compatible, ML-ready dataset.
+          </p>
+          <button class="btn btn-outline-info btn-sm" onclick="ANN.downloadXlsxTemplate()">
+            <i class="fa fa-download mr-1"></i>Download XLSX template
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 <!-- ══════════════════════════════════════════════════════════════════
@@ -1616,7 +1640,7 @@
 <!-- SheetJS — pinned to 0.20.3, not the mutable "xlsx-latest" tag -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js_OJIP.js') }}"></script>
-<script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}"></script>
+<script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}?v=4"></script>
 <script>
 // Provide raw OJIP curve data to the annotation bundle download.
 // Called by ANN.downloadBundle() when this hook is defined.

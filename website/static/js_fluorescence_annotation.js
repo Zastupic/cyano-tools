@@ -464,6 +464,7 @@ const ANN = (function () {
 
     function searchOrganism(query) {
         if (_ncbiTimer) clearTimeout(_ncbiTimer);
+        _hideOrganismBadge();
         const dropdown = _eid('study-organism-dropdown');
         if (!dropdown) return;
 
@@ -505,6 +506,146 @@ const ANN = (function () {
                     // Preset results remain visible as fallback
                 });
         }, 350);
+    }
+
+    /** Show / hide the organism match badge after auto-resolve. */
+    function _showOrganismBadge(best, raw) {
+        const badge = _eid('study-organism-match-badge');
+        if (!badge) return;
+
+        if (!best) {
+            // No match at all
+            badge.style.display = 'block';
+            badge.innerHTML =
+                `<span class="badge badge-danger" style="font-size:.82rem;font-weight:500;">` +
+                `<i class="fa fa-exclamation-triangle mr-1"></i>No match found for "${_esc(raw)}" &mdash; ` +
+                `please use the NCBI search above or enter the full scientific name</span>`;
+            return;
+        }
+
+        const pct = Math.round(best.score * 100);
+        badge.style.display = 'block';
+
+        if (pct >= 80) {
+            badge.innerHTML =
+                `<span class="badge badge-success" style="font-size:.82rem;font-weight:500;">` +
+                `<i class="fa fa-check mr-1"></i>Matched: ${_esc(best.name)} ` +
+                `(taxID ${best.taxid}) &mdash; score ${pct}%</span>`;
+        } else if (pct >= 50) {
+            badge.innerHTML =
+                `<span class="badge badge-warning" style="font-size:.82rem;font-weight:500;">` +
+                `<i class="fa fa-exclamation-circle mr-1"></i>Partial match: ${_esc(best.name)} ` +
+                `(taxID ${best.taxid}) &mdash; score ${pct}% &mdash; please verify</span>`;
+        } else {
+            badge.innerHTML =
+                `<span class="badge badge-danger" style="font-size:.82rem;font-weight:500;">` +
+                `<i class="fa fa-exclamation-triangle mr-1"></i>Low match: ${_esc(best.name)} ` +
+                `(taxID ${best.taxid}) &mdash; score ${pct}% &mdash; please verify or search NCBI</span>`;
+        }
+    }
+
+    /** Hide the organism badge (e.g. when the user edits the field manually). */
+    function _hideOrganismBadge() {
+        const badge = _eid('study-organism-match-badge');
+        if (badge) { badge.style.display = 'none'; badge.innerHTML = ''; }
+    }
+
+    /**
+     * After XLSX upload populates the organism text field, try to resolve it
+     * to a canonical name + taxID.  Auto-selects if there is a single
+     * high-confidence match; otherwise shows the dropdown for the user.
+     * Shows a colour-coded badge with the match quality.
+     */
+    function _resolveOrganismAfterUpload() {
+        const inp = _eid('study-organism');
+        const hid = _eid('study-organism-taxid');
+        const dropdown = _eid('study-organism-dropdown');
+        if (!inp || !dropdown) return;
+
+        _hideOrganismBadge();
+        // Clear stale taxID so every upload gets a fresh resolve
+        if (hid) hid.value = '';
+
+        const raw = (inp.value || '').trim();
+        if (!raw || raw.length < 2) return;
+
+        const q = raw.toLowerCase();
+        const tokens = q.split(/[\s.]+/).filter(t => t.length > 1);
+
+        // Score a candidate: fraction of query tokens found in the name
+        const _score = (name) => {
+            const nl = name.toLowerCase();
+            const hits = tokens.filter(t => nl.includes(t));
+            return tokens.length ? hits.length / tokens.length : 0;
+        };
+
+        // 1. Check presets first
+        const scored = _PRESET_ORGANISMS
+            .map(o => ({ ...o, score: _score(o.name) }))
+            .filter(o => o.score > 0)
+            .sort((a, b) => b.score - a.score);
+
+        if (scored.length && scored[0].score >= 0.8 &&
+            (scored.length === 1 || scored[0].score > scored[1].score)) {
+            inp.value = scored[0].name;
+            if (hid) hid.value = scored[0].taxid;
+            _showOrganismBadge(scored[0], raw);
+            return;
+        }
+
+        // 2. Fall back to NCBI API
+        if (raw.length < 3) {
+            if (scored.length) {
+                _renderOrganismResults(scored, dropdown);
+                _showOrganismBadge(scored[0], raw);
+            } else {
+                _showOrganismBadge(null, raw);
+            }
+            return;
+        }
+
+        fetch('/api/fluorescence_annotation/ncbi_taxon?q=' + encodeURIComponent(raw))
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(results => {
+                if (!Array.isArray(results)) results = [];
+
+                const ncbiScored = results
+                    .map(r => ({ ...r, score: _score(r.name) }))
+                    .sort((a, b) => b.score - a.score);
+
+                const ncbiIds = new Set(ncbiScored.map(r => r.taxid));
+                const merged = [
+                    ...ncbiScored,
+                    ...scored.filter(p => !ncbiIds.has(p.taxid)),
+                ];
+
+                if (!merged.length) {
+                    _showOrganismBadge(null, raw);
+                    return;
+                }
+
+                if (merged[0].score >= 0.8 &&
+                    (merged.length === 1 || merged[0].score > merged[1].score)) {
+                    inp.value = merged[0].name;
+                    if (hid) hid.value = merged[0].taxid;
+                    _showOrganismBadge(merged[0], raw);
+                    return;
+                }
+
+                // Ambiguous — show dropdown + badge for the best candidate
+                _renderOrganismResults(merged, dropdown);
+                _showOrganismBadge(merged[0], raw);
+                inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            })
+            .catch(err => {
+                console.warn('[ANN] Organism auto-resolve failed:', err);
+                if (scored.length) {
+                    _renderOrganismResults(scored, dropdown);
+                    _showOrganismBadge(scored[0], raw);
+                } else {
+                    _showOrganismBadge(null, raw);
+                }
+            });
     }
 
     // Close organism dropdown on outside click
@@ -1593,6 +1734,7 @@ const ANN = (function () {
                     treatment_templates: data.treatment_templates || [],
                 };
                 _populateTierForms(td);
+                _resolveOrganismAfterUpload();
 
                 // Apply per-curve overrides if grid has rows
                 const overrides = data.per_curve_overrides || [];
