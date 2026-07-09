@@ -430,11 +430,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (saved && [...sel.options].some(o => o.value === saved)) sel.value = saved;
   sel.addEventListener('change', () => localStorage.setItem('ojip_fluorometer', sel.value));
 
+  // Prevent browser from opening dropped files anywhere on the page
+  document.addEventListener('dragover', e => e.preventDefault());
+  document.addEventListener('drop',    e => e.preventDefault());
+
   // Drop-zone behaviour
   const dz   = document.getElementById('drop-zone');
   const finp = document.getElementById('ojip-files');
-  dz.addEventListener('click', () => finp.click());
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.background = '#e8f4fd'; });
+  dz.addEventListener('click', e => { if (e.target.tagName !== 'LABEL' && e.target !== finp) finp.click(); });
+  dz.addEventListener('dragenter', e => { e.preventDefault(); dz.style.background = '#e8f4fd'; });
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.style.background = '#e8f4fd'; });
   dz.addEventListener('dragleave', () => { dz.style.background = '#f8f9fa'; });
   dz.addEventListener('drop', e => {
     e.preventDefault(); dz.style.background = '#f8f9fa';

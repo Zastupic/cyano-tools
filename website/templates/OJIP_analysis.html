@@ -332,7 +332,9 @@
     <div id="drop-zone" class="border rounded p-4 text-center mb-2"
          style="border-style:dashed !important; cursor:pointer; background:#f8f9fa; transition:background 0.2s;">
       <i class="fa fa-upload fa-2x text-muted mb-2"></i>
-      <p class="mb-1 text-muted">Drag &amp; drop files here, or click to browse</p>
+      <p class="mb-1 text-muted">Drag &amp; drop files here, or
+        <label for="ojip-files" style="cursor:pointer; color:#007bff; text-decoration:underline; margin:0;">click to browse</label>
+      </p>
       <small class="text-muted" id="file-count-label">No files selected</small>
       <input type="file" id="ojip-files" multiple accept=".csv,.CSV,.txt,.ASCII" style="display:none">
     </div>
@@ -1637,13 +1639,11 @@
 
 <br><br><br>
 
-<!-- DOMPurify — sanitize all HTML before inserting into DOM -->
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a" crossorigin="anonymous"></script>
-<!-- Chart.js (minimal bundles) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.4.3/build/index.umd.min.js" integrity="sha384-sFm3gtVOu8tj9+CNeq4Ixnoa7bK89awxU5I9ZNyB1rFG3MX0IskcIeSmKY4TbrXd" crossorigin="anonymous"></script>
-<!-- SheetJS — pinned to 0.20.3, not the mutable "xlsx-latest" tag -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+<!-- Self-hosted vendor libs (avoids CDN/SRI issues in corporate networks) -->
+<script src="{{ url_for('static', filename='vendor/purify.min.3.1.6.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.4.4.7.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/chartjs-error-bars.umd.min.4.4.3.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/xlsx.full.min.0.20.3.js') }}"></script>
 <script src="{{ url_for('static', filename='js_OJIP.js') }}"></script>
 <script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}?v=9"></script>
 <script>
