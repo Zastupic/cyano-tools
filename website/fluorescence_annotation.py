@@ -1366,8 +1366,9 @@ def ingest_from_ojip():
     ojip    = payload.get("ojip_results", {})
     tier    = payload.get("tier_json",    {})
 
-    files       = ojip.get("files", [])
-    fluorometer = ojip.get("fluorometer") or None
+    files           = ojip.get("files", [])
+    fluorometer     = ojip.get("fluorometer") or None
+    instrument_meta = ojip.get("instrument_meta", {})
 
     if not files:
         return jsonify({"status": "error",
@@ -1384,6 +1385,24 @@ def ingest_from_ojip():
     if fluorometer and not fluor.get("instrument"):
         fluor = dict(fluor)
         fluor["instrument"] = fluorometer
+
+    # Map FluorPen instrument metadata to fluorometer-tier annotation fields.
+    # SUPER LED = saturating pulse, FLASH = measuring light, ACTINIC = pre-acclimation.
+    if instrument_meta:
+        _META_TO_FLUOR = {
+            "super_intensity_uE":    "sat_pulse_intensity",
+            "super_wavelength_nm":   "sat_pulse_wavelength_nm",
+            "flash_intensity_uE":    "meas_light_intensity",
+            "flash_wavelength_nm":   "meas_light_wavelength_nm",
+            "actinic_intensity_uE":  "actinic_preaccl_intensity",
+            "actinic_wavelength_nm": "actinic_preaccl_wavelength_nm",
+        }
+        if not isinstance(fluor, dict) or id(fluor) == id(tier.get("fluor", {})):
+            fluor = dict(fluor)
+        for meta_key, fluor_key in _META_TO_FLUOR.items():
+            meta_val = instrument_meta.get(meta_key)
+            if meta_val is not None and not fluor.get(fluor_key):
+                fluor[fluor_key] = meta_val
 
     inherited = _inherit_tiers(investigation, study, fluor)
 

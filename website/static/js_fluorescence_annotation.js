@@ -290,6 +290,8 @@ const ANN = (function () {
         if (!el) return;
         el.textContent = msg;
         el.classList.remove('d-none');
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        _toast('\u26a0 ' + msg);
     }
 
     function _clearError() {
@@ -318,7 +320,7 @@ const ANN = (function () {
     // ── Toast ─────────────────────────────────────────────────────────────────
     let _toastTimer = null;
 
-    function _toast(msg) {
+    function _toast(msg, durationMs) {
         let el = _eid('ann-toast');
         if (!el) {
             el = document.createElement('div');
@@ -337,7 +339,102 @@ const ANN = (function () {
         el.textContent = msg;
         el.style.opacity = '1';
         if (_toastTimer) clearTimeout(_toastTimer);
-        _toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 2800);
+        _toastTimer = setTimeout(() => { el.style.opacity = '0'; }, durationMs || 2800);
+    }
+
+    // ── Edit popover ("Apply to all" / "Apply to visible") ─────────────────
+    let _popoverEl    = null;
+    let _popoverTimer = null;
+
+    function _dismissPopover() {
+        if (_popoverEl && _popoverEl.parentNode) _popoverEl.parentNode.removeChild(_popoverEl);
+        _popoverEl = null;
+        if (_popoverTimer) { clearTimeout(_popoverTimer); _popoverTimer = null; }
+    }
+
+    function _showEditPopover(td, key, newVal) {
+        _dismissPopover();
+        const col = COLS.find(c => c.key === key);
+        if (!col || !col.editable || key === '_complete') return;
+
+        const pop = document.createElement('div');
+        pop.style.cssText = [
+            'position:absolute', 'z-index:10000',
+            'background:#1a2c35', 'color:#fff',
+            'border-radius:8px', 'padding:6px 10px',
+            'font-size:.78rem',
+            'box-shadow:0 2px 8px rgba(0,0,0,.25)',
+            'white-space:nowrap',
+            'display:flex', 'gap:8px', 'align-items:center',
+        ].join(';');
+
+        const btnCss = 'cursor:pointer;padding:2px 8px;border-radius:4px;border:1px solid #4a6a7a;' +
+                       'background:#2a4a5a;color:#fff;font-size:.76rem;';
+        const label  = _esc(String(newVal).length > 20 ? newVal.slice(0, 18) + '\u2026' : newVal);
+
+        pop.innerHTML =
+            '<span style="opacity:.8;">Apply\u00a0"' + label + '"</span>' +
+            '<button class="ann-pop-all" style="' + btnCss + '">to all</button>' +
+            '<button class="ann-pop-vis" style="' + btnCss + '">to visible</button>';
+
+        document.body.appendChild(pop);
+        _popoverEl = pop;
+
+        // Position near the edited cell
+        const rect = td.getBoundingClientRect();
+        pop.style.left = (rect.left + window.scrollX) + 'px';
+        pop.style.top  = (rect.bottom + window.scrollY + 4) + 'px';
+
+        // "to all" handler
+        pop.querySelector('.ann-pop-all').addEventListener('click', () => {
+            _dismissPopover();
+            let count = 0;
+            _rows.forEach(row => {
+                row[key] = { value: newVal, provenance: 'typed' };
+                if (key === 'treatment_label' && newVal) _applyTreatmentTemplate(row, newVal);
+                if (key === 'sample_type') _sampleType = newVal;
+                row.completeness_score = { value: _clientScore(row), provenance: 'computed' };
+                count++;
+            });
+            _renderGrid();
+            _toast('Applied "' + newVal + '" to all ' + count + ' rows.');
+        });
+
+        // "to visible" handler
+        pop.querySelector('.ann-pop-vis').addEventListener('click', () => {
+            _dismissPopover();
+            const visRows = _applyFilters(_rows);
+            let count = 0;
+            visRows.forEach(row => {
+                row[key] = { value: newVal, provenance: 'typed' };
+                if (key === 'treatment_label' && newVal) _applyTreatmentTemplate(row, newVal);
+                if (key === 'sample_type') _sampleType = newVal;
+                row.completeness_score = { value: _clientScore(row), provenance: 'computed' };
+                count++;
+            });
+            _renderGrid();
+            _toast('Applied "' + newVal + '" to ' + count + ' visible rows.');
+        });
+
+        // Auto-dismiss after 4 seconds
+        _popoverTimer = setTimeout(_dismissPopover, 4000);
+
+        // Dismiss on scroll within the grid wrapper
+        const gridWrap = _eid('ann-grid-wrap');
+        if (gridWrap) {
+            gridWrap.addEventListener('scroll', _dismissPopover, { once: true });
+        }
+
+        // Dismiss on click outside popover
+        setTimeout(() => {
+            const _onDoc = e => {
+                if (_popoverEl && !_popoverEl.contains(e.target)) {
+                    _dismissPopover();
+                    document.removeEventListener('click', _onDoc, true);
+                }
+            };
+            document.addEventListener('click', _onDoc, true);
+        }, 0);
     }
 
     // ── Fluorometer field count chip ──────────────────────────────────────────
@@ -1335,6 +1432,7 @@ const ANN = (function () {
 
     // ── Grid rendering ────────────────────────────────────────────────────────
     function _renderGrid() {
+        _dismissPopover();
         const visCols    = _visibleCols();
         const visibleRows = _applyFilters(_rows);
         _renderToolbar();
@@ -1534,6 +1632,7 @@ const ANN = (function () {
 
     // ── Inline cell editing ───────────────────────────────────────────────────
     function _startEdit(td, key, rowIdx) {
+        _dismissPopover();
         if (td.querySelector('input, select')) return;
 
         const cell   = _rows[rowIdx] && _rows[rowIdx][key] || {};
@@ -1585,6 +1684,16 @@ const ANN = (function () {
             // Propagate sample_type change to column visibility
             if (key === 'sample_type') _sampleType = newVal;
             _renderGrid();
+            // Show "apply to all/visible" popover when a meaningful change was made
+            if (newVal !== '' && newVal !== String(curVal)) {
+                setTimeout(() => {
+                    const tbody = _eid('ann-grid-body');
+                    if (tbody) {
+                        const newTd = tbody.querySelector('td[data-key="' + CSS.escape(key) + '"][data-ri="' + rowIdx + '"]');
+                        if (newTd) _showEditPopover(newTd, key, newVal);
+                    }
+                }, 0);
+            }
         }
 
         function _cancelEdit() {
@@ -1693,31 +1802,37 @@ const ANN = (function () {
         if (!_rows.length) { _showError('No data to export. Ingest files first.'); return; }
         if (!_validateProjectTitle()) {
             _showError('Project title is required before export.');
-            // Switch to Investigation tab
             const tabLink = _eid('tab-inv-lnk');
             if (tabLink) tabLink.click();
             return;
         }
         _clearError();
+
+        // Show spinner on button
+        const btn = document.querySelector('#ann-grid-card .btn-success');
+        const btnOrig = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i>Preparing bundle\u2026'; }
+
         const payload = { bundle_id: _bundleId, rows: _rows, tier_defaults: _collectTiers() };
-        if (typeof window._getOJIPCurvesForBundle === 'function') {
-            const ojipCurves = window._getOJIPCurvesForBundle();
-            if (ojipCurves) {
-                // Build stem → {curve_id, filename} map from annotation rows.
-                // Use original stem as-is; the backend normalises both sides when matching.
-                const stemToMeta = {};
-                for (const row of _rows) {
-                    const fname = (row.filename || {}).value || '';
-                    const cid   = (row.curve_id  || {}).value || '';
-                    // Only strip extension if suffix is purely alphabetic (1-4 chars).
-                    // Prevents "2.5mL" → "2" when there is no real extension.
-                    const extM  = fname.match(/\.([a-zA-Z]{1,4})$/);
-                    const stem  = extM ? fname.slice(0, -extM[0].length) : fname;
-                    if (stem) stemToMeta[stem] = { curve_id: cid, filename: fname };
+        try {
+            if (typeof window._getOJIPCurvesForBundle === 'function') {
+                const ojipCurves = window._getOJIPCurvesForBundle();
+                if (ojipCurves) {
+                    const stemToMeta = {};
+                    for (const row of _rows) {
+                        const fname = (row.filename || {}).value || '';
+                        const cid   = (row.curve_id  || {}).value || '';
+                        const extM  = fname.match(/\.([a-zA-Z]{1,4})$/);
+                        const stem  = extM ? fname.slice(0, -extM[0].length) : fname;
+                        if (stem) stemToMeta[stem] = { curve_id: cid, filename: fname };
+                    }
+                    ojipCurves.curve_meta = stemToMeta;
+                    payload.ojip_curves = ojipCurves;
                 }
-                ojipCurves.curve_meta = stemToMeta;
-                payload.ojip_curves = ojipCurves;
             }
+        } catch (hookErr) {
+            console.error('_getOJIPCurvesForBundle hook error:', hookErr);
+            _toast('\u26a0 Raw curve data could not be included: ' + hookErr.message, 8000);
         }
 
         fetch('/api/fluorescence_annotation/export', {
@@ -1726,6 +1841,7 @@ const ANN = (function () {
         })
             .then(r => { if (!r.ok) return r.json().then(d => Promise.reject(d.message || 'Server error')); return r.json(); })
             .then(data => {
+                if (btn) { btn.disabled = false; btn.innerHTML = btnOrig; }
                 if (data.status !== 'ok' && data.status !== 'success') { _showError(data.message || 'Export failed.'); return; }
                 const bytes = atob(data.bundle_b64);
                 const arr   = new Uint8Array(bytes.length);
@@ -1738,7 +1854,10 @@ const ANN = (function () {
                 document.body.removeChild(a); URL.revokeObjectURL(url);
                 _toast('Bundle downloaded — includes per-curve JSON sidecars + summary.parquet.');
             })
-            .catch(err => _showError('Export failed: ' + err));
+            .catch(err => {
+                if (btn) { btn.disabled = false; btn.innerHTML = btnOrig; }
+                _showError('Export failed: ' + err);
+            });
     }
 
     // ── Bundle load ───────────────────────────────────────────────────────────
@@ -1860,9 +1979,31 @@ const ANN = (function () {
             _sampleType = ((_rows[0].sample_type || {}).value || '') || _val('study-sample_type');
         }
         _detectInstrumentFromRows();
-        _renderGrid();
+
+        // Show card with a loading placeholder, then defer grid render
         const card = _eid('ann-grid-card');
-        if (card) { card.classList.remove('d-none'); card.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        if (card) card.classList.remove('d-none');
+
+        const gridTable = _eid('ann-grid-table');
+        const gridWrap  = _eid('ann-grid-wrap');
+        if (gridTable) gridTable.style.display = 'none';
+
+        let placeholder = null;
+        if (gridWrap) {
+            placeholder = document.createElement('div');
+            placeholder.className = 'text-center text-muted py-4';
+            placeholder.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>Rendering ' +
+                _rows.length + ' rows\u2026';
+            gridWrap.prepend(placeholder);
+        }
+
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        setTimeout(() => {
+            _renderGrid();
+            if (gridTable) gridTable.style.display = '';
+            if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+        }, 0);
     }
 
     // ── Pre-acclimation helpers ────────────────────────────────────────────────

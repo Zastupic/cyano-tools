@@ -266,6 +266,197 @@ def _t_safe(v, ms_factor):
         return None
 
 
+def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_time_ms, kr,
+                      include_curves=False):
+    """
+    Full OJIP analysis pipeline for a single curve.
+
+    Reuses the exact same normalisation, spline-fitting, derivative, polynomial
+    inflection-point, JIP-parameter and complementary-area logic as the
+    multi-file ``ojip_process`` route, but wrapped so it can be called per-curve
+    from the batch endpoint.
+
+    Parameters
+    ----------
+    time_native : array-like
+        Time axis in native units (µs for AquaPen, ms for MC-PAM, s for FL6000).
+    values : array-like
+        Fluorescence intensity values (same length as *time_native*).
+    fname : str
+        Curve name / label (used as the DataFrame column name).
+    fluorometer : str
+        Fluorometer type string (one of the values accepted by ``_axis_cfg``).
+    fj_time_ms, fi_time_ms : float
+        User-specified FJ / FI step times in milliseconds.
+    kr : int
+        Knot-reduction factor for the LSQ univariate spline.
+    include_curves : bool
+        If *True*, append full transient arrays (4 normalisation modes,
+        reconstructed spline, 1st/2nd derivatives, residuals, polynomial
+        fits) to the returned dict.  Set to *False* for the fast params-only
+        batch pass.
+
+    Returns
+    -------
+    dict
+        Always contains scalar JIP parameters and key timing values.
+        When *include_curves* is True, also contains ``time_raw_ms``,
+        ``time_log_ms`` and a ``curves`` sub-dict.
+    """
+    ms    = _ms_factor(fluorometer)
+    x_col = _axis_cfg(fluorometer)[0]
+    ranges = _axis_cfg(fluorometer)[5]
+
+    # Build 2-column DataFrame — identical structure to Summary_file with 1 col
+    sf = pd.DataFrame({
+        x_col: np.asarray(time_native, dtype=float),
+        fname: np.asarray(values, dtype=float),
+    })
+    data_cols = [fname]
+    FJ_time = fj_time_ms / ms
+    FI_time = fi_time_ms / ms
+
+    # ── normalise (mirrors ojip_process lines 419-440) ────────────────────────
+    if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
+        F0_index = sf[x_col].sub(0.01).abs().idxmin()
+    else:
+        F0_index = sf[x_col].sub(0).abs().idxmin()
+
+    F0 = sf[data_cols].loc[F0_index]
+    FM = sf[data_cols].max()
+
+    shifted_zero_df = pd.concat([
+        sf.iloc[:, 0],
+        sf[data_cols].subtract(F0, axis=1),
+    ], axis=1)
+    shifted_max_df = pd.concat([
+        sf.iloc[:, 0],
+        sf[data_cols].add(abs(FM - FM.max()), axis=1),
+    ], axis=1)
+    FMFORNORM = shifted_zero_df[data_cols].max()
+    dn_df = pd.concat([
+        sf.iloc[:, 0],
+        shifted_zero_df[data_cols].div(FMFORNORM, axis=1),
+    ], axis=1)
+
+    # ── spline fitting ────────────────────────────────────────────────────────
+    Raw_recon_DF, D1_DF, D2_DF, Resid_DF, Infl_DF, log_time = \
+        _fit_splines(dn_df, x_col, kr)
+
+    poly_oj = _fit_oj_polynomial(dn_df, x_col, ms)
+    poly_oi = _fit_oj_polynomial(dn_df, x_col, ms,
+                                  oj_lo_ms=10.0, oj_hi_ms=100.0)
+
+    # ── find FJ / FI / FP ────────────────────────────────────────────────────
+    FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl = \
+        _find_fjfifp(D2_DF, x_col, ranges, data_cols, Infl_DF)
+
+    # ── reference time indexes ────────────────────────────────────────────────
+    def tidx(t):
+        return sf[x_col].sub(t).abs().idxmin()
+
+    if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
+        F50us_idx  = tidx(0.05);   FK_idx     = tidx(0.3)
+        F50ms_idx  = tidx(50);     F100ms_idx = tidx(100)
+        F200ms_idx = tidx(200);    F300ms_idx = tidx(300)
+    elif fluorometer == 'Aquapen':
+        F50us_idx  = tidx(50);     FK_idx     = tidx(300)
+        F50ms_idx  = tidx(50000);  F100ms_idx = tidx(100000)
+        F200ms_idx = tidx(200000); F300ms_idx = tidx(300000)
+    elif fluorometer == 'FL6000':
+        F50us_idx  = tidx(5e-5);   FK_idx     = tidx(3e-4)
+        F50ms_idx  = tidx(0.05);   F100ms_idx = tidx(0.1)
+        F200ms_idx = tidx(0.2);    F300ms_idx = tidx(0.3)
+    else:
+        raise ValueError(f'Unknown fluorometer: {fluorometer}')
+
+    FJ_idx = tidx(FJ_time)
+    FI_idx = tidx(FI_time)
+
+    F50 = sf[data_cols].loc[F50us_idx]
+    FK  = sf[data_cols].loc[FK_idx]
+    FJ  = sf[data_cols].loc[FJ_idx]
+    FI  = sf[data_cols].loc[FI_idx]
+
+    # ── JIP parameters ────────────────────────────────────────────────────────
+    FV      = FM - F0
+    FVFM    = FV / FM
+    M0      = 4 * (FK - F50) / FV
+    VJ      = (FJ - F0) / FV
+    VI      = (FI - F0) / FV
+    OJ      = FJ - F0
+    JI      = FI - FJ
+    IP      = FM - FI
+    PSIE0   = 1 - VJ
+    PSIR0   = 1 - VI
+    DELTAR0 = PSIR0 / PSIE0
+    PHIE0   = FVFM * PSIE0
+    PHIR0   = FVFM * PSIR0
+    TR0RC   = M0 / VJ
+    ABSRC   = TR0RC / FVFM
+    ET0RC   = TR0RC * PSIE0
+    RE0RC   = TR0RC * PSIR0
+    DI0RC   = ABSRC - TR0RC
+
+    # ── areas + FM timing ─────────────────────────────────────────────────────
+    AREAOJ, AREAJI, AREAIP, AREAOP, FM_timings = _calc_areas_fm_timing(
+        sf, data_cols, FJ_idx, FI_idx, ms,
+        F50ms_idx, F100ms_idx, F200ms_idx, F300ms_idx)
+    SM    = AREAOP / FV
+    N_val = SM * M0 * (1 / VJ)
+
+    # ── build result dict ─────────────────────────────────────────────────────
+    result = {
+        'F0':  _safe(F0[fname]),  'FM': _safe(FM[fname]),
+        'FK':  _safe(FK[fname]),  'F50': _safe(F50[fname]),
+        'FJ':  _safe(FJ[fname]),  'FI':  _safe(FI[fname]),
+        'FJ_time_user_ms':    fj_time_ms,
+        'FI_time_user_ms':    fi_time_ms,
+        'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
+        'FI_time_deriv_ms':   _t_safe(FI_deriv.get(fname), ms),
+        'FP_time_deriv_ms':   _t_safe(FP_deriv.get(fname), ms),
+        'FJ_time_inflect_ms': _t_safe(FJ_infl.get(fname),  ms),
+        'FI_time_inflect_ms': _t_safe(FI_infl.get(fname),  ms),
+        'FP_time_inflect_ms': _t_safe(FP_infl.get(fname),  ms),
+        'FM_time_ms':  _safe(FM_timings.get(fname)),
+        'Area_OJ': _safe(AREAOJ[fname]),  'Area_JI': _safe(AREAJI[fname]),
+        'Area_IP': _safe(AREAIP[fname]),  'Area_OP': _safe(AREAOP[fname]),
+        'poly_infl_ms':    poly_oj[fname]['poly_infl_ms'],
+        'poly_fi_infl_ms': poly_oi[fname]['poly_infl_ms'],
+        # JIP computed parameters
+        'FVFM': _safe(FVFM[fname]),    'VJ': _safe(VJ[fname]),
+        'VI': _safe(VI[fname]),        'M0': _safe(M0[fname]),
+        'PSIE0': _safe(PSIE0[fname]),  'PSIR0': _safe(PSIR0[fname]),
+        'DELTAR0': _safe(DELTAR0[fname]),
+        'PHIE0': _safe(PHIE0[fname]),  'PHIR0': _safe(PHIR0[fname]),
+        'ABSRC': _safe(ABSRC[fname]),  'TR0RC': _safe(TR0RC[fname]),
+        'ET0RC': _safe(ET0RC[fname]),  'RE0RC': _safe(RE0RC[fname]),
+        'DI0RC': _safe(DI0RC[fname]),
+        'OJ': _safe(OJ[fname]),  'JI': _safe(JI[fname]),  'IP': _safe(IP[fname]),
+        'SM': _safe(SM[fname]),  'N':  _safe(N_val[fname]),
+    }
+
+    if include_curves:
+        result['time_raw_ms'] = (sf[x_col].astype(float) * ms).tolist()
+        result['time_log_ms'] = (log_time.astype(float) * ms).tolist()
+        result['curves'] = {
+            'raw':           [_safe(v) for v in sf[fname]],
+            'shifted_F0':    [_safe(v) for v in shifted_zero_df[fname]],
+            'shifted_FM':    [_safe(v) for v in shifted_max_df[fname]],
+            'double_norm':   [_safe(v) for v in dn_df[fname]],
+            'residuals':     [_safe(v) for v in Resid_DF[fname]],
+            'reconstructed': [_safe(v) for v in Raw_recon_DF[fname]],
+            'd1':            [_safe(v) for v in D1_DF[fname]],
+            'd2':            [_safe(v) for v in D2_DF[fname]],
+            'poly_oj_time_ms': poly_oj[fname]['poly_oj_time_ms'],
+            'poly_oj_d2':      poly_oj[fname]['poly_oj_d2'],
+            'poly_oi_time_ms': poly_oi[fname]['poly_oj_time_ms'],
+            'poly_oi_d2':      poly_oi[fname]['poly_oj_d2'],
+        }
+
+    return result
+
+
 # ─── routes ─────────────────────────────────────────────────────────────────
 
 @OJIP_data_analysis.route('/OJIP_data_analysis', methods=['GET'])
@@ -910,3 +1101,82 @@ def ojip_interpret():
     except Exception:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 500
+
+
+@OJIP_data_analysis.route('/api/ojip_process_batch', methods=['POST'])
+def ojip_process_batch():
+    """
+    Batch-process multiple OJIP curves (params-only or full detail).
+
+    Designed for the multi-curve orchestrator: the client fans batches of
+    ~30 curves here with ``include_curves=false`` for the fast params pass,
+    then fetches individual curves with ``include_curves=true`` on demand.
+
+    Receives JSON::
+
+        {
+          "fluorometer":            str,
+          "time_native":            [float, ...],
+          "curves":                 [
+            {"slot": int, "name": str, "values": [float, ...]}, ...
+          ],
+          "FJ_time":                float,          // ms
+          "FI_time":                float,          // ms
+          "knots_reduction_factor": int,
+          "include_curves":         bool            // false = params only (fast)
+        }
+
+    Returns JSON::
+
+        {
+          "status":  "success",
+          "results": [
+            {slot, name, F0, FM, FVFM, VJ, ...},
+            {slot, name, "error": "reason"},
+            ...
+          ]
+        }
+
+    One bad curve never fails the whole batch.
+    """
+    payload = request.get_json(force=True)
+    fluorometer  = payload.get('fluorometer', '')
+    time_native  = payload.get('time_native', [])
+    curves       = payload.get('curves', [])
+    fj_time_ms   = float(payload.get('FJ_time', 2.0))
+    fi_time_ms   = float(payload.get('FI_time', 30.0))
+    kr           = int(payload.get('knots_reduction_factor', 10))
+    include      = bool(payload.get('include_curves', False))
+
+    if not time_native or not curves:
+        return jsonify({'status': 'error',
+                        'message': 'Missing time_native or curves.'}), 400
+    if fj_time_ms >= fi_time_ms:
+        return jsonify({'status': 'error',
+                        'message': 'FJ time must be less than FI time.'}), 400
+    try:
+        _axis_cfg(fluorometer)
+    except ValueError:
+        return jsonify({'status': 'error',
+                        'message': f'Unknown fluorometer: {fluorometer}'}), 400
+
+    time_arr = np.asarray(time_native, dtype=float)
+    results  = []
+    for c in curves:
+        slot = c.get('slot', 0)
+        name = c.get('name', '')
+        vals = c.get('values', [])
+        try:
+            r = analyze_one_curve(
+                time_arr, vals, name, fluorometer,
+                fj_time_ms, fi_time_ms, kr,
+                include_curves=include,
+            )
+            r['slot'] = slot
+            r['name'] = name
+            results.append(r)
+        except Exception as exc:
+            results.append({'slot': slot, 'name': name,
+                            'error': str(exc)})
+
+    return jsonify({'status': 'success', 'results': results})

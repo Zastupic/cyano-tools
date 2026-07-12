@@ -10,12 +10,918 @@ let groups    = {};     // {filename: groupName}
 let chartInst = {};     // {chartId: Chart instance}
 let dirtyTabs = new Set(); // tabs whose charts need rendering on first visit
 
+// ── multi-curve state (M2-M6) ───────────────────────────────────────────
+var mcDataset      = null;   // parsed multi-curve file (see MC.parse)
+var paramMatrix    = null;   // [{slot,name,...params}, ...] from batch pass
+var mcTimeMs       = null;   // shared time axis in ms (from mcDataset)
+var mcDetailCache  = {};     // LRU: {name: {curves, time_raw_ms, time_log_ms, ...}}
+const MC_DETAIL_MAX = 10;    // max cached detail curves
+var mcAbort        = null;   // AbortController for cancel
+var mcIsActive     = false;  // true when a multi-curve dataset is loaded
+
+// ═══════════════════════════════════════════════════════════════════════
+//  MULTI-CURVE MODULE  (M2 parser, M3 orchestrator, M4 time-series,
+//                       M5 detail-on-demand, M6 visualization)
+// ═══════════════════════════════════════════════════════════════════════
+const MC = (() => {
+  'use strict';
+
+  // ── M2: Client-side multi-curve file parser ──────────────────────────
+  function parse(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try { resolve(_parseText(reader.result, file.name)); }
+        catch(e) { reject(e); }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
+  }
+
+  function _parseText(text, filename) {
+    const lines = text.split(/\r?\n/);
+    if (lines.length < 10)
+      throw new Error('File too short to be a multi-curve FluorPen file');
+
+    // Find the "index" row — usually line index 5 but scan first 10 lines
+    let indexLineIdx = -1;
+    for (let i = 0; i < Math.min(10, lines.length); i++) {
+      if (lines[i].startsWith('index\t')) { indexLineIdx = i; break; }
+    }
+    if (indexLineIdx < 0) return null; // not a multi-curve file
+
+    // Strip trailing empty columns (single-curve files often have trailing tabs)
+    const indexParts = lines[indexLineIdx].split('\t');
+    while (indexParts.length > 1 && indexParts[indexParts.length - 1].trim() === '') indexParts.pop();
+    const curveCount = indexParts.length - 1;
+    if (curveCount < 2) return null; // only 1 column → single-curve
+
+    // Parse timestamps (row after index)
+    const timeParts = lines[indexLineIdx + 1].split('\t');
+    const timestamps = timeParts.slice(1);
+
+    // Parse protocol IDs (row after time)
+    const idParts = lines[indexLineIdx + 2].split('\t');
+    const protocols = idParts.slice(1);
+
+    // Parse data rows (numeric first column)
+    const timeUs = [];
+    const dataMatrix = []; // dataMatrix[row][col]
+    const dataStart = indexLineIdx + 3;
+
+    // Known footer labels — stop parsing data when we hit one
+    const FOOTER_LABELS = new Set([
+      'Bckg','Fo','Fj','Fi','Fm','Fv','Vj','Vi','Fm/Fo','Fv/Fo','Fv/Fm',
+      'Mo','Area','Fix Area','HACH Area','Sm','Ss','N',
+      'Phi_Po','Psi_o','Phi_Eo','Phi_Do','Phi_Pav','Pi_Abs',
+      'ABS/RC','TRo/RC','ETo/RC','DIo/RC',
+      'FLASH-Wavelength [nm]','FLASH-Percent [%]','FLASH-Intensity [uE]',
+      'SUPER-Wavelength [nm]','SUPER-Percent [%]','SUPER-Intensity [uE]',
+      'ACTINIC-Wavelength [nm]','ACTINIC-Percent [%]','ACTINIC-Intensity [uE]',
+      'description',
+    ]);
+
+    const footerData = {};
+    let inData = true;
+
+    for (let i = dataStart; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const parts = line.split('\t');
+      const label = parts[0].trim();
+
+      if (inData && /^\d+$/.test(label)) {
+        timeUs.push(parseInt(label, 10));
+        const row = new Float64Array(curveCount);
+        for (let c = 0; c < curveCount; c++) {
+          row[c] = parseFloat(parts[c + 1]) || 0;
+        }
+        dataMatrix.push(row);
+      } else {
+        inData = false;
+        if (FOOTER_LABELS.has(label)) {
+          footerData[label] = parts.slice(1);
+        }
+      }
+    }
+
+    // Extract instrument metadata from footer
+    const _fval = (key, idx) => {
+      const arr = footerData[key];
+      if (!arr || !arr[idx]) return null;
+      const v = parseFloat(arr[idx]);
+      return (isNaN(v) || !isFinite(v)) ? null : v;
+    };
+    const instrumentMeta = {
+      flash_wavelength_nm:   _fval('FLASH-Wavelength [nm]', 0),
+      flash_percent:         _fval('FLASH-Percent [%]', 0),
+      flash_intensity_uE:    _fval('FLASH-Intensity [uE]', 0),
+      super_wavelength_nm:   _fval('SUPER-Wavelength [nm]', 0),
+      super_percent:         _fval('SUPER-Percent [%]', 0),
+      super_intensity_uE:    _fval('SUPER-Intensity [uE]', 0),
+      actinic_wavelength_nm: _fval('ACTINIC-Wavelength [nm]', 0),
+      actinic_percent:       _fval('ACTINIC-Percent [%]', 0),
+      actinic_intensity_uE:  _fval('ACTINIC-Intensity [uE]', 0),
+    };
+
+    const stem = filename.replace(/\.[^.]+$/, '');
+
+    // Parse FluorPen timestamp "H:MM:SS  D.M.YYYY" → epoch ms
+    function _parseTS(ts) {
+      if (!ts) return NaN;
+      const m = ts.trim().match(/^(\d{1,2}):(\d{2}):(\d{2})\s+(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+      if (!m) return NaN;
+      return new Date(+m[6], +m[5] - 1, +m[4], +m[1], +m[2], +m[3]).getTime();
+    }
+
+    // Build curves array
+    const curves = [];
+    for (let c = 0; c < curveCount; c++) {
+      if (protocols[c] && protocols[c].trim().toUpperCase() !== 'OJIP') continue;
+      const values = new Float64Array(timeUs.length);
+      for (let r = 0; r < timeUs.length; r++) values[r] = dataMatrix[r][c];
+      curves.push({
+        index: c,
+        colIndex: c + 1,
+        timestamp: (timestamps[c] || '').trim(),
+        epochMs: _parseTS((timestamps[c] || '').trim()),
+        protocol: (protocols[c] || '').trim(),
+        values: values,
+      });
+    }
+
+    return {
+      fluorometer: 'Aquapen',
+      filename: filename,
+      stem: stem,
+      timeUs: new Float64Array(timeUs),
+      curves: curves,
+      totalColumns: curveCount,
+      instrumentMeta: instrumentMeta,
+    };
+  }
+
+  // ── M2: Detection — called when files are selected ───────────────────
+  function isMultiCurve(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const lines = reader.result.split(/\r?\n/);
+        for (let i = 0; i < Math.min(10, lines.length); i++) {
+          if (lines[i].startsWith('index\t')) {
+            // Filter out empty trailing columns (single-curve files have trailing tabs)
+            const cols = lines[i].split('\t').filter(s => s.trim() !== '');
+            // Need at least 3 non-empty columns: "index" + 2+ curve indices
+            if (cols.length > 2) { resolve(true); return; }
+          }
+        }
+        resolve(false);
+      };
+      reader.onerror = () => resolve(false);
+      reader.readAsText(file.slice(0, 8192)); // only read first 8KB for detection
+    });
+  }
+
+  // ── M2: Selection modal logic ────────────────────────────────────────
+  function showSelectionModal(dataset) {
+    const modal   = document.getElementById('mc-selection-modal');
+    const tbody   = document.getElementById('mc-curve-tbody');
+    const countEl = document.getElementById('mc-curve-count');
+    const selEl   = document.getElementById('mc-selected-count');
+    const dateEl  = document.getElementById('mc-date-range');
+    const fileEl  = document.getElementById('mc-filename');
+
+    fileEl.textContent = dataset.filename;
+    countEl.textContent = dataset.curves.length;
+
+    // Date range
+    const ts = dataset.curves.map(c => c.timestamp).filter(Boolean);
+    dateEl.textContent = ts.length >= 2
+      ? `${ts[0]}  —  ${ts[ts.length - 1]}`
+      : (ts[0] || 'N/A');
+
+    // Build table rows
+    tbody.innerHTML = '';
+    for (const c of dataset.curves) {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        `<td><input type="checkbox" class="mc-curve-cb" data-idx="${c.index}" checked></td>` +
+        `<td>${c.index + 1}</td>` +
+        `<td class="small">${c.timestamp}</td>` +
+        `<td>${c.protocol}</td>`;
+      tbody.appendChild(tr);
+    }
+    _updateSelCount();
+
+    // Show modal
+    $(modal).modal('show');
+  }
+
+  function _updateSelCount() {
+    const cbs = document.querySelectorAll('.mc-curve-cb');
+    const checked = document.querySelectorAll('.mc-curve-cb:checked');
+    const selEl = document.getElementById('mc-selected-count');
+    const warnEl = document.getElementById('mc-limit-warn');
+    selEl.textContent = `${checked.length} of ${cbs.length}`;
+    if (warnEl) warnEl.style.display = checked.length > 2000 ? '' : 'none';
+  }
+
+  function selectAll()   { document.querySelectorAll('.mc-curve-cb').forEach(cb => cb.checked = true);  _updateSelCount(); }
+  function deselectAll() { document.querySelectorAll('.mc-curve-cb').forEach(cb => cb.checked = false); _updateSelCount(); }
+
+  function selectRange() {
+    const from = parseInt(document.getElementById('mc-range-from').value, 10) || 1;
+    const to   = parseInt(document.getElementById('mc-range-to').value, 10) || 0;
+    document.querySelectorAll('.mc-curve-cb').forEach(cb => {
+      const idx = parseInt(cb.dataset.idx, 10) + 1; // 1-based for user
+      cb.checked = idx >= from && idx <= to;
+    });
+    _updateSelCount();
+  }
+
+  function getSelectedIndices() {
+    return [...document.querySelectorAll('.mc-curve-cb:checked')].map(cb => parseInt(cb.dataset.idx, 10));
+  }
+
+  function getNamingScheme() {
+    return document.getElementById('mc-naming')?.value || 'timestamp';
+  }
+
+  function getCurveName(curve, dataset, scheme) {
+    if (scheme === 'timestamp')      return curve.timestamp || `${curve.index + 1}`;
+    if (scheme === 'filename_index') return `${dataset.stem}_${String(curve.index + 1).padStart(3, '0')}`;
+    return `${curve.index + 1}`; // 'index'
+  }
+
+  // Cache of selected indices so _slotToIndex works after modal is closed
+  let _selIndicesCache = [];
+
+  // ── M3: Batch orchestrator ───────────────────────────────────────────
+  async function runParamsPass(dataset, selectedIndices, jipOpts) {
+    _selIndicesCache = selectedIndices.slice(); // cache for later use
+    const BATCH  = 30;
+    const CONC   = 3;
+    const scheme = getNamingScheme();
+
+    // Build curve entries with named slots
+    const allCurves = selectedIndices.map((idx, slot) => {
+      const c = dataset.curves.find(x => x.index === idx);
+      return {
+        slot: slot,
+        name: getCurveName(c, dataset, scheme),
+        values: Array.from(c.values),
+      };
+    });
+
+    const batches = [];
+    for (let i = 0; i < allCurves.length; i += BATCH) {
+      batches.push(allCurves.slice(i, i + BATCH));
+    }
+
+    paramMatrix = new Array(allCurves.length);
+    mcAbort = new AbortController();
+    let done = 0;
+
+    _showProgress(0, allCurves.length);
+
+    let cursor = 0;
+    async function worker() {
+      while (cursor < batches.length) {
+        if (mcAbort.signal.aborted) return;
+        const batchIdx = cursor++;
+        const batch = batches[batchIdx];
+        const body = {
+          fluorometer: dataset.fluorometer,
+          time_native: Array.from(dataset.timeUs),
+          curves: batch,
+          FJ_time: jipOpts.FJ_time,
+          FI_time: jipOpts.FI_time,
+          knots_reduction_factor: jipOpts.kr,
+          include_curves: false,
+        };
+
+        let res;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const resp = await fetch('/api/ojip_process_batch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+              signal: mcAbort.signal,
+            });
+            res = await resp.json();
+            break;
+          } catch(e) {
+            if (mcAbort.signal.aborted) return;
+            if (attempt === 1) {
+              // Mark entire batch as errored
+              for (const c of batch) {
+                paramMatrix[c.slot] = { slot: c.slot, name: c.name, error: e.message };
+              }
+              done += batch.length;
+              _showProgress(done, allCurves.length);
+              return;
+            }
+            await new Promise(r => setTimeout(r, 1000 + Math.random() * 1000));
+          }
+        }
+
+        if (res && res.results) {
+          for (const r of res.results) paramMatrix[r.slot] = r;
+        }
+        done += batch.length;
+        _showProgress(done, allCurves.length);
+        _appendTimeSeriesPoints(res?.results || []);
+      }
+    }
+
+    await Promise.all(Array.from({ length: CONC }, () => worker()));
+
+    if (mcAbort.signal.aborted) return null;
+    _hideProgress();
+    return paramMatrix;
+  }
+
+  function cancelBatch() {
+    if (mcAbort) mcAbort.abort();
+    _hideProgress();
+  }
+
+  // ── M3: Progress bar ────────────────────────────────────────────────
+  function _showProgress(done, total) {
+    const wrap = document.getElementById('mc-progress-wrap');
+    const bar  = document.getElementById('mc-progress-bar');
+    const lbl  = document.getElementById('mc-progress-label');
+    if (!wrap) return;
+    wrap.style.display = '';
+    const pct = Math.round((done / total) * 100);
+    bar.style.width = pct + '%';
+    bar.setAttribute('aria-valuenow', pct);
+    lbl.textContent = `Analyzing ${done} / ${total} curves`;
+  }
+
+  function _hideProgress() {
+    const wrap = document.getElementById('mc-progress-wrap');
+    if (wrap) wrap.style.display = 'none';
+  }
+
+  // ── M4: Time-series overview ─────────────────────────────────────────
+  function renderTimeSeries() {
+    if (!paramMatrix) return;
+
+    const container = document.getElementById('tab-timeseries');
+    if (!container) return;
+
+    // Build the parameter-vs-time chart
+    _renderParamTimeChart();
+    // Build the virtualized parameter table
+    _renderParamTable();
+  }
+
+  function _appendTimeSeriesPoints(results) {
+    // Incremental draw during batch pass — update the param-time chart live
+    const chart = chartInst['mc-param-time-chart'];
+    if (!chart || !results.length) return;
+
+    const paramKey = document.getElementById('mc-param-picker')?.value || 'FVFM';
+    const useTimestamps = document.getElementById('mc-time-axis-ts')?.checked;
+    for (const r of results) {
+      if (r.error) continue;
+      const val = r[paramKey];
+      if (val == null) continue;
+      const xVal = useTimestamps ? _slotEpochMs(r.slot) : r.slot;
+      if (useTimestamps && isNaN(xVal)) continue;
+      chart.data.datasets[0].data.push({ x: xVal, y: val });
+    }
+    chart.update('none'); // no animation for live update
+  }
+
+  // Build a slot→epochMs lookup from the parsed dataset
+  function _slotEpochMs(slot) {
+    if (!mcDataset) return NaN;
+    const idx = _slotToIndex(slot);
+    const c = mcDataset.curves.find(x => x.index === idx);
+    return c ? c.epochMs : NaN;
+  }
+
+  function _renderParamTimeChart() {
+    const paramKey = document.getElementById('mc-param-picker')?.value || 'FVFM';
+    const useTimestamps = document.getElementById('mc-time-axis-ts')?.checked;
+
+    // Build data array and a slot lookup for click/tooltip
+    const data = [];
+    const slotLookup = []; // parallel array: slotLookup[i] = slot
+    for (const r of paramMatrix) {
+      if (!r || r.error) continue;
+      const val = r[paramKey];
+      if (val == null) continue;
+      const xVal = useTimestamps ? _slotEpochMs(r.slot) : r.slot;
+      if (useTimestamps && isNaN(xVal)) continue; // skip if no valid timestamp
+      data.push({ x: xVal, y: val });
+      slotLookup.push(r.slot);
+    }
+
+    destroyChart('mc-param-time-chart');
+    const canvas = document.getElementById('mc-param-time-chart');
+    if (!canvas) return;
+
+    const label = PARAM_LABELS[paramKey] || paramKey;
+
+    // X-axis config depends on mode
+    const xScale = useTimestamps
+      ? {
+          type: 'linear',
+          title: { display: true, text: 'Measurement time', font: { size: 12 } },
+          ticks: {
+            maxTicksLimit: 12,
+            callback: function(val) {
+              const d = new Date(val);
+              return d.getDate() + '.' + (d.getMonth() + 1) + '. ' +
+                     String(d.getHours()).padStart(2, '0') + ':' +
+                     String(d.getMinutes()).padStart(2, '0');
+            },
+          },
+        }
+      : {
+          type: 'linear',
+          title: { display: true, text: 'Curve index', font: { size: 12 } },
+          ticks: { maxTicksLimit: 20 },
+        };
+
+    chartInst['mc-param-time-chart'] = new Chart(canvas, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: label,
+          data: data,
+          pointRadius: 2.5,
+          pointHoverRadius: 5,
+          borderColor: 'hsl(210,70%,42%)',
+          backgroundColor: 'hsla(210,70%,42%,0.6)',
+          showLine: true,
+          borderWidth: 1.2,
+          tension: 0,
+        }],
+      },
+      options: {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+        scales: { x: xScale, y: { title: { display: true, text: label, font: { size: 12 } } } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => {
+                if (!items.length) return '';
+                const di = items[0].dataIndex;
+                const slot = slotLookup[di];
+                return slot != null && paramMatrix[slot] ? paramMatrix[slot].name : '';
+              },
+            },
+          },
+          decimation: { enabled: true, algorithm: 'lttb', samples: 800 },
+        },
+        onClick: (evt, elems) => {
+          if (elems.length) {
+            const di = elems[0].index;
+            const slot = slotLookup[di];
+            if (slot != null) fetchAndShowDetail(slot);
+          }
+        },
+      },
+    });
+  }
+
+  // ── M4: Virtualized parameter table ──────────────────────────────────
+  function _renderParamTable() {
+    const container = document.getElementById('mc-param-table-wrap');
+    if (!container) return;
+
+    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const headerRow = ['#', 'Name', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+
+    let html = '<div class="table-responsive" style="max-height:450px; overflow-y:auto;">' +
+      '<table class="table table-sm table-bordered table-hover" style="font-size:0.78em;">' +
+      '<thead class="thead-light"><tr>' +
+      headerRow.map(h => `<th class="text-nowrap">${h}</th>`).join('') +
+      '</tr></thead><tbody>';
+
+    for (const r of paramMatrix) {
+      if (!r) continue;
+      const cls = r.error ? 'table-danger' : '';
+      html += `<tr class="${cls}" style="cursor:pointer" onclick="MC.fetchAndShowDetail(${r.slot})">`;
+      html += `<td>${r.slot + 1}</td>`;
+      html += `<td class="text-nowrap">${r.name}</td>`;
+      if (r.error) {
+        html += `<td colspan="${paramKeys.length}" class="text-danger">${r.error}</td>`;
+      } else {
+        for (const k of paramKeys) {
+          const v = r[k];
+          html += `<td>${v != null ? (typeof v === 'number' ? v.toPrecision(5) : v) : ''}</td>`;
+        }
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+
+    // Copy button
+    html += '<button class="btn btn-sm btn-outline-secondary mt-2" onclick="MC.copyParamTable()">' +
+            '<i class="fa fa-clipboard mr-1"></i>Copy to clipboard</button>';
+
+    container.innerHTML = html;
+  }
+
+  function copyParamTable() {
+    if (!paramMatrix) return;
+    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const header = ['#', 'Name', ...paramKeys.map(k => PARAM_LABELS[k] || k)].join('\t');
+    const rows = paramMatrix.filter(Boolean).map(r => {
+      if (r.error) return `${r.slot + 1}\t${r.name}\tERROR: ${r.error}`;
+      return [r.slot + 1, r.name, ...paramKeys.map(k => r[k] ?? '')].join('\t');
+    });
+    navigator.clipboard.writeText(header + '\n' + rows.join('\n'));
+  }
+
+  // ── M5: Detail on demand ─────────────────────────────────────────────
+  async function fetchAndShowDetail(slot) {
+    const r = paramMatrix[slot];
+    if (!r || r.error) return;
+
+    // Check LRU cache
+    if (mcDetailCache[r.name]) {
+      _showDetailInTabs(r.name, mcDetailCache[r.name], slot);
+      return;
+    }
+
+    // Fetch full curves for this one curve
+    const body = {
+      fluorometer: mcDataset.fluorometer,
+      time_native: Array.from(mcDataset.timeUs),
+      curves: [{
+        slot: slot,
+        name: r.name,
+        values: Array.from(mcDataset.curves.find(c => c.index === _slotToIndex(slot)).values),
+      }],
+      FJ_time: parseFloat(document.getElementById('FJ_time').value) || 2.0,
+      FI_time: parseFloat(document.getElementById('FI_time').value) || 30.0,
+      knots_reduction_factor: parseInt(document.getElementById('kr_input').value) || 10,
+      include_curves: true,
+    };
+
+    try {
+      const resp = await fetch('/api/ojip_process_batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await resp.json();
+      if (data.status !== 'success' || !data.results?.length) return;
+
+      const detail = data.results[0];
+      if (detail.error) return;
+
+      // Cache with LRU eviction
+      const keys = Object.keys(mcDetailCache);
+      if (keys.length >= MC_DETAIL_MAX) delete mcDetailCache[keys[0]];
+      mcDetailCache[r.name] = detail;
+
+      _showDetailInTabs(r.name, detail, slot);
+    } catch(e) {
+      console.error('Detail fetch failed:', e);
+    }
+  }
+
+  function _slotToIndex(slot) {
+    // Map slot back to the original curve index (using cached indices)
+    return _selIndicesCache[slot] ?? slot;
+  }
+
+  function _showDetailInTabs(name, detail, slot) {
+    // Build a synthetic ojipData-like object for the existing rendering functions
+    // This lets the existing Curves/Params/Diagnostics tabs work unchanged
+    const singleData = {
+      status: 'success',
+      fluorometer: mcDataset.fluorometer,
+      kr: parseInt(document.getElementById('kr_input').value) || 10,
+      fj_time_ms: detail.FJ_time_user_ms,
+      fi_time_ms: detail.FI_time_user_ms,
+      files: [name],
+      file_stem: mcDataset.stem,
+      time_raw_ms: detail.time_raw_ms,
+      time_log_ms: detail.time_log_ms,
+      curves: { [name]: detail.curves },
+      key_values: { [name]: {
+        F0: detail.F0, FM: detail.FM, FK: detail.FK, F50: detail.F50,
+        FJ: detail.FJ, FI: detail.FI,
+        FJ_time_user_ms: detail.FJ_time_user_ms,
+        FI_time_user_ms: detail.FI_time_user_ms,
+        FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
+        FI_time_deriv_ms: detail.FI_time_deriv_ms,
+        FP_time_deriv_ms: detail.FP_time_deriv_ms,
+        FJ_time_inflect_ms: detail.FJ_time_inflect_ms,
+        FI_time_inflect_ms: detail.FI_time_inflect_ms,
+        FP_time_inflect_ms: detail.FP_time_inflect_ms,
+        FM_time_ms: detail.FM_time_ms,
+        Area_OJ: detail.Area_OJ, Area_JI: detail.Area_JI,
+        Area_IP: detail.Area_IP, Area_OP: detail.Area_OP,
+        poly_infl_ms: detail.poly_infl_ms,
+        poly_fi_infl_ms: detail.poly_fi_infl_ms,
+      }},
+    };
+
+    // Temporarily set ojipData to this single-curve view
+    ojipData = singleData;
+    groups = {};
+    recalcAllParams();
+
+    // Hide placeholders so real tab content is visible
+    mcShowPlaceholders(false);
+    renderResults();
+
+    // Show detail info bar
+    const infoBar = document.getElementById('mc-detail-info');
+    if (infoBar) {
+      infoBar.innerHTML = `<i class="fa fa-info-circle mr-1"></i>Viewing curve <strong>${name}</strong> (${slot + 1} of ${paramMatrix.length})` +
+        ` <button class="btn btn-sm btn-outline-secondary ml-2" onclick="MC.backToOverview()"><i class="fa fa-arrow-left mr-1"></i>Back to overview</button>`;
+      infoBar.style.display = '';
+    }
+
+    // Switch to Curves tab
+    $('[href="#tab-curves"]').tab('show');
+  }
+
+  function backToOverview() {
+    // Hide detail info bar
+    const infoBar = document.getElementById('mc-detail-info');
+    if (infoBar) infoBar.style.display = 'none';
+
+    // Restore placeholders in detail tabs
+    mcShowPlaceholders(true);
+
+    // Switch to time-series tab
+    $('[href="#tab-timeseries"]').tab('show');
+  }
+
+  // ── M6: Range-based multi-curve overlay viewer ───────────────────────
+  let _curvesValidSlots = []; // cached valid slot list
+
+  // Read the user-editable from/to range (1-based, clamped)
+  function _getCurveRange() {
+    const total = _curvesValidSlots.length;
+    const fromEl = document.getElementById('mc-cv-from');
+    const toEl   = document.getElementById('mc-cv-to');
+    let from = parseInt(fromEl?.value, 10) || 1;
+    let to   = parseInt(toEl?.value, 10)   || Math.min(50, total);
+    from = Math.max(1, Math.min(from, total));
+    to   = Math.max(from, Math.min(to, total));
+    return { from, to, total };
+  }
+
+  // Sync the From/To inputs and total label to current state
+  function _syncRangeUI(from, to, total) {
+    const fromEl  = document.getElementById('mc-cv-from');
+    const toEl    = document.getElementById('mc-cv-to');
+    const totalEl = document.getElementById('mc-cv-total');
+    if (fromEl) { fromEl.value = from; fromEl.max = total; }
+    if (toEl)   { toEl.value   = to;   toEl.max = total; }
+    if (totalEl) totalEl.textContent = `/ ${total}`;
+    const prevBtn = document.getElementById('mc-page-prev');
+    const nextBtn = document.getElementById('mc-page-next');
+    if (prevBtn) prevBtn.disabled = from <= 1;
+    if (nextBtn) nextBtn.disabled = to >= total;
+  }
+
+  function renderAggregateCurves() {
+    if (!mcDataset || !paramMatrix) return;
+
+    const canvas = document.getElementById('mc-aggregate-chart');
+    if (!canvas) return;
+
+    // Collect valid curve slots
+    _curvesValidSlots = paramMatrix.filter(r => r && !r.error).map(r => r.slot);
+    const totalCurves = _curvesValidSlots.length;
+    if (totalCurves === 0) return;
+
+    // Initial default: set To to min(50, total) on first render
+    const toEl = document.getElementById('mc-cv-to');
+    if (toEl && (toEl.value === '' || parseInt(toEl.value, 10) === 0))
+      toEl.value = Math.min(50, totalCurves);
+
+    const range = _getCurveRange();
+    _syncRangeUI(range.from, range.to, range.total);
+
+    // Slice for the requested range (from/to are 1-based)
+    const pageSlots = _curvesValidSlots.slice(range.from - 1, range.to);
+    const nVisible  = pageSlots.length;
+
+    // Time axis in ms (log scale)
+    const timeMs = Array.from(mcDataset.timeUs).map(t => t * 0.001);
+
+    // Decimate for performance: keep ~120 points per curve
+    const fullLen = timeMs.length;
+    const TARGET = 120;
+    let step = 1;
+    if (fullLen > TARGET) step = Math.max(1, Math.floor(fullLen / TARGET));
+    const idxKeep = [];
+    for (let i = 0; i < fullLen; i += step) idxKeep.push(i);
+    if (idxKeep[idxKeep.length - 1] !== fullLen - 1) idxKeep.push(fullLen - 1);
+    const decTimeMs = idxKeep.map(i => timeMs[i]);
+
+    // Build datasets: one per curve in the range
+    const datasets = [];
+    for (let pi = 0; pi < nVisible; pi++) {
+      const slot = pageSlots[pi];
+      const curveIdx = _slotToIndex(slot);
+      const curveObj = mcDataset.curves.find(c => c.index === curveIdx);
+      if (!curveObj) continue;
+
+      // Color spread across the visible range so every page uses the full palette
+      const hue = Math.round((pi / Math.max(nVisible - 1, 1)) * 240);
+      const color = `hsla(${240 - hue}, 70%, 48%, 0.45)`;
+      const name = paramMatrix[slot]?.name || `#${slot + 1}`;
+
+      const data = idxKeep.map((i, di) => ({ x: decTimeMs[di], y: curveObj.values[i] }));
+
+      datasets.push({
+        label: name,
+        data: data,
+        showLine: true,
+        borderColor: color,
+        borderWidth: 1.2,
+        pointRadius: 0,
+        pointHitRadius: 6,
+        fill: false,
+        tension: 0,
+        _mcSlot: slot,
+      });
+    }
+
+    // Optionally add median line (computed over ALL curves, not just visible)
+    const showMedian = document.getElementById('mc-show-median')?.checked;
+    if (showMedian && totalCurves > 1) {
+      const medianData = idxKeep.map(ti => {
+        const vals = [];
+        for (const s of _curvesValidSlots) {
+          const ci = _slotToIndex(s);
+          const co = mcDataset.curves.find(c => c.index === ci);
+          if (co) vals.push(co.values[ti]);
+        }
+        vals.sort((a, b) => a - b);
+        return { x: timeMs[ti], y: vals[Math.floor(vals.length / 2)] };
+      });
+      datasets.push({
+        label: 'Median (all curves)',
+        data: medianData,
+        showLine: true,
+        borderColor: '#000',
+        borderWidth: 2.5,
+        borderDash: [6, 3],
+        pointRadius: 0,
+        fill: false,
+      });
+    }
+
+    destroyChart('mc-aggregate-chart');
+    chartInst['mc-aggregate-chart'] = new Chart(canvas, {
+      type: 'scatter',
+      data: { datasets },
+      options: {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+        scales: {
+          x: {
+            type: 'logarithmic',
+            title: { display: true, text: 'Time (ms)', font: { size: 12 } },
+          },
+          y: {
+            title: { display: true, text: 'Fluorescence (a.u.)', font: { size: 12 } },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            filter: (item) => item.datasetIndex < nVisible,
+            callbacks: {
+              title: (items) => items.length ? items[0].dataset.label || '' : '',
+              label: (item) => `t = ${item.parsed.x.toFixed(3)} ms, F = ${item.parsed.y.toFixed(0)}`,
+            },
+          },
+        },
+        onClick: (evt, elems) => {
+          if (!elems.length) return;
+          const ds = chartInst['mc-aggregate-chart']?.data.datasets[elems[0].datasetIndex];
+          if (ds && ds._mcSlot != null) fetchAndShowDetail(ds._mcSlot);
+        },
+      },
+    });
+  }
+
+  function curvesPagePrev() {
+    const range = _getCurveRange();
+    const span = range.to - range.from + 1;
+    const newFrom = Math.max(1, range.from - span);
+    const newTo   = newFrom + span - 1;
+    document.getElementById('mc-cv-from').value = newFrom;
+    document.getElementById('mc-cv-to').value   = newTo;
+    renderAggregateCurves();
+  }
+
+  function curvesPageNext() {
+    const range = _getCurveRange();
+    const span = range.to - range.from + 1;
+    const newFrom = Math.min(range.total, range.from + span);
+    const newTo   = Math.min(range.total, newFrom + span - 1);
+    document.getElementById('mc-cv-from').value = newFrom;
+    document.getElementById('mc-cv-to').value   = newTo;
+    renderAggregateCurves();
+  }
+
+  // ── M8: Export helpers ───────────────────────────────────────────────
+  function downloadParamsCSV() {
+    if (!paramMatrix) return;
+    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const header = ['index', 'name', 'timestamp', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+    const rows = [header.join(',')];
+    for (const r of paramMatrix) {
+      if (!r) continue;
+      if (r.error) {
+        rows.push(`${r.slot + 1},"${r.name}","","ERROR: ${r.error}"`);
+        continue;
+      }
+      const ts = mcDataset?.curves.find(c => c.index === _slotToIndex(r.slot))?.timestamp || '';
+      const vals = paramKeys.map(k => r[k] ?? '');
+      rows.push([r.slot + 1, `"${r.name}"`, `"${ts}"`, ...vals].join(','));
+    }
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${mcDataset?.stem || 'ojip'}_params.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // ── M8: XLSX export (client-side via SheetJS) ───────────────────────
+  function downloadParamsXLSX() {
+    if (!paramMatrix || typeof XLSX === 'undefined') return;
+    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const header = ['Index', 'Name', 'Timestamp', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+    const rows = [header];
+    for (const r of paramMatrix) {
+      if (!r) continue;
+      const ts = mcDataset?.curves.find(c => c.index === _slotToIndex(r.slot))?.timestamp || '';
+      if (r.error) {
+        rows.push([r.slot + 1, r.name, ts, 'ERROR: ' + r.error]);
+      } else {
+        rows.push([r.slot + 1, r.name, ts, ...paramKeys.map(k => r[k] ?? '')]);
+      }
+    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'JIP Parameters');
+
+    // Add instrument metadata sheet if available
+    if (mcDataset?.instrumentMeta) {
+      const meta = mcDataset.instrumentMeta;
+      const metaRows = [['Property', 'Value']];
+      for (const [k, v] of Object.entries(meta)) {
+        if (v != null) metaRows.push([k, v]);
+      }
+      metaRows.push(['Filename', mcDataset.filename]);
+      metaRows.push(['Curves analyzed', paramMatrix.filter(r => r && !r.error).length]);
+      metaRows.push(['Total curves', mcDataset.curves.length]);
+      const ms = XLSX.utils.aoa_to_sheet(metaRows);
+      XLSX.utils.book_append_sheet(wb, ms, 'Metadata');
+    }
+
+    XLSX.writeFile(wb, `${mcDataset?.stem || 'ojip'}_params.xlsx`);
+  }
+
+  // ── Public API ───────────────────────────────────────────────────────
+  return {
+    parse, isMultiCurve, showSelectionModal,
+    selectAll, deselectAll, selectRange,
+    getSelectedIndices, getNamingScheme,
+    runParamsPass, cancelBatch,
+    renderTimeSeries, renderAggregateCurves,
+    curvesPagePrev, curvesPageNext,
+    fetchAndShowDetail, backToOverview,
+    copyParamTable, downloadParamsCSV, downloadParamsXLSX,
+    _updateSelCount, slotToIndex: _slotToIndex,
+  };
+})();
+
 // ── parameter metadata ────────────────────────────────────────────────────
 const PARAM_GROUPS = {
   yields: ['FVFM', 'VJ', 'VI', 'M0', 'PSIE0', 'PSIR0', 'DELTAR0', 'PHIE0', 'PHIR0'],
   fluxes: ['ABSRC', 'TR0RC', 'ET0RC', 'RE0RC', 'DI0RC'],
   areas:  ['Area_OJ', 'Area_JI', 'Area_IP', 'Area_OP', 'SM', 'N'],
   tech:   ['F0', 'FM', 'FK', 'FJ', 'FI', 'FV', 'OJ', 'JI', 'IP'],
+  timing: ['FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FM_time_ms'],
 };
 const PARAM_LABELS = {
   FVFM:'Fv/Fm (φP₀)', VJ:'VJ', VI:'VI', M0:'M₀', PSIE0:'ψE₀', PSIR0:'ψR₀',
@@ -24,6 +930,7 @@ const PARAM_LABELS = {
   Area_OJ:'Area O-J', Area_JI:'Area J-I', Area_IP:'Area I-P', Area_OP:'Area O-P',
   SM:'Sm', N:'N (QA turnover)',
   F0:'F₀', FM:'FM', FK:'FK', FJ:'FJ', FI:'FI', FV:'FV', OJ:'A(O-J)', JI:'A(J-I)', IP:'A(I-P)',
+  FJ_time_deriv_ms:'t(FJ) ms', FI_time_deriv_ms:'t(FI) ms', FP_time_deriv_ms:'t(FP) ms', FM_time_ms:'t(FM) ms',
 };
 
 // ── colour palette ─────────────────────────────────────────────────────────
@@ -563,8 +1470,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // On tab open: re-render if dirty (data changed while tab was hidden),
   // then resize so Chart.js picks up the now-visible canvas dimensions.
   document.getElementById('ojipTabs').addEventListener('shown.bs.tab', e => {
-    if (!ojipData) return;
     const tabId = (e.target.getAttribute('href') || '').slice(1);
+
+    // Multi-curve time-series tab: resize charts on show
+    if (tabId === 'tab-timeseries') {
+      chartInst['mc-param-time-chart']?.resize();
+      chartInst['mc-aggregate-chart']?.resize();
+      return;
+    }
+
+    if (!ojipData) return;
     renderDirtyTab(tabId); // no-op when not dirty
     if (tabId === 'tab-params') {
       chartInst['params-chart']?.resize();
@@ -595,6 +1510,29 @@ function updateFileList() {
 async function uploadAndAnalyze() {
   const files = document.getElementById('ojip-files').files;
   if (!files.length) return;
+
+  // ── Multi-curve detection: check .txt files for FluorPen multi-curve format ──
+  for (const f of files) {
+    if (f.name.toLowerCase().endsWith('.txt')) {
+      try {
+        const isMC = await MC.isMultiCurve(f);
+        if (isMC) {
+          // Parse the full file client-side
+          setLoading(true);
+          const dataset = await MC.parse(f);
+          setLoading(false);
+          if (dataset && dataset.curves.length > 1) {
+            mcDataset = dataset;
+            mcIsActive = true;
+            MC.showSelectionModal(dataset);
+            return; // selection modal takes over the flow
+          }
+        }
+      } catch(e) {
+        console.warn('Multi-curve detection failed for', f.name, e);
+      }
+    }
+  }
 
   const fd = new FormData();
   for (const f of files) fd.append('OJIP_files', f);
@@ -693,6 +1631,78 @@ function setLoading(on) {
   const sp  = document.getElementById('analyze-spinner');
   btn.disabled = on;
   sp.style.display = on ? '' : 'none';
+}
+
+// ── multi-curve: show/hide placeholders in detail tabs ────────────────────
+function mcShowPlaceholders(show) {
+  document.querySelectorAll('.mc-tab-placeholder').forEach(el => {
+    el.style.display = show ? '' : 'none';
+    // Hide or show the real tab content (all siblings after the placeholder)
+    let sib = el.nextElementSibling;
+    while (sib) {
+      sib.style.display = show ? 'none' : '';
+      sib = sib.nextElementSibling;
+    }
+  });
+}
+
+// ── multi-curve: start batch analysis from selection modal ────────────────
+async function mcStartAnalysis() {
+  const selected = MC.getSelectedIndices();
+  if (!selected.length) return;
+
+  // Close the selection modal
+  $('#mc-selection-modal').modal('hide');
+
+  // Show results section and configure for multi-curve mode
+  document.getElementById('results-section').style.display = '';
+
+  // Show placeholders in detail tabs (Curves, Params, Diag, etc.)
+  mcShowPlaceholders(true);
+
+  // Update summary bar
+  document.getElementById('results-summary').textContent =
+    `Multi-curve analysis — ${selected.length} curves selected from ${mcDataset.filename}`;
+
+  // Show time-series tab, switch to it
+  const tsLi = document.getElementById('tab-timeseries-li');
+  if (tsLi) tsLi.style.display = '';
+  $('[href="#tab-timeseries"]').tab('show');
+
+  // Hide single-file download bar (not applicable for multi-curve)
+  const xlsxLink = document.getElementById('xlsx-download-link');
+  if (xlsxLink) xlsxLink.style.display = 'none';
+
+  // Reset caches
+  mcDetailCache = {};
+  paramMatrix = null;
+
+  // JIP options from the form
+  const jipOpts = {
+    FJ_time: parseFloat(document.getElementById('FJ_time').value) || 2.0,
+    FI_time: parseFloat(document.getElementById('FI_time').value) || 30.0,
+    kr:      parseInt(document.getElementById('kr_input').value) || 10,
+  };
+
+  // Scroll to results
+  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+
+  // Run the batch params pass
+  const result = await MC.runParamsPass(mcDataset, selected, jipOpts);
+
+  if (result) {
+    // Render time-series overview
+    MC.renderTimeSeries();
+    MC.renderAggregateCurves();
+
+    // Update summary with completion info
+    const errors = result.filter(r => r && r.error).length;
+    const ok = result.filter(r => r && !r.error).length;
+    document.getElementById('results-summary').textContent =
+      `Multi-curve analysis complete — ${ok} curves analyzed` +
+      (errors ? `, ${errors} errors` : '') +
+      ` — ${mcDataset.filename}`;
+  }
 }
 
 // ── render all results ────────────────────────────────────────────────────
@@ -1790,12 +2800,70 @@ function generateOJIPMethodsText() {
 // Collects already-computed OJIP results from memory and POSTs them to
 // /api/fluorescence_annotation/ingest_from_ojip (no file re-upload needed).
 function populateAnnotationFromOJIP() {
+    if (typeof ANN === 'undefined') return;
+
+    // ── Multi-curve mode: build payload from paramMatrix ──
+    if (mcIsActive && paramMatrix) {
+        var mcFiles = [];
+        var mcKeyValues = {};
+        var mcParamData = {};
+        for (var i = 0; i < paramMatrix.length; i++) {
+            var r = paramMatrix[i];
+            if (!r || r.error) continue;
+            mcFiles.push(r.name);
+            mcKeyValues[r.name] = {
+                F0: r.F0, FM: r.FM, FK: r.FK, F50: r.F50,
+                FJ: r.FJ, FI: r.FI,
+                FJ_time_user_ms: r.FJ_time_user_ms,
+                FI_time_user_ms: r.FI_time_user_ms,
+            };
+            mcParamData[r.name] = {};
+            var pKeys = Object.keys(PARAM_GROUPS).flatMap(function(g) { return PARAM_GROUPS[g]; });
+            for (var k = 0; k < pKeys.length; k++) {
+                if (r[pKeys[k]] != null) mcParamData[r.name][pKeys[k]] = r[pKeys[k]];
+            }
+        }
+        var mcPayload = {
+            ojip_results: {
+                files:       mcFiles,
+                fluorometer: mcDataset.fluorometer || null,
+                fj_time_ms:  parseFloat(document.getElementById('FJ_time').value) || 2.0,
+                fi_time_ms:  parseFloat(document.getElementById('FI_time').value) || 30.0,
+                key_values:  mcKeyValues,
+                param_data:  mcParamData,
+                time_raw_ms: [],
+                curves:      {},
+                multi_curve_source: mcDataset.filename,
+                instrument_meta: mcDataset.instrumentMeta || {},
+            },
+            tier_json: ANN.collectTiers(),
+        };
+        // Cache raw curve data now (while mcDataset is available) for bundle download later.
+        // This avoids fragile lookups at download time.
+        var cachedCurves = {};
+        for (var ci = 0; ci < paramMatrix.length; ci++) {
+            var cr = paramMatrix[ci];
+            if (!cr || cr.error) continue;
+            var origIdx = typeof MC.slotToIndex === 'function' ? MC.slotToIndex(ci) : ci;
+            var cObj = mcDataset.curves.find(function(x) { return x.index === origIdx; });
+            if (cObj) cachedCurves[cr.name] = Array.from(cObj.values);
+        }
+        window._mcCurvesForBundle = {
+            files: mcFiles.slice(),
+            time_raw_ms: Array.from(mcDataset.timeUs).map(function(t) { return t * 0.001; }),
+            curves_raw: cachedCurves,
+        };
+
+        ANN.ingestFromOJIP(mcPayload);
+        return;
+    }
+
+    // ── Single-file mode (original path) ──
     if (!ojipData || !ojipData.files || !ojipData.files.length) {
         var eb = document.getElementById('ann-error-banner');
         if (eb) { eb.textContent = 'Run OJIP analysis first, then come back here.'; eb.classList.remove('d-none'); }
         return;
     }
-    if (typeof ANN === 'undefined') return;
 
     var payload = {
         ojip_results: {

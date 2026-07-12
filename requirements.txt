@@ -3,6 +3,7 @@
 
 # %% Web framework %%
 Flask>=2.3.0
+Flask-Compress>=1.14.0
 Flask-Login>=0.6.0
 Flask-Reuploaded>=1.5.0
 Flask-SQLAlchemy>=3.0.0
@@ -34,6 +35,7 @@ networkx>=3.1.0
 
 # %% Spreadsheet I/O %%
 openpyxl>=3.1.2
+xlsxwriter>=3.2.0
 pyarrow>=14.0.0
 et-xmlfile>=1.1.0
 

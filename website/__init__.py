@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_uploads import IMAGES, UploadSet, configure_uploads
 from flask_wtf.csrf import CSRFProtect
+from flask_compress import Compress
 from .shared import db
 from os import path
 import hashlib
@@ -141,6 +142,7 @@ def create_app():
     db.init_app(app)
     limiter.init_app(app)
     csrf.init_app(app)
+    Compress(app)
 
     from .views import views
     from .auth import auth

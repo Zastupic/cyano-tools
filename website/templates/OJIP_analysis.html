@@ -361,6 +361,23 @@
 
   <div class="alert alert-success mb-3 py-2" id="results-summary"></div>
 
+  <!-- Multi-curve detail info bar (visible when viewing a single curve from a batch) -->
+  <div class="alert alert-info mb-2 py-2" id="mc-detail-info" style="display:none"></div>
+
+  <!-- Multi-curve progress bar -->
+  <div id="mc-progress-wrap" class="mb-3" style="display:none">
+    <div class="d-flex align-items-center mb-1">
+      <small class="text-muted mr-2" id="mc-progress-label">Analyzing 0 / 0 curves</small>
+      <button class="btn btn-outline-danger btn-sm ml-auto" onclick="MC.cancelBatch()">
+        <i class="fa fa-times mr-1"></i>Cancel
+      </button>
+    </div>
+    <div class="progress" style="height:20px;">
+      <div class="progress-bar progress-bar-striped progress-bar-animated" id="mc-progress-bar"
+           role="progressbar" style="width:0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+  </div>
+
   <!-- Tabs -->
   <ul class="nav nav-tabs" id="ojipTabs" role="tablist">
     <li class="nav-item">
@@ -393,12 +410,22 @@
         <i class="fa fa-tags"></i> Annotation
       </a>
     </li>
+    <li class="nav-item" id="tab-timeseries-li" style="display:none">
+      <a class="nav-link" id="tab-timeseries-link" data-toggle="tab" href="#tab-timeseries" role="tab">
+        <i class="fa fa-area-chart"></i> Time Series
+      </a>
+    </li>
   </ul>
 
   <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white" id="ojipTabContent">
 
     <!-- ── Curves tab ─────────────────────────────────────────────────── -->
     <div class="tab-pane fade show active" id="tab-curves" role="tabpanel">
+      <div class="mc-tab-placeholder text-center text-muted py-5" style="display:none">
+        <i class="fa fa-line-chart fa-3x mb-3" style="opacity:0.25"></i>
+        <p class="mb-1">Select a curve from the <strong>Time Series</strong> tab to view its detailed analysis here.</p>
+        <small>Click any data point in the parameter chart or any row in the parameter table.</small>
+      </div>
       <div class="d-flex flex-wrap align-items-center mb-2">
         <span class="mr-2 font-weight-bold">Normalization:</span>
         <div class="ojip-seg-ctrl" id="norm-btns">
@@ -450,6 +477,11 @@
 
     <!-- ── Parameters tab ─────────────────────────────────────────────── -->
     <div class="tab-pane fade" id="tab-params" role="tabpanel">
+      <div class="mc-tab-placeholder text-center text-muted py-5" style="display:none">
+        <i class="fa fa-bar-chart fa-3x mb-3" style="opacity:0.25"></i>
+        <p class="mb-1">Select a curve from the <strong>Time Series</strong> tab to view its JIP parameters here.</p>
+        <small>Click any data point in the parameter chart or any row in the parameter table.</small>
+      </div>
       <div class="d-flex flex-wrap align-items-center mb-2">
         <span class="mr-2 font-weight-bold">Parameter group:</span>
         <div class="ojip-seg-ctrl" id="param-group-btns">
@@ -457,6 +489,7 @@
           <button class="btn btn-outline-primary" data-pgroup="fluxes">Energy fluxes</button>
           <button class="btn btn-outline-primary" data-pgroup="areas">Areas &amp; indices</button>
           <button class="btn btn-outline-primary" data-pgroup="tech">Technical</button>
+          <button class="btn btn-outline-primary" data-pgroup="timing">Timing</button>
         </div>
         <button class="btn btn-outline-warning btn-sm ml-auto mr-1" id="reset-fj-fi-btn">
           Reset F<sub>J</sub>/F<sub>I</sub> to 2/30 ms
@@ -478,6 +511,11 @@
 
     <!-- ── Groups tab ─────────────────────────────────────────────────── -->
     <div class="tab-pane fade" id="tab-groups" role="tabpanel">
+      <div class="mc-tab-placeholder text-center text-muted py-5" style="display:none">
+        <i class="fa fa-object-group fa-3x mb-3" style="opacity:0.25"></i>
+        <p class="mb-1">Select a curve from the <strong>Time Series</strong> tab to view group analysis here.</p>
+        <small>Click any data point in the parameter chart or any row in the parameter table.</small>
+      </div>
 
       <!-- Assignment panel -->
       <div class="card mb-3">
@@ -1072,6 +1110,11 @@
 
     <!-- ── Diagnostics tab ────────────────────────────────────────────── -->
     <div class="tab-pane fade" id="tab-diag" role="tabpanel">
+      <div class="mc-tab-placeholder text-center text-muted py-5" style="display:none">
+        <i class="fa fa-stethoscope fa-3x mb-3" style="opacity:0.25"></i>
+        <p class="mb-1">Select a curve from the <strong>Time Series</strong> tab to view its diagnostics here.</p>
+        <small>Click any data point in the parameter chart or any row in the parameter table.</small>
+      </div>
       <div class="card mb-3">
         <div class="card-header py-2">
           <strong>Spline fitting quality (k<sub>r</sub>)</strong>
@@ -1146,6 +1189,11 @@
 
     <!-- ── Interpretation tab ─────────────────────────────────────────── -->
     <div class="tab-pane fade" id="tab-interp" role="tabpanel">
+      <div class="mc-tab-placeholder text-center text-muted py-5" style="display:none">
+        <i class="fa fa-flask fa-3x mb-3" style="opacity:0.25"></i>
+        <p class="mb-1">Select a curve from the <strong>Time Series</strong> tab to view its interpretation here.</p>
+        <small>Click any data point in the parameter chart or any row in the parameter table.</small>
+      </div>
 
       <!-- Controls row -->
       <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
@@ -1620,6 +1668,120 @@
 
     </div><!-- /tab-annot -->
 
+    <!-- ── Time-series tab (multi-curve only) ─────────────────────────── -->
+    <div class="tab-pane fade" id="tab-timeseries" role="tabpanel">
+
+      <!-- Parameter picker and controls -->
+      <div class="d-flex flex-wrap align-items-center mb-2" style="gap:8px;">
+        <span class="mr-1 font-weight-bold">Parameter:</span>
+        <select class="form-control form-control-sm" id="mc-param-picker" style="width:auto; min-width:160px;"
+                onchange="MC.renderTimeSeries()">
+          <optgroup label="Yields &amp; Ratios">
+            <option value="FVFM" selected>Fv/Fm (&phi;P&#x2080;)</option>
+            <option value="VJ">VJ</option>
+            <option value="VI">VI</option>
+            <option value="M0">M&#x2080;</option>
+            <option value="PSIE0">&psi;E&#x2080;</option>
+            <option value="PSIR0">&psi;R&#x2080;</option>
+            <option value="DELTAR0">&delta;R&#x2080;</option>
+            <option value="PHIE0">&phi;E&#x2080;</option>
+            <option value="PHIR0">&phi;R&#x2080;</option>
+          </optgroup>
+          <optgroup label="Specific Fluxes">
+            <option value="ABSRC">ABS/RC</option>
+            <option value="TR0RC">TR&#x2080;/RC</option>
+            <option value="ET0RC">ET&#x2080;/RC</option>
+            <option value="RE0RC">RE&#x2080;/RC</option>
+            <option value="DI0RC">DI&#x2080;/RC</option>
+          </optgroup>
+          <optgroup label="Areas">
+            <option value="Area_OJ">Area O-J</option>
+            <option value="Area_JI">Area J-I</option>
+            <option value="Area_IP">Area I-P</option>
+            <option value="Area_OP">Area O-P</option>
+            <option value="SM">Sm</option>
+            <option value="N">N (QA turnover)</option>
+          </optgroup>
+          <optgroup label="Technical">
+            <option value="F0">F&#x2080;</option>
+            <option value="FM">FM</option>
+            <option value="FK">FK</option>
+            <option value="FJ">FJ</option>
+            <option value="FI">FI</option>
+            <option value="FV">FV</option>
+          </optgroup>
+          <optgroup label="Timing">
+            <option value="FJ_time_deriv_ms">t(FJ) ms</option>
+            <option value="FI_time_deriv_ms">t(FI) ms</option>
+            <option value="FP_time_deriv_ms">t(FP) ms</option>
+            <option value="FM_time_ms">t(FM) ms</option>
+          </optgroup>
+        </select>
+
+        <label class="mb-0 ml-3" style="font-size:0.85em; cursor:pointer;">
+          <input type="checkbox" id="mc-time-axis-ts" onchange="MC.renderTimeSeries()">
+          Use timestamps as X-axis
+        </label>
+
+        <div class="ml-auto d-flex" style="gap:6px;">
+          <button class="btn btn-sm btn-outline-secondary" onclick="MC.downloadParamsCSV()">
+            <i class="fa fa-download mr-1"></i>CSV
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="MC.downloadParamsXLSX()">
+            <i class="fa fa-download mr-1"></i>XLSX
+          </button>
+        </div>
+      </div>
+
+      <!-- Parameter scatter chart -->
+      <div style="position:relative; height:340px;" class="mb-3">
+        <canvas id="mc-param-time-chart"></canvas>
+      </div>
+
+      <small class="text-muted d-block mb-3">Click any point to view that curve's full analysis in the detail tabs.</small>
+
+      <!-- Multi-curve overlay viewer -->
+      <div class="card mb-3">
+        <div class="card-header py-2 d-flex flex-wrap align-items-center" style="background:#e9ecef; font-size:0.88em; gap:8px;">
+          <span class="font-weight-bold"><i class="fa fa-area-chart mr-1 text-primary"></i>OJIP Curves</span>
+          <div class="ml-auto d-flex align-items-center flex-wrap" style="gap:6px;">
+            <label class="mb-0 small">Curves:</label>
+            <input type="number" id="mc-cv-from" class="form-control form-control-sm" style="width:65px;" min="1" value="1"
+                   onchange="MC.renderAggregateCurves()">
+            <span class="small">&ndash;</span>
+            <input type="number" id="mc-cv-to" class="form-control form-control-sm" style="width:65px;" min="1" value="50"
+                   onchange="MC.renderAggregateCurves()">
+            <span class="small text-muted" id="mc-cv-total">/ 0</span>
+            <button class="btn btn-sm btn-outline-secondary" id="mc-page-prev" onclick="MC.curvesPagePrev()" title="Previous page">
+              <i class="fa fa-chevron-left"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" id="mc-page-next" onclick="MC.curvesPageNext()" title="Next page">
+              <i class="fa fa-chevron-right"></i>
+            </button>
+            <label class="mb-0 ml-2 small" style="cursor:pointer;">
+              <input type="checkbox" id="mc-show-median" checked onchange="MC.renderAggregateCurves()">
+              Median
+            </label>
+          </div>
+        </div>
+        <div class="card-body p-2">
+          <div style="position:relative; height:360px;">
+            <canvas id="mc-aggregate-chart"></canvas>
+          </div>
+          <small class="text-muted d-block mt-1">Click any curve to view its full analysis. Curves colored by measurement order (blue &rarr; red).</small>
+        </div>
+      </div>
+
+      <!-- Full parameter table -->
+      <div class="card mb-3">
+        <div class="card-header py-2 font-weight-bold" style="background:#e9ecef; font-size:0.88em;">
+          <i class="fa fa-table mr-1 text-primary"></i>All Parameters
+        </div>
+        <div class="card-body p-2" id="mc-param-table-wrap"></div>
+      </div>
+
+    </div><!-- /tab-timeseries -->
+
   </div><!-- /tab-content -->
 
   <!-- Download bar -->
@@ -1644,12 +1806,18 @@
 <script src="{{ url_for('static', filename='vendor/chart.umd.min.4.4.7.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/chartjs-error-bars.umd.min.4.4.3.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/xlsx.full.min.0.20.3.js') }}"></script>
-<script src="{{ url_for('static', filename='js_OJIP.js') }}"></script>
-<script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}?v=9"></script>
+<script src="{{ url_for('static', filename='js_OJIP.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}?v=11"></script>
 <script>
 // Provide raw OJIP curve data to the annotation bundle download.
 // Called by ANN.downloadBundle() when this hook is defined.
 window._getOJIPCurvesForBundle = function () {
+    // Multi-curve mode: use data cached at populate time (reliable)
+    if (window._mcCurvesForBundle) {
+        return window._mcCurvesForBundle;
+    }
+
+    // Single-file mode (original path)
     if (!window.ojipData || !window.ojipData.files || !window.ojipData.files.length) return null;
     var files = window.ojipData.files;
     var time_raw_ms = window.ojipData.time_raw_ms || [];
@@ -1691,6 +1859,77 @@ window._getOJIPCurvesForBundle = function () {
     </div>
   </div>
 </div>
+
+<!-- ── Multi-curve selection modal ── -->
+<div class="modal fade" id="mc-selection-modal" tabindex="-1" role="dialog" aria-labelledby="mcSelectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title font-weight-bold" id="mcSelectionModalLabel">
+          <i class="fa fa-list-ol mr-2"></i>Multi-curve file detected
+        </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body py-3">
+        <p class="mb-2">
+          File: <strong id="mc-filename"></strong><br>
+          <span class="text-muted"><span id="mc-curve-count"></span> OJIP curves &mdash; <span id="mc-date-range"></span></span>
+        </p>
+
+        <!-- Naming scheme -->
+        <div class="form-group row align-items-center mb-2">
+          <label class="col-auto col-form-label font-weight-bold" style="font-size:0.88em;">Curve naming:</label>
+          <div class="col-auto">
+            <select class="form-control form-control-sm" id="mc-naming" style="width:auto;">
+              <option value="timestamp" selected>Timestamp (e.g. 2026-04-30 09:22)</option>
+              <option value="filename_index">Filename + index (e.g. 1580_001)</option>
+              <option value="index">Index only (e.g. 1, 2, 3)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Selection controls -->
+        <div class="d-flex flex-wrap align-items-center mb-2" style="gap:6px; font-size:0.88em;">
+          <button class="btn btn-sm btn-outline-primary" onclick="MC.selectAll()">Select all</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="MC.deselectAll()">Deselect all</button>
+          <span class="mx-1">|</span>
+          <label class="mb-0">Range:</label>
+          <input type="number" id="mc-range-from" class="form-control form-control-sm" style="width:70px;" placeholder="from" min="1">
+          <span>&ndash;</span>
+          <input type="number" id="mc-range-to" class="form-control form-control-sm" style="width:70px;" placeholder="to">
+          <button class="btn btn-sm btn-outline-primary" onclick="MC.selectRange()">Apply</button>
+          <span class="ml-auto font-weight-bold">Selected: <span id="mc-selected-count">0 of 0</span></span>
+        </div>
+
+        <div class="alert alert-warning py-1 px-2 small" id="mc-limit-warn" style="display:none">
+          <i class="fa fa-exclamation-triangle mr-1"></i>Very large selection (&gt;2000 curves). Processing may be slow.
+        </div>
+
+        <!-- Curve table -->
+        <div style="max-height:300px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px;">
+          <table class="table table-sm table-hover mb-0" style="font-size:0.82em;">
+            <thead class="thead-light">
+              <tr>
+                <th style="width:30px;"><input type="checkbox" checked onchange="this.checked ? MC.selectAll() : MC.deselectAll()"></th>
+                <th style="width:50px;">#</th>
+                <th>Timestamp</th>
+                <th>Protocol</th>
+              </tr>
+            </thead>
+            <tbody id="mc-curve-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary btn-sm" id="mc-analyze-btn" onclick="mcStartAnalysis()">
+          <i class="fa fa-play mr-1"></i>Analyze Selected Curves
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 $(document).ready(function () {
   var $chevron = $('#advancedParamsChevron');
