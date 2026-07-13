@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, send_file, current_app
+from flask import Blueprint, render_template, request, jsonify, send_file, current_app, redirect, url_for
 import os, uuid, zipfile, math, io
 
 try:
@@ -248,12 +248,16 @@ def _apply_od_correction(od, device_str, signal_type):
 
 # ── Routes ───────────────────────────────────────────────────────────────────
 
-@pbr_analysis_bp.route('/pbr_analysis', methods=['GET'])
+@pbr_analysis_bp.route('/PBR', methods=['GET'])
 def pbr_page():
     return render_template('pbr_analysis.html')
 
+@pbr_analysis_bp.route('/pbr_analysis', methods=['GET'])
+def pbr_redirect():
+    return redirect(url_for('pbr_analysis.pbr_page'), 301)
 
-@pbr_analysis_bp.route('/pbr_analysis/parse', methods=['POST'])
+
+@pbr_analysis_bp.route('/PBR/parse', methods=['POST'])
 def parse_file():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
@@ -336,7 +340,7 @@ def parse_file():
     })
 
 
-@pbr_analysis_bp.route('/pbr_analysis/data', methods=['POST'])
+@pbr_analysis_bp.route('/PBR/data', methods=['POST'])
 def get_data():
     """Return display data for a cached file with configurable max rows (0 = all)."""
     body    = request.get_json(force=True)
@@ -369,7 +373,7 @@ def get_data():
     })
 
 
-@pbr_analysis_bp.route('/pbr_analysis/export', methods=['POST'])
+@pbr_analysis_bp.route('/PBR/export', methods=['POST'])
 def export_file():
     body        = request.get_json(force=True)
     key         = body.get('cache_key', '')

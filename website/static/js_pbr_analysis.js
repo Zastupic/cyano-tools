@@ -170,7 +170,7 @@ const PBR = (() => {
         const fd = new FormData();
         fd.append('file', file);
 
-        fetch('/pbr_analysis/parse', { method: 'POST', body: fd })
+        fetch('/PBR/parse', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(resp => {
                 _setLoading(false);
@@ -917,7 +917,7 @@ const PBR = (() => {
             }
         }
         _setLoading(true);
-        fetch('/pbr_analysis/data', {
+        fetch('/PBR/data', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ cache_key: _state.cacheKey, max_rows: maxRows }),
@@ -1056,7 +1056,7 @@ const PBR = (() => {
         });
 
         _setLoading(true);
-        fetch('/pbr_analysis/export', {
+        fetch('/PBR/export', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ cache_key: _state.cacheKey, corrections: serverCorr }),
@@ -1106,7 +1106,7 @@ const PBR = (() => {
                 corrections[col] = { device: strain, signal_type: `od-${odType}` };
             });
 
-            const resp = await fetch('/pbr_analysis/export', {
+            const resp = await fetch('/PBR/export', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({ cache_key: _state.cacheKey, corrections }),

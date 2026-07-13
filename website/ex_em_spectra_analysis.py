@@ -498,9 +498,13 @@ def _build_tensor(maps_dict, crop=None):
 # ─── end PARAFAC helpers ───────────────────────────────────────────────────────
 
 
-@ex_em_spectra_analysis.route('/fluorescence_spectra', methods=['GET'])
+@ex_em_spectra_analysis.route('/EEM', methods=['GET'])
 def analyze_ex_em_spectra():
     return render_template('ex_em_spectra_analysis.html')
+
+@ex_em_spectra_analysis.route('/fluorescence_spectra', methods=['GET'])
+def fluorescence_spectra_redirect():
+    return redirect(url_for('ex_em_spectra_analysis.analyze_ex_em_spectra'), 301)
 
 @ex_em_spectra_analysis.route('/ex_em_spectra_analysis', methods=['GET'])
 def ex_em_redirect():

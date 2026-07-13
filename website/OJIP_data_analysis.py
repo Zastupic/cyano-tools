@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 import os, base64, io
 import pandas as pd
 import numpy as np
@@ -459,9 +459,13 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
 
 # ─── routes ─────────────────────────────────────────────────────────────────
 
-@OJIP_data_analysis.route('/OJIP_data_analysis', methods=['GET'])
+@OJIP_data_analysis.route('/OJIP', methods=['GET'])
 def ojip_page():
     return render_template('OJIP_analysis.html')
+
+@OJIP_data_analysis.route('/OJIP_data_analysis', methods=['GET'])
+def ojip_page_redirect():
+    return redirect(url_for('OJIP_data_analysis.ojip_page'), 301)
 
 
 @OJIP_data_analysis.route('/api/ojip_process', methods=['POST'])

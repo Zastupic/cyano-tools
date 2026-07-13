@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 import os, base64, io, time
 import numpy as np
 from openpyxl import Workbook
@@ -49,9 +49,13 @@ def _cleanup_old_files(upload_folder, max_age_s=1200):
 
 # ── routes ───────────────────────────────────────────────────────────────────
 
-@light_curves_analysis.route('/light_curves_analysis', methods=['GET'])
+@light_curves_analysis.route('/RapidLightCurves', methods=['GET'])
 def analyze_light_curves():
     return render_template('light_curves_analysis.html')
+
+@light_curves_analysis.route('/light_curves_analysis', methods=['GET'])
+def light_curves_redirect():
+    return redirect(url_for('light_curves_analysis.analyze_light_curves'), 301)
 
 
 @light_curves_analysis.route('/api/lc_process', methods=['POST'])

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 import re
 import io
 import os
@@ -185,9 +185,13 @@ def _build_xlsx(samples, charts=None):
     return buf.getvalue()
 
 
-@sigma_bp.route('/sigma_analysis')
+@sigma_bp.route('/sigma')
 def sigma_analysis():
     return render_template('sigma_analysis.html')
+
+@sigma_bp.route('/sigma_analysis')
+def sigma_analysis_redirect():
+    return redirect(url_for('sigma_analysis.sigma_analysis'), 301)
 
 
 @sigma_bp.route('/api/sigma_process', methods=['POST'])

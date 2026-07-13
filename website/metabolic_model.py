@@ -5,7 +5,7 @@ import re
 import threading
 import urllib.request
 import urllib.parse
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for
 from . import metanetx_lookup
 from . import limiter
 
@@ -352,9 +352,13 @@ def _get_model(constrained=False):
 
 # ── Page ──────────────────────────────────────────────────────────────────────
 
-@metabolic_bp.route('/metabolic_model')
+@metabolic_bp.route('/FBA')
 def metabolic_model_page():
     return render_template('metabolic_model.html')
+
+@metabolic_bp.route('/metabolic_model')
+def metabolic_model_redirect():
+    return redirect(url_for('metabolic_bp.metabolic_model_page'), 301)
 
 
 # ── Info / lists ──────────────────────────────────────────────────────────────

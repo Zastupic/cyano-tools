@@ -4252,7 +4252,7 @@ function generateMethodsText() {
         lines.push(
             'Excitation-emission matrix (EEM) fluorescence spectroscopy was performed at 77\u202fK using a ' +
             spectroName + '. Raw data files were processed using the 77K EEM Analyzer module of CyanoTools ' +
-            '(https://www.cyano.tools/ex_em_spectra_analysis). ' +
+            '(https://www.cyano.tools/EEM). ' +
             'A total of ' + n + ' sample' + (n !== 1 ? 's were' : ' was') + ' analyzed (' + fList + ').'
         );
 
@@ -4293,7 +4293,7 @@ function generateMethodsText() {
         lines.push(
             'Excitation-emission matrix (EEM) fluorescence spectroscopy was performed at room temperature ' +
             'using a ' + spectroName + '. Raw data files were processed using the RT EEM Analyzer module of ' +
-            'CyanoTools (https://www.cyano.tools/ex_em_spectra_analysis). ' +
+            'CyanoTools (https://www.cyano.tools/EEM). ' +
             'A total of ' + n + ' sample' + (n !== 1 ? 's were' : ' was') + ' analyzed (' + fList + ').'
         );
 

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, send_file
+from flask import Blueprint, render_template, request, jsonify, send_file, redirect, url_for
 import os, io, time, base64
 import pandas as pd
 import numpy as np
@@ -707,9 +707,13 @@ def _process_aquapen(files, protocol_key, upload_folder):
 
 # ─── routes ──────────────────────────────────────────────────────────────────
 
-@slow_kin_data_analysis.route('/slow_kin_data_analysis', methods=['GET'])
+@slow_kin_data_analysis.route('/NPQ', methods=['GET'])
 def analyze_slow_kin_data():
     return render_template('slow_kin_data_analysis.html')
+
+@slow_kin_data_analysis.route('/slow_kin_data_analysis', methods=['GET'])
+def slow_kin_redirect():
+    return redirect(url_for('slow_kin_data_analysis.analyze_slow_kin_data'), 301)
 
 
 @slow_kin_data_analysis.route('/api/slow_kin_process', methods=['POST'])

@@ -3,7 +3,10 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_uploads import IMAGES, UploadSet, configure_uploads
 from flask_wtf.csrf import CSRFProtect
-from flask_compress import Compress
+try:
+    from flask_compress import Compress
+except ImportError:
+    Compress = None
 from .shared import db
 from os import path
 import hashlib
@@ -142,7 +145,8 @@ def create_app():
     db.init_app(app)
     limiter.init_app(app)
     csrf.init_app(app)
-    Compress(app)
+    if Compress:
+        Compress(app)
 
     from .views import views
     from .auth import auth
@@ -175,13 +179,13 @@ def create_app():
     TRACKED_PATHS = frozenset([
         '/', '/cell_count', '/cell_count_filament',
         '/pixel_profiles_round_cells', '/pixel_profiles_filament',
-        '/OJIP_data_analysis', '/slow_kin_data_analysis',
-        '/P700_kin_data_analysis', '/ex_em_spectra_analysis',
+        '/OJIP', '/NPQ',
+        '/P700_kin_data_analysis', '/EEM',
         '/cell_size_round_cells', '/cell_size_filament',
-        '/light_curves_analysis', '/MIMS_data_analysis',
+        '/RapidLightCurves', '/MIMS',
         '/MIMS_data_analysis_periodic', '/statistics',
-        '/calculators', '/sigma_analysis',
-        '/pbr_analysis',
+        '/calculators', '/sigma',
+        '/PBR', '/FBA',
     ])
 
     @app.before_request
