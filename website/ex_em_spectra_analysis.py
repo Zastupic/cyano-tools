@@ -566,6 +566,12 @@ def eem_process():
     except ValueError:
         spc_ex_increment = None
 
+    # Rayleigh scattering removal bandwidth (±nm around Ex=Em diagonal)
+    try:
+        rayleigh_width = float(request.form.get('rayleigh_width', 0) or 0)
+    except (TypeError, ValueError):
+        rayleigh_width = 0
+
     spectrofluorometer = request.form.get('spectrofluorometer', 'jasco')
 
     # For xlsx_matrix the client sends pre-parsed JSON — no file upload needed
@@ -595,9 +601,17 @@ def eem_process():
 
     # ── helper: add one parsed EEM to result ─────────────────────────────────
     def process_eem(fname, ex_wl_arr, em_wl_arr, intensity):
+        # Apply Rayleigh scattering removal if requested:
+        # Zero out all pixels where Em <= Ex + bandwidth (diagonal mask).
+        if rayleigh_width > 0:
+            intensity = intensity.copy().astype(float)
+            for j, ex in enumerate(ex_wl_arr):
+                mask_em = em_wl_arr <= ex + rayleigh_width
+                intensity[mask_em, j] = 0.0
+
         result['files'].append(fname)
 
-        # 2D map
+        # 3D map
         map_ex, map_em, map_int = ex_wl_arr, em_wl_arr, intensity
         if any(v is not None for v in map_range.values()):
             map_ex, map_em, map_int = apply_2d_map_range(ex_wl_arr, em_wl_arr, intensity, map_range)

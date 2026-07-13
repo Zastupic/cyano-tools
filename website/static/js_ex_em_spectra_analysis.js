@@ -590,6 +590,9 @@ function uploadAndAnalyzeXlsx() {
     }
     fd.append('ex_for_norm', document.getElementById('eem-ex-norm').value || '');
     fd.append('em_for_norm', document.getElementById('eem-em-norm').value || '');
+    var rayleighEnabled = document.getElementById('eem-rayleigh-enable').checked;
+    fd.append('rayleigh_width', rayleighEnabled ?
+        (document.getElementById('eem-rayleigh-width').value || '15') : '0');
 
     // Parse sheets client-side
     var samples = [], parseWarnings = [];
@@ -739,6 +742,33 @@ function _updateCopyScoresBtn() {
     btn.style.display = (anyRejected || anyReassigned) ? '' : 'none';
 }
 
+function _syncAnnotFromPigmDropdown(r) {
+    if (!parafacResults) return;
+    var val = parafacPigmAssign[r];
+    var data = parafacResults;
+    var exPeak = Math.round(data.ex_wl[data.ex_loadings[r].indexOf(
+        Math.max.apply(null, data.ex_loadings[r]))]);
+    var emPeak = Math.round(data.em_wl[data.em_loadings[r].indexOf(
+        Math.max.apply(null, data.em_loadings[r]))]);
+    var label = 'Unknown';
+    if (val && val !== '' && val !== 'other') {
+        for (var i = 0; i < PIGM_ASSIGN_OPTIONS.length; i++) {
+            if (PIGM_ASSIGN_OPTIONS[i][0] === val) {
+                label = PIGM_ASSIGN_OPTIONS[i][1].split('(')[0].trim();
+                break;
+            }
+        }
+    } else if (val === 'other') {
+        label = 'Other';
+    }
+    var annot = label + ' (Ex' + exPeak + '/Em' + emPeak + ')';
+    parafacAnnotations[r] = annot;
+    var inp = document.getElementById('par-annot-' + r);
+    if (inp) inp.textContent = annot;
+    _renderParafacScoresChart(data);
+    _refreshParafacCompMapLabels(data);
+}
+
 function _reAnnotateParafacComponents(pigm) {
     if (!parafacResults) return;
     var data = parafacResults;
@@ -746,11 +776,9 @@ function _reAnnotateParafacComponents(pigm) {
         var annot = _jsAnnotateComponent(data.ex_wl, data.em_wl,
                                          data.ex_loadings[r], data.em_loadings[r], pigm);
         parafacAnnotations[r] = annot;
-        // Update the editable input in the component card
         var inp = document.getElementById('par-annot-' + r);
-        if (inp) inp.value = annot;
+        if (inp) inp.textContent = annot;
     }
-    // Refresh scores chart and comp map labels with new annotations
     _renderParafacScoresChart(data);
     _refreshParafacCompMapLabels(data);
 }
@@ -865,6 +893,9 @@ function uploadAndAnalyze() {
     fd.append('em_for_norm', document.getElementById('eem-em-norm').value || '');
     fd.append('spc_ex_start', (document.getElementById('spc-ex-start') || {}).value || '');
     fd.append('spc_ex_increment', (document.getElementById('spc-ex-increment') || {}).value || '');
+    var rayleighEnabled = document.getElementById('eem-rayleigh-enable').checked;
+    fd.append('rayleigh_width', rayleighEnabled ?
+        (document.getElementById('eem-rayleigh-width').value || '15') : '0');
     selectedFiles.forEach(function(f) { fd.append('77K_files', f); });
 
     var btn = document.getElementById('eem-analyze-btn');
@@ -1198,7 +1229,7 @@ function setSpectraPalette(val) {
 }
 
 // ============================================================
-// 2D Map Tab
+// 3D Map Tab
 // ============================================================
 var COLORMAPS = {
     rdbu: [                                         // diverging: blue→white→red
@@ -1403,11 +1434,31 @@ function renderMapTab() {
         });
     }
 
+    var showGrid = document.getElementById('map-show-grid').checked;
+    var commonScale = document.getElementById('map-common-scale').checked;
+    var fixedRange = null;
+
+    if (commonScale) {
+        var globalMin = Infinity, globalMax = -Infinity;
+        files.forEach(function(fname) {
+            var mapData = eemData.maps[fname];
+            if (!mapData) return;
+            var d = applyClientMapRange(mapData.ex_wl, mapData.em_wl, mapData.intensity);
+            for (var i = 0; i < d.intensity.length; i++)
+                for (var j = 0; j < d.intensity[i].length; j++) {
+                    var v = d.intensity[i][j];
+                    if (v < globalMin) globalMin = v;
+                    if (v > globalMax) globalMax = v;
+                }
+        });
+        if (globalMax > globalMin) fixedRange = [globalMin, globalMax];
+    }
+
     files.forEach(function(fname, idx) {
         var mapData = eemData.maps[fname];
         if (!mapData) return;
         var d = applyClientMapRange(mapData.ex_wl, mapData.em_wl, mapData.intensity);
-        drawHeatmap('heatmap-canvas-' + idx, d.exWl, d.emWl, d.intensity, colorName, useLog);
+        drawHeatmap('heatmap-canvas-' + idx, d.exWl, d.emWl, d.intensity, colorName, useLog, undefined, showGrid, fixedRange);
     });
 }
 
@@ -1450,7 +1501,8 @@ function downloadMapPng(canvasId, fname) {
     a.click();
 }
 
-function drawHeatmap(canvasId, exWl, emWl, intensity, colorName, useLog, fontScale) {
+function drawHeatmap(canvasId, exWl, emWl, intensity, colorName, useLog, fontScale, showGrid, fixedRange) {
+    var gridOn = (showGrid !== false);
     var canvas = document.getElementById(canvasId);
     if (!canvas) return;
     var nEx = exWl.length, nEm = emWl.length;
@@ -1464,6 +1516,7 @@ function drawHeatmap(canvasId, exWl, emWl, intensity, colorName, useLog, fontSca
             if (v > maxVal) maxVal = v;
             if (v < minVal) minVal = v;
         }
+    if (fixedRange) { minVal = fixedRange[0]; maxVal = fixedRange[1]; }
     var logMin = minVal > 0 ? Math.log10(minVal) : 0;
     var logMax = maxVal > 0 ? Math.log10(maxVal) : 1;
     var range = maxVal - minVal || 1;
@@ -1501,34 +1554,73 @@ function drawHeatmap(canvasId, exWl, emWl, intensity, colorName, useLog, fontSca
     ctx.strokeStyle = '#666'; ctx.lineWidth = 1;
     ctx.strokeRect(margin.left, margin.top, pw, ph);
 
+    // Helper: generate round-number ticks for a wavelength array
+    function _roundTicks(wlArr) {
+        var lo = wlArr[0], hi = wlArr[wlArr.length - 1];
+        if (lo > hi) { var tmp = lo; lo = hi; hi = tmp; }
+        var span = hi - lo;
+        var steps = [10, 20, 25, 50, 100];
+        var step = 50;
+        for (var s = 0; s < steps.length; s++) {
+            var n = Math.floor(span / steps[s]);
+            if (n >= 3 && n <= 10) { step = steps[s]; break; }
+        }
+        var ticks = [];
+        var first = Math.ceil(lo / step) * step;
+        for (var v = first; v <= hi; v += step) ticks.push(v);
+        return ticks;
+    }
+    // Helper: map a wavelength value to pixel fraction (0–1) within the wl array
+    function _wlToFrac(wlArr, val) {
+        for (var k = 0; k < wlArr.length - 1; k++) {
+            if ((wlArr[k] <= val && val <= wlArr[k + 1]) ||
+                (wlArr[k] >= val && val >= wlArr[k + 1])) {
+                var f = (val - wlArr[k]) / (wlArr[k + 1] - wlArr[k]);
+                return (k + f) / (wlArr.length - 1);
+            }
+        }
+        return val <= wlArr[0] ? 0 : 1;
+    }
+
     // X-axis ticks & labels
-    var tickFontSize  = Math.round(13 * fs);
-    var titleFontSize = Math.round(15 * fs);
+    var tickFontSize  = Math.round(14 * fs);
+    var titleFontSize = Math.round(16 * fs);
+    var tickLen = Math.round(5 * fs);
     ctx.fillStyle = '#333'; ctx.font = tickFontSize + 'px sans-serif'; ctx.textAlign = 'center';
-    var nXticks = Math.min(8, nEx);
-    for (var k = 0; k <= nXticks; k++) {
-        var xFrac = k / nXticks;
+    var xTicks = _roundTicks(exWl);
+    for (var k = 0; k < xTicks.length; k++) {
+        var xFrac = _wlToFrac(exWl, xTicks[k]);
         var xPx = margin.left + xFrac * pw;
-        ctx.fillText(Math.round(exWl[Math.round(xFrac * (nEx - 1))]), xPx, ch - margin.bottom + Math.round(17 * fs));
-        ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5;
-        ctx.beginPath(); ctx.moveTo(xPx, margin.top); ctx.lineTo(xPx, margin.top + ph); ctx.stroke();
+        ctx.fillText(xTicks[k], xPx, ch - margin.bottom + Math.round(17 * fs));
+        // tick mark
+        ctx.strokeStyle = '#666'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(xPx, margin.top + ph); ctx.lineTo(xPx, margin.top + ph + tickLen); ctx.stroke();
+        if (gridOn) {
+            ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5;
+            ctx.beginPath(); ctx.moveTo(xPx, margin.top); ctx.lineTo(xPx, margin.top + ph); ctx.stroke();
+        }
     }
     ctx.fillStyle = '#333'; ctx.font = 'bold ' + titleFontSize + 'px sans-serif';
-    ctx.fillText('Excitation (nm)', margin.left + pw / 2, ch - Math.round(6 * fs));
+    ctx.fillText('Excitation (nm)', margin.left + pw / 2, ch - Math.round(4 * fs));
 
-    // Y-axis ticks & labels
+    // Y-axis ticks & labels  (emWl is ascending; canvas Y is top-down)
     ctx.textAlign = 'right';
     ctx.font = tickFontSize + 'px sans-serif';
-    var nYticks = Math.min(8, nEm);
-    for (var k = 0; k <= nYticks; k++) {
-        var yFrac = k / nYticks;
+    var yTicks = _roundTicks(emWl);
+    for (var k = 0; k < yTicks.length; k++) {
+        var yFrac = 1 - _wlToFrac(emWl, yTicks[k]);   // invert: high em at top
         var yPx = margin.top + yFrac * ph;
-        ctx.fillText(Math.round(emWl[Math.round((1 - yFrac) * (nEm - 1))]), margin.left - Math.round(6 * fs), yPx + 4);
-        ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5;
-        ctx.beginPath(); ctx.moveTo(margin.left, yPx); ctx.lineTo(margin.left + pw, yPx); ctx.stroke();
+        ctx.fillText(yTicks[k], margin.left - Math.round(6 * fs), yPx + 4);
+        // tick mark
+        ctx.strokeStyle = '#666'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(margin.left - tickLen, yPx); ctx.lineTo(margin.left, yPx); ctx.stroke();
+        if (gridOn) {
+            ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5;
+            ctx.beginPath(); ctx.moveTo(margin.left, yPx); ctx.lineTo(margin.left + pw, yPx); ctx.stroke();
+        }
     }
     ctx.save();
-    ctx.translate(Math.round(15 * fs), margin.top + ph / 2);
+    ctx.translate(Math.round(14 * fs), margin.top + ph / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = 'center'; ctx.font = 'bold ' + titleFontSize + 'px sans-serif'; ctx.fillStyle = '#333';
     ctx.fillText('Emission (nm)', 0, 0);
@@ -1569,7 +1661,25 @@ function openEnlargedMap(fname, idx) {
     if (!mc) return;
     mc.width  = 900;
     mc.height = 600;
-    drawHeatmap('eem-map-modal-canvas', d.exWl, d.emWl, d.intensity, colorName, useLog, 900 / 600);
+    var showGrid = document.getElementById('map-show-grid').checked;
+    var commonScale = document.getElementById('map-common-scale').checked;
+    var fixedRange = null;
+    if (commonScale && eemData && eemData.files) {
+        var gMin = Infinity, gMax = -Infinity;
+        eemData.files.forEach(function(f) {
+            var md = eemData.maps[f];
+            if (!md) return;
+            var dd = applyClientMapRange(md.ex_wl, md.em_wl, md.intensity);
+            for (var i = 0; i < dd.intensity.length; i++)
+                for (var j = 0; j < dd.intensity[i].length; j++) {
+                    var v = dd.intensity[i][j];
+                    if (v < gMin) gMin = v;
+                    if (v > gMax) gMax = v;
+                }
+        });
+        if (gMax > gMin) fixedRange = [gMin, gMax];
+    }
+    drawHeatmap('eem-map-modal-canvas', d.exWl, d.emWl, d.intensity, colorName, useLog, 900 / 600, showGrid, fixedRange);
 
     $('#eem-map-enlarge-modal').modal('show');
 }
@@ -1911,7 +2021,107 @@ function buildWorkbook() {
         if (!spec || !spec.wl.length) return;
         appendSpectraSheet(wb, spec, files, 'Ex (nm)', 'Ex@Em' + emWl, 'NormEx@Em' + emWl);
     });
+    appendDeconvSheets(wb);
+    appendParafacSheet(wb);
     return wb;
+}
+
+function appendDeconvSheets(wb) {
+    var presets = ['ex440', 'ex620', 'ex560'];
+    var presetLabels = { ex440: 'Ex440', ex620: 'Ex620', ex560: 'Ex560' };
+
+    presets.forEach(function(preset) {
+        var results = deconvBatchResults[preset];
+        if (!results || !Object.keys(results).length) return;
+
+        // Determine max peaks across all samples for column layout
+        var maxPeaks = 0;
+        Object.keys(results).forEach(function(fname) {
+            var res = results[fname];
+            if (res && res.fitParams) {
+                var np = res.fitParams.length / 3;
+                if (np > maxPeaks) maxPeaks = np;
+            }
+        });
+
+        // Build header row
+        var header = ['Sample', 'R\u00B2'];
+        for (var p = 0; p < maxPeaks; p++) {
+            var pn = 'P' + (p + 1);
+            header.push(pn + ' Assignment', pn + ' Position (nm)',
+                       pn + ' FWHM (nm)', pn + ' Amplitude',
+                       pn + ' Area', pn + ' Area (%)');
+        }
+
+        var rows = [header];
+
+        // Build data rows (use eemData.files order for consistency)
+        var files = eemData ? eemData.files : Object.keys(results);
+        files.forEach(function(fname) {
+            var res = results[fname];
+            if (!res || !res.fitParams) return;
+            var nPeaks = res.fitParams.length / 3;
+
+            // Compute areas
+            var areas = [];
+            for (var i = 0; i < nPeaks; i++) {
+                areas.push(Math.abs(res.fitParams[i * 3]) *
+                          Math.abs(res.fitParams[i * 3 + 2]) * Math.sqrt(2 * Math.PI));
+            }
+            var totalArea = areas.reduce(function(a, b) { return a + b; }, 0);
+
+            var row = [fname, res.r2];
+            for (var i = 0; i < maxPeaks; i++) {
+                if (i < nPeaks) {
+                    var A   = res.fitParams[i * 3];
+                    var mu  = res.fitParams[i * 3 + 1];
+                    var sig = Math.abs(res.fitParams[i * 3 + 2]);
+                    row.push(deconvPeakLabel(mu), mu, 2.355 * sig, A, areas[i],
+                            totalArea > 0 ? areas[i] / totalArea * 100 : 0);
+                } else {
+                    row.push('', '', '', '', '', '');
+                }
+            }
+            rows.push(row);
+        });
+
+        var sheetName = ('Deconv ' + presetLabels[preset]).substring(0, 31);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), sheetName);
+    });
+}
+
+function appendParafacSheet(wb) {
+    if (!parafacResults) return;
+    var data = parafacResults;
+
+    // Summary rows at top
+    var rows = [
+        ['PARAFAC Summary'],
+        ['Components', data.n_components],
+        ['Explained variance (%)', data.explained_variance],
+        ['RMSE', data.rmse],
+        []  // blank separator row
+    ];
+
+    // Scores table header
+    var header = ['Sample'];
+    for (var r = 0; r < data.n_components; r++) {
+        var label = parafacAnnotations[r] || ('Component ' + (r + 1));
+        var assign = parafacPigmAssign[r] || '';
+        header.push('C' + (r + 1) + ': ' + label + (assign ? ' [' + assign + ']' : ''));
+    }
+    rows.push(header);
+
+    // Score values per sample
+    data.sample_names.forEach(function(name, i) {
+        var row = [name];
+        for (var r = 0; r < data.n_components; r++) {
+            row.push(data.scores[i][r]);
+        }
+        rows.push(row);
+    });
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'PARAFAC Scores');
 }
 
 function _buildMethodsHtml(toolTitle, plainText) {
@@ -1927,7 +2137,7 @@ function downloadXLSX() {
     XLSX.writeFile(buildWorkbook(), 'EEM_analysis.xlsx');
 }
 
-function downloadZIP(btn) {
+async function downloadZIP(btn) {
     if (!eemData) return;
     if (typeof JSZip === 'undefined') { alert('JSZip library not loaded.'); return; }
 
@@ -1952,6 +2162,12 @@ function downloadZIP(btn) {
         .filter(function(v, i, a) { return a.indexOf(v) === i; });
     if (gnames.length >= 2) renderGroupsTab();
 
+    // Re-render PARAFAC components if results exist (uses setTimeout(0) internally)
+    if (parafacResults) {
+        renderParafacResults(parafacResults);
+        await new Promise(function(resolve) { setTimeout(resolve, 150); });
+    }
+
     // Restore visibility (canvas pixel buffers remain intact after display:none)
     tabPanes.forEach(function(p) { p.style.removeProperty('display'); });
     ['spectra-emission-section', 'spectra-excitation-section'].forEach(function(id) {
@@ -1975,10 +2191,22 @@ function downloadZIP(btn) {
         norm_ex: parseFloat((document.getElementById('eem-ex-norm') || {}).value) || null,
         norm_em: parseFloat((document.getElementById('eem-em-norm') || {}).value) || null,
         color_palette:  spectraColorPalette,
+        rayleigh_enabled: (document.getElementById('eem-rayleigh-enable') || {}).checked || false,
+        rayleigh_width: parseFloat((document.getElementById('eem-rayleigh-width') || {}).value) || 0,
         files:          eemData.files
     }, null, 2));
 
-    function pngB64(canvas) { return canvas.toDataURL('image/png').split(',')[1]; }
+    function pngB64(canvas) {
+        // Render onto a temporary canvas with white background to avoid transparency
+        var tmp = document.createElement('canvas');
+        tmp.width = canvas.width;
+        tmp.height = canvas.height;
+        var tctx = tmp.getContext('2d');
+        tctx.fillStyle = '#ffffff';
+        tctx.fillRect(0, 0, tmp.width, tmp.height);
+        tctx.drawImage(canvas, 0, 0);
+        return tmp.toDataURL('image/png').split(',')[1];
+    }
 
     // ── Spectra charts ────────────────────────────────────────────────────────
     var spectraFolder = zip.folder('spectra');
@@ -2016,10 +2244,61 @@ function downloadZIP(btn) {
         });
     }
 
-    // ── Deconvolution chart ───────────────────────────────────────────────────
-    if (deconvFitParams) {
+    // ── Deconvolution charts (all presets × all samples) ─────────────────────
+    var deconvPresets = ['ex440', 'ex620', 'ex560'];
+    var hasAnyDeconv = deconvPresets.some(function(p) {
+        return deconvBatchResults[p] && Object.keys(deconvBatchResults[p]).length > 0;
+    });
+    if (hasAnyDeconv) {
+        var deconvFolder = zip.folder('deconvolution');
+        deconvPresets.forEach(function(preset) {
+            var results = deconvBatchResults[preset];
+            if (!results) return;
+            var fnames = eemData ? eemData.files : Object.keys(results);
+            fnames.forEach(function(fname) {
+                var res = results[fname];
+                if (!res || !res.fitParams) return;
+                renderDeconvChart(res.xArr, res.yArr, res.fitParams, fname, res.exWl);
+                if (chartInst['deconv']) chartInst['deconv'].update('none');
+                var c = document.getElementById('deconv-chart');
+                if (c) {
+                    var safeName = fname.replace(/[^a-z0-9_.\-]/gi, '_');
+                    deconvFolder.file('Ex' + res.exWl + '_' + safeName + '.png',
+                                     pngB64(c), {base64: true});
+                }
+            });
+        });
+    } else if (deconvFitParams) {
+        // Fallback: export the single currently displayed chart
         var c = document.getElementById('deconv-chart');
         if (c) zip.file('deconvolution.png', pngB64(c), {base64: true});
+    }
+
+    // ── PARAFAC results ──────────────────────────────────────────────────────
+    if (parafacResults) {
+        var pfData = parafacResults;
+        var pfFolder = zip.folder('parafac');
+
+        // Scores chart
+        var scoresCanvas = document.getElementById('parafac-scores-chart');
+        if (scoresCanvas) {
+            pfFolder.file('scores_chart.png', pngB64(scoresCanvas), {base64: true});
+        }
+
+        // Component maps + loading charts
+        for (var r = 0; r < pfData.n_components; r++) {
+            var mapC = document.getElementById('parafac-comp-map-' + r);
+            if (mapC) pfFolder.file('component_C' + (r + 1) + '_map.png',
+                                   pngB64(mapC), {base64: true});
+
+            var exC = document.getElementById('par-ex-chart-' + r);
+            if (exC) pfFolder.file('component_C' + (r + 1) + '_ex_loading.png',
+                                  pngB64(exC), {base64: true});
+
+            var emC = document.getElementById('par-em-chart-' + r);
+            if (emC) pfFolder.file('component_C' + (r + 1) + '_em_loading.png',
+                                  pngB64(emC), {base64: true});
+        }
     }
 
     // ── Methods section ───────────────────────────────────────────────────────
@@ -3158,7 +3437,7 @@ function renderDeconvBatchTable(preset, files) {
                 '<div class="card" style="padding:5px 6px 3px;">' +
                 '<div style="font-size:0.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;" title="' + fname + '">' +
                 fname + ' <span class="badge ' + r2cls + '" style="font-size:0.65rem;">R²\u202f=\u202f' + res.r2.toFixed(3) + '</span></div>' +
-                '<canvas id="' + cid + '" width="260" height="90" style="width:100%; height:72px; display:block;"></canvas>' +
+                '<canvas id="' + cid + '" width="260" height="130" style="width:100%; height:106px; display:block;"></canvas>' +
                 '</div></div>';
         });
         html += '</div></div>';
@@ -3186,11 +3465,12 @@ function drawDeconvThumbnail(canvas, xArr, yArr, fitParams) {
     canvas.width  = W;
     canvas.height = H;
     ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
     if (!xArr || !xArr.length || !fitParams) return;
     var nPeaks = fitParams.length / 3;
     var xMin = xArr[0], xMax = xArr[xArr.length - 1];
     var yMax = Math.max.apply(null, yArr) * 1.08 || 1;
-    var padL = 2, padR = 2, padT = 3, padB = 2;
+    var padL = 28, padR = 4, padT = 3, padB = 24;
     var pw = W - padL - padR, ph = H - padT - padB;
     function cx(x) { return padL + (x - xMin) / (xMax - xMin) * pw; }
     function cy(y) { return padT + ph - Math.max(0, y / yMax) * ph; }
@@ -3234,6 +3514,30 @@ function drawDeconvThumbnail(canvas, xArr, yArr, fitParams) {
         else ctx.lineTo(cx(xArr[j]), cy(yArr[j]));
     }
     ctx.stroke();
+    // Axes frame
+    ctx.setLineDash([]);
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 0.7;
+    ctx.strokeRect(padL, padT, pw, ph);
+    // X-axis ticks and label
+    ctx.fillStyle = '#555';
+    ctx.font = '8px sans-serif';
+    ctx.textAlign = 'center';
+    var xTicks = [xMin, Math.round((xMin + xMax) / 2), xMax];
+    xTicks.forEach(function(v) {
+        ctx.fillText(v, cx(v), padT + ph + 10);
+    });
+    ctx.font = 'bold 8px sans-serif';
+    ctx.fillText('Emission (nm)', padL + pw / 2, H - 1);
+    // Y-axis label
+    ctx.save();
+    ctx.translate(7, padT + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.fillStyle = '#555';
+    ctx.fillText('Fl. (a.u.)', 0, 0);
+    ctx.restore();
 }
 
 // Tracks which preset/sample opened the Custom tab via Adjust (null = opened directly)
@@ -3619,8 +3923,10 @@ function renderDeconvChart(xArr, yArr, fitParams, fname, exWl) {
                 tooltip: { enabled: false }
             },
             scales: {
-                x: { title: { display: true, text: 'Emission (nm)' } },
-                y: { title: { display: true, text: 'Fluorescence (a.u.)' }, beginAtZero: true }
+                x: { title: { display: true, text: 'Emission (nm)', font: { size: 13, weight: 'bold' } },
+                     ticks: { font: { size: 11 } } },
+                y: { title: { display: true, text: 'Fluorescence (a.u.)', font: { size: 13, weight: 'bold' } },
+                     ticks: { font: { size: 11 } }, beginAtZero: true }
             }
         }
     });
@@ -4388,6 +4694,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('map-colorscale').addEventListener('change', renderMapTab);
     document.getElementById('map-log-scale').addEventListener('change', renderMapTab);
 
+    // Rayleigh scattering toggle
+    document.getElementById('eem-rayleigh-enable').addEventListener('change', function() {
+        document.getElementById('eem-rayleigh-options').style.display = this.checked ? '' : 'none';
+    });
+
     // Deconvolution drag handles (canvas is always in DOM)
     attachDeconvDrag();
 
@@ -4410,13 +4721,13 @@ var parafacPigmAssignDefault = [];  // auto-suggested assignments at run time (f
 // Pigment assignment options: [value, display label]
 var PIGM_ASSIGN_OPTIONS = [
     ['',         '— unassigned —'],
-    ['CP43',     'CP43  (Em ~685 nm)'],
-    ['CP47',     'CP47  (Em ~695 nm)'],
-    ['PSI',      'PSI  (Em ~724 nm)'],
-    ['PBS_free', 'PBS-free  (Em ~662 nm)'],
-    ['PBS_PSII', 'PBS→PSII  (Em ~689 nm)'],
-    ['PBS_PSI',  'PBS→PSI  (Em ~724 nm)'],
-    ['Chl675',   'Chl a 675 nm background'],
+    ['CP43',     'CP43 (Ex440/Em685)'],
+    ['CP47',     'CP47 (Ex440/Em695)'],
+    ['PSI',      'PSI (Ex440/Em724)'],
+    ['PBS_free', 'PBS-free (PC) (Ex605/Em656)'],
+    ['PBS_PSII', 'PBS→PSII (Ex620/Em693)'],
+    ['PBS_PSI',  'PBS→PSI (Ex620/Em724)'],
+    ['Chl675',   'Chl a 675 nm (Ex440/Em675)'],
     ['other',    'Other / unresolved']
 ];
 
@@ -4859,7 +5170,7 @@ function renderParafacResults(data) {
     // Scores table
     _renderParafacScoresTable(data);
 
-    // 2D maps: component fingerprints + reconstructed/residuals
+    // 3D maps: component fingerprints + reconstructed/residuals
     renderParafacCompMaps(data);
     _initParafacReconSelect(data);
     renderParafacReconMaps();
@@ -4897,12 +5208,9 @@ function _buildComponentCard(r, data) {
           '<div class="card-header py-1" style="background:' + color + '22; border-left:4px solid ' + color + ';">' +
             '<div class="d-flex align-items-center" style="gap:4px;">' +
               '<span class="font-weight-bold" style="font-size:0.9rem; white-space:nowrap;">C' + (r + 1) + '</span>' +
-              '<input type="text" class="form-control form-control-sm" style="min-width:0; flex:1; font-size:0.82rem;" ' +
-                'id="par-annot-' + r + '" value="' + annot + '" ' +
-                'onchange="parafacAnnotations[' + r + ']=this.value; _reAnnotateParafacComponents(getPigmentation());">' +
               '<select class="form-control form-control-sm" style="width:auto; font-size:0.78rem;" ' +
                 'id="par-pigm-' + r + '" ' +
-                'onchange="parafacPigmAssign[' + r + ']=this.value; _updateCopyScoresBtn(); updateComparisonTabState();">' +
+                'onchange="parafacPigmAssign[' + r + ']=this.value; _syncAnnotFromPigmDropdown(' + r + '); _updateCopyScoresBtn(); renderComparisonTab();">' +
                 pigmOpts +
               '</select>' +
               '<label class="mb-0 ml-1 d-flex align-items-center" style="gap:3px; font-size:0.78rem; white-space:nowrap; cursor:pointer;" ' +
@@ -4910,7 +5218,8 @@ function _buildComponentCard(r, data) {
                 '<input type="checkbox" id="par-reject-' + r + '"' + (rejected ? ' checked' : '') + ' ' +
                   'onchange="parafacRejected[' + r + ']=this.checked; ' +
                     'document.getElementById(\'par-card-inner-' + r + '\').style.opacity=this.checked?\'0.45\':\'\'; ' +
-                    '_updateCopyScoresBtn(); updateComparisonTabState();">' +
+                    'var _m=document.getElementById(\'parafac-comp-map-\'+' + r + '); if(_m&&_m.parentNode) _m.parentNode.style.opacity=this.checked?\'0.45\':\'\'; ' +
+                    '_updateCopyScoresBtn(); renderComparisonTab();">' +
                 ' Reject' +
               '</label>' +
             '</div>' +
@@ -5111,7 +5420,7 @@ function _renderParafacScoresTable(data) {
     container.innerHTML = html;
 }
 
-// ── 2D component maps ─────────────────────────────────────────────────────────
+// ── 3D component maps ─────────────────────────────────────────────────────────
 
 function _outerProduct(emLoading, exLoading) {
     // Returns intensity[n_em][n_ex] = emLoading[i] * exLoading[j]
@@ -5124,6 +5433,7 @@ function renderParafacCompMaps(data) {
     var row = document.getElementById('parafac-comp-maps-row');
     row.innerHTML = '';
     var colorName = document.getElementById('map-colorscale').value;
+    var showGrid = document.getElementById('map-show-grid').checked;
     var colClass = data.n_components <= 2 ? 'col-md-6' :
                    data.n_components <= 4 ? 'col-md-6' : 'col-md-4';
 
@@ -5133,6 +5443,7 @@ function renderParafacCompMaps(data) {
         col.className = colClass + ' mb-3';
         var canvasId = 'parafac-comp-map-' + r;
         var color = PARAFAC_COLORS[r % PARAFAC_COLORS.length];
+        var rejected = parafacRejected[r] || false;
         col.innerHTML =
             '<div class="d-flex align-items-center mb-1" style="border-left:3px solid ' + color + '; padding-left:5px;">' +
               '<small class="font-weight-bold text-truncate">' +
@@ -5141,11 +5452,12 @@ function renderParafacCompMaps(data) {
             '</div>' +
             '<canvas id="' + canvasId + '" width="460" height="320" ' +
               'style="max-width:100%; border:1px solid #dee2e6; display:block;"></canvas>';
+        if (rejected) col.style.opacity = '0.45';
         row.appendChild(col);
         // capture r in closure
         (function(id, intens) {
             setTimeout(function() {
-                drawHeatmap(id, data.ex_wl, data.em_wl, intens, colorName, false, 0.82);
+                drawHeatmap(id, data.ex_wl, data.em_wl, intens, colorName, false, 0.82, showGrid);
             }, 0);
         })(canvasId, intensity);
     }
@@ -5238,9 +5550,10 @@ function renderParafacReconMaps() {
             }
     }
 
+    var showGrid = document.getElementById('map-show-grid').checked;
     setTimeout(function() {
-        if (origMap)  drawHeatmap('par-orig-canvas',  data.ex_wl, data.em_wl, origMap.intensity, colorName, false, 0.85);
-        drawHeatmap('par-recon-canvas', data.ex_wl, data.em_wl, recon, colorName, false, 0.85);
+        if (origMap)  drawHeatmap('par-orig-canvas',  data.ex_wl, data.em_wl, origMap.intensity, colorName, false, 0.85, showGrid);
+        drawHeatmap('par-recon-canvas', data.ex_wl, data.em_wl, recon, colorName, false, 0.85, showGrid);
         if (residual) drawHeatmapDiverging('par-resid-canvas', data.ex_wl, data.em_wl, residual, 0.85, origMaxVal || undefined);
     }, 0);
 }

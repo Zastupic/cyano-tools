@@ -118,7 +118,7 @@
                     <ol class="mt-2">
                         <li>Select your spectrofluorometer (or <em>Custom EEM matrix (.xlsx)</em> for instrument-independent import), upload files, and click <em>Analyze</em></li>
                         <li><strong>Spectra</strong> tab — adjust excitation/emission wavelengths to plot and normalization mode; click <em>Re-extract spectra</em> to update without re-uploading</li>
-                        <li><strong>2D Map</strong> tab — view full EEM maps for all samples; select colorscale and optionally crop the display range</li>
+                        <li><strong>3D Map</strong> tab — view full EEM maps for all samples; select colorscale and optionally crop the display range</li>
                         <li><strong>Derived Parameters</strong> tab — select analysis mode (77K / RT) and pigmentation type; parameters update instantly</li>
                         <li><strong>Groups</strong> tab — assign samples to groups to compute mean ± SD and compare conditions</li>
                         <li>Download results as .xlsx or export scalar parameters to the Statistics page</li>
@@ -845,6 +845,24 @@
             </div>
         </div>
 
+        <!-- Rayleigh scattering removal -->
+        <div class="d-flex align-items-center flex-wrap mt-2 mb-2" style="gap:0.7rem;">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="eem-rayleigh-enable">
+                <label class="form-check-label font-weight-bold" for="eem-rayleigh-enable">
+                    Remove Rayleigh scattering
+                </label>
+            </div>
+            <div id="eem-rayleigh-options" style="display:none;">
+                <label class="mb-0 small">Buffer above diagonal:</label>
+                <input type="number" class="form-control form-control-sm d-inline-block"
+                       id="eem-rayleigh-width" value="15" min="0" max="50" step="1"
+                       style="width:65px;">
+                <span class="small text-muted">nm</span>
+                <span class="small text-muted ml-1">(zeros where Em &le; Ex + buffer)</span>
+            </div>
+        </div>
+
         <!-- Buttons -->
         <div class="d-flex flex-wrap align-items-center">
             <button id="eem-analyze-btn" class="btn btn-primary mr-2" disabled onclick="uploadAndAnalyze()">
@@ -935,7 +953,7 @@
         <li class="nav-item">
             <a class="nav-link" id="eem-map-tab" data-toggle="tab"
                href="#eem-map" role="tab">
-                <i class="fa fa-th"></i> 2D Map
+                <i class="fa fa-th"></i> 3D Map
             </a>
         </li>
         <li class="nav-item">
@@ -1122,8 +1140,18 @@
                     </select>
                 </div>
                 <div class="form-check" style="margin-top:1.6rem;">
+                    <input class="form-check-input" type="checkbox" id="map-show-grid" checked
+                           onchange="renderMapTab()">
+                    <label class="form-check-label" for="map-show-grid">Show grid</label>
+                </div>
+                <div class="form-check" style="margin-top:1.6rem;">
                     <input class="form-check-input" type="checkbox" id="map-log-scale">
-                    <label class="form-check-label" for="map-log-scale">Log scale</label>
+                    <label class="form-check-label" for="map-log-scale">Log scale (Y-axis)</label>
+                </div>
+                <div class="form-check" style="margin-top:1.6rem;">
+                    <input class="form-check-input" type="checkbox" id="map-common-scale"
+                           onchange="renderMapTab()">
+                    <label class="form-check-label" for="map-common-scale">Common scale (Y-axis)</label>
                 </div>
                 <div>
                     <label class="mb-1 font-weight-bold d-block">Display range <small class="text-muted font-weight-normal">(nm, optional)</small></label>
@@ -2023,10 +2051,10 @@
                     </div>
                     <div id="parafac-components-row" class="row mb-3"></div>
 
-                    <!-- 2D component maps (above scores) -->
-                    <h6 class="font-weight-bold mt-1">2D component maps</h6>
+                    <!-- 3D component maps (above scores) -->
+                    <h6 class="font-weight-bold mt-1">3D component maps</h6>
                     <p class="small text-muted mb-2">
-                        Each map is the outer product of excitation × emission loadings — the spectral fingerprint of that component in EEM space.
+                        Each map is the outer product of excitation &times; emission loadings &mdash; the spectral fingerprint of that component in EEM space.
                     </p>
                     <div class="row mb-3" id="parafac-comp-maps-row"></div>
 
