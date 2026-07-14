@@ -1031,7 +1031,14 @@ function openEnlargedChart(canvasEl, titleText) {
     var img = document.getElementById('eem-chart-modal-img');
     var titleEl = document.getElementById('eem-chart-modal-title');
     if (!img || !canvasEl) return;
-    img.src = canvasEl.toDataURL('image/png');
+    // Render with white background
+    var tmp = document.createElement('canvas');
+    tmp.width = canvasEl.width; tmp.height = canvasEl.height;
+    var tctx = tmp.getContext('2d');
+    tctx.fillStyle = '#ffffff';
+    tctx.fillRect(0, 0, tmp.width, tmp.height);
+    tctx.drawImage(canvasEl, 0, 0);
+    img.src = tmp.toDataURL('image/png');
     if (titleEl) titleEl.textContent = titleText || '';
     $('#eem-chart-enlarge-modal').modal('show');
 }
@@ -2144,6 +2151,8 @@ async function downloadZIP(btn) {
     var origLabel = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-1" role="status"></span> Building…'; }
 
+    try {
+
     // Temporarily force all tab panes and both spectra sub-sections visible so
     // Chart.js creates canvases at the correct size (responsive charts collapse to
     // 0 px inside hidden .tab-pane containers).
@@ -2197,6 +2206,7 @@ async function downloadZIP(btn) {
     }, null, 2));
 
     function pngB64(canvas) {
+        if (!canvas.width || !canvas.height) return null;
         // Render onto a temporary canvas with white background to avoid transparency
         var tmp = document.createElement('canvas');
         tmp.width = canvas.width;
@@ -2212,18 +2222,21 @@ async function downloadZIP(btn) {
     var spectraFolder = zip.folder('spectra');
     eemData.ex_wls.forEach(function(exWl) {
         var c = document.getElementById('chart-em-ex-' + exWl);
-        if (c) spectraFolder.file('emission_Ex' + exWl + 'nm.png', pngB64(c), {base64: true});
+        var b = c && pngB64(c);
+        if (b) spectraFolder.file('emission_Ex' + exWl + 'nm.png', b, {base64: true});
     });
     eemData.em_wls.forEach(function(emWl) {
         var c = document.getElementById('chart-ex-em-' + emWl);
-        if (c) spectraFolder.file('excitation_Em' + emWl + 'nm.png', pngB64(c), {base64: true});
+        var b = c && pngB64(c);
+        if (b) spectraFolder.file('excitation_Em' + emWl + 'nm.png', b, {base64: true});
     });
 
-    // ── 2D EEM maps ───────────────────────────────────────────────────────────
+    // ── 3D EEM maps ───────────────────────────────────────────────────────────
     var mapsFolder = zip.folder('maps');
     eemData.files.forEach(function(fname, idx) {
         var c = document.getElementById('heatmap-canvas-' + idx);
-        if (c) mapsFolder.file(fname.replace(/[^a-z0-9_.\-]/gi, '_') + '_EEM.png', pngB64(c), {base64: true});
+        var b = c && pngB64(c);
+        if (b) mapsFolder.file(fname.replace(/[^a-z0-9_.\-]/gi, '_') + '_EEM.png', b, {base64: true});
     });
 
     // ── Derived parameter charts ──────────────────────────────────────────────
@@ -2232,7 +2245,8 @@ async function downloadZIP(btn) {
     var avail = getAvailParams();
     ratioList.filter(function(p) { return avail.indexOf(p) !== -1; }).forEach(function(p) {
         var c = document.getElementById('chart-param-' + p);
-        if (c) derivedFolder.file('param_' + p + '.png', pngB64(c), {base64: true});
+        var b = c && pngB64(c);
+        if (b) derivedFolder.file('param_' + p + '.png', b, {base64: true});
     });
 
     // ── Group charts ──────────────────────────────────────────────────────────
@@ -2240,7 +2254,8 @@ async function downloadZIP(btn) {
         var groupsFolder = zip.folder('groups');
         ratioList.filter(function(p) { return avail.indexOf(p) !== -1; }).forEach(function(p) {
             var c = document.getElementById('chart-grp-' + p);
-            if (c) groupsFolder.file('group_' + p + '.png', pngB64(c), {base64: true});
+            var b = c && pngB64(c);
+            if (b) groupsFolder.file('group_' + p + '.png', b, {base64: true});
         });
     }
 
@@ -2261,17 +2276,19 @@ async function downloadZIP(btn) {
                 renderDeconvChart(res.xArr, res.yArr, res.fitParams, fname, res.exWl);
                 if (chartInst['deconv']) chartInst['deconv'].update('none');
                 var c = document.getElementById('deconv-chart');
-                if (c) {
+                var b = c && pngB64(c);
+                if (b) {
                     var safeName = fname.replace(/[^a-z0-9_.\-]/gi, '_');
                     deconvFolder.file('Ex' + res.exWl + '_' + safeName + '.png',
-                                     pngB64(c), {base64: true});
+                                     b, {base64: true});
                 }
             });
         });
     } else if (deconvFitParams) {
         // Fallback: export the single currently displayed chart
         var c = document.getElementById('deconv-chart');
-        if (c) zip.file('deconvolution.png', pngB64(c), {base64: true});
+        var b = c && pngB64(c);
+        if (b) zip.file('deconvolution.png', b, {base64: true});
     }
 
     // ── PARAFAC results ──────────────────────────────────────────────────────
@@ -2281,23 +2298,27 @@ async function downloadZIP(btn) {
 
         // Scores chart
         var scoresCanvas = document.getElementById('parafac-scores-chart');
-        if (scoresCanvas) {
-            pfFolder.file('scores_chart.png', pngB64(scoresCanvas), {base64: true});
+        var sb = scoresCanvas && pngB64(scoresCanvas);
+        if (sb) {
+            pfFolder.file('scores_chart.png', sb, {base64: true});
         }
 
         // Component maps + loading charts
         for (var r = 0; r < pfData.n_components; r++) {
             var mapC = document.getElementById('parafac-comp-map-' + r);
-            if (mapC) pfFolder.file('component_C' + (r + 1) + '_map.png',
-                                   pngB64(mapC), {base64: true});
+            var mapB = mapC && pngB64(mapC);
+            if (mapB) pfFolder.file('component_C' + (r + 1) + '_map.png',
+                                   mapB, {base64: true});
 
             var exC = document.getElementById('par-ex-chart-' + r);
-            if (exC) pfFolder.file('component_C' + (r + 1) + '_ex_loading.png',
-                                  pngB64(exC), {base64: true});
+            var exB = exC && pngB64(exC);
+            if (exB) pfFolder.file('component_C' + (r + 1) + '_ex_loading.png',
+                                  exB, {base64: true});
 
             var emC = document.getElementById('par-em-chart-' + r);
-            if (emC) pfFolder.file('component_C' + (r + 1) + '_em_loading.png',
-                                  pngB64(emC), {base64: true});
+            var emB = emC && pngB64(emC);
+            if (emB) pfFolder.file('component_C' + (r + 1) + '_em_loading.png',
+                                  emB, {base64: true});
         }
     }
 
@@ -2311,7 +2332,17 @@ async function downloadZIP(btn) {
         a.click();
         setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
         if (btn) { btn.disabled = false; btn.innerHTML = origLabel; }
+    }).catch(function(err) {
+        console.error('ZIP generation failed:', err);
+        alert('Failed to generate ZIP file: ' + err.message);
+        if (btn) { btn.disabled = false; btn.innerHTML = origLabel; }
     });
+
+    } catch (err) {
+        console.error('ZIP build error:', err);
+        alert('Failed to build ZIP file: ' + err.message);
+        if (btn) { btn.disabled = false; btn.innerHTML = origLabel; }
+    }
 }
 
 function appendSpectraSheet(wb, spec, files, wlHeader, rawName, normName) {
@@ -3427,38 +3458,103 @@ function renderDeconvBatchTable(preset, files) {
     // Chart gallery — one thumbnail per fitted sample
     var fittedFiles = files.filter(function(f) { return results[f] && results[f].xArr; });
     if (fittedFiles.length > 0) {
-        html += '<div class="mt-3"><p class="mb-1" style="font-size:0.82rem; font-weight:600; color:#555;">Fitted Spectra</p>' +
-            '<div class="row">';
+        // Controls row
+        html += '<div class="mt-3 d-flex align-items-center flex-wrap mb-2" style="gap:0.7rem;">' +
+            '<span style="font-size:0.82rem; font-weight:600; color:#555;">Fitted Spectra</span>' +
+            '<div class="form-check ml-2" style="font-size:0.8rem;">' +
+              '<input class="form-check-input" type="checkbox" id="deconv-grid-' + preset + '" ' +
+                'onchange="redrawDeconvThumbs(\'' + preset + '\')">' +
+              '<label class="form-check-label" for="deconv-grid-' + preset + '">Show grid</label>' +
+            '</div>' +
+            '<div class="form-check" style="font-size:0.8rem;">' +
+              '<input class="form-check-input" type="checkbox" id="deconv-common-' + preset + '" ' +
+                'onchange="redrawDeconvThumbs(\'' + preset + '\')">' +
+              '<label class="form-check-label" for="deconv-common-' + preset + '">Common scale (Y)</label>' +
+            '</div>' +
+            '<select class="form-control form-control-sm" id="deconv-palette-' + preset + '" ' +
+              'style="width:auto; font-size:0.8rem;" onchange="redrawDeconvThumbs(\'' + preset + '\')">' +
+              '<option value="default">Default palette</option>' +
+              '<option value="pastel">Pastel</option>' +
+              '<option value="bold">Bold</option>' +
+              '<option value="vivid">Vivid</option>' +
+              '<option value="earth">Earth tones</option>' +
+              '<option value="colorblind">Colorblind-safe</option>' +
+            '</select>' +
+            '<label style="font-size:0.8rem; margin:0 0 0 0.2rem; white-space:nowrap;">Opacity ' +
+              '<input type="range" min="5" max="80" value="28" step="1" id="deconv-opacity-' + preset + '" ' +
+                'style="width:80px; vertical-align:middle;" ' +
+                'oninput="redrawDeconvThumbs(\'' + preset + '\')">' +
+            '</label>' +
+          '</div>';
+        html += '<div class="row" id="deconv-thumbs-row-' + preset + '">';
         fittedFiles.forEach(function(fname, idx) {
             var res = results[fname];
             var r2cls = res.r2 >= 0.95 ? 'badge-success' : res.r2 >= 0.90 ? 'badge-warning text-dark' : 'badge-danger';
             var cid = 'dct-' + preset + '-' + idx;
+            var safeF = fname.replace(/'/g, "\\'");
             html += '<div class="col-6 col-md-4 col-lg-3 mb-2">' +
-                '<div class="card" style="padding:5px 6px 3px;">' +
+                '<div class="card" style="padding:5px 6px 3px; cursor:pointer;" ' +
+                'title="Click to enlarge" onclick="openEnlargedDeconv(\'' + preset + '\',\'' + safeF + '\')">' +
                 '<div style="font-size:0.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;" title="' + fname + '">' +
                 fname + ' <span class="badge ' + r2cls + '" style="font-size:0.65rem;">R²\u202f=\u202f' + res.r2.toFixed(3) + '</span></div>' +
                 '<canvas id="' + cid + '" width="260" height="130" style="width:100%; height:106px; display:block;"></canvas>' +
                 '</div></div>';
         });
-        html += '</div></div>';
+        html += '</div>';
     }
 
     container.innerHTML = html;
 
     // Draw thumbnails after DOM is updated
     if (fittedFiles.length > 0) {
-        setTimeout(function() {
-            fittedFiles.forEach(function(fname, idx) {
-                var res = results[fname];
-                var canvas = document.getElementById('dct-' + preset + '-' + idx);
-                if (canvas && res.xArr) drawDeconvThumbnail(canvas, res.xArr, res.yArr, res.fitParams);
-            });
-        }, 0);
+        setTimeout(function() { redrawDeconvThumbs(preset); }, 0);
     }
 }
 
+function redrawDeconvThumbs(preset) {
+    var results = deconvBatchResults[preset];
+    if (!results) return;
+    var files = eemData ? eemData.files : Object.keys(results);
+    var fittedFiles = files.filter(function(f) { return results[f] && results[f].xArr; });
+    var showGrid = (document.getElementById('deconv-grid-' + preset) || {}).checked || false;
+    var commonScale = (document.getElementById('deconv-common-' + preset) || {}).checked || false;
+    var palName = (document.getElementById('deconv-palette-' + preset) || {}).value || 'default';
+    var colors = DECONV_PALETTES[palName] || DECONV_PALETTES['default'];
+    var opacityEl = document.getElementById('deconv-opacity-' + preset);
+    var fillOpacity = opacityEl ? parseInt(opacityEl.value, 10) / 100 : 0.28;
+
+    // Compute global Y max if common scale
+    var globalYMax = 0;
+    if (commonScale) {
+        fittedFiles.forEach(function(fname) {
+            var res = results[fname];
+            var m = Math.max.apply(null, res.yArr);
+            if (m > globalYMax) globalYMax = m;
+        });
+        globalYMax *= 1.08;
+    }
+
+    fittedFiles.forEach(function(fname, idx) {
+        var res = results[fname];
+        var canvas = document.getElementById('dct-' + preset + '-' + idx);
+        if (canvas && res.xArr) {
+            drawDeconvThumbnail(canvas, res.xArr, res.yArr, res.fitParams, {
+                showGrid: showGrid,
+                fixedYMax: commonScale ? globalYMax : 0,
+                colors: colors,
+                fillOpacity: fillOpacity
+            });
+        }
+    });
+}
+
 // Draw a lightweight spectrum + gaussian-peak thumbnail onto a canvas element
-function drawDeconvThumbnail(canvas, xArr, yArr, fitParams) {
+function drawDeconvThumbnail(canvas, xArr, yArr, fitParams, options) {
+    var opts = options || {};
+    var showGrid = opts.showGrid || false;
+    var fixedYMax = opts.fixedYMax || 0;
+    var colors = opts.colors || PEAK_COLORS;
+    var fillOpacity = opts.fillOpacity !== undefined ? opts.fillOpacity : 0.28;
     var ctx = canvas.getContext('2d');
     var W = canvas.offsetWidth || canvas.width;
     var H = canvas.offsetHeight || canvas.height;
@@ -3469,15 +3565,33 @@ function drawDeconvThumbnail(canvas, xArr, yArr, fitParams) {
     if (!xArr || !xArr.length || !fitParams) return;
     var nPeaks = fitParams.length / 3;
     var xMin = xArr[0], xMax = xArr[xArr.length - 1];
-    var yMax = Math.max.apply(null, yArr) * 1.08 || 1;
+    var yMax = fixedYMax > 0 ? fixedYMax : (Math.max.apply(null, yArr) * 1.08 || 1);
     var padL = 28, padR = 4, padT = 3, padB = 24;
     var pw = W - padL - padR, ph = H - padT - padB;
     function cx(x) { return padL + (x - xMin) / (xMax - xMin) * pw; }
     function cy(y) { return padT + ph - Math.max(0, y / yMax) * ph; }
+    // Grid lines
+    if (showGrid) {
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([]);
+        // Horizontal grid (Y-axis)
+        var ySteps = 4;
+        for (var gi = 1; gi < ySteps; gi++) {
+            var gy = padT + ph - (gi / ySteps) * ph;
+            ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(padL + pw, gy); ctx.stroke();
+        }
+        // Vertical grid (X-axis)
+        var xTG = [xMin, Math.round((xMin + xMax) / 2), xMax];
+        for (var gi = 0; gi < xTG.length; gi++) {
+            var gx = cx(xTG[gi]);
+            ctx.beginPath(); ctx.moveTo(gx, padT); ctx.lineTo(gx, padT + ph); ctx.stroke();
+        }
+    }
     // Individual peak fills
     for (var i = 0; i < nPeaks; i++) {
         var A = fitParams[i * 3], mu = fitParams[i * 3 + 1], sig = fitParams[i * 3 + 2];
-        var color = PEAK_COLORS[i % PEAK_COLORS.length];
+        var color = colors[i % colors.length];
         ctx.beginPath();
         ctx.moveTo(cx(xArr[0]), cy(0));
         for (var j = 0; j < xArr.length; j++) {
@@ -3486,8 +3600,10 @@ function drawDeconvThumbnail(canvas, xArr, yArr, fitParams) {
         }
         ctx.lineTo(cx(xArr[xArr.length - 1]), cy(0));
         ctx.closePath();
-        ctx.fillStyle = color.replace('rgb(', 'rgba(').replace(')', ',0.28)');
+        ctx.globalAlpha = fillOpacity;
+        ctx.fillStyle = color;
         ctx.fill();
+        ctx.globalAlpha = 1.0;
         ctx.strokeStyle = color;
         ctx.lineWidth = 0.8;
         ctx.setLineDash([]);
@@ -3844,8 +3960,142 @@ function runDeconvolution(silent) {
     renderDeconvSliders(fitParams, xArr, yArr);
 }
 
-var PEAK_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c',
-                   '#e67e22','#16a085','#8e44ad','#c0392b'];
+var DECONV_PALETTES = {
+    'default':  ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#16a085','#8e44ad','#c0392b'],
+    'pastel':   ['#f28e8e','#8ecaf2','#8ef2b0','#f2d88e','#c89ef2','#8ef2e6','#f2c08e','#8ec4a8','#bf8ef2','#f28eae'],
+    'bold':     ['#d32f2f','#1976d2','#388e3c','#f57c00','#7b1fa2','#00838f','#e64a19','#00695c','#6a1b9a','#c62828'],
+    'vivid':    ['#ff0000','#0066ff','#00cc44','#ff9900','#aa00ff','#00cccc','#ff6600','#009966','#cc0066','#6600cc'],
+    'earth':    ['#a0522d','#6b8e23','#b8860b','#2e8b57','#8b4513','#556b2f','#cd853f','#228b22','#d2691e','#3cb371'],
+    'colorblind': ['#0072b2','#e69f00','#009e73','#cc79a7','#56b4e9','#d55e00','#f0e442','#000000','#999999','#882255']
+};
+var deconvPaletteName = 'default';
+var PEAK_COLORS = DECONV_PALETTES['default'];
+
+function openEnlargedDeconv(preset, fname) {
+    var res = deconvBatchResults[preset] && deconvBatchResults[preset][fname];
+    if (!res || !res.fitParams) return;
+    var nPeaks = res.fitParams.length / 3;
+
+    // Read current settings from batch controls
+    var palName = (document.getElementById('deconv-palette-' + preset) || {}).value || 'default';
+    var palColors = DECONV_PALETTES[palName] || DECONV_PALETTES['default'];
+    var showGrid = (document.getElementById('deconv-grid-' + preset) || {}).checked || false;
+    var commonScale = (document.getElementById('deconv-common-' + preset) || {}).checked || false;
+    var opacityEl = document.getElementById('deconv-opacity-' + preset);
+    var fillOpacity = opacityEl ? parseInt(opacityEl.value, 10) / 100 : 0.28;
+    // Convert 0-1 opacity to 2-digit hex alpha
+    var hexAlpha = Math.round(fillOpacity * 255).toString(16);
+    if (hexAlpha.length < 2) hexAlpha = '0' + hexAlpha;
+
+    // Compute common Y max across all fitted files for this preset
+    var fixedYMax = 0;
+    if (commonScale) {
+        var results = deconvBatchResults[preset];
+        var files = eemData ? eemData.files : Object.keys(results);
+        files.forEach(function(f) {
+            if (results[f] && results[f].yArr) {
+                var m = Math.max.apply(null, results[f].yArr);
+                if (m > fixedYMax) fixedYMax = m;
+            }
+        });
+        fixedYMax *= 1.08;
+    }
+
+    // Build chart data identical to renderDeconvChart
+    var datasets = [
+        {
+            label: fname || 'Measured',
+            data: res.xArr.map(function(x, i) { return {x: x, y: res.yArr[i]}; }),
+            borderColor: '#444', backgroundColor: 'transparent',
+            showLine: true, borderWidth: 2, pointRadius: 0, tension: 0, order: 1
+        },
+        {
+            label: 'Fit (total)',
+            data: res.xArr.map(function(x) { return {x: x, y: gaussianSum(res.fitParams, x)}; }),
+            borderColor: '#cc2200', backgroundColor: 'transparent',
+            showLine: true, borderWidth: 2, borderDash: [6, 3], pointRadius: 0, tension: 0, order: 2
+        }
+    ];
+    for (var i = 0; i < nPeaks; i++) {
+        (function(pi) {
+            var A = res.fitParams[pi*3], mu = res.fitParams[pi*3+1], sig = res.fitParams[pi*3+2];
+            var color = palColors[pi % palColors.length];
+            datasets.push({
+                label: 'P' + (pi+1) + ' (' + mu.toFixed(1) + ' nm)',
+                data: res.xArr.map(function(x) {
+                    var d = (x - mu) / sig;
+                    return {x: x, y: A * Math.exp(-0.5 * d * d)};
+                }),
+                borderColor: color,
+                backgroundColor: color + hexAlpha,
+                showLine: true, borderWidth: 1.5, borderDash: [4, 4], pointRadius: 0, tension: 0,
+                fill: true, order: 3 + pi
+            });
+        })(i);
+    }
+
+    // Grid and scale options for Chart.js
+    var gridColor = showGrid ? '#e0e0e0' : 'transparent';
+    var yScaleOpts = {
+        title: { display: true, text: 'Fluorescence (a.u.)', font: { size: 18, weight: 'bold' }, color: '#000' },
+        ticks: { font: { size: 16 }, padding: 2, color: '#000' }, beginAtZero: true,
+        grid: { color: gridColor, drawTicks: true, tickLength: 6, tickColor: '#666' },
+        border: { color: '#666', width: 1 }
+    };
+    if (fixedYMax > 0) {
+        yScaleOpts.max = fixedYMax;
+    }
+
+    // Create a temporary visible container + canvas (matched to 3D map proportions)
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed; left:0; top:0; width:640px; height:470px; opacity:0; pointer-events:none; z-index:-1;';
+    var tmpCanvas = document.createElement('canvas');
+    wrap.appendChild(tmpCanvas);
+    document.body.appendChild(wrap);
+
+    // Inline plugin to draw a border around the chart area
+    var chartAreaBorder = {
+        id: 'chartAreaBorder',
+        afterDraw: function(chart) {
+            var ctx2 = chart.ctx;
+            var ca = chart.chartArea;
+            ctx2.save();
+            ctx2.strokeStyle = '#666';
+            ctx2.lineWidth = 1;
+            ctx2.strokeRect(ca.left, ca.top, ca.right - ca.left, ca.bottom - ca.top);
+            ctx2.restore();
+        }
+    };
+
+    var tmpChart = new Chart(tmpCanvas, {
+        type: 'scatter',
+        data: { datasets: datasets },
+        plugins: [chartAreaBorder],
+        options: {
+            animation: false, responsive: true, maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Gaussian deconvolution \u2014 Em @ Ex ' + res.exWl + ' nm',
+                         font: { size: 18, weight: 'bold' }, color: '#000' },
+                legend: { labels: { usePointStyle: true, boxWidth: 10, font: { size: 15 }, color: '#000' } }
+            },
+            scales: {
+                x: { title: { display: true, text: 'Emission (nm)', font: { size: 18, weight: 'bold' }, color: '#000' },
+                     ticks: { font: { size: 16 }, padding: 2, color: '#000' },
+                     grid: { color: gridColor, drawTicks: true, tickLength: 6, tickColor: '#666' },
+                     border: { color: '#666', width: 1 } },
+                y: yScaleOpts
+            }
+        }
+    });
+
+    var title = 'Deconvolution \u2014 ' + fname + ' (Ex ' + res.exWl + ' nm)';
+    // Let Chart.js finish rendering, then capture and clean up
+    requestAnimationFrame(function() {
+        openEnlargedChart(tmpCanvas, title);
+        tmpChart.destroy();
+        document.body.removeChild(wrap);
+    });
+}
 
 function renderDeconvChart(xArr, yArr, fitParams, fname, exWl) {
     var nPeaks = fitParams.length / 3;
@@ -3904,7 +4154,7 @@ function renderDeconvChart(xArr, yArr, fitParams, fname, exWl) {
                     return {x: x, y: A * Math.exp(-0.5 * d * d)};
                 }),
                 borderColor: color,
-                backgroundColor: color.replace(')', ',0.08)').replace('rgb', 'rgba'),
+                backgroundColor: color + '14',
                 showLine: true, borderWidth: 1.5, borderDash: [4, 4], pointRadius: 0, tension: 0,
                 fill: true, order: 3 + pi
             });
