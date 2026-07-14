@@ -2287,6 +2287,7 @@ async function downloadZIP(btn) {
             var commonScale = (document.getElementById('deconv-common-' + preset) || {}).checked || false;
             var opacityEl = document.getElementById('deconv-opacity-' + preset);
             var fillOpacity = opacityEl ? parseInt(opacityEl.value, 10) / 100 : 0.28;
+            var legendPos = (document.getElementById('deconv-legend-' + preset) || {}).value || 'right';
             var hexAlpha = Math.round(fillOpacity * 255).toString(16);
             if (hexAlpha.length < 2) hexAlpha = '0' + hexAlpha;
             var gridColor = showGrid ? '#e0e0e0' : 'transparent';
@@ -2333,24 +2334,43 @@ async function downloadZIP(btn) {
                 };
                 if (fixedYMax > 0) dcYOpts.max = fixedYMax;
 
+                var _lp = legendPos;
                 var tmpChart = new Chart(dcCanvas, {
                     type: 'scatter', data: { datasets: ds },
-                    plugins: [{ id: 'chartAreaBorder', afterDraw: function(chart) {
-                        var ctx2 = chart.ctx, ca = chart.chartArea;
-                        ctx2.save(); ctx2.strokeStyle = '#666'; ctx2.lineWidth = 1;
-                        ctx2.strokeRect(ca.left, ca.top, ca.right - ca.left, ca.bottom - ca.top);
-                        ctx2.restore();
-                    }}],
+                    plugins: [
+                        { id: 'chartAreaBorder', afterDraw: function(chart) {
+                            var ctx2 = chart.ctx, ca = chart.chartArea;
+                            ctx2.save(); ctx2.strokeStyle = '#666'; ctx2.lineWidth = 1;
+                            ctx2.strokeRect(ca.left, ca.top, ca.right - ca.left, ca.bottom - ca.top);
+                            ctx2.restore();
+                        }},
+                        { id: 'legendMargin', afterInit: function(chart) {
+                            if (!chart.legend || _lp === 'none') return;
+                            var origFit = chart.legend.fit.bind(chart.legend);
+                            chart.legend.fit = function() {
+                                origFit();
+                                if (_lp === 'left' || _lp === 'right') this.width += 50;
+                                else this.height += 38;
+                            };
+                        }, beforeDraw: function(chart) {
+                            if (!chart.legend) return;
+                            if (_lp === 'right') chart.legend.left += 50;
+                            else if (_lp === 'bottom') chart.legend.top += 38;
+                        }}
+                    ],
                     options: {
                         animation: false, responsive: true, maintainAspectRatio: false,
                         plugins: {
                             title: { display: true, text: 'Deconvolution \u2014 ' + fname + ' (Ex ' + res.exWl + ' nm)',
                                      font: { size: 18, weight: 'bold' }, color: '#000' },
-                            legend: { labels: { usePointStyle: true, boxWidth: 10, font: { size: 15 }, color: '#000' } }
+                            legend: { display: legendPos !== 'none', position: legendPos !== 'none' ? legendPos : 'top',
+                                      labels: { usePointStyle: true, boxWidth: 10, font: { size: 15 }, color: '#000' } }
                         },
                         scales: {
-                            x: { title: { display: true, text: 'Emission (nm)', font: { size: 18, weight: 'bold' }, color: '#000' },
-                                 ticks: { font: { size: 16 }, padding: 2, color: '#000' },
+                            x: { min: res.xArr[0], max: res.xArr[res.xArr.length - 1],
+                                 title: { display: true, text: 'Emission (nm)', font: { size: 18, weight: 'bold' }, color: '#000' },
+                                 ticks: { font: { size: 16 }, padding: 2, color: '#000',
+                                          stepSize: _niceStep(res.xArr[0], res.xArr[res.xArr.length - 1]) },
                                  grid: { color: gridColor, drawTicks: true, tickLength: 6, tickColor: '#666' },
                                  border: { color: '#666', width: 1 } },
                             y: dcYOpts
@@ -3576,6 +3596,14 @@ function renderDeconvBatchTable(preset, files) {
                 'style="width:80px; vertical-align:middle;" ' +
                 'oninput="redrawDeconvThumbs(\'' + preset + '\')">' +
             '</label>' +
+            '<select class="form-control form-control-sm" id="deconv-legend-' + preset + '" ' +
+              'style="width:auto; font-size:0.8rem;">' +
+              '<option value="top">Legend: top</option>' +
+              '<option value="right" selected>Legend: right</option>' +
+              '<option value="bottom">Legend: bottom</option>' +
+              '<option value="left">Legend: left</option>' +
+              '<option value="none">Legend: hidden</option>' +
+            '</select>' +
           '</div>';
         html += '<div class="row" id="deconv-thumbs-row-' + preset + '">';
         fittedFiles.forEach(function(fname, idx) {
@@ -4062,6 +4090,16 @@ var DECONV_PALETTES = {
 var deconvPaletteName = 'default';
 var PEAK_COLORS = DECONV_PALETTES['default'];
 
+function _niceStep(lo, hi) {
+    var span = Math.abs(hi - lo);
+    var steps = [5, 10, 20, 25, 50, 100];
+    for (var i = 0; i < steps.length; i++) {
+        var n = Math.floor(span / steps[i]);
+        if (n >= 3 && n <= 10) return steps[i];
+    }
+    return 50;
+}
+
 function openEnlargedDeconv(preset, fname) {
     var res = deconvBatchResults[preset] && deconvBatchResults[preset][fname];
     if (!res || !res.fitParams) return;
@@ -4074,6 +4112,7 @@ function openEnlargedDeconv(preset, fname) {
     var commonScale = (document.getElementById('deconv-common-' + preset) || {}).checked || false;
     var opacityEl = document.getElementById('deconv-opacity-' + preset);
     var fillOpacity = opacityEl ? parseInt(opacityEl.value, 10) / 100 : 0.28;
+    var legendPos = (document.getElementById('deconv-legend-' + preset) || {}).value || 'right';
     // Convert 0-1 opacity to 2-digit hex alpha
     var hexAlpha = Math.round(fillOpacity * 255).toString(16);
     if (hexAlpha.length < 2) hexAlpha = '0' + hexAlpha;
@@ -4157,21 +4196,43 @@ function openEnlargedDeconv(preset, fname) {
             ctx2.restore();
         }
     };
+    // Inline plugin to add margin between legend and chart area
+    var _legendPos = legendPos;
+    var legendMargin = {
+        id: 'legendMargin',
+        afterInit: function(chart) {
+            if (!chart.legend || _legendPos === 'none') return;
+            var origFit = chart.legend.fit.bind(chart.legend);
+            chart.legend.fit = function() {
+                origFit();
+                if (_legendPos === 'left' || _legendPos === 'right') this.width += 50;
+                else this.height += 38;
+            };
+        },
+        beforeDraw: function(chart) {
+            if (!chart.legend) return;
+            if (_legendPos === 'right') chart.legend.left += 50;
+            else if (_legendPos === 'bottom') chart.legend.top += 38;
+        }
+    };
 
     var tmpChart = new Chart(tmpCanvas, {
         type: 'scatter',
         data: { datasets: datasets },
-        plugins: [chartAreaBorder],
+        plugins: [chartAreaBorder, legendMargin],
         options: {
             animation: false, responsive: true, maintainAspectRatio: false,
             plugins: {
                 title: { display: true, text: 'Gaussian deconvolution \u2014 Em @ Ex ' + res.exWl + ' nm',
                          font: { size: 18, weight: 'bold' }, color: '#000' },
-                legend: { labels: { usePointStyle: true, boxWidth: 10, font: { size: 15 }, color: '#000' } }
+                legend: { display: legendPos !== 'none', position: legendPos !== 'none' ? legendPos : 'top',
+                          labels: { usePointStyle: true, boxWidth: 10, font: { size: 15 }, color: '#000' } }
             },
             scales: {
-                x: { title: { display: true, text: 'Emission (nm)', font: { size: 18, weight: 'bold' }, color: '#000' },
-                     ticks: { font: { size: 16 }, padding: 2, color: '#000' },
+                x: { min: res.xArr[0], max: res.xArr[res.xArr.length - 1],
+                     title: { display: true, text: 'Emission (nm)', font: { size: 18, weight: 'bold' }, color: '#000' },
+                     ticks: { font: { size: 16 }, padding: 2, color: '#000',
+                              stepSize: _niceStep(res.xArr[0], res.xArr[res.xArr.length - 1]) },
                      grid: { color: gridColor, drawTicks: true, tickLength: 6, tickColor: '#666' },
                      border: { color: '#666', width: 1 } },
                 y: yScaleOpts
