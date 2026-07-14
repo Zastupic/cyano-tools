@@ -2266,29 +2266,120 @@ async function downloadZIP(btn) {
     });
     if (hasAnyDeconv) {
         var deconvFolder = zip.folder('deconvolution');
+        // Use off-screen canvas to avoid hidden-tab zero-dimension issue
+        var dcWrap = document.createElement('div');
+        dcWrap.style.cssText = 'position:fixed; left:0; top:0; width:640px; height:470px; opacity:0; pointer-events:none; z-index:-1;';
+        var dcCanvas = document.createElement('canvas');
+        dcWrap.appendChild(dcCanvas);
+        document.body.appendChild(dcWrap);
+
         deconvPresets.forEach(function(preset) {
             var results = deconvBatchResults[preset];
             if (!results) return;
             var fnames = eemData ? eemData.files : Object.keys(results);
-            fnames.forEach(function(fname) {
+            var fittedFiles = fnames.filter(function(f) { return results[f] && results[f].fitParams; });
+            if (!fittedFiles.length) return;
+
+            // Read current settings from batch controls
+            var palName = (document.getElementById('deconv-palette-' + preset) || {}).value || 'default';
+            var palColors = DECONV_PALETTES[palName] || DECONV_PALETTES['default'];
+            var showGrid = (document.getElementById('deconv-grid-' + preset) || {}).checked || false;
+            var commonScale = (document.getElementById('deconv-common-' + preset) || {}).checked || false;
+            var opacityEl = document.getElementById('deconv-opacity-' + preset);
+            var fillOpacity = opacityEl ? parseInt(opacityEl.value, 10) / 100 : 0.28;
+            var hexAlpha = Math.round(fillOpacity * 255).toString(16);
+            if (hexAlpha.length < 2) hexAlpha = '0' + hexAlpha;
+            var gridColor = showGrid ? '#e0e0e0' : 'transparent';
+
+            // Compute common Y max if needed
+            var fixedYMax = 0;
+            if (commonScale) {
+                fittedFiles.forEach(function(f) {
+                    var m = Math.max.apply(null, results[f].yArr);
+                    if (m > fixedYMax) fixedYMax = m;
+                });
+                fixedYMax *= 1.08;
+            }
+
+            fittedFiles.forEach(function(fname) {
                 var res = results[fname];
-                if (!res || !res.fitParams) return;
-                renderDeconvChart(res.xArr, res.yArr, res.fitParams, fname, res.exWl);
-                if (chartInst['deconv']) chartInst['deconv'].update('none');
-                var c = document.getElementById('deconv-chart');
-                var b = c && pngB64(c);
+                var nPeaks = res.fitParams.length / 3;
+                var ds = [
+                    { label: fname, data: res.xArr.map(function(x, i) { return {x: x, y: res.yArr[i]}; }),
+                      borderColor: '#444', backgroundColor: 'transparent',
+                      showLine: true, borderWidth: 2, pointRadius: 0, tension: 0, order: 1 },
+                    { label: 'Fit (total)', data: res.xArr.map(function(x) { return {x: x, y: gaussianSum(res.fitParams, x)}; }),
+                      borderColor: '#cc2200', backgroundColor: 'transparent',
+                      showLine: true, borderWidth: 2, borderDash: [6, 3], pointRadius: 0, tension: 0, order: 2 }
+                ];
+                for (var pi = 0; pi < nPeaks; pi++) {
+                    (function(i) {
+                        var A = res.fitParams[i*3], mu = res.fitParams[i*3+1], sig = res.fitParams[i*3+2];
+                        var color = palColors[i % palColors.length];
+                        ds.push({
+                            label: 'P' + (i+1) + ' (' + mu.toFixed(1) + ' nm)',
+                            data: res.xArr.map(function(x) { var d = (x - mu) / sig; return {x: x, y: A * Math.exp(-0.5 * d * d)}; }),
+                            borderColor: color, backgroundColor: color + hexAlpha,
+                            showLine: true, borderWidth: 1.5, borderDash: [4, 4], pointRadius: 0, tension: 0,
+                            fill: true, order: 3 + i
+                        });
+                    })(pi);
+                }
+                var dcYOpts = {
+                    title: { display: true, text: 'Fluorescence (a.u.)', font: { size: 18, weight: 'bold' }, color: '#000' },
+                    ticks: { font: { size: 16 }, padding: 2, color: '#000' }, beginAtZero: true,
+                    grid: { color: gridColor, drawTicks: true, tickLength: 6, tickColor: '#666' },
+                    border: { color: '#666', width: 1 }
+                };
+                if (fixedYMax > 0) dcYOpts.max = fixedYMax;
+
+                var tmpChart = new Chart(dcCanvas, {
+                    type: 'scatter', data: { datasets: ds },
+                    plugins: [{ id: 'chartAreaBorder', afterDraw: function(chart) {
+                        var ctx2 = chart.ctx, ca = chart.chartArea;
+                        ctx2.save(); ctx2.strokeStyle = '#666'; ctx2.lineWidth = 1;
+                        ctx2.strokeRect(ca.left, ca.top, ca.right - ca.left, ca.bottom - ca.top);
+                        ctx2.restore();
+                    }}],
+                    options: {
+                        animation: false, responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: 'Deconvolution \u2014 ' + fname + ' (Ex ' + res.exWl + ' nm)',
+                                     font: { size: 18, weight: 'bold' }, color: '#000' },
+                            legend: { labels: { usePointStyle: true, boxWidth: 10, font: { size: 15 }, color: '#000' } }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Emission (nm)', font: { size: 18, weight: 'bold' }, color: '#000' },
+                                 ticks: { font: { size: 16 }, padding: 2, color: '#000' },
+                                 grid: { color: gridColor, drawTicks: true, tickLength: 6, tickColor: '#666' },
+                                 border: { color: '#666', width: 1 } },
+                            y: dcYOpts
+                        }
+                    }
+                });
+                var b = pngB64(dcCanvas);
                 if (b) {
                     var safeName = fname.replace(/[^a-z0-9_.\-]/gi, '_');
-                    deconvFolder.file('Ex' + res.exWl + '_' + safeName + '.png',
-                                     b, {base64: true});
+                    deconvFolder.file('Ex' + res.exWl + '_' + safeName + '.png', b, {base64: true});
                 }
+                tmpChart.destroy();
             });
         });
+        document.body.removeChild(dcWrap);
     } else if (deconvFitParams) {
-        // Fallback: export the single currently displayed chart
-        var c = document.getElementById('deconv-chart');
-        var b = c && pngB64(c);
-        if (b) zip.file('deconvolution.png', b, {base64: true});
+        // Fallback: export single deconv chart via off-screen canvas
+        var dcWrap2 = document.createElement('div');
+        dcWrap2.style.cssText = 'position:fixed; left:0; top:0; width:640px; height:470px; opacity:0; pointer-events:none; z-index:-1;';
+        var dcCanvas2 = document.createElement('canvas');
+        dcWrap2.appendChild(dcCanvas2);
+        document.body.appendChild(dcWrap2);
+        renderDeconvChart(deconvXArr, deconvYArr, deconvFitParams, '', 0);
+        if (chartInst['deconv']) chartInst['deconv'].update('none');
+        // Copy from the real canvas if it has content, otherwise skip
+        var origC = document.getElementById('deconv-chart');
+        var b2 = origC && pngB64(origC);
+        if (b2) zip.file('deconvolution.png', b2, {base64: true});
+        document.body.removeChild(dcWrap2);
     }
 
     // ── PARAFAC results ──────────────────────────────────────────────────────
