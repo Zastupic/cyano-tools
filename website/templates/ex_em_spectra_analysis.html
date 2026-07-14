@@ -1516,19 +1516,79 @@
                     <strong style="font-size:0.92rem;">
                         <i class="fa fa-play-circle mr-1" style="color:#1a7a1a;"></i>
                         Batch Gaussian deconvolution
-                        <span class="par-tip" title="Fitting routine: Levenberg-Marquardt nonlinear least squares (scipy.optimize.curve_fit). Each peak is described by amplitude (A), center wavelength (μ), and standard deviation (σ). Initial peak positions are set by the active preset; bounds prevent peaks from shifting more than ±10 nm from their preset center. Peak area = |A| × |σ| × √(2π) is used for all ratio calculations."><i class="fa fa-info-circle"></i></span>
+                        <span class="par-tip" title="Fitting routine: Levenberg-Marquardt nonlinear least squares (scipy.optimize.curve_fit). Each peak is described by amplitude (A), center wavelength (μ), and standard deviation (σ). Initial peak positions are set by the active preset; bounds prevent peaks from shifting more than ±5 nm from their preset center. Per-peak FWHM limits are based on 77 K literature. Peak area = |A| × |σ| × √(2π) is used for all ratio calculations."><i class="fa fa-info-circle"></i></span>
                     </strong>
                     <span class="text-muted ml-2" style="font-size:0.82rem;">
                         Fit all samples across all active excitations in one click
                     </span>
                 </div>
-                <div class="d-flex align-items-center" style="gap:0.5rem;">
+                <div class="d-flex align-items-center flex-wrap" style="gap:0.5rem;">
+                    <label class="mb-0 font-weight-bold" style="font-size:0.85rem; white-space:nowrap;">Organism:</label>
+                    <select id="deconv-organism-select" class="form-control form-control-sm"
+                            style="width:auto; font-size:0.85rem;"
+                            onchange="applyOrganismPreset(this.value)">
+                        <option value="pc_rich">PC-rich cyanobacteria</option>
+                        <option value="pe_rich">PE-rich cyanobacteria</option>
+                        <option value="custom">Custom</option>
+                    </select>
                     <span id="deconv-fitall-all-progress" class="text-muted text-nowrap"
                           style="font-size:0.83rem;"></span>
                     <button class="btn btn-success text-nowrap" id="deconv-fitall-all"
                             onclick="runDeconvBatchAll()">
                         <i class="fa fa-play-circle mr-1"></i> Fit all excitations
                     </button>
+                    <button class="btn btn-outline-secondary btn-sm text-nowrap ml-1"
+                            data-toggle="collapse" data-target="#deconv-peak-params-panel"
+                            aria-expanded="false" aria-controls="deconv-peak-params-panel"
+                            style="font-size:0.82rem;">
+                        <i class="fa fa-sliders mr-1"></i> Peak constraints
+                    </button>
+                </div>
+            </div>
+
+            <!-- Collapsible peak parameters reference panel -->
+            <div class="collapse" id="deconv-peak-params-panel">
+                <div class="card card-body py-2 px-3 mb-2" style="font-size:0.82rem; background:#fafcfa; border:1px solid #c3dac3;">
+                    <div class="d-flex align-items-start justify-content-between mb-1">
+                        <div>
+                            <strong>Gaussian fit constraints per peak</strong>
+                            <span class="text-muted ml-1">(77 K literature-derived)</span>
+                        </div>
+                        <button class="btn btn-sm p-0 text-muted" data-toggle="collapse"
+                                data-target="#deconv-peak-params-panel" style="line-height:1;">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <p class="text-muted mb-2" style="font-size:0.78rem;">
+                        Peak positions are constrained to &plusmn;5 nm from preset centers.
+                        Peak widths (FWHM = 2.355 &times; &sigma;) are bounded per peak type as shown below.
+                        <br>Sources: Andrizhiyevskaya et al. 2005; Yokono et al. 2015; Rakhimberdieva et al. 2007.
+                    </p>
+                    <div style="overflow-x:auto;">
+                        <table class="table table-sm table-bordered mb-0" style="font-size:0.8rem; width:auto;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Peak</th>
+                                    <th style="text-align:center;">Initial &sigma;</th>
+                                    <th style="text-align:center;">&sigma; range</th>
+                                    <th style="text-align:center;">FWHM range</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>CP43</strong></td><td class="text-center">5 nm</td><td class="text-center">2&ndash;7 nm</td><td class="text-center">~5&ndash;16 nm</td><td class="text-muted">PSII inner antenna; ~685 nm</td></tr>
+                                <tr><td><strong>CP47</strong></td><td class="text-center">4 nm</td><td class="text-center">2&ndash;6 nm</td><td class="text-center">~5&ndash;14 nm</td><td class="text-muted">PSII inner antenna; ~695 nm</td></tr>
+                                <tr><td><strong>PSII</strong></td><td class="text-center">6 nm</td><td class="text-center">3&ndash;9 nm</td><td class="text-center">~7&ndash;21 nm</td><td class="text-muted">Unresolved CP43+CP47</td></tr>
+                                <tr><td><strong>PSI</strong></td><td class="text-center">9 nm</td><td class="text-center">4&ndash;14 nm</td><td class="text-center">~9&ndash;33 nm</td><td class="text-muted">Long-wavelength Chl a; 710&ndash;735 nm, species-variable</td></tr>
+                                <tr><td><strong>PC</strong></td><td class="text-center">8 nm</td><td class="text-center">4&ndash;12 nm</td><td class="text-center">~9&ndash;28 nm</td><td class="text-muted">Phycocyanin; ~645 nm</td></tr>
+                                <tr><td><strong>APC</strong></td><td class="text-center">7 nm</td><td class="text-center">3&ndash;10 nm</td><td class="text-center">~7&ndash;24 nm</td><td class="text-muted">Allophycocyanin; ~660 nm</td></tr>
+                                <tr><td><strong>APC-B</strong></td><td class="text-center">5 nm</td><td class="text-center">2&ndash;8 nm</td><td class="text-center">~5&ndash;19 nm</td><td class="text-muted">Terminal emitter (APC-B/Lcm); ~680 nm</td></tr>
+                                <tr><td><strong>PE</strong></td><td class="text-center">10 nm</td><td class="text-center">5&ndash;16 nm</td><td class="text-center">~12&ndash;38 nm</td><td class="text-muted">Phycoerythrin; ~580 nm</td></tr>
+                                <tr><td><strong>PBS tail</strong></td><td class="text-center">8 nm</td><td class="text-center">3&ndash;12 nm</td><td class="text-center">~7&ndash;28 nm</td><td class="text-muted">Residual PBS fluorescence at Ex 440; ~665 nm</td></tr>
+                                <tr class="table-light"><td><em>Custom</em></td><td class="text-center">8 nm</td><td class="text-center">2&ndash;15 nm</td><td class="text-center">~5&ndash;35 nm</td><td class="text-muted">Default for user-defined peaks</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -1570,9 +1630,13 @@
                 <div class="tab-pane fade show active" id="dcsub-440" role="tabpanel">
                     <div class="alert alert-secondary py-2 mb-3"
                          style="font-size:0.87em; border-left:3px solid #27ae60; background:#f6faf6;">
-                        <strong>Chl Soret excitation (Ex 440 nm)</strong> — <span id="dcsub-440-desc">Resolves PSII inner antenna:
-                        CP43 (~685 nm), CP47 (~695 nm), and PSI long-wavelength Chl (~724 nm).
-                        Used for PSII:PSI stoichiometry and CP43/CP47 ratio.</span>
+                        <strong>Chl Soret excitation (Ex 440 nm)</strong> — <span id="dcsub-440-desc">Resolves
+                        PBS tail (~665 nm, residual PBS fluorescence), PSII inner antenna CP43 (~685 nm) and CP47 (~695 nm),
+                        and PSI long-wavelength Chl (~720 nm).
+                        CP43+CP47 areas are summed as total PSII for comparison with fixed-wavelength analysis.
+                        Used for PSII:PSI stoichiometry and CP43/CP47 ratio.
+                        <br><small class="text-muted">Fit constraints: peak position &plusmn;5 nm; per-peak FWHM limits based on 77 K literature
+                        (hover over each peak chip for details).</small></span>
                     </div>
                     <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem;">
                         <label class="mb-0 font-weight-bold" style="font-size:0.85rem;">Excitation:</label>
@@ -1593,6 +1657,15 @@
                         <span class="text-muted">nm</span>
                         <small class="text-muted ml-1">(restricts fitting to the relevant emission window; avoids Rayleigh scatter at low wavelengths)</small>
                     </div>
+                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:4px; font-size:0.82rem;">
+                        <span class="text-muted font-weight-bold mr-1">Peaks (nm):</span>
+                        <span id="deconv-batch-peaks-ex440" class="d-inline-flex flex-wrap align-items-center"
+                              style="gap:4px;"></span>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                style="font-size:0.8rem;" onclick="addBatchPeak('ex440')">
+                            <i class="fa fa-plus"></i> Add
+                        </button>
+                    </div>
                     <div id="deconv-batch-table-ex440">
                         <p class="text-muted" style="font-size:0.88em;">
                             Click <strong>Fit all samples</strong> to run batch Gaussian deconvolution.
@@ -1604,9 +1677,12 @@
                 <div class="tab-pane fade" id="dcsub-620" role="tabpanel">
                     <div class="alert alert-secondary py-2 mb-3"
                          style="font-size:0.87em; border-left:3px solid #5b9bd5; background:#f5f8fd;">
-                        <strong>Phycocyanin excitation (Ex 620 nm)</strong> — Reveals PBS coupling state:
-                        free APC (~662 nm), PBS→PSII (~689 nm), PBS→PSI (~724 nm).
+                        <strong>Phycocyanin excitation (Ex 620 nm)</strong> — Resolves PBS components:
+                        PC (~645 nm), APC (~660 nm), APC-B/Lcm (~680 nm), and energy transfer to PSII and PSI.
+                        PC+APC+APC-B areas are summed as PBS-free; CP43+CP47 as PBS→PSII.
                         Used for PBS-PSII/PBS-PSI ratio and PBS coupling efficiency.
+                        <br><small class="text-muted">Fit constraints: peak position &plusmn;5 nm; per-peak FWHM limits based on 77 K literature
+                        (hover over each peak chip for details).</small>
                     </div>
                     <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem;">
                         <label class="mb-0 font-weight-bold" style="font-size:0.85rem;">Excitation:</label>
@@ -1630,6 +1706,15 @@
                             <span>Auto-detect start</span>
                         </label>
                     </div>
+                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:4px; font-size:0.82rem;">
+                        <span class="text-muted font-weight-bold mr-1">Peaks (nm):</span>
+                        <span id="deconv-batch-peaks-ex620" class="d-inline-flex flex-wrap align-items-center"
+                              style="gap:4px;"></span>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                style="font-size:0.8rem;" onclick="addBatchPeak('ex620')">
+                            <i class="fa fa-plus"></i> Add
+                        </button>
+                    </div>
                     <div id="deconv-batch-table-ex620">
                         <p class="text-muted" style="font-size:0.88em;">
                             Click <strong>Fit all samples</strong> to run batch Gaussian deconvolution.
@@ -1641,9 +1726,13 @@
                 <div class="tab-pane fade" id="dcsub-560" role="tabpanel">
                     <div class="alert alert-secondary py-2 mb-3"
                          style="font-size:0.87em; border-left:3px solid #e8a838; background:#fdf9f0;">
-                        <strong>Phycoerythrin excitation (Ex 560 nm)</strong> — Reveals PE emission
-                        (~580 nm) and PBS energy transfer:
-                        PBS-free (~662 nm), PBS→PSII (~689 nm), PBS→PSI (~724 nm).
+                        <strong>Phycoerythrin excitation (Ex 560 nm)</strong> — Resolves PE emission
+                        (~580 nm) and PBS energy transfer chain: PE (~580 nm), PC (~645 nm), APC (~660 nm),
+                        PSII (~685 nm), CP47 (~695 nm), and PSI (~720 nm).
+                        PE+PC+APC areas are summed as PBS-free; PSII+CP47 as PBS→PSII.
+                        Used for PBS coupling efficiency in PE-rich organisms.
+                        <br><small class="text-muted">Fit constraints: peak position &plusmn;5 nm; per-peak FWHM limits based on 77 K literature
+                        (hover over each peak chip for details).</small>
                     </div>
                     <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.5rem;">
                         <label class="mb-0 font-weight-bold" style="font-size:0.85rem;">Excitation:</label>
@@ -1666,6 +1755,15 @@
                             <input type="checkbox" id="deconv-em-autodetect-ex560" checked onchange="autoDetectEmEdge('ex560')">
                             <span>Auto-detect start</span>
                         </label>
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap mb-3" style="gap:4px; font-size:0.82rem;">
+                        <span class="text-muted font-weight-bold mr-1">Peaks (nm):</span>
+                        <span id="deconv-batch-peaks-ex560" class="d-inline-flex flex-wrap align-items-center"
+                              style="gap:4px;"></span>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                style="font-size:0.8rem;" onclick="addBatchPeak('ex560')">
+                            <i class="fa fa-plus"></i> Add
+                        </button>
                     </div>
                     <div id="deconv-batch-table-ex560">
                         <p class="text-muted" style="font-size:0.88em;">

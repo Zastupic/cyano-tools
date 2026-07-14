@@ -637,6 +637,8 @@ function uploadAndAnalyzeXlsx() {
             focusExWl = null;
             deconvFitParams = null; deconvCurrentData = null;
             deconvBatchResults = { 'ex440': {}, 'ex620': {}, 'ex560': {} };
+            deconvBatchPeaks   = { 'ex440': [], 'ex620': [], 'ex560': [] };
+            applyOrganismPreset(deconvOrganismType);
 
             var summary = document.getElementById('eem-results-summary');
             summary.innerHTML = '<strong>' + data.files.length + ' sample(s) processed:</strong> ' +
@@ -923,6 +925,8 @@ function uploadAndAnalyze() {
             deconvFitParams = null;
             deconvCurrentData = null;
             deconvBatchResults = { 'ex440': {}, 'ex620': {}, 'ex560': {} };
+            deconvBatchPeaks   = { 'ex440': [], 'ex620': [], 'ex560': [] };
+            applyOrganismPreset(deconvOrganismType);
 
             var summary = document.getElementById('eem-results-summary');
             summary.innerHTML = '<strong>' + data.files.length + ' file(s) processed:</strong> ' +
@@ -2051,10 +2055,16 @@ function appendDeconvSheets(wb) {
             }
         });
 
-        // Build header row
+        // Build header row — use peak labels if available
+        var refLabels = [];
+        var firstRes = null;
+        Object.keys(results).some(function(k) {
+            if (results[k] && results[k].peakLabels) { firstRes = results[k]; return true; }
+            return false;
+        });
         var header = ['Sample', 'R\u00B2'];
         for (var p = 0; p < maxPeaks; p++) {
-            var pn = 'P' + (p + 1);
+            var pn = (firstRes && firstRes.peakLabels[p]) || ('P' + (p + 1));
             header.push(pn + ' Assignment', pn + ' Position (nm)',
                        pn + ' FWHM (nm)', pn + ' Amplitude',
                        pn + ' Area', pn + ' Area (%)');
@@ -2077,13 +2087,15 @@ function appendDeconvSheets(wb) {
             }
             var totalArea = areas.reduce(function(a, b) { return a + b; }, 0);
 
+            var plabels = res.peakLabels || [];
             var row = [fname, res.r2];
             for (var i = 0; i < maxPeaks; i++) {
                 if (i < nPeaks) {
                     var A   = res.fitParams[i * 3];
                     var mu  = res.fitParams[i * 3 + 1];
                     var sig = Math.abs(res.fitParams[i * 3 + 2]);
-                    row.push(deconvPeakLabel(mu), mu, 2.355 * sig, A, areas[i],
+                    var lbl = plabels[i] || deconvPeakLabel(mu);
+                    row.push(lbl, mu, 2.355 * sig, A, areas[i],
                             totalArea > 0 ? areas[i] / totalArea * 100 : 0);
                 } else {
                     row.push('', '', '', '', '', '');
@@ -2147,6 +2159,7 @@ function downloadXLSX() {
 async function downloadZIP(btn) {
     if (!eemData) return;
     if (typeof JSZip === 'undefined') { alert('JSZip library not loaded.'); return; }
+    if (typeof XLSX === 'undefined') { alert('XLSX (SheetJS) library not loaded. Please reload the page.'); return; }
 
     var origLabel = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-1" role="status"></span> Building…'; }
@@ -2266,19 +2279,14 @@ async function downloadZIP(btn) {
     });
     if (hasAnyDeconv) {
         var deconvFolder = zip.folder('deconvolution');
-        // Use off-screen canvas to avoid hidden-tab zero-dimension issue
-        var dcWrap = document.createElement('div');
-        dcWrap.style.cssText = 'position:fixed; left:0; top:0; width:640px; height:470px; opacity:0; pointer-events:none; z-index:-1;';
-        var dcCanvas = document.createElement('canvas');
-        dcWrap.appendChild(dcCanvas);
-        document.body.appendChild(dcWrap);
 
-        deconvPresets.forEach(function(preset) {
+        for (var _pi = 0; _pi < deconvPresets.length; _pi++) {
+            var preset = deconvPresets[_pi];
             var results = deconvBatchResults[preset];
-            if (!results) return;
+            if (!results) continue;
             var fnames = eemData ? eemData.files : Object.keys(results);
             var fittedFiles = fnames.filter(function(f) { return results[f] && results[f].fitParams; });
-            if (!fittedFiles.length) return;
+            if (!fittedFiles.length) continue;
 
             // Read current settings from batch controls
             var palName = (document.getElementById('deconv-palette-' + preset) || {}).value || 'default';
@@ -2295,14 +2303,15 @@ async function downloadZIP(btn) {
             // Compute common Y max if needed
             var fixedYMax = 0;
             if (commonScale) {
-                fittedFiles.forEach(function(f) {
-                    var m = Math.max.apply(null, results[f].yArr);
+                for (var _ci = 0; _ci < fittedFiles.length; _ci++) {
+                    var m = Math.max.apply(null, results[fittedFiles[_ci]].yArr);
                     if (m > fixedYMax) fixedYMax = m;
-                });
+                }
                 fixedYMax *= 1.08;
             }
 
-            fittedFiles.forEach(function(fname) {
+            for (var _fi = 0; _fi < fittedFiles.length; _fi++) {
+                var fname = fittedFiles[_fi];
                 var res = results[fname];
                 var nPeaks = res.fitParams.length / 3;
                 var ds = [
@@ -2313,12 +2322,14 @@ async function downloadZIP(btn) {
                       borderColor: '#cc2200', backgroundColor: 'transparent',
                       showLine: true, borderWidth: 2, borderDash: [6, 3], pointRadius: 0, tension: 0, order: 2 }
                 ];
+                var resLabels = res.peakLabels || [];
                 for (var pi = 0; pi < nPeaks; pi++) {
                     (function(i) {
                         var A = res.fitParams[i*3], mu = res.fitParams[i*3+1], sig = res.fitParams[i*3+2];
                         var color = palColors[i % palColors.length];
+                        var plbl = resLabels[i] ? resLabels[i] + ' ' : 'P' + (i+1) + ' ';
                         ds.push({
-                            label: 'P' + (i+1) + ' (' + mu.toFixed(1) + ' nm)',
+                            label: plbl + '(' + mu.toFixed(1) + ' nm)',
                             data: res.xArr.map(function(x) { var d = (x - mu) / sig; return {x: x, y: A * Math.exp(-0.5 * d * d)}; }),
                             borderColor: color, backgroundColor: color + hexAlpha,
                             showLine: true, borderWidth: 1.5, borderDash: [4, 4], pointRadius: 0, tension: 0,
@@ -2333,6 +2344,15 @@ async function downloadZIP(btn) {
                     border: { color: '#666', width: 1 }
                 };
                 if (fixedYMax > 0) dcYOpts.max = fixedYMax;
+
+                // Fresh canvas per chart to avoid stale state
+                var dcWrap = document.createElement('div');
+                dcWrap.style.cssText = 'position:fixed; left:0; top:0; width:640px; height:470px; opacity:0; pointer-events:none; z-index:-1;';
+                var dcCanvas = document.createElement('canvas');
+                dcCanvas.width = 640;
+                dcCanvas.height = 470;
+                dcWrap.appendChild(dcCanvas);
+                document.body.appendChild(dcWrap);
 
                 var _lp = legendPos;
                 var tmpChart = new Chart(dcCanvas, {
@@ -2377,28 +2397,92 @@ async function downloadZIP(btn) {
                         }
                     }
                 });
+
+                // Wait for Chart.js to complete rendering before capture
+                await new Promise(function(r) { setTimeout(r, 20); });
+
                 var b = pngB64(dcCanvas);
                 if (b) {
                     var safeName = fname.replace(/[^a-z0-9_.\-]/gi, '_');
                     deconvFolder.file('Ex' + res.exWl + '_' + safeName + '.png', b, {base64: true});
                 }
                 tmpChart.destroy();
-            });
-        });
-        document.body.removeChild(dcWrap);
-    } else if (deconvFitParams) {
+                document.body.removeChild(dcWrap);
+            }
+        }
+    } else if (deconvFitParams && deconvCurrentData) {
         // Fallback: export single deconv chart via off-screen canvas
         var dcWrap2 = document.createElement('div');
         dcWrap2.style.cssText = 'position:fixed; left:0; top:0; width:640px; height:470px; opacity:0; pointer-events:none; z-index:-1;';
         var dcCanvas2 = document.createElement('canvas');
+        dcCanvas2.width = 640;
+        dcCanvas2.height = 470;
         dcWrap2.appendChild(dcCanvas2);
         document.body.appendChild(dcWrap2);
-        renderDeconvChart(deconvXArr, deconvYArr, deconvFitParams, '', 0);
-        if (chartInst['deconv']) chartInst['deconv'].update('none');
-        // Copy from the real canvas if it has content, otherwise skip
-        var origC = document.getElementById('deconv-chart');
-        var b2 = origC && pngB64(origC);
+
+        var sXArr = deconvCurrentData.xArr, sYArr = deconvCurrentData.yArr;
+        var sFname = deconvCurrentData.fname || '';
+        var sExWl = deconvCurrentData.exWl || 0;
+        var sNPeaks = deconvFitParams.length / 3;
+        var sDs = [
+            { label: sFname || 'Measured', data: sXArr.map(function(x, i) { return {x: x, y: sYArr[i]}; }),
+              borderColor: '#444', backgroundColor: 'transparent',
+              showLine: true, borderWidth: 2, pointRadius: 0, tension: 0, order: 1 },
+            { label: 'Fit (total)', data: sXArr.map(function(x) { return {x: x, y: gaussianSum(deconvFitParams, x)}; }),
+              borderColor: '#cc2200', backgroundColor: 'transparent',
+              showLine: true, borderWidth: 2, borderDash: [6, 3], pointRadius: 0, tension: 0, order: 2 }
+        ];
+        for (var si = 0; si < sNPeaks; si++) {
+            (function(i) {
+                var A = deconvFitParams[i*3], mu = deconvFitParams[i*3+1], sig = deconvFitParams[i*3+2];
+                var color = PEAK_COLORS[i % PEAK_COLORS.length];
+                sDs.push({
+                    label: 'P' + (i+1) + ' (' + mu.toFixed(1) + ' nm)',
+                    data: sXArr.map(function(x) { var d = (x - mu) / sig; return {x: x, y: A * Math.exp(-0.5 * d * d)}; }),
+                    borderColor: color, backgroundColor: color + '47',
+                    showLine: true, borderWidth: 1.5, borderDash: [4, 4], pointRadius: 0, tension: 0,
+                    fill: true, order: 3 + i
+                });
+            })(si);
+        }
+
+        var tmpChart2 = new Chart(dcCanvas2, {
+            type: 'scatter', data: { datasets: sDs },
+            plugins: [
+                { id: 'chartAreaBorder', afterDraw: function(chart) {
+                    var ctx2 = chart.ctx, ca = chart.chartArea;
+                    ctx2.save(); ctx2.strokeStyle = '#666'; ctx2.lineWidth = 1;
+                    ctx2.strokeRect(ca.left, ca.top, ca.right - ca.left, ca.bottom - ca.top);
+                    ctx2.restore();
+                }}
+            ],
+            options: {
+                animation: false, responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: 'Deconvolution \u2014 ' + (sFname || '') + (sExWl ? ' (Ex ' + sExWl + ' nm)' : ''),
+                             font: { size: 18, weight: 'bold' }, color: '#000' },
+                    legend: { display: true, position: 'right',
+                              labels: { usePointStyle: true, boxWidth: 10, font: { size: 15 }, color: '#000' } }
+                },
+                scales: {
+                    x: { min: sXArr[0], max: sXArr[sXArr.length - 1],
+                         title: { display: true, text: 'Emission (nm)', font: { size: 18, weight: 'bold' }, color: '#000' },
+                         ticks: { font: { size: 16 }, padding: 2, color: '#000',
+                                  stepSize: _niceStep(sXArr[0], sXArr[sXArr.length - 1]) },
+                         grid: { color: '#e0e0e0', drawTicks: true, tickLength: 6, tickColor: '#666' },
+                         border: { color: '#666', width: 1 } },
+                    y: { title: { display: true, text: 'Fluorescence (a.u.)', font: { size: 18, weight: 'bold' }, color: '#000' },
+                         ticks: { font: { size: 16 }, padding: 2, color: '#000' }, beginAtZero: true,
+                         grid: { color: '#e0e0e0', drawTicks: true, tickLength: 6, tickColor: '#666' },
+                         border: { color: '#666', width: 1 } }
+                }
+            }
+        });
+
+        await new Promise(function(r) { setTimeout(r, 20); });
+        var b2 = pngB64(dcCanvas2);
         if (b2) zip.file('deconvolution.png', b2, {base64: true});
+        tmpChart2.destroy();
         document.body.removeChild(dcWrap2);
     }
 
@@ -2636,36 +2720,75 @@ function computeGaussianParamsFromBatch() {
     eemData.files.forEach(function(fname) {
         var p = {};
 
+        // Helper: group peak areas by label → family, with wavelength fallback
+        function groupAreas(res) {
+            var fp = res.fitParams, n = fp.length / 3;
+            var labels = res.peakLabels || [];
+            var families = {};   // { familyName: totalArea }
+            var byLabel = {};    // { label: totalArea }
+            for (var i = 0; i < n; i++) {
+                var mu = fp[i * 3 + 1], area = _peakArea(fp, i);
+                var lbl = labels[i] || '';
+                if (lbl) byLabel[lbl] = (byLabel[lbl] || 0) + area;
+                var fam = lbl ? (PEAK_FAMILIES[lbl] || lbl) : '';
+                if (fam) families[fam] = (families[fam] || 0) + area;
+            }
+            return { families: families, byLabel: byLabel };
+        }
+
         // ── Ex 440: Chl / PSII / PSI peaks ──
         var r440 = deconvBatchResults.ex440 && deconvBatchResults.ex440[fname];
         if (r440 && r440.fitParams) {
-            var fp = r440.fitParams, n = fp.length / 3;
-            var aChl = 0, aCP43 = 0, aCP47 = 0, aPSI = 0;
-            for (var i = 0; i < n; i++) {
-                var mu = fp[i * 3 + 1], area = _peakArea(fp, i);
-                if      (mu < 680)  aChl  += area;
-                else if (mu < 690)  aCP43 += area;
-                else if (mu < 710)  aCP47 += area;
-                else                aPSI  += area;
+            var g440 = groupAreas(r440);
+            var hasLabels = r440.peakLabels && r440.peakLabels.length;
+
+            var aPSII, aPSI, aCP43, aCP47, aPBStail;
+            if (hasLabels) {
+                aPSII    = g440.families.PSII     || 0;
+                aPSI     = g440.families.PSI      || 0;
+                aCP43    = g440.byLabel.CP43      || 0;
+                aCP47    = g440.byLabel.CP47      || 0;
+                aPBStail = g440.families.PBS_free  || 0;  // PBS tail at ~665 nm
+            } else {
+                // Wavelength-threshold fallback (backward compat)
+                var fp = r440.fitParams, n = fp.length / 3;
+                aPBStail = 0; aCP43 = 0; aCP47 = 0; aPSI = 0;
+                for (var i = 0; i < n; i++) {
+                    var mu = fp[i * 3 + 1], area = _peakArea(fp, i);
+                    if      (mu < 680) aPBStail += area;
+                    else if (mu < 690) aCP43    += area;
+                    else if (mu < 710) aCP47    += area;
+                    else               aPSI     += area;
+                }
+                aPSII = aCP43 + aCP47;
             }
-            var aPSII = aCP43 + aCP47;
-            var aTot  = aChl + aPSII + aPSI;
-            if (aPSII > 0 && aPSI  > 0) p.PSII_to_PSI_gauss    = aPSII / aPSI;
-            if (aCP43 > 0 && aCP47 > 0) p.CP43_to_CP47_gauss    = aCP43 / aCP47;
-            if (aTot  > 0 && aPSII > 0) p.Chl_PSII_norm_gauss   = aPSII / aTot;
-            if (aTot  > 0 && aPSI  > 0) p.Chl_PSI_norm_gauss    = aPSI  / aTot;
+            var aTot = aPBStail + aPSII + aPSI;
+            if (aPSII > 0 && aPSI  > 0) p.PSII_to_PSI_gauss  = aPSII / aPSI;
+            if (aCP43 > 0 && aCP47 > 0) p.CP43_to_CP47_gauss  = aCP43 / aCP47;
+            if (aTot  > 0 && aPSII > 0) p.Chl_PSII_norm_gauss = aPSII / aTot;
+            if (aTot  > 0 && aPSI  > 0) p.Chl_PSI_norm_gauss  = aPSI  / aTot;
         }
 
         // ── Ex 620: PBS-free / PBS→PSII / PBS→PSI peaks ──
         var r620 = deconvBatchResults.ex620 && deconvBatchResults.ex620[fname];
         if (r620 && r620.fitParams) {
-            var fp2 = r620.fitParams, n2 = fp2.length / 3;
-            var aFree = 0, aPBSpsii = 0, aPBSpsi = 0;
-            for (var j = 0; j < n2; j++) {
-                var mu2 = fp2[j * 3 + 1], area2 = _peakArea(fp2, j);
-                if      (mu2 < 675) aFree    += area2;
-                else if (mu2 < 710) aPBSpsii += area2;
-                else                aPBSpsi  += area2;
+            var g620 = groupAreas(r620);
+            var hasLabels620 = r620.peakLabels && r620.peakLabels.length;
+
+            var aFree, aPBSpsii, aPBSpsi;
+            if (hasLabels620) {
+                aFree    = g620.families.PBS_free || 0;
+                aPBSpsii = g620.families.PSII     || 0;
+                aPBSpsi  = g620.families.PSI      || 0;
+            } else {
+                var fp2 = r620.fitParams, n2 = fp2.length / 3;
+                aFree = 0; aPBSpsii = 0; aPBSpsi = 0;
+                for (var j = 0; j < n2; j++) {
+                    var mu2 = fp2[j * 3 + 1], area2 = _peakArea(fp2, j);
+                    if      (mu2 < 675) aFree    += area2;
+                    else if (mu2 < 710) aPBSpsii += area2;
+                    else                aPBSpsi  += area2;
+                }
             }
             var aTot2 = aFree + aPBSpsii + aPBSpsi;
             if (aTot2 > 0) {
@@ -3177,18 +3300,103 @@ function fitGaussians(xArr, yArr, initParams, maxIter, bounds) {
 // ============================================================
 // ── Batch deconvolution state ──────────────────────────────────────────────
 var deconvBatchResults = { 'ex440': {}, 'ex620': {}, 'ex560': {} };
+var deconvBatchPeaks   = { 'ex440': [], 'ex620': [], 'ex560': [] };
+var deconvOrganismType = 'pc_rich';
 
-// ── Preset configuration (uses WL_CONFIG for pigmentation-aware peaks) ─────
-// getPeaks(pigm) — pigm is optional; defaults to current pigmentation setting.
-// Ex 440: 3 peaks (CP43 ~685, CP47 ~695, PSI ~724) for all pigmentation types — no free Chl peak.
-// Ex 620: 3 peaks — PC/APC ~662 (PBS-free), PBS→PSII ~689, PBS→PSI ~724.
-// Ex 560: 4 peaks — PE ~580 (PBS-free via PE), APC via PE ~662 (PBS-free via APC), PBS→PSII ~689, PBS→PSI ~724.
+// ── Peak info: brief descriptions for tooltips ───────────────────────────
+var PEAK_INFO = {
+    'CP43': 'PSII inner antenna protein CP43; ~685 nm at 77 K',
+    'CP47': 'PSII inner antenna protein CP47; ~695 nm at 77 K',
+    'PSII': 'Photosystem II emission (unresolved CP43+CP47)',
+    'PSI':  'Photosystem I long-wavelength Chl a; species-variable 710\u2013735 nm',
+    'PC':   'Phycocyanin; ~645 nm at 77 K',
+    'APC':  'Allophycocyanin; ~660 nm at 77 K',
+    'APC-B':'APC terminal emitter; ~680 nm at 77 K. APC-B (APC680) and Lcm (ApcE, core\u2013membrane linker) carry the chromophore that bridges PBS core to photosystems.',
+    'PE':   'Phycoerythrin; ~580 nm at 77 K',
+    'PBS tail': 'Residual PBS fluorescence tail visible at Chl-a excitation (Ex 440); ~665 nm. Accounts for PBS emission that overlaps with PSII region.'
+};
+
+// ── Peak families: maps peak labels → family names for area grouping ──────
+var PEAK_FAMILIES = {
+    'CP43': 'PSII', 'CP47': 'PSII', 'PSII': 'PSII',
+    'PSI':  'PSI',
+    'PC':   'PBS_free', 'APC': 'PBS_free', 'APC-B': 'PBS_free',
+    'PE':   'PBS_free', 'PBS tail': 'PBS_free'
+};
+
+// ── Per-peak Gaussian sigma (σ) constraints at 77 K ──────────────────────
+// Literature-derived: FWHM = 2.355 × σ.
+// Sources: Andrizhiyevskaya et al. 2005 (F685/F695); Yokono et al. 2015
+// (red algae, FWHM boundaries: F685 5–15 nm, F695 5–10 nm);
+// Rakhimberdieva et al. 2007 (PBS components); general 77 K spectroscopy.
+// sig0 = initial σ; min/max = hard bounds for Levenberg–Marquardt fit.
+var PEAK_SIGMA_BOUNDS = {
+    'CP43':      { sig0: 5,  min: 2, max: 7  },  // FWHM ~5–16 nm
+    'CP47':      { sig0: 4,  min: 2, max: 6  },  // FWHM ~5–14 nm
+    'PSII':      { sig0: 6,  min: 3, max: 9  },  // FWHM ~7–21 nm (unresolved CP43+CP47)
+    'PSI':       { sig0: 9,  min: 4, max: 14 },  // FWHM ~9–33 nm (species-variable)
+    'PC':        { sig0: 8,  min: 4, max: 12 },  // FWHM ~9–28 nm
+    'APC':       { sig0: 7,  min: 3, max: 10 },  // FWHM ~7–24 nm
+    'APC-B':     { sig0: 5,  min: 2, max: 8  },  // FWHM ~5–19 nm
+    'PE':        { sig0: 10, min: 5, max: 16 },  // FWHM ~12–38 nm
+    'PBS tail':  { sig0: 8,  min: 3, max: 12 },  // FWHM ~7–28 nm
+    '_default':  { sig0: 8,  min: 2, max: 15 }   // fallback for custom peaks
+};
+
+// ── Organism-type peak presets (literature-derived 77 K peaks) ────────────
+var ORGANISM_PEAK_PRESETS = {
+    'pc_rich': {
+        label: 'PC-rich cyanobacteria',
+        ex440: [
+            { mu: 665, label: 'PBS tail' },
+            { mu: 685, label: 'CP43' },
+            { mu: 695, label: 'CP47' },
+            { mu: 720, label: 'PSI' }
+        ],
+        ex620: [
+            { mu: 645, label: 'PC' },
+            { mu: 660, label: 'APC' },
+            { mu: 680, label: 'APC-B' },
+            { mu: 685, label: 'CP43' },
+            { mu: 695, label: 'CP47' },
+            { mu: 720, label: 'PSI' }
+        ]
+    },
+    'pe_rich': {
+        label: 'PE-rich cyanobacteria',
+        ex440: [
+            { mu: 665, label: 'PBS tail' },
+            { mu: 685, label: 'CP43' },
+            { mu: 695, label: 'CP47' },
+            { mu: 720, label: 'PSI' }
+        ],
+        ex560: [
+            { mu: 580, label: 'PE' },
+            { mu: 645, label: 'PC' },
+            { mu: 660, label: 'APC' },
+            { mu: 685, label: 'PSII' },
+            { mu: 695, label: 'CP47' },
+            { mu: 720, label: 'PSI' }
+        ],
+        ex620: [
+            { mu: 645, label: 'PC' },
+            { mu: 660, label: 'APC' },
+            { mu: 680, label: 'APC-B' },
+            { mu: 685, label: 'CP43' },
+            { mu: 695, label: 'CP47' },
+            { mu: 720, label: 'PSI' }
+        ]
+    },
+    'custom': { label: 'Custom' }
+};
+
+// ── Preset configuration ─────────────────────────────────────────────────
+// getPeaks() reads from deconvBatchPeaks (populated by applyOrganismPreset).
 var DECONV_PRESET_CONFIG = {
     'ex440': {
         targetEx: 440,
         getPeaks: function() {
-            var W = WL_CONFIG;
-            return [W.k77_em_cp43, W.k77_em_cp47, W.k77_em_psi];
+            return deconvBatchPeaks.ex440.map(function(p) { return p.mu; });
         },
         pigmAll: true,
         emMin: 650, emMax: 750, autoDetect: false
@@ -3196,8 +3404,7 @@ var DECONV_PRESET_CONFIG = {
     'ex620': {
         targetEx: 620,
         getPeaks: function() {
-            var W = WL_CONFIG;
-            return [W.k77_em_pbs_free, W.k77_em_psii, W.k77_em_psi];
+            return deconvBatchPeaks.ex620.map(function(p) { return p.mu; });
         },
         pigmFilter: ['checkbox_chl_PC', 'checkbox_chl_PC_PE'],
         emMin: 640, emMax: 750, autoDetect: true
@@ -3205,8 +3412,7 @@ var DECONV_PRESET_CONFIG = {
     'ex560': {
         targetEx: 560,
         getPeaks: function() {
-            var W = WL_CONFIG;
-            return [W.k77_em_pe, W.k77_em_pbs_free, W.k77_em_psii, W.k77_em_psi];
+            return deconvBatchPeaks.ex560.map(function(p) { return p.mu; });
         },
         pigmFilter: ['checkbox_chl_PE', 'checkbox_chl_PC_PE'],
         emMin: 565, emMax: 750, autoDetect: true
@@ -3320,6 +3526,11 @@ function updateDeconvSubTabs() {
     if (eemData) {
         ['ex440', 'ex620', 'ex560'].forEach(updateDeconvExDropdown);
     }
+
+    // Initialize batch peaks from organism preset if not yet populated
+    if (!deconvBatchPeaks.ex440.length) {
+        applyOrganismPreset(deconvOrganismType);
+    }
 }
 
 // Populate the excitation dropdown for one preset tab with available EEM wavelengths
@@ -3369,6 +3580,13 @@ function runDeconvBatch(preset, onDone) {
     if (isNaN(emMax)) emMax = cfg.emMax;
 
     var peaks = cfg.getPeaks();
+    if (!peaks || !peaks.length) {
+        alert('No peaks defined for ' + preset + '. Add at least one peak before fitting.');
+        return;
+    }
+    var peakLabels = deconvBatchPeaks[preset]
+        ? deconvBatchPeaks[preset].map(function(p) { return p.label; })
+        : [];
     var files = eemData.files.slice();
     var btn = document.getElementById('deconv-fitall-' + preset);
     var progress = document.getElementById('deconv-batch-progress-' + preset);
@@ -3398,8 +3616,11 @@ function runDeconvBatch(preset, onDone) {
         if (btn) btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (idx + 1) + ' / ' + files.length;
         if (progress) progress.textContent = fname;
 
-        var result = fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax);
-        if (result) deconvBatchResults[preset][fname] = result;
+        var result = fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax, peakLabels);
+        if (result) {
+            result.peakLabels = peakLabels;
+            deconvBatchResults[preset][fname] = result;
+        }
         idx++;
         setTimeout(fitNext, 0);
     }
@@ -3444,7 +3665,8 @@ function runDeconvBatchAll() {
 }
 
 // Fit one sample at a given excitation wavelength with given initial peak positions
-function fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax) {
+// peakLabels (optional): array of label strings parallel to peaks, used for per-peak sigma constraints
+function fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax, peakLabels) {
     var mapData = eemData && eemData.maps[fname];
     if (!mapData) return null;
 
@@ -3471,18 +3693,21 @@ function fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax) {
         if (xFilt.length >= 3) { xArr = xFilt; yArr = yFilt; }
     }
 
-    // Build LM initial params [A, mu, sigma] per peak
-    var sig0 = 8, initParams = [], minB = [], maxB = [];
-    peaks.forEach(function(mu) {
+    // Build LM initial params [A, mu, sigma] per peak with per-peak constraints
+    var labels = peakLabels || [];
+    var initParams = [], minB = [], maxB = [];
+    peaks.forEach(function(mu, pi) {
+        var lbl = labels[pi] || '';
+        var sb = PEAK_SIGMA_BOUNDS[lbl] || PEAK_SIGMA_BOUNDS._default;
         var bestIdx = 0, bestDist = Infinity;
         for (var i = 0; i < xArr.length; i++) {
             var d = Math.abs(xArr[i] - mu);
             if (d < bestDist) { bestDist = d; bestIdx = i; }
         }
         var A0 = Math.max(0, yArr[bestIdx] || 0);
-        initParams.push(A0, mu, sig0);
-        minB.push(0, mu - 20, 1);
-        maxB.push(Infinity, mu + 30, 45);
+        initParams.push(A0, mu, sb.sig0);
+        minB.push(0, mu - 5, sb.min);
+        maxB.push(Infinity, mu + 5, sb.max);
     });
 
     var fitParams = fitGaussians(xArr, yArr, initParams, 300, { min: minB, max: maxB });
@@ -3531,6 +3756,22 @@ function renderDeconvBatchTable(preset, files) {
             (nFlagged > 1 ? 's' : '') + ' flagged (R² &lt; 0.90) — click <strong>Adjust</strong> to manually review.</div>';
     }
 
+    // Collapsible table accordion — closed by default
+    var collapseId = 'deconv-results-collapse-' + preset;
+    var nFitted = files.filter(function(f) { return results[f]; }).length;
+    html += '<div class="card mb-2" style="border:1px solid #ddd;">' +
+        '<div class="card-header py-1 px-2 d-flex align-items-center" ' +
+        'style="cursor:pointer; background:#f8f9fa; font-size:0.84em;" ' +
+        'data-toggle="collapse" data-target="#' + collapseId + '" ' +
+        'aria-expanded="false" aria-controls="' + collapseId + '">' +
+        '<i class="fa fa-chevron-right mr-1 deconv-collapse-icon" style="font-size:0.75em; transition:transform 0.2s;"></i>' +
+        '<span class="font-weight-bold">Peak details</span>' +
+        '<span class="text-muted ml-2">(' + nFitted + ' sample' + (nFitted !== 1 ? 's' : '') + ' fitted' +
+        (nFlagged > 0 ? ', ' + nFlagged + ' flagged' : '') + ')</span>' +
+        '</div>' +
+        '<div id="' + collapseId + '" class="collapse">' +
+        '<div class="card-body py-2 px-2">';
+
     html += '<div style="overflow-x:auto;">' +
         '<table class="table table-sm table-bordered table-hover mb-2" style="font-size:0.83em;">' +
         '<thead class="thead-light"><tr>' +
@@ -3547,8 +3788,12 @@ function renderDeconvBatchTable(preset, files) {
         var r2cls = res.r2 >= 0.95 ? 'badge-success' : res.r2 >= 0.90 ? 'badge-warning text-dark' : 'badge-danger';
         var r2badge = '<span class="badge ' + r2cls + '">' + res.r2.toFixed(3) + '</span>';
         var nPeaks = res.fitParams.length / 3;
+        var labels = res.peakLabels || [];
         var peaks = [];
-        for (var i = 0; i < nPeaks; i++) peaks.push(res.fitParams[i * 3 + 1].toFixed(1));
+        for (var i = 0; i < nPeaks; i++) {
+            var pos = res.fitParams[i * 3 + 1].toFixed(1);
+            peaks.push(labels[i] ? '<small class="text-muted">' + labels[i] + '</small>\u2009' + pos : pos);
+        }
         var statusBadge = res.flagged
             ? '<span class="badge badge-warning text-dark"><i class="fa fa-exclamation-triangle"></i> Check</span>'
             : '<span class="badge badge-success"><i class="fa fa-check"></i> OK</span>';
@@ -3565,6 +3810,7 @@ function renderDeconvBatchTable(preset, files) {
     });
 
     html += '</tbody></table></div>';
+    html += '</div></div></div>'; // close card-body, collapse, card
 
     // Chart gallery — one thumbnail per fitted sample
     var fittedFiles = files.filter(function(f) { return results[f] && results[f].xArr; });
@@ -3623,6 +3869,18 @@ function renderDeconvBatchTable(preset, files) {
     }
 
     container.innerHTML = html;
+
+    // Rotate chevron icon on collapse toggle
+    var collapseEl = document.getElementById('deconv-results-collapse-' + preset);
+    if (collapseEl) {
+        $(collapseEl).off('show.bs.collapse hide.bs.collapse')
+            .on('show.bs.collapse', function() {
+                $(this).parent().find('.deconv-collapse-icon').css('transform', 'rotate(90deg)');
+            })
+            .on('hide.bs.collapse', function() {
+                $(this).parent().find('.deconv-collapse-icon').css('transform', 'rotate(0deg)');
+            });
+    }
 
     // Draw thumbnails after DOM is updated
     if (fittedFiles.length > 0) {
@@ -3832,7 +4090,9 @@ function openCustomTabForAdjust(preset, fname) {
             renderDeconvSliders(deconvFitParams, res.xArr, res.yArr);
         }, 80);
     } else {
-        deconvPeakMus = cfg ? cfg.getPeaks().slice() : [689, 724];
+        deconvPeakMus = (deconvBatchPeaks[preset] && deconvBatchPeaks[preset].length)
+            ? deconvBatchPeaks[preset].map(function(p) { return p.mu; })
+            : (cfg ? cfg.getPeaks().slice() : [689, 724]);
         rebuildPeaksEditor();
         setTimeout(function() { runDeconvolution(true); }, 80);
     }
@@ -4009,6 +4269,95 @@ function initDeconvUI(autoRun) {
     }
 }
 
+// ── Organism peak presets — batch tab peak management ─────────────────────
+
+function applyOrganismPreset(organismType) {
+    deconvOrganismType = organismType || 'pc_rich';
+    var presetData = ORGANISM_PEAK_PRESETS[deconvOrganismType];
+    if (!presetData) return;
+    ['ex440', 'ex620', 'ex560'].forEach(function(preset) {
+        if (deconvOrganismType === 'custom') {
+            // Custom: keep existing peaks or set minimal defaults
+            if (!deconvBatchPeaks[preset] || !deconvBatchPeaks[preset].length) {
+                deconvBatchPeaks[preset] = [
+                    { mu: 689, label: 'PSII' },
+                    { mu: 724, label: 'PSI' }
+                ];
+            }
+        } else if (presetData[preset]) {
+            // Deep copy so user edits don't mutate the template
+            deconvBatchPeaks[preset] = presetData[preset].map(function(p) {
+                return { mu: p.mu, label: p.label };
+            });
+        } else {
+            deconvBatchPeaks[preset] = [];
+        }
+        rebuildBatchPeaksEditor(preset);
+    });
+}
+
+function rebuildBatchPeaksEditor(preset) {
+    var container = document.getElementById('deconv-batch-peaks-' + preset);
+    if (!container) return;
+    var peaks = deconvBatchPeaks[preset];
+    container.innerHTML = '';
+    if (!peaks || !peaks.length) {
+        container.innerHTML = '<span class="text-muted" style="font-size:0.78rem;">No peaks defined.</span>';
+        return;
+    }
+    peaks.forEach(function(peak, idx) {
+        var info = PEAK_INFO[peak.label] || '';
+        var sb = PEAK_SIGMA_BOUNDS[peak.label] || PEAK_SIGMA_BOUNDS._default;
+        var fwhmMin = (sb.min * 2.355).toFixed(0);
+        var fwhmMax = (sb.max * 2.355).toFixed(0);
+        var widthInfo = 'FWHM constraint: ' + fwhmMin + '\u2013' + fwhmMax + ' nm';
+        var span = document.createElement('span');
+        span.className = 'd-inline-flex align-items-center bg-white border rounded px-1';
+        span.style.cssText = 'gap:2px; font-size:0.82rem;';
+        span.title = (info ? info + '\n' : '') + widthInfo;
+        span.innerHTML =
+            '<small class="text-muted" style="font-size:0.7rem; min-width:24px;">' + peak.label + '</small>' +
+            '<input type="number" class="border-0 text-center p-0" style="width:46px; font-size:0.82rem;" ' +
+            'value="' + peak.mu + '" step="1" data-preset="' + preset + '" data-idx="' + idx + '" ' +
+            'onchange="updateBatchPeak(this)">' +
+            '<button class="btn p-0 text-danger" style="line-height:1; font-size:0.8rem;" ' +
+            'onclick="removeBatchPeak(\'' + preset + '\',' + idx + ')"><i class="fa fa-times"></i></button>';
+        container.appendChild(span);
+    });
+
+    // Add info icon with peak summary tooltip
+    var infoBtn = document.createElement('span');
+    infoBtn.className = 'par-tip text-muted ml-1';
+    infoBtn.style.cssText = 'font-size:0.82rem; cursor:help;';
+    var tipLines = peaks.map(function(pk) {
+        var desc = PEAK_INFO[pk.label] || pk.label;
+        var sb2 = PEAK_SIGMA_BOUNDS[pk.label] || PEAK_SIGMA_BOUNDS._default;
+        var fw1 = (sb2.min * 2.355).toFixed(0), fw2 = (sb2.max * 2.355).toFixed(0);
+        return pk.label + ' (' + pk.mu + ' nm, FWHM ' + fw1 + '\u2013' + fw2 + ' nm): ' + desc;
+    });
+    infoBtn.title = tipLines.join('\n');
+    infoBtn.innerHTML = '<i class="fa fa-info-circle"></i>';
+    container.appendChild(infoBtn);
+}
+
+function updateBatchPeak(input) {
+    var preset = input.dataset.preset;
+    var idx = parseInt(input.dataset.idx);
+    deconvBatchPeaks[preset][idx].mu = parseFloat(input.value) || deconvBatchPeaks[preset][idx].mu;
+}
+
+function removeBatchPeak(preset, idx) {
+    deconvBatchPeaks[preset].splice(idx, 1);
+    rebuildBatchPeaksEditor(preset);
+}
+
+function addBatchPeak(preset) {
+    deconvBatchPeaks[preset].push({ mu: 700, label: 'New' });
+    rebuildBatchPeaksEditor(preset);
+}
+
+// ── Custom tab preset application ────────────────────────────────────────
+
 function applyDeconvPreset() {
     var preset = document.getElementById('deconv-preset-select').value;
     var cfg = DECONV_PRESET_CONFIG[preset];
@@ -4146,12 +4495,14 @@ function openEnlargedDeconv(preset, fname) {
             showLine: true, borderWidth: 2, borderDash: [6, 3], pointRadius: 0, tension: 0, order: 2
         }
     ];
+    var enlargedLabels = res.peakLabels || [];
     for (var i = 0; i < nPeaks; i++) {
         (function(pi) {
             var A = res.fitParams[pi*3], mu = res.fitParams[pi*3+1], sig = res.fitParams[pi*3+2];
             var color = palColors[pi % palColors.length];
+            var elbl = enlargedLabels[pi] ? enlargedLabels[pi] + ' ' : 'P' + (pi+1) + ' ';
             datasets.push({
-                label: 'P' + (pi+1) + ' (' + mu.toFixed(1) + ' nm)',
+                label: elbl + '(' + mu.toFixed(1) + ' nm)',
                 data: res.xArr.map(function(x) {
                     var d = (x - mu) / sig;
                     return {x: x, y: A * Math.exp(-0.5 * d * d)};
