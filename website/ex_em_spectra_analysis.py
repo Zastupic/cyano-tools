@@ -391,7 +391,6 @@ def _corcondia(X, A, B, C):
 _PIGM_ALLOWED = {
     'checkbox_chl_only':  {'Chl-PSII', 'Chl-PSI'},
     'checkbox_chl_PC':    {'Chl-PSII', 'Chl-PSI', 'PBS-free (PC)', 'PBS→PSII', 'PBS→PSI'},
-    'checkbox_chl_PE':    {'Chl-PSII', 'Chl-PSI', 'PE direct', 'PE→PC', 'PE→PSII', 'PE→PSI'},
     'checkbox_chl_PC_PE': None,   # None = all allowed
 }
 
@@ -731,13 +730,6 @@ def eem_process():
                     pbs_free  = get_point(620, 662)
                     pbs_psii  = get_point(620, 689)
                     pbs_psi   = get_point(620, 724)
-                elif pigmentation == 'checkbox_chl_PE':
-                    p562 = get_point(560, 662)
-                    p558 = get_point(560, 580)
-                    if p562 is not None and p558 is not None:
-                        pbs_free = p562 + p558
-                    pbs_psii = get_point(560, 689)
-                    pbs_psi  = get_point(560, 724)
                 elif pigmentation == 'checkbox_chl_PC_PE':
                     if 560 in ex_wls_requested:
                         pbs_free = (get_point(620, 662) or 0) + (get_point(560, 662) or 0) + (get_point(560, 580) or 0)

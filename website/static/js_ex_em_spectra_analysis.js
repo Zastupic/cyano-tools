@@ -12,6 +12,7 @@ var groupFileOrder = [];
 var isSingleEx = false;
 var focusExWl = null;
 var deconvPeakMus = [689, 724];
+var deconvCurrentLabels = [];   // labels parallel to deconvPeakMus (for consistent peak colours)
 var deconvFitParams = null;
 var deconvCurrentData = null;
 var analysisMode = '77K';
@@ -83,8 +84,6 @@ var PARAM_LABELS = {
 var PIGM_PARAMS = {
     'checkbox_chl_only':   ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI','CP43_to_CP47'],
     'checkbox_chl_PC':     ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI','CP43_to_CP47',
-                            'PBS_free','PBS_PSII','PBS_PSI','PBS_tot','PBS_free_norm','PBS_PSII_norm','PBS_PSI_norm','PBS_PSII_to_PBS_PSI'],
-    'checkbox_chl_PE':     ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI','CP43_to_CP47',
                             'PBS_free','PBS_PSII','PBS_PSI','PBS_tot','PBS_free_norm','PBS_PSII_norm','PBS_PSI_norm','PBS_PSII_to_PBS_PSI'],
     'checkbox_chl_PC_PE':  ['Chl_PSII','Chl_PSI','Chl_tot','Chl_PSII_norm','Chl_PSI_norm','PSII_to_PSI','CP43_to_CP47',
                             'PBS_free','PBS_PSII','PBS_PSI','PBS_tot','PBS_free_norm','PBS_PSII_norm','PBS_PSI_norm','PBS_PSII_to_PBS_PSI','PC_to_PE']
@@ -709,15 +708,15 @@ function switchPigmentation(val) {
 
 // Client-side fluorophore table (mirrors backend _FLUOROPHORE_TABLE)
 var _JS_FLUOROPHORE_TABLE = [
-    {ex: 440, em: 689, label: 'Chl-PSII',      pigm: ['checkbox_chl_only','checkbox_chl_PC','checkbox_chl_PE','checkbox_chl_PC_PE']},
-    {ex: 440, em: 724, label: 'Chl-PSI',        pigm: ['checkbox_chl_only','checkbox_chl_PC','checkbox_chl_PE','checkbox_chl_PC_PE']},
+    {ex: 440, em: 689, label: 'Chl-PSII',      pigm: ['checkbox_chl_only','checkbox_chl_PC','checkbox_chl_PC_PE']},
+    {ex: 440, em: 724, label: 'Chl-PSI',        pigm: ['checkbox_chl_only','checkbox_chl_PC','checkbox_chl_PC_PE']},
     {ex: 620, em: 662, label: 'PBS-free (PC)',   pigm: ['checkbox_chl_PC','checkbox_chl_PC_PE']},
     {ex: 620, em: 689, label: 'PBS\u2192PSII',  pigm: ['checkbox_chl_PC','checkbox_chl_PC_PE']},
     {ex: 620, em: 724, label: 'PBS\u2192PSI',   pigm: ['checkbox_chl_PC','checkbox_chl_PC_PE']},
-    {ex: 560, em: 580, label: 'PE direct',       pigm: ['checkbox_chl_PE','checkbox_chl_PC_PE']},
-    {ex: 560, em: 662, label: 'PE\u2192PC',      pigm: ['checkbox_chl_PE','checkbox_chl_PC_PE']},
-    {ex: 560, em: 689, label: 'PE\u2192PSII',   pigm: ['checkbox_chl_PE','checkbox_chl_PC_PE']},
-    {ex: 560, em: 724, label: 'PE\u2192PSI',    pigm: ['checkbox_chl_PE','checkbox_chl_PC_PE']}
+    {ex: 560, em: 580, label: 'PE direct',       pigm: ['checkbox_chl_PC_PE']},
+    {ex: 560, em: 662, label: 'PE\u2192PC',      pigm: ['checkbox_chl_PC_PE']},
+    {ex: 560, em: 689, label: 'PE\u2192PSII',   pigm: ['checkbox_chl_PC_PE']},
+    {ex: 560, em: 724, label: 'PE\u2192PSI',    pigm: ['checkbox_chl_PC_PE']}
 ];
 
 function _jsAnnotateComponent(exWl, emWl, exLoading, emLoading, pigm, tol) {
@@ -1195,12 +1194,6 @@ function updateDerivedParamHint() {
                 'Ex620/Em662 <span class="text-muted">(PBS-free)</span>',
                 'Ex620/Em689 <span class="text-muted">(PBS-PSII)</span>',
                 'Ex620/Em724 <span class="text-muted">(PBS-PSI)</span>'
-            ]);
-        } else if (pigm === 'checkbox_chl_PE') {
-            items = items.concat([
-                'Ex560/Em580+662 <span class="text-muted">(PBS-free)</span>',
-                'Ex560/Em689 <span class="text-muted">(PBS-PSII)</span>',
-                'Ex560/Em724 <span class="text-muted">(PBS-PSI)</span>'
             ]);
         } else if (pigm === 'checkbox_chl_PC_PE') {
             items = items.concat([
@@ -2522,7 +2515,7 @@ async function downloadZIP(btn) {
                 for (var pi = 0; pi < nPeaks; pi++) {
                     (function(i) {
                         var A = res.fitParams[i*3], mu = res.fitParams[i*3+1], sig = res.fitParams[i*3+2];
-                        var color = palColors[i % palColors.length];
+                        var color = getPeakColor(palColors, i, resLabels[i]);
                         var plbl = resLabels[i] ? resLabels[i] + ' ' : 'P' + (i+1) + ' ';
                         ds.push({
                             label: plbl + '(' + mu.toFixed(1) + ' nm)',
@@ -2631,7 +2624,7 @@ async function downloadZIP(btn) {
         for (var si = 0; si < sNPeaks; si++) {
             (function(i) {
                 var A = deconvFitParams[i*3], mu = deconvFitParams[i*3+1], sig = deconvFitParams[i*3+2];
-                var color = PEAK_COLORS[i % PEAK_COLORS.length];
+                var color = getPeakColor(PEAK_COLORS, i, deconvCurrentLabels[i]);
                 sDs.push({
                     label: 'P' + (i+1) + ' (' + mu.toFixed(1) + ' nm)',
                     data: sXArr.map(function(x) { var d = (x - mu) / sig; return {x: x, y: A * Math.exp(-0.5 * d * d)}; }),
@@ -3599,31 +3592,6 @@ var ORGANISM_PEAK_PRESETS = {
             { mu: 720, label: 'PSI' }
         ]
     },
-    'pe_rich': {
-        label: 'PE-rich cyanobacteria',
-        ex440: [
-            { mu: 665, label: 'PBS tail' },
-            { mu: 685, label: 'CP43' },
-            { mu: 695, label: 'CP47' },
-            { mu: 720, label: 'PSI' }
-        ],
-        ex560: [
-            { mu: 580, label: 'PE' },
-            { mu: 645, label: 'PC' },
-            { mu: 660, label: 'APC' },
-            { mu: 685, label: 'PSII' },
-            { mu: 695, label: 'CP47' },
-            { mu: 720, label: 'PSI' }
-        ],
-        ex620: [
-            { mu: 645, label: 'PC' },
-            { mu: 660, label: 'APC' },
-            { mu: 680, label: 'APC-TE' },
-            { mu: 685, label: 'CP43' },
-            { mu: 695, label: 'CP47' },
-            { mu: 720, label: 'PSI' }
-        ]
-    },
     'pc_pe_rich': {
         label: 'PC+PE cyanobacteria',
         ex440: [
@@ -3664,7 +3632,6 @@ var ORGANISM_PEAK_PRESETS = {
 var PIGM_TO_ORGANISM = {
     'checkbox_chl_only': 'chl_only',
     'checkbox_chl_PC':   'pc_rich',
-    'checkbox_chl_PE':   'pe_rich',
     'checkbox_chl_PC_PE':'pc_pe_rich'
 };
 
@@ -3692,7 +3659,7 @@ var DECONV_PRESET_CONFIG = {
         getPeaks: function() {
             return deconvBatchPeaks.ex560.map(function(p) { return p.mu; });
         },
-        pigmFilter: ['checkbox_chl_PE', 'checkbox_chl_PC_PE'],
+        pigmFilter: ['checkbox_chl_PC_PE'],
         emMin: 565, emMax: 750, autoDetect: true
     },
     'custom': {
@@ -3704,7 +3671,6 @@ var DECONV_PRESET_CONFIG = {
 var PIGM_SUGGESTED_RANK = {
     'checkbox_chl_only':   2,
     'checkbox_chl_PC':     5,
-    'checkbox_chl_PE':     6,
     'checkbox_chl_PC_PE':  8
 };
 
@@ -3781,7 +3747,7 @@ function updateDeconvSubTabs() {
     var pigm = getPigmentation();
     var mode = (eemData && eemData.analysis_mode) || analysisMode;
     var show620 = mode === '77K' && (pigm === 'checkbox_chl_PC' || pigm === 'checkbox_chl_PC_PE');
-    var show560 = mode === '77K' && (pigm === 'checkbox_chl_PE' || pigm === 'checkbox_chl_PC_PE');
+    var show560 = mode === '77K' && pigm === 'checkbox_chl_PC_PE';
 
     var li620 = document.getElementById('dcsub-620-li');
     var li560 = document.getElementById('dcsub-560-li');
@@ -4198,7 +4164,8 @@ function redrawDeconvThumbs(preset) {
                 showGrid: showGrid,
                 fixedYMax: commonScale ? globalYMax : 0,
                 colors: colors,
-                fillOpacity: fillOpacity
+                fillOpacity: fillOpacity,
+                peakLabels: res.peakLabels
             });
         }
     });
@@ -4210,6 +4177,7 @@ function drawDeconvThumbnail(canvas, xArr, yArr, fitParams, options) {
     var showGrid = opts.showGrid || false;
     var fixedYMax = opts.fixedYMax || 0;
     var colors = opts.colors || PEAK_COLORS;
+    var peakLabels = opts.peakLabels || [];
     var fillOpacity = opts.fillOpacity !== undefined ? opts.fillOpacity : 0.28;
     var ctx = canvas.getContext('2d');
     var W = canvas.offsetWidth || canvas.width;
@@ -4247,7 +4215,7 @@ function drawDeconvThumbnail(canvas, xArr, yArr, fitParams, options) {
     // Individual peak fills
     for (var i = 0; i < nPeaks; i++) {
         var A = fitParams[i * 3], mu = fitParams[i * 3 + 1], sig = fitParams[i * 3 + 2];
-        var color = colors[i % colors.length];
+        var color = getPeakColor(colors, i, peakLabels[i]);
         ctx.beginPath();
         ctx.moveTo(cx(xArr[0]), cy(0));
         for (var j = 0; j < xArr.length; j++) {
@@ -4351,6 +4319,7 @@ function openCustomTabForAdjust(preset, fname) {
         var nPeaks = res.fitParams.length / 3;
         deconvPeakMus = [];
         for (var i = 0; i < nPeaks; i++) deconvPeakMus.push(Math.round(res.fitParams[i * 3 + 1]));
+        deconvCurrentLabels = res.peakLabels ? res.peakLabels.slice() : [];
         rebuildPeaksEditor();
         // Set ex selector to match actual fitted wavelength
         if (exSel) {
@@ -4372,6 +4341,9 @@ function openCustomTabForAdjust(preset, fname) {
         deconvPeakMus = (deconvBatchPeaks[preset] && deconvBatchPeaks[preset].length)
             ? deconvBatchPeaks[preset].map(function(p) { return p.mu; })
             : (cfg ? cfg.getPeaks().slice() : [689, 724]);
+        deconvCurrentLabels = (deconvBatchPeaks[preset] && deconvBatchPeaks[preset].length)
+            ? deconvBatchPeaks[preset].map(function(p) { return p.label; })
+            : [];
         rebuildPeaksEditor();
         setTimeout(function() { runDeconvolution(true); }, 80);
     }
@@ -4441,7 +4413,7 @@ var deconvHandlePlugin = {
             var mu  = deconvFitParams[i * 3 + 1];
             var sig = Math.abs(deconvFitParams[i * 3 + 2]);
             var halfFwhm = sig * 1.1775;            // = FWHM/2 = σ × 2.355/2
-            var color = PEAK_COLORS[i % PEAK_COLORS.length];
+            var color = getPeakColor(PEAK_COLORS, i, deconvCurrentLabels[i]);
 
             var apexPx = xs.getPixelForValue(mu);
             var apexPy = ys.getPixelForValue(A);
@@ -4641,6 +4613,7 @@ function applyDeconvPreset() {
     var preset = document.getElementById('deconv-preset-select').value;
     var cfg = DECONV_PRESET_CONFIG[preset];
     deconvPeakMus = cfg ? cfg.getPeaks().slice() : [WL_CONFIG.k77_em_psii, WL_CONFIG.k77_em_psi];
+    deconvCurrentLabels = [];
     rebuildPeaksEditor();
 }
 
@@ -4667,11 +4640,13 @@ function updateDeconvPeak(input) {
 
 function addDeconvPeak() {
     deconvPeakMus.push(700);
+    deconvCurrentLabels.push('');
     rebuildPeaksEditor();
 }
 
 function removeDeconvPeak(idx) {
     deconvPeakMus.splice(idx, 1);
+    deconvCurrentLabels.splice(idx, 1);
     rebuildPeaksEditor();
 }
 
@@ -4717,6 +4692,32 @@ var DECONV_PALETTES = {
 };
 var deconvPaletteName = 'default';
 var PEAK_COLORS = DECONV_PALETTES['default'];
+
+// Fixed palette-slot index for each known peak label so the same peak
+// always gets the same colour regardless of its position in the peak list.
+var PEAK_LABEL_INDEX = {
+    'CP43': 0, 'PSII': 0,   // PSII (unresolved) shares slot with CP43
+    'CP47': 1,
+    'PSI':  2,
+    'PC':   3,
+    'APC':  4,
+    'APC-TE': 5,
+    'PE':   6
+};
+
+/**
+ * Return the colour for a peak, using the label-based fixed slot when
+ * a known label is provided, otherwise falling back to positional index.
+ * @param {string[]} palette  - the active colour palette array
+ * @param {number}   idx      - positional index of the peak in its list
+ * @param {string=}  label    - optional peak label (e.g. 'CP43', 'PSI')
+ */
+function getPeakColor(palette, idx, label) {
+    var slot = (label && PEAK_LABEL_INDEX.hasOwnProperty(label))
+        ? PEAK_LABEL_INDEX[label]
+        : idx;
+    return palette[slot % palette.length];
+}
 
 function _niceStep(lo, hi) {
     var span = Math.abs(hi - lo);
@@ -4778,7 +4779,7 @@ function openEnlargedDeconv(preset, fname) {
     for (var i = 0; i < nPeaks; i++) {
         (function(pi) {
             var A = res.fitParams[pi*3], mu = res.fitParams[pi*3+1], sig = res.fitParams[pi*3+2];
-            var color = palColors[pi % palColors.length];
+            var color = getPeakColor(palColors, pi, enlargedLabels[pi]);
             var elbl = enlargedLabels[pi] ? enlargedLabels[pi] + ' ' : 'P' + (pi+1) + ' ';
             datasets.push({
                 label: elbl + '(' + mu.toFixed(1) + ' nm)',
@@ -4928,7 +4929,7 @@ function renderDeconvChart(xArr, yArr, fitParams, fname, exWl) {
     for (var i = 0; i < nPeaks; i++) {
         (function(pi) {
             var A = fitParams[pi*3], mu = fitParams[pi*3+1], sig = fitParams[pi*3+2];
-            var color = PEAK_COLORS[pi % PEAK_COLORS.length];
+            var color = getPeakColor(PEAK_COLORS, pi, deconvCurrentLabels[pi]);
             datasets.push({
                 label: 'P' + (pi+1) + ' (' + mu.toFixed(1) + ' nm)',
                 data: xArr.map(function(x) {
@@ -5003,7 +5004,7 @@ function renderDeconvResults(fitParams, xArr, yArr) {
         var A   = fitParams[i*3];
         var mu  = fitParams[i*3+1];
         var sig = Math.abs(fitParams[i*3+2]);
-        var color = PEAK_COLORS[i % PEAK_COLORS.length];
+        var color = getPeakColor(PEAK_COLORS, i, deconvCurrentLabels[i]);
         html += '<tr>' +
             '<td><span class="font-weight-bold" style="color:' + color + ';">P' + (i+1) + '</span></td>' +
             '<td class="text-muted" style="font-size:0.81em; white-space:nowrap;">' + deconvPeakLabel(mu) + '</td>' +
@@ -5133,12 +5134,6 @@ function recomputeParamsFromMaps() {
                     pbsFree = getPoint(W.k77_ex_pc, W.k77_em_pbs_free);
                     pbsPSII = getPoint(W.k77_ex_pc, W.k77_em_psii);
                     pbsPSI  = getPoint(W.k77_ex_pc, W.k77_em_psi);
-                } else if (pigmVal === 'checkbox_chl_PE') {
-                    var p562 = getPoint(W.k77_ex_pe, W.k77_em_pbs_free),
-                        p558 = getPoint(W.k77_ex_pe, W.k77_em_pe);
-                    if (p562 != null && p558 != null) pbsFree = p562 + p558;
-                    pbsPSII = getPoint(W.k77_ex_pe, W.k77_em_psii);
-                    pbsPSI  = getPoint(W.k77_ex_pe, W.k77_em_psi);
                 } else if (pigmVal === 'checkbox_chl_PC_PE') {
                     var has560 = mapData.ex_wl.some(function(v) { return Math.abs(v - W.k77_ex_pe) < 0.5; });
                     if (has560) {
@@ -5331,7 +5326,7 @@ function renderDeconvSliders(fitParams, xArr, yArr) {
         var mu   = fitParams[i*3+1];
         var sig  = Math.abs(fitParams[i*3+2]);
         var fwhm = (2.355 * sig).toFixed(1);
-        var color = PEAK_COLORS[i % PEAK_COLORS.length];
+        var color = getPeakColor(PEAK_COLORS, i, deconvCurrentLabels[i]);
         var aMax  = Math.max(1, (yMax * 1.5)).toFixed(0);
 
         html +=
@@ -5511,6 +5506,7 @@ function attachDeconvDrag() {
             // ── Remove peak ──────────────────────────────────────────────
             deconvFitParams.splice(h.pi * 3, 3);
             deconvPeakMus.splice(h.pi, 1);
+            deconvCurrentLabels.splice(h.pi, 1);
             if (deconvFitParams.length > 0) {
                 renderDeconvChart(d.xArr, d.yArr, deconvFitParams, d.fname, d.exWl);
                 renderDeconvResults(deconvFitParams, d.xArr, d.yArr);
@@ -5531,6 +5527,7 @@ function attachDeconvDrag() {
             A  = Math.max(0, A);
             deconvFitParams.push(A, mu, 8);          // σ₀ = 8 nm (FWHM ≈ 19 nm)
             deconvPeakMus.push(Math.round(mu));
+            deconvCurrentLabels.push('');
             renderDeconvChart(d.xArr, d.yArr, deconvFitParams, d.fname, d.exWl);
             renderDeconvResults(deconvFitParams, d.xArr, d.yArr);
             renderDeconvSliders(deconvFitParams, d.xArr, d.yArr);
@@ -5619,7 +5616,7 @@ function generateMethodsText() {
                 'Ex\u202f620/Em\u202f689\u202fnm (PBS-PSII; PBS coupled to PSII), and ' +
                 'Ex\u202f620/Em\u202f724\u202fnm (PBS-PSI; PBS coupled to PSI).';
         }
-        if (pigmVal === 'checkbox_chl_PE' || pigmVal === 'checkbox_chl_PC_PE') {
+        if (pigmVal === 'checkbox_chl_PC_PE') {
             dp += ' Phycoerythrin (PE) contribution was assessed from Ex\u202f560/Em\u202f580\u202fnm (PE emission), ' +
                 'Ex\u202f560/Em\u202f662\u202fnm (PBS-free, PE), Ex\u202f560/Em\u202f689\u202fnm (PBS-PSII, PE), and ' +
                 'Ex\u202f560/Em\u202f724\u202fnm (PBS-PSI, PE).';
