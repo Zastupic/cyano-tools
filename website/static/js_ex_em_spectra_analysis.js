@@ -698,6 +698,9 @@ function switchPigmentation(val) {
     recomputeParamsFromMaps();
     // Update deconvolution sub-tabs visibility for new pigmentation
     updateDeconvSubTabs();
+    // Sync deconvolution organism preset to pigmentation
+    var org = PIGM_TO_ORGANISM[val];
+    if (org) applyOrganismPreset(org);
     // Re-annotate PARAFAC components client-side (no re-fit needed)
     if (parafacResults) _reAnnotateParafacComponents(val);
     // Update PARAFAC rank suggestion for this pigmentation
@@ -2027,6 +2030,10 @@ function buildWorkbook() {
 
     // ── Sheet 2: Gaussian deconvolution parameters ───────────────────────────
     appendGaussParamsSheet(wb, files);
+
+    // ── Sheet 3: PARAFAC parameters ────────────────────────────────────────
+    appendParafacSheet(wb);
+
     eemData.ex_wls.forEach(function(exWl) {
         var spec = eemData.emission_spectra[String(exWl)];
         if (!spec || !spec.wl.length) return;
@@ -2038,7 +2045,6 @@ function buildWorkbook() {
         appendSpectraSheet(wb, spec, files, 'Ex (nm)', 'Ex@Em' + emWl, 'NormEx@Em' + emWl);
     });
     appendDeconvSheets(wb);
-    appendParafacSheet(wb);
     return wb;
 }
 
@@ -2109,7 +2115,11 @@ function appendGaussParamsSheet(wb, files) {
         { key: 'PBS_PSII_to_PBS_PSI_gauss', label: 'PBS-PSII:PBS-PSI (Ex 620)' },
         { key: 'PBS_free_norm_gauss',       label: 'PBS-free/tot (Ex 620)' },
         { key: 'PBS_PSII_norm_gauss',       label: 'PBS-PSII/tot (Ex 620)' },
-        { key: 'PBS_PSI_norm_gauss',        label: 'PBS-PSI/tot (Ex 620)' }
+        { key: 'PBS_PSI_norm_gauss',        label: 'PBS-PSI/tot (Ex 620)' },
+        { key: 'PE_PSII_to_PE_PSI_gauss',  label: 'PE-PSII:PE-PSI (Ex 560)' },
+        { key: 'PE_free_norm_gauss',        label: 'PE-free/tot (Ex 560)' },
+        { key: 'PE_PSII_norm_gauss',        label: 'PE-PSII/tot (Ex 560)' },
+        { key: 'PE_PSI_norm_gauss',         label: 'PE-PSI/tot (Ex 560)' }
     ];
     var gaussParams = computeGaussianParamsFromBatch();
     var ratiosAvail = GAUSS_RATIO_KEYS.filter(function(rk) {
@@ -2257,34 +2267,76 @@ function appendParafacSheet(wb) {
     if (!parafacResults) return;
     var data = parafacResults;
 
-    // Summary rows at top
-    var rows = [
-        ['PARAFAC Summary'],
-        ['Components', data.n_components],
-        ['Explained variance (%)', data.explained_variance],
-        ['RMSE', data.rmse],
-        []  // blank separator row
-    ];
-
-    // Scores table header
-    var header = ['Sample'];
+    // Identify active (non-rejected) components
+    var activeIdx = [];
     for (var r = 0; r < data.n_components; r++) {
+        if (!parafacRejected[r]) activeIdx.push(r);
+    }
+
+    // Build header: Sample | component scores | derived ratios
+    var header = ['Sample'];
+    activeIdx.forEach(function(r) {
         var label = parafacAnnotations[r] || ('Component ' + (r + 1));
         var assign = parafacPigmAssign[r] || '';
         header.push('C' + (r + 1) + ': ' + label + (assign ? ' [' + assign + ']' : ''));
-    }
-    rows.push(header);
+    });
 
-    // Score values per sample
+    // Derived ratio columns (same keys as computeParafacParams)
+    var PARAFAC_RATIO_KEYS = [
+        { key: 'PSII_to_PSI_parafac',          label: 'PSII:PSI' },
+        { key: 'CP43_to_CP47_parafac',         label: 'CP43/CP47' },
+        { key: 'Chl_PSII_norm_parafac',        label: 'Chl-PSII/tot' },
+        { key: 'Chl_PSI_norm_parafac',         label: 'Chl-PSI/tot' },
+        { key: 'PBS_PSII_to_PBS_PSI_parafac',  label: 'PBS-PSII:PBS-PSI' },
+        { key: 'PBS_free_norm_parafac',         label: 'PBS-free/tot' },
+        { key: 'PBS_PSII_norm_parafac',         label: 'PBS-PSII/tot' },
+        { key: 'PBS_PSI_norm_parafac',          label: 'PBS-PSI/tot' }
+    ];
+
+    var parafacParams = computeParafacParams();
+
+    // Filter to only ratios that have at least one value
+    var ratiosAvail = PARAFAC_RATIO_KEYS.filter(function(rk) {
+        return data.sample_names.some(function(f) {
+            var v = parafacParams[f] && parafacParams[f][rk.key];
+            return v !== null && v !== undefined;
+        });
+    });
+    ratiosAvail.forEach(function(rk) { header.push(rk.label); });
+
+    // Summary rows at top
+    var rows = [
+        ['PARAFAC Summary'],
+        ['Components', data.n_components,
+         '', 'Explained variance (%)', data.explained_variance,
+         '', 'RMSE', data.rmse],
+        []  // blank separator row
+    ];
+
+    // Component assignment summary
+    var assignRow = ['Component assignments:'];
+    activeIdx.forEach(function(r) {
+        assignRow.push('C' + (r + 1) + ' = ' + (parafacPigmAssign[r] || 'unassigned'));
+    });
+    rows.push(assignRow);
+    rows.push([]);  // blank separator
+
+    // Data table
+    rows.push(header);
     data.sample_names.forEach(function(name, i) {
         var row = [name];
-        for (var r = 0; r < data.n_components; r++) {
+        activeIdx.forEach(function(r) {
             row.push(data.scores[i][r]);
-        }
+        });
+        // Derived ratios
+        ratiosAvail.forEach(function(rk) {
+            var v = parafacParams[name] && parafacParams[name][rk.key];
+            row.push(v !== null && v !== undefined ? v : '');
+        });
         rows.push(row);
     });
 
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'PARAFAC Scores');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Params - PARAFAC');
 }
 
 function _buildMethodsHtml(toolTitle, plainText) {
@@ -2828,6 +2880,16 @@ var COMPARISON_GROUPS = [
             { key: 'PBS_PSII_norm',       label: 'PBS-PSII / PBS-tot', fixedKey: 'PBS_PSII_norm',       gaussKey: 'PBS_PSII_norm_gauss',       parafacKey: 'PBS_PSII_norm_parafac' },
             { key: 'PBS_PSI_norm',        label: 'PBS-PSI / PBS-tot',  fixedKey: 'PBS_PSI_norm',        gaussKey: 'PBS_PSI_norm_gauss',        parafacKey: 'PBS_PSI_norm_parafac' }
         ]
+    },
+    {
+        id: 'pe',
+        label: 'PE coupling (Ex 560 nm)',
+        params: [
+            { key: 'PE_PSII_to_PE_PSI', label: 'PE-PSII : PE-PSI', fixedKey: null, gaussKey: 'PE_PSII_to_PE_PSI_gauss', parafacKey: null },
+            { key: 'PE_free_norm',       label: 'PE-free / PE-tot', fixedKey: null, gaussKey: 'PE_free_norm_gauss',       parafacKey: null },
+            { key: 'PE_PSII_norm',       label: 'PE-PSII / PE-tot', fixedKey: null, gaussKey: 'PE_PSII_norm_gauss',       parafacKey: null },
+            { key: 'PE_PSI_norm',        label: 'PE-PSI / PE-tot',  fixedKey: null, gaussKey: 'PE_PSI_norm_gauss',        parafacKey: null }
+        ]
     }
 ];
 
@@ -2941,6 +3003,37 @@ function computeGaussianParamsFromBatch() {
                 if (aPBSpsi  > 0) p.PBS_PSI_norm_gauss        = aPBSpsi  / aTot2;
                 if (aPBSpsii > 0 && aPBSpsi > 0)
                     p.PBS_PSII_to_PBS_PSI_gauss = aPBSpsii / aPBSpsi;
+            }
+        }
+
+        // ── Ex 560: PE excitation — PBS-free / PBS→PSII / PBS→PSI ──
+        var r560 = deconvBatchResults.ex560 && deconvBatchResults.ex560[fname];
+        if (r560 && r560.fitParams) {
+            var g560 = groupAreas(r560);
+            var hasLabels560 = r560.peakLabels && r560.peakLabels.length;
+
+            var aFree560, aPE_PSII, aPE_PSI;
+            if (hasLabels560) {
+                aFree560 = g560.families.PBS_free || 0;
+                aPE_PSII = g560.families.PSII     || 0;
+                aPE_PSI  = g560.families.PSI      || 0;
+            } else {
+                var fp3 = r560.fitParams, n3 = fp3.length / 3;
+                aFree560 = 0; aPE_PSII = 0; aPE_PSI = 0;
+                for (var k = 0; k < n3; k++) {
+                    var mu3 = fp3[k * 3 + 1], area3 = _peakArea(fp3, k);
+                    if      (mu3 < 675) aFree560 += area3;
+                    else if (mu3 < 710) aPE_PSII += area3;
+                    else                aPE_PSI  += area3;
+                }
+            }
+            var aTot3 = aFree560 + aPE_PSII + aPE_PSI;
+            if (aTot3 > 0) {
+                if (aFree560 > 0) p.PE_free_norm_gauss       = aFree560 / aTot3;
+                if (aPE_PSII > 0) p.PE_PSII_norm_gauss       = aPE_PSII / aTot3;
+                if (aPE_PSI  > 0) p.PE_PSI_norm_gauss        = aPE_PSI  / aTot3;
+                if (aPE_PSII > 0 && aPE_PSI > 0)
+                    p.PE_PSII_to_PE_PSI_gauss = aPE_PSII / aPE_PSI;
             }
         }
 
@@ -3455,7 +3548,7 @@ var PEAK_INFO = {
     'PSI':  'Photosystem I long-wavelength Chl a; species-variable 710\u2013735 nm',
     'PC':   'Phycocyanin; ~645 nm at 77 K',
     'APC':  'Allophycocyanin; ~660 nm at 77 K',
-    'APC-B':'APC terminal emitter; ~680 nm at 77 K. APC-B (APC680) and Lcm (ApcE, core\u2013membrane linker) carry the chromophore that bridges PBS core to photosystems.',
+    'APC-TE':'APC terminal emitter (APC680); ~680 nm at 77 K. Collective pool of red-shifted APC subunits: ApcD (APC-B, energy transfer to PSI), ApcE (Lcm, core\u2013membrane linker, to PSII) and ApcF (assists ApcE). Not spectrally resolvable at 77 K.',
     'PE':   'Phycoerythrin; ~580 nm at 77 K',
     'PBS tail': 'Residual PBS fluorescence tail visible at Chl-a excitation (Ex 440); ~665 nm. Accounts for PBS emission that overlaps with PSII region.'
 };
@@ -3464,7 +3557,7 @@ var PEAK_INFO = {
 var PEAK_FAMILIES = {
     'CP43': 'PSII', 'CP47': 'PSII', 'PSII': 'PSII',
     'PSI':  'PSI',
-    'PC':   'PBS_free', 'APC': 'PBS_free', 'APC-B': 'PBS_free',
+    'PC':   'PBS_free', 'APC': 'PBS_free', 'APC-TE': 'PBS_free',
     'PE':   'PBS_free', 'PBS tail': 'PBS_free'
 };
 
@@ -3481,7 +3574,7 @@ var PEAK_SIGMA_BOUNDS = {
     'PSI':       { sig0: 9,  min: 4, max: 14 },  // FWHM ~9–33 nm (species-variable)
     'PC':        { sig0: 8,  min: 4, max: 12 },  // FWHM ~9–28 nm
     'APC':       { sig0: 7,  min: 3, max: 10 },  // FWHM ~7–24 nm
-    'APC-B':     { sig0: 5,  min: 2, max: 8  },  // FWHM ~5–19 nm
+    'APC-TE':    { sig0: 5,  min: 2, max: 8  },  // FWHM ~5–19 nm
     'PE':        { sig0: 10, min: 5, max: 16 },  // FWHM ~12–38 nm
     'PBS tail':  { sig0: 8,  min: 3, max: 12 },  // FWHM ~7–28 nm
     '_default':  { sig0: 8,  min: 2, max: 15 }   // fallback for custom peaks
@@ -3500,7 +3593,7 @@ var ORGANISM_PEAK_PRESETS = {
         ex620: [
             { mu: 645, label: 'PC' },
             { mu: 660, label: 'APC' },
-            { mu: 680, label: 'APC-B' },
+            { mu: 680, label: 'APC-TE' },
             { mu: 685, label: 'CP43' },
             { mu: 695, label: 'CP47' },
             { mu: 720, label: 'PSI' }
@@ -3525,13 +3618,54 @@ var ORGANISM_PEAK_PRESETS = {
         ex620: [
             { mu: 645, label: 'PC' },
             { mu: 660, label: 'APC' },
-            { mu: 680, label: 'APC-B' },
+            { mu: 680, label: 'APC-TE' },
+            { mu: 685, label: 'CP43' },
+            { mu: 695, label: 'CP47' },
+            { mu: 720, label: 'PSI' }
+        ]
+    },
+    'pc_pe_rich': {
+        label: 'PC+PE cyanobacteria',
+        ex440: [
+            { mu: 665, label: 'PBS tail' },
+            { mu: 685, label: 'CP43' },
+            { mu: 695, label: 'CP47' },
+            { mu: 720, label: 'PSI' }
+        ],
+        ex560: [
+            { mu: 580, label: 'PE' },
+            { mu: 645, label: 'PC' },
+            { mu: 660, label: 'APC' },
+            { mu: 685, label: 'PSII' },
+            { mu: 695, label: 'CP47' },
+            { mu: 720, label: 'PSI' }
+        ],
+        ex620: [
+            { mu: 645, label: 'PC' },
+            { mu: 660, label: 'APC' },
+            { mu: 680, label: 'APC-TE' },
+            { mu: 685, label: 'CP43' },
+            { mu: 695, label: 'CP47' },
+            { mu: 720, label: 'PSI' }
+        ]
+    },
+    'chl_only': {
+        label: 'Chl only',
+        ex440: [
             { mu: 685, label: 'CP43' },
             { mu: 695, label: 'CP47' },
             { mu: 720, label: 'PSI' }
         ]
     },
     'custom': { label: 'Custom' }
+};
+
+// Map pigmentation selection to organism preset for deconvolution
+var PIGM_TO_ORGANISM = {
+    'checkbox_chl_only': 'chl_only',
+    'checkbox_chl_PC':   'pc_rich',
+    'checkbox_chl_PE':   'pe_rich',
+    'checkbox_chl_PC_PE':'pc_pe_rich'
 };
 
 // ── Preset configuration ─────────────────────────────────────────────────
@@ -3671,9 +3805,10 @@ function updateDeconvSubTabs() {
         ['ex440', 'ex620', 'ex560'].forEach(updateDeconvExDropdown);
     }
 
-    // Initialize batch peaks from organism preset if not yet populated
+    // Initialize batch peaks from organism preset based on current pigmentation
     if (!deconvBatchPeaks.ex440.length) {
-        applyOrganismPreset(deconvOrganismType);
+        var org = PIGM_TO_ORGANISM[pigm] || 'pc_rich';
+        applyOrganismPreset(org);
     }
 }
 
@@ -5014,12 +5149,19 @@ function recomputeParamsFromMaps() {
                                   (getPoint(W.k77_ex_pe, W.k77_em_psii) || 0);
                         pbsPSI  = (getPoint(W.k77_ex_pc, W.k77_em_psi) || 0) +
                                   (getPoint(W.k77_ex_pe, W.k77_em_psi) || 0);
-                        var pc = getPoint(W.k77_ex_pc, W.k77_em_pbs_free),
-                            pe662 = getPoint(W.k77_ex_pe, W.k77_em_pbs_free),
-                            pe580 = getPoint(W.k77_ex_pe, W.k77_em_pe);
-                        if (pc != null && pe662 != null && pe580 != null) {
-                            var pe = pe662 + pe580;
-                            params.PC_to_PE = pe > 0 ? pc / pe : null;
+                        // PC:PE = total fluorescence upon PC excitation / total upon PE excitation
+                        var pcFree = getPoint(W.k77_ex_pc, W.k77_em_pbs_free),
+                            pcPSII = getPoint(W.k77_ex_pc, W.k77_em_psii),
+                            pcPSI  = getPoint(W.k77_ex_pc, W.k77_em_psi),
+                            peFree = getPoint(W.k77_ex_pe, W.k77_em_pbs_free),
+                            pePE   = getPoint(W.k77_ex_pe, W.k77_em_pe),
+                            pePSII = getPoint(W.k77_ex_pe, W.k77_em_psii),
+                            pePSI  = getPoint(W.k77_ex_pe, W.k77_em_psi);
+                        if (pcFree != null && pcPSII != null && pcPSI != null &&
+                            peFree != null && pePE != null && pePSII != null && pePSI != null) {
+                            var pcTot = pcFree + pcPSII + pcPSI;
+                            var peTot = pePE + peFree + pePSII + pePSI;
+                            params.PC_to_PE = peTot > 0 ? pcTot / peTot : null;
                         }
                     } else {
                         pbsFree = getPoint(W.k77_ex_pc, W.k77_em_pbs_free);
@@ -5489,6 +5631,12 @@ function generateMethodsText() {
                 'The PBS-PSII/PBS-PSI ratio served as a state-transition indicator, with higher values ' +
                 'reflecting State\u202f1 (PBS preferentially coupled to PSII) and lower values reflecting ' +
                 'State\u202f2 (PBS preferentially coupled to PSI; Mullineaux\u202f&\u202fAllen, 1990).';
+        }
+        if (pigmVal === 'checkbox_chl_PC_PE') {
+            dp += ' The PC\u202f:\u202fPE ratio was calculated as the total fluorescence upon PC excitation ' +
+                '(Ex\u202f620/Em\u202f662\u202f+\u202fEm\u202f689\u202f+\u202fEm\u202f724) divided by the total fluorescence upon PE excitation ' +
+                '(Ex\u202f560/Em\u202f580\u202f+\u202fEm\u202f662\u202f+\u202fEm\u202f689\u202f+\u202fEm\u202f724), ' +
+                'serving as a proxy for relative phycocyanin-to-phycoerythrin pigment content.';
         }
         lines.push(dp);
 

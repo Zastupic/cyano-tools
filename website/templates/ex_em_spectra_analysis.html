@@ -293,8 +293,9 @@
                         <tr><td>PBS-PSII / PBS-tot</td><td></td><td>Ex620/Em689 / PBS-tot</td><td>Ex560/Em689 / PBS-tot</td><td>(Ex560/Em689 + Ex620/Em689) / PBS-tot</td></tr>
                         <tr><td>PBS-PSI / PBS-tot</td><td></td><td>Ex620/Em724 / PBS-tot</td><td>Ex560/Em724 / PBS-tot</td><td>(Ex560/Em724 + Ex620/Em724) / PBS-tot</td></tr>
                         <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>Ex620/Em689 / Ex620/Em724</td><td>Ex560/Em689 / Ex560/Em724</td><td>(Ex560/Em689 + Ex620/Em689) / (Ex560/Em724 + Ex620/Em724)</td></tr>
+                        <tr><td>PC : PE</td><td></td><td></td><td></td><td>(Ex620/Em662 + Ex620/Em689 + Ex620/Em724) / (Ex560/Em580 + Ex560/Em662 + Ex560/Em689 + Ex560/Em724)</td></tr>
                         <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>Chl-tot = Ex440/Em689 + Ex440/Em724.</em></td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PBS-tot = Ex560/Em580 + Ex560/Em662 + Ex620/Em662 + Ex560/Em689 + Ex620/Em689 + Ex560/Em724 + Ex620/Em724 (zero for absent pigments).</em></td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.82em;"><em>PBS-tot = Ex560/Em580 + Ex560/Em662 + Ex560/Em689 + Ex560/Em724 + Ex620/Em662 + Ex620/Em689 + Ex620/Em724 (zero for absent pigments).</em></td></tr>
                     </table>
 
                     <!-- /fixed-WL table content ends -->
@@ -352,28 +353,36 @@
                             <td><i><u>Chl+PC+PE</u></i></td>
                         </tr>
                         <tr><td colspan="5" class="text-muted pt-1"><em>Measured peaks (Ex 440 nm)</em></td></tr>
-                        <tr><td>CP43</td><td>Ex440 / area 680–690 nm</td><td>Ex440 / area 680–690 nm</td><td>Ex440 / area 680–690 nm</td><td>Ex440 / area 680–690 nm</td></tr>
-                        <tr><td>CP47</td><td>Ex440 / area 690–710 nm</td><td>Ex440 / area 690–710 nm</td><td>Ex440 / area 690–710 nm</td><td>Ex440 / area 690–710 nm</td></tr>
-                        <tr><td>PSI</td><td>Ex440 / area &gt;710 nm</td><td>Ex440 / area &gt;710 nm</td><td>Ex440 / area &gt;710 nm</td><td>Ex440 / area &gt;710 nm</td></tr>
+                        <tr><td>PBS tail</td><td></td><td>Ex440 / area ~665 nm</td><td>Ex440 / area ~665 nm</td><td>Ex440 / area ~665 nm</td></tr>
+                        <tr><td>CP43</td><td>Ex440 / area ~685 nm</td><td>Ex440 / area ~685 nm</td><td>Ex440 / area ~685 nm</td><td>Ex440 / area ~685 nm</td></tr>
+                        <tr><td>CP47</td><td>Ex440 / area ~695 nm</td><td>Ex440 / area ~695 nm</td><td>Ex440 / area ~695 nm</td><td>Ex440 / area ~695 nm</td></tr>
+                        <tr><td>PSI</td><td>Ex440 / area ~720 nm</td><td>Ex440 / area ~720 nm</td><td>Ex440 / area ~720 nm</td><td>Ex440 / area ~720 nm</td></tr>
                         <tr><td colspan="5" class="text-muted pt-1"><em>Measured peaks (Ex 560 / 620 nm)</em></td></tr>
                         <tr><td>PE</td><td></td><td></td><td>Ex560 / area ~580 nm</td><td>Ex560 / area ~580 nm</td></tr>
                         <tr><td>PC/APC</td><td></td><td>Ex620 / area ~662 nm</td><td></td><td>Ex620 / area ~662 nm</td></tr>
                         <tr><td>APC via PE</td><td></td><td></td><td>Ex560 / area ~662 nm</td><td>Ex560 / area ~662 nm</td></tr>
-                        <tr><td>PBS→PSII</td><td></td><td>Ex620 / area ~689 nm</td><td>Ex560 / area ~689 nm</td><td>(Ex560 + Ex620) / area ~689 nm</td></tr>
-                        <tr><td>PBS→PSI</td><td></td><td>Ex620 / area ~724 nm</td><td>Ex560 / area ~724 nm</td><td>(Ex560 + Ex620) / area ~724 nm</td></tr>
-                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios)</em></td></tr>
-                        <tr><td>PBS-free</td><td></td><td>PC/APC area</td><td>PE + APC via PE area</td><td>PE + APC via PE + PC/APC area</td></tr>
+                        <tr><td>PBS/PE→PSII</td><td></td><td>Ex620 / area ~689 nm</td><td>Ex560 / area ~689 nm</td><td>Ex560 + Ex620 (fitted separately)</td></tr>
+                        <tr><td>PBS/PE→PSI</td><td></td><td>Ex620 / area ~724 nm</td><td>Ex560 / area ~724 nm</td><td>Ex560 + Ex620 (fitted separately)</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters — Ex 440 (Chl)</em></td></tr>
                         <tr><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td><td>CP43 / CP47</td></tr>
                         <tr><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td></tr>
                         <tr><td>Chl-PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td></tr>
                         <tr><td>Chl-PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td></tr>
-                        <tr><td>PBS-free / PBS-tot</td><td></td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td></tr>
-                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td><td>PBS→PSII / PBS-tot</td></tr>
-                        <tr><td>PBS-PSI / PBS-tot</td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
-                        <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
-                        <tr><td class="text-muted" colspan="5" style="font-size:0.75em;"><em>PSII = CP43 + CP47. 
-                        <br>Chl-tot = PSII + PSI.
-                        <br>PBS-tot = PBS-free + PBS→PSII + PBS→PSI (all contributing areas summed; zero for absent pigments).</em></td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters — Ex 620 (PC)</em></td></tr>
+                        <tr><td>PBS-free / PBS-tot</td><td></td><td>PBS-free / PBS-tot</td><td></td><td>PBS-free / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td><td></td><td>PBS→PSII / PBS-tot</td></tr>
+                        <tr><td>PBS-PSI / PBS-tot</td><td></td><td>PBS→PSI / PBS-tot</td><td></td><td>PBS→PSI / PBS-tot</td></tr>
+                        <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>PBS→PSII / PBS→PSI</td><td></td><td>PBS→PSII / PBS→PSI</td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters — Ex 560 (PE)</em></td></tr>
+                        <tr><td>PE-free / PE-tot</td><td></td><td></td><td>PE-free / PE-tot</td><td>PE-free / PE-tot</td></tr>
+                        <tr><td>PE-PSII / PE-tot</td><td></td><td></td><td>PE→PSII / PE-tot</td><td>PE→PSII / PE-tot</td></tr>
+                        <tr><td>PE-PSI / PE-tot</td><td></td><td></td><td>PE→PSI / PE-tot</td><td>PE→PSI / PE-tot</td></tr>
+                        <tr><td>PE-PSII : PE-PSI</td><td></td><td></td><td>PE→PSII / PE→PSI</td><td>PE→PSII / PE→PSI</td></tr>
+                        <tr><td class="text-muted" colspan="5" style="font-size:0.75em;"><em>PSII = CP43 + CP47.
+                        <br>Chl-tot = PBS&nbsp;tail + PSII + PSI (all Ex&nbsp;440 peak areas; PBS&nbsp;tail is zero when absent).
+                        <br>PBS-tot (Ex&nbsp;620) = PBS-free + PBS→PSII + PBS→PSI.
+                        <br>PE-tot (Ex&nbsp;560) = PE-free + PE→PSII + PE→PSI.
+                        <br>Ex&nbsp;620 and Ex&nbsp;560 are fitted <strong>independently</strong>; for Chl+PC+PE, both ratio sets are reported.</em></td></tr>
                     </table>
 
                     <!-- /Gaussian table ends -->
@@ -429,6 +438,7 @@
                         <tr><td colspan="5" class="text-muted pt-1"><em>Suggested rank (number of components)</em></td></tr>
                         <tr><td>F</td><td>2</td><td>3–4</td><td>4–5</td><td>6–7</td></tr>
                         <tr><td colspan="5" class="text-muted pt-1"><em>Chl-related components (scores); dominant excitation loading shown</em></td></tr>
+                        <tr><td>Chl&nbsp;a 675 <sup title="A short-wavelength Chl a component (~675 nm) sometimes resolved by PARAFAC, especially at higher rank. It contributes to Chl-tot but not to the PSII or PSI families." style="color:#212529; font-weight:bold; cursor:help;">†</sup></td><td>score (Ex440/Em675)</td><td>score (Ex440/Em675)</td><td>score (Ex440/Em675)</td><td>score (Ex440/Em675)</td></tr>
                         <tr><td>PSII pool (CP43+CP47) <sup title="CP43 and CP47 cannot be resolved by PARAFAC at 77 K — their excitation and emission profiles differ by only ~10 nm; they appear as a single PSII pool component near 685–695 nm. Use Gaussian deconvolution for the CP43/CP47 ratio." style="color:#212529; font-weight:bold; cursor:help;">*</sup></td><td>score (Ex440/Em685)</td><td>score (Ex440/Em685)</td><td>score (Ex440/Em685)</td><td>score (Ex440/Em685)</td></tr>
                         <tr><td>PSI</td><td>score (Ex440/Em724)</td><td>score (Ex440/Em724)</td><td>score (Ex440/Em724)</td><td>score (Ex440/Em724)</td></tr>
                         <tr><td colspan="5" class="text-muted pt-1"><em>PBS-related components (scores); dominant excitation loading shown</em></td></tr>
@@ -436,8 +446,9 @@
                         <tr><td>PC/APC (PBS-free)</td><td></td><td>score (Ex620/Em662)</td><td>score (Ex560/Em662)</td><td>score (Ex560+620/Em662)</td></tr>
                         <tr><td>PBS→PSII</td><td></td><td>score (Ex620/Em689)</td><td>score (Ex560/Em689)</td><td>score (Ex560+620/Em689)</td></tr>
                         <tr><td>PBS→PSI</td><td></td><td>score (Ex620/Em724)</td><td>score (Ex560/Em724)</td><td>score (Ex560+620/Em724)</td></tr>
-                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios) — same formula as Gaussian, using scores instead of areas</em></td></tr>
+                        <tr><td colspan="5" class="text-muted pt-1"><em>Derived parameters (ratios) — computed from component scores</em></td></tr>
                         <tr><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td><td>PSII / PSI</td></tr>
+                        <tr><td>CP43 / CP47 <sup title="Only computed when the user assigns separate CP43 and CP47 components. Normally PARAFAC cannot resolve these — use Gaussian deconvolution instead." style="color:#212529; font-weight:bold; cursor:help;">*</sup></td><td></td><td></td><td></td><td></td></tr>
                         <tr><td>Chl-PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td><td>PSII / Chl-tot</td></tr>
                         <tr><td>Chl-PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td><td>PSI / Chl-tot</td></tr>
                         <tr><td>PBS-free / PBS-tot</td><td></td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td><td>PBS-free / PBS-tot</td></tr>
@@ -445,9 +456,10 @@
                         <tr><td>PBS-PSI / PBS-tot</td><td></td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td><td>PBS→PSI / PBS-tot</td></tr>
                         <tr><td>PBS-PSII : PBS-PSI</td><td></td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td><td>PBS→PSII / PBS→PSI</td></tr>
                         <tr><td class="text-muted" colspan="5" style="font-size:0.75em;"><em><sup style="color:#212529; font-weight:bold;">
-                        *</sup> CP43/CP47 ratio cannot be derived from PARAFAC — both contribute to a single ~685–695 nm component. Use Gaussian deconvolution for this ratio. 
-                        <br>Chl-tot = PSII pool + PSI.
-                        <br>PBS-free = PE + PC/APC components (scores summed per pigmentation). 
+                        *</sup> CP43/CP47 ratio is normally not resolvable by PARAFAC — both contribute to a single ~685–695 nm component. If the user manually assigns separate CP43 and CP47 components, the ratio is computed. Use Gaussian deconvolution for reliable CP43/CP47 ratios.
+                        <br><sup style="color:#212529; font-weight:bold;">†</sup> Chl&nbsp;a 675 nm component is not always resolved; when present it is included in Chl-tot.
+                        <br>Chl-tot = Chl&nbsp;a&nbsp;675 + PSII pool + PSI.
+                        <br>PBS-free = PE + PC/APC components (scores summed per pigmentation).
                         <br>PBS-tot = PBS-free + PBS→PSII + PBS→PSI.</em></td></tr>
                     </table>
 
@@ -472,9 +484,11 @@
                         <li>Andrizhiyevskaya EG et al. (2005) <em>Biochim Biophys Acta</em> 1708:198–208. — Origin of F685 / F695</li>
                         <li>Murakami A (1997) <em>Photosynth Res</em> 53:141–148. — PSII/PSI stoichiometry by 77 K fluorescence</li>
                         <li>Mullineaux CW, Allen JF (1990) <em>Photosynth Res</em> 23:297–311. — State 1–State 2 transitions in <em>Synechococcus</em> characterized by 77 K emission spectroscopy (F697/F654 ratio as state-transition indicator)</li>
+                        <li>Yokono M et al. (2015) <em>Biochim Biophys Acta</em> 1847:1274–1282. — Fluorescence peak widths and Gaussian decomposition of 77 K Chl emission bands</li>
+                        <li>Rakhimberdieva MG et al. (2007) <em>Biochim Biophys Acta</em> 1767:757–765. — 77 K PE and PBS fluorescence; peak width constraints for phycobiliprotein emission</li>
                     </ol>
                     <p class="mb-1 text-muted" style="font-size:0.88em;"><em>Application examples:</em></p>
-                    <ol start="6" class="mb-1" style="padding-left:1.4rem; font-size:0.9em;">
+                    <ol start="8" class="mb-1" style="padding-left:1.4rem; font-size:0.9em;">
                         <li>Luimstra VM et al. (2020) <em>J Exp Bot</em> 71:3650–3660. — 77 K tracking of PS remodelling under blue light in <em>Synechocystis</em></li>
                         <li>Zavřel T et al. (2024) <em>Plant Cell Physiol</em> 65:1082–1097. — 77 K in light-quality acclimation in <em>Synechocystis</em></li>
                     </ol>
@@ -940,7 +954,7 @@
                         style="font-size:0.78rem; color:rgba(255,255,255,0.7) !important;">Chl+PC+PE</button>
             </div>
             <span style="color:rgba(255,255,255,0.55); font-size:0.75rem;">
-                updates Derived Parameters &amp; PARAFAC
+                updates Derived Parameters, Deconvolution &amp; PARAFAC
             </span>
         </div>
     </div>
@@ -1526,14 +1540,6 @@
                     </span>
                 </div>
                 <div class="d-flex align-items-center flex-wrap" style="gap:0.5rem;">
-                    <label class="mb-0 font-weight-bold" style="font-size:0.85rem; white-space:nowrap;">Organism:</label>
-                    <select id="deconv-organism-select" class="form-control form-control-sm"
-                            style="width:auto; font-size:0.85rem;"
-                            onchange="applyOrganismPreset(this.value)">
-                        <option value="pc_rich">PC-rich cyanobacteria</option>
-                        <option value="pe_rich">PE-rich cyanobacteria</option>
-                        <option value="custom">Custom</option>
-                    </select>
                     <span id="deconv-fitall-all-progress" class="text-muted text-nowrap"
                           style="font-size:0.83rem;"></span>
                     <button class="btn btn-success text-nowrap" id="deconv-fitall-all"
@@ -1585,7 +1591,7 @@
                                         <tr><td><strong>PSI</strong></td><td class="text-center">9 nm</td><td class="text-center">4&ndash;14 nm</td><td class="text-center">~9&ndash;33 nm</td><td class="text-muted">Long-wavelength Chl a; 710&ndash;735 nm, species-variable</td></tr>
                                         <tr><td><strong>PC</strong></td><td class="text-center">8 nm</td><td class="text-center">4&ndash;12 nm</td><td class="text-center">~9&ndash;28 nm</td><td class="text-muted">Phycocyanin; ~645 nm</td></tr>
                                         <tr><td><strong>APC</strong></td><td class="text-center">7 nm</td><td class="text-center">3&ndash;10 nm</td><td class="text-center">~7&ndash;24 nm</td><td class="text-muted">Allophycocyanin; ~660 nm</td></tr>
-                                        <tr><td><strong>APC-B</strong></td><td class="text-center">5 nm</td><td class="text-center">2&ndash;8 nm</td><td class="text-center">~5&ndash;19 nm</td><td class="text-muted">Terminal emitter (APC-B/Lcm); ~680 nm</td></tr>
+                                        <tr><td><strong>APC-TE</strong></td><td class="text-center">5 nm</td><td class="text-center">2&ndash;8 nm</td><td class="text-center">~5&ndash;19 nm</td><td class="text-muted">APC terminal emitter (ApcD/ApcE/ApcF); ~680 nm</td></tr>
                                         <tr><td><strong>PE</strong></td><td class="text-center">10 nm</td><td class="text-center">5&ndash;16 nm</td><td class="text-center">~12&ndash;38 nm</td><td class="text-muted">Phycoerythrin; ~580 nm</td></tr>
                                         <tr><td><strong>PBS tail</strong></td><td class="text-center">8 nm</td><td class="text-center">3&ndash;12 nm</td><td class="text-center">~7&ndash;28 nm</td><td class="text-muted">Residual PBS fluorescence at Ex 440; ~665 nm</td></tr>
                                         <tr class="table-light"><td><em>Custom</em></td><td class="text-center">8 nm</td><td class="text-center">2&ndash;15 nm</td><td class="text-center">~5&ndash;35 nm</td><td class="text-muted">Default for user-defined peaks</td></tr>
@@ -1637,7 +1643,7 @@
                                         </tr>
                                         <tr>
                                             <td><strong>PBS-free</strong></td>
-                                            <td>PC + APC + APC-B <span class="text-muted">(+ PE and PBS&nbsp;tail when present)</span></td>
+                                            <td>PC + APC + APC-TE <span class="text-muted">(+ PE and PBS&nbsp;tail when present)</span></td>
                                             <td class="text-muted">Sum of all phycobilisome-associated peaks = uncoupled PBS emission</td>
                                         </tr>
                                     </tbody>
@@ -1691,6 +1697,27 @@
                                             <td><strong>PBS-PSI/tot</strong></td><td>Ex 620</td>
                                             <td><code>Area(PSI) / (Area(PBS-free) + Area(PSII) + Area(PSI))</code></td>
                                             <td class="text-muted">Fraction of PBS energy transferred to PSI</td>
+                                        </tr>
+                                        <tr><td colspan="4" style="background:#fdf5e6; padding:2px 6px;"><em class="text-muted">Phycoerythrin coupling (Ex 560)</em></td></tr>
+                                        <tr>
+                                            <td><strong>PE-PSII:PE-PSI</strong></td><td>Ex 560</td>
+                                            <td><code>Area(PSII) / Area(PSI)</code></td>
+                                            <td class="text-muted">PE energy transfer preference (PSII vs PSI)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PE-free/tot</strong></td><td>Ex 560</td>
+                                            <td><code>Area(PBS-free) / (Area(PBS-free) + Area(PSII) + Area(PSI))</code></td>
+                                            <td class="text-muted">Fraction of uncoupled PE/PBS emission</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PE-PSII/tot</strong></td><td>Ex 560</td>
+                                            <td><code>Area(PSII) / (Area(PBS-free) + Area(PSII) + Area(PSI))</code></td>
+                                            <td class="text-muted">Fraction of PE energy transferred to PSII</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PE-PSI/tot</strong></td><td>Ex 560</td>
+                                            <td><code>Area(PSI) / (Area(PBS-free) + Area(PSII) + Area(PSI))</code></td>
+                                            <td class="text-muted">Fraction of PE energy transferred to PSI</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1786,8 +1813,8 @@
                     <div class="alert alert-secondary py-2 mb-3"
                          style="font-size:0.87em; border-left:3px solid #5b9bd5; background:#f5f8fd;">
                         <strong>Phycocyanin excitation (Ex 620 nm)</strong> — Resolves PBS components:
-                        PC (~645 nm), APC (~660 nm), APC-B/Lcm (~680 nm), and energy transfer to PSII and PSI.
-                        PC+APC+APC-B areas are summed as PBS-free; CP43+CP47 as PBS→PSII.
+                        PC (~645 nm), APC (~660 nm), APC-TE (~680 nm, terminal emitter), and energy transfer to PSII and PSI.
+                        PC+APC+APC-TE areas are summed as PBS-free; CP43+CP47 as PBS→PSII.
                         Used for PBS-PSII/PBS-PSI ratio and PBS coupling efficiency.
                         <br><small class="text-muted">Fit constraints: peak position &plusmn;5 nm; per-peak FWHM limits based on 77 K literature
                         (hover over each peak chip for details).</small>
