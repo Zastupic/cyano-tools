@@ -4702,12 +4702,17 @@ var PEAK_LABEL_INDEX = {
     'PC':   3,
     'APC':  4,
     'APC-TE': 5,
-    'PE':   6
+    'PE':   6,
+    'PBS tail': 7
 };
+
+// One past the highest named slot — unlabeled peaks start here.
+var _PEAK_LABEL_OFFSET = 8;
 
 /**
  * Return the colour for a peak, using the label-based fixed slot when
- * a known label is provided, otherwise falling back to positional index.
+ * a known label is provided; unlabeled peaks are offset beyond the
+ * named range so they don't collide with known peak colours.
  * @param {string[]} palette  - the active colour palette array
  * @param {number}   idx      - positional index of the peak in its list
  * @param {string=}  label    - optional peak label (e.g. 'CP43', 'PSI')
@@ -4715,7 +4720,7 @@ var PEAK_LABEL_INDEX = {
 function getPeakColor(palette, idx, label) {
     var slot = (label && PEAK_LABEL_INDEX.hasOwnProperty(label))
         ? PEAK_LABEL_INDEX[label]
-        : idx;
+        : _PEAK_LABEL_OFFSET + idx;
     return palette[slot % palette.length];
 }
 
