@@ -2014,6 +2014,8 @@ function renderGroupCharts(groupStats, groupNames, avail) {
 function buildWorkbook() {
     var wb = XLSX.utils.book_new();
     var files = eemData.files, avail = getAvailParams();
+
+    // ── Sheet 1: Fixed-wavelength parameters ─────────────────────────────────
     var rows = [['Sample'].concat(avail.map(function(p) { return getParamLabel(p); }))];
     files.forEach(function(fname) {
         rows.push([fname].concat(avail.map(function(p) {
@@ -2021,7 +2023,10 @@ function buildWorkbook() {
             return v !== null && v !== undefined ? v : '';
         })));
     });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Parameters');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Params - Fixed WL');
+
+    // ── Sheet 2: Gaussian deconvolution parameters ───────────────────────────
+    appendGaussParamsSheet(wb, files);
     eemData.ex_wls.forEach(function(exWl) {
         var spec = eemData.emission_spectra[String(exWl)];
         if (!spec || !spec.wl.length) return;
@@ -2035,6 +2040,145 @@ function buildWorkbook() {
     appendDeconvSheets(wb);
     appendParafacSheet(wb);
     return wb;
+}
+
+function appendGaussParamsSheet(wb, files) {
+    // Collect which presets have results
+    var activePresets = ['ex440', 'ex620', 'ex560'].filter(function(pr) {
+        return deconvBatchResults[pr] && Object.keys(deconvBatchResults[pr]).length > 0;
+    });
+    if (!activePresets.length) return;
+
+    var presetTitles = { ex440: 'Ex 440', ex620: 'Ex 620', ex560: 'Ex 560' };
+
+    // For each preset, determine peak labels from first result
+    var presetPeakLabels = {};
+    activePresets.forEach(function(pr) {
+        var res = deconvBatchResults[pr];
+        var labels = [];
+        Object.keys(res).some(function(k) {
+            if (res[k] && res[k].peakLabels && res[k].peakLabels.length) {
+                labels = res[k].peakLabels.slice();
+                return true;
+            }
+            return false;
+        });
+        // Fallback: generate labels from fit params of first result
+        if (!labels.length) {
+            Object.keys(res).some(function(k) {
+                if (res[k] && res[k].fitParams) {
+                    var n = res[k].fitParams.length / 3;
+                    for (var i = 0; i < n; i++) labels.push('P' + (i + 1));
+                    return true;
+                }
+                return false;
+            });
+        }
+        presetPeakLabels[pr] = labels;
+    });
+
+    // Determine which families exist across all presets
+    var familyNames = ['PSII', 'PSI', 'PBS_free'];
+    var familyLabels = { PSII: 'PSII (sum)', PSI: 'PSI (sum)', PBS_free: 'PBS-free (sum)' };
+
+    // Build header row
+    var header = ['Sample'];
+    activePresets.forEach(function(pr) {
+        var title = presetTitles[pr];
+        header.push(title + ' R\u00B2');
+        // Individual peak area columns
+        presetPeakLabels[pr].forEach(function(lbl) {
+            header.push(title + ' ' + lbl + ' Area');
+        });
+        // Family sum columns
+        familyNames.forEach(function(fam) {
+            // Only add family column if at least one peak maps to it in this preset
+            var hasFamily = presetPeakLabels[pr].some(function(lbl) {
+                return (PEAK_FAMILIES[lbl] || '') === fam;
+            });
+            if (hasFamily) header.push(title + ' ' + familyLabels[fam]);
+        });
+    });
+
+    // Derived ratio columns
+    var GAUSS_RATIO_KEYS = [
+        { key: 'PSII_to_PSI_gauss',        label: 'PSII:PSI (Ex 440)' },
+        { key: 'CP43_to_CP47_gauss',       label: 'CP43/CP47 (Ex 440)' },
+        { key: 'Chl_PSII_norm_gauss',      label: 'Chl-PSII/tot (Ex 440)' },
+        { key: 'Chl_PSI_norm_gauss',       label: 'Chl-PSI/tot (Ex 440)' },
+        { key: 'PBS_PSII_to_PBS_PSI_gauss', label: 'PBS-PSII:PBS-PSI (Ex 620)' },
+        { key: 'PBS_free_norm_gauss',       label: 'PBS-free/tot (Ex 620)' },
+        { key: 'PBS_PSII_norm_gauss',       label: 'PBS-PSII/tot (Ex 620)' },
+        { key: 'PBS_PSI_norm_gauss',        label: 'PBS-PSI/tot (Ex 620)' }
+    ];
+    var gaussParams = computeGaussianParamsFromBatch();
+    var ratiosAvail = GAUSS_RATIO_KEYS.filter(function(rk) {
+        return files.some(function(f) {
+            var v = gaussParams[f] && gaussParams[f][rk.key];
+            return v !== null && v !== undefined;
+        });
+    });
+    ratiosAvail.forEach(function(rk) { header.push(rk.label); });
+
+    var rows = [header];
+
+    // Build data rows
+    files.forEach(function(fname) {
+        var row = [fname];
+        activePresets.forEach(function(pr) {
+            var res = deconvBatchResults[pr] && deconvBatchResults[pr][fname];
+            var labels = presetPeakLabels[pr];
+
+            if (!res || !res.fitParams) {
+                // Empty cells: R² + individual peaks + families
+                row.push('');
+                labels.forEach(function() { row.push(''); });
+                familyNames.forEach(function(fam) {
+                    var hasFamily = labels.some(function(lbl) {
+                        return (PEAK_FAMILIES[lbl] || '') === fam;
+                    });
+                    if (hasFamily) row.push('');
+                });
+                return;
+            }
+
+            row.push(res.r2);
+
+            // Compute individual peak areas and family sums
+            var nPeaks = res.fitParams.length / 3;
+            var peakLabelsRes = res.peakLabels || [];
+            var famSums = {};
+
+            labels.forEach(function(lbl, i) {
+                if (i < nPeaks) {
+                    var area = _peakArea(res.fitParams, i);
+                    row.push(area);
+                    var fam = PEAK_FAMILIES[peakLabelsRes[i] || lbl] || '';
+                    if (fam) famSums[fam] = (famSums[fam] || 0) + area;
+                } else {
+                    row.push('');
+                }
+            });
+
+            // Family sum columns
+            familyNames.forEach(function(fam) {
+                var hasFamily = labels.some(function(lbl) {
+                    return (PEAK_FAMILIES[lbl] || '') === fam;
+                });
+                if (hasFamily) row.push(famSums[fam] || 0);
+            });
+        });
+
+        // Derived ratios
+        ratiosAvail.forEach(function(rk) {
+            var v = gaussParams[fname] && gaussParams[fname][rk.key];
+            row.push(v !== null && v !== undefined ? v : '');
+        });
+
+        rows.push(row);
+    });
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Params - Gauss Deconv');
 }
 
 function appendDeconvSheets(wb) {

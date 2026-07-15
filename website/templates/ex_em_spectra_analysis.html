@@ -32,6 +32,9 @@
 <style>
   /* Tooltip icon */
   .par-tip { cursor:help; color:#6c9bbf; font-size:0.82em; vertical-align:middle; margin-left:3px; }
+  /* Accordion chevron rotation */
+  .deconv-acc-icon { transition: transform 0.2s; }
+  [aria-expanded="true"] > .deconv-acc-icon { transform: rotate(90deg); }
   /* ── EEM main tabs ── */
   #eemTabs { border-bottom: 2px solid #dee2e6; margin-bottom: 0; padding-bottom: 0; }
   #eemTabs .nav-link {
@@ -1537,57 +1540,162 @@
                             onclick="runDeconvBatchAll()">
                         <i class="fa fa-play-circle mr-1"></i> Fit all excitations
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm text-nowrap ml-1"
-                            data-toggle="collapse" data-target="#deconv-peak-params-panel"
-                            aria-expanded="false" aria-controls="deconv-peak-params-panel"
-                            style="font-size:0.82rem;">
-                        <i class="fa fa-sliders mr-1"></i> Peak constraints
-                    </button>
                 </div>
             </div>
 
-            <!-- Collapsible peak parameters reference panel -->
-            <div class="collapse" id="deconv-peak-params-panel">
-                <div class="card card-body py-2 px-3 mb-2" style="font-size:0.82rem; background:#fafcfa; border:1px solid #c3dac3;">
-                    <div class="d-flex align-items-start justify-content-between mb-1">
-                        <div>
-                            <strong>Gaussian fit constraints per peak</strong>
-                            <span class="text-muted ml-1">(77 K literature-derived)</span>
-                        </div>
-                        <button class="btn btn-sm p-0 text-muted" data-toggle="collapse"
-                                data-target="#deconv-peak-params-panel" style="line-height:1;">
-                            <i class="fa fa-times"></i>
-                        </button>
+            <!-- Accordion: peak constraints & parameter derivation -->
+            <div class="accordion mb-1" id="deconv-info-accordion"
+                 style="font-size:0.82rem; border:1px solid #c3dac3; border-radius:4px; overflow:hidden;">
+
+                <!-- Section 1: Fit constraints -->
+                <div class="card border-0" style="border-bottom:1px solid #c3dac3 !important;">
+                    <div class="card-header py-1 px-3 d-flex align-items-center"
+                         style="cursor:pointer; background:#f4f9f4;"
+                         data-toggle="collapse" data-target="#deconv-acc-constraints"
+                         aria-expanded="false" aria-controls="deconv-acc-constraints">
+                        <i class="fa fa-chevron-right mr-2 deconv-acc-icon"
+                           style="font-size:0.7em; transition:transform 0.2s; width:10px;"></i>
+                        <i class="fa fa-sliders mr-1 text-muted" style="font-size:0.85em;"></i>
+                        <strong>Gaussian fit constraints per peak</strong>
+                        <span class="text-muted ml-2">(77 K literature-derived)</span>
                     </div>
-                    <p class="text-muted mb-2" style="font-size:0.78rem;">
-                        Peak positions are constrained to &plusmn;5 nm from preset centers.
-                        Peak widths (FWHM = 2.355 &times; &sigma;) are bounded per peak type as shown below.
-                        <br>Sources: Andrizhiyevskaya et al. 2005; Yokono et al. 2015; Rakhimberdieva et al. 2007.
-                    </p>
-                    <div style="overflow-x:auto;">
-                        <table class="table table-sm table-bordered mb-0" style="font-size:0.8rem; width:auto;">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Peak</th>
-                                    <th style="text-align:center;">Initial &sigma;</th>
-                                    <th style="text-align:center;">&sigma; range</th>
-                                    <th style="text-align:center;">FWHM range</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td><strong>CP43</strong></td><td class="text-center">5 nm</td><td class="text-center">2&ndash;7 nm</td><td class="text-center">~5&ndash;16 nm</td><td class="text-muted">PSII inner antenna; ~685 nm</td></tr>
-                                <tr><td><strong>CP47</strong></td><td class="text-center">4 nm</td><td class="text-center">2&ndash;6 nm</td><td class="text-center">~5&ndash;14 nm</td><td class="text-muted">PSII inner antenna; ~695 nm</td></tr>
-                                <tr><td><strong>PSII</strong></td><td class="text-center">6 nm</td><td class="text-center">3&ndash;9 nm</td><td class="text-center">~7&ndash;21 nm</td><td class="text-muted">Unresolved CP43+CP47</td></tr>
-                                <tr><td><strong>PSI</strong></td><td class="text-center">9 nm</td><td class="text-center">4&ndash;14 nm</td><td class="text-center">~9&ndash;33 nm</td><td class="text-muted">Long-wavelength Chl a; 710&ndash;735 nm, species-variable</td></tr>
-                                <tr><td><strong>PC</strong></td><td class="text-center">8 nm</td><td class="text-center">4&ndash;12 nm</td><td class="text-center">~9&ndash;28 nm</td><td class="text-muted">Phycocyanin; ~645 nm</td></tr>
-                                <tr><td><strong>APC</strong></td><td class="text-center">7 nm</td><td class="text-center">3&ndash;10 nm</td><td class="text-center">~7&ndash;24 nm</td><td class="text-muted">Allophycocyanin; ~660 nm</td></tr>
-                                <tr><td><strong>APC-B</strong></td><td class="text-center">5 nm</td><td class="text-center">2&ndash;8 nm</td><td class="text-center">~5&ndash;19 nm</td><td class="text-muted">Terminal emitter (APC-B/Lcm); ~680 nm</td></tr>
-                                <tr><td><strong>PE</strong></td><td class="text-center">10 nm</td><td class="text-center">5&ndash;16 nm</td><td class="text-center">~12&ndash;38 nm</td><td class="text-muted">Phycoerythrin; ~580 nm</td></tr>
-                                <tr><td><strong>PBS tail</strong></td><td class="text-center">8 nm</td><td class="text-center">3&ndash;12 nm</td><td class="text-center">~7&ndash;28 nm</td><td class="text-muted">Residual PBS fluorescence at Ex 440; ~665 nm</td></tr>
-                                <tr class="table-light"><td><em>Custom</em></td><td class="text-center">8 nm</td><td class="text-center">2&ndash;15 nm</td><td class="text-center">~5&ndash;35 nm</td><td class="text-muted">Default for user-defined peaks</td></tr>
-                            </tbody>
-                        </table>
+                    <div id="deconv-acc-constraints" class="collapse"
+                         data-parent="#deconv-info-accordion">
+                        <div class="card-body py-2 px-3" style="background:#fafcfa;">
+                            <p class="text-muted mb-2" style="font-size:0.78rem;">
+                                Peak positions are constrained to &plusmn;5 nm from preset centers.
+                                Peak widths (FWHM = 2.355 &times; &sigma;) are bounded per peak type as shown below.
+                                <br>Sources: Andrizhiyevskaya et al. 2005; Yokono et al. 2015; Rakhimberdieva et al. 2007.
+                            </p>
+                            <div style="overflow-x:auto;">
+                                <table class="table table-sm table-bordered mb-0" style="font-size:0.8rem; width:auto;">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Peak</th>
+                                            <th style="text-align:center;">Initial &sigma;</th>
+                                            <th style="text-align:center;">&sigma; range</th>
+                                            <th style="text-align:center;">FWHM range</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>CP43</strong></td><td class="text-center">5 nm</td><td class="text-center">2&ndash;7 nm</td><td class="text-center">~5&ndash;16 nm</td><td class="text-muted">PSII inner antenna; ~685 nm</td></tr>
+                                        <tr><td><strong>CP47</strong></td><td class="text-center">4 nm</td><td class="text-center">2&ndash;6 nm</td><td class="text-center">~5&ndash;14 nm</td><td class="text-muted">PSII inner antenna; ~695 nm</td></tr>
+                                        <tr><td><strong>PSII</strong></td><td class="text-center">6 nm</td><td class="text-center">3&ndash;9 nm</td><td class="text-center">~7&ndash;21 nm</td><td class="text-muted">Unresolved CP43+CP47</td></tr>
+                                        <tr><td><strong>PSI</strong></td><td class="text-center">9 nm</td><td class="text-center">4&ndash;14 nm</td><td class="text-center">~9&ndash;33 nm</td><td class="text-muted">Long-wavelength Chl a; 710&ndash;735 nm, species-variable</td></tr>
+                                        <tr><td><strong>PC</strong></td><td class="text-center">8 nm</td><td class="text-center">4&ndash;12 nm</td><td class="text-center">~9&ndash;28 nm</td><td class="text-muted">Phycocyanin; ~645 nm</td></tr>
+                                        <tr><td><strong>APC</strong></td><td class="text-center">7 nm</td><td class="text-center">3&ndash;10 nm</td><td class="text-center">~7&ndash;24 nm</td><td class="text-muted">Allophycocyanin; ~660 nm</td></tr>
+                                        <tr><td><strong>APC-B</strong></td><td class="text-center">5 nm</td><td class="text-center">2&ndash;8 nm</td><td class="text-center">~5&ndash;19 nm</td><td class="text-muted">Terminal emitter (APC-B/Lcm); ~680 nm</td></tr>
+                                        <tr><td><strong>PE</strong></td><td class="text-center">10 nm</td><td class="text-center">5&ndash;16 nm</td><td class="text-center">~12&ndash;38 nm</td><td class="text-muted">Phycoerythrin; ~580 nm</td></tr>
+                                        <tr><td><strong>PBS tail</strong></td><td class="text-center">8 nm</td><td class="text-center">3&ndash;12 nm</td><td class="text-center">~7&ndash;28 nm</td><td class="text-muted">Residual PBS fluorescence at Ex 440; ~665 nm</td></tr>
+                                        <tr class="table-light"><td><em>Custom</em></td><td class="text-center">8 nm</td><td class="text-center">2&ndash;15 nm</td><td class="text-center">~5&ndash;35 nm</td><td class="text-muted">Default for user-defined peaks</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Parameter derivation -->
+                <div class="card border-0">
+                    <div class="card-header py-1 px-3 d-flex align-items-center"
+                         style="cursor:pointer; background:#f4f9f4;"
+                         data-toggle="collapse" data-target="#deconv-acc-params"
+                         aria-expanded="false" aria-controls="deconv-acc-params">
+                        <i class="fa fa-chevron-right mr-2 deconv-acc-icon"
+                           style="font-size:0.7em; transition:transform 0.2s; width:10px;"></i>
+                        <i class="fa fa-calculator mr-1 text-muted" style="font-size:0.85em;"></i>
+                        <strong>How parameters are derived from peak areas</strong>
+                    </div>
+                    <div id="deconv-acc-params" class="collapse"
+                         data-parent="#deconv-info-accordion">
+                        <div class="card-body py-2 px-3" style="background:#fafcfa;">
+                            <p class="text-muted mb-2" style="font-size:0.78rem;">
+                                Each fitted Gaussian is described by amplitude (<em>A</em>), center wavelength (&mu;), and standard deviation (&sigma;).
+                                The area under each peak is:
+                                <strong>Area = |<em>A</em>| &times; |&sigma;| &times; &radic;(2&pi;)</strong>.
+                                Individual peak areas are grouped into <em>families</em> by summing.
+                                Since the integral of a sum equals the sum of the integrals (linearity of integration),
+                                this grouping is mathematically exact &mdash; no approximation is involved.
+                            </p>
+
+                            <div style="overflow-x:auto;">
+                                <table class="table table-sm table-bordered mb-2" style="font-size:0.8rem; width:auto;">
+                                    <thead class="thead-light">
+                                        <tr><th>Family</th><th>Peaks summed</th><th>Logic</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>PSII</strong></td>
+                                            <td>CP43 + CP47 <span class="text-muted">(or single PSII peak)</span></td>
+                                            <td class="text-muted">Area(CP43) + Area(CP47) = total PSII emission</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PSI</strong></td>
+                                            <td>PSI</td>
+                                            <td class="text-muted">Single peak, no summing needed</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PBS-free</strong></td>
+                                            <td>PC + APC + APC-B <span class="text-muted">(+ PE and PBS&nbsp;tail when present)</span></td>
+                                            <td class="text-muted">Sum of all phycobilisome-associated peaks = uncoupled PBS emission</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <strong style="font-size:0.8rem;">Exported parameters</strong>
+                            <div class="mt-1" style="overflow-x:auto;">
+                                <table class="table table-sm table-bordered mb-0" style="font-size:0.78rem; width:auto;">
+                                    <thead class="thead-light">
+                                        <tr><th>Parameter</th><th>Excitation</th><th>Formula</th><th>Interpretation</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>PSII:PSI</strong></td><td>Ex 440</td>
+                                            <td><code>Area(PSII) / Area(PSI)</code></td>
+                                            <td class="text-muted">Photosystem stoichiometry under Chl&nbsp;a excitation</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>CP43/CP47</strong></td><td>Ex 440</td>
+                                            <td><code>Area(CP43) / Area(CP47)</code></td>
+                                            <td class="text-muted">PSII inner antenna heterogeneity</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Chl-PSII/tot</strong></td><td>Ex 440</td>
+                                            <td><code>Area(PSII) / (Area(PBS&nbsp;tail) + Area(PSII) + Area(PSI))</code></td>
+                                            <td class="text-muted">Normalized PSII contribution to total Chl emission</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Chl-PSI/tot</strong></td><td>Ex 440</td>
+                                            <td><code>Area(PSI) / (Area(PBS&nbsp;tail) + Area(PSII) + Area(PSI))</code></td>
+                                            <td class="text-muted">Normalized PSI contribution to total Chl emission</td>
+                                        </tr>
+                                        <tr><td colspan="4" style="background:#f0f4fa; padding:2px 6px;"><em class="text-muted">Phycobilisome coupling (Ex 620)</em></td></tr>
+                                        <tr>
+                                            <td><strong>PBS-PSII:PBS-PSI</strong></td><td>Ex 620</td>
+                                            <td><code>Area(PSII) / Area(PSI)</code></td>
+                                            <td class="text-muted">PBS energy transfer preference (PSII vs PSI)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PBS-free/tot</strong></td><td>Ex 620</td>
+                                            <td><code>Area(PBS-free) / (Area(PBS-free) + Area(PSII) + Area(PSI))</code></td>
+                                            <td class="text-muted">Fraction of uncoupled PBS emission</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PBS-PSII/tot</strong></td><td>Ex 620</td>
+                                            <td><code>Area(PSII) / (Area(PBS-free) + Area(PSII) + Area(PSI))</code></td>
+                                            <td class="text-muted">Fraction of PBS energy transferred to PSII</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PBS-PSI/tot</strong></td><td>Ex 620</td>
+                                            <td><code>Area(PSI) / (Area(PBS-free) + Area(PSII) + Area(PSI))</code></td>
+                                            <td class="text-muted">Fraction of PBS energy transferred to PSI</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
