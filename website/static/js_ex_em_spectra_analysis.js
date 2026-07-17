@@ -3904,7 +3904,7 @@ function runDeconvBatch(preset, onDone) {
         if (btn) btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (idx + 1) + ' / ' + files.length;
         if (progress) progress.textContent = fname;
 
-        var result = fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax, peakLabels);
+        var result = fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax, peakLabels, deconvBatchPeaks[preset]);
         if (result) {
             result.peakLabels = peakLabels;
             deconvBatchResults[preset][fname] = result;
@@ -3956,7 +3956,7 @@ function runDeconvBatchAll() {
 
 // Fit one sample at a given excitation wavelength with given initial peak positions
 // peakLabels (optional): array of label strings parallel to peaks, used for per-peak sigma constraints
-function fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax, peakLabels) {
+function fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax, peakLabels, batchPeakDefs) {
     var mapData = eemData && eemData.maps[fname];
     if (!mapData) return null;
 
@@ -3985,6 +3985,7 @@ function fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax, peakLabels) {
 
     // Build LM initial params [A, mu, sigma] per peak with per-peak constraints
     var labels = peakLabels || [];
+    var freedom = parseFloat((document.getElementById('deconv-constraint-freedom') || {}).value) || 1;
     var initParams = [], minB = [], maxB = [];
     peaks.forEach(function(mu, pi) {
         var lbl = labels[pi] || '';
@@ -3995,9 +3996,28 @@ function fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax, peakLabels) {
             if (d < bestDist) { bestDist = d; bestIdx = i; }
         }
         var A0 = Math.max(0, yArr[bestIdx] || 0);
+        var peakDef = batchPeakDefs ? batchPeakDefs[pi] : null;
+        var lockMu    = peakDef && peakDef.varyMu === false;
+        var lockSigma = peakDef && peakDef.varySigma === false;
+        var muRange, sMin, sMax;
+        if (lockMu) {
+            muRange = 0;
+        } else if (freedom === 0) {
+            muRange = 30;
+        } else {
+            muRange = 5 * freedom;
+        }
+        if (lockSigma) {
+            sMin = sb.sig0; sMax = sb.sig0;
+        } else if (freedom === 0) {
+            sMin = 1; sMax = 45;
+        } else {
+            sMin = Math.max(1, sb.sig0 - (sb.sig0 - sb.min) * freedom);
+            sMax = sb.sig0 + (sb.max - sb.sig0) * freedom;
+        }
         initParams.push(A0, mu, sb.sig0);
-        minB.push(0, mu - 5, sb.min);
-        maxB.push(Infinity, mu + 5, sb.max);
+        minB.push(0, mu - muRange, sMin);
+        maxB.push(Infinity, mu + muRange, sMax);
     });
 
     var fitParams = fitGaussians(xArr, yArr, initParams, 300, { min: minB, max: maxB });
@@ -4576,14 +4596,14 @@ function applyOrganismPreset(organismType) {
             // Custom: keep existing peaks or set minimal defaults
             if (!deconvBatchPeaks[preset] || !deconvBatchPeaks[preset].length) {
                 deconvBatchPeaks[preset] = [
-                    { mu: 689, label: 'PSII' },
-                    { mu: 724, label: 'PSI' }
+                    { mu: 689, label: 'PSII', varyMu: true, varySigma: true },
+                    { mu: 724, label: 'PSI', varyMu: true, varySigma: true }
                 ];
             }
         } else if (presetData[preset]) {
             // Deep copy so user edits don't mutate the template
             deconvBatchPeaks[preset] = presetData[preset].map(function(p) {
-                return { mu: p.mu, label: p.label };
+                return { mu: p.mu, label: p.label, varyMu: true, varySigma: true };
             });
         } else {
             deconvBatchPeaks[preset] = [];
@@ -4611,11 +4631,21 @@ function rebuildBatchPeaksEditor(preset) {
         span.className = 'd-inline-flex align-items-center bg-white border rounded px-1';
         span.style.cssText = 'gap:2px; font-size:0.82rem;';
         span.title = (info ? info + '\n' : '') + widthInfo;
+        var muOn = peak.varyMu !== false;
+        var sigOn = peak.varySigma !== false;
         span.innerHTML =
             '<small class="text-muted" style="font-size:0.7rem; min-width:24px;">' + peak.label + '</small>' +
             '<input type="number" class="border-0 text-center p-0" style="width:46px; font-size:0.82rem;" ' +
             'value="' + peak.mu + '" step="1" data-preset="' + preset + '" data-idx="' + idx + '" ' +
             'onchange="updateBatchPeak(this)">' +
+            '<button class="btn p-0" style="line-height:1; font-size:0.7rem; font-style:italic; opacity:' +
+            (muOn ? '1' : '0.35') + '; color:' + (muOn ? '#27ae60' : '#999') + ';" ' +
+            'title="' + (muOn ? 'Position varies (click to lock)' : 'Position locked (click to free)') + '" ' +
+            'onclick="toggleBatchPeakFlag(\'' + preset + '\',' + idx + ',\'varyMu\')">\u03bc</button>' +
+            '<button class="btn p-0" style="line-height:1; font-size:0.7rem; font-style:italic; opacity:' +
+            (sigOn ? '1' : '0.35') + '; color:' + (sigOn ? '#2e86c1' : '#999') + ';" ' +
+            'title="' + (sigOn ? 'Width varies (click to lock)' : 'Width locked (click to free)') + '" ' +
+            'onclick="toggleBatchPeakFlag(\'' + preset + '\',' + idx + ',\'varySigma\')">\u03c3</button>' +
             '<button class="btn p-0 text-danger" style="line-height:1; font-size:0.8rem;" ' +
             'onclick="removeBatchPeak(\'' + preset + '\',' + idx + ')"><i class="fa fa-times"></i></button>';
         container.appendChild(span);
@@ -4648,7 +4678,14 @@ function removeBatchPeak(preset, idx) {
 }
 
 function addBatchPeak(preset) {
-    deconvBatchPeaks[preset].push({ mu: 700, label: 'New' });
+    deconvBatchPeaks[preset].push({ mu: 700, label: 'New', varyMu: true, varySigma: true });
+    rebuildBatchPeaksEditor(preset);
+}
+
+function toggleBatchPeakFlag(preset, idx, flag) {
+    var peak = deconvBatchPeaks[preset][idx];
+    if (!peak) return;
+    peak[flag] = !(peak[flag] !== false);
     rebuildBatchPeaksEditor(preset);
 }
 
