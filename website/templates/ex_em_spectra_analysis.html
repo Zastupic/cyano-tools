@@ -1117,7 +1117,7 @@
                 <div class="ojip-seg-ctrl" id="spectra-section-btns">
                     <button class="btn btn-primary" data-section="emission"
                             onclick="switchSpectraSection('emission')">Emission spectra</button>
-                    <button class="btn btn-outline-primary" data-section="excitation"
+                    <button class="btn btn-outline-primary" id="spectra-excitation-btn" data-section="excitation"
                             onclick="switchSpectraSection('excitation')">Excitation spectra</button>
                 </div>
             </div>
@@ -1133,9 +1133,11 @@
 
         <!-- ── 2D MAP TAB ── -->
         <div class="tab-pane fade" id="eem-map" role="tabpanel">
-            <div id="eem-map-single-ex-note" class="alert alert-info py-2 mb-2" style="display:none; font-size:0.9em;">
-                <i class="fa fa-info-circle mr-1"></i>Single excitation data — map shows the emission intensity strip at the measured excitation wavelength.
+            <div id="eem-map-single-ex-note" class="alert alert-info py-2 mb-3" style="display:none; font-size:0.92em;">
+                <i class="fa fa-info-circle mr-1"></i>
+                3D Map requires multiple excitation wavelengths. Your data contains only a single excitation wavelength.
             </div>
+            <div id="eem-map-controls">
             <div class="d-flex align-items-center flex-wrap mb-3" style="gap:1.2rem;">
                 <div>
                     <label class="mb-1 font-weight-bold d-block">Color scale</label>
@@ -1179,6 +1181,7 @@
                  style="position:fixed; background:rgba(0,0,0,0.72); color:#fff;
                         padding:3px 8px; border-radius:4px; font-size:0.78rem;
                         pointer-events:none; display:none; white-space:nowrap; z-index:9999;"></div>
+            </div><!-- /eem-map-controls -->
         </div>
 
         <!-- ── DERIVED TAB ── -->
@@ -1708,7 +1711,7 @@
             <!-- Deconvolution sub-tab navigation -->
             <ul class="nav nav-tabs mb-0" id="deconv-subtabs" role="tablist"
                 style="border-bottom:2px solid #dee2e6;">
-                <li class="nav-item">
+                <li class="nav-item" id="dcsub-440-li">
                     <a class="nav-link active" id="dcsub-440-tab" data-toggle="tab"
                        href="#dcsub-440" role="tab">
                         <i class="fa fa-leaf" style="color:#27ae60; margin-right:3px;"></i>
@@ -2304,6 +2307,11 @@
 
             <!-- Main content shown once batch data is ready -->
             <div id="comparison-content" style="display:none;">
+
+                <div id="comparison-single-ex-note" class="alert alert-info py-2 mb-3" style="display:none; font-size:0.92em;">
+                    <i class="fa fa-info-circle mr-1"></i>
+                    Your data contains only a single excitation wavelength. Parameters requiring other excitation wavelengths are not available and will show as &ldquo;&ndash;&rdquo;.
+                </div>
 
                 <!-- Method reference accordion -->
                 <div class="mb-3">

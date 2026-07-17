@@ -4,7 +4,6 @@ import numpy as np
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from scipy.optimize import curve_fit
-from scipy import stats
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
 
@@ -229,28 +228,21 @@ def lc_process():
             return jsonify({'status': 'error',
                             'message': f'Curve fitting failed for {fname}.'}), 400
 
-        ETRmPot_fit, _, _ = popt
+        ETRmPot_fit, alpha, beta = popt   # all ≥ 0 by curve_fit bounds
         fit_etr = model_platt(par_arr, *popt)
 
-        # Re-derive alpha and beta from slopes of fitted curve
-        slope1, _, _, _, _ = stats.linregress(par_arr[:3],   fit_etr[:3])
-        slope2, _, _, _, _ = stats.linregress(par_arr[-2:],  fit_etr[-2:])
-        alpha     = slope1
-        beta      = slope2
-        beta_abs  = abs(slope2)
-
-        # ETRmax from alpha/beta formula (Platt 1980; β must be positive)
-        if (alpha + beta_abs) > 0 and alpha > 0 and beta_abs > 0:
-            etr_max_from_ab = ETRmPot_fit * (alpha / (alpha + beta_abs)) * (beta_abs / (alpha + beta_abs)) ** (beta_abs / alpha)
+        # ETRmax from alpha/beta formula (Platt 1980; α, β ≥ 0)
+        if (alpha + beta) > 0 and alpha > 0 and beta > 0:
+            etr_max_from_ab = ETRmPot_fit * (alpha / (alpha + beta)) * (beta / (alpha + beta)) ** (beta / alpha)
         else:
             etr_max_from_ab = float('nan')
 
-        Ik = etr_max_from_ab / alpha    if (alpha    != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
-        Ib = etr_max_from_ab / beta_abs if (beta_abs != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
+        Ik = etr_max_from_ab / alpha if (alpha != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
+        Ib = etr_max_from_ab / beta  if (beta  != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
 
         params_out[fname] = {
             'alpha':              _safe(alpha),
-            'beta':               _safe(beta_abs),
+            'beta':               _safe(beta),
             'etr_max_measured':   _safe(etr_max_obs),
             'etr_max_from_ab':    _safe(etr_max_from_ab),
             'etr_mpot':           _safe(ETRmPot_fit),

@@ -657,6 +657,7 @@ function uploadAndAnalyzeXlsx() {
             initDeconvUI(true);
             autoDetectAllEmEdges();
             updateParafacRankSuggestion(getPigmentation());
+            updateComparisonTabState();
             document.getElementById('eem-spectra-tab').click();
             renderSpectraTab();
         })
@@ -947,6 +948,7 @@ function uploadAndAnalyze() {
             initDeconvUI(true);
             autoDetectAllEmEdges();
             updateParafacRankSuggestion(getPigmentation());
+            updateComparisonTabState();
 
             document.getElementById('eem-spectra-tab').click();
             renderSpectraTab();
@@ -985,11 +987,35 @@ function detectSingleEx() {
         badge.style.display = '';
         focusRow.style.display = 'none';
         if (mapNote) mapNote.style.display = '';
+        // Disable excitation spectra button (single point, not useful)
+        var exBtn = document.getElementById('spectra-excitation-btn');
+        if (exBtn) { exBtn.disabled = true; exBtn.title = 'Not available \u2014 single excitation wavelength'; }
+        if (spectraSection === 'excitation') switchSpectraSection('emission');
+        // Show 3D Map "not available" banner and hide map controls
+        var mapControls = document.getElementById('eem-map-controls');
+        if (mapControls) mapControls.style.display = 'none';
     } else {
         badge.style.display = 'none';
         if (mapNote) mapNote.style.display = 'none';
+        var exBtn = document.getElementById('spectra-excitation-btn');
+        if (exBtn) { exBtn.disabled = false; exBtn.title = ''; }
+        // Re-enable 3D Map controls
+        var mapControls = document.getElementById('eem-map-controls');
+        if (mapControls) mapControls.style.display = '';
         buildFocusExSelector();
     }
+}
+
+// Check whether any loaded file has an excitation wavelength within ±tol nm
+function dataHasExcitation(targetEx, tol) {
+    if (!eemData || !eemData.files.length) return false;
+    tol = tol || 15;
+    return eemData.files.some(function(f) {
+        var map = eemData.maps[f];
+        return map && map.ex_wl.some(function(ex) {
+            return Math.abs(ex - targetEx) <= tol;
+        });
+    });
 }
 
 function buildFocusExSelector() {
@@ -3035,10 +3061,14 @@ function computeGaussianParamsFromBatch() {
     return out;
 }
 
-// Enable / disable the Comparison tab based on available batch data
+// Enable / disable the Comparison tab based on available data
 function updateComparisonTabState() {
-    var hasData = eemData && eemData.files.length &&
-        deconvBatchResults.ex440 && Object.keys(deconvBatchResults.ex440).length > 0;
+    var hasFixedWL = eemData && eemData.files.length && eemData.params &&
+        Object.keys(eemData.params).length > 0;
+    var hasGauss = ['ex440', 'ex620', 'ex560'].some(function(p) {
+        return deconvBatchResults[p] && Object.keys(deconvBatchResults[p]).length > 0;
+    });
+    var hasData = hasFixedWL || hasGauss;
     var tabLink = document.getElementById('eem-comparison-tab');
     if (!tabLink) return;
     if (hasData) {
@@ -3046,7 +3076,7 @@ function updateComparisonTabState() {
         tabLink.removeAttribute('title');
     } else {
         if (!tabLink.classList.contains('disabled')) tabLink.classList.add('disabled');
-        tabLink.title = 'Run Gaussian batch fit (Deconvolution tab) to enable';
+        tabLink.title = 'Upload data to enable';
     }
 }
 
@@ -3314,15 +3344,22 @@ function renderComparisonTab() {
     if (!eemData) return;
     var placeholder = document.getElementById('comparison-placeholder');
     var content = document.getElementById('comparison-content');
-    var hasData = deconvBatchResults.ex440 && Object.keys(deconvBatchResults.ex440).length > 0;
+    var hasFixedWL = eemData.params && Object.keys(eemData.params).length > 0;
+    var hasGauss = ['ex440', 'ex620', 'ex560'].some(function(p) {
+        return deconvBatchResults[p] && Object.keys(deconvBatchResults[p]).length > 0;
+    });
 
-    if (!hasData) {
+    if (!hasFixedWL && !hasGauss) {
         if (placeholder) placeholder.style.display = '';
         if (content) content.style.display = 'none';
         return;
     }
     if (placeholder) placeholder.style.display = 'none';
     if (content) content.style.display = '';
+
+    // Show single-ex info note when applicable
+    var singleExNote = document.getElementById('comparison-single-ex-note');
+    if (singleExNote) singleExNote.style.display = isSingleEx ? '' : 'none';
 
     // Filter out excluded samples
     var allFiles = eemData.files;
@@ -3746,29 +3783,35 @@ function autoDetectAllEmEdges() {
 function updateDeconvSubTabs() {
     var pigm = getPigmentation();
     var mode = (eemData && eemData.analysis_mode) || analysisMode;
-    var show620 = mode === '77K' && (pigm === 'checkbox_chl_PC' || pigm === 'checkbox_chl_PC_PE');
-    var show560 = mode === '77K' && pigm === 'checkbox_chl_PC_PE';
+    var show440 = dataHasExcitation(440);
+    var show620 = mode === '77K' && (pigm === 'checkbox_chl_PC' || pigm === 'checkbox_chl_PC_PE')
+                  && dataHasExcitation(620);
+    var show560 = mode === '77K' && pigm === 'checkbox_chl_PC_PE'
+                  && dataHasExcitation(560);
 
+    var li440 = document.getElementById('dcsub-440-li');
     var li620 = document.getElementById('dcsub-620-li');
     var li560 = document.getElementById('dcsub-560-li');
+    if (li440) li440.style.display = show440 ? '' : 'none';
     if (li620) li620.style.display = show620 ? '' : 'none';
     if (li560) li560.style.display = show560 ? '' : 'none';
 
-    // If the currently-active tab is now hidden, fall back to Ex 440
-    ['dcsub-620-tab', 'dcsub-560-tab'].forEach(function(tabId) {
-        var tab = document.getElementById(tabId);
-        if (tab && tab.classList.contains('active')) {
-            var li = tab.closest('li');
-            if (li && li.style.display === 'none') {
-                var t440 = document.getElementById('dcsub-440-tab');
-                if (t440) $(t440).tab('show');
-            }
+    // If the currently-active tab is now hidden, fall back to first visible
+    var activeSubTab = document.querySelector('#deconv-subtabs .nav-link.active');
+    if (activeSubTab) {
+        var li = activeSubTab.closest('li');
+        if (li && li.style.display === 'none') {
+            var fallback = document.querySelector(
+                '#deconv-subtabs li:not([style*="display: none"]):not([style*="display:none"]) .nav-link');
+            if (fallback) $(fallback).tab('show');
         }
-    });
+    }
 
-    // Populate excitation dropdowns for all preset tabs
+    // Populate excitation dropdowns for visible preset tabs
     if (eemData) {
-        ['ex440', 'ex620', 'ex560'].forEach(updateDeconvExDropdown);
+        if (show440) updateDeconvExDropdown('ex440');
+        if (show620) updateDeconvExDropdown('ex620');
+        if (show560) updateDeconvExDropdown('ex560');
     }
 
     // Initialize batch peaks from organism preset based on current pigmentation
@@ -3876,12 +3919,14 @@ function runDeconvBatch(preset, onDone) {
 function runDeconvBatchAll() {
     if (!eemData || !eemData.files.length) return;
 
-    // Collect active presets in order (ex440 always; ex620/ex560 only if visible)
-    var presets = ['ex440'];
-    if (document.getElementById('dcsub-620-li') &&
-        document.getElementById('dcsub-620-li').style.display !== 'none') presets.push('ex620');
-    if (document.getElementById('dcsub-560-li') &&
-        document.getElementById('dcsub-560-li').style.display !== 'none') presets.push('ex560');
+    // Collect active presets in order (only visible sub-tabs)
+    var presets = [];
+    ['ex440', 'ex620', 'ex560'].forEach(function(p) {
+        var liId = 'dcsub-' + p.replace('ex', '') + '-li';
+        var li = document.getElementById(liId);
+        if (li && li.style.display !== 'none') presets.push(p);
+    });
+    if (!presets.length) return;
 
     var btn = document.getElementById('deconv-fitall-all');
     var prog = document.getElementById('deconv-fitall-all-progress');
@@ -3921,7 +3966,7 @@ function fitSingleDeconvSample(fname, exWl, peaks, emMin, emMax, peakLabels) {
         var d = Math.abs(v - exWl);
         if (d < bestDx) { bestDx = d; xi = i; }
     });
-    if (xi === -1) return null;
+    if (xi === -1 || bestDx > 15) return null;
 
     var xArr = mapData.em_wl.slice();
     var yArr = mapData.intensity.map(function(row) { return row[xi]; });
@@ -4661,6 +4706,25 @@ function runDeconvolution(silent) {
     }
     var xArr = spec.wl, yArr = spec.raw[fname];
 
+    // Apply emission-range crop matching the batch preset for this excitation
+    var exNum = parseFloat(exWlStr);
+    var matchedCfg = null;
+    ['ex440', 'ex620', 'ex560'].forEach(function(key) {
+        var c = DECONV_PRESET_CONFIG[key];
+        if (c && Math.abs(c.targetEx - exNum) < 15) matchedCfg = c;
+    });
+    if (matchedCfg && (matchedCfg.emMin != null || matchedCfg.emMax != null)) {
+        var xFilt = [], yFilt = [];
+        xArr.forEach(function(em, i) {
+            if ((matchedCfg.emMin == null || em >= matchedCfg.emMin) &&
+                (matchedCfg.emMax == null || em <= matchedCfg.emMax)) {
+                xFilt.push(em);
+                yFilt.push(yArr[i]);
+            }
+        });
+        if (xFilt.length >= 3) { xArr = xFilt; yArr = yFilt; }
+    }
+
     // Build initial params: [A, mu, sigma] per peak
     var sig0 = 8, initParams = [], minB = [], maxB = [];
     deconvPeakMus.forEach(function(mu) {
@@ -4693,35 +4757,34 @@ var DECONV_PALETTES = {
 var deconvPaletteName = 'default';
 var PEAK_COLORS = DECONV_PALETTES['default'];
 
-// Fixed palette-slot index for each known peak label so the same peak
-// always gets the same colour regardless of its position in the peak list.
-var PEAK_LABEL_INDEX = {
-    'CP43': 0, 'PSII': 0,   // PSII (unresolved) shares slot with CP43
-    'CP47': 1,
-    'PSI':  2,
-    'PC':   3,
-    'APC':  4,
-    'APC-TE': 5,
-    'PE':   6,
-    'PBS tail': 7
+// Fixed colours per peak label, grouped by pigment type:
+//   Chl (greens)  —  PC / PBS core (blues)  —  PE (orange)  —  residual (grey)
+var PEAK_LABEL_COLORS = {
+    'CP43':     '#27ae60',   // Chl — bright green  (matches leaf icon)
+    'PSII':     '#27ae60',   // unresolved PSII pool (same as CP43)
+    'CP47':     '#1e8449',   // Chl — forest green
+    'PSI':      '#148f77',   // Chl — teal-green
+    'PC':       '#2e86c1',   // PC  — steel blue
+    'APC':      '#1a5276',   // APC — navy blue
+    'APC-TE':   '#7d3c98',   // APC terminal emitter — purple
+    'PE':       '#e67e22',   // PE  — orange
+    'PBS tail': '#7f8c8d'    // residual — grey
 };
 
-// One past the highest named slot — unlabeled peaks start here.
+// Unlabeled (user-defined) peaks start past this offset in the palette
+// so they don't collide with any of the fixed colours above.
 var _PEAK_LABEL_OFFSET = 8;
 
 /**
- * Return the colour for a peak, using the label-based fixed slot when
- * a known label is provided; unlabeled peaks are offset beyond the
- * named range so they don't collide with known peak colours.
+ * Return the colour for a peak.  Known labels get a fixed pigment-group
+ * colour; unlabeled peaks use the selectable palette with an offset.
  * @param {string[]} palette  - the active colour palette array
  * @param {number}   idx      - positional index of the peak in its list
  * @param {string=}  label    - optional peak label (e.g. 'CP43', 'PSI')
  */
 function getPeakColor(palette, idx, label) {
-    var slot = (label && PEAK_LABEL_INDEX.hasOwnProperty(label))
-        ? PEAK_LABEL_INDEX[label]
-        : _PEAK_LABEL_OFFSET + idx;
-    return palette[slot % palette.length];
+    if (label && PEAK_LABEL_COLORS[label]) return PEAK_LABEL_COLORS[label];
+    return palette[(_PEAK_LABEL_OFFSET + idx) % palette.length];
 }
 
 function _niceStep(lo, hi) {
@@ -5787,6 +5850,8 @@ function _parafacValidate() {
         return 'At least 3 samples are needed for PARAFAC analysis.';
     var keys = Object.keys(eemData.maps);
     if (!keys.length) return 'No EEM maps available.';
+    if (isSingleEx)
+        return 'PARAFAC requires multiple excitation wavelengths. Your data contains only a single excitation wavelength.';
     return null;
 }
 
