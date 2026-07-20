@@ -74,8 +74,8 @@ def lc_process():
     protocol_key   = request.form.get('protocol', 'LC3')
     etr_max_factor = int(request.form.get('etr_max_factor', 10))
 
-    if len(files) > 50:
-        return jsonify({'status': 'error', 'message': 'Maximum 50 files allowed.'}), 400
+    if len(files) > 100:
+        return jsonify({'status': 'error', 'message': 'Maximum 100 files allowed.'}), 400
 
     if protocol_key not in LC_PROTOCOLS:
         return jsonify({'status': 'error', 'message': f'Unknown protocol: {protocol_key}'}), 400

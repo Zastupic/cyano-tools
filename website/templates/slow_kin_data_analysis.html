@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block description %}
-    Analyze slow chlorophyll fluorescence induction kinetics and Kautsky effect online. Process PAM fluorometer data to calculate Fv/Fm, NPQ, qP, qL, and photosynthetic parameters. Batch processing for 50 files.
+    Analyze slow chlorophyll fluorescence induction kinetics and Kautsky effect online. Process PAM fluorometer data to calculate Fv/Fm, NPQ, qP, qL, and photosynthetic parameters. Batch processing for 100 files.
 {% endblock %}
 
 {% block keywords %}
@@ -84,7 +84,7 @@
   <strong>At a glance:</strong> Upload PAM fluorometer files from NPQ / slow kinetics protocols to visualize and
   quantify time-dependent fluorescence changes — including non-photochemical quenching (NPQ), state transitions,
   photochemical quenching (qP), and quantum yield. No software installation needed; results download as a
-  formatted .xlsx file. Supports batch processing of up to 50 files.
+  formatted .xlsx file. Supports batch processing of up to 100 files.
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════
@@ -192,7 +192,7 @@
               <li>Select your fluorometer from the dropdown</li>
               <li>For <strong>AquaPen/FluorPen</strong>: choose the NPQ protocol used during the measurement</li>
               <li>For <strong>MC-PAM/Dual PAM</strong>: choose whether you are uploading raw data or parameter files</li>
-              <li>Upload up to 50 files and click <em>Upload &amp; Analyze</em></li>
+              <li>Upload up to 100 files and click <em>Upload &amp; Analyze</em></li>
               <li>Explore traces, derived parameters, and group statistics in the interactive tabs</li>
               <li>Optionally assign files to groups to compare replicates with mean ± SD</li>
               <li>Download results as .xlsx; export scalar parameters to the Statistics page</li>
@@ -340,7 +340,7 @@
     </div>
 
     <!-- Step 3: Drop zone -->
-    <label><span class="badge badge-primary mr-1">3</span> Select files (up to 50; .csv for MC-PAM, .txt for AquaPen/FluorPen)</label>
+    <label><span class="badge badge-primary mr-1">3</span> Select files (up to 100; .csv for MC-PAM, .txt for AquaPen/FluorPen)</label>
     <div id="sk-drop-zone" class="border rounded p-4 text-center mb-2"
          style="border-style:dashed !important; cursor:pointer; background:#f8f9fa; transition:background 0.2s;">
       <i class="fa fa-upload fa-2x text-muted mb-2"></i>

@@ -729,8 +729,8 @@ def slow_kin_process():
     if not files or secure_filename(files[0].filename or '') == '':
         return jsonify({'status': 'error', 'message': 'Please select one or more files.'}), 400
 
-    if len(files) > 50:
-        return jsonify({'status': 'error', 'message': 'Maximum 50 files allowed.'}), 400
+    if len(files) > 100:
+        return jsonify({'status': 'error', 'message': 'Maximum 100 files allowed.'}), 400
 
     fluorometer = request.form.get('fluorometer', '')
     reduce_data = request.form.get('reduce_data') == 'true'
