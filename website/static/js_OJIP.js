@@ -191,9 +191,23 @@ const MC = (() => {
     const selEl   = document.getElementById('mc-selected-count');
     const dateEl  = document.getElementById('mc-date-range');
     const fileEl  = document.getElementById('mc-filename');
+    const headerEl = document.getElementById('mc-table-header');
+    const filtersEl = document.getElementById('mc-excel-filters');
+    const namingRow = document.getElementById('mc-naming')?.closest('.form-group');
 
     fileEl.textContent = dataset.filename;
     countEl.textContent = dataset.curves.length;
+
+    // Reset to FluorPen layout (undo any Excel-specific changes)
+    if (filtersEl) filtersEl.style.display = 'none';
+    if (namingRow) namingRow.style.display = '';
+    if (headerEl) {
+      headerEl.innerHTML =
+        `<th style="width:30px;"><input type="checkbox" checked onchange="this.checked ? MC.selectAll() : MC.deselectAll()"></th>` +
+        `<th style="width:50px;">#</th>` +
+        `<th>Timestamp</th>` +
+        `<th>Protocol</th>`;
+    }
 
     // Date range
     const ts = dataset.curves.map(c => c.timestamp).filter(Boolean);
@@ -249,6 +263,8 @@ const MC = (() => {
   }
 
   function getCurveName(curve, dataset, scheme) {
+    // Excel datasets use pre-built curve names from the parseExcel step
+    if (dataset.fluorometer === 'OJIPImaging' && curve.curveName) return curve.curveName;
     if (scheme === 'timestamp')      return curve.timestamp || `${curve.index + 1}`;
     if (scheme === 'filename_index') return `${dataset.stem}_${String(curve.index + 1).padStart(3, '0')}`;
     return `${curve.index + 1}`; // 'index'
@@ -377,6 +393,11 @@ const MC = (() => {
     _renderParamTimeChart();
     // Build the virtualized parameter table
     _renderParamTable();
+    // Refresh summary table if visible
+    const summaryWrap = document.getElementById('mc-summary-table-wrap');
+    if (summaryWrap && summaryWrap.style.display !== 'none') {
+      _renderSummaryTable();
+    }
   }
 
   function _appendTimeSeriesPoints(results) {
@@ -405,22 +426,59 @@ const MC = (() => {
     return c ? c.epochMs : NaN;
   }
 
+  // Metadata lookup: get Excel metadata for a given slot
+  function _slotMeta(slot) {
+    if (!mcDataset) return null;
+    const idx = _slotToIndex(slot);
+    return mcDataset.curves.find(x => x.index === idx) || null;
+  }
+
+  // Convert metadata field value to a numeric x-axis value
+  function _metaToX(meta, field) {
+    if (!meta) return NaN;
+    const v = meta[field];
+    if (field === 'hours' && typeof v === 'string') {
+      // "HH:MM" → minutes since midnight
+      const parts = v.split(':');
+      return parseInt(parts[0], 10) * 60 + (parseInt(parts[1], 10) || 0);
+    }
+    if (field === 'day' && typeof v === 'string') {
+      // "D1" → 1, "D2" → 2, etc.
+      const m = v.match(/(\d+)/);
+      return m ? parseInt(m[1], 10) : NaN;
+    }
+    return NaN;
+  }
+
+  // X-axis label for metadata field
+  function _metaXLabel(field) {
+    if (field === 'hours') return 'Hour of day';
+    if (field === 'day')   return 'Day (replicate)';
+    return 'Curve index';
+  }
+
+  // X-axis tick formatter for metadata fields
+  function _metaXTickCallback(field) {
+    if (field === 'hours') {
+      return function(val) {
+        const h = Math.floor(val / 60);
+        const m = val % 60;
+        return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+      };
+    }
+    if (field === 'day') {
+      return function(val) { return 'D' + val; };
+    }
+    return undefined;
+  }
+
   function _renderParamTimeChart() {
     const paramKey = document.getElementById('mc-param-picker')?.value || 'FVFM';
     const useTimestamps = document.getElementById('mc-time-axis-ts')?.checked;
-
-    // Build data array and a slot lookup for click/tooltip
-    const data = [];
-    const slotLookup = []; // parallel array: slotLookup[i] = slot
-    for (const r of paramMatrix) {
-      if (!r || r.error) continue;
-      const val = r[paramKey];
-      if (val == null) continue;
-      const xVal = useTimestamps ? _slotEpochMs(r.slot) : r.slot;
-      if (useTimestamps && isNaN(xVal)) continue; // skip if no valid timestamp
-      data.push({ x: xVal, y: val });
-      slotLookup.push(r.slot);
-    }
+    const colorBy = document.getElementById('mc-color-by')?.value || '';
+    const xAxisField = document.getElementById('mc-x-axis')?.value || 'index';
+    const isExcel = mcDataset?.fluorometer === 'OJIPImaging';
+    const isGrouped = isExcel && colorBy;
 
     destroyChart('mc-param-time-chart');
     const canvas = document.getElementById('mc-param-time-chart');
@@ -428,71 +486,290 @@ const MC = (() => {
 
     const label = PARAM_LABELS[paramKey] || paramKey;
 
-    // X-axis config depends on mode
-    const xScale = useTimestamps
-      ? {
-          type: 'linear',
-          title: { display: true, text: 'Measurement time', font: { size: 12 } },
-          ticks: {
-            maxTicksLimit: 12,
-            callback: function(val) {
-              const d = new Date(val);
-              return d.getDate() + '.' + (d.getMonth() + 1) + '. ' +
-                     String(d.getHours()).padStart(2, '0') + ':' +
-                     String(d.getMinutes()).padStart(2, '0');
-            },
-          },
-        }
-      : {
-          type: 'linear',
-          title: { display: true, text: 'Curve index', font: { size: 12 } },
-          ticks: { maxTicksLimit: 20 },
-        };
+    if (isGrouped) {
+      // ── Grouped mode: one dataset per unique value of colorBy field ──
+      const groupMap = new Map(); // groupValue → [{x, y, _slot}, ...]
 
-    chartInst['mc-param-time-chart'] = new Chart(canvas, {
-      type: 'scatter',
-      data: {
-        datasets: [{
-          label: label,
-          data: data,
-          pointRadius: 2.5,
-          pointHoverRadius: 5,
-          borderColor: 'hsl(210,70%,42%)',
-          backgroundColor: 'hsla(210,70%,42%,0.6)',
-          showLine: true,
-          borderWidth: 1.2,
-          tension: 0,
-        }],
-      },
-      options: {
-        animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
-        parsing: false,
-        scales: { x: xScale, y: { title: { display: true, text: label, font: { size: 12 } } } },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: (items) => {
-                if (!items.length) return '';
-                const di = items[0].dataIndex;
-                const slot = slotLookup[di];
-                return slot != null && paramMatrix[slot] ? paramMatrix[slot].name : '';
+      for (const r of paramMatrix) {
+        if (!r || r.error) continue;
+        const val = r[paramKey];
+        if (val == null) continue;
+        const meta = _slotMeta(r.slot);
+        if (!meta) continue;
+
+        const groupVal = meta[colorBy] || 'unknown';
+        const xVal = xAxisField === 'index' ? r.slot : _metaToX(meta, xAxisField);
+        if (isNaN(xVal)) continue;
+
+        if (!groupMap.has(groupVal)) groupMap.set(groupVal, []);
+        groupMap.get(groupVal).push({ x: xVal, y: val, _slot: r.slot });
+      }
+
+      // Sort groups for consistent ordering
+      const sortedGroups = [...groupMap.keys()].sort();
+      const n = sortedGroups.length;
+
+      // ── Jitter ──
+      const jitterPct = parseInt(document.getElementById('mc-jitter')?.value || '0', 10);
+      let jitterWidth = 0;
+      if (jitterPct > 0) {
+        const allXvals = new Set();
+        for (const pts of groupMap.values()) pts.forEach(p => allXvals.add(p.x));
+        const sortedX = [...allXvals].sort((a, b) => a - b);
+        let minGap = Infinity;
+        for (let i = 1; i < sortedX.length; i++) {
+          const gap = sortedX[i] - sortedX[i - 1];
+          if (gap > 0) minGap = Math.min(minGap, gap);
+        }
+        if (!isFinite(minGap)) minGap = 1;
+        jitterWidth = (minGap * 0.8) * (jitterPct / 100);
+      }
+      // Deterministic seeded PRNG (mulberry32) — prevents "dancing" on re-render
+      function _jitterRng(seed) {
+        let t = (seed + 0x6D2B79F5) | 0;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      }
+
+      // ── Read mean ± SD options ──
+      const showMeanSD = document.getElementById('mc-show-mean-sd')?.checked;
+      const fadeRaw = document.getElementById('mc-fade-raw')?.checked;
+
+      // ── Build scatter datasets ──
+      const datasets = sortedGroups.map((gv, gi) => {
+        const points = groupMap.get(gv);
+        points.sort((a, b) => a.x - b.x);
+        const isFaded = showMeanSD && fadeRaw;
+        const color = isFaded ? sampleColor(gi, n, 0.2) : sampleColor(gi, n);
+        const colorA = isFaded ? sampleColor(gi, n, 0.15) : sampleColor(gi, n, 0.65);
+        return {
+          label: gv,
+          data: points.map(p => ({
+            x: p.x + (jitterWidth > 0 ? (_jitterRng(p._slot * 7 + gi) - 0.5) * jitterWidth : 0),
+            y: p.y,
+          })),
+          _slots: points.map(p => p._slot),
+          pointRadius: isFaded ? 2 : 3,
+          pointHoverRadius: 6,
+          borderColor: color,
+          backgroundColor: colorA,
+          showLine: false,
+          borderWidth: 1,
+          order: 10, // raw points behind overlays
+        };
+      });
+
+      // ── Mean ± SD overlay ──
+      if (showMeanSD) {
+        sortedGroups.forEach((gv, gi) => {
+          const points = groupMap.get(gv);
+          // Group by original (non-jittered) x value
+          const byX = new Map();
+          for (const p of points) {
+            if (!byX.has(p.x)) byX.set(p.x, []);
+            byX.get(p.x).push(p.y);
+          }
+          const sortedXKeys = [...byX.keys()].sort((a, b) => a - b);
+          const color = sampleColor(gi, n);
+
+          const meanLineData = [];
+          const errorBarData = [];
+
+          for (const xVal of sortedXKeys) {
+            const vals = byX.get(xVal);
+            const count = vals.length;
+            const mean = vals.reduce((s, v) => s + v, 0) / count;
+            // Sample SD (n-1 denominator) for biological replicates
+            const sd = count > 1
+              ? Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / (count - 1))
+              : 0;
+            meanLineData.push({ x: xVal, y: mean });
+            errorBarData.push({ x: xVal, y: mean, yMin: mean - sd, yMax: mean + sd, _n: count, _sd: sd });
+          }
+
+          // Connected mean line
+          datasets.push({
+            label: '',
+            data: meanLineData,
+            showLine: true,
+            pointRadius: 0,
+            borderColor: color,
+            backgroundColor: 'transparent',
+            borderWidth: 2.5,
+            order: -2,
+            _isMeanOverlay: true,
+            _groupLabel: gv,
+          });
+
+          // Error bar points (scatterWithErrorBars)
+          datasets.push({
+            type: 'scatterWithErrorBars',
+            label: '',
+            data: errorBarData,
+            pointRadius: 5,
+            pointStyle: 'circle',
+            borderColor: color,
+            backgroundColor: sampleColor(gi, n, 0.8),
+            borderWidth: 1.5,
+            showLine: false,
+            errorBarColor: color,
+            errorBarWhiskerColor: color,
+            errorBarLineWidth: 1.5,
+            errorBarWhiskerSize: 6,
+            order: -1,
+            _isMeanOverlay: true,
+            _groupLabel: gv,
+          });
+        });
+      }
+
+      // X-axis config
+      const xScale = {
+        type: 'linear',
+        title: { display: true, text: _metaXLabel(xAxisField), font: { size: 12 } },
+        ticks: {
+          maxTicksLimit: 20,
+          callback: _metaXTickCallback(xAxisField),
+        },
+      };
+
+      chartInst['mc-param-time-chart'] = new Chart(canvas, {
+        type: 'scatter',
+        data: { datasets },
+        options: {
+          animation: false,
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { x: xScale, y: { title: { display: true, text: label, font: { size: 12 } } } },
+          plugins: {
+            legend: {
+              display: n <= 25,
+              position: 'right',
+              labels: {
+                usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11 },
+                filter: (item) => item.text !== '',
+              },
+            },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  if (!items.length) return '';
+                  const ds = datasets[items[0].datasetIndex];
+                  if (ds._isMeanOverlay) {
+                    const pt = ds.data[items[0].dataIndex];
+                    const tickCb = _metaXTickCallback(xAxisField);
+                    const xLabel = tickCb ? tickCb(pt.x) : pt.x;
+                    return `${ds._groupLabel} @ ${xLabel}`;
+                  }
+                  const di = items[0].dataIndex;
+                  const slot = ds._slots?.[di];
+                  return slot != null && paramMatrix[slot] ? paramMatrix[slot].name : ds.label;
+                },
+                label: (item) => {
+                  const ds = datasets[item.datasetIndex];
+                  if (ds._isMeanOverlay && item.raw.yMin != null) {
+                    const mean = item.raw.y;
+                    const sd = item.raw._sd != null ? item.raw._sd : (item.raw.yMax - item.raw.y);
+                    const nn = item.raw._n || '';
+                    return `Mean: ${mean.toPrecision(4)} \u00b1 ${sd.toPrecision(3)} (n=${nn})`;
+                  }
+                  return `${ds.label}: ${item.parsed.y.toPrecision(5)}`;
+                },
               },
             },
           },
-          decimation: { enabled: true, algorithm: 'lttb', samples: 800 },
+          onClick: (evt, elems) => {
+            if (elems.length) {
+              const ds = datasets[elems[0].datasetIndex];
+              if (ds._isMeanOverlay) return; // don't navigate for mean/SD points
+              const di = elems[0].index;
+              const slot = ds._slots?.[di];
+              if (slot != null) fetchAndShowDetail(slot);
+            }
+          },
         },
-        onClick: (evt, elems) => {
-          if (elems.length) {
-            const di = elems[0].index;
-            const slot = slotLookup[di];
-            if (slot != null) fetchAndShowDetail(slot);
+      });
+
+    } else {
+      // ── Ungrouped mode: single dataset (original behavior) ──
+      const data = [];
+      const slotLookup = [];
+      for (const r of paramMatrix) {
+        if (!r || r.error) continue;
+        const val = r[paramKey];
+        if (val == null) continue;
+        const xVal = useTimestamps ? _slotEpochMs(r.slot) : r.slot;
+        if (useTimestamps && isNaN(xVal)) continue;
+        data.push({ x: xVal, y: val });
+        slotLookup.push(r.slot);
+      }
+
+      const xScale = useTimestamps
+        ? {
+            type: 'linear',
+            title: { display: true, text: 'Measurement time', font: { size: 12 } },
+            ticks: {
+              maxTicksLimit: 12,
+              callback: function(val) {
+                const d = new Date(val);
+                return d.getDate() + '.' + (d.getMonth() + 1) + '. ' +
+                       String(d.getHours()).padStart(2, '0') + ':' +
+                       String(d.getMinutes()).padStart(2, '0');
+              },
+            },
           }
+        : {
+            type: 'linear',
+            title: { display: true, text: 'Curve index', font: { size: 12 } },
+            ticks: { maxTicksLimit: 20 },
+          };
+
+      chartInst['mc-param-time-chart'] = new Chart(canvas, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: label,
+            data: data,
+            pointRadius: 2.5,
+            pointHoverRadius: 5,
+            borderColor: 'hsl(210,70%,42%)',
+            backgroundColor: 'hsla(210,70%,42%,0.6)',
+            showLine: true,
+            borderWidth: 1.2,
+            tension: 0,
+          }],
         },
-      },
-    });
+        options: {
+          animation: false,
+          responsive: true,
+          maintainAspectRatio: false,
+          parsing: false,
+          scales: { x: xScale, y: { title: { display: true, text: label, font: { size: 12 } } } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  if (!items.length) return '';
+                  const di = items[0].dataIndex;
+                  const slot = slotLookup[di];
+                  return slot != null && paramMatrix[slot] ? paramMatrix[slot].name : '';
+                },
+              },
+            },
+            decimation: { enabled: true, algorithm: 'lttb', samples: 800 },
+          },
+          onClick: (evt, elems) => {
+            if (elems.length) {
+              const di = elems[0].index;
+              const slot = slotLookup[di];
+              if (slot != null) fetchAndShowDetail(slot);
+            }
+          },
+        },
+      });
+    }
   }
 
   // ── M4: Virtualized parameter table ──────────────────────────────────
@@ -500,8 +777,10 @@ const MC = (() => {
     const container = document.getElementById('mc-param-table-wrap');
     if (!container) return;
 
+    const isExcel = mcDataset && mcDataset.fluorometer === 'OJIPImaging';
+    const metaCols = isExcel ? ['Line', 'Day', 'Hour'] : [];
     const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
-    const headerRow = ['#', 'Name', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+    const headerRow = ['#', 'Name', ...metaCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)];
 
     let html = '<div class="table-responsive" style="max-height:450px; overflow-y:auto;">' +
       '<table class="table table-sm table-bordered table-hover" style="font-size:0.78em;">' +
@@ -515,6 +794,12 @@ const MC = (() => {
       html += `<tr class="${cls}" style="cursor:pointer" onclick="MC.fetchAndShowDetail(${r.slot})">`;
       html += `<td>${r.slot + 1}</td>`;
       html += `<td class="text-nowrap">${r.name}</td>`;
+      if (isExcel) {
+        const meta = _slotMeta(r.slot);
+        html += `<td class="text-nowrap">${meta ? meta.line : ''}</td>`;
+        html += `<td>${meta ? meta.day : ''}</td>`;
+        html += `<td>${meta ? meta.hours : ''}</td>`;
+      }
       if (r.error) {
         html += `<td colspan="${paramKeys.length}" class="text-danger">${r.error}</td>`;
       } else {
@@ -536,11 +821,18 @@ const MC = (() => {
 
   function copyParamTable() {
     if (!paramMatrix) return;
+    const isExcel = mcDataset && mcDataset.fluorometer === 'OJIPImaging';
+    const metaCols = isExcel ? ['Line', 'Day', 'Hour'] : [];
     const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
-    const header = ['#', 'Name', ...paramKeys.map(k => PARAM_LABELS[k] || k)].join('\t');
+    const header = ['#', 'Name', ...metaCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)].join('\t');
     const rows = paramMatrix.filter(Boolean).map(r => {
-      if (r.error) return `${r.slot + 1}\t${r.name}\tERROR: ${r.error}`;
-      return [r.slot + 1, r.name, ...paramKeys.map(k => r[k] ?? '')].join('\t');
+      const metaVals = [];
+      if (isExcel) {
+        const meta = _slotMeta(r.slot);
+        metaVals.push(meta ? meta.line : '', meta ? meta.day : '', meta ? meta.hours : '');
+      }
+      if (r.error) return [r.slot + 1, r.name, ...metaVals, `ERROR: ${r.error}`].join('\t');
+      return [r.slot + 1, r.name, ...metaVals, ...paramKeys.map(k => r[k] ?? '')].join('\t');
     });
     navigator.clipboard.writeText(header + '\n' + rows.join('\n'));
   }
@@ -667,6 +959,11 @@ const MC = (() => {
 
   // ── M6: Range-based multi-curve overlay viewer ───────────────────────
   let _curvesValidSlots = []; // cached valid slot list
+  let _panelChartIds = [];    // canvas IDs of grouped-panel charts
+  let _compareSelected       = new Set(); // selected primary panel values for comparison
+  let _compareSubSelected    = new Set(); // selected sub-group values for comparison
+  let _comparePrimaryField   = null;      // field _compareSelected was last initialized for
+  let _compareSubField       = null;      // field _compareSubSelected was last initialized for
 
   // Read the user-editable from/to range (1-based, clamped)
   function _getCurveRange() {
@@ -901,16 +1198,1020 @@ const MC = (() => {
     XLSX.writeFile(wb, `${mcDataset?.stem || 'ojip'}_params.xlsx`);
   }
 
+  // ── M2-Excel: Client-side OJIP Imaging Excel parser ─────────────────
+  function parseExcel(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try { resolve(_parseExcelData(reader.result, file.name)); }
+        catch(e) { reject(e); }
+      };
+      reader.onerror = () => reject(new Error('Failed to read Excel file'));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function _parseExcelData(buffer, filename) {
+    const wb = XLSX.read(buffer, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+    if (!rows.length) throw new Error('Excel file is empty');
+
+    // Validate expected columns
+    const requiredCols = ['Day', 'Hours', 'Lines', 'TimePoint'];
+    const headers = Object.keys(rows[0]);
+    for (const col of requiredCols) {
+      if (!headers.includes(col))
+        throw new Error(`Missing required column: "${col}". Expected columns: ${requiredCols.join(', ')}`);
+    }
+
+    // Get selected normalization column
+    const normSel = document.getElementById('excel-norm-col');
+    const normCol = normSel ? normSel.value : 'Fo';
+    if (!headers.includes(normCol))
+      throw new Error(`Normalization column "${normCol}" not found in Excel file. Available: ${headers.join(', ')}`);
+
+    // Group rows by (Plant ID, Day, Hours) to reconstruct curves
+    // Use Plant ID if available, otherwise fall back to Lines + Position
+    const hasPlantId = headers.includes('Plant ID');
+    const curveMap = new Map(); // key → { meta, timepoints: [{t, val}] }
+
+    for (const row of rows) {
+      const plantId = hasPlantId ? row['Plant ID'] : `${row['Lines']}_${row['Position'] || ''}`;
+      const key = `${plantId}||${row['Day']}||${row['Hours']}`;
+
+      if (!curveMap.has(key)) {
+        curveMap.set(key, {
+          plantId: plantId,
+          line: row['Lines'] || '',
+          day: row['Day'] || '',
+          hours: row['Hours'] || '',
+          position: row['Position'] || '',
+          trayId: row['Tray ID'] || '',
+          timepoints: [],
+        });
+      }
+      curveMap.get(key).timepoints.push({
+        t: parseFloat(row['TimePoint']),
+        val: parseFloat(row[normCol]),
+      });
+    }
+
+    // Sort timepoints within each curve and build the shared time axis
+    // (all curves share the same timepoints)
+    let sharedTimeMs = null;
+    const curves = [];
+    let idx = 0;
+
+    // Collect unique metadata for filters
+    const uniqueLines = new Set();
+    const uniqueDays = new Set();
+    const uniqueHours = new Set();
+
+    for (const [, meta] of curveMap) {
+      meta.timepoints.sort((a, b) => a.t - b.t);
+
+      if (!sharedTimeMs) {
+        sharedTimeMs = new Float64Array(meta.timepoints.map(tp => tp.t));
+      }
+
+      const values = new Float64Array(meta.timepoints.length);
+      for (let i = 0; i < meta.timepoints.length; i++) {
+        values[i] = meta.timepoints[i].val;
+      }
+
+      // Build curve name from naming builder blocks
+      const tempCurve = { line: meta.line, day: meta.day, hours: meta.hours,
+                          plantId: meta.plantId, position: meta.position, trayId: meta.trayId,
+                          index: idx };
+      const name = ExcelNaming.buildName(tempCurve);
+
+      uniqueLines.add(meta.line);
+      uniqueDays.add(meta.day);
+      uniqueHours.add(meta.hours);
+
+      curves.push({
+        index: idx,
+        colIndex: idx + 1,
+        timestamp: `${meta.day} ${meta.hours}`,
+        epochMs: NaN,
+        protocol: 'OJIP',
+        values: values,
+        // Excel-specific metadata
+        line: meta.line,
+        day: meta.day,
+        hours: meta.hours,
+        plantId: meta.plantId,
+        position: meta.position,
+        trayId: meta.trayId,
+        curveName: name,
+      });
+      idx++;
+    }
+
+    if (!sharedTimeMs || !curves.length) {
+      throw new Error('No valid OJIP curves found in the Excel file.');
+    }
+
+    const stem = filename.replace(/\.[^.]+$/, '');
+
+    return {
+      fluorometer: 'OJIPImaging',
+      filename: filename,
+      stem: stem,
+      timeUs: sharedTimeMs,  // actually ms, but field name kept for pipeline compat
+      curves: curves,
+      totalColumns: curves.length,
+      instrumentMeta: {
+        flash_wavelength_nm: null, flash_percent: null, flash_intensity_uE: null,
+        super_wavelength_nm: null, super_percent: null, super_intensity_uE: null,
+        actinic_wavelength_nm: null, actinic_percent: null, actinic_intensity_uE: null,
+      },
+      excelMeta: {
+        normColumn: normCol,
+        uniqueLines: [...uniqueLines].sort(),
+        uniqueDays: [...uniqueDays].sort(),
+        uniqueHours: [...uniqueHours].sort(),
+      },
+    };
+  }
+
+  // ── M2-Excel: Selection modal adaptations ──────────────────────────
+  function showExcelSelectionModal(dataset) {
+    const modal   = document.getElementById('mc-selection-modal');
+    const tbody   = document.getElementById('mc-curve-tbody');
+    const countEl = document.getElementById('mc-curve-count');
+    const selEl   = document.getElementById('mc-selected-count');
+    const dateEl  = document.getElementById('mc-date-range');
+    const fileEl  = document.getElementById('mc-filename');
+    const headerEl = document.getElementById('mc-table-header');
+    const filtersEl = document.getElementById('mc-excel-filters');
+    const namingRow = document.getElementById('mc-naming')?.closest('.form-group');
+
+    fileEl.textContent = dataset.filename;
+    countEl.textContent = dataset.curves.length;
+    dateEl.textContent = `${dataset.excelMeta.uniqueLines.length} lines, ` +
+                         `${dataset.excelMeta.uniqueDays.length} days, ` +
+                         `norm: ${dataset.excelMeta.normColumn}`;
+
+    // Hide FluorPen naming dropdown (we use the Excel-specific one)
+    if (namingRow) namingRow.style.display = 'none';
+
+    // Show Excel filters
+    if (filtersEl) {
+      filtersEl.style.display = '';
+      _populateFilterSelect('mc-filter-line', dataset.excelMeta.uniqueLines, 'All lines');
+      _populateFilterSelect('mc-filter-day',  dataset.excelMeta.uniqueDays,  'All days');
+      _populateFilterSelect('mc-filter-hour', dataset.excelMeta.uniqueHours, 'All hours');
+    }
+
+    // Update table header for Excel data
+    if (headerEl) {
+      headerEl.innerHTML =
+        `<th style="width:30px;"><input type="checkbox" checked onchange="this.checked ? MC.selectAll() : MC.deselectAll()"></th>` +
+        `<th style="width:40px;">#</th>` +
+        `<th>Line</th>` +
+        `<th>Day</th>` +
+        `<th>Hour</th>` +
+        `<th>Plant ID</th>`;
+    }
+
+    // Build table rows
+    tbody.innerHTML = '';
+    for (const c of dataset.curves) {
+      const tr = document.createElement('tr');
+      tr.dataset.line  = c.line;
+      tr.dataset.day   = c.day;
+      tr.dataset.hours = c.hours;
+      tr.innerHTML =
+        `<td><input type="checkbox" class="mc-curve-cb" data-idx="${c.index}" checked></td>` +
+        `<td>${c.index + 1}</td>` +
+        `<td>${c.line}</td>` +
+        `<td>${c.day}</td>` +
+        `<td>${c.hours}</td>` +
+        `<td class="small">${c.plantId}</td>`;
+      tbody.appendChild(tr);
+    }
+    _updateSelCount();
+
+    $(modal).modal('show');
+  }
+
+  function _populateFilterSelect(selectId, values, placeholder) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    sel.innerHTML = `<option value="" selected>${placeholder}</option>` +
+      values.map(v => `<option value="${v}">${v}</option>`).join('');
+  }
+
+  function applyExcelFilters() {
+    const lineVal = _getMultiSelectValues('mc-filter-line');
+    const dayVal  = _getMultiSelectValues('mc-filter-day');
+    const hourVal = _getMultiSelectValues('mc-filter-hour');
+
+    const rows = document.querySelectorAll('#mc-curve-tbody tr');
+    for (const tr of rows) {
+      const cb = tr.querySelector('.mc-curve-cb');
+      const matchLine = !lineVal.length || lineVal.includes(tr.dataset.line);
+      const matchDay  = !dayVal.length  || dayVal.includes(tr.dataset.day);
+      const matchHour = !hourVal.length || hourVal.includes(tr.dataset.hours);
+      const match = matchLine && matchDay && matchHour;
+      if (cb) cb.checked = match;
+      tr.style.display = ''; // always show row, just toggle checkbox
+    }
+    _updateSelCount();
+  }
+
+  function clearExcelFilters() {
+    ['mc-filter-line', 'mc-filter-day', 'mc-filter-hour'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (sel) sel.selectedIndex = 0;
+    });
+    document.querySelectorAll('.mc-curve-cb').forEach(cb => cb.checked = true);
+    _updateSelCount();
+  }
+
+  function _getMultiSelectValues(selectId) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return [];
+    return [...sel.selectedOptions].map(o => o.value).filter(v => v !== '');
+  }
+
+  // Override getCurveName for Excel datasets
+  function getExcelCurveName(curve) {
+    return curve.curveName || `${curve.line}_${curve.day}_${curve.hours}`;
+  }
+
+  // ── Grouped OJIP Curve Panels ────────────────────────────────────────
+
+  function _destroyAllPanelCharts() {
+    for (const id of _panelChartIds) destroyChart(id);
+    _panelChartIds = [];
+  }
+
+  // ── Compare mode helpers ────────────────────────────────────────────
+
+  /**
+   * Render a clickable badge row for a metadata field.
+   * Generic — used for both primary and sub-group badge rows.
+   *
+   * @param {HTMLElement} container   Element to render into
+   * @param {string}      field       Metadata field name (e.g. 'line', 'hours')
+   * @param {string[]}    validSlots  Slot list to collect unique values from
+   * @param {Set}         selectedSet Set to read/write selection state into
+   * @param {Function}    onChangeFn  Called when selection changes
+   * @param {string}      [labelPrefix] Optional prefix (e.g. "Lines:")
+   * @param {boolean}     [forceReinit] Force re-select all (e.g. when field changed)
+   * @returns {string[]}  Sorted unique values
+   */
+  function _renderBadgeRow(container, field, validSlots, selectedSet,
+                            onChangeFn, labelPrefix, forceReinit) {
+    if (!container) return [];
+
+    // Collect unique values
+    const valueSet = new Set();
+    for (const slot of validSlots) {
+      const meta = _slotMeta(slot);
+      if (meta) valueSet.add(String(meta[field] ?? 'unknown'));
+    }
+
+    // Numeric-aware sort
+    const sorted = [...valueSet].sort((a, b) => {
+      const na = parseFloat(a.replace(/[^\d.]/g, ''));
+      const nb = parseFloat(b.replace(/[^\d.]/g, ''));
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+
+    // Auto-select all when forced (field changed) or when set is completely stale
+    // (has values but none match current data). Empty set = user chose "None", respect it.
+    const hasAnyValid = selectedSet.size > 0 &&
+                        [...selectedSet].some(v => valueSet.has(v));
+    if (forceReinit || (!hasAnyValid && selectedSet.size > 0)) {
+      selectedSet.clear();
+      sorted.forEach(v => selectedSet.add(v));
+    }
+
+    container.innerHTML = '';
+
+    // Optional prefix label
+    if (labelPrefix) {
+      const lbl = document.createElement('span');
+      lbl.style.cssText = 'font-size:0.78em; font-weight:600; margin-right:4px; color:#495057;';
+      lbl.textContent = labelPrefix;
+      container.appendChild(lbl);
+    }
+
+    // Select all / Deselect all links
+    const links = document.createElement('span');
+    links.style.cssText = 'font-size:0.78em; margin-right:6px;';
+    const selAll = document.createElement('a');
+    selAll.href = '#'; selAll.textContent = 'All';
+    selAll.style.cssText = 'margin-right:4px; text-decoration:underline; cursor:pointer;';
+    selAll.onclick = (e) => {
+      e.preventDefault();
+      sorted.forEach(v => selectedSet.add(v));
+      onChangeFn();
+    };
+    const deselAll = document.createElement('a');
+    deselAll.href = '#'; deselAll.textContent = 'None';
+    deselAll.style.cssText = 'text-decoration:underline; cursor:pointer;';
+    deselAll.onclick = (e) => {
+      e.preventDefault();
+      selectedSet.clear();
+      onChangeFn();
+    };
+    links.appendChild(selAll);
+    links.appendChild(document.createTextNode(' / '));
+    links.appendChild(deselAll);
+    container.appendChild(links);
+
+    // One badge per value
+    for (const val of sorted) {
+      const badge = document.createElement('span');
+      const active = selectedSet.has(val);
+      badge.className = 'badge ' + (active ? 'badge-primary' : 'badge-secondary');
+      badge.style.cssText = 'cursor:pointer; margin:2px; padding:4px 8px; font-size:0.82em;' +
+                            (active ? '' : ' opacity:0.4;');
+      badge.textContent = val;
+      badge.onclick = () => {
+        if (selectedSet.has(val)) selectedSet.delete(val);
+        else selectedSet.add(val);
+        onChangeFn();
+      };
+      container.appendChild(badge);
+    }
+
+    return sorted;
+  }
+
+  /**
+   * Compute per-timepoint mean and sample SD for each color group
+   * within a subset of curve slots.
+   */
+  function _calcPanelGroupStats(slots, colorField, timeMs) {
+    const groups = new Map(); // groupVal → [slot, ...]
+    for (const slot of slots) {
+      const meta = _slotMeta(slot);
+      if (!meta) continue;
+      const gv = colorField ? (meta[colorField] || 'unknown') : 'all';
+      if (!groups.has(gv)) groups.set(gv, []);
+      groups.get(gv).push(slot);
+    }
+
+    const nTime = timeMs.length;
+    const result = new Map();
+
+    for (const [gv, gSlots] of groups) {
+      const mean = new Float64Array(nTime);
+      const sd   = new Float64Array(nTime);
+
+      for (let t = 0; t < nTime; t++) {
+        let sum = 0, sum2 = 0, count = 0;
+        for (const s of gSlots) {
+          const idx = _slotToIndex(s);
+          const curveObj = mcDataset.curves.find(c => c.index === idx);
+          if (!curveObj) continue;
+          const v = curveObj.values[t];
+          if (v == null || !isFinite(v)) continue;
+          sum += v; sum2 += v * v; count++;
+        }
+        if (count > 0) {
+          mean[t] = sum / count;
+          sd[t] = count > 1
+            ? Math.sqrt((sum2 - sum * sum / count) / (count - 1))
+            : 0;
+        }
+      }
+      result.set(gv, { mean, sd, slots: gSlots, n: gSlots.length });
+    }
+    return result;
+  }
+
+  /**
+   * Build Chart.js datasets for one panel.
+   */
+  function _buildPanelDatasets(panelSlots, colorField, displayMode, timeMs) {
+    const stats = _calcPanelGroupStats(panelSlots, colorField, timeMs);
+    const sortedGroups = [...stats.keys()].sort();
+    const nGroups = sortedGroups.length;
+    const datasets = [];
+
+    sortedGroups.forEach((gv, gi) => {
+      const { mean, sd, slots: gSlots } = stats.get(gv);
+      const color   = sampleColor(gi, nGroups);
+      const sdColor = sampleColor(gi, nGroups, 0.15);
+
+      if (displayMode === 'meansd' || displayMode === 'both') {
+        // Upper SD band (fill to next dataset)
+        datasets.push({
+          label: '', showLine: true, pointRadius: 0,
+          borderWidth: 0, borderColor: 'transparent', backgroundColor: sdColor,
+          data: timeMs.map((t, j) => ({ x: t, y: mean[j] + sd[j] })),
+          fill: '+1',
+        });
+        // Lower SD band
+        datasets.push({
+          label: '', showLine: true, pointRadius: 0,
+          borderWidth: 0, borderColor: 'transparent', backgroundColor: sdColor,
+          data: timeMs.map((t, j) => ({ x: t, y: mean[j] - sd[j] })),
+          fill: false,
+        });
+        // Mean line
+        datasets.push({
+          label: gv, showLine: true, pointRadius: 0,
+          borderWidth: 2, borderColor: color, backgroundColor: 'transparent',
+          data: timeMs.map((t, j) => ({ x: t, y: mean[j] })),
+          fill: false,
+        });
+      }
+
+      if (displayMode === 'individual' || displayMode === 'both') {
+        const indivAlpha = displayMode === 'both' ? 0.2 : 0.5;
+        const indivWidth = displayMode === 'both' ? 0.7 : 1.0;
+        const indivColor = sampleColor(gi, nGroups, indivAlpha);
+
+        for (let si = 0; si < gSlots.length; si++) {
+          const slot = gSlots[si];
+          const idx = _slotToIndex(slot);
+          const curveObj = mcDataset.curves.find(c => c.index === idx);
+          if (!curveObj) continue;
+          datasets.push({
+            label: (displayMode === 'individual' && si === 0) ? gv : '',
+            showLine: true, pointRadius: 0,
+            borderWidth: indivWidth, borderColor: indivColor,
+            backgroundColor: 'transparent',
+            data: timeMs.map((t, j) => ({ x: t, y: curveObj.values[j] })),
+            fill: false, _mcSlot: slot,
+          });
+        }
+      }
+    });
+    return datasets;
+  }
+
+  /**
+   * Create one grid cell: heading + canvas + chart instance.
+   */
+  function _createPanelChart(grid, panelValue, title, slots,
+                             colorField, displayMode, timeMs) {
+    const cell = document.createElement('div');
+    cell.style.cssText = 'border:1px solid #dee2e6; border-radius:4px; padding:6px;';
+
+    const heading = document.createElement('div');
+    heading.style.cssText = 'font-size:0.82em; font-weight:600; margin-bottom:4px; ' +
+                            'text-align:center; color:#495057;';
+    heading.textContent = title;
+    cell.appendChild(heading);
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative; height:220px;';
+    const canvas = document.createElement('canvas');
+    const canvasId = 'mc-panel-' + String(panelValue).replace(/[^a-zA-Z0-9]/g, '_');
+    canvas.id = canvasId;
+    wrapper.appendChild(canvas);
+    cell.appendChild(wrapper);
+
+    const info = document.createElement('small');
+    info.className = 'text-muted';
+    info.style.fontSize = '0.75em';
+    info.textContent = `n = ${slots.length} curves`;
+    cell.appendChild(info);
+
+    grid.appendChild(cell);
+
+    const datasets = _buildPanelDatasets(slots, colorField, displayMode, timeMs);
+
+    chartInst[canvasId] = new Chart(canvas, {
+      type: 'scatter',
+      data: { datasets },
+      options: {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+        scales: {
+          x: {
+            type: 'logarithmic',
+            title: { display: true, text: 'Time (ms)', font: { size: 10 } },
+            ticks: { font: { size: 9 } },
+            grid: { display: false },
+          },
+          y: {
+            title: { display: true, text: 'Fluorescence', font: { size: 10 } },
+            ticks: { font: { size: 9 } },
+            grid: { display: false },
+          },
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'right',
+            labels: {
+              font: { size: 9 }, padding: 4,
+              boxWidth: 10, boxHeight: 6,
+              filter: item => item.text !== '',
+            },
+          },
+          tooltip: {
+            enabled: true, mode: 'nearest', intersect: false,
+            callbacks: {
+              title: items => items.length ? items[0].dataset.label || '' : '',
+              label: item =>
+                `t = ${item.parsed.x.toFixed(2)} ms, F = ${item.parsed.y.toFixed(1)}`,
+            },
+          },
+        },
+        onClick: (evt, elems) => {
+          if (!elems.length) return;
+          const ds = chartInst[canvasId]?.data.datasets[elems[0].datasetIndex];
+          if (ds && ds._mcSlot != null) fetchAndShowDetail(ds._mcSlot);
+        },
+      },
+      plugins: [{ id: 'panelBorder', afterDraw(ch) {
+        const a = ch.chartArea, c = ch.ctx; c.save();
+        c.strokeStyle = '#000'; c.lineWidth = 1;
+        c.strokeRect(a.left, a.top, a.right - a.left, a.bottom - a.top);
+        c.restore();
+      }}],
+    });
+    _panelChartIds.push(canvasId);
+  }
+
+  /**
+   * Push Chart.js datasets for one comparison group (mean±SD + individuals).
+   * Mutates the `datasets` array in place.
+   */
+  function _pushComparisonDatasets(datasets, label, gSlots, color, sdColor,
+                                    displayMode, timeMs) {
+    const nTime = timeMs.length;
+    const mean = new Float64Array(nTime);
+    const sd   = new Float64Array(nTime);
+    for (let t = 0; t < nTime; t++) {
+      let sum = 0, sum2 = 0, count = 0;
+      for (const s of gSlots) {
+        const idx = _slotToIndex(s);
+        const curveObj = mcDataset.curves.find(c => c.index === idx);
+        if (!curveObj) continue;
+        const v = curveObj.values[t];
+        if (v == null || !isFinite(v)) continue;
+        sum += v; sum2 += v * v; count++;
+      }
+      if (count > 0) {
+        mean[t] = sum / count;
+        sd[t] = count > 1
+          ? Math.sqrt((sum2 - sum * sum / count) / (count - 1)) : 0;
+      }
+    }
+
+    if (displayMode === 'meansd' || displayMode === 'both') {
+      datasets.push({
+        label: '', showLine: true, pointRadius: 0,
+        borderWidth: 0, borderColor: 'transparent', backgroundColor: sdColor,
+        data: timeMs.map((t, j) => ({ x: t, y: mean[j] + sd[j] })),
+        fill: '+1',
+      });
+      datasets.push({
+        label: '', showLine: true, pointRadius: 0,
+        borderWidth: 0, borderColor: 'transparent', backgroundColor: sdColor,
+        data: timeMs.map((t, j) => ({ x: t, y: mean[j] - sd[j] })),
+        fill: false,
+      });
+      datasets.push({
+        label: `${label} (n=${gSlots.length})`, showLine: true, pointRadius: 0,
+        borderWidth: 2, borderColor: color, backgroundColor: 'transparent',
+        data: timeMs.map((t, j) => ({ x: t, y: mean[j] })),
+        fill: false,
+      });
+    }
+
+    if (displayMode === 'individual' || displayMode === 'both') {
+      const indivAlpha = displayMode === 'both' ? 0.2 : 0.5;
+      const indivWidth = displayMode === 'both' ? 0.7 : 1.0;
+      // Derive individual color with alpha from the base HSL color
+      const indivColor = color.replace(')', `,${indivAlpha})`).replace('hsl(', 'hsla(');
+
+      for (let si = 0; si < gSlots.length; si++) {
+        const slot = gSlots[si];
+        const idx = _slotToIndex(slot);
+        const curveObj = mcDataset.curves.find(c => c.index === idx);
+        if (!curveObj) continue;
+        datasets.push({
+          label: (displayMode === 'individual' && si === 0) ? label : '',
+          showLine: true, pointRadius: 0,
+          borderWidth: indivWidth, borderColor: indivColor,
+          backgroundColor: 'transparent',
+          data: timeMs.map((t, j) => ({ x: t, y: curveObj.values[j] })),
+          fill: false, _mcSlot: slot,
+        });
+      }
+    }
+  }
+
+  /**
+   * Build datasets and render the comparison chart on the fixed #mc-compare-chart canvas.
+   * Supports optional sub-grouping (e.g. Line × Hour).
+   */
+  function _createComparisonChart(validSlots, panelField, selectedPrimary,
+                                   subField, selectedSub, displayMode, timeMs) {
+    // Step 1: Partition slots → Map<primaryVal, Map<subVal, slot[]>>
+    const primaryMap = new Map();
+    for (const slot of validSlots) {
+      const meta = _slotMeta(slot);
+      if (!meta) continue;
+      const pv = String(meta[panelField] ?? 'unknown');
+      if (!selectedPrimary.has(pv)) continue;
+      const sv = subField ? String(meta[subField] ?? 'unknown') : '__none__';
+      if (selectedSub && subField && !selectedSub.has(sv)) continue;
+      if (!primaryMap.has(pv)) primaryMap.set(pv, new Map());
+      const subMap = primaryMap.get(pv);
+      if (!subMap.has(sv)) subMap.set(sv, []);
+      subMap.get(sv).push(slot);
+    }
+
+    // Step 2: Sort primary values
+    const sortedPrimary = [...primaryMap.keys()].sort((a, b) => {
+      const na = parseFloat(a.replace(/[^\d.]/g, ''));
+      const nb = parseFloat(b.replace(/[^\d.]/g, ''));
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+    const nPrimary = sortedPrimary.length;
+    if (nPrimary === 0) return;
+
+    // Step 3: Collect all sub-values for consistent ordering
+    const allSubVals = new Set();
+    for (const subMap of primaryMap.values())
+      for (const sv of subMap.keys()) allSubVals.add(sv);
+    const sortedSubVals = [...allSubVals].sort((a, b) => {
+      const na = parseFloat(a.replace(/[^\d.]/g, ''));
+      const nb = parseFloat(b.replace(/[^\d.]/g, ''));
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+    const nSubs = subField ? sortedSubVals.length : 1;
+
+    // Step 4: Build datasets
+    const datasets = [];
+    let totalCurves = 0;
+    let nDataGroups = 0;
+
+    sortedPrimary.forEach((pv, pi) => {
+      const primaryHue = Math.round((pi / Math.max(nPrimary, 1)) * 320);
+      const subMap = primaryMap.get(pv);
+
+      if (!subField) {
+        // No sub-grouping: one color per primary value
+        const gSlots = subMap.get('__none__') || [];
+        if (gSlots.length === 0) return;
+        totalCurves += gSlots.length;
+        nDataGroups++;
+        const color   = `hsl(${primaryHue},70%,42%)`;
+        const sdColor = `hsla(${primaryHue},70%,42%,0.15)`;
+        _pushComparisonDatasets(datasets, pv, gSlots, color, sdColor,
+                                 displayMode, timeMs);
+      } else {
+        // Sub-grouped: color families per primary, shades per sub-group
+        sortedSubVals.forEach((sv, si) => {
+          const gSlots = subMap.get(sv);
+          if (!gSlots || gSlots.length === 0) return;
+          totalCurves += gSlots.length;
+          nDataGroups++;
+          const color   = subGroupColor(primaryHue, si, nSubs);
+          const sdColor = subGroupColor(primaryHue, si, nSubs, 0.15);
+          const label   = `${pv} / ${sv}`;
+          _pushComparisonDatasets(datasets, label, gSlots, color, sdColor,
+                                   displayMode, timeMs);
+        });
+      }
+    });
+
+    // Step 5: Render on fixed canvas
+    const canvasId = 'mc-compare-chart';
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    chartInst[canvasId] = new Chart(canvas, {
+      type: 'scatter',
+      data: { datasets },
+      options: {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+        scales: {
+          x: {
+            type: 'logarithmic',
+            title: { display: true, text: 'Time (ms)', font: { size: 11 } },
+            ticks: { font: { size: 10 } },
+            grid: { display: false },
+          },
+          y: {
+            title: { display: true, text: 'Fluorescence', font: { size: 11 } },
+            ticks: { font: { size: 10 } },
+            grid: { display: false },
+          },
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'right',
+            labels: {
+              font: { size: 10 }, padding: 5,
+              boxWidth: 12, boxHeight: 8,
+              filter: item => item.text !== '',
+            },
+          },
+          tooltip: {
+            enabled: true, mode: 'nearest', intersect: false,
+            callbacks: {
+              title: items => items.length ? items[0].dataset.label || '' : '',
+              label: item =>
+                `t = ${item.parsed.x.toFixed(2)} ms, F = ${item.parsed.y.toFixed(1)}`,
+            },
+          },
+        },
+        onClick: (evt, elems) => {
+          if (!elems.length) return;
+          const ds = chartInst[canvasId]?.data.datasets[elems[0].datasetIndex];
+          if (ds && ds._mcSlot != null) fetchAndShowDetail(ds._mcSlot);
+        },
+      },
+      plugins: [{ id: 'panelBorder', afterDraw(ch) {
+        const a = ch.chartArea, c = ch.ctx; c.save();
+        c.strokeStyle = '#000'; c.lineWidth = 1;
+        c.strokeRect(a.left, a.top, a.right - a.left, a.bottom - a.top);
+        c.restore();
+      }}],
+    });
+
+    // Update info text
+    const infoEl = document.getElementById('mc-compare-info');
+    if (infoEl) {
+      infoEl.textContent = `${nDataGroups} group${nDataGroups !== 1 ? 's' : ''}, ` +
+                           `${totalCurves} curves total. Sample SD (n\u22121).`;
+    }
+  }
+
+  /**
+   * Main entry: render the grouped OJIP curve panel grid.
+   */
+  function renderGroupedPanels() {
+    const card = document.getElementById('mc-grouped-panels-card');
+    if (!card) return;
+
+    const isExcel = mcDataset?.fluorometer === 'OJIPImaging';
+    if (!isExcel || !paramMatrix) {
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = '';
+
+    const panelBy     = document.getElementById('mc-panel-by')?.value || '';
+    const colorBy     = document.getElementById('mc-panel-color-by')?.value || '';
+    const displayMode = document.getElementById('mc-panel-display')?.value || 'meansd';
+
+    _destroyAllPanelCharts();
+    const grid = document.getElementById('mc-panel-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+
+    const timeMs = Array.from(mcDataset.timeUs);
+
+    const validSlots = (paramMatrix || [])
+      .filter(r => r && !r.error)
+      .map(r => r.slot);
+    if (validSlots.length === 0) return;
+
+    if (!panelBy) {
+      _createPanelChart(grid, 'all', 'All Curves', validSlots,
+                        colorBy, displayMode, timeMs);
+    } else {
+      const panelMap = new Map();
+      for (const slot of validSlots) {
+        const meta = _slotMeta(slot);
+        if (!meta) continue;
+        const pv = meta[panelBy] || 'unknown';
+        if (!panelMap.has(pv)) panelMap.set(pv, []);
+        panelMap.get(pv).push(slot);
+      }
+
+      const sortedPanels = [...panelMap.keys()].sort((a, b) => {
+        const na = parseFloat(String(a).replace(/[^\d.]/g, ''));
+        const nb = parseFloat(String(b).replace(/[^\d.]/g, ''));
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return String(a).localeCompare(String(b));
+      });
+
+      for (const pv of sortedPanels) {
+        _createPanelChart(grid, pv, String(pv), panelMap.get(pv),
+                          colorBy, displayMode, timeMs);
+      }
+    }
+
+    // Also refresh the comparison card
+    renderComparison();
+  }
+
+  /**
+   * Render the standalone comparison card.
+   * Called by: renderGroupedPanels (tail call), badge clicks,
+   *           sub-group/display dropdown onchange.
+   */
+  function renderComparison() {
+    const compareCard = document.getElementById('mc-compare-card');
+    if (!compareCard) return;
+
+    const isExcel = mcDataset?.fluorometer === 'OJIPImaging';
+    if (!isExcel || !paramMatrix) {
+      compareCard.style.display = 'none';
+      return;
+    }
+    compareCard.style.display = '';
+
+    const groupBy     = document.getElementById('mc-compare-group-by')?.value || 'line';
+    const subGroupBy  = document.getElementById('mc-compare-subgroup-by')?.value || '';
+    const displayMode = document.getElementById('mc-compare-display')?.value || 'meansd';
+
+    // Sync sub-group dropdown: hide option matching current groupBy
+    const subGroupSel = document.getElementById('mc-compare-subgroup-by');
+    if (subGroupSel) {
+      for (const opt of subGroupSel.options) {
+        opt.hidden = (opt.value !== '' && opt.value === groupBy);
+      }
+      if (subGroupBy && subGroupBy === groupBy) {
+        subGroupSel.value = '';
+      }
+    }
+    const effectiveSubGroupBy = subGroupSel?.value || '';
+
+    // Detect field changes → force reinit of badge selections
+    const primaryFieldChanged = (_comparePrimaryField !== groupBy);
+    if (primaryFieldChanged) _comparePrimaryField = groupBy;
+
+    const subFieldChanged = (_compareSubField !== effectiveSubGroupBy);
+    if (subFieldChanged) _compareSubField = effectiveSubGroupBy;
+
+    const timeMs = Array.from(mcDataset.timeUs);
+    const validSlots = (paramMatrix || [])
+      .filter(r => r && !r.error)
+      .map(r => r.slot);
+    if (validSlots.length === 0) return;
+
+    // Render primary badges
+    const primaryContainer = document.getElementById('mc-compare-primary-badges');
+    if (primaryContainer) {
+      _renderBadgeRow(primaryContainer, groupBy, validSlots,
+                       _compareSelected, renderComparison, 'Primary:',
+                       primaryFieldChanged);
+    }
+
+    // Show/hide and render sub-group badges
+    const subContainer = document.getElementById('mc-compare-sub-badges');
+    if (effectiveSubGroupBy && subContainer) {
+      subContainer.style.display = '';
+      _renderBadgeRow(subContainer, effectiveSubGroupBy, validSlots,
+                       _compareSubSelected, renderComparison, 'Sub-group:',
+                       subFieldChanged);
+    } else if (subContainer) {
+      subContainer.style.display = 'none';
+    }
+
+    // Destroy previous comparison chart and rebuild
+    destroyChart('mc-compare-chart');
+
+    if (_compareSelected.size > 0) {
+      _createComparisonChart(
+        validSlots, groupBy, _compareSelected,
+        effectiveSubGroupBy,
+        effectiveSubGroupBy ? _compareSubSelected : null,
+        displayMode, timeMs
+      );
+    }
+  }
+
+  // ── Summary statistics table ─────────────────────────────────────────
+  function _buildGroupStats() {
+    // Returns { groupMap, sortedGroups, sortedX, xLabels, paramKey, colorBy, xAxisField }
+    const paramKey = document.getElementById('mc-param-picker')?.value || 'FVFM';
+    const colorBy = document.getElementById('mc-color-by')?.value || '';
+    const xAxisField = document.getElementById('mc-x-axis')?.value || 'index';
+
+    if (!colorBy || !paramMatrix) return null;
+
+    const groupMap = new Map();
+    for (const r of paramMatrix) {
+      if (!r || r.error) continue;
+      const val = r[paramKey];
+      if (val == null) continue;
+      const meta = _slotMeta(r.slot);
+      if (!meta) continue;
+      const groupVal = meta[colorBy] || 'unknown';
+      const xVal = xAxisField === 'index' ? r.slot : _metaToX(meta, xAxisField);
+      if (isNaN(xVal)) continue;
+      if (!groupMap.has(groupVal)) groupMap.set(groupVal, []);
+      groupMap.get(groupVal).push({ x: xVal, y: val });
+    }
+
+    const sortedGroups = [...groupMap.keys()].sort();
+    const allX = new Set();
+    for (const pts of groupMap.values()) pts.forEach(p => allX.add(p.x));
+    const sortedX = [...allX].sort((a, b) => a - b);
+    const tickCb = _metaXTickCallback(xAxisField);
+    const xLabels = sortedX.map(x => tickCb ? tickCb(x) : x);
+
+    return { groupMap, sortedGroups, sortedX, xLabels, paramKey, colorBy, xAxisField };
+  }
+
+  function _renderSummaryTable() {
+    const wrap = document.getElementById('mc-summary-table-body');
+    if (!wrap) return;
+
+    const stats = _buildGroupStats();
+    if (!stats) {
+      wrap.innerHTML = '<p class="text-muted mb-0">Select a "Color by" grouping to see summary statistics.</p>';
+      return;
+    }
+    if (stats.xAxisField === 'index') {
+      wrap.innerHTML = '<p class="text-muted mb-0">Summary table is not available when X-axis is "Curve index". Select Hour or Day as X-axis.</p>';
+      return;
+    }
+
+    const { groupMap, sortedGroups, sortedX, xLabels, paramKey } = stats;
+    const label = PARAM_LABELS[paramKey] || paramKey;
+
+    let html = '<div class="table-responsive" style="max-height:400px; overflow:auto;">';
+    html += '<table class="table table-sm table-bordered" style="font-size:0.78em;">';
+    html += `<thead class="thead-light"><tr><th class="text-nowrap">${label}</th>`;
+    xLabels.forEach(xl => { html += `<th class="text-center text-nowrap">${xl}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    for (const gv of sortedGroups) {
+      html += `<tr><td class="font-weight-bold text-nowrap">${gv}</td>`;
+      const pts = groupMap.get(gv);
+
+      for (const xVal of sortedX) {
+        const vals = pts.filter(p => p.x === xVal).map(p => p.y);
+        if (!vals.length) { html += '<td class="text-center text-muted">-</td>'; continue; }
+        const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
+        const sd = vals.length > 1
+          ? Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / (vals.length - 1))
+          : 0;
+        html += `<td class="text-center text-nowrap">${mean.toPrecision(4)} &pm; ${sd.toPrecision(3)}`;
+        html += `<br><span class="text-muted" style="font-size:0.85em;">n=${vals.length}</span></td>`;
+      }
+      html += '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+    wrap.innerHTML = html;
+  }
+
+  function toggleSummaryTable() {
+    const wrap = document.getElementById('mc-summary-table-wrap');
+    if (!wrap) return;
+    const visible = wrap.style.display !== 'none';
+    wrap.style.display = visible ? 'none' : '';
+    if (!visible) _renderSummaryTable();
+  }
+
+  function copySummaryTable() {
+    const stats = _buildGroupStats();
+    if (!stats || stats.xAxisField === 'index') return;
+
+    const { groupMap, sortedGroups, sortedX, xLabels } = stats;
+    const header = ['Group', ...xLabels].join('\t');
+    const rows = sortedGroups.map(gv => {
+      const pts = groupMap.get(gv);
+      const cells = sortedX.map(xVal => {
+        const vals = pts.filter(p => p.x === xVal).map(p => p.y);
+        if (!vals.length) return '-';
+        const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
+        const sd = vals.length > 1
+          ? Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / (vals.length - 1))
+          : 0;
+        return `${mean.toPrecision(4)} \u00b1 ${sd.toPrecision(3)} (n=${vals.length})`;
+      });
+      return [gv, ...cells].join('\t');
+    });
+    navigator.clipboard.writeText(header + '\n' + rows.join('\n'));
+  }
+
   // ── Public API ───────────────────────────────────────────────────────
   return {
     parse, isMultiCurve, showSelectionModal,
+    parseExcel, showExcelSelectionModal,
+    applyExcelFilters, clearExcelFilters,
     selectAll, deselectAll, selectRange,
     getSelectedIndices, getNamingScheme,
     runParamsPass, cancelBatch,
-    renderTimeSeries, renderAggregateCurves,
+    renderTimeSeries, renderAggregateCurves, renderGroupedPanels, renderComparison,
     curvesPagePrev, curvesPageNext,
     fetchAndShowDetail, backToOverview,
     copyParamTable, downloadParamsCSV, downloadParamsXLSX,
+    toggleSummaryTable, copySummaryTable,
     _updateSelCount, slotToIndex: _slotToIndex,
   };
 })();
@@ -944,6 +2245,13 @@ function groupColor(i, n, alpha) {
   const palette = [210, 30, 120, 270, 60, 180, 330];
   const h = palette[i % palette.length];
   return alpha !== undefined ? `hsla(${h},65%,42%,${alpha})` : `hsl(${h},65%,42%)`;
+}
+/** Color within a "family": same hue, varying lightness 28–60%. */
+function subGroupColor(primaryHue, subIndex, nSubs, alpha) {
+  const L = nSubs < 2 ? 44 : Math.round(28 + (subIndex / (nSubs - 1)) * 32);
+  return alpha !== undefined
+    ? `hsla(${primaryHue},65%,${L}%,${alpha})`
+    : `hsl(${primaryHue},65%,${L}%)`;
 }
 
 // ── OJIP publication figure style ─────────────────────────────────────────
@@ -1335,7 +2643,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const sel = document.getElementById('fluorometer');
   const saved = localStorage.getItem('ojip_fluorometer');
   if (saved && [...sel.options].some(o => o.value === saved)) sel.value = saved;
-  sel.addEventListener('change', () => localStorage.setItem('ojip_fluorometer', sel.value));
+  function _toggleExcelOpts() {
+    const exOpts = document.getElementById('excel-options');
+    if (exOpts) exOpts.style.display = sel.value === 'OJIPImaging' ? '' : 'none';
+  }
+  sel.addEventListener('change', () => {
+    localStorage.setItem('ojip_fluorometer', sel.value);
+    _toggleExcelOpts();
+  });
+  _toggleExcelOpts();
+  ExcelNaming.init();
 
   // Prevent browser from opening dropped files anywhere on the page
   document.addEventListener('dragover', e => e.preventDefault());
@@ -1495,6 +2812,118 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ── Excel naming builder ──────────────────────────────────────────────────
+const ExcelNaming = (() => {
+  const FIELDS = [
+    { key: 'line',     label: 'Line',    example: 'Col-0' },
+    { key: 'day',      label: 'Day',     example: 'D1' },
+    { key: 'hours',    label: 'Hour',    example: '11:00' },
+    { key: 'plantId',  label: 'PlantID', example: '24_STQR_At_199' },
+    { key: 'position', label: 'Position',example: 'D4' },
+    { key: 'trayId',   label: 'TrayID',  example: '24_STQR_At_Tray010' },
+  ];
+
+  // Default: Line, Day, Hour active
+  let activeKeys = ['line', 'day', 'hours'];
+
+  function _isActive(key) { return activeKeys.includes(key); }
+
+  function _getSep() {
+    return (document.getElementById('excel-naming-sep') || {}).value || '_';
+  }
+
+  function _updatePreview() {
+    const sep = _getSep();
+    const preview = activeKeys
+      .map(k => FIELDS.find(f => f.key === k)?.example || k)
+      .join(sep);
+    const el = document.getElementById('excel-naming-preview');
+    if (el) el.textContent = preview || '(no fields selected)';
+  }
+
+  function _syncBadges() {
+    const container = document.getElementById('excel-naming-blocks');
+    if (!container) return;
+    const badges = container.querySelectorAll('.excel-name-block');
+    // Reorder badges to match activeKeys order, then append inactive ones
+    const ordered = [];
+    for (const key of activeKeys) {
+      for (const b of badges) { if (b.dataset.field === key) { ordered.push(b); break; } }
+    }
+    for (const b of badges) {
+      if (!activeKeys.includes(b.dataset.field)) ordered.push(b);
+    }
+    for (const b of ordered) {
+      b.className = _isActive(b.dataset.field)
+        ? 'badge badge-primary excel-name-block'
+        : 'badge badge-secondary excel-name-block';
+      b.style.opacity = _isActive(b.dataset.field) ? '1' : '0.5';
+      container.appendChild(b);
+    }
+    _updatePreview();
+  }
+
+  function init() {
+    const container = document.getElementById('excel-naming-blocks');
+    if (!container) return;
+
+    // Click to toggle
+    container.addEventListener('click', e => {
+      const badge = e.target.closest('.excel-name-block');
+      if (!badge) return;
+      const key = badge.dataset.field;
+      if (_isActive(key)) {
+        activeKeys = activeKeys.filter(k => k !== key);
+      } else {
+        activeKeys.push(key);
+      }
+      _syncBadges();
+    });
+
+    // Drag-and-drop reorder
+    let dragEl = null;
+    container.addEventListener('dragstart', e => {
+      dragEl = e.target.closest('.excel-name-block');
+      if (dragEl) e.dataTransfer.effectAllowed = 'move';
+    });
+    container.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    container.addEventListener('drop', e => {
+      e.preventDefault();
+      const target = e.target.closest('.excel-name-block');
+      if (!dragEl || !target || dragEl === target) return;
+      const dKey = dragEl.dataset.field;
+      const tKey = target.dataset.field;
+      // Move dKey to position of tKey in activeKeys
+      if (_isActive(dKey)) {
+        activeKeys = activeKeys.filter(k => k !== dKey);
+        const tIdx = activeKeys.indexOf(tKey);
+        if (tIdx >= 0) activeKeys.splice(tIdx, 0, dKey);
+        else activeKeys.push(dKey);
+      }
+      _syncBadges();
+    });
+
+    // Separator change
+    const sepInput = document.getElementById('excel-naming-sep');
+    if (sepInput) sepInput.addEventListener('input', _updatePreview);
+
+    _syncBadges();
+  }
+
+  function buildName(curve) {
+    const sep = _getSep();
+    if (!activeKeys.length) return `${curve.index + 1}`;
+    return activeKeys.map(k => curve[k] || '').join(sep);
+  }
+
+  function getActiveKeys() { return activeKeys.slice(); }
+
+  return { init, buildName, getActiveKeys, FIELDS };
+})();
+
 // ── file list helper ──────────────────────────────────────────────────────
 function updateFileList() {
   const files = document.getElementById('ojip-files').files;
@@ -1510,6 +2939,36 @@ function updateFileList() {
 async function uploadAndAnalyze() {
   const files = document.getElementById('ojip-files').files;
   if (!files.length) return;
+
+  const fluorometer = document.getElementById('fluorometer').value;
+
+  // ── OJIP Imaging Excel file detection ──
+  if (fluorometer === 'OJIPImaging') {
+    const xlsxFile = [...files].find(f => f.name.toLowerCase().endsWith('.xlsx'));
+    if (!xlsxFile) {
+      const errDiv = document.getElementById('upload-error');
+      errDiv.innerHTML = '<strong>No .xlsx file found.</strong> Please select an Excel file for OJIP Imaging.';
+      errDiv.style.display = '';
+      return;
+    }
+    setLoading(true);
+    try {
+      const dataset = await MC.parseExcel(xlsxFile);
+      setLoading(false);
+      if (dataset && dataset.curves.length > 0) {
+        mcDataset = dataset;
+        mcIsActive = true;
+        MC.showExcelSelectionModal(dataset);
+        return; // selection modal takes over the flow
+      }
+    } catch(e) {
+      setLoading(false);
+      const errDiv = document.getElementById('upload-error');
+      errDiv.innerHTML = `<strong>Excel parsing error:</strong> ${e.message}`;
+      errDiv.style.display = '';
+      return;
+    }
+  }
 
   // ── Multi-curve detection: check .txt files for FluorPen multi-curve format ──
   for (const f of files) {
@@ -1691,9 +3150,26 @@ async function mcStartAnalysis() {
   const result = await MC.runParamsPass(mcDataset, selected, jipOpts);
 
   if (result) {
+    // Show/hide grouping controls and chart options for Excel OJIPImaging data
+    const isOJIPImg = mcDataset.fluorometer === 'OJIPImaging';
+    const groupCtrl = document.getElementById('mc-group-controls');
+    if (groupCtrl) groupCtrl.style.display = isOJIPImg ? '' : 'none';
+    const chartOpts = document.getElementById('mc-chart-opts');
+    if (chartOpts) chartOpts.style.display = isOJIPImg ? '' : 'none';
+    // Hide summary table on new analysis
+    const summaryWrap = document.getElementById('mc-summary-table-wrap');
+    if (summaryWrap) summaryWrap.style.display = 'none';
+    // Show/hide grouped panels card and compare card
+    const panelsCard  = document.getElementById('mc-grouped-panels-card');
+    const compareCard = document.getElementById('mc-compare-card');
+    if (panelsCard)  panelsCard.style.display  = isOJIPImg ? '' : 'none';
+    if (compareCard) compareCard.style.display = isOJIPImg ? '' : 'none';
+
     // Render time-series overview
     MC.renderTimeSeries();
     MC.renderAggregateCurves();
+    // renderGroupedPanels also calls renderComparison at its tail
+    if (isOJIPImg) MC.renderGroupedPanels();
 
     // Update summary with completion info
     const errors = result.filter(r => r && r.error).length;

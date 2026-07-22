@@ -21,7 +21,7 @@ def _ms_factor(fluorometer):
         return 0.001        # µs → ms
     if fluorometer == 'FL6000':
         return 1000.0       # s  → ms
-    return 1.0              # MULTI-COLOR-PAM already in ms
+    return 1.0              # MULTI-COLOR-PAM and OJIPImaging already in ms
 
 
 def _axis_cfg(fluorometer: str) -> tuple[str, str, str, float, set[str], dict[str, tuple[float, float]]]:
@@ -35,6 +35,9 @@ def _axis_cfg(fluorometer: str) -> tuple[str, str, str, float, set[str], dict[st
     if fluorometer == 'FL6000':
         return ('time_s', 'Time (s)', 'Fluorescence intensity (a.u.)', 1e-5, {'.txt'},
                 dict(FJ=(1e-4, 0.01), FI=(0.01, 0.1), FP=(0.1, 1.0)))
+    if fluorometer == 'OJIPImaging':
+        return ('time_ms', 'Time (ms)', 'Fluorescence (norm.)', 1e-2, {'.xlsx'},
+                dict(FJ=(0.1, 10), FI=(10, 100), FP=(100, 1000)))
     raise ValueError(f'Unknown fluorometer: {fluorometer}')
 
 
@@ -367,6 +370,10 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         F50us_idx  = tidx(5e-5);   FK_idx     = tidx(3e-4)
         F50ms_idx  = tidx(0.05);   F100ms_idx = tidx(0.1)
         F200ms_idx = tidx(0.2);    F300ms_idx = tidx(0.3)
+    elif fluorometer == 'OJIPImaging':
+        F50us_idx  = tidx(0.05);   FK_idx     = tidx(0.3)
+        F50ms_idx  = tidx(50);     F100ms_idx = tidx(100)
+        F200ms_idx = tidx(200);    F300ms_idx = tidx(300)
     else:
         raise ValueError(f'Unknown fluorometer: {fluorometer}')
 
@@ -668,6 +675,10 @@ def ojip_process():
         F50us_idx  = tidx(5e-5);  FK_idx     = tidx(3e-4)
         F50ms_idx  = tidx(0.05);  F100ms_idx = tidx(0.1)
         F200ms_idx = tidx(0.2);   F300ms_idx = tidx(0.3)
+    elif fluorometer == 'OJIPImaging':
+        F50us_idx  = tidx(0.05);  FK_idx     = tidx(0.3)
+        F50ms_idx  = tidx(50);    F100ms_idx = tidx(100)
+        F200ms_idx = tidx(200);   F300ms_idx = tidx(300)
     else:
         raise ValueError(f'Unknown fluorometer: {fluorometer}')
 
