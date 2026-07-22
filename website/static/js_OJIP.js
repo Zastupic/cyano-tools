@@ -3271,6 +3271,24 @@ function renderCurvesChart(norm) {
     borderColor: 'transparent', backgroundColor: 'transparent',
   });
 
+  // FP markers (■ squares) — only for files where FP timing is available
+  const fpData = [], fpBg = [], fpBd = [];
+  files.forEach((fname, i) => {
+    const fpT = ojipData.key_values[fname].FP_time_deriv_ms;
+    if (fpT != null) {
+      fpData.push({ x: fpT, y: interpAt(t, ojipData.curves[fname][norm], fpT) });
+      fpBg.push(sampleColor(i, n)); fpBd.push(sampleColor(i, n));
+    }
+  });
+  if (fpData.length) {
+    datasets.push({
+      label: 'FP', showLine: false, data: fpData,
+      pointRadius: 6, pointStyle: 'rect',
+      pointBackgroundColor: fpBg, pointBorderColor: fpBd,
+      borderColor: 'transparent', backgroundColor: 'transparent',
+    });
+  }
+
   const yLabel = norm === 'raw' ? 'Fluorescence' :
                  norm === 'double_norm' ? 'Normalised fluorescence (r.u.)' :
                  'Fluorescence (shifted)';
@@ -3279,7 +3297,7 @@ function renderCurvesChart(norm) {
   opts.onClick = (e, elements) => {
     if (!elements.length) return;
     const dsIdx = elements[0].datasetIndex;
-    if (dsIdx >= n) return;                    // FJ / FI marker row — ignore
+    if (dsIdx >= n) return;                    // FJ / FI / FP marker row — ignore
     const fname = ojipData.files[dsIdx];
     if (fname && confirm(`Remove "${fname}" from analysis?`)) removeFile(fname);
   };
@@ -3654,13 +3672,19 @@ function renderDiagRecon() {
     datasets.push({ label: '', showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, borderDash: [4, 3], backgroundColor: 'transparent',
       data: ojipData.curves[fname].reconstructed.map((y, j) => ({ x: tLog[j], y })) });
-    // FJ (▲) and FI (◆) on the reconstructed curve
+    // FJ (▲), FI (◆) and FP (■) on the reconstructed curve
     const fjY = interpAt(tLog, ojipData.curves[fname].reconstructed, kv.FJ_time_user_ms);
     const fiY = interpAt(tLog, ojipData.curves[fname].reconstructed, kv.FI_time_user_ms);
-    datasets.push({ label: '', showLine: false,
-      data: [{ x: kv.FJ_time_user_ms, y: fjY }, { x: kv.FI_time_user_ms, y: fiY }],
-      pointRadius: [6, 6], pointStyle: ['triangle', 'rectRot'],
-      pointBackgroundColor: [c, c], pointBorderColor: [c, c],
+    const pts = [{ x: kv.FJ_time_user_ms, y: fjY }, { x: kv.FI_time_user_ms, y: fiY }];
+    const radii = [6, 6], styles = ['triangle', 'rectRot'], bg = [c, c], bd = [c, c];
+    if (kv.FP_time_deriv_ms != null) {
+      const fpY = interpAt(tLog, ojipData.curves[fname].reconstructed, kv.FP_time_deriv_ms);
+      pts.push({ x: kv.FP_time_deriv_ms, y: fpY });
+      radii.push(6); styles.push('rect'); bg.push(c); bd.push(c);
+    }
+    datasets.push({ label: '', showLine: false, data: pts,
+      pointRadius: radii, pointStyle: styles,
+      pointBackgroundColor: bg, pointBorderColor: bd,
       borderColor: 'transparent', backgroundColor: 'transparent' });
   });
   makeChart('diag-recon-chart', { type: 'scatter', data: { datasets },
@@ -3691,13 +3715,19 @@ function renderDiagD2() {
     datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, backgroundColor: 'transparent',
       data: ojipData.curves[fname].d2.map((y, j) => ({ x: t[j], y })) });
-    // FJ (▲) and FI (◆) at their positions on the d2 curve
+    // FJ (▲), FI (◆) and FP (■) at their positions on the d2 curve
     const fjY = interpAt(t, ojipData.curves[fname].d2, kv.FJ_time_user_ms);
     const fiY = interpAt(t, ojipData.curves[fname].d2, kv.FI_time_user_ms);
-    datasets.push({ label: '', showLine: false,
-      data: [{ x: kv.FJ_time_user_ms, y: fjY }, { x: kv.FI_time_user_ms, y: fiY }],
-      pointRadius: [6, 6], pointStyle: ['triangle', 'rectRot'],
-      pointBackgroundColor: [c, c], pointBorderColor: [c, c],
+    const pts2 = [{ x: kv.FJ_time_user_ms, y: fjY }, { x: kv.FI_time_user_ms, y: fiY }];
+    const r2 = [6, 6], st2 = ['triangle', 'rectRot'], bg2 = [c, c], bd2 = [c, c];
+    if (kv.FP_time_deriv_ms != null) {
+      const fpY = interpAt(t, ojipData.curves[fname].d2, kv.FP_time_deriv_ms);
+      pts2.push({ x: kv.FP_time_deriv_ms, y: fpY });
+      r2.push(6); st2.push('rect'); bg2.push(c); bd2.push(c);
+    }
+    datasets.push({ label: '', showLine: false, data: pts2,
+      pointRadius: r2, pointStyle: st2,
+      pointBackgroundColor: bg2, pointBorderColor: bd2,
       borderColor: 'transparent', backgroundColor: 'transparent' });
   });
   makeChart('diag-d2-chart', { type: 'scatter', data: { datasets },

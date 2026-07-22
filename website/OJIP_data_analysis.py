@@ -45,10 +45,20 @@ def _fit_splines(double_norm_df: pd.DataFrame, x_col: str, kr: int) -> tuple:
     """
     Spline-fit, smooth and compute derivatives for each sample column in double_norm_df.
     Returns (Raw_recon_DF, D1_DF, D2_DF, Resid_DF, Infl_DF, log_time_series).
+
+    Gaussian smoothing sigma is adaptive: proportional to the number of data
+    points so that short curves (e.g. 60-pt OJIPImaging) retain per-curve
+    derivative structure, while long curves (≥200 pts) keep sigma=20 as before.
     """
     dn = double_norm_df
     cols = dn.columns          # [time_col, file1, file2, ...]
     n_files = len(cols) - 1
+    n_pts = len(dn) - 1        # usable points (first row skipped in spline fit)
+    sigma = max(2, min(20, round(n_pts * 0.1)))
+    # Adaptive knot reduction: for short curves (e.g. 60-pt OJIPImaging),
+    # ensure at least ~12 total knots (~10 interior) so the cubic spline can
+    # capture the multi-phase OJIP shape.  Long curves keep the user-chosen kr.
+    effective_kr = max(1, min(kr, max(1, n_pts // 12)))
 
     log_time = pd.Series(
         np.geomspace(float(dn.iloc[1, 0]), float(dn.iloc[-1, 0]), num=len(dn)),  # type: ignore[arg-type]
@@ -60,12 +70,12 @@ def _fit_splines(double_norm_df: pd.DataFrame, x_col: str, kr: int) -> tuple:
         fname = cols[i]
         x = dn.iloc[1:, 0].values
         y = dn.iloc[1:, i].values
-        knots = UnivariateSpline(x, x, s=0).get_knots()[::kr]
+        knots = UnivariateSpline(x, x, s=0).get_knots()[::effective_kr]
         model = LSQUnivariateSpline(x, y, knots[1:-1], k=3)
         model.set_smoothing_factor(0.5)
-        recon = gaussian_filter1d(model(log_time.values), 20)
-        d1 = gaussian_filter1d(np.gradient(recon), 20)
-        d2 = gaussian_filter1d(np.gradient(d1), 20)
+        recon = gaussian_filter1d(model(log_time.values), sigma)
+        d1 = gaussian_filter1d(np.gradient(recon), sigma)
+        d2 = gaussian_filter1d(np.gradient(d1), sigma)
         zc = np.where(np.diff(np.sign(d2)))[0]
         infl = pd.Series(log_time.values[zc]).reset_index(drop=True).rename(fname)
         Raw_recon_list.append(pd.Series(recon, name=fname))
@@ -377,6 +387,14 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     else:
         raise ValueError(f'Unknown fluorometer: {fluorometer}')
 
+    # Guard: if F50us and FK resolve to the same index (time axis lacks
+    # sub-ms resolution, common for imaging-PAM), widen the interval so M₀
+    # reflects the actual initial slope over the nearest available time points.
+    if F50us_idx == FK_idx:
+        FK_idx = min(int(F50us_idx) + 2, len(sf) - 1)
+        if FK_idx == F50us_idx:          # only 1-2 data points total
+            FK_idx = len(sf) - 1
+
     FJ_idx = tidx(FJ_time)
     FI_idx = tidx(FI_time)
 
@@ -681,6 +699,11 @@ def ojip_process():
         F200ms_idx = tidx(200);   F300ms_idx = tidx(300)
     else:
         raise ValueError(f'Unknown fluorometer: {fluorometer}')
+
+    if F50us_idx == FK_idx:
+        FK_idx = min(int(F50us_idx) + 2, len(Summary_file) - 1)
+        if FK_idx == F50us_idx:
+            FK_idx = len(Summary_file) - 1
 
     FJ_idx = tidx(FJ_time)
     FI_idx = tidx(FI_time)
