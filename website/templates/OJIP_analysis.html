@@ -1766,9 +1766,9 @@
           <select id="mc-color-by" class="form-control form-control-sm" style="width:auto; min-width:100px;"
                   onchange="MC.renderTimeSeries()">
             <option value="">None</option>
-            <option value="line" selected>Line (genotype)</option>
+            <option value="line">Line (genotype)</option>
             <option value="day">Day</option>
-            <option value="hours">Hour</option>
+            <option value="hours" selected>Hour</option>
             <option value="plantId">Plant</option>
             <option value="trayId">Tray</option>
           </select>
@@ -1802,7 +1802,7 @@
           <span id="mc-jitter-val" class="text-muted" style="min-width:2.5em;">30%</span>
         </label>
         <label class="mb-0 mr-3" style="cursor:pointer; font-size:0.85em;">
-          <input type="checkbox" id="mc-show-mean-sd" onchange="MC.renderTimeSeries()">
+          <input type="checkbox" id="mc-show-mean-sd" checked onchange="MC.renderTimeSeries()">
           <span class="font-weight-bold">Show mean &pm; SD</span>
         </label>
         <label class="mb-0 mr-3" style="cursor:pointer; font-size:0.85em;">
@@ -1833,61 +1833,6 @@
         <div class="card-body p-2" id="mc-summary-table-body"></div>
       </div>
 
-      <!-- Grouped OJIP Curve Panels (OJIPImaging only) -->
-      <div id="mc-grouped-panels-card" class="card mb-3" style="display:none;">
-        <div class="card-header py-2 d-flex flex-wrap align-items-center"
-             style="background:#e9ecef; font-size:0.88em; gap:8px;">
-          <span class="font-weight-bold">
-            <i class="fa fa-th mr-1 text-success"></i>Grouped OJIP Curves
-          </span>
-          <div class="d-flex align-items-center flex-wrap ml-auto" style="gap:8px;">
-            <label class="mb-0 small font-weight-bold">Panel by:</label>
-            <select id="mc-panel-by" class="form-control form-control-sm"
-                    style="width:auto; min-width:100px;"
-                    onchange="MC.renderGroupedPanels()">
-              <option value="">None (single chart)</option>
-              <option value="line" selected>Line (genotype)</option>
-              <option value="day">Day</option>
-              <option value="hours">Hour</option>
-              <option value="plantId">Plant</option>
-              <option value="trayId">Tray</option>
-            </select>
-
-            <span id="mc-panel-color-wrap">
-              <label class="mb-0 small font-weight-bold ml-2">Color by:</label>
-              <select id="mc-panel-color-by" class="form-control form-control-sm"
-                      style="width:auto; min-width:100px;"
-                      onchange="MC.renderGroupedPanels()">
-                <option value="">None</option>
-                <option value="day" selected>Day</option>
-                <option value="hours">Hour</option>
-                <option value="line">Line (genotype)</option>
-                <option value="plantId">Plant</option>
-                <option value="trayId">Tray</option>
-              </select>
-            </span>
-
-            <label class="mb-0 small font-weight-bold ml-2">Display:</label>
-            <select id="mc-panel-display" class="form-control form-control-sm"
-                    style="width:auto; min-width:110px;"
-                    onchange="MC.renderGroupedPanels()">
-              <option value="individual">Individual curves</option>
-              <option value="meansd" selected>Mean &pm; SD</option>
-              <option value="both">Both</option>
-            </select>
-          </div>
-        </div>
-        <div class="card-body p-2">
-          <div id="mc-panel-grid"
-               style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;">
-          </div>
-          <small class="text-muted d-block mt-2">
-            Each panel shows OJIP transient curves grouped by the selected metadata fields.
-            Mean &pm; SD uses sample standard deviation (n&minus;1).
-          </small>
-        </div>
-      </div>
-
       <!-- Compare card (OJIPImaging only) -->
       <div id="mc-compare-card" class="card mb-3" style="display:none;">
         <div class="card-header py-2 d-flex flex-wrap align-items-center"
@@ -1895,36 +1840,42 @@
           <span class="font-weight-bold">
             <i class="fa fa-bar-chart mr-1 text-primary"></i>Compare
           </span>
-          <div class="d-flex align-items-center flex-wrap ml-auto" style="gap:8px;">
-            <label class="mb-0 small font-weight-bold">Group by:</label>
-            <select id="mc-compare-group-by" class="form-control form-control-sm"
-                    style="width:auto; min-width:100px;"
-                    onchange="MC.renderComparison()">
-              <option value="line" selected>Line (genotype)</option>
-              <option value="day">Day</option>
-              <option value="hours">Hour</option>
-              <option value="plantId">Plant</option>
-              <option value="trayId">Tray</option>
-            </select>
-            <label class="mb-0 small font-weight-bold ml-2">Sub-group by:</label>
-            <select id="mc-compare-subgroup-by" class="form-control form-control-sm"
-                    style="width:auto; min-width:100px;"
-                    onchange="MC.renderComparison()">
-              <option value="" selected>None</option>
-              <option value="day">Day</option>
-              <option value="hours">Hour</option>
-              <option value="line">Line (genotype)</option>
-              <option value="plantId">Plant</option>
-              <option value="trayId">Tray</option>
-            </select>
-            <label class="mb-0 small font-weight-bold ml-2">Display:</label>
-            <select id="mc-compare-display" class="form-control form-control-sm"
-                    style="width:auto; min-width:110px;"
-                    onchange="MC.renderComparison()">
-              <option value="individual">Individual curves</option>
-              <option value="meansd" selected>Mean &pm; SD</option>
-              <option value="both">Both</option>
-            </select>
+          <div class="d-flex flex-wrap ml-auto" style="gap:10px;">
+            <div class="d-flex flex-column align-items-start">
+              <small class="font-weight-bold text-muted">Group by</small>
+              <select id="mc-compare-group-by" class="form-control form-control-sm"
+                      style="width:auto; min-width:100px;"
+                      onchange="MC.renderComparison()">
+                <option value="line" selected>Line (genotype)</option>
+                <option value="day">Day</option>
+                <option value="hours">Hour</option>
+                <option value="plantId">Plant</option>
+                <option value="trayId">Tray</option>
+              </select>
+            </div>
+            <div class="d-flex flex-column align-items-start">
+              <small class="font-weight-bold text-muted">Sub-group by</small>
+              <select id="mc-compare-subgroup-by" class="form-control form-control-sm"
+                      style="width:auto; min-width:100px;"
+                      onchange="MC.renderComparison()">
+                <option value="" selected>None</option>
+                <option value="day">Day</option>
+                <option value="hours">Hour</option>
+                <option value="line">Line (genotype)</option>
+                <option value="plantId">Plant</option>
+                <option value="trayId">Tray</option>
+              </select>
+            </div>
+            <div class="d-flex flex-column align-items-start">
+              <small class="font-weight-bold text-muted">Display</small>
+              <select id="mc-compare-display" class="form-control form-control-sm"
+                      style="width:auto; min-width:110px;"
+                      onchange="MC.renderComparison()">
+                <option value="individual">Individual curves</option>
+                <option value="meansd" selected>Mean &pm; SD</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
           </div>
         </div>
         <div class="card-body p-2">
@@ -1940,6 +1891,65 @@
           </div>
           <small id="mc-compare-info" class="text-muted d-block mt-2">
             Select groups to compare via badges. Mean &pm; SD uses sample standard deviation (n&minus;1).
+          </small>
+        </div>
+      </div>
+
+      <!-- Grouped OJIP Curve Panels (OJIPImaging only) -->
+      <div id="mc-grouped-panels-card" class="card mb-3" style="display:none;">
+        <div class="card-header py-2 d-flex flex-wrap align-items-center"
+             style="background:#e9ecef; font-size:0.88em; gap:8px;">
+          <span class="font-weight-bold">
+            <i class="fa fa-th mr-1 text-success"></i>Grouped OJIP Curves
+          </span>
+          <div class="d-flex flex-wrap ml-auto" style="gap:10px;">
+            <div class="d-flex flex-column align-items-start">
+              <small class="font-weight-bold text-muted">Panel by</small>
+              <select id="mc-panel-by" class="form-control form-control-sm"
+                      style="width:auto; min-width:100px;"
+                      onchange="MC.renderGroupedPanels()">
+                <option value="">None (single chart)</option>
+                <option value="line" selected>Line (genotype)</option>
+                <option value="day">Day</option>
+                <option value="hours">Hour</option>
+                <option value="plantId">Plant</option>
+                <option value="trayId">Tray</option>
+              </select>
+            </div>
+
+            <div id="mc-panel-color-wrap" class="d-flex flex-column align-items-start">
+              <small class="font-weight-bold text-muted">Color by</small>
+              <select id="mc-panel-color-by" class="form-control form-control-sm"
+                      style="width:auto; min-width:100px;"
+                      onchange="MC.renderGroupedPanels()">
+                <option value="">None</option>
+                <option value="day" selected>Day</option>
+                <option value="hours">Hour</option>
+                <option value="line">Line (genotype)</option>
+                <option value="plantId">Plant</option>
+                <option value="trayId">Tray</option>
+              </select>
+            </div>
+
+            <div class="d-flex flex-column align-items-start">
+              <small class="font-weight-bold text-muted">Display</small>
+              <select id="mc-panel-display" class="form-control form-control-sm"
+                      style="width:auto; min-width:110px;"
+                      onchange="MC.renderGroupedPanels()">
+                <option value="individual">Individual curves</option>
+                <option value="meansd" selected>Mean &pm; SD</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-2">
+          <div id="mc-panel-grid"
+               style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;">
+          </div>
+          <small class="text-muted d-block mt-2">
+            Each panel shows OJIP transient curves grouped by the selected metadata fields.
+            Mean &pm; SD uses sample standard deviation (n&minus;1).
           </small>
         </div>
       </div>

@@ -3156,6 +3156,9 @@ async function mcStartAnalysis() {
     if (groupCtrl) groupCtrl.style.display = isOJIPImg ? '' : 'none';
     const chartOpts = document.getElementById('mc-chart-opts');
     if (chartOpts) chartOpts.style.display = isOJIPImg ? '' : 'none';
+    // Hide timestamp checkbox for OJIPImaging (X-axis is controlled by dropdown instead)
+    const tsCheckWrap = document.getElementById('mc-ts-checkbox-wrap');
+    if (tsCheckWrap) tsCheckWrap.style.display = isOJIPImg ? 'none' : '';
     // Hide summary table on new analysis
     const summaryWrap = document.getElementById('mc-summary-table-wrap');
     if (summaryWrap) summaryWrap.style.display = 'none';
