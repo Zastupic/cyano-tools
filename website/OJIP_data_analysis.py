@@ -4,8 +4,9 @@ import pandas as pd
 import numpy as np
 from openpyxl.drawing.image import Image
 from openpyxl import Workbook
-from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline
+from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline, PchipInterpolator
 from scipy.ndimage import gaussian_filter1d
+from scipy.signal import find_peaks
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
 from .ojip_interpretation import interpret_ojip, generate_narrative, summarise_findings, compare_ojip_params
@@ -37,23 +38,46 @@ def _axis_cfg(fluorometer: str) -> tuple[str, str, str, float, set[str], dict[st
                 dict(FJ=(1e-4, 0.01), FI=(0.01, 0.1), FP=(0.1, 1.0)))
     if fluorometer == 'OJIPImaging':
         return ('time_ms', 'Time (ms)', 'Fluorescence (norm.)', 1e-2, {'.xlsx'},
-                dict(FJ=(0.1, 10), FI=(10, 100), FP=(100, 1000)))
+                dict(FJ=(0.1, 10), FI=(9, 100), FP=(100, 1000)))
     raise ValueError(f'Unknown fluorometer: {fluorometer}')
 
 
-def _fit_splines(double_norm_df: pd.DataFrame, x_col: str, kr: int) -> tuple:
+def _fit_start_index(dn: pd.DataFrame, trim_first: int = 0) -> int:
+    """First row index to include when fitting.
+
+    Skips the leading row *and* any non-positive (pre-illumination) timepoints:
+    MULTI-COLOR-PAM files carry a long baseline at t ≤ 0 ms, and both the
+    log10(time) fitters and the geomspace evaluation grid require strictly
+    positive time (log10 of ≤ 0 is nan/-inf, which crashes the spline fit and
+    blanks the reconstruction). Aquapen/FL6000 loaders already drop t=0, so
+    for them the first positive point is index 0 and this reduces to the old
+    ``1 + trim_first`` behaviour. The user ``trim_first`` is applied on top.
+    """
+    t = dn.iloc[:, 0].values.astype(float)
+    pos = np.flatnonzero(t > 0)
+    first_pos = int(pos[0]) if pos.size else 1
+    return max(1, first_pos) + trim_first
+
+
+def _fit_splines(double_norm_df: pd.DataFrame, x_col: str, kr: int,
+                 trim_first: int = 0, trim_last: int = 0) -> tuple:
     """
     Spline-fit, smooth and compute derivatives for each sample column in double_norm_df.
-    Returns (Raw_recon_DF, D1_DF, D2_DF, Resid_DF, Infl_DF, log_time_series).
+    Returns (Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time_series).
 
     Gaussian smoothing sigma is adaptive: proportional to the number of data
     points so that short curves (e.g. 60-pt OJIPImaging) retain per-curve
     derivative structure, while long curves (≥200 pts) keep sigma=20 as before.
+
+    trim_first / trim_last: exclude the first / last N data points from the
+    spline fit (useful when the tail of OJIPImaging curves is poorly fitted).
     """
     dn = double_norm_df
     cols = dn.columns          # [time_col, file1, file2, ...]
     n_files = len(cols) - 1
-    n_pts = len(dn) - 1        # usable points (first row skipped in spline fit)
+    _t_start = _fit_start_index(dn, trim_first)
+    _t_end   = len(dn) - trim_last if trim_last > 0 else len(dn)
+    n_pts = _t_end - _t_start  # usable points after trim
     sigma = max(2, min(20, round(n_pts * 0.1)))
     # Adaptive knot reduction: for short curves (e.g. 60-pt OJIPImaging),
     # ensure at least ~12 total knots (~10 interior) so the cubic spline can
@@ -61,26 +85,31 @@ def _fit_splines(double_norm_df: pd.DataFrame, x_col: str, kr: int) -> tuple:
     effective_kr = max(1, min(kr, max(1, n_pts // 12)))
 
     log_time = pd.Series(
-        np.geomspace(float(dn.iloc[1, 0]), float(dn.iloc[-1, 0]), num=len(dn)),  # type: ignore[arg-type]
+        np.geomspace(dn.iloc[_t_start:_t_start + 1, 0].values.astype(float)[0],
+                     dn.iloc[_t_end - 1:_t_end, 0].values.astype(float)[0], num=n_pts),
         name=cols[0])
 
-    Raw_recon_list, D1_list, D2_list, Infl_list = [], [], [], []
+    Raw_recon_list, D1_list, D2_list, D3_list, Infl_list = [], [], [], [], []
 
     for i in range(1, n_files + 1):
         fname = cols[i]
-        x = dn.iloc[1:, 0].values
-        y = dn.iloc[1:, i].values
+        x = dn.iloc[_t_start:_t_end, 0].values
+        y = dn.iloc[_t_start:_t_end, i].values
         knots = UnivariateSpline(x, x, s=0).get_knots()[::effective_kr]
         model = LSQUnivariateSpline(x, y, knots[1:-1], k=3)
         model.set_smoothing_factor(0.5)
         recon = gaussian_filter1d(model(log_time.values), sigma)
         d1 = gaussian_filter1d(np.gradient(recon), sigma)
         d2 = gaussian_filter1d(np.gradient(d1), sigma)
-        zc = np.where(np.diff(np.sign(d2)))[0]
+        d3 = gaussian_filter1d(np.gradient(d2), sigma)
+        # Upward zero-crossings only: D2 goes from - to + (D3 > 0 at crossing)
+        # These are the inflection points per Akinyemi et al. 2025
+        zc   = np.where(np.diff(np.sign(d2)) > 0)[0]
         infl = pd.Series(log_time.values[zc]).reset_index(drop=True).rename(fname)
         Raw_recon_list.append(pd.Series(recon, name=fname))
         D1_list.append(pd.Series(d1, name=fname))
         D2_list.append(pd.Series(d2, name=fname))
+        D3_list.append(pd.Series(d3, name=fname))
         Infl_list.append(infl)
 
     def _assemble(series_list, time_series, col_names):
@@ -91,6 +120,7 @@ def _fit_splines(double_norm_df: pd.DataFrame, x_col: str, kr: int) -> tuple:
     Raw_recon_DF = _assemble(Raw_recon_list, log_time, cols)
     D1_DF = _assemble(D1_list, log_time, cols)
     D2_DF = _assemble(D2_list, log_time, cols)
+    D3_DF = _assemble(D3_list, log_time, cols)
     Infl_DF = pd.concat(Infl_list, axis=1)  # columns = sample names
 
     # Residuals (interpolate reconstructed→raw time axis)
@@ -101,15 +131,21 @@ def _fit_splines(double_norm_df: pd.DataFrame, x_col: str, kr: int) -> tuple:
     Resid_DF = pd.concat([dn.iloc[:, 0].reset_index(drop=True)] + Resid_list, axis=1)
     Resid_DF.columns = cols
 
-    return Raw_recon_DF, D1_DF, D2_DF, Resid_DF, Infl_DF, log_time
+    return Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time
 
 
 def _fit_oj_polynomial(double_norm_df: pd.DataFrame, x_col: str, ms_factor: float,
                        oj_lo_ms: float = 0.5, oj_hi_ms: float = 5.0,
-                       n_dense: int = 500) -> dict:
+                       n_dense: int = 500, max_degree: int = 9) -> dict:
     """
-    Fit a 9th-degree polynomial to the O-J region of double_norm data (0.5–5 ms by default).
+    Fit a polynomial to the O-J region of double_norm data (0.5–5 ms by default).
     Inflection points = roots of d2 where d3 > 0 (Akinyemi et al. 2023).
+
+    The polynomial degree adapts to the number of data points in the window:
+    ``degree = min(max_degree, n_points - 2)`` so that sparse instruments
+    (e.g. OJIPImaging with only 8 points in the O-J window) can still produce
+    meaningful fits instead of returning empty.
+
     Returns {fname: {'poly_oj_time_ms': list, 'poly_oj_d2': list, 'poly_infl_ms': list}}.
     """
     dn = double_norm_df
@@ -130,18 +166,23 @@ def _fit_oj_polynomial(double_norm_df: pd.DataFrame, x_col: str, ms_factor: floa
         y_oj  = y_all[mask]
 
         empty = {'poly_oj_time_ms': [], 'poly_oj_d2': [], 'poly_infl_ms': []}
-        if len(x_oj) < 12:
+        # Need at least 5 points for a meaningful polynomial with d2/d3 analysis
+        if len(x_oj) < 5:
             result[fname] = empty
             continue
 
-        # Work in ms; normalise to [-1, 1] for degree-9 numerical stability
+        # Adaptive degree: ensure we never exceed (n_points - 2) to avoid
+        # overfitting, and cap at max_degree (default 9).
+        degree = min(max_degree, len(x_oj) - 2)
+
+        # Work in ms; normalise to [-1, 1] for numerical stability
         x_ms = x_oj * ms_factor
         xc   = (x_ms[0] + x_ms[-1]) / 2.0
         xs   = max((x_ms[-1] - x_ms[0]) / 2.0, 1e-12)
         x_n  = (x_ms - xc) / xs
 
         try:
-            coeffs = np.polyfit(x_n, y_oj, 9)
+            coeffs = np.polyfit(x_n, y_oj, degree)
         except Exception:
             result[fname] = empty
             continue
@@ -177,34 +218,127 @@ def _fit_oj_polynomial(double_norm_df: pd.DataFrame, x_col: str, ms_factor: floa
     return result
 
 
-def _find_fjfifp(D2_DF, x_col, ranges, file_names, Infl_DF):
+def _select_trough_pos(d2_values, t_values, expect=None, after=None,
+                       prom_frac: float = 0.15):
+    """Choose one D2 local minimum (trough) within a search window, per-curve.
+
+    A phase timing (FJ/FI/FP) marks a genuine deceleration trough — D2 declines
+    and then rises again. The plain argmin of the window instead returns whatever
+    is lowest, which on non-standard transients is often a value on a monotonic
+    slope at the window edge, bleeding in from the neighbouring phase (e.g. a fast
+    curve whose FP deceleration drags the FI window's minimum out to ~100 ms even
+    though a real, shallower FI trough sits near 25 ms).
+
+    Rather than one fixed rule, several cues are combined so the choice adapts to
+    each curve:
+      • Interior local minima are found as troughs (peaks of −D2) with their
+        prominences; monotonic-edge values are not troughs and are ignored.
+      • Only troughs ≥ ``prom_frac`` of the window's strongest trough are kept
+        (an adaptive noise floor — tiny wiggles never win).
+      • ``after`` (a time) enforces the biological ordering FJ < FI < FP by
+        dropping troughs at/before the previously-assigned phase.
+      • If ``expect`` (a time) is given, the surviving trough nearest it in
+        LOG-time is chosen (OJIP phases are log-distributed) — the "expected
+        position" rule for FJ/FI. Otherwise the most prominent survivor is chosen
+        (FP, which has no preset time).
+
+    Falls back to the plain minimum only when the window holds no interior trough
+    (genuinely monotonic D2).
+
+    Returns (pos, confidence): pos is the positional index into the segment (−1
+    if unusable); confidence ∈ [0, 1] is the chosen trough's prominence relative
+    to the window's strongest trough (1.0 = it *is* the strongest; low = several
+    comparable troughs, i.e. ambiguous and worth manual review in a batch).
     """
-    Identify FJ/FI/FP derivative minima and inflection points per sample.
-    Returns six pd.Series (FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl)
-    indexed by file_names, or raises ValueError on bad data.
+    d2 = np.asarray(d2_values, dtype=float)
+    t  = np.asarray(t_values,  dtype=float)
+    if d2.size == 0 or np.all(np.isnan(d2)):
+        return -1, 0.0
+
+    troughs, props = find_peaks(-d2, prominence=0)
+    if troughs.size == 0:
+        # No interior trough: genuinely monotonic window — fall back to argmin.
+        return int(np.nanargmin(d2)), 0.0
+
+    proms = props['prominences']
+    pmax  = float(proms.max()) or 1.0
+    keep  = proms >= prom_frac * pmax
+    cand  = troughs[keep]
+    cprom = proms[keep]
+
+    if after is not None:
+        mask = t[cand] > after
+        if mask.any():
+            cand, cprom = cand[mask], cprom[mask]
+
+    if expect is not None and cand.size:
+        dist = np.abs(np.log10(np.clip(t[cand], 1e-12, None)) - np.log10(max(float(expect), 1e-12)))
+        j = int(np.argmin(dist))
+    else:
+        j = int(np.argmax(cprom))
+
+    return int(cand[j]), float(cprom[j] / pmax)
+
+
+def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
+                 fj_expect=None, fi_expect=None):
+    """
+    Identify FJ/FI/FP timings as D2 LOCAL MINIMA (deceleration troughs), chosen
+    per-curve by _select_trough_pos, which combines several cues so no single
+    fixed rule has to fit every transient shape:
+      • prominence — the trough must be a genuine dip, not a monotonic-edge value
+        bleeding in from a neighbouring phase;
+      • ordering — FJ < FI < FP enforced in time;
+      • expected position — FJ/FI resolve to the significant trough nearest their
+        preset time (``fj_expect``/``fi_expect``, native units); FP, which has no
+        preset, resolves to the most prominent trough after FI.
+
+    Detection history: FJ/FI once used a D2 upward zero-crossing and FP the window
+    minimum; then all three used the plain window minimum (argmin), which grabs
+    monotonic-edge values on non-standard curves (e.g. a fast transient whose FP
+    deceleration pulls the FI argmin out to ~100 ms). The trough-based, multi-cue
+    selection above replaces that.
+
+    Returns seven objects: six pd.Series (FJ_deriv, FI_deriv, FP_deriv, FJ_infl,
+    FI_infl, FP_infl) indexed by file_names, plus ``conf`` — a dict of three
+    pd.Series (FJ/FI/FP) giving each detection's confidence ∈ [0, 1] (chosen
+    trough prominence relative to the window's strongest trough; low values flag
+    ambiguous curves for review). Raises ValueError on bad data.
     """
     t = D2_DF[x_col]
 
     def range_idx(lo, hi):
         return t.sub(lo).abs().idxmin(), t.sub(hi).abs().idxmin()
 
-    FJ_lo, FJ_hi = range_idx(*ranges['FJ'])
-    FI_lo, FI_hi = range_idx(*ranges['FI'])
-    FP_lo, FP_hi = range_idx(*ranges['FP'])
+    windows = {
+        'FJ': range_idx(*ranges['FJ']),
+        'FI': range_idx(*ranges['FI']),
+        'FP': range_idx(*ranges['FP']),
+    }
+    expect = {'FJ': fj_expect, 'FI': fi_expect, 'FP': None}
 
     results = {k: [] for k in ('FJ', 'FI', 'FP')}
+    confs   = {k: [] for k in ('FJ', 'FI', 'FP')}
     for i in range(1, len(D2_DF.columns)):
-        col = D2_DF.iloc[:, i]
-        for key, lo, hi in [('FJ', FJ_lo, FJ_hi), ('FI', FI_lo, FI_hi), ('FP', FP_lo, FP_hi)]:
-            mn = col.loc[lo:hi].min()
-            idx = col.sub(mn).abs().idxmin()
-            if pd.isna(idx):
+        d2_col = D2_DF.iloc[:, i]
+        prev_t = None
+        for key in ('FJ', 'FI', 'FP'):
+            lo, hi = windows[key]
+            d2_seg = d2_col.loc[lo:hi]
+            t_seg  = t.loc[lo:hi]
+            pos, cf = _select_trough_pos(d2_seg.values, t_seg.values,
+                                         expect=expect[key], after=prev_t)
+            if pos < 0:
                 raise ValueError('Could not identify phase timing — check data integrity.')
-            results[key].append(t.iloc[int(idx)])
+            tv = float(t_seg.iloc[pos])
+            results[key].append(tv)
+            confs[key].append(cf)
+            prev_t = tv
 
     FJ_deriv = pd.Series(results['FJ'], index=file_names)
     FI_deriv = pd.Series(results['FI'], index=file_names)
     FP_deriv = pd.Series(results['FP'], index=file_names)
+    conf = {k: pd.Series(confs[k], index=file_names) for k in ('FJ', 'FI', 'FP')}
 
     def nearest_inflect(deriv_ser):
         return pd.Series({
@@ -213,7 +347,8 @@ def _find_fjfifp(D2_DF, x_col, ranges, file_names, Infl_DF):
         })
 
     return (FJ_deriv, FI_deriv, FP_deriv,
-            nearest_inflect(FJ_deriv), nearest_inflect(FI_deriv), nearest_inflect(FP_deriv))
+            nearest_inflect(FJ_deriv), nearest_inflect(FI_deriv), nearest_inflect(FP_deriv),
+            conf)
 
 
 def _calc_areas_fm_timing(Summary_file, data_cols, FJ_idx, FI_idx, ms_factor,
@@ -261,6 +396,213 @@ def _calc_areas_fm_timing(Summary_file, data_cols, FJ_idx, FI_idx, ms_factor,
             pd.Series(fm_t))
 
 
+def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
+                     n_interior_knots: int = 10,
+                     trim_first: int = 0, trim_last: int = 0) -> tuple:
+    """
+    Like _fit_splines but fits in log10(time) space.
+
+    Knots are placed uniformly in log10 space so that each OJIP phase
+    (O-J, J-I, I-P, P-decline) receives equal spline flexibility regardless
+    of the linear-time density of the data points.  This greatly improves
+    reconstruction quality for logarithmically-sampled instruments such as
+    OJIPImaging (60 points over 0.1–2900 ms).
+
+    A QUINTIC (k=5) spline is used so the analytic 2nd derivative is a smooth
+    cubic and the 3rd derivative a smooth quadratic.  A cubic (k=3) spline would
+    give a piecewise-LINEAR D2 and a piecewise-CONSTANT D3 — the latter renders
+    as a visible staircase no matter how dense the evaluation grid, because the
+    underlying function really is a step function.
+
+    Two numerical safeguards keep the high-order derivatives realistic,
+    especially in the tail used for FP detection:
+      1. Interior knots are spread across the FULL log range (not pushed up
+         against the first/last data point), so the boundary intervals stay wide
+         and their derivatives don't explode.
+      2. Derivatives are evaluated STRICTLY INSIDE the boundary knots.  Those
+         knots sit at the data extremes with multiplicity k+1, and evaluating a
+         high-order derivative exactly on them yields a huge numerical spike
+         (order 1e13) that would otherwise hijack the FP D2-minimum search.
+
+    trim_first / trim_last: exclude the first / last N data points from the
+    spline fit (useful when the tail of OJIPImaging curves is poorly fitted).
+
+    Returns the same 7-tuple as _fit_splines.
+    """
+    dn = double_norm_df
+    cols = dn.columns
+    n_files = len(cols) - 1
+    _t_start = _fit_start_index(dn, trim_first)
+    _t_end   = len(dn) - trim_last if trim_last > 0 else len(dn)
+    n_fit = _t_end - _t_start
+
+    # Quintic where enough points support it; degrade for very short curves so
+    # LSQUnivariateSpline always has k+1 points and valid derivative orders.
+    k = 5 if n_fit >= 12 else (3 if n_fit >= 5 else max(1, n_fit - 2))
+    # Cap interior knots so every knot interval keeps data (Schoenberg-Whitney).
+    n_knots = max(1, min(n_interior_knots, n_fit // (k + 2)))
+
+    x_fit = dn.iloc[_t_start:_t_end, 0].values.astype(float)
+    x_log = np.log10(x_fit)
+    lo, hi = float(x_log[0]), float(x_log[-1])
+
+    # Interior knots evenly spread across the full log range (safeguard 1).
+    knots_log = np.linspace(lo, hi, n_knots + 2)[1:-1]
+
+    # Dense grid for smooth chart lines and fine zero-crossing resolution, and
+    # kept strictly inside the boundary knots (safeguard 2): span the interior
+    # data range [x_fit[1], x_fit[-2]] rather than the full [x_fit[0], x_fit[-1]].
+    n_eval = max(600, n_fit)
+    log_time = pd.Series(
+        np.geomspace(float(x_fit[1]), float(x_fit[-2]), num=n_eval), name=cols[0])
+    x_eval = np.log10(log_time.values.astype(float))
+
+    Raw_recon_list, D1_list, D2_list, D3_list, Infl_list = [], [], [], [], []
+
+    for i in range(1, n_files + 1):
+        fname = cols[i]
+        y     = dn.iloc[_t_start:_t_end, i].values.astype(float)
+
+        model = LSQUnivariateSpline(x_log, y, knots_log, k=k)
+
+        recon  = model(x_eval)
+        # Analytic derivatives of the spline in log10(t) space.
+        # Using model.derivative() avoids the compounding numerical noise of
+        # np.gradient on a sparse grid, giving reliable D2 zero-crossing detection.
+        # Guard the order for degraded (very short curve) fits where k < 2/3.
+        d1 = model.derivative(1)(x_eval) if k >= 1 else np.zeros_like(x_eval)
+        d2 = model.derivative(2)(x_eval) if k >= 2 else np.zeros_like(x_eval)
+        d3 = model.derivative(3)(x_eval) if k >= 3 else np.zeros_like(x_eval)
+        # Upward zero-crossings only: D2 goes from - to + (D3 > 0 at crossing)
+        # These are the inflection points per Akinyemi et al. 2025
+        zc   = np.where(np.diff(np.sign(d2)) > 0)[0]
+        infl = pd.Series(log_time.values[zc]).reset_index(drop=True).rename(fname)
+
+        Raw_recon_list.append(pd.Series(recon, name=fname))
+        D1_list.append(pd.Series(d1,    name=fname))
+        D2_list.append(pd.Series(d2,    name=fname))
+        D3_list.append(pd.Series(d3,    name=fname))
+        Infl_list.append(infl)
+
+    def _assemble(series_list, time_series, col_names):
+        df = pd.concat([time_series] + series_list, axis=1)
+        df.columns = col_names
+        return df
+
+    Raw_recon_DF = _assemble(Raw_recon_list, log_time, cols)
+    D1_DF        = _assemble(D1_list,        log_time, cols)
+    D2_DF        = _assemble(D2_list,        log_time, cols)
+    D3_DF        = _assemble(D3_list,        log_time, cols)
+    Infl_DF      = pd.concat(Infl_list, axis=1)
+
+    Resid_list = []
+    for i in range(1, n_files + 1):
+        interp = np.interp(
+            np.array(dn.iloc[:, 0], dtype=float),
+            np.array(log_time, dtype=float),
+            np.array(Raw_recon_DF.iloc[:, i], dtype=float))
+        Resid_list.append(pd.Series(
+            np.array(dn.iloc[:, i], dtype=float) - interp, name=cols[i]))
+    Resid_DF = pd.concat([dn.iloc[:, 0].reset_index(drop=True)] + Resid_list, axis=1)
+    Resid_DF.columns = cols
+
+    return Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time
+
+
+def _fit_splines_pchip(double_norm_df: pd.DataFrame, x_col: str,
+                       trim_first: int = 0, trim_last: int = 0) -> tuple:
+    """
+    Monotone PCHIP interpolation in log10(time) space.
+
+    PchipInterpolator passes through every data point and preserves
+    monotonicity between points.  Its analytic derivatives are used
+    directly — no Gaussian smoothing is applied.  Residuals are
+    trivially zero by construction.
+
+    trim_first / trim_last: exclude the first / last N data points from the
+    interpolation (useful when the tail of OJIPImaging curves is unreliable).
+
+    Returns the same 7-tuple as _fit_splines.
+    """
+    dn = double_norm_df
+    cols = dn.columns
+    n_files = len(cols) - 1
+    _t_start = _fit_start_index(dn, trim_first)
+    _t_end   = len(dn) - trim_last if trim_last > 0 else len(dn)
+
+    log_time = pd.Series(
+        np.geomspace(dn.iloc[_t_start:_t_start + 1, 0].values.astype(float)[0],
+                     dn.iloc[_t_end - 1:_t_end, 0].values.astype(float)[0],
+                     num=_t_end - _t_start),
+        name=cols[0])
+
+    Raw_recon_list, D1_list, D2_list, D3_list, Infl_list = [], [], [], [], []
+
+    for i in range(1, n_files + 1):
+        fname = cols[i]
+        x_raw = dn.iloc[_t_start:_t_end, 0].values.astype(float)
+        y     = dn.iloc[_t_start:_t_end, i].values.astype(float)
+        x_log = np.log10(x_raw)
+
+        interp_fn = PchipInterpolator(x_log, y)
+        x_eval = np.log10(log_time.values.astype(float))
+
+        recon = interp_fn(x_eval)
+        d1    = interp_fn.derivative(1)(x_eval)
+        d2    = interp_fn.derivative(2)(x_eval)
+        d3    = interp_fn.derivative(3)(x_eval)
+
+        # Upward zero-crossings only: D2 goes from - to + (D3 > 0 at crossing)
+        # These are the inflection points per Akinyemi et al. 2025
+        zc   = np.where(np.diff(np.sign(d2)) > 0)[0]
+        infl = pd.Series(log_time.values[zc]).reset_index(drop=True).rename(fname)
+
+        Raw_recon_list.append(pd.Series(recon, name=fname))
+        D1_list.append(pd.Series(d1,    name=fname))
+        D2_list.append(pd.Series(d2,    name=fname))
+        D3_list.append(pd.Series(d3,    name=fname))
+        Infl_list.append(infl)
+
+    def _assemble(series_list, time_series, col_names):
+        df = pd.concat([time_series] + series_list, axis=1)
+        df.columns = col_names
+        return df
+
+    Raw_recon_DF = _assemble(Raw_recon_list, log_time, cols)
+    D1_DF        = _assemble(D1_list,        log_time, cols)
+    D2_DF        = _assemble(D2_list,        log_time, cols)
+    D3_DF        = _assemble(D3_list,        log_time, cols)
+    Infl_DF      = pd.concat(Infl_list, axis=1)
+
+    # PCHIP passes through all points — residuals at raw time axis are ~0 by construction
+    Resid_list = []
+    for i in range(1, n_files + 1):
+        interp_vals = np.interp(
+            np.array(dn.iloc[:, 0], dtype=float),
+            np.array(log_time, dtype=float),
+            np.array(Raw_recon_DF.iloc[:, i], dtype=float))
+        Resid_list.append(pd.Series(
+            np.array(dn.iloc[:, i], dtype=float) - interp_vals, name=cols[i]))
+    Resid_DF = pd.concat([dn.iloc[:, 0].reset_index(drop=True)] + Resid_list, axis=1)
+    Resid_DF.columns = cols
+
+    return Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time
+
+
+def _fit_curves(double_norm_df: pd.DataFrame, x_col: str, kr: int,
+                method: str = 'spline',
+                trim_first: int = 0, trim_last: int = 0) -> tuple:
+    """Dispatcher: route to the requested fitting method."""
+    if method == 'logspline':
+        return _fit_splines_log(double_norm_df, x_col,
+                                trim_first=trim_first, trim_last=trim_last)
+    if method == 'pchip':
+        return _fit_splines_pchip(double_norm_df, x_col,
+                                  trim_first=trim_first, trim_last=trim_last)
+    return _fit_splines(double_norm_df, x_col, kr,
+                        trim_first=trim_first, trim_last=trim_last)
+
+
 def _safe(v):
     """Convert to float, returning None for NaN/None."""
     try:
@@ -268,6 +610,77 @@ def _safe(v):
         return None if np.isnan(f) else round(f, 8)
     except Exception:
         return None
+
+
+def _fit_quality(y_raw: np.ndarray, y_recon_at_raw: np.ndarray,
+                 d2: np.ndarray, method: str = 'spline') -> dict:
+    """
+    Per-curve fit quality metric.
+
+    For spline / logspline: normalised RMSE (nRMSE) and R² of the
+    reconstruction versus the raw double-normalised values, plus a NOISE-ADAPTIVE
+    'poor' flag.
+
+    A plain nRMSE > 3 % threshold flags any noisy curve, because a smooth spline
+    deliberately does not chase measurement noise — so its residuals are ≈ the
+    data's own noise level, and on noisy OJIPImaging (per-pixel) curves that
+    alone exceeds 3 % even when the fit represents the transient well. Instead we
+    estimate each curve's noise floor from its point-to-point scatter and flag
+    'poor' only when the residuals *systematically exceed* that floor (i.e. the
+    spline is missing real structure), not when they merely equal it.
+
+    For pchip: residuals are trivially 0 by construction, so instead
+    the *derivative roughness* (normalised RMS of diff(d2)) is computed.
+    High roughness means noisy data propagates into timing detection.
+    A 'poor' flag is raised when roughness > 0.15.
+    """
+    if method == 'pchip':
+        dd2    = np.diff(d2)
+        denom  = float(np.max(np.abs(d2))) or 1.0
+        roughness = float(np.sqrt(np.mean(dd2 ** 2))) / denom
+        flag   = 'poor' if roughness > 0.15 else 'good'
+        return {
+            'fit_nrmse':     None,
+            'fit_r2':        None,
+            'fit_roughness': round(roughness, 6),
+            'fit_flag':      flag,
+            'fit_method':    method,
+        }
+    res    = y_raw - y_recon_at_raw
+    ss_res = float(np.sum(res ** 2))
+    ss_tot = float(np.sum((y_raw - float(y_raw.mean())) ** 2))
+    rmse   = float(np.sqrt(np.mean(res ** 2)))
+    span   = float(y_raw.max() - y_raw.min()) or 1.0
+    nrmse  = rmse / span
+    r2     = 1.0 - ss_res / ss_tot if ss_tot > 0 else 1.0
+
+    # Robust per-curve noise floor from 2nd differences (cancels the smooth
+    # signal's slope; the median resists the few high-curvature OJIP steps):
+    #   for white noise σ, std(2nd diff) = √6·σ and MAD ≈ 0.6745·std,
+    #   so σ ≈ median|2nd diff| · 1.4826 / √6.
+    if y_raw.size >= 3:
+        sigma_noise = float(np.median(np.abs(np.diff(y_raw, n=2)))) * 1.4826 / np.sqrt(6.0)
+    else:
+        sigma_noise = 0.0
+    # Ratio of residual to the noise floor: ≈1 when the fit is as good as the
+    # noise allows, ≫1 when the spline systematically misses real structure.
+    misfit_ratio = rmse / sigma_noise if sigma_noise > 1e-9 else float('inf')
+
+    # 'poor' when the residuals are clearly beyond the noise floor (systematic
+    # misfit, misfit_ratio ≫ 1) AND non-negligible in absolute terms. The
+    # noise-floor test is what matters — the small absolute floor only keeps a
+    # near-perfect fit of essentially noise-free data from being flagged when its
+    # tiny residual happens to exceed its tiny noise estimate.
+    flag = 'poor' if (misfit_ratio > 2.0 and nrmse > 0.01) else 'good'
+    return {
+        'fit_nrmse':        round(nrmse, 6),
+        'fit_r2':           round(r2, 6),
+        'fit_noise':        round(sigma_noise / span, 6),
+        'fit_misfit_ratio': (round(misfit_ratio, 3) if np.isfinite(misfit_ratio) else None),
+        'fit_roughness':    None,
+        'fit_flag':         flag,
+        'fit_method':       method,
+    }
 
 
 def _t_safe(v, ms_factor):
@@ -280,7 +693,8 @@ def _t_safe(v, ms_factor):
 
 
 def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_time_ms, kr,
-                      include_curves=False):
+                      include_curves=False, fit_method='logspline',
+                      trim_first: int = 0, trim_last: int = 0):
     """
     Full OJIP analysis pipeline for a single curve.
 
@@ -353,16 +767,18 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     ], axis=1)
 
     # ── spline fitting ────────────────────────────────────────────────────────
-    Raw_recon_DF, D1_DF, D2_DF, Resid_DF, Infl_DF, log_time = \
-        _fit_splines(dn_df, x_col, kr)
+    Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time = \
+        _fit_curves(dn_df, x_col, kr, method=fit_method,
+                    trim_first=trim_first, trim_last=trim_last)
 
     poly_oj = _fit_oj_polynomial(dn_df, x_col, ms)
     poly_oi = _fit_oj_polynomial(dn_df, x_col, ms,
-                                  oj_lo_ms=10.0, oj_hi_ms=100.0)
+                                  oj_lo_ms=9.0, oj_hi_ms=100.0)
 
     # ── find FJ / FI / FP ────────────────────────────────────────────────────
-    FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl = \
-        _find_fjfifp(D2_DF, x_col, ranges, data_cols, Infl_DF)
+    FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf = \
+        _find_fjfifp(D2_DF, D3_DF, x_col, ranges, data_cols, Infl_DF,
+                     fj_expect=FJ_time, fi_expect=FI_time)
 
     # ── reference time indexes ────────────────────────────────────────────────
     def tidx(t):
@@ -430,6 +846,16 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     SM    = AREAOP / FV
     N_val = SM * M0 * (1 / VJ)
 
+    # ── fit quality (evaluated on fitted / non-trimmed region only) ───────────
+    _y_raw_dn      = np.array(dn_df[fname].values, dtype=float)
+    _y_recon_at_raw = _y_raw_dn - np.array(Resid_DF[fname].values, dtype=float)
+    _d2_vals       = np.array(D2_DF[fname].values, dtype=float)
+    _q_start = _fit_start_index(dn_df, trim_first)
+    _q_end   = len(_y_raw_dn) - trim_last if trim_last > 0 else len(_y_raw_dn)
+    fq = _fit_quality(_y_raw_dn[_q_start:_q_end],
+                      _y_recon_at_raw[_q_start:_q_end],
+                      _d2_vals, method=fit_method)
+
     # ── build result dict ─────────────────────────────────────────────────────
     result = {
         'F0':  _safe(F0[fname]),  'FM': _safe(FM[fname]),
@@ -443,6 +869,9 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'FJ_time_inflect_ms': _t_safe(FJ_infl.get(fname),  ms),
         'FI_time_inflect_ms': _t_safe(FI_infl.get(fname),  ms),
         'FP_time_inflect_ms': _t_safe(FP_infl.get(fname),  ms),
+        'FJ_conf': _safe(fjifp_conf['FJ'].get(fname)),
+        'FI_conf': _safe(fjifp_conf['FI'].get(fname)),
+        'FP_conf': _safe(fjifp_conf['FP'].get(fname)),
         'FM_time_ms':  _safe(FM_timings.get(fname)),
         'Area_OJ': _safe(AREAOJ[fname]),  'Area_JI': _safe(AREAJI[fname]),
         'Area_IP': _safe(AREAIP[fname]),  'Area_OP': _safe(AREAOP[fname]),
@@ -459,20 +888,27 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'DI0RC': _safe(DI0RC[fname]),
         'OJ': _safe(OJ[fname]),  'JI': _safe(JI[fname]),  'IP': _safe(IP[fname]),
         'SM': _safe(SM[fname]),  'N':  _safe(N_val[fname]),
+        **fq,
     }
 
     if include_curves:
-        result['time_raw_ms'] = (sf[x_col].astype(float) * ms).tolist()
+        # Drop the non-positive pre-illumination baseline from the raw-axis
+        # display arrays (see ojip_process for the full rationale): a t ≤ 0 point
+        # makes the log-axis charts fall back to a ~10 ms floor and hide the rise.
+        _t_disp = sf[x_col].values.astype(float)
+        _disp0  = int(np.argmax(_t_disp > 0)) if (_t_disp > 0).any() else 0
+        result['time_raw_ms'] = (sf[x_col].iloc[_disp0:].astype(float) * ms).tolist()
         result['time_log_ms'] = (log_time.astype(float) * ms).tolist()
         result['curves'] = {
-            'raw':           [_safe(v) for v in sf[fname]],
-            'shifted_F0':    [_safe(v) for v in shifted_zero_df[fname]],
-            'shifted_FM':    [_safe(v) for v in shifted_max_df[fname]],
-            'double_norm':   [_safe(v) for v in dn_df[fname]],
-            'residuals':     [_safe(v) for v in Resid_DF[fname]],
+            'raw':           [_safe(v) for v in sf[fname].iloc[_disp0:]],
+            'shifted_F0':    [_safe(v) for v in shifted_zero_df[fname].iloc[_disp0:]],
+            'shifted_FM':    [_safe(v) for v in shifted_max_df[fname].iloc[_disp0:]],
+            'double_norm':   [_safe(v) for v in dn_df[fname].iloc[_disp0:]],
+            'residuals':     [_safe(v) for v in Resid_DF[fname].iloc[_disp0:]],
             'reconstructed': [_safe(v) for v in Raw_recon_DF[fname]],
             'd1':            [_safe(v) for v in D1_DF[fname]],
             'd2':            [_safe(v) for v in D2_DF[fname]],
+            'd3':            [_safe(v) for v in D3_DF[fname]],
             'poly_oj_time_ms': poly_oj[fname]['poly_oj_time_ms'],
             'poly_oj_d2':      poly_oj[fname]['poly_oj_d2'],
             'poly_oi_time_ms': poly_oi[fname]['poly_oj_time_ms'],
@@ -508,6 +944,9 @@ def ojip_process():
 
     fluorometer = request.form.get('fluorometer', '')
     kr = int(request.form.get('knots_reduction_factor', 10))
+    fit_method_proc = request.form.get('fit_method', 'logspline')
+    trim_first_proc = int(request.form.get('trim_first', 0))
+    trim_last_proc  = int(request.form.get('trim_last',  0))
     reduce_size = request.form.get('checkbox_reduce_file_size') == 'checked'
     FJ_time_ms = float(request.form.get('FJ_time', 2.0))
     FI_time_ms = float(request.form.get('FI_time', 30.0))
@@ -661,19 +1100,21 @@ def ojip_process():
 
     # ── spline fitting ───────────────────────────────────────────────────────
     try:
-        Raw_recon_DF, D1_DF, D2_DF, Resid_DF, Infl_DF, log_time = _fit_splines(
-            OJIP_double_normalized, x_col, kr)
+        Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time = _fit_curves(
+            OJIP_double_normalized, x_col, kr, method=fit_method_proc,
+            trim_first=trim_first_proc, trim_last=trim_last_proc)
     except Exception:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'Spline fitting failed.'}), 400
 
     poly_oj = _fit_oj_polynomial(OJIP_double_normalized, x_col, ms)                          # FJ window 0.5–5 ms
-    poly_oi = _fit_oj_polynomial(OJIP_double_normalized, x_col, ms, oj_lo_ms=10.0, oj_hi_ms=100.0)  # FI window 10–100 ms
+    poly_oi = _fit_oj_polynomial(OJIP_double_normalized, x_col, ms, oj_lo_ms=9.0, oj_hi_ms=100.0)   # FI window 9–100 ms
 
     # ── find FJ/FI/FP ────────────────────────────────────────────────────────
     try:
-        FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl = _find_fjfifp(
-            D2_DF, x_col, ranges, data_cols, Infl_DF)
+        FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf = _find_fjfifp(
+            D2_DF, D3_DF, x_col, ranges, data_cols, Infl_DF,
+            fj_expect=FJ_time, fi_expect=FI_time)
     except ValueError:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
@@ -768,20 +1209,33 @@ def ojip_process():
     new_cols = [Summary_file.columns[0]] + data_cols   # preserve time-axis name
     Summary_file.columns = new_cols
 
-    time_raw_ms = (Summary_file.iloc[:, 0].astype(float) * ms).tolist()
+    # Display arrays are plotted on a LOG time axis, which cannot render the
+    # non-positive pre-illumination baseline (MC-PAM records t ≤ 0 ms before the
+    # light pulse). A single x ≤ 0 point makes Chart.js abandon data-driven
+    # auto-scaling and fall back to its default ~10 ms floor, hiding the whole
+    # O–J rise. Drop the leading non-positive samples from the raw-axis display
+    # arrays so every log chart auto-scales from the first real timepoint.
+    # (Reconstructed / derivative arrays live on the already-positive log_time
+    # grid and are left untouched. Analysis/JIP params are computed above from
+    # the full Summary_file and are unaffected.)
+    _t_disp = Summary_file.iloc[:, 0].values.astype(float)
+    _disp0  = int(np.argmax(_t_disp > 0)) if (_t_disp > 0).any() else 0
+
+    time_raw_ms = (Summary_file.iloc[_disp0:, 0].astype(float) * ms).tolist()
     time_log_ms = (log_time.astype(float) * ms).tolist()
 
     curves = {}
     for i, fname in enumerate(data_cols, start=1):
         curves[fname] = {
-            'raw':          [_safe(v) for v in Summary_file.iloc[:, i]],
-            'shifted_F0':   [_safe(v) for v in OJIP_shifted_to_zero.iloc[:, i]],
-            'shifted_FM':   [_safe(v) for v in OJIP_shifted_to_max.iloc[:, i]],
-            'double_norm':  [_safe(v) for v in OJIP_double_normalized.iloc[:, i]],
-            'residuals':    [_safe(v) for v in Resid_DF.iloc[:, i]],
+            'raw':          [_safe(v) for v in Summary_file.iloc[_disp0:, i]],
+            'shifted_F0':   [_safe(v) for v in OJIP_shifted_to_zero.iloc[_disp0:, i]],
+            'shifted_FM':   [_safe(v) for v in OJIP_shifted_to_max.iloc[_disp0:, i]],
+            'double_norm':  [_safe(v) for v in OJIP_double_normalized.iloc[_disp0:, i]],
+            'residuals':    [_safe(v) for v in Resid_DF.iloc[_disp0:, i]],
             'reconstructed':[_safe(v) for v in Raw_recon_DF.iloc[:, i]],
             'd1':              [_safe(v) for v in D1_DF.iloc[:, i]],
             'd2':              [_safe(v) for v in D2_DF.iloc[:, i]],
+            'd3':              [_safe(v) for v in D3_DF.iloc[:, i]],
             'poly_oj_time_ms': poly_oj[fname]['poly_oj_time_ms'],
             'poly_oj_d2':      poly_oj[fname]['poly_oj_d2'],
             'poly_oi_time_ms': poly_oi[fname]['poly_oj_time_ms'],
@@ -789,7 +1243,15 @@ def ojip_process():
         }
 
     key_values = {}
-    for fname in data_cols:
+    for i, fname in enumerate(data_cols, start=1):
+        _y_raw_p      = np.array(OJIP_double_normalized[fname].values, dtype=float)
+        _y_recon_p    = _y_raw_p - np.array(Resid_DF[fname].values, dtype=float)
+        _d2_p         = np.array(D2_DF.iloc[:, i].values, dtype=float)
+        _qp_start = _fit_start_index(OJIP_double_normalized, trim_first_proc)
+        _qp_end   = len(_y_raw_p) - trim_last_proc if trim_last_proc > 0 else len(_y_raw_p)
+        fq_p = _fit_quality(_y_raw_p[_qp_start:_qp_end],
+                            _y_recon_p[_qp_start:_qp_end],
+                            _d2_p, method=fit_method_proc)
         key_values[fname] = {
             'F0':  _safe(F0[fname]),  'FM': _safe(FM[fname]),
             'FK':  _safe(FK[fname]),  'F50': _safe(F50[fname]),
@@ -802,11 +1264,15 @@ def ojip_process():
             'FJ_time_inflect_ms': _t_safe(FJ_infl.get(fname),  ms),
             'FI_time_inflect_ms': _t_safe(FI_infl.get(fname),  ms),
             'FP_time_inflect_ms': _t_safe(FP_infl.get(fname),  ms),
+            'FJ_conf': _safe(fjifp_conf['FJ'].get(fname)),
+            'FI_conf': _safe(fjifp_conf['FI'].get(fname)),
+            'FP_conf': _safe(fjifp_conf['FP'].get(fname)),
             'FM_time_ms':  _safe(FM_timings_series.get(fname)),
             'Area_OJ': _safe(AREAOJ[fname]), 'Area_JI': _safe(AREAJI[fname]),
             'Area_IP': _safe(AREAIP[fname]), 'Area_OP': _safe(AREAOP[fname]),
             'poly_infl_ms':    poly_oj[fname]['poly_infl_ms'],
             'poly_fi_infl_ms': poly_oi[fname]['poly_infl_ms'],
+            **fq_p,
         }
 
     return jsonify({
@@ -834,6 +1300,9 @@ def ojip_refit():
     data = request.get_json(force=True)
     fluorometer = data.get('fluorometer', '')
     kr = int(data.get('kr', 10))
+    fit_method_refit = data.get('fit_method', 'logspline')
+    trim_first_refit = int(data.get('trim_first', 0))
+    trim_last_refit  = int(data.get('trim_last',  0))
     FJ_time_ms = float(data.get('fj_time_ms', 2.0))
     FI_time_ms = float(data.get('fi_time_ms', 30.0))
     time_raw_ms = data['time_raw_ms']
@@ -855,17 +1324,20 @@ def ojip_refit():
         dn_df[fname] = vals
 
     try:
-        Raw_recon_DF, D1_DF, D2_DF, Resid_DF, Infl_DF, log_time = _fit_splines(dn_df, x_col, kr)
+        Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time = \
+            _fit_curves(dn_df, x_col, kr, method=fit_method_refit,
+                        trim_first=trim_first_refit, trim_last=trim_last_refit)
     except Exception:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'Refit failed.'}), 400
 
     poly_oj = _fit_oj_polynomial(dn_df, x_col, ms)
-    poly_oi = _fit_oj_polynomial(dn_df, x_col, ms, oj_lo_ms=10.0, oj_hi_ms=100.0)
+    poly_oi = _fit_oj_polynomial(dn_df, x_col, ms, oj_lo_ms=9.0, oj_hi_ms=100.0)
 
     try:
-        FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl = _find_fjfifp(
-            D2_DF, x_col, ranges, file_names, Infl_DF)
+        FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf = _find_fjfifp(
+            D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
+            fj_expect=FJ_time_ms / ms, fi_expect=FI_time_ms / ms)
     except ValueError:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
@@ -877,6 +1349,7 @@ def ojip_refit():
             'reconstructed': [_safe(v) for v in Raw_recon_DF.iloc[:, i]],
             'd1':            [_safe(v) for v in D1_DF.iloc[:, i]],
             'd2':            [_safe(v) for v in D2_DF.iloc[:, i]],
+            'd3':            [_safe(v) for v in D3_DF.iloc[:, i]],
             'residuals':       [_safe(v) for v in Resid_DF.iloc[:, i]],
             'poly_oj_time_ms': poly_oj[fname]['poly_oj_time_ms'],
             'poly_oj_d2':      poly_oj[fname]['poly_oj_d2'],
@@ -885,7 +1358,15 @@ def ojip_refit():
         }
 
     key_timings = {}
-    for fname in file_names:
+    for i, fname in enumerate(file_names, start=1):
+        _y_raw_dn_r      = np.array(dn_df[fname].values, dtype=float)
+        _y_recon_at_raw_r = _y_raw_dn_r - np.array(Resid_DF[fname].values, dtype=float)
+        _d2_vals_r       = np.array(D2_DF.iloc[:, i].values, dtype=float)
+        _qr_start = 1 + trim_first_refit
+        _qr_end   = len(_y_raw_dn_r) - trim_last_refit if trim_last_refit > 0 else len(_y_raw_dn_r)
+        fq_r = _fit_quality(_y_raw_dn_r[_qr_start:_qr_end],
+                            _y_recon_at_raw_r[_qr_start:_qr_end],
+                            _d2_vals_r, method=fit_method_refit)
         key_timings[fname] = {
             'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
             'FI_time_deriv_ms':   _t_safe(FI_deriv.get(fname), ms),
@@ -893,8 +1374,12 @@ def ojip_refit():
             'FJ_time_inflect_ms': _t_safe(FJ_infl.get(fname),  ms),
             'FI_time_inflect_ms': _t_safe(FI_infl.get(fname),  ms),
             'FP_time_inflect_ms': _t_safe(FP_infl.get(fname),  ms),
+            'FJ_conf': _safe(fjifp_conf['FJ'].get(fname)),
+            'FI_conf': _safe(fjifp_conf['FI'].get(fname)),
+            'FP_conf': _safe(fjifp_conf['FP'].get(fname)),
             'poly_infl_ms':    poly_oj[fname]['poly_infl_ms'],
             'poly_fi_infl_ms': poly_oi[fname]['poly_infl_ms'],
+            **fq_r,
         }
 
     return jsonify({
@@ -1185,6 +1670,9 @@ def ojip_process_batch():
     fi_time_ms   = float(payload.get('FI_time', 30.0))
     kr           = int(payload.get('knots_reduction_factor', 10))
     include      = bool(payload.get('include_curves', False))
+    fit_method   = payload.get('fit_method', 'logspline')
+    trim_first   = int(payload.get('trim_first', 0))
+    trim_last    = int(payload.get('trim_last',  0))
 
     if not time_native or not curves:
         return jsonify({'status': 'error',
@@ -1209,6 +1697,9 @@ def ojip_process_batch():
                 time_arr, vals, name, fluorometer,
                 fj_time_ms, fi_time_ms, kr,
                 include_curves=include,
+                fit_method=fit_method,
+                trim_first=trim_first,
+                trim_last=trim_last,
             )
             r['slot'] = slot
             r['name'] = name

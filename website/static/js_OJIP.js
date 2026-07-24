@@ -18,6 +18,8 @@ var mcDetailCache  = {};     // LRU: {name: {curves, time_raw_ms, time_log_ms, .
 const MC_DETAIL_MAX = 10;    // max cached detail curves
 var mcAbort        = null;   // AbortController for cancel
 var mcIsActive     = false;  // true when a multi-curve dataset is loaded
+var _lastSelected  = [];     // curve indices from last mcStartAnalysis (for batch refit)
+var _lastJipOpts   = {};     // jipOpts from last mcStartAnalysis (for batch refit)
 
 // ═══════════════════════════════════════════════════════════════════════
 //  MULTI-CURVE MODULE  (M2 parser, M3 orchestrator, M4 time-series,
@@ -314,6 +316,9 @@ const MC = (() => {
           FJ_time: jipOpts.FJ_time,
           FI_time: jipOpts.FI_time,
           knots_reduction_factor: jipOpts.kr,
+          fit_method: jipOpts.fitMethod || 'logspline',
+          trim_first: jipOpts.trimFirst || 0,
+          trim_last:  jipOpts.trimLast  || 0,
           include_curves: false,
         };
 
@@ -860,6 +865,9 @@ const MC = (() => {
       FJ_time: parseFloat(document.getElementById('FJ_time').value) || 2.0,
       FI_time: parseFloat(document.getElementById('FI_time').value) || 30.0,
       knots_reduction_factor: parseInt(document.getElementById('kr_input').value) || 10,
+      fit_method: document.getElementById('fit-method-sel')?.value || 'logspline',
+      trim_first: parseInt(document.getElementById('trim-first-input')?.value) || 0,
+      trim_last:  parseInt(document.getElementById('trim-last-input')?.value)  || 0,
       include_curves: true,
     };
 
@@ -921,6 +929,11 @@ const MC = (() => {
         Area_IP: detail.Area_IP, Area_OP: detail.Area_OP,
         poly_infl_ms: detail.poly_infl_ms,
         poly_fi_infl_ms: detail.poly_fi_infl_ms,
+        fit_nrmse:     detail.fit_nrmse,
+        fit_r2:        detail.fit_r2,
+        fit_roughness: detail.fit_roughness,
+        fit_flag:      detail.fit_flag,
+        fit_method:    detail.fit_method,
       }},
     };
 
@@ -2999,6 +3012,9 @@ async function uploadAndAnalyze() {
   fd.append('FJ_time',     document.getElementById('FJ_time').value);
   fd.append('FI_time',     document.getElementById('FI_time').value);
   fd.append('knots_reduction_factor', document.getElementById('kr_input').value);
+  fd.append('fit_method', document.getElementById('fit-method-sel')?.value || 'logspline');
+  fd.append('trim_first', document.getElementById('trim-first-input')?.value || '0');
+  fd.append('trim_last',  document.getElementById('trim-last-input')?.value  || '0');
   if (document.getElementById('reduce_size').checked) fd.append('checkbox_reduce_file_size', 'checked');
 
   // Pre-flight size check — avoid a silent connection-reset from the server
@@ -3138,10 +3154,15 @@ async function mcStartAnalysis() {
 
   // JIP options from the form
   const jipOpts = {
-    FJ_time: parseFloat(document.getElementById('FJ_time').value) || 2.0,
-    FI_time: parseFloat(document.getElementById('FI_time').value) || 30.0,
-    kr:      parseInt(document.getElementById('kr_input').value) || 10,
+    FJ_time:   parseFloat(document.getElementById('FJ_time').value) || 2.0,
+    FI_time:   parseFloat(document.getElementById('FI_time').value) || 30.0,
+    kr:        parseInt(document.getElementById('kr_input').value) || 10,
+    fitMethod:  document.getElementById('fit-method-sel')?.value || 'logspline',
+    trimFirst:  parseInt(document.getElementById('trim-first-input')?.value) || 0,
+    trimLast:   parseInt(document.getElementById('trim-last-input')?.value)  || 0,
   };
+  _lastSelected = selected.slice();
+  _lastJipOpts  = Object.assign({}, jipOpts);
 
   // Scroll to results
   document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
@@ -3181,6 +3202,9 @@ async function mcStartAnalysis() {
       `Multi-curve analysis complete — ${ok} curves analyzed` +
       (errors ? `, ${errors} errors` : '') +
       ` — ${mcDataset.filename}`;
+
+    // Batch fit quality alert
+    _updateBatchFitQualityAlert(result);
   }
 }
 
@@ -3651,11 +3675,33 @@ function _renderAllOjipGroupCharts() {
 }
 
 // ── diagnostics ───────────────────────────────────────────────────────────
+
+/**
+ * Return { tMin, tMax } time range (ms) for diagnostic plot display,
+ * derived from the plot-trim-first/last inputs applied to the raw time axis.
+ */
+function _diagPlotTrimRange() {
+  const first = Math.max(0, parseInt(document.getElementById('plot-trim-first-input')?.value) || 0);
+  const last  = Math.max(0, parseInt(document.getElementById('plot-trim-last-input')?.value)  || 0);
+  if (!ojipData || !ojipData.time_raw_ms || ojipData.time_raw_ms.length === 0)
+    return { tMin: -Infinity, tMax: Infinity };
+  const tRaw = ojipData.time_raw_ms;
+  const n = tRaw.length;
+  const startIdx = Math.min(first, n - 1);
+  const endIdx   = Math.max(startIdx, n - 1 - last);
+  return { tMin: tRaw[startIdx] ?? -Infinity, tMax: tRaw[endIdx] ?? Infinity };
+}
+
 function renderDiagnostics() {
-  renderDiagRecon(); renderDiagResid(); renderDiagD2(); renderDiagPoly(); renderDiagPolyFI();
+  renderDiagRecon(); renderDiagResid(); renderDiagD2(); renderDiagD3(); renderDiagPoly(); renderDiagPolyFI();
+  _updateFitQualityBadge();
+  // Show 'Refit all curves' button only in multi-curve mode
+  const refitAllWrap = document.getElementById('refit-all-wrap');
+  if (refitAllWrap) refitAllWrap.style.display = (mcDataset && mcIsActive) ? '' : 'none';
 }
 
 function renderDiagRecon() {
+  const { tMin, tMax } = _diagPlotTrimRange();
   const files = ojipData.files;
   const tRaw  = ojipData.time_raw_ms;
   const tLog  = ojipData.time_log_ms;
@@ -3667,43 +3713,54 @@ function renderDiagRecon() {
     // raw double_norm curve
     datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, backgroundColor: 'transparent',
-      data: ojipData.curves[fname].double_norm.map((y, j) => ({ x: tRaw[j], y })) });
+      data: ojipData.curves[fname].double_norm
+        .map((y, j) => ({ x: tRaw[j], y }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
     // reconstructed curve (dashed)
     datasets.push({ label: '', showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, borderDash: [4, 3], backgroundColor: 'transparent',
-      data: ojipData.curves[fname].reconstructed.map((y, j) => ({ x: tLog[j], y })) });
-    // FJ (▲), FI (◆) and FP (■) on the reconstructed curve
-    const fjY = interpAt(tLog, ojipData.curves[fname].reconstructed, kv.FJ_time_user_ms);
-    const fiY = interpAt(tLog, ojipData.curves[fname].reconstructed, kv.FI_time_user_ms);
-    const pts = [{ x: kv.FJ_time_user_ms, y: fjY }, { x: kv.FI_time_user_ms, y: fiY }];
-    const radii = [6, 6], styles = ['triangle', 'rectRot'], bg = [c, c], bd = [c, c];
-    if (kv.FP_time_deriv_ms != null) {
-      const fpY = interpAt(tLog, ojipData.curves[fname].reconstructed, kv.FP_time_deriv_ms);
-      pts.push({ x: kv.FP_time_deriv_ms, y: fpY });
-      radii.push(6); styles.push('rect'); bg.push(c); bd.push(c);
+      data: ojipData.curves[fname].reconstructed
+        .map((y, j) => ({ x: tLog[j], y }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    // FJ (▲), FI (◆) and FP (■) on the reconstructed curve — only if within visible range
+    const pts = [], radii = [], styles = [], bg = [], bd = [];
+    const addMk = (t, arr, style) => {
+      if (t == null || t < tMin || t > tMax) return;
+      pts.push({ x: t, y: interpAt(tLog, arr, t) });
+      radii.push(6); styles.push(style); bg.push(c); bd.push(c);
+    };
+    addMk(kv.FJ_time_deriv_ms, ojipData.curves[fname].reconstructed, 'triangle');
+    addMk(kv.FI_time_deriv_ms, ojipData.curves[fname].reconstructed, 'rectRot');
+    if (kv.FP_time_deriv_ms != null)
+      addMk(kv.FP_time_deriv_ms, ojipData.curves[fname].reconstructed, 'rect');
+    if (pts.length > 0) {
+      datasets.push({ label: '', showLine: false, data: pts,
+        pointRadius: radii, pointStyle: styles,
+        pointBackgroundColor: bg, pointBorderColor: bd,
+        borderColor: 'transparent', backgroundColor: 'transparent' });
     }
-    datasets.push({ label: '', showLine: false, data: pts,
-      pointRadius: radii, pointStyle: styles,
-      pointBackgroundColor: bg, pointBorderColor: bd,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
   });
   makeChart('diag-recon-chart', { type: 'scatter', data: { datasets },
     options: logScatterOpts('Time (ms)', 'Double normalised') });
 }
 
 function renderDiagResid() {
+  const { tMin, tMax } = _diagPlotTrimRange();
   const files = ojipData.files;
   const t     = ojipData.time_raw_ms;
   const datasets = files.map((fname, i) => ({
     label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
     borderColor: sampleColor(i, files.length), backgroundColor: 'transparent',
-    data: ojipData.curves[fname].residuals.map((y, j) => ({ x: t[j], y })),
+    data: ojipData.curves[fname].residuals
+      .map((y, j) => ({ x: t[j], y }))
+      .filter(pt => pt.x >= tMin && pt.x <= tMax),
   }));
   makeChart('diag-resid-chart', { type: 'scatter', data: { datasets },
     options: logScatterOpts('Time (ms)', 'Residuals (r.u.)') });
 }
 
 function renderDiagD2() {
+  const { tMin, tMax } = _diagPlotTrimRange();
   const files = ojipData.files;
   const t     = ojipData.time_log_ms;
   const n     = files.length;
@@ -3711,27 +3768,64 @@ function renderDiagD2() {
   files.forEach((fname, i) => {
     const kv = ojipData.key_values[fname];
     const c  = sampleColor(i, n);
-    // d2 curve
+    const d2arr = ojipData.curves[fname].d2;
     datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, backgroundColor: 'transparent',
-      data: ojipData.curves[fname].d2.map((y, j) => ({ x: t[j], y })) });
-    // FJ (▲), FI (◆) and FP (■) at their positions on the d2 curve
-    const fjY = interpAt(t, ojipData.curves[fname].d2, kv.FJ_time_user_ms);
-    const fiY = interpAt(t, ojipData.curves[fname].d2, kv.FI_time_user_ms);
-    const pts2 = [{ x: kv.FJ_time_user_ms, y: fjY }, { x: kv.FI_time_user_ms, y: fiY }];
-    const r2 = [6, 6], st2 = ['triangle', 'rectRot'], bg2 = [c, c], bd2 = [c, c];
-    if (kv.FP_time_deriv_ms != null) {
-      const fpY = interpAt(t, ojipData.curves[fname].d2, kv.FP_time_deriv_ms);
-      pts2.push({ x: kv.FP_time_deriv_ms, y: fpY });
-      r2.push(6); st2.push('rect'); bg2.push(c); bd2.push(c);
+      data: d2arr.map((y, j) => ({ x: t[j], y }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    const pts2 = [], r2 = [], st2 = [], bg2 = [], bd2 = [];
+    const addMk2 = (tv, style) => {
+      if (tv == null || tv < tMin || tv > tMax) return;
+      pts2.push({ x: tv, y: interpAt(t, d2arr, tv) });
+      r2.push(6); st2.push(style); bg2.push(c); bd2.push(c);
+    };
+    addMk2(kv.FJ_time_deriv_ms, 'triangle');
+    addMk2(kv.FI_time_deriv_ms, 'rectRot');
+    if (kv.FP_time_deriv_ms != null) addMk2(kv.FP_time_deriv_ms, 'rect');
+    if (pts2.length > 0) {
+      datasets.push({ label: '', showLine: false, data: pts2,
+        pointRadius: r2, pointStyle: st2,
+        pointBackgroundColor: bg2, pointBorderColor: bd2,
+        borderColor: 'transparent', backgroundColor: 'transparent' });
     }
-    datasets.push({ label: '', showLine: false, data: pts2,
-      pointRadius: r2, pointStyle: st2,
-      pointBackgroundColor: bg2, pointBorderColor: bd2,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
   });
   makeChart('diag-d2-chart', { type: 'scatter', data: { datasets },
     options: logScatterOpts('Time (ms)', '2nd derivative') });
+}
+
+function renderDiagD3() {
+  const { tMin, tMax } = _diagPlotTrimRange();
+  const files = ojipData.files;
+  const t     = ojipData.time_log_ms;
+  const n     = files.length;
+  const datasets = [];
+  files.forEach((fname, i) => {
+    const kv = ojipData.key_values[fname];
+    const c  = sampleColor(i, n);
+    const d3arr = ojipData.curves[fname].d3;
+    if (!d3arr) return;
+    datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
+      borderColor: c, backgroundColor: 'transparent',
+      data: d3arr.map((y, j) => ({ x: t[j], y }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    const pts3 = [], r3 = [], st3 = [], bg3 = [], bd3 = [];
+    const addMk3 = (tv, style) => {
+      if (tv == null || tv < tMin || tv > tMax) return;
+      pts3.push({ x: tv, y: interpAt(t, d3arr, tv) });
+      r3.push(6); st3.push(style); bg3.push(c); bd3.push(c);
+    };
+    addMk3(kv.FJ_time_deriv_ms, 'triangle');
+    addMk3(kv.FI_time_deriv_ms, 'rectRot');
+    if (kv.FP_time_deriv_ms != null) addMk3(kv.FP_time_deriv_ms, 'rect');
+    if (pts3.length > 0) {
+      datasets.push({ label: '', showLine: false, data: pts3,
+        pointRadius: r3, pointStyle: st3,
+        pointBackgroundColor: bg3, pointBorderColor: bd3,
+        borderColor: 'transparent', backgroundColor: 'transparent' });
+    }
+  });
+  makeChart('diag-d3-chart', { type: 'scatter', data: { datasets },
+    options: logScatterOpts('Time (ms)', '3rd derivative') });
 }
 
 function renderDiagPoly() {
@@ -3904,6 +3998,105 @@ function usePolyFI() {
   _refreshAfterTimingChange();
 }
 
+// ── fit quality badge (Diagnostics tab) ──────────────────────────────────
+function _updateFitQualityBadge() {
+  const badge = document.getElementById('fit-quality-badge');
+  if (!badge || !ojipData || !ojipData.files?.length) return;
+  const fname = ojipData.files[0];
+  const kv = ojipData.key_values?.[fname];
+  if (!kv) { badge.style.display = 'none'; return; }
+
+  badge.style.display = '';
+  badge.className = 'badge';
+
+  if (kv.fit_method === 'pchip') {
+    const r = kv.fit_roughness;
+    if (r == null) { badge.style.display = 'none'; return; }
+    const pct = (r * 100).toFixed(1);
+    badge.classList.add(kv.fit_flag === 'poor' ? 'badge-danger' : 'badge-success');
+    badge.textContent = `PCHIP — d2 roughness ${pct}%` + (kv.fit_flag === 'poor' ? ' ⚠' : ' ✓');
+  } else {
+    const n = kv.fit_nrmse;
+    if (n == null) { badge.style.display = 'none'; return; }
+    const pct = (n * 100).toFixed(2);
+    badge.classList.add(kv.fit_flag === 'poor' ? 'badge-danger' : 'badge-success');
+    badge.textContent = `nRMSE ${pct}%` + (kv.fit_flag === 'poor' ? ' ⚠' : ' ✓');
+  }
+}
+
+// ── batch fit quality alert (OJIPImaging overview) ────────────────────────
+function _updateBatchFitQualityAlert(result) {
+  const alert = document.getElementById('mc-fit-quality-alert');
+  const text  = document.getElementById('mc-fit-quality-text');
+  if (!alert || !text) return;
+
+  const valid = (result || []).filter(r => r && !r.error);
+  const poor  = valid.filter(r => r.fit_flag === 'poor').length;
+
+  if (poor === 0) {
+    alert.style.display = 'none';
+    return;
+  }
+
+  const method = _lastJipOpts.fitMethod || 'logspline';
+  const methodLabel = method === 'logspline' ? 'Log-time spline'
+                    : method === 'pchip'     ? 'PCHIP'
+                    : 'Standard spline';
+  const suggParts = [];
+  if (method === 'spline') {
+    suggParts.push('Log-time spline');
+    suggParts.push('PCHIP');
+  } else if (method === 'logspline') {
+    suggParts.push('PCHIP');
+  }
+  const sugg = suggParts.length ? ` Consider trying ${suggParts.join(' or ')}.` : '';
+
+  text.textContent = `${poor} / ${valid.length} curves have poor ${methodLabel} fit.${sugg}`;
+  alert.style.display = '';
+  document.getElementById('mc-refit-batch-status').textContent = '';
+}
+
+// ── batch refit for OJIPImaging (full re-analysis with new fit method) ────
+async function mcRefitBatch() {
+  const btn    = document.getElementById('mc-refit-batch-btn');
+  const status = document.getElementById('mc-refit-batch-status');
+  if (!mcDataset || !_lastSelected.length) return;
+
+  const fitMethod = document.getElementById('fit-method-sel')?.value || 'logspline';
+  const jipOpts = {
+    FJ_time:   parseFloat(document.getElementById('FJ_time').value) || 2.0,
+    FI_time:   parseFloat(document.getElementById('FI_time').value) || 30.0,
+    kr:        parseInt(document.getElementById('kr_input').value) || 10,
+    fitMethod,
+    trimFirst: parseInt(document.getElementById('trim-first-input')?.value) || 0,
+    trimLast:  parseInt(document.getElementById('trim-last-input')?.value)  || 0,
+  };
+
+  btn.disabled = true;
+  status.textContent = `Refitting ${_lastSelected.length} curves with ${fitMethod}…`;
+
+  const result = await MC.runParamsPass(mcDataset, _lastSelected, jipOpts);
+  if (!result) {
+    status.textContent = 'Refit cancelled.';
+    btn.disabled = false;
+    return;
+  }
+
+  _lastJipOpts = Object.assign({}, jipOpts);
+  _updateBatchFitQualityAlert(result);
+
+  // Refresh overview charts
+  MC.renderTimeSeries();
+  MC.renderAggregateCurves();
+  if (mcDataset.fluorometer === 'OJIPImaging') MC.renderGroupedPanels();
+
+  const methodLabel = fitMethod === 'logspline' ? 'Log-time spline'
+                    : fitMethod === 'pchip'     ? 'PCHIP'
+                    : 'Standard spline';
+  status.textContent = `Refit done (${methodLabel}).`;
+  btn.disabled = false;
+}
+
 // ── spline refit ──────────────────────────────────────────────────────────
 async function refitSplines() {
   const kr     = parseInt(document.getElementById('kr-slider').value);
@@ -3921,6 +4114,9 @@ async function refitSplines() {
       body: JSON.stringify({
         fluorometer: ojipData.fluorometer,
         kr,
+        fit_method: document.getElementById('fit-method-sel')?.value || 'logspline',
+        trim_first: parseInt(document.getElementById('trim-first-input')?.value) || 0,
+        trim_last:  parseInt(document.getElementById('trim-last-input')?.value)  || 0,
         fj_time_ms: ojipData.fj_time_ms,
         fi_time_ms: ojipData.fi_time_ms,
         time_raw_ms: ojipData.time_raw_ms,

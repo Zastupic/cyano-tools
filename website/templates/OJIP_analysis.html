@@ -398,6 +398,14 @@
 
   <div class="alert alert-success mb-3 py-2" id="results-summary"></div>
 
+  <!-- Multi-curve fit quality alert (shown when poor-fit curves detected after batch analysis) -->
+  <div id="mc-fit-quality-alert" class="alert alert-warning py-2 mb-2" style="display:none">
+    <span id="mc-fit-quality-text"></span>
+    <button class="btn btn-sm btn-warning ml-3" id="mc-refit-batch-btn"
+            onclick="mcRefitBatch()">Refit all with selected method</button>
+    <span id="mc-refit-batch-status" class="ml-2 text-muted" style="font-size:0.85em;"></span>
+  </div>
+
   <!-- Multi-curve detail info bar (visible when viewing a single curve from a batch) -->
   <div class="alert alert-info mb-2 py-2" id="mc-detail-info" style="display:none"></div>
 
@@ -1159,20 +1167,62 @@
         <div class="card-body py-2">
           <div class="form-row align-items-center mb-2">
             <div class="col-auto">
+              <label class="mb-0 mr-1">Method:</label>
+              <select id="fit-method-sel" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="spline">Standard spline</option>
+                <option value="logspline" selected>Log-time spline</option>
+                <option value="pchip">PCHIP (no params)</option>
+              </select>
+            </div>
+            <div class="col-auto">
               <label class="mb-0">k<sub>r</sub>: <strong id="kr-display">10</strong></label>
             </div>
             <div class="col-auto">
               <input type="range" id="kr-slider" min="1" max="50" value="10" style="width:160px">
             </div>
             <div class="col-auto">
+              <label class="mb-0 mr-1">Skip first:</label>
+              <input type="number" id="trim-first-input" min="0" max="30" value="0"
+                     class="form-control form-control-sm d-inline-block" style="width:60px">
+            </div>
+            <div class="col-auto">
+              <label class="mb-0 mr-1">Skip last:</label>
+              <input type="number" id="trim-last-input" min="0" max="30" value="0"
+                     class="form-control form-control-sm d-inline-block" style="width:60px">
+            </div>
+            <div class="col-auto">
               <button class="btn btn-warning btn-sm" id="refit-btn">Re-fit splines</button>
+            </div>
+            <div class="col-auto" id="refit-all-wrap" style="display:none">
+              <button class="btn btn-primary btn-sm" onclick="mcRefitBatch()">Refit all curves</button>
             </div>
             <div class="col-auto">
               <span id="refit-status" class="text-muted" style="font-size:0.85em;"></span>
             </div>
+            <div class="col-auto ml-auto">
+              <span id="fit-quality-badge" class="badge" style="font-size:0.8em;display:none"></span>
+            </div>
           </div>
-          <small class="text-muted">Drag the slider to preview kr value, then click <em>Re-fit splines</em> for an accurate server-side refit.</small>
+          <small class="text-muted">Drag the slider to preview k<sub>r</sub> value, then click <em>Re-fit splines</em>. <em>Log-time spline</em> and <em>PCHIP</em> improve fits for OJIPImaging (60-point) data; k<sub>r</sub> is ignored for PCHIP. <em>Skip first / last</em>: exclude N raw points from both ends before fitting (useful when the tail of OJIPImaging curves fits poorly).</small>
         </div>
+      </div>
+      <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.5rem 1.2rem">
+        <small class="text-muted font-weight-bold mb-0">Plot display:</small>
+        <div class="d-flex align-items-center">
+          <label class="mb-0 mr-1" style="font-size:0.85em;">Skip first</label>
+          <input type="number" id="plot-trim-first-input" min="0" max="50" value="0"
+                 class="form-control form-control-sm d-inline-block" style="width:56px"
+                 oninput="if(ojipData)renderDiagnostics()">
+          <label class="mb-0 ml-1" style="font-size:0.85em;">pts</label>
+        </div>
+        <div class="d-flex align-items-center">
+          <label class="mb-0 mr-1" style="font-size:0.85em;">Skip last</label>
+          <input type="number" id="plot-trim-last-input" min="0" max="50" value="0"
+                 class="form-control form-control-sm d-inline-block" style="width:56px"
+                 oninput="if(ojipData)renderDiagnostics()">
+          <label class="mb-0 ml-1" style="font-size:0.85em;">pts</label>
+        </div>
+        <small class="text-muted mb-0">(raw time axis — display only, does not affect fitting)</small>
       </div>
       <div class="row">
         <div class="col-md-6 mb-3">
@@ -1185,6 +1235,10 @@
         </div>
       </div>
       <div class="row">
+        <div class="col-md-6 mb-3">
+          <h6>3rd derivative with identified F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub> timings</h6>
+          <div style="position:relative; height:260px;"><canvas id="diag-d3-chart"></canvas></div>
+        </div>
         <div class="col-md-6 mb-3">
           <h6>Residuals</h6>
           <div style="position:relative; height:260px;"><canvas id="diag-resid-chart"></canvas></div>
