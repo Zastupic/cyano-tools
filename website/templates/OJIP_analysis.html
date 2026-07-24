@@ -398,12 +398,40 @@
 
   <div class="alert alert-success mb-3 py-2" id="results-summary"></div>
 
-  <!-- Multi-curve fit quality alert (shown when poor-fit curves detected after batch analysis) -->
-  <div id="mc-fit-quality-alert" class="alert alert-warning py-2 mb-2" style="display:none">
-    <span id="mc-fit-quality-text"></span>
-    <button class="btn btn-sm btn-warning ml-3" id="mc-refit-batch-btn"
-            onclick="mcRefitBatch()">Refit all with selected method</button>
-    <span id="mc-refit-batch-status" class="ml-2 text-muted" style="font-size:0.85em;"></span>
+  <!-- Multi-curve quality-flagging panel: one subtle card holding the tunable
+       cutoffs + a muted per-axis summary line (shown after batch analysis).
+       Deliberately understated — these are optional review hints, not errors. -->
+  <div id="mc-flag-panel" class="mb-3 border rounded bg-light p-2" style="display:none; font-size:0.83em;">
+    <div class="d-flex flex-wrap align-items-center" style="gap:6px;">
+      <span class="text-muted font-weight-bold mr-1">Quality-review flags —</span>
+      <span class="d-flex align-items-center">
+        <span class="mr-1" style="color:#b06a62;">&#9650;&nbsp;fit</span> R²&nbsp;&lt;
+        <input type="number" id="mc-fit-r2-thresh" value="0.90" min="0" max="1" step="0.01"
+               class="form-control form-control-sm mx-1" style="width:70px;"
+               oninput="MC.onFlagThresholdChange()">
+      </span>
+      <span class="text-muted">·</span>
+      <span class="d-flex align-items-center">
+        <span class="mr-1" style="color:#b8923f;">&#9679;&nbsp;conf</span> timing confidence&nbsp;&lt;
+        <input type="number" id="mc-conf-thresh" value="0.15" min="0" max="1" step="0.05"
+               class="form-control form-control-sm mx-1" style="width:70px;"
+               oninput="MC.onFlagThresholdChange()">
+      </span>
+      <span class="text-muted ml-2" style="opacity:0.8;">Independent axes, shown separately in the Time-series table &amp; plot. Lower a cutoff until only genuinely-bad curves flag.</span>
+    </div>
+
+    <!-- Fit-quality summary line (muted, not an alert box) -->
+    <div id="mc-fit-quality-alert" class="text-muted mt-1" style="display:none">
+      <span id="mc-fit-quality-text"></span>
+      <button class="btn btn-sm btn-outline-secondary ml-2 py-0" id="mc-refit-batch-btn"
+              onclick="mcRefitBatch()">Refit all with selected method</button>
+      <span id="mc-refit-batch-status" class="ml-2 text-muted" style="font-size:0.95em;"></span>
+    </div>
+
+    <!-- Timing-confidence summary line -->
+    <div id="mc-conf-quality-alert" class="text-muted mt-1" style="display:none">
+      <span id="mc-conf-quality-text"></span>
+    </div>
   </div>
 
   <!-- Multi-curve detail info bar (visible when viewing a single curve from a batch) -->
@@ -1814,15 +1842,29 @@
           Use timestamps as X-axis
         </label>
 
+        <!-- Toggle each quality-review flag overlay on the plot -->
+        <span class="d-flex align-items-center ml-3" style="font-size:0.85em; gap:10px;"
+              title="Show or hide each quality-review mark on this plot.">
+          <span class="font-weight-bold">Show flags:</span>
+          <label class="mb-0" style="cursor:pointer;">
+            <input type="checkbox" id="mc-show-flag-fit" checked onchange="MC.renderTimeSeries()">
+            <span style="color:#b06a62;">&#9650;&nbsp;fit</span>
+          </label>
+          <label class="mb-0" style="cursor:pointer;">
+            <input type="checkbox" id="mc-show-flag-conf" checked onchange="MC.renderTimeSeries()">
+            <span style="color:#b8923f;">&#9679;&nbsp;conf</span>
+          </label>
+        </span>
+
         <!-- Metadata grouping controls (shown only for Excel/OJIPImaging data) -->
         <span id="mc-group-controls" style="display:none;" class="d-flex align-items-center ml-3" >
           <span class="mr-1 font-weight-bold" style="font-size:0.85em;">Color by:</span>
           <select id="mc-color-by" class="form-control form-control-sm" style="width:auto; min-width:100px;"
                   onchange="MC.renderTimeSeries()">
             <option value="">None</option>
-            <option value="line">Line (genotype)</option>
+            <option value="line" selected>Line (genotype)</option>
             <option value="day">Day</option>
-            <option value="hours" selected>Hour</option>
+            <option value="hours">Hour</option>
             <option value="plantId">Plant</option>
             <option value="trayId">Tray</option>
           </select>
@@ -1912,9 +1954,9 @@
               <select id="mc-compare-subgroup-by" class="form-control form-control-sm"
                       style="width:auto; min-width:100px;"
                       onchange="MC.renderComparison()">
-                <option value="" selected>None</option>
+                <option value="">None</option>
                 <option value="day">Day</option>
-                <option value="hours">Hour</option>
+                <option value="hours" selected>Hour</option>
                 <option value="line">Line (genotype)</option>
                 <option value="plantId">Plant</option>
                 <option value="trayId">Tray</option>
@@ -1977,8 +2019,8 @@
                       style="width:auto; min-width:100px;"
                       onchange="MC.renderGroupedPanels()">
                 <option value="">None</option>
-                <option value="day" selected>Day</option>
-                <option value="hours">Hour</option>
+                <option value="day">Day</option>
+                <option value="hours" selected>Hour</option>
                 <option value="line">Line (genotype)</option>
                 <option value="plantId">Plant</option>
                 <option value="trayId">Tray</option>

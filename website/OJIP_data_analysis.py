@@ -247,8 +247,19 @@ def _select_trough_pos(d2_values, t_values, expect=None, after=None,
 
     Returns (pos, confidence): pos is the positional index into the segment (−1
     if unusable); confidence ∈ [0, 1] is the chosen trough's prominence relative
-    to the window's strongest trough (1.0 = it *is* the strongest; low = several
-    comparable troughs, i.e. ambiguous and worth manual review in a batch).
+    to the strongest *valid candidate* — i.e. the troughs that survive the
+    prominence floor AND the ``after`` ordering rule, which are the only troughs
+    the selection can legitimately choose between. 1.0 means the pick is the most
+    prominent admissible trough (a unique, unambiguous choice); a low value means
+    another equally/more prominent admissible trough was passed over (e.g. the
+    ``expect`` rule chose a nearer-in-time but shallower trough) — a genuinely
+    ambiguous curve worth manual review.
+
+    NOTE: the reference is deliberately the strongest *candidate*, not the
+    strongest trough in the raw window. OJIP search windows are broad and
+    overlap, so a neighbouring phase's stronger trough frequently sits inside a
+    window but is excluded by ordering/prominence; dividing by it would penalise
+    perfectly correct picks and flag nearly every curve.
     """
     d2 = np.asarray(d2_values, dtype=float)
     t  = np.asarray(t_values,  dtype=float)
@@ -262,6 +273,8 @@ def _select_trough_pos(d2_values, t_values, expect=None, after=None,
 
     proms = props['prominences']
     pmax  = float(proms.max()) or 1.0
+    # Prominence floor is measured against the raw window max (an adaptive noise
+    # floor — this only decides which wiggles count as real troughs).
     keep  = proms >= prom_frac * pmax
     cand  = troughs[keep]
     cprom = proms[keep]
@@ -277,7 +290,10 @@ def _select_trough_pos(d2_values, t_values, expect=None, after=None,
     else:
         j = int(np.argmax(cprom))
 
-    return int(cand[j]), float(cprom[j] / pmax)
+    # Confidence is relative to the strongest *admissible* trough (the candidate
+    # set at the point of selection), so an unambiguous pick scores 1.0.
+    cand_max = float(cprom.max()) or 1.0
+    return int(cand[j]), float(cprom[j] / cand_max)
 
 
 def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
@@ -617,17 +633,21 @@ def _fit_quality(y_raw: np.ndarray, y_recon_at_raw: np.ndarray,
     """
     Per-curve fit quality metric.
 
-    For spline / logspline: normalised RMSE (nRMSE) and R² of the
-    reconstruction versus the raw double-normalised values, plus a NOISE-ADAPTIVE
-    'poor' flag.
+    For spline / logspline: the 'poor' flag is driven by R² — the fraction of the
+    transient's variance the reconstruction explains. R² is scale-, grid- and
+    noise-level-independent and matches visual "does the fit follow the data"
+    judgement: a smooth spline over noisy data still scores R² ≈ 0.99+ because the
+    noise variance is tiny next to the O-J-I-P dynamic range, while a spline that
+    misses real structure drops R² visibly. Flag 'poor' when R² < ``FIT_R2_POOR``.
 
-    A plain nRMSE > 3 % threshold flags any noisy curve, because a smooth spline
-    deliberately does not chase measurement noise — so its residuals are ≈ the
-    data's own noise level, and on noisy OJIPImaging (per-pixel) curves that
-    alone exceeds 3 % even when the fit represents the transient well. Instead we
-    estimate each curve's noise floor from its point-to-point scatter and flag
-    'poor' only when the residuals *systematically exceed* that floor (i.e. the
-    spline is missing real structure), not when they merely equal it.
+    History of this flag: (1) fixed nRMSE > 3 % — mass-flagged noisy-but-good
+    curves (smooth spline doesn't chase noise, so residual ≈ noise ≈ >3 % on
+    per-pixel OJIPImaging). (2) noise-adaptive misfit_ratio = rmse / sigma_noise
+    with sigma_noise from 2nd differences — but that high-pass estimator assumes
+    WHITE noise; OJIPImaging residuals are smooth/correlated, so sigma_noise
+    collapsed and misfit_ratio blew up to ~10 on every curve (nRMSE stayed ~2 %),
+    mass-flagging again. nRMSE, R², sigma_noise and misfit_ratio are all still
+    returned as diagnostics, but only R² drives the flag now.
 
     For pchip: residuals are trivially 0 by construction, so instead
     the *derivative roughness* (normalised RMS of diff(d2)) is computed.
@@ -666,12 +686,14 @@ def _fit_quality(y_raw: np.ndarray, y_recon_at_raw: np.ndarray,
     # noise allows, ≫1 when the spline systematically misses real structure.
     misfit_ratio = rmse / sigma_noise if sigma_noise > 1e-9 else float('inf')
 
-    # 'poor' when the residuals are clearly beyond the noise floor (systematic
-    # misfit, misfit_ratio ≫ 1) AND non-negligible in absolute terms. The
-    # noise-floor test is what matters — the small absolute floor only keeps a
-    # near-perfect fit of essentially noise-free data from being flagged when its
-    # tiny residual happens to exceed its tiny noise estimate.
-    flag = 'poor' if (misfit_ratio > 2.0 and nrmse > 0.01) else 'good'
+    # Flag on R² alone: it explains-variance, so it is robust to the noise level
+    # and grid non-uniformity that broke the nRMSE and misfit_ratio approaches.
+    # Threshold is generous (a good fit is ≈0.99+); it fires only on fits that
+    # visibly miss the transient. misfit_ratio/nRMSE are kept for diagnostics.
+    # Kept LOCAL (not a module global) so the flag never depends on module
+    # load/reload order — raise toward 0.98 to make the flag more sensitive.
+    FIT_R2_POOR = 0.95
+    flag = 'poor' if (r2 is not None and r2 < FIT_R2_POOR) else 'good'
     return {
         'fit_nrmse':        round(nrmse, 6),
         'fit_r2':           round(r2, 6),

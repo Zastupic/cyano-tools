@@ -477,6 +477,78 @@ const MC = (() => {
     return undefined;
   }
 
+  // ── Low-quality curve flagging ───────────────────────────────────────
+  // Two INDEPENDENT quality axes (see .claude/docs/ojip.md): fit quality (R²)
+  // and timing confidence (min of the FJ/FI/FP *_conf fields). Both flags are
+  // computed HERE, in the frontend, straight from the raw per-curve diagnostics
+  // (fit_r2, *_conf) so the user can tune the two cutoffs live and watch the
+  // flags update — the scientist looking at the curves is the best judge of
+  // where "actually bad" begins. They are tracked & badged separately: a poor
+  // spline fit does not mean the J/I/P timings are wrong, and vice-versa.
+  const R2_THRESH_DEFAULT   = 0.90;
+  const CONF_THRESH_DEFAULT = 0.15;
+
+  // "Show only flagged" filter state for the parameter table (persists
+  // across re-renders since _renderParamTable rebuilds its own innerHTML).
+  let _showOnlyFlagged = false;
+
+  // User-tunable cutoffs (read from the Time-series controls, with defaults).
+  function _r2Thresh() {
+    const v = parseFloat(document.getElementById('mc-fit-r2-thresh')?.value);
+    return isNaN(v) ? R2_THRESH_DEFAULT : v;
+  }
+  function _confThresh() {
+    const v = parseFloat(document.getElementById('mc-conf-thresh')?.value);
+    return isNaN(v) ? CONF_THRESH_DEFAULT : v;
+  }
+
+  // Lowest of the three per-phase timing confidences (null-safe → 0).
+  function _confMin(r) {
+    return Math.min(r.FJ_conf ?? 0, r.FI_conf ?? 0, r.FP_conf ?? 0);
+  }
+  // Fit flag: R² below the cutoff (falls back to the backend fit_flag for PCHIP,
+  // which reports roughness instead of R² so fit_r2 is null).
+  function _fitPoor(r) {
+    if (!r || r.error) return false;
+    return r.fit_r2 != null ? r.fit_r2 < _r2Thresh() : r.fit_flag === 'poor';
+  }
+  function _confPoor(r) { return !!r && !r.error && _confMin(r) < _confThresh(); }
+  // Flagged on either axis — used by the table row filter / count.
+  function _isPoorCurve(r) { return _fitPoor(r) || _confPoor(r); }
+
+  // Distinct plot/badge styles for the two flag axes — both are ALWAYS drawn in
+  // the time-series plot (no mode selector) so a curve flagged on either axis
+  // stands out, and the two are visually separable: amber circle = low timing
+  // confidence, red triangle = poor fit. A curve flagged on both gets both marks.
+  // Muted colours (match the flag-panel markers) so flags read as gentle review
+  // hints, not alarms — conf ● amber-tan, fit ▲ soft brick.
+  const FLAG_STYLES = {
+    conf: { color: '#b8923f', pointStyle: 'circle',   label: '● low confidence', test: _confPoor },
+    fit:  { color: '#b06a62', pointStyle: 'triangle', label: '▲ poor fit',       test: _fitPoor  },
+  };
+
+  // Whether a flag overlay is shown in the plot (per-axis checkbox; on by default).
+  function _showFlag(key) {
+    const el = document.getElementById(key === 'fit' ? 'mc-show-flag-fit' : 'mc-show-flag-conf');
+    return el ? el.checked : true;
+  }
+
+  // Re-render everything that depends on the flag cutoffs. Debounced because a
+  // full re-render (Chart.js rebuild + up to ~2000-row table) is heavy and the
+  // inputs fire on every keystroke / spinner click — without this, rapid changes
+  // queue up and the UI feels frozen. Runs ~180 ms after the last change.
+  let _flagThreshTimer = null;
+  function _onFlagThresholdChange() {
+    if (_flagThreshTimer) clearTimeout(_flagThreshTimer);
+    _flagThreshTimer = setTimeout(() => {
+      _flagThreshTimer = null;
+      renderTimeSeries();
+      if (paramMatrix && typeof _updateBatchQualityAlerts === 'function') {
+        _updateBatchQualityAlerts(paramMatrix);
+      }
+    }, 180);
+  }
+
   function _renderParamTimeChart() {
     const paramKey = document.getElementById('mc-param-picker')?.value || 'FVFM';
     const useTimestamps = document.getElementById('mc-time-axis-ts')?.checked;
@@ -629,6 +701,40 @@ const MC = (() => {
         });
       }
 
+      // ── Flag overlays: one per axis, always both, distinct hollow marks ──
+      // Mark each flagged point at its actual (jittered) position so flagged
+      // curves stand out in context. conf = amber circle, fit = red triangle;
+      // a curve flagged on both gets both marks.
+      for (const key of ['conf', 'fit']) {
+        if (!_showFlag(key)) continue;
+        const style = FLAG_STYLES[key];
+        const fData = [];
+        const fSlots = [];
+        sortedGroups.forEach((gv, gi) => {
+          for (const p of groupMap.get(gv)) {
+            if (!style.test(paramMatrix[p._slot])) continue;
+            const jx = p.x + (jitterWidth > 0 ? (_jitterRng(p._slot * 7 + gi) - 0.5) * jitterWidth : 0);
+            fData.push({ x: jx, y: p.y });
+            fSlots.push(p._slot);
+          }
+        });
+        if (!fData.length) continue;
+        datasets.push({
+          label: style.label,
+          data: fData,
+          _slots: fSlots,
+          _isFlagOverlay: true,
+          pointStyle: style.pointStyle,
+          pointRadius: key === 'fit' ? 4.5 : 3.5,
+          pointHoverRadius: 7,
+          borderColor: style.color,
+          borderWidth: 1.2,
+          backgroundColor: 'transparent',
+          showLine: false,
+          order: -3, // on top of raw points and mean/SD overlays
+        });
+      }
+
       // X-axis config
       const xScale = {
         type: 'linear',
@@ -697,9 +803,10 @@ const MC = (() => {
       });
 
     } else {
-      // ── Ungrouped mode: single dataset (original behavior) ──
+      // ── Ungrouped mode: single series + one overlay per flag axis ──
       const data = [];
       const slotLookup = [];
+      const flag = { conf: { data: [], slots: [] }, fit: { data: [], slots: [] } };
       for (const r of paramMatrix) {
         if (!r || r.error) continue;
         const val = r[paramKey];
@@ -708,6 +815,9 @@ const MC = (() => {
         if (useTimestamps && isNaN(xVal)) continue;
         data.push({ x: xVal, y: val });
         slotLookup.push(r.slot);
+        for (const key of ['conf', 'fit']) {
+          if (FLAG_STYLES[key].test(r)) { flag[key].data.push({ x: xVal, y: val }); flag[key].slots.push(r.slot); }
+        }
       }
 
       const xScale = useTimestamps
@@ -730,21 +840,43 @@ const MC = (() => {
             ticks: { maxTicksLimit: 20 },
           };
 
+      const ungroupedDatasets = [{
+        label: label,
+        data: data,
+        _slots: slotLookup,
+        pointRadius: 2.5,
+        pointHoverRadius: 5,
+        borderColor: 'hsl(210,70%,42%)',
+        backgroundColor: 'hsla(210,70%,42%,0.6)',
+        showLine: true,
+        borderWidth: 1.2,
+        tension: 0,
+      }];
+      // Flag overlays — one per axis, distinct hollow marks, on top.
+      let anyFlag = false;
+      for (const key of ['conf', 'fit']) {
+        if (!_showFlag(key) || !flag[key].data.length) continue;
+        anyFlag = true;
+        const style = FLAG_STYLES[key];
+        ungroupedDatasets.push({
+          label: style.label,
+          data: flag[key].data,
+          _slots: flag[key].slots,
+          _isFlagOverlay: true,
+          pointStyle: style.pointStyle,
+          pointRadius: key === 'fit' ? 4 : 3,
+          pointHoverRadius: 6,
+          borderColor: style.color,
+          backgroundColor: 'transparent',
+          borderWidth: 1.2,
+          showLine: false,
+          order: -1,
+        });
+      }
+
       chartInst['mc-param-time-chart'] = new Chart(canvas, {
         type: 'scatter',
-        data: {
-          datasets: [{
-            label: label,
-            data: data,
-            pointRadius: 2.5,
-            pointHoverRadius: 5,
-            borderColor: 'hsl(210,70%,42%)',
-            backgroundColor: 'hsla(210,70%,42%,0.6)',
-            showLine: true,
-            borderWidth: 1.2,
-            tension: 0,
-          }],
-        },
+        data: { datasets: ungroupedDatasets },
         options: {
           animation: false,
           responsive: true,
@@ -752,13 +884,21 @@ const MC = (() => {
           parsing: false,
           scales: { x: xScale, y: { title: { display: true, text: label, font: { size: 12 } } } },
           plugins: {
-            legend: { display: false },
+            // Small legend only to explain the two flag-marker styles.
+            legend: {
+              display: anyFlag,
+              position: 'top',
+              labels: {
+                usePointStyle: true, boxWidth: 8, font: { size: 11 },
+                filter: (item) => item.text === FLAG_STYLES.conf.label || item.text === FLAG_STYLES.fit.label,
+              },
+            },
             tooltip: {
               callbacks: {
                 title: (items) => {
                   if (!items.length) return '';
-                  const di = items[0].dataIndex;
-                  const slot = slotLookup[di];
+                  const ds = ungroupedDatasets[items[0].datasetIndex];
+                  const slot = ds?._slots?.[items[0].dataIndex];
                   return slot != null && paramMatrix[slot] ? paramMatrix[slot].name : '';
                 },
               },
@@ -767,8 +907,8 @@ const MC = (() => {
           },
           onClick: (evt, elems) => {
             if (elems.length) {
-              const di = elems[0].index;
-              const slot = slotLookup[di];
+              const ds = ungroupedDatasets[elems[0].datasetIndex];
+              const slot = ds?._slots?.[elems[0].index];
               if (slot != null) fetchAndShowDetail(slot);
             }
           },
@@ -784,10 +924,28 @@ const MC = (() => {
 
     const isExcel = mcDataset && mcDataset.fluorometer === 'OJIPImaging';
     const metaCols = isExcel ? ['Line', 'Day', 'Hour'] : [];
+    // Fit-quality diagnostic columns. The poor-fit flag is now driven by R²
+    // (nRMSE/misfit× kept in payload as secondary diagnostics only).
+    const fitCols = ['min conf', 'R²', 'nRMSE %'];
     const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
-    const headerRow = ['#', 'Name', ...metaCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+    const headerRow = ['#', 'Name', ...metaCols, ...fitCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)];
 
-    let html = '<div class="table-responsive" style="max-height:450px; overflow-y:auto;">' +
+    const confCount = paramMatrix.filter(_confPoor).length;
+    const fitCount  = paramMatrix.filter(_fitPoor).length;
+    const flaggedTotal = paramMatrix.filter(_isPoorCurve).length;
+
+    // "Show only flagged" filter toggle + per-axis flagged counts (muted markers
+    // matching the plot: ● conf amber-tan, ▲ fit soft brick — review hints, not errors).
+    let html = '<div class="d-flex flex-wrap align-items-center mb-2" style="gap:10px; font-size:0.82em;">' +
+      `<label class="mb-0" style="cursor:pointer;${flaggedTotal ? '' : ' opacity:0.5;'}">` +
+      `<input type="checkbox" ${_showOnlyFlagged ? 'checked' : ''} ${flaggedTotal ? '' : 'disabled'} ` +
+      `onchange="MC.setFlaggedFilter(this.checked)"> Show only flagged</label>` +
+      `<span class="text-muted"><span style="color:#b8923f;">&#9679;&nbsp;conf</span> ` +
+      `${confCount} lower timing confidence (&lt; ${_confThresh()})</span>` +
+      `<span class="text-muted"><span style="color:#b06a62;">&#9650;&nbsp;fit</span> ` +
+      `${fitCount} lower-quality fit (R² &lt; ${_r2Thresh()})</span></div>`;
+
+    html += '<div class="table-responsive" style="max-height:450px; overflow-y:auto;">' +
       '<table class="table table-sm table-bordered table-hover" style="font-size:0.78em;">' +
       '<thead class="thead-light"><tr>' +
       headerRow.map(h => `<th class="text-nowrap">${h}</th>`).join('') +
@@ -795,10 +953,17 @@ const MC = (() => {
 
     for (const r of paramMatrix) {
       if (!r) continue;
+      const confPoor = _confPoor(r);
+      const fitPoor  = _fitPoor(r);
+      if (_showOnlyFlagged && !(confPoor || fitPoor)) continue;
+      // Only genuine errors colour the whole row; flags are subtle inline marks.
       const cls = r.error ? 'table-danger' : '';
       html += `<tr class="${cls}" style="cursor:pointer" onclick="MC.fetchAndShowDetail(${r.slot})">`;
       html += `<td>${r.slot + 1}</td>`;
-      html += `<td class="text-nowrap">${r.name}</td>`;
+      let badge = '';
+      if (fitPoor)  badge += `<span class="mr-1" title="lower-quality fit (R² ${r.fit_r2 != null ? r.fit_r2.toFixed(3) : 'n/a'})" style="color:#b06a62;">&#9650;</span>`;
+      if (confPoor) badge += `<span class="mr-1" title="lower timing confidence (min ${_confMin(r).toFixed(2)})" style="color:#b8923f;">&#9679;</span>`;
+      html += `<td class="text-nowrap">${badge}${r.name}</td>`;
       if (isExcel) {
         const meta = _slotMeta(r.slot);
         html += `<td class="text-nowrap">${meta ? meta.line : ''}</td>`;
@@ -806,8 +971,13 @@ const MC = (() => {
         html += `<td>${meta ? meta.hours : ''}</td>`;
       }
       if (r.error) {
-        html += `<td colspan="${paramKeys.length}" class="text-danger">${r.error}</td>`;
+        html += `<td colspan="${fitCols.length + paramKeys.length}" class="text-danger">${r.error}</td>`;
       } else {
+        // Fit diagnostics (R² null for PCHIP, which uses roughness instead).
+        const r2 = r.fit_r2, nr = r.fit_nrmse;
+        html += `<td class="${confPoor ? 'text-warning font-weight-bold' : 'text-muted'}">${_confMin(r).toFixed(2)}</td>`;
+        html += `<td class="${fitPoor ? 'text-danger font-weight-bold' : 'text-muted'}">${r2 != null ? r2.toFixed(4) : '—'}</td>`;
+        html += `<td class="text-muted">${nr != null ? (nr * 100).toFixed(2) : '—'}</td>`;
         for (const k of paramKeys) {
           const v = r[k];
           html += `<td>${v != null ? (typeof v === 'number' ? v.toPrecision(5) : v) : ''}</td>`;
@@ -824,12 +994,19 @@ const MC = (() => {
     container.innerHTML = html;
   }
 
+  // Toggle the "show only flagged" filter and re-render the parameter table.
+  function _setFlaggedFilter(checked) {
+    _showOnlyFlagged = !!checked;
+    _renderParamTable();
+  }
+
   function copyParamTable() {
     if (!paramMatrix) return;
     const isExcel = mcDataset && mcDataset.fluorometer === 'OJIPImaging';
     const metaCols = isExcel ? ['Line', 'Day', 'Hour'] : [];
+    const fitCols = ['min conf', 'R²', 'nRMSE %'];
     const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
-    const header = ['#', 'Name', ...metaCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)].join('\t');
+    const header = ['#', 'Name', ...metaCols, ...fitCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)].join('\t');
     const rows = paramMatrix.filter(Boolean).map(r => {
       const metaVals = [];
       if (isExcel) {
@@ -837,7 +1014,12 @@ const MC = (() => {
         metaVals.push(meta ? meta.line : '', meta ? meta.day : '', meta ? meta.hours : '');
       }
       if (r.error) return [r.slot + 1, r.name, ...metaVals, `ERROR: ${r.error}`].join('\t');
-      return [r.slot + 1, r.name, ...metaVals, ...paramKeys.map(k => r[k] ?? '')].join('\t');
+      const fitVals = [
+        _confMin(r).toFixed(3),
+        r.fit_r2 != null ? r.fit_r2 : '',
+        r.fit_nrmse != null ? (r.fit_nrmse * 100).toFixed(3) : '',
+      ];
+      return [r.slot + 1, r.name, ...metaVals, ...fitVals, ...paramKeys.map(k => r[k] ?? '')].join('\t');
     });
     navigator.clipboard.writeText(header + '\n' + rows.join('\n'));
   }
@@ -2224,7 +2406,8 @@ const MC = (() => {
     curvesPagePrev, curvesPageNext,
     fetchAndShowDetail, backToOverview,
     copyParamTable, downloadParamsCSV, downloadParamsXLSX,
-    toggleSummaryTable, copySummaryTable,
+    toggleSummaryTable, copySummaryTable, setFlaggedFilter: _setFlaggedFilter,
+    onFlagThresholdChange: _onFlagThresholdChange,
     _updateSelCount, slotToIndex: _slotToIndex,
   };
 })();
@@ -3086,6 +3269,9 @@ async function uploadAndAnalyze() {
     }
     recalcAllParams();
     document.getElementById('results-section').style.display = '';
+    // The batch flag panel (fit/conf banners + cutoffs) is multi-curve only.
+    const flagPanel = document.getElementById('mc-flag-panel');
+    if (flagPanel) flagPanel.style.display = 'none';
     renderResults();
     document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
   } catch (err) {
@@ -3203,8 +3389,8 @@ async function mcStartAnalysis() {
       (errors ? `, ${errors} errors` : '') +
       ` — ${mcDataset.filename}`;
 
-    // Batch fit quality alert
-    _updateBatchFitQualityAlert(result);
+    // Batch quality banners (fit + timing confidence)
+    _updateBatchQualityAlerts(result);
   }
 }
 
@@ -4024,36 +4210,84 @@ function _updateFitQualityBadge() {
   }
 }
 
-// ── batch fit quality alert (OJIPImaging overview) ────────────────────────
-function _updateBatchFitQualityAlert(result) {
+// Percentile of a numeric array (nearest-rank).
+function _pctl(arr, p) {
+  if (!arr.length) return null;
+  const s = [...arr].sort((a, b) => a - b);
+  return s[Math.min(s.length - 1, Math.max(0, Math.round(p * (s.length - 1))))];
+}
+
+// ── batch quality banners (OJIPImaging overview) ──────────────────────────
+// One responsive banner per flag axis. Both read the same tunable cutoffs the
+// Time-series table/plot use, so the three surfaces always agree.
+function _updateBatchQualityAlerts(result) {
+  const panel = document.getElementById('mc-flag-panel');
+  const valid = (result || []).filter(r => r && !r.error);
+  // The panel (cutoff inputs) stays visible whenever there are batch results,
+  // even at zero flags, so the user can always adjust the thresholds.
+  if (panel) panel.style.display = valid.length ? '' : 'none';
+
+  _updateFitBanner(valid);
+  _updateConfBanner(valid);
+}
+
+function _updateFitBanner(valid) {
   const alert = document.getElementById('mc-fit-quality-alert');
   const text  = document.getElementById('mc-fit-quality-text');
   if (!alert || !text) return;
 
-  const valid = (result || []).filter(r => r && !r.error);
-  const poor  = valid.filter(r => r.fit_flag === 'poor').length;
+  // Count against the user-tunable R² cutoff (falls back to backend fit_flag for
+  // PCHIP, whose fit_r2 is null), so this stays consistent with the table/plot.
+  const r2t = parseFloat(document.getElementById('mc-fit-r2-thresh')?.value);
+  const r2Thresh = isNaN(r2t) ? 0.90 : r2t;
+  const isPoorFit = (r) => r.fit_r2 != null ? r.fit_r2 < r2Thresh : r.fit_flag === 'poor';
+  const poor = valid.filter(isPoorFit).length;
 
-  if (poor === 0) {
-    alert.style.display = 'none';
-    return;
-  }
+  if (poor === 0) { alert.style.display = 'none'; return; }
 
   const method = _lastJipOpts.fitMethod || 'logspline';
   const methodLabel = method === 'logspline' ? 'Log-time spline'
                     : method === 'pchip'     ? 'PCHIP'
                     : 'Standard spline';
   const suggParts = [];
-  if (method === 'spline') {
-    suggParts.push('Log-time spline');
-    suggParts.push('PCHIP');
-  } else if (method === 'logspline') {
-    suggParts.push('PCHIP');
-  }
+  if (method === 'spline') { suggParts.push('Log-time spline'); suggParts.push('PCHIP'); }
+  else if (method === 'logspline') { suggParts.push('PCHIP'); }
   const sugg = suggParts.length ? ` Consider trying ${suggParts.join(' or ')}.` : '';
 
-  text.textContent = `${poor} / ${valid.length} curves have poor ${methodLabel} fit.${sugg}`;
+  const r2s    = valid.map(r => r.fit_r2).filter(v => v != null);
+  const nrmses = valid.map(r => r.fit_nrmse).filter(v => v != null);
+  const parts = [];
+  if (r2s.length)    parts.push(`R² median ${_pctl(r2s, 0.5).toFixed(4)}, p10 ${_pctl(r2s, 0.1).toFixed(4)} (poor &lt; ${r2Thresh})`);
+  if (nrmses.length) parts.push(`nRMSE median ${(_pctl(nrmses, 0.5) * 100).toFixed(2)}%, p90 ${(_pctl(nrmses, 0.9) * 100).toFixed(2)}%`);
+  const distLine = parts.length
+    ? `<br><span style="font-size:0.85em; opacity:0.85;">Batch distribution: ${parts.join('; ')}. Per-curve values are in the Time-series table.</span>`
+    : '';
+
+  text.innerHTML = `<span style="color:#b06a62;">&#9650;&nbsp;fit</span> — ${poor} / ${valid.length} curves have lower-quality ${methodLabel} fit.${sugg}${distLine}`;
   alert.style.display = '';
-  document.getElementById('mc-refit-batch-status').textContent = '';
+  const st = document.getElementById('mc-refit-batch-status');
+  if (st) st.textContent = '';
+}
+
+function _updateConfBanner(valid) {
+  const alert = document.getElementById('mc-conf-quality-alert');
+  const text  = document.getElementById('mc-conf-quality-text');
+  if (!alert || !text) return;
+
+  const ct = parseFloat(document.getElementById('mc-conf-thresh')?.value);
+  const confThresh = isNaN(ct) ? 0.15 : ct;
+  const confMin = (r) => Math.min(r.FJ_conf ?? 0, r.FI_conf ?? 0, r.FP_conf ?? 0);
+  const mins = valid.map(confMin);
+  const low  = mins.filter(v => v < confThresh).length;
+
+  if (low === 0) { alert.style.display = 'none'; return; }
+
+  const distLine = mins.length
+    ? `<br><span style="font-size:0.85em; opacity:0.85;">Batch distribution: min FJ/FI/FP confidence median ${_pctl(mins, 0.5).toFixed(3)}, p10 ${_pctl(mins, 0.1).toFixed(3)} (low &lt; ${confThresh}). Low confidence flags an ambiguous J/I/P pick to review — not necessarily a wrong one. Per-curve values are in the Time-series table.</span>`
+    : '';
+
+  text.innerHTML = `<span style="color:#b8923f;">&#9679;&nbsp;conf</span> — ${low} / ${valid.length} curves have lower timing confidence.${distLine}`;
+  alert.style.display = '';
 }
 
 // ── batch refit for OJIPImaging (full re-analysis with new fit method) ────
@@ -4083,7 +4317,7 @@ async function mcRefitBatch() {
   }
 
   _lastJipOpts = Object.assign({}, jipOpts);
-  _updateBatchFitQualityAlert(result);
+  _updateBatchQualityAlerts(result);
 
   // Refresh overview charts
   MC.renderTimeSeries();
