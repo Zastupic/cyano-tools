@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
-import os, base64, io
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
+import os, base64, io, zipfile
 import pandas as pd
 import numpy as np
 from openpyxl.drawing.image import Image
@@ -532,27 +532,35 @@ def _fit_splines_pchip(double_norm_df: pd.DataFrame, x_col: str,
 
     PchipInterpolator passes through every data point and preserves
     monotonicity between points.  Its analytic derivatives are used
-    directly — no Gaussian smoothing is applied.  Residuals are
-    trivially zero by construction.
+    directly for detection (inflection points, FJ/FI/FP).  For display,
+    D2 and D3 are additionally smoothed with a light Gaussian filter
+    (sigma=3) because PCHIP is only C¹ and its higher derivatives are
+    inherently discontinuous.  Residuals are trivially zero by construction.
 
     trim_first / trim_last: exclude the first / last N data points from the
     interpolation (useful when the tail of OJIPImaging curves is unreliable).
 
-    Returns the same 7-tuple as _fit_splines.
+    Returns an 8-tuple: the same 7 as _fit_splines, plus D2_smooth_DF.
+    The 8th element (D2_smooth_DF) is also a DataFrame; callers that
+    unpack only 7 values (the _fit_curves dispatcher) will need updating.
     """
     dn = double_norm_df
     cols = dn.columns
     n_files = len(cols) - 1
     _t_start = _fit_start_index(dn, trim_first)
     _t_end   = len(dn) - trim_last if trim_last > 0 else len(dn)
+    n_fit = _t_end - _t_start
 
+    # Dense evaluation grid matching the logspline approach (≥ 600 points)
+    n_eval = max(600, n_fit)
     log_time = pd.Series(
         np.geomspace(dn.iloc[_t_start:_t_start + 1, 0].values.astype(float)[0],
                      dn.iloc[_t_end - 1:_t_end, 0].values.astype(float)[0],
-                     num=_t_end - _t_start),
+                     num=n_eval),
         name=cols[0])
 
     Raw_recon_list, D1_list, D2_list, D3_list, Infl_list = [], [], [], [], []
+    D2_smooth_list, D3_smooth_list = [], []
 
     for i in range(1, n_files + 1):
         fname = cols[i]
@@ -568,6 +576,10 @@ def _fit_splines_pchip(double_norm_df: pd.DataFrame, x_col: str,
         d2    = interp_fn.derivative(2)(x_eval)
         d3    = interp_fn.derivative(3)(x_eval)
 
+        # Gaussian-smoothed D2/D3 for display (detection uses raw d2/d3)
+        d2_smooth = gaussian_filter1d(d2, sigma=3)
+        d3_smooth = gaussian_filter1d(d3, sigma=3)
+
         # Upward zero-crossings only: D2 goes from - to + (D3 > 0 at crossing)
         # These are the inflection points per Akinyemi et al. 2025
         zc   = np.where(np.diff(np.sign(d2)) > 0)[0]
@@ -577,6 +589,8 @@ def _fit_splines_pchip(double_norm_df: pd.DataFrame, x_col: str,
         D1_list.append(pd.Series(d1,    name=fname))
         D2_list.append(pd.Series(d2,    name=fname))
         D3_list.append(pd.Series(d3,    name=fname))
+        D2_smooth_list.append(pd.Series(d2_smooth, name=fname))
+        D3_smooth_list.append(pd.Series(d3_smooth, name=fname))
         Infl_list.append(infl)
 
     def _assemble(series_list, time_series, col_names):
@@ -588,6 +602,8 @@ def _fit_splines_pchip(double_norm_df: pd.DataFrame, x_col: str,
     D1_DF        = _assemble(D1_list,        log_time, cols)
     D2_DF        = _assemble(D2_list,        log_time, cols)
     D3_DF        = _assemble(D3_list,        log_time, cols)
+    D2_smooth_DF = _assemble(D2_smooth_list, log_time, cols)
+    D3_smooth_DF = _assemble(D3_smooth_list, log_time, cols)
     Infl_DF      = pd.concat(Infl_list, axis=1)
 
     # PCHIP passes through all points — residuals at raw time axis are ~0 by construction
@@ -602,21 +618,30 @@ def _fit_splines_pchip(double_norm_df: pd.DataFrame, x_col: str,
     Resid_DF = pd.concat([dn.iloc[:, 0].reset_index(drop=True)] + Resid_list, axis=1)
     Resid_DF.columns = cols
 
-    return Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time
+    return Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, D2_smooth_DF, D3_smooth_DF
 
 
 def _fit_curves(double_norm_df: pd.DataFrame, x_col: str, kr: int,
                 method: str = 'spline',
                 trim_first: int = 0, trim_last: int = 0) -> tuple:
-    """Dispatcher: route to the requested fitting method."""
+    """Dispatcher: route to the requested fitting method.
+
+    Always returns a 9-tuple:
+      Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time,
+      D2_smooth_DF, D3_smooth_DF
+    D2_smooth_DF / D3_smooth_DF are None for non-PCHIP methods (their
+    analytic derivatives are already smooth).
+    """
     if method == 'logspline':
-        return _fit_splines_log(double_norm_df, x_col,
-                                trim_first=trim_first, trim_last=trim_last)
+        result = _fit_splines_log(double_norm_df, x_col,
+                                  trim_first=trim_first, trim_last=trim_last)
+        return result + (None, None)
     if method == 'pchip':
         return _fit_splines_pchip(double_norm_df, x_col,
                                   trim_first=trim_first, trim_last=trim_last)
-    return _fit_splines(double_norm_df, x_col, kr,
-                        trim_first=trim_first, trim_last=trim_last)
+    result = _fit_splines(double_norm_df, x_col, kr,
+                          trim_first=trim_first, trim_last=trim_last)
+    return result + (None, None)
 
 
 def _safe(v):
@@ -789,7 +814,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     ], axis=1)
 
     # ── spline fitting ────────────────────────────────────────────────────────
-    Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time = \
+    Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, \
+        D2_smooth_DF, D3_smooth_DF = \
         _fit_curves(dn_df, x_col, kr, method=fit_method,
                     trim_first=trim_first, trim_last=trim_last)
 
@@ -861,6 +887,63 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     RE0RC   = TR0RC * PSIR0
     DI0RC   = ABSRC - TR0RC
 
+    # ── phase slopes (fluorescence rise rate between O-J, J-I, I-P) ──────────
+    # Use derived (detected) timings for phase boundaries; fall back to user times.
+    _fj_t = _t_safe(FJ_deriv.get(fname), ms) or fj_time_ms
+    _fi_t = _t_safe(FI_deriv.get(fname), ms) or fi_time_ms
+    _fp_t = _t_safe(FP_deriv.get(fname), ms)
+    _f0_t = float(sf[x_col].iloc[F50us_idx]) * ms  # F0 time in ms
+    _f0_v = float(F0[fname])
+    _fj_v = float(FJ[fname])
+    _fi_v = float(FI[fname])
+    _fm_v = float(FM[fname])
+
+    def _slope(f_end, f_start, t_end, t_start):
+        dt = t_end - t_start
+        if dt <= 0 or not np.isfinite(dt):
+            return np.nan
+        return (f_end - f_start) / dt
+
+    slope_OJ = pd.Series([_slope(_fj_v, _f0_v, _fj_t, _f0_t)], index=[fname], name=fname)
+    slope_JI = pd.Series([_slope(_fi_v, _fj_v, _fi_t, _fj_t)], index=[fname], name=fname)
+    slope_IP = pd.Series([_slope(_fm_v, _fi_v, _fp_t if _fp_t else _fi_t + 100,
+                                  _fi_t)], index=[fname], name=fname)
+
+    # ── FI-FP dip detection ────────────────────────────────────────────────────
+    # Look for a local D1 minimum (fluorescence decrease) between FI and FP.
+    _lt_ms = log_time.values.astype(float) * ms  # log-time grid in ms
+    _d1_vals = np.array(D1_DF[fname].values, dtype=float)
+    _recon_vals = np.array(Raw_recon_DF[fname].values, dtype=float)
+    _fi_t_actual = _fi_t if _fi_t else fi_time_ms
+    _fp_t_actual = _fp_t if _fp_t else float(_lt_ms[-1])
+
+    dip_IP_present = False
+    dip_IP_time_ms_val = None
+    dip_IP_amplitude_val = None
+    dip_IP_d1_min_val = None
+
+    _ip_mask = (_lt_ms >= _fi_t_actual) & (_lt_ms <= _fp_t_actual)
+    if np.any(_ip_mask):
+        _d1_ip = _d1_vals[_ip_mask]
+        _t_ip  = _lt_ms[_ip_mask]
+        _r_ip  = _recon_vals[_ip_mask]
+        _d1_min_idx = np.argmin(_d1_ip)
+        _d1_min_val = float(_d1_ip[_d1_min_idx])
+
+        if _d1_min_val < 0:
+            dip_IP_present = True
+            dip_IP_time_ms_val = float(_t_ip[_d1_min_idx])
+            dip_IP_d1_min_val = _d1_min_val
+            # Amplitude: depth below the straight line FI → FP at the dip time
+            _fi_recon = float(np.interp(_fi_t_actual, _lt_ms, _recon_vals))
+            _fp_recon = float(np.interp(_fp_t_actual, _lt_ms, _recon_vals))
+            _dt_total = _fp_t_actual - _fi_t_actual
+            if _dt_total > 0:
+                _frac = (dip_IP_time_ms_val - _fi_t_actual) / _dt_total
+                _line_val = _fi_recon + _frac * (_fp_recon - _fi_recon)
+                _curve_val = float(_r_ip[_d1_min_idx])
+                dip_IP_amplitude_val = _line_val - _curve_val  # positive = dip below line
+
     # ── areas + FM timing ─────────────────────────────────────────────────────
     AREAOJ, AREAJI, AREAIP, AREAOP, FM_timings = _calc_areas_fm_timing(
         sf, data_cols, FJ_idx, FI_idx, ms,
@@ -910,6 +993,15 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'DI0RC': _safe(DI0RC[fname]),
         'OJ': _safe(OJ[fname]),  'JI': _safe(JI[fname]),  'IP': _safe(IP[fname]),
         'SM': _safe(SM[fname]),  'N':  _safe(N_val[fname]),
+        # Phase slopes (fluorescence rise rate, r.u. / ms)
+        'slope_OJ': _safe(slope_OJ[fname]),
+        'slope_JI': _safe(slope_JI[fname]),
+        'slope_IP': _safe(slope_IP[fname]),
+        # FI-FP dip detection
+        'dip_IP_present':   dip_IP_present,
+        'dip_IP_time_ms':   _safe(dip_IP_time_ms_val) if dip_IP_time_ms_val is not None else None,
+        'dip_IP_amplitude': _safe(dip_IP_amplitude_val) if dip_IP_amplitude_val is not None else None,
+        'dip_IP_d1_min':    _safe(dip_IP_d1_min_val) if dip_IP_d1_min_val is not None else None,
         **fq,
     }
 
@@ -931,6 +1023,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
             'd1':            [_safe(v) for v in D1_DF[fname]],
             'd2':            [_safe(v) for v in D2_DF[fname]],
             'd3':            [_safe(v) for v in D3_DF[fname]],
+            'd2_smooth':     [_safe(v) for v in D2_smooth_DF[fname]] if D2_smooth_DF is not None else None,
+            'd3_smooth':     [_safe(v) for v in D3_smooth_DF[fname]] if D3_smooth_DF is not None else None,
             'poly_oj_time_ms': poly_oj[fname]['poly_oj_time_ms'],
             'poly_oj_d2':      poly_oj[fname]['poly_oj_d2'],
             'poly_oi_time_ms': poly_oi[fname]['poly_oj_time_ms'],
@@ -1122,7 +1216,8 @@ def ojip_process():
 
     # ── spline fitting ───────────────────────────────────────────────────────
     try:
-        Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time = _fit_curves(
+        Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, \
+            D2_smooth_DF, D3_smooth_DF = _fit_curves(
             OJIP_double_normalized, x_col, kr, method=fit_method_proc,
             trim_first=trim_first_proc, trim_last=trim_last_proc)
     except Exception:
@@ -1258,11 +1353,16 @@ def ojip_process():
             'd1':              [_safe(v) for v in D1_DF.iloc[:, i]],
             'd2':              [_safe(v) for v in D2_DF.iloc[:, i]],
             'd3':              [_safe(v) for v in D3_DF.iloc[:, i]],
+            'd2_smooth':       [_safe(v) for v in D2_smooth_DF.iloc[:, i]] if D2_smooth_DF is not None else None,
+            'd3_smooth':       [_safe(v) for v in D3_smooth_DF.iloc[:, i]] if D3_smooth_DF is not None else None,
             'poly_oj_time_ms': poly_oj[fname]['poly_oj_time_ms'],
             'poly_oj_d2':      poly_oj[fname]['poly_oj_d2'],
             'poly_oi_time_ms': poly_oi[fname]['poly_oj_time_ms'],
             'poly_oi_d2':      poly_oi[fname]['poly_oj_d2'],
         }
+
+    # Pre-compute log-time grid in ms for slope/dip calculations
+    _lt_ms_multi = log_time.values.astype(float) * ms
 
     key_values = {}
     for i, fname in enumerate(data_cols, start=1):
@@ -1274,6 +1374,46 @@ def ojip_process():
         fq_p = _fit_quality(_y_raw_p[_qp_start:_qp_end],
                             _y_recon_p[_qp_start:_qp_end],
                             _d2_p, method=fit_method_proc)
+
+        # ── per-file slopes ───────────────────────────────────────────────
+        _fj_t_p = _t_safe(FJ_deriv.get(fname), ms) or FJ_time_ms
+        _fi_t_p = _t_safe(FI_deriv.get(fname), ms) or FI_time_ms
+        _fp_t_p = _t_safe(FP_deriv.get(fname), ms)
+        _f0_t_p = float(Summary_file[x_col].iloc[F50us_idx]) * ms
+        _f0_v_p = float(F0[fname]); _fj_v_p = float(FJ[fname])
+        _fi_v_p = float(FI[fname]); _fm_v_p = float(FM[fname])
+        def _slope_p(fe, fs, te, ts):
+            dt = te - ts
+            return (fe - fs) / dt if dt > 0 and np.isfinite(dt) else np.nan
+        _sl_oj = _slope_p(_fj_v_p, _f0_v_p, _fj_t_p, _f0_t_p)
+        _sl_ji = _slope_p(_fi_v_p, _fj_v_p, _fi_t_p, _fj_t_p)
+        _sl_ip = _slope_p(_fm_v_p, _fi_v_p,
+                          _fp_t_p if _fp_t_p else _fi_t_p + 100, _fi_t_p)
+
+        # ── per-file dip detection (FI-FP) ────────────────────────────────
+        _d1_p = np.array(D1_DF.iloc[:, i].values, dtype=float)
+        _recon_p = np.array(Raw_recon_DF.iloc[:, i].values, dtype=float)
+        _fi_t_act = _fi_t_p if _fi_t_p else FI_time_ms
+        _fp_t_act = _fp_t_p if _fp_t_p else float(_lt_ms_multi[-1])
+        _dip_present = False; _dip_time = None; _dip_amp = None; _dip_d1 = None
+        _ip_mask_p = (_lt_ms_multi >= _fi_t_act) & (_lt_ms_multi <= _fp_t_act)
+        if np.any(_ip_mask_p):
+            _d1_ip_p = _d1_p[_ip_mask_p]
+            _t_ip_p = _lt_ms_multi[_ip_mask_p]
+            _r_ip_p = _recon_p[_ip_mask_p]
+            _d1_mi = np.argmin(_d1_ip_p)
+            _d1_mv = float(_d1_ip_p[_d1_mi])
+            if _d1_mv < 0:
+                _dip_present = True
+                _dip_time = float(_t_ip_p[_d1_mi])
+                _dip_d1 = _d1_mv
+                _fi_r = float(np.interp(_fi_t_act, _lt_ms_multi, _recon_p))
+                _fp_r = float(np.interp(_fp_t_act, _lt_ms_multi, _recon_p))
+                _dt_t = _fp_t_act - _fi_t_act
+                if _dt_t > 0:
+                    _frac_p = (_dip_time - _fi_t_act) / _dt_t
+                    _dip_amp = (_fi_r + _frac_p * (_fp_r - _fi_r)) - float(_r_ip_p[_d1_mi])
+
         key_values[fname] = {
             'F0':  _safe(F0[fname]),  'FM': _safe(FM[fname]),
             'FK':  _safe(FK[fname]),  'F50': _safe(F50[fname]),
@@ -1294,6 +1434,13 @@ def ojip_process():
             'Area_IP': _safe(AREAIP[fname]), 'Area_OP': _safe(AREAOP[fname]),
             'poly_infl_ms':    poly_oj[fname]['poly_infl_ms'],
             'poly_fi_infl_ms': poly_oi[fname]['poly_infl_ms'],
+            # Phase slopes
+            'slope_OJ': _safe(_sl_oj), 'slope_JI': _safe(_sl_ji), 'slope_IP': _safe(_sl_ip),
+            # FI-FP dip
+            'dip_IP_present': _dip_present,
+            'dip_IP_time_ms': _safe(_dip_time) if _dip_time is not None else None,
+            'dip_IP_amplitude': _safe(_dip_amp) if _dip_amp is not None else None,
+            'dip_IP_d1_min': _safe(_dip_d1) if _dip_d1 is not None else None,
             **fq_p,
         }
 
@@ -1346,7 +1493,8 @@ def ojip_refit():
         dn_df[fname] = vals
 
     try:
-        Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time = \
+        Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, \
+            D2_smooth_DF, D3_smooth_DF = \
             _fit_curves(dn_df, x_col, kr, method=fit_method_refit,
                         trim_first=trim_first_refit, trim_last=trim_last_refit)
     except Exception:
@@ -1372,6 +1520,8 @@ def ojip_refit():
             'd1':            [_safe(v) for v in D1_DF.iloc[:, i]],
             'd2':            [_safe(v) for v in D2_DF.iloc[:, i]],
             'd3':            [_safe(v) for v in D3_DF.iloc[:, i]],
+            'd2_smooth':     [_safe(v) for v in D2_smooth_DF.iloc[:, i]] if D2_smooth_DF is not None else None,
+            'd3_smooth':     [_safe(v) for v in D3_smooth_DF.iloc[:, i]] if D3_smooth_DF is not None else None,
             'residuals':       [_safe(v) for v in Resid_DF.iloc[:, i]],
             'poly_oj_time_ms': poly_oj[fname]['poly_oj_time_ms'],
             'poly_oj_d2':      poly_oj[fname]['poly_oj_d2'],
@@ -1731,3 +1881,235 @@ def ojip_process_batch():
                             'error': str(exc)})
 
     return jsonify({'status': 'success', 'results': results})
+
+
+# ─── batch ZIP export ──────────────────────────────────────────────────────
+@OJIP_data_analysis.route('/api/ojip_export_batch', methods=['POST'])
+def ojip_export_batch():
+    """
+    Build a ZIP archive containing the batch analysis results.
+
+    Receives JSON::
+
+        {
+          "params_header": [str, ...],        // column names
+          "params_rows":   [[val, ...], ...],  // one row per curve
+          "charts":        {canvasId: dataURL, ...},  // base64 PNGs
+          "stem":          str,                // base filename
+          "include_curves": bool,
+          "include_diag":   bool,
+          "curve_data":    {name: {time_raw_ms, time_log_ms, curves, key_values}, ...}
+        }
+
+    Returns a ZIP file as a binary download.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    payload = request.get_json(force=True)
+    params_header = payload.get('params_header', [])
+    params_rows   = payload.get('params_rows', [])
+    charts        = payload.get('charts', {})
+    stem          = payload.get('stem', 'ojip_batch')
+    include_curves = payload.get('include_curves', False)
+    include_diag   = payload.get('include_diag', False)
+    curve_data     = payload.get('curve_data', {})
+
+    try:
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+
+            # ── 1. Parameters XLSX ────────────────────────────────────────
+            xlsx_buf = io.BytesIO()
+            wb = Workbook()
+            ws = wb.active
+            ws.title = 'Parameters'
+            if params_header:
+                ws.append(params_header)
+            for row in params_rows:
+                ws.append(row)
+            wb.save(xlsx_buf)
+            xlsx_buf.seek(0)
+            zf.writestr('params_summary.xlsx', xlsx_buf.getvalue())
+
+            # ── 2. Summary chart PNGs (captured from client canvases) ─────
+            CHART_NAMES = {
+                'mc-param-time-chart': 'param_scatter',
+                'mc-compare-chart':    'compare',
+                'mc-aggregate-chart':  'grouped_panels',
+            }
+            for cid, data_url in charts.items():
+                if not data_url or ',' not in data_url:
+                    continue
+                b64 = data_url.split(',', 1)[1]
+                try:
+                    img_bytes = base64.b64decode(b64)
+                except Exception:
+                    continue
+                fname = CHART_NAMES.get(cid, cid) + '.png'
+                zf.writestr(f'summary_plots/{fname}', img_bytes)
+
+            # ── 3. Individual curve plots (matplotlib, optional) ──────────
+            if include_curves and curve_data:
+                for name, cd in curve_data.items():
+                    safe = _safe_zip_name(name)
+                    time_raw = cd.get('time_raw_ms', [])
+                    curves_d = cd.get('curves', {})
+                    kv       = cd.get('key_values', {})
+
+                    for norm_key, label in [
+                        ('raw',         'Raw'),
+                        ('shifted_F0',  'Shifted F0'),
+                        ('shifted_FM',  'Shifted FM'),
+                        ('double_norm', 'Double normalised'),
+                    ]:
+                        y_data = curves_d.get(norm_key)
+                        if not y_data or not time_raw:
+                            continue
+                        png = _make_curve_png(time_raw, y_data, name, label, kv)
+                        zf.writestr(f'curves/{safe}/{norm_key}.png', png)
+
+            # ── 4. Individual diagnostic plots (matplotlib, optional) ─────
+            if include_diag and curve_data:
+                for name, cd in curve_data.items():
+                    safe = _safe_zip_name(name)
+                    time_log = cd.get('time_log_ms', [])
+                    time_raw = cd.get('time_raw_ms', [])
+                    curves_d = cd.get('curves', {})
+
+                    # Reconstructed vs raw
+                    recon = curves_d.get('reconstructed')
+                    dnorm = curves_d.get('double_norm')
+                    if recon and time_log:
+                        png = _make_diag_png(time_log, recon, name, 'Reconstructed',
+                                             time_raw, dnorm)
+                        zf.writestr(f'diagnostics/{safe}/reconstructed.png', png)
+
+                    # D2
+                    d2 = curves_d.get('d2_smooth') or curves_d.get('d2')
+                    if d2 and time_log:
+                        png = _make_deriv_png(time_log, d2, name,
+                                             'D2 (2nd derivative)')
+                        zf.writestr(f'diagnostics/{safe}/d2.png', png)
+
+                    # D3
+                    d3 = curves_d.get('d3_smooth') or curves_d.get('d3')
+                    if d3 and time_log:
+                        png = _make_deriv_png(time_log, d3, name,
+                                             'D3 (3rd derivative)')
+                        zf.writestr(f'diagnostics/{safe}/d3.png', png)
+
+                    # Residuals
+                    resid = curves_d.get('residuals')
+                    if resid and time_raw:
+                        png = _make_deriv_png(time_raw, resid, name, 'Residuals')
+                        zf.writestr(f'diagnostics/{safe}/residuals.png', png)
+
+        zip_buf.seek(0)
+        dl_name = stem.replace(' ', '_') + '_export.zip'
+        return send_file(zip_buf, mimetype='application/zip',
+                         as_attachment=True, download_name=dl_name)
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error',
+                        'message': 'An internal error occurred during export.'}), 500
+
+
+# ─── helpers for batch ZIP export ──────────────────────────────────────────
+
+def _safe_zip_name(name: str) -> str:
+    """Sanitise a curve name for use as a ZIP path component."""
+    import re
+    s = re.sub(r'[<>:"/\\|?*]', '_', str(name))
+    return s.strip().strip('.') or 'unnamed'
+
+
+def _make_curve_png(time_ms, y_data, title, norm_label, kv=None):
+    """Render one OJIP curve plot as a PNG byte string (log x-axis)."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    t = np.asarray(time_ms, dtype=float)
+    y = np.asarray(y_data, dtype=float)
+    # Only plot positive times for log scale
+    mask = t > 0
+    t, y = t[mask], y[mask]
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+    ax.semilogx(t, y, 'b-', linewidth=1)
+    ax.set_xlabel('Time (ms)')
+    ax.set_ylabel('Fluorescence')
+    ax.set_title(f'{title} — {norm_label}')
+
+    # Mark FJ, FI, FP if available
+    if kv:
+        for phase, marker, colour in [
+            ('FJ', '^', '#e6550d'), ('FI', 'D', '#31a354'), ('FP', 's', '#756bb1')
+        ]:
+            t_key = f'{phase}_time_deriv_ms'
+            v_key = phase if phase != 'FP' else 'FM'
+            tv = kv.get(t_key)
+            fv = kv.get(v_key) if phase != 'FP' else kv.get('FM')
+            if tv and fv:
+                ax.plot(tv, fv, marker=marker, color=colour, markersize=8,
+                        label=phase, zorder=5)
+        ax.legend(fontsize=8)
+
+    fig.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=120)
+    plt.close(fig)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def _make_diag_png(time_log, recon, title, label, time_raw=None, raw_data=None):
+    """Render a reconstructed-vs-raw diagnostic plot."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+    tl = np.asarray(time_log, dtype=float)
+    yr = np.asarray(recon, dtype=float)
+    ax.semilogx(tl, yr, 'r-', linewidth=1.2, label='Reconstructed')
+    if raw_data and time_raw:
+        tr = np.asarray(time_raw, dtype=float)
+        yd = np.asarray(raw_data, dtype=float)
+        mask = tr > 0
+        ax.semilogx(tr[mask], yd[mask], 'b.', markersize=2, alpha=0.5, label='Data')
+    ax.set_xlabel('Time (ms)')
+    ax.set_ylabel('Fluorescence (norm.)')
+    ax.set_title(f'{title} — {label}')
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=120)
+    plt.close(fig)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def _make_deriv_png(time_arr, y_data, title, label):
+    """Render a derivative or residual plot."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+    t = np.asarray(time_arr, dtype=float)
+    y = np.asarray(y_data, dtype=float)
+    mask = t > 0
+    ax.semilogx(t[mask], y[mask], 'g-', linewidth=1)
+    ax.axhline(0, color='grey', linewidth=0.5, linestyle='--')
+    ax.set_xlabel('Time (ms)')
+    ax.set_ylabel(label)
+    ax.set_title(f'{title} — {label}')
+    fig.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=120)
+    plt.close(fig)
+    buf.seek(0)
+    return buf.getvalue()

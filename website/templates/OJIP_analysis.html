@@ -63,6 +63,14 @@
     background: #ffffff !important; color: #004085 !important;
     box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
   }
+  /* ── Fix Chrome <select> text clipping (bottom of letters cut off) ── */
+  select.form-control,
+  select.form-control-sm {
+    line-height: 1.5;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    height: auto;
+  }
 </style>
 <!-- Banner -->
 <div id="banner-content">
@@ -1835,6 +1843,16 @@
             <option value="FP_time_deriv_ms">t(FP) ms</option>
             <option value="FM_time_ms">t(FM) ms</option>
           </optgroup>
+          <optgroup label="Phase Slopes">
+            <option value="slope_OJ">Slope O-J</option>
+            <option value="slope_JI">Slope J-I</option>
+            <option value="slope_IP">Slope I-P</option>
+          </optgroup>
+          <optgroup label="I-P Dip">
+            <option value="dip_IP_amplitude">Dip I-P amplitude</option>
+            <option value="dip_IP_time_ms">Dip I-P time (ms)</option>
+            <option value="dip_IP_d1_min">Dip I-P D1 min</option>
+          </optgroup>
         </select>
 
         <label class="mb-0 ml-3" id="mc-ts-checkbox-wrap" style="font-size:0.85em; cursor:pointer;">
@@ -1878,14 +1896,6 @@
           </select>
         </span>
 
-        <div class="ml-auto d-flex" style="gap:6px;">
-          <button class="btn btn-sm btn-outline-secondary" onclick="MC.downloadParamsCSV()">
-            <i class="fa fa-download mr-1"></i>CSV
-          </button>
-          <button class="btn btn-sm btn-outline-secondary" onclick="MC.downloadParamsXLSX()">
-            <i class="fa fa-download mr-1"></i>XLSX
-          </button>
-        </div>
       </div>
 
       <!-- Grouped-mode chart options (jitter, mean/SD) — visible only for OJIPImaging -->
@@ -1972,6 +1982,24 @@
                 <option value="both">Both</option>
               </select>
             </div>
+            <label class="mb-0 d-flex align-items-end" style="font-size:0.82em; cursor:pointer;">
+              <input type="checkbox" id="mc-compare-show-timing" checked
+                     onchange="MC.renderComparison()" class="mr-1">
+              J/I/P timing
+            </label>
+            <div class="d-flex align-items-end" style="gap:4px;">
+              <label class="mb-0" style="font-size:0.82em; cursor:pointer; white-space:nowrap;">
+                <input type="checkbox" id="mc-compare-shared-y"
+                       onchange="MC.renderComparison()" class="mr-1">
+                Shared Y
+              </label>
+              <input type="number" id="mc-compare-y-min" placeholder="Y min"
+                     class="form-control form-control-sm" style="width:65px; font-size:0.78em;"
+                     step="any" onchange="MC.renderComparison()">
+              <input type="number" id="mc-compare-y-max" placeholder="Y max"
+                     class="form-control form-control-sm" style="width:65px; font-size:0.78em;"
+                     step="any" onchange="MC.renderComparison()">
+            </div>
           </div>
         </div>
         <div class="card-body p-2">
@@ -2037,6 +2065,19 @@
                 <option value="both">Both</option>
               </select>
             </div>
+            <div class="d-flex align-items-end" style="gap:4px;">
+              <label class="mb-0" style="font-size:0.82em; cursor:pointer; white-space:nowrap;">
+                <input type="checkbox" id="mc-panel-shared-y"
+                       onchange="MC.renderGroupedPanels()" class="mr-1">
+                Shared Y
+              </label>
+              <input type="number" id="mc-panel-y-min" placeholder="Y min"
+                     class="form-control form-control-sm" style="width:65px; font-size:0.78em;"
+                     step="any" onchange="MC.renderGroupedPanels()">
+              <input type="number" id="mc-panel-y-max" placeholder="Y max"
+                     class="form-control form-control-sm" style="width:65px; font-size:0.78em;"
+                     step="any" onchange="MC.renderGroupedPanels()">
+            </div>
           </div>
         </div>
         <div class="card-body p-2">
@@ -2099,6 +2140,16 @@
     <a id="xlsx-download-link" href="#" class="btn btn-success mr-2" style="display:none">
       <i class="fa fa-download"></i> Download OJIP analysis (.xlsx)
     </a>
+    <button class="btn btn-sm btn-outline-secondary" id="mc-csv-btn" onclick="MC.downloadParamsCSV()" style="display:none">
+      <i class="fa fa-download mr-1"></i>CSV
+    </button>
+    <button class="btn btn-sm btn-outline-secondary" id="mc-xlsx-btn" onclick="MC.downloadParamsXLSX()" style="display:none">
+      <i class="fa fa-download mr-1"></i>XLSX
+    </button>
+    <button class="btn btn-sm btn-outline-success" id="mc-batch-export-btn"
+            onclick="showBatchExportModal()" style="display:none">
+      <i class="fa fa-file-archive-o mr-1"></i>Export ZIP
+    </button>
     <button class="btn btn-outline-info btn-sm" onclick="showOJIPMethodsModal()">
       <i class="fa fa-file-text-o mr-1"></i> Methods text
     </button>
@@ -2106,6 +2157,40 @@
       Contains JIP parameters, raw &amp; normalized fluorescence curves, derivatives, charts, group statistics, and a Methods section — all in one file.
     </small>
   </div>
+
+<!-- Batch export modal -->
+<div class="modal fade" id="batchExportModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title"><i class="fa fa-file-archive-o mr-1 text-success"></i>Export Batch Results (ZIP)</h6>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body" style="font-size:0.88em;">
+        <p class="mb-2">Select what to include in the ZIP archive:</p>
+        <div class="mb-2">
+          <label class="d-block mb-1"><input type="checkbox" id="be-params-xlsx" checked disabled> Parameter table (.xlsx) &mdash; always included</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-summary-plots" checked> Summary plots (param scatter, compare, grouped panels)</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-indiv-curves"> Individual curve plots (raw, F0-norm, FM-norm, double-norm)</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-indiv-diag"> Individual diagnostic plots (reconstructed, residuals, D2, D3)</label>
+        </div>
+        <small id="be-file-estimate" class="text-muted d-block mb-2"></small>
+        <div id="be-progress" style="display:none;">
+          <div class="progress" style="height:18px;">
+            <div id="be-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%">0%</div>
+          </div>
+          <small id="be-progress-text" class="text-muted mt-1 d-block"></small>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success btn-sm" id="be-start-btn" onclick="startBatchExport()">
+          <i class="fa fa-download mr-1"></i>Export
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </div><!-- /results-section -->
 

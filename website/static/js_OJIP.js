@@ -915,6 +915,44 @@ const MC = (() => {
         },
       });
     }
+
+    // ── Right-click to remove a curve from analysis ──
+    const chartCanvas = document.getElementById('mc-param-time-chart');
+    if (chartCanvas) {
+      chartCanvas.oncontextmenu = (e) => {
+        e.preventDefault();
+        const chart = chartInst['mc-param-time-chart'];
+        if (!chart) return;
+        const elems = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+        if (!elems.length) return;
+        const dsIdx = elems[0].datasetIndex;
+        const ptIdx = elems[0].index;
+        const ds = chart.data.datasets[dsIdx];
+        if (ds._isMeanOverlay) return; // don't remove from mean/SD overlay
+        const slot = ds._slots?.[ptIdx];
+        if (slot == null) return;
+        const name = paramMatrix[slot]?.name || `#${slot + 1}`;
+        if (!confirm(`Remove "${name}" from analysis?`)) return;
+        _removeBatchSlot(slot);
+      };
+    }
+  }
+
+  /** Remove a single curve slot from the batch analysis. */
+  function _removeBatchSlot(slot) {
+    if (!paramMatrix || slot == null) return;
+    paramMatrix[slot] = null;
+    // Also remove from mcDataset curves array if present
+    if (mcDataset && mcDataset.curves) {
+      const idx = mcDataset.curves.findIndex(c => c.index === slot);
+      if (idx !== -1) mcDataset.curves.splice(idx, 1);
+    }
+    // Re-render the time series tab
+    renderTimeSeries();
+    // Re-render grouped panels and comparison if visible
+    if (mcDataset?.fluorometer === 'OJIPImaging') {
+      renderGroupedPanels();
+    }
   }
 
   // ── M4: Virtualized parameter table ──────────────────────────────────
@@ -1850,7 +1888,7 @@ const MC = (() => {
    * Create one grid cell: heading + canvas + chart instance.
    */
   function _createPanelChart(grid, panelValue, title, slots,
-                             colorField, displayMode, timeMs) {
+                             colorField, displayMode, timeMs, yRange) {
     const cell = document.createElement('div');
     cell.style.cssText = 'border:1px solid #dee2e6; border-radius:4px; padding:6px;';
 
@@ -1893,11 +1931,14 @@ const MC = (() => {
             ticks: { font: { size: 9 } },
             grid: { display: false },
           },
-          y: {
-            title: { display: true, text: 'Fluorescence', font: { size: 10 } },
-            ticks: { font: { size: 9 } },
-            grid: { display: false },
-          },
+          y: Object.assign(
+            {
+              title: { display: true, text: 'Fluorescence', font: { size: 10 } },
+              ticks: { font: { size: 9 } },
+              grid: { display: false },
+            },
+            yRange ? { min: yRange.min, max: yRange.max } : {}
+          ),
         },
         plugins: {
           legend: {
@@ -2002,6 +2043,49 @@ const MC = (() => {
         });
       }
     }
+
+    // ── FJ / FI / FP timing markers on the mean curve ──────────────────
+    const showTiming = document.getElementById('mc-compare-show-timing')?.checked ?? true;
+    if (showTiming && paramMatrix) {
+      // Compute group-mean timings from paramMatrix
+      const timingKeys = [
+        { key: 'FJ_time_deriv_ms', style: 'triangle', tip: 'FJ' },
+        { key: 'FI_time_deriv_ms', style: 'rectRot',  tip: 'FI' },
+        { key: 'FP_time_deriv_ms', style: 'rect',     tip: 'FP' },
+      ];
+      const markerPts = [], markerR = [], markerSt = [], markerBg = [], markerBd = [];
+      for (const { key, style, tip } of timingKeys) {
+        let tSum = 0, tCount = 0;
+        for (const s of gSlots) {
+          const r = paramMatrix[s];
+          if (!r || r.error || r[key] == null) continue;
+          tSum += r[key]; tCount++;
+        }
+        if (tCount === 0) continue;
+        const meanT = tSum / tCount;
+        // Interpolate fluorescence on the mean curve at meanT
+        let yVal = null;
+        for (let j = 1; j < nTime; j++) {
+          if (timeMs[j] >= meanT) {
+            const frac = (meanT - timeMs[j - 1]) / (timeMs[j] - timeMs[j - 1]);
+            yVal = mean[j - 1] + frac * (mean[j] - mean[j - 1]);
+            break;
+          }
+        }
+        if (yVal == null) continue;
+        markerPts.push({ x: meanT, y: yVal, _tip: `${tip} = ${meanT.toFixed(2)} ms` });
+        markerR.push(7); markerSt.push(style); markerBg.push(color); markerBd.push(color);
+      }
+      if (markerPts.length > 0) {
+        datasets.push({
+          label: '', showLine: false,
+          data: markerPts,
+          pointRadius: markerR, pointStyle: markerSt,
+          pointBackgroundColor: markerBg, pointBorderColor: markerBd,
+          borderColor: 'transparent', backgroundColor: 'transparent',
+        });
+      }
+    }
   }
 
   /**
@@ -2087,6 +2171,20 @@ const MC = (() => {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
 
+    // ── Compare Y-axis controls ──
+    const compareSharedY = document.getElementById('mc-compare-shared-y')?.checked;
+    const compareYMin = parseFloat(document.getElementById('mc-compare-y-min')?.value);
+    const compareYMax = parseFloat(document.getElementById('mc-compare-y-max')?.value);
+    const compareYScale = {
+      title: { display: true, text: 'Fluorescence', font: { size: 11 } },
+      ticks: { font: { size: 10 } },
+      grid: { display: false },
+    };
+    if (compareSharedY || !isNaN(compareYMin) || !isNaN(compareYMax)) {
+      if (!isNaN(compareYMin)) compareYScale.min = compareYMin;
+      if (!isNaN(compareYMax)) compareYScale.max = compareYMax;
+    }
+
     chartInst[canvasId] = new Chart(canvas, {
       type: 'scatter',
       data: { datasets },
@@ -2102,11 +2200,7 @@ const MC = (() => {
             ticks: { font: { size: 10 } },
             grid: { display: false },
           },
-          y: {
-            title: { display: true, text: 'Fluorescence', font: { size: 11 } },
-            ticks: { font: { size: 10 } },
-            grid: { display: false },
-          },
+          y: compareYScale,
         },
         plugins: {
           legend: {
@@ -2122,8 +2216,11 @@ const MC = (() => {
             enabled: true, mode: 'nearest', intersect: false,
             callbacks: {
               title: items => items.length ? items[0].dataset.label || '' : '',
-              label: item =>
-                `t = ${item.parsed.x.toFixed(2)} ms, F = ${item.parsed.y.toFixed(1)}`,
+              label: item => {
+                const raw = item.raw;
+                if (raw && raw._tip) return raw._tip;
+                return `t = ${item.parsed.x.toFixed(2)} ms, F = ${item.parsed.y.toFixed(1)}`;
+              },
             },
           },
         },
@@ -2167,6 +2264,11 @@ const MC = (() => {
     const colorBy     = document.getElementById('mc-panel-color-by')?.value || '';
     const displayMode = document.getElementById('mc-panel-display')?.value || 'meansd';
 
+    // ── Shared Y-axis controls ──
+    const sharedY = document.getElementById('mc-panel-shared-y')?.checked;
+    const yMinInput = parseFloat(document.getElementById('mc-panel-y-min')?.value);
+    const yMaxInput = parseFloat(document.getElementById('mc-panel-y-max')?.value);
+
     _destroyAllPanelCharts();
     const grid = document.getElementById('mc-panel-grid');
     if (!grid) return;
@@ -2180,9 +2282,33 @@ const MC = (() => {
       .map(r => r.slot);
     if (validSlots.length === 0) return;
 
+    // Compute global Y range if shared Y is on and no manual values set
+    let yRange = null;
+    if (sharedY) {
+      let gMin = Infinity, gMax = -Infinity;
+      if (!isNaN(yMinInput)) gMin = yMinInput;
+      if (!isNaN(yMaxInput)) gMax = yMaxInput;
+      if (isNaN(yMinInput) || isNaN(yMaxInput)) {
+        for (const slot of validSlots) {
+          const idx = _slotToIndex(slot);
+          const curveObj = mcDataset.curves.find(c => c.index === idx);
+          if (!curveObj) continue;
+          for (const v of curveObj.values) {
+            if (v != null && isFinite(v)) {
+              if (isNaN(yMinInput) && v < gMin) gMin = v;
+              if (isNaN(yMaxInput) && v > gMax) gMax = v;
+            }
+          }
+        }
+      }
+      if (isFinite(gMin) && isFinite(gMax)) {
+        yRange = { min: gMin, max: gMax };
+      }
+    }
+
     if (!panelBy) {
       _createPanelChart(grid, 'all', 'All Curves', validSlots,
-                        colorBy, displayMode, timeMs);
+                        colorBy, displayMode, timeMs, yRange);
     } else {
       const panelMap = new Map();
       for (const slot of validSlots) {
@@ -2202,7 +2328,7 @@ const MC = (() => {
 
       for (const pv of sortedPanels) {
         _createPanelChart(grid, pv, String(pv), panelMap.get(pv),
-                          colorBy, displayMode, timeMs);
+                          colorBy, displayMode, timeMs, yRange);
       }
     }
 
@@ -2419,6 +2545,8 @@ const PARAM_GROUPS = {
   areas:  ['Area_OJ', 'Area_JI', 'Area_IP', 'Area_OP', 'SM', 'N'],
   tech:   ['F0', 'FM', 'FK', 'FJ', 'FI', 'FV', 'OJ', 'JI', 'IP'],
   timing: ['FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FM_time_ms'],
+  slopes: ['slope_OJ', 'slope_JI', 'slope_IP'],
+  dip:    ['dip_IP_amplitude', 'dip_IP_time_ms', 'dip_IP_d1_min'],
 };
 const PARAM_LABELS = {
   FVFM:'Fv/Fm (φP₀)', VJ:'VJ', VI:'VI', M0:'M₀', PSIE0:'ψE₀', PSIR0:'ψR₀',
@@ -2428,6 +2556,8 @@ const PARAM_LABELS = {
   SM:'Sm', N:'N (QA turnover)',
   F0:'F₀', FM:'FM', FK:'FK', FJ:'FJ', FI:'FI', FV:'FV', OJ:'A(O-J)', JI:'A(J-I)', IP:'A(I-P)',
   FJ_time_deriv_ms:'t(FJ) ms', FI_time_deriv_ms:'t(FI) ms', FP_time_deriv_ms:'t(FP) ms', FM_time_ms:'t(FM) ms',
+  slope_OJ:'Slope O-J', slope_JI:'Slope J-I', slope_IP:'Slope I-P',
+  dip_IP_amplitude:'Dip I-P amplitude', dip_IP_time_ms:'Dip I-P time (ms)', dip_IP_d1_min:'Dip I-P D1 min',
 };
 
 // ── colour palette ─────────────────────────────────────────────────────────
@@ -3334,6 +3464,12 @@ async function mcStartAnalysis() {
   const xlsxLink = document.getElementById('xlsx-download-link');
   if (xlsxLink) xlsxLink.style.display = 'none';
 
+  // Show multi-curve export buttons (CSV, XLSX, ZIP) in the bottom download bar
+  for (const id of ['mc-csv-btn', 'mc-xlsx-btn', 'mc-batch-export-btn']) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = '';
+  }
+
   // Reset caches
   mcDetailCache = {};
   paramMatrix = null;
@@ -3954,7 +4090,8 @@ function renderDiagD2() {
   files.forEach((fname, i) => {
     const kv = ojipData.key_values[fname];
     const c  = sampleColor(i, n);
-    const d2arr = ojipData.curves[fname].d2;
+    const d2raw = ojipData.curves[fname].d2;
+    const d2arr = ojipData.curves[fname].d2_smooth || d2raw;
     datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, backgroundColor: 'transparent',
       data: d2arr.map((y, j) => ({ x: t[j], y }))
@@ -3988,8 +4125,9 @@ function renderDiagD3() {
   files.forEach((fname, i) => {
     const kv = ojipData.key_values[fname];
     const c  = sampleColor(i, n);
-    const d3arr = ojipData.curves[fname].d3;
-    if (!d3arr) return;
+    const d3raw = ojipData.curves[fname].d3;
+    if (!d3raw) return;
+    const d3arr = ojipData.curves[fname].d3_smooth || d3raw;
     datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, backgroundColor: 'transparent',
       data: d3arr.map((y, j) => ({ x: t[j], y }))
@@ -4819,4 +4957,150 @@ function populateAnnotationFromOJIP() {
     };
 
     ANN.ingestFromOJIP(payload);
+}
+
+// ── Batch export as ZIP ───────────────────────────────────────────────────
+
+function showBatchExportModal() {
+  _updateBatchExportEstimate();
+  // Attach onchange listeners for estimate updates
+  ['be-summary-plots', 'be-indiv-curves', 'be-indiv-diag'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.onchange = _updateBatchExportEstimate;
+  });
+  $('#batchExportModal').modal('show');
+}
+
+function _updateBatchExportEstimate() {
+  const el = document.getElementById('be-file-estimate');
+  if (!el || !paramMatrix) return;
+  const valid = paramMatrix.filter(r => r && !r.error);
+  const nCurves = valid.length;
+  const nCached = valid.filter(r => mcDetailCache[r.slot]?.curves).length;
+  let count = 1; // params xlsx
+  if (document.getElementById('be-summary-plots')?.checked) count += 3;
+  const wantIndiv = document.getElementById('be-indiv-curves')?.checked ||
+                    document.getElementById('be-indiv-diag')?.checked;
+  if (document.getElementById('be-indiv-curves')?.checked) count += nCached * 4;
+  if (document.getElementById('be-indiv-diag')?.checked) count += nCached * 4;
+  let txt = `Estimated: ~${count} files for ${nCurves} curves.`;
+  if (wantIndiv && nCached < nCurves) {
+    txt += ` (${nCached}/${nCurves} curves inspected — click curves in the Time Series plot to cache them before export)`;
+  }
+  el.textContent = txt;
+}
+
+async function startBatchExport() {
+  const btn = document.getElementById('be-start-btn');
+  const progress = document.getElementById('be-progress');
+  const bar = document.getElementById('be-progress-bar');
+  const text = document.getElementById('be-progress-text');
+
+  if (!paramMatrix) return;
+  btn.disabled = true;
+  progress.style.display = '';
+
+  const inclSummary = document.getElementById('be-summary-plots')?.checked;
+  const inclCurves  = document.getElementById('be-indiv-curves')?.checked;
+  const inclDiag    = document.getElementById('be-indiv-diag')?.checked;
+
+  const validRows = paramMatrix.filter(r => r && !r.error);
+
+  // Step 1: Build params table data
+  const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+  const header = ['#', 'Name', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+  const rows = validRows.map(r => [
+    r.slot + 1, r.name || `#${r.slot + 1}`,
+    ...paramKeys.map(k => r[k] != null ? r[k] : '')
+  ]);
+
+  // Step 2: Collect summary chart images
+  const charts = {};
+  const _setProgress = (pct, msg) => {
+    bar.style.width = pct + '%';
+    bar.textContent = pct + '%';
+    if (text) text.textContent = msg;
+  };
+  _setProgress(5, 'Preparing parameter table...');
+
+  if (inclSummary) {
+    _setProgress(10, 'Capturing summary plots...');
+    const chartIds = ['mc-param-time-chart', 'mc-compare-chart', 'mc-aggregate-chart'];
+    for (const cid of chartIds) {
+      const canvas = document.getElementById(cid);
+      if (canvas && chartInst[cid]) {
+        charts[cid] = canvas.toDataURL('image/png');
+      }
+    }
+  }
+
+  _setProgress(20, 'Sending data to server...');
+
+  try {
+    const payload = {
+      params_header: header,
+      params_rows: rows,
+      charts: charts,
+      stem: mcDataset?.filename || 'ojip_batch',
+      include_curves: inclCurves,
+      include_diag: inclDiag,
+    };
+
+    // If individual curves/diag are requested, include the curve data
+    // so the server can generate matplotlib plots
+    if (inclCurves || inclDiag) {
+      const curveData = {};
+      for (const r of validRows) {
+        // Fetch detail for each curve if not cached
+        const slot = r.slot;
+        const detail = mcDetailCache[slot];
+        if (detail && detail.curves) {
+          curveData[r.name || `#${slot + 1}`] = {
+            time_raw_ms: detail.time_raw_ms,
+            time_log_ms: detail.time_log_ms,
+            curves: detail.curves,
+            key_values: detail,
+          };
+        }
+      }
+      payload.curve_data = curveData;
+      _setProgress(30, `Sending ${Object.keys(curveData).length} curve datasets...`);
+    }
+
+    const resp = await fetch('/api/ojip_export_batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`Server error (${resp.status}): ${errText.slice(0, 200)}`);
+    }
+
+    _setProgress(90, 'Downloading ZIP...');
+
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (mcDataset?.filename || 'ojip_batch').replace(/\.[^.]+$/, '') + '_export.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    _setProgress(100, 'Done!');
+    setTimeout(() => {
+      progress.style.display = 'none';
+      btn.disabled = false;
+      $('#batchExportModal').modal('hide');
+    }, 1000);
+
+  } catch (err) {
+    _setProgress(0, '');
+    progress.style.display = 'none';
+    btn.disabled = false;
+    alert('Batch export failed: ' + err.message);
+  }
 }
