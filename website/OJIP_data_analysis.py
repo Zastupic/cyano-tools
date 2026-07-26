@@ -7,7 +7,7 @@ from openpyxl import Workbook
 from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline, PchipInterpolator
 from scipy.ndimage import gaussian_filter1d
 from scipy.signal import find_peaks
-from . import UPLOAD_FOLDER
+from . import UPLOAD_FOLDER, csrf
 from werkzeug.utils import secure_filename
 from .ojip_interpretation import interpret_ojip, generate_narrative, summarise_findings, compare_ojip_params
 
@@ -1706,6 +1706,7 @@ def ojip_add_charts():
 
 
 @OJIP_data_analysis.route('/api/ojip_interpret', methods=['POST'])
+@csrf.exempt
 def ojip_interpret():
     """
     Biological interpretation of JIP-test parameters for one sample.
