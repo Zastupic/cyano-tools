@@ -1067,9 +1067,9 @@ const MC = (() => {
     const r = paramMatrix[slot];
     if (!r || r.error) return;
 
-    // Check LRU cache
-    if (mcDetailCache[r.name]) {
-      _showDetailInTabs(r.name, mcDetailCache[r.name], slot);
+    // Check LRU cache (keyed by both slot and name for different consumers)
+    if (mcDetailCache[slot]) {
+      _showDetailInTabs(r.name, mcDetailCache[slot], slot);
       return;
     }
 
@@ -1103,10 +1103,10 @@ const MC = (() => {
       const detail = data.results[0];
       if (detail.error) return;
 
-      // Cache with LRU eviction
+      // Cache with LRU eviction (keyed by slot for ZIP export compatibility)
       const keys = Object.keys(mcDetailCache);
       if (keys.length >= MC_DETAIL_MAX) delete mcDetailCache[keys[0]];
-      mcDetailCache[r.name] = detail;
+      mcDetailCache[slot] = detail;
 
       _showDetailInTabs(r.name, detail, slot);
     } catch(e) {
@@ -1174,8 +1174,8 @@ const MC = (() => {
       infoBar.style.display = '';
     }
 
-    // Switch to Curves tab
-    $('[href="#tab-curves"]').tab('show');
+    // Switch to Diagnostics tab
+    $('[href="#tab-diag"]').tab('show');
   }
 
   function backToOverview() {
@@ -2520,6 +2520,52 @@ const MC = (() => {
     navigator.clipboard.writeText(header + '\n' + rows.join('\n'));
   }
 
+  // ── Capture all summary charts for ZIP export ─────────────────────────
+  // Cycles through every parameter in the picker, captures each scatter
+  // plot, then captures grouped panels, compare chart, and aggregate chart.
+  function captureAllSummaryCharts() {
+    const result = {};
+    if (!paramMatrix) return result;
+
+    const picker = document.getElementById('mc-param-picker');
+    if (picker) {
+      const origValue = picker.value;
+      for (const opt of picker.options) {
+        picker.value = opt.value;
+        _renderParamTimeChart();
+        const canvas = document.getElementById('mc-param-time-chart');
+        if (canvas && chartInst['mc-param-time-chart']) {
+          result['param-' + opt.value] = canvas.toDataURL('image/png');
+        }
+      }
+      // Restore original selection
+      picker.value = origValue;
+      _renderParamTimeChart();
+    }
+
+    // Capture grouped-panel charts (one per group value, e.g. mc-panel-WT)
+    for (const cid of _panelChartIds) {
+      const canvas = document.getElementById(cid);
+      if (canvas && chartInst[cid]) {
+        result[cid] = canvas.toDataURL('image/png');
+      }
+    }
+
+    // Capture compare chart
+    const cmpCanvas = document.getElementById('mc-compare-chart');
+    if (cmpCanvas && chartInst['mc-compare-chart']) {
+      result['mc-compare-chart'] = cmpCanvas.toDataURL('image/png');
+    }
+
+    // Capture aggregate curves chart
+    const aggCanvas = document.getElementById('mc-aggregate-chart');
+    if (aggCanvas && chartInst['mc-aggregate-chart']) {
+      result['mc-aggregate-chart'] = aggCanvas.toDataURL('image/png');
+    }
+
+    return result;
+  }
+
   // ── Public API ───────────────────────────────────────────────────────
   return {
     parse, isMultiCurve, showSelectionModal,
@@ -2534,7 +2580,8 @@ const MC = (() => {
     copyParamTable, downloadParamsCSV, downloadParamsXLSX,
     toggleSummaryTable, copySummaryTable, setFlaggedFilter: _setFlaggedFilter,
     onFlagThresholdChange: _onFlagThresholdChange,
-    _updateSelCount, slotToIndex: _slotToIndex,
+    _updateSelCount, slotToIndex: _slotToIndex, slotMeta: _slotMeta,
+    captureAllSummaryCharts,
   };
 })();
 
@@ -4961,10 +5008,21 @@ function populateAnnotationFromOJIP() {
 
 // ── Batch export as ZIP ───────────────────────────────────────────────────
 
+const _BE_INDIV_LIMIT = 100; // disable individual curve/diag export above this count
+
 function showBatchExportModal() {
+  // Disable individual curve/diag checkboxes for large batches
+  const validCount = paramMatrix ? paramMatrix.filter(r => r && !r.error).length : 0;
+  const tooMany = validCount > _BE_INDIV_LIMIT;
+  for (const id of ['be-indiv-curves', 'be-indiv-diag']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.disabled = tooMany;
+    if (tooMany) el.checked = false;
+  }
   _updateBatchExportEstimate();
   // Attach onchange listeners for estimate updates
-  ['be-summary-plots', 'be-indiv-curves', 'be-indiv-diag'].forEach(id => {
+  ['be-indiv-curves', 'be-indiv-diag'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.onchange = _updateBatchExportEstimate;
   });
@@ -4976,9 +5034,20 @@ function _updateBatchExportEstimate() {
   if (!el || !paramMatrix) return;
   const valid = paramMatrix.filter(r => r && !r.error);
   const nCurves = valid.length;
+  // Count always-included charts: params xlsx + all param scatter plots + compare + aggregate + panels
+  const nParamOpts = document.getElementById('mc-param-picker')?.options.length || 0;
+  let nPanels = 0;
+  document.querySelectorAll('canvas[id^="mc-panel-"]').forEach(() => nPanels++);
+  const nCompare = document.getElementById('mc-compare-chart') ? 1 : 0;
+  const nAggregate = document.getElementById('mc-aggregate-chart') ? 1 : 0;
+  let count = 1 + nParamOpts + nPanels + nCompare + nAggregate; // xlsx + charts
+  if (nCurves > _BE_INDIV_LIMIT) {
+    el.textContent = `Estimated: ~${count} files for ${nCurves} curves ` +
+      `(${nParamOpts} parameter plots, ${nPanels} group panels, compare, aggregate). ` +
+      `Individual curve/diagnostic plots disabled for batches over ${_BE_INDIV_LIMIT} curves.`;
+    return;
+  }
   const nCached = valid.filter(r => mcDetailCache[r.slot]?.curves).length;
-  let count = 1; // params xlsx
-  if (document.getElementById('be-summary-plots')?.checked) count += 3;
   const wantIndiv = document.getElementById('be-indiv-curves')?.checked ||
                     document.getElementById('be-indiv-diag')?.checked;
   if (document.getElementById('be-indiv-curves')?.checked) count += nCached * 4;
@@ -5000,7 +5069,6 @@ async function startBatchExport() {
   btn.disabled = true;
   progress.style.display = '';
 
-  const inclSummary = document.getElementById('be-summary-plots')?.checked;
   const inclCurves  = document.getElementById('be-indiv-curves')?.checked;
   const inclDiag    = document.getElementById('be-indiv-diag')?.checked;
 
@@ -5014,25 +5082,15 @@ async function startBatchExport() {
     ...paramKeys.map(k => r[k] != null ? r[k] : '')
   ]);
 
-  // Step 2: Collect summary chart images
-  const charts = {};
+  // Step 2: Capture all summary charts (always included)
   const _setProgress = (pct, msg) => {
     bar.style.width = pct + '%';
     bar.textContent = pct + '%';
     if (text) text.textContent = msg;
   };
   _setProgress(5, 'Preparing parameter table...');
-
-  if (inclSummary) {
-    _setProgress(10, 'Capturing summary plots...');
-    const chartIds = ['mc-param-time-chart', 'mc-compare-chart', 'mc-aggregate-chart'];
-    for (const cid of chartIds) {
-      const canvas = document.getElementById(cid);
-      if (canvas && chartInst[cid]) {
-        charts[cid] = canvas.toDataURL('image/png');
-      }
-    }
-  }
+  _setProgress(10, 'Capturing all parameter & summary plots...');
+  const charts = MC.captureAllSummaryCharts();
 
   _setProgress(20, 'Sending data to server...');
 

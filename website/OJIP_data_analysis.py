@@ -1934,11 +1934,7 @@ def ojip_export_batch():
             zf.writestr('params_summary.xlsx', xlsx_buf.getvalue())
 
             # ── 2. Summary chart PNGs (captured from client canvases) ─────
-            CHART_NAMES = {
-                'mc-param-time-chart': 'param_scatter',
-                'mc-compare-chart':    'compare',
-                'mc-aggregate-chart':  'grouped_panels',
-            }
+            # Dynamic chart keys: param-FVFM, mc-panel-WT, mc-compare-chart, etc.
             for cid, data_url in charts.items():
                 if not data_url or ',' not in data_url:
                     continue
@@ -1947,7 +1943,17 @@ def ojip_export_batch():
                     img_bytes = base64.b64decode(b64)
                 except Exception:
                     continue
-                fname = CHART_NAMES.get(cid, cid) + '.png'
+                # Route each chart type to an appropriate subdirectory
+                if cid.startswith('param-'):
+                    fname = f'parameters/{cid[6:]}.png'
+                elif cid.startswith('mc-panel-'):
+                    fname = f'panels/{cid[9:]}.png'
+                elif cid == 'mc-compare-chart':
+                    fname = 'compare.png'
+                elif cid == 'mc-aggregate-chart':
+                    fname = 'aggregate_curves.png'
+                else:
+                    fname = f'{cid}.png'
                 zf.writestr(f'summary_plots/{fname}', img_bytes)
 
             # ── 3. Individual curve plots (matplotlib, optional) ──────────

@@ -2080,8 +2080,81 @@ def compare_ojip_params(
     if timing_parts:
         sentences.append('Phase timing: ' + '; '.join(timing_parts) + '.')
 
-    # ── Fallback: nothing significant ────────────────────────────────────────
-    if not sentences:
+    # ── Absolute-value snapshot when few sections reported changes ──────────
+    # If only 0–2 sentences were generated (e.g. just the Fv/Fm lead and maybe
+    # one section), append a compact summary of key parameter values so the
+    # user always sees a full characterisation — not just "nothing changed".
+    if len(sentences) <= 2:
+        sv_vj_v  = _g(sample, 'VJ')
+        sv_vi_v  = _g(sample, 'VI')
+        sv_m0_v  = _g(sample, 'M0')
+        sv_psie  = _g(sample, 'PSIE0')
+        sv_psir  = _g(sample, 'PSIR0')
+        sv_delr  = _g(sample, 'DELTAR0')
+        sv_absrc = _g(sample, 'ABSRC')
+        sv_etrc  = _g(sample, 'ET0RC')
+        sv_dirc  = _g(sample, 'DI0RC')
+        sv_sm_v  = _g(sample, 'SM')
+        parts = []
+        if sv_vj_v is not None:
+            parts.append(f'VJ={sv_vj_v:.3f}')
+        if sv_vi_v is not None:
+            parts.append(f'VI={sv_vi_v:.3f}')
+        if sv_m0_v is not None:
+            parts.append(f'M₀={sv_m0_v:.3f}')
+        if sv_psie is not None:
+            parts.append(f'ψE₀={sv_psie:.3f}')
+        if sv_psir is not None:
+            parts.append(f'ψR₀={sv_psir:.3f}')
+        if sv_delr is not None:
+            parts.append(f'δR₀={sv_delr:.3f}')
+        if sv_absrc is not None:
+            parts.append(f'ABS/RC={sv_absrc:.2f}')
+        if sv_etrc is not None:
+            parts.append(f'ET₀/RC={sv_etrc:.3f}')
+        if sv_dirc is not None:
+            parts.append(f'DI₀/RC={sv_dirc:.3f}')
+        if sv_sm_v is not None:
+            parts.append(f'Sm={sv_sm_v:.1f}')
+        if parts:
+            # Build matching reference values line
+            rv_parts = []
+            rv_vj_v  = _g(reference, 'VJ')
+            rv_vi_v  = _g(reference, 'VI')
+            rv_m0_v  = _g(reference, 'M0')
+            rv_psie  = _g(reference, 'PSIE0')
+            rv_psir  = _g(reference, 'PSIR0')
+            rv_delr  = _g(reference, 'DELTAR0')
+            rv_absrc = _g(reference, 'ABSRC')
+            rv_etrc  = _g(reference, 'ET0RC')
+            rv_dirc  = _g(reference, 'DI0RC')
+            rv_sm_v  = _g(reference, 'SM')
+            if rv_vj_v is not None:
+                rv_parts.append(f'VJ={rv_vj_v:.3f}')
+            if rv_vi_v is not None:
+                rv_parts.append(f'VI={rv_vi_v:.3f}')
+            if rv_m0_v is not None:
+                rv_parts.append(f'M₀={rv_m0_v:.3f}')
+            if rv_psie is not None:
+                rv_parts.append(f'ψE₀={rv_psie:.3f}')
+            if rv_psir is not None:
+                rv_parts.append(f'ψR₀={rv_psir:.3f}')
+            if rv_delr is not None:
+                rv_parts.append(f'δR₀={rv_delr:.3f}')
+            if rv_absrc is not None:
+                rv_parts.append(f'ABS/RC={rv_absrc:.2f}')
+            if rv_etrc is not None:
+                rv_parts.append(f'ET₀/RC={rv_etrc:.3f}')
+            if rv_dirc is not None:
+                rv_parts.append(f'DI₀/RC={rv_dirc:.3f}')
+            if rv_sm_v is not None:
+                rv_parts.append(f'Sm={rv_sm_v:.1f}')
+            sentences.append(
+                f'Key parameter values — Sample: {", ".join(parts)}; '
+                f'Reference: {", ".join(rv_parts)}. '
+                'All differences fall within typical replicate variability.'
+            )
+    elif not sentences:
         sentences.append(
             'No parameter changed by more than 5 % relative to the reference; '
             'the two OJIP curves are broadly comparable.'

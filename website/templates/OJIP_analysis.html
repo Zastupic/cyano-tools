@@ -1323,29 +1323,139 @@
       </div>
 
       <!-- Controls row -->
-      <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
-        <div class="d-flex align-items-center mr-3">
-          <label class="mb-0 mr-2 font-weight-bold" for="interp-sample-sel">Sample:</label>
-          <select id="interp-sample-sel" class="form-control form-control-sm" style="min-width:180px;"></select>
+      <div class="mb-3" style="font-size:0.88em;">
+        <!-- Top row: mode toggle + organism + interpret button -->
+        <div class="d-flex flex-wrap align-items-center mb-2 gap-2">
+          <div class="d-flex align-items-center mr-3">
+            <label class="mb-0 mr-2 font-weight-bold">Mode:</label>
+            <select id="interp-mode" class="form-control form-control-sm" style="width:auto;"
+                    onchange="_interpModeChanged()">
+              <option value="individual">Individual curve</option>
+              <option value="group">Group average</option>
+            </select>
+          </div>
+          <div class="d-flex align-items-center mr-3">
+            <label class="mb-0 mr-2" for="ojip-organism">Organism:</label>
+            <select id="ojip-organism" class="form-control form-control-sm" style="min-width:200px;">
+              <option value="unknown">Unknown / not specified</option>
+              <option value="cyanobacteria">Cyanobacteria</option>
+              <option value="green_alga">Green alga (Chlorophyta)</option>
+              <option value="plant">Vascular plant</option>
+            </select>
+          </div>
+          <button id="interp-run-btn" class="btn btn-primary btn-sm">
+            <span id="interp-spinner" class="spinner-border spinner-border-sm mr-1" style="display:none;" role="status"></span>
+            <i class="fa fa-flask mr-1"></i> Interpret
+          </button>
+          <button id="interp-run-all-btn" class="btn btn-outline-primary btn-sm" style="display:none;"
+                  title="Interpret all values of the group-by field and show comparison table">
+            <span id="interp-all-spinner" class="spinner-border spinner-border-sm mr-1" style="display:none;" role="status"></span>
+            <i class="fa fa-table mr-1"></i> Interpret All
+            <small id="interp-all-count" class="ml-1 text-muted"></small>
+          </button>
         </div>
-        <div class="d-flex align-items-center mr-3">
-          <label class="mb-0 mr-2" for="interp-reference-sel">vs. Reference:</label>
-          <select id="interp-reference-sel" class="form-control form-control-sm" style="min-width:180px;">
-            <option value="">&mdash; none &mdash;</option>
-          </select>
+
+        <!-- Individual mode controls -->
+        <div id="interp-individual-controls" class="d-flex flex-wrap align-items-center gap-2">
+          <div class="d-flex align-items-center mr-3">
+            <label class="mb-0 mr-2 font-weight-bold" for="interp-sample-sel">Sample:</label>
+            <select id="interp-sample-sel" class="form-control form-control-sm" style="min-width:180px;"></select>
+          </div>
+          <div class="d-flex align-items-center mr-3">
+            <label class="mb-0 mr-2" for="interp-reference-sel">vs. Reference:</label>
+            <select id="interp-reference-sel" class="form-control form-control-sm" style="min-width:180px;">
+              <option value="">&mdash; none &mdash;</option>
+            </select>
+          </div>
         </div>
-        <button id="interp-run-btn" class="btn btn-primary btn-sm">
-          <span id="interp-spinner" class="spinner-border spinner-border-sm mr-1" style="display:none;" role="status"></span>
-          <i class="fa fa-flask mr-1"></i> Interpret
-        </button>
-        <div class="d-flex align-items-center mr-3">
-          <label class="mb-0 mr-2" for="ojip-organism">Organism:</label>
-          <select id="ojip-organism" class="form-control form-control-sm" style="min-width:200px;">
-            <option value="unknown">Unknown / not specified</option>
-            <option value="cyanobacteria">Cyanobacteria</option>
-            <option value="green_alga">Green alga (Chlorophyta)</option>
-            <option value="plant">Vascular plant</option>
-          </select>
+
+        <!-- Group average mode controls -->
+        <div id="interp-group-controls" style="display:none;">
+          <!-- Multi-filter controls -->
+          <div id="interp-filter-block" class="mb-2">
+            <div id="interp-filter-pills" class="d-flex flex-wrap gap-1 mb-1" style="min-height:0;"></div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <label class="mb-0 mr-1 text-muted"><i class="fa fa-filter mr-1"></i>Filter:</label>
+              <select id="interp-filter-add-field" class="form-control form-control-sm" style="width:auto;"
+                      onchange="_interpFilterAddFieldChanged()">
+                <option value="">+ Add filter...</option>
+                <option value="line">Line (genotype)</option>
+                <option value="day">Day</option>
+                <option value="hours">Hour</option>
+                <option value="plantId">Plant</option>
+                <option value="trayId">Tray</option>
+              </select>
+              <select id="interp-filter-add-value" class="form-control form-control-sm" style="width:auto; display:none;"></select>
+              <button id="interp-filter-add-btn" class="btn btn-outline-secondary btn-sm"
+                      style="display:none;" onclick="_interpAddFilter()" title="Add this filter">
+                <i class="fa fa-plus"></i>
+              </button>
+              <button id="interp-filter-clear-btn" class="btn btn-outline-danger btn-sm"
+                      style="display:none;" onclick="_interpClearFilters()" title="Clear all filters">
+                <i class="fa fa-times mr-1"></i>Clear
+              </button>
+              <small id="interp-filter-count" class="text-muted"></small>
+            </div>
+          </div>
+          <!-- Sample group -->
+          <div class="d-flex flex-wrap align-items-center mb-2 gap-2">
+            <label class="mb-0 mr-1 font-weight-bold">Sample:</label>
+            <select id="interp-grp-sample-field" class="form-control form-control-sm" style="width:auto;"
+                    onchange="_interpGroupPopulate()">
+              <option value="line">Line (genotype)</option>
+              <option value="day">Day</option>
+              <option value="hours">Hour</option>
+              <option value="plantId">Plant</option>
+              <option value="trayId">Tray</option>
+            </select>
+            <select id="interp-grp-sample-value" class="form-control form-control-sm" style="width:auto; min-width:120px;"></select>
+            <small id="interp-grp-sample-n" class="text-muted"></small>
+          </div>
+          <!-- Reference group -->
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <label class="mb-0 mr-1">vs. Reference:</label>
+            <select id="interp-grp-ref-field" class="form-control form-control-sm" style="width:auto;"
+                    onchange="_interpGroupPopulate()">
+              <option value="line">Line (genotype)</option>
+              <option value="day">Day</option>
+              <option value="hours">Hour</option>
+              <option value="plantId">Plant</option>
+              <option value="trayId">Tray</option>
+            </select>
+            <select id="interp-grp-ref-value" class="form-control form-control-sm" style="width:auto; min-width:120px;">
+              <option value="">&mdash; none &mdash;</option>
+            </select>
+            <small id="interp-grp-ref-n" class="text-muted"></small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch interpretation results table -->
+      <div id="interp-batch-output" style="display:none;" class="mb-3">
+        <div class="card">
+          <div class="card-header py-2 d-flex align-items-center justify-content-between">
+            <span class="font-weight-bold" style="font-size:0.93em;">
+              <i class="fa fa-table mr-1"></i>Batch Interpretation Summary
+              <small id="interp-batch-title" class="font-weight-normal text-muted ml-2"></small>
+            </span>
+            <div>
+              <button class="btn btn-outline-secondary btn-sm mr-1" onclick="_interpBatchCopyCSV()" title="Copy as CSV">
+                <i class="fa fa-clipboard mr-1"></i>Copy CSV
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="setVisible('interp-batch-output',false)" title="Close">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-2">
+            <div id="interp-batch-progress" style="display:none;" class="mb-2">
+              <div class="progress" style="height:20px;">
+                <div id="interp-batch-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated"
+                     role="progressbar" style="width:0%;">0 / 0</div>
+              </div>
+            </div>
+            <div id="interp-batch-table-wrap" class="table-responsive" style="max-height:600px; overflow-y:auto;"></div>
+          </div>
         </div>
       </div>
 
@@ -2167,10 +2277,16 @@
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body" style="font-size:0.88em;">
-        <p class="mb-2">Select what to include in the ZIP archive:</p>
+        <p class="mb-2 font-weight-bold">Always included:</p>
+        <div class="mb-2" style="font-size:0.92em;">
+          <div class="d-block mb-1"><i class="fa fa-check text-success mr-1"></i>Parameter table (.xlsx)</div>
+          <div class="d-block mb-1"><i class="fa fa-check text-success mr-1"></i>All parameter scatter plots (Fv/Fm, VJ, VI, &hellip;)</div>
+          <div class="d-block mb-1"><i class="fa fa-check text-success mr-1"></i>Compare chart (grouped OJIP curves)</div>
+          <div class="d-block mb-1"><i class="fa fa-check text-success mr-1"></i>Grouped panels (one per group value)</div>
+          <div class="d-block mb-1"><i class="fa fa-check text-success mr-1"></i>Aggregate curves chart</div>
+        </div>
+        <p class="mb-2 font-weight-bold">Optional (per-curve):</p>
         <div class="mb-2">
-          <label class="d-block mb-1"><input type="checkbox" id="be-params-xlsx" checked disabled> Parameter table (.xlsx) &mdash; always included</label>
-          <label class="d-block mb-1"><input type="checkbox" id="be-summary-plots" checked> Summary plots (param scatter, compare, grouped panels)</label>
           <label class="d-block mb-1"><input type="checkbox" id="be-indiv-curves"> Individual curve plots (raw, F0-norm, FM-norm, double-norm)</label>
           <label class="d-block mb-1"><input type="checkbox" id="be-indiv-diag"> Individual diagnostic plots (reconstructed, residuals, D2, D3)</label>
         </div>
@@ -2201,7 +2317,7 @@
 <script src="{{ url_for('static', filename='vendor/chart.umd.min.4.4.7.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/chartjs-error-bars.umd.min.4.4.3.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/xlsx.full.min.0.20.3.js') }}"></script>
-<script src="{{ url_for('static', filename='js_OJIP.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='js_OJIP.js') }}?v=7"></script>
 <script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}?v=11"></script>
 <script>
 // Provide raw OJIP curve data to the annotation bundle download.
@@ -2407,39 +2523,318 @@ function setVisible(elId, show) {
   if (el) el.style.display = show ? '' : 'none';
 }
 
+// ── metadata lookup (self-contained, no dependency on MC.slotMeta export) ───
+function _getSlotMeta(slot) {
+  if (!window.mcDataset || !window.mcDataset.curves) return null;
+  var idx = (typeof MC !== 'undefined' && MC.slotToIndex) ? MC.slotToIndex(slot) : slot;
+  return window.mcDataset.curves.find(function(x) { return x.index === idx; }) || null;
+}
+
 // ── populate sample selector when analysis data is available ────────────────
 function _syncSampleSelector() {
-  if (!window.ojipData || !window.ojipData.files) return;
-  const files = window.ojipData.files;
+  const files = (window.ojipData && window.ojipData.files) ? window.ojipData.files : [];
+  const hasParamMatrix = window.paramMatrix && window.paramMatrix.filter(function(r){return r && !r.error;}).length > 0;
 
-  // ── sample selector ───────────────────────────────────────────────────────
-  const sel = document.getElementById('interp-sample-sel');
-  if (sel) {
-    const prev = sel.value;
-    sel.innerHTML = '';
-    files.forEach(function (f) {
-      const opt = document.createElement('option');
-      opt.value = f;
-      opt.textContent = f;
-      if (f === prev) opt.selected = true;
-      sel.appendChild(opt);
+  // Nothing to show at all
+  if (!files.length && !hasParamMatrix) return;
+
+  // Override mcShowPlaceholders for the Interpretation tab — show controls
+  // immediately when data is available (no need to click a single curve first)
+  var placeholder = document.querySelector('#tab-interp .mc-tab-placeholder');
+  if (placeholder) {
+    placeholder.style.display = 'none';
+    var sib = placeholder.nextElementSibling;
+    while (sib) {
+      sib.style.display = '';
+      sib = sib.nextElementSibling;
+    }
+  }
+
+  // ── sample selector (individual mode) ──────────────────────────────────────
+  // Use ojipData.files if available, otherwise build names from paramMatrix
+  var indivNames = files.slice();
+  if (!indivNames.length && hasParamMatrix) {
+    window.paramMatrix.forEach(function(r) {
+      if (r && !r.error) {
+        var name = r.name || ('Curve ' + r.slot);
+        indivNames.push(name);
+      }
     });
   }
 
-  // ── reference selector ────────────────────────────────────────────────────
-  const ref = document.getElementById('interp-reference-sel');
-  if (ref) {
-    const prevRef = ref.value;
-    ref.innerHTML = '<option value="">\u2014 none \u2014</option>';
-    files.forEach(function (f) {
-      const opt = document.createElement('option');
-      opt.value = f;
-      opt.textContent = f;
-      if (f === prevRef) opt.selected = true;
-      ref.appendChild(opt);
-    });
+  if (indivNames.length) {
+    var sel = document.getElementById('interp-sample-sel');
+    if (sel) {
+      var prev = sel.value;
+      sel.innerHTML = '';
+      indivNames.forEach(function (f) {
+        var opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f;
+        if (f === prev) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
+    // ── reference selector (individual mode) ─────────────────────────────────
+    var ref = document.getElementById('interp-reference-sel');
+    if (ref) {
+      var prevRef = ref.value;
+      ref.innerHTML = '<option value="">\u2014 none \u2014</option>';
+      indivNames.forEach(function (f) {
+        var opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f;
+        if (f === prevRef) opt.selected = true;
+        ref.appendChild(opt);
+      });
+    }
+  }
+
+  // Auto-switch to group mode when paramMatrix has many entries (multi-curve batch)
+  if (hasParamMatrix && window.paramMatrix.filter(function(r){return r && !r.error;}).length > 10) {
+    const modeEl = document.getElementById('interp-mode');
+    if (modeEl && modeEl.value === 'individual') {
+      modeEl.value = 'group';
+      _interpModeChanged();
+    }
+  }
+
+  // Populate group-mode dropdowns if in group mode
+  if (document.getElementById('interp-mode')?.value === 'group') {
+    _interpGroupPopulate();
   }
 }
+
+// ── mode toggle ──────────────────────────────────────────────────────────────
+function _interpModeChanged() {
+  var mode = document.getElementById('interp-mode')?.value || 'individual';
+  document.getElementById('interp-individual-controls').style.display = (mode === 'individual') ? '' : 'none';
+  document.getElementById('interp-group-controls').style.display = (mode === 'group') ? '' : 'none';
+  var allBtn = document.getElementById('interp-run-all-btn');
+  if (allBtn) allBtn.style.display = (mode === 'group') ? '' : 'none';
+  if (mode === 'group') _interpGroupPopulate();
+}
+
+// ── multi-filter system ──────────────────────────────────────────────────────
+var _interpActiveFilters = [];  // [{field, value, label}]
+var _interpFieldLabels = {line:'Line', day:'Day', hours:'Hour', plantId:'Plant', trayId:'Tray'};
+
+function _interpFilterAddFieldChanged() {
+  var field = document.getElementById('interp-filter-add-field').value;
+  var valSel = document.getElementById('interp-filter-add-value');
+  var addBtn = document.getElementById('interp-filter-add-btn');
+  if (!field) {
+    valSel.style.display = 'none';
+    addBtn.style.display = 'none';
+    return;
+  }
+  valSel.style.display = '';
+  addBtn.style.display = '';
+  // Populate values from the currently-filtered pool (respecting existing pills)
+  var filtered = _interpGetFilteredSlots();
+  var values = _interpUniqueMetaValues(field, filtered);
+  _interpFillSelect(valSel, values, false);
+}
+
+function _interpAddFilter() {
+  var fieldSel = document.getElementById('interp-filter-add-field');
+  var field = fieldSel.value;
+  var value = document.getElementById('interp-filter-add-value').value;
+  if (!field || !value) return;
+  // Prevent duplicate
+  if (_interpActiveFilters.some(function(f) { return f.field === field && f.value === value; })) return;
+  _interpActiveFilters.push({
+    field: field,
+    value: value,
+    label: (_interpFieldLabels[field] || field) + ' = ' + value
+  });
+  // Reset add controls
+  fieldSel.value = '';
+  document.getElementById('interp-filter-add-value').style.display = 'none';
+  document.getElementById('interp-filter-add-btn').style.display = 'none';
+  _interpRenderFilterPills();
+  _interpGroupPopulate();
+}
+
+function _interpRemoveFilter(idx) {
+  _interpActiveFilters.splice(idx, 1);
+  _interpRenderFilterPills();
+  _interpGroupPopulate();
+}
+
+function _interpClearFilters() {
+  _interpActiveFilters = [];
+  _interpRenderFilterPills();
+  _interpGroupPopulate();
+}
+
+function _interpRenderFilterPills() {
+  var container = document.getElementById('interp-filter-pills');
+  var clearBtn = document.getElementById('interp-filter-clear-btn');
+  container.innerHTML = '';
+  _interpActiveFilters.forEach(function(f, idx) {
+    var pill = document.createElement('span');
+    pill.className = 'badge badge-info mr-1 mb-1';
+    pill.style.cssText = 'font-size:0.82em; cursor:pointer; padding:4px 8px;';
+    pill.innerHTML = f.label + ' <i class="fa fa-times ml-1" style="font-size:0.75em;"></i>';
+    pill.title = 'Click to remove this filter';
+    pill.onclick = (function(i) { return function() { _interpRemoveFilter(i); }; })(idx);
+    container.appendChild(pill);
+  });
+  if (clearBtn) clearBtn.style.display = _interpActiveFilters.length > 0 ? '' : 'none';
+  // Disable fields already in a pill in the "add" dropdown
+  var addField = document.getElementById('interp-filter-add-field');
+  if (addField) {
+    var usedFields = _interpActiveFilters.map(function(f) { return f.field; });
+    for (var i = 0; i < addField.options.length; i++) {
+      var opt = addField.options[i];
+      opt.disabled = opt.value && usedFields.indexOf(opt.value) >= 0;
+    }
+  }
+}
+
+// ── helpers for group mode ───────────────────────────────────────────────────
+function _interpGetFilteredSlots() {
+  if (!window.paramMatrix) return [];
+  return window.paramMatrix.filter(function(r) {
+    if (!r || r.error) return false;
+    if (_interpActiveFilters.length === 0) return true;
+    var meta = _getSlotMeta(r.slot);
+    if (!meta) return false;
+    for (var i = 0; i < _interpActiveFilters.length; i++) {
+      var f = _interpActiveFilters[i];
+      if (String(meta[f.field] || '') !== f.value) return false;
+    }
+    return true;
+  });
+}
+
+function _interpUniqueMetaValues(field, slots, filterField) {
+  var source = slots || _interpGetFilteredSlots();
+  var seen = new Set();
+  source.forEach(function(r) {
+    var meta = _getSlotMeta(r.slot);
+    if (meta) {
+      var v = meta[field];
+      if (v != null) seen.add(String(v));
+    }
+  });
+  // Sort numerically where possible
+  var arr = Array.from(seen);
+  arr.sort(function(a, b) {
+    var na = parseFloat(a), nb = parseFloat(b);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b);
+  });
+  return arr;
+}
+
+function _interpFillSelect(sel, values, addNone) {
+  if (!sel) return;
+  var prev = sel.value;
+  sel.innerHTML = '';
+  if (addNone) {
+    var noneOpt = document.createElement('option');
+    noneOpt.value = '';
+    noneOpt.textContent = '\u2014 all \u2014';
+    sel.appendChild(noneOpt);
+  }
+  values.forEach(function(v) {
+    var opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    if (v === prev) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function _interpGroupPopulate() {
+  var filtered = _interpGetFilteredSlots();
+
+  // Update filter count
+  var countEl = document.getElementById('interp-filter-count');
+  if (countEl) {
+    countEl.textContent = _interpActiveFilters.length > 0
+      ? '(' + filtered.length + ' curves after filtering)'
+      : '(' + filtered.length + ' curves available)';
+  }
+
+  // Populate sample group value dropdown
+  var sampleField = document.getElementById('interp-grp-sample-field')?.value || 'line';
+  var sampleValues = _interpUniqueMetaValues(sampleField, filtered);
+  _interpFillSelect(document.getElementById('interp-grp-sample-value'), sampleValues, false);
+
+  // Populate reference group value dropdown
+  var refField = document.getElementById('interp-grp-ref-field')?.value || 'line';
+  var refValues = _interpUniqueMetaValues(refField, filtered);
+  _interpFillSelect(document.getElementById('interp-grp-ref-value'), refValues, true);
+
+  // Update n counts
+  _interpUpdateGroupN();
+
+  // Update "Interpret All" count badge
+  var allCount = document.getElementById('interp-all-count');
+  if (allCount) allCount.textContent = '(' + sampleValues.length + ')';
+}
+
+function _interpUpdateGroupN() {
+  var filtered = _interpGetFilteredSlots();
+  var sField = document.getElementById('interp-grp-sample-field')?.value || 'line';
+  var sValue = document.getElementById('interp-grp-sample-value')?.value;
+  var rField = document.getElementById('interp-grp-ref-field')?.value || 'line';
+  var rValue = document.getElementById('interp-grp-ref-value')?.value;
+
+  var sN = _interpCountGroup(filtered, sField, sValue);
+  var rN = rValue ? _interpCountGroup(filtered, rField, rValue) : 0;
+
+  var sEl = document.getElementById('interp-grp-sample-n');
+  var rEl = document.getElementById('interp-grp-ref-n');
+  if (sEl) sEl.textContent = sValue ? '(n=' + sN + ')' : '';
+  if (rEl) rEl.textContent = rValue ? '(n=' + rN + ')' : '';
+}
+
+function _interpCountGroup(slots, field, value) {
+  if (!value) return 0;
+  return slots.filter(function(r) {
+    var meta = _getSlotMeta(r.slot);
+    return meta && String(meta[field] || '') === value;
+  }).length;
+}
+
+// Build averaged params for a group
+function _buildGroupAvgParams(slots, field, value) {
+  var matching = slots.filter(function(r) {
+    var meta = _getSlotMeta(r.slot);
+    return meta && String(meta[field] || '') === value;
+  });
+  if (matching.length === 0) return null;
+
+  var keys = ['F0','FM','FK','FJ','FI','FV','FVFM','VJ','VI','M0',
+              'PSIE0','PSIR0','DELTAR0','PHIE0','PHIR0',
+              'ABSRC','TR0RC','ET0RC','RE0RC','DI0RC','SM','N',
+              'Area_OJ','Area_JI','Area_IP','Area_OP',
+              'slope_OJ','slope_JI','slope_IP',
+              'dip_IP_amplitude','dip_IP_time_ms','dip_IP_d1_min',
+              'FJ_time_user_ms','FI_time_user_ms','FM_time_ms',
+              'FJ_time_deriv_ms','FI_time_deriv_ms','FP_time_deriv_ms'];
+  var avg = {};
+  keys.forEach(function(k) {
+    var vals = matching.map(function(r) { return r[k]; }).filter(function(v) { return v != null && isFinite(v); });
+    avg[k] = vals.length ? vals.reduce(function(a,b){return a+b;}, 0) / vals.length : null;
+  });
+  return avg;
+}
+
+// Add onchange to group value selects for n-count updates
+['interp-grp-sample-value', 'interp-grp-ref-value',
+ 'interp-grp-sample-field', 'interp-grp-ref-field'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('change', function() {
+    if (id.includes('field')) _interpGroupPopulate();
+    else _interpUpdateGroupN();
+  });
+});
 
 // Rebuild selector whenever results section becomes visible
 $(document).on('show.bs.tab', 'a[href="#tab-interp"]', function () {
@@ -2451,23 +2846,124 @@ var _origRecalc = window.recalcAllParams;
 if (typeof _origRecalc === 'function') {
   window.recalcAllParams = function () {
     _origRecalc.apply(this, arguments);
+    _interpActiveFilters = [];
+    _interpRenderFilterPills();
     _syncSampleSelector();
   };
 }
 
 // ── main interpret function ─────────────────────────────────────────────────
 document.getElementById('interp-run-btn').addEventListener('click', function () {
-  if (!window.ojipData || !window.ojipData.files || !window.ojipData.files.length) {
+  var mode = document.getElementById('interp-mode')?.value || 'individual';
+  var organism = document.getElementById('ojip-organism').value || 'unknown';
+  var params, reference, fluorometer, instrument, measurement;
+
+  // ── Group average mode ──────────────────────────────────────────────────
+  if (mode === 'group') {
+    if (!window.paramMatrix || !window.paramMatrix.length) {
+      document.getElementById('interp-error').textContent = 'No batch analysis results available. Run a multi-curve analysis first.';
+      setVisible('interp-error', true);
+      return;
+    }
+    var filtered = _interpGetFilteredSlots();
+    var sField = document.getElementById('interp-grp-sample-field')?.value || 'line';
+    var sValue = document.getElementById('interp-grp-sample-value')?.value;
+    if (!sValue) {
+      document.getElementById('interp-error').textContent = 'Please select a sample group value.';
+      setVisible('interp-error', true);
+      return;
+    }
+    params = _buildGroupAvgParams(filtered, sField, sValue);
+    if (!params) {
+      document.getElementById('interp-error').textContent = 'No curves match the selected sample group.';
+      setVisible('interp-error', true);
+      return;
+    }
+    var sN = _interpCountGroup(filtered, sField, sValue);
+
+    var rField = document.getElementById('interp-grp-ref-field')?.value || 'line';
+    var rValue = document.getElementById('interp-grp-ref-value')?.value;
+    reference = null;
+    var rN = 0;
+    if (rValue) {
+      reference = _buildGroupAvgParams(filtered, rField, rValue);
+      rN = _interpCountGroup(filtered, rField, rValue);
+    }
+
+    setVisible('interp-error', false);
+    setVisible('interp-output', false);
+    document.getElementById('interp-spinner').style.display = '';
+    document.getElementById('interp-run-btn').disabled = true;
+
+    fluorometer = window.ojipData ? (window.ojipData.fluorometer || '') : '';
+    instrument = 'unknown';
+    if (fluorometer.includes('MULTI-COLOR')) instrument = 'multicolor_pam';
+    else if (fluorometer.toLowerCase().includes('aquapen')) instrument = 'aquapen';
+    else if (fluorometer.includes('FL6000')) instrument = 'fl6000';
+
+    measurement = {
+      instrument: instrument,
+      uses_measuring_light: false,
+      fj_timing_ms: params.FJ_time_user_ms || 2.0,
+      acclimation: 'dark',
+    };
+
+    // Store labels for display in results
+    window._interpSampleLabel = sValue + ' (n=' + sN + ')';
+    window._interpRefLabel = rValue ? rValue + ' (n=' + rN + ')' : null;
+
+    fetch('/api/ojip_interpret', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        params: params,
+        organism_class: organism,
+        reference: reference,
+        measurement: measurement,
+      }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('interp-spinner').style.display = 'none';
+      document.getElementById('interp-run-btn').disabled = false;
+      if (data.status !== 'success') {
+        document.getElementById('interp-error').textContent = data.message || 'Interpretation failed.';
+        setVisible('interp-error', true);
+        return;
+      }
+      _interpRenderResults(data, window._interpSampleLabel, window._interpRefLabel, params, reference);
+    })
+    .catch(function(err) {
+      document.getElementById('interp-spinner').style.display = 'none';
+      document.getElementById('interp-run-btn').disabled = false;
+      document.getElementById('interp-error').textContent = 'Request failed: ' + err.message;
+      setVisible('interp-error', true);
+    });
+    return;
+  }
+
+  // ── Individual mode (original logic) ────────────────────────────────────
+  var hasFiles = window.ojipData && window.ojipData.files && window.ojipData.files.length;
+  var hasMatrix = window.paramMatrix && window.paramMatrix.some(function(r){ return r && !r.error; });
+  if (!hasFiles && !hasMatrix) {
     document.getElementById('interp-error').textContent = 'No analysis results available. Please upload and analyse files first.';
     setVisible('interp-error', true);
     return;
   }
 
   _syncSampleSelector();
-  const fname = document.getElementById('interp-sample-sel').value;
-  const organism = document.getElementById('ojip-organism').value || 'unknown';
+  var fname = document.getElementById('interp-sample-sel').value;
 
-  if (!fname || !window.paramData || !window.paramData[fname]) {
+  // Helper: find paramMatrix entry by name
+  function _findInMatrix(name) {
+    if (!window.paramMatrix) return null;
+    return window.paramMatrix.find(function(r) { return r && !r.error && r.name === name; }) || null;
+  }
+
+  // Check if we have params for this name (from paramData or paramMatrix)
+  var hasPD = window.paramData && window.paramData[fname];
+  var matrixEntry = !hasPD ? _findInMatrix(fname) : null;
+  if (!fname || (!hasPD && !matrixEntry)) {
     document.getElementById('interp-error').textContent = 'Sample data not found.';
     setVisible('interp-error', true);
     return;
@@ -2478,14 +2974,21 @@ document.getElementById('interp-run-btn').addEventListener('click', function () 
   document.getElementById('interp-spinner').style.display = '';
   document.getElementById('interp-run-btn').disabled = true;
 
-  const p = window.paramData[fname];
-  const kv = window.ojipData.key_values[fname] || {};
+  var kvObj = (window.ojipData && window.ojipData.key_values) ? (window.ojipData.key_values[fname] || {}) : {};
 
-  // Helper: build a params object from a filename
+  // Helper: build a params object from a filename (paramData or paramMatrix)
   function _buildParams(fn) {
-    const pd = window.paramData[fn];
-    const kd = window.ojipData.key_values[fn] || {};
-    if (!pd) return null;
+    var pd = (window.paramData && window.paramData[fn]) ? window.paramData[fn] : null;
+    var kd = (window.ojipData && window.ojipData.key_values) ? (window.ojipData.key_values[fn] || {}) : {};
+    // Fallback: look up in paramMatrix
+    if (!pd) {
+      var me = _findInMatrix(fn);
+      if (!me) return null;
+      // paramMatrix entries have the same keys as paramData (FVFM, VJ, etc.)
+      pd = me;
+      // paramMatrix entries also have timing fields directly
+      kd = me;
+    }
     return {
       F0: pd.F0, FM: pd.FM, FK: pd.FK, FJ: pd.FJ, FI: pd.FI, FV: pd.FV,
       FVFM: pd.FVFM, VJ: pd.VJ, VI: pd.VI, M0: pd.M0,
@@ -2500,25 +3003,40 @@ document.getElementById('interp-run-btn').addEventListener('click', function () 
     };
   }
 
-  const params = _buildParams(fname);
+  params = _buildParams(fname);
+  // Build merged params object for delta table
+  var sampleMerged = hasPD
+    ? Object.assign({}, window.paramData[fname], kvObj)
+    : Object.assign({}, matrixEntry || {});
 
   // Reference sample (null if "— none —" is selected)
-  const refFname = (document.getElementById('interp-reference-sel') || {}).value || '';
-  const reference = (refFname && refFname !== fname) ? _buildParams(refFname) : null;
+  var refFname = (document.getElementById('interp-reference-sel') || {}).value || '';
+  reference = (refFname && refFname !== fname) ? _buildParams(refFname) : null;
+  var refMerged = null;
+  if (refFname && refFname !== fname) {
+    var refPD = window.paramData && window.paramData[refFname];
+    var refME = !refPD ? _findInMatrix(refFname) : null;
+    refMerged = refPD
+      ? Object.assign({}, refPD, ((window.ojipData && window.ojipData.key_values) ? (window.ojipData.key_values[refFname] || {}) : {}))
+      : (refME ? Object.assign({}, refME) : null);
+  }
 
   // Assemble measurement metadata from what the pipeline knows
-  const fluorometer = window.ojipData.fluorometer || '';
-  let instrument = 'unknown';
+  fluorometer = window.ojipData ? (window.ojipData.fluorometer || '') : '';
+  instrument = 'unknown';
   if (fluorometer.includes('MULTI-COLOR')) instrument = 'multicolor_pam';
   else if (fluorometer.toLowerCase().includes('aquapen') || fluorometer.toLowerCase().includes('fluorpen')) instrument = 'aquapen';
   else if (fluorometer.includes('FL6000')) instrument = 'fl6000';
 
-  const measurement = {
+  measurement = {
     instrument: instrument,
-    uses_measuring_light: false,  // OJIP is driven by saturation pulse only — ML is off regardless of instrument type
-    fj_timing_ms: kv.FJ_time_user_ms || window.ojipData.fj_time_ms || 2.0,
-    acclimation: 'dark',  // conservative default; user can extend later
+    uses_measuring_light: false,
+    fj_timing_ms: kvObj.FJ_time_user_ms || (window.ojipData ? window.ojipData.fj_time_ms : null) || 2.0,
+    acclimation: 'dark',
   };
+
+  window._interpSampleLabel = fname;
+  window._interpRefLabel = refFname || null;
 
   fetch('/api/ojip_interpret', {
     method: 'POST',
@@ -2541,25 +3059,7 @@ document.getElementById('interp-run-btn').addEventListener('click', function () 
       return;
     }
 
-    const hasRef = !!(data.has_reference && data.ref_findings);
-
-    // Comparative mode: show paragraph + delta table, hide standalone cards
-    setVisible('interp-comparison-narrative-section', hasRef);
-    setVisible('interp-delta-section', hasRef);
-    // Standalone mode: show narrative card + detailed findings accordion
-    setVisible('interp-narrative-card', !hasRef);
-    setVisible('interp-detail-wrapper-card', !hasRef);
-    // Reference / sample compact cards: permanently hidden (removed from UX)
-    setVisible('interp-ref-section', false);
-    setVisible('interp-sample-section', false);
-
-    if (hasRef) {
-      setText('interp-delta-ref-label', refFname);
-      setText('interp-delta-smp-label', fname);
-      setText('interp-comparison-narrative', data.comparison_paragraph || '');
-      renderDeltaTable(fname, refFname, organism);
-    }
-    renderInterpretation(data.findings, data.narrative, organism, fname, hasRef ? refFname : null);
+    _interpRenderResults(data, fname, refFname || null, sampleMerged, refMerged);
   })
   .catch(function (err) {
     document.getElementById('interp-spinner').style.display = 'none';
@@ -2568,6 +3068,275 @@ document.getElementById('interp-run-btn').addEventListener('click', function () 
     setVisible('interp-error', true);
   });
 });
+
+// ── "Interpret All" batch handler ────────────────────────────────────────────
+document.getElementById('interp-run-all-btn').addEventListener('click', function () {
+  if (!window.paramMatrix || !window.paramMatrix.length) {
+    document.getElementById('interp-error').textContent = 'No batch analysis results available.';
+    setVisible('interp-error', true);
+    return;
+  }
+
+  var filtered = _interpGetFilteredSlots();
+  var sField = document.getElementById('interp-grp-sample-field')?.value || 'line';
+  var sampleValues = _interpUniqueMetaValues(sField, filtered);
+
+  if (sampleValues.length === 0) {
+    document.getElementById('interp-error').textContent = 'No groups found for the selected field.';
+    setVisible('interp-error', true);
+    return;
+  }
+
+  // Reference (optional)
+  var rField = document.getElementById('interp-grp-ref-field')?.value || 'line';
+  var rValue = document.getElementById('interp-grp-ref-value')?.value;
+  var refParams = null;
+  if (rValue) {
+    refParams = _buildGroupAvgParams(filtered, rField, rValue);
+  }
+
+  var organism = document.getElementById('ojip-organism').value || 'unknown';
+  var fluorometer = window.ojipData ? (window.ojipData.fluorometer || '') : '';
+  var instrument = 'unknown';
+  if (fluorometer.includes('MULTI-COLOR')) instrument = 'multicolor_pam';
+  else if (fluorometer.toLowerCase().includes('aquapen')) instrument = 'aquapen';
+  else if (fluorometer.includes('FL6000')) instrument = 'fl6000';
+
+  // Build work items
+  var workItems = [];
+  sampleValues.forEach(function(val) {
+    var params = _buildGroupAvgParams(filtered, sField, val);
+    if (params) {
+      workItems.push({
+        value: val,
+        params: params,
+        n: _interpCountGroup(filtered, sField, val),
+      });
+    }
+  });
+
+  if (workItems.length === 0) {
+    document.getElementById('interp-error').textContent = 'No valid groups found.';
+    setVisible('interp-error', true);
+    return;
+  }
+
+  // UI state
+  setVisible('interp-error', false);
+  setVisible('interp-output', false);
+  setVisible('interp-batch-output', true);
+  setVisible('interp-batch-progress', true);
+  document.getElementById('interp-all-spinner').style.display = '';
+  document.getElementById('interp-run-all-btn').disabled = true;
+  document.getElementById('interp-run-btn').disabled = true;
+
+  var progressBar = document.getElementById('interp-batch-progress-bar');
+  var total = workItems.length;
+  var completed = 0;
+  var results = [];
+
+  // Title
+  var filterDesc = _interpActiveFilters.map(function(f) { return f.label; }).join(', ');
+  document.getElementById('interp-batch-title').textContent =
+    'Grouped by ' + (_interpFieldLabels[sField] || sField) +
+    (filterDesc ? ' | Filters: ' + filterDesc : '') +
+    (rValue ? ' | Ref: ' + (_interpFieldLabels[rField] || rField) + '=' + rValue : '');
+
+  // Store for row click-through
+  window._interpBatchRefParams = refParams;
+  window._interpBatchRefLabel = rValue || null;
+
+  // Sequential fetch
+  function processNext(idx) {
+    if (idx >= workItems.length) {
+      _interpRenderBatchTable(results, sField, refParams, rValue);
+      setVisible('interp-batch-progress', false);
+      document.getElementById('interp-all-spinner').style.display = 'none';
+      document.getElementById('interp-run-all-btn').disabled = false;
+      document.getElementById('interp-run-btn').disabled = false;
+      return;
+    }
+
+    var item = workItems[idx];
+    var measurement = {
+      instrument: instrument,
+      uses_measuring_light: false,
+      fj_timing_ms: item.params.FJ_time_user_ms || 2.0,
+      acclimation: 'dark',
+    };
+
+    progressBar.style.width = ((idx / total) * 100) + '%';
+    progressBar.textContent = idx + ' / ' + total;
+
+    fetch('/api/ojip_interpret', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        params: item.params,
+        organism_class: organism,
+        reference: refParams,
+        measurement: measurement,
+      }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      results.push({ value: item.value, n: item.n, params: item.params, data: data });
+      completed++;
+      progressBar.style.width = ((completed / total) * 100) + '%';
+      progressBar.textContent = completed + ' / ' + total;
+      processNext(idx + 1);
+    })
+    .catch(function(err) {
+      results.push({ value: item.value, n: item.n, params: item.params,
+                      data: { status: 'error', message: err.message } });
+      completed++;
+      processNext(idx + 1);
+    });
+  }
+
+  processNext(0);
+});
+
+// ── Batch results table renderer ─────────────────────────────────────────────
+function _interpRenderBatchTable(results, groupField, refParams, refLabel) {
+  var groupLabel = _interpFieldLabels[groupField] || groupField;
+
+  var paramCols = [
+    { hdr: 'n',        get: function(r) { return r.n; },            dp: 0 },
+    { hdr: 'Fv/Fm',   get: function(r) { return r.params.FVFM; },  dp: 3 },
+    { hdr: 'VJ',      get: function(r) { return r.params.VJ; },    dp: 3 },
+    { hdr: 'VI',      get: function(r) { return r.params.VI; },    dp: 3 },
+    { hdr: 'M0',      get: function(r) { return r.params.M0; },    dp: 3 },
+    { hdr: '\u03C8E0', get: function(r) { return r.params.PSIE0; }, dp: 3 },
+    { hdr: '\u03C8R0', get: function(r) { return r.params.PSIR0; }, dp: 3 },
+    { hdr: '\u03B4R0', get: function(r) { return r.params.DELTAR0; }, dp: 3 },
+    { hdr: 'ABS/RC',  get: function(r) { return r.params.ABSRC; }, dp: 2 },
+    { hdr: 'ET0/RC',  get: function(r) { return r.params.ET0RC; }, dp: 3 },
+    { hdr: 'DI0/RC',  get: function(r) { return r.params.DI0RC; }, dp: 3 },
+    { hdr: 'Sm',      get: function(r) { return r.params.SM; },    dp: 1 },
+  ];
+
+  var statusCols = [
+    { hdr: 'PQ poise', get: function(r) {
+        if (r.data.status !== 'success') return { text:'err', cls:'badge-danger' };
+        var f = (r.data.findings && r.data.findings.findings && r.data.findings.findings.pq_redox_poise) || {};
+        return { text: f.poise || '--', cls: '' };
+      }
+    },
+    { hdr: 'PSII yield', get: function(r) {
+        if (r.data.status !== 'success') return { text:'err', cls:'badge-danger' };
+        var f = (r.data.findings && r.data.findings.findings && r.data.findings.findings.psii_max_quantum_yield) || {};
+        return { text: f.level || '--', cls: '' };
+      }
+    },
+    { hdr: 'ET QA\u2192QB', get: function(r) {
+        if (r.data.status !== 'success') return { text:'err', cls:'badge-danger' };
+        var f = (r.data.findings && r.data.findings.findings && r.data.findings.findings.electron_transport_qa) || {};
+        return { text: f.level || '--', cls: '' };
+      }
+    },
+    { hdr: 'PSI acc.', get: function(r) {
+        if (r.data.status !== 'success') return { text:'err', cls:'badge-danger' };
+        var f = (r.data.findings && r.data.findings.findings && r.data.findings.findings.psi_acceptor_side) || {};
+        return { text: f.level || '--', cls: '' };
+      }
+    },
+    { hdr: 'Donor/OEC', get: function(r) {
+        if (r.data.status !== 'success') return { text:'err', cls:'badge-danger' };
+        var f = (r.data.findings && r.data.findings.findings && r.data.findings.findings.donor_side_oec) || {};
+        return { text: f.level || '--', cls: '' };
+      }
+    },
+  ];
+
+  var html = '<table class="table table-sm table-bordered table-hover mb-0" style="font-size:0.82em; white-space:nowrap;">';
+  html += '<thead class="thead-light"><tr>';
+  html += '<th style="position:sticky;left:0;background:#f8f9fa;z-index:2;">' + groupLabel + '</th>';
+  paramCols.forEach(function(c) { html += '<th>' + c.hdr + '</th>'; });
+  statusCols.forEach(function(c) { html += '<th>' + c.hdr + '</th>'; });
+  html += '</tr></thead><tbody>';
+
+  results.forEach(function(r) {
+    var isRef = (refLabel && r.value === refLabel);
+    var rowBg = isRef ? '#d1ecf1' : '#fff';
+    html += '<tr style="cursor:pointer;' + (isRef ? 'background:#d1ecf1;' : '') + '"'
+          + ' onclick="_interpShowBatchDetail(\'' + r.value.replace(/'/g, "\\'") + '\')">';
+    html += '<td style="position:sticky;left:0;background:' + rowBg + ';z-index:1;font-weight:600;">'
+          + r.value + (isRef ? ' <small class="text-info">(ref)</small>' : '') + '</td>';
+
+    paramCols.forEach(function(c) {
+      var v = c.get(r);
+      html += '<td>' + (v != null && isFinite(v) ? (+v).toFixed(c.dp) : '--') + '</td>';
+    });
+
+    statusCols.forEach(function(c) {
+      var s = c.get(r);
+      var badgeCls = s.cls || _BADGE_MAP[s.text] || 'badge-secondary';
+      var label = _POISE_LABELS[s.text] || _LEVEL_LABELS[s.text] || s.text;
+      html += '<td><span class="badge ' + badgeCls + '" style="font-size:0.78em;">' + label + '</span></td>';
+    });
+
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('interp-batch-table-wrap').innerHTML = html;
+
+  // Store for CSV export and row click
+  window._interpBatchResults = results;
+  window._interpBatchParamCols = paramCols;
+  window._interpBatchStatusCols = statusCols;
+  window._interpBatchGroupLabel = groupLabel;
+}
+
+// ── Batch row click-through to detailed interpretation ───────────────────────
+function _interpShowBatchDetail(value) {
+  var r = (window._interpBatchResults || []).find(function(x) { return x.value === value; });
+  if (!r || r.data.status !== 'success') return;
+  var sLabel = value + ' (n=' + r.n + ')';
+  var rLabel = window._interpBatchRefLabel || null;
+  _interpRenderResults(r.data, sLabel, rLabel, r.params, window._interpBatchRefParams || null);
+  setVisible('interp-output', true);
+  document.getElementById('interp-output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Batch table CSV copy ─────────────────────────────────────────────────────
+function _interpBatchCopyCSV() {
+  if (!window._interpBatchResults) return;
+  var results = window._interpBatchResults;
+  var paramCols = window._interpBatchParamCols;
+  var statusCols = window._interpBatchStatusCols;
+  var groupLabel = window._interpBatchGroupLabel;
+
+  var lines = [];
+  var hdr = [groupLabel];
+  paramCols.forEach(function(c) { hdr.push(c.hdr); });
+  statusCols.forEach(function(c) { hdr.push(c.hdr); });
+  lines.push(hdr.join('\t'));
+
+  results.forEach(function(r) {
+    var row = [r.value];
+    paramCols.forEach(function(c) {
+      var v = c.get(r);
+      row.push(v != null && isFinite(v) ? (+v).toFixed(c.dp) : '');
+    });
+    statusCols.forEach(function(c) {
+      var s = c.get(r);
+      var label = _POISE_LABELS[s.text] || _LEVEL_LABELS[s.text] || s.text;
+      row.push(label);
+    });
+    lines.push(row.join('\t'));
+  });
+
+  navigator.clipboard.writeText(lines.join('\n')).then(function() {
+    var btn = document.querySelector('#interp-batch-output .btn-outline-secondary');
+    if (btn) {
+      var orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fa fa-check mr-1"></i>Copied!';
+      setTimeout(function() { btn.innerHTML = orig; }, 1500);
+    }
+  });
+}
 
 // ── Shared label/badge maps for compact summary tables ────────────────────────
 const _POISE_LABELS = {
@@ -2647,13 +3416,36 @@ function renderSampleSummary(sample_findings, sample_narrative) {
   document.getElementById('interp-sample-table').innerHTML = _buildSummaryTableRows(sample_findings);
 }
 
+// ── Shared interpretation results renderer ──────────────────────────────────
+// Used by both individual and group-average modes
+function _interpRenderResults(data, sampleLabel, refLabel, sampleParams, refParams) {
+  setVisible('interp-output', true);
+  setVisible('interp-error', false);
+
+  const hasRef = !!(data.has_reference && data.ref_findings);
+  setVisible('interp-comparison-narrative-section', hasRef);
+  setVisible('interp-delta-section', hasRef);
+  setVisible('interp-narrative-card', !hasRef);
+  setVisible('interp-detail-wrapper-card', !hasRef);
+  setVisible('interp-ref-section', false);
+  setVisible('interp-sample-section', false);
+
+  const organism = document.getElementById('ojip-organism').value || 'unknown';
+
+  if (hasRef && sampleParams && refParams) {
+    setText('interp-delta-ref-label', refLabel || '');
+    setText('interp-delta-smp-label', sampleLabel || '');
+    // Prepend sample/reference labels to comparison paragraph for copy-paste context
+    var headerLine = '<strong>Sample: ' + (sampleLabel || '?') + ' vs. Reference: ' + (refLabel || '?') + '</strong><br>';
+    setText('interp-comparison-narrative', headerLine + (data.comparison_paragraph || ''));
+    renderDeltaTable(sampleLabel, refLabel, sampleParams, refParams);
+  }
+  renderInterpretation(data.findings, data.narrative, organism, sampleLabel, hasRef ? refLabel : null);
+}
+
 // ── Parameter comparison delta table ─────────────────────────────────────────
 // dir: +1 = higher is better, -1 = lower is better, 0 = neutral/informational
-function renderDeltaTable(fname, refFname, organism) {
-  const p   = paramData[fname]   || {};
-  const pr  = paramData[refFname]  || {};
-  const kv  = (ojipData && ojipData.key_values && ojipData.key_values[fname])    || {};
-  const kvr = (ojipData && ojipData.key_values && ojipData.key_values[refFname]) || {};
+function renderDeltaTable(sampleLabel, refLabel, p, pr) {
 
   function row(label, rv, sv, dir, dp) {
     const valid = v => (v != null && !isNaN(v));
@@ -2680,15 +3472,15 @@ function renderDeltaTable(fname, refFname, organism) {
     return `<tr class="table-secondary"><th colspan="5" class="py-1 px-2" style="font-size:0.82em;font-weight:600;">${label}</th></tr>`;
   }
 
-  // Truncate long filenames for column headers
-  const refShort = refFname.length > 28 ? refFname.slice(0, 26) + '…' : refFname;
-  const smpShort = fname.length > 28    ? fname.slice(0, 26) + '…'    : fname;
+  // Truncate long labels for column headers
+  const refShort = refLabel.length > 28 ? refLabel.slice(0, 26) + '…' : refLabel;
+  const smpShort = sampleLabel.length > 28 ? sampleLabel.slice(0, 26) + '…' : sampleLabel;
 
   let html = `<table class="table table-sm table-bordered mb-0" style="font-size:0.86em;">
 <thead class="thead-light"><tr>
   <th style="width:30%;">Parameter</th>
-  <th title="${refFname}">${refShort}</th>
-  <th title="${fname}">${smpShort}</th>
+  <th title="${refLabel}">${refShort}</th>
+  <th title="${sampleLabel}">${smpShort}</th>
   <th>Δ</th><th>Δ%</th>
 </tr></thead><tbody>`;
 
@@ -2732,9 +3524,9 @@ function renderDeltaTable(fname, refFname, organism) {
 
   // ── Phase timing (ms)
   html += grp('Phase timing (ms)');
-  html += row('t(FJ)', kvr.FJ_time_user_ms, kv.FJ_time_user_ms, 0, 2);
-  html += row('t(FI)', kvr.FI_time_user_ms, kv.FI_time_user_ms, 0, 1);
-  html += row('t(FP / FM)', kvr.FM_time_ms, kv.FM_time_ms,       0, 1);
+  html += row('t(FJ)', pr.FJ_time_user_ms, p.FJ_time_user_ms, 0, 2);
+  html += row('t(FI)', pr.FI_time_user_ms, p.FI_time_user_ms, 0, 1);
+  html += row('t(FP / FM)', pr.FM_time_ms, p.FM_time_ms,       0, 1);
 
   html += '</tbody></table>';
   document.getElementById('interp-delta-table').innerHTML = html;
@@ -2915,6 +3707,17 @@ function renderInterpretation(findings, narrative, organism, fname, refFname) {
 
   setVisible('interp-output', true);
 }
+
+// Expose functions needed by HTML onchange/onclick attributes to global scope
+window._interpModeChanged          = _interpModeChanged;
+window._interpFilterAddFieldChanged = _interpFilterAddFieldChanged;
+window._interpAddFilter            = _interpAddFilter;
+window._interpRemoveFilter         = _interpRemoveFilter;
+window._interpClearFilters         = _interpClearFilters;
+window._interpGroupPopulate        = _interpGroupPopulate;
+window._interpShowBatchDetail      = _interpShowBatchDetail;
+window._interpBatchCopyCSV         = _interpBatchCopyCSV;
+window._syncSampleSelector         = _syncSampleSelector;
 
 })();
 </script>
