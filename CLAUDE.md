@@ -45,6 +45,7 @@ Tools are otherwise decoupled — work on one without touching the others.
 Most tools are small/self-evident; read `website/<tool>.py` directly. Docs exist only where
 there's non-obvious domain logic worth not re-deriving:
 - **OJIP / JIP-test** → `.claude/docs/ojip.md`
+- **EEM / Fluorescence spectra** → `.claude/docs/ex_em_spectra_analysis.md`
 
 _(Grow this list reactively: when a session on some tool would clearly have gone faster with
 notes, write `.claude/docs/<tool>.md` at the end of it. Likely future candidates: statistics.py,

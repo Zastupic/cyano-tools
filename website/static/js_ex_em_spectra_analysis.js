@@ -10,6 +10,7 @@ var normMode = 'peak';
 var mapMetaStore = {};
 var groupFileOrder = [];
 var isSingleEx = false;
+var isSingleEm = false;
 var focusExWl = null;
 var deconvPeakMus = [689, 724];
 var deconvCurrentLabels = [];   // labels parallel to deconvPeakMus (for consistent peak colours)
@@ -967,38 +968,58 @@ function showError(msg) {
 }
 
 // ============================================================
-// Single-excitation mode
+// Single-wavelength mode (single excitation or single emission)
 // ============================================================
 function detectSingleEx() {
     if (!eemData || !eemData.files.length) return;
     isSingleEx = eemData.files.every(function(f) {
         return eemData.maps[f] && eemData.maps[f].ex_wl.length === 1;
     });
+    isSingleEm = eemData.files.every(function(f) {
+        return eemData.maps[f] && eemData.maps[f].em_wl.length === 1;
+    });
 
-    var badge   = document.getElementById('eem-single-ex-info');
+    var badge    = document.getElementById('eem-single-ex-info');
     var focusRow = document.getElementById('eem-focus-ex-row');
-    var mapNote = document.getElementById('eem-map-single-ex-note');
+    var mapNote  = document.getElementById('eem-map-single-ex-note');
+    var emBtn    = document.getElementById('spectra-emission-btn');
+    var exBtn    = document.getElementById('spectra-excitation-btn');
 
     if (isSingleEx) {
         var exWl = eemData.maps[eemData.files[0]].ex_wl[0];
-        badge.innerHTML = '<span class="badge badge-warning">' +
-            '<i class="fa fa-info-circle mr-1"></i>Single excitation: Ex ' +
-            Math.round(exWl) + ' nm (auto-detected)</span>';
+        badge.innerHTML = '<span class="badge badge-info">' +
+            '<i class="fa fa-info-circle mr-1"></i>Emission spectrum: Ex ' +
+            Math.round(exWl) + ' nm (fixed excitation)</span>';
         badge.style.display = '';
         focusRow.style.display = 'none';
         if (mapNote) mapNote.style.display = '';
         // Disable excitation spectra button (single point, not useful)
-        var exBtn = document.getElementById('spectra-excitation-btn');
         if (exBtn) { exBtn.disabled = true; exBtn.title = 'Not available \u2014 single excitation wavelength'; }
+        if (emBtn) { emBtn.disabled = false; emBtn.title = ''; }
         if (spectraSection === 'excitation') switchSpectraSection('emission');
-        // Show 3D Map "not available" banner and hide map controls
+        // Hide 3D Map controls (1D data)
+        var mapControls = document.getElementById('eem-map-controls');
+        if (mapControls) mapControls.style.display = 'none';
+    } else if (isSingleEm) {
+        var emWl = eemData.maps[eemData.files[0]].em_wl[0];
+        badge.innerHTML = '<span class="badge badge-info">' +
+            '<i class="fa fa-info-circle mr-1"></i>Excitation spectrum: Em ' +
+            Math.round(emWl) + ' nm (fixed emission)</span>';
+        badge.style.display = '';
+        focusRow.style.display = 'none';
+        if (mapNote) mapNote.style.display = '';
+        // Disable emission spectra button (single point, not useful)
+        if (emBtn) { emBtn.disabled = true; emBtn.title = 'Not available \u2014 single emission wavelength'; }
+        if (exBtn) { exBtn.disabled = false; exBtn.title = ''; }
+        if (spectraSection === 'emission') switchSpectraSection('excitation');
+        // Hide 3D Map controls (1D data)
         var mapControls = document.getElementById('eem-map-controls');
         if (mapControls) mapControls.style.display = 'none';
     } else {
         badge.style.display = 'none';
         if (mapNote) mapNote.style.display = 'none';
-        var exBtn = document.getElementById('spectra-excitation-btn');
         if (exBtn) { exBtn.disabled = false; exBtn.title = ''; }
+        if (emBtn) { emBtn.disabled = false; emBtn.title = ''; }
         // Re-enable 3D Map controls
         var mapControls = document.getElementById('eem-map-controls');
         if (mapControls) mapControls.style.display = '';
@@ -3357,9 +3378,9 @@ function renderComparisonTab() {
     if (placeholder) placeholder.style.display = 'none';
     if (content) content.style.display = '';
 
-    // Show single-ex info note when applicable
+    // Show single-wavelength info note when applicable
     var singleExNote = document.getElementById('comparison-single-ex-note');
-    if (singleExNote) singleExNote.style.display = isSingleEx ? '' : 'none';
+    if (singleExNote) singleExNote.style.display = (isSingleEx || isSingleEm) ? '' : 'none';
 
     // Filter out excluded samples
     var allFiles = eemData.files;
@@ -5887,8 +5908,8 @@ function _parafacValidate() {
         return 'At least 3 samples are needed for PARAFAC analysis.';
     var keys = Object.keys(eemData.maps);
     if (!keys.length) return 'No EEM maps available.';
-    if (isSingleEx)
-        return 'PARAFAC requires multiple excitation wavelengths. Your data contains only a single excitation wavelength.';
+    if (isSingleEx || isSingleEm)
+        return 'PARAFAC requires full excitation-emission matrices. Your data contains only a single-wavelength spectrum.';
     return null;
 }
 

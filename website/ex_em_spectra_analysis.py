@@ -33,8 +33,9 @@ def apply_2d_map_range(ex_wl, em_wl, intensity, map_range):
 
 def parse_jasco_csv(file_obj):
     """
-    Parse Jasco FP-8050/8550 CSV EEM file (comma or semicolon delimited).
-    Also handles AMINCO-Bowman Series 2 Jasco-compatible exports.
+    Parse Jasco FP-8050/8550 CSV file (comma or semicolon delimited).
+    Handles both 2D EEM matrices and 1D single-wavelength spectra
+    (excitation scan at fixed Em, or emission scan at fixed Ex).
     Returns (ex_wl_arr, em_wl_arr, intensity) as float numpy arrays.
     intensity shape: [n_em x n_ex]
     """
@@ -70,6 +71,16 @@ def parse_jasco_csv(file_obj):
     if len(rows) < 2:
         raise ValueError("Not enough data rows after XYDATA")
 
+    # ── Detect 1D single-wavelength spectrum ──────────────────────────────
+    # 2D EEM: row 0 = [0/empty, ex1, ex2, ...] with many columns
+    # 1D:     data rows are [wavelength, intensity] with exactly 2 columns
+    # Count only "real" data rows (first element > 100, i.e. a valid wavelength)
+    data_rows = [r for r in rows if len(r) >= 2 and r[0] > 100]
+    max_cols = max(len(r) for r in data_rows[:min(10, len(data_rows))]) if data_rows else 0
+    if max_cols == 2 and len(data_rows) >= 10:
+        return _parse_jasco_1d(content, sep, data_rows)
+
+    # ── 2D EEM path (original logic) ─────────────────────────────────────
     # Row 0: [empty/0, ex1, ex2, ...]  Rows 1+: [em, int1, int2, ...]
     ex_wl_arr = np.array([v for v in rows[0][1:] if v > 0], dtype=float)
     em_wl_arr = np.array([row[0] for row in rows[1:] if row[0] > 0], dtype=float)
@@ -81,6 +92,64 @@ def parse_jasco_csv(file_obj):
         for j in range(n_ex):
             if j + 1 < len(row):
                 intensity[i, j] = row[j + 1]
+    return ex_wl_arr, em_wl_arr, intensity
+
+
+def _parse_jasco_1d(content, sep, rows):
+    """
+    Handle a 1D Jasco single-wavelength spectrum (excitation or emission scan).
+    Reads metadata from the file to determine scan mode and fixed wavelength.
+    Returns (ex_wl_arr, em_wl_arr, intensity) shaped for process_eem compatibility.
+    """
+    wavelengths = np.array([r[0] for r in rows], dtype=float)
+    intensities = np.array([r[1] for r in rows], dtype=float)
+
+    # Parse metadata from full file content (including Extended Information)
+    mode = None          # 'EXCITATION' or 'EMISSION'
+    fixed_wl = None      # the fixed Ex or Em wavelength
+
+    for line in content.splitlines():
+        parts = line.split(sep)
+        if len(parts) < 2:
+            continue
+        key = parts[0].strip().lower()
+        val = parts[1].strip()
+        if key == 'mode':
+            mode = val.strip().upper()
+        elif key in ('em wavelength', 'em.wavelength'):
+            # e.g. "680.0 nm"
+            m = re.match(r'([0-9]+\.?[0-9]*)', val)
+            if m:
+                fixed_wl = float(m.group(1))
+        elif key in ('ex wavelength', 'ex.wavelength'):
+            m = re.match(r'([0-9]+\.?[0-9]*)', val)
+            if m:
+                fixed_wl = float(m.group(1))
+
+    if mode == 'EXCITATION':
+        # Excitation scan: X-axis = excitation wavelengths, Em is fixed
+        ex_wl_arr = wavelengths
+        fixed_em = fixed_wl if fixed_wl else 680.0  # fallback
+        em_wl_arr = np.array([fixed_em], dtype=float)
+        intensity = intensities.reshape(1, -1)  # shape (1, n_ex) = (n_em, n_ex)
+    elif mode == 'EMISSION':
+        # Emission scan: X-axis = emission wavelengths, Ex is fixed
+        em_wl_arr = wavelengths
+        fixed_ex = fixed_wl if fixed_wl else 440.0  # fallback
+        ex_wl_arr = np.array([fixed_ex], dtype=float)
+        intensity = intensities.reshape(-1, 1)  # shape (n_em, 1) = (n_em, n_ex)
+    else:
+        # Mode not found in metadata — heuristic: if wavelengths are in typical
+        # emission range (>500 nm predominantly), assume emission scan
+        if wavelengths[0] >= 450:
+            em_wl_arr = wavelengths
+            ex_wl_arr = np.array([440.0], dtype=float)
+            intensity = intensities.reshape(-1, 1)
+        else:
+            ex_wl_arr = wavelengths
+            em_wl_arr = np.array([680.0], dtype=float)
+            intensity = intensities.reshape(1, -1)
+
     return ex_wl_arr, em_wl_arr, intensity
 
 
@@ -600,6 +669,20 @@ def eem_process():
 
     # ── helper: add one parsed EEM to result ─────────────────────────────────
     def process_eem(fname, ex_wl_arr, em_wl_arr, intensity):
+        # Auto-add fixed wavelength for 1D spectra so spectra get extracted
+        if len(ex_wl_arr) == 1:
+            ex_int = int(round(float(ex_wl_arr[0])))
+            if ex_int not in ex_wls_requested:
+                ex_wls_requested.append(ex_int)
+                result['ex_wls'] = ex_wls_requested
+                result['emission_spectra'][str(ex_int)] = {'wl': [], 'raw': {}, 'norm': {}}
+        if len(em_wl_arr) == 1:
+            em_int = int(round(float(em_wl_arr[0])))
+            if em_int not in em_wls_requested:
+                em_wls_requested.append(em_int)
+                result['em_wls'] = em_wls_requested
+                result['excitation_spectra'][str(em_int)] = {'wl': [], 'raw': {}, 'norm': {}}
+
         # Apply Rayleigh scattering removal if requested:
         # Zero out all pixels where Em <= Ex + bandwidth (diagonal mask).
         if rayleigh_width > 0:
