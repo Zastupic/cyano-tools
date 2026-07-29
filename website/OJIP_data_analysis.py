@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
 import os, base64, io, zipfile
+from typing import cast
 import pandas as pd
 import numpy as np
 from openpyxl.drawing.image import Image
 from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline, PchipInterpolator
 from scipy.ndimage import gaussian_filter1d
 from scipy.signal import find_peaks
@@ -40,6 +42,60 @@ def _axis_cfg(fluorometer: str) -> tuple[str, str, str, float, set[str], dict[st
         return ('time_ms', 'Time (ms)', 'Fluorescence (norm.)', 1e-2, {'.xlsx'},
                 dict(FJ=(0.1, 10), FI=(9, 100), FP=(100, 1000)))
     raise ValueError(f'Unknown fluorometer: {fluorometer}')
+
+
+def _bg_correct(sf, x_col, data_cols, mode='auto', n=1, bckg_map=None):
+    """Correct an AquaPen/FluorPen transient for the pre-illumination background.
+
+    The first FluorPen timepoint (~11 µs) is a dark/background reading, not the
+    O-step. Taking it as F0 inflates Fv/Fm and drops the F0 marker below the
+    visible curve. This subtracts and/or drops the leading point(s) before F0
+    is chosen — consistently for both the single-file and batch paths (the old
+    hard-coded ``iloc[1:]`` only ever ran on the single-file path, so batch/wide
+    FluorPen files kept the 11 µs point as F0).
+
+    mode : 'auto' | 'subtract' | 'drop' | 'keep'
+        auto     – subtract the instrument ``Bckg`` (from ``bckg_map``) when
+                   available and drop the first point; with no known ``Bckg``,
+                   just drop the first point (the historical behaviour).
+        subtract – subtract the mean of the first ``n`` points from every point,
+                   then drop those ``n`` points.
+        drop     – drop the first ``n`` points, no subtraction.
+        keep     – return unchanged (the pre-fix behaviour).
+    n : int            number of leading background points (subtract / drop).
+    bckg_map : dict[str, float] | None   per-column instrument background (auto).
+
+    Returns (sf_corrected, bg_applied). ``bg_applied`` is True when a background
+    value was subtracted, so the transient is now in background-subtracted units
+    and the caller may substitute the instrument ``Fo`` for F0.
+    """
+    mode = (mode or 'auto').lower()
+    n = max(0, int(n or 0))
+    bckg_map = bckg_map or {}
+    if mode == 'keep':
+        return sf.reset_index(drop=True), False
+
+    bg_applied = False
+    if mode == 'subtract':
+        k = max(1, n)
+        for col in data_cols:
+            bg = float(np.nanmean(sf[col].iloc[:k]))
+            if np.isfinite(bg):
+                sf[col] = sf[col] - bg
+                bg_applied = True
+        drop = k
+    elif mode == 'drop':
+        drop = max(1, n)
+    else:  # auto
+        for col in data_cols:
+            bg = bckg_map.get(col)
+            if bg is not None and np.isfinite(bg):
+                sf[col] = sf[col] - float(bg)
+                bg_applied = True
+        drop = 1
+
+    sf_out = sf.iloc[drop:].reset_index(drop=True) if drop > 0 else sf.reset_index(drop=True)
+    return sf_out, bg_applied
 
 
 def _fit_start_index(dn: pd.DataFrame, trim_first: int = 0) -> int:
@@ -653,6 +709,16 @@ def _safe(v):
         return None
 
 
+def _fscalar(v):
+    """Plain float from a single Series element.
+
+    Deliberately untyped: indexing a pandas Series is typed by the stubs as a
+    ``Series | scalar`` union, so a bare ``float(series[key])`` trips the type
+    checker even though the value is always scalar at runtime. Routing through
+    an untyped param launders that union (same trick as ``_safe``)."""
+    return float(v)
+
+
 def _fit_quality(y_raw: np.ndarray, y_recon_at_raw: np.ndarray,
                  d2: np.ndarray, method: str = 'spline') -> dict:
     """
@@ -741,7 +807,10 @@ def _t_safe(v, ms_factor):
 
 def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_time_ms, kr,
                       include_curves=False, fit_method='logspline',
-                      trim_first: int = 0, trim_last: int = 0):
+                      trim_first: int = 0, trim_last: int = 0,
+                      background_mode='auto', background_n=1,
+                      f0_source='instrument',
+                      bckg: 'float | None' = None, fo_footer: 'float | None' = None):
     """
     Full OJIP analysis pipeline for a single curve.
 
@@ -790,13 +859,26 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     FJ_time = fj_time_ms / ms
     FI_time = fi_time_ms / ms
 
+    # ── background / first-point correction (AquaPen/FluorPen only) ───────────
+    bg_applied = False
+    if fluorometer == 'Aquapen':
+        bckg_map = {fname: bckg} if bckg is not None else None
+        sf, bg_applied = _bg_correct(sf, x_col, data_cols,
+                                     background_mode, background_n, bckg_map)
+
     # ── normalise (mirrors ojip_process lines 419-440) ────────────────────────
     if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
         F0_index = sf[x_col].sub(0.01).abs().idxmin()
     else:
         F0_index = sf[x_col].sub(0).abs().idxmin()
 
-    F0 = sf[data_cols].loc[F0_index]
+    F0 = sf[data_cols].loc[F0_index].copy()
+    # When the transient is background-subtracted, F0 may be set from the
+    # instrument's own reported Fo (footer) so the result matches the FluorPen
+    # readout; otherwise F0 stays the first measured point after the background.
+    if (f0_source == 'instrument' and bg_applied
+            and fo_footer is not None and np.isfinite(fo_footer)):
+        F0[fname] = float(fo_footer)
     FM = sf[data_cols].max()
 
     shifted_zero_df = pd.concat([
@@ -892,11 +974,11 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     _fj_t = _t_safe(FJ_deriv.get(fname), ms) or fj_time_ms
     _fi_t = _t_safe(FI_deriv.get(fname), ms) or fi_time_ms
     _fp_t = _t_safe(FP_deriv.get(fname), ms)
-    _f0_t = float(sf[x_col].iloc[F50us_idx]) * ms  # F0 time in ms
-    _f0_v = float(F0[fname])
-    _fj_v = float(FJ[fname])
-    _fi_v = float(FI[fname])
-    _fm_v = float(FM[fname])
+    _f0_t = float(sf[x_col].iloc[int(F50us_idx)]) * ms  # F0 time in ms
+    _f0_v = _fscalar(F0[fname])
+    _fj_v = _fscalar(FJ[fname])
+    _fi_v = _fscalar(FI[fname])
+    _fm_v = _fscalar(FM[fname])
 
     def _slope(f_end, f_start, t_end, t_start):
         dt = t_end - t_start
@@ -1063,6 +1145,9 @@ def ojip_process():
     fit_method_proc = request.form.get('fit_method', 'logspline')
     trim_first_proc = int(request.form.get('trim_first', 0))
     trim_last_proc  = int(request.form.get('trim_last',  0))
+    background_mode = request.form.get('background_mode', 'auto')
+    background_n    = int(request.form.get('background_n', 1) or 1)
+    f0_source       = request.form.get('f0_source', 'instrument')
     reduce_size = request.form.get('checkbox_reduce_file_size') == 'checked'
     FJ_time_ms = float(request.form.get('FJ_time', 2.0))
     FI_time_ms = float(request.form.get('FI_time', 30.0))
@@ -1125,7 +1210,10 @@ def ojip_process():
                 df_clean = df[good].rename(columns={df.columns[0]: 'time_us', df.columns[1]: fname_no_ext}).copy()
                 df_clean['time_us'] = df_clean['time_us'].astype(int)
                 df_clean[fname_no_ext] = pd.to_numeric(df_clean[fname_no_ext], errors='coerce')
-                df_clean = df_clean.iloc[1:]  # skip t=0 row
+                # NB: the first ~11 µs point is a background reading; dropping /
+                # subtracting it is now handled uniformly by _bg_correct() in the
+                # normalize block below (was a hard-coded iloc[1:] here, which
+                # never reached the batch/wide FluorPen path).
                 if file_number == 0:
                     Summary_file = df_clean
                 else:
@@ -1190,6 +1278,13 @@ def ojip_process():
 
     data_cols = list(Summary_file.columns[1:])
     n_files = len(data_cols)
+
+    # Background / first-point correction (AquaPen/FluorPen only). Single-file
+    # uploads carry no Bckg/Fo footer (the loader keeps only numeric rows), so
+    # 'auto' here means "drop the first point" — identical to the old iloc[1:].
+    if fluorometer == 'Aquapen':
+        Summary_file, _ = _bg_correct(Summary_file, x_col, data_cols,
+                                      background_mode, background_n, None)
 
     # ── normalize ────────────────────────────────────────────────────────────
     if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
@@ -1379,7 +1474,7 @@ def ojip_process():
         _fj_t_p = _t_safe(FJ_deriv.get(fname), ms) or FJ_time_ms
         _fi_t_p = _t_safe(FI_deriv.get(fname), ms) or FI_time_ms
         _fp_t_p = _t_safe(FP_deriv.get(fname), ms)
-        _f0_t_p = float(Summary_file[x_col].iloc[F50us_idx]) * ms
+        _f0_t_p = float(Summary_file[x_col].iloc[int(F50us_idx)]) * ms
         _f0_v_p = float(F0[fname]); _fj_v_p = float(FJ[fname])
         _fi_v_p = float(FI[fname]); _fm_v_p = float(FM[fname])
         def _slope_p(fe, fs, te, ts):
@@ -1846,6 +1941,9 @@ def ojip_process_batch():
     fit_method   = payload.get('fit_method', 'logspline')
     trim_first   = int(payload.get('trim_first', 0))
     trim_last    = int(payload.get('trim_last',  0))
+    background_mode = payload.get('background_mode', 'auto')
+    background_n    = int(payload.get('background_n', 1) or 1)
+    f0_source       = payload.get('f0_source', 'instrument')
 
     if not time_native or not curves:
         return jsonify({'status': 'error',
@@ -1865,6 +1963,8 @@ def ojip_process_batch():
         slot = c.get('slot', 0)
         name = c.get('name', '')
         vals = c.get('values', [])
+        bckg = c.get('bckg', None)
+        fo_footer = c.get('fo_footer', None)
         try:
             r = analyze_one_curve(
                 time_arr, vals, name, fluorometer,
@@ -1873,6 +1973,11 @@ def ojip_process_batch():
                 fit_method=fit_method,
                 trim_first=trim_first,
                 trim_last=trim_last,
+                background_mode=background_mode,
+                background_n=background_n,
+                f0_source=f0_source,
+                bckg=bckg,
+                fo_footer=fo_footer,
             )
             r['slot'] = slot
             r['name'] = name
@@ -1924,7 +2029,7 @@ def ojip_export_batch():
             # ── 1. Parameters XLSX ────────────────────────────────────────
             xlsx_buf = io.BytesIO()
             wb = Workbook()
-            ws = wb.active
+            ws = cast(Worksheet, wb.active)  # a new Workbook always has an active sheet
             ws.title = 'Parameters'
             if params_header:
                 ws.append(params_header)

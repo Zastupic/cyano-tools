@@ -127,6 +127,16 @@ const MC = (() => {
       actinic_intensity_uE:  _fval('ACTINIC-Intensity [uE]', 0),
     };
 
+    // Per-curve instrument background (Bckg) and Fo from the footer, aligned to
+    // the data columns. Used to correct the ~11 µs background point server-side.
+    const _bckgArr = footerData['Bckg'] || null;
+    const _foArr   = footerData['Fo']   || null;
+    const _footVal = (arr, i) => {
+      if (!arr || arr[i] === undefined) return null;
+      const v = parseFloat(arr[i]);
+      return (isNaN(v) || !isFinite(v)) ? null : v;
+    };
+
     const stem = filename.replace(/\.[^.]+$/, '');
 
     // Parse FluorPen timestamp "H:MM:SS  D.M.YYYY" → epoch ms
@@ -150,6 +160,8 @@ const MC = (() => {
         epochMs: _parseTS((timestamps[c] || '').trim()),
         protocol: (protocols[c] || '').trim(),
         values: values,
+        bckg: _footVal(_bckgArr, c),
+        foFooter: _footVal(_foArr, c),
       });
     }
 
@@ -289,6 +301,8 @@ const MC = (() => {
         slot: slot,
         name: getCurveName(c, dataset, scheme),
         values: Array.from(c.values),
+        bckg: (c.bckg != null ? c.bckg : null),
+        fo_footer: (c.foFooter != null ? c.foFooter : null),
       };
     });
 
@@ -319,6 +333,9 @@ const MC = (() => {
           fit_method: jipOpts.fitMethod || 'logspline',
           trim_first: jipOpts.trimFirst || 0,
           trim_last:  jipOpts.trimLast  || 0,
+          background_mode: jipOpts.bgMode || 'auto',
+          background_n:    jipOpts.bgN || 1,
+          f0_source:       jipOpts.f0Source || 'instrument',
           include_curves: false,
         };
 
@@ -1074,13 +1091,16 @@ const MC = (() => {
     }
 
     // Fetch full curves for this one curve
+    const _dc = mcDataset.curves.find(c => c.index === _slotToIndex(slot));
     const body = {
       fluorometer: mcDataset.fluorometer,
       time_native: Array.from(mcDataset.timeUs),
       curves: [{
         slot: slot,
         name: r.name,
-        values: Array.from(mcDataset.curves.find(c => c.index === _slotToIndex(slot)).values),
+        values: Array.from(_dc.values),
+        bckg: (_dc.bckg != null ? _dc.bckg : null),
+        fo_footer: (_dc.foFooter != null ? _dc.foFooter : null),
       }],
       FJ_time: parseFloat(document.getElementById('FJ_time').value) || 2.0,
       FI_time: parseFloat(document.getElementById('FI_time').value) || 30.0,
@@ -1088,6 +1108,9 @@ const MC = (() => {
       fit_method: document.getElementById('fit-method-sel')?.value || 'logspline',
       trim_first: parseInt(document.getElementById('trim-first-input')?.value) || 0,
       trim_last:  parseInt(document.getElementById('trim-last-input')?.value)  || 0,
+      background_mode: document.getElementById('bg-mode-sel')?.value || 'auto',
+      background_n:    parseInt(document.getElementById('bg-n-input')?.value) || 1,
+      f0_source:       document.getElementById('f0-source-sel')?.value || 'instrument',
       include_curves: true,
     };
 
@@ -3375,6 +3398,9 @@ async function uploadAndAnalyze() {
   fd.append('fit_method', document.getElementById('fit-method-sel')?.value || 'logspline');
   fd.append('trim_first', document.getElementById('trim-first-input')?.value || '0');
   fd.append('trim_last',  document.getElementById('trim-last-input')?.value  || '0');
+  fd.append('background_mode', document.getElementById('bg-mode-sel')?.value || 'auto');
+  fd.append('background_n',    document.getElementById('bg-n-input')?.value || '1');
+  fd.append('f0_source',       document.getElementById('f0-source-sel')?.value || 'instrument');
   if (document.getElementById('reduce_size').checked) fd.append('checkbox_reduce_file_size', 'checked');
 
   // Pre-flight size check — avoid a silent connection-reset from the server
@@ -3529,6 +3555,9 @@ async function mcStartAnalysis() {
     fitMethod:  document.getElementById('fit-method-sel')?.value || 'logspline',
     trimFirst:  parseInt(document.getElementById('trim-first-input')?.value) || 0,
     trimLast:   parseInt(document.getElementById('trim-last-input')?.value)  || 0,
+    bgMode:     document.getElementById('bg-mode-sel')?.value || 'auto',
+    bgN:        parseInt(document.getElementById('bg-n-input')?.value) || 1,
+    f0Source:   document.getElementById('f0-source-sel')?.value || 'instrument',
   };
   _lastSelected = selected.slice();
   _lastJipOpts  = Object.assign({}, jipOpts);
@@ -4061,12 +4090,35 @@ function _diagPlotTrimRange() {
   return { tMin: tRaw[startIdx] ?? -Infinity, tMax: tRaw[endIdx] ?? Infinity };
 }
 
+// Mirror the upload-panel Background/F0 controls into the results toolbar and
+// keep the two copies in lock-step, so every reader that reads the upload-panel
+// IDs still sees the current value regardless of which copy the user edited.
+function _syncBgF0Controls() {
+  const pairs = [['bg-mode-sel', 'mc-bg-mode-sel'],
+                 ['bg-n-input', 'mc-bg-n-input'],
+                 ['f0-source-sel', 'mc-f0-source-sel']];
+  for (const [a, b] of pairs) {
+    const ea = document.getElementById(a), eb = document.getElementById(b);
+    if (!ea || !eb) continue;
+    eb.value = ea.value;                       // toolbar reflects the panel
+    if (!ea._bgSynced) { ea.addEventListener('change', () => { eb.value = ea.value; }); ea._bgSynced = true; }
+    if (!eb._bgSynced) { eb.addEventListener('change', () => { ea.value = eb.value; }); eb._bgSynced = true; }
+  }
+}
+
 function renderDiagnostics() {
   renderDiagRecon(); renderDiagResid(); renderDiagD2(); renderDiagD3(); renderDiagPoly(); renderDiagPolyFI();
   _updateFitQualityBadge();
   // Show 'Refit all curves' button only in multi-curve mode
   const refitAllWrap = document.getElementById('refit-all-wrap');
   if (refitAllWrap) refitAllWrap.style.display = (mcDataset && mcIsActive) ? '' : 'none';
+  // Mirror the Background/F0 control next to it — AquaPen/FluorPen batches only
+  const bgF0Wrap = document.getElementById('mc-bg-f0-wrap');
+  if (bgF0Wrap) {
+    const showBg = mcDataset && mcIsActive && mcDataset.fluorometer === 'Aquapen';
+    bgF0Wrap.style.display = showBg ? '' : 'none';
+    if (showBg) _syncBgF0Controls();
+  }
 }
 
 function renderDiagRecon() {
@@ -4489,6 +4541,9 @@ async function mcRefitBatch() {
     fitMethod,
     trimFirst: parseInt(document.getElementById('trim-first-input')?.value) || 0,
     trimLast:  parseInt(document.getElementById('trim-last-input')?.value)  || 0,
+    bgMode:    document.getElementById('bg-mode-sel')?.value || 'auto',
+    bgN:       parseInt(document.getElementById('bg-n-input')?.value) || 1,
+    f0Source:  document.getElementById('f0-source-sel')?.value || 'instrument',
   };
 
   btn.disabled = true;

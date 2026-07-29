@@ -359,6 +359,40 @@
             </div>
           </div>
 
+          <!-- Background / F0 handling (AquaPen / FluorPen) -->
+          <div class="form-group mb-3" id="bg-f0-group">
+            <label class="font-weight-bold mb-1">Background &amp; F<sub>0</sub>
+              <span class="text-muted font-weight-normal">(AquaPen / FluorPen)</span></label>
+            <div class="form-row align-items-center">
+              <div class="col-auto"><label for="bg-mode-sel" class="mb-0">First point:</label></div>
+              <div class="col-auto">
+                <select id="bg-mode-sel" class="form-control form-control-sm" style="width:auto">
+                  <option value="auto" selected>Auto — subtract instrument Bckg, else drop first</option>
+                  <option value="subtract">Subtract first N as background</option>
+                  <option value="drop">Drop first N (as t=0)</option>
+                  <option value="keep">Keep all points (no correction)</option>
+                </select>
+              </div>
+              <div class="col-auto"><label for="bg-n-input" class="mb-0">N:</label></div>
+              <div class="col-auto">
+                <input type="number" id="bg-n-input" class="form-control form-control-sm"
+                       value="1" min="1" max="20" step="1" style="width:64px">
+              </div>
+              <div class="col-auto ml-3"><label for="f0-source-sel" class="mb-0">F<sub>0</sub> from:</label></div>
+              <div class="col-auto">
+                <select id="f0-source-sel" class="form-control form-control-sm" style="width:auto">
+                  <option value="instrument" selected>Instrument F&#8320; (footer)</option>
+                  <option value="second">First measured point</option>
+                </select>
+              </div>
+            </div>
+            <small class="text-muted">The first FluorPen point (~11&nbsp;µs) is a dark/background
+              reading, not F<sub>0</sub>. <em>Auto</em> subtracts the instrument's <code>Bckg</code>
+              and (with <em>Instrument&nbsp;F&#8320;</em>) uses its reported <code>Fo</code>, so the
+              result matches the FluorPen readout. Pick <em>First measured point</em> to set
+              F<sub>0</sub> at the first post-background timepoint instead. AquaPen/FluorPen only.</small>
+          </div>
+
           <!-- Reduce size checkbox -->
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="reduce_size" checked>
@@ -1237,6 +1271,38 @@
             </div>
             <div class="col-auto ml-auto">
               <span id="fit-quality-badge" class="badge" style="font-size:0.8em;display:none"></span>
+            </div>
+          </div>
+          <!-- Background / F0 mirror (AquaPen/FluorPen batches) — synced to the
+               upload-panel controls so you can change it and Refit all without
+               scrolling back up. Shown only for AquaPen/FluorPen. -->
+          <div class="form-row align-items-center mb-2" id="mc-bg-f0-wrap" style="display:none">
+            <div class="col-auto">
+              <label class="mb-0 mr-1 font-weight-bold" style="font-size:0.85em;">Background &amp; F<sub>0</sub>:</label>
+            </div>
+            <div class="col-auto">
+              <label class="mb-0 mr-1" style="font-size:0.85em;">First point:</label>
+              <select id="mc-bg-mode-sel" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="auto">Auto (subtract Bckg, else drop first)</option>
+                <option value="subtract">Subtract first N</option>
+                <option value="drop">Drop first N</option>
+                <option value="keep">Keep all</option>
+              </select>
+            </div>
+            <div class="col-auto">
+              <label class="mb-0 mr-1" style="font-size:0.85em;">N:</label>
+              <input type="number" id="mc-bg-n-input" min="1" max="20" value="1"
+                     class="form-control form-control-sm d-inline-block" style="width:56px">
+            </div>
+            <div class="col-auto">
+              <label class="mb-0 mr-1" style="font-size:0.85em;">F<sub>0</sub> from:</label>
+              <select id="mc-f0-source-sel" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="instrument">Instrument F&#8320; (footer)</option>
+                <option value="second">First measured point</option>
+              </select>
+            </div>
+            <div class="col-auto">
+              <small class="text-muted">then click <em>Refit all curves</em> &rarr;</small>
             </div>
           </div>
           <small class="text-muted">Drag the slider to preview k<sub>r</sub> value, then click <em>Re-fit splines</em>. <em>Log-time spline</em> and <em>PCHIP</em> improve fits for OJIPImaging (60-point) data; k<sub>r</sub> is ignored for PCHIP. <em>Skip first / last</em>: exclude N raw points from both ends before fitting (useful when the tail of OJIPImaging curves fits poorly).</small>
