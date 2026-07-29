@@ -2225,3 +2225,5 @@ def _make_deriv_png(time_arr, y_data, title, label):
     plt.close(fig)
     buf.seek(0)
     return buf.getvalue()
+
+    
