@@ -239,45 +239,10 @@
         <option value="MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)">MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)</option>
         <option value="Aquapen">AquaPen / FluorPen (Photon Systems Instruments)</option>
         <option value="FL6000">Fluorometer FL 6000 (Photon Systems Instruments)</option>
-        <option value="OJIPImaging">OJIP Imaging &mdash; Custom format 1 (Excel)</option>
+        <option value="OJIPImaging">OJIP Imaging &mdash; multi-curve (Excel: custom format 1 or Long/Raw)</option>
       </select>
     </div>
 
-    <!-- Excel-specific options (shown only for OJIPImaging) -->
-    <div id="excel-options" class="mb-3" style="display:none;">
-      <div class="card" style="border:1px solid #dee2e6;">
-        <div class="card-header py-2 px-3" style="background:#e8f4fd;">
-          <i class="fa fa-file-excel-o mr-1 text-success"></i>
-          <strong style="font-size:0.88rem;">Excel import options</strong>
-        </div>
-        <div class="card-body py-2 px-3">
-          <div class="form-group mb-2">
-            <label class="small font-weight-bold mb-1">Normalization column</label>
-            <select id="excel-norm-col" class="form-control form-control-sm" style="width:auto;">
-              <option value="Fo" selected>Fo (normalized to O)</option>
-              <option value="Foi">Foi (normalized to O and I)</option>
-              <option value="Foj">Foj (normalized to O and J)</option>
-              <option value="Fop">Fop (normalized to O and P)</option>
-            </select>
-            <small class="text-muted">Select which normalization to use for curve analysis.</small>
-          </div>
-          <div class="form-group mb-1">
-            <label class="small font-weight-bold mb-1">Curve naming (click to toggle, drag to reorder)</label>
-            <div id="excel-naming-blocks" class="d-flex flex-wrap align-items-center mb-1" style="gap:4px;">
-              <span class="badge badge-primary excel-name-block" data-field="line" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px;">Line</span>
-              <span class="badge badge-primary excel-name-block" data-field="day" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px;">Day</span>
-              <span class="badge badge-primary excel-name-block" data-field="hours" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px;">Hour</span>
-              <span class="badge badge-secondary excel-name-block" data-field="plantId" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px; opacity:0.5;">PlantID</span>
-              <span class="badge badge-secondary excel-name-block" data-field="position" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px; opacity:0.5;">Position</span>
-              <span class="badge badge-secondary excel-name-block" data-field="trayId" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px; opacity:0.5;">TrayID</span>
-              <span class="ml-2 text-muted small">sep:</span>
-              <input type="text" id="excel-naming-sep" value="_" class="form-control form-control-sm" style="width:36px; text-align:center; font-size:0.82em; padding:2px;">
-            </div>
-            <small class="text-muted">Preview: <code id="excel-naming-preview">Col-0_D1_11:00</code></small>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Supported fluorometers: informational gallery (not selection) -->
     <div class="mb-3">
@@ -1303,6 +1268,23 @@
             </div>
             <div class="col-auto">
               <small class="text-muted">then click <em>Refit all curves</em> &rarr;</small>
+            </div>
+          </div>
+          <!-- Background / F0 mirror (OJIP Imaging Excel batches) — same idea as the
+               AquaPen mirror above: change the strip/keep mode here and click Refit
+               all curves to re-apply it to the whole batch. Shown only for OJIPImaging. -->
+          <div class="form-row align-items-center mb-2" id="mc-excel-bg-f0-wrap" style="display:none">
+            <div class="col-auto">
+              <label class="mb-0 mr-1 font-weight-bold" style="font-size:0.85em;">Background &amp; F<sub>0</sub>:</label>
+            </div>
+            <div class="col-auto">
+              <select id="mc-excel-bg-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="strip">Strip pre-illumination background (recommended)</option>
+                <option value="keep">Keep all points (F0 = first point)</option>
+              </select>
+            </div>
+            <div class="col-auto">
+              <small class="text-muted">drops the dark/background point(s) so F<sub>0</sub> is the true O&ndash;level; then click <em>Refit all curves</em> &rarr;</small>
             </div>
           </div>
           <small class="text-muted">Drag the slider to preview k<sub>r</sub> value, then click <em>Re-fit splines</em>. <em>Log-time spline</em> and <em>PCHIP</em> improve fits for OJIPImaging (60-point) data; k<sub>r</sub> is ignored for PCHIP. <em>Skip first / last</em>: exclude N raw points from both ends before fitting (useful when the tail of OJIPImaging curves fits poorly).</small>
@@ -2452,6 +2434,56 @@ window._getOJIPCurvesForBundle = function () {
           File: <strong id="mc-filename"></strong><br>
           <span class="text-muted"><span id="mc-curve-count"></span> OJIP curves &mdash; <span id="mc-date-range"></span></span>
         </p>
+
+        <!-- Excel import options (shown only for OJIPImaging; populated after upload) -->
+        <div id="excel-options" class="mb-3" style="display:none;">
+          <div class="card" style="border:1px solid #dee2e6;">
+            <div class="card-header py-2 px-3" style="background:#e8f4fd;">
+              <i class="fa fa-file-excel-o mr-1 text-success"></i>
+              <strong style="font-size:0.88rem;">Excel import options</strong>
+            </div>
+            <div class="card-body py-2 px-3">
+              <div class="form-group mb-2">
+                <label class="small font-weight-bold mb-1">Normalization column</label>
+                <select id="excel-norm-col" class="form-control form-control-sm" style="width:auto;">
+                  <option value="Fo" selected>Fo (normalized to O)</option>
+                  <option value="Foi">Foi (normalized to O and I)</option>
+                  <option value="Foj">Foj (normalized to O and J)</option>
+                  <option value="Fop">Fop (normalized to O and P)</option>
+                </select>
+                <small class="text-muted">Options adapt to the file. For files with a <code>Raw</code> column the tool computes
+                  Bg / F0 / F0j / F0i / F0p itself (Bg = Raw&minus;mean(1&ndash;3&nbsp;µs); F0 = Bg/mean(10&ndash;12&nbsp;µs);
+                  F0j/i/p = F0 / F0 at 2 / 36 / 280&nbsp;ms). These all give identical JIP parameters (the backend
+                  double-normalizes) &mdash; they differ only in the transient shown/exported. (Raw itself is not offered:
+                  its un-subtracted dark offset would bias Fv/Fm.)</small>
+              </div>
+              <div class="form-group mb-2">
+                <label class="small font-weight-bold mb-1">Background / F0</label>
+                <select id="excel-bg-mode" class="form-control form-control-sm" style="width:auto;">
+                  <option value="strip" selected>Strip pre-illumination background (recommended)</option>
+                  <option value="keep">Keep all points (F0 = first point)</option>
+                </select>
+                <small class="text-muted">The first timepoint(s) are a dark/background reading, not the O&ndash;step.
+                  <em>Strip</em> drops them so F0 is the true O&ndash;level (µs files: below 10&nbsp;µs; ms files: the leading
+                  background point) &mdash; otherwise Fv/Fm is inflated toward ~1. <em>Keep</em> restores the legacy behaviour.</small>
+              </div>
+              <div class="form-group mb-1">
+                <label class="small font-weight-bold mb-1">Curve naming (click to toggle, drag to reorder)</label>
+                <div id="excel-naming-blocks" class="d-flex flex-wrap align-items-center mb-1" style="gap:4px;">
+                  <span class="badge badge-primary excel-name-block" data-field="line" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px;">Line</span>
+                  <span class="badge badge-primary excel-name-block" data-field="day" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px;">Day</span>
+                  <span class="badge badge-primary excel-name-block" data-field="hours" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px;">Hour</span>
+                  <span class="badge badge-secondary excel-name-block" data-field="plantId" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px; opacity:0.5;">PlantID</span>
+                  <span class="badge badge-secondary excel-name-block" data-field="position" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px; opacity:0.5;">Position</span>
+                  <span class="badge badge-secondary excel-name-block" data-field="trayId" draggable="true" style="cursor:pointer; font-size:0.82em; padding:4px 8px; opacity:0.5;">TrayID</span>
+                  <span class="ml-2 text-muted small">sep:</span>
+                  <input type="text" id="excel-naming-sep" value="_" class="form-control form-control-sm" style="width:36px; text-align:center; font-size:0.82em; padding:2px;">
+                </div>
+                <small class="text-muted">Preview: <code id="excel-naming-preview">Col-0_D1_11:00</code></small>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Naming scheme -->
         <div class="form-group row align-items-center mb-2">

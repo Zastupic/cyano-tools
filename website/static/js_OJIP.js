@@ -215,6 +215,8 @@ const MC = (() => {
     // Reset to FluorPen layout (undo any Excel-specific changes)
     if (filtersEl) filtersEl.style.display = 'none';
     if (namingRow) namingRow.style.display = '';
+    const exOpts = document.getElementById('excel-options');
+    if (exOpts) exOpts.style.display = 'none';
     if (headerEl) {
       headerEl.innerHTML =
         `<th style="width:30px;"><input type="checkbox" checked onchange="this.checked ? MC.selectAll() : MC.deselectAll()"></th>` +
@@ -1467,6 +1469,85 @@ const MC = (() => {
     });
   }
 
+  // Metadata (non-signal) columns present in either OJIP-Imaging Excel layout.
+  // Everything else in the header is treated as a candidate signal / normalization
+  // column, so both "custom format 1" (Fo/Foi/Foj/Fop) and the newer "Long"
+  // layout (Raw/Bg/F0/F0j_manual/…) are handled without a hard-coded column list.
+  const EXCEL_META_COLS = new Set([
+    'Tray ID', 'Tray Info', 'Plant ID', 'Position', 'Day', 'Hours', 'Lines',
+    'ZT', 'ZT Corrected', 'TimePoint', 'LogTimePoint',
+  ]);
+
+  // Human-readable labels for the normalization-column dropdown.
+  const EXCEL_NORM_LABELS = {
+    Raw: 'Raw fluorescence',
+    Bg: 'Bg (baseline-subtracted)',
+    F0: 'F0 (O-normalized, 10–12 µs)',
+    F0j_manual: 'F0j (norm. O & J, 2 ms)',
+    F0i_manual: 'F0i (norm. O & I, 36 ms)',
+    F0p_manual: 'F0p (norm. O & P, 280 ms)',
+    Fo: 'Fo (normalized to O)',
+    Foi: 'Foi (normalized to O and I)',
+    Foj: 'Foj (normalized to O and J)',
+    Fop: 'Fop (normalized to O and P)',
+  };
+
+  // Normalizations the tool can COMPUTE from a Raw column, per Sylvain's spec:
+  //   Bg  = Raw − mean(Raw, 1–3 µs)
+  //   F0  = Bg  / mean(Bg, 10–12 µs)
+  //   F0j = F0  / F0(TimePoint = 2000 µs)
+  //   F0i = F0  / F0(TimePoint = 36000 µs)
+  //   F0p = F0  / F0(TimePoint = 280000 µs)
+  // These require µs-scale TimePoints (the "Long" layout). Bg/F0/F0j/F0i/F0p are
+  // pure per-curve SCALAR multiples of each other (dark baseline already at 0), so
+  // they yield IDENTICAL JIP parameters — the choice only changes the transient
+  // shown/exported. Raw is deliberately NOT offered: it retains the additive dark
+  // offset (~hundreds of counts), which does NOT cancel in ratios like
+  // Fv/Fm=(FM−F0)/FM and biases every F-ratio param — Raw is the source, not a
+  // valid analysis target (_excelComputeNorm still handles it for internal use).
+  const EXCEL_COMPUTABLE = ['Bg', 'F0', 'F0j_manual', 'F0i_manual', 'F0p_manual'];
+  const EXCEL_JIP_REF_US = { F0j_manual: 2000, F0i_manual: 36000, F0p_manual: 280000 };
+
+  function _excelInRange(t, lo, hi) { return t >= lo && t <= hi; }
+  function _excelMean(arr) {
+    let s = 0, n = 0;
+    for (const v of arr) if (Number.isFinite(v)) { s += v; n++; }
+    return n ? s / n : NaN;
+  }
+
+  /** Compute a normalization series from Raw for one curve (µs TimePoints). */
+  function _excelComputeNorm(tpUs, raw, which) {
+    if (which === 'Raw') return raw.slice();
+    const base = _excelMean(raw.filter((_, i) => _excelInRange(tpUs[i], 1, 3)));
+    const bg = raw.map(r => r - (Number.isFinite(base) ? base : 0));
+    if (which === 'Bg') return bg;
+    const oref = _excelMean(bg.filter((_, i) => _excelInRange(tpUs[i], 10, 12)));
+    const denom0 = Number.isFinite(oref) && oref !== 0 ? oref : 1;
+    const f0 = bg.map(b => b / denom0);
+    if (which === 'F0') return f0;
+    const refT = EXCEL_JIP_REF_US[which];
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < tpUs.length; i++) {
+      const d = Math.abs(tpUs[i] - refT);
+      if (d < bd) { bd = d; bi = i; }
+    }
+    const denom = Number.isFinite(f0[bi]) && f0[bi] !== 0 ? f0[bi] : 1;
+    return f0.map(v => v / denom);
+  }
+
+  /** Median of a numeric array (ignoring non-finite), NaN if empty. */
+  function _excelMedian(arr) {
+    const v = arr.filter(Number.isFinite).sort((a, b) => a - b);
+    if (!v.length) return NaN;
+    const m = v.length >> 1;
+    return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+  }
+
+  // Parse the workbook into a raw, choice-independent payload. The actual
+  // normalization column, background mode and curve naming are chosen in the
+  // selection modal AFTER upload, so this step retains every candidate column
+  // per timepoint; `resolveExcelDataset` then turns those choices into the
+  // curve values / time axis / names consumed by the pipeline.
   function _parseExcelData(buffer, filename) {
     const wb = XLSX.read(buffer, { type: 'array' });
     const ws = wb.Sheets[wb.SheetNames[0]];
@@ -1482,16 +1563,36 @@ const MC = (() => {
         throw new Error(`Missing required column: "${col}". Expected columns: ${requiredCols.join(', ')}`);
     }
 
-    // Get selected normalization column
-    const normSel = document.getElementById('excel-norm-col');
-    const normCol = normSel ? normSel.value : 'Fo';
-    if (!headers.includes(normCol))
-      throw new Error(`Normalization column "${normCol}" not found in Excel file. Available: ${headers.join(', ')}`);
+    // Candidate signal columns = everything that is not metadata.
+    const dataCols = headers.filter(h => !EXCEL_META_COLS.has(h));
+    const hasRaw = headers.includes('Raw');
 
-    // Group rows by (Plant ID, Day, Hours) to reconstruct curves
-    // Use Plant ID if available, otherwise fall back to Lines + Position
+    // ── time-unit detection ────────────────────────────────────────────────
+    // "Custom format 1" stores TimePoint in ms (0.1 … ~2900); the "Long" layout
+    // stores it in µs (1 … ~2.5e6). Detect µs from the presence of a Raw column
+    // or from a max TimePoint well beyond any plausible ms value, then convert to
+    // ms so the rest of the pipeline (which assumes ms for OJIPImaging) is
+    // untouched.
+    let tpMax = 0;
+    for (const row of rows) {
+      const t = parseFloat(row['TimePoint']);
+      if (Number.isFinite(t) && t > tpMax) tpMax = t;
+    }
+    const isMicro = hasRaw || tpMax > 10000;
+    const tScale = isMicro ? 0.001 : 1.0;          // native TimePoint → ms
+
+    // ── available normalization columns ─────────────────────────────────────
+    // With a Raw column the tool computes the full Bg/F0/F0j/F0i/F0p family
+    // itself (owning the definition, so a Raw-only file also works); otherwise
+    // it offers whatever signal columns the file already carries.
+    const availableNormCols = hasRaw ? EXCEL_COMPUTABLE.slice() : dataCols.slice();
+    if (!availableNormCols.length)
+      throw new Error('No fluorescence/normalization columns found in the Excel file.');
+
+    // Group rows by (Plant ID, Day, Hours) to reconstruct curves. Store all
+    // candidate columns per timepoint so any normalization can be resolved.
     const hasPlantId = headers.includes('Plant ID');
-    const curveMap = new Map(); // key → { meta, timepoints: [{t, val}] }
+    const curveMap = new Map();
 
     for (const row of rows) {
       const plantId = hasPlantId ? row['Plant ID'] : `${row['Lines']}_${row['Position'] || ''}`;
@@ -1505,92 +1606,151 @@ const MC = (() => {
           hours: row['Hours'] || '',
           position: row['Position'] || '',
           trayId: row['Tray ID'] || '',
-          timepoints: [],
+          points: [],
         });
       }
-      curveMap.get(key).timepoints.push({
-        t: parseFloat(row['TimePoint']),
-        val: parseFloat(row[normCol]),
-      });
+      const rec = { t: parseFloat(row['TimePoint']) };
+      for (const c of dataCols) rec[c] = parseFloat(row[c]);
+      curveMap.get(key).points.push(rec);
     }
 
-    // Sort timepoints within each curve and build the shared time axis
-    // (all curves share the same timepoints)
-    let sharedTimeMs = null;
-    const curves = [];
+    let sharedTpNative = null;
+    const rawCurves = [];
+    const uniqueLines = new Set(), uniqueDays = new Set(), uniqueHours = new Set();
     let idx = 0;
 
-    // Collect unique metadata for filters
-    const uniqueLines = new Set();
-    const uniqueDays = new Set();
-    const uniqueHours = new Set();
-
     for (const [, meta] of curveMap) {
-      meta.timepoints.sort((a, b) => a.t - b.t);
-
-      if (!sharedTimeMs) {
-        sharedTimeMs = new Float64Array(meta.timepoints.map(tp => tp.t));
-      }
-
-      const values = new Float64Array(meta.timepoints.length);
-      for (let i = 0; i < meta.timepoints.length; i++) {
-        values[i] = meta.timepoints[i].val;
-      }
-
-      // Build curve name from naming builder blocks
-      const tempCurve = { line: meta.line, day: meta.day, hours: meta.hours,
-                          plantId: meta.plantId, position: meta.position, trayId: meta.trayId,
-                          index: idx };
-      const name = ExcelNaming.buildName(tempCurve);
-
+      meta.points.sort((a, b) => a.t - b.t);
+      const tpNative = meta.points.map(p => p.t);
+      if (!sharedTpNative) sharedTpNative = tpNative;
+      rawCurves.push({ meta, tpNative, index: idx });
       uniqueLines.add(meta.line);
       uniqueDays.add(meta.day);
       uniqueHours.add(meta.hours);
-
-      curves.push({
-        index: idx,
-        colIndex: idx + 1,
-        timestamp: `${meta.day} ${meta.hours}`,
-        epochMs: NaN,
-        protocol: 'OJIP',
-        values: values,
-        // Excel-specific metadata
-        line: meta.line,
-        day: meta.day,
-        hours: meta.hours,
-        plantId: meta.plantId,
-        position: meta.position,
-        trayId: meta.trayId,
-        curveName: name,
-      });
       idx++;
     }
 
-    if (!sharedTimeMs || !curves.length) {
+    if (!sharedTpNative || !rawCurves.length)
       throw new Error('No valid OJIP curves found in the Excel file.');
-    }
 
-    const stem = filename.replace(/\.[^.]+$/, '');
-
-    return {
+    const dataset = {
       fluorometer: 'OJIPImaging',
       filename: filename,
-      stem: stem,
-      timeUs: sharedTimeMs,  // actually ms, but field name kept for pipeline compat
-      curves: curves,
-      totalColumns: curves.length,
+      stem: filename.replace(/\.[^.]+$/, ''),
       instrumentMeta: {
         flash_wavelength_nm: null, flash_percent: null, flash_intensity_uE: null,
         super_wavelength_nm: null, super_percent: null, super_intensity_uE: null,
         actinic_wavelength_nm: null, actinic_percent: null, actinic_intensity_uE: null,
       },
-      excelMeta: {
-        normColumn: normCol,
+      // Raw payload retained so the modal's normalization / background / naming
+      // choices can be (re)applied without re-reading the workbook.
+      _excel: {
+        rawCurves, sharedTpNative, dataCols, hasRaw, isMicro, tScale,
+        availableNormCols,
         uniqueLines: [...uniqueLines].sort(),
         uniqueDays: [...uniqueDays].sort(),
         uniqueHours: [...uniqueHours].sort(),
       },
     };
+
+    // Resolve once with defaults so the modal can list curves immediately.
+    return resolveExcelDataset(dataset, null, null);
+  }
+
+  /**
+   * (Re)build curve values / time axis / names for an OJIP-Imaging dataset from
+   * the chosen normalization column and background mode. Mutates and returns the
+   * dataset. Called first with defaults at parse time, then again from the
+   * selection modal (via mcStartAnalysis) once the user has picked options.
+   */
+  function resolveExcelDataset(dataset, normCol, bgMode) {
+    const x = dataset && dataset._excel;
+    if (!x) return dataset;
+
+    // Resolve the normalization column against what this file offers.
+    if (!x.availableNormCols.includes(normCol))
+      normCol = ['F0', 'Fo'].find(c => x.availableNormCols.includes(c)) || x.availableNormCols[0];
+    bgMode = (bgMode === 'strip' || bgMode === 'keep') ? bgMode : 'strip';
+
+    // Per-curve normalization series (still on the full native axis) + name.
+    const curveSeries = x.rawCurves.map(rc => {
+      const m = rc.meta;
+      const series = x.hasRaw
+        ? _excelComputeNorm(rc.tpNative, m.points.map(p => p.Raw), normCol)
+        : m.points.map(p => p[normCol]);
+      const name = ExcelNaming.buildName({
+        line: m.line, day: m.day, hours: m.hours,
+        plantId: m.plantId, position: m.position, trayId: m.trayId, index: rc.index });
+      return { series, name };
+    });
+
+    // ── decide which leading (background) timepoints to drop ─────────────────
+    // Applied globally (all curves share the time axis) so the drop is consistent.
+    const nT = x.sharedTpNative.length;
+    let firstKeep = 0;
+    if (bgMode !== 'keep') {
+      if (x.isMicro) {
+        // "Long" layout: the 1–3 µs points are the Bg baseline and the O-step
+        // sits at 10–12 µs — drop everything below 10 µs so F0 = the O-level.
+        while (firstKeep < nT && x.sharedTpNative[firstKeep] < 10) firstKeep++;
+      } else {
+        // ms layout ("custom format 1"): a single leading dark/background point
+        // (≈0.1 ms, value ≪ the O-level) precedes the rise. Drop leading points
+        // that jump ≥3× up to the next point, judged on the median across curves
+        // (robust to a noisy individual trace).
+        const medAt = i => _excelMedian(curveSeries.map(c => c.series[i]));
+        while (firstKeep < nT - 1) {
+          const a = medAt(firstKeep), b = medAt(firstKeep + 1);
+          if (Number.isFinite(a) && Number.isFinite(b) && a > 0 && b / a >= 3) firstKeep++;
+          else break;
+        }
+      }
+      if (firstKeep >= nT) firstKeep = 0;   // never drop the whole curve
+    }
+
+    // Shared time axis (ms) after the background drop.
+    const sharedTimeMs = new Float64Array(
+      x.sharedTpNative.slice(firstKeep).map(t => t * x.tScale));
+
+    dataset.curves = x.rawCurves.map((rc, i) => {
+      const kept = curveSeries[i].series.slice(firstKeep);
+      const values = new Float64Array(kept.length);
+      for (let j = 0; j < kept.length; j++) values[j] = kept[j];
+      const m = rc.meta;
+      return {
+        index: rc.index,
+        colIndex: rc.index + 1,
+        timestamp: `${m.day} ${m.hours}`,
+        epochMs: NaN,
+        protocol: 'OJIP',
+        values: values,
+        line: m.line, day: m.day, hours: m.hours,
+        plantId: m.plantId, position: m.position, trayId: m.trayId,
+        curveName: curveSeries[i].name,
+      };
+    });
+    dataset.timeUs = sharedTimeMs;   // actually ms; field name kept for pipeline compat
+    dataset.totalColumns = dataset.curves.length;
+    dataset.excelMeta = {
+      normColumn: normCol,
+      availableNormCols: x.availableNormCols,
+      timeUnit: x.isMicro ? 'µs' : 'ms',
+      bgMode: bgMode,
+      droppedBg: firstKeep,
+      uniqueLines: x.uniqueLines,
+      uniqueDays: x.uniqueDays,
+      uniqueHours: x.uniqueHours,
+    };
+    return dataset;
+  }
+
+  /** Repopulate the normalization-column dropdown to match the parsed file. */
+  function _repopulateNormColSelect(availableNormCols, selected) {
+    const sel = document.getElementById('excel-norm-col');
+    if (!sel || !availableNormCols) return;
+    sel.innerHTML = availableNormCols.map(c =>
+      `<option value="${c}"${c === selected ? ' selected' : ''}>${EXCEL_NORM_LABELS[c] || c}</option>`
+    ).join('');
   }
 
   // ── M2-Excel: Selection modal adaptations ──────────────────────────
@@ -1607,11 +1767,23 @@ const MC = (() => {
 
     fileEl.textContent = dataset.filename;
     countEl.textContent = dataset.curves.length;
-    dateEl.textContent = `${dataset.excelMeta.uniqueLines.length} lines, ` +
-                         `${dataset.excelMeta.uniqueDays.length} days, ` +
-                         `norm: ${dataset.excelMeta.normColumn}`;
+    const em = dataset.excelMeta;
+    const bgTxt = em.bgMode === 'keep'
+      ? 'background kept'
+      : (em.droppedBg ? `${em.droppedBg} bg point${em.droppedBg > 1 ? 's' : ''} dropped` : 'no bg point');
+    dateEl.textContent = `${em.uniqueLines.length} lines, ${em.uniqueDays.length} days, ` +
+                         `norm: ${em.normColumn}, TimePoint in ${em.timeUnit}, ${bgTxt}`;
 
-    // Hide FluorPen naming dropdown (we use the Excel-specific one)
+    // Reflect the columns actually present in this file in the dropdown, so the
+    // normalization choice matches the file.
+    _repopulateNormColSelect(em.availableNormCols, em.normColumn);
+    const bgSel = document.getElementById('excel-bg-mode');
+    if (bgSel) bgSel.value = em.bgMode || 'strip';
+
+    // Show the Excel import options (normalization / background / naming), which
+    // now live inside this modal, and hide the FluorPen naming dropdown.
+    const exOpts = document.getElementById('excel-options');
+    if (exOpts) exOpts.style.display = '';
     if (namingRow) namingRow.style.display = 'none';
 
     // Show Excel filters
@@ -2592,7 +2764,7 @@ const MC = (() => {
   // ── Public API ───────────────────────────────────────────────────────
   return {
     parse, isMultiCurve, showSelectionModal,
-    parseExcel, showExcelSelectionModal,
+    parseExcel, showExcelSelectionModal, resolveExcelDataset,
     applyExcelFilters, clearExcelFilters,
     selectAll, deselectAll, selectRange,
     getSelectedIndices, getNamingScheme,
@@ -3039,15 +3211,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const sel = document.getElementById('fluorometer');
   const saved = localStorage.getItem('ojip_fluorometer');
   if (saved && [...sel.options].some(o => o.value === saved)) sel.value = saved;
-  function _toggleExcelOpts() {
-    const exOpts = document.getElementById('excel-options');
-    if (exOpts) exOpts.style.display = sel.value === 'OJIPImaging' ? '' : 'none';
-  }
   sel.addEventListener('change', () => {
     localStorage.setItem('ojip_fluorometer', sel.value);
-    _toggleExcelOpts();
   });
-  _toggleExcelOpts();
+  // Excel import options (normalization / background / naming) now live inside
+  // the post-upload selection modal, not the upload panel — so there is nothing
+  // to show/hide here on fluorometer change.
   ExcelNaming.init();
 
   // Prevent browser from opening dropped files anywhere on the page
@@ -3514,6 +3683,16 @@ function mcShowPlaceholders(show) {
 async function mcStartAnalysis() {
   const selected = MC.getSelectedIndices();
   if (!selected.length) return;
+
+  // Apply the Excel import options chosen in the modal (normalization column,
+  // background/F0 mode, and curve naming) before building the batch. Curve
+  // indices are preserved, so the current selection stays valid.
+  if (mcDataset && mcDataset.fluorometer === 'OJIPImaging' && mcDataset._excel) {
+    MC.resolveExcelDataset(
+      mcDataset,
+      document.getElementById('excel-norm-col')?.value,
+      document.getElementById('excel-bg-mode')?.value);
+  }
 
   // Close the selection modal
   $('#mc-selection-modal').modal('hide');
@@ -4119,6 +4298,16 @@ function renderDiagnostics() {
     bgF0Wrap.style.display = showBg ? '' : 'none';
     if (showBg) _syncBgF0Controls();
   }
+  // OJIP-Imaging Excel background/F0 mirror — reflect the currently-applied mode;
+  // changing it + Refit all curves re-resolves the batch (see mcRefitBatch).
+  const exBgWrap = document.getElementById('mc-excel-bg-f0-wrap');
+  if (exBgWrap) {
+    const showEx = mcDataset && mcIsActive
+      && mcDataset.fluorometer === 'OJIPImaging' && mcDataset._excel;
+    exBgWrap.style.display = showEx ? '' : 'none';
+    const exSel = document.getElementById('mc-excel-bg-mode');
+    if (showEx && exSel) exSel.value = mcDataset.excelMeta?.bgMode || 'strip';
+  }
 }
 
 function renderDiagRecon() {
@@ -4533,6 +4722,10 @@ async function mcRefitBatch() {
   const status = document.getElementById('mc-refit-batch-status');
   if (!mcDataset || !_lastSelected.length) return;
 
+  // A refit changes the fit / background inputs, so any cached per-curve detail
+  // is now stale — drop it so the Diagnostics detail re-fetches on next click.
+  mcDetailCache = {};
+
   const fitMethod = document.getElementById('fit-method-sel')?.value || 'logspline';
   const jipOpts = {
     FJ_time:   parseFloat(document.getElementById('FJ_time').value) || 2.0,
@@ -4545,6 +4738,16 @@ async function mcRefitBatch() {
     bgN:       parseInt(document.getElementById('bg-n-input')?.value) || 1,
     f0Source:  document.getElementById('f0-source-sel')?.value || 'instrument',
   };
+
+  // OJIP-Imaging Excel: re-apply the background/F0 mode chosen in the Diagnostics
+  // mirror by rebuilding the curve values/time axis before the pass (curve
+  // indices are preserved, so _lastSelected stays valid).
+  if (mcDataset.fluorometer === 'OJIPImaging' && mcDataset._excel) {
+    MC.resolveExcelDataset(
+      mcDataset,
+      mcDataset.excelMeta?.normColumn,
+      document.getElementById('mc-excel-bg-mode')?.value);
+  }
 
   btn.disabled = true;
   status.textContent = `Refitting ${_lastSelected.length} curves with ${fitMethod}…`;
