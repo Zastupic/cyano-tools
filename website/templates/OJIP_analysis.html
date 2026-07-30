@@ -2452,9 +2452,10 @@ window._getOJIPCurvesForBundle = function () {
                   <option value="Fop">Fop (normalized to O and P)</option>
                 </select>
                 <small class="text-muted">Options adapt to the file. For files with a <code>Raw</code> column the tool computes
-                  Bg / F0 / F0j / F0i / F0p itself (Bg = Raw&minus;mean(1&ndash;3&nbsp;µs); F0 = Bg/mean(10&ndash;12&nbsp;µs);
-                  F0j/i/p = F0 / F0 at 2 / 36 / 280&nbsp;ms). These all give identical JIP parameters (the backend
-                  double-normalizes) &mdash; they differ only in the transient shown/exported. (Raw itself is not offered:
+                  Bg / F0 / F0j / F0i / F0p itself (Bg = Raw&minus;mean(Raw,&nbsp;1&ndash;3&nbsp;µs);
+                  F0 = Bg/mean(Bg,&nbsp;10&ndash;12&nbsp;µs); F0j/i/p = F0 / F0 at 2 / 36 / 280&nbsp;ms).
+                  These all give identical JIP parameters (the backend double-normalizes) &mdash;
+                  they differ only in the transient shown/exported. (Raw itself is not offered:
                   its un-subtracted dark offset would bias Fv/Fm.)</small>
               </div>
               <div class="form-group mb-2">
@@ -2463,9 +2464,13 @@ window._getOJIPCurvesForBundle = function () {
                   <option value="strip" selected>Strip pre-illumination background (recommended)</option>
                   <option value="keep">Keep all points (F0 = first point)</option>
                 </select>
-                <small class="text-muted">The first timepoint(s) are a dark/background reading, not the O&ndash;step.
-                  <em>Strip</em> drops them so F0 is the true O&ndash;level (µs files: below 10&nbsp;µs; ms files: the leading
-                  background point) &mdash; otherwise Fv/Fm is inflated toward ~1. <em>Keep</em> restores the legacy behaviour.</small>
+                <small class="text-muted">For µs files (TOMI-3 / OJIP-Imaging): timepoints 1&ndash;3&nbsp;µs are dark/background
+                  readings; 10&ndash;12&nbsp;µs are three noisy F0 (O&ndash;step) samples.
+                  <em>Strip</em> subtracts the background (already done in the Bg/F0 normalization),
+                  drops the 1&ndash;3&nbsp;µs points, and averages the three F0 readings into a single
+                  point placed at 0.1&nbsp;ms on the time axis.
+                  For ms files: the leading dark point is dropped.
+                  <em>Keep</em> retains all points unchanged (legacy behaviour; inflates Fv/Fm).</small>
               </div>
               <div class="form-group mb-1">
                 <label class="small font-weight-bold mb-1">Curve naming (click to toggle, drag to reorder)</label>

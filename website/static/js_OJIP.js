@@ -21,6 +21,19 @@ var mcIsActive     = false;  // true when a multi-curve dataset is loaded
 var _lastSelected  = [];     // curve indices from last mcStartAnalysis (for batch refit)
 var _lastJipOpts   = {};     // jipOpts from last mcStartAnalysis (for batch refit)
 
+// White background plugin for Chart.js (avoids transparent canvas)
+const _ojipWhiteBgPlugin = {
+  id: 'whiteBg',
+  beforeDraw(chart) {
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  },
+};
+
 // ═══════════════════════════════════════════════════════════════════════
 //  MULTI-CURVE MODULE  (M2 parser, M3 orchestrator, M4 time-series,
 //                       M5 detail-on-demand, M6 visualization)
@@ -650,6 +663,8 @@ const MC = (() => {
           pointHoverRadius: 6,
           borderColor: color,
           backgroundColor: colorA,
+          _fullColor: sampleColor(gi, n),
+          _fullColorBg: sampleColor(gi, n, 0.65),
           showLine: false,
           borderWidth: 1,
           order: 10, // raw points behind overlays
@@ -776,9 +791,33 @@ const MC = (() => {
             legend: {
               display: n <= 25,
               position: 'right',
+              onClick: (e, legendItem, legend) => {
+                const chart = legend.chart;
+                const idx = legendItem.datasetIndex;
+                const ds = chart.data.datasets[idx];
+                const nowVisible = !chart.isDatasetVisible(idx);
+                chart.setDatasetVisibility(idx, nowVisible);
+                // Also toggle associated mean±SD overlays
+                const grp = ds.label;
+                chart.data.datasets.forEach((d, i) => {
+                  if (d._isMeanOverlay && d._groupLabel === grp)
+                    chart.setDatasetVisibility(i, nowVisible);
+                });
+                chart.update();
+              },
               labels: {
                 usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11 },
-                filter: (item) => item.text !== '',
+                generateLabels: (chart) => {
+                  const items = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                  return items.filter(l => l.text !== '').map(l => {
+                    const ds = chart.data.datasets[l.datasetIndex];
+                    if (ds._fullColor) {
+                      l.strokeStyle = ds._fullColor;
+                      l.fillStyle = ds._fullColorBg;
+                    }
+                    return l;
+                  });
+                },
               },
             },
             tooltip: {
@@ -819,6 +858,7 @@ const MC = (() => {
             }
           },
         },
+        plugins: [_ojipWhiteBgPlugin],
       });
 
     } else {
@@ -932,6 +972,7 @@ const MC = (() => {
             }
           },
         },
+        plugins: [_ojipWhiteBgPlugin],
       });
     }
 
@@ -1373,6 +1414,7 @@ const MC = (() => {
           if (ds && ds._mcSlot != null) fetchAndShowDetail(ds._mcSlot);
         },
       },
+      plugins: [_ojipWhiteBgPlugin],
     });
   }
 
@@ -1684,38 +1726,68 @@ const MC = (() => {
       return { series, name };
     });
 
-    // ── decide which leading (background) timepoints to drop ─────────────────
-    // Applied globally (all curves share the time axis) so the drop is consistent.
+    // ── background / F0 handling (applied globally — shared time axis) ──────
     const nT = x.sharedTpNative.length;
-    let firstKeep = 0;
-    if (bgMode !== 'keep') {
-      if (x.isMicro) {
-        // "Long" layout: the 1–3 µs points are the Bg baseline and the O-step
-        // sits at 10–12 µs — drop everything below 10 µs so F0 = the O-level.
-        while (firstKeep < nT && x.sharedTpNative[firstKeep] < 10) firstKeep++;
-      } else {
-        // ms layout ("custom format 1"): a single leading dark/background point
-        // (≈0.1 ms, value ≪ the O-level) precedes the rise. Drop leading points
-        // that jump ≥3× up to the next point, judged on the median across curves
-        // (robust to a noisy individual trace).
-        const medAt = i => _excelMedian(curveSeries.map(c => c.series[i]));
-        while (firstKeep < nT - 1) {
-          const a = medAt(firstKeep), b = medAt(firstKeep + 1);
-          if (Number.isFinite(a) && Number.isFinite(b) && a > 0 && b / a >= 3) firstKeep++;
-          else break;
-        }
+    let sharedTimeMs, resolvedValues;
+
+    if (bgMode !== 'keep' && x.isMicro) {
+      // "Long" µs layout — the first six timepoints are synthetic (TOMI-3
+      // pump-and-probe):
+      //   1, 2, 3 µs   = background (dark) readings     → drop entirely
+      //   10, 11, 12 µs = F0 (O-step, 3 noisy samples)  → average into one
+      //                     point placed at 100 µs (0.1 ms)
+      // Everything from 500 µs onward is real OJIP kinetics, kept as-is.
+      // Placing averaged F0 at 100 µs (= 0.1 ms) matches the historical
+      // summary-file format and fills the visual gap on a log-time plot.
+      const f0Idx = [], restIdx = [];
+      for (let i = 0; i < nT; i++) {
+        const tp = x.sharedTpNative[i];
+        if (tp >= 10 && tp <= 12)  f0Idx.push(i);
+        else if (tp > 12)          restIdx.push(i);
+        // tp < 10 (1–3 µs background) → dropped
       }
-      if (firstKeep >= nT) firstKeep = 0;   // never drop the whole curve
+      const F0_PLACED_US = 100;                  // 0.1 ms on the log axis
+      const hasF0pts = f0Idx.length > 0;
+      const timeParts = hasF0pts
+        ? [F0_PLACED_US, ...restIdx.map(i => x.sharedTpNative[i])]
+        : restIdx.map(i => x.sharedTpNative[i]);
+      sharedTimeMs = new Float64Array(timeParts.map(t => t * x.tScale));
+
+      resolvedValues = curveSeries.map(cs => {
+        let vals;
+        if (hasF0pts) {
+          const f0Vals = f0Idx.map(i => cs.series[i]).filter(Number.isFinite);
+          const f0Avg = f0Vals.length
+            ? f0Vals.reduce((a, b) => a + b, 0) / f0Vals.length : NaN;
+          vals = [f0Avg, ...restIdx.map(i => cs.series[i])];
+        } else {
+          vals = restIdx.map(i => cs.series[i]);
+        }
+        return new Float64Array(vals);
+      });
+    } else if (bgMode !== 'keep') {
+      // ms layout ("custom format 1"): drop leading dark/background points
+      // that jump ≥3× up to the next point (median across curves).
+      let firstKeep = 0;
+      const medAt = i => _excelMedian(curveSeries.map(c => c.series[i]));
+      while (firstKeep < nT - 1) {
+        const a = medAt(firstKeep), b = medAt(firstKeep + 1);
+        if (Number.isFinite(a) && Number.isFinite(b) && a > 0 && b / a >= 3) firstKeep++;
+        else break;
+      }
+      if (firstKeep >= nT) firstKeep = 0;
+      sharedTimeMs = new Float64Array(
+        x.sharedTpNative.slice(firstKeep).map(t => t * x.tScale));
+      resolvedValues = curveSeries.map(cs =>
+        new Float64Array(cs.series.slice(firstKeep)));
+    } else {
+      // 'keep' mode — no dropping, no collapsing
+      sharedTimeMs = new Float64Array(
+        x.sharedTpNative.map(t => t * x.tScale));
+      resolvedValues = curveSeries.map(cs => new Float64Array(cs.series));
     }
 
-    // Shared time axis (ms) after the background drop.
-    const sharedTimeMs = new Float64Array(
-      x.sharedTpNative.slice(firstKeep).map(t => t * x.tScale));
-
     dataset.curves = x.rawCurves.map((rc, i) => {
-      const kept = curveSeries[i].series.slice(firstKeep);
-      const values = new Float64Array(kept.length);
-      for (let j = 0; j < kept.length; j++) values[j] = kept[j];
       const m = rc.meta;
       return {
         index: rc.index,
@@ -1723,7 +1795,7 @@ const MC = (() => {
         timestamp: `${m.day} ${m.hours}`,
         epochMs: NaN,
         protocol: 'OJIP',
-        values: values,
+        values: resolvedValues[i],
         line: m.line, day: m.day, hours: m.hours,
         plantId: m.plantId, position: m.position, trayId: m.trayId,
         curveName: curveSeries[i].name,
@@ -1736,7 +1808,7 @@ const MC = (() => {
       availableNormCols: x.availableNormCols,
       timeUnit: x.isMicro ? 'µs' : 'ms',
       bgMode: bgMode,
-      droppedBg: firstKeep,
+      droppedBg: nT - sharedTimeMs.length,
       uniqueLines: x.uniqueLines,
       uniqueDays: x.uniqueDays,
       uniqueHours: x.uniqueHours,
@@ -1770,7 +1842,7 @@ const MC = (() => {
     const em = dataset.excelMeta;
     const bgTxt = em.bgMode === 'keep'
       ? 'background kept'
-      : (em.droppedBg ? `${em.droppedBg} bg point${em.droppedBg > 1 ? 's' : ''} dropped` : 'no bg point');
+      : (em.droppedBg ? `bg 1\u20133 \u00b5s dropped, F0 10\u201312 \u00b5s averaged \u2192 0.1 ms` : 'no bg change');
     dateEl.textContent = `${em.uniqueLines.length} lines, ${em.uniqueDays.length} days, ` +
                          `norm: ${em.normColumn}, TimePoint in ${em.timeUnit}, ${bgTxt}`;
 
@@ -2160,7 +2232,7 @@ const MC = (() => {
           if (ds && ds._mcSlot != null) fetchAndShowDetail(ds._mcSlot);
         },
       },
-      plugins: [{ id: 'panelBorder', afterDraw(ch) {
+      plugins: [_ojipWhiteBgPlugin, { id: 'panelBorder', afterDraw(ch) {
         const a = ch.chartArea, c = ch.ctx; c.save();
         c.strokeStyle = '#000'; c.lineWidth = 1;
         c.strokeRect(a.left, a.top, a.right - a.left, a.bottom - a.top);
@@ -2425,7 +2497,7 @@ const MC = (() => {
           if (ds && ds._mcSlot != null) fetchAndShowDetail(ds._mcSlot);
         },
       },
-      plugins: [{ id: 'panelBorder', afterDraw(ch) {
+      plugins: [_ojipWhiteBgPlugin, { id: 'panelBorder', afterDraw(ch) {
         const a = ch.chartArea, c = ch.ctx; c.save();
         c.strokeStyle = '#000'; c.lineWidth = 1;
         c.strokeRect(a.left, a.top, a.right - a.left, a.bottom - a.top);
@@ -3020,6 +3092,7 @@ function destroyChart(id) {
 }
 function makeChart(id, cfg) {
   destroyChart(id);
+  cfg.plugins = (cfg.plugins || []).concat(_ojipWhiteBgPlugin);
   chartInst[id] = new Chart(document.getElementById(id), cfg);
   return chartInst[id];
 }
