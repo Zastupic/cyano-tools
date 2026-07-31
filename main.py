@@ -19,4 +19,3 @@ if __name__ == '__main__':
     # debug=False in production; set FLASK_DEBUG=1 env var for local development
     # With debug=True the server auto-reloads on any .py file change — no restart needed
     app.run(debug=True)
-    

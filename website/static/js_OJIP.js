@@ -9,6 +9,7 @@ var paramData = {};     // {filename: {FVFM, VJ, ...}} — recalculated per samp
 let groups    = {};     // {filename: groupName}
 let chartInst = {};     // {chartId: Chart instance}
 let dirtyTabs = new Set(); // tabs whose charts need rendering on first visit
+let fjfiMode  = 'default'; // 'default' (2/30 ms) or 'auto' (derivative-detected)
 
 // ── multi-curve state (M2-M6) ───────────────────────────────────────────
 var mcDataset      = null;   // parsed multi-curve file (see MC.parse)
@@ -20,6 +21,7 @@ var mcAbort        = null;   // AbortController for cancel
 var mcIsActive     = false;  // true when a multi-curve dataset is loaded
 var _lastSelected  = [];     // curve indices from last mcStartAnalysis (for batch refit)
 var _lastJipOpts   = {};     // jipOpts from last mcStartAnalysis (for batch refit)
+var _currentDetailSlot = null; // paramMatrix slot shown in Diagnostics (for param writeback)
 
 // White background plugin for Chart.js (avoids transparent canvas)
 const _ojipWhiteBgPlugin = {
@@ -351,6 +353,10 @@ const MC = (() => {
           background_mode: jipOpts.bgMode || 'auto',
           background_n:    jipOpts.bgN || 1,
           f0_source:       jipOpts.f0Source || 'instrument',
+          knot_placement:  jipOpts.knotPlacement || 'hybrid',
+          oj_densify:      jipOpts.ojDensify || false,
+          oj_tau_ms:       jipOpts.ojTauMs || null,
+          f0_time_ms:      jipOpts.f0TimMs || null,
           include_curves: false,
         };
 
@@ -1148,12 +1154,16 @@ const MC = (() => {
       FJ_time: parseFloat(document.getElementById('FJ_time').value) || 2.0,
       FI_time: parseFloat(document.getElementById('FI_time').value) || 30.0,
       knots_reduction_factor: parseInt(document.getElementById('kr_input').value) || 10,
-      fit_method: document.getElementById('fit-method-sel')?.value || 'logspline',
+      fit_method: (document.getElementById('fit-method-sel')?.value || 'logspline'),
       trim_first: parseInt(document.getElementById('trim-first-input')?.value) || 0,
       trim_last:  parseInt(document.getElementById('trim-last-input')?.value)  || 0,
       background_mode: document.getElementById('bg-mode-sel')?.value || 'auto',
       background_n:    parseInt(document.getElementById('bg-n-input')?.value) || 1,
       f0_source:       document.getElementById('f0-source-sel')?.value || 'instrument',
+      knot_placement:  document.getElementById('knot-placement-sel')?.value || 'hybrid',
+      oj_densify:      document.getElementById('oj-densify-chk')?.checked || false,
+      oj_tau_ms:       (() => { const v = parseFloat(document.getElementById('oj-tau-input')?.value); return (v > 0) ? v : null; })(),
+      f0_time_ms:      (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
       include_curves: true,
     };
 
@@ -1174,6 +1184,17 @@ const MC = (() => {
       if (keys.length >= MC_DETAIL_MAX) delete mcDetailCache[keys[0]];
       mcDetailCache[slot] = detail;
 
+      // Update densify status if info returned
+      const densifySt = document.getElementById('oj-densify-status');
+      if (densifySt && detail.densify_info) {
+        const first = Object.values(detail.densify_info)[0];
+        if (first) {
+          densifySt.textContent = `\u03c4 = ${first.tau_ms} ms, A = ${first.A}`;
+          const tauIn = document.getElementById('oj-tau-input');
+          if (tauIn && !tauIn.value) tauIn.value = first.tau_ms;
+        }
+      }
+
       _showDetailInTabs(r.name, detail, slot);
     } catch(e) {
       console.error('Detail fetch failed:', e);
@@ -1186,6 +1207,7 @@ const MC = (() => {
   }
 
   function _showDetailInTabs(name, detail, slot) {
+    _currentDetailSlot = slot;  // remember for param writeback in refitSplines()
     // Build a synthetic ojipData-like object for the existing rendering functions
     // This lets the existing Curves/Params/Diagnostics tabs work unchanged
     const singleData = {
@@ -3126,7 +3148,11 @@ function markTabsDirty(...ids) { ids.forEach(id => dirtyTabs.add(id)); }
 function renderDirtyTab(tabId) {
   if (!ojipData || !dirtyTabs.has(tabId)) return;
   dirtyTabs.delete(tabId);
-  if (tabId === 'tab-params') {
+  if (tabId === 'tab-curves') {
+    const activeNorm = document.querySelector('#norm-btns .btn-primary')?.dataset?.norm || 'double_norm';
+    renderCurvesChart(activeNorm);
+    buildFJTable();
+  } else if (tabId === 'tab-params') {
     const pgroup = document.querySelector('#param-group-btns .btn-primary')?.dataset?.pgroup || 'yields';
     renderParamsChart(pgroup);
     renderParamsTable(pgroup);
@@ -3221,6 +3247,8 @@ function calcJIP(kv) {
     ABSRC, TR0RC, ET0RC, RE0RC, DI0RC,
     Area_OJ: kv.Area_OJ, Area_JI: kv.Area_JI, Area_IP: kv.Area_IP, Area_OP: kv.Area_OP,
     SM, N,
+    FJ_time_deriv_ms: kv.FJ_time_deriv_ms, FI_time_deriv_ms: kv.FI_time_deriv_ms,
+    FP_time_deriv_ms: kv.FP_time_deriv_ms, FM_time_ms: kv.FM_time_ms,
   };
 }
 
@@ -3330,9 +3358,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Copy params table
   document.getElementById('copy-params-btn').addEventListener('click', copyParamsTable);
 
-  // Reset FJ/FI timings (both tabs share the same handler)
-  document.getElementById('reset-fj-fi-btn').addEventListener('click', resetFJFI);
-  document.getElementById('reset-fj-fi-btn-curves').addEventListener('click', resetFJFI);
+  // Toggle FJ/FI between default (2/30 ms) and auto-detected timings
+  document.getElementById('reset-fj-fi-btn').addEventListener('click', toggleFJFI);
+  document.getElementById('reset-fj-fi-btn-curves').addEventListener('click', toggleFJFI);
 
   // Groups tab
   document.getElementById('select-all-check').addEventListener('change', e => {
@@ -3405,15 +3433,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // Export to statistics
   document.getElementById('export-stats-btn').addEventListener('click', exportToStatistics);
 
-  // Polynomial FJ/FI apply buttons
-  document.getElementById('use-poly-fj-btn').addEventListener('click', usePolyFJ);
-  document.getElementById('use-poly-fi-btn').addEventListener('click', usePolyFI);
-
   // Diagnostics kr slider
   const krSlider = document.getElementById('kr-slider');
   const krDisp   = document.getElementById('kr-display');
   krSlider.addEventListener('input', () => { krDisp.textContent = krSlider.value; });
   document.getElementById('refit-btn').addEventListener('click', refitSplines);
+
+  // O-J densify checkbox → enable/disable τ input
+  const ojDensifyChk = document.getElementById('oj-densify-chk');
+  const ojTauInput   = document.getElementById('oj-tau-input');
+  if (ojDensifyChk && ojTauInput) {
+    ojDensifyChk.addEventListener('change', () => {
+      ojTauInput.disabled = !ojDensifyChk.checked;
+      if (!ojDensifyChk.checked) {
+        document.getElementById('oj-densify-status').textContent = '';
+      }
+    });
+  }
 
   // Delegated listeners that must survive table rebuilds
   document.getElementById('fjtable').addEventListener('change', _onFJTableChange);
@@ -3436,10 +3472,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!ojipData) return;
     renderDirtyTab(tabId); // no-op when not dirty
-    if (tabId === 'tab-params') {
+    if (tabId === 'tab-curves') {
+      chartInst['curves-chart']?.resize();
+    } else if (tabId === 'tab-params') {
       chartInst['params-chart']?.resize();
     } else if (tabId === 'tab-diag') {
-      ['diag-recon-chart', 'diag-resid-chart', 'diag-d2-chart', 'diag-poly-chart', 'diag-poly-fi-chart']
+      ['diag-recon-chart', 'diag-resid-chart', 'diag-d2-chart', 'diag-d3-chart']
         .forEach(id => chartInst[id]?.resize());
     } else if (tabId === 'tab-groups') {
       ['grp-curves-raw-chart','grp-curves-f0-chart','grp-curves-fm-chart','grp-curves-dn-chart',
@@ -3637,12 +3675,13 @@ async function uploadAndAnalyze() {
   fd.append('FJ_time',     document.getElementById('FJ_time').value);
   fd.append('FI_time',     document.getElementById('FI_time').value);
   fd.append('knots_reduction_factor', document.getElementById('kr_input').value);
-  fd.append('fit_method', document.getElementById('fit-method-sel')?.value || 'logspline');
+  fd.append('fit_method', (document.getElementById('fit-method-sel')?.value || 'logspline'));
   fd.append('trim_first', document.getElementById('trim-first-input')?.value || '0');
   fd.append('trim_last',  document.getElementById('trim-last-input')?.value  || '0');
   fd.append('background_mode', document.getElementById('bg-mode-sel')?.value || 'auto');
   fd.append('background_n',    document.getElementById('bg-n-input')?.value || '1');
   fd.append('f0_source',       document.getElementById('f0-source-sel')?.value || 'instrument');
+  fd.append('knot_placement',  document.getElementById('knot-placement-sel')?.value || 'hybrid');
   if (document.getElementById('reduce_size').checked) fd.append('checkbox_reduce_file_size', 'checked');
 
   // Pre-flight size check — avoid a silent connection-reset from the server
@@ -3804,12 +3843,16 @@ async function mcStartAnalysis() {
     FJ_time:   parseFloat(document.getElementById('FJ_time').value) || 2.0,
     FI_time:   parseFloat(document.getElementById('FI_time').value) || 30.0,
     kr:        parseInt(document.getElementById('kr_input').value) || 10,
-    fitMethod:  document.getElementById('fit-method-sel')?.value || 'logspline',
+    fitMethod:  (document.getElementById('fit-method-sel')?.value || 'logspline'),
     trimFirst:  parseInt(document.getElementById('trim-first-input')?.value) || 0,
     trimLast:   parseInt(document.getElementById('trim-last-input')?.value)  || 0,
     bgMode:     document.getElementById('bg-mode-sel')?.value || 'auto',
     bgN:        parseInt(document.getElementById('bg-n-input')?.value) || 1,
     f0Source:   document.getElementById('f0-source-sel')?.value || 'instrument',
+    knotPlacement: document.getElementById('knot-placement-sel')?.value || 'hybrid',
+    ojDensify: false,
+    ojTauMs:   null,
+    f0TimMs:   null,
   };
   _lastSelected = selected.slice();
   _lastJipOpts  = Object.assign({}, jipOpts);
@@ -3870,6 +3913,10 @@ function renderResults() {
   link.onclick = e => { e.preventDefault(); downloadXlsxWithCharts(); };
   link.style.display = '';
 
+  // Reset FJ/FI toggle to default state for fresh data
+  fjfiMode = 'default';
+  _updateFJFIBtnLabels();
+
   renderCurvesChart('raw');
   buildFJTable();
   buildGroupAssignTable();
@@ -3918,32 +3965,44 @@ function renderCurvesChart(norm) {
   }));
 
   // FJ markers (▲ triangles) — one point per file, colour-matched to its curve
-  datasets.push({
-    label: 'FJ', showLine: false,
-    data: files.map(fname => ({
-      x: ojipData.key_values[fname].FJ_time_user_ms,
-      y: interpAt(t, ojipData.curves[fname][norm], ojipData.key_values[fname].FJ_time_user_ms),
-    })),
-    pointRadius:          6,
-    pointStyle:           'triangle',
-    pointBackgroundColor: files.map((_, i) => sampleColor(i, n)),
-    pointBorderColor:     files.map((_, i) => sampleColor(i, n)),
-    borderColor: 'transparent', backgroundColor: 'transparent',
+  // Use the user/editable timing (FJ_time_user_ms) so that manual edits and
+  // the "Reset FJ/FI" button are immediately reflected on the chart.
+  const fjData = [], fjBg = [], fjBd = [];
+  files.forEach((fname, i) => {
+    const kv  = ojipData.key_values[fname];
+    const fjT = kv.FJ_time_user_ms;
+    if (fjT != null) {
+      fjData.push({ x: fjT, y: interpAt(t, ojipData.curves[fname][norm], fjT) });
+      fjBg.push(sampleColor(i, n)); fjBd.push(sampleColor(i, n));
+    }
   });
+  if (fjData.length) {
+    datasets.push({
+      label: 'FJ', showLine: false, data: fjData,
+      pointRadius: 6, pointStyle: 'triangle',
+      pointBackgroundColor: fjBg, pointBorderColor: fjBd,
+      borderColor: 'transparent', backgroundColor: 'transparent',
+    });
+  }
 
-  // FI markers (◆ diamonds) — same colours
-  datasets.push({
-    label: 'FI', showLine: false,
-    data: files.map(fname => ({
-      x: ojipData.key_values[fname].FI_time_user_ms,
-      y: interpAt(t, ojipData.curves[fname][norm], ojipData.key_values[fname].FI_time_user_ms),
-    })),
-    pointRadius:          6,
-    pointStyle:           'rectRot',
-    pointBackgroundColor: files.map((_, i) => sampleColor(i, n)),
-    pointBorderColor:     files.map((_, i) => sampleColor(i, n)),
-    borderColor: 'transparent', backgroundColor: 'transparent',
+  // FI markers (◆ diamonds) — same logic
+  const fiData = [], fiBg = [], fiBd = [];
+  files.forEach((fname, i) => {
+    const kv  = ojipData.key_values[fname];
+    const fiT = kv.FI_time_user_ms;
+    if (fiT != null) {
+      fiData.push({ x: fiT, y: interpAt(t, ojipData.curves[fname][norm], fiT) });
+      fiBg.push(sampleColor(i, n)); fiBd.push(sampleColor(i, n));
+    }
   });
+  if (fiData.length) {
+    datasets.push({
+      label: 'FI', showLine: false, data: fiData,
+      pointRadius: 6, pointStyle: 'rectRot',
+      pointBackgroundColor: fiBg, pointBorderColor: fiBd,
+      borderColor: 'transparent', backgroundColor: 'transparent',
+    });
+  }
 
   // FP markers (■ squares) — only for files where FP timing is available
   const fpData = [], fpBg = [], fpBd = [];
@@ -4031,9 +4090,9 @@ function buildFJTable() {
       <td><input type="number" class="form-control form-control-sm fi-edit" data-fname="${fname}"
            value="${kv.FI_time_user_ms.toFixed(2)}" step="0.1" min="1" max="500"
            style="width:80px"></td>
-      <td class="fj-auto">${fmt(kv.FJ_time_inflect_ms ?? kv.FJ_time_deriv_ms)}</td>
-      <td class="fi-auto">${fmt(kv.FI_time_inflect_ms ?? kv.FI_time_deriv_ms)}</td>
-      <td class="fp-auto">${fmt(kv.FP_time_inflect_ms ?? kv.FP_time_deriv_ms)}</td>
+      <td class="fj-auto">${fmt(kv.FJ_time_deriv_ms)}</td>
+      <td class="fi-auto">${fmt(kv.FI_time_deriv_ms)}</td>
+      <td class="fp-auto">${fmt(kv.FP_time_deriv_ms)}</td>
       <td>${fmt(kv.F0)}</td>
       <td>${fmt(kv.FM)}</td>
       <td>${fmt(kv.FK)}</td>
@@ -4359,7 +4418,7 @@ function _syncBgF0Controls() {
 }
 
 function renderDiagnostics() {
-  renderDiagRecon(); renderDiagResid(); renderDiagD2(); renderDiagD3(); renderDiagPoly(); renderDiagPolyFI();
+  renderDiagRecon(); renderDiagResid(); renderDiagD2(); renderDiagD3();
   _updateFitQualityBadge();
   // Show 'Refit all curves' button only in multi-curve mode
   const refitAllWrap = document.getElementById('refit-all-wrap');
@@ -4513,112 +4572,34 @@ function renderDiagD3() {
     options: logScatterOpts('Time (ms)', '3rd derivative') });
 }
 
-function renderDiagPoly() {
-  const files = ojipData.files;
-  const n     = files.length;
-  const datasets = [];
-
-  // Zero reference line spanning the full O-J window
-  const firstOJTime = ojipData.curves[files[0]]?.poly_oj_time_ms;
-  if (firstOJTime?.length) {
-    datasets.push({
-      label: '',
-      showLine: true, pointRadius: 0, borderWidth: 1,
-      borderColor: 'rgba(0,0,0,0.25)', borderDash: [4, 4], backgroundColor: 'transparent',
-      data: [{ x: firstOJTime[0], y: 0 }, { x: firstOJTime[firstOJTime.length - 1], y: 0 }],
-    });
-  }
-
-  files.forEach((fname, i) => {
-    const kv      = ojipData.key_values[fname];
-    const c       = sampleColor(i, n);
-    const ojTime  = ojipData.curves[fname].poly_oj_time_ms;
-    const ojD2    = ojipData.curves[fname].poly_oj_d2;
-    if (!ojTime?.length) return;
-
-    // 2nd derivative of 9th-degree polynomial fit (O-J window)
-    datasets.push({
-      label: fname,
-      showLine: true, pointRadius: 0, borderWidth: 1.5,
-      borderColor: c, backgroundColor: 'transparent',
-      data: ojTime.map((t, j) => ({ x: t, y: ojD2[j] })),
-    });
-
-    // Inflection points (▲) at y = 0, x = inflection time
-    const inflTimes = kv.poly_infl_ms || [];
-    if (inflTimes.length) {
-      datasets.push({
-        label: '',
-        showLine: false,
-        data: inflTimes.map(t => ({ x: t, y: 0 })),
-        pointRadius: 8,
-        pointStyle: 'triangle',
-        pointBackgroundColor: c,
-        pointBorderColor: c,
-        borderColor: 'transparent', backgroundColor: 'transparent',
-      });
+// ── toggle FJ / FI between default (2/30 ms) and auto-detected ───────────
+function toggleFJFI() {
+  if (fjfiMode === 'default') {
+    // Apply auto-detected derivative timings
+    let applied = 0;
+    for (const fname of ojipData.files) {
+      const kv   = ojipData.key_values[fname];
+      const fjMs = kv.FJ_time_deriv_ms;
+      const fiMs = kv.FI_time_deriv_ms;
+      if (fjMs != null && fiMs != null && fjMs < fiMs) {
+        const newKv = recalcKeyValues(fname, fjMs, fiMs);
+        ojipData.key_values[fname] = newKv;
+        paramData[fname] = calcJIP(newKv);
+        applied++;
+      }
     }
-  });
-
-  const opts = logScatterOpts('Time (ms)', '2nd derivative of poly fit (O-J window)');
-  makeChart('diag-poly-chart', { type: 'scatter', data: { datasets }, options: opts });
-}
-
-function renderDiagPolyFI() {
-  const files = ojipData.files;
-  const n     = files.length;
-  const datasets = [];
-
-  const firstTime = ojipData.curves[files[0]]?.poly_oi_time_ms;
-  if (firstTime?.length) {
-    datasets.push({
-      label: '',
-      showLine: true, pointRadius: 0, borderWidth: 1,
-      borderColor: 'rgba(0,0,0,0.25)', borderDash: [4, 4], backgroundColor: 'transparent',
-      data: [{ x: firstTime[0], y: 0 }, { x: firstTime[firstTime.length - 1], y: 0 }],
-    });
-  }
-
-  files.forEach((fname, i) => {
-    const kv     = ojipData.key_values[fname];
-    const c      = sampleColor(i, n);
-    const oiTime = ojipData.curves[fname].poly_oi_time_ms;
-    const oiD2   = ojipData.curves[fname].poly_oi_d2;
-    if (!oiTime?.length) return;
-
-    datasets.push({
-      label: fname,
-      showLine: true, pointRadius: 0, borderWidth: 1.5,
-      borderColor: c, backgroundColor: 'transparent',
-      data: oiTime.map((t, j) => ({ x: t, y: oiD2[j] })),
-    });
-
-    const inflTimes = kv.poly_fi_infl_ms || [];
-    if (inflTimes.length) {
-      datasets.push({
-        label: '',
-        showLine: false,
-        data: inflTimes.map(t => ({ x: t, y: 0 })),
-        pointRadius: 8, pointStyle: 'triangle',
-        pointBackgroundColor: c, pointBorderColor: c,
-        borderColor: 'transparent', backgroundColor: 'transparent',
-      });
+    if (!applied) return;
+    fjfiMode = 'auto';
+  } else {
+    // Reset to 2/30 ms defaults
+    for (const fname of ojipData.files) {
+      const newKv = recalcKeyValues(fname, 2.0, 30.0);
+      ojipData.key_values[fname] = newKv;
+      paramData[fname] = calcJIP(newKv);
     }
-  });
-
-  const opts = logScatterOpts('Time (ms)', '2nd derivative of poly fit (J-I window)');
-  makeChart('diag-poly-fi-chart', { type: 'scatter', data: { datasets }, options: opts });
-}
-
-// ── reset FJ / FI to default timings ─────────────────────────────────────
-function resetFJFI() {
-  const fjMs = 2.0;
-  const fiMs = 30.0;
-  for (const fname of ojipData.files) {
-    const newKv = recalcKeyValues(fname, fjMs, fiMs);
-    ojipData.key_values[fname] = newKv;
-    paramData[fname] = calcJIP(newKv);
+    fjfiMode = 'default';
   }
+  _updateFJFIBtnLabels();
   buildFJTable();
   const norm   = document.querySelector('#norm-btns .btn-primary')?.dataset?.norm   || 'raw';
   const pgroup = document.querySelector('#param-group-btns .btn-primary')?.dataset?.pgroup || 'yields';
@@ -4630,6 +4611,16 @@ function resetFJFI() {
     if (tab === 'tab-groups') _renderAllOjipGroupCharts();
     else markTabsDirty('tab-groups');
   }
+}
+
+function _updateFJFIBtnLabels() {
+  const html = fjfiMode === 'default'
+    ? 'Use auto-detected F<sub>J</sub>/F<sub>I</sub>'
+    : 'Reset F<sub>J</sub>/F<sub>I</sub> to 2/30 ms';
+  const btn1 = document.getElementById('reset-fj-fi-btn');
+  const btn2 = document.getElementById('reset-fj-fi-btn-curves');
+  if (btn1) btn1.innerHTML = html;
+  if (btn2) btn2.innerHTML = html;
 }
 
 // ── apply polynomial-identified FJ / FI ───────────────────────────────────
@@ -4645,42 +4636,6 @@ function _refreshAfterTimingChange() {
     if (tab === 'tab-groups') _renderAllOjipGroupCharts();
     else markTabsDirty('tab-groups');
   }
-}
-
-function usePolyFJ() {
-  let applied = 0;
-  for (const fname of ojipData.files) {
-    const inflTimes = ojipData.key_values[fname].poly_infl_ms || [];
-    if (!inflTimes.length) continue;
-    const fjMs = inflTimes.reduce((a, b) => Math.abs(a - 2) < Math.abs(b - 2) ? a : b);
-    const fiMs = ojipData.key_values[fname].FI_time_user_ms;
-    if (fjMs < fiMs) {
-      const newKv = recalcKeyValues(fname, fjMs, fiMs);
-      ojipData.key_values[fname] = newKv;
-      paramData[fname] = calcJIP(newKv);
-      applied++;
-    }
-  }
-  if (!applied) { alert('No polynomial FJ inflection points found.'); return; }
-  _refreshAfterTimingChange();
-}
-
-function usePolyFI() {
-  let applied = 0;
-  for (const fname of ojipData.files) {
-    const inflTimes = ojipData.key_values[fname].poly_fi_infl_ms || [];
-    if (!inflTimes.length) continue;
-    const fiMs = inflTimes.reduce((a, b) => Math.abs(a - 30) < Math.abs(b - 30) ? a : b);
-    const fjMs = ojipData.key_values[fname].FJ_time_user_ms;
-    if (fiMs > fjMs) {
-      const newKv = recalcKeyValues(fname, fjMs, fiMs);
-      ojipData.key_values[fname] = newKv;
-      paramData[fname] = calcJIP(newKv);
-      applied++;
-    }
-  }
-  if (!applied) { alert('No polynomial FI inflection points found.'); return; }
-  _refreshAfterTimingChange();
 }
 
 // ── fit quality badge (Diagnostics tab) ──────────────────────────────────
@@ -4810,6 +4765,10 @@ async function mcRefitBatch() {
     bgMode:    document.getElementById('bg-mode-sel')?.value || 'auto',
     bgN:       parseInt(document.getElementById('bg-n-input')?.value) || 1,
     f0Source:  document.getElementById('f0-source-sel')?.value || 'instrument',
+    knotPlacement: document.getElementById('knot-placement-diag')?.value || 'hybrid',
+    ojDensify: document.getElementById('oj-densify-chk')?.checked || false,
+    ojTauMs: (() => { const v = parseFloat(document.getElementById('oj-tau-input')?.value); return (v > 0) ? v : null; })(),
+    f0TimMs: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
   };
 
   // OJIP-Imaging Excel: re-apply the background/F0 mode chosen in the Diagnostics
@@ -4840,8 +4799,9 @@ async function mcRefitBatch() {
   MC.renderAggregateCurves();
   if (mcDataset.fluorometer === 'OJIPImaging') MC.renderGroupedPanels();
 
-  const methodLabel = fitMethod === 'logspline' ? 'Log-time spline'
-                    : fitMethod === 'pchip'     ? 'PCHIP'
+  const methodLabel = fitMethod === 'polynomial' ? 'Polynomial (Akinyemi)'
+                    : fitMethod === 'logspline'  ? 'Log-time spline'
+                    : fitMethod === 'pchip'      ? 'PCHIP'
                     : 'Standard spline';
   status.textContent = `Refit done (${methodLabel}).`;
   btn.disabled = false;
@@ -4854,17 +4814,52 @@ async function refitSplines() {
   status.textContent = 'Refitting…';
   document.getElementById('refit-btn').disabled = true;
 
-  const double_norm = {};
-  for (const fname of ojipData.files) double_norm[fname] = ojipData.curves[fname].double_norm;
-
   try {
+    // F0 timing override: re-normalise from raw data if the user supplied a value
+    const f0TimeMs  = parseFloat(document.getElementById('f0-time-input')?.value);
+    const f0Override = (f0TimeMs > 0) ? f0TimeMs : null;
+
+    const double_norm = {};
+    for (const fname of ojipData.files) {
+      if (f0Override && ojipData.curves[fname].raw) {
+        const raw   = ojipData.curves[fname].raw;
+        const times = ojipData.time_raw_ms;
+        // Nearest index to requested F0 time
+        let nearIdx = 0, minD = Math.abs(times[0] - f0Override);
+        for (let i = 1; i < times.length; i++) {
+          const d = Math.abs(times[i] - f0Override);
+          if (d < minD) { minD = d; nearIdx = i; }
+        }
+        const newF0 = raw[nearIdx];
+        // Safe loop-based max (Math.max(...raw) can stack-overflow for large arrays)
+        let newFM = -Infinity;
+        for (let i = 0; i < raw.length; i++) { if (raw[i] > newFM) newFM = raw[i]; }
+        const span  = newFM - newF0;
+        if (span <= 0) {
+          console.warn('F0 override: span ≤ 0 — falling back to original', fname);
+          double_norm[fname] = ojipData.curves[fname].double_norm;
+          continue;
+        }
+        double_norm[fname] = raw.map(v => (v - newF0) / span);
+        // Store overridden F0/FM so calcJIP uses them
+        ojipData.key_values[fname].F0 = newF0;
+        ojipData.key_values[fname].FM = newFM;
+        ojipData.curves[fname].double_norm = double_norm[fname];
+        console.log(`F0 override: ${fname} → F0=${newF0.toFixed(1)} at ${times[nearIdx].toFixed(3)} ms, FM=${newFM.toFixed(1)}`);
+      } else {
+        double_norm[fname] = ojipData.curves[fname].double_norm;
+      }
+    }
     const resp = await fetch('/api/ojip_refit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         fluorometer: ojipData.fluorometer,
         kr,
-        fit_method: document.getElementById('fit-method-sel')?.value || 'logspline',
+        fit_method: (document.getElementById('fit-method-sel')?.value || 'logspline'),
+        knot_placement: document.getElementById('knot-placement-diag')?.value || 'hybrid',
+        oj_densify: document.getElementById('oj-densify-chk')?.checked || false,
+        oj_tau_ms: (() => { const v = parseFloat(document.getElementById('oj-tau-input')?.value); return (v > 0) ? v : null; })(),
         trim_first: parseInt(document.getElementById('trim-first-input')?.value) || 0,
         trim_last:  parseInt(document.getElementById('trim-last-input')?.value)  || 0,
         fj_time_ms: ojipData.fj_time_ms,
@@ -4882,13 +4877,85 @@ async function refitSplines() {
       Object.assign(ojipData.curves[fname], data.curves[fname]);
       if (data.key_timings?.[fname]) Object.assign(ojipData.key_values[fname], data.key_timings[fname]);
     }
+
+    // Sync user-editable FJ/FI timing from the new auto-detected values
+    // so that markers on the Curves chart and the FJ/FI table inputs update
+    for (const fname of ojipData.files) {
+      const kv = ojipData.key_values[fname];
+      if (kv.FJ_time_deriv_ms != null && kv.FI_time_deriv_ms != null) {
+        const updated = recalcKeyValues(fname, kv.FJ_time_deriv_ms, kv.FI_time_deriv_ms);
+        ojipData.key_values[fname] = updated;
+      }
+    }
+    fjfiMode = 'auto';
+    _updateFJFIBtnLabels();
+
+    // After key_timings applied: if F0 was overridden, re-read FJ/FI/FK/F50 from raw data
+    if (f0Override) {
+      for (const fname of ojipData.files) {
+        if (!ojipData.curves[fname].raw) continue;
+        const raw  = ojipData.curves[fname].raw;
+        const times = ojipData.time_raw_ms;
+        const kv   = ojipData.key_values[fname];
+        if (kv.FJ_time_deriv_ms != null) kv.FJ = interpAt(times, raw, kv.FJ_time_deriv_ms);
+        if (kv.FI_time_deriv_ms != null) kv.FI = interpAt(times, raw, kv.FI_time_deriv_ms);
+        // FK (~0.3 ms) and F50 (~0.05 ms) needed for M0 = 4*(FK-F50)/FV
+        kv.FK  = interpAt(times, raw, 0.3);
+        kv.F50 = interpAt(times, raw, 0.05);
+      }
+    }
+
     ojipData.kr = kr;
     document.getElementById('kr_input').value = kr;
     document.getElementById('kr-display').textContent = kr;
+    // Sync knot placement between diagnostics and section 2
+    const kpVal = document.getElementById('knot-placement-diag')?.value || 'hybrid';
+    const kpSel = document.getElementById('knot-placement-sel');
+    if (kpSel) kpSel.value = kpVal;
 
+    // Display densify info if available
+    const densifySt = document.getElementById('oj-densify-status');
+    if (densifySt) {
+      if (data.densify_info && Object.keys(data.densify_info).length) {
+        const first = Object.values(data.densify_info)[0];
+        densifySt.textContent = `\u03c4 = ${first.tau_ms} ms, A = ${first.A}`;
+        // Populate τ input with auto-fitted value (only if user didn't set one)
+        const tauIn = document.getElementById('oj-tau-input');
+        if (tauIn && !tauIn.value) tauIn.value = first.tau_ms;
+      } else {
+        densifySt.textContent = '';
+      }
+    }
+
+    // ── Propagate updated params to summary views ──
+    recalcAllParams();
+
+    if (mcIsActive && paramMatrix && _currentDetailSlot != null) {
+      // Batch mode: write back to paramMatrix for Time Series
+      const fname = ojipData.files[0];
+      const kv  = ojipData.key_values[fname];
+      const jip = paramData[fname];
+      Object.assign(paramMatrix[_currentDetailSlot], kv, jip);
+      delete mcDetailCache[_currentDetailSlot];   // stale after refit
+      MC.renderTimeSeries();
+    }
+
+    // Re-render everything directly (tables update even when hidden;
+    // _withPaneVisible ensures Chart.js can measure hidden canvases)
+    const pgroup = document.querySelector('#param-group-btns .btn-primary')
+                     ?.dataset?.pgroup || 'yields';
+    _withPaneVisible('tab-params', () => renderParamsChart(pgroup));
+    renderParamsTable(pgroup);
     renderDiagnostics();
-    status.textContent = `Refit done (kr = ${kr})`;
-    setTimeout(() => status.textContent = '', 3000);
+    const activeNorm = document.querySelector('#norm-btns .btn-primary')?.dataset?.norm || 'double_norm';
+    _withPaneVisible('tab-curves', () => renderCurvesChart(activeNorm));
+    buildFJTable();
+    markTabsDirty('tab-curves', 'tab-params', 'tab-diag');
+    if (hasGroups()) markTabsDirty('tab-groups');
+
+    const f0Note = f0Override ? `, F0 @ ${f0Override} ms` : '';
+    status.textContent = `Refit done (kr = ${kr}${f0Note})`;
+    setTimeout(() => status.textContent = '', 4000);
   } catch (e) {
     status.textContent = 'Error: ' + e.message;
   } finally {
@@ -4950,8 +5017,7 @@ async function downloadXlsxWithCharts() {
     { id: 'diag-recon-chart',   title: 'Reconstructed vs Raw' },
     { id: 'diag-resid-chart',   title: 'Residuals' },
     { id: 'diag-d2-chart',      title: '2nd Derivative' },
-    { id: 'diag-poly-chart',    title: 'FJ Polynomial Derivatives' },
-    { id: 'diag-poly-fi-chart', title: 'FI Polynomial Derivatives' },
+    { id: 'diag-d3-chart',      title: '3rd Derivative' },
   ];
   for (const { id, title } of simpleCaps) {
     const data_url = captureCanvas(id);

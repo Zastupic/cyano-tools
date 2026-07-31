@@ -8,6 +8,7 @@ from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline, PchipInterpolator
 from scipy.ndimage import gaussian_filter1d
+from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from . import UPLOAD_FOLDER, csrf
 from werkzeug.utils import secure_filename
@@ -112,7 +113,7 @@ def _fit_start_index(dn: pd.DataFrame, trim_first: int = 0) -> int:
     t = dn.iloc[:, 0].values.astype(float)
     pos = np.flatnonzero(t > 0)
     first_pos = int(pos[0]) if pos.size else 1
-    return max(1, first_pos) + trim_first
+    return max(0, first_pos) + trim_first
 
 
 def _fit_splines(double_norm_df: pd.DataFrame, x_col: str, kr: int,
@@ -285,37 +286,31 @@ def _select_trough_pos(d2_values, t_values, expect=None, after=None,
     curve whose FP deceleration drags the FI window's minimum out to ~100 ms even
     though a real, shallower FI trough sits near 25 ms).
 
-    Rather than one fixed rule, several cues are combined so the choice adapts to
-    each curve:
-      • Interior local minima are found as troughs (peaks of −D2) with their
-        prominences; monotonic-edge values are not troughs and are ignored.
-      • Only troughs ≥ ``prom_frac`` of the window's strongest trough are kept
-        (an adaptive noise floor — tiny wiggles never win).
+    Two selection modes:
+
+    **When ``expect`` is given** (FJ, FI): a combined score balances prominence
+    and proximity to the expected phase time.  The noise floor is lowered (3 %
+    instead of ``prom_frac``) so weak-but-correctly-positioned troughs — e.g. the
+    true J step at ~2 ms whose prominence is dwarfed by the nearby K step at
+    ~0.3 ms — are not discarded.  A Gaussian proximity kernel in log₁₀-time
+    (σ = 0.5 decades ≈ factor of 3) is combined with normalized prominence:
+
+        score = α × prom_norm + (1 − α) × exp(−log_dist² / 2σ²)
+
+    with α = 0.3 (prominence counts 30 %, proximity 70 %).  Confidence is the
+    product of the prominence ratio and the proximity factor, so a trough that is
+    the sole candidate but far from ``expect`` gets reduced confidence.
+
+    **When ``expect`` is None** (FP): the original logic — prominence floor at
+    ``prom_frac``, then the most prominent trough wins.
+
+    In both modes:
       • ``after`` (a time) enforces the biological ordering FJ < FI < FP by
         dropping troughs at/before the previously-assigned phase.
-      • If ``expect`` (a time) is given, the surviving trough nearest it in
-        LOG-time is chosen (OJIP phases are log-distributed) — the "expected
-        position" rule for FJ/FI. Otherwise the most prominent survivor is chosen
-        (FP, which has no preset time).
-
-    Falls back to the plain minimum only when the window holds no interior trough
-    (genuinely monotonic D2).
+      • Falls back to the plain minimum when the window has no interior trough.
 
     Returns (pos, confidence): pos is the positional index into the segment (−1
-    if unusable); confidence ∈ [0, 1] is the chosen trough's prominence relative
-    to the strongest *valid candidate* — i.e. the troughs that survive the
-    prominence floor AND the ``after`` ordering rule, which are the only troughs
-    the selection can legitimately choose between. 1.0 means the pick is the most
-    prominent admissible trough (a unique, unambiguous choice); a low value means
-    another equally/more prominent admissible trough was passed over (e.g. the
-    ``expect`` rule chose a nearer-in-time but shallower trough) — a genuinely
-    ambiguous curve worth manual review.
-
-    NOTE: the reference is deliberately the strongest *candidate*, not the
-    strongest trough in the raw window. OJIP search windows are broad and
-    overlap, so a neighbouring phase's stronger trough frequently sits inside a
-    window but is excluded by ordering/prominence; dividing by it would penalise
-    perfectly correct picks and flag nearly every curve.
+    if unusable); confidence ∈ [0, 1].
     """
     d2 = np.asarray(d2_values, dtype=float)
     t  = np.asarray(t_values,  dtype=float)
@@ -329,53 +324,82 @@ def _select_trough_pos(d2_values, t_values, expect=None, after=None,
 
     proms = props['prominences']
     pmax  = float(proms.max()) or 1.0
-    # Prominence floor is measured against the raw window max (an adaptive noise
-    # floor — this only decides which wiggles count as real troughs).
-    keep  = proms >= prom_frac * pmax
-    cand  = troughs[keep]
-    cprom = proms[keep]
 
-    if after is not None:
-        mask = t[cand] > after
-        if mask.any():
-            cand, cprom = cand[mask], cprom[mask]
+    if expect is not None:
+        # ── Weighted scoring: prominence × proximity ──────────────────────
+        # Use a low noise floor so weak-but-near-expected troughs survive.
+        _NOISE_FLOOR = 0.03
+        keep  = proms >= _NOISE_FLOOR * pmax
+        cand  = troughs[keep]
+        cprom = proms[keep]
 
-    if expect is not None and cand.size:
-        dist = np.abs(np.log10(np.clip(t[cand], 1e-12, None)) - np.log10(max(float(expect), 1e-12)))
-        j = int(np.argmin(dist))
+        if after is not None:
+            mask = t[cand] > after
+            if mask.any():
+                cand, cprom = cand[mask], cprom[mask]
+
+        if cand.size == 0:
+            return int(np.nanargmin(d2)), 0.0
+
+        # Gaussian proximity in log₁₀-time (σ = 0.5 decades).
+        _SIGMA = 0.5
+        _ALPHA = 0.3   # prominence weight (0.3 prom + 0.7 proximity)
+        log_t   = np.log10(np.clip(t[cand], 1e-12, None))
+        log_exp = np.log10(max(float(expect), 1e-12))
+        log_dist = np.abs(log_t - log_exp)
+        proximity = np.exp(-log_dist**2 / (2 * _SIGMA**2))
+
+        prom_norm = cprom / pmax
+        score = _ALPHA * prom_norm + (1 - _ALPHA) * proximity
+        j = int(np.argmax(score))
+
+        # Confidence: prominence ratio × proximity factor.
+        cand_max = float(cprom.max()) or 1.0
+        prom_conf = float(cprom[j] / cand_max)
+        confidence = prom_conf * float(proximity[j])
+        return int(cand[j]), confidence
     else:
-        j = int(np.argmax(cprom))
+        # ── No expected position (FP): most prominent trough wins ─────────
+        keep  = proms >= prom_frac * pmax
+        cand  = troughs[keep]
+        cprom = proms[keep]
 
-    # Confidence is relative to the strongest *admissible* trough (the candidate
-    # set at the point of selection), so an unambiguous pick scores 1.0.
-    cand_max = float(cprom.max()) or 1.0
-    return int(cand[j]), float(cprom[j] / cand_max)
+        if after is not None:
+            mask = t[cand] > after
+            if mask.any():
+                cand, cprom = cand[mask], cprom[mask]
+
+        if cand.size == 0:
+            return int(np.nanargmin(d2)), 0.0
+
+        j = int(np.argmax(cprom))
+        cand_max = float(cprom.max()) or 1.0
+        return int(cand[j]), float(cprom[j] / cand_max)
 
 
 def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
-                 fj_expect=None, fi_expect=None):
+                 fj_expect=None, fi_expect=None,
+                 poly_oj=None, poly_oi=None, ms_factor=1.0):
     """
-    Identify FJ/FI/FP timings as D2 LOCAL MINIMA (deceleration troughs), chosen
-    per-curve by _select_trough_pos, which combines several cues so no single
-    fixed rule has to fit every transient shape:
-      • prominence — the trough must be a genuine dip, not a monotonic-edge value
-        bleeding in from a neighbouring phase;
-      • ordering — FJ < FI < FP enforced in time;
-      • expected position — FJ/FI resolve to the significant trough nearest their
-        preset time (``fj_expect``/``fi_expect``, native units); FP, which has no
-        preset, resolves to the most prominent trough after FI.
+    Identify FJ/FI/FP timings using a two-tier strategy:
 
-    Detection history: FJ/FI once used a D2 upward zero-crossing and FP the window
-    minimum; then all three used the plain window minimum (argmin), which grabs
-    monotonic-edge values on non-standard curves (e.g. a fast transient whose FP
-    deceleration pulls the FI argmin out to ~100 ms). The trough-based, multi-cue
-    selection above replaces that.
+    **Primary (FJ/FI): windowed polynomial inflection points** (Akinyemi et al.
+    2023).  When ``poly_oj``/``poly_oi`` are supplied, the polynomial's D2
+    zero-crossings (with D3 > 0) provide the FJ and FI inflection times.  The
+    polynomial window (0.5–5 ms for FJ, 9–100 ms for FI) naturally excludes the
+    O-K step at ~0.3 ms, so the true J inflection is found even when the global
+    spline's D2 is dominated by the K-step trough.  The inflection nearest the
+    expected time (in log-time) is chosen.
+
+    **Fallback (FJ/FI) & primary (FP): D2 trough** via ``_select_trough_pos``.
+    When no polynomial inflection is available (too few data points, no
+    zero-crossing), or for FP (no polynomial window), the D2 local-minimum
+    approach with weighted prominence + proximity scoring is used.
 
     Returns seven objects: six pd.Series (FJ_deriv, FI_deriv, FP_deriv, FJ_infl,
     FI_infl, FP_infl) indexed by file_names, plus ``conf`` — a dict of three
-    pd.Series (FJ/FI/FP) giving each detection's confidence ∈ [0, 1] (chosen
-    trough prominence relative to the window's strongest trough; low values flag
-    ambiguous curves for review). Raises ValueError on bad data.
+    pd.Series (FJ/FI/FP) giving each detection's confidence in [0, 1].
+    Raises ValueError on bad data.
     """
     t = D2_DF[x_col]
 
@@ -389,20 +413,63 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
     }
     expect = {'FJ': fj_expect, 'FI': fi_expect, 'FP': None}
 
+    # Pre-compute polynomial inflection lookups per file.
+    # poly_oj / poly_oi map fname → {…, 'poly_infl_ms': [t_ms, …]}.
+    def _pick_poly_infl(poly_dict, fname, expect_native, ms):
+        """Pick the polynomial inflection nearest to expect (in log-time).
+
+        Returns (native_time, confidence) or (None, 0.0).
+        """
+        if poly_dict is None:
+            return None, 0.0
+        entry = poly_dict.get(fname)
+        if not entry:
+            return None, 0.0
+        infls = entry.get('poly_infl_ms', [])
+        if not infls:
+            return None, 0.0
+        infls = np.array(infls, dtype=float)
+        if expect_native is not None and ms > 0:
+            expect_ms = float(expect_native) * ms
+            log_dist = np.abs(np.log10(np.clip(infls, 1e-12, None))
+                              - np.log10(max(expect_ms, 1e-12)))
+            j = int(np.argmin(log_dist))
+            # Gaussian confidence (σ = 0.5 decades)
+            conf = float(np.exp(-log_dist[j]**2 / (2 * 0.5**2)))
+        else:
+            j = 0
+            conf = 0.5
+        native_t = infls[j] / ms   # ms → native units
+        return native_t, conf
+
     results = {k: [] for k in ('FJ', 'FI', 'FP')}
     confs   = {k: [] for k in ('FJ', 'FI', 'FP')}
     for i in range(1, len(D2_DF.columns)):
+        fname  = D2_DF.columns[i]
         d2_col = D2_DF.iloc[:, i]
         prev_t = None
+
         for key in ('FJ', 'FI', 'FP'):
-            lo, hi = windows[key]
-            d2_seg = d2_col.loc[lo:hi]
-            t_seg  = t.loc[lo:hi]
-            pos, cf = _select_trough_pos(d2_seg.values, t_seg.values,
-                                         expect=expect[key], after=prev_t)
-            if pos < 0:
-                raise ValueError('Could not identify phase timing — check data integrity.')
-            tv = float(t_seg.iloc[pos])
+            poly_src = poly_oj if key == 'FJ' else (poly_oi if key == 'FI' else None)
+            poly_t, poly_cf = _pick_poly_infl(
+                poly_src, fname, expect[key], ms_factor)
+
+            if poly_t is not None and (prev_t is None or poly_t > prev_t):
+                # Polynomial inflection available and respects ordering.
+                tv = poly_t
+                cf = poly_cf
+            else:
+                # Fall back to D2 trough selection.
+                lo, hi = windows[key]
+                d2_seg = d2_col.loc[lo:hi]
+                t_seg  = t.loc[lo:hi]
+                pos, cf = _select_trough_pos(d2_seg.values, t_seg.values,
+                                             expect=expect[key], after=prev_t)
+                if pos < 0:
+                    raise ValueError(
+                        'Could not identify phase timing — check data integrity.')
+                tv = float(t_seg.iloc[pos])
+
             results[key].append(tv)
             confs[key].append(cf)
             prev_t = tv
@@ -468,9 +535,98 @@ def _calc_areas_fm_timing(Summary_file, data_cols, FJ_idx, FI_idx, ms_factor,
             pd.Series(fm_t))
 
 
+def _oj_exp_densify(x_log, y, fj_hi_log,
+                    tau_ms=None, synth_weight=0.3):
+    """Inject exponential-model points into sparse O-J gaps.
+
+    Fits  F(t) = A · (1 − exp(−t/τ))  to double-normalised O-J data and
+    generates synthetic fill points within any gap > 0.5 decades.  Synthetic
+    points are assigned a reduced weight for the downstream LSQ spline fit.
+
+    Parameters
+    ----------
+    x_log : ndarray — log10(time_ms) of fitted data (sorted, all positive).
+    y     : ndarray — double-normalised fluorescence (same length as x_log).
+    fj_hi_log : float — log10 of FJ search upper bound in ms.
+    tau_ms : float or None — user-specified τ in ms.  None = auto-fit.
+    synth_weight : float — weight for synthetic points (0–1).
+
+    Returns
+    -------
+    (x_aug, y_aug, w_aug, tau_fit, A_fit)
+    If no gap ≥ 0.5 decades is found, returns the originals with uniform
+    weights and (None, None) for the fit params.
+    """
+    GAP_THRESH = 0.5          # decades
+    FILL_STEP  = 0.1          # decades between synthetic points
+
+    # Select O-J region points
+    oj_mask = x_log <= fj_hi_log
+    if oj_mask.sum() < 3:
+        return x_log, y, np.ones(len(x_log)), None, None
+
+    oj_x = x_log[oj_mask]
+    gaps = np.diff(oj_x)
+    big_gaps = np.where(gaps > GAP_THRESH)[0]
+    if len(big_gaps) == 0:
+        return x_log, y, np.ones(len(x_log)), None, None
+
+    # Fit the exponential model to O-J points
+    t_oj = 10.0 ** oj_x          # time in ms
+    y_oj = y[oj_mask]
+
+    def _exp_model(t, A, tau):
+        return A * (1.0 - np.exp(-t / tau))
+
+    try:
+        if tau_ms is not None and tau_ms > 0:
+            # User-specified τ — fit only A
+            def _exp_fixed_tau(t, A):
+                return A * (1.0 - np.exp(-t / tau_ms))
+            popt, _ = curve_fit(_exp_fixed_tau, t_oj, y_oj,
+                                p0=[0.5], bounds=([0.01], [2.0]),
+                                maxfev=2000)
+            A_fit = float(popt[0])
+            tau_fit = float(tau_ms)
+        else:
+            popt, _ = curve_fit(_exp_model, t_oj, y_oj,
+                                p0=[0.5, 1.0],
+                                bounds=([0.01, 0.01], [2.0, 50.0]),
+                                maxfev=2000)
+            A_fit, tau_fit = float(popt[0]), float(popt[1])
+    except (RuntimeError, ValueError):
+        # curve_fit failed — return originals
+        return x_log, y, np.ones(len(x_log)), None, None
+
+    # Generate synthetic fill points in each gap
+    fill_x_log = []
+    for gi in big_gaps:
+        lo_g, hi_g = oj_x[gi], oj_x[gi + 1]
+        n_fill = max(1, int(np.round((hi_g - lo_g) / FILL_STEP)) - 1)
+        fill_x_log.append(np.linspace(lo_g, hi_g, n_fill + 2)[1:-1])
+    fill_x_log = np.concatenate(fill_x_log)
+
+    if len(fill_x_log) == 0:
+        return x_log, y, np.ones(len(x_log)), tau_fit, A_fit
+
+    fill_t = 10.0 ** fill_x_log
+    fill_y = _exp_model(fill_t, A_fit, tau_fit)
+
+    # Merge real + synthetic, sort
+    x_aug = np.concatenate([x_log, fill_x_log])
+    y_aug = np.concatenate([y, fill_y])
+    w_aug = np.concatenate([np.ones(len(x_log)),
+                            np.full(len(fill_x_log), synth_weight)])
+    order = np.argsort(x_aug)
+    return x_aug[order], y_aug[order], w_aug[order], tau_fit, A_fit
+
+
 def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
                      n_interior_knots: int = 10,
-                     trim_first: int = 0, trim_last: int = 0) -> tuple:
+                     trim_first: int = 0, trim_last: int = 0,
+                     knot_placement: str = 'hybrid',
+                     oj_densify: bool = False,
+                     oj_tau_ms: 'float | None' = None) -> tuple:
     """
     Like _fit_splines but fits in log10(time) space.
 
@@ -499,7 +655,8 @@ def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
     trim_first / trim_last: exclude the first / last N data points from the
     spline fit (useful when the tail of OJIPImaging curves is poorly fitted).
 
-    Returns the same 7-tuple as _fit_splines.
+    Returns an 8-tuple: the same 7 elements as _fit_splines, plus
+    densify_info (dict mapping fname → {tau_ms, A} when oj_densify is used).
     """
     dn = double_norm_df
     cols = dn.columns
@@ -518,24 +675,95 @@ def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
     x_log = np.log10(x_fit)
     lo, hi = float(x_log[0]), float(x_log[-1])
 
-    # Interior knots evenly spread across the full log range (safeguard 1).
-    knots_log = np.linspace(lo, hi, n_knots + 2)[1:-1]
+    # Interior knot placement (safeguard 1).
+    HYBRID_GAP = 0.3   # decades — gap threshold triggering hybrid crossover
+
+    if knot_placement == 'uniform':
+        # Evenly spread across the full log range.
+        knots_log = np.linspace(lo, hi, n_knots + 2)[1:-1]
+    elif knot_placement == 'hybrid':
+        # Auto-detect crossover: right edge of last big gap.  Below the
+        # crossover, quantile knots cluster where sparse data exists; above,
+        # uniform knots give even coverage for the well-sampled I-P tail.
+        # On data with no large gap (AquaPen, MC-PAM), falls back to uniform.
+        diffs = np.diff(x_log)
+        big = np.where(diffs > HYBRID_GAP)[0]
+        if len(big) == 0:
+            knots_log = np.linspace(lo, hi, n_knots + 2)[1:-1]
+        else:
+            x_cross = float(x_log[big[-1] + 1])
+            frac_below = (x_cross - lo) / (hi - lo)
+            n_below = max(1, round(n_knots * frac_below))
+            n_above = n_knots - n_below
+
+            # Below crossover: quantile on sparse data
+            mask_lo = x_log <= x_cross
+            min_sep = (hi - lo) / (n_knots + 2) * 0.1
+            if mask_lo.sum() >= 2 and n_below >= 1:
+                raw_q = np.quantile(x_log[mask_lo],
+                                    np.linspace(0, 1, n_below + 2)[1:-1])
+                q_knots = [raw_q[0]]
+                for kv in raw_q[1:]:
+                    if kv - q_knots[-1] >= min_sep:
+                        q_knots.append(kv)
+            else:
+                q_knots = []
+
+            # Above crossover: uniform in well-sampled tail
+            if n_above >= 1:
+                u_knots = np.linspace(x_cross, hi,
+                                      n_above + 2)[1:-1].tolist()
+            else:
+                u_knots = []
+
+            merged = sorted(set(q_knots + u_knots))
+            knots_log = (np.array(merged) if merged
+                         else np.linspace(lo, hi, 3)[1:2])
+    else:
+        # 'quantile': place at data quantiles — for well-sampled instruments
+        # whose data is ~uniform in log-space this ≈ np.linspace; for sparse
+        # TOMI-3 data, knots cluster where data exists and avoid the
+        # 0.1→0.5 ms gap where an unconstrained knot causes oscillation.
+        raw_knots = np.quantile(x_log, np.linspace(0, 1, n_knots + 2)[1:-1])
+        # Deduplicate: ensure minimum separation so LSQUnivariateSpline
+        # doesn't get coincident knots (can happen with repeated timepoints).
+        min_sep = (hi - lo) / (n_knots + 2) * 0.1
+        knots_log = [raw_knots[0]]
+        for kv in raw_knots[1:]:
+            if kv - knots_log[-1] >= min_sep:
+                knots_log.append(kv)
+        knots_log = np.array(knots_log)
 
     # Dense grid for smooth chart lines and fine zero-crossing resolution, and
-    # kept strictly inside the boundary knots (safeguard 2): span the interior
-    # data range [x_fit[1], x_fit[-2]] rather than the full [x_fit[0], x_fit[-1]].
+    # kept strictly inside the boundary knots (safeguard 2): small epsilon
+    # offsets from the data extremes avoid derivative spikes at boundary knots
+    # while covering almost the full fitted range — including the O-J region
+    # needed for FJ detection on sparse TOMI-3 data.
     n_eval = max(600, n_fit)
+    eps_lo = (float(x_log[1]) - float(x_log[0])) * 0.01
+    eps_hi = (float(x_log[-1]) - float(x_log[-2])) * 0.01
     log_time = pd.Series(
-        np.geomspace(float(x_fit[1]), float(x_fit[-2]), num=n_eval), name=cols[0])
+        np.geomspace(10**(lo + eps_lo), 10**(hi - eps_hi), num=n_eval),
+        name=cols[0])
     x_eval = np.log10(log_time.values.astype(float))
 
     Raw_recon_list, D1_list, D2_list, D3_list, Infl_list = [], [], [], [], []
+    densify_info = {}
 
     for i in range(1, n_files + 1):
         fname = cols[i]
         y     = dn.iloc[_t_start:_t_end, i].values.astype(float)
 
-        model = LSQUnivariateSpline(x_log, y, knots_log, k=k)
+        if oj_densify:
+            fj_hi_log = np.log10(10.0)   # 10 ms — covers FJ for all instruments
+            x_aug, y_aug, w_aug, tau_fit, A_fit = _oj_exp_densify(
+                x_log, y, fj_hi_log, tau_ms=oj_tau_ms)
+            model = LSQUnivariateSpline(x_aug, y_aug, knots_log, k=k, w=w_aug)
+            if tau_fit is not None:
+                densify_info[fname] = {'tau_ms': round(tau_fit, 4),
+                                       'A': round(A_fit, 4)}
+        else:
+            model = LSQUnivariateSpline(x_log, y, knots_log, k=k)
 
         recon  = model(x_eval)
         # Analytic derivatives of the spline in log10(t) space.
@@ -578,7 +806,7 @@ def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
     Resid_DF = pd.concat([dn.iloc[:, 0].reset_index(drop=True)] + Resid_list, axis=1)
     Resid_DF.columns = cols
 
-    return Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time
+    return Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, densify_info
 
 
 def _fit_splines_pchip(double_norm_df: pd.DataFrame, x_col: str,
@@ -679,25 +907,31 @@ def _fit_splines_pchip(double_norm_df: pd.DataFrame, x_col: str,
 
 def _fit_curves(double_norm_df: pd.DataFrame, x_col: str, kr: int,
                 method: str = 'spline',
-                trim_first: int = 0, trim_last: int = 0) -> tuple:
+                trim_first: int = 0, trim_last: int = 0,
+                knot_placement: str = 'quantile',
+                oj_densify: bool = False,
+                oj_tau_ms: 'float | None' = None) -> tuple:
     """Dispatcher: route to the requested fitting method.
 
-    Always returns a 9-tuple:
+    Always returns a 10-tuple:
       Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time,
-      D2_smooth_DF, D3_smooth_DF
-    D2_smooth_DF / D3_smooth_DF are None for non-PCHIP methods (their
-    analytic derivatives are already smooth).
+      D2_smooth_DF, D3_smooth_DF, densify_info
+    D2_smooth_DF / D3_smooth_DF are None for non-PCHIP methods.
+    densify_info is {} unless logspline + oj_densify produced results.
     """
     if method == 'logspline':
         result = _fit_splines_log(double_norm_df, x_col,
-                                  trim_first=trim_first, trim_last=trim_last)
-        return result + (None, None)
+                                  trim_first=trim_first, trim_last=trim_last,
+                                  knot_placement=knot_placement,
+                                  oj_densify=oj_densify, oj_tau_ms=oj_tau_ms)
+        # result is 8-tuple: 7 + densify_info
+        return result[:-1] + (None, None, result[-1])
     if method == 'pchip':
         return _fit_splines_pchip(double_norm_df, x_col,
-                                  trim_first=trim_first, trim_last=trim_last)
+                                  trim_first=trim_first, trim_last=trim_last) + ({},)
     result = _fit_splines(double_norm_df, x_col, kr,
                           trim_first=trim_first, trim_last=trim_last)
-    return result + (None, None)
+    return result + (None, None, {})
 
 
 def _safe(v):
@@ -810,7 +1044,11 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       trim_first: int = 0, trim_last: int = 0,
                       background_mode='auto', background_n=1,
                       f0_source='instrument',
-                      bckg: 'float | None' = None, fo_footer: 'float | None' = None):
+                      bckg: 'float | None' = None, fo_footer: 'float | None' = None,
+                      knot_placement: str = 'hybrid',
+                      oj_densify: bool = False,
+                      oj_tau_ms: 'float | None' = None,
+                      f0_time_ms: 'float | None' = None):
     """
     Full OJIP analysis pipeline for a single curve.
 
@@ -867,7 +1105,9 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                                      background_mode, background_n, bckg_map)
 
     # ── normalise (mirrors ojip_process lines 419-440) ────────────────────────
-    if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
+    if f0_time_ms is not None:
+        F0_index = sf[x_col].sub(f0_time_ms / ms).abs().idxmin()
+    elif fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
         F0_index = sf[x_col].sub(0.01).abs().idxmin()
     else:
         F0_index = sf[x_col].sub(0).abs().idxmin()
@@ -896,19 +1136,26 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     ], axis=1)
 
     # ── spline fitting ────────────────────────────────────────────────────────
+    _spline_method = 'logspline' if fit_method == 'polynomial' else fit_method
     Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, \
-        D2_smooth_DF, D3_smooth_DF = \
-        _fit_curves(dn_df, x_col, kr, method=fit_method,
-                    trim_first=trim_first, trim_last=trim_last)
+        D2_smooth_DF, D3_smooth_DF, densify_info = \
+        _fit_curves(dn_df, x_col, kr, method=_spline_method,
+                    trim_first=trim_first, trim_last=trim_last,
+                    knot_placement=knot_placement,
+                    oj_densify=oj_densify, oj_tau_ms=oj_tau_ms)
 
     poly_oj = _fit_oj_polynomial(dn_df, x_col, ms)
     poly_oi = _fit_oj_polynomial(dn_df, x_col, ms,
                                   oj_lo_ms=9.0, oj_hi_ms=100.0)
 
     # ── find FJ / FI / FP ────────────────────────────────────────────────────
+    _use_poly = (fit_method == 'polynomial')
     FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf = \
         _find_fjfifp(D2_DF, D3_DF, x_col, ranges, data_cols, Infl_DF,
-                     fj_expect=FJ_time, fi_expect=FI_time)
+                     fj_expect=FJ_time, fi_expect=FI_time,
+                     poly_oj=poly_oj if _use_poly else None,
+                     poly_oi=poly_oi if _use_poly else None,
+                     ms_factor=ms)
 
     # ── reference time indexes ────────────────────────────────────────────────
     def tidx(t):
@@ -1113,6 +1360,9 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
             'poly_oi_d2':      poly_oi[fname]['poly_oj_d2'],
         }
 
+    if densify_info:
+        result['densify_info'] = densify_info
+
     return result
 
 
@@ -1148,6 +1398,7 @@ def ojip_process():
     background_mode = request.form.get('background_mode', 'auto')
     background_n    = int(request.form.get('background_n', 1) or 1)
     f0_source       = request.form.get('f0_source', 'instrument')
+    knot_placement  = request.form.get('knot_placement', 'quantile')
     reduce_size = request.form.get('checkbox_reduce_file_size') == 'checked'
     FJ_time_ms = float(request.form.get('FJ_time', 2.0))
     FI_time_ms = float(request.form.get('FI_time', 30.0))
@@ -1310,11 +1561,13 @@ def ojip_process():
     ], axis=1)
 
     # ── spline fitting ───────────────────────────────────────────────────────
+    _spline_method_proc = 'logspline' if fit_method_proc == 'polynomial' else fit_method_proc
     try:
         Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, \
-            D2_smooth_DF, D3_smooth_DF = _fit_curves(
-            OJIP_double_normalized, x_col, kr, method=fit_method_proc,
-            trim_first=trim_first_proc, trim_last=trim_last_proc)
+            D2_smooth_DF, D3_smooth_DF, _densify = _fit_curves(
+            OJIP_double_normalized, x_col, kr, method=_spline_method_proc,
+            trim_first=trim_first_proc, trim_last=trim_last_proc,
+            knot_placement=knot_placement)
     except Exception:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'Spline fitting failed.'}), 400
@@ -1323,10 +1576,14 @@ def ojip_process():
     poly_oi = _fit_oj_polynomial(OJIP_double_normalized, x_col, ms, oj_lo_ms=9.0, oj_hi_ms=100.0)   # FI window 9–100 ms
 
     # ── find FJ/FI/FP ────────────────────────────────────────────────────────
+    _use_poly_proc = (fit_method_proc == 'polynomial')
     try:
         FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf = _find_fjfifp(
             D2_DF, D3_DF, x_col, ranges, data_cols, Infl_DF,
-            fj_expect=FJ_time, fi_expect=FI_time)
+            fj_expect=FJ_time, fi_expect=FI_time,
+            poly_oj=poly_oj if _use_poly_proc else None,
+            poly_oi=poly_oi if _use_poly_proc else None,
+            ms_factor=ms)
     except ValueError:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
@@ -1567,6 +1824,10 @@ def ojip_refit():
     fit_method_refit = data.get('fit_method', 'logspline')
     trim_first_refit = int(data.get('trim_first', 0))
     trim_last_refit  = int(data.get('trim_last',  0))
+    knot_placement_refit = data.get('knot_placement', 'quantile')
+    oj_densify_refit = bool(data.get('oj_densify', False))
+    oj_tau_raw = data.get('oj_tau_ms', None)
+    oj_tau_refit = float(oj_tau_raw) if oj_tau_raw is not None and oj_tau_raw != '' else None
     FJ_time_ms = float(data.get('fj_time_ms', 2.0))
     FI_time_ms = float(data.get('fi_time_ms', 30.0))
     time_raw_ms = data['time_raw_ms']
@@ -1587,11 +1848,14 @@ def ojip_refit():
     for fname, vals in double_norm_dict.items():
         dn_df[fname] = vals
 
+    _spline_method_refit = 'logspline' if fit_method_refit == 'polynomial' else fit_method_refit
     try:
         Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, \
-            D2_smooth_DF, D3_smooth_DF = \
-            _fit_curves(dn_df, x_col, kr, method=fit_method_refit,
-                        trim_first=trim_first_refit, trim_last=trim_last_refit)
+            D2_smooth_DF, D3_smooth_DF, densify_info = \
+            _fit_curves(dn_df, x_col, kr, method=_spline_method_refit,
+                        trim_first=trim_first_refit, trim_last=trim_last_refit,
+                        knot_placement=knot_placement_refit,
+                        oj_densify=oj_densify_refit, oj_tau_ms=oj_tau_refit)
     except Exception:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'Refit failed.'}), 400
@@ -1599,10 +1863,14 @@ def ojip_refit():
     poly_oj = _fit_oj_polynomial(dn_df, x_col, ms)
     poly_oi = _fit_oj_polynomial(dn_df, x_col, ms, oj_lo_ms=9.0, oj_hi_ms=100.0)
 
+    _use_poly_refit = (fit_method_refit == 'polynomial')
     try:
         FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf = _find_fjfifp(
             D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
-            fj_expect=FJ_time_ms / ms, fi_expect=FI_time_ms / ms)
+            fj_expect=FJ_time_ms / ms, fi_expect=FI_time_ms / ms,
+            poly_oj=poly_oj if _use_poly_refit else None,
+            poly_oi=poly_oi if _use_poly_refit else None,
+            ms_factor=ms)
     except ValueError:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
@@ -1649,12 +1917,15 @@ def ojip_refit():
             **fq_r,
         }
 
-    return jsonify({
+    resp = {
         'status':       'success',
         'time_log_ms':  time_log_ms,
         'curves':       updated_curves,
         'key_timings':  key_timings,
-    })
+    }
+    if densify_info:
+        resp['densify_info'] = densify_info
+    return jsonify(resp)
 
 
 @OJIP_data_analysis.route('/api/ojip_add_charts', methods=['POST'])
@@ -1944,6 +2215,12 @@ def ojip_process_batch():
     background_mode = payload.get('background_mode', 'auto')
     background_n    = int(payload.get('background_n', 1) or 1)
     f0_source       = payload.get('f0_source', 'instrument')
+    knot_placement  = payload.get('knot_placement', 'quantile')
+    oj_densify      = bool(payload.get('oj_densify', False))
+    oj_tau_raw      = payload.get('oj_tau_ms', None)
+    oj_tau_ms       = float(oj_tau_raw) if oj_tau_raw is not None and oj_tau_raw != '' else None
+    f0_raw          = payload.get('f0_time_ms', None)
+    f0_time_ms      = float(f0_raw) if f0_raw is not None and f0_raw != '' else None
 
     if not time_native or not curves:
         return jsonify({'status': 'error',
@@ -1978,6 +2255,10 @@ def ojip_process_batch():
                 f0_source=f0_source,
                 bckg=bckg,
                 fo_footer=fo_footer,
+                knot_placement=knot_placement,
+                oj_densify=oj_densify,
+                oj_tau_ms=oj_tau_ms,
+                f0_time_ms=f0_time_ms,
             )
             r['slot'] = slot
             r['name'] = name

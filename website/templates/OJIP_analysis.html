@@ -324,6 +324,23 @@
             </div>
           </div>
 
+          <!-- Knot placement (logspline only) -->
+          <div class="form-group mb-3">
+            <label class="font-weight-bold mb-1">Knot placement</label>
+            <div class="form-row align-items-center">
+              <div class="col-auto">
+                <select id="knot-placement-sel" class="form-control form-control-sm" style="width:auto">
+                  <option value="hybrid" selected>Hybrid (auto)</option>
+                  <option value="quantile">Data-density (quantile)</option>
+                  <option value="uniform">Uniform (log-spaced)</option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <small class="text-muted ml-1">Quantile places knots where data exists; uniform spreads them evenly in log-time.</small>
+              </div>
+            </div>
+          </div>
+
           <!-- Background / F0 handling (AquaPen / FluorPen) -->
           <div class="form-group mb-3" id="bg-f0-group">
             <label class="font-weight-bold mb-1">Background &amp; F<sub>0</sub>
@@ -520,10 +537,10 @@
         <canvas id="curves-chart"></canvas>
       </div>
 
-      <!-- Reset FJ/FI button -->
+      <!-- Toggle FJ/FI between default (2/30 ms) and auto-detected -->
       <div class="mt-2 mb-1">
         <button class="btn btn-outline-warning btn-sm" id="reset-fj-fi-btn-curves">
-          Reset F<sub>J</sub>/F<sub>I</sub> to 2/30 ms
+          Use auto-detected F<sub>J</sub>/F<sub>I</sub>
         </button>
       </div>
 
@@ -572,7 +589,7 @@
           <button class="btn btn-outline-primary" data-pgroup="timing">Timing</button>
         </div>
         <button class="btn btn-outline-warning btn-sm ml-auto mr-1" id="reset-fj-fi-btn">
-          Reset F<sub>J</sub>/F<sub>I</sub> to 2/30 ms
+          Use auto-detected F<sub>J</sub>/F<sub>I</sub>
         </button>
         <button class="btn btn-outline-secondary btn-sm" id="copy-params-btn">
           Copy table
@@ -1207,6 +1224,15 @@
                 <option value="spline">Standard spline</option>
                 <option value="logspline" selected>Log-time spline</option>
                 <option value="pchip">PCHIP (no params)</option>
+                <option value="polynomial">Polynomial (Akinyemi)</option>
+              </select>
+            </div>
+            <div class="col-auto">
+              <label class="mb-0 mr-1">Knots:</label>
+              <select id="knot-placement-diag" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="hybrid" selected>Hybrid</option>
+                <option value="quantile">Quantile</option>
+                <option value="uniform">Uniform</option>
               </select>
             </div>
             <div class="col-auto">
@@ -1226,7 +1252,7 @@
                      class="form-control form-control-sm d-inline-block" style="width:60px">
             </div>
             <div class="col-auto">
-              <button class="btn btn-warning btn-sm" id="refit-btn">Re-fit splines</button>
+              <button class="btn btn-warning btn-sm" id="refit-btn">Re-fit &amp; update params</button>
             </div>
             <div class="col-auto" id="refit-all-wrap" style="display:none">
               <button class="btn btn-primary btn-sm" onclick="mcRefitBatch()">Refit all curves</button>
@@ -1236,6 +1262,37 @@
             </div>
             <div class="col-auto ml-auto">
               <span id="fit-quality-badge" class="badge" style="font-size:0.8em;display:none"></span>
+            </div>
+          </div>
+          <!-- O-J exponential densify (Diagnostics-only, off by default) -->
+          <div class="form-row align-items-center mb-2">
+            <div class="col-auto">
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="oj-densify-chk">
+                <label class="custom-control-label" for="oj-densify-chk">
+                  O-J exp. densify
+                </label>
+              </div>
+            </div>
+            <div class="col-auto">
+              <label class="mb-0 mr-1">&tau;:</label>
+              <input type="number" id="oj-tau-input" min="0.01" max="50" step="0.1"
+                     placeholder="auto" class="form-control form-control-sm d-inline-block"
+                     style="width:80px" disabled>
+              <small class="text-muted ml-1">ms</small>
+            </div>
+            <div class="col-auto">
+              <span id="oj-densify-status" class="text-muted" style="font-size:0.85em;"></span>
+            </div>
+          </div>
+          <!-- F0 timing override -->
+          <div class="form-row align-items-center mb-2">
+            <div class="col-auto">
+              <label class="mb-0 mr-1">F<sub>0</sub> at:</label>
+              <input type="number" id="f0-time-input" min="0" max="1000" step="0.01"
+                     placeholder="auto" class="form-control form-control-sm d-inline-block"
+                     style="width:90px">
+              <small class="text-muted ml-1">ms (override F<sub>0</sub> timing)</small>
             </div>
           </div>
           <!-- Background / F0 mirror (AquaPen/FluorPen batches) — synced to the
@@ -1326,38 +1383,6 @@
         <div class="col-md-6 mb-3">
           <h6>Residuals</h6>
           <div style="position:relative; height:260px;"><canvas id="diag-resid-chart"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Polynomial inflection point identification -->
-      <div class="card mb-3">
-        <div class="card-header py-2">
-          <strong>Polynomial inflection point identification (Akinyemi et al. 2023)</strong>
-        </div>
-        <div class="card-body py-2">
-          <p class="mb-2" style="font-size:0.88em;">
-            The fluorescence signal in each window is fitted with a 9th-degree polynomial. Inflection points
-            (▲) are identified as roots of the 2nd derivative where the 3rd derivative is positive.
-            The inflection closest to the expected timing is assigned as F<sub>J</sub> or F<sub>I</sub>.
-          </p>
-          <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-sm btn-outline-primary mr-2" id="use-poly-fj-btn">
-              Apply identified F<sub>J</sub> &amp; recalculate parameters
-            </button>
-            <button class="btn btn-sm btn-outline-primary" id="use-poly-fi-btn">
-              Apply identified F<sub>I</sub> &amp; recalculate parameters
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <h6>F<sub>J</sub> identification — 9th-degree poly 2nd derivative, O-J window (0.5–5 ms); inflection points (▲) where d²=0, d³&gt;0</h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-poly-chart"></canvas></div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <h6>F<sub>I</sub> identification — 9th-degree poly 2nd derivative, J-I window (10–100 ms); inflection points (▲) where d²=0, d³&gt;0</h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-poly-fi-chart"></canvas></div>
         </div>
       </div>
     </div>
@@ -2225,7 +2250,7 @@
             </div>
             <div class="d-flex align-items-end" style="gap:4px;">
               <label class="mb-0" style="font-size:0.82em; cursor:pointer; white-space:nowrap;">
-                <input type="checkbox" id="mc-panel-shared-y"
+                <input type="checkbox" id="mc-panel-shared-y" checked
                        onchange="MC.renderGroupedPanels()" class="mr-1">
                 Shared Y
               </label>
