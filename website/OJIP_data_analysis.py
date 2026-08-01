@@ -535,68 +535,203 @@ def _calc_areas_fm_timing(Summary_file, data_cols, FJ_idx, FI_idx, ms_factor,
             pd.Series(fm_t))
 
 
-def _oj_exp_densify(x_log, y, fj_hi_log,
-                    tau_ms=None, synth_weight=0.3):
-    """Inject exponential-model points into sparse O-J gaps.
+# ─── O-J densify model fitters ───────────────────────────────────────────
+# Each returns (predict_fn, fit_info_dict) or raises RuntimeError/ValueError.
 
-    Fits  F(t) = A · (1 − exp(−t/τ))  to double-normalised O-J data and
-    generates synthetic fill points within any gap > 0.5 decades.  Synthetic
-    points are assigned a reduced weight for the downstream LSQ spline fit.
+def _fit_oj_exponential(t_oj, y_oj, params):
+    """F(t) = A * (1 - exp(-t/tau)).  The p=0 (separate PSII units) case."""
+    tau_ms = params.get('tau_ms') if params else None
 
-    Parameters
-    ----------
-    x_log : ndarray — log10(time_ms) of fitted data (sorted, all positive).
-    y     : ndarray — double-normalised fluorescence (same length as x_log).
-    fj_hi_log : float — log10 of FJ search upper bound in ms.
-    tau_ms : float or None — user-specified τ in ms.  None = auto-fit.
-    synth_weight : float — weight for synthetic points (0–1).
+    def _model(t, A, tau):
+        return A * (1.0 - np.exp(-t / tau))
+
+    if tau_ms is not None and tau_ms > 0:
+        def _fixed(t, A):
+            return A * (1.0 - np.exp(-t / tau_ms))
+        popt, _ = curve_fit(_fixed, t_oj, y_oj,
+                            p0=[0.5], bounds=([0.01], [2.0]), maxfev=2000)
+        A_fit, tau_fit = float(popt[0]), float(tau_ms)
+    else:
+        popt, _ = curve_fit(_model, t_oj, y_oj, p0=[0.5, 1.0],
+                            bounds=([0.01, 0.01], [2.0, 50.0]), maxfev=2000)
+        A_fit, tau_fit = float(popt[0]), float(popt[1])
+
+    def predict(t):
+        return _model(t, A_fit, tau_fit)
+
+    return predict, {'model': 'exponential',
+                     'tau_ms': round(tau_fit, 4), 'A': round(A_fit, 4)}
+
+
+def _fit_oj_biexponential(t_oj, y_oj, params):
+    """F(t) = A1*(1-exp(-t/tau1)) + A2*(1-exp(-t/tau2)).
+
+    Phenomenological two-component O-J rise (fast ~0.3 ms, slow ~2 ms).
+    """
+    params = params or {}
+    tau1_user = params.get('tau1_ms')
+    tau2_user = params.get('tau2_ms')
+
+    def _model(t, A1, tau1, A2, tau2):
+        return A1 * (1.0 - np.exp(-t / tau1)) + A2 * (1.0 - np.exp(-t / tau2))
+
+    if (tau1_user and tau1_user > 0) and (tau2_user and tau2_user > 0):
+        def _fixed(t, A1, A2):
+            return _model(t, A1, tau1_user, A2, tau2_user)
+        popt, _ = curve_fit(_fixed, t_oj, y_oj, p0=[0.3, 0.3],
+                            bounds=([0.001, 0.001], [2.0, 2.0]), maxfev=3000)
+        A1_fit, A2_fit = float(popt[0]), float(popt[1])
+        tau1_fit, tau2_fit = float(tau1_user), float(tau2_user)
+    else:
+        popt, _ = curve_fit(_model, t_oj, y_oj, p0=[0.3, 0.3, 0.3, 2.0],
+                            bounds=([0.001, 0.01, 0.001, 0.1],
+                                    [2.0, 5.0, 2.0, 50.0]), maxfev=5000)
+        A1_fit, tau1_fit, A2_fit, tau2_fit = [float(v) for v in popt]
+
+    # Canonical order: tau1 < tau2
+    if tau1_fit > tau2_fit:
+        A1_fit, tau1_fit, A2_fit, tau2_fit = A2_fit, tau2_fit, A1_fit, tau1_fit
+
+    def predict(t):
+        return _model(t, A1_fit, tau1_fit, A2_fit, tau2_fit)
+
+    return predict, {'model': 'biexponential',
+                     'A1': round(A1_fit, 4), 'tau1_ms': round(tau1_fit, 4),
+                     'A2': round(A2_fit, 4), 'tau2_ms': round(tau2_fit, 4)}
+
+
+def _fit_oj_connectivity(t_oj, y_oj, params):
+    """Joliot connectivity model (exciton-radical-pair equilibrium).
+
+    C(t)     = 1 - exp(-k_L * t)             # fraction closed RCs
+    C_eff(t) = C(t) * exp(-k_ox * t)         # with QA⁻ reoxidation
+    V(t)     = C_eff*(1-p) / (1 - p*C_eff)   # relative variable fluorescence
+    F(t)     = A * V(t)
+
+    Ref: Guo et al. 2024, Plants 13(3):452; Joliot & Joliot 1964.
+    When p=0, k_ox=0 this degenerates to the simple exponential.
+    k_ox defaults to 0 (fixed) — negligible in the short O-J window.
+    """
+    params = params or {}
+    p_user   = params.get('p')
+    kL_user  = params.get('k_L')
+    kox_user = params.get('k_ox', 0.0)  # default fixed at 0
+
+    def _vt(t, k_L, p, k_ox):
+        C = 1.0 - np.exp(-k_L * t)
+        C_eff = C * np.exp(-k_ox * t)
+        denom = 1.0 - p * C_eff
+        denom = np.where(np.abs(denom) < 1e-12, 1e-12, denom)
+        return C_eff * (1.0 - p) / denom
+
+    def _model(t, A, k_L, p, k_ox):
+        return A * _vt(t, k_L, p, k_ox)
+
+    # Build free/fixed parameter sets:  [A, k_L, p, k_ox]
+    p0_all = [0.5, 2.0, 0.4, 0.0]
+    lo_all = [0.01, 0.1, 0.0, 0.0]
+    hi_all = [2.0, 50.0, 0.85, 5.0]
+    param_names = ['A', 'k_L', 'p', 'k_ox']
+
+    fixed = {}
+    if kox_user is not None:
+        fixed['k_ox'] = float(kox_user)
+    if p_user is not None:
+        fixed['p'] = float(p_user)
+    if kL_user is not None:
+        fixed['k_L'] = float(kL_user)
+
+    free_idx = [i for i, n in enumerate(param_names) if n not in fixed]
+
+    if not free_idx:
+        # Everything fixed — just fit A
+        free_idx = [0]
+        fixed.pop('A', None)
+
+    free_p0 = [p0_all[i] for i in free_idx]
+    free_lo = [lo_all[i] for i in free_idx]
+    free_hi = [hi_all[i] for i in free_idx]
+
+    def _partial(t, *free_vals):
+        vals = list(p0_all)
+        for i, fi in enumerate(free_idx):
+            vals[fi] = free_vals[i]
+        for name, fv in fixed.items():
+            vals[param_names.index(name)] = fv
+        return _model(t, *vals)
+
+    popt, _ = curve_fit(_partial, t_oj, y_oj, p0=free_p0,
+                        bounds=(free_lo, free_hi), maxfev=5000)
+
+    all_vals = list(p0_all)
+    for i, fi in enumerate(free_idx):
+        all_vals[fi] = float(popt[i])
+    for name, fv in fixed.items():
+        all_vals[param_names.index(name)] = fv
+    A_fit, kL_fit, p_fit, kox_fit = all_vals
+
+    def predict(t):
+        return _model(t, A_fit, kL_fit, p_fit, kox_fit)
+
+    return predict, {'model': 'connectivity',
+                     'A': round(A_fit, 4), 'k_L': round(kL_fit, 4),
+                     'p': round(p_fit, 4), 'k_ox': round(kox_fit, 4)}
+
+
+_OJ_FITTERS = {
+    'exponential':   _fit_oj_exponential,
+    'biexponential': _fit_oj_biexponential,
+    'connectivity':  _fit_oj_connectivity,
+}
+
+
+def _oj_densify(x_log, y, fj_hi_log,
+                model='exponential', model_params=None, synth_weight=0.3):
+    """Inject model-based synthetic points into sparse O-J gaps.
+
+    Fits the selected model to double-normalised O-J data and generates
+    synthetic fill points within any gap > 0.5 decades.  Synthetic points
+    are assigned a reduced weight for the downstream LSQ spline fit.
+
+    Models: 'exponential' (default), 'biexponential', 'connectivity'.
 
     Returns
     -------
-    (x_aug, y_aug, w_aug, tau_fit, A_fit)
-    If no gap ≥ 0.5 decades is found, returns the originals with uniform
-    weights and (None, None) for the fit params.
+    (x_aug, y_aug, w_aug, fit_info)
+    fit_info is a dict with 'model' key + fitted params, or None.
     """
     GAP_THRESH = 0.5          # decades
     FILL_STEP  = 0.1          # decades between synthetic points
 
-    # Select O-J region points
     oj_mask = x_log <= fj_hi_log
     if oj_mask.sum() < 3:
-        return x_log, y, np.ones(len(x_log)), None, None
+        return x_log, y, np.ones(len(x_log)), None
 
     oj_x = x_log[oj_mask]
     gaps = np.diff(oj_x)
     big_gaps = np.where(gaps > GAP_THRESH)[0]
     if len(big_gaps) == 0:
-        return x_log, y, np.ones(len(x_log)), None, None
+        return x_log, y, np.ones(len(x_log)), None
 
-    # Fit the exponential model to O-J points
-    t_oj = 10.0 ** oj_x          # time in ms
+    t_oj = 10.0 ** oj_x
     y_oj = y[oj_mask]
+    params = model_params or {}
 
-    def _exp_model(t, A, tau):
-        return A * (1.0 - np.exp(-t / tau))
-
+    fitter = _OJ_FITTERS.get(model, _fit_oj_exponential)
     try:
-        if tau_ms is not None and tau_ms > 0:
-            # User-specified τ — fit only A
-            def _exp_fixed_tau(t, A):
-                return A * (1.0 - np.exp(-t / tau_ms))
-            popt, _ = curve_fit(_exp_fixed_tau, t_oj, y_oj,
-                                p0=[0.5], bounds=([0.01], [2.0]),
-                                maxfev=2000)
-            A_fit = float(popt[0])
-            tau_fit = float(tau_ms)
-        else:
-            popt, _ = curve_fit(_exp_model, t_oj, y_oj,
-                                p0=[0.5, 1.0],
-                                bounds=([0.01, 0.01], [2.0, 50.0]),
-                                maxfev=2000)
-            A_fit, tau_fit = float(popt[0]), float(popt[1])
+        predict_fn, fit_info = fitter(t_oj, y_oj, params)
     except (RuntimeError, ValueError):
-        # curve_fit failed — return originals
-        return x_log, y, np.ones(len(x_log)), None, None
+        # Fallback to exponential if the selected model fails
+        if model != 'exponential':
+            try:
+                predict_fn, fit_info = _fit_oj_exponential(
+                    t_oj, y_oj, {'tau_ms': params.get('tau_ms')})
+                fit_info['_fallback'] = True
+                fit_info['_original_model'] = model
+            except (RuntimeError, ValueError):
+                return x_log, y, np.ones(len(x_log)), None
+        else:
+            return x_log, y, np.ones(len(x_log)), None
 
     # Generate synthetic fill points in each gap
     fill_x_log = []
@@ -607,18 +742,17 @@ def _oj_exp_densify(x_log, y, fj_hi_log,
     fill_x_log = np.concatenate(fill_x_log)
 
     if len(fill_x_log) == 0:
-        return x_log, y, np.ones(len(x_log)), tau_fit, A_fit
+        return x_log, y, np.ones(len(x_log)), fit_info
 
     fill_t = 10.0 ** fill_x_log
-    fill_y = _exp_model(fill_t, A_fit, tau_fit)
+    fill_y = predict_fn(fill_t)
 
-    # Merge real + synthetic, sort
     x_aug = np.concatenate([x_log, fill_x_log])
     y_aug = np.concatenate([y, fill_y])
     w_aug = np.concatenate([np.ones(len(x_log)),
                             np.full(len(fill_x_log), synth_weight)])
     order = np.argsort(x_aug)
-    return x_aug[order], y_aug[order], w_aug[order], tau_fit, A_fit
+    return x_aug[order], y_aug[order], w_aug[order], fit_info
 
 
 def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
@@ -626,7 +760,8 @@ def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
                      trim_first: int = 0, trim_last: int = 0,
                      knot_placement: str = 'hybrid',
                      oj_densify: bool = False,
-                     oj_tau_ms: 'float | None' = None) -> tuple:
+                     oj_model: str = 'exponential',
+                     oj_model_params: 'dict | None' = None) -> tuple:
     """
     Like _fit_splines but fits in log10(time) space.
 
@@ -656,7 +791,7 @@ def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
     spline fit (useful when the tail of OJIPImaging curves is poorly fitted).
 
     Returns an 8-tuple: the same 7 elements as _fit_splines, plus
-    densify_info (dict mapping fname → {tau_ms, A} when oj_densify is used).
+    densify_info (dict mapping fname → fit_info when oj_densify is used).
     """
     dn = double_norm_df
     cols = dn.columns
@@ -756,12 +891,12 @@ def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
 
         if oj_densify:
             fj_hi_log = np.log10(10.0)   # 10 ms — covers FJ for all instruments
-            x_aug, y_aug, w_aug, tau_fit, A_fit = _oj_exp_densify(
-                x_log, y, fj_hi_log, tau_ms=oj_tau_ms)
+            x_aug, y_aug, w_aug, fit_info = _oj_densify(
+                x_log, y, fj_hi_log,
+                model=oj_model, model_params=oj_model_params)
             model = LSQUnivariateSpline(x_aug, y_aug, knots_log, k=k, w=w_aug)
-            if tau_fit is not None:
-                densify_info[fname] = {'tau_ms': round(tau_fit, 4),
-                                       'A': round(A_fit, 4)}
+            if fit_info is not None:
+                densify_info[fname] = fit_info
         else:
             model = LSQUnivariateSpline(x_log, y, knots_log, k=k)
 
@@ -910,7 +1045,8 @@ def _fit_curves(double_norm_df: pd.DataFrame, x_col: str, kr: int,
                 trim_first: int = 0, trim_last: int = 0,
                 knot_placement: str = 'quantile',
                 oj_densify: bool = False,
-                oj_tau_ms: 'float | None' = None) -> tuple:
+                oj_model: str = 'exponential',
+                oj_model_params: 'dict | None' = None) -> tuple:
     """Dispatcher: route to the requested fitting method.
 
     Always returns a 10-tuple:
@@ -923,7 +1059,9 @@ def _fit_curves(double_norm_df: pd.DataFrame, x_col: str, kr: int,
         result = _fit_splines_log(double_norm_df, x_col,
                                   trim_first=trim_first, trim_last=trim_last,
                                   knot_placement=knot_placement,
-                                  oj_densify=oj_densify, oj_tau_ms=oj_tau_ms)
+                                  oj_densify=oj_densify,
+                                  oj_model=oj_model,
+                                  oj_model_params=oj_model_params)
         # result is 8-tuple: 7 + densify_info
         return result[:-1] + (None, None, result[-1])
     if method == 'pchip':
@@ -1047,7 +1185,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       bckg: 'float | None' = None, fo_footer: 'float | None' = None,
                       knot_placement: str = 'hybrid',
                       oj_densify: bool = False,
-                      oj_tau_ms: 'float | None' = None,
+                      oj_model: str = 'exponential',
+                      oj_model_params: 'dict | None' = None,
                       f0_time_ms: 'float | None' = None):
     """
     Full OJIP analysis pipeline for a single curve.
@@ -1142,7 +1281,9 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         _fit_curves(dn_df, x_col, kr, method=_spline_method,
                     trim_first=trim_first, trim_last=trim_last,
                     knot_placement=knot_placement,
-                    oj_densify=oj_densify, oj_tau_ms=oj_tau_ms)
+                    oj_densify=oj_densify,
+                    oj_model=oj_model,
+                    oj_model_params=oj_model_params)
 
     poly_oj = _fit_oj_polynomial(dn_df, x_col, ms)
     poly_oi = _fit_oj_polynomial(dn_df, x_col, ms,
@@ -1826,8 +1967,13 @@ def ojip_refit():
     trim_last_refit  = int(data.get('trim_last',  0))
     knot_placement_refit = data.get('knot_placement', 'quantile')
     oj_densify_refit = bool(data.get('oj_densify', False))
-    oj_tau_raw = data.get('oj_tau_ms', None)
-    oj_tau_refit = float(oj_tau_raw) if oj_tau_raw is not None and oj_tau_raw != '' else None
+    oj_model_refit = data.get('oj_model', 'exponential')
+    oj_model_params_refit = data.get('oj_model_params', None)
+    # Legacy compat: old payloads send oj_tau_ms directly
+    if oj_model_params_refit is None:
+        _tau_raw = data.get('oj_tau_ms', None)
+        if _tau_raw is not None and _tau_raw != '':
+            oj_model_params_refit = {'tau_ms': float(_tau_raw)}
     FJ_time_ms = float(data.get('fj_time_ms', 2.0))
     FI_time_ms = float(data.get('fi_time_ms', 30.0))
     time_raw_ms = data['time_raw_ms']
@@ -1855,7 +2001,9 @@ def ojip_refit():
             _fit_curves(dn_df, x_col, kr, method=_spline_method_refit,
                         trim_first=trim_first_refit, trim_last=trim_last_refit,
                         knot_placement=knot_placement_refit,
-                        oj_densify=oj_densify_refit, oj_tau_ms=oj_tau_refit)
+                        oj_densify=oj_densify_refit,
+                        oj_model=oj_model_refit,
+                        oj_model_params=oj_model_params_refit)
     except Exception:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'Refit failed.'}), 400
@@ -2217,8 +2365,13 @@ def ojip_process_batch():
     f0_source       = payload.get('f0_source', 'instrument')
     knot_placement  = payload.get('knot_placement', 'quantile')
     oj_densify      = bool(payload.get('oj_densify', False))
-    oj_tau_raw      = payload.get('oj_tau_ms', None)
-    oj_tau_ms       = float(oj_tau_raw) if oj_tau_raw is not None and oj_tau_raw != '' else None
+    oj_model        = payload.get('oj_model', 'exponential')
+    oj_model_params = payload.get('oj_model_params', None)
+    # Legacy compat: old payloads send oj_tau_ms directly
+    if oj_model_params is None:
+        _tau_raw_b = payload.get('oj_tau_ms', None)
+        if _tau_raw_b is not None and _tau_raw_b != '':
+            oj_model_params = {'tau_ms': float(_tau_raw_b)}
     f0_raw          = payload.get('f0_time_ms', None)
     f0_time_ms      = float(f0_raw) if f0_raw is not None and f0_raw != '' else None
 
@@ -2257,7 +2410,8 @@ def ojip_process_batch():
                 fo_footer=fo_footer,
                 knot_placement=knot_placement,
                 oj_densify=oj_densify,
-                oj_tau_ms=oj_tau_ms,
+                oj_model=oj_model,
+                oj_model_params=oj_model_params,
                 f0_time_ms=f0_time_ms,
             )
             r['slot'] = slot

@@ -355,7 +355,8 @@ const MC = (() => {
           f0_source:       jipOpts.f0Source || 'instrument',
           knot_placement:  jipOpts.knotPlacement || 'hybrid',
           oj_densify:      jipOpts.ojDensify || false,
-          oj_tau_ms:       jipOpts.ojTauMs || null,
+          oj_model:        jipOpts.ojModel || 'exponential',
+          oj_model_params: jipOpts.ojModelParams || null,
           f0_time_ms:      jipOpts.f0TimMs || null,
           include_curves: false,
         };
@@ -1161,8 +1162,7 @@ const MC = (() => {
       background_n:    parseInt(document.getElementById('bg-n-input')?.value) || 1,
       f0_source:       document.getElementById('f0-source-sel')?.value || 'instrument',
       knot_placement:  document.getElementById('knot-placement-sel')?.value || 'hybrid',
-      oj_densify:      document.getElementById('oj-densify-chk')?.checked || false,
-      oj_tau_ms:       (() => { const v = parseFloat(document.getElementById('oj-tau-input')?.value); return (v > 0) ? v : null; })(),
+      ..._buildOjDensifyPayload(),
       f0_time_ms:      (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
       include_curves: true,
     };
@@ -1189,9 +1189,8 @@ const MC = (() => {
       if (densifySt && detail.densify_info) {
         const first = Object.values(detail.densify_info)[0];
         if (first) {
-          densifySt.textContent = `\u03c4 = ${first.tau_ms} ms, A = ${first.A}`;
-          const tauIn = document.getElementById('oj-tau-input');
-          if (tauIn && !tauIn.value) tauIn.value = first.tau_ms;
+          densifySt.textContent = _formatDensifyInfo(first);
+          _populateDensifyInputs(first);
         }
       }
 
@@ -3306,6 +3305,73 @@ function recalcAllParams() {
   }
 }
 
+// ── O-J densify payload / display helpers (module scope) ─────────────────
+function _buildOjDensifyPayload() {
+  const enabled = document.getElementById('oj-densify-chk')?.checked || false;
+  const model = document.getElementById('oj-densify-model')?.value || 'exponential';
+  let modelParams = null;
+  if (enabled) {
+    if (model === 'exponential') {
+      const tau = parseFloat(document.getElementById('oj-tau-input')?.value);
+      if (tau > 0) modelParams = { tau_ms: tau };
+    } else if (model === 'biexponential') {
+      modelParams = {};
+      const t1 = parseFloat(document.getElementById('oj-tau1-input')?.value);
+      const t2 = parseFloat(document.getElementById('oj-tau2-input')?.value);
+      if (t1 > 0) modelParams.tau1_ms = t1;
+      if (t2 > 0) modelParams.tau2_ms = t2;
+    } else if (model === 'connectivity') {
+      modelParams = {};
+      const p = parseFloat(document.getElementById('oj-p-input')?.value);
+      const kL = parseFloat(document.getElementById('oj-kL-input')?.value);
+      const kox = parseFloat(document.getElementById('oj-kox-input')?.value);
+      if (!isNaN(p) && p >= 0) modelParams.p = p;
+      if (kL > 0) modelParams.k_L = kL;
+      if (!isNaN(kox) && kox >= 0) modelParams.k_ox = kox;
+    }
+  }
+  return { oj_densify: enabled, oj_model: model, oj_model_params: modelParams };
+}
+
+function _formatDensifyInfo(info) {
+  if (!info) return '';
+  let txt = '';
+  switch (info.model) {
+    case 'exponential':
+      txt = `\u03c4 = ${info.tau_ms} ms, A = ${info.A}`;
+      break;
+    case 'biexponential':
+      txt = `A\u2081=${info.A1}, \u03c4\u2081=${info.tau1_ms} ms, A\u2082=${info.A2}, \u03c4\u2082=${info.tau2_ms} ms`;
+      break;
+    case 'connectivity':
+      txt = `p = ${info.p}, k\u2097 = ${info.k_L} ms\u207b\u00b9, k\u2092\u2093 = ${info.k_ox} ms\u207b\u00b9, A = ${info.A}`;
+      break;
+    default:
+      if (info.tau_ms != null) txt = `\u03c4 = ${info.tau_ms} ms, A = ${info.A}`;
+      else txt = JSON.stringify(info);
+  }
+  if (info._fallback) txt += ` (fallback from ${info._original_model})`;
+  return txt;
+}
+
+function _populateDensifyInputs(info) {
+  function _setIfEmpty(id, val) {
+    const el = document.getElementById(id);
+    if (el && !el.value && val != null) el.value = val;
+  }
+  if (!info) return;
+  if (info.model === 'exponential' || !info.model) {
+    _setIfEmpty('oj-tau-input', info.tau_ms);
+  } else if (info.model === 'biexponential') {
+    _setIfEmpty('oj-tau1-input', info.tau1_ms);
+    _setIfEmpty('oj-tau2-input', info.tau2_ms);
+  } else if (info.model === 'connectivity') {
+    _setIfEmpty('oj-p-input', info.p);
+    _setIfEmpty('oj-kL-input', info.k_L);
+    _setIfEmpty('oj-kox-input', info.k_ox);
+  }
+}
+
 // ── init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Restore saved fluorometer
@@ -3439,17 +3505,26 @@ document.addEventListener('DOMContentLoaded', () => {
   krSlider.addEventListener('input', () => { krDisp.textContent = krSlider.value; });
   document.getElementById('refit-btn').addEventListener('click', refitSplines);
 
-  // O-J densify checkbox → enable/disable τ input
-  const ojDensifyChk = document.getElementById('oj-densify-chk');
-  const ojTauInput   = document.getElementById('oj-tau-input');
-  if (ojDensifyChk && ojTauInput) {
-    ojDensifyChk.addEventListener('change', () => {
-      ojTauInput.disabled = !ojDensifyChk.checked;
-      if (!ojDensifyChk.checked) {
-        document.getElementById('oj-densify-status').textContent = '';
-      }
+  // O-J densify checkbox + model selector → show/hide params
+  const ojDensifyChk  = document.getElementById('oj-densify-chk');
+  const ojModelSel    = document.getElementById('oj-densify-model');
+  const ojParamsWrap  = document.getElementById('oj-densify-params');
+  function _ojDensifyUpdateUI() {
+    const enabled = ojDensifyChk && ojDensifyChk.checked;
+    if (ojModelSel) ojModelSel.disabled = !enabled;
+    if (ojParamsWrap) ojParamsWrap.style.display = enabled ? '' : 'none';
+    const model = ojModelSel ? ojModelSel.value : 'exponential';
+    ['exponential', 'biexponential', 'connectivity'].forEach(m => {
+      const el = document.getElementById('oj-params-' + m);
+      if (el) el.style.display = (enabled && model === m) ? '' : 'none';
     });
+    if (!enabled) {
+      const st = document.getElementById('oj-densify-status');
+      if (st) st.textContent = '';
+    }
   }
+  if (ojDensifyChk) ojDensifyChk.addEventListener('change', _ojDensifyUpdateUI);
+  if (ojModelSel)   ojModelSel.addEventListener('change', _ojDensifyUpdateUI);
 
   // Delegated listeners that must survive table rebuilds
   document.getElementById('fjtable').addEventListener('change', _onFJTableChange);
@@ -3850,9 +3925,10 @@ async function mcStartAnalysis() {
     bgN:        parseInt(document.getElementById('bg-n-input')?.value) || 1,
     f0Source:   document.getElementById('f0-source-sel')?.value || 'instrument',
     knotPlacement: document.getElementById('knot-placement-sel')?.value || 'hybrid',
-    ojDensify: false,
-    ojTauMs:   null,
-    f0TimMs:   null,
+    ojDensify:     false,
+    ojModel:       'exponential',
+    ojModelParams: null,
+    f0TimMs:       null,
   };
   _lastSelected = selected.slice();
   _lastJipOpts  = Object.assign({}, jipOpts);
@@ -4766,8 +4842,10 @@ async function mcRefitBatch() {
     bgN:       parseInt(document.getElementById('bg-n-input')?.value) || 1,
     f0Source:  document.getElementById('f0-source-sel')?.value || 'instrument',
     knotPlacement: document.getElementById('knot-placement-diag')?.value || 'hybrid',
-    ojDensify: document.getElementById('oj-densify-chk')?.checked || false,
-    ojTauMs: (() => { const v = parseFloat(document.getElementById('oj-tau-input')?.value); return (v > 0) ? v : null; })(),
+    ...(() => {
+      const d = _buildOjDensifyPayload();
+      return { ojDensify: d.oj_densify, ojModel: d.oj_model, ojModelParams: d.oj_model_params };
+    })(),
     f0TimMs: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
   };
 
@@ -4858,8 +4936,7 @@ async function refitSplines() {
         kr,
         fit_method: (document.getElementById('fit-method-sel')?.value || 'logspline'),
         knot_placement: document.getElementById('knot-placement-diag')?.value || 'hybrid',
-        oj_densify: document.getElementById('oj-densify-chk')?.checked || false,
-        oj_tau_ms: (() => { const v = parseFloat(document.getElementById('oj-tau-input')?.value); return (v > 0) ? v : null; })(),
+        ..._buildOjDensifyPayload(),
         trim_first: parseInt(document.getElementById('trim-first-input')?.value) || 0,
         trim_last:  parseInt(document.getElementById('trim-last-input')?.value)  || 0,
         fj_time_ms: ojipData.fj_time_ms,
@@ -4918,10 +4995,8 @@ async function refitSplines() {
     if (densifySt) {
       if (data.densify_info && Object.keys(data.densify_info).length) {
         const first = Object.values(data.densify_info)[0];
-        densifySt.textContent = `\u03c4 = ${first.tau_ms} ms, A = ${first.A}`;
-        // Populate τ input with auto-fitted value (only if user didn't set one)
-        const tauIn = document.getElementById('oj-tau-input');
-        if (tauIn && !tauIn.value) tauIn.value = first.tau_ms;
+        densifySt.textContent = _formatDensifyInfo(first);
+        _populateDensifyInputs(first);
       } else {
         densifySt.textContent = '';
       }

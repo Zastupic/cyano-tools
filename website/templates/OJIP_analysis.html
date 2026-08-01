@@ -1264,25 +1264,96 @@
               <span id="fit-quality-badge" class="badge" style="font-size:0.8em;display:none"></span>
             </div>
           </div>
-          <!-- O-J exponential densify (Diagnostics-only, off by default) -->
+          <!-- Fitting method help (collapsed by default) -->
+          <details class="mb-2" style="font-size:0.85em">
+            <summary class="text-muted" style="cursor:pointer">About fitting methods</summary>
+            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
+              <p class="mb-1"><strong>All four methods</strong> reconstruct the full transient with a spline and compute D2/D3 derivatives. They differ in <em>how FJ and FI inflection points are detected:</em></p>
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>Standard spline</dt>
+                <dd class="mb-0">Linear LSQ spline (k<sub>r</sub>&nbsp;adjustable). FJ/FI from D2 troughs.</dd>
+                <dt>Log-time spline</dt>
+                <dd class="mb-0">Quintic spline in log-time (smooth D2/D3). FJ/FI from D2 troughs.</dd>
+                <dt>PCHIP</dt>
+                <dd class="mb-0">Monotone piecewise cubic (no tunable params). FJ/FI from D2 troughs.</dd>
+                <dt>Polynomial (Akinyemi)</dt>
+                <dd class="mb-0">Log-time spline for reconstruction, but FJ/FI from a <strong>9th-degree polynomial</strong> fitted in narrow windows (0.5&ndash;5&nbsp;ms for J, 9&ndash;100&nbsp;ms for I). Spline-independent &rarr; more reproducible across methods. Ref:&nbsp;Akinyemi&nbsp;et&nbsp;al.&nbsp;2023, <em>Photosynth.&nbsp;Res.</em></dd>
+              </dl>
+              <p class="mb-0 text-muted">FP always uses D2 trough regardless of method.</p>
+            </div>
+          </details>
+          <!-- O-J densify (Diagnostics-only, off by default) -->
           <div class="form-row align-items-center mb-2">
             <div class="col-auto">
               <div class="custom-control custom-checkbox">
                 <input type="checkbox" class="custom-control-input" id="oj-densify-chk">
                 <label class="custom-control-label" for="oj-densify-chk">
-                  O-J exp. densify
+                  O-J densify
                 </label>
               </div>
             </div>
             <div class="col-auto">
-              <label class="mb-0 mr-1">&tau;:</label>
-              <input type="number" id="oj-tau-input" min="0.01" max="50" step="0.1"
-                     placeholder="auto" class="form-control form-control-sm d-inline-block"
-                     style="width:80px" disabled>
-              <small class="text-muted ml-1">ms</small>
+              <label class="mb-0 mr-1">Model:</label>
+              <select id="oj-densify-model" class="form-control form-control-sm d-inline-block"
+                      style="width:auto" disabled>
+                <option value="exponential" selected>Exponential</option>
+                <option value="biexponential">Bi-exponential</option>
+                <option value="connectivity">Connectivity (Joliot)</option>
+              </select>
             </div>
             <div class="col-auto">
               <span id="oj-densify-status" class="text-muted" style="font-size:0.85em;"></span>
+            </div>
+          </div>
+          <!-- O-J densify model-specific params (shown/hidden by JS) -->
+          <div id="oj-densify-params" class="ml-4 mb-2" style="display:none">
+            <div id="oj-params-exponential" class="form-row align-items-center">
+              <div class="col-auto">
+                <label class="mb-0 mr-1">&tau;:</label>
+                <input type="number" id="oj-tau-input" min="0.01" max="50" step="0.1"
+                       placeholder="auto" class="form-control form-control-sm d-inline-block"
+                       style="width:80px">
+                <small class="text-muted ml-1">ms</small>
+              </div>
+            </div>
+            <div id="oj-params-biexponential" class="form-row align-items-center" style="display:none">
+              <div class="col-auto">
+                <label class="mb-0 mr-1">&tau;<sub>1</sub>:</label>
+                <input type="number" id="oj-tau1-input" min="0.01" max="5" step="0.01"
+                       placeholder="auto" class="form-control form-control-sm d-inline-block"
+                       style="width:80px">
+                <small class="text-muted ml-1">ms (fast)</small>
+              </div>
+              <div class="col-auto">
+                <label class="mb-0 mr-1">&tau;<sub>2</sub>:</label>
+                <input type="number" id="oj-tau2-input" min="0.1" max="50" step="0.1"
+                       placeholder="auto" class="form-control form-control-sm d-inline-block"
+                       style="width:80px">
+                <small class="text-muted ml-1">ms (slow)</small>
+              </div>
+            </div>
+            <div id="oj-params-connectivity" class="form-row align-items-center" style="display:none">
+              <div class="col-auto">
+                <label class="mb-0 mr-1"><i>p</i>:</label>
+                <input type="number" id="oj-p-input" min="0" max="0.85" step="0.05"
+                       placeholder="auto" class="form-control form-control-sm d-inline-block"
+                       style="width:80px">
+                <small class="text-muted ml-1">(connectivity)</small>
+              </div>
+              <div class="col-auto">
+                <label class="mb-0 mr-1"><i>k</i><sub>L</sub>:</label>
+                <input type="number" id="oj-kL-input" min="0.1" max="50" step="0.1"
+                       placeholder="auto" class="form-control form-control-sm d-inline-block"
+                       style="width:80px">
+                <small class="text-muted ml-1">ms<sup>&minus;1</sup></small>
+              </div>
+              <div class="col-auto">
+                <label class="mb-0 mr-1"><i>k</i><sub>ox</sub>:</label>
+                <input type="number" id="oj-kox-input" min="0" max="5" step="0.05"
+                       value="0" class="form-control form-control-sm d-inline-block"
+                       style="width:80px">
+                <small class="text-muted ml-1">ms<sup>&minus;1</sup> (0 = off)</small>
+              </div>
             </div>
           </div>
           <!-- F0 timing override -->
