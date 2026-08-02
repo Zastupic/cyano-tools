@@ -6786,3 +6786,50 @@ function copyParafacTable() {
         document.execCommand('copy'); document.body.removeChild(ta);
     });
 }
+
+// ── Try with example data ──────────────────────────────────────────────
+async function loadExampleData(btn) {
+    var orig = btn.textContent;
+    var manifest = [
+        '77K spectra example file (1).csv',
+        '77K spectra example file (2).csv',
+        '77K spectra example file (3).csv',
+        '77K spectra example file (4).csv',
+        '77K spectra example file (5).csv',
+        '77K spectra example file (6).csv',
+        '77K spectra example file (7).csv',
+        '77K spectra example file (8).csv',
+        '77K spectra example file (9).csv'
+    ];
+    var basePath = '/static/files/examples/eem/';
+    try {
+        btn.disabled = true; btn.textContent = '\u23F3 Loading\u2026';
+        var filePromises = manifest.map(function(name) {
+            return fetch(basePath + encodeURIComponent(name))
+                .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+                .then(function(blob) { return new File([blob], name); });
+        });
+        var files = await Promise.all(filePromises);
+        // Set spectrofluorometer to Jasco (example files are Jasco CSV)
+        var spectroSel = document.getElementById('eem-spectrofluorometer');
+        if (spectroSel) spectroSel.value = 'jasco';
+        // Inject files
+        selectedFiles = files;
+        var label = document.getElementById('eem-file-count-label');
+        var listEl = document.getElementById('eem-file-list');
+        var analyzeBtn = document.getElementById('eem-analyze-btn');
+        label.textContent = files.length + ' file(s) selected';
+        listEl.style.display = 'flex'; listEl.style.flexWrap = 'wrap'; listEl.style.gap = '2px 12px';
+        listEl.innerHTML = files.map(function(f) {
+            return '<span style="font-size:0.85em;white-space:nowrap">' + f.name + '</span>';
+        }).join('');
+        analyzeBtn.disabled = false;
+        // Auto-analyze
+        uploadAndAnalyze();
+    } catch (e) {
+        var errEl = document.getElementById('eem-upload-error');
+        if (errEl) { errEl.textContent = 'Could not load example files: ' + e.message; errEl.style.display = 'block'; }
+    } finally {
+        btn.disabled = false; btn.textContent = orig;
+    }
+}

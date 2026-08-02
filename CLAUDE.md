@@ -41,6 +41,24 @@ Tools are otherwise decoupled — work on one without touching the others.
 - **Never** add an external host to any page without updating the CSP in `set_security_headers()`.
 - **Never** send raw transients/images to an external LLM — only named scalar params (see ojip.md).
 
+## "Try with example data" pattern
+Every analysis tool has a **"▶ Try with example data"** button that loads example files
+directly into the tool and auto-triggers analysis (no manual download/re-upload).
+A small ⬇ fallback download link sits next to it.
+
+- **Pre-extracted static files:** `website/static/files/examples/<tool>/` — multi-file tools
+  (OJIP, Slow Kin, EEM, Light Curves, Sigma, MIMS) store extracted example files here.
+  Single-image tools (Cell Count, Cell Size, Pixel Profiles, Cell Morphology) serve from
+  `website/static/images/`. Statistics serves from `website/static/files/`.
+- **JS pattern:** Each tool's JS file has a `loadExampleData(btn)` (or tool-specific name)
+  function that fetches files via `fetch()`, injects them using the `DataTransfer` API
+  (`new DataTransfer(); dt.items.add(file); input.files = dt.files`), and triggers analysis.
+- **Statistics special case:** Fetches `.xlsx`, parses with SheetJS (`XLSX.read()`),
+  converts to TSV, injects into the paste textarea, then clicks "Load Data".
+- **Multi-instrument tools** (OJIP, Slow Kin, MIMS) offer per-instrument buttons that also
+  auto-set the fluorometer/model dropdown before triggering analysis.
+- **Reference implementation:** PBR Analysis (`js_pbr_analysis.js`, `pbr_analysis.html`).
+
 ## Per-tool notes (loaded on demand — read only when working that tool)
 Most tools are small/self-evident; read `website/<tool>.py` directly. Docs exist only where
 there's non-obvious domain logic worth not re-deriving:

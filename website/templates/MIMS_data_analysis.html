@@ -179,9 +179,16 @@
 
     <!-- Action buttons -->
     <div class="d-flex flex-wrap align-items-center" style="gap:0.5em;">
-      <a href="{{url_for('static', filename='files/MIMS example files.zip')}}" download="MIMS_example_file">
-        <button type="button" class="btn btn-outline-secondary">&#128229; Download example files</button>
-      </a>
+      <span style="font-size:0.88em; color:#555;">Try with example data:</span>
+      <button type="button" class="btn btn-sm btn-outline-success" data-example="MASsoft"
+          onclick="loadMimsExampleData('MASsoft', this)">&#9654; MASsoft (HPR-40)</button>
+      <button type="button" class="btn btn-sm btn-outline-success" data-example="Quadera"
+          onclick="loadMimsExampleData('Quadera', this)">&#9654; Quadera</button>
+      <button type="button" class="btn btn-sm btn-outline-success" data-example="Quadstar"
+          onclick="loadMimsExampleData('Quadstar', this)">&#9654; Quadstar</button>
+      <a style="font-size:0.82em; color:#888; margin-left:4px;"
+         href="{{url_for('static', filename='files/MIMS example files.zip')}}" download
+         title="Download all example files">&#11015; ZIP</a>
     </div>
 
   </div>

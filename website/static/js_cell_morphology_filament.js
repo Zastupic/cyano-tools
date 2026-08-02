@@ -1537,3 +1537,24 @@ document.addEventListener('keydown', function (e) {
         e.preventDefault(); undoLastCell();
     }
 });
+
+// ── Try with example data ──────────────────────────────────────────────
+async function loadExampleImage(btn) {
+    var orig = btn.textContent;
+    try {
+        btn.disabled = true; btn.textContent = '\u23F3 Loading\u2026';
+        var r = await fetch('/static/images/cells_filamentous_example.tif');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var blob = await r.blob();
+        var file = new File([blob], 'cells_filamentous_example.tif', { type: 'image/tiff' });
+        var dt = new DataTransfer();
+        dt.items.add(file);
+        var inp = document.getElementById('selected_image');
+        inp.files = dt.files;
+        inp.dispatchEvent(new Event('change'));
+    } catch (e) {
+        alert('Could not load example image: ' + e.message);
+    } finally {
+        btn.disabled = false; btn.textContent = orig;
+    }
+}

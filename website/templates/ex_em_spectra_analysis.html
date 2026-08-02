@@ -880,12 +880,12 @@
                 <span id="eem-spinner" class="spinner-border spinner-border-sm mr-1" role="status" style="display:none"></span>
                 <i class="fa fa-upload"></i> Analyze
             </button>
-            <a href="{{ url_for('static', filename='files/77K_spectra_example_files.zip') }}"
-               download="77K_spectra_example_files">
-                <button type="button" class="btn btn-outline-secondary btn-sm">
-                    <i class="fa fa-download"></i> Download example files
-                </button>
-            </a>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="loadExampleData(this)">
+                &#9654; Try with example data
+            </button>
+            <a style="font-size:0.82em; color:#888; margin-left:4px;"
+               href="{{ url_for('static', filename='files/77K_spectra_example_files.zip') }}" download
+               title="Download all example files">&#11015; ZIP</a>
         </div>
         <div id="eem-upload-error" class="alert alert-danger mt-2 mb-0 py-1 px-2" style="display:none; font-size:0.9em;"></div>
 

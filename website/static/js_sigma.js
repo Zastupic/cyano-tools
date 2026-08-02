@@ -1182,3 +1182,33 @@ function copySigmaMethodsText() {
   btn.innerHTML = '<i class="fa fa-check mr-1"></i>Copied!';
   setTimeout(() => { btn.innerHTML = orig; }, 1800);
 }
+
+// ── Try with example data ──────────────────────────────────────────────
+async function loadSigmaExampleData(btn) {
+    const orig = btn.textContent;
+    const manifest = [
+        'SigmaII_02-050-01.csv', 'SigmaII_02-050-07.csv', 'SigmaII_02-050-08.csv',
+        'SigmaII_04-050-01.csv', 'SigmaII_04-050-07.csv', 'SigmaII_04-050-08.csv',
+        'SigmaII_08-050-01.csv', 'SigmaII_08-050-07.csv', 'SigmaII_08-050-08.csv',
+        'SigmaII_12-050-01.csv', 'SigmaII_12-050-07.csv', 'SigmaII_12-050-08.csv'
+    ];
+    const basePath = '/static/files/examples/sigma/';
+    try {
+        btn.disabled = true; btn.textContent = '\u23F3 Loading\u2026';
+        const files = await Promise.all(manifest.map(async name => {
+            const r = await fetch(basePath + encodeURIComponent(name));
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return new File([await r.blob()], name);
+        }));
+        // Inject into selectedFiles array
+        selectedFiles = files;
+        renderFileList();
+        // Auto-analyze (trigger the analyze button click)
+        document.getElementById('analyze-btn').click();
+    } catch (e) {
+        const errEl = document.getElementById('upload-error');
+        if (errEl) { errEl.textContent = 'Could not load example files: ' + e.message; errEl.style.display = 'block'; }
+    } finally {
+        btn.disabled = false; btn.textContent = orig;
+    }
+}

@@ -145,4 +145,22 @@ if (canvas && img) {
   });
 }
 
-
+// ── Try with example data ──────────────────────────────────────────────
+async function loadExampleImage(btn) {
+    var orig = btn.textContent;
+    try {
+        btn.disabled = true; btn.textContent = '\u23F3 Loading\u2026';
+        var r = await fetch('/static/images/round_cells_example.jpg');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var blob = await r.blob();
+        var file = new File([blob], 'round_cells_example.jpg', { type: 'image/jpeg' });
+        var dt = new DataTransfer();
+        dt.items.add(file);
+        var inp = document.getElementById('image');
+        inp.files = dt.files;
+        inp.closest('form').submit();
+    } catch (e) {
+        alert('Could not load example image: ' + e.message);
+        btn.disabled = false; btn.textContent = orig;
+    }
+}

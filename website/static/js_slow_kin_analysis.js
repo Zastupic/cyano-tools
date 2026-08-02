@@ -2500,3 +2500,55 @@ function initSkPubSettingsUI() {
 
   syncUI(); updateBadge();
 }
+
+// ── Try with example data ──────────────────────────────────────────────
+var SK_EXAMPLE_MANIFESTS = {
+    'AquaPen': {
+        fluorometerValue: 'AquaPen',
+        files: [
+            'AquaPen NPQ 1 example file 1.txt',
+            'AquaPen NPQ 1 example file 2.txt',
+            'AquaPen NPQ 1 example file 3.txt'
+        ]
+    },
+    'MC-PAM': {
+        fluorometerValue: 'MC-PAM',
+        files: [
+            'MC-PAM NPQ example parameters file 1.CSV',
+            'MC-PAM NPQ example parameters file 2.CSV',
+            'MC-PAM NPQ example parameters file 3.CSV',
+            'MC-PAM NPQ example parameters file 4.CSV'
+        ]
+    }
+};
+
+async function loadSkExampleData(label, btn) {
+    var orig = btn.textContent;
+    var entry = SK_EXAMPLE_MANIFESTS[label];
+    if (!entry) return;
+    var basePath = '/static/files/examples/slow_kin/' + encodeURIComponent(label) + '/';
+    try {
+        btn.disabled = true; btn.textContent = '\u23F3 Loading\u2026';
+        var filePromises = entry.files.map(function(name) {
+            return fetch(basePath + encodeURIComponent(name))
+                .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+                .then(function(blob) { return new File([blob], name); });
+        });
+        var files = await Promise.all(filePromises);
+        // Set fluorometer dropdown
+        var sel = document.getElementById('sk-fluorometer');
+        if (sel) sel.value = entry.fluorometerValue;
+        // Inject files
+        var dt = new DataTransfer();
+        files.forEach(function(f) { dt.items.add(f); });
+        document.getElementById('sk-files').files = dt.files;
+        updateFileList();
+        // Auto-analyze
+        uploadAndAnalyze();
+    } catch (e) {
+        var errDiv = document.getElementById('sk-upload-error');
+        if (errDiv) { errDiv.textContent = 'Could not load example files: ' + e.message; errDiv.style.display = ''; }
+    } finally {
+        btn.disabled = false; btn.textContent = orig;
+    }
+}

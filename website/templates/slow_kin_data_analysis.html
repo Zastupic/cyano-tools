@@ -356,9 +356,14 @@
         <span id="sk-spinner" class="spinner-border spinner-border-sm mr-1" role="status" style="display:none"></span>
         Upload &amp; Analyze
       </button>
-      <a href="{{ url_for('static', filename='files/Slow_kin_example_files.zip') }}" download="Slow_kin_example_files">
-        <button type="button" class="btn btn-outline-secondary btn-sm">Download example files</button>
-      </a>
+      <span style="font-size:0.88em; color:#555;">Try with example data:</span>
+      <button type="button" class="btn btn-sm btn-outline-success" data-example="AquaPen"
+          onclick="loadSkExampleData('AquaPen', this)">&#9654; AquaPen</button>
+      <button type="button" class="btn btn-sm btn-outline-success" data-example="MC-PAM"
+          onclick="loadSkExampleData('MC-PAM', this)">&#9654; MC-PAM</button>
+      <a style="font-size:0.82em; color:#888; margin-left:4px;"
+         href="{{ url_for('static', filename='files/Slow_kin_example_files.zip') }}" download
+         title="Download all example files">&#11015; ZIP</a>
       <div id="sk-upload-error" class="alert alert-danger mt-2 mb-0 py-1 px-2 w-100" style="display:none; font-size:0.9em;"></div>
     </div>
 

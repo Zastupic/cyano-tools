@@ -2850,3 +2850,38 @@ document.getElementById('MIMS_file').addEventListener('change', function (ev) {
     });
   }
 });
+
+// ── Try with example data ──────────────────────────────────────────────
+const MIMS_EXAMPLES = {
+    'MASsoft': { model: 'HPR40', file: 'Example file MassSoft 7.csv' },
+    'Quadera': { model: 'MSGAS', file: 'Example file Quadera.asc' },
+    'Quadstar': { model: 'QMS', file: 'Example file Quadstar32bit.asc' }
+};
+
+async function loadMimsExampleData(label, btn) {
+    const orig = btn.textContent;
+    const entry = MIMS_EXAMPLES[label];
+    if (!entry) return;
+    const url = '/static/files/examples/mims/' + encodeURIComponent(entry.file);
+    try {
+        btn.disabled = true; btn.textContent = '\u23F3 Loading\u2026';
+        const r = await fetch(url);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const blob = await r.blob();
+        const file = new File([blob], entry.file);
+        // Set MIMS model dropdown
+        const modelSel = document.querySelector('select[name="MIMS_model"]');
+        if (modelSel) modelSel.value = entry.model;
+        // Inject file into file input and trigger change
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        const fi = document.getElementById('MIMS_file');
+        fi.files = dt.files;
+        fi.dispatchEvent(new Event('change'));
+    } catch (e) {
+        const errDiv = document.getElementById('mims-error-alert');
+        if (errDiv) errDiv.innerHTML = `<div class="alert alert-danger">Could not load example file: ${e.message}</div>`;
+    } finally {
+        btn.disabled = false; btn.textContent = orig;
+    }
+}

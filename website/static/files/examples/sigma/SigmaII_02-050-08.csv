@@ -1,0 +1,7 @@
+Nr.;Filename;Comment;Fo;I1;PAR;p;J;Tau;1.r.Tau;Sigma;Error;
+;;;Volt;Volt;uE/m²s;;;ms;ms;nm²;rel.;
+1;F_251125_112021_0;Begin Sigma1000cyano_10.prg, 440nm Sigma1000_AL.FTM, ML20G5, AL17,FRback, 2avg; 0.343; 0.566;2767; 0.500; 0.999; 0.568; 0.201; 1.057; 131.5;
+2;F_251125_112042_0;480nm Sigma1000_MT.FTM with ML20G10, MT20, FRback, 6 averages; 0.715; 0.893;10008; 0.325; 0.482; 0.523; 0.231; 0.317; 191.0;
+3;F_251125_112143_0;540nm Sigma1000_AL.FTM with ML13G6, AL13, FRback, 2 averages; 0.471; 0.609;2248; 0.586; 1.416; 0.709; 0.396; 1.041; 479.1;
+4;F_251125_112203_0;590nm Sigma1000_AL.FTM with ML15G2, AL11, FRback; 0.517; 0.698;788; 0.721; 2.589; 0.492; 0.572; 4.280; 100.2;
+5;F_251125_112214_0;625nm Sigma1000.FTM with ML4G3, AL9, FRback; 0.395; 0.570;393; 0.709; 2.434; 0.897; 0.716; 4.708; 284.1;

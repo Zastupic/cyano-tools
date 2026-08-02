@@ -115,9 +115,12 @@ Analyze cell length and width of filamentous algae and cyanobacteria. Calculate 
     </div>
     <br>
     <button type="submit" class="btn btn-primary">Upload image and select individual cells</button>
-    <a href="{{url_for('static', filename='images/cells_filamentous_example.tif')}}" download="example_filament_image">
-        <button type="button" class="btn btn-outline-primary">Download an example image</button>
-    </a>
+    <button type="button" class="btn btn-sm btn-outline-success" onclick="loadExampleImage(this)">
+        &#9654; Try with example data
+    </button>
+    <a style="font-size:0.82em; color:#888; margin-left:4px;"
+       href="{{url_for('static', filename='images/cells_filamentous_example.tif')}}" download
+       title="Download example image">&#11015; Image</a>
 </form>
 <br>
 

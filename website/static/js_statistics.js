@@ -8519,3 +8519,61 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ── Try with example data ────────────────────────────────────────────────────
+async function loadStatisticsExampleData(btn) {
+    var orig = btn.textContent;
+    try {
+        btn.disabled = true;
+        btn.textContent = '\u23F3 Loading\u2026';
+
+        // Fetch the example .xlsx file
+        var resp = await fetch('/static/files/ExampleStatisticsData.xlsx');
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var buf = await resp.arrayBuffer();
+
+        // Parse with SheetJS (already loaded on the page)
+        var wb = XLSX.read(buf, { type: 'array' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        // Convert to tab-separated text (headers + data)
+        var tsv = XLSX.utils.sheet_to_csv(ws, { FS: '\t' });
+
+        // Inject into textarea and click "Load Data"
+        var box = document.getElementById('excelPasteBox');
+        var loadBtn = document.getElementById('processDataBtn');
+        var container = document.getElementById('checkboxContainer');
+        if (!box || !loadBtn) throw new Error('UI elements not found');
+
+        box.value = tsv;
+
+        // Auto-select all variables + confirm after data loads (same pattern as OJIP export)
+        if (container) {
+            var observer = new MutationObserver(function () {
+                if (!container.querySelector('.var-check')) return;
+                observer.disconnect();
+                setTimeout(function () {
+                    var selectAll = document.getElementById('selectAllVars');
+                    if (selectAll) {
+                        selectAll.checked = true;
+                        selectAll.dispatchEvent(new Event('change'));
+                    }
+                    setTimeout(function () {
+                        var confirmBtn = document.getElementById('updateAnalysisBtn');
+                        if (confirmBtn) confirmBtn.click();
+                    }, 150);
+                }, 150);
+            });
+            observer.observe(container, { childList: true });
+        }
+
+        loadBtn.click();
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) {
+        console.error('Example load failed:', e);
+        alert('Could not load example data: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────

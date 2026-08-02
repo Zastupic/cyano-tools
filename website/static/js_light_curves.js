@@ -1534,3 +1534,38 @@ function generateLCMethodsText() {
 
     return lines.join('\n\n');
 }
+
+// ── Try with example data ──────────────────────────────────────────────
+async function loadExampleData(btn) {
+    const orig = btn.textContent;
+    const manifest = [
+        'LC3 white light 010 uE m-2 s-1.txt',
+        'LC3 white light 025 uE m-2 s-1.txt',
+        'LC3 white light 050 uE m-2 s-1.txt',
+        'LC3 white light 100 uE m-2 s-1.txt',
+        'LC3 white light 300 uE m-2 s-1.txt',
+        'LC3 white light 500 uE m-2 s-1.txt',
+        'LC3 white light 999 uE m-2 s-1.txt'
+    ];
+    const basePath = '/static/files/examples/light_curves/';
+    try {
+        btn.disabled = true; btn.textContent = '\u23F3 Loading\u2026';
+        const files = await Promise.all(manifest.map(async name => {
+            const r = await fetch(basePath + encodeURIComponent(name));
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return new File([await r.blob()], name);
+        }));
+        // Inject into file input
+        const dt = new DataTransfer();
+        files.forEach(f => dt.items.add(f));
+        document.getElementById('lc-files').files = dt.files;
+        updateFileList();
+        // Auto-analyze
+        uploadAndAnalyze();
+    } catch (e) {
+        const errEl = document.getElementById('upload-error');
+        if (errEl) { errEl.textContent = 'Could not load example files: ' + e.message; errEl.style.display = 'block'; }
+    } finally {
+        btn.disabled = false; btn.textContent = orig;
+    }
+}

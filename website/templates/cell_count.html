@@ -88,10 +88,13 @@ Automated cell counting tool for fluorescence and brightfield microscopy. Easily
         </div>
     </div>
 </div>
-<div style="margin-top:0.5em; margin-bottom:1em;">
-    <a href="{{url_for('static', filename='images/cell_counting_example.jpeg')}}" download="example_image">
-        <button type="button" class="btn btn-sm btn-outline-secondary">&#128229; Download example image</button>
-    </a>
+<div style="margin-top:0.5em; margin-bottom:1em; display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+    <button type="button" class="btn btn-sm btn-outline-success" onclick="loadExampleImage(this)">
+        &#9654; Try with example data
+    </button>
+    <a style="font-size:0.82em; color:#888; margin-left:4px;"
+       href="{{url_for('static', filename='images/cell_counting_example.jpeg')}}" download
+       title="Download example image">&#11015; Image</a>
 </div>
 
 <form method="POST" enctype="multipart/form-data" action="{{ url_for('cell_count.count_cells') }}" id="cell-count-form">

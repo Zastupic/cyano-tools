@@ -105,9 +105,12 @@ Extract longitudinal fluorescence intensity profiles along individual filaments 
     </div>
     <br>
     <button id="show-image-button" type="submit" class="btn btn-primary">Upload images and select individual cells</button>
-    <a href="{{url_for('static', filename='files/cells_filamentous_example.rar')}}" download="example_image">
-        <button type="button" class="btn btn-outline-primary">Download example images</button>
-    </a>
+    <button type="button" class="btn btn-sm btn-outline-success" onclick="loadExampleImage(this)">
+        &#9654; Try with example data
+    </button>
+    <a style="font-size:0.82em; color:#888; margin-left:4px;"
+       href="{{url_for('static', filename='files/cells_filamentous_example.rar')}}" download
+       title="Download example images">&#11015; RAR</a>
 </form>
 <br>
 

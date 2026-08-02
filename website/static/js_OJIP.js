@@ -5634,3 +5634,40 @@ async function startBatchExport() {
     alert('Batch export failed: ' + err.message);
   }
 }
+
+// ── Try with example data ──────────────────────────────────────────────
+const OJIP_EXAMPLE_FILES = [
+    'OJIP example file AquaPen (1).txt', 'OJIP example file AquaPen (2).txt',
+    'OJIP example file AquaPen (3).txt', 'OJIP example file AquaPen (4).txt',
+    'OJIP example file AquaPen (5).txt', 'OJIP example file AquaPen (6).txt',
+    'OJIP example file AquaPen (7).txt', 'OJIP example file AquaPen (8).txt',
+    'OJIP example file AquaPen (9).txt'
+];
+
+async function loadOjipExampleData(btn) {
+    const orig = btn.textContent;
+    const basePath = '/static/files/examples/ojip/AquaPen/';
+    try {
+        btn.disabled = true; btn.textContent = '\u23F3 Loading\u2026';
+        const files = await Promise.all(OJIP_EXAMPLE_FILES.map(async name => {
+            const r = await fetch(basePath + encodeURIComponent(name));
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return new File([await r.blob()], name);
+        }));
+        // Set fluorometer dropdown to AquaPen
+        const sel = document.getElementById('fluorometer');
+        if (sel) sel.value = 'Aquapen';
+        // Inject files
+        const dt = new DataTransfer();
+        files.forEach(f => dt.items.add(f));
+        document.getElementById('ojip-files').files = dt.files;
+        updateFileList();
+        // Auto-analyze
+        uploadAndAnalyze();
+    } catch (e) {
+        const errDiv = document.getElementById('upload-error');
+        if (errDiv) { errDiv.textContent = 'Could not load example files: ' + e.message; errDiv.style.display = ''; }
+    } finally {
+        btn.disabled = false; btn.textContent = orig;
+    }
+}

@@ -462,11 +462,13 @@
                                     <button class="btn btn-link collapsed text-left flex-grow-1" type="button" data-toggle="collapse" data-target="#dataRequirements" aria-expanded="false" aria-controls="dataRequirements" style="min-width:0;">
                                         <i class="fa fa-info-circle mr-2"></i> Data Requirements & Best Practices
                                     </button>
+                                    <button type="button" class="btn btn-outline-success btn-sm flex-shrink-0"
+                                        onclick="loadStatisticsExampleData(this)" style="font-size:0.82rem;">
+                                        &#9654; Try with example data
+                                    </button>
                                     <a href="{{url_for('static', filename='files/ExampleStatisticsData.xlsx')}}"
-                                       class="btn btn-outline-primary btn-sm flex-shrink-0"
-                                       download style="font-size:0.82rem;">
-                                        <i class="fa fa-download mr-1"></i> Download Example Dataset
-                                    </a>
+                                       download title="Download example dataset"
+                                       style="font-size:0.82em; color:#888; margin-left:4px;">&#11015; XLSX</a>
                                 </h5>
                             </div>
                             <div id="dataRequirements" class="collapse" aria-labelledby="headingRequirements" data-parent="#requirementsAccordion">
