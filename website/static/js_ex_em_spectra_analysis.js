@@ -659,8 +659,15 @@ function uploadAndAnalyzeXlsx() {
             autoDetectAllEmEdges();
             updateParafacRankSuggestion(getPigmentation());
             updateComparisonTabState();
-            document.getElementById('eem-spectra-tab').click();
-            renderSpectraTab();
+
+            // 3D data → open 3D Map tab first; 2D (single-Ex or single-Em) → Spectra
+            if (isSingleEx || isSingleEm) {
+                document.getElementById('eem-spectra-tab').click();
+                renderSpectraTab();
+            } else {
+                document.getElementById('eem-map-tab').click();
+                renderMapTab();
+            }
         })
         .catch(function(e) {
             document.getElementById('eem-spinner').style.display = 'none';
@@ -951,8 +958,14 @@ function uploadAndAnalyze() {
             updateParafacRankSuggestion(getPigmentation());
             updateComparisonTabState();
 
-            document.getElementById('eem-spectra-tab').click();
-            renderSpectraTab();
+            // 3D data → open 3D Map tab first; 2D (single-Ex or single-Em) → Spectra
+            if (isSingleEx || isSingleEm) {
+                document.getElementById('eem-spectra-tab').click();
+                renderSpectraTab();
+            } else {
+                document.getElementById('eem-map-tab').click();
+                renderMapTab();
+            }
         })
         .catch(function(e) {
             document.getElementById('eem-spinner').style.display = 'none';
