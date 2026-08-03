@@ -2242,6 +2242,74 @@
         <div class="card-body p-2" id="mc-summary-table-body"></div>
       </div>
 
+      <!-- Reference FM override (OJIPImaging batch only) -->
+      <div id="mc-ref-fm-card" class="card mb-3" style="display:none;">
+        <div class="card-header py-2 d-flex align-items-center"
+             style="background:#e9ecef; font-size:0.88em;">
+          <span class="font-weight-bold">
+            <i class="fa fa-crosshairs mr-1 text-danger"></i>Reference F<sub>M</sub>
+          </span>
+          <small class="text-muted ml-2">Override FM with a reference curve or group &mdash; recalculates all JIP parameters</small>
+          <button class="btn btn-sm btn-outline-secondary ml-auto" data-toggle="collapse"
+                  data-target="#mc-ref-fm-body">
+            <i class="fa fa-chevron-down"></i>
+          </button>
+        </div>
+        <div id="mc-ref-fm-body" class="collapse card-body p-3" style="font-size:0.85em;">
+
+          <!-- Mode selector -->
+          <div class="form-group mb-2">
+            <label class="font-weight-bold mb-1">Mode</label>
+            <select id="mc-ref-fm-mode" class="form-control form-control-sm" style="width:auto;"
+                    onchange="MC.refFMUpdateUI()">
+              <option value="single">Single reference curve</option>
+              <option value="per-strain">Per-strain: one time point</option>
+              <option value="per-strain-avg">Per-strain: average of time points</option>
+            </select>
+          </div>
+
+          <!-- Single-curve selector (shown for mode=single) -->
+          <div id="mc-ref-fm-single-wrap" class="form-group mb-2">
+            <label class="font-weight-bold mb-1">Reference curve</label>
+            <select id="mc-ref-fm-curve" class="form-control form-control-sm"
+                    style="width:auto; max-width:350px;">
+            </select>
+          </div>
+
+          <!-- Group-field + group-value selectors (shown for per-strain modes) -->
+          <div id="mc-ref-fm-group-wrap" class="form-group mb-2" style="display:none;">
+            <label class="font-weight-bold mb-1">Reference time group</label>
+            <select id="mc-ref-fm-group-field" class="form-control form-control-sm mb-1"
+                    style="width:auto;" onchange="MC.refFMUpdateGroupValues()">
+              <option value="hours" selected>Hour of day</option>
+              <option value="day">Day</option>
+            </select>
+            <div id="mc-ref-fm-group-values" class="d-flex flex-wrap" style="gap:4px;">
+            </div>
+          </div>
+
+          <!-- Strain field info -->
+          <div id="mc-ref-fm-strain-info" class="text-muted mb-2" style="display:none; font-size:0.85em;">
+            Strains identified by: <strong>Line (genotype)</strong>
+          </div>
+
+          <!-- Apply / Clear buttons -->
+          <div class="d-flex align-items-center" style="gap:8px;">
+            <button class="btn btn-sm btn-primary" onclick="MC.applyRefFM()">
+              <i class="fa fa-check mr-1"></i>Apply Reference F<sub>M</sub>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" id="mc-ref-fm-clear-btn"
+                    onclick="MC.clearRefFM()" style="display:none;">
+              <i class="fa fa-undo mr-1"></i>Clear
+            </button>
+            <span id="mc-ref-fm-status" class="text-muted small"></span>
+          </div>
+
+          <!-- Warning area -->
+          <div id="mc-ref-fm-warning" class="text-warning mt-2" style="display:none; font-size:0.85em;"></div>
+        </div>
+      </div>
+
       <!-- Compare card (OJIPImaging only) -->
       <div id="mc-compare-card" class="card mb-3" style="display:none;">
         <div class="card-header py-2 d-flex flex-wrap align-items-center"

@@ -328,6 +328,17 @@ const MC = (() => {
       batches.push(allCurves.slice(i, i + BATCH));
     }
 
+    // Reset reference FM state from any previous run
+    if (_refFM.active) {
+      _clearRefFM();
+      const statusEl = document.getElementById('mc-ref-fm-status');
+      const clearBtn = document.getElementById('mc-ref-fm-clear-btn');
+      const warnEl   = document.getElementById('mc-ref-fm-warning');
+      if (statusEl) statusEl.textContent = '';
+      if (clearBtn) clearBtn.style.display = 'none';
+      if (warnEl)   warnEl.style.display = 'none';
+    }
+
     paramMatrix = new Array(allCurves.length);
     mcAbort = new AbortController();
     let done = 0;
@@ -1033,7 +1044,9 @@ const MC = (() => {
     // (nRMSE/misfit× kept in payload as secondary diagnostics only).
     const fitCols = ['min conf', 'R²', 'nRMSE %'];
     const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const refActive = _refFM.active;
     const headerRow = ['#', 'Name', ...metaCols, ...fitCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+    if (refActive) headerRow.push('FM (own)');
 
     const confCount = paramMatrix.filter(_confPoor).length;
     const fitCount  = paramMatrix.filter(_fitPoor).length;
@@ -1085,7 +1098,12 @@ const MC = (() => {
         html += `<td class="text-muted">${nr != null ? (nr * 100).toFixed(2) : '—'}</td>`;
         for (const k of paramKeys) {
           const v = r[k];
-          html += `<td>${v != null ? (typeof v === 'number' ? v.toPrecision(5) : v) : ''}</td>`;
+          const refMark = (refActive && k === 'FM' && r._refFM) ? ' style="background:#fff3cd;"' : '';
+          html += `<td${refMark}>${v != null ? (typeof v === 'number' ? v.toPrecision(5) : v) : ''}</td>`;
+        }
+        if (refActive) {
+          const own = r._FM_own;
+          html += `<td class="text-muted">${own != null ? own.toPrecision(5) : ''}</td>`;
         }
       }
       html += '</tr>';
@@ -1111,7 +1129,10 @@ const MC = (() => {
     const metaCols = isExcel ? ['Line', 'Day', 'Hour'] : [];
     const fitCols = ['min conf', 'R²', 'nRMSE %'];
     const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
-    const header = ['#', 'Name', ...metaCols, ...fitCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)].join('\t');
+    const refActive = _refFM.active;
+    const headerParts = ['#', 'Name', ...metaCols, ...fitCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+    if (refActive) headerParts.push('FM (own)');
+    const header = headerParts.join('\t');
     const rows = paramMatrix.filter(Boolean).map(r => {
       const metaVals = [];
       if (isExcel) {
@@ -1124,7 +1145,9 @@ const MC = (() => {
         r.fit_r2 != null ? r.fit_r2 : '',
         r.fit_nrmse != null ? (r.fit_nrmse * 100).toFixed(3) : '',
       ];
-      return [r.slot + 1, r.name, ...metaVals, ...fitVals, ...paramKeys.map(k => r[k] ?? '')].join('\t');
+      const vals = paramKeys.map(k => r[k] ?? '');
+      if (refActive) vals.push(r._FM_own ?? '');
+      return [r.slot + 1, r.name, ...metaVals, ...fitVals, ...vals].join('\t');
     });
     navigator.clipboard.writeText(header + '\n' + rows.join('\n'));
   }
@@ -1285,6 +1308,233 @@ const MC = (() => {
   let _compareSubSelected    = new Set(); // selected sub-group values for comparison
   let _comparePrimaryField   = null;      // field _compareSelected was last initialized for
   let _compareSubField       = null;      // field _compareSubSelected was last initialized for
+
+  // ── Reference FM override ──────────────────────────────────────────
+  let _refFM = {
+    active: false,
+    mode: null,           // 'single' | 'per-strain' | 'per-strain-avg'
+    singleSlot: null,     // slot index for mode='single'
+    strainField: 'line',  // metadata field that defines "strain"
+    groupField: 'hours',  // metadata field that defines the reference group
+    groupValues: [],      // selected group values
+    fmMap: {},            // strain → reference FM value  ('*' key for single mode)
+  };
+
+  /** Build _refFM.fmMap from current paramMatrix + _slotMeta. */
+  function _resolveRefFM() {
+    const fm = _refFM;
+    fm.fmMap = {};
+
+    if (fm.mode === 'single') {
+      const r = paramMatrix[fm.singleSlot];
+      if (!r || r.error) return;
+      // Use _FM_own if already overridden, otherwise current FM
+      fm.fmMap['*'] = r._FM_own != null ? r._FM_own : r.FM;
+      return;
+    }
+
+    // per-strain or per-strain-avg: collect FM values per strain from matching groups
+    // strainFMs: { strainValue: [fm1, fm2, ...] }
+    const strainFMs = {};
+    const gvSet = new Set(fm.groupValues.map(String));
+
+    for (const r of paramMatrix) {
+      if (!r || r.error) continue;
+      const meta = _slotMeta(r.slot);
+      if (!meta) continue;
+      const gVal = String(meta[fm.groupField] || '');
+      if (!gvSet.has(gVal)) continue;
+      const strain = String(meta[fm.strainField] || 'unknown');
+      if (!strainFMs[strain]) strainFMs[strain] = [];
+      strainFMs[strain].push(r._FM_own != null ? r._FM_own : r.FM);
+    }
+
+    // Average FM values per strain
+    for (const [strain, fms] of Object.entries(strainFMs)) {
+      fm.fmMap[strain] = fms.reduce((a, b) => a + b, 0) / fms.length;
+    }
+  }
+
+  /** Get reference FM for a given slot. Returns null if not available. */
+  function _getRefFM(slot) {
+    if (_refFM.mode === 'single') return _refFM.fmMap['*'] ?? null;
+    const meta = _slotMeta(slot);
+    if (!meta) return null;
+    const strain = String(meta[_refFM.strainField] || 'unknown');
+    return _refFM.fmMap[strain] ?? null;
+  }
+
+  /** Apply reference FM to all paramMatrix entries. Returns {updated, skipped, negFV}. */
+  function _applyRefFM() {
+    let updated = 0, skipped = 0, negFV = 0;
+    for (const r of paramMatrix) {
+      if (!r || r.error) continue;
+      // Save original FM on first apply
+      if (r._FM_own == null) r._FM_own = r.FM;
+      const refFM = _getRefFM(r.slot);
+      if (refFM == null) { skipped++; continue; }
+      r.FM = refFM;
+      Object.assign(r, calcJIP(r));
+      r._refFM = true;
+      updated++;
+      if (r.FV != null && r.FV <= 0) negFV++;
+    }
+    _refFM.active = true;
+    return { updated, skipped, negFV };
+  }
+
+  /** Clear reference FM, restore original FM values. */
+  function _clearRefFM() {
+    for (const r of paramMatrix) {
+      if (!r || r.error || !r._refFM) continue;
+      if (r._FM_own != null) {
+        r.FM = r._FM_own;
+        Object.assign(r, calcJIP(r));
+      }
+      delete r._refFM;
+      delete r._FM_own;
+    }
+    _refFM.active = false;
+    _refFM.fmMap = {};
+  }
+
+  /** Populate the single-curve reference dropdown with paramMatrix entries. */
+  function _refFMPopulateCurveDropdown() {
+    const sel = document.getElementById('mc-ref-fm-curve');
+    if (!sel || !paramMatrix) return;
+    sel.innerHTML = '';
+    for (const r of paramMatrix) {
+      if (!r || r.error) continue;
+      const opt = document.createElement('option');
+      opt.value = r.slot;
+      const fm = (r._FM_own != null ? r._FM_own : r.FM);
+      opt.textContent = `${r.name}  (FM = ${fm.toFixed(0)})`;
+      sel.appendChild(opt);
+    }
+  }
+
+  /** Toggle visibility of single vs group selectors based on mode. */
+  function _refFMUpdateUI() {
+    const mode = document.getElementById('mc-ref-fm-mode')?.value || 'single';
+    const singleWrap = document.getElementById('mc-ref-fm-single-wrap');
+    const groupWrap  = document.getElementById('mc-ref-fm-group-wrap');
+    const strainInfo = document.getElementById('mc-ref-fm-strain-info');
+
+    if (mode === 'single') {
+      if (singleWrap) singleWrap.style.display = '';
+      if (groupWrap)  groupWrap.style.display = 'none';
+      if (strainInfo) strainInfo.style.display = 'none';
+    } else {
+      if (singleWrap) singleWrap.style.display = 'none';
+      if (groupWrap)  groupWrap.style.display = '';
+      if (strainInfo) strainInfo.style.display = '';
+      _refFMUpdateGroupValues();
+    }
+  }
+
+  /** Populate group value selectors (checkboxes or radio buttons). */
+  function _refFMUpdateGroupValues() {
+    const mode = document.getElementById('mc-ref-fm-mode')?.value || 'single';
+    const field = document.getElementById('mc-ref-fm-group-field')?.value || 'hours';
+    const container = document.getElementById('mc-ref-fm-group-values');
+    if (!container || !paramMatrix) return;
+
+    // Collect unique group values from metadata
+    const vals = new Set();
+    for (const r of paramMatrix) {
+      if (!r || r.error) continue;
+      const meta = _slotMeta(r.slot);
+      if (meta && meta[field] != null) vals.add(String(meta[field]));
+    }
+
+    const sorted = [...vals].sort();
+    const isMulti = (mode === 'per-strain-avg');
+    const inputType = isMulti ? 'checkbox' : 'radio';
+
+    container.innerHTML = sorted.map(v => {
+      return `<label class="btn btn-sm btn-outline-secondary mb-1" style="font-size:0.82em;">
+        <input type="${inputType}" name="mc-ref-fm-gv" value="${v}" class="mr-1">${v}
+      </label>`;
+    }).join('');
+  }
+
+  /** Read UI and apply reference FM override. */
+  function _applyRefFMFromUI() {
+    const mode = document.getElementById('mc-ref-fm-mode')?.value || 'single';
+    const warnEl = document.getElementById('mc-ref-fm-warning');
+    const statusEl = document.getElementById('mc-ref-fm-status');
+    const clearBtn = document.getElementById('mc-ref-fm-clear-btn');
+
+    // Clear any existing override first
+    if (_refFM.active) _clearRefFM();
+
+    _refFM.mode = mode;
+
+    if (mode === 'single') {
+      const sel = document.getElementById('mc-ref-fm-curve');
+      if (!sel || sel.value === '') {
+        if (warnEl) { warnEl.textContent = 'Please select a reference curve.'; warnEl.style.display = ''; }
+        return;
+      }
+      _refFM.singleSlot = parseInt(sel.value, 10);
+    } else {
+      _refFM.groupField = document.getElementById('mc-ref-fm-group-field')?.value || 'hours';
+      const checked = document.querySelectorAll('#mc-ref-fm-group-values input:checked');
+      if (!checked.length) {
+        if (warnEl) { warnEl.textContent = 'Please select at least one time group.'; warnEl.style.display = ''; }
+        return;
+      }
+      _refFM.groupValues = [...checked].map(el => el.value);
+    }
+
+    // Build FM map
+    _resolveRefFM();
+
+    if (Object.keys(_refFM.fmMap).length === 0) {
+      if (warnEl) { warnEl.textContent = 'No reference FM values found for the selected criteria.'; warnEl.style.display = ''; }
+      return;
+    }
+
+    // Apply
+    const result = _applyRefFM();
+
+    // Warnings
+    const warnings = [];
+    if (result.skipped > 0) {
+      warnings.push(`${result.skipped} curve(s) had no matching reference strain — kept original FM.`);
+    }
+    if (result.negFV > 0) {
+      warnings.push(`${result.negFV} curve(s) have FV ≤ 0 (reference FM < F₀) — check reference selection.`);
+    }
+    if (warnEl) {
+      warnEl.innerHTML = warnings.join('<br>');
+      warnEl.style.display = warnings.length ? '' : 'none';
+    }
+
+    // Status
+    if (statusEl) statusEl.textContent = `Reference FM applied to ${result.updated} curve(s).`;
+    if (clearBtn) clearBtn.style.display = '';
+
+    // Re-render
+    renderTimeSeries();
+    _renderParamTable();
+  }
+
+  /** Clear reference FM and restore originals. */
+  function _clearRefFMFromUI() {
+    _clearRefFM();
+    _refFM.mode = null;
+    _refFM.singleSlot = null;
+    _refFM.groupValues = [];
+    const statusEl = document.getElementById('mc-ref-fm-status');
+    const clearBtn = document.getElementById('mc-ref-fm-clear-btn');
+    const warnEl   = document.getElementById('mc-ref-fm-warning');
+    if (statusEl) statusEl.textContent = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (warnEl)   warnEl.style.display = 'none';
+    renderTimeSeries();
+    _renderParamTable();
+  }
 
   // Read the user-editable from/to range (1-based, clamped)
   function _getCurveRange() {
@@ -1464,7 +1714,9 @@ const MC = (() => {
   function downloadParamsCSV() {
     if (!paramMatrix) return;
     const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const refActive = _refFM.active;
     const header = ['index', 'name', 'timestamp', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+    if (refActive) header.push('FM (own)');
     const rows = [header.join(',')];
     for (const r of paramMatrix) {
       if (!r) continue;
@@ -1474,6 +1726,7 @@ const MC = (() => {
       }
       const ts = mcDataset?.curves.find(c => c.index === _slotToIndex(r.slot))?.timestamp || '';
       const vals = paramKeys.map(k => r[k] ?? '');
+      if (refActive) vals.push(r._FM_own ?? '');
       rows.push([r.slot + 1, `"${r.name}"`, `"${ts}"`, ...vals].join(','));
     }
     const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
@@ -1488,7 +1741,9 @@ const MC = (() => {
   function downloadParamsXLSX() {
     if (!paramMatrix || typeof XLSX === 'undefined') return;
     const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const refActive = _refFM.active;
     const header = ['Index', 'Name', 'Timestamp', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+    if (refActive) header.push('FM (own)');
     const rows = [header];
     for (const r of paramMatrix) {
       if (!r) continue;
@@ -1496,7 +1751,9 @@ const MC = (() => {
       if (r.error) {
         rows.push([r.slot + 1, r.name, ts, 'ERROR: ' + r.error]);
       } else {
-        rows.push([r.slot + 1, r.name, ts, ...paramKeys.map(k => r[k] ?? '')]);
+        const vals = paramKeys.map(k => r[k] ?? '');
+        if (refActive) vals.push(r._FM_own ?? '');
+        rows.push([r.slot + 1, r.name, ts, ...vals]);
       }
     }
     const wb = XLSX.utils.book_new();
@@ -2871,6 +3128,14 @@ const MC = (() => {
     onFlagThresholdChange: _onFlagThresholdChange,
     _updateSelCount, slotToIndex: _slotToIndex, slotMeta: _slotMeta,
     captureAllSummaryCharts,
+    // Reference FM
+    refFMUpdateUI: _refFMUpdateUI,
+    refFMUpdateGroupValues: _refFMUpdateGroupValues,
+    applyRefFM: _applyRefFMFromUI,
+    clearRefFM: _clearRefFMFromUI,
+    initRefFMCard: _refFMPopulateCurveDropdown,
+    get refFMActive() { return _refFM.active; },
+    reapplyRefFM() { if (_refFM.mode) { _resolveRefFM(); _applyRefFM(); } },
   };
 })();
 
@@ -3979,11 +4244,14 @@ async function mcStartAnalysis() {
     // Hide summary table on new analysis
     const summaryWrap = document.getElementById('mc-summary-table-wrap');
     if (summaryWrap) summaryWrap.style.display = 'none';
-    // Show/hide grouped panels card and compare card
+    // Show/hide grouped panels card, compare card, and reference FM card
     const panelsCard  = document.getElementById('mc-grouped-panels-card');
     const compareCard = document.getElementById('mc-compare-card');
+    const refFMCard   = document.getElementById('mc-ref-fm-card');
     if (panelsCard)  panelsCard.style.display  = isOJIPImg ? '' : 'none';
     if (compareCard) compareCard.style.display = isOJIPImg ? '' : 'none';
+    if (refFMCard)   refFMCard.style.display   = isOJIPImg ? '' : 'none';
+    if (isOJIPImg) { MC.initRefFMCard(); MC.refFMUpdateUI(); }
 
     // Render time-series overview
     MC.renderTimeSeries();
@@ -5037,6 +5305,8 @@ async function mcRefitBatch() {
   // A refit changes the fit / background inputs, so any cached per-curve detail
   // is now stale — drop it so the Diagnostics detail re-fetches on next click.
   mcDetailCache = {};
+  // Remember if reference FM was active before refit (runParamsPass clears it)
+  const hadRefFM = MC.refFMActive;
 
   const fitMethod = document.getElementById('fit-method-sel')?.value || 'logspline';
   const jipOpts = {
@@ -5079,6 +5349,9 @@ async function mcRefitBatch() {
 
   _lastJipOpts = Object.assign({}, jipOpts);
   _updateBatchQualityAlerts(result);
+
+  // Re-apply reference FM if it was active before refit
+  if (hadRefFM) MC.reapplyRefFM();
 
   // Refresh overview charts
   MC.renderTimeSeries();
