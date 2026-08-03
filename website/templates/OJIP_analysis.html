@@ -1302,7 +1302,15 @@
                 <dt>Gaussian D1</dt>
                 <dd class="mb-0">Deconvolves D1 into 2&ndash;3 Gaussian peaks in log<sub>10</sub>(t) space. FJ/FI from valleys (local minima) between adjacent Gaussian centers. Intuitive spectral decomposition of the fluorescence rise.</dd>
               </dl>
-              <p class="mb-0 text-muted">FP always uses D2 trough for spline and most detection methods. Piecewise-linear derives all three breakpoints directly from the fit.</p>
+              <p class="mb-1 text-muted">FP always uses D2 trough for spline and most detection methods. Piecewise-linear derives all three breakpoints directly from the fit.</p>
+              <p class="mb-0 mt-2" style="font-size:0.92em"><strong>References</strong></p>
+              <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">
+                <li>Strasser RJ, Tsimilli-Michael M, Srivastava A (2004) Analysis of the chlorophyll <em>a</em> fluorescence transient. In: Papageorgiou GC, Govindjee (eds) <em>Chlorophyll a Fluorescence</em>, Springer, pp&nbsp;321&ndash;362. <a href="https://doi.org/10.1007/978-1-4020-3218-9_12" target="_blank" rel="noopener">doi:10.1007/978-1-4020-3218-9_12</a> &mdash; <em>D2 trough / JIP-test foundation</em></li>
+                <li>Stirbet A, Govindjee (2011) On the relation between the Kautsky effect and Photosystem&nbsp;II. <em>J&nbsp;Photochem Photobiol&nbsp;B</em> 104:236&ndash;257. <a href="https://doi.org/10.1016/j.jphotobiol.2010.12.010" target="_blank" rel="noopener">doi:10.1016/j.jphotobiol.2010.12.010</a> &mdash; <em>D1/D2 derivative approach review</em></li>
+                <li>Akinyemi OO <em>et&nbsp;al.</em> (2023) Derivative-based time-adjusted analysis of the OJIP fluorescence transient of silver birch. <em>Photosynth&nbsp;Res</em> 157:133&ndash;146. <a href="https://doi.org/10.1007/s11120-023-01033-x" target="_blank" rel="noopener">doi:10.1007/s11120-023-01033-x</a> &mdash; <em>Polynomial inflection method</em></li>
+                <li>Boisvert S, Joly D, Carpentier R (2006) Quantitative analysis of the experimental O-J-I-P chlorophyll fluorescence induction kinetics. <em>FEBS&nbsp;J</em> 273:4770&ndash;4777. <a href="https://doi.org/10.1111/j.1742-4658.2006.05475.x" target="_blank" rel="noopener">doi:10.1111/j.1742-4658.2006.05475.x</a> &mdash; <em>3-exponential decomposition</em></li>
+                <li>Fritsch FN, Carlson RE (1980) Monotone piecewise cubic interpolation. <em>SIAM&nbsp;J&nbsp;Numer&nbsp;Anal</em> 17:238&ndash;246. <a href="https://doi.org/10.1137/0717021" target="_blank" rel="noopener">doi:10.1137/0717021</a> &mdash; <em>PCHIP interpolation</em></li>
+              </ol>
             </div>
           </details>
           <!-- O-J densify (Diagnostics-only, off by default) -->
@@ -1322,6 +1330,7 @@
                 <option value="exponential" selected>Exponential</option>
                 <option value="biexponential">Bi-exponential</option>
                 <option value="connectivity">Connectivity (Joliot)</option>
+                <option value="linear">Linear</option>
               </select>
             </div>
             <div class="col-auto">
@@ -1378,6 +1387,11 @@
                 <small class="text-muted ml-1">ms<sup>&minus;1</sup> (0 = off)</small>
               </div>
             </div>
+            <div id="oj-params-linear" class="form-row align-items-center" style="display:none">
+              <div class="col-auto">
+                <small class="text-muted">No tuneable parameters &mdash; slope and intercept fitted automatically</small>
+              </div>
+            </div>
           </div>
           <!-- F0 timing override -->
           <div class="form-row align-items-center mb-2">
@@ -1387,6 +1401,8 @@
                      placeholder="auto" class="form-control form-control-sm d-inline-block"
                      style="width:90px">
               <small class="text-muted ml-1">ms (override F<sub>0</sub> timing)</small>
+              <span id="f0-time-warning" class="text-warning ml-2" style="display:none; font-size:0.85em;">&#9888; F<sub>0</sub> &gt; 0.2 ms &mdash; O&ndash;J rise may be partially included</span>
+              <span id="f0-time-note" class="text-info ml-2" style="display:none; font-size:0.85em;">&#9432; Time axis will be rescaled &mdash; click Re-fit to apply</span>
             </div>
           </div>
           <!-- Background / F0 mirror (AquaPen/FluorPen batches) — synced to the
@@ -1465,14 +1481,14 @@
           <div style="position:relative; height:260px;"><canvas id="diag-recon-chart"></canvas></div>
         </div>
         <div class="col-md-6 mb-3">
-          <h6>2nd derivative (D2) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-d2-chart"></canvas></div>
+          <h6>1st derivative (D1) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
+          <div style="position:relative; height:260px;"><canvas id="diag-d1-chart"></canvas></div>
         </div>
       </div>
       <div class="row">
         <div class="col-md-6 mb-3">
-          <h6>1st derivative (D1) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-d1-chart"></canvas></div>
+          <h6>2nd derivative (D2) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
+          <div style="position:relative; height:260px;"><canvas id="diag-d2-chart"></canvas></div>
         </div>
         <div class="col-md-6 mb-3">
           <h6>3rd derivative (D3) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>

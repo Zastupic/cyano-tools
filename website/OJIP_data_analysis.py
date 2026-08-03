@@ -1179,10 +1179,23 @@ def _fit_oj_connectivity(t_oj, y_oj, params):
                      'p': round(p_fit, 4), 'k_ox': round(kox_fit, 4)}
 
 
+def _fit_oj_linear(t_oj, y_oj, params):
+    """F(t) = a + b*t.  Simple linear extrapolation through the O-J rise."""
+    coeffs = np.polyfit(t_oj, y_oj, 1)  # [slope, intercept]
+    slope, intercept = float(coeffs[0]), float(coeffs[1])
+
+    def predict(t):
+        return intercept + slope * np.asarray(t, dtype=float)
+
+    return predict, {'model': 'linear',
+                     'slope': round(slope, 6), 'intercept': round(intercept, 6)}
+
+
 _OJ_FITTERS = {
     'exponential':   _fit_oj_exponential,
     'biexponential': _fit_oj_biexponential,
     'connectivity':  _fit_oj_connectivity,
+    'linear':        _fit_oj_linear,
 }
 
 
@@ -1194,7 +1207,7 @@ def _oj_densify(x_log, y, fj_hi_log,
     synthetic fill points within any gap > 0.5 decades.  Synthetic points
     are assigned a reduced weight for the downstream LSQ spline fit.
 
-    Models: 'exponential' (default), 'biexponential', 'connectivity'.
+    Models: 'exponential' (default), 'biexponential', 'connectivity', 'linear'.
 
     Returns
     -------
@@ -1745,20 +1758,29 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                                      background_mode, background_n, bckg_map)
 
     # ── normalise (mirrors ojip_process lines 419-440) ────────────────────────
-    if f0_time_ms is not None:
-        F0_index = sf[x_col].sub(f0_time_ms / ms).abs().idxmin()
-    elif fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
+    # Always auto-detect F0 first (value at the instrument's reference point).
+    if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
         F0_index = sf[x_col].sub(0.01).abs().idxmin()
     else:
         F0_index = sf[x_col].sub(0).abs().idxmin()
-
     F0 = sf[data_cols].loc[F0_index].copy()
+
     # When the transient is background-subtracted, F0 may be set from the
     # instrument's own reported Fo (footer) so the result matches the FluorPen
     # readout; otherwise F0 stays the first measured point after the background.
-    if (f0_source == 'instrument' and bg_applied
+    # Skip when user explicitly overrides F0 timing.
+    if (f0_time_ms is None and f0_source == 'instrument' and bg_applied
             and fo_footer is not None and np.isfinite(fo_footer)):
         F0[fname] = float(fo_footer)
+
+    # F0 time override: move ONLY the F0 data point to the user-specified time.
+    # All other time points stay at their original positions.  This changes
+    # the gap between F0 and the next point but preserves the rest of the
+    # time axis, so spline fitting and derivatives reflect the corrected
+    # F0 position without distorting the remainder of the curve.
+    if f0_time_ms is not None:
+        f0_native_target = f0_time_ms / ms
+        sf.loc[F0_index, x_col] = f0_native_target
     FM = sf[data_cols].max()
 
     shifted_zero_df = pd.concat([
@@ -2065,6 +2087,8 @@ def ojip_process():
     background_n    = int(request.form.get('background_n', 1) or 1)
     f0_source       = request.form.get('f0_source', 'instrument')
     knot_placement  = request.form.get('knot_placement', 'quantile')
+    _f0_raw_proc    = request.form.get('f0_time_ms', None)
+    f0_time_ms_proc = float(_f0_raw_proc) if _f0_raw_proc not in (None, '') else None
     reduce_size = request.form.get('checkbox_reduce_file_size') == 'checked'
     FJ_time_ms = float(request.form.get('FJ_time', 2.0))
     FI_time_ms = float(request.form.get('FI_time', 30.0))
@@ -2204,12 +2228,17 @@ def ojip_process():
                                       background_mode, background_n, None)
 
     # ── normalize ────────────────────────────────────────────────────────────
+    # Always auto-detect F0 first.
     if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
         F0_index = Summary_file[x_col].sub(0.01).abs().idxmin()
     else:
         F0_index = Summary_file[x_col].sub(0).abs().idxmin()
-
     F0 = Summary_file[data_cols].loc[F0_index]
+
+    # F0 time override: move only the F0 data point to the user-specified time.
+    if f0_time_ms_proc is not None:
+        f0_native_target = f0_time_ms_proc / ms
+        Summary_file.loc[F0_index, x_col] = f0_native_target
     FM = Summary_file[data_cols].max()
 
     OJIP_shifted_to_zero = pd.concat([

@@ -1246,6 +1246,7 @@ const MC = (() => {
 
     // Temporarily set ojipData to this single-curve view
     ojipData = singleData;
+    ojipData._time_raw_ms_orig = singleData.time_raw_ms.slice();
     groups = {};
     recalcAllParams();
 
@@ -3199,17 +3200,15 @@ function compactLegend(position = 'right') {
 
 // Common scatter (log x-axis) options
 function logScatterOpts(xLabel, yLabel) {
+  const xCfg  = { type: 'logarithmic',
+                   title: { display: true, text: xLabel },
+                   ticks: { callback: v => v >= 1 ? v : (v >= 0.01 ? +v.toFixed(2) : +v.toExponential(1)) }};
   return {
     animation: false,
     parsing: false,          // data already in {x,y} format — skip parse step
     responsive: true,
     maintainAspectRatio: false,
-    scales: {
-      x: { type: 'logarithmic',
-           title: { display: true, text: xLabel },
-           ticks: { callback: v => v >= 1 ? v : (v >= 0.01 ? +v.toFixed(2) : +v.toExponential(1)) }},
-      y: { title: { display: true, text: yLabel } },
-    },
+    scales: { x: xCfg, y: { title: { display: true, text: yLabel } } },
     plugins: {
       legend:  compactLegend('right'),
       tooltip: { mode: 'nearest', intersect: false },
@@ -3346,6 +3345,7 @@ function _buildOjDensifyPayload() {
       if (kL > 0) modelParams.k_L = kL;
       if (!isNaN(kox) && kox >= 0) modelParams.k_ox = kox;
     }
+    // 'linear' has no user-tuneable params
   }
   return { oj_densify: enabled, oj_model: model, oj_model_params: modelParams };
 }
@@ -3362,6 +3362,9 @@ function _formatDensifyInfo(info) {
       break;
     case 'connectivity':
       txt = `p = ${info.p}, k\u2097 = ${info.k_L} ms\u207b\u00b9, k\u2092\u2093 = ${info.k_ox} ms\u207b\u00b9, A = ${info.A}`;
+      break;
+    case 'linear':
+      txt = `slope = ${info.slope}, intercept = ${info.intercept}`;
       break;
     default:
       if (info.tau_ms != null) txt = `\u03c4 = ${info.tau_ms} ms, A = ${info.A}`;
@@ -3522,6 +3525,9 @@ document.addEventListener('DOMContentLoaded', () => {
   krSlider.addEventListener('input', () => { krDisp.textContent = krSlider.value; });
   document.getElementById('refit-btn').addEventListener('click', refitSplines);
 
+  // F0 timing override — live warning/note feedback
+  document.getElementById('f0-time-input')?.addEventListener('input', updateF0InputNotes);
+
   // O-J densify checkbox + model selector → show/hide params
   const ojDensifyChk  = document.getElementById('oj-densify-chk');
   const ojModelSel    = document.getElementById('oj-densify-model');
@@ -3531,7 +3537,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ojModelSel) ojModelSel.disabled = !enabled;
     if (ojParamsWrap) ojParamsWrap.style.display = enabled ? '' : 'none';
     const model = ojModelSel ? ojModelSel.value : 'exponential';
-    ['exponential', 'biexponential', 'connectivity'].forEach(m => {
+    ['exponential', 'biexponential', 'connectivity', 'linear'].forEach(m => {
       const el = document.getElementById('oj-params-' + m);
       if (el) el.style.display = (enabled && model === m) ? '' : 'none';
     });
@@ -3774,6 +3780,8 @@ async function uploadAndAnalyze() {
   fd.append('background_n',    document.getElementById('bg-n-input')?.value || '1');
   fd.append('f0_source',       document.getElementById('f0-source-sel')?.value || 'instrument');
   fd.append('knot_placement',  document.getElementById('knot-placement-sel')?.value || 'hybrid');
+  const _f0Val = parseFloat(document.getElementById('f0-time-input')?.value);
+  if (_f0Val > 0) fd.append('f0_time_ms', _f0Val.toString());
   if (document.getElementById('reduce_size').checked) fd.append('checkbox_reduce_file_size', 'checked');
 
   // Pre-flight size check — avoid a silent connection-reset from the server
@@ -3833,6 +3841,8 @@ async function uploadAndAnalyze() {
     }
 
     ojipData = data;
+    // Preserve original (unscaled) time axis for F0 timing override
+    ojipData._time_raw_ms_orig = data.time_raw_ms.slice();
     groups   = {};
     // Sync annotation instrument select with the OJIP fluorometer selection so
     // the field is pre-filled when the user switches to the Annotation tab.
@@ -4047,15 +4057,18 @@ function renderCurvesChart(norm) {
   const t     = ojipData.time_raw_ms;
   const n     = files.length;
 
-  const datasets = files.map((fname, i) => ({
-    label: fname,
-    data:  ojipData.curves[fname][norm].map((y, j) => ({ x: t[j], y })),
-    borderColor: sampleColor(i, n),
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    pointRadius: 0,
-    showLine: true,
-  }));
+  const datasets = files.map((fname, i) => {
+    const arr = ojipData.curves[fname][norm];
+    const data = arr.map((y, j) => ({ x: t[j], y }));
+    return {
+      label: fname, data,
+      borderColor: sampleColor(i, n),
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      showLine: true,
+    };
+  });
 
   // FJ markers (▲ triangles) — one point per file, colour-matched to its curve
   // Use the user/editable timing (FJ_time_user_ms) so that manual edits and
@@ -4511,8 +4524,8 @@ function _syncBgF0Controls() {
 }
 
 function renderDiagnostics() {
-  renderDiagRecon(); renderDiagResid(); renderDiagD2(); renderDiagD3();
-  renderDiagD1(); renderMethodFit();
+  renderDiagRecon(); renderDiagD1(); renderDiagD2(); renderDiagD3();
+  renderDiagResid(); renderMethodFit();
   _updateFitQualityBadge();
   // Show/hide method-specific param-group buttons
   const fm = document.getElementById('fit-method-sel')?.value || 'logspline';
@@ -4552,12 +4565,11 @@ function renderDiagRecon() {
   files.forEach((fname, i) => {
     const c  = sampleColor(i, n);
     const kv = ojipData.key_values[fname];
-    // raw double_norm curve
-    datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
-      borderColor: c, backgroundColor: 'transparent',
-      data: ojipData.curves[fname].double_norm
+    const dnData = ojipData.curves[fname].double_norm
         .map((y, j) => ({ x: tRaw[j], y }))
-        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+        .filter(pt => pt.x >= tMin && pt.x <= tMax);
+    datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
+      borderColor: c, backgroundColor: 'transparent', data: dnData });
     // reconstructed curve (dashed)
     datasets.push({ label: '', showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, borderDash: [4, 3], backgroundColor: 'transparent',
@@ -5081,6 +5093,20 @@ async function mcRefitBatch() {
   btn.disabled = false;
 }
 
+// ── F0 override warning/note ──────────────────────────────────────────────
+function updateF0InputNotes() {
+  const val  = parseFloat(document.getElementById('f0-time-input')?.value);
+  const warn = document.getElementById('f0-time-warning');
+  const note = document.getElementById('f0-time-note');
+  if (warn) warn.style.display = (val > 0.2) ? '' : 'none';
+  // Use original (unscaled) times for the "different from instrument" note
+  const origTimes = ojipData?._time_raw_ms_orig || ojipData?.time_raw_ms;
+  if (note && origTimes?.length) {
+    const origF0 = origTimes[0];
+    note.style.display = (val > 0 && Math.abs(val - origF0) > 1e-6) ? '' : 'none';
+  } else if (note) note.style.display = 'none';
+}
+
 // ── spline refit ──────────────────────────────────────────────────────────
 async function refitSplines() {
   const kr     = parseInt(document.getElementById('kr-slider').value);
@@ -5089,40 +5115,25 @@ async function refitSplines() {
   document.getElementById('refit-btn').disabled = true;
 
   try {
-    // F0 timing override: re-normalise from raw data if the user supplied a value
+    // F0 timing override: move ONLY the first (F0) data point to the user-
+    // specified time.  All other time points stay at their original positions.
     const f0TimeMs  = parseFloat(document.getElementById('f0-time-input')?.value);
     const f0Override = (f0TimeMs > 0) ? f0TimeMs : null;
 
+    const origTimes = ojipData._time_raw_ms_orig || ojipData.time_raw_ms;
+    if (f0Override) {
+      ojipData.time_raw_ms = origTimes.slice();
+      ojipData.time_raw_ms[0] = f0Override;
+      console.log(`F0 time override: t[0] ${origTimes[0].toFixed(4)} → ${f0Override} ms`);
+    } else {
+      // Restore original times when override is cleared
+      ojipData.time_raw_ms = origTimes.slice();
+    }
+
+    // Collect current double_norm (unchanged — F0 value is not affected by time rescaling)
     const double_norm = {};
     for (const fname of ojipData.files) {
-      if (f0Override && ojipData.curves[fname].raw) {
-        const raw   = ojipData.curves[fname].raw;
-        const times = ojipData.time_raw_ms;
-        // Nearest index to requested F0 time
-        let nearIdx = 0, minD = Math.abs(times[0] - f0Override);
-        for (let i = 1; i < times.length; i++) {
-          const d = Math.abs(times[i] - f0Override);
-          if (d < minD) { minD = d; nearIdx = i; }
-        }
-        const newF0 = raw[nearIdx];
-        // Safe loop-based max (Math.max(...raw) can stack-overflow for large arrays)
-        let newFM = -Infinity;
-        for (let i = 0; i < raw.length; i++) { if (raw[i] > newFM) newFM = raw[i]; }
-        const span  = newFM - newF0;
-        if (span <= 0) {
-          console.warn('F0 override: span ≤ 0 — falling back to original', fname);
-          double_norm[fname] = ojipData.curves[fname].double_norm;
-          continue;
-        }
-        double_norm[fname] = raw.map(v => (v - newF0) / span);
-        // Store overridden F0/FM so calcJIP uses them
-        ojipData.key_values[fname].F0 = newF0;
-        ojipData.key_values[fname].FM = newFM;
-        ojipData.curves[fname].double_norm = double_norm[fname];
-        console.log(`F0 override: ${fname} → F0=${newF0.toFixed(1)} at ${times[nearIdx].toFixed(3)} ms, FM=${newFM.toFixed(1)}`);
-      } else {
-        double_norm[fname] = ojipData.curves[fname].double_norm;
-      }
+      double_norm[fname] = ojipData.curves[fname].double_norm;
     }
     const resp = await fetch('/api/ojip_refit', {
       method: 'POST',
@@ -5163,16 +5174,16 @@ async function refitSplines() {
     fjfiMode = 'auto';
     _updateFJFIBtnLabels();
 
-    // After key_timings applied: if F0 was overridden, re-read FJ/FI/FK/F50 from raw data
+    // When time axis was rescaled, re-read FJ/FI/FK/F50 values from raw data
+    // at the new time coordinates returned by the refit
     if (f0Override) {
+      const times = ojipData.time_raw_ms;
       for (const fname of ojipData.files) {
         if (!ojipData.curves[fname].raw) continue;
-        const raw  = ojipData.curves[fname].raw;
-        const times = ojipData.time_raw_ms;
-        const kv   = ojipData.key_values[fname];
+        const raw = ojipData.curves[fname].raw;
+        const kv  = ojipData.key_values[fname];
         if (kv.FJ_time_deriv_ms != null) kv.FJ = interpAt(times, raw, kv.FJ_time_deriv_ms);
         if (kv.FI_time_deriv_ms != null) kv.FI = interpAt(times, raw, kv.FI_time_deriv_ms);
-        // FK (~0.3 ms) and F50 (~0.05 ms) needed for M0 = 4*(FK-F50)/FV
         kv.FK  = interpAt(times, raw, 0.3);
         kv.F50 = interpAt(times, raw, 0.05);
       }
