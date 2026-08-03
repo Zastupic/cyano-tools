@@ -2882,6 +2882,10 @@ const PARAM_GROUPS = {
   timing: ['FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FM_time_ms'],
   slopes: ['slope_OJ', 'slope_JI', 'slope_IP'],
   dip:    ['dip_IP_amplitude', 'dip_IP_time_ms', 'dip_IP_d1_min'],
+  decomp: ['A_OJ', 'A_JI', 'A_IP', 'tau_OJ_ms', 'tau_JI_ms', 'tau_IP_ms'],
+  gauss:  ['gauss_center_1_ms', 'gauss_sigma_1', 'gauss_amp_1',
+           'gauss_center_2_ms', 'gauss_sigma_2', 'gauss_amp_2',
+           'gauss_center_3_ms', 'gauss_sigma_3', 'gauss_amp_3'],
 };
 const PARAM_LABELS = {
   FVFM:'Fv/Fm (φP₀)', VJ:'VJ', VI:'VI', M0:'M₀', PSIE0:'ψE₀', PSIR0:'ψR₀',
@@ -2893,6 +2897,11 @@ const PARAM_LABELS = {
   FJ_time_deriv_ms:'t(FJ) ms', FI_time_deriv_ms:'t(FI) ms', FP_time_deriv_ms:'t(FP) ms', FM_time_ms:'t(FM) ms',
   slope_OJ:'Slope O-J', slope_JI:'Slope J-I', slope_IP:'Slope I-P',
   dip_IP_amplitude:'Dip I-P amplitude', dip_IP_time_ms:'Dip I-P time (ms)', dip_IP_d1_min:'Dip I-P D1 min',
+  A_OJ:'A(O-J)', A_JI:'A(J-I)', A_IP:'A(I-P)',
+  tau_OJ_ms:'τ(O-J) ms', tau_JI_ms:'τ(J-I) ms', tau_IP_ms:'τ(I-P) ms',
+  gauss_center_1_ms:'G1 center ms', gauss_sigma_1:'G1 σ', gauss_amp_1:'G1 amplitude',
+  gauss_center_2_ms:'G2 center ms', gauss_sigma_2:'G2 σ', gauss_amp_2:'G2 amplitude',
+  gauss_center_3_ms:'G3 center ms', gauss_sigma_3:'G3 σ', gauss_amp_3:'G3 amplitude',
 };
 
 // ── colour palette ─────────────────────────────────────────────────────────
@@ -3248,6 +3257,14 @@ function calcJIP(kv) {
     SM, N,
     FJ_time_deriv_ms: kv.FJ_time_deriv_ms, FI_time_deriv_ms: kv.FI_time_deriv_ms,
     FP_time_deriv_ms: kv.FP_time_deriv_ms, FM_time_ms: kv.FM_time_ms,
+    // pass-through: slopes, dip, decomposition, gaussians
+    slope_OJ: kv.slope_OJ, slope_JI: kv.slope_JI, slope_IP: kv.slope_IP,
+    dip_IP_amplitude: kv.dip_IP_amplitude, dip_IP_time_ms: kv.dip_IP_time_ms, dip_IP_d1_min: kv.dip_IP_d1_min,
+    A_OJ: kv.A_OJ, A_JI: kv.A_JI, A_IP: kv.A_IP,
+    tau_OJ_ms: kv.tau_OJ_ms, tau_JI_ms: kv.tau_JI_ms, tau_IP_ms: kv.tau_IP_ms,
+    gauss_center_1_ms: kv.gauss_center_1_ms, gauss_sigma_1: kv.gauss_sigma_1, gauss_amp_1: kv.gauss_amp_1,
+    gauss_center_2_ms: kv.gauss_center_2_ms, gauss_sigma_2: kv.gauss_sigma_2, gauss_amp_2: kv.gauss_amp_2,
+    gauss_center_3_ms: kv.gauss_center_3_ms, gauss_sigma_3: kv.gauss_sigma_3, gauss_amp_3: kv.gauss_amp_3,
   };
 }
 
@@ -4495,7 +4512,14 @@ function _syncBgF0Controls() {
 
 function renderDiagnostics() {
   renderDiagRecon(); renderDiagResid(); renderDiagD2(); renderDiagD3();
+  renderDiagD1(); renderMethodFit();
   _updateFitQualityBadge();
+  // Show/hide method-specific param-group buttons
+  const fm = document.getElementById('fit-method-sel')?.value || 'logspline';
+  const decompBtn = document.getElementById('pgroup-decomp-btn');
+  const gaussBtn  = document.getElementById('pgroup-gauss-btn');
+  if (decompBtn) decompBtn.style.display = (fm === 'three_exp') ? '' : 'none';
+  if (gaussBtn)  gaussBtn.style.display  = (fm === 'gaussian_d1') ? '' : 'none';
   // Show 'Refit all curves' button only in multi-curve mode
   const refitAllWrap = document.getElementById('refit-all-wrap');
   if (refitAllWrap) refitAllWrap.style.display = (mcDataset && mcIsActive) ? '' : 'none';
@@ -4646,6 +4670,178 @@ function renderDiagD3() {
   });
   makeChart('diag-d3-chart', { type: 'scatter', data: { datasets },
     options: logScatterOpts('Time (ms)', '3rd derivative') });
+}
+
+function renderDiagD1() {
+  const { tMin, tMax } = _diagPlotTrimRange();
+  const files = ojipData.files;
+  const t     = ojipData.time_log_ms;
+  const n     = files.length;
+  const datasets = [];
+  files.forEach((fname, i) => {
+    const kv = ojipData.key_values[fname];
+    const c  = sampleColor(i, n);
+    const d1arr = ojipData.curves[fname].d1;
+    if (!d1arr) return;
+    datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
+      borderColor: c, backgroundColor: 'transparent',
+      data: d1arr.map((y, j) => ({ x: t[j], y }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    const pts = [], r = [], st = [], bg = [], bd = [];
+    const addMk = (tv, style) => {
+      if (tv == null || tv < tMin || tv > tMax) return;
+      pts.push({ x: tv, y: interpAt(t, d1arr, tv) });
+      r.push(6); st.push(style); bg.push(c); bd.push(c);
+    };
+    addMk(kv.FJ_time_deriv_ms, 'triangle');
+    addMk(kv.FI_time_deriv_ms, 'rectRot');
+    if (kv.FP_time_deriv_ms != null) addMk(kv.FP_time_deriv_ms, 'rect');
+    if (pts.length > 0) {
+      datasets.push({ label: '', showLine: false, data: pts,
+        pointRadius: r, pointStyle: st,
+        pointBackgroundColor: bg, pointBorderColor: bd,
+        borderColor: 'transparent', backgroundColor: 'transparent' });
+    }
+  });
+  makeChart('diag-d1-chart', { type: 'scatter', data: { datasets },
+    options: logScatterOpts('Time (ms)', '1st derivative') });
+}
+
+function renderMethodFit() {
+  const method = document.getElementById('fit-method-sel')?.value || 'logspline';
+  const panel  = document.getElementById('method-fit-panel');
+  const METHODS_WITH_PLOT = ['three_exp', 'piecewise', 'gaussian_d1'];
+  if (!METHODS_WITH_PLOT.includes(method)) {
+    if (panel) panel.style.display = 'none';
+    return;
+  }
+  if (panel) panel.style.display = '';
+  const title = document.getElementById('method-fit-title');
+  if (method === 'three_exp') {
+    if (title) title.textContent = '3-Exponential decomposition';
+    _renderThreeExpFit();
+  } else if (method === 'piecewise') {
+    if (title) title.textContent = 'Piecewise-linear fit';
+    _renderPiecewiseFit();
+  } else if (method === 'gaussian_d1') {
+    if (title) title.textContent = 'Gaussian D1 deconvolution';
+    _renderGaussianD1Fit();
+  }
+}
+
+function _renderThreeExpFit() {
+  const { tMin, tMax } = _diagPlotTrimRange();
+  const files = ojipData.files;
+  const n     = files.length;
+  const datasets = [];
+  files.forEach((fname, i) => {
+    const mf = ojipData.curves[fname].method_fit;
+    if (!mf || !mf.fit_t_ms) return;
+    const c = sampleColor(i, n);
+    const tArr = mf.fit_t_ms;
+    // Total fit (solid)
+    datasets.push({ label: fname + ' fit', showLine: true, pointRadius: 0, borderWidth: 1.5,
+      borderColor: c, backgroundColor: 'transparent',
+      data: tArr.map((t, j) => ({ x: t, y: mf.fit_total[j] }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    // O-J component (dashed)
+    if (mf.fit_oj) datasets.push({ label: 'O-J', showLine: true, pointRadius: 0,
+      borderWidth: 1, borderColor: c, borderDash: [4, 3], backgroundColor: 'transparent',
+      data: tArr.map((t, j) => ({ x: t, y: mf.fit_oj[j] }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    // J-I component (dashed)
+    if (mf.fit_ji) datasets.push({ label: 'J-I', showLine: true, pointRadius: 0,
+      borderWidth: 1, borderColor: c, borderDash: [8, 4], backgroundColor: 'transparent',
+      data: tArr.map((t, j) => ({ x: t, y: mf.fit_ji[j] }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    // I-P component (dashed)
+    if (mf.fit_ip) datasets.push({ label: 'I-P', showLine: true, pointRadius: 0,
+      borderWidth: 1, borderColor: c, borderDash: [2, 2], backgroundColor: 'transparent',
+      data: tArr.map((t, j) => ({ x: t, y: mf.fit_ip[j] }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+  });
+  makeChart('diag-method-fit-chart', { type: 'scatter', data: { datasets },
+    options: logScatterOpts('Time (ms)', 'V(t)') });
+}
+
+function _renderPiecewiseFit() {
+  const { tMin, tMax } = _diagPlotTrimRange();
+  const files = ojipData.files;
+  const t_raw = ojipData.time_raw_ms;
+  const n     = files.length;
+  const datasets = [];
+  files.forEach((fname, i) => {
+    const c  = sampleColor(i, n);
+    const dn = ojipData.curves[fname].double_norm;
+    // Data points
+    if (dn && t_raw) {
+      datasets.push({ label: fname + ' data', showLine: false, pointRadius: 2,
+        borderColor: c, backgroundColor: c + '60',
+        data: t_raw.map((t, j) => ({ x: t, y: dn[j] }))
+          .filter(pt => pt.x >= tMin && pt.x <= tMax && pt.y != null) });
+    }
+    const mf = ojipData.curves[fname].method_fit;
+    if (!mf || !mf.fit_t_ms) return;
+    // Piecewise fit line
+    datasets.push({ label: fname + ' fit', showLine: true, pointRadius: 0, borderWidth: 2,
+      borderColor: c, backgroundColor: 'transparent',
+      data: mf.fit_t_ms.map((t, j) => ({ x: t, y: mf.fit_y[j] }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    // Breakpoint markers
+    if (mf.breakpoints_ms) {
+      const bpPts = mf.breakpoints_ms.map(bp => {
+        const idx = mf.fit_t_ms.findIndex(t => t >= bp);
+        return idx >= 0 ? { x: bp, y: mf.fit_y[idx] } : null;
+      }).filter(Boolean);
+      if (bpPts.length > 0) {
+        datasets.push({ label: 'breakpoints', showLine: false, data: bpPts,
+          pointRadius: 7, pointStyle: 'crossRot', pointBorderWidth: 2,
+          pointBackgroundColor: c, pointBorderColor: c,
+          borderColor: 'transparent', backgroundColor: 'transparent' });
+      }
+    }
+  });
+  makeChart('diag-method-fit-chart', { type: 'scatter', data: { datasets },
+    options: logScatterOpts('Time (ms)', 'V(t)') });
+}
+
+function _renderGaussianD1Fit() {
+  const { tMin, tMax } = _diagPlotTrimRange();
+  const files = ojipData.files;
+  const t     = ojipData.time_log_ms;
+  const n     = files.length;
+  const datasets = [];
+  files.forEach((fname, i) => {
+    const c = sampleColor(i, n);
+    // D1 data
+    const d1arr = ojipData.curves[fname].d1;
+    if (d1arr) {
+      datasets.push({ label: fname + ' D1', showLine: true, pointRadius: 0, borderWidth: 1,
+        borderColor: c + '80', backgroundColor: 'transparent',
+        data: d1arr.map((y, j) => ({ x: t[j], y }))
+          .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    }
+    const mf = ojipData.curves[fname].method_fit;
+    if (!mf || !mf.fit_t_ms) return;
+    // Total Gaussian fit (solid)
+    datasets.push({ label: fname + ' fit', showLine: true, pointRadius: 0, borderWidth: 2,
+      borderColor: c, backgroundColor: 'transparent',
+      data: mf.fit_t_ms.map((t, j) => ({ x: t, y: mf.fit_total[j] }))
+        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    // Individual Gaussians (dashed)
+    const dashes = [[4,3], [8,4], [2,2]];
+    for (let g = 1; g <= 3; g++) {
+      const gk = mf['fit_g' + g];
+      if (!gk) continue;
+      datasets.push({ label: 'G' + g, showLine: true, pointRadius: 0,
+        borderWidth: 1, borderColor: c, borderDash: dashes[g-1] || [4,3],
+        backgroundColor: 'transparent',
+        data: mf.fit_t_ms.map((t, j) => ({ x: t, y: gk[j] }))
+          .filter(pt => pt.x >= tMin && pt.x <= tMax) });
+    }
+  });
+  makeChart('diag-method-fit-chart', { type: 'scatter', data: { datasets },
+    options: logScatterOpts('Time (ms)', 'D1') });
 }
 
 // ── toggle FJ / FI between default (2/30 ms) and auto-detected ───────────

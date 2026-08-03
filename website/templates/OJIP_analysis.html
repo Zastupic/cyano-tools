@@ -589,6 +589,8 @@
           <button class="btn btn-outline-primary" data-pgroup="areas">Areas &amp; indices</button>
           <button class="btn btn-outline-primary" data-pgroup="tech">Technical</button>
           <button class="btn btn-outline-primary" data-pgroup="timing">Timing</button>
+          <button class="btn btn-outline-primary" data-pgroup="decomp" id="pgroup-decomp-btn" style="display:none">Decomposition</button>
+          <button class="btn btn-outline-primary" data-pgroup="gauss"  id="pgroup-gauss-btn"  style="display:none">D1 Gaussians</button>
         </div>
         <button class="btn btn-outline-warning btn-sm ml-auto mr-1" id="reset-fj-fi-btn">
           Use auto-detected F<sub>J</sub>/F<sub>I</sub>
@@ -1223,10 +1225,18 @@
             <div class="col-auto">
               <label class="mb-0 mr-1">Method:</label>
               <select id="fit-method-sel" class="form-control form-control-sm d-inline-block" style="width:auto">
-                <option value="spline">Standard spline</option>
-                <option value="logspline" selected>Log-time spline</option>
-                <option value="pchip">PCHIP (no params)</option>
-                <option value="polynomial">Polynomial (Akinyemi)</option>
+                <optgroup label="Spline method (FJ/FI via D2 troughs)">
+                  <option value="spline">Standard spline</option>
+                  <option value="logspline" selected>Log-time spline</option>
+                  <option value="pchip">PCHIP (no params)</option>
+                </optgroup>
+                <optgroup label="Detection method (log-time spline reconstruction)">
+                  <option value="polynomial">Polynomial (Akinyemi)</option>
+                  <option value="d1_minima">D1 local minima</option>
+                  <option value="three_exp">3-Exponential decomposition</option>
+                  <option value="piecewise">Piecewise-linear breakpoints</option>
+                  <option value="gaussian_d1">Gaussian D1 deconvolution</option>
+                </optgroup>
               </select>
             </div>
             <div class="col-auto">
@@ -1270,7 +1280,7 @@
           <details class="mb-2" style="font-size:0.85em">
             <summary class="text-muted" style="cursor:pointer">About fitting methods</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
-              <p class="mb-1"><strong>All four methods</strong> reconstruct the full transient with a spline and compute D2/D3 derivatives. They differ in <em>how FJ and FI inflection points are detected:</em></p>
+              <p class="mb-1"><strong>Spline methods</strong> reconstruct the full transient with a spline and compute D2/D3 derivatives. FJ/FI are detected from D2 troughs:</p>
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
                 <dt>Standard spline</dt>
                 <dd class="mb-0">Linear LSQ spline (k<sub>r</sub>&nbsp;adjustable). FJ/FI from D2 troughs.</dd>
@@ -1278,10 +1288,21 @@
                 <dd class="mb-0">Quintic spline in log-time (smooth D2/D3). FJ/FI from D2 troughs.</dd>
                 <dt>PCHIP</dt>
                 <dd class="mb-0">Monotone piecewise cubic (no tunable params). FJ/FI from D2 troughs.</dd>
-                <dt>Polynomial (Akinyemi)</dt>
-                <dd class="mb-0">Log-time spline for reconstruction, but FJ/FI from a <strong>9th-degree polynomial</strong> fitted in narrow windows (0.5&ndash;5&nbsp;ms for J, 9&ndash;100&nbsp;ms for I). Spline-independent &rarr; more reproducible across methods. Ref:&nbsp;Akinyemi&nbsp;et&nbsp;al.&nbsp;2023, <em>Photosynth.&nbsp;Res.</em></dd>
               </dl>
-              <p class="mb-0 text-muted">FP always uses D2 trough regardless of method.</p>
+              <p class="mb-1"><strong>Detection methods</strong> use log-time spline for reconstruction (D2/D3/residuals) but detect FJ/FI with a separate algorithm:</p>
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>Polynomial (Akinyemi)</dt>
+                <dd class="mb-0">FJ/FI from a <strong>9th-degree polynomial</strong> fitted in narrow windows (0.5&ndash;5&nbsp;ms for J, 9&ndash;100&nbsp;ms for I). Spline-independent &rarr; more reproducible. Ref:&nbsp;Akinyemi&nbsp;et&nbsp;al.&nbsp;2023, <em>Photosynth.&nbsp;Res.</em></dd>
+                <dt>D1 local minima</dt>
+                <dd class="mb-0">FJ/FI from local minima of the 1st derivative D1&nbsp;=&nbsp;dV/d(log&nbsp;t), i.e. plateaus where the fluorescence rise rate is slowest. Mirrors the D2 trough approach but in D1 space. FP uses D2 trough fallback.</dd>
+                <dt>3-Exp decomposition</dt>
+                <dd class="mb-0">Fits V(t)&nbsp;=&nbsp;&Sigma;&nbsp;A<sub>i</sub>(1&minus;e<sup>&minus;t/&tau;<sub>i</sub></sup>) with 3 exponential components (O-J, J-I, I-P). FJ/FI from rate crossovers between adjacent components. Ref:&nbsp;Boisvert&nbsp;et&nbsp;al.&nbsp;2006, <em>FEBS&nbsp;J.</em></dd>
+                <dt>Piecewise-linear</dt>
+                <dd class="mb-0">Fits 4 linear segments in V&nbsp;vs&nbsp;log<sub>10</sub>(t) with 3 optimized breakpoints. FJ/FI/FP directly from breakpoint positions. Robust, no derivative noise.</dd>
+                <dt>Gaussian D1</dt>
+                <dd class="mb-0">Deconvolves D1 into 2&ndash;3 Gaussian peaks in log<sub>10</sub>(t) space. FJ/FI from valleys (local minima) between adjacent Gaussian centers. Intuitive spectral decomposition of the fluorescence rise.</dd>
+              </dl>
+              <p class="mb-0 text-muted">FP always uses D2 trough for spline and most detection methods. Piecewise-linear derives all three breakpoints directly from the fit.</p>
             </div>
           </details>
           <!-- O-J densify (Diagnostics-only, off by default) -->
@@ -1444,18 +1465,28 @@
           <div style="position:relative; height:260px;"><canvas id="diag-recon-chart"></canvas></div>
         </div>
         <div class="col-md-6 mb-3">
-          <h6>2nd derivative with identified F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub> timings</h6>
+          <h6>2nd derivative (D2) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
           <div style="position:relative; height:260px;"><canvas id="diag-d2-chart"></canvas></div>
         </div>
       </div>
       <div class="row">
         <div class="col-md-6 mb-3">
-          <h6>3rd derivative with identified F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub> timings</h6>
+          <h6>1st derivative (D1) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
+          <div style="position:relative; height:260px;"><canvas id="diag-d1-chart"></canvas></div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <h6>3rd derivative (D3) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
           <div style="position:relative; height:260px;"><canvas id="diag-d3-chart"></canvas></div>
         </div>
+      </div>
+      <div class="row">
         <div class="col-md-6 mb-3">
           <h6>Residuals</h6>
           <div style="position:relative; height:260px;"><canvas id="diag-resid-chart"></canvas></div>
+        </div>
+        <div class="col-md-6 mb-3" id="method-fit-panel" style="display:none">
+          <h6 id="method-fit-title">Method-specific fit</h6>
+          <div style="position:relative; height:260px;"><canvas id="diag-method-fit-chart"></canvas></div>
         </div>
       </div>
     </div>

@@ -275,6 +275,425 @@ def _fit_oj_polynomial(double_norm_df: pd.DataFrame, x_col: str, ms_factor: floa
     return result
 
 
+# ─── New FJ/FI detection fitting functions ──────────────────────────────────
+
+def _fit_three_exponential(double_norm_df: pd.DataFrame, x_col: str,
+                           ms_factor: float, n_dense: int = 500) -> dict:
+    """Fit V(t) = A_OJ*(1-exp(-t/τ_OJ)) + A_JI*(1-exp(-t/τ_JI)) + A_IP*(1-exp(-t/τ_IP)).
+
+    Three saturating exponentials decompose the OJIP rise into O-J, J-I, I-P
+    kinetic phases (Boisvert, Joly & Carpentier 2006, FEBS J.).  Phase
+    boundaries FJ and FI are identified at the rate-crossover points where
+    the derivative of one component falls below the next.
+
+    Returns ``{fname: {...}}`` or ``{fname: None}`` on fit failure.
+    """
+    dn   = double_norm_df
+    cols = dn.columns
+    x_all = np.asarray(dn.iloc[:, 0].values, dtype=float)
+
+    def _three_exp(t, a1, tau1, a2, tau2, a3, tau3):
+        return (a1 * (1.0 - np.exp(-t / tau1))
+                + a2 * (1.0 - np.exp(-t / tau2))
+                + a3 * (1.0 - np.exp(-t / tau3)))
+
+    result: dict = {}
+    for i in range(1, len(cols)):
+        fname = cols[i]
+        y_all = np.array(pd.to_numeric(dn.iloc[:, i], errors='coerce'), dtype=float)
+        mask  = np.isfinite(y_all) & np.isfinite(x_all) & (x_all > 0)
+        x_ms  = x_all[mask] * ms_factor
+        y     = y_all[mask]
+
+        if len(x_ms) < 8:
+            result[fname] = None
+            continue
+
+        # Initial guesses and bounds
+        p0 = [0.5, 0.5, 0.3, 5.0, 0.2, 50.0]
+        bounds = ([0, 0.01, 0, 0.01, 0, 0.01],
+                  [1.5, 500, 1.5, 500, 1.5, 500])
+        try:
+            popt, _ = curve_fit(_three_exp, x_ms, y, p0=p0, bounds=bounds,
+                                maxfev=10000)
+            a1, tau1, a2, tau2, a3, tau3 = popt
+
+            # Enforce ordering: τ1 < τ2 < τ3 (swap if needed)
+            params = sorted([(tau1, a1), (tau2, a2), (tau3, a3)])
+            tau1, a1 = params[0]
+            tau2, a2 = params[1]
+            tau3, a3 = params[2]
+
+            # Dense evaluation grid
+            t_dense = np.geomspace(max(x_ms[0], 0.01), x_ms[-1], n_dense)
+            fit_total = _three_exp(t_dense, a1, tau1, a2, tau2, a3, tau3)
+            fit_oj = a1 * (1.0 - np.exp(-t_dense / tau1))
+            fit_ji = a2 * (1.0 - np.exp(-t_dense / tau2))
+            fit_ip = a3 * (1.0 - np.exp(-t_dense / tau3))
+
+            # FJ/FI from rate crossovers: d(component)/dt
+            rate_oj = (a1 / tau1) * np.exp(-t_dense / tau1)
+            rate_ji = (a2 / tau2) * np.exp(-t_dense / tau2)
+            rate_ip = (a3 / tau3) * np.exp(-t_dense / tau3)
+
+            # FJ: where rate_oj falls below rate_ji
+            diff_oj_ji = rate_oj - rate_ji
+            zc_fj = np.where(np.diff(np.sign(diff_oj_ji)) < 0)[0]
+            fj_ms = float(np.interp(0, [diff_oj_ji[zc_fj[0]], diff_oj_ji[zc_fj[0]+1]],
+                                    [t_dense[zc_fj[0]], t_dense[zc_fj[0]+1]])) if len(zc_fj) > 0 else None
+
+            # FI: where rate_ji falls below rate_ip
+            diff_ji_ip = rate_ji - rate_ip
+            zc_fi = np.where(np.diff(np.sign(diff_ji_ip)) < 0)[0]
+            fi_ms = float(np.interp(0, [diff_ji_ip[zc_fi[0]], diff_ji_ip[zc_fi[0]+1]],
+                                    [t_dense[zc_fi[0]], t_dense[zc_fi[0]+1]])) if len(zc_fi) > 0 else None
+
+            # R² goodness of fit
+            y_pred = _three_exp(x_ms, a1, tau1, a2, tau2, a3, tau3)
+            ss_res = float(np.sum((y - y_pred)**2))
+            ss_tot = float(np.sum((y - np.mean(y))**2))
+            r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+
+            result[fname] = {
+                'A_OJ': round(float(a1), 6), 'A_JI': round(float(a2), 6),
+                'A_IP': round(float(a3), 6),
+                'tau_OJ_ms': round(float(tau1), 4), 'tau_JI_ms': round(float(tau2), 4),
+                'tau_IP_ms': round(float(tau3), 4),
+                'fj_ms': round(fj_ms, 4) if fj_ms is not None else None,
+                'fi_ms': round(fi_ms, 4) if fi_ms is not None else None,
+                'fit_t_ms':  [round(float(v), 6) for v in t_dense],
+                'fit_total': [_safe(v) for v in fit_total],
+                'fit_oj':    [_safe(v) for v in fit_oj],
+                'fit_ji':    [_safe(v) for v in fit_ji],
+                'fit_ip':    [_safe(v) for v in fit_ip],
+                'r2': round(r2, 6),
+            }
+        except Exception:
+            result[fname] = None
+    return result
+
+
+def _fit_piecewise_linear(double_norm_df: pd.DataFrame, x_col: str,
+                          ms_factor: float, n_dense: int = 500) -> dict:
+    """Fit a piecewise-linear model to V(log₁₀(t)) with 3 optimised breakpoints.
+
+    The OJIP transient in log-time is approximately piecewise-linear with
+    four segments separated at FJ, FI, FP.  Breakpoint positions are
+    optimised to minimise total squared residuals; per-segment slopes are
+    solved analytically (LSQ) for each candidate breakpoint set.
+
+    Returns ``{fname: {...}}`` or ``{fname: None}`` on failure.
+    """
+    from scipy.optimize import minimize
+
+    dn   = double_norm_df
+    cols = dn.columns
+    x_all = np.asarray(dn.iloc[:, 0].values, dtype=float)
+
+    def _pw_residual(breakpoints_log, x_log, y):
+        """Sum-of-squares for 4 linear segments defined by 3 sorted breakpoints."""
+        bp = np.sort(breakpoints_log)
+        edges = np.concatenate([[x_log[0] - 0.01], bp, [x_log[-1] + 0.01]])
+        ss = 0.0
+        for seg in range(4):
+            mask = (x_log >= edges[seg]) & (x_log < edges[seg + 1])
+            if seg == 3:  # last segment includes endpoint
+                mask = (x_log >= edges[seg]) & (x_log <= edges[seg + 1])
+            xs = x_log[mask]
+            ys = y[mask]
+            if len(xs) < 2:
+                ss += 1e6  # penalty for empty segments
+                continue
+            # Analytic LSQ line fit
+            coeffs = np.polyfit(xs, ys, 1)
+            ss += float(np.sum((ys - np.polyval(coeffs, xs))**2))
+        return ss
+
+    result: dict = {}
+    for i in range(1, len(cols)):
+        fname = cols[i]
+        y_all = np.array(pd.to_numeric(dn.iloc[:, i], errors='coerce'), dtype=float)
+        mask  = np.isfinite(y_all) & np.isfinite(x_all) & (x_all > 0)
+        x_ms  = x_all[mask] * ms_factor
+        y     = y_all[mask]
+
+        if len(x_ms) < 8:
+            result[fname] = None
+            continue
+
+        x_log = np.log10(np.clip(x_ms, 1e-6, None))
+
+        # Initial breakpoint guesses in log10(ms)
+        bp0 = np.array([np.log10(2.0), np.log10(30.0), np.log10(300.0)])
+        # Clamp to data range
+        bp0 = np.clip(bp0, x_log[1], x_log[-2])
+
+        try:
+            res = minimize(_pw_residual, bp0, args=(x_log, y),
+                           method='Nelder-Mead',
+                           options={'maxiter': 5000, 'xatol': 1e-4, 'fatol': 1e-8})
+            bp_opt = np.sort(res.x)
+            bp_ms  = 10.0 ** bp_opt  # convert back to ms
+
+            # Compute per-segment slopes on optimal breakpoints
+            edges = np.concatenate([[x_log[0] - 0.01], bp_opt, [x_log[-1] + 0.01]])
+            slopes = []
+            for seg in range(4):
+                seg_mask = (x_log >= edges[seg]) & (x_log < edges[seg + 1])
+                if seg == 3:
+                    seg_mask = (x_log >= edges[seg]) & (x_log <= edges[seg + 1])
+                xs = x_log[seg_mask]
+                ys = y[seg_mask]
+                if len(xs) >= 2:
+                    slopes.append(round(float(np.polyfit(xs, ys, 1)[0]), 6))
+                else:
+                    slopes.append(None)
+
+            # Build fitted piecewise curve on dense grid for plotting
+            x_log_dense = np.linspace(x_log[0], x_log[-1], n_dense)
+            y_dense = np.zeros(n_dense)
+            for seg in range(4):
+                seg_mask_d = (x_log_dense >= edges[seg]) & (x_log_dense < edges[seg + 1])
+                if seg == 3:
+                    seg_mask_d = (x_log_dense >= edges[seg]) & (x_log_dense <= edges[seg + 1])
+                seg_mask_data = (x_log >= edges[seg]) & (x_log < edges[seg + 1])
+                if seg == 3:
+                    seg_mask_data = (x_log >= edges[seg]) & (x_log <= edges[seg + 1])
+                xs_d = x_log[seg_mask_data]
+                ys_d = y[seg_mask_data]
+                if len(xs_d) >= 2:
+                    coeffs = np.polyfit(xs_d, ys_d, 1)
+                    y_dense[seg_mask_d] = np.polyval(coeffs, x_log_dense[seg_mask_d])
+
+            t_dense_ms = 10.0 ** x_log_dense
+
+            # R² goodness of fit
+            y_pred_all = np.zeros_like(y)
+            for seg in range(4):
+                seg_mask_a = (x_log >= edges[seg]) & (x_log < edges[seg + 1])
+                if seg == 3:
+                    seg_mask_a = (x_log >= edges[seg]) & (x_log <= edges[seg + 1])
+                xs_a = x_log[seg_mask_a]
+                ys_a = y[seg_mask_a]
+                if len(xs_a) >= 2:
+                    y_pred_all[seg_mask_a] = np.polyval(np.polyfit(xs_a, ys_a, 1), xs_a)
+            ss_res = float(np.sum((y - y_pred_all)**2))
+            ss_tot = float(np.sum((y - np.mean(y))**2))
+            r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+
+            result[fname] = {
+                'breakpoints_ms': [round(float(v), 4) for v in bp_ms],
+                'segment_slopes': slopes,
+                'fit_t_ms':  [round(float(v), 6) for v in t_dense_ms],
+                'fit_y':     [_safe(v) for v in y_dense],
+                'r2': round(r2, 6),
+            }
+        except Exception:
+            result[fname] = None
+    return result
+
+
+def _fit_d1_gaussians(D1_DF: pd.DataFrame, x_col: str, ms_factor: float,
+                      n_dense: int = 500) -> dict:
+    """Decompose D1 = dV/d(log₁₀ t) into 2–3 Gaussian peaks.
+
+    The D1 curve of a typical OJIP transient shows 2–3 peaks corresponding
+    to the O-J, J-I, and I-P rate maxima.  Fitting Gaussians in log₁₀(t_ms)
+    space produces peak centres, widths, and amplitudes for each phase.  The
+    valleys (local minima of the fitted sum) between adjacent peaks give the
+    FJ and FI timings.
+
+    Attempts 3 Gaussians first; falls back to 2 if the third is negligible
+    (amplitude < 5 % of max) or if the 3-Gaussian fit fails.
+
+    Returns ``{fname: {...}}`` or ``{fname: None}`` on failure.
+    """
+    t_all = np.asarray(D1_DF.iloc[:, 0].values, dtype=float)
+
+    def _sum_gaussians(x, *params):
+        n_g = len(params) // 3
+        y = np.zeros_like(x, dtype=float)
+        for g in range(n_g):
+            a, c, s = params[3*g], params[3*g+1], params[3*g+2]
+            y += a * np.exp(-(x - c)**2 / (2 * s**2))
+        return y
+
+    result: dict = {}
+    for i in range(1, len(D1_DF.columns)):
+        fname = D1_DF.columns[i]
+        d1 = np.asarray(D1_DF.iloc[:, i].values, dtype=float)
+        mask = np.isfinite(d1) & np.isfinite(t_all) & (t_all > 0)
+        t_ms = t_all[mask] * ms_factor
+        d1v  = d1[mask]
+
+        if len(t_ms) < 8:
+            result[fname] = None
+            continue
+
+        x_log = np.log10(np.clip(t_ms, 1e-6, None))
+        x_dense = np.linspace(x_log[0], x_log[-1], n_dense)
+
+        # Initial guesses: 3 Gaussians at ~O-J, ~J-I, ~I-P in log10(ms)
+        d1_max = float(np.nanmax(d1v)) if np.any(d1v > 0) else 1.0
+        p0_3 = [d1_max * 0.6, np.log10(0.3), 0.3,   # G1: O-J peak
+                d1_max * 0.3, np.log10(3.0), 0.3,    # G2: J-I peak
+                d1_max * 0.2, np.log10(30.0), 0.3]   # G3: I-P peak
+        lb_3 = [0, x_log[0], 0.05] * 3
+        ub_3 = [d1_max * 3, x_log[-1], 2.0] * 3
+
+        fit_ok = False
+        n_gaussians = 3
+
+        try:
+            popt, _ = curve_fit(_sum_gaussians, x_log, d1v, p0=p0_3,
+                                bounds=(lb_3, ub_3), maxfev=10000)
+            # Check if 3rd Gaussian is negligible
+            amps = [abs(popt[0]), abs(popt[3]), abs(popt[6])]
+            if amps[2] < 0.05 * max(amps):
+                raise ValueError('Third Gaussian negligible')
+            fit_ok = True
+        except Exception:
+            n_gaussians = 2
+            # Fall back to 2 Gaussians
+            p0_2 = [d1_max * 0.6, np.log10(0.3), 0.3,
+                    d1_max * 0.3, np.log10(10.0), 0.5]
+            lb_2 = [0, x_log[0], 0.05] * 2
+            ub_2 = [d1_max * 3, x_log[-1], 2.0] * 2
+            try:
+                popt, _ = curve_fit(_sum_gaussians, x_log, d1v, p0=p0_2,
+                                    bounds=(lb_2, ub_2), maxfev=10000)
+                fit_ok = True
+            except Exception:
+                pass
+
+        if not fit_ok:
+            result[fname] = None
+            continue
+
+        # Sort Gaussians by centre position
+        gauss_list = []
+        for g in range(n_gaussians):
+            gauss_list.append((popt[3*g+1], popt[3*g], popt[3*g+2]))  # (center, amp, sigma)
+        gauss_list.sort(key=lambda x: x[0])
+
+        # Dense evaluation
+        fit_total = _sum_gaussians(x_dense, *popt)
+        fit_components = []
+        centers_ms, sigmas, amplitudes = [], [], []
+        for center, amp, sigma in gauss_list:
+            g_curve = amp * np.exp(-(x_dense - center)**2 / (2 * sigma**2))
+            fit_components.append(g_curve)
+            centers_ms.append(round(float(10**center), 4))
+            sigmas.append(round(float(sigma), 4))
+            amplitudes.append(round(float(amp), 6))
+
+        # Find valleys (FJ, FI) as local minima of fitted sum between peaks
+        valleys_ms = []
+        for v in range(len(gauss_list) - 1):
+            c1, c2 = gauss_list[v][0], gauss_list[v + 1][0]
+            vmask = (x_dense >= c1) & (x_dense <= c2)
+            if vmask.any():
+                v_idx = np.argmin(fit_total[vmask])
+                valleys_ms.append(round(float(10**x_dense[vmask][v_idx]), 4))
+
+        fj_ms = valleys_ms[0] if len(valleys_ms) >= 1 else None
+        fi_ms = valleys_ms[1] if len(valleys_ms) >= 2 else None
+
+        # R²
+        y_pred = _sum_gaussians(x_log, *popt)
+        ss_res = float(np.sum((d1v - y_pred)**2))
+        ss_tot = float(np.sum((d1v - np.mean(d1v))**2))
+        r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+
+        t_dense_ms = [round(float(10**v), 6) for v in x_dense]
+        entry = {
+            'n_gaussians': n_gaussians,
+            'centers_ms': centers_ms, 'sigmas': sigmas, 'amplitudes': amplitudes,
+            'fj_ms': fj_ms, 'fi_ms': fi_ms,
+            'fit_t_ms':  t_dense_ms,
+            'fit_total': [_safe(v) for v in fit_total],
+            'r2': round(r2, 6),
+        }
+        for g_idx, g_curve in enumerate(fit_components):
+            entry[f'fit_g{g_idx+1}'] = [_safe(v) for v in g_curve]
+        result[fname] = entry
+    return result
+
+
+def _select_d1_min_pos(d1_values, t_values, expect=None, after=None,
+                       prom_frac: float = 0.15):
+    """Choose one D1 local minimum (plateau) within a search window.
+
+    D1 = dV/d(log t).  Local minima of D1 correspond to plateaus where the
+    fluorescence rise rate is slowest — i.e. the J and I steps.  This is
+    complementary to the D2 trough approach: D2 troughs mark inflection
+    points (curvature reversal), while D1 minima mark rate minima (plateaus).
+
+    Uses the same prominence + log-time proximity scoring as
+    ``_select_trough_pos()``.
+
+    Returns ``(pos, confidence)``: *pos* is the positional index into the
+    segment (−1 if unusable); *confidence* ∈ [0, 1].
+    """
+    d1 = np.asarray(d1_values, dtype=float)
+    t  = np.asarray(t_values,  dtype=float)
+    if d1.size == 0 or np.all(np.isnan(d1)):
+        return -1, 0.0
+
+    troughs, props = find_peaks(-d1, prominence=0)
+    if troughs.size == 0:
+        return int(np.nanargmin(d1)), 0.0
+
+    proms = props['prominences']
+    pmax  = float(proms.max()) or 1.0
+
+    if expect is not None:
+        _NOISE_FLOOR = 0.03
+        keep  = proms >= _NOISE_FLOOR * pmax
+        cand  = troughs[keep]
+        cprom = proms[keep]
+
+        if after is not None:
+            mask = t[cand] > after
+            if mask.any():
+                cand, cprom = cand[mask], cprom[mask]
+
+        if cand.size == 0:
+            return int(np.nanargmin(d1)), 0.0
+
+        _SIGMA = 0.5
+        _ALPHA = 0.3
+        log_t   = np.log10(np.clip(t[cand], 1e-12, None))
+        log_exp = np.log10(max(float(expect), 1e-12))
+        log_dist = np.abs(log_t - log_exp)
+        proximity = np.exp(-log_dist**2 / (2 * _SIGMA**2))
+
+        prom_norm = cprom / pmax
+        score = _ALPHA * prom_norm + (1 - _ALPHA) * proximity
+        j = int(np.argmax(score))
+
+        cand_max = float(cprom.max()) or 1.0
+        prom_conf = float(cprom[j] / cand_max)
+        confidence = prom_conf * float(proximity[j])
+        return int(cand[j]), confidence
+    else:
+        keep  = proms >= prom_frac * pmax
+        cand  = troughs[keep]
+        cprom = proms[keep]
+
+        if after is not None:
+            mask = t[cand] > after
+            if mask.any():
+                cand, cprom = cand[mask], cprom[mask]
+
+        if cand.size == 0:
+            return int(np.nanargmin(d1)), 0.0
+
+        j = int(np.argmax(cprom))
+        cand_max = float(cprom.max()) or 1.0
+        return int(cand[j]), float(cprom[j] / cand_max)
+
+
 def _select_trough_pos(d2_values, t_values, expect=None, after=None,
                        prom_frac: float = 0.15):
     """Choose one D2 local minimum (trough) within a search window, per-curve.
@@ -377,29 +796,38 @@ def _select_trough_pos(d2_values, t_values, expect=None, after=None,
         return int(cand[j]), float(cprom[j] / cand_max)
 
 
+_DETECTION_METHODS = frozenset({
+    'polynomial', 'd1_minima', 'three_exp', 'piecewise', 'gaussian_d1',
+})
+
+
 def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
                  fj_expect=None, fi_expect=None,
-                 poly_oj=None, poly_oi=None, ms_factor=1.0):
+                 poly_oj=None, poly_oi=None, ms_factor=1.0,
+                 method='d2_trough',
+                 D1_DF=None,
+                 three_exp_results=None,
+                 piecewise_results=None,
+                 gaussian_d1_results=None):
     """
-    Identify FJ/FI/FP timings using a two-tier strategy:
+    Identify FJ/FI/FP timings using one of several detection strategies.
 
-    **Primary (FJ/FI): windowed polynomial inflection points** (Akinyemi et al.
-    2023).  When ``poly_oj``/``poly_oi`` are supplied, the polynomial's D2
-    zero-crossings (with D3 > 0) provide the FJ and FI inflection times.  The
-    polynomial window (0.5–5 ms for FJ, 9–100 ms for FI) naturally excludes the
-    O-K step at ~0.3 ms, so the true J inflection is found even when the global
-    spline's D2 is dominated by the K-step trough.  The inflection nearest the
-    expected time (in log-time) is chosen.
+    ``method`` selects the detection algorithm:
 
-    **Fallback (FJ/FI) & primary (FP): D2 trough** via ``_select_trough_pos``.
-    When no polynomial inflection is available (too few data points, no
-    zero-crossing), or for FP (no polynomial window), the D2 local-minimum
-    approach with weighted prominence + proximity scoring is used.
+    - ``'d2_trough'`` — prominence-ranked D2 local minima (default; used by
+      spline/logspline/pchip).
+    - ``'polynomial'`` — polynomial inflection points (Akinyemi et al. 2023).
+    - ``'d1_minima'`` — D1 local minima (plateaus in dV/d(log t)).
+    - ``'three_exp'`` — pre-computed 3-exponential rate crossovers.
+    - ``'piecewise'`` — pre-computed piecewise-linear breakpoints.
+    - ``'gaussian_d1'`` — pre-computed Gaussian D1 deconvolution valleys.
 
-    Returns seven objects: six pd.Series (FJ_deriv, FI_deriv, FP_deriv, FJ_infl,
-    FI_infl, FP_infl) indexed by file_names, plus ``conf`` — a dict of three
-    pd.Series (FJ/FI/FP) giving each detection's confidence in [0, 1].
-    Raises ValueError on bad data.
+    All methods fall back to D2 trough for FP (and for FJ/FI when the
+    primary method fails).
+
+    Returns eight objects: six pd.Series (FJ/FI/FP_deriv and _infl),
+    ``conf`` (dict of three pd.Series), and ``method_extras`` (dict of
+    per-curve method-specific visualisation data).
     """
     t = D2_DF[x_col]
 
@@ -411,15 +839,10 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
         'FI': range_idx(*ranges['FI']),
         'FP': range_idx(*ranges['FP']),
     }
-    expect = {'FJ': fj_expect, 'FI': fi_expect, 'FP': None}
+    expect_map = {'FJ': fj_expect, 'FI': fi_expect, 'FP': None}
 
-    # Pre-compute polynomial inflection lookups per file.
-    # poly_oj / poly_oi map fname → {…, 'poly_infl_ms': [t_ms, …]}.
+    # ── Polynomial inflection helper (unchanged) ─────────────────────────
     def _pick_poly_infl(poly_dict, fname, expect_native, ms):
-        """Pick the polynomial inflection nearest to expect (in log-time).
-
-        Returns (native_time, confidence) or (None, 0.0).
-        """
         if poly_dict is None:
             return None, 0.0
         entry = poly_dict.get(fname)
@@ -434,45 +857,123 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
             log_dist = np.abs(np.log10(np.clip(infls, 1e-12, None))
                               - np.log10(max(expect_ms, 1e-12)))
             j = int(np.argmin(log_dist))
-            # Gaussian confidence (σ = 0.5 decades)
             conf = float(np.exp(-log_dist[j]**2 / (2 * 0.5**2)))
         else:
             j = 0
             conf = 0.5
-        native_t = infls[j] / ms   # ms → native units
+        native_t = infls[j] / ms
         return native_t, conf
 
+    # ── Helper: read pre-computed FJ/FI from a method results dict ───────
+    def _read_precomputed(res_dict, fname, key, ms):
+        """Read FJ or FI from a pre-computed results dict.
+
+        Returns (native_time, confidence) or (None, 0.0).
+        """
+        if res_dict is None:
+            return None, 0.0
+        entry = res_dict.get(fname)
+        if entry is None:
+            return None, 0.0
+        field = 'fj_ms' if key == 'FJ' else ('fi_ms' if key == 'FI' else None)
+        if field is None:
+            return None, 0.0
+        val_ms = entry.get(field)
+        if val_ms is None:
+            return None, 0.0
+        # Confidence from R² of the fit (rough proxy)
+        r2 = entry.get('r2', 0.5)
+        conf = max(0.0, min(1.0, float(r2)))
+        return float(val_ms) / ms, conf
+
+    def _read_piecewise(res_dict, fname, key, ms):
+        """Read FJ/FI/FP from piecewise breakpoints."""
+        if res_dict is None:
+            return None, 0.0
+        entry = res_dict.get(fname)
+        if entry is None:
+            return None, 0.0
+        bp = entry.get('breakpoints_ms', [])
+        idx = {'FJ': 0, 'FI': 1, 'FP': 2}.get(key)
+        if idx is None or idx >= len(bp):
+            return None, 0.0
+        r2 = entry.get('r2', 0.5)
+        conf = max(0.0, min(1.0, float(r2)))
+        return float(bp[idx]) / ms, conf
+
+    # ── D2 trough fallback ───────────────────────────────────────────────
+    def _d2_trough_fallback(fname, key, prev_t, d2_col):
+        lo, hi = windows[key]
+        d2_seg = d2_col.loc[lo:hi]
+        t_seg  = t.loc[lo:hi]
+        pos, cf = _select_trough_pos(d2_seg.values, t_seg.values,
+                                     expect=expect_map[key], after=prev_t)
+        if pos < 0:
+            raise ValueError(
+                'Could not identify phase timing — check data integrity.')
+        return float(t_seg.iloc[pos]), cf
+
+    # ── Main loop ────────────────────────────────────────────────────────
     results = {k: [] for k in ('FJ', 'FI', 'FP')}
     confs   = {k: [] for k in ('FJ', 'FI', 'FP')}
+    method_extras: dict = {}
+
     for i in range(1, len(D2_DF.columns)):
         fname  = D2_DF.columns[i]
         d2_col = D2_DF.iloc[:, i]
         prev_t = None
 
         for key in ('FJ', 'FI', 'FP'):
-            poly_src = poly_oj if key == 'FJ' else (poly_oi if key == 'FI' else None)
-            poly_t, poly_cf = _pick_poly_infl(
-                poly_src, fname, expect[key], ms_factor)
+            tv, cf = None, 0.0
 
-            if poly_t is not None and (prev_t is None or poly_t > prev_t):
-                # Polynomial inflection available and respects ordering.
-                tv = poly_t
-                cf = poly_cf
-            else:
-                # Fall back to D2 trough selection.
+            # ── Method-specific primary detection ────────────────────────
+            if method == 'polynomial':
+                poly_src = poly_oj if key == 'FJ' else (poly_oi if key == 'FI' else None)
+                tv, cf = _pick_poly_infl(poly_src, fname, expect_map[key], ms_factor)
+
+            elif method == 'd1_minima' and D1_DF is not None and key != 'FP':
                 lo, hi = windows[key]
-                d2_seg = d2_col.loc[lo:hi]
+                d1_col = D1_DF.iloc[:, i]
+                d1_seg = d1_col.loc[lo:hi]
                 t_seg  = t.loc[lo:hi]
-                pos, cf = _select_trough_pos(d2_seg.values, t_seg.values,
-                                             expect=expect[key], after=prev_t)
-                if pos < 0:
-                    raise ValueError(
-                        'Could not identify phase timing — check data integrity.')
-                tv = float(t_seg.iloc[pos])
+                pos, cf = _select_d1_min_pos(d1_seg.values, t_seg.values,
+                                             expect=expect_map[key], after=prev_t)
+                if pos >= 0:
+                    tv = float(t_seg.iloc[pos])
+
+            elif method == 'three_exp' and key != 'FP':
+                tv, cf = _read_precomputed(three_exp_results, fname, key, ms_factor)
+
+            elif method == 'piecewise':
+                tv, cf = _read_piecewise(piecewise_results, fname, key, ms_factor)
+
+            elif method == 'gaussian_d1' and key != 'FP':
+                tv, cf = _read_precomputed(gaussian_d1_results, fname, key, ms_factor)
+
+            # ── Ordering check + D2 trough fallback ──────────────────────
+            if tv is not None and prev_t is not None and tv <= prev_t:
+                tv = None  # ordering violated → fall back
+
+            if tv is None:
+                tv, cf = _d2_trough_fallback(fname, key, prev_t, d2_col)
 
             results[key].append(tv)
             confs[key].append(cf)
             prev_t = tv
+
+        # Store method-specific visualisation data per curve
+        if method == 'three_exp' and three_exp_results:
+            entry = three_exp_results.get(fname)
+            if entry:
+                method_extras[fname] = entry
+        elif method == 'piecewise' and piecewise_results:
+            entry = piecewise_results.get(fname)
+            if entry:
+                method_extras[fname] = entry
+        elif method == 'gaussian_d1' and gaussian_d1_results:
+            entry = gaussian_d1_results.get(fname)
+            if entry:
+                method_extras[fname] = entry
 
     FJ_deriv = pd.Series(results['FJ'], index=file_names)
     FI_deriv = pd.Series(results['FI'], index=file_names)
@@ -487,7 +988,7 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
 
     return (FJ_deriv, FI_deriv, FP_deriv,
             nearest_inflect(FJ_deriv), nearest_inflect(FI_deriv), nearest_inflect(FP_deriv),
-            conf)
+            conf, method_extras)
 
 
 def _calc_areas_fm_timing(Summary_file, data_cols, FJ_idx, FI_idx, ms_factor,
@@ -1275,7 +1776,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     ], axis=1)
 
     # ── spline fitting ────────────────────────────────────────────────────────
-    _spline_method = 'logspline' if fit_method == 'polynomial' else fit_method
+    _spline_method = 'logspline' if fit_method in _DETECTION_METHODS else fit_method
     Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, \
         D2_smooth_DF, D3_smooth_DF, densify_info = \
         _fit_curves(dn_df, x_col, kr, method=_spline_method,
@@ -1289,14 +1790,25 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     poly_oi = _fit_oj_polynomial(dn_df, x_col, ms,
                                   oj_lo_ms=9.0, oj_hi_ms=100.0)
 
+    # ── method-specific fits ─────────────────────────────────────────────────
+    three_exp_res = _fit_three_exponential(dn_df, x_col, ms) if fit_method == 'three_exp' else None
+    piecewise_res = _fit_piecewise_linear(dn_df, x_col, ms)  if fit_method == 'piecewise' else None
+    gauss_d1_res  = _fit_d1_gaussians(D1_DF, x_col, ms)      if fit_method == 'gaussian_d1' else None
+
     # ── find FJ / FI / FP ────────────────────────────────────────────────────
     _use_poly = (fit_method == 'polynomial')
-    FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf = \
+    _fjfi_method = fit_method if fit_method in _DETECTION_METHODS else 'd2_trough'
+    FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf, method_extras = \
         _find_fjfifp(D2_DF, D3_DF, x_col, ranges, data_cols, Infl_DF,
                      fj_expect=FJ_time, fi_expect=FI_time,
                      poly_oj=poly_oj if _use_poly else None,
                      poly_oi=poly_oi if _use_poly else None,
-                     ms_factor=ms)
+                     ms_factor=ms,
+                     method=_fjfi_method,
+                     D1_DF=D1_DF,
+                     three_exp_results=three_exp_res,
+                     piecewise_results=piecewise_res,
+                     gaussian_d1_results=gauss_d1_res)
 
     # ── reference time indexes ────────────────────────────────────────────────
     def tidx(t):
@@ -1500,9 +2012,22 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
             'poly_oi_time_ms': poly_oi[fname]['poly_oj_time_ms'],
             'poly_oi_d2':      poly_oi[fname]['poly_oj_d2'],
         }
+        if fname in method_extras:
+            result['curves']['method_fit'] = method_extras[fname]
 
     if densify_info:
         result['densify_info'] = densify_info
+
+    # Method-specific key_values (analyze_one_curve result is flat, not nested by fname)
+    _me = method_extras.get(fname)
+    if _me and fit_method == 'three_exp':
+        for k in ('A_OJ', 'A_JI', 'A_IP', 'tau_OJ_ms', 'tau_JI_ms', 'tau_IP_ms'):
+            result[k] = _me.get(k)
+    elif _me and fit_method == 'gaussian_d1':
+        for g in range(_me.get('n_gaussians', 0)):
+            result[f'gauss_center_{g+1}_ms'] = _me['centers_ms'][g] if g < len(_me.get('centers_ms', [])) else None
+            result[f'gauss_sigma_{g+1}']     = _me['sigmas'][g]     if g < len(_me.get('sigmas', []))     else None
+            result[f'gauss_amp_{g+1}']       = _me['amplitudes'][g] if g < len(_me.get('amplitudes', [])) else None
 
     return result
 
@@ -1702,7 +2227,7 @@ def ojip_process():
     ], axis=1)
 
     # ── spline fitting ───────────────────────────────────────────────────────
-    _spline_method_proc = 'logspline' if fit_method_proc == 'polynomial' else fit_method_proc
+    _spline_method_proc = 'logspline' if fit_method_proc in _DETECTION_METHODS else fit_method_proc
     try:
         Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, \
             D2_smooth_DF, D3_smooth_DF, _densify = _fit_curves(
@@ -1716,15 +2241,26 @@ def ojip_process():
     poly_oj = _fit_oj_polynomial(OJIP_double_normalized, x_col, ms)                          # FJ window 0.5–5 ms
     poly_oi = _fit_oj_polynomial(OJIP_double_normalized, x_col, ms, oj_lo_ms=9.0, oj_hi_ms=100.0)   # FI window 9–100 ms
 
+    # ── method-specific fits ─────────────────────────────────────────────────
+    three_exp_res_proc = _fit_three_exponential(OJIP_double_normalized, x_col, ms) if fit_method_proc == 'three_exp' else None
+    piecewise_res_proc = _fit_piecewise_linear(OJIP_double_normalized, x_col, ms)  if fit_method_proc == 'piecewise' else None
+    gauss_d1_res_proc  = _fit_d1_gaussians(D1_DF, x_col, ms)                      if fit_method_proc == 'gaussian_d1' else None
+
     # ── find FJ/FI/FP ────────────────────────────────────────────────────────
     _use_poly_proc = (fit_method_proc == 'polynomial')
+    _fjfi_method_proc = fit_method_proc if fit_method_proc in _DETECTION_METHODS else 'd2_trough'
     try:
-        FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf = _find_fjfifp(
+        FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf, method_extras_proc = _find_fjfifp(
             D2_DF, D3_DF, x_col, ranges, data_cols, Infl_DF,
             fj_expect=FJ_time, fi_expect=FI_time,
             poly_oj=poly_oj if _use_poly_proc else None,
             poly_oi=poly_oi if _use_poly_proc else None,
-            ms_factor=ms)
+            ms_factor=ms,
+            method=_fjfi_method_proc,
+            D1_DF=D1_DF,
+            three_exp_results=three_exp_res_proc,
+            piecewise_results=piecewise_res_proc,
+            gaussian_d1_results=gauss_d1_res_proc)
     except ValueError:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
@@ -1853,6 +2389,8 @@ def ojip_process():
             'poly_oi_time_ms': poly_oi[fname]['poly_oj_time_ms'],
             'poly_oi_d2':      poly_oi[fname]['poly_oj_d2'],
         }
+        if fname in method_extras_proc:
+            curves[fname]['method_fit'] = method_extras_proc[fname]
 
     # Pre-compute log-time grid in ms for slope/dip calculations
     _lt_ms_multi = log_time.values.astype(float) * ms
@@ -1936,6 +2474,16 @@ def ojip_process():
             'dip_IP_d1_min': _safe(_dip_d1) if _dip_d1 is not None else None,
             **fq_p,
         }
+        # Method-specific parameters
+        _me_proc = method_extras_proc.get(fname)
+        if _me_proc and fit_method_proc == 'three_exp':
+            for k in ('A_OJ', 'A_JI', 'A_IP', 'tau_OJ_ms', 'tau_JI_ms', 'tau_IP_ms'):
+                key_values[fname][k] = _me_proc.get(k)
+        elif _me_proc and fit_method_proc == 'gaussian_d1':
+            for g in range(_me_proc.get('n_gaussians', 0)):
+                key_values[fname][f'gauss_center_{g+1}_ms'] = _me_proc['centers_ms'][g] if g < len(_me_proc.get('centers_ms', [])) else None
+                key_values[fname][f'gauss_sigma_{g+1}']     = _me_proc['sigmas'][g]     if g < len(_me_proc.get('sigmas', []))     else None
+                key_values[fname][f'gauss_amp_{g+1}']       = _me_proc['amplitudes'][g] if g < len(_me_proc.get('amplitudes', [])) else None
 
     return jsonify({
         'status':      'success',
@@ -1994,7 +2542,7 @@ def ojip_refit():
     for fname, vals in double_norm_dict.items():
         dn_df[fname] = vals
 
-    _spline_method_refit = 'logspline' if fit_method_refit == 'polynomial' else fit_method_refit
+    _spline_method_refit = 'logspline' if fit_method_refit in _DETECTION_METHODS else fit_method_refit
     try:
         Raw_recon_DF, D1_DF, D2_DF, D3_DF, Resid_DF, Infl_DF, log_time, \
             D2_smooth_DF, D3_smooth_DF, densify_info = \
@@ -2011,14 +2559,25 @@ def ojip_refit():
     poly_oj = _fit_oj_polynomial(dn_df, x_col, ms)
     poly_oi = _fit_oj_polynomial(dn_df, x_col, ms, oj_lo_ms=9.0, oj_hi_ms=100.0)
 
+    # ── method-specific fits ─────────────────────────────────────────────────
+    three_exp_res_r = _fit_three_exponential(dn_df, x_col, ms) if fit_method_refit == 'three_exp' else None
+    piecewise_res_r = _fit_piecewise_linear(dn_df, x_col, ms)  if fit_method_refit == 'piecewise' else None
+    gauss_d1_res_r  = _fit_d1_gaussians(D1_DF, x_col, ms)      if fit_method_refit == 'gaussian_d1' else None
+
     _use_poly_refit = (fit_method_refit == 'polynomial')
+    _fjfi_method_refit = fit_method_refit if fit_method_refit in _DETECTION_METHODS else 'd2_trough'
     try:
-        FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf = _find_fjfifp(
+        FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf, method_extras_r = _find_fjfifp(
             D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
             fj_expect=FJ_time_ms / ms, fi_expect=FI_time_ms / ms,
             poly_oj=poly_oj if _use_poly_refit else None,
             poly_oi=poly_oi if _use_poly_refit else None,
-            ms_factor=ms)
+            ms_factor=ms,
+            method=_fjfi_method_refit,
+            D1_DF=D1_DF,
+            three_exp_results=three_exp_res_r,
+            piecewise_results=piecewise_res_r,
+            gaussian_d1_results=gauss_d1_res_r)
     except ValueError:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
@@ -2026,7 +2585,7 @@ def ojip_refit():
     time_log_ms = (log_time.astype(float) * ms).tolist()
     updated_curves = {}
     for i, fname in enumerate(file_names, start=1):
-        updated_curves[fname] = {
+        curve_entry = {
             'reconstructed': [_safe(v) for v in Raw_recon_DF.iloc[:, i]],
             'd1':            [_safe(v) for v in D1_DF.iloc[:, i]],
             'd2':            [_safe(v) for v in D2_DF.iloc[:, i]],
@@ -2039,6 +2598,10 @@ def ojip_refit():
             'poly_oi_time_ms': poly_oi[fname]['poly_oj_time_ms'],
             'poly_oi_d2':      poly_oi[fname]['poly_oj_d2'],
         }
+        # Method-specific visualisation data
+        if fname in method_extras_r:
+            curve_entry['method_fit'] = method_extras_r[fname]
+        updated_curves[fname] = curve_entry
 
     key_timings = {}
     for i, fname in enumerate(file_names, start=1):
@@ -2050,7 +2613,7 @@ def ojip_refit():
         fq_r = _fit_quality(_y_raw_dn_r[_qr_start:_qr_end],
                             _y_recon_at_raw_r[_qr_start:_qr_end],
                             _d2_vals_r, method=fit_method_refit)
-        key_timings[fname] = {
+        kt_entry = {
             'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
             'FI_time_deriv_ms':   _t_safe(FI_deriv.get(fname), ms),
             'FP_time_deriv_ms':   _t_safe(FP_deriv.get(fname), ms),
@@ -2064,6 +2627,17 @@ def ojip_refit():
             'poly_fi_infl_ms': poly_oi[fname]['poly_infl_ms'],
             **fq_r,
         }
+        # Method-specific parameters
+        me = method_extras_r.get(fname)
+        if me and fit_method_refit == 'three_exp':
+            for k in ('A_OJ', 'A_JI', 'A_IP', 'tau_OJ_ms', 'tau_JI_ms', 'tau_IP_ms'):
+                kt_entry[k] = me.get(k)
+        elif me and fit_method_refit == 'gaussian_d1':
+            for g in range(me.get('n_gaussians', 0)):
+                kt_entry[f'gauss_center_{g+1}_ms'] = me['centers_ms'][g] if g < len(me.get('centers_ms', [])) else None
+                kt_entry[f'gauss_sigma_{g+1}']     = me['sigmas'][g]     if g < len(me.get('sigmas', []))     else None
+                kt_entry[f'gauss_amp_{g+1}']       = me['amplitudes'][g] if g < len(me.get('amplitudes', [])) else None
+        key_timings[fname] = kt_entry
 
     resp = {
         'status':       'success',
