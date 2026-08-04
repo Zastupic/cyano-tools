@@ -83,14 +83,22 @@
             crossorigin="anonymous">
         </script>
     -->
-    <!-- Google Analytics — loaded on every page (cookie banner is informational) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S"></script>
+    <!-- Google Analytics — consent mode: cookieless pings until user opts in -->
     <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
+    gtag('consent', 'default', {
+        analytics_storage: 'denied',
+        ad_storage: 'denied',
+        wait_for_update: 500
+    });
+    if (localStorage.getItem('cyanotools_cookie_consent')) {
+        gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
     gtag('js', new Date());
     gtag('config', 'G-V1B3ZCRT9S');
     </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S"></script>
     <!-- JS-verification beacon — confirms real browser with JS execution -->
     <script>
     (function () {
@@ -315,6 +323,7 @@
     document.getElementById('cookie-got-it-btn').addEventListener('click', function () {
         localStorage.setItem(KEY, 'dismissed');
         banner.style.display = 'none';
+        gtag('consent', 'update', { analytics_storage: 'granted' });
     });
 })();
 </script>
