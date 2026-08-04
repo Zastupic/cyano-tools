@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Sigma(II) Analyzer – Functional Absorption Cross-Section of PSII | CyanoTools{% endblock %}
+{% block title %}Free Sigma(II) Analyzer – PSII Absorption Cross-Section | CyanoTools{% endblock %}
 
 {% block description %}Analyze wavelength-dependent functional absorption cross-section of photosystem II [σ(II)λ] from Multi-Color PAM fluorometer data. Upload CSV files and get σ(II) spectra, per-wavelength comparison plots and group statistics.{% endblock %}
 
@@ -16,7 +16,12 @@
   "applicationCategory": "ScientificSoftware",
   "description": "Online analysis of functional absorption cross-section of PSII from Multi-Color PAM fluorometer data.",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-  "featureList": "Sigma(II) spectrum plotting, Per-wavelength comparison, Group mean ± SD, Excel export"
+  "featureList": "Sigma(II) spectrum plotting, Per-wavelength comparison, Group mean ± SD, Excel export",
+  "citation": [
+    {"@type": "ScholarlyArticle", "name": "Metabolic cost as a determinant of light quality acclimation: a full-PAR characterization of the CA3 cyanobacterium Nostoc sp. CCAP 1453/38", "datePublished": "2026", "url": "https://doi.org/10.64898/2026.07.27.740936"},
+    {"@type": "ScholarlyArticle", "name": "Low PSI content broadens the optimal light spectrum for a phycoerythrin-dominated cyanobacterium towards near far-red", "datePublished": "2026", "url": "https://doi.org/10.1038/s41598-026-50772-z"},
+    {"@type": "ScholarlyArticle", "name": "A Comprehensive Study of Light Quality Acclimation in Synechocystis Sp. PCC 6803", "datePublished": "2024", "url": "https://doi.org/10.1093/pcp/pcae062"}
+  ]
 }
 </script>
 {% endblock %}

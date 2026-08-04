@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Online Statistical Data Analyzer | CyanoTools
+    Free Online Statistical Analyzer – ANOVA, Box Plots & PCA | CyanoTools
 {% endblock %}
 
 {% block description %}
-    Free statistical tool for biological datasets. Generate box plots with swarm overlays, run PCA, and perform normality tests and ANOVA on wet-lab data instantly.
+    Free online statistical analysis: ANOVA, Kruskal-Wallis, pairwise comparisons, box plots with swarm overlays, PCA, normality tests, and correlation analysis. Paste or upload data — no login required. Publication-ready plots.
 {% endblock %}
 
 {% block keywords %}
@@ -22,7 +22,14 @@
   "applicationCategory": "BusinessApplication",
   "description": "Statistical tool for wet-lab data: ANOVA, Kruskal-Wallis, and automated visualization of physiological assays.",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-  "featureList": "Multi-factor grouping, Significance testing, Instant boxplots and bar charts"
+  "featureList": "Multi-factor grouping, Significance testing, Instant boxplots and bar charts",
+  "citation": [
+    {"@type": "ScholarlyArticle", "name": "Metabolic cost as a determinant of light quality acclimation: a full-PAR characterization of the CA3 cyanobacterium Nostoc sp. CCAP 1453/38", "datePublished": "2026", "url": "https://doi.org/10.64898/2026.07.27.740936"},
+    {"@type": "ScholarlyArticle", "name": "Low PSI content broadens the optimal light spectrum for a phycoerythrin-dominated cyanobacterium towards near far-red", "datePublished": "2026", "url": "https://doi.org/10.1038/s41598-026-50772-z"},
+    {"@type": "ScholarlyArticle", "name": "A Comprehensive Study of Light Quality Acclimation in Synechocystis Sp. PCC 6803", "datePublished": "2024", "url": "https://doi.org/10.1093/pcp/pcae062"},
+    {"@type": "ScholarlyArticle", "name": "Characterizing isoprene production in cyanobacteria – insights into the effects of light, temperature, and isoprene on Synechocystis sp. PCC 6803", "datePublished": "2023", "url": "https://doi.org/10.1016/j.biortech.2023.129068"},
+    {"@type": "ScholarlyArticle", "name": "Monitoring fitness and productivity in cyanobacteria batch cultures", "datePublished": "2021", "url": "https://doi.org/10.1016/j.algal.2021.102328"}
+  ]
 }
 </script>
 {% endblock %}
@@ -551,13 +558,13 @@
                         <span class="badge bg-primary mr-2">1</span> Data Input
                     </h5>
                     <p class="small text-muted mb-3">
-                        Copy-paste data from an Excel file, or paste Tab-delimited data
+                        Copy-paste data from Excel, or paste tab-delimited, CSV, or semicolon-separated data (format is detected automatically)
                     </p>
                     <p class="small text-muted mb-2">
                         <i class="fa fa-info-circle"></i> Maximum: 100 rows, 100 columns
                     </p>
                     <textarea id="excelPasteBox" class="form-control mb-2" rows="6"
-                              placeholder="Paste your Excel data with headers here..."></textarea>
+                              placeholder="Paste your data with headers here (tab, CSV, or semicolon-separated)..."></textarea>
                     <div id="dataLimitError" class="alert alert-danger small py-2 mb-3" role="alert" style="display: none;"></div>
                     <button id="processDataBtn" class="btn btn-primary w-100 font-weight-bold shadow-sm">
                         <i class="fa fa-upload"></i> Load Data

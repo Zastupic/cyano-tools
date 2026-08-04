@@ -4,28 +4,29 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- SEO Meta Tags -->
-    <title>{% block title %}Home | CyanoTools{% endblock %}</title>
-    <meta name="description" content="{% block description %}CyanoTools is a browser-based platform for analyzing photosynthesis, fluorescence, microscopy, and bioreactor data from wet-lab experiments with plants, cyanobacteria, algae and other microbes.{% endblock %}">
-    <meta name="keywords" content="{% block keywords %}CyanoTools, photosynthesis analysis, chlorophyll fluorescence, wet-lab calculators, algae research, plant physiology tools, cyanobacteria, microbiology data analysis{% endblock %}">
+    <title>{% block title %}CyanoTools – Free Photosynthesis & Biological Data Analysis{% endblock %}</title>
+    <meta name="description" content="{% block description %}Free, browser-based tools for photosynthesis research: OJIP & PAM fluorescence analysis, rapid light curves, EEM spectroscopy, MIMS, microscopy image analysis, cell counting, statistical analysis, and metabolic modelling. For plants, algae, cyanobacteria, and microbes. No registration required.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}CyanoTools, photosynthesis analysis, chlorophyll fluorescence, OJIP curves, JIP-test, PAM fluorometry, rapid light curves, Kautsky kinetics, sigma PSII, absorption cross-section, EEM fluorescence, excitation emission matrix, MIMS, membrane inlet mass spectrometry, flux balance analysis, FBA, cell counting, microscopy image analysis, pigment profiles, statistical analysis, bioreactor data analysis, wet-lab calculators, algae research, plant physiology tools, cyanobacteria, microalgae, phytoplankton, microbiology data analysis, free online scientific tools{% endblock %}">
     <meta name="author" content="Department of Adaptive Biotechnologies, CzechGlobe">
     <meta name="robots" content="index, follow">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <!-- CSRF token for AJAX requests -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0a3c58">
-    <meta name="copyright" content="© 2025 CzechGlobe - Department of Adaptive Biotechnologies">
+    <meta name="copyright" content="© 2025–2026 CzechGlobe - Department of Adaptive Biotechnologies">
     <meta name="publisher" content="CzechGlobe">
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="{% block og_title %}CyanoTools - Tools for Cyanobacteria and Algal Research{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}CyanoTools is a web platform supporting advanced biological research through specialized tools for photosynthesis, microscopy, spectroscopy and mass spectrometry analysis.{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}CyanoTools – Free Tools for Photosynthesis, Fluorescence & Biological Data Analysis{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Free, no-login web tools for photosynthesis and biological lab data: OJIP curves, PAM fluorometry, light curves, EEM spectroscopy, MIMS, cell counting, statistical analysis, calculators, and metabolic modelling. Raw instrument files in – publication-ready plots and Excel out.{% endblock %}">
     <meta property="og:image" content="{{ url_for('static', filename='img/cyano_preview.png') }}">
     <meta property="og:url" content="https://www.cyano.tools{{ request.path }}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="CyanoTools">
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}CyanoTools{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}Web tools for analyzing cyanobacteria, algae, and photosynthetic systems.{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}CyanoTools – Free Photosynthesis & Bio Data Tools{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Free browser-based tools for OJIP/PAM fluorescence, EEM spectroscopy, MIMS, microscopy, statistics & metabolic modelling. No login needed. For plants, algae & microbes.{% endblock %}">
     <meta name="twitter:image" content="{{ url_for('static', filename='img/cyano_preview.png') }}">
     <!-- Favicon and Icons -->
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -113,8 +114,12 @@
       "name": {{ _schema_name|tojson }},
       "operatingSystem": "Web",
       "applicationCategory": "ScientificSoftware",
+      "applicationSubCategory": "Photosynthesis Research & Biological Data Analysis",
       "url": "https://www.cyano.tools{{ request.path }}",
       "description": {{ self.description()|tojson }},
+      "keywords": "OJIP, JIP-test, PAM fluorometry, chlorophyll fluorescence, rapid light curves, Kautsky kinetics, EEM spectroscopy, MIMS, cell counting, microscopy image analysis, statistical analysis, flux balance analysis, photosynthesis, plants, algae, cyanobacteria, microalgae, phytoplankton",
+      "featureList": "OJIP curve analysis, PAM fluorometry, Rapid light curves, Kautsky slow kinetics, Sigma(II) absorption cross-section, EEM fluorescence spectroscopy, MIMS mass spectrometry, Cell counting, Microscopy image analysis, Statistical analysis (ANOVA), Metabolic modelling (FBA), Lab calculators, Photobioreactor data analysis",
+      "isAccessibleForFree": true,
       "offers": {
         "@type": "Offer",
         "price": "0",

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}
-    MIMS Data Analyzer | Dissolved Gas & Volatiles Monitor
+    Free MIMS Data Analyzer – Dissolved Gas & Volatiles Monitor | CyanoTools
 {% endblock %}
 
 {% block description %}
-    Process Membrane Inlet Mass Spectrometry (MIMS) data online. Normalize signals, correct for drift, and calculate gas exchange rates (O2, CO2) in real-time.
+    Free online tool for Membrane Inlet Mass Spectrometry (MIMS) data. Normalize signals, correct for drift, and visualize dissolved gas dynamics (O2, CO2, H2, CH4). Supports Hiden HPR-40 and PSI MS GAS. No login required.
 {% endblock %}
 
 {% block keywords %}
@@ -22,7 +22,13 @@
     "applicationCategory": "ScientificSoftware",
     "description": "Process Membrane Inlet Mass Spectrometry data for real-time dissolved gas exchange measurements.",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-    "featureList": "Signal normalization, Drift correction, Linear regression for gas rates"
+    "featureList": "Signal normalization, Drift correction, Linear regression for gas rates",
+    "citation": [
+      {"@type": "ScholarlyArticle", "name": "Characterizing isoprene production in cyanobacteria – insights into the effects of light, temperature, and isoprene on Synechocystis sp. PCC 6803", "datePublished": "2023", "url": "https://doi.org/10.1016/j.biortech.2023.129068"},
+      {"@type": "ScholarlyArticle", "name": "Towards a quantitative assessment of inorganic carbon cycling in photosynthetic microorganisms", "datePublished": "2019", "url": "https://doi.org/10.1002/elsc.201900061"},
+      {"@type": "ScholarlyArticle", "name": "Optimizing cyanobacterial product synthesis: Meeting the challenges", "datePublished": "2016", "url": "https://doi.org/10.1080/21655979.2016.1207017"},
+      {"@type": "ScholarlyArticle", "name": "A quantitative evaluation of ethylene production in the recombinant cyanobacterium Synechocystis sp. PCC 6803 harboring the ethylene-forming enzyme by membrane inlet mass spectrometry", "datePublished": "2016", "url": "https://doi.org/10.1016/j.biortech.2015.11.062"}
+    ]
   }
   </script>
 {% endblock %}

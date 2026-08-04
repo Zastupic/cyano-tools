@@ -4,6 +4,23 @@
 {% block description %}Interactive genome-scale metabolic reconstruction (iRH783) for Synechocystis sp. PCC 6803. Browse reactions, metabolites and genes, visualise pathway networks, and run Flux Balance Analysis simulations.{% endblock %}
 {% block keywords %}metabolic model, iRH783, Synechocystis 6803, FBA, flux balance analysis, genome-scale model, COBRApy, pathway network{% endblock %}
 
+{% block extra_schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "CyanoTools Metabolic Model iRH783",
+  "operatingSystem": "Web",
+  "applicationCategory": "ScientificSoftware",
+  "description": "Interactive genome-scale metabolic reconstruction (iRH783) for Synechocystis sp. PCC 6803 with Flux Balance Analysis.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "citation": [
+    {"@type": "ScholarlyArticle", "name": "A quantitative description of light-limited cyanobacterial growth using flux balance analysis", "datePublished": "2024", "url": "https://doi.org/10.1371/journal.pcbi.1012280"}
+  ]
+}
+</script>
+{% endblock %}
+
 {% block head %}
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>

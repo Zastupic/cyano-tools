@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Fluorescence Spectra & EEM Analyzer | CyanoTools
+    Free EEM & Fluorescence Spectra Analyzer – 77K & Room Temperature | CyanoTools
 {% endblock %}
 
 
 {% block description %}
-    Analyze excitation-emission fluorescence matrices at 77K and room temperature. Visualize thylakoid pigment complexes, PSII/PSI ratios, and states of PBS excitonic coupling to PSII or PSI online.
+    Free online tool to analyze excitation-emission fluorescence matrices at 77K and room temperature. Visualize thylakoid pigment complexes, PSII/PSI ratios, and phycobilisome coupling states. Supports Jasco spectrofluorometer CSV files. No login required.
 {% endblock %}
 
 {% block keywords %}
-    77K fluorescence, excitation-emission matrix, EEM analysis, photosystem stoichiometry, phycobilisome coupling, fluorescence spectroscopy, pigment identification, chlorophyll complexes, carotenoid detection, phycobiliprotein analysis, energy transfer pathways, 2D fluorescence maps, 3D EEM visualization
+    77K fluorescence, excitation-emission matrix, EEM analysis, photosystem stoichiometry, phycobilisome coupling, fluorescence spectroscopy, pigment identification, chlorophyll complexes, carotenoid detection, phycobiliprotein analysis, energy transfer pathways, 2D fluorescence maps, 3D EEM visualization, Jasco spectrofluorometer, low temperature fluorescence, free online EEM tool, PSII PSI ratio
 {% endblock %}
 
 {% block extra_schema %}
@@ -23,7 +23,12 @@
       "applicationCategory": "ScientificSoftware",
       "description": "Analysis of 3D excitation-emission fluorescence matrices at 77K and room temperature to identify pigment-protein complexes.",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-      "featureList": "2D/3D fluorescence maps, PSII/PSI ratio estimation, Phycobilisome coupling analysis"
+      "featureList": "2D/3D fluorescence maps, PSII/PSI ratio estimation, Phycobilisome coupling analysis",
+      "citation": [
+        {"@type": "ScholarlyArticle", "name": "Metabolic cost as a determinant of light quality acclimation: a full-PAR characterization of the CA3 cyanobacterium Nostoc sp. CCAP 1453/38", "datePublished": "2026", "url": "https://doi.org/10.64898/2026.07.27.740936"},
+        {"@type": "ScholarlyArticle", "name": "Low PSI content broadens the optimal light spectrum for a phycoerythrin-dominated cyanobacterium towards near far-red", "datePublished": "2026", "url": "https://doi.org/10.1038/s41598-026-50772-z"},
+        {"@type": "ScholarlyArticle", "name": "A Comprehensive Study of Light Quality Acclimation in Synechocystis Sp. PCC 6803", "datePublished": "2024", "url": "https://doi.org/10.1093/pcp/pcae062"}
+      ]
     }
     </script>
 {% endblock %}

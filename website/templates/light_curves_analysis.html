@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Rapid Light Curve (RLC) Analyzer & ETR Calculator | CyanoTools{% endblock %}
+{% block title %}Free Rapid Light Curve (RLC) Analyzer & ETR Calculator | CyanoTools{% endblock %}
 
 {% block description %}
-  Analyze Photosynthesis-Irradiance (P-I) curves online. Fit data to the Platt model to calculate ETRmax, Alpha, and Ik. Compatible with AquaPen and FluorPen data.
+  Free online Photosynthesis-Irradiance (P-I) curve analyzer. Fit data to the Platt model to calculate ETRmax, Alpha, and Ik. Supports Walz Multi-Color/DUAL-PAM, AquaPen, FluorPen, and FL 6000. No login required.
 {% endblock %}
 
 {% block keywords %}
-  rapid light curves, RLC analysis, ETRmax calculator, photosynthetic efficiency, Platt 1980 model, rETR calculation, PAM fluorometry, photoinhibition analysis, plant stress physiology, Platt model, photosynthesis-irradiance curve, photoinhibition index, dynamic photosynthetic capacity, light saturation point
+  rapid light curves, RLC analysis, ETRmax calculator, photosynthetic efficiency, Platt 1980 model, rETR calculation, PAM fluorometry, photoinhibition analysis, plant stress physiology, Platt model, photosynthesis-irradiance curve, photoinhibition index, dynamic photosynthetic capacity, light saturation point, Walz Multi-Color PAM, DUAL-PAM, AquaPen, FluorPen, FL 6000, free online P-I curve tool
 {% endblock %}
 
 {% block extra_schema %}
@@ -20,7 +20,10 @@
   "applicationCategory": "ScientificSoftware",
   "description": "Fit Photosynthesis-Irradiance (P-I) curves using the Platt model to calculate ETRmax and Alpha.",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-  "featureList": "Non-linear regression fitting, Photoinhibition analysis, Electron transport rate calculation"
+  "featureList": "Non-linear regression fitting, Photoinhibition analysis, Electron transport rate calculation",
+  "citation": [
+    {"@type": "ScholarlyArticle", "name": "The linker protein ApcI regulates light harvesting under red light in Synechocystis sp. PCC 6803", "datePublished": "2025", "url": "https://doi.org/10.1093/plcell/koaf144"}
+  ]
 }
 </script>
 {% endblock %}

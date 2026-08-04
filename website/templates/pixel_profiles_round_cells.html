@@ -1,7 +1,7 @@
 {% extends "base.html" %} 
 
 {% block title %}
-    Cell Fluorescence Profile Analyzer | Pixel Intensity Line Profiles | CyanoTools
+    Free Cell Fluorescence Profile Analyzer – Pixel Intensity Profiles | CyanoTools
 {% endblock %}
 
 {% block description %}
@@ -23,7 +23,12 @@ Analyze cross-sectional pixel intensity profiles of round or spherical cells. Ev
       "applicationCategory": "ImageProcessingSoftware",
       "description": "Analysis of pixel intensity profiles and fluorescence distribution in individual cells",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-      "featureList": "Cross-sectional profiling, Multi-channel analysis, Intensity statistics, Distribution mapping"
+      "featureList": "Cross-sectional profiling, Multi-channel analysis, Intensity statistics, Distribution mapping",
+      "citation": [
+        {"@type": "ScholarlyArticle", "name": "Low PSI content broadens the optimal light spectrum for a phycoerythrin-dominated cyanobacterium towards near far-red", "datePublished": "2026", "url": "https://doi.org/10.1038/s41598-026-50772-z"},
+        {"@type": "ScholarlyArticle", "name": "A Comprehensive Study of Light Quality Acclimation in Synechocystis Sp. PCC 6803", "datePublished": "2024", "url": "https://doi.org/10.1093/pcp/pcae062"},
+        {"@type": "ScholarlyArticle", "name": "Photomorphogenesis in the Picocyanobacterium Cyanobium gracile Includes Increased Phycobilisome Abundance Under Blue Light", "datePublished": "2021", "url": "https://doi.org/10.3389/fpls.2021.612302"}
+      ]
     }
     </script>
 {% endblock %}

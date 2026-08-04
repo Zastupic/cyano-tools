@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}
-    PBR Data Analysis — FMT-150 &amp; MC-1000 | CyanoTools
+    Free PBR Data Analysis – FMT-150 &amp; MC-1000 Growth Curves | CyanoTools
 {% endblock %}
 
 {% block description %}
-    Free online tool for PSI photobioreactor (FMT-150) and multi-cultivator (MC-1000) data analysis. Upload .ods export files, plot OD720/OD680 and other signals, apply OD non-linearity correction, fit Logistic/Gompertz/Baranyi growth curves, and export results to XLSX or PNG.
+    Free online tool for PSI photobioreactor (FMT-150) and multi-cultivator (MC-1000) data analysis. Plot OD720/OD680 signals, apply OD non-linearity correction, fit Logistic/Gompertz/Baranyi growth curves, and export publication-ready results. No login required.
 {% endblock %}
 
 {% block keywords %}
@@ -30,7 +30,14 @@
     "Multi-channel MC-1000 support",
     "XLSX and PNG export"
   ],
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "citation": [
+    {"@type": "ScholarlyArticle", "name": "The linker protein ApcI regulates light harvesting under red light in Synechocystis sp. PCC 6803", "datePublished": "2025", "url": "https://doi.org/10.1093/plcell/koaf144"},
+    {"@type": "ScholarlyArticle", "name": "A quantitative description of light-limited cyanobacterial growth using flux balance analysis", "datePublished": "2024", "url": "https://doi.org/10.1371/journal.pcbi.1012280"},
+    {"@type": "ScholarlyArticle", "name": "Characterizing isoprene production in cyanobacteria – insights into the effects of light, temperature, and isoprene on Synechocystis sp. PCC 6803", "datePublished": "2023", "url": "https://doi.org/10.1016/j.biortech.2023.129068"},
+    {"@type": "ScholarlyArticle", "name": "Quantitative insights into the cyanobacterial cell economy", "datePublished": "2019", "url": "https://doi.org/10.7554/eLife.42508"},
+    {"@type": "ScholarlyArticle", "name": "Monitoring fitness and productivity in cyanobacteria batch cultures", "datePublished": "2021", "url": "https://doi.org/10.1016/j.algal.2021.102328"}
+  ]
 }
 </script>
 {% endblock %}
