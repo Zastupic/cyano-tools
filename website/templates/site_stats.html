@@ -84,33 +84,125 @@
         </div>
     </div>
 
-    <!-- Top pages table -->
+    <!-- Top pages + Traffic sources (side by side) -->
+    <div class="row mb-4">
+        <div class="col-md-7 mb-3">
+            <div class="card h-100">
+                <div class="card-header"><b>Top pages — last 30 days</b></div>
+                <div class="card-body p-0">
+                    {% if top_pages %}
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="thead-light">
+                            <tr><th>Page</th><th style="width:100px; text-align:right;">Views</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for page in top_pages %}
+                            <tr>
+                                <td><a href="{{ page.path }}">{{ page.name }}</a></td>
+                                <td style="text-align:right;">{{ page.count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted p-3 mb-0">No data yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 mb-3">
+            <div class="card h-100">
+                <div class="card-header"><b>Traffic sources — last 30 days</b></div>
+                <div class="card-body p-0">
+                    {% if top_sources %}
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="thead-light">
+                            <tr><th>Source</th><th style="width:80px; text-align:right;">Views</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for s in top_sources %}
+                            <tr>
+                                <td>{{ s.source }}</td>
+                                <td style="text-align:right;">{{ s.count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted p-3 mb-0">No data yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS-verified indicator -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body py-2 px-3" style="font-size:0.9rem;">
+                    <b>JS-verified views (last 30 days):</b> {{ js_verified_pct }}%
+                    <span class="text-muted ms-2" style="font-size:0.8rem;">
+                        — views confirmed by client-side JavaScript execution (bots without JS engines will not pass this check)
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot traffic section -->
+    <h5 class="mt-4 mb-3">Bot Traffic</h5>
+    <div class="row mb-4">
+        <div class="col-4 col-md-2 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-2">
+                    <div style="font-size:1.5rem; font-weight:700; color:#dc3545;">{{ bot_total }}</div>
+                    <div class="text-muted" style="font-size:0.8rem;">Total bot hits</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4 col-md-2 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-2">
+                    <div style="font-size:1.5rem; font-weight:700; color:#dc3545;">{{ bot_today }}</div>
+                    <div class="text-muted" style="font-size:0.8rem;">Bots today</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4 col-md-2 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-2">
+                    <div style="font-size:1.5rem; font-weight:700; color:#dc3545;">{{ bot_30d }}</div>
+                    <div class="text-muted" style="font-size:0.8rem;">Bots last 30 days</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if top_bots %}
     <div class="card mb-4">
-        <div class="card-header"><b>Top pages — last 30 days</b></div>
+        <div class="card-header"><b>Top bot User-Agents — last 30 days</b></div>
         <div class="card-body p-0">
-            {% if top_pages %}
             <table class="table table-sm table-striped mb-0">
                 <thead class="thead-light">
-                    <tr><th>Page</th><th style="width:100px; text-align:right;">Views</th></tr>
+                    <tr><th>User-Agent</th><th style="width:80px; text-align:right;">Hits</th></tr>
                 </thead>
                 <tbody>
-                    {% for page in top_pages %}
+                    {% for b in top_bots %}
                     <tr>
-                        <td><a href="{{ page.path }}">{{ page.name }}</a></td>
-                        <td style="text-align:right;">{{ page.count }}</td>
+                        <td style="font-size:0.8rem; word-break:break-all;">{{ b.ua }}</td>
+                        <td style="text-align:right;">{{ b.count }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-            {% else %}
-            <p class="text-muted p-3 mb-0">No data yet.</p>
-            {% endif %}
         </div>
     </div>
+    {% endif %}
 
     <p class="text-muted" style="font-size:0.8rem;">
         Unique visitors are estimated by counting distinct hashed IPs per day (SHA-256 with a daily salt — raw IPs are never stored).
-        Bot traffic (known crawlers, scrapers, and scanners) is excluded. Only GET requests are counted.
+        Bot traffic (known crawlers, scrapers, and scanners) is tracked separately. Only GET requests are counted.
+        JS-verified percentage indicates views where client-side JavaScript executed — a strong signal of a real browser.
     </p>
 </div>
 

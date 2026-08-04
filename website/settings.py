@@ -3,7 +3,7 @@ from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, limiter
 from flask_login import current_user, login_required
 from .shared import db
 from .models import PageView
-from sqlalchemy import func
+from sqlalchemy import func, and_, or_
 from datetime import datetime, timedelta
 
 settings = Blueprint('settings', __name__)
@@ -43,23 +43,33 @@ def user_section_functions():
 @limiter.limit("30 per minute")
 def site_stats():
     now = datetime.utcnow()
-    base_q = PageView.query.filter(PageView.path != '/site_stats')
+    # Base query excludes /site_stats and bots (for human stats)
+    not_stats = PageView.path != '/site_stats'
+    human_filter = and_(not_stats, or_(PageView.is_bot == False, PageView.is_bot == None))  # noqa: E711,E712
+
+    base_q = PageView.query.filter(human_filter)
 
     total = base_q.count()
 
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_count  = base_q.filter(PageView.timestamp >= today_start).count()
     unique_today = db.session.query(func.count(func.distinct(PageView.ip_hash))) \
-                             .filter(PageView.timestamp >= today_start,
-                                     PageView.path != '/site_stats').scalar() or 0
+                             .filter(human_filter,
+                                     PageView.timestamp >= today_start).scalar() or 0
 
     since_30d = now - timedelta(days=30)
     month_count = base_q.filter(PageView.timestamp >= since_30d).count()
 
+    # JS-verified percentage (last 30 days, humans only)
+    human_30d = base_q.filter(PageView.timestamp >= since_30d)
+    js_verified_count = human_30d.filter(PageView.js_verified == True).count()  # noqa: E712
+    js_verified_pct = round(100 * js_verified_count / month_count, 1) if month_count else 0
+
     top_pages_raw = db.session.query(
         PageView.path,
         func.count(PageView.id).label('count')
-    ).filter(PageView.timestamp >= since_30d,
+    ).filter(human_filter,
+             PageView.timestamp >= since_30d,
              PageView.path.in_(list(PAGE_NAMES.keys()))) \
      .group_by(PageView.path) \
      .order_by(func.count(PageView.id).desc()) \
@@ -75,7 +85,7 @@ def site_stats():
     raw = db.session.query(
         func.strftime('%Y-%m-%d %H:%M', PageView.timestamp).label('slot'),
         func.count(PageView.id).label('count')
-    ).filter(PageView.timestamp >= hour_ago, PageView.path != '/site_stats') \
+    ).filter(human_filter, PageView.timestamp >= hour_ago) \
      .group_by('slot').order_by('slot').all()
     hr_map = {r.slot: r.count for r in raw}
     hour_labels, hour_counts = [], []
@@ -89,7 +99,7 @@ def site_stats():
     raw = db.session.query(
         func.strftime('%Y-%m-%d %H', PageView.timestamp).label('slot'),
         func.count(PageView.id).label('count')
-    ).filter(PageView.timestamp >= day_ago, PageView.path != '/site_stats') \
+    ).filter(human_filter, PageView.timestamp >= day_ago) \
      .group_by('slot').order_by('slot').all()
     d24_map = {r.slot: r.count for r in raw}
     day24_labels, day24_counts = [], []
@@ -103,7 +113,7 @@ def site_stats():
     raw = db.session.query(
         func.strftime('%Y-%m-%d', PageView.timestamp).label('slot'),
         func.count(PageView.id).label('count')
-    ).filter(PageView.timestamp >= since_30d, PageView.path != '/site_stats') \
+    ).filter(human_filter, PageView.timestamp >= since_30d) \
      .group_by('slot').order_by('slot').all()
     d30_map = {r.slot: r.count for r in raw}
     d30_labels, d30_counts = [], []
@@ -118,7 +128,7 @@ def site_stats():
     raw = db.session.query(
         func.strftime('%Y-%m', PageView.timestamp).label('slot'),
         func.count(PageView.id).label('count')
-    ).filter(PageView.timestamp >= year_ago, PageView.path != '/site_stats') \
+    ).filter(human_filter, PageView.timestamp >= year_ago) \
      .group_by('slot').order_by('slot').all()
     yr_map = {r.slot: r.count for r in raw}
     yr_labels, yr_counts = [], []
@@ -131,11 +141,40 @@ def site_stats():
         yr_labels.append(datetime(y, m, 1).strftime('%b %Y'))
         yr_counts.append(yr_map.get(key, 0))
 
+    # ── Bot traffic stats ─────────────────────────────────────────────────
+    bot_filter = and_(not_stats, PageView.is_bot == True)  # noqa: E712
+    bot_total    = PageView.query.filter(bot_filter).count()
+    bot_today    = PageView.query.filter(bot_filter, PageView.timestamp >= today_start).count()
+    bot_30d      = PageView.query.filter(bot_filter, PageView.timestamp >= since_30d).count()
+
+    # Top bot User-Agents (last 30 days)
+    top_bots_raw = db.session.query(
+        PageView.user_agent,
+        func.count(PageView.id).label('count')
+    ).filter(bot_filter, PageView.timestamp >= since_30d,
+             PageView.user_agent != None) \
+     .group_by(PageView.user_agent) \
+     .order_by(func.count(PageView.id).desc()) \
+     .limit(15).all()
+    top_bots = [{'ua': r.user_agent[:120], 'count': r.count} for r in top_bots_raw]
+
+    # ── Traffic sources (last 30 days, humans only) ───────────────────────
+    sources_raw = db.session.query(
+        PageView.source,
+        func.count(PageView.id).label('count')
+    ).filter(human_filter, PageView.timestamp >= since_30d,
+             PageView.source != None) \
+     .group_by(PageView.source) \
+     .order_by(func.count(PageView.id).desc()) \
+     .limit(10).all()
+    top_sources = [{'source': r.source, 'count': r.count} for r in sources_raw]
+
     return render_template('site_stats.html',
         total        = total,
         today_count  = today_count,
         unique_today = unique_today,
         month_count  = month_count,
+        js_verified_pct = js_verified_pct,
         top_pages    = top_pages,
         hour_labels  = hour_labels,
         hour_counts  = hour_counts,
@@ -145,4 +184,9 @@ def site_stats():
         d30_counts   = d30_counts,
         yr_labels    = yr_labels,
         yr_counts    = yr_counts,
+        bot_total    = bot_total,
+        bot_today    = bot_today,
+        bot_30d      = bot_30d,
+        top_bots     = top_bots,
+        top_sources  = top_sources,
     )

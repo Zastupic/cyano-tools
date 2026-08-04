@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, g, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_uploads import IMAGES, UploadSet, configure_uploads
@@ -11,7 +11,9 @@ from .shared import db
 from os import path
 import hashlib
 from datetime import datetime
+from urllib.parse import urlparse
 import os, glob, time, threading, re
+import sqlalchemy
 # Flask-Limiter: install with  pip install Flask-Limiter
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -188,41 +190,128 @@ def create_app():
         '/PBR', '/FBA',
     ])
 
+    # ── Bot detection patterns ────────────────────────────────────────────
+    BOT_PATTERNS = (
+        # Generic crawler tokens
+        'bot', 'crawler', 'spider', 'slurp', 'headless',
+        # HTTP client libraries
+        'python-requests', 'python-urllib', 'python-httpx',
+        'curl/', 'wget/', 'scrapy', 'httpie', 'insomnia', 'postmanruntime',
+        'go-http-client', 'java/', 'libwww-perl',
+        'okhttp', 'node-fetch', 'axios/',
+        # Social / messaging preview fetchers
+        'facebookexternalhit', 'facebookcatalog',
+        'whatsapp', 'telegrambot', 'twitterbot', 'linkedinbot', 'discordbot',
+        'slack', 'pinterestbot',
+        # Search engine crawlers
+        'ahrefsbot', 'semrushbot', 'mj12bot', 'dotbot',
+        'bingpreview', 'yandexbot', 'baiduspider', 'duckduckbot',
+        'petalbot', 'applebot', 'seznambot',
+        # AI / LLM crawlers
+        'gptbot', 'chatgpt-user', 'claude-web', 'anthropic-ai',
+        'cohere-ai', 'bytespider', 'ccbot', 'perplexitybot',
+        # SEO & analytics tools
+        'dataforseo', 'screaming frog', 'seokicks',
+        # Archive / research
+        'ia_archiver', 'archive.org',
+        # Security scanners
+        'zgrab', 'masscan', 'censys', 'shodan', 'nmap', 'nikto',
+        # Performance / uptime monitors
+        'lighthouse', 'pagespeed', 'gtmetrix',
+        'uptimerobot', 'pingdom', 'site24x7', 'statuscake',
+    )
+
+    # ── Referrer → source normalisation ───────────────────────────────────
+    def _parse_source(referrer, current_host):
+        """Return a short traffic-source label from a referrer URL."""
+        if not referrer:
+            return 'direct'
+        try:
+            domain = urlparse(referrer).netloc.lower()
+        except Exception:
+            return 'other'
+        if not domain or domain == current_host:
+            return 'direct'
+        if 'scholar.google' in domain:
+            return 'google_scholar'
+        if 'google' in domain:
+            return 'google'
+        if domain in ('t.co', 'twitter.com', 'x.com'):
+            return 'twitter'
+        if 'bing.com' in domain:
+            return 'bing'
+        if 'facebook.com' in domain or 'fb.com' in domain:
+            return 'facebook'
+        if 'linkedin.com' in domain:
+            return 'linkedin'
+        if 'github.com' in domain:
+            return 'github'
+        if 'reddit.com' in domain:
+            return 'reddit'
+        if 'researchgate.net' in domain:
+            return 'researchgate'
+        if 'duckduckgo.com' in domain:
+            return 'duckduckgo'
+        if 'yahoo' in domain:
+            return 'yahoo'
+        if 'baidu.com' in domain:
+            return 'baidu'
+        return domain[:50]
+
     @app.before_request
     def log_page_view():
         if request.path not in TRACKED_PATHS:
             return
         if request.method != 'GET':
             return
-        ua = (request.headers.get('User-Agent') or '').lower()
+        ua_raw = request.headers.get('User-Agent') or ''
+        ua = ua_raw.lower()
         if not ua:
             return
-        if any(b in ua for b in (
-            'bot', 'crawler', 'spider', 'slurp', 'headless',
-            'python-requests', 'python-urllib', 'python-httpx',
-            'curl/', 'wget/', 'scrapy', 'httpie', 'insomnia', 'postmanruntime',
-            'go-http-client', 'java/', 'libwww-perl',
-            'okhttp', 'node-fetch',
-            'facebookexternalhit', 'facebookcatalog',
-            'ia_archiver', 'archive.org',
-            'dataforseo', 'zgrab', 'masscan', 'censys', 'shodan',
-            'nmap', 'nikto',
-        )):
-            return
+        is_bot = any(b in ua for b in BOT_PATTERNS)
         try:
             ip   = request.remote_addr or ''
             salt = datetime.utcnow().strftime('%Y-%m-%d')
             ip_hash = hashlib.sha256((ip + salt).encode()).hexdigest()[:16]
             ref = (request.referrer or '')[:500]
-            db.session.add(PageView(
-                timestamp = datetime.utcnow(), # type: ignore
-                path      = request.path[:200], # type: ignore
-                ip_hash   = ip_hash, # type: ignore
-                referrer  = ref or None, # type: ignore
-            ))
+            host = request.host.split(':')[0]
+            pv = PageView(
+                timestamp  = datetime.utcnow(),  # type: ignore
+                path       = request.path[:200],  # type: ignore
+                ip_hash    = ip_hash,             # type: ignore
+                referrer   = ref or None,         # type: ignore
+                user_agent = ua_raw[:300],         # type: ignore
+                is_bot     = is_bot,              # type: ignore
+                source     = _parse_source(ref, host),  # type: ignore
+            )
+            db.session.add(pv)
             db.session.commit()
+            # Store ID so the client-side beacon can mark this view as JS-verified
+            g.page_view_id = pv.id
         except Exception:
             db.session.rollback()
+
+    # ── JS-verification beacon ────────────────────────────────────────────
+    @app.route('/beacon', methods=['POST'])
+    @csrf.exempt
+    @limiter.limit("60 per minute")
+    def js_beacon():
+        """Called by client-side JS after page load to confirm real browser."""
+        pv_id = request.form.get('pv')
+        if not pv_id:
+            body = request.get_json(silent=True) or {}
+            pv_id = body.get('pv')
+        if not pv_id:
+            return '', 204
+        try:
+            pv_id = int(pv_id)
+            pv = db.session.get(PageView, pv_id)
+            if pv and not pv.js_verified:
+                pv.js_verified = True
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return '', 204
 
     @app.after_request
     def set_security_headers(response):
@@ -318,8 +407,23 @@ def create_app():
         pass  # stocks package not installed — skip silently
 
     #### DATABASE ####
-    with app.app_context(): # creating the database
+    with app.app_context():
         db.create_all()
+        # Migrate: add new PageView columns to an existing table (no-op if fresh DB)
+        insp = sqlalchemy.inspect(db.engine)
+        existing = {c['name'] for c in insp.get_columns('page_view')}
+        migrations = {
+            'user_agent':  'VARCHAR(300)',
+            'is_bot':      'BOOLEAN DEFAULT 0',
+            'js_verified': 'BOOLEAN DEFAULT 0',
+            'source':      'VARCHAR(50)',
+        }
+        for col, typedef in migrations.items():
+            if col not in existing:
+                db.session.execute(db.text(
+                    f'ALTER TABLE page_view ADD COLUMN {col} {typedef}'
+                ))
+        db.session.commit()
 
     #### LOGIN MANAGAER ####
     login_manager = LoginManager()

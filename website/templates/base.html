@@ -83,23 +83,22 @@
             crossorigin="anonymous">
         </script>
     -->
-    <!-- Google Analytics — loaded only after cookie consent -->
+    <!-- Google Analytics — loaded on every page (cookie banner is informational) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-V1B3ZCRT9S');
+    </script>
+    <!-- JS-verification beacon — confirms real browser with JS execution -->
     <script>
     (function () {
-        function _loadGA() {
-            window.dataLayer = window.dataLayer || [];
-            function gtag() { dataLayer.push(arguments); }
-            gtag('js', new Date());
-            gtag('config', 'G-V1B3ZCRT9S');
-            var _gas = document.createElement('script');
-            _gas.async = true;
-            _gas.src = 'https://www.googletagmanager.com/gtag/js?id=G-V1B3ZCRT9S';
-            document.head.appendChild(_gas);
-        }
-        if (localStorage.getItem('cyanotools_cookie_consent')) {
-            _loadGA();
-        } else {
-            document.addEventListener('cookieConsentGiven', _loadGA);
+        var pvId = '{{ g.get("page_view_id", "") }}';
+        if (pvId) {
+            var fd = new FormData();
+            fd.append('pv', pvId);
+            navigator.sendBeacon('/beacon', fd);
         }
     })();
     </script>
@@ -316,7 +315,6 @@
     document.getElementById('cookie-got-it-btn').addEventListener('click', function () {
         localStorage.setItem(KEY, 'dismissed');
         banner.style.display = 'none';
-        document.dispatchEvent(new Event('cookieConsentGiven'));
     });
 })();
 </script>

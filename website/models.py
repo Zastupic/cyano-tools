@@ -22,3 +22,7 @@ class PageView(db.Model):
     path      = db.Column(db.String(200), nullable=False, index=True)
     ip_hash   = db.Column(db.String(16))   # first 16 hex chars of SHA-256(ip+date)
     referrer  = db.Column(db.String(500))
+    user_agent  = db.Column(db.String(300))  # raw UA for retroactive analysis
+    is_bot      = db.Column(db.Boolean, default=False, index=True)
+    js_verified = db.Column(db.Boolean, default=False)  # True when client-side beacon fires
+    source      = db.Column(db.String(50))   # normalised traffic source (google, direct, …)
