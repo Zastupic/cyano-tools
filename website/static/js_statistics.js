@@ -2661,16 +2661,44 @@ _bulkTransformSelect.addEventListener('change', function() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ════════════════════════════════════════════════════════════════════════════
+// Auto-detect column separator from pasted/loaded tabular text.
+// Priority: tab > semicolon > comma > 2+ spaces.
+// Picks the first candidate that yields a consistent column count (≥ 2 cols)
+// across the header row and up to 5 data rows.
+function detectColumnSeparator(rows) {
+    const candidates = [
+        { sep: /\t/,    test: '\t' },   // Excel paste, TSV
+        { sep: /;/,     test: ';'  },   // European-locale CSV
+        { sep: /,/,     test: ','  },   // Standard CSV
+        { sep: / {2,}/, test: null },   // Space-aligned tables (regex-only)
+    ];
+    const sampleRows = rows.slice(0, Math.min(rows.length, 6));
+    for (const c of candidates) {
+        // Quick presence check (skip regex-only fallback)
+        if (c.test && !sampleRows[0].includes(c.test)) continue;
+        const counts = sampleRows
+            .filter(r => r.trim() !== '')
+            .map(r => r.split(c.sep).length);
+        if (counts.length >= 1 && counts[0] >= 2 && counts.every(n => n === counts[0])) {
+            return c.sep;
+        }
+    }
+    // Ultimate fallback — treat each line as a single column
+    return / {2,}/;
+}
 
 document.getElementById('processDataBtn').addEventListener('click', function() {
     hideDataLimitError();
-    const rawData = document.getElementById('excelPasteBox').value.trim();
-    if (!rawData) return alert("Please paste data from Excel.");
+    // Normalize all line-ending styles: \r\n (Windows), \r (old Mac), \n (Unix/modern Mac)
+    const rawData = document.getElementById('excelPasteBox').value.trim()
+        .replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    if (!rawData) return alert("Please paste your data.");
 
     const rows = rawData.split('\n');
-    // Use tab as separator if present (Excel paste), otherwise fall back to 2+ spaces.
-    // This prevents column names containing double spaces from being incorrectly split.
-    const sep = rows[0].includes('\t') ? /\t/ : / {2,}/;
+    // Auto-detect column separator from a priority list.
+    // Pick the first candidate that produces a consistent column count (≥ 2)
+    // across the header and first few data rows.
+    const sep = detectColumnSeparator(rows);
     const headers = rows[0].split(sep).map(h => h.trim()).filter(h => h !== "");
 
     if (headers.length === 0) return alert("Could not detect columns. Check your data format.");
