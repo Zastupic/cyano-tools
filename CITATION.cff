@@ -22,6 +22,14 @@ authors:
 version: 1.0.0
 date-released: 2026-08-13
 license: MIT
+doi: 10.5281/zenodo.21916564
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21916564
+    description: Concept DOI — always resolves to the latest version of CyanoTools
+  - type: doi
+    value: 10.5281/zenodo.21916565
+    description: DOI of this specific archived release
 url: "https://www.cyano.tools"
 repository-code: "https://github.com/Zastupic/cyano-tools"
 keywords:
