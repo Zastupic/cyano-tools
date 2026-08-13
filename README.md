@@ -3,6 +3,7 @@
 [![Website](https://img.shields.io/badge/Website-cyano.tools-blue)](https://www.cyano.tools/)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen)](#)
 [![Stack](https://img.shields.io/badge/Stack-Python%20|%20Flask-lightgrey)](https://www.pythonanywhere.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 **CyanoTools** is a free, browser-based platform we built for researchers working with cyanobacteria, microalgae, and plants. It grew out of our everyday lab needs at the **Department of Adaptive Biotechnologies (DoAB)**, Global Change Research Institute, Czech Academy of Sciences — we kept writing the same analysis scripts over and over, so we turned them into proper tools anyone can use without installing anything.
 
@@ -118,7 +119,15 @@ A set of quick calculators for common lab conversions and corrections:
 
 ## How to cite
 
-> CyanoTools – a web-based toolkit for cyanobacteria, algae, and plant research. Available at: https://www.cyano.tools/
+> Zavřel, T. (2026). CyanoTools – a web-based toolkit for cyanobacteria, algae, and plants research [Software]. Department of Adaptive Biotechnologies, Global Change Research Institute CAS (CzechGlobe), Brno, Czech Republic. Available at: https://www.cyano.tools
+
+Machine-readable metadata lives in [`CITATION.cff`](CITATION.cff) — GitHub's **"Cite this repository"** button and reference managers (Zotero, Mendeley) read it directly.
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE) — free to use, modify and redistribute, including commercially, as long as the copyright notice is kept.
 
 ---
 

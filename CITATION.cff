@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use CyanoTools in your research, please cite it as below."
+title: "CyanoTools – a web-based toolkit for cyanobacteria, algae, and plants research"
+abstract: >-
+  CyanoTools is a free, open-access, browser-based platform for processing and
+  analysing data from cyanobacteria, microalgae and higher plants. It covers PAM
+  fluorometry (rapid light curves, OJIP transients, Kautsky kinetics, sigma(II)),
+  fluorescence spectroscopy and excitation-emission matrices, membrane inlet mass
+  spectrometry, microscopy image analysis (cell counting, cell size, morphology,
+  pigment profiles), photobioreactor growth analysis, genome-scale metabolic
+  modelling, statistics and wet-lab calculators. Raw instrument files go in,
+  publication-ready spreadsheets and plots come out. No installation, no account,
+  and no server-side retention of user data.
+type: software
+authors:
+  - family-names: "Zavřel"
+    given-names: "Tomáš"
+    affiliation: >-
+      Department of Adaptive Biotechnologies, Global Change Research Institute of
+      the Czech Academy of Sciences (CzechGlobe), Brno, Czech Republic
+    # orcid: "https://orcid.org/0000-0000-0000-0000"  # <-- fill in your ORCID and uncomment
+version: 1.0.0
+date-released: 2026-08-13
+license: MIT
+url: "https://www.cyano.tools"
+repository-code: "https://github.com/Zastupic/cyano-tools"
+keywords:
+  - cyanobacteria
+  - microalgae
+  - photosynthesis
+  - chlorophyll fluorescence
+  - PAM fluorometry
+  - OJIP
+  - JIP-test
+  - mass spectrometry
+  - microscopy image analysis
+  - metabolic modelling
+  - open access software

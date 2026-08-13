@@ -391,12 +391,15 @@
     <div class="container">
         <h2 id="cite" class="section-title" style="font-size: 1.5em; margin-bottom: 0.6rem;">How to Cite <a style="color: #00b894"><b>Cyano</b><b style="color: #525151">Tools</b></h2>
         <div class="citation-box" style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
-            <p id="citation-text" class="citation-text">CyanoTools – a web-based toolkit for cyanobacteria, algae, and plants research. Available at: https://www.cyano.tools</p>
+            <p id="citation-text" class="citation-text">Zavřel, T. (2026). CyanoTools – a web-based toolkit for cyanobacteria, algae, and plants research [Software]. Department of Adaptive Biotechnologies, Global Change Research Institute CAS (CzechGlobe), Brno, Czech Republic. Available at: https://www.cyano.tools [accessed <span id="citation-accessed">DD/MM/YYYY</span>]</p>
             <div style="flex-shrink:0;">
                 <button class="btn btn-sm citation-copy-btn" onclick="copyCitation()" title="Copy citation"><i class="fa fa-copy"></i></button>
                 <span id="citation-copied" style="display:none; margin-left:0.3rem; font-size:0.85rem;">Copied!</span>
             </div>
         </div>
+        <p style="font-size:0.78em; color:#888; margin:0.45rem 0 0;">
+            The access date is filled in automatically — adjust the citation to your journal's reference style if needed.
+        </p>
     </div>
 </section>
 <br>
@@ -693,6 +696,14 @@ function showCopied() {
     el.style.display = 'inline';
     setTimeout(function() { el.style.display = 'none'; }, 2500);
 }
+// Fill in today's date as the "accessed" date of the citation
+(function() {
+    var el = document.getElementById('citation-accessed');
+    if (!el) return;
+    var d = new Date();
+    var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+    el.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
+})();
 $(function() { $('[data-toggle="tooltip"]').tooltip(); });
 </script>
 {% endblock %}
