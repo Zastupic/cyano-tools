@@ -5960,21 +5960,14 @@ function populateAnnotationFromOJIP() {
 
 // ── Batch export as ZIP ───────────────────────────────────────────────────
 
-const _BE_INDIV_LIMIT = 100; // disable individual curve/diag export above this count
+const _BE_INDIV_LIMIT = 100; // warning threshold for large-batch export
+const _BE_CURVE_IDS = ['be-raw', 'be-shifted-f0', 'be-shifted-fm', 'be-double-norm'];
+const _BE_DIAG_IDS  = ['be-reconstructed', 'be-d2', 'be-d3', 'be-residuals'];
+const _BE_ALL_IDS   = [..._BE_CURVE_IDS, ..._BE_DIAG_IDS];
 
 function showBatchExportModal() {
-  // Disable individual curve/diag checkboxes for large batches
-  const validCount = paramMatrix ? paramMatrix.filter(r => r && !r.error).length : 0;
-  const tooMany = validCount > _BE_INDIV_LIMIT;
-  for (const id of ['be-indiv-curves', 'be-indiv-diag']) {
-    const el = document.getElementById(id);
-    if (!el) continue;
-    el.disabled = tooMany;
-    if (tooMany) el.checked = false;
-  }
   _updateBatchExportEstimate();
-  // Attach onchange listeners for estimate updates
-  ['be-indiv-curves', 'be-indiv-diag'].forEach(id => {
+  _BE_ALL_IDS.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.onchange = _updateBatchExportEstimate;
   });
@@ -5986,30 +5979,453 @@ function _updateBatchExportEstimate() {
   if (!el || !paramMatrix) return;
   const valid = paramMatrix.filter(r => r && !r.error);
   const nCurves = valid.length;
-  // Count always-included charts: params xlsx + all param scatter plots + compare + aggregate + panels
   const nParamOpts = document.getElementById('mc-param-picker')?.options.length || 0;
   let nPanels = 0;
   document.querySelectorAll('canvas[id^="mc-panel-"]').forEach(() => nPanels++);
   const nCompare = document.getElementById('mc-compare-chart') ? 1 : 0;
   const nAggregate = document.getElementById('mc-aggregate-chart') ? 1 : 0;
-  let count = 1 + nParamOpts + nPanels + nCompare + nAggregate; // xlsx + charts
-  if (nCurves > _BE_INDIV_LIMIT) {
-    el.textContent = `Estimated: ~${count} files for ${nCurves} curves ` +
-      `(${nParamOpts} parameter plots, ${nPanels} group panels, compare, aggregate). ` +
-      `Individual curve/diagnostic plots disabled for batches over ${_BE_INDIV_LIMIT} curves.`;
-    return;
-  }
-  const nCached = valid.filter(r => mcDetailCache[r.slot]?.curves).length;
-  const wantIndiv = document.getElementById('be-indiv-curves')?.checked ||
-                    document.getElementById('be-indiv-diag')?.checked;
-  if (document.getElementById('be-indiv-curves')?.checked) count += nCached * 4;
-  if (document.getElementById('be-indiv-diag')?.checked) count += nCached * 4;
+  let count = 1 + nParamOpts + nPanels + nCompare + nAggregate;
+  const nChecked = _BE_ALL_IDS.filter(id => document.getElementById(id)?.checked).length;
+  count += nCurves * nChecked;
   let txt = `Estimated: ~${count} files for ${nCurves} curves.`;
-  if (wantIndiv && nCached < nCurves) {
-    txt += ` (${nCached}/${nCurves} curves inspected — click curves in the Time Series plot to cache them before export)`;
+  if (nChecked > 0) {
+    const nCached = valid.filter(r => mcDetailCache[r.slot]?.curves).length;
+    const nUncached = nCurves - nCached;
+    if (nUncached > 0) {
+      txt += ` ${nUncached} curve(s) will be computed during export.`;
+    }
+    if (nCurves > _BE_INDIV_LIMIT) {
+      txt += ' \u26A0 Large dataset \u2014 export may take a while.';
+    }
   }
   el.textContent = txt;
 }
+
+// ── Client-side Canvas 2D rendering for batch export ──────────────────
+const _PLOT_W = 480, _PLOT_H = 288;
+const _MARGIN = { top: 30, right: 12, bottom: 40, left: 55 };
+const _DRAW_W = _PLOT_W - _MARGIN.left - _MARGIN.right;   // 413
+const _DRAW_H = _PLOT_H - _MARGIN.top  - _MARGIN.bottom;  // 218
+
+function _safeZipName(name) {
+  let s = String(name).replace(/[<>:"/\\|?*]/g, '_').trim();
+  while (s.startsWith('.')) s = s.slice(1);
+  while (s.endsWith('.'))   s = s.slice(0, -1);
+  return s || 'unnamed';
+}
+
+function _linearInterp(xArr, yArr, xTarget) {
+  if (!xArr.length || !yArr.length) return NaN;
+  if (xTarget <= xArr[0]) return yArr[0];
+  if (xTarget >= xArr[xArr.length - 1]) return yArr[yArr.length - 1];
+  let lo = 0, hi = xArr.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (xArr[mid] <= xTarget) lo = mid; else hi = mid;
+  }
+  const frac = (xTarget - xArr[lo]) / (xArr[hi] - xArr[lo]);
+  return yArr[lo] + frac * (yArr[hi] - yArr[lo]);
+}
+
+function _niceLinearTicks(min, max, targetCount) {
+  const range = max - min;
+  if (range <= 0) return [min];
+  const rawStep = range / targetCount;
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const norm = rawStep / mag;
+  let step;
+  if (norm <= 1.5)      step = 1 * mag;
+  else if (norm <= 3.5) step = 2 * mag;
+  else if (norm <= 7.5) step = 5 * mag;
+  else                  step = 10 * mag;
+  const start = Math.ceil(min / step) * step;
+  const ticks = [];
+  for (let v = start; v <= max + step * 0.01; v += step) ticks.push(v);
+  return ticks;
+}
+
+function _fmtTick(val) {
+  if (val === 0) return '0';
+  const abs = Math.abs(val);
+  if (abs >= 1000)  return val.toPrecision(3);
+  if (abs >= 1)     return val.toPrecision(3);
+  if (abs >= 0.01)  return val.toFixed(3);
+  return val.toExponential(1);
+}
+
+function _drawLogXAxis(ctx, logMin, logMax, toX) {
+  ctx.fillStyle = '#333'; ctx.strokeStyle = '#333';
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 0.5;
+  const bottom = _MARGIN.top + _DRAW_H;
+  const pMin = Math.floor(logMin), pMax = Math.ceil(logMax);
+  for (let p = pMin; p <= pMax; p++) {
+    const px = toX(Math.pow(10, p));
+    if (px < _MARGIN.left - 1 || px > _MARGIN.left + _DRAW_W + 1) continue;
+    ctx.beginPath(); ctx.moveTo(px, bottom); ctx.lineTo(px, bottom + 5); ctx.stroke();
+    let label;
+    if (p >= 0 && p <= 4) label = String(Math.pow(10, p));
+    else if (p < 0 && p >= -3) label = Math.pow(10, p).toFixed(-p);
+    else label = '1e' + p;
+    ctx.fillText(label, px, bottom + 15);
+  }
+  for (let p = pMin; p < pMax; p++) {
+    for (const sub of [2, 3, 5]) {
+      const tVal = sub * Math.pow(10, p);
+      const lg = Math.log10(tVal);
+      if (lg < logMin || lg > logMax) continue;
+      const px = toX(tVal);
+      ctx.beginPath(); ctx.moveTo(px, bottom); ctx.lineTo(px, bottom + 3); ctx.stroke();
+    }
+  }
+}
+
+function _drawLinearYAxis(ctx, yMin, yMax, toY) {
+  ctx.fillStyle = '#333'; ctx.strokeStyle = '#333';
+  ctx.font = '9px sans-serif'; ctx.textAlign = 'right'; ctx.lineWidth = 0.5;
+  const ticks = _niceLinearTicks(yMin, yMax, 5);
+  for (const val of ticks) {
+    const py = toY(val);
+    if (py < _MARGIN.top - 1 || py > _MARGIN.top + _DRAW_H + 1) continue;
+    ctx.beginPath(); ctx.moveTo(_MARGIN.left, py); ctx.lineTo(_MARGIN.left - 5, py); ctx.stroke();
+    ctx.save(); ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 0.3;
+    ctx.beginPath(); ctx.moveTo(_MARGIN.left, py); ctx.lineTo(_MARGIN.left + _DRAW_W, py); ctx.stroke();
+    ctx.restore();
+    ctx.fillText(_fmtTick(val), _MARGIN.left - 7, py + 3);
+  }
+}
+
+function _drawMarker(ctx, px, py, shape, color, size) {
+  const h = size / 2;
+  ctx.fillStyle = color; ctx.beginPath();
+  if (shape === 'triangle')    { ctx.moveTo(px, py - h); ctx.lineTo(px - h, py + h); ctx.lineTo(px + h, py + h); ctx.closePath(); }
+  else if (shape === 'diamond') { ctx.moveTo(px, py - h); ctx.lineTo(px + h, py); ctx.lineTo(px, py + h); ctx.lineTo(px - h, py); ctx.closePath(); }
+  else { ctx.rect(px - h, py - h, size, size); }
+  ctx.fill();
+}
+
+function _drawLegend(ctx, markerEntries, overlayLabel, mainLabel) {
+  const entries = [];
+  if (mainLabel)    entries.push({ type: 'dot', color: '#0000ff', label: mainLabel });
+  if (overlayLabel) entries.push({ type: 'line', color: '#ff0000', label: overlayLabel });
+  for (const m of markerEntries) entries.push({ type: 'marker', ...m });
+  if (!entries.length) return;
+  const lineH = 14, padX = 6, padY = 4;
+  ctx.font = '9px sans-serif';
+  const maxW = Math.max(...entries.map(e => ctx.measureText(e.label).width)) + 24;
+  const boxW = maxW + 2 * padX, boxH = entries.length * lineH + 2 * padY;
+  const bx = _MARGIN.left + _DRAW_W - boxW - 6, by = _MARGIN.top + 6;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(bx, by, boxW, boxH);
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5; ctx.strokeRect(bx, by, boxW, boxH);
+  ctx.textAlign = 'left';
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i], ey = by + padY + i * lineH + lineH / 2, ex = bx + padX;
+    if (e.type === 'line') {
+      ctx.strokeStyle = e.color; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex + 14, ey); ctx.stroke();
+    } else if (e.type === 'dot') {
+      ctx.fillStyle = e.color; ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.arc(ex + 7, ey, 2, 0, 2 * Math.PI); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (e.type === 'marker') {
+      _drawMarker(ctx, ex + 7, ey, e.shape, e.color, 7);
+    }
+    ctx.fillStyle = '#333'; ctx.fillText(e.label, ex + 18, ey + 3);
+  }
+}
+
+/**
+ * Render one OJIP plot onto an offscreen canvas. Returns base64 PNG (no prefix).
+ * cfg: { timeMs, yData, title, lineColor, lineWidth,
+ *        lineStyle?, dotSize?, dotAlpha?, yLabel?, hlineZero?,
+ *        overlay?: {timeMs, yData, color, lineWidth, label},
+ *        kv?, interpolateMarkers? }
+ */
+function _renderOjipPlot(ctx, cfg) {
+  const canvas = ctx.canvas;
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, _PLOT_W, _PLOT_H);
+
+  // Filter positive times
+  const tArr = [], yArr = [];
+  for (let i = 0; i < cfg.timeMs.length; i++) {
+    if (cfg.timeMs[i] > 0 && isFinite(cfg.yData[i])) { tArr.push(cfg.timeMs[i]); yArr.push(cfg.yData[i]); }
+  }
+  if (!tArr.length) {
+    ctx.fillStyle = '#666'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(cfg.title || 'No data', _PLOT_W / 2, _PLOT_H / 2);
+    return canvas.toDataURL('image/png').split(',')[1];
+  }
+
+  // Ranges
+  let logMin = Infinity, logMax = -Infinity;
+  for (const t of tArr) { const lg = Math.log10(t); if (lg < logMin) logMin = lg; if (lg > logMax) logMax = lg; }
+  const logRange = logMax > logMin ? logMax - logMin : 1;
+
+  let yMin = Infinity, yMax = -Infinity;
+  for (const y of yArr) { if (y < yMin) yMin = y; if (y > yMax) yMax = y; }
+  if (cfg.overlay) {
+    for (const y of cfg.overlay.yData) { if (isFinite(y)) { if (y < yMin) yMin = y; if (y > yMax) yMax = y; } }
+  }
+  const yPad = (yMax - yMin) * 0.05 || 0.1;
+  yMin -= yPad; yMax += yPad;
+  const yRange = yMax - yMin;
+
+  const toX = (tMs) => _MARGIN.left + ((Math.log10(tMs) - logMin) / logRange) * _DRAW_W;
+  const toY = (yVal) => _MARGIN.top + (1 - (yVal - yMin) / yRange) * _DRAW_H;
+
+  // Axes border
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+  ctx.strokeRect(_MARGIN.left, _MARGIN.top, _DRAW_W, _DRAW_H);
+  _drawLogXAxis(ctx, logMin, logMax, toX);
+  _drawLinearYAxis(ctx, yMin, yMax, toY);
+
+  // Zero line
+  if (cfg.hlineZero && yMin < 0 && yMax > 0) {
+    ctx.save(); ctx.setLineDash([4, 3]); ctx.strokeStyle = 'grey'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); const y0 = toY(0); ctx.moveTo(_MARGIN.left, y0); ctx.lineTo(_MARGIN.left + _DRAW_W, y0); ctx.stroke();
+    ctx.restore();
+  }
+
+  // Clip to plot area
+  ctx.save(); ctx.beginPath(); ctx.rect(_MARGIN.left, _MARGIN.top, _DRAW_W, _DRAW_H); ctx.clip();
+
+  // Main data
+  if (cfg.lineStyle === 'dot') {
+    ctx.fillStyle = cfg.lineColor; ctx.globalAlpha = cfg.dotAlpha || 0.5;
+    for (let i = 0; i < tArr.length; i++) { ctx.beginPath(); ctx.arc(toX(tArr[i]), toY(yArr[i]), cfg.dotSize || 2, 0, 2 * Math.PI); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  } else if (cfg.lineWidth > 0) {
+    ctx.strokeStyle = cfg.lineColor; ctx.lineWidth = cfg.lineWidth;
+    ctx.beginPath(); ctx.moveTo(toX(tArr[0]), toY(yArr[0]));
+    for (let i = 1; i < tArr.length; i++) ctx.lineTo(toX(tArr[i]), toY(yArr[i]));
+    ctx.stroke();
+  }
+
+  // Overlay (fitted line on diagnostic plot)
+  if (cfg.overlay) {
+    const ot = cfg.overlay.timeMs, oy = cfg.overlay.yData;
+    ctx.strokeStyle = cfg.overlay.color; ctx.lineWidth = cfg.overlay.lineWidth;
+    ctx.beginPath(); let started = false;
+    for (let i = 0; i < ot.length; i++) {
+      if (ot[i] > 0 && isFinite(oy[i])) {
+        if (!started) { ctx.moveTo(toX(ot[i]), toY(oy[i])); started = true; }
+        else ctx.lineTo(toX(ot[i]), toY(oy[i]));
+      }
+    }
+    ctx.stroke();
+  }
+
+  // FJ/FI/FP markers
+  const legendMarkers = [];
+  if (cfg.kv) {
+    const markers = [
+      { phase: 'FJ', shape: 'triangle', color: '#e6550d', label: 'J' },
+      { phase: 'FI', shape: 'diamond',  color: '#31a354', label: 'I' },
+      { phase: 'FP', shape: 'square',   color: '#756bb1', label: 'P' },
+    ];
+    // For interpolation, pick the right curve: overlay curve (fitted) or main curve
+    const interpT = cfg.interpolateMarkers && cfg.overlay ? cfg.overlay.timeMs.filter(t => t > 0) : tArr;
+    const interpY = cfg.interpolateMarkers && cfg.overlay
+      ? cfg.overlay.yData.filter((_, i) => cfg.overlay.timeMs[i] > 0) : yArr;
+    for (const m of markers) {
+      const tv = cfg.kv[m.phase + '_time_deriv_ms'];
+      if (tv == null || tv <= 0) continue;
+      let fv;
+      if (cfg.interpolateMarkers) {
+        fv = _linearInterp(interpT, interpY, tv);
+      } else {
+        fv = m.phase === 'FP' ? cfg.kv.FM : cfg.kv[m.phase];
+      }
+      if (fv == null || !isFinite(fv)) continue;
+      _drawMarker(ctx, toX(tv), toY(fv), m.shape, m.color, 8);
+      legendMarkers.push({ shape: m.shape, color: m.color, label: m.label });
+    }
+  }
+  ctx.restore(); // unclip
+
+  // Title
+  ctx.fillStyle = '#333'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(cfg.title || '', _PLOT_W / 2, 16);
+  // Axis labels
+  ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Time (ms)', _MARGIN.left + _DRAW_W / 2, _PLOT_H - 4);
+  ctx.save(); ctx.translate(12, _MARGIN.top + _DRAW_H / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText(cfg.yLabel || 'Fluorescence', 0, 0); ctx.restore();
+
+  // Legend
+  if (legendMarkers.length > 0 || cfg.overlay?.label) {
+    _drawLegend(ctx, legendMarkers, cfg.overlay?.label,
+                cfg.lineStyle === 'dot' ? 'Measured' : null);
+  }
+
+  return canvas.toDataURL('image/png').split(',')[1];
+}
+
+/**
+ * Render all selected plot types for one curve. Returns [{path, b64}].
+ */
+function _renderCurvePngs(ctx, name, detail, inclPlots) {
+  const safe = _safeZipName(name);
+  const results = [];
+  const timeRaw = detail.time_raw_ms || [];
+  const timeLog = detail.time_log_ms || [];
+  const curves = detail.curves || {};
+  const kv = detail.key_values || null;
+
+  const curveTypes = [
+    ['raw', 'Raw'], ['shifted_F0', 'Shifted F\u2080'],
+    ['shifted_FM', 'Shifted F\u2098'], ['double_norm', 'Double normalised'],
+  ];
+  for (const [normKey, label] of curveTypes) {
+    if (!inclPlots[normKey] || !curves[normKey] || !timeRaw.length) continue;
+    const b64 = _renderOjipPlot(ctx, {
+      timeMs: timeRaw, yData: curves[normKey],
+      title: name + ' \u2014 ' + label, lineColor: '#0000ff', lineWidth: 1,
+      yLabel: 'Fluorescence', kv, interpolateMarkers: false,
+    });
+    results.push({ path: normKey + '/' + safe + '.png', b64 });
+  }
+
+  if (inclPlots.reconstructed) {
+    const recon = curves.reconstructed, dnorm = curves.double_norm;
+    if (recon && timeLog.length) {
+      const b64 = _renderOjipPlot(ctx, {
+        timeMs: timeRaw.length ? timeRaw : timeLog,
+        yData: dnorm || [], title: name,
+        lineColor: '#0000ff', lineWidth: 0, lineStyle: 'dot', dotSize: 2, dotAlpha: 0.5,
+        yLabel: 'Fluorescence (double norm.)', kv, interpolateMarkers: true,
+        overlay: { timeMs: timeLog, yData: recon, color: '#ff0000', lineWidth: 1.2, label: 'Fitted' },
+      });
+      results.push({ path: 'reconstructed/' + safe + '.png', b64 });
+    }
+  }
+
+  if (inclPlots.d2) {
+    const d2 = curves.d2_smooth || curves.d2;
+    if (d2 && timeLog.length) {
+      const b64 = _renderOjipPlot(ctx, {
+        timeMs: timeLog, yData: d2, title: name,
+        lineColor: '#008000', lineWidth: 1, yLabel: 'D2 (2nd derivative)',
+        hlineZero: true, kv, interpolateMarkers: true,
+      });
+      results.push({ path: 'd2/' + safe + '.png', b64 });
+    }
+  }
+
+  if (inclPlots.d3) {
+    const d3 = curves.d3_smooth || curves.d3;
+    if (d3 && timeLog.length) {
+      const b64 = _renderOjipPlot(ctx, {
+        timeMs: timeLog, yData: d3, title: name,
+        lineColor: '#008000', lineWidth: 1, yLabel: 'D3 (3rd derivative)',
+        hlineZero: true, kv, interpolateMarkers: true,
+      });
+      results.push({ path: 'd3/' + safe + '.png', b64 });
+    }
+  }
+
+  if (inclPlots.residuals) {
+    const resid = curves.residuals;
+    if (resid && timeRaw.length) {
+      const b64 = _renderOjipPlot(ctx, {
+        timeMs: timeRaw, yData: resid, title: name,
+        lineColor: '#008000', lineWidth: 1, yLabel: 'Residuals',
+        hlineZero: true, kv, interpolateMarkers: true,
+      });
+      results.push({ path: 'residuals/' + safe + '.png', b64 });
+    }
+  }
+
+  return results;
+}
+
+function _collectMethodInfo() {
+  const fitMethod  = document.getElementById('fit-method-sel')?.value || 'logspline';
+  const kr         = parseInt(document.getElementById('kr_input').value) || 10;
+  const knotPlace  = document.getElementById('knot-placement-sel')?.value || 'hybrid';
+  const fjTime     = parseFloat(document.getElementById('FJ_time').value) || 2.0;
+  const fiTime     = parseFloat(document.getElementById('FI_time').value) || 30.0;
+  const trimFirst  = parseInt(document.getElementById('trim-first-input')?.value) || 0;
+  const trimLast   = parseInt(document.getElementById('trim-last-input')?.value) || 0;
+  const bgMode     = document.getElementById('bg-mode-sel')?.value || 'auto';
+  const bgN        = parseInt(document.getElementById('bg-n-input')?.value) || 1;
+  const f0Source   = document.getElementById('f0-source-sel')?.value || 'instrument';
+  const f0TimeRaw  = parseFloat(document.getElementById('f0-time-input')?.value);
+  const f0Time     = (f0TimeRaw > 0) ? f0TimeRaw : null;
+  const densify    = _buildOjDensifyPayload();
+  return {
+    fluorometer:      mcDataset?.fluorometer || '',
+    fit_method:       fitMethod,
+    knots_reduction:  kr,
+    knot_placement:   knotPlace,
+    FJ_time_ms:       fjTime,
+    FI_time_ms:       fiTime,
+    trim_first:       trimFirst,
+    trim_last:        trimLast,
+    background_mode:  bgMode,
+    background_n:     bgN,
+    f0_source:        f0Source,
+    f0_time_ms:       f0Time,
+    oj_densify:       densify.oj_densify,
+    oj_model:         densify.oj_model,
+    oj_model_params:  densify.oj_model_params,
+    total_curves:     paramMatrix ? paramMatrix.filter(r => r && !r.error).length : 0,
+  };
+}
+
+function _formatMethodInfoText(mi) {
+  const METHOD_NAMES = {
+    logspline: 'Log-time spline (quintic, analytic D2/D3)',
+    spline: 'Standard LSQ spline (linear, numeric D2)',
+    pchip: 'PCHIP (monotone piecewise cubic)',
+    polynomial: 'Polynomial inflection (Akinyemi et al. 2023)',
+    d1_minima: 'D1 local minima',
+    three_exp: '3-Exponential decomposition (Boisvert et al. 2006)',
+    piecewise: 'Piecewise-linear breakpoints',
+    gaussian_d1: 'Gaussian D1 deconvolution',
+  };
+  const SPLINE_METHODS = new Set(['logspline', 'spline', 'pchip']);
+  const fm = mi.fit_method || 'logspline';
+  const lines = [
+    'OJIP Batch Export \u2014 Analysis Method Summary',
+    '='.repeat(46), '',
+    'Instrument:             ' + (mi.fluorometer || '\u2014'),
+    'Total curves:           ' + (mi.total_curves || '\u2014'), '',
+    '\u2014 Curve fitting \u2014',
+    'Fitting method:         ' + (METHOD_NAMES[fm] || fm),
+  ];
+  lines.push(SPLINE_METHODS.has(fm)
+    ? 'FJ / FI detection:      D2 troughs (2nd derivative minima)'
+    : 'FJ / FI detection:      Method-specific (reconstruction via log-time spline)');
+  lines.push(
+    'Knot reduction (kr):    ' + (mi.knots_reduction || '\u2014'),
+    'Knot placement:         ' + (mi.knot_placement || '\u2014'),
+    'FJ search window:       ' + (mi.FJ_time_ms || '\u2014') + ' ms',
+    'FI search window:       ' + (mi.FI_time_ms || '\u2014') + ' ms',
+  );
+  if (mi.trim_first || mi.trim_last)
+    lines.push('Trim:                   first ' + (mi.trim_first||0) + ', last ' + (mi.trim_last||0) + ' points');
+  if (mi.f0_time_ms && mi.f0_time_ms > 0)
+    lines.push('F0 timing override:     ' + mi.f0_time_ms + ' ms');
+  lines.push('', '\u2014 Background / F0 \u2014',
+    'Background mode:        ' + (mi.background_mode || '\u2014'),
+    'Background points (n):  ' + (mi.background_n || '\u2014'),
+    'F0 source:              ' + (mi.f0_source || '\u2014'));
+  lines.push('', '\u2014 O-J densification \u2014');
+  if (mi.oj_densify) {
+    const model = mi.oj_model || 'exponential', mp = mi.oj_model_params || {};
+    lines.push('Enabled:                yes', 'Model:                  ' + model);
+    if (model === 'exponential') lines.push('  tau:                  ' + (mp.tau_ms || 'auto') + ' ms');
+    else if (model === 'biexponential') { lines.push('  tau1:                 ' + (mp.tau1_ms||'auto') + ' ms'); lines.push('  tau2:                 ' + (mp.tau2_ms||'auto') + ' ms'); }
+    else if (model === 'connectivity') { lines.push('  p (connectivity):     ' + (mp.p != null ? mp.p : 'auto')); lines.push('  k_L:                  ' + (mp.k_L||'auto') + ' ms\u207B\u00B9'); lines.push('  k_ox:                 ' + (mp.k_ox||0) + ' ms\u207B\u00B9'); }
+    else if (model === 'linear') lines.push('  (no tuneable params)');
+  } else {
+    lines.push('Enabled:                no');
+  }
+  lines.push('', '\u2014 Generated by cyano.tools OJIP analysis \u2014', 'https://www.cyano.tools', '');
+  return lines.join('\n');
+}
+
+// ── Batch export — client-side rendering + JSZip ──────────────────────
 
 async function startBatchExport() {
   const btn = document.getElementById('be-start-btn');
@@ -6021,84 +6437,188 @@ async function startBatchExport() {
   btn.disabled = true;
   progress.style.display = '';
 
-  const inclCurves  = document.getElementById('be-indiv-curves')?.checked;
-  const inclDiag    = document.getElementById('be-indiv-diag')?.checked;
-
+  const inclPlots = {
+    raw:           !!document.getElementById('be-raw')?.checked,
+    shifted_F0:    !!document.getElementById('be-shifted-f0')?.checked,
+    shifted_FM:    !!document.getElementById('be-shifted-fm')?.checked,
+    double_norm:   !!document.getElementById('be-double-norm')?.checked,
+    reconstructed: !!document.getElementById('be-reconstructed')?.checked,
+    d2:            !!document.getElementById('be-d2')?.checked,
+    d3:            !!document.getElementById('be-d3')?.checked,
+    residuals:     !!document.getElementById('be-residuals')?.checked,
+  };
+  const anyIndiv = Object.values(inclPlots).some(v => v);
   const validRows = paramMatrix.filter(r => r && !r.error);
+  const stem = mcDataset?.filename || 'ojip_batch';
 
-  // Step 1: Build params table data
-  const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
-  const header = ['#', 'Name', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
-  const rows = validRows.map(r => [
-    r.slot + 1, r.name || `#${r.slot + 1}`,
-    ...paramKeys.map(k => r[k] != null ? r[k] : '')
-  ]);
-
-  // Step 2: Capture all summary charts (always included)
   const _setProgress = (pct, msg) => {
     bar.style.width = pct + '%';
     bar.textContent = pct + '%';
     if (text) text.textContent = msg;
   };
-  _setProgress(5, 'Preparing parameter table...');
-  _setProgress(10, 'Capturing all parameter & summary plots...');
-  const charts = MC.captureAllSummaryCharts();
-
-  _setProgress(20, 'Sending data to server...');
 
   try {
-    const payload = {
-      params_header: header,
-      params_rows: rows,
-      charts: charts,
-      stem: mcDataset?.filename || 'ojip_batch',
-      include_curves: inclCurves,
-      include_diag: inclDiag,
-    };
+    const zip = new JSZip();
 
-    // If individual curves/diag are requested, include the curve data
-    // so the server can generate matplotlib plots
-    if (inclCurves || inclDiag) {
-      const curveData = {};
+    // ── Phase 1: Client-side params + summaries + method_info (0–10%) ──
+    _setProgress(2, 'Generating parameter table...');
+    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const header = ['#', 'Name', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+    const rows = validRows.map(r => [
+      r.slot + 1, r.name || `#${r.slot + 1}`,
+      ...paramKeys.map(k => r[k] != null ? r[k] : '')
+    ]);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+    XLSX.utils.book_append_sheet(wb, ws, 'Parameters');
+    zip.file('params_summary.xlsx', XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+
+    _setProgress(4, 'Capturing summary plots...');
+    const charts = MC.captureAllSummaryCharts();
+    for (const [cid, dataUrl] of Object.entries(charts)) {
+      if (!dataUrl || !dataUrl.includes(',')) continue;
+      const b64 = dataUrl.split(',')[1];
+      let fname;
+      if (cid.startsWith('param-'))        fname = 'parameters/' + cid.slice(6) + '.png';
+      else if (cid.startsWith('mc-panel-')) fname = 'panels/' + cid.slice(9) + '.png';
+      else if (cid === 'mc-compare-chart') fname = 'compare.png';
+      else if (cid === 'mc-aggregate-chart') fname = 'aggregate_curves.png';
+      else fname = cid + '.png';
+      zip.file('summary_plots/' + fname, b64, { base64: true });
+    }
+
+    _setProgress(6, 'Writing method info...');
+    const mi = _collectMethodInfo();
+    if (mi && Object.keys(mi).length > 0) {
+      zip.file('method_info.txt', _formatMethodInfoText(mi));
+    }
+
+    // ── Phase 2+3: Fetch curve details + render client-side (10–95%) ──
+    if (anyIndiv) {
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = _PLOT_W; offCanvas.height = _PLOT_H;
+      const offCtx = offCanvas.getContext('2d');
+
+      const cachedSlots = [], uncachedSlots = [];
       for (const r of validRows) {
-        // Fetch detail for each curve if not cached
-        const slot = r.slot;
+        if (mcDetailCache[r.slot]?.curves) cachedSlots.push(r.slot);
+        else uncachedSlots.push(r.slot);
+      }
+
+      let rendered = 0;
+      const totalValid = validRows.length;
+
+      // Render already-cached curves
+      for (const slot of cachedSlots) {
+        const r = paramMatrix[slot];
         const detail = mcDetailCache[slot];
-        if (detail && detail.curves) {
-          curveData[r.name || `#${slot + 1}`] = {
-            time_raw_ms: detail.time_raw_ms,
-            time_log_ms: detail.time_log_ms,
-            curves: detail.curves,
-            key_values: detail,
-          };
+        const pngs = _renderCurvePngs(offCtx, r.name || '#' + (slot + 1), {
+          time_raw_ms: detail.time_raw_ms, time_log_ms: detail.time_log_ms,
+          curves: detail.curves,
+          key_values: { FJ: detail.FJ, FI: detail.FI, FM: detail.FM,
+            FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
+            FI_time_deriv_ms: detail.FI_time_deriv_ms,
+            FP_time_deriv_ms: detail.FP_time_deriv_ms },
+        }, inclPlots);
+        for (const { path, b64 } of pngs) zip.file(path, b64, { base64: true });
+        rendered++;
+        if (rendered % 10 === 0) {
+          _setProgress(10 + Math.round((rendered / totalValid) * 85),
+            'Rendering plots: ' + rendered + '/' + totalValid + ' curves...');
+          await new Promise(r => setTimeout(r, 0));
         }
       }
-      payload.curve_data = curveData;
-      _setProgress(30, `Sending ${Object.keys(curveData).length} curve datasets...`);
+
+      // Fetch uncached curves + render immediately
+      if (uncachedSlots.length > 0) {
+        const entries = uncachedSlots.map(slot => {
+          const r = paramMatrix[slot];
+          const _dc = mcDataset.curves.find(c => c.index === MC.slotToIndex(slot));
+          return { slot, name: r.name,
+            values: Array.from(_dc.values),
+            bckg: (_dc.bckg != null ? _dc.bckg : null),
+            fo_footer: (_dc.foFooter != null ? _dc.foFooter : null) };
+        });
+        const baseBody = {
+          fluorometer: mcDataset.fluorometer,
+          time_native: Array.from(mcDataset.timeUs),
+          FJ_time: parseFloat(document.getElementById('FJ_time').value) || 2.0,
+          FI_time: parseFloat(document.getElementById('FI_time').value) || 30.0,
+          knots_reduction_factor: parseInt(document.getElementById('kr_input').value) || 10,
+          fit_method: (document.getElementById('fit-method-sel')?.value || 'logspline'),
+          trim_first: parseInt(document.getElementById('trim-first-input')?.value) || 0,
+          trim_last:  parseInt(document.getElementById('trim-last-input')?.value)  || 0,
+          background_mode: document.getElementById('bg-mode-sel')?.value || 'auto',
+          background_n:    parseInt(document.getElementById('bg-n-input')?.value) || 1,
+          f0_source:       document.getElementById('f0-source-sel')?.value || 'instrument',
+          knot_placement:  document.getElementById('knot-placement-sel')?.value || 'hybrid',
+          ..._buildOjDensifyPayload(),
+          f0_time_ms: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
+          include_curves: true,
+        };
+        const BATCH = 20, CONC = 2, MAX_RETRIES = 3;
+        const batches = [];
+        for (let i = 0; i < entries.length; i += BATCH) batches.push(entries.slice(i, i + BATCH));
+        let cursor = 0, failedBatches = 0;
+
+        async function worker() {
+          while (cursor < batches.length) {
+            const bi = cursor++;
+            const batch = batches[bi];
+            let res;
+            for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+              try {
+                const resp = await fetch('/api/ojip_process_batch', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ...baseBody, curves: batch }),
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                res = await resp.json();
+                break;
+              } catch (e) {
+                if (attempt === MAX_RETRIES - 1) { console.error('Export fetch failed batch ' + bi, e); failedBatches++; }
+                else { await new Promise(r => setTimeout(r, (attempt + 1) * 2000 + Math.random() * 1000)); }
+              }
+            }
+            if (res?.status === 'success' && res.results) {
+              for (const detail of res.results) {
+                if (detail.error || !detail.curves) continue;
+                const curveName = detail.name || '#' + (detail.slot + 1);
+                const pngs = _renderCurvePngs(offCtx, curveName, {
+                  time_raw_ms: detail.time_raw_ms, time_log_ms: detail.time_log_ms,
+                  curves: detail.curves,
+                  key_values: { FJ: detail.FJ, FI: detail.FI, FM: detail.FM,
+                    FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
+                    FI_time_deriv_ms: detail.FI_time_deriv_ms,
+                    FP_time_deriv_ms: detail.FP_time_deriv_ms },
+                }, inclPlots);
+                for (const { path, b64 } of pngs) zip.file(path, b64, { base64: true });
+                rendered++;
+              }
+            }
+            let msg = 'Rendering plots: ' + rendered + '/' + totalValid + ' curves...';
+            if (failedBatches > 0) msg += ' (' + failedBatches + ' batch failures)';
+            _setProgress(10 + Math.round((rendered / totalValid) * 85), msg);
+          }
+        }
+        await Promise.all(Array.from({ length: CONC }, () => worker()));
+        if (failedBatches > 0)
+          console.warn('Export: ' + failedBatches + '/' + batches.length + ' batches failed \u2014 ' + rendered + '/' + totalValid + ' curves rendered');
+      }
     }
 
-    const resp = await fetch('/api/ojip_export_batch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      throw new Error(`Server error (${resp.status}): ${errText.slice(0, 200)}`);
-    }
-
-    _setProgress(90, 'Downloading ZIP...');
-
-    const blob = await resp.blob();
+    // ── Phase 4: Generate ZIP and trigger download (95–100%) ──────────
+    _setProgress(95, 'Building ZIP...');
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = (mcDataset?.filename || 'ojip_batch').replace(/\.[^.]+$/, '') + '_export.zip';
+    a.download = stem.replace(/\.[^.]+$/, '') + '_export.zip';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 
     _setProgress(100, 'Done!');
     setTimeout(() => {

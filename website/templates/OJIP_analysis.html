@@ -1400,6 +1400,31 @@
               </div>
             </div>
           </div>
+          <!-- O-J densify help (collapsed by default) -->
+          <details class="mb-2" style="font-size:0.85em">
+            <summary class="text-muted" style="cursor:pointer">About O-J densify models</summary>
+            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
+              <p class="mb-1">O-J densify fills sparse gaps (&gt;&nbsp;0.5 decades) in the O&ndash;J window with model-based synthetic points (weight&nbsp;0.3 in the spline fit), improving derivative stability for instruments with coarse early sampling.</p>
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>Exponential</dt>
+                <dd class="mb-0">F(t)&nbsp;=&nbsp;A&middot;(1&nbsp;&minus;&nbsp;e<sup>&minus;t/&tau;</sup>). Single RC closure with connectivity <em>p</em>&nbsp;=&nbsp;0. One tuneable parameter (&tau;, auto-fitted or user-fixed).</dd>
+                <dt>Bi-exponential</dt>
+                <dd class="mb-0">F(t)&nbsp;=&nbsp;A<sub>1</sub>(1&nbsp;&minus;&nbsp;e<sup>&minus;t/&tau;<sub>1</sub></sup>)&nbsp;+&nbsp;A<sub>2</sub>(1&nbsp;&minus;&nbsp;e<sup>&minus;t/&tau;<sub>2</sub></sup>). Resolves fast (~0.3&nbsp;ms, Q<sub>A</sub><sup>&minus;</sup> formation) and slow (~2&nbsp;ms, PQ kinetics) O-J sub-phases. &tau;<sub>1</sub>,&nbsp;&tau;<sub>2</sub> independently fixable.</dd>
+                <dt>Connectivity (Joliot)</dt>
+                <dd class="mb-0">V(t)&nbsp;=&nbsp;C<sub>eff</sub>&middot;(1&minus;p)/(1&minus;p&middot;C<sub>eff</sub>), where C<sub>eff</sub>&nbsp;=&nbsp;(1&minus;e<sup>&minus;k<sub>L</sub>t</sup>)&middot;e<sup>&minus;k<sub>ox</sub>t</sup>. Accounts for PSII excitonic connectivity (<em>p</em>) and Q<sub>A</sub><sup>&minus;</sup> reoxidation (<em>k</em><sub>ox</sub>). Reduces to simple exponential when <em>p</em>&nbsp;=&nbsp;0 and <em>k</em><sub>ox</sub>&nbsp;=&nbsp;0. Based on Joliot&nbsp;&amp;&nbsp;Joliot&nbsp;(1964).</dd>
+                <dt>Linear</dt>
+                <dd class="mb-0">F(t)&nbsp;=&nbsp;a&nbsp;+&nbsp;b&middot;t. Baseline / sanity check; slope and intercept auto-fitted, no tuneable parameters.</dd>
+              </dl>
+              <p class="mb-1 text-muted">If a model fails to converge it falls back to exponential automatically. Leave parameter fields blank for auto-fitting.</p>
+              <p class="mb-0 mt-2" style="font-size:0.92em"><strong>References</strong></p>
+              <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">
+                <li>Joliot A, Joliot P (1964) &Eacute;tude cin&eacute;tique de la r&eacute;action photochimique lib&eacute;rant l&rsquo;oxyg&egrave;ne au cours de la photosynth&egrave;se. <em>C&nbsp;R&nbsp;Acad&nbsp;Sci&nbsp;Paris</em> 258:4622&ndash;4625. &mdash; <em>Connectivity / exciton-coupling model</em></li>
+                <li>Laz&aacute;r D (1999) Chlorophyll <em>a</em> fluorescence induction. <em>Biochim&nbsp;Biophys&nbsp;Acta</em> 1412:1&ndash;28. <a href="https://doi.org/10.1016/S0005-2728(99)00047-X" target="_blank" rel="noopener">doi:10.1016/S0005-2728(99)00047-X</a> &mdash; <em>Review of O-J kinetic models</em></li>
+                <li>Stirbet A, Govindjee (2012) Chlorophyll <em>a</em> fluorescence induction: a personal perspective of the thermal phase, the J&ndash;I&ndash;P rise. <em>Photosynth&nbsp;Res</em> 113:15&ndash;61. <a href="https://doi.org/10.1007/s11120-012-9754-5" target="_blank" rel="noopener">doi:10.1007/s11120-012-9754-5</a> &mdash; <em>Exponential decomposition of O-J-I-P</em></li>
+                <li>Guo Y <em>et&nbsp;al.</em> (2024) Revisiting the polyphasic chlorophyll <em>a</em> fluorescence transient by use of a connectivity model of Photosystem&nbsp;II. <em>Plants</em> 13:452. <a href="https://doi.org/10.3390/plants13030452" target="_blank" rel="noopener">doi:10.3390/plants13030452</a> &mdash; <em>Connectivity model with k<sub>ox</sub> term</em></li>
+              </ol>
+            </div>
+          </details>
           <!-- F0 timing override -->
           <div class="form-row align-items-center mb-2">
             <div class="col-auto">
@@ -2553,10 +2578,19 @@
           <div class="d-block mb-1"><i class="fa fa-check text-success mr-1"></i>Grouped panels (one per group value)</div>
           <div class="d-block mb-1"><i class="fa fa-check text-success mr-1"></i>Aggregate curves chart</div>
         </div>
-        <p class="mb-2 font-weight-bold">Optional (per-curve):</p>
-        <div class="mb-2">
-          <label class="d-block mb-1"><input type="checkbox" id="be-indiv-curves"> Individual curve plots (raw, F0-norm, FM-norm, double-norm)</label>
-          <label class="d-block mb-1"><input type="checkbox" id="be-indiv-diag"> Individual diagnostic plots (reconstructed, residuals, D2, D3)</label>
+        <p class="mb-2 font-weight-bold">Optional &mdash; individual curve plots:</p>
+        <div class="mb-2 ml-2" style="font-size:0.93em;">
+          <label class="d-block mb-1"><input type="checkbox" id="be-raw"> Raw</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-shifted-f0"> Shifted F<sub>0</sub></label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-shifted-fm"> Shifted F<sub>M</sub></label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-double-norm"> Double-normalised</label>
+        </div>
+        <p class="mb-2 font-weight-bold">Optional &mdash; individual diagnostic plots:</p>
+        <div class="mb-2 ml-2" style="font-size:0.93em;">
+          <label class="d-block mb-1"><input type="checkbox" id="be-reconstructed"> Reconstructed vs raw</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-d2"> D2 (2nd derivative)</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-d3"> D3 (3rd derivative)</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-residuals"> Residuals</label>
         </div>
         <small id="be-file-estimate" class="text-muted d-block mb-2"></small>
         <div id="be-progress" style="display:none;">
@@ -2585,6 +2619,7 @@
 <script src="{{ url_for('static', filename='vendor/chart.umd.min.4.4.7.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/chartjs-error-bars.umd.min.4.4.3.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/xlsx.full.min.0.20.3.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="{{ url_for('static', filename='js_OJIP.js') }}?v=7"></script>
 <script src="{{ url_for('static', filename='js_fluorescence_annotation.js') }}?v=11"></script>
 <script>

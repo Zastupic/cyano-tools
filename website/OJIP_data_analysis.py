@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
-import os, base64, io, zipfile
+import os, base64, io, zipfile, uuid
 from typing import cast
 import pandas as pd
 import numpy as np
@@ -2917,6 +2917,7 @@ def ojip_interpret():
 
 
 @OJIP_data_analysis.route('/api/ojip_process_batch', methods=['POST'])
+@csrf.exempt
 def ojip_process_batch():
     """
     Batch-process multiple OJIP curves (params-only or full detail).
@@ -3029,6 +3030,7 @@ def ojip_process_batch():
 
 # ─── batch ZIP export ──────────────────────────────────────────────────────
 @OJIP_data_analysis.route('/api/ojip_export_batch', methods=['POST'])
+@csrf.exempt
 def ojip_export_batch():
     """
     Build a ZIP archive containing the batch analysis results.
@@ -3040,8 +3042,11 @@ def ojip_export_batch():
           "params_rows":   [[val, ...], ...],  // one row per curve
           "charts":        {canvasId: dataURL, ...},  // base64 PNGs
           "stem":          str,                // base filename
-          "include_curves": bool,
-          "include_diag":   bool,
+          "include_plots": {                   // per-plot-type flags
+            "raw": bool, "shifted_F0": bool, "shifted_FM": bool,
+            "double_norm": bool, "reconstructed": bool,
+            "d2": bool, "d3": bool, "residuals": bool
+          },
           "curve_data":    {name: {time_raw_ms, time_log_ms, curves, key_values}, ...}
         }
 
@@ -3056,9 +3061,18 @@ def ojip_export_batch():
     params_rows   = payload.get('params_rows', [])
     charts        = payload.get('charts', {})
     stem          = payload.get('stem', 'ojip_batch')
-    include_curves = payload.get('include_curves', False)
-    include_diag   = payload.get('include_diag', False)
-    curve_data     = payload.get('curve_data', {})
+    curve_data    = payload.get('curve_data', {})
+
+    # Granular plot flags (with backwards compat for old include_curves/include_diag)
+    inc = payload.get('include_plots', {})
+    if not inc:
+        # Legacy fallback
+        ic = payload.get('include_curves', False)
+        id_ = payload.get('include_diag', False)
+        inc = {
+            'raw': ic, 'shifted_F0': ic, 'shifted_FM': ic, 'double_norm': ic,
+            'reconstructed': id_, 'd2': id_, 'd3': id_, 'residuals': id_,
+        }
 
     try:
         zip_buf = io.BytesIO()
@@ -3100,61 +3114,9 @@ def ojip_export_batch():
                     fname = f'{cid}.png'
                 zf.writestr(f'summary_plots/{fname}', img_bytes)
 
-            # ── 3. Individual curve plots (matplotlib, optional) ──────────
-            if include_curves and curve_data:
-                for name, cd in curve_data.items():
-                    safe = _safe_zip_name(name)
-                    time_raw = cd.get('time_raw_ms', [])
-                    curves_d = cd.get('curves', {})
-                    kv       = cd.get('key_values', {})
-
-                    for norm_key, label in [
-                        ('raw',         'Raw'),
-                        ('shifted_F0',  'Shifted F0'),
-                        ('shifted_FM',  'Shifted FM'),
-                        ('double_norm', 'Double normalised'),
-                    ]:
-                        y_data = curves_d.get(norm_key)
-                        if not y_data or not time_raw:
-                            continue
-                        png = _make_curve_png(time_raw, y_data, name, label, kv)
-                        zf.writestr(f'curves/{safe}/{norm_key}.png', png)
-
-            # ── 4. Individual diagnostic plots (matplotlib, optional) ─────
-            if include_diag and curve_data:
-                for name, cd in curve_data.items():
-                    safe = _safe_zip_name(name)
-                    time_log = cd.get('time_log_ms', [])
-                    time_raw = cd.get('time_raw_ms', [])
-                    curves_d = cd.get('curves', {})
-
-                    # Reconstructed vs raw
-                    recon = curves_d.get('reconstructed')
-                    dnorm = curves_d.get('double_norm')
-                    if recon and time_log:
-                        png = _make_diag_png(time_log, recon, name, 'Reconstructed',
-                                             time_raw, dnorm)
-                        zf.writestr(f'diagnostics/{safe}/reconstructed.png', png)
-
-                    # D2
-                    d2 = curves_d.get('d2_smooth') or curves_d.get('d2')
-                    if d2 and time_log:
-                        png = _make_deriv_png(time_log, d2, name,
-                                             'D2 (2nd derivative)')
-                        zf.writestr(f'diagnostics/{safe}/d2.png', png)
-
-                    # D3
-                    d3 = curves_d.get('d3_smooth') or curves_d.get('d3')
-                    if d3 and time_log:
-                        png = _make_deriv_png(time_log, d3, name,
-                                             'D3 (3rd derivative)')
-                        zf.writestr(f'diagnostics/{safe}/d3.png', png)
-
-                    # Residuals
-                    resid = curves_d.get('residuals')
-                    if resid and time_raw:
-                        png = _make_deriv_png(time_raw, resid, name, 'Residuals')
-                        zf.writestr(f'diagnostics/{safe}/residuals.png', png)
+            # ── 3+4. Individual per-curve plots (flat folder per type) ─────
+            if curve_data:
+                _render_per_curve(zf, curve_data, inc)
 
         zip_buf.seek(0)
         dl_name = stem.replace(' ', '_') + '_export.zip'
@@ -3166,7 +3128,311 @@ def ojip_export_batch():
                         'message': 'An internal error occurred during export.'}), 500
 
 
+# ─── Incremental (chunked) batch export ────────────────────────────────────
+# DEPRECATED (2026-08): Client-side Canvas 2D rendering + JSZip now handles
+# all plot generation and ZIP assembly in the browser.  These three endpoints
+# are retained for rollback only — the JS no longer calls them.
+#
+# Original purpose: for large datasets (>100 curves) the monolithic
+# ojip_export_batch can timeout or hit payload limits.  These three endpoints
+# let the client build the ZIP incrementally:
+#   1. _start  → create a temp ZIP with params + summary charts
+#   2. _add    → render a batch of ~50 curves and append PNGs to the ZIP
+#   3. _finish → return the completed ZIP and clean up
+
+
+@OJIP_data_analysis.route('/api/ojip_export_start', methods=['POST'])
+@csrf.exempt
+def ojip_export_start():
+    """Create a temp ZIP and write params XLSX + summary chart PNGs."""
+    import matplotlib
+    matplotlib.use('Agg')
+
+    payload = request.get_json(force=True)
+    params_header = payload.get('params_header', [])
+    params_rows   = payload.get('params_rows', [])
+    charts        = payload.get('charts', {})
+    stem          = payload.get('stem', 'ojip_batch')
+    method_info   = payload.get('method_info', {})
+
+    export_id = uuid.uuid4().hex[:12]
+    zip_path  = os.path.join(UPLOAD_FOLDER, f'_export_{export_id}.zip')
+
+    try:
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # Params XLSX
+            xlsx_buf = io.BytesIO()
+            wb = Workbook()
+            ws = cast(Worksheet, wb.active)
+            ws.title = 'Parameters'
+            if params_header:
+                ws.append(params_header)
+            for row in params_rows:
+                ws.append(row)
+            wb.save(xlsx_buf)
+            xlsx_buf.seek(0)
+            zf.writestr('params_summary.xlsx', xlsx_buf.getvalue())
+
+            # Method info text file
+            if method_info:
+                zf.writestr('method_info.txt',
+                            _format_method_info(method_info))
+
+            # Summary chart PNGs
+            for cid, data_url in charts.items():
+                if not data_url or ',' not in data_url:
+                    continue
+                b64 = data_url.split(',', 1)[1]
+                try:
+                    img_bytes = base64.b64decode(b64)
+                except Exception:
+                    continue
+                if cid.startswith('param-'):
+                    fname = f'parameters/{cid[6:]}.png'
+                elif cid.startswith('mc-panel-'):
+                    fname = f'panels/{cid[9:]}.png'
+                elif cid == 'mc-compare-chart':
+                    fname = 'compare.png'
+                elif cid == 'mc-aggregate-chart':
+                    fname = 'aggregate_curves.png'
+                else:
+                    fname = f'{cid}.png'
+                zf.writestr(f'summary_plots/{fname}', img_bytes)
+
+        # Log what was written for diagnostics
+        with zipfile.ZipFile(zip_path, 'r') as zr:
+            entries = zr.namelist()
+        print(f'[export_start] id={export_id}, '
+              f'params_rows={len(params_rows)}, '
+              f'charts={len(charts)}, '
+              f'method_info={"yes" if method_info else "no"}, '
+              f'zip_entries={entries}')
+        return jsonify({'status': 'success', 'export_id': export_id,
+                        'stem': stem})
+    except Exception:
+        import traceback; traceback.print_exc()
+        if os.path.exists(zip_path):
+            os.remove(zip_path)
+        return jsonify({'status': 'error',
+                        'message': 'Failed to start export.'}), 500
+
+
+@OJIP_data_analysis.route('/api/ojip_export_add', methods=['POST'])
+@csrf.exempt
+def ojip_export_add():
+    """Render PNGs for a batch of curves and append them to the temp ZIP."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    payload   = request.get_json(force=True)
+    export_id = payload.get('export_id', '')
+    inc       = payload.get('include_plots', {})
+    curve_data = payload.get('curve_data', {})
+
+    zip_path = os.path.join(UPLOAD_FOLDER, f'_export_{export_id}.zip')
+    if not os.path.isfile(zip_path):
+        return jsonify({'status': 'error',
+                        'message': 'Unknown export_id.'}), 404
+
+    try:
+        added = 0
+        with zipfile.ZipFile(zip_path, 'a', zipfile.ZIP_DEFLATED) as zf:
+            added = _render_per_curve(zf, curve_data, inc)
+
+        return jsonify({'status': 'success', 'added': added})
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error',
+                        'message': 'Failed to add curves to export.'}), 500
+
+
+@OJIP_data_analysis.route('/api/ojip_export_finish/<export_id>', methods=['GET'])
+def ojip_export_finish(export_id):
+    """Return the completed ZIP and delete the temp file."""
+    # Sanitise export_id (hex only)
+    if not export_id or not all(c in '0123456789abcdef' for c in export_id):
+        return jsonify({'status': 'error', 'message': 'Invalid export_id.'}), 400
+
+    zip_path = os.path.join(UPLOAD_FOLDER, f'_export_{export_id}.zip')
+    if not os.path.isfile(zip_path):
+        return jsonify({'status': 'error', 'message': 'Export not found.'}), 404
+
+    try:
+        # Read into memory so we can delete the temp file
+        with open(zip_path, 'rb') as f:
+            data = f.read()
+        os.remove(zip_path)
+
+        buf = io.BytesIO(data)
+        stem = request.args.get('stem', 'ojip_batch')
+        dl_name = stem.replace(' ', '_') + '_export.zip'
+        return send_file(buf, mimetype='application/zip',
+                         as_attachment=True, download_name=dl_name)
+    except Exception:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error',
+                        'message': 'Failed to finalise export.'}), 500
+
+
 # ─── helpers for batch ZIP export ──────────────────────────────────────────
+
+def _render_per_curve(zf, curve_data, inc):
+    """Render per-curve PNGs and write them into *zf* (a ZipFile).
+
+    Folder layout is flat per plot type:
+        raw/<name>.png, shifted_F0/<name>.png, …
+        reconstructed/<name>.png, d2/<name>.png, d3/<name>.png, residuals/<name>.png
+
+    Returns the number of PNGs added.
+    """
+    added = 0
+    curve_types = [
+        ('raw',         'Raw'),
+        ('shifted_F0',  'Shifted F0'),
+        ('shifted_FM',  'Shifted FM'),
+        ('double_norm', 'Double normalised'),
+    ]
+
+    for name, cd in curve_data.items():
+        safe = _safe_zip_name(name)
+        time_raw = cd.get('time_raw_ms', [])
+        time_log = cd.get('time_log_ms', [])
+        curves_d = cd.get('curves', {})
+        kv       = cd.get('key_values', {})
+
+        # Curve plots  →  raw/<name>.png  etc.
+        for norm_key, label in curve_types:
+            if not inc.get(norm_key):
+                continue
+            y_data = curves_d.get(norm_key)
+            if y_data and time_raw:
+                png = _make_curve_png(time_raw, y_data, name, label, kv)
+                zf.writestr(f'{norm_key}/{safe}.png', png)
+                added += 1
+
+        # Reconstructed  →  reconstructed/<name>.png
+        if inc.get('reconstructed'):
+            recon = curves_d.get('reconstructed')
+            dnorm = curves_d.get('double_norm')
+            if recon and time_log:
+                png = _make_diag_png(time_log, recon, name,
+                                     'Reconstructed', time_raw, dnorm, kv)
+                zf.writestr(f'reconstructed/{safe}.png', png)
+                added += 1
+
+        # D2  →  d2/<name>.png
+        if inc.get('d2'):
+            d2 = curves_d.get('d2_smooth') or curves_d.get('d2')
+            if d2 and time_log:
+                png = _make_deriv_png(time_log, d2, name,
+                                     'D2 (2nd derivative)', kv)
+                zf.writestr(f'd2/{safe}.png', png)
+                added += 1
+
+        # D3  →  d3/<name>.png
+        if inc.get('d3'):
+            d3 = curves_d.get('d3_smooth') or curves_d.get('d3')
+            if d3 and time_log:
+                png = _make_deriv_png(time_log, d3, name,
+                                     'D3 (3rd derivative)', kv)
+                zf.writestr(f'd3/{safe}.png', png)
+                added += 1
+
+        # Residuals  →  residuals/<name>.png
+        if inc.get('residuals'):
+            resid = curves_d.get('residuals')
+            if resid and time_raw:
+                png = _make_deriv_png(time_raw, resid, name, 'Residuals', kv)
+                zf.writestr(f'residuals/{safe}.png', png)
+                added += 1
+
+    return added
+
+
+def _format_method_info(mi: dict) -> str:
+    """Format the method_info dict into a human-readable text summary."""
+    _METHOD_NAMES = {
+        'logspline':   'Log-time spline (quintic, analytic D2/D3)',
+        'spline':      'Standard LSQ spline (linear, numeric D2)',
+        'pchip':       'PCHIP (monotone piecewise cubic)',
+        'polynomial':  'Polynomial inflection (Akinyemi et al. 2023)',
+        'd1_minima':   'D1 local minima',
+        'three_exp':   '3-Exponential decomposition (Boisvert et al. 2006)',
+        'piecewise':   'Piecewise-linear breakpoints',
+        'gaussian_d1': 'Gaussian D1 deconvolution',
+    }
+    _SPLINE_METHODS = {'logspline', 'spline', 'pchip'}
+    fm = mi.get('fit_method', 'logspline')
+    lines = [
+        'OJIP Batch Export — Analysis Method Summary',
+        '=' * 46,
+        '',
+        f'Instrument:             {mi.get("fluorometer", "—")}',
+        f'Total curves:           {mi.get("total_curves", "—")}',
+        '',
+        '— Curve fitting —',
+        f'Fitting method:         {_METHOD_NAMES.get(fm, fm)}',
+    ]
+    if fm in _SPLINE_METHODS:
+        lines.append(
+            f'FJ / FI detection:      D2 troughs (2nd derivative minima)')
+    else:
+        lines.append(
+            f'FJ / FI detection:      Method-specific '
+            f'(reconstruction via log-time spline)')
+    lines += [
+        f'Knot reduction (kr):    {mi.get("knots_reduction", "—")}',
+        f'Knot placement:         {mi.get("knot_placement", "—")}',
+        f'FJ search window:       {mi.get("FJ_time_ms", "—")} ms',
+        f'FI search window:       {mi.get("FI_time_ms", "—")} ms',
+    ]
+    tf = mi.get('trim_first', 0)
+    tl = mi.get('trim_last', 0)
+    if tf or tl:
+        lines.append(f'Trim:                   first {tf}, last {tl} points')
+    f0t = mi.get('f0_time_ms')
+    if f0t:
+        lines.append(f'F0 timing override:     {f0t} ms')
+    lines += [
+        '',
+        '— Background / F0 —',
+        f'Background mode:        {mi.get("background_mode", "—")}',
+        f'Background points (n):  {mi.get("background_n", "—")}',
+        f'F0 source:              {mi.get("f0_source", "—")}',
+    ]
+
+    # O-J densify
+    lines += ['', '— O-J densification —']
+    if mi.get('oj_densify'):
+        model = mi.get('oj_model', 'exponential')
+        lines.append(f'Enabled:                yes')
+        lines.append(f'Model:                  {model}')
+        mp = mi.get('oj_model_params') or {}
+        if model == 'exponential':
+            tau = mp.get('tau_ms', 'auto')
+            lines.append(f'  tau:                  {tau} ms')
+        elif model == 'biexponential':
+            lines.append(f'  tau1:                 {mp.get("tau1_ms", "auto")} ms')
+            lines.append(f'  tau2:                 {mp.get("tau2_ms", "auto")} ms')
+        elif model == 'connectivity':
+            lines.append(f'  p (connectivity):     {mp.get("p", "auto")}')
+            lines.append(f'  k_L:                  {mp.get("k_L", "auto")} ms-1')
+            lines.append(f'  k_ox:                 {mp.get("k_ox", 0)} ms-1')
+        elif model == 'linear':
+            lines.append(f'  (no tuneable params)')
+    else:
+        lines.append(f'Enabled:                no')
+
+    lines += [
+        '',
+        '— Generated by cyano.tools OJIP analysis —',
+        'https://www.cyano.tools',
+        '',
+    ]
+    return '\n'.join(lines)
+
 
 def _safe_zip_name(name: str) -> str:
     """Sanitise a curve name for use as a ZIP path component."""
@@ -3187,7 +3453,7 @@ def _make_curve_png(time_ms, y_data, title, norm_label, kv=None):
     mask = t > 0
     t, y = t[mask], y[mask]
 
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(figsize=(5, 3))
     ax.semilogx(t, y, 'b-', linewidth=1)
     ax.set_xlabel('Time (ms)')
     ax.set_ylabel('Fluorescence')
@@ -3207,61 +3473,94 @@ def _make_curve_png(time_ms, y_data, title, norm_label, kv=None):
                         label=phase, zorder=5)
         ax.legend(fontsize=8)
 
-    fig.tight_layout()
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=120)
+    fig.savefig(buf, format='png', dpi=72, bbox_inches='tight')
     plt.close(fig)
     buf.seek(0)
     return buf.getvalue()
 
 
-def _make_diag_png(time_log, recon, title, label, time_raw=None, raw_data=None):
-    """Render a reconstructed-vs-raw diagnostic plot."""
+def _make_diag_png(time_log, recon, title, label,
+                   time_raw=None, raw_data=None, kv=None):
+    """Render a reconstructed-vs-raw diagnostic plot with FJ/FI/FP markers."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(figsize=(5, 3))
     tl = np.asarray(time_log, dtype=float)
     yr = np.asarray(recon, dtype=float)
-    ax.semilogx(tl, yr, 'r-', linewidth=1.2, label='Reconstructed')
+
+    # Raw data (measured)
     if raw_data and time_raw:
         tr = np.asarray(time_raw, dtype=float)
         yd = np.asarray(raw_data, dtype=float)
         mask = tr > 0
-        ax.semilogx(tr[mask], yd[mask], 'b.', markersize=2, alpha=0.5, label='Data')
+        ax.semilogx(tr[mask], yd[mask], 'b.', markersize=2, alpha=0.5,
+                     label='Measured')
+
+    # Reconstructed (fitted) curve
+    ax.semilogx(tl, yr, 'r-', linewidth=1.2, label='Fitted')
+
+    # FJ/FI/FP markers (interpolated onto the reconstructed curve)
+    _add_phase_markers(ax, tl, yr, kv)
+
     ax.set_xlabel('Time (ms)')
-    ax.set_ylabel('Fluorescence (norm.)')
-    ax.set_title(f'{title} — {label}')
+    ax.set_ylabel('Fluorescence (double norm.)')
+    ax.set_title(title)
     ax.legend(fontsize=8)
-    fig.tight_layout()
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=120)
+    fig.savefig(buf, format='png', dpi=72, bbox_inches='tight')
     plt.close(fig)
     buf.seek(0)
     return buf.getvalue()
 
 
-def _make_deriv_png(time_arr, y_data, title, label):
-    """Render a derivative or residual plot."""
+def _make_deriv_png(time_arr, y_data, title, label, kv=None):
+    """Render a derivative or residual plot with FJ/FI/FP markers."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(figsize=(5, 3))
     t = np.asarray(time_arr, dtype=float)
     y = np.asarray(y_data, dtype=float)
     mask = t > 0
     ax.semilogx(t[mask], y[mask], 'g-', linewidth=1)
     ax.axhline(0, color='grey', linewidth=0.5, linestyle='--')
+
+    # FJ/FI/FP markers (interpolated onto this derivative curve)
+    _add_phase_markers(ax, t[mask], y[mask], kv)
+
     ax.set_xlabel('Time (ms)')
     ax.set_ylabel(label)
-    ax.set_title(f'{title} — {label}')
-    fig.tight_layout()
+    ax.set_title(title)
+    if kv:
+        ax.legend(fontsize=8)
     buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=120)
+    fig.savefig(buf, format='png', dpi=72, bbox_inches='tight')
     plt.close(fig)
     buf.seek(0)
     return buf.getvalue()
+
+
+def _add_phase_markers(ax, t_arr, y_arr, kv):
+    """Add FJ / FI / FP markers to an axes, interpolated onto (t_arr, y_arr)."""
+    if not kv:
+        return
+    t_np = np.asarray(t_arr, dtype=float)
+    y_np = np.asarray(y_arr, dtype=float)
+    for phase, marker, colour, label in [
+        ('FJ', '^', '#e6550d', 'J'),
+        ('FI', 'D', '#31a354', 'I'),
+        ('FP', 's', '#756bb1', 'P'),
+    ]:
+        tv = kv.get(f'{phase}_time_deriv_ms')
+        if tv is None:
+            continue
+        # Linear interpolation onto the curve
+        yv = float(np.interp(tv, t_np, y_np))
+        ax.plot(tv, yv, marker=marker, color=colour, markersize=8,
+                label=label, zorder=5, linestyle='none')
 
     
