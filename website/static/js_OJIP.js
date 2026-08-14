@@ -3659,21 +3659,9 @@ function _formatDensifyInfo(info) {
 }
 
 function _populateDensifyInputs(info) {
-  function _setIfEmpty(id, val) {
-    const el = document.getElementById(id);
-    if (el && !el.value && val != null) el.value = val;
-  }
-  if (!info) return;
-  if (info.model === 'exponential' || !info.model) {
-    _setIfEmpty('oj-tau-input', info.tau_ms);
-  } else if (info.model === 'biexponential') {
-    _setIfEmpty('oj-tau1-input', info.tau1_ms);
-    _setIfEmpty('oj-tau2-input', info.tau2_ms);
-  } else if (info.model === 'connectivity') {
-    _setIfEmpty('oj-p-input', info.p);
-    _setIfEmpty('oj-kL-input', info.k_L);
-    _setIfEmpty('oj-kox-input', info.k_ox);
-  }
+  // No-op: fitted values are shown in the status text (_formatDensifyInfo).
+  // Do NOT auto-fill input fields — that would convert "auto" (empty) into a
+  // fixed constraint for every subsequent fit, defeating per-curve fitting.
 }
 
 // ── init ──────────────────────────────────────────────────────────────────
