@@ -314,7 +314,7 @@
                 </div>
               </div>
             </div>
-            <small class="text-muted">Used for JIP parameter calculation. Auto-identification from 2nd derivative is also shown for reference.</small>
+            <small class="text-muted">Used for JIP parameter calculation (V<sub>J</sub>, V<sub>I</sub>, &psi;E<sub>0</sub>, etc.). After spline refit, parameters auto-switch to derivative-detected F<sub>J</sub>/F<sub>I</sub> times. Use the toggle button on Curves/Parameters tabs to switch back.</small>
           </div>
 
           <!-- kr / spline smoothing -->
@@ -547,10 +547,11 @@
       </div>
 
       <!-- Toggle FJ/FI between default (2/30 ms) and auto-detected -->
-      <div class="mt-2 mb-1">
+      <div class="mt-2 mb-1 d-flex align-items-center">
         <button class="btn btn-outline-warning btn-sm" id="reset-fj-fi-btn-curves">
           Use auto-detected F<sub>J</sub>/F<sub>I</sub>
         </button>
+        <span id="fjfi-mode-badge-curves" class="badge badge-info ml-2" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
       </div>
 
       <!-- Editable FJ/FI table -->
@@ -599,7 +600,8 @@
           <button class="btn btn-outline-primary" data-pgroup="decomp" id="pgroup-decomp-btn" style="display:none">Decomposition</button>
           <button class="btn btn-outline-primary" data-pgroup="gauss"  id="pgroup-gauss-btn"  style="display:none">D1 Gaussians</button>
         </div>
-        <button class="btn btn-outline-warning btn-sm ml-auto mr-1" id="reset-fj-fi-btn">
+        <span id="fjfi-mode-badge-params" class="badge badge-info ml-auto mr-2" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
+        <button class="btn btn-outline-warning btn-sm mr-1" id="reset-fj-fi-btn">
           Use auto-detected F<sub>J</sub>/F<sub>I</sub>
         </button>
         <button class="btn btn-outline-secondary btn-sm" id="copy-params-btn">
@@ -1275,11 +1277,22 @@
             </div>
             <div class="col-auto" id="refit-all-wrap" style="display:none">
               <button class="btn btn-primary btn-sm" onclick="mcRefitBatch()">Refit all curves</button>
+              <span id="mc-refit-status-diag" class="ml-2 text-muted" style="font-size:0.85em"></span>
             </div>
             <div class="col-auto">
               <span id="refit-status" class="text-muted" style="font-size:0.85em;"></span>
             </div>
-            <div class="col-auto ml-auto">
+            <div class="col-auto ml-auto align-items-center" id="fjfi-timing-wrap" style="display:none">
+              <small class="text-muted mr-1">F<sub>J</sub>/F<sub>I</sub> for JIP params:</small>
+              <div class="btn-group btn-group-toggle btn-group-sm" data-toggle="buttons">
+                <label class="btn btn-outline-info btn-sm active" id="fjfi-radio-fixed-label" style="font-size:0.78em;padding:2px 8px">
+                  <input type="radio" name="fjfi-timing" id="fjfi-radio-fixed" value="fixed" checked> Fixed
+                </label>
+                <label class="btn btn-outline-warning btn-sm" id="fjfi-radio-auto-label" style="font-size:0.78em;padding:2px 8px">
+                  <input type="radio" name="fjfi-timing" id="fjfi-radio-auto" value="auto"> Auto-detected
+                </label>
+              </div>
+              <span id="fjfi-mode-badge-diag" class="badge badge-info ml-2 mr-2" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
               <span id="fit-quality-badge" class="badge" style="font-size:0.8em;display:none"></span>
             </div>
           </div>

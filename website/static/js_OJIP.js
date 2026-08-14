@@ -11,6 +11,16 @@ let chartInst = {};     // {chartId: Chart instance}
 let dirtyTabs = new Set(); // tabs whose charts need rendering on first visit
 let fjfiMode  = 'default'; // 'default' (2/30 ms) or 'auto' (derivative-detected)
 
+/** Is the "Auto-detected" FJ/FI radio selected? Checks both input.checked
+ *  and Bootstrap's active class (jQuery toggle doesn't always sync checked). */
+function _wantDerivTiming() {
+  const inp = document.getElementById('fjfi-radio-auto');
+  if (inp && inp.checked) return true;
+  const lbl = document.getElementById('fjfi-radio-auto-label');
+  if (lbl && lbl.classList.contains('active')) return true;
+  return false;
+}
+
 // ── multi-curve state (M2-M6) ───────────────────────────────────────────
 var mcDataset      = null;   // parsed multi-curve file (see MC.parse)
 var paramMatrix    = null;   // [{slot,name,...params}, ...] from batch pass
@@ -369,6 +379,7 @@ const MC = (() => {
           oj_model:        jipOpts.ojModel || 'exponential',
           oj_model_params: jipOpts.ojModelParams || null,
           f0_time_ms:      jipOpts.f0TimMs || null,
+          use_deriv_timing: jipOpts.useDerivTiming || false,
           include_curves: false,
         };
 
@@ -459,6 +470,7 @@ const MC = (() => {
     // Incremental draw during batch pass — update the param-time chart live
     const chart = chartInst['mc-param-time-chart'];
     if (!chart || !results.length) return;
+    if (!chart.data.datasets?.[0]) return;  // chart exists but has no dataset yet
 
     const paramKey = document.getElementById('mc-param-picker')?.value || 'FVFM';
     const useTimestamps = document.getElementById('mc-time-axis-ts')?.checked;
@@ -1187,6 +1199,7 @@ const MC = (() => {
       knot_placement:  document.getElementById('knot-placement-sel')?.value || 'hybrid',
       ..._buildOjDensifyPayload(),
       f0_time_ms:      (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
+      use_deriv_timing: _wantDerivTiming(),
       include_curves: true,
     };
 
@@ -3552,6 +3565,7 @@ function trapz(x, y, a, b) {
 // Re-calculate key_values for a sample when FJ/FI times change (browser-side)
 function recalcKeyValues(fname, fjMs, fiMs) {
   const kv0 = ojipData.key_values[fname];
+  if (!kv0) return null;  // guard: no key_values for this curve yet
   const t   = ojipData.time_raw_ms;
   const raw = ojipData.curves[fname].raw;
 
@@ -3582,7 +3596,8 @@ function recalcKeyValues(fname, fjMs, fiMs) {
 function recalcAllParams() {
   paramData = {};
   for (const fname of ojipData.files) {
-    paramData[fname] = calcJIP(ojipData.key_values[fname]);
+    const kv = ojipData.key_values[fname];
+    if (kv) paramData[fname] = calcJIP(kv);
   }
 }
 
@@ -3712,6 +3727,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Toggle FJ/FI between default (2/30 ms) and auto-detected timings
   document.getElementById('reset-fj-fi-btn').addEventListener('click', toggleFJFI);
   document.getElementById('reset-fj-fi-btn-curves').addEventListener('click', toggleFJFI);
+
+  // FJ/FI timing radio (diagnostics tab) — user selects fixed/auto-detected,
+  // then manually clicks "Refit all curves" when ready.  No auto-trigger here;
+  // the radio state is read by mcRefitBatch() / refitSplines() at refit time.
 
   // Groups tab
   document.getElementById('select-all-check').addEventListener('change', e => {
@@ -4221,6 +4240,7 @@ async function mcStartAnalysis() {
     ojModel:       'exponential',
     ojModelParams: null,
     f0TimMs:       null,
+    useDerivTiming: _wantDerivTiming(),
   };
   _lastSelected = selected.slice();
   _lastJipOpts  = Object.assign({}, jipOpts);
@@ -4269,6 +4289,10 @@ async function mcStartAnalysis() {
 
     // Batch quality banners (fit + timing confidence)
     _updateBatchQualityAlerts(result);
+
+    // Sync badge with the radio selection used for this analysis
+    fjfiMode = jipOpts.useDerivTiming ? 'auto' : 'default';
+    _updateFJFIBtnLabels();
   }
 }
 
@@ -4284,9 +4308,12 @@ function renderResults() {
   link.onclick = e => { e.preventDefault(); downloadXlsxWithCharts(); };
   link.style.display = '';
 
-  // Reset FJ/FI toggle to default state for fresh data
-  fjfiMode = 'default';
-  _updateFJFIBtnLabels();
+  // Reset FJ/FI toggle to default state for fresh data — but NOT when
+  // viewing a single-curve detail from batch mode (preserve the batch setting).
+  if (!(mcDataset && mcIsActive)) {
+    fjfiMode = 'default';
+    _updateFJFIBtnLabels();
+  }
 
   renderCurvesChart('raw');
   buildFJTable();
@@ -4801,9 +4828,11 @@ function renderDiagnostics() {
   const gaussBtn  = document.getElementById('pgroup-gauss-btn');
   if (decompBtn) decompBtn.style.display = (fm === 'three_exp') ? '' : 'none';
   if (gaussBtn)  gaussBtn.style.display  = (fm === 'gaussian_d1') ? '' : 'none';
-  // Show 'Refit all curves' button only in multi-curve mode
+  // Show 'Refit all curves' button and FJ/FI timing radio only in multi-curve mode
   const refitAllWrap = document.getElementById('refit-all-wrap');
   if (refitAllWrap) refitAllWrap.style.display = (mcDataset && mcIsActive) ? '' : 'none';
+  const fjfiTimingWrap = document.getElementById('fjfi-timing-wrap');
+  if (fjfiTimingWrap) fjfiTimingWrap.style.display = (mcDataset && mcIsActive) ? 'flex' : 'none';
   // Mirror the Background/F0 control next to it — AquaPen/FluorPen batches only
   const bgF0Wrap = document.getElementById('mc-bg-f0-wrap');
   if (bgF0Wrap) {
@@ -5173,6 +5202,21 @@ function _updateFJFIBtnLabels() {
   const btn2 = document.getElementById('reset-fj-fi-btn-curves');
   if (btn1) btn1.innerHTML = html;
   if (btn2) btn2.innerHTML = html;
+
+  // Update mode badges across all tabs
+  const badgeHtml = fjfiMode === 'default'
+    ? 'F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms'
+    : 'F<sub>J</sub>/F<sub>I</sub>: auto-detected';
+  const badgeClass = fjfiMode === 'default' ? 'badge-info' : 'badge-warning';
+  const badges = {
+    'fjfi-mode-badge-curves': 'badge ' + badgeClass + ' ml-2',
+    'fjfi-mode-badge-params': 'badge ' + badgeClass + ' ml-auto mr-2',
+    'fjfi-mode-badge-diag':   'badge ' + badgeClass + ' mr-2',
+  };
+  for (const [id, cls] of Object.entries(badges)) {
+    const el = document.getElementById(id);
+    if (el) { el.innerHTML = badgeHtml; el.className = cls; el.style.fontSize = '0.8em'; }
+  }
 }
 
 // ── apply polynomial-identified FJ / FI ───────────────────────────────────
@@ -5300,6 +5344,11 @@ function _updateConfBanner(valid) {
 async function mcRefitBatch() {
   const btn    = document.getElementById('mc-refit-batch-btn');
   const status = document.getElementById('mc-refit-batch-status');
+  const statusDiag = document.getElementById('mc-refit-status-diag');
+  const _setStatus = (msg) => {
+    if (status) status.textContent = msg;
+    if (statusDiag) statusDiag.textContent = msg;
+  };
   if (!mcDataset || !_lastSelected.length) return;
 
   // A refit changes the fit / background inputs, so any cached per-curve detail
@@ -5325,6 +5374,7 @@ async function mcRefitBatch() {
       return { ojDensify: d.oj_densify, ojModel: d.oj_model, ojModelParams: d.oj_model_params };
     })(),
     f0TimMs: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
+    useDerivTiming: _wantDerivTiming(),
   };
 
   // OJIP-Imaging Excel: re-apply the background/F0 mode chosen in the Diagnostics
@@ -5338,17 +5388,21 @@ async function mcRefitBatch() {
   }
 
   btn.disabled = true;
-  status.textContent = `Refitting ${_lastSelected.length} curves with ${fitMethod}…`;
+  _setStatus(`Refitting ${_lastSelected.length} curves with ${fitMethod}…`);
 
   const result = await MC.runParamsPass(mcDataset, _lastSelected, jipOpts);
   if (!result) {
-    status.textContent = 'Refit cancelled.';
+    _setStatus('Refit cancelled.');
     btn.disabled = false;
     return;
   }
 
   _lastJipOpts = Object.assign({}, jipOpts);
   _updateBatchQualityAlerts(result);
+
+  // Sync badge with the radio selection used for this batch
+  fjfiMode = jipOpts.useDerivTiming ? 'auto' : 'default';
+  _updateFJFIBtnLabels();
 
   // Re-apply reference FM if it was active before refit
   if (hadRefFM) MC.reapplyRefFM();
@@ -5362,7 +5416,18 @@ async function mcRefitBatch() {
                     : fitMethod === 'logspline'  ? 'Log-time spline'
                     : fitMethod === 'pchip'      ? 'PCHIP'
                     : 'Standard spline';
-  status.textContent = `Refit done (${methodLabel}).`;
+  let statusMsg = `Refit done (${methodLabel}).`;
+  // Report auto-detected timing coverage when the user selected that mode
+  if (jipOpts.useDerivTiming && result) {
+    const total = result.filter(r => r && !r.error).length;
+    const auto  = result.filter(r => r && !r.error && r.deriv_timing_used).length;
+    if (auto < total) {
+      statusMsg += ` FJ/FI auto-detected: ${auto}/${total} curves (${total - auto} fell back to fixed 2/30 ms).`;
+    } else {
+      statusMsg += ` FJ/FI auto-detected for all ${total} curves.`;
+    }
+  }
+  _setStatus(statusMsg);
   btn.disabled = false;
 }
 
@@ -5431,20 +5496,33 @@ async function refitSplines() {
     // Update stored curves + time_log
     ojipData.time_log_ms = data.time_log_ms;
     for (const fname of ojipData.files) {
+      if (!ojipData.curves[fname]) ojipData.curves[fname] = {};
       Object.assign(ojipData.curves[fname], data.curves[fname]);
-      if (data.key_timings?.[fname]) Object.assign(ojipData.key_values[fname], data.key_timings[fname]);
-    }
-
-    // Sync user-editable FJ/FI timing from the new auto-detected values
-    // so that markers on the Curves chart and the FJ/FI table inputs update
-    for (const fname of ojipData.files) {
-      const kv = ojipData.key_values[fname];
-      if (kv.FJ_time_deriv_ms != null && kv.FI_time_deriv_ms != null) {
-        const updated = recalcKeyValues(fname, kv.FJ_time_deriv_ms, kv.FI_time_deriv_ms);
-        ojipData.key_values[fname] = updated;
+      if (data.key_timings?.[fname]) {
+        if (!ojipData.key_values[fname]) ojipData.key_values[fname] = {};
+        Object.assign(ojipData.key_values[fname], data.key_timings[fname]);
       }
     }
-    fjfiMode = 'auto';
+
+    // Sync user-editable FJ/FI timing: respect the radio selection if in
+    // multi-curve mode; default to auto-detected for single-file mode.
+    const wantAuto = (mcDataset && mcIsActive)
+      ? (_wantDerivTiming())
+      : true;  // single-file refit always switches to auto (legacy behaviour)
+    for (const fname of ojipData.files) {
+      const kv = ojipData.key_values[fname];
+      if (!kv) continue;  // guard: no key_values for this curve
+      if (wantAuto && kv.FJ_time_deriv_ms != null && kv.FI_time_deriv_ms != null) {
+        const updated = recalcKeyValues(fname, kv.FJ_time_deriv_ms, kv.FI_time_deriv_ms);
+        if (updated) ojipData.key_values[fname] = updated;
+      } else {
+        const fjMs = parseFloat(document.getElementById('FJ_time').value) || 2.0;
+        const fiMs = parseFloat(document.getElementById('FI_time').value) || 30.0;
+        const updated = recalcKeyValues(fname, fjMs, fiMs);
+        if (updated) ojipData.key_values[fname] = updated;
+      }
+    }
+    fjfiMode = wantAuto ? 'auto' : 'default';
     _updateFJFIBtnLabels();
 
     // When time axis was rescaled, re-read FJ/FI/FK/F50 values from raw data
@@ -5452,9 +5530,10 @@ async function refitSplines() {
     if (f0Override) {
       const times = ojipData.time_raw_ms;
       for (const fname of ojipData.files) {
-        if (!ojipData.curves[fname].raw) continue;
+        if (!ojipData.curves[fname]?.raw) continue;
         const raw = ojipData.curves[fname].raw;
         const kv  = ojipData.key_values[fname];
+        if (!kv) continue;  // guard: no key_values for this curve
         if (kv.FJ_time_deriv_ms != null) kv.FJ = interpAt(times, raw, kv.FJ_time_deriv_ms);
         if (kv.FI_time_deriv_ms != null) kv.FI = interpAt(times, raw, kv.FI_time_deriv_ms);
         kv.FK  = interpAt(times, raw, 0.3);
@@ -5490,7 +5569,8 @@ async function refitSplines() {
       const fname = ojipData.files[0];
       const kv  = ojipData.key_values[fname];
       const jip = paramData[fname];
-      Object.assign(paramMatrix[_currentDetailSlot], kv, jip);
+      const target = paramMatrix[_currentDetailSlot];
+      if (target) Object.assign(target, kv || {}, jip || {});
       delete mcDetailCache[_currentDetailSlot];   // stale after refit
       MC.renderTimeSeries();
     }
@@ -5512,6 +5592,7 @@ async function refitSplines() {
     status.textContent = `Refit done (kr = ${kr}${f0Note})`;
     setTimeout(() => status.textContent = '', 4000);
   } catch (e) {
+    console.error('refitSplines error:', e);
     status.textContent = 'Error: ' + e.message;
   } finally {
     document.getElementById('refit-btn').disabled = false;

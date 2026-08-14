@@ -1701,7 +1701,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       oj_densify: bool = False,
                       oj_model: str = 'exponential',
                       oj_model_params: 'dict | None' = None,
-                      f0_time_ms: 'float | None' = None):
+                      f0_time_ms: 'float | None' = None,
+                      use_deriv_timing: bool = False):
     """
     Full OJIP analysis pipeline for a single curve.
 
@@ -1863,6 +1864,18 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         if FK_idx == F50us_idx:          # only 1-2 data points total
             FK_idx = len(sf) - 1
 
+    # ── optionally override FJ/FI with derivative-detected times ─────────────
+    _deriv_timing_used = False
+    if use_deriv_timing:
+        _fj_d = _t_safe(FJ_deriv.get(fname), ms)
+        _fi_d = _t_safe(FI_deriv.get(fname), ms)
+        if _fj_d is not None and _fi_d is not None and _fj_d < _fi_d:
+            fj_time_ms = _fj_d
+            fi_time_ms = _fi_d
+            FJ_time = fj_time_ms / ms
+            FI_time = fi_time_ms / ms
+            _deriv_timing_used = True
+
     FJ_idx = tidx(FJ_time)
     FI_idx = tidx(FI_time)
 
@@ -2006,6 +2019,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'dip_IP_time_ms':   _safe(dip_IP_time_ms_val) if dip_IP_time_ms_val is not None else None,
         'dip_IP_amplitude': _safe(dip_IP_amplitude_val) if dip_IP_amplitude_val is not None else None,
         'dip_IP_d1_min':    _safe(dip_IP_d1_min_val) if dip_IP_d1_min_val is not None else None,
+        'deriv_timing_used': _deriv_timing_used,
         **fq,
     }
 
@@ -2978,6 +2992,7 @@ def ojip_process_batch():
             oj_model_params = {'tau_ms': float(_tau_raw_b)}
     f0_raw          = payload.get('f0_time_ms', None)
     f0_time_ms      = float(f0_raw) if f0_raw is not None and f0_raw != '' else None
+    use_deriv_timing = bool(payload.get('use_deriv_timing', False))
 
     if not time_native or not curves:
         return jsonify({'status': 'error',
@@ -3017,6 +3032,7 @@ def ojip_process_batch():
                 oj_model=oj_model,
                 oj_model_params=oj_model_params,
                 f0_time_ms=f0_time_ms,
+                use_deriv_timing=use_deriv_timing,
             )
             r['slot'] = slot
             r['name'] = name
