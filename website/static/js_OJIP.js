@@ -6450,6 +6450,9 @@ function _collectMethodInfo() {
     oj_model:         densify.oj_model,
     oj_model_params:  densify.oj_model_params,
     total_curves:     paramMatrix ? paramMatrix.filter(r => r && !r.error).length : 0,
+    fjfi_mode:        fjfiMode,  // 'default' or 'auto'
+    deriv_timing_count: paramMatrix
+      ? paramMatrix.filter(r => r && !r.error && r.deriv_timing_used).length : 0,
   };
 }
 
@@ -6483,6 +6486,16 @@ function _formatMethodInfoText(mi) {
     'FJ search window:       ' + (mi.FJ_time_ms || '\u2014') + ' ms',
     'FI search window:       ' + (mi.FI_time_ms || '\u2014') + ' ms',
   );
+  if (mi.fjfi_mode === 'auto') {
+    lines.push('FJ/FI for JIP params:   Auto-detected (per-curve derivative times)');
+    if (mi.total_curves > 0) {
+      const fallback = mi.total_curves - mi.deriv_timing_count;
+      lines.push('  Auto-detected:        ' + mi.deriv_timing_count + '/' + mi.total_curves + ' curves'
+        + (fallback > 0 ? ' (' + fallback + ' fell back to fixed ' + (mi.FJ_time_ms||2) + '/' + (mi.FI_time_ms||30) + ' ms)' : ''));
+    }
+  } else {
+    lines.push('FJ/FI for JIP params:   Fixed (' + (mi.FJ_time_ms||2) + ' / ' + (mi.FI_time_ms||30) + ' ms)');
+  }
   if (mi.trim_first || mi.trim_last)
     lines.push('Trim:                   first ' + (mi.trim_first||0) + ', last ' + (mi.trim_last||0) + ' points');
   if (mi.f0_time_ms && mi.f0_time_ms > 0)
