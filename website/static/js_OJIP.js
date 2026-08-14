@@ -3158,7 +3158,7 @@ const PARAM_GROUPS = {
   fluxes: ['ABSRC', 'TR0RC', 'ET0RC', 'RE0RC', 'DI0RC'],
   areas:  ['Area_OJ', 'Area_JI', 'Area_IP', 'Area_OP', 'SM', 'N'],
   tech:   ['F0', 'FM', 'FK', 'FJ', 'FI', 'FV', 'OJ', 'JI', 'IP'],
-  timing: ['FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FM_time_ms'],
+  timing: ['FJ_time_user_ms', 'FI_time_user_ms', 'FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FM_time_ms'],
   slopes: ['slope_OJ', 'slope_JI', 'slope_IP'],
   dip:    ['dip_IP_amplitude', 'dip_IP_time_ms', 'dip_IP_d1_min'],
   decomp: ['A_OJ', 'A_JI', 'A_IP', 'tau_OJ_ms', 'tau_JI_ms', 'tau_IP_ms'],
@@ -3173,7 +3173,9 @@ const PARAM_LABELS = {
   Area_OJ:'Area O-J', Area_JI:'Area J-I', Area_IP:'Area I-P', Area_OP:'Area O-P',
   SM:'Sm', N:'N (QA turnover)',
   F0:'F₀', FM:'FM', FK:'FK', FJ:'FJ', FI:'FI', FV:'FV', OJ:'A(O-J)', JI:'A(J-I)', IP:'A(I-P)',
-  FJ_time_deriv_ms:'t(FJ) ms', FI_time_deriv_ms:'t(FI) ms', FP_time_deriv_ms:'t(FP) ms', FM_time_ms:'t(FM) ms',
+  FJ_time_user_ms:'t(FJ) used ms', FI_time_user_ms:'t(FI) used ms',
+  FJ_time_deriv_ms:'t(FJ) detected ms', FI_time_deriv_ms:'t(FI) detected ms', FP_time_deriv_ms:'t(FP) detected ms', FM_time_ms:'t(FM) ms',
+  deriv_timing_used:'Auto-detected used',
   slope_OJ:'Slope O-J', slope_JI:'Slope J-I', slope_IP:'Slope I-P',
   dip_IP_amplitude:'Dip I-P amplitude', dip_IP_time_ms:'Dip I-P time (ms)', dip_IP_d1_min:'Dip I-P D1 min',
   A_OJ:'A(O-J)', A_JI:'A(J-I)', A_IP:'A(I-P)',
@@ -3532,8 +3534,10 @@ function calcJIP(kv) {
     ABSRC, TR0RC, ET0RC, RE0RC, DI0RC,
     Area_OJ: kv.Area_OJ, Area_JI: kv.Area_JI, Area_IP: kv.Area_IP, Area_OP: kv.Area_OP,
     SM, N,
+    FJ_time_user_ms: kv.FJ_time_user_ms, FI_time_user_ms: kv.FI_time_user_ms,
     FJ_time_deriv_ms: kv.FJ_time_deriv_ms, FI_time_deriv_ms: kv.FI_time_deriv_ms,
     FP_time_deriv_ms: kv.FP_time_deriv_ms, FM_time_ms: kv.FM_time_ms,
+    deriv_timing_used: kv.deriv_timing_used,
     // pass-through: slopes, dip, decomposition, gaussians
     slope_OJ: kv.slope_OJ, slope_JI: kv.slope_JI, slope_IP: kv.slope_IP,
     dip_IP_amplitude: kv.dip_IP_amplitude, dip_IP_time_ms: kv.dip_IP_time_ms, dip_IP_d1_min: kv.dip_IP_d1_min,
@@ -4530,6 +4534,8 @@ function _onFJTableChange(e) {
 }
 
 function fmt(v, d = 4) {
+  if (v === true) return 'yes';
+  if (v === false) return 'no';
   if (v === null || v === undefined || isNaN(v)) return '—';
   return Number(v).toFixed(d);
 }
