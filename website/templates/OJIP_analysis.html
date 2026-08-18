@@ -2720,11 +2720,16 @@ window._getOJIPCurvesForBundle = function () {
                   <option value="Fop">Fop (normalized to O and P)</option>
                 </select>
                 <small class="text-muted">Options adapt to the file. For files with a <code>Raw</code> column the tool computes
-                  Bg / F0 / F0j / F0i / F0p itself (Bg = Raw&minus;mean(Raw,&nbsp;1&ndash;3&nbsp;µs);
-                  F0 = Bg/mean(Bg,&nbsp;10&ndash;12&nbsp;µs); F0j/i/p = F0 / F0 at 2 / 36 / 280&nbsp;ms).
-                  These all give identical JIP parameters (the backend double-normalizes) &mdash;
-                  they differ only in the transient shown/exported. (Raw itself is not offered:
-                  its un-subtracted dark offset would bias Fv/Fm.)</small>
+                  all normalizations itself:<br>
+                  &bull; <strong>Bg</strong> = Raw &minus; mean(Raw at 1&ndash;3&nbsp;µs) &mdash; background-subtracted, in raw intensity units.<br>
+                  &bull; <strong>F0</strong> = Bg / mean(Bg at 10&ndash;12&nbsp;µs) &mdash; normalized so the O-step &asymp;&nbsp;1.0.<br>
+                  &bull; <strong>F0j / F0i / F0p</strong> = F0 / F0(at 2 / 36 / 280&nbsp;ms) &mdash; additionally divided by the J / I / P reference value.<br>
+                  <em>All choices give identical JIP parameters</em> because the backend applies
+                  double-normalization V(t)&nbsp;=&nbsp;(F&minus;F<sub>0</sub>)/(F<sub>M</sub>&minus;F<sub>0</sub>),
+                  which cancels any shared scalar factor. The choice only affects the
+                  transient curve shown in plots and exported to XLSX.
+                  (Raw itself is not offered: its un-subtracted dark offset does not cancel
+                  and would bias Fv/Fm.)</small>
               </div>
               <div class="form-group mb-2">
                 <label class="small font-weight-bold mb-1">Background / F0</label>
@@ -2732,13 +2737,24 @@ window._getOJIPCurvesForBundle = function () {
                   <option value="strip" selected>Strip pre-illumination background (recommended)</option>
                   <option value="keep">Keep all points (F0 = first point)</option>
                 </select>
-                <small class="text-muted">For µs files (TOMI-3 / OJIP-Imaging): timepoints 1&ndash;3&nbsp;µs are dark/background
-                  readings; 10&ndash;12&nbsp;µs are three noisy F0 (O&ndash;step) samples.
-                  <em>Strip</em> subtracts the background (already done in the Bg/F0 normalization),
-                  drops the 1&ndash;3&nbsp;µs points, and averages the three F0 readings into a single
-                  point placed at 0.1&nbsp;ms on the time axis.
-                  For ms files: the leading dark point is dropped.
-                  <em>Keep</em> retains all points unchanged (legacy behaviour; inflates Fv/Fm).</small>
+                <small class="text-muted">This controls how the synthetic early timepoints are handled on the time axis
+                  (the normalization column choice above is independent).<br>
+                  For <strong>µs files</strong> (TOMI-3 / OJIP-Imaging) the first 6 timepoints are not
+                  real kinetics &mdash; they come from a pump-and-probe F<sub>0</sub> measurement
+                  taken &sim;7&nbsp;ms before the saturating pulse, assigned fictitious timestamps:<br>
+                  &bull; 1, 2, 3&nbsp;µs = dark/background readings<br>
+                  &bull; 10, 11, 12&nbsp;µs = three noisy F<sub>0</sub> (O-step) samples<br>
+                  &bull; 500&nbsp;µs onward = real OJIP kinetics (0.5&nbsp;ms time resolution)<br>
+                  <em>Strip</em> (recommended): drops the 1&ndash;3&nbsp;µs background points,
+                  averages the three F<sub>0</sub> readings into a single point placed at
+                  <strong>0.1&nbsp;ms</strong> (100&nbsp;µs) on the time axis &mdash; filling the gap before
+                  the first real kinetic point at 0.5&nbsp;ms.
+                  The backend then uses this averaged value as F<sub>0</sub> for all JIP calculations.<br>
+                  <em>Keep</em>: retains all 6 points at their original fictitious timestamps.
+                  The backend takes the first point (1&nbsp;µs, a dark reading) as F<sub>0</sub>,
+                  which artificially inflates Fv/Fm.<br>
+                  For <strong>ms files</strong>: <em>Strip</em> drops leading dark points (detected by
+                  a &ge;3&times; jump to the next point).</small>
               </div>
               <div class="form-group mb-1">
                 <label class="small font-weight-bold mb-1">Curve naming (click to toggle, drag to reorder)</label>
