@@ -3158,7 +3158,9 @@ const PARAM_GROUPS = {
   timing: ['FJ_time_user_ms', 'FI_time_user_ms', 'FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FM_time_ms'],
   slopes: ['slope_OJ', 'slope_JI', 'slope_IP'],
   dip:    ['dip_IP_amplitude', 'dip_IP_time_ms', 'dip_IP_d1_min'],
-  ps:     ['FS', 'FS_time_ms', 'slope_PS', 'PS_amplitude', 'PS_rel', 'FS_ref', 'FS_ref_time_ms'],
+  pqs:    ['FQ', 'FQ_time_ms', 'slope_PQ', 'PQ_amplitude', 'PQ_rel', 'FQ_ref',
+           'F_earlyS', 'F_earlyS_time_ms', 'slope_P_earlyS', 'P_earlyS_amplitude', 'P_earlyS_rel',
+           'slope_Q_earlyS', 'Q_earlyS_amplitude', 'Q_earlyS_rel'],
   decomp: ['A_OJ', 'A_JI', 'A_IP', 'tau_OJ_ms', 'tau_JI_ms', 'tau_IP_ms'],
   gauss:  ['gauss_center_1_ms', 'gauss_sigma_1', 'gauss_amp_1',
            'gauss_center_2_ms', 'gauss_sigma_2', 'gauss_amp_2',
@@ -3176,7 +3178,9 @@ const PARAM_LABELS = {
   deriv_timing_used:'Auto-detected used',
   slope_OJ:'Slope O-J', slope_JI:'Slope J-I', slope_IP:'Slope I-P',
   dip_IP_amplitude:'Dip I-P amplitude', dip_IP_time_ms:'Dip I-P time (ms)', dip_IP_d1_min:'Dip I-P D1 min',
-  FS:'FS', FS_time_ms:'t(FS) ms', slope_PS:'Slope P-S', PS_amplitude:'P-S amplitude', PS_rel:'P-S / FV', FS_ref:'S point used', FS_ref_time_ms:'t(S ref) ms',
+  FQ:'FQ', FQ_time_ms:'t(FQ) ms', slope_PQ:'Slope P-Q', PQ_amplitude:'P-Q amplitude', PQ_rel:'P-Q / FV', FQ_ref:'Q detection',
+  F_earlyS:'F(early S)', F_earlyS_time_ms:'t(early S) ms', slope_P_earlyS:'Slope P-eS', P_earlyS_amplitude:'P-eS amplitude', P_earlyS_rel:'P-eS / FV',
+  slope_Q_earlyS:'Slope Q-eS', Q_earlyS_amplitude:'Q-eS amplitude', Q_earlyS_rel:'Q-eS / FV',
   A_OJ:'A(O-J)', A_JI:'A(J-I)', A_IP:'A(I-P)',
   tau_OJ_ms:'τ(O-J) ms', tau_JI_ms:'τ(J-I) ms', tau_IP_ms:'τ(I-P) ms',
   gauss_center_1_ms:'G1 center ms', gauss_sigma_1:'G1 σ', gauss_amp_1:'G1 amplitude',
@@ -3540,8 +3544,10 @@ function calcJIP(kv) {
     // pass-through: slopes, dip, decomposition, gaussians
     slope_OJ: kv.slope_OJ, slope_JI: kv.slope_JI, slope_IP: kv.slope_IP,
     dip_IP_amplitude: kv.dip_IP_amplitude, dip_IP_time_ms: kv.dip_IP_time_ms, dip_IP_d1_min: kv.dip_IP_d1_min,
-    // P-S transition (post-P semi-steady-state)
-    FS: kv.FS, FS_time_ms: kv.FS_time_ms, slope_PS: kv.slope_PS, PS_amplitude: kv.PS_amplitude, PS_rel: kv.PS_rel, FS_ref: kv.FS_ref, FS_ref_time_ms: kv.FS_ref_time_ms,
+    // Q point / early S (post-P decline)
+    FQ: kv.FQ, FQ_time_ms: kv.FQ_time_ms, slope_PQ: kv.slope_PQ, PQ_amplitude: kv.PQ_amplitude, PQ_rel: kv.PQ_rel, FQ_ref: kv.FQ_ref,
+    F_earlyS: kv.F_earlyS, F_earlyS_time_ms: kv.F_earlyS_time_ms, slope_P_earlyS: kv.slope_P_earlyS, P_earlyS_amplitude: kv.P_earlyS_amplitude, P_earlyS_rel: kv.P_earlyS_rel,
+    slope_Q_earlyS: kv.slope_Q_earlyS, Q_earlyS_amplitude: kv.Q_earlyS_amplitude, Q_earlyS_rel: kv.Q_earlyS_rel,
     A_OJ: kv.A_OJ, A_JI: kv.A_JI, A_IP: kv.A_IP,
     tau_OJ_ms: kv.tau_OJ_ms, tau_JI_ms: kv.tau_JI_ms, tau_IP_ms: kv.tau_IP_ms,
     gauss_center_1_ms: kv.gauss_center_1_ms, gauss_sigma_1: kv.gauss_sigma_1, gauss_amp_1: kv.gauss_amp_1,
@@ -4416,21 +4422,39 @@ function renderCurvesChart(norm) {
     });
   }
 
-  // FS markers (● circle) — uses FS_ref_time_ms so marker appears for both
-  // auto-detected S minimum and end-of-measurement fallback
-  const fsData = [], fsBg = [], fsBd = [];
+  // Q markers (● circle, red) — only when Q was detected
+  const fqData = [], fqBg = [], fqBd = [];
   files.forEach((fname, i) => {
-    const fsT = ojipData.key_values[fname].FS_ref_time_ms;
-    if (fsT != null) {
-      fsData.push({ x: fsT, y: interpAt(t, ojipData.curves[fname][norm], fsT) });
-      fsBg.push(sampleColor(i, n)); fsBd.push(sampleColor(i, n));
+    const fqT = ojipData.key_values[fname].FQ_time_ms;
+    const fqRef = ojipData.key_values[fname].FQ_ref;
+    if (fqT != null && fqRef) {
+      fqData.push({ x: fqT, y: interpAt(t, ojipData.curves[fname][norm], fqT) });
+      fqBg.push(sampleColor(i, n)); fqBd.push(sampleColor(i, n));
     }
   });
-  if (fsData.length) {
+  if (fqData.length) {
     datasets.push({
-      label: 'FS', showLine: false, data: fsData,
+      label: 'FQ', showLine: false, data: fqData,
       pointRadius: 6, pointStyle: 'circle',
-      pointBackgroundColor: fsBg, pointBorderColor: fsBd,
+      pointBackgroundColor: fqBg, pointBorderColor: fqBd,
+      borderColor: 'transparent', backgroundColor: 'transparent',
+    });
+  }
+
+  // Early S markers (★ star, teal) — always shown
+  const esData = [], esBg = [], esBd = [];
+  files.forEach((fname, i) => {
+    const esT = ojipData.key_values[fname].F_earlyS_time_ms;
+    if (esT != null) {
+      esData.push({ x: esT, y: interpAt(t, ojipData.curves[fname][norm], esT) });
+      esBg.push('#17becf'); esBd.push('#17becf');
+    }
+  });
+  if (esData.length) {
+    datasets.push({
+      label: 'eS', showLine: false, data: esData,
+      pointRadius: 7, pointStyle: 'star',
+      pointBackgroundColor: esBg, pointBorderColor: esBd,
       borderColor: 'transparent', backgroundColor: 'transparent',
     });
   }
@@ -4443,7 +4467,7 @@ function renderCurvesChart(norm) {
   opts.onClick = (e, elements) => {
     if (!elements.length) return;
     const dsIdx = elements[0].datasetIndex;
-    if (dsIdx >= n) return;                    // FJ / FI / FP / FS marker row — ignore
+    if (dsIdx >= n) return;                    // FJ / FI / FP / Q / eS marker row — ignore
     const fname = ojipData.files[dsIdx];
     if (fname && confirm(`Remove "${fname}" from analysis?`)) removeFile(fname);
   };
@@ -4901,8 +4925,10 @@ function renderDiagRecon() {
     addMk(kv.FI_time_deriv_ms, ojipData.curves[fname].reconstructed, 'rectRot');
     if (kv.FP_time_deriv_ms != null)
       addMk(kv.FP_time_deriv_ms, ojipData.curves[fname].reconstructed, 'rect');
-    if (kv.FS_ref_time_ms != null)
-      addMk(kv.FS_ref_time_ms, ojipData.curves[fname].reconstructed, 'circle');
+    if (kv.FQ_time_ms != null && kv.FQ_ref)
+      addMk(kv.FQ_time_ms, ojipData.curves[fname].reconstructed, 'circle');
+    if (kv.F_earlyS_time_ms != null)
+      addMk(kv.F_earlyS_time_ms, ojipData.curves[fname].reconstructed, 'star');
     if (pts.length > 0) {
       datasets.push({ label: '', showLine: false, data: pts,
         pointRadius: radii, pointStyle: styles,
@@ -4953,7 +4979,8 @@ function renderDiagD2() {
     addMk2(kv.FJ_time_deriv_ms, 'triangle');
     addMk2(kv.FI_time_deriv_ms, 'rectRot');
     if (kv.FP_time_deriv_ms != null) addMk2(kv.FP_time_deriv_ms, 'rect');
-    if (kv.FS_ref_time_ms != null) addMk2(kv.FS_ref_time_ms, 'circle');
+    if (kv.FQ_time_ms != null && kv.FQ_ref) addMk2(kv.FQ_time_ms, 'circle');
+    if (kv.F_earlyS_time_ms != null) addMk2(kv.F_earlyS_time_ms, 'star');
     if (pts2.length > 0) {
       datasets.push({ label: '', showLine: false, data: pts2,
         pointRadius: r2, pointStyle: st2,
@@ -4990,7 +5017,8 @@ function renderDiagD3() {
     addMk3(kv.FJ_time_deriv_ms, 'triangle');
     addMk3(kv.FI_time_deriv_ms, 'rectRot');
     if (kv.FP_time_deriv_ms != null) addMk3(kv.FP_time_deriv_ms, 'rect');
-    if (kv.FS_ref_time_ms != null) addMk3(kv.FS_ref_time_ms, 'circle');
+    if (kv.FQ_time_ms != null && kv.FQ_ref) addMk3(kv.FQ_time_ms, 'circle');
+    if (kv.F_earlyS_time_ms != null) addMk3(kv.F_earlyS_time_ms, 'star');
     if (pts3.length > 0) {
       datasets.push({ label: '', showLine: false, data: pts3,
         pointRadius: r3, pointStyle: st3,
@@ -5026,7 +5054,8 @@ function renderDiagD1() {
     addMk(kv.FJ_time_deriv_ms, 'triangle');
     addMk(kv.FI_time_deriv_ms, 'rectRot');
     if (kv.FP_time_deriv_ms != null) addMk(kv.FP_time_deriv_ms, 'rect');
-    if (kv.FS_ref_time_ms != null) addMk(kv.FS_ref_time_ms, 'circle');
+    if (kv.FQ_time_ms != null && kv.FQ_ref) addMk(kv.FQ_time_ms, 'circle');
+    if (kv.F_earlyS_time_ms != null) addMk(kv.F_earlyS_time_ms, 'star');
     if (pts.length > 0) {
       datasets.push({ label: '', showLine: false, data: pts,
         pointRadius: r, pointStyle: st,
@@ -5969,34 +5998,30 @@ function generateOJIPMethodsText() {
         '(DI0/RC), and the performance index on absorption basis (PI_abs).'
     );
 
-    // P-S transition — include only when data has P-S results
-    var hasPS = false;
+    // Q point / early S — include when data has post-peak results
+    var hasPQS = false;
     var kv0 = ojipData.key_values && ojipData.files && ojipData.files.length > 0
         ? ojipData.key_values[ojipData.files[0]] : null;
-    if (kv0 && kv0.FS_ref != null) hasPS = true;
-    if (!hasPS && mcIsActive && paramMatrix) {
+    if (kv0 && kv0.F_earlyS != null) hasPQS = true;
+    if (!hasPQS && mcIsActive && paramMatrix) {
         for (var pi = 0; pi < paramMatrix.length; pi++) {
-            if (paramMatrix[pi] && paramMatrix[pi].FS_ref != null) { hasPS = true; break; }
+            if (paramMatrix[pi] && paramMatrix[pi].F_earlyS != null) { hasPQS = true; break; }
         }
     }
-    if (hasPS) {
+    if (hasPQS) {
         var sMode = document.getElementById('s-point-mode')?.value || 'auto';
-        var sDesc;
+        var qDesc;
         if (sMode === 'auto') {
-            sDesc = 'The S point (semi-steady-state) was identified as the first local minimum (D1 zero-crossing) ' +
-                'in the post-P decline of the spline reconstruction; when no minimum was detected, the D2 trough ' +
-                '(second-derivative local minimum) was used as a fallback, with the end of the measurement as a ' +
-                'final reference.';
-        } else if (sMode === 'inflection') {
-            sDesc = 'The S point (semi-steady-state) was identified as the D2 trough (second-derivative local minimum) ' +
-                'in the post-P decline of the spline reconstruction, corresponding to the characteristic inflection ' +
-                'point where the rate of fluorescence decline transitions from accelerating to decelerating.';
+            qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the first ' +
+                'local minimum (D1 zero-crossing) in the post-P decline of the spline reconstruction; when no minimum ' +
+                'was detected, the D2 trough (second-derivative local minimum) was used as a fallback.';
         } else {
-            sDesc = 'The end of the measurement was used as the S point reference for calculating the P\u2013S decline slope ' +
-                'and amplitude.';
+            qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the D2 trough ' +
+                '(second-derivative local minimum) in the post-P decline of the spline reconstruction.';
         }
-        lines.push(sDesc + ' The P\u2013S transition was characterized by the slope, amplitude, and relative ' +
-            'amplitude (normalized to variable fluorescence FV) between FM and the S reference point.');
+        lines.push(qDesc + ' The early S level was taken as the last measured data point (proxy for the classical ' +
+            'semi-steady-state S, which typically occurs at 15\u201360\u202fs). Both the P\u2013Q and P\u2013early\u202fS transitions ' +
+            'were characterized by slope, amplitude, and relative amplitude (normalized to variable fluorescence FV).');
     }
 
     if (gnames.length >= 2) {
@@ -6239,6 +6264,16 @@ function _drawMarker(ctx, px, py, shape, color, size) {
   if (shape === 'triangle')    { ctx.moveTo(px, py - h); ctx.lineTo(px - h, py + h); ctx.lineTo(px + h, py + h); ctx.closePath(); }
   else if (shape === 'diamond') { ctx.moveTo(px, py - h); ctx.lineTo(px + h, py); ctx.lineTo(px, py + h); ctx.lineTo(px - h, py); ctx.closePath(); }
   else if (shape === 'circle') { ctx.arc(px, py, h, 0, 2 * Math.PI); }
+  else if (shape === 'star') {
+    for (let i = 0; i < 5; i++) {
+      const a = i * 2 * Math.PI / 5 - Math.PI / 2;
+      const ra = i * 2 * Math.PI / 5 - Math.PI / 2 + Math.PI / 5;
+      if (i === 0) ctx.moveTo(px + h * Math.cos(a), py + h * Math.sin(a));
+      else ctx.lineTo(px + h * Math.cos(a), py + h * Math.sin(a));
+      ctx.lineTo(px + h * 0.4 * Math.cos(ra), py + h * 0.4 * Math.sin(ra));
+    }
+    ctx.closePath();
+  }
   else { ctx.rect(px - h, py - h, size, size); }
   ctx.fill();
 }
@@ -6382,15 +6417,25 @@ function _renderOjipPlot(ctx, cfg) {
       _drawMarker(ctx, toX(tv), toY(fv), m.shape, m.color, 8);
       legendMarkers.push({ shape: m.shape, color: m.color, label: m.label });
     }
-    // FS marker (● circle) — only when a real S point was detected
-    const fsT = cfg.kv.FS_ref_time_ms;
-    const fsRef = cfg.kv.FS_ref;
-    if (fsT != null && fsT > 0 && fsRef && fsRef !== 'end of data') {
-      const fsFv = cfg.interpolateMarkers
-        ? _linearInterp(interpT, interpY, fsT) : cfg.kv.FS;
-      if (fsFv != null && isFinite(fsFv)) {
-        _drawMarker(ctx, toX(fsT), toY(fsFv), 'circle', '#d62728', 8);
-        legendMarkers.push({ shape: 'circle', color: '#d62728', label: 'S' });
+    // Q marker (● circle, red) — only when Q was detected
+    const fqT = cfg.kv.FQ_time_ms;
+    const fqRef = cfg.kv.FQ_ref;
+    if (fqT != null && fqT > 0 && fqRef) {
+      const fqFv = cfg.interpolateMarkers
+        ? _linearInterp(interpT, interpY, fqT) : cfg.kv.FQ;
+      if (fqFv != null && isFinite(fqFv)) {
+        _drawMarker(ctx, toX(fqT), toY(fqFv), 'circle', '#d62728', 8);
+        legendMarkers.push({ shape: 'circle', color: '#d62728', label: 'Q' });
+      }
+    }
+    // Early S marker (★ star, teal) — always shown
+    const esT = cfg.kv.F_earlyS_time_ms;
+    if (esT != null && esT > 0) {
+      const esFv = cfg.interpolateMarkers
+        ? _linearInterp(interpT, interpY, esT) : cfg.kv.F_earlyS;
+      if (esFv != null && isFinite(esFv)) {
+        _drawMarker(ctx, toX(esT), toY(esFv), 'star', '#17becf', 9);
+        legendMarkers.push({ shape: 'star', color: '#17becf', label: 'eS' });
       }
     }
   }
@@ -6591,15 +6636,16 @@ function _formatMethodInfoText(mi) {
   } else {
     lines.push('Enabled:                no');
   }
-  // S point reference mode
+  // Q point / early S detection mode
   const sMode = mi.s_point_mode || 'auto';
-  const S_MODE_LABELS = {
-    auto: 'Auto (D1 minimum \u2192 D2 trough fallback \u2192 end of data)',
+  const Q_MODE_LABELS = {
+    auto: 'Auto (D1 minimum \u2192 D2 trough fallback)',
     inflection: 'Inflection point (D2 trough in post-P decline)',
-    end: 'End of measurement (last data point)',
   };
-  lines.push('', '\u2014 P-S transition \u2014',
-    'S point reference:      ' + (S_MODE_LABELS[sMode] || sMode));
+  lines.push('', '\u2014 Q point / early S detection \u2014',
+    'Q point detection:      ' + (Q_MODE_LABELS[sMode] || sMode),
+    'Early S:                Last measured point (always computed)',
+    'Ref: Fratamico et al. (2016) Photosynth Res 128:271-285');
 
   lines.push('', '\u2014 Generated by cyano.tools OJIP analysis \u2014', 'https://www.cyano.tools', '');
   return lines.join('\n');
@@ -6699,7 +6745,8 @@ async function startBatchExport() {
             FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
             FI_time_deriv_ms: detail.FI_time_deriv_ms,
             FP_time_deriv_ms: detail.FP_time_deriv_ms,
-            FS_ref_time_ms: detail.FS_ref_time_ms, FS_ref: detail.FS_ref,
+            FQ: detail.FQ, FQ_time_ms: detail.FQ_time_ms, FQ_ref: detail.FQ_ref,
+            F_earlyS: detail.F_earlyS, F_earlyS_time_ms: detail.F_earlyS_time_ms,
             FM_time_ms: detail.FM_time_ms },
         }, inclPlots);
         for (const { path, b64 } of pngs) zip.file(path, b64, { base64: true });
@@ -6775,7 +6822,8 @@ async function startBatchExport() {
                     FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
                     FI_time_deriv_ms: detail.FI_time_deriv_ms,
                     FP_time_deriv_ms: detail.FP_time_deriv_ms,
-                    FS_ref_time_ms: detail.FS_ref_time_ms, FS_ref: detail.FS_ref,
+                    FQ: detail.FQ, FQ_time_ms: detail.FQ_time_ms, FQ_ref: detail.FQ_ref,
+                    F_earlyS: detail.F_earlyS, F_earlyS_time_ms: detail.F_earlyS_time_ms,
                     FM_time_ms: detail.FM_time_ms },
                 }, inclPlots);
                 for (const { path, b64 } of pngs) zip.file(path, b64, { base64: true });

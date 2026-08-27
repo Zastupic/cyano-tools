@@ -540,7 +540,7 @@
           <button class="btn btn-outline-primary" data-norm="shifted_FM">Shifted to F<sub>M</sub></button>
           <button class="btn btn-outline-primary" data-norm="double_norm">Double normalized</button>
         </div>
-        <small class="text-muted ml-3">▲ F<sub>J</sub> &nbsp;◆ F<sub>I</sub> &nbsp;■ F<sub>P</sub> &nbsp;● F<sub>S</sub> &nbsp;|&nbsp; click a curve to remove it</small>
+        <small class="text-muted ml-3">▲ F<sub>J</sub> &nbsp;◆ F<sub>I</sub> &nbsp;■ F<sub>P</sub> &nbsp;<span style="color:#d62728">●</span> Q &nbsp;<span style="color:#17becf">★</span> eS &nbsp;|&nbsp; click a curve to remove it</small>
       </div>
       <div style="position:relative; height:380px;">
         <canvas id="curves-chart"></canvas>
@@ -597,7 +597,7 @@
           <button class="btn btn-outline-primary" data-pgroup="areas">Areas &amp; indices</button>
           <button class="btn btn-outline-primary" data-pgroup="tech">Technical</button>
           <button class="btn btn-outline-primary" data-pgroup="timing">Timing</button>
-          <button class="btn btn-outline-primary" data-pgroup="ps">P-S transition</button>
+          <button class="btn btn-outline-primary" data-pgroup="pqs">Post-peak (Q &amp; early S)</button>
           <button class="btn btn-outline-primary" data-pgroup="decomp" id="pgroup-decomp-btn" style="display:none">Decomposition</button>
           <button class="btn btn-outline-primary" data-pgroup="gauss"  id="pgroup-gauss-btn"  style="display:none">D1 Gaussians</button>
         </div>
@@ -1331,6 +1331,8 @@
                 <li>Akinyemi OO <em>et&nbsp;al.</em> (2023) Derivative-based time-adjusted analysis of the OJIP fluorescence transient of silver birch. <em>Photosynth&nbsp;Res</em> 157:133&ndash;146. <a href="https://doi.org/10.1007/s11120-023-01033-x" target="_blank" rel="noopener">doi:10.1007/s11120-023-01033-x</a> &mdash; <em>Polynomial inflection method</em></li>
                 <li>Boisvert S, Joly D, Carpentier R (2006) Quantitative analysis of the experimental O-J-I-P chlorophyll fluorescence induction kinetics. <em>FEBS&nbsp;J</em> 273:4770&ndash;4777. <a href="https://doi.org/10.1111/j.1742-4658.2006.05475.x" target="_blank" rel="noopener">doi:10.1111/j.1742-4658.2006.05475.x</a> &mdash; <em>3-exponential decomposition</em></li>
                 <li>Fritsch FN, Carlson RE (1980) Monotone piecewise cubic interpolation. <em>SIAM&nbsp;J&nbsp;Numer&nbsp;Anal</em> 17:238&ndash;246. <a href="https://doi.org/10.1137/0717021" target="_blank" rel="noopener">doi:10.1137/0717021</a> &mdash; <em>PCHIP interpolation</em></li>
+                <li>Fratamico A, Tocquin P, Franck F (2016) The chlorophyll <em>a</em> fluorescence induction curve in the green microalga <em>Haematococcus pluvialis</em>: identification of the Q point and of spectroscopic differences between high-light- and low-light-grown cells. <em>Photosynth&nbsp;Res</em> 128:271&ndash;285. <a href="https://doi.org/10.1007/s11120-016-0241-2" target="_blank" rel="noopener">doi:10.1007/s11120-016-0241-2</a> &mdash; <em>Q point identification</em></li>
+                <li>Stirbet A, Govindjee (2012) Chlorophyll <em>a</em> fluorescence induction: a personal perspective of the thermal phase, the J&ndash;I&ndash;P rise. <em>Photosynth&nbsp;Res</em> 113:15&ndash;61. <a href="https://doi.org/10.1007/s11120-012-9754-5" target="_blank" rel="noopener">doi:10.1007/s11120-012-9754-5</a> &mdash; <em>PSMT nomenclature</em></li>
               </ol>
             </div>
           </details>
@@ -1451,16 +1453,15 @@
               <span id="f0-time-note" class="text-info ml-2" style="display:none; font-size:0.85em;">&#9432; Time axis will be rescaled &mdash; click Re-fit to apply</span>
             </div>
           </div>
-          <!-- S point reference mode for P-S transition parameters -->
+          <!-- Q point detection mode for post-peak transition parameters -->
           <div class="form-row align-items-center mb-2">
             <div class="col-auto">
-              <label class="mb-0 mr-1">S point ref:</label>
+              <label class="mb-0 mr-1">Q point detection:</label>
               <select id="s-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
-                <option value="auto">Auto (detect minimum)</option>
-                <option value="inflection">Inflection point</option>
-                <option value="end">End of measurement</option>
+                <option value="auto">Auto (D1 minimum &rarr; D2 trough)</option>
+                <option value="inflection">D2 trough only</option>
               </select>
-              <small class="text-muted ml-1">reference for P-S slope/amplitude &mdash; click Re-fit to apply</small>
+              <small class="text-muted ml-1">Q point at ~1&ndash;2&thinsp;s (Fratamico et&nbsp;al. 2016); early S&nbsp;=&nbsp;last point &mdash; click Re-fit to apply</small>
             </div>
           </div>
           <!-- Background / F0 mirror (AquaPen/FluorPen batches) — synced to the
@@ -2214,14 +2215,25 @@
             <option value="dip_IP_time_ms">Dip I-P time (ms)</option>
             <option value="dip_IP_d1_min">Dip I-P D1 min</option>
           </optgroup>
-          <optgroup label="P-S Transition">
-            <option value="FS">FS</option>
-            <option value="FS_time_ms">t(FS) ms</option>
-            <option value="slope_PS">Slope P-S</option>
-            <option value="PS_amplitude">P-S amplitude</option>
-            <option value="PS_rel">P-S / FV</option>
-            <option value="FS_ref">S point used</option>
-            <option value="FS_ref_time_ms">t(S ref) ms</option>
+          <optgroup label="P-Q Transition">
+            <option value="FQ">FQ</option>
+            <option value="FQ_time_ms">t(FQ) ms</option>
+            <option value="slope_PQ">Slope P-Q</option>
+            <option value="PQ_amplitude">P-Q amplitude</option>
+            <option value="PQ_rel">P-Q / FV</option>
+            <option value="FQ_ref">Q detection</option>
+          </optgroup>
+          <optgroup label="P-early S Decline">
+            <option value="F_earlyS">F(early S)</option>
+            <option value="F_earlyS_time_ms">t(early S) ms</option>
+            <option value="slope_P_earlyS">Slope P-eS</option>
+            <option value="P_earlyS_amplitude">P-eS amplitude</option>
+            <option value="P_earlyS_rel">P-eS / FV</option>
+          </optgroup>
+          <optgroup label="Q → early S">
+            <option value="slope_Q_earlyS">Slope Q-eS</option>
+            <option value="Q_earlyS_amplitude">Q-eS amplitude</option>
+            <option value="Q_earlyS_rel">Q-eS / FV</option>
           </optgroup>
         </select>
 
@@ -3225,7 +3237,9 @@ function _buildGroupAvgParams(slots, field, value) {
               'Area_OJ','Area_JI','Area_IP','Area_OP',
               'slope_OJ','slope_JI','slope_IP',
               'dip_IP_amplitude','dip_IP_time_ms','dip_IP_d1_min',
-              'FS','FS_time_ms','slope_PS','PS_amplitude','PS_rel',
+              'FQ','FQ_time_ms','slope_PQ','PQ_amplitude','PQ_rel',
+              'F_earlyS','F_earlyS_time_ms','slope_P_earlyS','P_earlyS_amplitude','P_earlyS_rel',
+              'slope_Q_earlyS','Q_earlyS_amplitude','Q_earlyS_rel',
               'FJ_time_user_ms','FI_time_user_ms','FM_time_ms',
               'FJ_time_deriv_ms','FI_time_deriv_ms','FP_time_deriv_ms'];
   var avg = {};

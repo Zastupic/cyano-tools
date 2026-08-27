@@ -1691,35 +1691,36 @@ def _t_safe(v, ms_factor):
         return None
 
 
-def _detect_ps_transition(recon_vals, log_time_native, ms_factor,
+def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
                           fp_time_ms, fm_time_ms, fm_raw, f0_raw,
                           min_post_p_ms=200.0, s_point_mode='auto',
                           d2_vals=None):
-    """Detect the P-S transition after the P peak.
+    """Detect the Q point and compute early-S parameters after the P peak.
+
+    The **Q point** (Fratamico et al. 2016, *Photosynth Res* 128:271-285)
+    is the first notable inflection or minimum after the P peak, typically
+    at ~1-2 s.  It marks the transition between fast photochemical
+    quenching (alternative electron transport / Mehler reaction) and
+    slower NPQ build-up.  This is *not* the classical S level, which
+    occurs at ~15-60 s — beyond most OJIP recording windows.
+
+    The **early S** proxy is always the last measured data point.
 
     Uses the spline-reconstructed curve (double-normalised, already
-    smoothed by the knot density ``kr``) for S-point timing detection.
-    Output values (FS, slope_PS, PS_amplitude) are converted back to
-    **raw fluorescence units** using *fm_raw* and *f0_raw*.
+    smoothed by the knot density ``kr``) for Q-point timing detection.
+    Output values are converted back to **raw fluorescence units**.
 
-    Three tiers of detection:
+    Q detection (two tiers):
 
     1. **D1 zero-crossing** (neg → pos): a true local minimum in the
        post-P decline — the reconstruction reverses and begins rising.
-       ``FS_ref = 'S minimum'``.
+       ``FQ_ref = 'Q minimum'``.
     2. **D2 trough** (D2 local minimum / D3 zero-crossing): the
-       characteristic "elbow" of the P-S decline, where curvature
-       intensity peaks.  Found by skipping past the first D2
-       zero-crossing (which is the FP peak transition), then locating
-       the D2 local minimum in the remaining decline region.
-       ``FS_ref = 'S inflection'``.
-    3. **End of data**: neither minimum nor inflection detected; the
-       last measured point is used as reference.
-       ``FS_ref = 'end of data'``.
+       characteristic "elbow" of the post-P decline.
+       ``FQ_ref = 'Q inflection'``.
 
-    FS / FS_time_ms are reported for tiers 1 and 2 (``None`` for tier 3).
-    slope_PS / PS_amplitude / PS_rel are always computed using whichever
-    reference point was found.
+    When neither is found, ``FQ_ref = None`` and FQ / FQ_time_ms
+    are ``None``.  Early-S parameters are always computed.
 
     The search starts after FP time (not FM time) to correctly skip the
     J-I dip when FM coincides with the early J step.
@@ -1738,31 +1739,29 @@ def _detect_ps_transition(recon_vals, log_time_native, ms_factor,
         Time of FM (global fluorescence maximum) in ms.
     fm_raw, f0_raw : float
         FM and F0 fluorescence values in **raw** (instrument) units.
-        Used to convert double-norm reconstruction values back to raw.
     min_post_p_ms : float
         Minimum data span (ms) after the search start required to
         attempt detection.
     s_point_mode : str
         ``'auto'`` (default): try D1 zero-crossing (minimum), then D2
-        inflection as fallback, then end-of-data.
-        ``'inflection'``: skip D1, use D2 inflection point directly,
-        fall back to end-of-data.
-        ``'end'``: always use the last measured point (skip detection).
+        trough as fallback.
+        ``'inflection'``: skip D1, use D2 trough directly.
     d2_vals : array-like or None
         Second-derivative values from the spline (D2_DF column), same
-        length as *recon_vals*.  When provided, the D2 inflection tier
-        uses these true spline derivatives instead of crude second
-        differences of the reconstruction.
+        length as *recon_vals*.
 
     Returns
     -------
-    dict — FS and slope_PS / PS_amplitude are in raw fluorescence units.
-    PS_rel is normalised to FV (FM − F0).
+    dict — Q point and early-S parameters in raw fluorescence units.
+    PQ_rel / P_earlyS_rel are normalised to FV (FM − F0).
     """
     null_result = {
-        'FS': None, 'FS_time_ms': None,
-        'slope_PS': None, 'PS_amplitude': None, 'PS_rel': None,
-        'FS_ref': None, 'FS_ref_time_ms': None,
+        'FQ': None, 'FQ_time_ms': None,
+        'slope_PQ': None, 'PQ_amplitude': None, 'PQ_rel': None,
+        'FQ_ref': None,
+        'F_earlyS': None, 'F_earlyS_time_ms': None,
+        'slope_P_earlyS': None, 'P_earlyS_amplitude': None, 'P_earlyS_rel': None,
+        'slope_Q_earlyS': None, 'Q_earlyS_amplitude': None, 'Q_earlyS_rel': None,
     }
 
     # Determine search start: FP if available, else FM
@@ -1783,34 +1782,38 @@ def _detect_ps_transition(recon_vals, log_time_native, ms_factor,
 
     y_post = y[post_mask]
 
-    # ── Tier 1: precise S point via D1 zero-crossing (neg → pos) ──────
+    # Treat legacy 'end' mode as 'auto' (backward compat)
+    if s_point_mode == 'end':
+        s_point_mode = 'auto'
+
+    # ── Tier 1: Q point via D1 zero-crossing (neg → pos) ──────────────
     # A true local minimum: the decline reverses and fluorescence rises.
-    # Attempted in 'auto' mode only (skipped for 'inflection' and 'end').
-    fs_dn = None           # S point value in double-norm
-    fs_time_ms = None
-    fs_ref_label = 'end of data'
+    # Attempted in 'auto' mode only (skipped for 'inflection').
+    fq_dn = None           # Q point value in double-norm
+    fq_time_ms = None
+    fq_ref_label = None    # None = Q not detected
     dy = np.diff(y_post)
     if s_point_mode == 'auto':
         neg_then_pos = np.where((dy[:-1] < 0) & (dy[1:] >= 0))[0]
         if len(neg_then_pos) > 0:
-            s_idx = neg_then_pos[0] + 1
-            fs_dn = float(y_post[s_idx])
-            fs_time_ms = float(t_post[s_idx])
-            fs_ref_label = 'S minimum'
+            q_idx = neg_then_pos[0] + 1
+            fq_dn = float(y_post[q_idx])
+            fq_time_ms = float(t_post[q_idx])
+            fq_ref_label = 'Q minimum'
 
     # ── Tier 1b: D2 trough (inflection of the decline) ────────────────
     # Finds the D2 local minimum (trough) in the post-peak decline.
     # This is where D3 crosses zero (neg → pos), marking the "elbow"
-    # between the fast initial P-S decline and the slower approach to
-    # steady state.
+    # between the fast initial post-P decline and the slower approach
+    # to steady state.
     #
     # Algorithm: skip past the first D2 neg→pos crossing (which is
     # just the transition out of the FP peak curvature), then find the
     # D2 trough in the remaining region.
     #
     # Attempted in 'auto' (as fallback when no minimum) and 'inflection'
-    # (as primary method).  Skipped for 'end'.
-    if fs_dn is None and s_point_mode in ('auto', 'inflection') and len(y_post) >= 3:
+    # (as primary method).
+    if fq_dn is None and s_point_mode in ('auto', 'inflection') and len(y_post) >= 3:
         _found_inflection = False
         if d2_vals is not None:
             d2_arr = np.asarray(d2_vals, dtype=float)
@@ -1828,11 +1831,11 @@ def _detect_ps_transition(recon_vals, log_time_native, ms_factor,
                     trough_locs = np.where(
                         (dd2[:-1] <= 0) & (dd2[1:] > 0))[0]
                     if len(trough_locs) > 0:
-                        s_idx_local = trough_locs[0] + 1
-                        s_idx_d2 = after_peak + s_idx_local
-                        fs_dn = float(y_post[s_idx_d2])
-                        fs_time_ms = float(t_post[s_idx_d2])
-                        fs_ref_label = 'S inflection'
+                        q_idx_local = trough_locs[0] + 1
+                        q_idx_d2 = after_peak + q_idx_local
+                        fq_dn = float(y_post[q_idx_d2])
+                        fq_time_ms = float(t_post[q_idx_d2])
+                        fq_ref_label = 'Q inflection'
                         _found_inflection = True
         # Fallback: second differences of reconstruction (no spline D2)
         if not _found_inflection:
@@ -1840,39 +1843,61 @@ def _detect_ps_transition(recon_vals, log_time_native, ms_factor,
             neg_then_pos_d2 = np.where(
                 (d2y[:-1] < 0) & (d2y[1:] >= 0))[0]
             if len(neg_then_pos_d2) > 0:
-                s_idx_d2 = neg_then_pos_d2[0] + 1
-                fs_dn = float(y_post[s_idx_d2])
-                fs_time_ms = float(t_post[s_idx_d2])
-                fs_ref_label = 'S inflection'
+                q_idx_d2 = neg_then_pos_d2[0] + 1
+                fq_dn = float(y_post[q_idx_d2])
+                fq_time_ms = float(t_post[q_idx_d2])
+                fq_ref_label = 'Q inflection'
 
-    # ── Tier 2: slope / amplitude (always, using best ref found) ──────
-    if fs_dn is not None:
-        ref_dn   = fs_dn
-        ref_time = fs_time_ms
-    else:
-        ref_dn   = float(y_post[-1])
-        ref_time = float(t_post[-1])
-
-    # Convert double-norm → raw:  raw = dn * FV + F0
+    # ── Convert double-norm → raw ─────────────────────────────────────
     fv_raw = fm_raw - f0_raw
-    ref_raw = ref_dn * fv_raw + f0_raw
-    fs_raw  = (fs_dn * fv_raw + f0_raw) if fs_dn is not None else None
-
     fm_t_ref = fm_time_ms if fm_time_ms and np.isfinite(fm_time_ms) else search_start
-    dt = ref_time - fm_t_ref
 
-    ps_amplitude = ref_raw - fm_raw
-    slope_ps = ps_amplitude / dt if dt > 0 and np.isfinite(dt) else np.nan
-    ps_rel = ps_amplitude / fv_raw if fv_raw != 0 and np.isfinite(fv_raw) else np.nan
+    # ── Q point slope / amplitude (only when Q detected) ──────────────
+    fq_raw = None
+    slope_pq = None
+    pq_amplitude = None
+    pq_rel = None
+    if fq_dn is not None:
+        fq_raw = fq_dn * fv_raw + f0_raw
+        dt_q = fq_time_ms - fm_t_ref
+        pq_amplitude = fq_raw - fm_raw
+        slope_pq = pq_amplitude / dt_q if dt_q > 0 and np.isfinite(dt_q) else np.nan
+        pq_rel = pq_amplitude / fv_raw if fv_raw != 0 and np.isfinite(fv_raw) else np.nan
+
+    # ── Early S (always = last measured point) ────────────────────────
+    end_dn = float(y_post[-1])
+    end_time = float(t_post[-1])
+    end_raw = end_dn * fv_raw + f0_raw
+    dt_es = end_time - fm_t_ref
+    earlyS_amplitude = end_raw - fm_raw
+    earlyS_slope = earlyS_amplitude / dt_es if dt_es > 0 and np.isfinite(dt_es) else np.nan
+    earlyS_rel = earlyS_amplitude / fv_raw if fv_raw != 0 and np.isfinite(fv_raw) else np.nan
+
+    # ── Q → early S slope / amplitude (only when Q detected) ────────
+    q_earlyS_slope = None
+    q_earlyS_amplitude = None
+    q_earlyS_rel = None
+    if fq_dn is not None and fq_raw is not None:
+        q_earlyS_amplitude = end_raw - fq_raw
+        dt_qes = end_time - fq_time_ms
+        q_earlyS_slope = q_earlyS_amplitude / dt_qes if dt_qes > 0 and np.isfinite(dt_qes) else np.nan
+        q_earlyS_rel = q_earlyS_amplitude / fv_raw if fv_raw != 0 and np.isfinite(fv_raw) else np.nan
 
     return {
-        'FS': _safe(fs_raw) if fs_raw is not None else None,
-        'FS_time_ms': _safe(fs_time_ms) if fs_time_ms is not None else None,
-        'slope_PS': _safe(slope_ps),
-        'PS_amplitude': _safe(ps_amplitude),
-        'PS_rel': _safe(ps_rel),
-        'FS_ref': fs_ref_label,
-        'FS_ref_time_ms': _safe(ref_time),
+        'FQ': _safe(fq_raw) if fq_raw is not None else None,
+        'FQ_time_ms': _safe(fq_time_ms) if fq_time_ms is not None else None,
+        'slope_PQ': _safe(slope_pq) if slope_pq is not None else None,
+        'PQ_amplitude': _safe(pq_amplitude) if pq_amplitude is not None else None,
+        'PQ_rel': _safe(pq_rel) if pq_rel is not None else None,
+        'FQ_ref': fq_ref_label,
+        'F_earlyS': _safe(end_raw),
+        'F_earlyS_time_ms': _safe(end_time),
+        'slope_P_earlyS': _safe(earlyS_slope),
+        'P_earlyS_amplitude': _safe(earlyS_amplitude),
+        'P_earlyS_rel': _safe(earlyS_rel),
+        'slope_Q_earlyS': _safe(q_earlyS_slope) if q_earlyS_slope is not None else None,
+        'Q_earlyS_amplitude': _safe(q_earlyS_amplitude) if q_earlyS_amplitude is not None else None,
+        'Q_earlyS_rel': _safe(q_earlyS_rel) if q_earlyS_rel is not None else None,
     }
 
 
@@ -2154,9 +2179,9 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     SM    = AREAOP / FV
     N_val = SM * M0 * (1 / VJ)
 
-    # ── P-S transition detection ─────────────────────────────────────────────
+    # ── Q point / early-S detection ───────────────────────────────────────────
     # Pass raw FM/F0 so output values are in raw fluorescence units
-    _ps = _detect_ps_transition(
+    _pq = _detect_pq_transition(
         Raw_recon_DF[fname].values, log_time.values, ms,
         _fp_t, _safe(FM_timings.get(fname)), _fm_v, _f0_v,
         s_point_mode=s_point_mode,
@@ -2213,10 +2238,15 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'dip_IP_time_ms':   _safe(dip_IP_time_ms_val) if dip_IP_time_ms_val is not None else None,
         'dip_IP_amplitude': _safe(dip_IP_amplitude_val) if dip_IP_amplitude_val is not None else None,
         'dip_IP_d1_min':    _safe(dip_IP_d1_min_val) if dip_IP_d1_min_val is not None else None,
-        # P-S transition (post-P semi-steady-state)
-        'FS': _ps['FS'], 'FS_time_ms': _ps['FS_time_ms'],
-        'slope_PS': _ps['slope_PS'], 'PS_amplitude': _ps['PS_amplitude'],
-        'PS_rel': _ps['PS_rel'], 'FS_ref': _ps['FS_ref'], 'FS_ref_time_ms': _ps['FS_ref_time_ms'],
+        # Q point / early S (post-P decline)
+        'FQ': _pq['FQ'], 'FQ_time_ms': _pq['FQ_time_ms'],
+        'slope_PQ': _pq['slope_PQ'], 'PQ_amplitude': _pq['PQ_amplitude'],
+        'PQ_rel': _pq['PQ_rel'], 'FQ_ref': _pq['FQ_ref'],
+        'F_earlyS': _pq['F_earlyS'], 'F_earlyS_time_ms': _pq['F_earlyS_time_ms'],
+        'slope_P_earlyS': _pq['slope_P_earlyS'], 'P_earlyS_amplitude': _pq['P_earlyS_amplitude'],
+        'P_earlyS_rel': _pq['P_earlyS_rel'],
+        'slope_Q_earlyS': _pq['slope_Q_earlyS'], 'Q_earlyS_amplitude': _pq['Q_earlyS_amplitude'],
+        'Q_earlyS_rel': _pq['Q_earlyS_rel'],
         'deriv_timing_used': _deriv_timing_used,
         **fq,
     }
@@ -2686,9 +2716,9 @@ def ojip_process():
                     _frac_p = (_dip_time - _fi_t_act) / _dt_t
                     _dip_amp = (_fi_r + _frac_p * (_fp_r - _fi_r)) - float(_r_ip_p[_d1_mi])
 
-        # ── per-file P-S transition ─────────────────────────────────────────
+        # ── per-file Q point / early-S detection ───────────────────────────
         # Pass raw FM/F0 so output values are in raw fluorescence units
-        _ps_p = _detect_ps_transition(
+        _pq_p = _detect_pq_transition(
             _recon_p, log_time.values, ms,
             _fp_t_p, _safe(FM_timings_series.get(fname)), _fm_v_p, _f0_v_p,
             d2_vals=D2_DF.iloc[:, i].values)
@@ -2720,10 +2750,15 @@ def ojip_process():
             'dip_IP_time_ms': _safe(_dip_time) if _dip_time is not None else None,
             'dip_IP_amplitude': _safe(_dip_amp) if _dip_amp is not None else None,
             'dip_IP_d1_min': _safe(_dip_d1) if _dip_d1 is not None else None,
-            # P-S transition (post-P semi-steady-state)
-            'FS': _ps_p['FS'], 'FS_time_ms': _ps_p['FS_time_ms'],
-            'slope_PS': _ps_p['slope_PS'], 'PS_amplitude': _ps_p['PS_amplitude'],
-            'PS_rel': _ps_p['PS_rel'], 'FS_ref': _ps_p['FS_ref'], 'FS_ref_time_ms': _ps_p['FS_ref_time_ms'],
+            # Q point / early S (post-P decline)
+            'FQ': _pq_p['FQ'], 'FQ_time_ms': _pq_p['FQ_time_ms'],
+            'slope_PQ': _pq_p['slope_PQ'], 'PQ_amplitude': _pq_p['PQ_amplitude'],
+            'PQ_rel': _pq_p['PQ_rel'], 'FQ_ref': _pq_p['FQ_ref'],
+            'F_earlyS': _pq_p['F_earlyS'], 'F_earlyS_time_ms': _pq_p['F_earlyS_time_ms'],
+            'slope_P_earlyS': _pq_p['slope_P_earlyS'], 'P_earlyS_amplitude': _pq_p['P_earlyS_amplitude'],
+            'P_earlyS_rel': _pq_p['P_earlyS_rel'],
+            'slope_Q_earlyS': _pq_p['slope_Q_earlyS'], 'Q_earlyS_amplitude': _pq_p['Q_earlyS_amplitude'],
+            'Q_earlyS_rel': _pq_p['Q_earlyS_rel'],
             **fq_p,
         }
         # Method-specific parameters
@@ -2891,7 +2926,7 @@ def ojip_refit():
                 kt_entry[f'gauss_center_{g+1}_ms'] = me['centers_ms'][g] if g < len(me.get('centers_ms', [])) else None
                 kt_entry[f'gauss_sigma_{g+1}']     = me['sigmas'][g]     if g < len(me.get('sigmas', []))     else None
                 kt_entry[f'gauss_amp_{g+1}']       = me['amplitudes'][g] if g < len(me.get('amplitudes', [])) else None
-        # ── P-S transition (recompute on refit so params stay current) ────
+        # ── Q point / early-S (recompute on refit so params stay current) ─
         _recon_r = np.array(Raw_recon_DF.iloc[:, i].values, dtype=float)
         _fp_t_r  = _t_safe(FP_deriv.get(fname), ms)
         # FM time: argmax of reconstruction on log_time grid
@@ -2901,18 +2936,25 @@ def ojip_refit():
         _raw_vals = raw_fm_f0.get(fname, {})
         _fm_v_r = float(_raw_vals.get('FM', np.max(_recon_r)))
         _f0_v_r = float(_raw_vals.get('F0', dn_df[fname].iloc[0]))
-        _ps_r = _detect_ps_transition(
+        _pq_r = _detect_pq_transition(
             _recon_r, log_time.values, ms,
             _fp_t_r, _fm_t_r, _fm_v_r, _f0_v_r,
             s_point_mode=s_point_mode_refit,
             d2_vals=D2_DF.iloc[:, i].values)
-        kt_entry['FS'] = _ps_r['FS']
-        kt_entry['FS_time_ms'] = _ps_r['FS_time_ms']
-        kt_entry['slope_PS'] = _ps_r['slope_PS']
-        kt_entry['PS_amplitude'] = _ps_r['PS_amplitude']
-        kt_entry['PS_rel'] = _ps_r['PS_rel']
-        kt_entry['FS_ref'] = _ps_r['FS_ref']
-        kt_entry['FS_ref_time_ms'] = _ps_r['FS_ref_time_ms']
+        kt_entry['FQ'] = _pq_r['FQ']
+        kt_entry['FQ_time_ms'] = _pq_r['FQ_time_ms']
+        kt_entry['slope_PQ'] = _pq_r['slope_PQ']
+        kt_entry['PQ_amplitude'] = _pq_r['PQ_amplitude']
+        kt_entry['PQ_rel'] = _pq_r['PQ_rel']
+        kt_entry['FQ_ref'] = _pq_r['FQ_ref']
+        kt_entry['F_earlyS'] = _pq_r['F_earlyS']
+        kt_entry['F_earlyS_time_ms'] = _pq_r['F_earlyS_time_ms']
+        kt_entry['slope_P_earlyS'] = _pq_r['slope_P_earlyS']
+        kt_entry['P_earlyS_amplitude'] = _pq_r['P_earlyS_amplitude']
+        kt_entry['P_earlyS_rel'] = _pq_r['P_earlyS_rel']
+        kt_entry['slope_Q_earlyS'] = _pq_r['slope_Q_earlyS']
+        kt_entry['Q_earlyS_amplitude'] = _pq_r['Q_earlyS_amplitude']
+        kt_entry['Q_earlyS_rel'] = _pq_r['Q_earlyS_rel']
 
         key_timings[fname] = kt_entry
 
@@ -3677,17 +3719,18 @@ def _format_method_info(mi: dict) -> str:
     else:
         lines.append(f'Enabled:                no')
 
-    # S point reference mode
-    s_mode = mi.get('s_point_mode', 'auto')
-    _S_MODE_LABELS = {
-        'auto':       'Auto (D1 minimum → D2 trough fallback → end of data)',
+    # Q point detection mode
+    q_mode = mi.get('s_point_mode', 'auto')
+    _Q_MODE_LABELS = {
+        'auto':       'Auto (D1 minimum → D2 trough fallback)',
         'inflection': 'Inflection point (D2 trough in post-P decline)',
-        'end':        'End of measurement (last data point)',
     }
     lines += [
         '',
-        '— P-S transition —',
-        f'S point reference:      {_S_MODE_LABELS.get(s_mode, s_mode)}',
+        '— Q point / early S detection —',
+        f'Q point detection:      {_Q_MODE_LABELS.get(q_mode, q_mode)}',
+        'Early S:                Last measured point (always computed)',
+        'Ref: Fratamico et al. (2016) Photosynth Res 128:271-285',
     ]
 
     lines += [
@@ -3802,7 +3845,7 @@ def _make_deriv_png(time_arr, y_data, title, label, kv=None):
 
 
 def _add_phase_markers(ax, t_arr, y_arr, kv):
-    """Add FJ / FI / FP / FS markers to an axes, interpolated onto (t_arr, y_arr)."""
+    """Add FJ / FI / FP / Q / eS markers to an axes, interpolated onto (t_arr, y_arr)."""
     if not kv:
         return
     t_np = np.asarray(t_arr, dtype=float)
@@ -3819,14 +3862,18 @@ def _add_phase_markers(ax, t_arr, y_arr, kv):
         yv = float(np.interp(tv, t_np, y_np))
         ax.plot(tv, yv, marker=marker, color=colour, markersize=8,
                 label=label, zorder=5, linestyle='none')
-    # FS marker (circle) — uses FS_ref_time_ms so it appears for both
-    # S minimum and S inflection detections (not for end-of-data fallback
-    # where FS_ref == 'end of data' and no distinct S point exists).
-    fs_t = kv.get('FS_ref_time_ms')
-    fs_ref = kv.get('FS_ref')
-    if fs_t is not None and fs_ref and fs_ref != 'end of data':
-        yv = float(np.interp(fs_t, t_np, y_np))
-        ax.plot(fs_t, yv, marker='o', color='#d62728', markersize=8,
-                label='S', zorder=5, linestyle='none')
+    # Q marker (circle, red) — only when Q was detected
+    fq_t = kv.get('FQ_time_ms')
+    fq_ref = kv.get('FQ_ref')
+    if fq_t is not None and fq_ref:
+        yv = float(np.interp(fq_t, t_np, y_np))
+        ax.plot(fq_t, yv, marker='o', color='#d62728', markersize=8,
+                label='Q', zorder=5, linestyle='none')
+    # Early S marker (star, teal) — always shown when available
+    es_t = kv.get('F_earlyS_time_ms')
+    if es_t is not None:
+        yv = float(np.interp(es_t, t_np, y_np))
+        ax.plot(es_t, yv, marker='*', color='#17becf', markersize=10,
+                label='eS', zorder=5, linestyle='none')
 
     
