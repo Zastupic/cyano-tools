@@ -380,6 +380,7 @@ const MC = (() => {
           oj_model_params: jipOpts.ojModelParams || null,
           f0_time_ms:      jipOpts.f0TimMs || null,
           use_deriv_timing: jipOpts.useDerivTiming || false,
+          s_point_mode:    jipOpts.sPointMode || 'auto',
           include_curves: false,
         };
 
@@ -1200,6 +1201,7 @@ const MC = (() => {
       ..._buildOjDensifyPayload(),
       f0_time_ms:      (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
       use_deriv_timing: _wantDerivTiming(),
+      s_point_mode:    document.getElementById('s-point-mode')?.value || 'auto',
       include_curves: true,
     };
 
@@ -1241,6 +1243,22 @@ const MC = (() => {
     return _selIndicesCache[slot] ?? slot;
   }
 
+  /** Extract key_values fields from a flat server detail object.
+   *  Omits large array fields (curves, time_raw_ms, etc.) so the result
+   *  can be used as ojipData.key_values[fname]. */
+  function _extractKeyValues(d) {
+    const skip = new Set(['curves', 'time_raw_ms', 'time_log_ms', 'slot', 'name', 'error']);
+    const kv = {};
+    for (const k of Object.keys(d)) {
+      if (!skip.has(k) && !Array.isArray(d[k]) && typeof d[k] !== 'object') kv[k] = d[k];
+    }
+    // Also copy non-array object fields that are needed (e.g. poly_infl_ms can be null)
+    for (const k of ['poly_infl_ms', 'poly_fi_infl_ms']) {
+      if (k in d) kv[k] = d[k];
+    }
+    return kv;
+  }
+
   function _showDetailInTabs(name, detail, slot) {
     _currentDetailSlot = slot;  // remember for param writeback in refitSplines()
     // Build a synthetic ojipData-like object for the existing rendering functions
@@ -1256,28 +1274,7 @@ const MC = (() => {
       time_raw_ms: detail.time_raw_ms,
       time_log_ms: detail.time_log_ms,
       curves: { [name]: detail.curves },
-      key_values: { [name]: {
-        F0: detail.F0, FM: detail.FM, FK: detail.FK, F50: detail.F50,
-        FJ: detail.FJ, FI: detail.FI,
-        FJ_time_user_ms: detail.FJ_time_user_ms,
-        FI_time_user_ms: detail.FI_time_user_ms,
-        FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
-        FI_time_deriv_ms: detail.FI_time_deriv_ms,
-        FP_time_deriv_ms: detail.FP_time_deriv_ms,
-        FJ_time_inflect_ms: detail.FJ_time_inflect_ms,
-        FI_time_inflect_ms: detail.FI_time_inflect_ms,
-        FP_time_inflect_ms: detail.FP_time_inflect_ms,
-        FM_time_ms: detail.FM_time_ms,
-        Area_OJ: detail.Area_OJ, Area_JI: detail.Area_JI,
-        Area_IP: detail.Area_IP, Area_OP: detail.Area_OP,
-        poly_infl_ms: detail.poly_infl_ms,
-        poly_fi_infl_ms: detail.poly_fi_infl_ms,
-        fit_nrmse:     detail.fit_nrmse,
-        fit_r2:        detail.fit_r2,
-        fit_roughness: detail.fit_roughness,
-        fit_flag:      detail.fit_flag,
-        fit_method:    detail.fit_method,
-      }},
+      key_values: { [name]: _extractKeyValues(detail) },
     };
 
     // Temporarily set ojipData to this single-curve view
@@ -3161,6 +3158,7 @@ const PARAM_GROUPS = {
   timing: ['FJ_time_user_ms', 'FI_time_user_ms', 'FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FM_time_ms'],
   slopes: ['slope_OJ', 'slope_JI', 'slope_IP'],
   dip:    ['dip_IP_amplitude', 'dip_IP_time_ms', 'dip_IP_d1_min'],
+  ps:     ['FS', 'FS_time_ms', 'slope_PS', 'PS_amplitude', 'PS_rel', 'FS_ref', 'FS_ref_time_ms'],
   decomp: ['A_OJ', 'A_JI', 'A_IP', 'tau_OJ_ms', 'tau_JI_ms', 'tau_IP_ms'],
   gauss:  ['gauss_center_1_ms', 'gauss_sigma_1', 'gauss_amp_1',
            'gauss_center_2_ms', 'gauss_sigma_2', 'gauss_amp_2',
@@ -3178,6 +3176,7 @@ const PARAM_LABELS = {
   deriv_timing_used:'Auto-detected used',
   slope_OJ:'Slope O-J', slope_JI:'Slope J-I', slope_IP:'Slope I-P',
   dip_IP_amplitude:'Dip I-P amplitude', dip_IP_time_ms:'Dip I-P time (ms)', dip_IP_d1_min:'Dip I-P D1 min',
+  FS:'FS', FS_time_ms:'t(FS) ms', slope_PS:'Slope P-S', PS_amplitude:'P-S amplitude', PS_rel:'P-S / FV', FS_ref:'S point used', FS_ref_time_ms:'t(S ref) ms',
   A_OJ:'A(O-J)', A_JI:'A(J-I)', A_IP:'A(I-P)',
   tau_OJ_ms:'τ(O-J) ms', tau_JI_ms:'τ(J-I) ms', tau_IP_ms:'τ(I-P) ms',
   gauss_center_1_ms:'G1 center ms', gauss_sigma_1:'G1 σ', gauss_amp_1:'G1 amplitude',
@@ -3541,6 +3540,8 @@ function calcJIP(kv) {
     // pass-through: slopes, dip, decomposition, gaussians
     slope_OJ: kv.slope_OJ, slope_JI: kv.slope_JI, slope_IP: kv.slope_IP,
     dip_IP_amplitude: kv.dip_IP_amplitude, dip_IP_time_ms: kv.dip_IP_time_ms, dip_IP_d1_min: kv.dip_IP_d1_min,
+    // P-S transition (post-P semi-steady-state)
+    FS: kv.FS, FS_time_ms: kv.FS_time_ms, slope_PS: kv.slope_PS, PS_amplitude: kv.PS_amplitude, PS_rel: kv.PS_rel, FS_ref: kv.FS_ref, FS_ref_time_ms: kv.FS_ref_time_ms,
     A_OJ: kv.A_OJ, A_JI: kv.A_JI, A_IP: kv.A_IP,
     tau_OJ_ms: kv.tau_OJ_ms, tau_JI_ms: kv.tau_JI_ms, tau_IP_ms: kv.tau_IP_ms,
     gauss_center_1_ms: kv.gauss_center_1_ms, gauss_sigma_1: kv.gauss_sigma_1, gauss_amp_1: kv.gauss_amp_1,
@@ -4415,6 +4416,25 @@ function renderCurvesChart(norm) {
     });
   }
 
+  // FS markers (● circle) — uses FS_ref_time_ms so marker appears for both
+  // auto-detected S minimum and end-of-measurement fallback
+  const fsData = [], fsBg = [], fsBd = [];
+  files.forEach((fname, i) => {
+    const fsT = ojipData.key_values[fname].FS_ref_time_ms;
+    if (fsT != null) {
+      fsData.push({ x: fsT, y: interpAt(t, ojipData.curves[fname][norm], fsT) });
+      fsBg.push(sampleColor(i, n)); fsBd.push(sampleColor(i, n));
+    }
+  });
+  if (fsData.length) {
+    datasets.push({
+      label: 'FS', showLine: false, data: fsData,
+      pointRadius: 6, pointStyle: 'circle',
+      pointBackgroundColor: fsBg, pointBorderColor: fsBd,
+      borderColor: 'transparent', backgroundColor: 'transparent',
+    });
+  }
+
   const yLabel = norm === 'raw' ? 'Fluorescence' :
                  norm === 'double_norm' ? 'Normalised fluorescence (r.u.)' :
                  'Fluorescence (shifted)';
@@ -4423,7 +4443,7 @@ function renderCurvesChart(norm) {
   opts.onClick = (e, elements) => {
     if (!elements.length) return;
     const dsIdx = elements[0].datasetIndex;
-    if (dsIdx >= n) return;                    // FJ / FI / FP marker row — ignore
+    if (dsIdx >= n) return;                    // FJ / FI / FP / FS marker row — ignore
     const fname = ojipData.files[dsIdx];
     if (fname && confirm(`Remove "${fname}" from analysis?`)) removeFile(fname);
   };
@@ -4524,7 +4544,9 @@ function _onFJTableChange(e) {
 function fmt(v, d = 4) {
   if (v === true) return 'yes';
   if (v === false) return 'no';
-  if (v === null || v === undefined || isNaN(v)) return '—';
+  if (v === null || v === undefined) return 'n.d.';
+  if (typeof v === 'string') return v;
+  if (isNaN(v)) return 'n.d.';
   return Number(v).toFixed(d);
 }
 
@@ -4822,9 +4844,10 @@ function renderDiagnostics() {
   const gaussBtn  = document.getElementById('pgroup-gauss-btn');
   if (decompBtn) decompBtn.style.display = (fm === 'three_exp') ? '' : 'none';
   if (gaussBtn)  gaussBtn.style.display  = (fm === 'gaussian_d1') ? '' : 'none';
-  // Show 'Refit all curves' button and FJ/FI timing radio only in multi-curve mode
+  // Show 'Refit all curves' button in multi-curve mode or when multiple individual files loaded
   const refitAllWrap = document.getElementById('refit-all-wrap');
-  if (refitAllWrap) refitAllWrap.style.display = (mcDataset && mcIsActive) ? '' : 'none';
+  const showRefitAll = (mcDataset && mcIsActive) || (ojipData && ojipData.files && ojipData.files.length > 1);
+  if (refitAllWrap) refitAllWrap.style.display = showRefitAll ? '' : 'none';
   const fjfiTimingWrap = document.getElementById('fjfi-timing-wrap');
   if (fjfiTimingWrap) fjfiTimingWrap.style.display = (mcDataset && mcIsActive) ? 'flex' : 'none';
   // Mirror the Background/F0 control next to it — AquaPen/FluorPen batches only
@@ -4878,6 +4901,8 @@ function renderDiagRecon() {
     addMk(kv.FI_time_deriv_ms, ojipData.curves[fname].reconstructed, 'rectRot');
     if (kv.FP_time_deriv_ms != null)
       addMk(kv.FP_time_deriv_ms, ojipData.curves[fname].reconstructed, 'rect');
+    if (kv.FS_ref_time_ms != null)
+      addMk(kv.FS_ref_time_ms, ojipData.curves[fname].reconstructed, 'circle');
     if (pts.length > 0) {
       datasets.push({ label: '', showLine: false, data: pts,
         pointRadius: radii, pointStyle: styles,
@@ -4928,6 +4953,7 @@ function renderDiagD2() {
     addMk2(kv.FJ_time_deriv_ms, 'triangle');
     addMk2(kv.FI_time_deriv_ms, 'rectRot');
     if (kv.FP_time_deriv_ms != null) addMk2(kv.FP_time_deriv_ms, 'rect');
+    if (kv.FS_ref_time_ms != null) addMk2(kv.FS_ref_time_ms, 'circle');
     if (pts2.length > 0) {
       datasets.push({ label: '', showLine: false, data: pts2,
         pointRadius: r2, pointStyle: st2,
@@ -4964,6 +4990,7 @@ function renderDiagD3() {
     addMk3(kv.FJ_time_deriv_ms, 'triangle');
     addMk3(kv.FI_time_deriv_ms, 'rectRot');
     if (kv.FP_time_deriv_ms != null) addMk3(kv.FP_time_deriv_ms, 'rect');
+    if (kv.FS_ref_time_ms != null) addMk3(kv.FS_ref_time_ms, 'circle');
     if (pts3.length > 0) {
       datasets.push({ label: '', showLine: false, data: pts3,
         pointRadius: r3, pointStyle: st3,
@@ -4999,6 +5026,7 @@ function renderDiagD1() {
     addMk(kv.FJ_time_deriv_ms, 'triangle');
     addMk(kv.FI_time_deriv_ms, 'rectRot');
     if (kv.FP_time_deriv_ms != null) addMk(kv.FP_time_deriv_ms, 'rect');
+    if (kv.FS_ref_time_ms != null) addMk(kv.FS_ref_time_ms, 'circle');
     if (pts.length > 0) {
       datasets.push({ label: '', showLine: false, data: pts,
         pointRadius: r, pointStyle: st,
@@ -5369,6 +5397,7 @@ async function mcRefitBatch() {
     })(),
     f0TimMs: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
     useDerivTiming: _wantDerivTiming(),
+    sPointMode: document.getElementById('s-point-mode')?.value || 'auto',
   };
 
   // OJIP-Imaging Excel: re-apply the background/F0 mode chosen in the Diagnostics
@@ -5464,8 +5493,11 @@ async function refitSplines() {
 
     // Collect current double_norm (unchanged — F0 value is not affected by time rescaling)
     const double_norm = {};
+    const raw_fm_f0 = {};
     for (const fname of ojipData.files) {
       double_norm[fname] = ojipData.curves[fname].double_norm;
+      const kv = ojipData.key_values[fname] || {};
+      raw_fm_f0[fname] = { FM: kv.FM, F0: kv.F0 };
     }
     const resp = await fetch('/api/ojip_refit', {
       method: 'POST',
@@ -5482,6 +5514,8 @@ async function refitSplines() {
         fi_time_ms: ojipData.fi_time_ms,
         time_raw_ms: ojipData.time_raw_ms,
         double_norm,
+        raw_fm_f0,
+        s_point_mode: document.getElementById('s-point-mode')?.value || 'auto',
       }),
     });
     const data = await resp.json();
@@ -5935,6 +5969,36 @@ function generateOJIPMethodsText() {
         '(DI0/RC), and the performance index on absorption basis (PI_abs).'
     );
 
+    // P-S transition — include only when data has P-S results
+    var hasPS = false;
+    var kv0 = ojipData.key_values && ojipData.files && ojipData.files.length > 0
+        ? ojipData.key_values[ojipData.files[0]] : null;
+    if (kv0 && kv0.FS_ref != null) hasPS = true;
+    if (!hasPS && mcIsActive && paramMatrix) {
+        for (var pi = 0; pi < paramMatrix.length; pi++) {
+            if (paramMatrix[pi] && paramMatrix[pi].FS_ref != null) { hasPS = true; break; }
+        }
+    }
+    if (hasPS) {
+        var sMode = document.getElementById('s-point-mode')?.value || 'auto';
+        var sDesc;
+        if (sMode === 'auto') {
+            sDesc = 'The S point (semi-steady-state) was identified as the first local minimum (D1 zero-crossing) ' +
+                'in the post-P decline of the spline reconstruction; when no minimum was detected, the D2 trough ' +
+                '(second-derivative local minimum) was used as a fallback, with the end of the measurement as a ' +
+                'final reference.';
+        } else if (sMode === 'inflection') {
+            sDesc = 'The S point (semi-steady-state) was identified as the D2 trough (second-derivative local minimum) ' +
+                'in the post-P decline of the spline reconstruction, corresponding to the characteristic inflection ' +
+                'point where the rate of fluorescence decline transitions from accelerating to decelerating.';
+        } else {
+            sDesc = 'The end of the measurement was used as the S point reference for calculating the P\u2013S decline slope ' +
+                'and amplitude.';
+        }
+        lines.push(sDesc + ' The P\u2013S transition was characterized by the slope, amplitude, and relative ' +
+            'amplitude (normalized to variable fluorescence FV) between FM and the S reference point.');
+    }
+
     if (gnames.length >= 2) {
         lines.push(
             'Samples were organized into ' + gnames.length + ' experimental group' +
@@ -6174,11 +6238,12 @@ function _drawMarker(ctx, px, py, shape, color, size) {
   ctx.fillStyle = color; ctx.beginPath();
   if (shape === 'triangle')    { ctx.moveTo(px, py - h); ctx.lineTo(px - h, py + h); ctx.lineTo(px + h, py + h); ctx.closePath(); }
   else if (shape === 'diamond') { ctx.moveTo(px, py - h); ctx.lineTo(px + h, py); ctx.lineTo(px, py + h); ctx.lineTo(px - h, py); ctx.closePath(); }
+  else if (shape === 'circle') { ctx.arc(px, py, h, 0, 2 * Math.PI); }
   else { ctx.rect(px - h, py - h, size, size); }
   ctx.fill();
 }
 
-function _drawLegend(ctx, markerEntries, overlayLabel, mainLabel) {
+function _drawLegend(ctx, markerEntries, overlayLabel, mainLabel, position) {
   const entries = [];
   if (mainLabel)    entries.push({ type: 'dot', color: '#0000ff', label: mainLabel });
   if (overlayLabel) entries.push({ type: 'line', color: '#ff0000', label: overlayLabel });
@@ -6188,7 +6253,10 @@ function _drawLegend(ctx, markerEntries, overlayLabel, mainLabel) {
   ctx.font = '9px sans-serif';
   const maxW = Math.max(...entries.map(e => ctx.measureText(e.label).width)) + 24;
   const boxW = maxW + 2 * padX, boxH = entries.length * lineH + 2 * padY;
-  const bx = _MARGIN.left + _DRAW_W - boxW - 6, by = _MARGIN.top + 6;
+  const bx = _MARGIN.left + _DRAW_W - boxW - 6;
+  const by = position === 'bottom-right'
+    ? _MARGIN.top + _DRAW_H - boxH - 6
+    : _MARGIN.top + 6;
   ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(bx, by, boxW, boxH);
   ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5; ctx.strokeRect(bx, by, boxW, boxH);
   ctx.textAlign = 'left';
@@ -6314,6 +6382,17 @@ function _renderOjipPlot(ctx, cfg) {
       _drawMarker(ctx, toX(tv), toY(fv), m.shape, m.color, 8);
       legendMarkers.push({ shape: m.shape, color: m.color, label: m.label });
     }
+    // FS marker (● circle) — only when a real S point was detected
+    const fsT = cfg.kv.FS_ref_time_ms;
+    const fsRef = cfg.kv.FS_ref;
+    if (fsT != null && fsT > 0 && fsRef && fsRef !== 'end of data') {
+      const fsFv = cfg.interpolateMarkers
+        ? _linearInterp(interpT, interpY, fsT) : cfg.kv.FS;
+      if (fsFv != null && isFinite(fsFv)) {
+        _drawMarker(ctx, toX(fsT), toY(fsFv), 'circle', '#d62728', 8);
+        legendMarkers.push({ shape: 'circle', color: '#d62728', label: 'S' });
+      }
+    }
   }
   ctx.restore(); // unclip
 
@@ -6329,7 +6408,8 @@ function _renderOjipPlot(ctx, cfg) {
   // Legend
   if (legendMarkers.length > 0 || cfg.overlay?.label) {
     _drawLegend(ctx, legendMarkers, cfg.overlay?.label,
-                cfg.lineStyle === 'dot' ? 'Measured' : null);
+                cfg.lineStyle === 'dot' ? 'Measured' : null,
+                cfg.legendPosition);
   }
 
   return canvas.toDataURL('image/png').split(',')[1];
@@ -6368,6 +6448,7 @@ function _renderCurvePngs(ctx, name, detail, inclPlots) {
         yData: dnorm || [], title: name,
         lineColor: '#0000ff', lineWidth: 0, lineStyle: 'dot', dotSize: 2, dotAlpha: 0.5,
         yLabel: 'Fluorescence (double norm.)', kv, interpolateMarkers: true,
+        legendPosition: 'bottom-right',
         overlay: { timeMs: timeLog, yData: recon, color: '#ff0000', lineWidth: 1.2, label: 'Fitted' },
       });
       results.push({ path: 'reconstructed/' + safe + '.png', b64 });
@@ -6447,6 +6528,7 @@ function _collectMethodInfo() {
     fjfi_mode:        fjfiMode,  // 'default' or 'auto'
     deriv_timing_count: paramMatrix
       ? paramMatrix.filter(r => r && !r.error && r.deriv_timing_used).length : 0,
+    s_point_mode:     document.getElementById('s-point-mode')?.value || 'auto',
   };
 }
 
@@ -6509,6 +6591,16 @@ function _formatMethodInfoText(mi) {
   } else {
     lines.push('Enabled:                no');
   }
+  // S point reference mode
+  const sMode = mi.s_point_mode || 'auto';
+  const S_MODE_LABELS = {
+    auto: 'Auto (D1 minimum \u2192 D2 trough fallback \u2192 end of data)',
+    inflection: 'Inflection point (D2 trough in post-P decline)',
+    end: 'End of measurement (last data point)',
+  };
+  lines.push('', '\u2014 P-S transition \u2014',
+    'S point reference:      ' + (S_MODE_LABELS[sMode] || sMode));
+
   lines.push('', '\u2014 Generated by cyano.tools OJIP analysis \u2014', 'https://www.cyano.tools', '');
   return lines.join('\n');
 }
@@ -6606,7 +6698,9 @@ async function startBatchExport() {
           key_values: { FJ: detail.FJ, FI: detail.FI, FM: detail.FM,
             FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
             FI_time_deriv_ms: detail.FI_time_deriv_ms,
-            FP_time_deriv_ms: detail.FP_time_deriv_ms },
+            FP_time_deriv_ms: detail.FP_time_deriv_ms,
+            FS_ref_time_ms: detail.FS_ref_time_ms, FS_ref: detail.FS_ref,
+            FM_time_ms: detail.FM_time_ms },
         }, inclPlots);
         for (const { path, b64 } of pngs) zip.file(path, b64, { base64: true });
         rendered++;
@@ -6642,6 +6736,7 @@ async function startBatchExport() {
           knot_placement:  document.getElementById('knot-placement-sel')?.value || 'hybrid',
           ..._buildOjDensifyPayload(),
           f0_time_ms: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
+          s_point_mode: document.getElementById('s-point-mode')?.value || 'auto',
           include_curves: true,
         };
         const BATCH = 20, CONC = 2, MAX_RETRIES = 3;
@@ -6679,7 +6774,9 @@ async function startBatchExport() {
                   key_values: { FJ: detail.FJ, FI: detail.FI, FM: detail.FM,
                     FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
                     FI_time_deriv_ms: detail.FI_time_deriv_ms,
-                    FP_time_deriv_ms: detail.FP_time_deriv_ms },
+                    FP_time_deriv_ms: detail.FP_time_deriv_ms,
+                    FS_ref_time_ms: detail.FS_ref_time_ms, FS_ref: detail.FS_ref,
+                    FM_time_ms: detail.FM_time_ms },
                 }, inclPlots);
                 for (const { path, b64 } of pngs) zip.file(path, b64, { base64: true });
                 rendered++;
