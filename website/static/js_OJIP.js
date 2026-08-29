@@ -380,7 +380,7 @@ const MC = (() => {
           oj_model_params: jipOpts.ojModelParams || null,
           f0_time_ms:      jipOpts.f0TimMs || null,
           use_deriv_timing: jipOpts.useDerivTiming || false,
-          s_point_mode:    jipOpts.sPointMode || 'auto',
+          s_point_mode:    jipOpts.sPointMode || 'inflection',
           include_curves: false,
         };
 
@@ -1056,7 +1056,7 @@ const MC = (() => {
     // Fit-quality diagnostic columns. The poor-fit flag is now driven by R²
     // (nRMSE/misfit× kept in payload as secondary diagnostics only).
     const fitCols = ['min conf', 'R²', 'nRMSE %'];
-    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const paramKeys = _activeParamKeys();
     const refActive = _refFM.active;
     const headerRow = ['#', 'Name', ...metaCols, ...fitCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)];
     if (refActive) headerRow.push('FM (own)');
@@ -1141,7 +1141,7 @@ const MC = (() => {
     const isExcel = mcDataset && mcDataset.fluorometer === 'OJIPImaging';
     const metaCols = isExcel ? ['Line', 'Day', 'Hour'] : [];
     const fitCols = ['min conf', 'R²', 'nRMSE %'];
-    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const paramKeys = _activeParamKeys();
     const refActive = _refFM.active;
     const headerParts = ['#', 'Name', ...metaCols, ...fitCols, ...paramKeys.map(k => PARAM_LABELS[k] || k)];
     if (refActive) headerParts.push('FM (own)');
@@ -1201,7 +1201,7 @@ const MC = (() => {
       ..._buildOjDensifyPayload(),
       f0_time_ms:      (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
       use_deriv_timing: _wantDerivTiming(),
-      s_point_mode:    document.getElementById('s-point-mode')?.value || 'auto',
+      s_point_mode:    document.getElementById('s-point-mode')?.value || 'inflection',
       include_curves: true,
     };
 
@@ -1723,7 +1723,7 @@ const MC = (() => {
   // ── M8: Export helpers ───────────────────────────────────────────────
   function downloadParamsCSV() {
     if (!paramMatrix) return;
-    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const paramKeys = _activeParamKeys();
     const refActive = _refFM.active;
     const header = ['index', 'name', 'timestamp', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
     if (refActive) header.push('FM (own)');
@@ -1750,7 +1750,7 @@ const MC = (() => {
   // ── M8: XLSX export (client-side via SheetJS) ───────────────────────
   function downloadParamsXLSX() {
     if (!paramMatrix || typeof XLSX === 'undefined') return;
-    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const paramKeys = _activeParamKeys();
     const refActive = _refFM.active;
     const header = ['Index', 'Name', 'Timestamp', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
     if (refActive) header.push('FM (own)');
@@ -3172,7 +3172,7 @@ const PARAM_LABELS = {
   ABSRC:'ABS/RC', TR0RC:'TR₀/RC', ET0RC:'ET₀/RC', RE0RC:'RE₀/RC', DI0RC:'DI₀/RC',
   Area_OJ:'Area O-J', Area_JI:'Area J-I', Area_IP:'Area I-P', Area_OP:'Area O-P',
   SM:'Sm', N:'N (QA turnover)',
-  F0:'F₀', FM:'FM', FK:'FK', FJ:'FJ', FI:'FI', FV:'FV', OJ:'A(O-J)', JI:'A(J-I)', IP:'A(I-P)',
+  F0:'F₀', FM:'FM', FK:'FK', FJ:'FJ', FI:'FI', FV:'FV', OJ:'Amplitude (O-J)', JI:'Amplitude (J-I)', IP:'Amplitude (I-P)',
   FJ_time_user_ms:'t(FJ) used ms', FI_time_user_ms:'t(FI) used ms',
   FJ_time_deriv_ms:'t(FJ) detected ms', FI_time_deriv_ms:'t(FI) detected ms', FP_time_deriv_ms:'t(FP) detected ms', FM_time_ms:'t(FM) ms',
   deriv_timing_used:'Auto-detected used',
@@ -3181,12 +3181,23 @@ const PARAM_LABELS = {
   FQ:'FQ', FQ_time_ms:'t(FQ) ms', slope_PQ:'Slope P-Q', PQ_amplitude:'P-Q amplitude', PQ_rel:'P-Q / FV', FQ_ref:'Q detection',
   F_earlyS:'F(early S)', F_earlyS_time_ms:'t(early S) ms', slope_P_earlyS:'Slope P-eS', P_earlyS_amplitude:'P-eS amplitude', P_earlyS_rel:'P-eS / FV',
   slope_Q_earlyS:'Slope Q-eS', Q_earlyS_amplitude:'Q-eS amplitude', Q_earlyS_rel:'Q-eS / FV',
-  A_OJ:'A(O-J)', A_JI:'A(J-I)', A_IP:'A(I-P)',
+  A_OJ:'A₁ (O-J exp)', A_JI:'A₂ (J-I exp)', A_IP:'A₃ (I-P exp)',
   tau_OJ_ms:'τ(O-J) ms', tau_JI_ms:'τ(J-I) ms', tau_IP_ms:'τ(I-P) ms',
   gauss_center_1_ms:'G1 center ms', gauss_sigma_1:'G1 σ', gauss_amp_1:'G1 amplitude',
   gauss_center_2_ms:'G2 center ms', gauss_sigma_2:'G2 σ', gauss_amp_2:'G2 amplitude',
   gauss_center_3_ms:'G3 center ms', gauss_sigma_3:'G3 σ', gauss_amp_3:'G3 amplitude',
 };
+
+/** Return flat param-key list, excluding method-specific groups that don't apply. */
+function _activeParamKeys() {
+  const fm = document.getElementById('fit-method-sel')?.value || 'logspline';
+  const skip = new Set();
+  if (fm !== 'three_exp') skip.add('decomp');
+  if (fm !== 'gaussian_d1') skip.add('gauss');
+  return Object.keys(PARAM_GROUPS)
+    .filter(g => !skip.has(g))
+    .flatMap(g => PARAM_GROUPS[g]);
+}
 
 // ── colour palette ─────────────────────────────────────────────────────────
 function sampleColor(i, n, alpha) {
@@ -3727,9 +3738,27 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('reset-fj-fi-btn').addEventListener('click', toggleFJFI);
   document.getElementById('reset-fj-fi-btn-curves').addEventListener('click', toggleFJFI);
 
-  // FJ/FI timing radio (diagnostics tab) — user selects fixed/auto-detected,
-  // then manually clicks "Refit all curves" when ready.  No auto-trigger here;
-  // the radio state is read by mcRefitBatch() / refitSplines() at refit time.
+  // FJ/FI timing radio (diagnostics tab) — switching immediately recalculates
+  // key_values across all curves and refreshes Curves / Params / Groups tabs.
+  document.querySelectorAll('input[name="fjfi-timing"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (!ojipData || !ojipData.files) return;
+      const wantAuto = _wantDerivTiming();
+      for (const fname of ojipData.files) {
+        const kv = ojipData.key_values[fname];
+        if (!kv) continue;
+        if (wantAuto && kv.FJ_time_deriv_ms != null && kv.FI_time_deriv_ms != null) {
+          ojipData.key_values[fname] = recalcKeyValues(fname, kv.FJ_time_deriv_ms, kv.FI_time_deriv_ms);
+        } else {
+          ojipData.key_values[fname] = recalcKeyValues(fname, 2.0, 30.0);
+        }
+        paramData[fname] = calcJIP(ojipData.key_values[fname]);
+      }
+      fjfiMode = wantAuto ? 'auto' : 'default';
+      _updateFJFIBtnLabels();
+      _refreshAfterTimingChange();
+    });
+  });
 
   // Groups tab
   document.getElementById('select-all-check').addEventListener('change', e => {
@@ -4302,10 +4331,11 @@ function renderResults() {
     `${n} file${n > 1 ? 's' : ''} processed — ${ojipData.fluorometer} — FJ ${ojipData.fj_time_ms} ms / FI ${ojipData.fi_time_ms} ms`;
 
   // Single xlsx — all data, charts, and methods
+  // Hide in multi-curve mode (batch zip already contains full params_summary.xlsx)
   const link = document.getElementById('xlsx-download-link');
   link.href = '#';
   link.onclick = e => { e.preventDefault(); downloadXlsxWithCharts(); };
-  link.style.display = '';
+  link.style.display = (mcDataset && mcIsActive) ? 'none' : '';
 
   // Reset FJ/FI toggle to default state for fresh data — but NOT when
   // viewing a single-curve detail from batch mode (preserve the batch setting).
@@ -4873,7 +4903,8 @@ function renderDiagnostics() {
   const showRefitAll = (mcDataset && mcIsActive) || (ojipData && ojipData.files && ojipData.files.length > 1);
   if (refitAllWrap) refitAllWrap.style.display = showRefitAll ? '' : 'none';
   const fjfiTimingWrap = document.getElementById('fjfi-timing-wrap');
-  if (fjfiTimingWrap) fjfiTimingWrap.style.display = (mcDataset && mcIsActive) ? 'flex' : 'none';
+  const hasData = ojipData && ojipData.files && ojipData.files.length > 0;
+  if (fjfiTimingWrap) fjfiTimingWrap.style.display = hasData ? 'flex' : 'none';
   // Mirror the Background/F0 control next to it — AquaPen/FluorPen batches only
   const bgF0Wrap = document.getElementById('mc-bg-f0-wrap');
   if (bgF0Wrap) {
@@ -5231,18 +5262,21 @@ function toggleFJFI() {
     }
     fjfiMode = 'default';
   }
-  _updateFJFIBtnLabels();
-  buildFJTable();
-  const norm   = document.querySelector('#norm-btns .btn-primary')?.dataset?.norm   || 'raw';
-  const pgroup = document.querySelector('#param-group-btns .btn-primary')?.dataset?.pgroup || 'yields';
-  renderCurvesChart(norm);
-  const tab = activeTabId();
-  if (tab === 'tab-params') { renderParamsChart(pgroup); renderParamsTable(pgroup); }
-  else markTabsDirty('tab-params');
-  if (hasGroups()) {
-    if (tab === 'tab-groups') _renderAllOjipGroupCharts();
-    else markTabsDirty('tab-groups');
+  // Sync the diagnostics radio buttons with the new mode
+  const fixedRadio = document.getElementById('fjfi-radio-fixed');
+  const autoRadio  = document.getElementById('fjfi-radio-auto');
+  const fixedLabel = document.getElementById('fjfi-radio-fixed-label');
+  const autoLabel  = document.getElementById('fjfi-radio-auto-label');
+  if (fixedRadio && autoRadio) {
+    fixedRadio.checked = fjfiMode === 'default';
+    autoRadio.checked  = fjfiMode === 'auto';
   }
+  if (fixedLabel && autoLabel) {
+    fixedLabel.classList.toggle('active', fjfiMode === 'default');
+    autoLabel.classList.toggle('active',  fjfiMode === 'auto');
+  }
+  _updateFJFIBtnLabels();
+  _refreshAfterTimingChange();
 }
 
 function _updateFJFIBtnLabels() {
@@ -5426,7 +5460,7 @@ async function mcRefitBatch() {
     })(),
     f0TimMs: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
     useDerivTiming: _wantDerivTiming(),
-    sPointMode: document.getElementById('s-point-mode')?.value || 'auto',
+    sPointMode: document.getElementById('s-point-mode')?.value || 'inflection',
   };
 
   // OJIP-Imaging Excel: re-apply the background/F0 mode chosen in the Diagnostics
@@ -5544,7 +5578,7 @@ async function refitSplines() {
         time_raw_ms: ojipData.time_raw_ms,
         double_norm,
         raw_fm_f0,
-        s_point_mode: document.getElementById('s-point-mode')?.value || 'auto',
+        s_point_mode: document.getElementById('s-point-mode')?.value || 'inflection',
       }),
     });
     const data = await resp.json();
@@ -5561,11 +5595,8 @@ async function refitSplines() {
       }
     }
 
-    // Sync user-editable FJ/FI timing: respect the radio selection if in
-    // multi-curve mode; default to auto-detected for single-file mode.
-    const wantAuto = (mcDataset && mcIsActive)
-      ? (_wantDerivTiming())
-      : true;  // single-file refit always switches to auto (legacy behaviour)
+    // Sync user-editable FJ/FI timing: respect the radio selection
+    const wantAuto = _wantDerivTiming();
     for (const fname of ojipData.files) {
       const kv = ojipData.key_values[fname];
       if (!kv) continue;  // guard: no key_values for this curve
@@ -5787,7 +5818,7 @@ async function downloadXlsxWithCharts() {
   let group_export = null;
   if (hasGroups()) {
     const stats     = calcGroupStats();
-    const allParams = Object.values(PARAM_GROUPS).flat();
+    const allParams = _activeParamKeys();
 
     const grp_stats = {};
     for (const [grp, s] of Object.entries(stats)) {
@@ -5805,7 +5836,7 @@ async function downloadXlsxWithCharts() {
         const row = { sample: fname, group: groups[fname] };
         for (const p of allParams) {
           const v = paramData[fname]?.[p];
-          row[p] = (v != null && isFinite(v)) ? v : null;
+          row[p] = (v != null && (typeof v === 'string' || isFinite(v))) ? v : null;
         }
         return row;
       });
@@ -5819,22 +5850,14 @@ async function downloadXlsxWithCharts() {
   }
 
   // Build params_table for the Parameters sheet in the summary xlsx
-  const allParamKeys = Object.values(PARAM_GROUPS).flat();
-  const kvFields = ['F0', 'FM', 'FK', 'FJ', 'FI',
-                    'FM_time_ms', 'FJ_time_user_ms', 'FI_time_user_ms',
-                    'FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms',
-                    'Area_OJ', 'Area_JI', 'Area_IP', 'Area_OP'];
+  const allParamKeys = _activeParamKeys();
   const params_table = {
-    header: ['Sample', ...allParamKeys.map(p => PARAM_LABELS[p] || p), ...kvFields],
+    header: ['Sample', ...allParamKeys.map(p => PARAM_LABELS[p] || p)],
     rows: ojipData.files.map(fname => {
       const row = [fname];
       for (const p of allParamKeys) {
         const v = paramData[fname]?.[p];
-        row.push(v != null && isFinite(v) ? v : null);
-      }
-      for (const f of kvFields) {
-        const v = ojipData.key_values[fname]?.[f];
-        row.push(v != null ? v : null);
+        row.push(v != null && (typeof v === 'string' || isFinite(v)) ? v : null);
       }
       return row;
     }),
@@ -5902,12 +5925,12 @@ function exportToStatistics() {
   const assignedFiles = ojipData.files.filter(f => groups[f]);
   if (!assignedFiles.length) { alert('No files assigned to groups.'); return; }
 
-  const allParams = Object.values(PARAM_GROUPS).flat();
+  const allParams = _activeParamKeys();
   const header    = ['Group', 'Sample', ...allParams.map(p => PARAM_LABELS[p] || p)].join('\t');
   const rows      = assignedFiles.map(fname => {
     const vals = allParams.map(p => {
       const v = paramData[fname]?.[p];
-      return v != null && isFinite(v) ? v.toFixed(6) : '';
+      return v != null ? (typeof v === 'string' ? v : (isFinite(v) ? v.toFixed(6) : '')) : '';
     });
     return [groups[fname], fname, ...vals].join('\t');
   });
@@ -6009,7 +6032,7 @@ function generateOJIPMethodsText() {
         }
     }
     if (hasPQS) {
-        var sMode = document.getElementById('s-point-mode')?.value || 'auto';
+        var sMode = document.getElementById('s-point-mode')?.value || 'inflection';
         var qDesc;
         if (sMode === 'auto') {
             qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the first ' +
@@ -6573,7 +6596,7 @@ function _collectMethodInfo() {
     fjfi_mode:        fjfiMode,  // 'default' or 'auto'
     deriv_timing_count: paramMatrix
       ? paramMatrix.filter(r => r && !r.error && r.deriv_timing_used).length : 0,
-    s_point_mode:     document.getElementById('s-point-mode')?.value || 'auto',
+    s_point_mode:     document.getElementById('s-point-mode')?.value || 'inflection',
   };
 }
 
@@ -6637,10 +6660,10 @@ function _formatMethodInfoText(mi) {
     lines.push('Enabled:                no');
   }
   // Q point / early S detection mode
-  const sMode = mi.s_point_mode || 'auto';
+  const sMode = mi.s_point_mode || 'inflection';
   const Q_MODE_LABELS = {
-    auto: 'Auto (D1 minimum \u2192 D2 trough fallback)',
-    inflection: 'Inflection point (D2 trough in post-P decline)',
+    inflection: 'D2 trough (Q inflection)',
+    auto: 'D1 minimum (Q minimum) \u2192 D2 fallback',
   };
   lines.push('', '\u2014 Q point / early S detection \u2014',
     'Q point detection:      ' + (Q_MODE_LABELS[sMode] || sMode),
@@ -6688,7 +6711,7 @@ async function startBatchExport() {
 
     // ── Phase 1: Client-side params + summaries + method_info (0–10%) ──
     _setProgress(2, 'Generating parameter table...');
-    const paramKeys = Object.keys(PARAM_GROUPS).flatMap(g => PARAM_GROUPS[g]);
+    const paramKeys = _activeParamKeys();
     const header = ['#', 'Name', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
     const rows = validRows.map(r => [
       r.slot + 1, r.name || `#${r.slot + 1}`,
@@ -6783,7 +6806,7 @@ async function startBatchExport() {
           knot_placement:  document.getElementById('knot-placement-sel')?.value || 'hybrid',
           ..._buildOjDensifyPayload(),
           f0_time_ms: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
-          s_point_mode: document.getElementById('s-point-mode')?.value || 'auto',
+          s_point_mode: document.getElementById('s-point-mode')?.value || 'inflection',
           include_curves: true,
         };
         const BATCH = 20, CONC = 2, MAX_RETRIES = 3;

@@ -149,10 +149,33 @@
             <tr><td>RE<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψR<sub>0</sub></td><td>Electron flux from Q<sub>A</sub><sup>−</sup> to final PSI acceptors per active PSII</td></tr>
             <tr><td>DI<sub>0</sub>/RC</td><td>ABS/RC – TR<sub>0</sub>/RC</td><td>Dissipated energy flux per active PSII</td></tr>
           </table>
+
+          <p class="mt-3 mb-1" style="font-size:0.92em"><strong>Post-peak transition parameters (Q point / early S)</strong></p>
+          <p style="font-size:85%; line-height:1.35; margin-bottom:0.3em;">
+            These parameters extend beyond the classical JIP-test framework and characterize the fluorescence decline after the P peak.
+            The <strong>Q point</strong> (~1&ndash;2&thinsp;s) marks the transition between fast photochemical quenching and slower non-photochemical quenching build-up
+            (Fratamico et&nbsp;al.&nbsp;2016).
+            The <strong>early S</strong> level is the last measured data point, serving as a proxy for the classical semi-steady-state S (~15&ndash;60&thinsp;s).
+            Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).
+          </p>
+          <table style="width:95%; font-size:90%; margin-top:0.5em;">
+            <colgroup><col style="width:8%"><col style="width:30%"><col style="width:62%"></colgroup>
+            <tr><td><u>Parameter</u></td><td><u>Formula</u></td><td><u>Meaning</u></td></tr>
+            <tr><td>F<sub>Q</sub>, t(F<sub>Q</sub>)</td><td></td><td>Fluorescence and timing (ms) at the Q point</td></tr>
+            <tr><td>F(eS), t(eS)</td><td></td><td>Fluorescence and timing (ms) at the last measured point</td></tr>
+            <tr><td>Slope P&ndash;Q</td><td>(F<sub>Q</sub>&minus;F<sub>M</sub>)/(t<sub>Q</sub>&minus;t<sub>FM</sub>)</td><td>Rate of decline from P to Q (r.u. ms<sup>&minus;1</sup>)</td></tr>
+            <tr><td>P&ndash;Q / F<sub>V</sub></td><td>(F<sub>Q</sub>&minus;F<sub>M</sub>)/F<sub>V</sub></td><td>P&ndash;Q amplitude normalised to F<sub>V</sub></td></tr>
+            <tr><td>Slope P&ndash;eS</td><td>(F<sub>eS</sub>&minus;F<sub>M</sub>)/(t<sub>eS</sub>&minus;t<sub>FM</sub>)</td><td>Rate of decline from P to early S</td></tr>
+            <tr><td>P&ndash;eS / F<sub>V</sub></td><td>(F<sub>eS</sub>&minus;F<sub>M</sub>)/F<sub>V</sub></td><td>P&ndash;eS amplitude normalised to F<sub>V</sub></td></tr>
+            <tr><td>Slope Q&ndash;eS</td><td>(F<sub>eS</sub>&minus;F<sub>Q</sub>)/(t<sub>eS</sub>&minus;t<sub>Q</sub>)</td><td>Rate of decline from Q to early S</td></tr>
+            <tr><td>Q&ndash;eS / F<sub>V</sub></td><td>(F<sub>eS</sub>&minus;F<sub>Q</sub>)/F<sub>V</sub></td><td>Q&ndash;eS amplitude normalised to F<sub>V</sub></td></tr>
+          </table>
+
           <p style="font-size:75%; line-height:1.3;">
-            References: Tsimilli-Michael (2020) Photosynthetica 58:275–292 · Stirbet et al. (2018) Photosynthetica 56:86–104 ·
-            Strasser et al. (2000) Probing Photosynthesis 445–483 ·
-            Zavřel et al. (2026) Photosynthesis Research (2026) 164:6</a>
+            References: Tsimilli-Michael (2020) Photosynthetica 58:275&ndash;292 &middot; Stirbet et al. (2018) Photosynthetica 56:86&ndash;104 &middot;
+            Strasser et al. (2000) Probing Photosynthesis 445&ndash;483 &middot;
+            Zavřel et al. (2026) Photosynthesis Research (2026) 164:6 &middot;
+            Fratamico et al. (2016) Photosynth Res 128:271&ndash;285
           </p>
         </div>
       </div>
@@ -175,7 +198,7 @@
             <li>Upload OJIP files (up to 100) and click <em>Analyze</em></li>
             <li>Optionally adjust analysis parameters (F<sub>J</sub>/F<sub>I</sub> timing, spline smoothing, data reduction)</li>
             <li>Explore curves, parameters, and diagnostics in the interactive tabs</li>
-            <li>Optionally assign files to groups to compare replicates with mean ± SD</li>
+            <li>Optionally assign files to groups to compare replicates with mean &plusmn; SD &mdash; for advanced statistics, use the <a href="/statistics">Statistics tool</a></li>
             <li>Download results as .xlsx</li>
           </ol>
         </div>
@@ -1298,7 +1321,7 @@
             </div>
           </div>
           <!-- Fitting method help (collapsed by default) -->
-          <details class="mb-2" style="font-size:0.85em">
+          <details class="mb-4" style="font-size:0.85em">
             <summary class="text-muted" style="cursor:pointer">About fitting methods</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
               <p class="mb-1"><strong>Spline methods</strong> reconstruct the full transient with a spline and compute D2/D3 derivatives. FJ/FI are detected from D2 troughs:</p>
@@ -1417,7 +1440,7 @@
             </div>
           </div>
           <!-- O-J densify help (collapsed by default) -->
-          <details class="mb-2" style="font-size:0.85em">
+          <details class="mb-4" style="font-size:0.85em">
             <summary class="text-muted" style="cursor:pointer">About O-J densify models</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
               <p class="mb-1">O-J densify fills sparse gaps (&gt;&nbsp;0.5 decades) in the O&ndash;J window with model-based synthetic points (weight&nbsp;0.3 in the spline fit), improving derivative stability for instruments with coarse early sampling.</p>
@@ -1442,7 +1465,7 @@
             </div>
           </details>
           <!-- F0 timing override -->
-          <div class="form-row align-items-center mb-2">
+          <div class="form-row align-items-center mb-4">
             <div class="col-auto">
               <label class="mb-0 mr-1">F<sub>0</sub> at:</label>
               <input type="number" id="f0-time-input" min="0" max="1000" step="0.01"
@@ -1458,12 +1481,30 @@
             <div class="col-auto">
               <label class="mb-0 mr-1">Q point detection:</label>
               <select id="s-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
-                <option value="auto">Auto (D1 minimum &rarr; D2 trough)</option>
-                <option value="inflection">D2 trough only</option>
+                <option value="inflection">D2 trough (Q inflection)</option>
+                <option value="auto">D1 minimum (Q minimum) &rarr; D2 fallback</option>
               </select>
               <small class="text-muted ml-1">Q point at ~1&ndash;2&thinsp;s (Fratamico et&nbsp;al. 2016); early S&nbsp;=&nbsp;last point &mdash; click Re-fit to apply</small>
             </div>
           </div>
+          <!-- Q point detection help (collapsed by default) -->
+          <details class="mb-4" style="font-size:0.85em">
+            <summary class="text-muted" style="cursor:pointer">About Q point detection methods</summary>
+            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
+              <p class="mb-1">After the P peak (F<sub>M</sub>), fluorescence declines. The <strong>Q point</strong> (~1&ndash;2&thinsp;s) marks the transition between fast photochemical quenching and slower non-photochemical quenching build-up. It is distinct from the classical S level (~15&ndash;60&thinsp;s).</p>
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>D2 trough (Q inflection)</dt>
+                <dd class="mb-0">Finds the local minimum of the second derivative (D2) in the post-P decline &mdash; the &ldquo;elbow&rdquo; where the rate of decline transitions from accelerating to decelerating. Default method; robust even when the decline never fully reverses.</dd>
+                <dt>D1 minimum (Q minimum)</dt>
+                <dd class="mb-0">Finds the first zero-crossing of the first derivative (D1, negative&nbsp;&rarr;&nbsp;positive) &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 trough when no reversal is detected. Identifies a stronger, more definitive Q feature.</dd>
+              </dl>
+              <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
+              <p class="mb-0 mt-2" style="font-size:0.92em"><strong>Reference</strong></p>
+              <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">
+                <li>Fratamico A, Tocquin P, Franck F (2016) The chlorophyll <em>a</em> fluorescence induction curve in the green microalga <em>Haematococcus pluvialis</em>: identification of the Q point. <em>Photosynth&nbsp;Res</em> 128:271&ndash;285. <a href="https://doi.org/10.1007/s11120-016-0241-2" target="_blank" rel="noopener">doi:10.1007/s11120-016-0241-2</a></li>
+              </ol>
+            </div>
+          </details>
           <!-- Background / F0 mirror (AquaPen/FluorPen batches) — synced to the
                upload-panel controls so you can change it and Refit all without
                scrolling back up. Shown only for AquaPen/FluorPen. -->

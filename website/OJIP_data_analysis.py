@@ -1693,7 +1693,7 @@ def _t_safe(v, ms_factor):
 
 def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
                           fp_time_ms, fm_time_ms, fm_raw, f0_raw,
-                          min_post_p_ms=200.0, s_point_mode='auto',
+                          min_post_p_ms=200.0, s_point_mode='inflection',
                           d2_vals=None):
     """Detect the Q point and compute early-S parameters after the P peak.
 
@@ -1913,7 +1913,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       oj_model_params: 'dict | None' = None,
                       f0_time_ms: 'float | None' = None,
                       use_deriv_timing: bool = False,
-                      s_point_mode: str = 'auto'):
+                      s_point_mode: str = 'inflection'):
     """
     Full OJIP analysis pipeline for a single curve.
 
@@ -2202,6 +2202,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'F0':  _safe(F0[fname]),  'FM': _safe(FM[fname]),
         'FK':  _safe(FK[fname]),  'F50': _safe(F50[fname]),
         'FJ':  _safe(FJ[fname]),  'FI':  _safe(FI[fname]),
+        'FV':  _safe(FV[fname]),
         'FJ_time_user_ms':    fj_time_ms,
         'FI_time_user_ms':    fi_time_ms,
         'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
@@ -2727,6 +2728,7 @@ def ojip_process():
             'F0':  _safe(F0[fname]),  'FM': _safe(FM[fname]),
             'FK':  _safe(FK[fname]),  'F50': _safe(F50[fname]),
             'FJ':  _safe(FJ[fname]),  'FI':  _safe(FI[fname]),
+            'FV':  _safe(FV[fname]),
             'FJ_time_user_ms':    FJ_time_ms,
             'FI_time_user_ms':    FI_time_ms,
             'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
@@ -2811,7 +2813,7 @@ def ojip_refit():
             oj_model_params_refit = {'tau_ms': float(_tau_raw)}
     FJ_time_ms = float(data.get('fj_time_ms', 2.0))
     FI_time_ms = float(data.get('fi_time_ms', 30.0))
-    s_point_mode_refit = data.get('s_point_mode', 'auto')
+    s_point_mode_refit = data.get('s_point_mode', 'inflection')
     raw_fm_f0 = data.get('raw_fm_f0', {})   # {file: {FM: ..., F0: ...}}
     time_raw_ms = data['time_raw_ms']
     double_norm_dict = data['double_norm']  # {file: [y values]}
@@ -3269,7 +3271,7 @@ def ojip_process_batch():
     f0_raw          = payload.get('f0_time_ms', None)
     f0_time_ms      = float(f0_raw) if f0_raw is not None and f0_raw != '' else None
     use_deriv_timing = bool(payload.get('use_deriv_timing', False))
-    s_point_mode     = payload.get('s_point_mode', 'auto')
+    s_point_mode     = payload.get('s_point_mode', 'inflection')
 
     if not time_native or not curves:
         return jsonify({'status': 'error',
@@ -3720,10 +3722,10 @@ def _format_method_info(mi: dict) -> str:
         lines.append(f'Enabled:                no')
 
     # Q point detection mode
-    q_mode = mi.get('s_point_mode', 'auto')
+    q_mode = mi.get('s_point_mode', 'inflection')
     _Q_MODE_LABELS = {
-        'auto':       'Auto (D1 minimum → D2 trough fallback)',
-        'inflection': 'Inflection point (D2 trough in post-P decline)',
+        'inflection': 'D2 trough (Q inflection)',
+        'auto':       'D1 minimum (Q minimum) → D2 fallback',
     }
     lines += [
         '',
