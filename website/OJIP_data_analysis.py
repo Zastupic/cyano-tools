@@ -110,7 +110,7 @@ def _fit_start_index(dn: pd.DataFrame, trim_first: int = 0) -> int:
     for them the first positive point is index 0 and this reduces to the old
     ``1 + trim_first`` behaviour. The user ``trim_first`` is applied on top.
     """
-    t = dn.iloc[:, 0].values.astype(float)
+    t = np.asarray(dn.iloc[:, 0].values, dtype=float)
     pos = np.flatnonzero(t > 0)
     first_pos = int(pos[0]) if pos.size else 1
     return max(0, first_pos) + trim_first
@@ -1877,7 +1877,7 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
     q_earlyS_slope = None
     q_earlyS_amplitude = None
     q_earlyS_rel = None
-    if fq_dn is not None and fq_raw is not None:
+    if fq_dn is not None and fq_raw is not None and fq_time_ms is not None:
         q_earlyS_amplitude = end_raw - fq_raw
         dt_qes = end_time - fq_time_ms
         q_earlyS_slope = q_earlyS_amplitude / dt_qes if dt_qes > 0 and np.isfinite(dt_qes) else np.nan
@@ -2256,7 +2256,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         # Drop the non-positive pre-illumination baseline from the raw-axis
         # display arrays (see ojip_process for the full rationale): a t ≤ 0 point
         # makes the log-axis charts fall back to a ~10 ms floor and hide the rise.
-        _t_disp = sf[x_col].values.astype(float)
+        _t_disp = np.asarray(sf[x_col].values, dtype=float)
         _disp0  = int(np.argmax(_t_disp > 0)) if (_t_disp > 0).any() else 0
         result['time_raw_ms'] = (sf[x_col].iloc[_disp0:].astype(float) * ms).tolist()
         result['time_log_ms'] = (log_time.astype(float) * ms).tolist()
@@ -2636,7 +2636,7 @@ def ojip_process():
     # (Reconstructed / derivative arrays live on the already-positive log_time
     # grid and are left untouched. Analysis/JIP params are computed above from
     # the full Summary_file and are unaffected.)
-    _t_disp = Summary_file.iloc[:, 0].values.astype(float)
+    _t_disp = np.asarray(Summary_file.iloc[:, 0].values, dtype=float)
     _disp0  = int(np.argmax(_t_disp > 0)) if (_t_disp > 0).any() else 0
 
     time_raw_ms = (Summary_file.iloc[_disp0:, 0].astype(float) * ms).tolist()
@@ -2683,8 +2683,8 @@ def ojip_process():
         _fi_t_p = _t_safe(FI_deriv.get(fname), ms) or FI_time_ms
         _fp_t_p = _t_safe(FP_deriv.get(fname), ms)
         _f0_t_p = float(Summary_file[x_col].iloc[int(F50us_idx)]) * ms
-        _f0_v_p = float(F0[fname]); _fj_v_p = float(FJ[fname])
-        _fi_v_p = float(FI[fname]); _fm_v_p = float(FM[fname])
+        _f0_v_p = float(F0[fname]); _fj_v_p = float(FJ[fname])  # type: ignore[arg-type]
+        _fi_v_p = float(FI[fname]); _fm_v_p = float(FM[fname])  # type: ignore[arg-type]
         def _slope_p(fe, fs, te, ts):
             dt = te - ts
             return (fe - fs) / dt if dt > 0 and np.isfinite(dt) else np.nan
