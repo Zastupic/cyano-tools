@@ -580,7 +580,7 @@
                     <i class="fa fa-info-circle" style="color:#0a3c58;"></i>
                     If &mu; was calculated from OD<sub>720</sub> in the non-linear range (&gt;&nbsp;0.4), the value may be underestimated and should be corrected:
                     <br>&nbsp;&middot;&nbsp;
-                    <a href="#od-mu-simple" onclick="openODSection('od-mu-simple'); return false;" style="white-space:nowrap;">Quick correction from known &mu;<sub>raw</sub></a>
+                    <a href="#od-mu-simple" onclick="openODSection('od-mu-simple'); return false;" style="white-space:nowrap;">Quick correction from known &mu;<sub>raw</sub> and operating OD</a>
                     <br>&nbsp;&middot;&nbsp;
                     <a href="#od-mu-corr" onclick="openODSection('od-mu-corr'); return false;" style="white-space:nowrap;">Recalculate from two OD measurements</a>
                 </p>
@@ -782,37 +782,24 @@
 
                 <!-- 5. Quick μ recalculator -->
                 <details id="od-mu-simple">
-                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Quick recalculation of already-calculated &mu; (from known &mu;<sub>raw</sub>)</summary>
+                    <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0;">Quick recalculation of already-calculated &mu; (from known &mu;<sub>raw</sub> and operating OD)</summary>
                     <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
-                        <p class="mb-1">If you already have a &mu; value (calculated from raw OD) and want to correct it without re-entering the original OD measurements.
-                        The shortcut &mu;<sub>corrected</sub>&nbsp;=&nbsp;<i>k</i>&nbsp;&middot;&nbsp;&mu;<sub>raw</sub> is exact only for a <em>power-law</em> correction form
-                        (<i>OD<sub>true</sub></i>&nbsp;=&nbsp;<i>C&nbsp;&middot;&nbsp;OD<sub>meas</sub><sup>k</sup></i>), because the exponent <i>k</i> factors out of the ln-ratio.
-                        <br>
-                        <strong>OD<sub>720</sub> (FMT-150, AquaPen):</strong> The pure-exponential correction (<i>A&nbsp;&middot;&nbsp;e<sup>k&nbsp;OD</sup></i>) behaves closely enough to a power law in the relevant range that &mu;<sub>corrected</sub>&nbsp;=&nbsp;<i>k</i>&nbsp;&middot;&nbsp;&mu;<sub>raw</sub> is a good approximation.
-                        <strong>OD<sub>680</sub> (FMT-150):</strong> The exponential correction exponent (&lt;&nbsp;1 for both strains) cannot be used as a multiplier — it gives &mu;<sub>corrected</sub>&nbsp;&lt;&nbsp;&mu;<sub>raw</sub>, which is physically wrong.
-                        Instead, a <em>power-law fit</em> to the same calibration data is used as a quick approximation:
-                        WT: (<i style="font-size:90%">\( OD_{true} \approx C \cdot OD_{meas}^{1.58} \)</i>, k&nbsp;=&nbsp;1.58);
-                        EFE: (<i style="font-size:90%">\( OD_{true} = 1.0884 \cdot OD_{meas}^{1.4315} \)</i>, k&nbsp;=&nbsp;1.4315).
-                        For an exact result, use the two-OD calculator below.
-                        <br>
-                        <strong>MC-1000:</strong> Additive constant in correction — shortcut is approximate only.</p>
+                        <p class="mb-1">If you already have a &mu; value (calculated from raw OD) and want to correct it without
+                        re-entering the original OD measurements, provide the <strong>operating OD<sub>0</sub></strong>
+                        (the OD around which growth was measured &mdash; e.g.&nbsp;turbidostat setpoint or mid-point of a short batch interval).
+                        </p>
+                        <p class="mb-1">The correction factor is computed from the same OD correction model
+                        used in the <a href="#od-mu-corr" onclick="openODSection('od-mu-corr'); return false;">two-OD calculator below</a>,
+                        applied locally at OD<sub>0</sub>:</p>
                         <p class="mb-1" style="line-height:0.9"><i style="font-size:80%">
-                            \( \mu_{corrected} \approx k \cdot \mu_{raw} \)
+                            \( \mu_{corrected} \approx \text{factor}(OD_0) \cdot \mu_{raw}, \quad \text{factor} = \max\!\left(1,\; \frac{d\ln OD_{corr}}{d\ln OD_{meas}}\bigg|_{OD_0}\right) \)
                         </i></p>
-                        <table class="table table-sm table-borderless mb-2" style="font-size:0.85em; width:auto;">
-                            <thead><tr>
-                                <th style="padding:0.15rem 0.6rem 0.15rem 0; color:#555; font-weight:600;">Device</th>
-                                <th style="padding:0.15rem 0.6rem 0.15rem 0; color:#555; font-weight:600;"><i>k</i></th>
-                            </tr></thead>
-                            <tbody>
-                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">FMT-150 WT &nbsp;(OD<sub>720</sub>)</td><td style="padding:0.1rem 0;">1.83</td></tr>
-                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">FMT-150 EFE &nbsp;(OD<sub>720</sub>)</td><td style="padding:0.1rem 0;">1.6376</td></tr>
-                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">AquaPen &nbsp;(OD<sub>720</sub>)</td><td style="padding:0.1rem 0;">1.677</td></tr>
-                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">MC-1000 &nbsp;(OD<sub>720</sub>)</td><td style="padding:0.1rem 0;">&asymp;&nbsp;2.497</td></tr>
-                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">FMT-150 WT &nbsp;(OD<sub>680</sub>)</td><td style="padding:0.1rem 0;">&asymp;&nbsp;1.58</td></tr>
-                                <tr><td style="padding:0.1rem 0.6rem 0.1rem 0;">FMT-150 EFE &nbsp;(OD<sub>680</sub>)</td><td style="padding:0.1rem 0;">&asymp;&nbsp;1.4315</td></tr>
-                            </tbody>
-                        </table>
+                        <p class="mb-1">The higher the OD, the larger the correction.
+                        The factor is clamped to &ge;&nbsp;1 (near the non-linearity threshold the piecewise model
+                        can produce a small artifact; the clamp ensures the correction never reduces &mu;).
+                        This approximation is accurate when OD does not change much during the measurement interval
+                        (turbidostat/chemostat, or short batch intervals with &lt;&nbsp;50% OD change).
+                        For batch growth with large OD swings, use the two-OD calculator below for an exact result.</p>
                         <div class="form-row align-items-end mb-1">
                             <div class="col-auto">
                                 <label class="mb-0" style="font-size:0.9em;">Device</label>
@@ -831,6 +818,11 @@
                                        style="width:90px;" onkeypress="return isNumberKey(event)" oninput="calculateSimpleMuCorrection()">
                             </div>
                             <div class="col-auto">
+                                <label class="mb-0" style="font-size:0.9em;">OD<sub>0</sub></label>
+                                <input type="number" class="form-control form-control-sm" id="mu_simple_OD0" min="0.1" step="0.1" value="1.0"
+                                       style="width:80px;" onkeypress="return isNumberKey(event)" oninput="calculateSimpleMuCorrection()">
+                            </div>
+                            <div class="col-auto">
                                 <label class="mb-0" style="font-size:0.9em;">Time unit</label>
                                 <select class="form-control form-control-sm" id="mu_simple_unit" oninput="calculateSimpleMuCorrection()">
                                     <option value="h">h<sup>-1</sup></option>
@@ -844,6 +836,7 @@
                             </div>
                         </div>
                         <div id="mu_simple_detail_span" style="font-size:0.88em; color:#555;"></div>
+                        <div id="mu_simple_table_div"></div>
                     </div>
                 </details>
                 <br>
@@ -856,17 +849,21 @@
                         the raw &mu; underestimates the true value. Correcting both OD readings first yields the true growth rate:
                         <i style="font-size:80%">\( \mu_{corrected} = \ln\!\left(OD_{2}^{corr} / OD_{1}^{corr}\right) / \Delta t \)</i></p>
                         <details style="margin-bottom:0.4em;">
-                            <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.2em 0;">Mathematical insight — simplified formula for exponential correction models</summary>
+                            <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.2em 0;">Mathematical insight — why &mu;<sub>corrected</sub> &ne; k &middot; &mu;<sub>raw</sub></summary>
                             <div class="card card-body py-2" style="font-size:0.92em; background:#f8f9fa; margin-top:0.3em;">
                                 <p class="mb-1">For FMT-150 and AquaPen, the correction has the pure exponential form <i>OD<sub>corr</sub> = A &middot; e<sup>k &middot; OD<sub>meas</sub></sup></i>.
-                                The constant <i>A</i> cancels in the ratio, giving a simple closed form:</p>
+                                The constant <i>A</i> cancels in the ratio, giving a closed form:</p>
                                 <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px;">
                                 <p class="mb-1" style="line-height:0.9; white-space:nowrap;"><i style="font-size:80%">
-                                    \( \mu_{corrected} = \dfrac{\ln\!\left(A e^{k\,OD_2} / A e^{k\,OD_1}\right)}{\Delta t} = \dfrac{k\,(OD_2 - OD_1)}{\Delta t} = k\cdot\mu_{raw} \)
+                                    \( \mu_{corrected} = \dfrac{\ln\!\left(A e^{k\,OD_2} / A e^{k\,OD_1}\right)}{\Delta t} = \dfrac{k\,(OD_2 - OD_1)}{\Delta t} \)
                                 </i></p>
                                 </div>
-                                <p class="mb-0">The corrected growth rate is simply the raw growth rate scaled by the correction exponent <i>k</i>:
-                                <strong>k&nbsp;=&nbsp;1.83</strong> (FMT-150 WT) or <strong>k&nbsp;=&nbsp;1.6376</strong> (FMT-150 EFE) and <strong>k&nbsp;=&nbsp;1.677</strong> for AquaPen.
+                                <p class="mb-1">Note that this is <strong>not</strong> the same as <i>k</i>&nbsp;&middot;&nbsp;&mu;<sub>raw</sub>,
+                                because &mu;<sub>raw</sub>&nbsp;=&nbsp;ln(OD<sub>2</sub>/OD<sub>1</sub>)&nbsp;/&nbsp;&Delta;t uses the <em>log-ratio</em>,
+                                while the corrected formula uses the <em>linear difference</em> (OD<sub>2</sub>&nbsp;&minus;&nbsp;OD<sub>1</sub>).
+                                These are equal only when OD<sub>2</sub>&nbsp;&approx;&nbsp;OD<sub>1</sub>; for typical batch growth the discrepancy is 10&ndash;50%+.</p>
+                                <p class="mb-0">This is exactly what this calculator computes: it applies the correction to each OD value individually, then takes the ln-ratio of the corrected values.
+                                Exponents: <strong>k&nbsp;=&nbsp;1.83</strong> (FMT-150 WT), <strong>1.6376</strong> (FMT-150 EFE), <strong>1.677</strong> (AquaPen).
                                 For MC-1000 (form <i>0.029 + 0.143&middot;e<sup>2.497&middot;OD</sup></i>), the additive constant breaks the cancellation, so the full formula is used.</p>
                             </div>
                         </details>

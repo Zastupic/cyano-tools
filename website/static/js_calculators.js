@@ -265,21 +265,32 @@ document.getElementById('mu_simple_result_span').innerHTML = "<b>...</b>";
 function calculateSimpleMuCorrection() {
     const device  = document.getElementById('mu_simple_device').value;
     const mu_raw  = parseFloat(document.getElementById('mu_simple_raw').value);
+    const OD0     = parseFloat(document.getElementById('mu_simple_OD0').value);
     const unit    = document.getElementById('mu_simple_unit').value;
     const resultSpan = document.getElementById('mu_simple_result_span');
     const detailSpan = document.getElementById('mu_simple_detail_span');
 
     if (isNaN(mu_raw) || mu_raw <= 0) {
-        resultSpan.innerHTML = "<b>—</b> (enter a positive &mu; value)";
+        resultSpan.innerHTML = "<b>&mdash;</b> (enter a positive &mu; value)";
+        detailSpan.innerHTML = "";
+        return;
+    }
+    if (isNaN(OD0) || OD0 <= 0) {
+        resultSpan.innerHTML = "<b>&mdash;</b> (enter a positive OD<sub>0</sub> value)";
         detailSpan.innerHTML = "";
         return;
     }
 
-    const kMap = { 'FMT-150 WT': 1.83, 'FMT-150 EFE': 1.6376, 'AquaPen': 1.677, 'MC-1000': 2.497, 'FMT-150 WT (OD680)': 1.58, 'FMT-150 EFE (OD680)': 1.4315 };
-    const k = kMap[device];
-    const mu_corr = k * mu_raw;
-    const isOD680simple = device === 'FMT-150 WT (OD680)' || device === 'FMT-150 EFE (OD680)';
-    const isApprox = (device === 'MC-1000' || isOD680simple);
+    // Local correction factor from the OD correction model (same as the two-OD calculator).
+    // Computed as the elasticity d ln(OD_corr) / d ln(OD_meas) at OD0, clamped to >= 1.
+    var eps = 0.001;
+    var odLo = OD0 * (1 - eps);
+    var odHi = OD0 * (1 + eps);
+    var factor = Math.log(correctOD(odHi, device) / correctOD(odLo, device))
+               / Math.log(odHi / odLo);
+    factor = Math.max(factor, 1.0);  // correction can only increase growth rate
+
+    const mu_corr = factor * mu_raw;
 
     resultSpan.innerHTML =
         "&mu;<sub>raw</sub> = <b>" + mu_raw.toFixed(4) + "</b> " + unit + "<sup>-1</sup>" +
@@ -287,9 +298,79 @@ function calculateSimpleMuCorrection() {
         "&mu;<sub>corrected</sub> &asymp; <b>" + mu_corr.toFixed(4) + "</b> " + unit + "<sup>-1</sup>";
 
     detailSpan.innerHTML =
-        "k = <b>" + k + "</b> (" + device + ")" +
-        (device === 'MC-1000' ? '&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:#b06000;">Approximate — use the OD-based calculator above for an exact result with MC-1000.</span>' : '') +
-        (isOD680simple ? '&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:#b06000;">Power-law approximation: &asymp;10% OD error vs. the exponential model. For exact results use the two-OD calculator below.</span>' : '');
+        "OD<sub>0</sub> = <b>" + OD0.toFixed(2) + "</b>" +
+        "&nbsp;&nbsp;&rarr;&nbsp;&nbsp;correction factor = <b>" + factor.toFixed(3) + "</b> (" + device + ")";
+
+    generateFactorTable(device);
+}
+
+function generateFactorTable(device) {
+    var tableDiv = document.getElementById('mu_simple_table_div');
+    if (!tableDiv) return;
+
+    var isOD680 = device === 'FMT-150 WT (OD680)' || device === 'FMT-150 EFE (OD680)';
+    var threshold = isOD680 ? 0.6 : 0.4;
+    var odMax = isOD680 ? 3.5 : 2.0;
+    var odLabel = isOD680 ? 'OD<sub>680</sub>' : 'OD<sub>720</sub>';
+    // Start above threshold so both OD1 (0.95*OD0) and OD2 (1.05*OD0) are in the non-linear range
+    var odStart = threshold + 0.1;
+
+    // Worked-example parameters
+    var dt = 5;  // hours
+    var mu_raw = Math.log(1.05 / 0.95) / dt;  // constant for all rows (~0.0200 h-1)
+
+    var p = 'padding:0.1rem 0.35rem;';  // compact cell padding
+    var ph = 'padding:0.15rem 0.35rem;';  // header padding
+    var nw = 'white-space:nowrap;';  // prevent line breaks in cells
+
+    var html = '<details style="margin-top:0.5em;"><summary style="cursor:pointer; font-size:0.88em; color:#0a3c58;">' +
+        'Reference table with worked examples for <b>' + device +
+        '</b></summary><div style="overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:0.3em;">' +
+        '<p style="font-size:0.78em; color:#666; margin-bottom:0.2em;">' +
+        'Example scenario: OD<sub>1</sub> = 0.95 &middot; OD<sub>0</sub>, ' +
+        'OD<sub>2</sub> = 1.05 &middot; OD<sub>0</sub>, &Delta;t = 5 h. ' +
+        'Factor is clamped to &ge; 1.0 (correction can only increase &mu;).' +
+        '</p>' +
+        '<table class="table table-sm table-bordered mb-1" style="font-size:0.78em; width:auto;">' +
+        '<thead><tr>' +
+        '<th style="' + ph + '">' + odLabel + '</th>' +
+        '<th style="' + ph + nw + '">OD<sub>1</sub> &rarr; corr</th>' +
+        '<th style="' + ph + nw + '">OD<sub>2</sub> &rarr; corr</th>' +
+        '<th style="' + ph + nw + '">&mu;<sub>raw</sub> (h<sup>-1</sup>)</th>' +
+        '<th style="' + ph + nw + '">&mu;<sub>corr</sub> (h<sup>-1</sup>)</th>' +
+        '<th style="' + ph + nw + '">Factor</th>' +
+        '</tr></thead><tbody>';
+
+    for (var od = odStart; od <= odMax + 0.001; od += 0.1) {
+        var od1 = 0.95 * od;
+        var od2 = 1.05 * od;
+        var od1c = correctOD(od1, device);
+        var od2c = correctOD(od2, device);
+        var mu_corr_raw = Math.log(od2c / od1c) / dt;
+        var rawFactor = mu_corr_raw / mu_raw;
+        var factor = Math.max(rawFactor, 1.0);
+        var mu_corr = factor * mu_raw;  // use clamped factor for displayed mu_corr
+        var clamped = rawFactor < 1.0;
+        var clampStyle = clamped ? 'color:#999;' : '';
+
+        html += '<tr>' +
+            '<td style="' + p + '"><b>' + od.toFixed(1) + '</b></td>' +
+            '<td style="' + p + nw + '">' + od1.toFixed(3) + ' &rarr; ' + od1c.toFixed(3) + '</td>' +
+            '<td style="' + p + nw + '">' + od2.toFixed(3) + ' &rarr; ' + od2c.toFixed(3) + '</td>' +
+            '<td style="' + p + '">' + mu_raw.toFixed(4) + '</td>' +
+            '<td style="' + p + clampStyle + '">' + mu_corr.toFixed(4) + '</td>' +
+            '<td style="' + p + clampStyle + '"><b>' + factor.toFixed(2) + '</b>' +
+            (clamped ? ' <span style="font-size:0.85em;" title="Model gives ' + rawFactor.toFixed(2) + '; clamped to 1.00">&dagger;</span>' : '') +
+            '</td></tr>';
+    }
+
+    html += '</tbody></table>';
+    // Footnote if any rows were clamped
+    html += '<p style="font-size:0.72em; color:#999; margin:0.1em 0 0 0;">' +
+        '&dagger; Near the non-linearity threshold the OD correction model can give factor &lt; 1 ' +
+        '(an artifact of the piecewise model); clamped to 1.00.</p>';
+    html += '</div></details>';
+    tableDiv.innerHTML = html;
 }
 
 //--------------------------------------//
