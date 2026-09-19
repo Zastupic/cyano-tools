@@ -2333,6 +2333,7 @@ def ojip_process():
     _f0_raw_proc    = request.form.get('f0_time_ms', None)
     f0_time_ms_proc = float(_f0_raw_proc) if _f0_raw_proc not in (None, '') else None
     reduce_size = request.form.get('checkbox_reduce_file_size') == 'checked'
+    use_deriv_timing_proc = request.form.get('use_deriv_timing', '') == 'true'
     FJ_time_ms = float(request.form.get('FJ_time', 2.0))
     FI_time_ms = float(request.form.get('FI_time', 30.0))
 
@@ -2537,6 +2538,19 @@ def ojip_process():
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
 
+    # ── optionally override FJ/FI with derivative-detected times ────────────
+    _deriv_timing_used_proc = False
+    if use_deriv_timing_proc:
+        _fname0 = data_cols[0] if data_cols else None
+        _fj_d = _t_safe(FJ_deriv.get(_fname0), ms) if _fname0 else None
+        _fi_d = _t_safe(FI_deriv.get(_fname0), ms) if _fname0 else None
+        if _fj_d is not None and _fi_d is not None and _fj_d < _fi_d:
+            FJ_time_ms = _fj_d
+            FI_time_ms = _fi_d
+            FJ_time = FJ_time_ms / ms
+            FI_time = FI_time_ms / ms
+            _deriv_timing_used_proc = True
+
     # ── reference time indexes ───────────────────────────────────────────────
     def tidx(t): return Summary_file[x_col].sub(t).abs().idxmin()
 
@@ -2740,6 +2754,7 @@ def ojip_process():
             'FJ_conf': _safe(fjifp_conf['FJ'].get(fname)),
             'FI_conf': _safe(fjifp_conf['FI'].get(fname)),
             'FP_conf': _safe(fjifp_conf['FP'].get(fname)),
+            'deriv_timing_used': _deriv_timing_used_proc,
             'FM_time_ms':  _safe(FM_timings_series.get(fname)),
             'Area_OJ': _safe(AREAOJ[fname]), 'Area_JI': _safe(AREAJI[fname]),
             'Area_IP': _safe(AREAIP[fname]), 'Area_OP': _safe(AREAOP[fname]),

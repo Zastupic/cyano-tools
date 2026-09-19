@@ -14,10 +14,16 @@ let fjfiMode  = 'default'; // 'default' (2/30 ms) or 'auto' (derivative-detected
 /** Is the "Auto-detected" FJ/FI radio selected? Checks both input.checked
  *  and Bootstrap's active class (jQuery toggle doesn't always sync checked). */
 function _wantDerivTiming() {
+  // Check diagnostics tab radio first (visible after analysis)
   const inp = document.getElementById('fjfi-radio-auto');
   if (inp && inp.checked) return true;
   const lbl = document.getElementById('fjfi-radio-auto-label');
   if (lbl && lbl.classList.contains('active')) return true;
+  // Fallback: sidebar radio (available before analysis)
+  const sidebarInp = document.getElementById('fjfi-sidebar-auto');
+  if (sidebarInp && sidebarInp.checked) return true;
+  const sidebarLbl = document.getElementById('fjfi-sidebar-auto-label');
+  if (sidebarLbl && sidebarLbl.classList.contains('active')) return true;
   return false;
 }
 
@@ -3760,6 +3766,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Sidebar FJ/FI timing radio — mirrors the diagnostics radio behaviour.
+  // Before analysis: just updates fjfiMode for the next upload/batch.
+  // After analysis: recalculates JIP params like the diagnostics radio.
+  document.querySelectorAll('input[name="fjfi-timing-sidebar"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const wantAuto = _wantDerivTiming();
+      // Sync diagnostics radio
+      const fixedRadio = document.getElementById('fjfi-radio-fixed');
+      const autoRadio  = document.getElementById('fjfi-radio-auto');
+      const fixedLabel = document.getElementById('fjfi-radio-fixed-label');
+      const autoLabel  = document.getElementById('fjfi-radio-auto-label');
+      if (fixedRadio && autoRadio) {
+        fixedRadio.checked = !wantAuto;
+        autoRadio.checked  = wantAuto;
+      }
+      if (fixedLabel && autoLabel) {
+        fixedLabel.classList.toggle('active', !wantAuto);
+        autoLabel.classList.toggle('active',  wantAuto);
+      }
+      // If data is loaded, recalculate
+      if (ojipData && ojipData.files) {
+        for (const fname of ojipData.files) {
+          const kv = ojipData.key_values[fname];
+          if (!kv) continue;
+          if (wantAuto && kv.FJ_time_deriv_ms != null && kv.FI_time_deriv_ms != null) {
+            ojipData.key_values[fname] = recalcKeyValues(fname, kv.FJ_time_deriv_ms, kv.FI_time_deriv_ms);
+          } else {
+            ojipData.key_values[fname] = recalcKeyValues(fname,
+              parseFloat(document.getElementById('FJ_time').value) || 2.0,
+              parseFloat(document.getElementById('FI_time').value) || 30.0);
+          }
+          paramData[fname] = calcJIP(ojipData.key_values[fname]);
+        }
+      }
+      fjfiMode = wantAuto ? 'auto' : 'default';
+      _updateFJFIBtnLabels();
+      if (ojipData && ojipData.files) _refreshAfterTimingChange();
+    });
+  });
+
   // Groups tab
   document.getElementById('select-all-check').addEventListener('change', e => {
     document.querySelectorAll('.group-check').forEach(cb => cb.checked = e.target.checked);
@@ -4092,6 +4138,7 @@ async function uploadAndAnalyze() {
   fd.append('background_n',    document.getElementById('bg-n-input')?.value || '1');
   fd.append('f0_source',       document.getElementById('f0-source-sel')?.value || 'instrument');
   fd.append('knot_placement',  document.getElementById('knot-placement-sel')?.value || 'hybrid');
+  fd.append('use_deriv_timing', _wantDerivTiming() ? 'true' : 'false');
   const _f0Val = parseFloat(document.getElementById('f0-time-input')?.value);
   if (_f0Val > 0) fd.append('f0_time_ms', _f0Val.toString());
   if (document.getElementById('reduce_size').checked) fd.append('checkbox_reduce_file_size', 'checked');
@@ -4156,6 +4203,9 @@ async function uploadAndAnalyze() {
     // Preserve original (unscaled) time axis for F0 timing override
     ojipData._time_raw_ms_orig = data.time_raw_ms.slice();
     groups   = {};
+    // Sync FJ/FI timing mode with the sidebar selection used for this upload
+    fjfiMode = _wantDerivTiming() ? 'auto' : 'default';
+    _updateFJFIBtnLabels();
     // Sync annotation instrument select with the OJIP fluorometer selection so
     // the field is pre-filled when the user switches to the Annotation tab.
     if (data.fluorometer) {
@@ -5301,6 +5351,21 @@ function _updateFJFIBtnLabels() {
   for (const [id, cls] of Object.entries(badges)) {
     const el = document.getElementById(id);
     if (el) { el.innerHTML = badgeHtml; el.className = cls; el.style.fontSize = '0.8em'; }
+  }
+
+  // Sync sidebar radio with current fjfiMode
+  const isAuto = fjfiMode === 'auto';
+  const sbFixed = document.getElementById('fjfi-sidebar-fixed');
+  const sbAuto  = document.getElementById('fjfi-sidebar-auto');
+  const sbFixedLbl = document.getElementById('fjfi-sidebar-fixed-label');
+  const sbAutoLbl  = document.getElementById('fjfi-sidebar-auto-label');
+  if (sbFixed && sbAuto) {
+    sbFixed.checked = !isAuto;
+    sbAuto.checked  = isAuto;
+  }
+  if (sbFixedLbl && sbAutoLbl) {
+    sbFixedLbl.classList.toggle('active', !isAuto);
+    sbAutoLbl.classList.toggle('active',  isAuto);
   }
 }
 

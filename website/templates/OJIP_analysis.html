@@ -337,7 +337,20 @@
                 </div>
               </div>
             </div>
-            <small class="text-muted">Used for JIP parameter calculation (V<sub>J</sub>, V<sub>I</sub>, &psi;E<sub>0</sub>, etc.). After spline refit, parameters auto-switch to derivative-detected F<sub>J</sub>/F<sub>I</sub> times. Use the toggle button on Curves/Parameters tabs to switch back.</small>
+            <div class="form-row align-items-center mt-2 mb-1">
+              <div class="col-auto"><small class="text-muted mr-1">F<sub>J</sub>/F<sub>I</sub> for JIP params:</small></div>
+              <div class="col-auto">
+                <div class="btn-group btn-group-toggle btn-group-sm" data-toggle="buttons">
+                  <label class="btn btn-outline-info btn-sm active" id="fjfi-sidebar-fixed-label" style="font-size:0.78em;padding:2px 8px">
+                    <input type="radio" name="fjfi-timing-sidebar" id="fjfi-sidebar-fixed" value="fixed" checked> Fixed
+                  </label>
+                  <label class="btn btn-outline-warning btn-sm" id="fjfi-sidebar-auto-label" style="font-size:0.78em;padding:2px 8px">
+                    <input type="radio" name="fjfi-timing-sidebar" id="fjfi-sidebar-auto" value="auto"> Auto-detected
+                  </label>
+                </div>
+              </div>
+            </div>
+            <small class="text-muted">Used for JIP parameter calculation (V<sub>J</sub>, V<sub>I</sub>, &psi;E<sub>0</sub>, etc.). <b>Fixed</b> uses the times above; <b>Auto-detected</b> uses derivative-identified F<sub>J</sub>/F<sub>I</sub> inflection points from the spline fit. Toggle is also available on Curves, Parameters, and Diagnostics tabs.</small>
           </div>
 
           <!-- kr / spline smoothing -->
