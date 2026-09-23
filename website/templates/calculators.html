@@ -91,6 +91,19 @@
         display: block;
         padding: 0.4em 0.8em !important;
     }
+
+    /* Chart containers — full width on mobile, half on desktop */
+    .od-chart-wrap {
+        background: #fff;
+        border-radius: 4px;
+        padding: 8px;
+        width: 50%;
+    }
+    @media (max-width: 768px) {
+        .od-chart-wrap {
+            width: 100%;
+        }
+    }
 </style>
 
 <div class="accordion" id="calculatorsAccordion">
@@ -767,11 +780,11 @@
                     <summary style="cursor:pointer; font-weight:bold; color:#0a3c58; padding:0.4em 0 !important;">OD non-linearity — measured calibration data (<i>Synechocystis</i> sp. PCC 6803)</summary>
                     <div class="card card-body" style="font-size:0.92em; background:#f8f9fa; margin-top:0.5em;">
                         <p class="mb-1"><strong>OD<sub>720</sub> vs. Chlorophyll <em>a</em></strong> — AquaPen, MC-1000-OD, FMT-150 WT, FMT-150 EFE</p>
-                        <div style="background:#fff; border-radius:4px; padding:8px; width:clamp(280px, 50%, 100%);">
+                        <div class="od-chart-wrap">
                             <canvas id="odNonlinearityChart" style="width:100%; height:280px;"></canvas>
                         </div>
                         <p class="mb-1 mt-3"><strong>OD<sub>680</sub> measured vs. Chlorophyll <em>a</em></strong> — FMT-150 WT, FMT-150 EFE</p>
-                        <div style="background:#fff; border-radius:4px; padding:8px; width:clamp(280px, 50%, 100%);">
+                        <div class="od-chart-wrap">
                             <canvas id="od680NonlinearityChart" style="width:100%; height:260px;"></canvas>
                         </div>
                     </div>
@@ -1246,8 +1259,8 @@
                 <br>
                 <button id="calculate_dilution_btn" type="button" class="btn btn-sm btn-outline-secondary" onclick="calculateDilutionPlot();"> ↻ Refresh Plot</button>
 
-                <div style="margin-top: 20px; padding: 10px; background-color: #fff; border-radius: 5px;">
-                    <canvas id="dilutionChart" style="width:100%; max-height:400px;"></canvas>
+                <div style="margin-top: 20px; padding: 10px; background-color: #fff; border-radius: 5px; height: 350px;">
+                    <canvas id="dilutionChart" style="width:100%;"></canvas>
                 </div>
                 <br>
                 <details>
