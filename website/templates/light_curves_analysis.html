@@ -65,6 +65,26 @@
     background: #ffffff !important; color: #004085 !important;
     box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
   }
+  /* ── External scrollable chart legend ── */
+  .lc-chart-wrap { display: flex; align-items: stretch; }
+  .lc-chart-area { position: relative; flex: 1; min-width: 0; }
+  .lc-ext-legend {
+    overflow-y: auto; min-width: 110px; max-width: 200px;
+    padding: 4px 6px; font-size: 10px; flex-shrink: 0;
+    border-left: 1px solid #eee;
+  }
+  .lc-ext-legend .ll-row {
+    display: flex; align-items: center; cursor: pointer;
+    padding: 1px 2px; white-space: nowrap; border-radius: 2px;
+  }
+  .lc-ext-legend .ll-row:hover { background: #f0f4f8; }
+  .lc-ext-legend .ll-row.ll-hidden { opacity: 0.35; }
+  .lc-ext-legend .ll-row.ll-hidden .ll-txt { text-decoration: line-through; }
+  .lc-ext-legend .ll-box {
+    display: inline-block; width: 12px; height: 8px;
+    margin-right: 4px; flex-shrink: 0; border-radius: 1px;
+  }
+  .lc-ext-legend .ll-txt { overflow: hidden; text-overflow: ellipsis; }
 </style>
 
 <!-- Banner -->
@@ -202,23 +222,160 @@
       </div>
     </div>
 
-    <!-- Protocol overview -->
+    <!-- Protocol & interpretation guide -->
     <div class="card">
       <div class="card-header py-2" id="headingProtocol">
         <h6 class="mb-0">
           <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
                   data-toggle="collapse" data-target="#collapseProtocol"
                   aria-expanded="false" aria-controls="collapseProtocol">
-            <i class="fa fa-image mr-2"></i>Protocol overview
+            <i class="fa fa-book mr-2"></i>Rapid light curve protocol &amp; interpretation guide
           </button>
         </h6>
       </div>
       <div id="collapseProtocol" class="collapse" aria-labelledby="headingProtocol" data-parent="#lcInfoAccordion">
-        <div class="card-body text-center">
-          <img src="static/images/light_curve_orig.jpg" alt="Rapid light curve example" class="img-fluid" style="max-width:600px;">
-          <p class="text-muted mt-2 mb-0" style="font-size:0.85em;">
-            Example rapid light curve (RLC) with fitted parameters: initial slope (α), photoinhibition coefficient (β),
-            and maximum relative electron transport rate (rETR<sub>max</sub>).
+        <div class="card-body" style="font-size:0.92em;">
+
+          <!-- Section 1: Measurement procedure -->
+          <h6 class="font-weight-bold mt-1 mb-2" style="color:#0a3c58;">
+            Measurement procedure
+          </h6>
+          <ul class="mb-2">
+            <li>Rapid light curves (RLCs) capture the <strong>momentary photosynthetic state</strong> of the
+              sample &mdash; they reflect recent light history rather than a steady-state acclimated response
+              (Ralph &amp; Gademann, 2005).</li>
+            <li>Unlike F<sub>v</sub>/F<sub>m</sub> (OJIP), RLCs do <strong>not</strong> require dark adaptation.
+              The pre-measurement state should match the experimental question:
+              <ul>
+                <li><em>Light-acclimated samples</em> &rarr; operational photosynthetic capacity under
+                  the growth or ambient conditions (recommended for most applications).</li>
+                <li><em>Dark-adapted samples</em> &rarr; a different pattern with markedly lower initial ETR;
+                  maximum ETR values may be very low following long-term dark adaptation
+                  (White &amp; Critchley, 1999).</li>
+              </ul>
+            </li>
+            <li>Short actinic-light steps (typically 10&ndash;30&thinsp;s each) ensure that each measurement
+              captures the momentary photosynthetic response before full acclimation to the new irradiance
+              can occur &mdash; this is the defining feature of RLCs compared to steady-state P&ndash;I
+              curves.</li>
+            <li>A saturating pulse is applied at the end of each step to determine
+              F<sub>m</sub>&prime; (maximum fluorescence yield under actinic light).</li>
+          </ul>
+          <div class="text-center mb-3">
+            <img src="static/images/light_curve_orig.jpg" alt="Rapid light curve example"
+                 class="img-fluid" style="max-width:600px;">
+            <p class="text-muted mt-1 mb-0" style="font-size:0.85em;">
+              Example rapid light curve (RLC) with fitted parameters: initial slope (&alpha;),
+              photoinhibition coefficient (&beta;), and maximum relative electron transport rate
+              (rETR<sub>max</sub>).
+            </p>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- Section 2: How parameters are derived -->
+          <h6 class="font-weight-bold mb-2" style="color:#0a3c58;">
+            How parameters are derived
+          </h6>
+          <ol class="mb-2">
+            <li><strong>Raw fluorescence:</strong> At each PAR step, steady-state fluorescence
+              (F<sub>t</sub>) is recorded, followed by a saturating pulse to determine
+              F<sub>m</sub>&prime;.</li>
+            <li><strong>Quantum yield:</strong> Q<sub>y</sub> = (F<sub>m</sub>&prime; &minus;
+              F<sub>t</sub>) / F<sub>m</sub>&prime; at each PAR level.</li>
+            <li><strong>Relative ETR:</strong> rETR = Q<sub>y</sub> &times; PAR.</li>
+            <li><strong>Curve fitting:</strong> The rETR vs. PAR data are fitted to the
+              <a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525"
+                 target="_blank" rel="noopener">Platt et al. (1980)</a> model using non-linear
+              regression (Levenberg&ndash;Marquardt algorithm), yielding fitted parameters
+              &alpha;, &beta;, and ETR<sub>mPot</sub>.</li>
+            <li><strong>Derived quantities:</strong>
+              <ul>
+                <li>ETR<sub>max</sub> = ETR<sub>mPot</sub> &times;
+                  (&alpha;&thinsp;/&thinsp;(&alpha;+&beta;)) &times;
+                  (&beta;&thinsp;/&thinsp;(&alpha;+&beta;))<sup>&beta;/&alpha;</sup></li>
+                <li>I<sub>k</sub> = ETR<sub>max</sub> / &alpha; &mdash; saturation irradiance</li>
+                <li>I<sub>b</sub> = ETR<sub>max</sub> / &beta; &mdash; photoinhibition irradiance</li>
+              </ul>
+              See the <em>Parameter reference table</em> above for full details and units.
+            </li>
+          </ol>
+
+          <hr class="my-3">
+
+          <!-- Section 3: Tips and troubleshooting -->
+          <h6 class="font-weight-bold mb-2" style="color:#0a3c58;">
+            Tips and troubleshooting
+          </h6>
+
+          <p class="mb-1"><strong>Fm&prime; &lt; Ft (negative quantum yield)</strong></p>
+          <p class="mb-1">
+            Under high actinic light, F<sub>m</sub>&prime; can fall below F<sub>t</sub>, resulting in
+            negative effective quantum yield (Q<sub>y</sub>) and rETR values. This is a well-documented
+            phenomenon with several possible causes:
+          </p>
+          <ul class="mb-2">
+            <li><strong>PSI fluorescence contamination:</strong> Photosystem I emits fluorescence that is
+              not quenched by saturating pulses. At high actinic light, PSI fluorescence inflates
+              F<sub>t</sub> relative to F<sub>m</sub>&prime;
+              (Pf&uuml;ndel, 1998).</li>
+            <li><strong>State transitions:</strong> In cyanobacteria, phycobilisomes redistribute from PSII
+              to PSI under strong light (state 2 transition), which is especially pronounced at 620&thinsp;nm
+              excitation
+              (Campbell et al., 1998; Kirilovsky, 2007).</li>
+            <li><strong>Incomplete Q<sub>A</sub> reduction:</strong> Under very strong actinic light, the
+              saturating pulse may fail to fully close all PSII reaction centres, yielding an underestimated
+              F<sub>m</sub>&prime;
+              (Schreiber, 2004).</li>
+            <li><strong>Low PSII content or PBS&ndash;PSII decoupling:</strong> Cells acclimated to high light
+              may have downregulated PSII to the point where PSI fluorescence dominates the signal.
+              In cyanobacteria, phycobilisomes can also functionally decouple from PSII under high
+              light as a photoprotective response, reducing the effective PSII absorption cross-section
+              (Zavřel et al., 2026; Tamary et al., 2012).</li>
+          </ul>
+          <p class="mb-1"><em>Effect on fitted parameters:</em></p>
+          <ul class="mb-2">
+            <li><strong>&alpha;</strong> (initial slope) &mdash; robust; determined by the low-light points
+              which are unaffected.</li>
+            <li><strong>&beta;</strong> (photoinhibition) &mdash; likely <strong>underestimated</strong> with
+              the &ldquo;Keep original values&rdquo; mode, because the Platt model cannot go below
+              zero.</li>
+            <li><strong>ETR<sub>mPot</sub>, ETR<sub>max</sub>, I<sub>b</sub></strong> &mdash; may be distorted
+              when negative values are fed to the fitter.</li>
+            <li><strong>I<sub>k</sub></strong> &mdash; mostly robust (&alpha;-driven).</li>
+          </ul>
+          <p class="mb-2">
+            <em>Recommendation:</em> The default <strong>&ldquo;Replace negatives with zero&rdquo;</strong> fitting
+            mode (Step 3) gives more reliable &beta; estimation. If the majority of PAR steps
+            show negative Q<sub>y</sub>, consider re-measuring with different instrument settings (e.g. shorter
+            saturating pulse, different measuring-light wavelength, or lower actinic-light range).
+          </p>
+
+          <p class="mb-1"><strong>Poor fit quality</strong></p>
+          <ul class="mb-2">
+            <li>Increase the <em>ETR<sub>max</sub> factor</em> (Step 3) to widen the upper fitting
+              boundary for ETR<sub>mPot</sub>.</li>
+            <li>Check raw fluorescence traces for anomalies (spikes, flat signal, instrument
+              errors).</li>
+          </ul>
+
+          <p class="mb-1"><strong>Very flat curves (low &alpha;)</strong></p>
+          <ul class="mb-0">
+            <li>May indicate severely stressed, photoinhibited, or inactive samples with very low
+              photosynthetic capacity.</li>
+          </ul>
+
+          <p class="text-muted small mt-3 mb-0">
+            References:
+            Ralph &amp; Gademann (2005) Aquatic Botany 82, 222&ndash;237 &middot;
+            White &amp; Critchley (1999) Photosynthesis Research 59, 63&ndash;72 &middot;
+            Platt et al. (1980) Journal of Marine Research 38, 687&ndash;701 &middot;
+            Pf&uuml;ndel (1998) Photosynthesis Research 56, 185&ndash;195 &middot;
+            Campbell et al. (1998) Marine Ecology Progress Series 163, 35&ndash;45 &middot;
+            Schreiber (2004) in Chlorophyll a Fluorescence (Papageorgiou &amp; Govindjee, eds.), pp. 279&ndash;319 &middot;
+            Kirilovsky (2007) Photosynthesis Research 93, 7&ndash;16 &middot;
+            Zavřel et al. (2026) Photosynthesis Research 164, 6 &middot;
+            Tamary et al. (2012) Biochimica et Biophysica Acta 1817, 1457&ndash;1465
           </p>
         </div>
       </div>
@@ -294,21 +451,22 @@
       </div>
     </div>
 
-    <!-- Step 3: Additional parameters (collapsible) -->
+    <!-- Step 3: Additional analysis parameters (collapsible) -->
     <div class="card mb-3" style="border:1px solid #dee2e6;">
       <div class="card-header py-2 px-3 d-flex align-items-center justify-content-between"
            data-toggle="collapse" data-target="#advancedParams"
            aria-expanded="false" aria-controls="advancedParams"
            style="cursor:pointer; background:#f8f9fa; user-select:none;">
         <span>
-          <span class="badge badge-primary mr-1">3</span> Additional fitting parameter
-          <span class="text-muted ml-2" style="font-size:0.85rem;">ETR<sub>max</sub> factor</span>
+          <span class="badge badge-primary mr-1">3</span> Additional analysis parameters
         </span>
         <i class="fa fa-chevron-down text-muted" id="advancedParamsChevron" style="transition:transform 0.2s;"></i>
       </div>
       <div id="advancedParams" class="collapse">
         <div class="card-body py-3">
-          <div class="form-group mb-0">
+
+          <!-- ETR max factor -->
+          <div class="form-group mb-3">
             <label for="etr_max_factor" class="font-weight-bold mb-1">
               ETR<sub>max</sub> factor
             </label>
@@ -326,6 +484,35 @@
               </div>
             </div>
           </div>
+
+          <hr class="my-2">
+
+          <!-- Negative ETR handling -->
+          <label class="font-weight-bold mb-1">Negative rETR handling</label>
+          <p class="text-muted small mb-2">
+            Controls how negative rETR values (resulting from Fm&prime; &lt; Ft at high actinic light) are handled
+            during Platt model fitting. Original values are always preserved in plots and exports.
+            See the <em>Protocol &amp; interpretation guide</em> above for details.
+          </p>
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="radio" name="negative_etr_mode" id="neg_etr_keep" value="keep">
+            <label class="form-check-label" for="neg_etr_keep">
+              <strong>Keep original values</strong> <span class="text-muted">&mdash; fit includes negative rETR as-is</span>
+            </label>
+          </div>
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="radio" name="negative_etr_mode" id="neg_etr_clip" value="clip_zero" checked>
+            <label class="form-check-label" for="neg_etr_clip">
+              <strong>Replace negatives with zero</strong> <span class="text-muted">&mdash; clip negative rETR to 0 for fitting only (recommended)</span>
+            </label>
+          </div>
+          <div class="form-check mb-0">
+            <input class="form-check-input" type="radio" name="negative_etr_mode" id="neg_etr_positive" value="positive_only">
+            <label class="form-check-label" for="neg_etr_positive">
+              <strong>Use only positive values</strong> <span class="text-muted">&mdash; exclude negative rETR points from fitting (needs &ge; 3 positive)</span>
+            </label>
+          </div>
+
         </div>
       </div>
     </div>
@@ -365,6 +552,11 @@
 <div id="results-section" style="display:none">
 
   <div class="alert alert-success mb-3 py-2" id="results-summary"></div>
+
+  <div class="alert alert-warning mb-3 py-2" id="negative-qy-warning" style="display:none; font-size:0.9em;">
+    <i class="fa fa-exclamation-triangle mr-1"></i>
+    <strong>Negative QY detected:</strong> <span id="negative-qy-details"></span>
+  </div>
 
   <!-- Tabs -->
   <ul class="nav nav-tabs" id="lcTabs" role="tablist">
@@ -424,8 +616,9 @@
           <small class="ml-1 text-muted">s</small>
         </div>
       </div>
-      <div style="position:relative; height:360px;">
-        <canvas id="raw-chart"></canvas>
+      <div class="lc-chart-wrap" style="height:360px;">
+        <div class="lc-chart-area"><canvas id="raw-chart"></canvas></div>
+        <div class="lc-ext-legend" id="raw-chart-legend"></div>
       </div>
     </div>
 
@@ -434,18 +627,22 @@
       <p class="text-muted small mb-2">
         Steady-state fluorescence F<sub>t</sub> (solid lines) and maximum fluorescence F<sub>m</sub>' (dashed lines) at each PAR step.
       </p>
-      <div style="position:relative; height:360px;">
-        <canvas id="ftfm-chart"></canvas>
+      <div class="lc-chart-wrap" style="height:360px;">
+        <div class="lc-chart-area"><canvas id="ftfm-chart"></canvas></div>
+        <div class="lc-ext-legend" id="ftfm-chart-legend"></div>
       </div>
     </div>
 
     <!-- ── ETR tab ──────────────────────────────────────────────────── -->
     <div class="tab-pane fade" id="tab-etr" role="tabpanel">
       <p class="text-muted small mb-2">
-        Relative electron transport rate (rETR): measured values (scatter points) and Platt model fit (lines).
+        Relative electron transport rate (rETR): measured values (filled circles; negative values shown
+        semi-transparent), values used for fitting (hollow circles, shown only when they differ from measured),
+        and Platt model fit (lines).
       </p>
-      <div style="position:relative; height:360px;">
-        <canvas id="etr-chart"></canvas>
+      <div class="lc-chart-wrap" style="height:360px;">
+        <div class="lc-chart-area"><canvas id="etr-chart"></canvas></div>
+        <div class="lc-ext-legend" id="etr-chart-legend"></div>
       </div>
     </div>
 
@@ -460,8 +657,9 @@
           <button class="btn btn-outline-primary" data-metric="qn">qN</button>
         </div>
       </div>
-      <div style="position:relative; height:360px;">
-        <canvas id="derived-chart"></canvas>
+      <div class="lc-chart-wrap" style="height:360px;">
+        <div class="lc-chart-area"><canvas id="derived-chart"></canvas></div>
+        <div class="lc-ext-legend" id="derived-chart-legend"></div>
       </div>
     </div>
 
@@ -474,8 +672,9 @@
           <button class="btn btn-outline-primary" data-pgroup="rates">Rates &amp; Irradiances</button>
         </div>
       </div>
-      <div style="position:relative; height:340px;">
-        <canvas id="params-chart"></canvas>
+      <div class="lc-chart-wrap" style="height:340px;">
+        <div class="lc-chart-area"><canvas id="params-chart"></canvas></div>
+        <div class="lc-ext-legend" id="params-chart-legend"></div>
       </div>
       <div style="overflow-x:auto; font-size:0.82em; margin-top:0.75rem;">
         <table class="table table-sm table-hover table-bordered mb-0" id="params-table"></table>

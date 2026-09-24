@@ -70,9 +70,14 @@ def lc_process():
     if not files or secure_filename(files[0].filename or '') == '':
         return jsonify({'status': 'error', 'message': 'Please select one or more files.'}), 400
 
-    fluorometer    = request.form.get('fluorometer', 'AquaPen')
-    protocol_key   = request.form.get('protocol', 'LC3')
-    etr_max_factor = int(request.form.get('etr_max_factor', 10))
+    fluorometer       = request.form.get('fluorometer', 'AquaPen')
+    protocol_key      = request.form.get('protocol', 'LC3')
+    etr_max_factor    = int(request.form.get('etr_max_factor', 10))
+    negative_etr_mode = request.form.get('negative_etr_mode', 'clip_zero')
+
+    if negative_etr_mode not in ('keep', 'clip_zero', 'positive_only'):
+        return jsonify({'status': 'error',
+                        'message': f'Invalid negative_etr_mode: {negative_etr_mode}'}), 400
 
     if len(files) > 100:
         return jsonify({'status': 'error', 'message': 'Maximum 100 files allowed.'}), 400
@@ -193,19 +198,28 @@ def lc_process():
 
     ETRMAX_measured = ETRALL.max()   # max measured ETR per file
 
-    # Check for zero or negative ETR (unfittable data)
-    if (ETRMAX_measured <= 0).any():
-        bad = ETRMAX_measured[ETRMAX_measured <= 0].index.tolist()
+    # Check for unfittable data (mode-aware)
+    unfittable = []
+    for fname in file_names:
+        etr_vals = ETRALL[fname].values.astype(float)
+        if negative_etr_mode == 'positive_only':
+            if int(np.sum(etr_vals > 0)) < 3:
+                unfittable.append(fname)
+        else:
+            if float(ETRALL[fname].max()) <= 0:
+                unfittable.append(fname)
+
+    if unfittable:
         return jsonify({
             'status': 'error',
-            'message': ('Some light curves contain zero or negative ETR values, '
-                        f'which cannot be fitted: {bad}. '
-                        'Please check the data and select only valid rapid light curves.')
+            'message': (f'The following files cannot be fitted with the selected '
+                        f'negative ETR mode ("{negative_etr_mode}"): {unfittable}. '
+                        f'Please check the data or try a different mode.')
         }), 400
 
     step_data = {fname: {
         'ft': [], 'fm': [], 'qy': [], 'etr_measured': [],
-        'etr_fitted': [], 'npq': [], 'qp': [], 'qn': []
+        'etr_for_fit': [], 'etr_fitted': [], 'npq': [], 'qp': [], 'qn': []
     } for fname in file_names}
 
     params_out = {}
@@ -213,12 +227,32 @@ def lc_process():
 
     for fname in file_names:
         etr_measured = ETRALL[fname].values.astype(float)
-        etr_max_obs  = float(ETRMAX_measured.at[fname])
-        etrmPot_init = etr_max_factor * etr_max_obs
+
+        # Per-file negative QY diagnostics (always from original data)
+        has_negative_qy   = bool(np.any(etr_measured < 0))
+        negative_qy_count = int(np.sum(etr_measured < 0))
+
+        # Prepare fitting arrays based on negative_etr_mode
+        if negative_etr_mode == 'clip_zero':
+            etr_for_fit = np.clip(etr_measured, 0, None)
+            par_for_fit = par_arr
+        elif negative_etr_mode == 'positive_only':
+            mask = etr_measured > 0
+            etr_for_fit = etr_measured[mask]
+            par_for_fit = par_arr[mask]
+        else:  # 'keep'
+            etr_for_fit = etr_measured
+            par_for_fit = par_arr
+
+        # Upper bound from fitting data (not raw measured, which may be negative)
+        etr_max_obs_fit = float(np.max(etr_for_fit)) if len(etr_for_fit) > 0 else 1.0
+        if etr_max_obs_fit <= 0:
+            etr_max_obs_fit = 1.0  # safety fallback
+        etrmPot_init = etr_max_factor * etr_max_obs_fit
 
         try:
             popt, _ = curve_fit(
-                model_platt, par_arr, etr_measured,
+                model_platt, par_for_fit, etr_for_fit,
                 p0=np.array([etrmPot_init, 0.05, 0.05]),
                 bounds=((0, 0, 0), (etrmPot_init, 25, 25)),
                 maxfev=2000
@@ -229,7 +263,7 @@ def lc_process():
                             'message': f'Curve fitting failed for {fname}.'}), 400
 
         ETRmPot_fit, alpha, beta = popt   # all ≥ 0 by curve_fit bounds
-        fit_etr = model_platt(par_arr, *popt)
+        fit_etr = model_platt(par_arr, *popt)  # always over full PAR range
 
         # ETRmax from alpha/beta formula (Platt 1980; α, β ≥ 0)
         if (alpha + beta) > 0 and alpha > 0 and beta > 0:
@@ -240,21 +274,34 @@ def lc_process():
         Ik = etr_max_from_ab / alpha if (alpha != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
         Ib = etr_max_from_ab / beta  if (beta  != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
 
+        # etr_max_measured always from original data (may be negative)
+        etr_max_obs_orig = float(np.max(etr_measured))
+
         params_out[fname] = {
             'alpha':              _safe(alpha),
             'beta':               _safe(beta),
-            'etr_max_measured':   _safe(etr_max_obs),
+            'etr_max_measured':   _safe(etr_max_obs_orig),
             'etr_max_from_ab':    _safe(etr_max_from_ab),
             'etr_mpot':           _safe(ETRmPot_fit),
             'ik':                 _safe(Ik),
             'ib':                 _safe(Ib),
+            'has_negative_qy':    has_negative_qy,
+            'negative_qy_count':  negative_qy_count,
         }
+
+        # Build full-length etr_for_fit (None where point was excluded)
+        if negative_etr_mode == 'positive_only':
+            etr_for_fit_full = [_safe(v) if v > 0 else None
+                                for v in etr_measured]
+        else:
+            etr_for_fit_full = [_safe(v) for v in etr_for_fit]
 
         step_data[fname] = {
             'ft':           [_safe(v) for v in FTALL[fname].values],
             'fm':           [_safe(v) for v in FMALL[fname].values],
             'qy':           [_safe(v) for v in QYALL[fname].values],
             'etr_measured': [_safe(v) for v in etr_measured],
+            'etr_for_fit':  etr_for_fit_full,
             'etr_fitted':   [_safe(v) for v in fit_etr],
             'npq':          [_safe(v) for v in NPQALL[fname].values],
             'qp':           [_safe(v) for v in QP[fname].values],
@@ -264,16 +311,17 @@ def lc_process():
     _cleanup_old_files(upload_folder)
 
     return jsonify({
-        'status':           'success',
-        'fluorometer':      fluorometer,
-        'protocol':         protocol_key,
+        'status':            'success',
+        'fluorometer':       fluorometer,
+        'protocol':          protocol_key,
+        'negative_etr_mode': negative_etr_mode,
         'light_intensities': PAR,
-        'files':            file_names,
-        'file_stem':        last_stem,
-        'raw_time_us':      raw_time_us,
-        'raw_curves':       raw_curves,
-        'step_data':        step_data,
-        'params':           params_out,
+        'files':             file_names,
+        'file_stem':         last_stem,
+        'raw_time_us':       raw_time_us,
+        'raw_curves':        raw_curves,
+        'step_data':         step_data,
+        'params':            params_out,
     })
 
 
@@ -325,14 +373,15 @@ def lc_export():
 
         # ── Step-data sheets ──────────────────────────────────────────────────
         metric_sheets = [
-            ('ETR_measured', 'etr_measured'),
-            ('ETR_fitted',   'etr_fitted'),
-            ('Ft',           'ft'),
-            ('Fm',           'fm'),
-            ('QY',           'qy'),
-            ('NPQ',          'npq'),
-            ('qP',           'qp'),
-            ('qN',           'qn'),
+            ('ETR_measured',      'etr_measured'),
+            ('ETR_used_for_fit',  'etr_for_fit'),
+            ('ETR_fitted',        'etr_fitted'),
+            ('Ft',                'ft'),
+            ('Fm',                'fm'),
+            ('QY',                'qy'),
+            ('NPQ',              'npq'),
+            ('qP',               'qp'),
+            ('qN',               'qn'),
         ]
         for sheet_name, key in metric_sheets:
             ws = wb.create_sheet(sheet_name)

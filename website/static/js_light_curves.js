@@ -400,6 +400,58 @@ function compactLegend(position = 'right') {
   };
 }
 
+// ── external scrollable legend ────────────────────────────────────────────
+// Builds a clickable HTML legend beside the chart canvas.  filterFn(dataset)
+// returns true for datasets that should appear as primary legend rows; the
+// following datasets (empty/filtered labels) are grouped with the preceding
+// primary and toggled together on click.
+function buildScrollLegend(canvasId, filterFn) {
+  const chart = chartInst[canvasId];
+  const el    = document.getElementById(canvasId + '-legend');
+  if (!chart || !el) return;
+  if (!filterFn) filterFn = ds => ds.label && ds.label !== '';
+
+  // Group datasets: each "group" = primary dataset + following unlabeled ones
+  const groups = [];
+  const datasets = chart.data.datasets;
+  let cur = null;
+  datasets.forEach((ds, i) => {
+    if (filterFn(ds)) {
+      cur = { label: ds.label, color: ds.borderColor || ds.backgroundColor, indices: [i] };
+      groups.push(cur);
+    } else if (cur) {
+      cur.indices.push(i);
+    }
+  });
+
+  el.innerHTML = '';
+  groups.forEach(g => {
+    const row = document.createElement('div');
+    row.className = 'll-row';
+    row.title = g.label;   // full name on hover
+
+    const box = document.createElement('span');
+    box.className = 'll-box';
+    box.style.background = g.color;
+
+    const txt = document.createElement('span');
+    txt.className = 'll-txt';
+    txt.textContent = g.label.length > 28 ? g.label.slice(0, 26) + '…' : g.label;
+
+    row.appendChild(box);
+    row.appendChild(txt);
+
+    row.addEventListener('click', () => {
+      const hide = !chart.getDatasetMeta(g.indices[0]).hidden;
+      g.indices.forEach(idx => { chart.getDatasetMeta(idx).hidden = hide; });
+      chart.update();
+      row.classList.toggle('ll-hidden', hide);
+    });
+
+    el.appendChild(row);
+  });
+}
+
 // ── chart option builders ─────────────────────────────────────────────────
 function linearScatterOpts(xLabel, yLabel) {
   return {
@@ -634,6 +686,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('advancedParams')
       ?.addEventListener('hide.bs.collapse', () => { chevron.style.transform = 'rotate(0deg)'; });
   }
+
 });
 
 // ── file list ─────────────────────────────────────────────────────────────
@@ -656,14 +709,16 @@ async function uploadAndAnalyze() {
   const files = document.getElementById('lc-files').files;
   if (!files.length) return;
 
-  const protocol  = document.querySelector('input[name="lc_protocol"]:checked')?.value || 'LC3';
-  const etrFactor = document.getElementById('etr_max_factor')?.value || '10';
+  const protocol   = document.querySelector('input[name="lc_protocol"]:checked')?.value || 'LC3';
+  const etrFactor  = document.getElementById('etr_max_factor')?.value || '10';
+  const negEtrMode = document.querySelector('input[name="negative_etr_mode"]:checked')?.value || 'clip_zero';
 
   const fd = new FormData();
   for (const f of files) fd.append('light_curve_files', f);
-  fd.append('fluorometer',    'AquaPen');
-  fd.append('protocol',       protocol);
-  fd.append('etr_max_factor', etrFactor);
+  fd.append('fluorometer',       'AquaPen');
+  fd.append('protocol',          protocol);
+  fd.append('etr_max_factor',    etrFactor);
+  fd.append('negative_etr_mode', negEtrMode);
 
   const errDiv = document.getElementById('upload-error');
   errDiv.style.display = 'none';
@@ -721,6 +776,28 @@ function renderResults() {
   document.getElementById('results-summary').textContent =
     `${n} file${n > 1 ? 's' : ''} processed — ${lcData.fluorometer} — Protocol ${lcData.protocol}` +
     ` — PAR: ${lcData.light_intensities.join(', ')} µmol photons m⁻² s⁻¹`;
+
+  // Negative QY warning banner
+  const negWarning = document.getElementById('negative-qy-warning');
+  const negDetails = document.getElementById('negative-qy-details');
+  if (negWarning && negDetails) {
+    const filesWithNeg = lcData.files.filter(f => lcData.params[f]?.has_negative_qy);
+    if (filesWithNeg.length > 0) {
+      const details = filesWithNeg.map(f => {
+        const count = lcData.params[f].negative_qy_count || 0;
+        return `${f} (${count} step${count !== 1 ? 's' : ''})`;
+      });
+      const modeLabel = lcData.negative_etr_mode === 'clip_zero'
+        ? 'negatives clipped to zero for fitting'
+        : lcData.negative_etr_mode === 'positive_only'
+          ? 'negative points excluded from fitting'
+          : 'original values kept for fitting';
+      negDetails.textContent = details.join('; ') + '. Mode: ' + modeLabel + '.';
+      negWarning.style.display = '';
+    } else {
+      negWarning.style.display = 'none';
+    }
+  }
 
   // Wire download button
   const xlsxSummaryLink = document.getElementById('xlsx-summary-link');
@@ -797,11 +874,10 @@ function renderRawChart() {
     };
   });
 
-  makeChart('raw-chart', {
-    type: 'scatter',
-    data: { datasets },
-    options: linearScatterOpts('Time (s)', yLabel),
-  });
+  const opts = linearScatterOpts('Time (s)', yLabel);
+  opts.plugins.legend.display = false;
+  makeChart('raw-chart', { type: 'scatter', data: { datasets }, options: opts });
+  buildScrollLegend('raw-chart');
 }
 
 // ── Ft & Fm chart ─────────────────────────────────────────────────────────
@@ -832,8 +908,9 @@ function renderFtFmChart() {
   });
 
   const opts = linearScatterOpts('PAR (µmol photons m⁻² s⁻¹)', 'Fluorescence (a.u.)');
-  opts.plugins.legend.labels.filter = item => item.text !== '';
+  opts.plugins.legend.display = false;
   makeChart('ftfm-chart', { type: 'scatter', data: { datasets }, options: opts });
+  buildScrollLegend('ftfm-chart');
 }
 
 // ── ETR chart ─────────────────────────────────────────────────────────────
@@ -842,29 +919,66 @@ function renderEtrChart() {
   const par   = lcData.light_intensities;
   const n     = files.length;
   const datasets = [];
+  const mode  = lcData.negative_etr_mode || 'clip_zero';
 
   files.forEach((fname, i) => {
-    const c  = sampleColor(i, n);
-    const sd = lcData.step_data[fname];
-    // Measured — scatter points only
+    const c   = sampleColor(i, n);
+    const cT  = sampleColor(i, n, 0.3);   // semi-transparent for negatives
+    const sd  = lcData.step_data[fname];
+    const etr = sd.etr_measured;
+
+    if (mode === 'keep') {
+      // All measured points — solid filled circles, uniform
+      datasets.push({
+        label: fname,
+        data:  etr.map((y, j) => ({ x: par[j], y })),
+        borderColor: c, backgroundColor: c,
+        borderWidth: 0, pointRadius: 5, showLine: false,
+      });
+    } else {
+      // Positive measured — solid filled circles (used for fitting as-is)
+      datasets.push({
+        label: fname,
+        data:  etr.map((y, j) => y >= 0 ? { x: par[j], y } : null).filter(Boolean),
+        borderColor: c, backgroundColor: c,
+        borderWidth: 0, pointRadius: 5, showLine: false,
+      });
+      // Negative measured — semi-transparent (not used / replaced)
+      const negPts = etr.map((y, j) => y < 0 ? { x: par[j], y } : null).filter(Boolean);
+      if (negPts.length) {
+        datasets.push({
+          label: '',
+          data:  negPts,
+          borderColor: cT, backgroundColor: cT,
+          borderWidth: 0, pointRadius: 5, showLine: false,
+        });
+      }
+      // clip_zero: hollow circles at y=0 for each replaced point
+      if (mode === 'clip_zero') {
+        const zeroPts = etr.map((y, j) => y < 0 ? { x: par[j], y: 0 } : null).filter(Boolean);
+        if (zeroPts.length) {
+          datasets.push({
+            label: '',
+            data:  zeroPts,
+            borderColor: c, backgroundColor: 'transparent',
+            borderWidth: 2, pointRadius: 7, pointStyle: 'circle', showLine: false,
+          });
+        }
+      }
+    }
+    // Fitted curve — line only
     datasets.push({
-      label:           fname,
-      data:            sd.etr_measured.map((y, j) => ({ x: par[j], y })),
-      borderColor:     c, backgroundColor: c,
-      borderWidth: 0, pointRadius: 5, showLine: false,
-    });
-    // Fitted — line only, no legend entry
-    datasets.push({
-      label:           '',
-      data:            sd.etr_fitted.map((y, j) => ({ x: par[j], y })),
-      borderColor:     c, backgroundColor: 'transparent',
+      label: '',
+      data:  sd.etr_fitted.map((y, j) => ({ x: par[j], y })),
+      borderColor: c, backgroundColor: 'transparent',
       borderWidth: 2, pointRadius: 0, showLine: true,
     });
   });
 
   const opts = linearScatterOpts('PAR (µmol photons m⁻² s⁻¹)', 'rETR (µmol e⁻ m⁻² s⁻¹)');
-  opts.plugins.legend.labels.filter = item => item.text !== '';
+  opts.plugins.legend.display = false;
   makeChart('etr-chart', { type: 'scatter', data: { datasets }, options: opts });
+  buildScrollLegend('etr-chart');
 }
 
 // ── derived parameter chart ────────────────────────────────────────────────
@@ -882,11 +996,10 @@ function renderDerivedChart(metric) {
     borderWidth: 2, pointRadius: 4, showLine: true,
   }));
 
-  makeChart('derived-chart', {
-    type: 'scatter',
-    data: { datasets },
-    options: linearScatterOpts('PAR (µmol photons m⁻² s⁻¹)', yLabels[metric] || metric),
-  });
+  const opts = linearScatterOpts('PAR (µmol photons m⁻² s⁻¹)', yLabels[metric] || metric);
+  opts.plugins.legend.display = false;
+  makeChart('derived-chart', { type: 'scatter', data: { datasets }, options: opts });
+  buildScrollLegend('derived-chart');
 }
 
 // ── parameters bar chart ──────────────────────────────────────────────────
@@ -907,7 +1020,10 @@ function renderParamsChart(pgroup) {
     borderWidth: 1,
   }));
 
-  makeChart('params-chart', { type: 'bar', data: { labels, datasets }, options: barOpts() });
+  const opts = barOpts();
+  opts.plugins.legend.display = false;
+  makeChart('params-chart', { type: 'bar', data: { labels, datasets }, options: opts });
+  buildScrollLegend('params-chart');
 }
 
 // ── parameters table ──────────────────────────────────────────────────────
@@ -1295,15 +1411,28 @@ function captureCanvas(id) {
   if (!chartInst[id]) return null;
   const canvas = document.getElementById(id);
   if (!canvas) return null;
+  const chart = chartInst[id];
   const pane = canvas.closest('.tab-pane');
   const wasHidden = pane && getComputedStyle(pane).display === 'none';
   if (wasHidden) {
     pane.style.display = 'block';
     pane.style.visibility = 'hidden';
     void pane.offsetWidth;
-    chartInst[id].resize();
+    chart.resize();
+  }
+  // Temporarily re-enable built-in legend for charts using external legend
+  const legendDiv = document.getElementById(id + '-legend');
+  const hadExtLegend = legendDiv && chart.options.plugins.legend.display === false;
+  if (hadExtLegend) {
+    chart.options.plugins.legend = compactLegend('right');
+    chart.update();
   }
   const data_url = _chartToDataUrl(canvas);
+  // Restore external legend mode
+  if (hadExtLegend) {
+    chart.options.plugins.legend.display = false;
+    chart.update();
+  }
   if (wasHidden) {
     pane.style.display = '';
     pane.style.visibility = '';
@@ -1393,6 +1522,7 @@ async function downloadXlsxWithCharts() {
     raw_curves:         lcData.raw_curves,
     light_intensities:  lcData.light_intensities,
     raw_time_us:        lcData.raw_time_us,
+    negative_etr_mode:  lcData.negative_etr_mode,
     charts,
     group_export,
     methods_text:       generateLCMethodsText(),
@@ -1479,6 +1609,8 @@ function generateLCMethodsText() {
     }[proto] || proto;
 
     var etrFactor = (document.getElementById('etr_max_factor') || {}).value || '10';
+    var negModeEl = document.querySelector('input[name="negative_etr_mode"]:checked');
+    var negModeVal = negModeEl ? negModeEl.value : 'clip_zero';
 
     var files = lcData.files || [];
     var n = files.length;
@@ -1521,7 +1653,12 @@ function generateLCMethodsText() {
         'ETRmax\u202f=\u202fETRmPot\u202f\u00d7\u202f(\u03b1\u202f/\u202f(\u03b1\u202f+\u202f\u03b2))\u202f\u00d7\u202f' +
         '(\u03b2\u202f/\u202f(\u03b1\u202f+\u202f\u03b2))^(\u03b2/\u03b1), saturation irradiance ' +
         'Ik\u202f=\u202fETRmax\u202f/\u202f\u03b1, and photoinhibition irradiance Ib\u202f=\u202fETRmax\u202f/\u202f\u03b2 ' +
-        '(Ralph\u202f&\u202fGademann, 2005).'
+        '(Ralph\u202f&\u202fGademann, 2005).' +
+        (negModeVal === 'clip_zero'
+            ? ' Negative rETR values (from Fm\u2032\u202f<\u202fFt) were clipped to zero prior to fitting.'
+            : negModeVal === 'positive_only'
+                ? ' Data points with negative rETR (from Fm\u2032\u202f<\u202fFt) were excluded from fitting.'
+                : '')
     );
 
     if (gnames.length >= 2) {
