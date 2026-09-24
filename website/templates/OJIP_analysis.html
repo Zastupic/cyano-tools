@@ -116,7 +116,7 @@
           <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
                   data-toggle="collapse" data-target="#collapseJipTable"
                   aria-expanded="false" aria-controls="collapseJipTable">
-            <i class="fa fa-table mr-2"></i>JIP-test parameter reference table
+            <i class="fa fa-table mr-2"></i>Parameter reference table
           </button>
         </h6>
       </div>
@@ -125,7 +125,7 @@
           <table style="width:95%; font-size:90%; margin-top:0.5em;">
             <colgroup><col style="width:8%"><col style="width:30%"><col style="width:62%"></colgroup>
             <tr><td><u>Parameter</u></td><td><u>Formula</u></td><td><u>Meaning</u></td></tr>
-            <tr><td colspan="3"><i>Technical parameters</i></td></tr>
+            <tr><td colspan="3"><strong>Technical parameters</strong></td></tr>
             <tr><td>F<sub>O</sub>, F<sub>M</sub></td><td></td><td>Initial and maximal fluorescence intensity</td></tr>
             <tr><td>F<sub>V</sub></td><td>F<sub>M</sub> – F<sub>O</sub></td><td>Maximum variable fluorescence</td></tr>
             <tr><td>F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub></td><td></td><td>Fluorescence at 300 μs, 2 ms and 30 ms, respectively</td></tr>
@@ -134,6 +134,32 @@
             <tr><td>M<sub>0</sub></td><td>4(F<sub>0.3ms</sub>–F<sub>0.05ms</sub>)/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Initial slope of O-J rise (ms<sup>–1</sup>)</td></tr>
             <tr><td>S<sub>m</sub></td><td>Area/(F<sub>M</sub>–F<sub>O</sub>)</td><td>Complementary area above the OJIP transient (normalized to F<sub>V</sub>); proportional to the number of electrons that must pass through Q<sub>A</sub> before all PSII reaction centres are fully closed — i.e. before Q<sub>B</sub>, the PQ pool, and downstream carriers are saturated</td></tr>
             <tr><td>N</td><td>S<sub>m</sub>×M<sub>0</sub>/V<sub>J</sub></td><td>Q<sub>A</sub> turnover number</td></tr>
+            <tr><td colspan="3"><i>Phase amplitudes, slopes, and areas</i></td></tr>
+            <tr><td>Ampl. O-J</td><td>F<sub>J</sub> – F<sub>O</sub></td><td>Amplitude of the O-J phase</td></tr>
+            <tr><td>Ampl. J-I</td><td>F<sub>I</sub> – F<sub>J</sub></td><td>Amplitude of the J-I phase</td></tr>
+            <tr><td>Ampl. I-P</td><td>F<sub>M</sub> – F<sub>I</sub></td><td>Amplitude of the I-P phase</td></tr>
+            <tr><td>Slope O-J</td><td>(F<sub>J</sub>–F<sub>O</sub>)/(t<sub>J</sub>–t<sub>O</sub>)</td><td>Rate of O-J fluorescence rise (r.u.&thinsp;ms<sup>–1</sup>)</td></tr>
+            <tr><td>Slope J-I</td><td>(F<sub>I</sub>–F<sub>J</sub>)/(t<sub>I</sub>–t<sub>J</sub>)</td><td>Rate of J-I fluorescence rise (r.u.&thinsp;ms<sup>–1</sup>)</td></tr>
+            <tr><td>Slope I-P</td><td>(F<sub>M</sub>–F<sub>I</sub>)/(t<sub>P</sub>–t<sub>I</sub>)</td><td>Rate of I-P fluorescence rise (r.u.&thinsp;ms<sup>–1</sup>)</td></tr>
+            <tr><td>Area O-J</td><td>F<sub>M</sub>&middot;&Delta;t &minus; &int;F&thinsp;dt</td><td>Complementary area above the curve between O and J</td></tr>
+            <tr><td>Area J-I</td><td>F<sub>M</sub>&middot;&Delta;t &minus; &int;F&thinsp;dt</td><td>Complementary area above the curve between J and I</td></tr>
+            <tr><td>Area I-P</td><td>F<sub>M</sub>&middot;&Delta;t &minus; &int;F&thinsp;dt</td><td>Complementary area above the curve between I and P</td></tr>
+            <tr><td>Area O-P</td><td>F<sub>M</sub>&middot;&Delta;t &minus; &int;F&thinsp;dt</td><td>Total complementary area above the curve between O and P</td></tr>
+            <tr><td colspan="3"><i>I-P dip detection</i></td></tr>
+            <tr><td>Dip I-P ampl.</td><td>F<sub>line</sub> &minus; F(t<sub>dip</sub>)</td><td>Depth of a local dip in the I-P rise below the straight line F<sub>I</sub>&rarr;F<sub>P</sub>; absent when the rise is monotonic</td></tr>
+            <tr><td>Dip I-P time</td><td></td><td>Timing (ms) of the I-P dip</td></tr>
+            <tr><td>Dip I-P D1 min</td><td>min(dF/dt) in I-P</td><td>First-derivative minimum in the I-P phase (negative value confirms a local dip)</td></tr>
+          </table>
+
+          <p class="mt-3 mb-1" style="font-size:0.92em"><strong>JIP-test parameters</strong></p>
+          <p style="font-size:85%; line-height:1.35; margin-bottom:0.3em;">
+            The JIP-test (Strasser et&nbsp;al.&nbsp;2000) translates the raw OJIP transient into biophysical quantities
+            that describe energy fluxes and quantum efficiencies of PSII.
+            The parameters below are derived from the technical parameters above.
+          </p>
+          <table style="width:95%; font-size:90%; margin-top:0.5em;">
+            <colgroup><col style="width:8%"><col style="width:30%"><col style="width:62%"></colgroup>
+            <tr><td><u>Parameter</u></td><td><u>Formula</u></td><td><u>Meaning</u></td></tr>
             <tr><td colspan="3"><i>Efficiencies and quantum yields</i></td></tr>
             <tr><td>ψE<sub>0</sub> = ET<sub>0</sub>/TR<sub>0</sub></td><td>1–V<sub>J</sub></td><td>Efficiency with which a PSII trapped electron is transferred from Q<sub>A</sub><sup>−</sup> to PQ</td></tr>
             <tr><td>ψR<sub>0</sub> = RE<sub>0</sub>/TR<sub>0</sub></td><td>1–V<sub>I</sub></td><td>Efficiency with which a PSII trapped electron is transferred to final PSI acceptors</td></tr>
@@ -148,21 +174,6 @@
             <tr><td>ET<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψE<sub>0</sub></td><td>Electron flux from Q<sub>A</sub><sup>−</sup> to PQ per active PSII</td></tr>
             <tr><td>RE<sub>0</sub>/RC</td><td>TR<sub>0</sub>/RC × ψR<sub>0</sub></td><td>Electron flux from Q<sub>A</sub><sup>−</sup> to final PSI acceptors per active PSII</td></tr>
             <tr><td>DI<sub>0</sub>/RC</td><td>ABS/RC – TR<sub>0</sub>/RC</td><td>Dissipated energy flux per active PSII</td></tr>
-            <tr><td colspan="3"><i>Phase amplitudes, slopes, and areas</i></td></tr>
-            <tr><td>Ampl. O-J</td><td>F<sub>J</sub> – F<sub>O</sub></td><td>Amplitude of the O-J phase</td></tr>
-            <tr><td>Ampl. J-I</td><td>F<sub>I</sub> – F<sub>J</sub></td><td>Amplitude of the J-I phase</td></tr>
-            <tr><td>Ampl. I-P</td><td>F<sub>M</sub> – F<sub>I</sub></td><td>Amplitude of the I-P phase</td></tr>
-            <tr><td>Slope O-J</td><td>(F<sub>J</sub>–F<sub>O</sub>)/(t<sub>J</sub>–t<sub>O</sub>)</td><td>Rate of O-J fluorescence rise (r.u.&thinsp;ms<sup>–1</sup>)</td></tr>
-            <tr><td>Slope J-I</td><td>(F<sub>I</sub>–F<sub>J</sub>)/(t<sub>I</sub>–t<sub>J</sub>)</td><td>Rate of J-I fluorescence rise (r.u.&thinsp;ms<sup>–1</sup>)</td></tr>
-            <tr><td>Slope I-P</td><td>(F<sub>M</sub>–F<sub>I</sub>)/(t<sub>P</sub>–t<sub>I</sub>)</td><td>Rate of I-P fluorescence rise (r.u.&thinsp;ms<sup>–1</sup>)</td></tr>
-            <tr><td>Area O-J</td><td></td><td>Complementary area above the curve between O and J</td></tr>
-            <tr><td>Area J-I</td><td></td><td>Complementary area above the curve between J and I</td></tr>
-            <tr><td>Area I-P</td><td></td><td>Complementary area above the curve between I and P</td></tr>
-            <tr><td>Area O-P</td><td></td><td>Total complementary area above the curve between O and P</td></tr>
-            <tr><td colspan="3"><i>I-P dip detection</i></td></tr>
-            <tr><td>Dip I-P ampl.</td><td></td><td>Depth of a local dip in the I-P rise below the straight line F<sub>I</sub>&rarr;F<sub>P</sub>; absent when the rise is monotonic</td></tr>
-            <tr><td>Dip I-P time</td><td></td><td>Timing (ms) of the I-P dip</td></tr>
-            <tr><td>Dip I-P D1 min</td><td></td><td>First-derivative minimum in the I-P phase (negative value confirms a local dip)</td></tr>
           </table>
 
           <p class="mt-3 mb-1" style="font-size:0.92em"><strong>Post-peak transition parameters (Q point / early S)</strong></p>
