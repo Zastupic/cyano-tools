@@ -78,6 +78,26 @@
     padding-bottom: 0.25rem;
     height: auto;
   }
+  /* ── External scrollable chart legend ── */
+  .oj-chart-wrap { display: flex; align-items: stretch; }
+  .oj-chart-area { position: relative; flex: 1; min-width: 0; }
+  .oj-ext-legend {
+    overflow-y: auto; min-width: 110px; max-width: 200px;
+    padding: 4px 6px; font-size: 10px; flex-shrink: 0;
+    border-left: 1px solid #eee;
+  }
+  .oj-ext-legend .ll-row {
+    display: flex; align-items: center; cursor: pointer;
+    padding: 1px 2px; white-space: nowrap; border-radius: 2px;
+  }
+  .oj-ext-legend .ll-row:hover { background: #f0f4f8; }
+  .oj-ext-legend .ll-row.ll-hidden { opacity: 0.35; }
+  .oj-ext-legend .ll-row.ll-hidden .ll-txt { text-decoration: line-through; }
+  .oj-ext-legend .ll-box {
+    display: inline-block; width: 12px; height: 8px;
+    margin-right: 4px; flex-shrink: 0; border-radius: 1px;
+  }
+  .oj-ext-legend .ll-txt { overflow: hidden; text-overflow: ellipsis; }
 </style>
 <!-- Banner -->
 <div id="banner-content">
@@ -604,8 +624,9 @@
         </div>
         <small class="text-muted ml-3">▲ F<sub>J</sub> &nbsp;◆ F<sub>I</sub> &nbsp;■ F<sub>P</sub> &nbsp;<span style="color:#d62728">●</span> Q &nbsp;<span style="color:#17becf">★</span> eS &nbsp;|&nbsp; click a curve to remove it</small>
       </div>
-      <div style="position:relative; height:380px;">
-        <canvas id="curves-chart"></canvas>
+      <div class="oj-chart-wrap" style="height:380px;">
+        <div class="oj-chart-area"><canvas id="curves-chart"></canvas></div>
+        <div class="oj-ext-legend" id="curves-chart-legend"></div>
       </div>
 
       <!-- Toggle FJ/FI between default (2/30 ms) and auto-detected -->
@@ -671,8 +692,9 @@
           Copy table
         </button>
       </div>
-      <div style="position:relative; height:360px;">
-        <canvas id="params-chart"></canvas>
+      <div class="oj-chart-wrap" style="height:360px;">
+        <div class="oj-chart-area"><canvas id="params-chart"></canvas></div>
+        <div class="oj-ext-legend" id="params-chart-legend"></div>
       </div>
       <div style="overflow-x:auto; font-size:0.82em; margin-top:0.75rem;">
         <table class="table table-sm table-hover table-bordered mb-0" id="params-table">
@@ -1617,31 +1639,31 @@
       <div class="row">
         <div class="col-md-6 mb-3">
           <h6>Reconstructed vs raw (double normalized)</h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-recon-chart"></canvas></div>
+          <div class="oj-chart-wrap" style="height:260px;"><div class="oj-chart-area"><canvas id="diag-recon-chart"></canvas></div><div class="oj-ext-legend" id="diag-recon-chart-legend"></div></div>
         </div>
         <div class="col-md-6 mb-3">
           <h6>1st derivative (D1) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-d1-chart"></canvas></div>
+          <div class="oj-chart-wrap" style="height:260px;"><div class="oj-chart-area"><canvas id="diag-d1-chart"></canvas></div><div class="oj-ext-legend" id="diag-d1-chart-legend"></div></div>
         </div>
       </div>
       <div class="row">
         <div class="col-md-6 mb-3">
           <h6>2nd derivative (D2) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-d2-chart"></canvas></div>
+          <div class="oj-chart-wrap" style="height:260px;"><div class="oj-chart-area"><canvas id="diag-d2-chart"></canvas></div><div class="oj-ext-legend" id="diag-d2-chart-legend"></div></div>
         </div>
         <div class="col-md-6 mb-3">
           <h6>3rd derivative (D3) with F<sub>J</sub> / F<sub>I</sub> / F<sub>P</sub></h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-d3-chart"></canvas></div>
+          <div class="oj-chart-wrap" style="height:260px;"><div class="oj-chart-area"><canvas id="diag-d3-chart"></canvas></div><div class="oj-ext-legend" id="diag-d3-chart-legend"></div></div>
         </div>
       </div>
       <div class="row">
         <div class="col-md-6 mb-3">
           <h6>Residuals</h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-resid-chart"></canvas></div>
+          <div class="oj-chart-wrap" style="height:260px;"><div class="oj-chart-area"><canvas id="diag-resid-chart"></canvas></div><div class="oj-ext-legend" id="diag-resid-chart-legend"></div></div>
         </div>
         <div class="col-md-6 mb-3" id="method-fit-panel" style="display:none">
           <h6 id="method-fit-title">Method-specific fit</h6>
-          <div style="position:relative; height:260px;"><canvas id="diag-method-fit-chart"></canvas></div>
+          <div class="oj-chart-wrap" style="height:260px;"><div class="oj-chart-area"><canvas id="diag-method-fit-chart"></canvas></div><div class="oj-ext-legend" id="diag-method-fit-chart-legend"></div></div>
         </div>
       </div>
     </div>

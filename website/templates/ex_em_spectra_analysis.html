@@ -75,6 +75,26 @@
     background: #ffffff !important; color: #004085 !important;
     box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
   }
+  /* ── External scrollable chart legend ── */
+  .ee-chart-wrap { display: flex; align-items: stretch; }
+  .ee-chart-area { position: relative; flex: 1; min-width: 0; }
+  .ee-ext-legend {
+    overflow-y: auto; min-width: 110px; max-width: 200px;
+    padding: 4px 6px; font-size: 10px; flex-shrink: 0;
+    border-left: 1px solid #eee;
+  }
+  .ee-ext-legend .ll-row {
+    display: flex; align-items: center; cursor: pointer;
+    padding: 1px 2px; white-space: nowrap; border-radius: 2px;
+  }
+  .ee-ext-legend .ll-row:hover { background: #f0f4f8; }
+  .ee-ext-legend .ll-row.ll-hidden { opacity: 0.35; }
+  .ee-ext-legend .ll-row.ll-hidden .ll-txt { text-decoration: line-through; }
+  .ee-ext-legend .ll-box {
+    display: inline-block; width: 12px; height: 8px;
+    margin-right: 4px; flex-shrink: 0; border-radius: 1px;
+  }
+  .ee-ext-legend .ll-txt { overflow: hidden; text-overflow: ellipsis; }
 </style>
 
 <!-- Banner -->

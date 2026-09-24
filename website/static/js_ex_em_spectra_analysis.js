@@ -1073,23 +1073,81 @@ function setFocusEx(val) {
 // ============================================================
 // Chart helper
 // ============================================================
-function makeChartCanvas(containerId, chartKey, colClass, titleText) {
+
+// ── external scrollable legend ────────────────────────────────────────────
+function buildScrollLegend(canvasId, filterFn) {
+    var chart = chartInst[canvasId.replace('chart-', '')];
+    if (!chart) chart = chartInst[canvasId];
+    var el = document.getElementById(canvasId + '-legend');
+    if (!chart || !el) return;
+    if (!filterFn) filterFn = function(ds) { return ds.label && ds.label !== ''; };
+    var groups = [];
+    var datasets = chart.data.datasets;
+    var cur = null;
+    datasets.forEach(function(ds, i) {
+        if (filterFn(ds)) {
+            cur = { label: ds.label, color: ds.borderColor || ds.backgroundColor, indices: [i] };
+            groups.push(cur);
+        } else if (cur) {
+            cur.indices.push(i);
+        }
+    });
+    el.innerHTML = '';
+    groups.forEach(function(g) {
+        var row = document.createElement('div');
+        row.className = 'll-row';
+        row.title = g.label;
+        var box = document.createElement('span');
+        box.className = 'll-box';
+        box.style.background = g.color;
+        var txt = document.createElement('span');
+        txt.className = 'll-txt';
+        txt.textContent = g.label.length > 28 ? g.label.slice(0, 26) + '…' : g.label;
+        row.appendChild(box);
+        row.appendChild(txt);
+        row.addEventListener('click', function() {
+            var hide = !chart.getDatasetMeta(g.indices[0]).hidden;
+            g.indices.forEach(function(idx) { chart.getDatasetMeta(idx).hidden = hide; });
+            chart.update();
+            row.classList.toggle('ll-hidden', hide);
+        });
+        el.appendChild(row);
+    });
+}
+
+function makeChartCanvas(containerId, chartKey, colClass, titleText, withLegend) {
     if (chartInst[chartKey]) {
         chartInst[chartKey].destroy();
         delete chartInst[chartKey];
     }
-    var div = document.createElement('div');
-    div.className = colClass + ' mb-3';
+    var col = document.createElement('div');
+    col.className = colClass + ' mb-3';
     var canvas = document.createElement('canvas');
     canvas.id = 'chart-' + chartKey;
-    canvas.height = 260;
     canvas.style.cursor = 'pointer';
     canvas.title = 'Click to enlarge';
     canvas.addEventListener('click', function() {
         openEnlargedChart(canvas, titleText || '');
     });
-    div.appendChild(canvas);
-    document.getElementById(containerId).appendChild(div);
+    if (withLegend) {
+        // Flex wrapper with chart area + scrollable legend
+        var wrap = document.createElement('div');
+        wrap.className = 'ee-chart-wrap';
+        wrap.style.height = '260px';
+        var area = document.createElement('div');
+        area.className = 'ee-chart-area';
+        area.appendChild(canvas);
+        var legendDiv = document.createElement('div');
+        legendDiv.className = 'ee-ext-legend';
+        legendDiv.id = 'chart-' + chartKey + '-legend';
+        wrap.appendChild(area);
+        wrap.appendChild(legendDiv);
+        col.appendChild(wrap);
+    } else {
+        canvas.height = 260;
+        col.appendChild(canvas);
+    }
+    document.getElementById(containerId).appendChild(col);
     return canvas;
 }
 
@@ -1153,28 +1211,30 @@ function renderSpectraTab() {
     var exList = eemData.ex_wls.filter(function(ex) {
         return focusExWl === null || ex === focusExWl;
     });
-    var emColClass = exList.length === 1 ? 'col-12' : exList.length === 2 ? 'col-md-6' : 'col-xl-4 col-md-6';
+    var emColClass = exList.length === 1 ? 'col-12' : 'col-md-6';
     exList.forEach(function(exWl) {
         var spec = eemData.emission_spectra[String(exWl)];
         if (!spec || !spec.wl.length) return;
-        var canvas = makeChartCanvas('spectra-emission-charts', 'em-ex-' + exWl, emColClass, 'Emission @ Ex ' + exWl + ' nm');
+        var canvas = makeChartCanvas('spectra-emission-charts', 'em-ex-' + exWl, emColClass, 'Emission @ Ex ' + exWl + ' nm', true);
         chartInst['em-ex-' + exWl] = buildSpectraChart(
             canvas, spec, 'Emission @ Ex ' + exWl + ' nm', 'Emission (nm)'
         );
+        buildScrollLegend('chart-em-ex-' + exWl);
     });
 
     // Excitation spectra — not filtered by focus Ex
     var exCont = document.getElementById('spectra-excitation-charts');
     exCont.innerHTML = '';
     var emList = eemData.em_wls;
-    var exColClass = emList.length === 1 ? 'col-12' : emList.length === 2 ? 'col-md-6' : 'col-xl-4 col-md-6';
+    var exColClass = emList.length === 1 ? 'col-12' : 'col-md-6';
     emList.forEach(function(emWl) {
         var spec = eemData.excitation_spectra[String(emWl)];
         if (!spec || !spec.wl.length) return;
-        var canvas = makeChartCanvas('spectra-excitation-charts', 'ex-em-' + emWl, exColClass, 'Excitation @ Em ' + emWl + ' nm');
+        var canvas = makeChartCanvas('spectra-excitation-charts', 'ex-em-' + emWl, exColClass, 'Excitation @ Em ' + emWl + ' nm', true);
         chartInst['ex-em-' + emWl] = buildSpectraChart(
             canvas, spec, 'Excitation @ Em ' + emWl + ' nm', 'Excitation (nm)'
         );
+        buildScrollLegend('chart-ex-em-' + emWl);
     });
 
     // Update toggle visibility: hide excitation button if no em_wls, hide emission if no ex_wls
@@ -1214,13 +1274,10 @@ function buildSpectraChart(canvas, spec, title, xLabel) {
         type: 'scatter',
         data: { datasets: datasets },
         options: {
-            animation: false, responsive: true,
+            animation: false, responsive: true, maintainAspectRatio: false,
             plugins: {
                 title: { display: true, text: title },
-                legend: {
-                    display: true,
-                    labels: { boxWidth: 10, padding: 6, font: { size: 9 } }
-                }
+                legend: { display: false }
             },
             scales: {
                 x: { title: { display: true, text: xLabel } },
@@ -2480,16 +2537,34 @@ async function downloadZIP(btn) {
         return tmp.toDataURL('image/png').split(',')[1];
     }
 
+    // Helper: temporarily re-enable legend for spectra chart export
+    function captureSpectraChart(canvasId) {
+        var c = document.getElementById(canvasId);
+        if (!c) return null;
+        var key = canvasId.replace('chart-', '');
+        var chart = chartInst[key];
+        var legendDiv = document.getElementById(canvasId + '-legend');
+        var hadExtLegend = chart && legendDiv && chart.options.plugins.legend.display === false;
+        if (hadExtLegend) {
+            chart.options.plugins.legend = { display: true, labels: { boxWidth: 10, padding: 6, font: { size: 9 } } };
+            chart.update();
+        }
+        var b = pngB64(c);
+        if (hadExtLegend) {
+            chart.options.plugins.legend.display = false;
+            chart.update();
+        }
+        return b;
+    }
+
     // ── Spectra charts ────────────────────────────────────────────────────────
     var spectraFolder = zip.folder('spectra');
     eemData.ex_wls.forEach(function(exWl) {
-        var c = document.getElementById('chart-em-ex-' + exWl);
-        var b = c && pngB64(c);
+        var b = captureSpectraChart('chart-em-ex-' + exWl);
         if (b) spectraFolder.file('emission_Ex' + exWl + 'nm.png', b, {base64: true});
     });
     eemData.em_wls.forEach(function(emWl) {
-        var c = document.getElementById('chart-ex-em-' + emWl);
-        var b = c && pngB64(c);
+        var b = captureSpectraChart('chart-ex-em-' + emWl);
         if (b) spectraFolder.file('excitation_Em' + emWl + 'nm.png', b, {base64: true});
     });
 

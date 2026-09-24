@@ -65,6 +65,26 @@
   #upload-card .gallery_6_img img { width: 165px; height: 165px; }
   #upload-card .gallery_6_img img:hover { height: 158px; }
   .sigma-table td { font-size: 0.83rem; }
+  /* ── External scrollable chart legend ── */
+  .sg-chart-wrap { display: flex; align-items: stretch; }
+  .sg-chart-area { position: relative; flex: 1; min-width: 0; }
+  .sg-ext-legend {
+    overflow-y: auto; min-width: 110px; max-width: 200px;
+    padding: 4px 6px; font-size: 10px; flex-shrink: 0;
+    border-left: 1px solid #eee;
+  }
+  .sg-ext-legend .ll-row {
+    display: flex; align-items: center; cursor: pointer;
+    padding: 1px 2px; white-space: nowrap; border-radius: 2px;
+  }
+  .sg-ext-legend .ll-row:hover { background: #f0f4f8; }
+  .sg-ext-legend .ll-row.ll-hidden { opacity: 0.35; }
+  .sg-ext-legend .ll-row.ll-hidden .ll-txt { text-decoration: line-through; }
+  .sg-ext-legend .ll-box {
+    display: inline-block; width: 12px; height: 8px;
+    margin-right: 4px; flex-shrink: 0; border-radius: 1px;
+  }
+  .sg-ext-legend .ll-txt { overflow: hidden; text-overflow: ellipsis; }
 </style>
 
 <!-- Banner -->
@@ -388,8 +408,9 @@
           <button class="btn btn-outline-primary" data-param="error">Error (rel.)</button>
         </div>
       </div>
-      <div style="position:relative; height:400px;">
-        <canvas id="chart-spectrum"></canvas>
+      <div class="sg-chart-wrap" style="height:400px;">
+        <div class="sg-chart-area"><canvas id="chart-spectrum"></canvas></div>
+        <div class="sg-ext-legend" id="chart-spectrum-legend"></div>
       </div>
     </div>
 

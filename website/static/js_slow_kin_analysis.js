@@ -143,13 +143,25 @@ function _captureSkCanvas(id) {
   if (!chartInst[id]) return null;
   var canvas = document.getElementById(id);
   if (!canvas) return null;
+  var chart = chartInst[id];
   var pane = canvas.closest('.tab-pane');
   var wasHidden = pane && getComputedStyle(pane).display === 'none';
   if (wasHidden) {
     pane.style.display = 'block'; pane.style.visibility = 'hidden';
-    void pane.offsetWidth; chartInst[id].resize();
+    void pane.offsetWidth; chart.resize();
+  }
+  // Temporarily re-enable built-in legend for export if external legend is active
+  var legendDiv = document.getElementById(id + '-legend');
+  var hadExtLegend = legendDiv && chart.options.plugins.legend.display === false;
+  if (hadExtLegend) {
+    chart.options.plugins.legend = compactLegend('right');
+    chart.update();
   }
   var du = _skChartToDataUrl(canvas);
+  if (hadExtLegend) {
+    chart.options.plugins.legend.display = false;
+    chart.update();
+  }
   if (wasHidden) { pane.style.display = ''; pane.style.visibility = ''; }
   return (du && du.includes(',') && du.split(',')[1]) ? du : null;
 }
@@ -215,6 +227,46 @@ function compactLegend(position) {
       },
     },
   };
+}
+
+// ── external scrollable legend ────────────────────────────────────────────
+function buildScrollLegend(canvasId, filterFn) {
+  var chart = chartInst[canvasId];
+  var el    = document.getElementById(canvasId + '-legend');
+  if (!chart || !el) return;
+  if (!filterFn) filterFn = function(ds) { return ds.label && ds.label !== ''; };
+  var groups = [];
+  var datasets = chart.data.datasets;
+  var cur = null;
+  datasets.forEach(function(ds, i) {
+    if (filterFn(ds)) {
+      cur = { label: ds.label, color: ds.borderColor || ds.backgroundColor, indices: [i] };
+      groups.push(cur);
+    } else if (cur) {
+      cur.indices.push(i);
+    }
+  });
+  el.innerHTML = '';
+  groups.forEach(function(g) {
+    var row = document.createElement('div');
+    row.className = 'll-row';
+    row.title = g.label;
+    var box = document.createElement('span');
+    box.className = 'll-box';
+    box.style.background = g.color;
+    var txt = document.createElement('span');
+    txt.className = 'll-txt';
+    txt.textContent = g.label.length > 28 ? g.label.slice(0, 26) + '…' : g.label;
+    row.appendChild(box);
+    row.appendChild(txt);
+    row.addEventListener('click', function() {
+      var hide = !chart.getDatasetMeta(g.indices[0]).hidden;
+      g.indices.forEach(function(idx) { chart.getDatasetMeta(idx).hidden = hide; });
+      chart.update();
+      row.classList.toggle('ll-hidden', hide);
+    });
+    el.appendChild(row);
+  });
 }
 
 // ── chart option builders ─────────────────────────────────────────────────
@@ -816,11 +868,14 @@ function renderTracesChart() {
       borderWidth: 1.5, pointRadius: 0, showLine: true,
     };
   });
+  var trOpts = linearScatterOpts(timeAxisLabel(skData.time_unit), yLabel);
+  trOpts.plugins.legend.display = false;
   makeChart('sk-traces-chart', {
     type: 'scatter',
     data: { datasets: datasets },
-    options: linearScatterOpts(timeAxisLabel(skData.time_unit), yLabel),
+    options: trOpts,
   });
+  buildScrollLegend('sk-traces-chart');
 }
 
 // ── Ft & Fm chart ─────────────────────────────────────────────────────────
@@ -845,11 +900,14 @@ function renderFtFmChart(metric) {
     };
   });
 
+  var ftfmOpts = linearScatterOpts(timeAxisLabel(skData.time_unit), yLabels[metric] || metric);
+  ftfmOpts.plugins.legend.display = false;
   makeChart('sk-ftfm-chart', {
     type: 'scatter',
     data: { datasets: datasets },
-    options: linearScatterOpts(timeAxisLabel(skData.time_unit), yLabels[metric] || metric),
+    options: ftfmOpts,
   });
+  buildScrollLegend('sk-ftfm-chart');
 }
 
 // ── derived timeseries chart ──────────────────────────────────────────────
@@ -873,11 +931,14 @@ function renderDerivedChart(metric) {
     };
   });
 
+  var derOpts = linearScatterOpts(timeAxisLabel(skData.time_unit), SK_DERIVED_YLABELS[metric] || metric);
+  derOpts.plugins.legend.display = false;
   makeChart('sk-derived-chart', {
     type: 'scatter',
     data: { datasets: datasets },
-    options: linearScatterOpts(timeAxisLabel(skData.time_unit), SK_DERIVED_YLABELS[metric] || metric),
+    options: derOpts,
   });
+  buildScrollLegend('sk-derived-chart');
 }
 
 // ── parameters (summary scalars) chart — single canvas, switched by seg-ctrl
@@ -906,7 +967,10 @@ function renderParamChart(key) {
     };
   });
 
-  makeChart('sk-params-chart', { type: 'bar', data: { labels: [label], datasets: datasets }, options: barOpts(label) });
+  var pOpts = barOpts(label);
+  pOpts.plugins.legend.display = false;
+  makeChart('sk-params-chart', { type: 'bar', data: { labels: [label], datasets: datasets }, options: pOpts });
+  buildScrollLegend('sk-params-chart');
 }
 
 // ── parameters table ──────────────────────────────────────────────────────
@@ -2017,8 +2081,9 @@ function renderStChart() {
   });
 
   var opts = linearScatterOpts('Time (s)', "Fm\u2032 (a.u.)");
-  opts.plugins.legend.labels.filter = function(item) { return item.text !== ''; };
+  opts.plugins.legend.display = false;
   makeChart('sk-st-chart', { type: 'scatter', data: { datasets: datasets }, options: opts });
+  buildScrollLegend('sk-st-chart');
 }
 
 function renderStTable() {

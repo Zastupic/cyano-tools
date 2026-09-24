@@ -73,6 +73,26 @@
     background: #ffffff !important; color: #004085 !important;
     box-shadow: 0 1px 6px rgba(0,40,100,0.14), 0 1px 2px rgba(0,0,0,0.06) !important;
   }
+  /* ── External scrollable chart legend ── */
+  .sk-chart-wrap { display: flex; align-items: stretch; }
+  .sk-chart-area { position: relative; flex: 1; min-width: 0; }
+  .sk-ext-legend {
+    overflow-y: auto; min-width: 110px; max-width: 200px;
+    padding: 4px 6px; font-size: 10px; flex-shrink: 0;
+    border-left: 1px solid #eee;
+  }
+  .sk-ext-legend .ll-row {
+    display: flex; align-items: center; cursor: pointer;
+    padding: 1px 2px; white-space: nowrap; border-radius: 2px;
+  }
+  .sk-ext-legend .ll-row:hover { background: #f0f4f8; }
+  .sk-ext-legend .ll-row.ll-hidden { opacity: 0.35; }
+  .sk-ext-legend .ll-row.ll-hidden .ll-txt { text-decoration: line-through; }
+  .sk-ext-legend .ll-box {
+    display: inline-block; width: 12px; height: 8px;
+    margin-right: 4px; flex-shrink: 0; border-radius: 1px;
+  }
+  .sk-ext-legend .ll-txt { overflow: hidden; text-overflow: ellipsis; }
 </style>
 <!-- Banner -->
 <div id="banner-content">
@@ -443,8 +463,9 @@
           <small class="ml-1 text-muted" id="sk-traces-jitter-unit"></small>
         </div>
       </div>
-      <div style="position:relative; height:380px;">
-        <canvas id="sk-traces-chart"></canvas>
+      <div class="sk-chart-wrap" style="height:380px;">
+        <div class="sk-chart-area"><canvas id="sk-traces-chart"></canvas></div>
+        <div class="sk-ext-legend" id="sk-traces-chart-legend"></div>
       </div>
     </div>
 
@@ -462,8 +483,9 @@
             <button class="btn btn-outline-primary" data-ftfm="fv">F<sub>v</sub>'</button>
           </div>
         </div>
-        <div style="position:relative; height:380px;">
-          <canvas id="sk-ftfm-chart"></canvas>
+        <div class="sk-chart-wrap" style="height:380px;">
+          <div class="sk-chart-area"><canvas id="sk-ftfm-chart"></canvas></div>
+          <div class="sk-ext-legend" id="sk-ftfm-chart-legend"></div>
         </div>
       </div>
     </div>
@@ -485,8 +507,9 @@
             <button class="btn btn-outline-primary" data-derived="etr">rETR</button>
           </div>
         </div>
-        <div style="position:relative; height:380px;">
-          <canvas id="sk-derived-chart"></canvas>
+        <div class="sk-chart-wrap" style="height:380px;">
+          <div class="sk-chart-area"><canvas id="sk-derived-chart"></canvas></div>
+          <div class="sk-ext-legend" id="sk-derived-chart-legend"></div>
         </div>
       </div>
     </div>
@@ -509,8 +532,9 @@
             <i class="fa fa-clipboard mr-1"></i>Copy table
           </button>
         </div>
-        <div style="position:relative; height:300px;">
-          <canvas id="sk-params-chart"></canvas>
+        <div class="sk-chart-wrap" style="height:300px;">
+          <div class="sk-chart-area"><canvas id="sk-params-chart"></canvas></div>
+          <div class="sk-ext-legend" id="sk-params-chart-legend"></div>
         </div>
         <div style="overflow-x:auto; font-size:0.82em; margin-top:0.75rem;">
           <table class="table table-sm table-hover table-bordered mb-0" id="sk-params-table">
@@ -1029,8 +1053,9 @@
       </div>
 
       <!-- Chart -->
-      <div style="position:relative; height:380px;">
-        <canvas id="sk-st-chart"></canvas>
+      <div class="sk-chart-wrap" style="height:380px;">
+        <div class="sk-chart-area"><canvas id="sk-st-chart"></canvas></div>
+        <div class="sk-ext-legend" id="sk-st-chart-legend"></div>
       </div>
 
       <!-- Results table -->

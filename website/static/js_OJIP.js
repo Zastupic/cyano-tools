@@ -3498,6 +3498,46 @@ function compactLegend(position = 'right') {
   };
 }
 
+// ── external scrollable legend ────────────────────────────────────────────
+function buildScrollLegend(canvasId, filterFn) {
+  const chart = chartInst[canvasId];
+  const el    = document.getElementById(canvasId + '-legend');
+  if (!chart || !el) return;
+  if (!filterFn) filterFn = ds => ds.label && ds.label !== '';
+  const groups = [];
+  const datasets = chart.data.datasets;
+  let cur = null;
+  datasets.forEach((ds, i) => {
+    if (filterFn(ds)) {
+      cur = { label: ds.label, color: ds.borderColor || ds.backgroundColor, indices: [i] };
+      groups.push(cur);
+    } else if (cur) {
+      cur.indices.push(i);
+    }
+  });
+  el.innerHTML = '';
+  groups.forEach(g => {
+    const row = document.createElement('div');
+    row.className = 'll-row';
+    row.title = g.label;
+    const box = document.createElement('span');
+    box.className = 'll-box';
+    box.style.background = g.color;
+    const txt = document.createElement('span');
+    txt.className = 'll-txt';
+    txt.textContent = g.label.length > 28 ? g.label.slice(0, 26) + '…' : g.label;
+    row.appendChild(box);
+    row.appendChild(txt);
+    row.addEventListener('click', () => {
+      const hide = !chart.getDatasetMeta(g.indices[0]).hidden;
+      g.indices.forEach(idx => { chart.getDatasetMeta(idx).hidden = hide; });
+      chart.update();
+      row.classList.toggle('ll-hidden', hide);
+    });
+    el.appendChild(row);
+  });
+}
+
 // Common scatter (log x-axis) options
 function logScatterOpts(xLabel, yLabel) {
   const xCfg  = { type: 'logarithmic',
@@ -4556,7 +4596,10 @@ function renderCurvesChart(norm) {
     e.native.target.style.cursor = hit ? 'pointer' : 'default';
   };
 
+  opts.plugins.legend.display = false;
   makeChart('curves-chart', { type: 'scatter', data: { datasets }, options: opts });
+  buildScrollLegend('curves-chart', ds => ds.label && ds.label !== '' &&
+    !['FJ','FI','FP','FQ','eS'].includes(ds.label));
 }
 
 // ── remove one file from all analysis data ────────────────────────────────
@@ -4666,7 +4709,10 @@ function renderParamsChart(group) {
     borderColor:     sampleColor(i, files.length),
     borderWidth: 1,
   }));
-  makeChart('params-chart', { type: 'bar', data: { labels, datasets }, options: barOpts() });
+  const opts = barOpts();
+  opts.plugins.legend.display = false;
+  makeChart('params-chart', { type: 'bar', data: { labels, datasets }, options: opts });
+  buildScrollLegend('params-chart');
 }
 
 // ── parameters table ──────────────────────────────────────────────────────
@@ -5017,8 +5063,10 @@ function renderDiagRecon() {
         borderColor: 'transparent', backgroundColor: 'transparent' });
     }
   });
-  makeChart('diag-recon-chart', { type: 'scatter', data: { datasets },
-    options: logScatterOpts('Time (ms)', 'Double normalised') });
+  const reconOpts = logScatterOpts('Time (ms)', 'Double normalised');
+  reconOpts.plugins.legend.display = false;
+  makeChart('diag-recon-chart', { type: 'scatter', data: { datasets }, options: reconOpts });
+  buildScrollLegend('diag-recon-chart');
 }
 
 function renderDiagResid() {
@@ -5032,8 +5080,10 @@ function renderDiagResid() {
       .map((y, j) => ({ x: t[j], y }))
       .filter(pt => pt.x >= tMin && pt.x <= tMax),
   }));
-  makeChart('diag-resid-chart', { type: 'scatter', data: { datasets },
-    options: logScatterOpts('Time (ms)', 'Residuals (r.u.)') });
+  const residOpts = logScatterOpts('Time (ms)', 'Residuals (r.u.)');
+  residOpts.plugins.legend.display = false;
+  makeChart('diag-resid-chart', { type: 'scatter', data: { datasets }, options: residOpts });
+  buildScrollLegend('diag-resid-chart');
 }
 
 function renderDiagD2() {
@@ -5069,8 +5119,10 @@ function renderDiagD2() {
         borderColor: 'transparent', backgroundColor: 'transparent' });
     }
   });
-  makeChart('diag-d2-chart', { type: 'scatter', data: { datasets },
-    options: logScatterOpts('Time (ms)', '2nd derivative') });
+  const d2Opts = logScatterOpts('Time (ms)', '2nd derivative');
+  d2Opts.plugins.legend.display = false;
+  makeChart('diag-d2-chart', { type: 'scatter', data: { datasets }, options: d2Opts });
+  buildScrollLegend('diag-d2-chart');
 }
 
 function renderDiagD3() {
@@ -5107,8 +5159,10 @@ function renderDiagD3() {
         borderColor: 'transparent', backgroundColor: 'transparent' });
     }
   });
-  makeChart('diag-d3-chart', { type: 'scatter', data: { datasets },
-    options: logScatterOpts('Time (ms)', '3rd derivative') });
+  const d3Opts = logScatterOpts('Time (ms)', '3rd derivative');
+  d3Opts.plugins.legend.display = false;
+  makeChart('diag-d3-chart', { type: 'scatter', data: { datasets }, options: d3Opts });
+  buildScrollLegend('diag-d3-chart');
 }
 
 function renderDiagD1() {
@@ -5144,8 +5198,10 @@ function renderDiagD1() {
         borderColor: 'transparent', backgroundColor: 'transparent' });
     }
   });
-  makeChart('diag-d1-chart', { type: 'scatter', data: { datasets },
-    options: logScatterOpts('Time (ms)', '1st derivative') });
+  const d1Opts = logScatterOpts('Time (ms)', '1st derivative');
+  d1Opts.plugins.legend.display = false;
+  makeChart('diag-d1-chart', { type: 'scatter', data: { datasets }, options: d1Opts });
+  buildScrollLegend('diag-d1-chart');
 }
 
 function renderMethodFit() {
@@ -5201,8 +5257,10 @@ function _renderThreeExpFit() {
       data: tArr.map((t, j) => ({ x: t, y: mf.fit_ip[j] }))
         .filter(pt => pt.x >= tMin && pt.x <= tMax) });
   });
-  makeChart('diag-method-fit-chart', { type: 'scatter', data: { datasets },
-    options: logScatterOpts('Time (ms)', 'V(t)') });
+  const mfOpts1 = logScatterOpts('Time (ms)', 'V(t)');
+  mfOpts1.plugins.legend.display = false;
+  makeChart('diag-method-fit-chart', { type: 'scatter', data: { datasets }, options: mfOpts1 });
+  buildScrollLegend('diag-method-fit-chart', ds => ds.label && ds.label.endsWith(' fit'));
 }
 
 function _renderPiecewiseFit() {
@@ -5242,8 +5300,10 @@ function _renderPiecewiseFit() {
       }
     }
   });
-  makeChart('diag-method-fit-chart', { type: 'scatter', data: { datasets },
-    options: logScatterOpts('Time (ms)', 'V(t)') });
+  const mfOpts2 = logScatterOpts('Time (ms)', 'V(t)');
+  mfOpts2.plugins.legend.display = false;
+  makeChart('diag-method-fit-chart', { type: 'scatter', data: { datasets }, options: mfOpts2 });
+  buildScrollLegend('diag-method-fit-chart', ds => ds.label && ds.label.endsWith(' data'));
 }
 
 function _renderGaussianD1Fit() {
@@ -5281,8 +5341,10 @@ function _renderGaussianD1Fit() {
           .filter(pt => pt.x >= tMin && pt.x <= tMax) });
     }
   });
-  makeChart('diag-method-fit-chart', { type: 'scatter', data: { datasets },
-    options: logScatterOpts('Time (ms)', 'D1') });
+  const mfOpts3 = logScatterOpts('Time (ms)', 'D1');
+  mfOpts3.plugins.legend.display = false;
+  makeChart('diag-method-fit-chart', { type: 'scatter', data: { datasets }, options: mfOpts3 });
+  buildScrollLegend('diag-method-fit-chart', ds => ds.label && ds.label.endsWith(' D1'));
 }
 
 // ── toggle FJ / FI between default (2/30 ms) and auto-detected ───────────
@@ -5783,15 +5845,27 @@ async function downloadXlsxWithCharts() {
     if (!chartInst[id]) return null;
     const canvas = document.getElementById(id);
     if (!canvas) return null;
+    const chart = chartInst[id];
     const pane = canvas.closest('.tab-pane');
     const wasHidden = pane && getComputedStyle(pane).display === 'none';
     if (wasHidden) {
       pane.style.display = 'block';
       pane.style.visibility = 'hidden';
       void pane.offsetWidth;
-      chartInst[id].resize();
+      chart.resize();
+    }
+    // Temporarily re-enable built-in legend for export if external legend is active
+    const legendDiv = document.getElementById(id + '-legend');
+    const hadExtLegend = legendDiv && chart.options.plugins.legend.display === false;
+    if (hadExtLegend) {
+      chart.options.plugins.legend = compactLegend('right');
+      chart.update();
     }
     const data_url = _chartToDataUrl(canvas);
+    if (hadExtLegend) {
+      chart.options.plugins.legend.display = false;
+      chart.update();
+    }
     if (wasHidden) {
       pane.style.display = '';
       pane.style.visibility = '';

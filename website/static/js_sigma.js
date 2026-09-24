@@ -242,6 +242,46 @@ function _adaptiveLegend(labelsArr, position) {
   };
 }
 
+// ── external scrollable legend ────────────────────────────────────────────
+function buildScrollLegend(canvasId, filterFn) {
+  const chart = sigmaCharts[canvasId];
+  const el    = document.getElementById(canvasId + '-legend');
+  if (!chart || !el) return;
+  if (!filterFn) filterFn = ds => ds.label && ds.label !== '';
+  const groups = [];
+  const datasets = chart.data.datasets;
+  let cur = null;
+  datasets.forEach((ds, i) => {
+    if (filterFn(ds)) {
+      cur = { label: ds.label, color: ds.borderColor || ds.backgroundColor, indices: [i] };
+      groups.push(cur);
+    } else if (cur) {
+      cur.indices.push(i);
+    }
+  });
+  el.innerHTML = '';
+  groups.forEach(g => {
+    const row = document.createElement('div');
+    row.className = 'll-row';
+    row.title = g.label;
+    const box = document.createElement('span');
+    box.className = 'll-box';
+    box.style.background = g.color;
+    const txt = document.createElement('span');
+    txt.className = 'll-txt';
+    txt.textContent = g.label.length > 28 ? g.label.slice(0, 26) + '…' : g.label;
+    row.appendChild(box);
+    row.appendChild(txt);
+    row.addEventListener('click', () => {
+      const hide = !chart.getDatasetMeta(g.indices[0]).hidden;
+      g.indices.forEach(idx => { chart.getDatasetMeta(idx).hidden = hide; });
+      chart.update();
+      row.classList.toggle('ll-hidden', hide);
+    });
+    el.appendChild(row);
+  });
+}
+
 // Per-wavelength bar charts need a custom generateLabels because they use a
 // single dataset with per-element colors, not one dataset per sample.
 function _adaptiveLegendFromSamples(samples) {
@@ -417,7 +457,7 @@ function buildSpectrumChart(param) {
         y: { title: { display: true, text: PARAM_LABELS[param] }, beginAtZero: false },
       },
       plugins: {
-        legend: _adaptiveLegend(samples.map(s => s.name), 'right'),
+        legend: { display: false },
         tooltip: {
           callbacks: {
             title: items => `λ = ${items[0].parsed.x} nm`,
@@ -427,6 +467,7 @@ function buildSpectrumChart(param) {
       },
     },
   });
+  buildScrollLegend('chart-spectrum');
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -876,9 +917,22 @@ function _sigmaChartToDataUrl(canvas) {
 function _captureDirect(id) {
   const canvas = document.getElementById(id);
   if (!canvas) return null;
-  if (sigmaCharts[id]) sigmaCharts[id].resize();
+  const chart = sigmaCharts[id];
+  if (chart) chart.resize();
   if (canvas.width === 0 || canvas.height === 0) return null;
+  // Temporarily re-enable built-in legend for export if external legend is active
+  const legendDiv = document.getElementById(id + '-legend');
+  const hadExtLegend = chart && legendDiv && chart.options.plugins.legend.display === false;
+  if (hadExtLegend) {
+    chart.options.plugins.legend = _adaptiveLegend(
+      sigmaData.samples.map(s => s.name), 'right');
+    chart.update();
+  }
   const du = _sigmaChartToDataUrl(canvas);
+  if (hadExtLegend) {
+    chart.options.plugins.legend.display = false;
+    chart.update();
+  }
   return (du && du.includes(',') && du.split(',')[1]) ? du : null;
 }
 
