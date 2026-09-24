@@ -2363,6 +2363,11 @@ def ojip_process():
         fname_full = secure_filename(file.filename or '')
         last_fname = fname_no_ext
 
+        if fname_no_ext in file_names_list:
+            return jsonify({'status': 'error',
+                            'message': f'Duplicate filename: "{fname_no_ext}" — '
+                                       f'please rename files so each has a unique name.'}), 400
+
         if ext not in allowed_ext:
             return jsonify({'status': 'error',
                             'message': f'Wrong file type for {fname_full}. Expected: {allowed_ext}'}), 400
