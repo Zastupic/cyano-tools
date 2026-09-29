@@ -12,19 +12,42 @@ let dirtyTabs = new Set(); // tabs whose charts need rendering on first visit
 let fjfiMode  = 'default'; // 'default' (2/30 ms) or 'auto' (derivative-detected)
 
 /** Is the "Auto-detected" FJ/FI radio selected? Checks both input.checked
- *  and Bootstrap's active class (jQuery toggle doesn't always sync checked). */
+ *  and Bootstrap's active class (jQuery toggle doesn't always sync checked).
+ *  Diagnostics radio is authoritative; sidebar is a fallback only. */
 function _wantDerivTiming() {
-  // Check diagnostics tab radio first (visible after analysis)
-  const inp = document.getElementById('fjfi-radio-auto');
-  if (inp && inp.checked) return true;
-  const lbl = document.getElementById('fjfi-radio-auto-label');
-  if (lbl && lbl.classList.contains('active')) return true;
-  // Fallback: sidebar radio (available before analysis)
-  const sidebarInp = document.getElementById('fjfi-sidebar-auto');
-  if (sidebarInp && sidebarInp.checked) return true;
-  const sidebarLbl = document.getElementById('fjfi-sidebar-auto-label');
-  if (sidebarLbl && sidebarLbl.classList.contains('active')) return true;
+  // FJ/FI detection dropdown (diagnostics tab) is authoritative
+  const dd = document.getElementById('fjfi-detect-mode');
+  if (dd) return dd.value !== 'fixed';
+  // Fallback: diagnostics radio
+  const diagAuto = document.getElementById('fjfi-radio-auto');
+  if (diagAuto) {
+    return diagAuto.checked ||
+      (document.getElementById('fjfi-radio-auto-label')?.classList.contains('active') ?? false);
+  }
+  // Fallback: sidebar radio (only if diagnostics elements missing)
+  const sidebarAuto = document.getElementById('fjfi-sidebar-auto');
+  if (sidebarAuto) {
+    return sidebarAuto.checked ||
+      (document.getElementById('fjfi-sidebar-auto-label')?.classList.contains('active') ?? false);
+  }
   return false;
+}
+
+/** Mode-aware FJ auto-detected timing from key_values. */
+function _fjAutoTime(kv) {
+  const mode = document.getElementById('fjfi-detect-mode')?.value || 'd2_zero';
+  if (mode === 'd2_zero')      return kv.FJ_time_d2zero_ms ?? kv.FJ_time_inflect_ms ?? kv.FJ_time_deriv_ms;
+  if (mode === 'poly_inflect') return kv.FJ_time_inflect_ms ?? kv.FJ_time_deriv_ms;
+  if (mode === 'd2_trough')    return kv.FJ_time_deriv_ms;
+  return null;  // 'fixed' — caller uses input field value
+}
+/** Mode-aware FI auto-detected timing from key_values. */
+function _fiAutoTime(kv) {
+  const mode = document.getElementById('fjfi-detect-mode')?.value || 'd2_zero';
+  if (mode === 'd2_zero')      return kv.FI_time_d2zero_ms ?? kv.FI_time_inflect_ms ?? kv.FI_time_deriv_ms;
+  if (mode === 'poly_inflect') return kv.FI_time_inflect_ms ?? kv.FI_time_deriv_ms;
+  if (mode === 'd2_trough')    return kv.FI_time_deriv_ms;
+  return null;
 }
 
 // ── multi-curve state (M2-M6) ───────────────────────────────────────────
@@ -273,6 +296,39 @@ const MC = (() => {
         `<td>${c.protocol}</td>`;
       tbody.appendChild(tr);
     }
+
+    // ── Duplicate detection ──
+    _dupMap = new Map();
+    _dupOrigNames = new Map();
+    const seen = new Map(); // JSON(values) → first index
+    for (const c of dataset.curves) {
+      // Use server-provided duplicate_of if available (HandyPEA)
+      if (c.meta && c.meta.duplicate_of != null) {
+        _dupMap.set(c.index, c.meta.duplicate_of);
+        continue;
+      }
+      // Client-side detection: compare value arrays
+      const key = JSON.stringify(c.values);
+      if (seen.has(key)) {
+        _dupMap.set(c.index, seen.get(key));
+      } else {
+        seen.set(key, c.index);
+      }
+    }
+
+    const dupCtrl = document.getElementById('mc-dup-control');
+    if (dupCtrl) {
+      if (_dupMap.size > 0) {
+        document.getElementById('mc-dup-count').textContent = _dupMap.size;
+        document.getElementById('mc-dup-mode').value = 'drop';
+        dupCtrl.style.display = '';
+        // Default: pre-uncheck duplicate curves
+        _applyDupDrop();
+      } else {
+        dupCtrl.style.display = 'none';
+      }
+    }
+
     _updateSelCount();
 
     // Show modal
@@ -301,6 +357,57 @@ const MC = (() => {
     _updateSelCount();
   }
 
+  /** Uncheck duplicate curves in the selection table. */
+  function _applyDupDrop() {
+    // Restore original names if previously renamed
+    for (const [idx, orig] of _dupOrigNames) {
+      const c = mcDataset?.curves.find(x => x.index === idx);
+      if (c) c.curveName = orig;
+    }
+    _dupOrigNames.clear();
+    // Uncheck duplicates
+    for (const dupIdx of _dupMap.keys()) {
+      const cb = document.querySelector(`.mc-curve-cb[data-idx="${dupIdx}"]`);
+      if (cb) cb.checked = false;
+    }
+    _updateSelCount();
+  }
+
+  /** Re-check duplicate curves and add _2/_3 suffix to names. */
+  function _applyDupKeep() {
+    if (!mcDataset) return;
+    // Restore any previous renames first
+    for (const [idx, orig] of _dupOrigNames) {
+      const c = mcDataset.curves.find(x => x.index === idx);
+      if (c) c.curveName = orig;
+    }
+    _dupOrigNames.clear();
+    // Re-check duplicate curves
+    for (const dupIdx of _dupMap.keys()) {
+      const cb = document.querySelector(`.mc-curve-cb[data-idx="${dupIdx}"]`);
+      if (cb) cb.checked = true;
+    }
+    // Count occurrences per original curve to assign _2, _3, etc.
+    const counts = new Map(); // firstIdx → occurrence count
+    for (const [dupIdx, firstIdx] of _dupMap) {
+      const n = (counts.get(firstIdx) || 1) + 1;
+      counts.set(firstIdx, n);
+      const c = mcDataset.curves.find(x => x.index === dupIdx);
+      if (c) {
+        _dupOrigNames.set(dupIdx, c.curveName);
+        c.curveName = c.curveName + '_' + n;
+      }
+    }
+    _updateSelCount();
+  }
+
+  /** Handle duplicate mode dropdown change. */
+  function applyDupMode() {
+    const mode = document.getElementById('mc-dup-mode')?.value || 'drop';
+    if (mode === 'drop') _applyDupDrop();
+    else _applyDupKeep();
+  }
+
   function getSelectedIndices() {
     return [...document.querySelectorAll('.mc-curve-cb:checked')].map(cb => parseInt(cb.dataset.idx, 10));
   }
@@ -310,8 +417,8 @@ const MC = (() => {
   }
 
   function getCurveName(curve, dataset, scheme) {
-    // Excel datasets use pre-built curve names from the parseExcel step
-    if (dataset.fluorometer === 'OJIPImaging' && curve.curveName) return curve.curveName;
+    // Excel and HandyPEA datasets use pre-built curve names
+    if ((dataset.fluorometer === 'OJIPImaging' || dataset.fluorometer === 'HandyPEA') && curve.curveName) return curve.curveName;
     if (scheme === 'timestamp')      return curve.timestamp || `${curve.index + 1}`;
     if (scheme === 'filename_index') return `${dataset.stem}_${String(curve.index + 1).padStart(3, '0')}`;
     return `${curve.index + 1}`; // 'index'
@@ -319,6 +426,11 @@ const MC = (() => {
 
   // Cache of selected indices so _slotToIndex works after modal is closed
   let _selIndicesCache = [];
+
+  // Duplicate tracking: maps duplicate curve index → first-seen index
+  let _dupMap = new Map();
+  // Original curve names before _2/_3 suffix
+  let _dupOrigNames = new Map();
 
   // ── M3: Batch orchestrator ───────────────────────────────────────────
   async function runParamsPass(dataset, selectedIndices, jipOpts) {
@@ -387,6 +499,7 @@ const MC = (() => {
           f0_time_ms:      jipOpts.f0TimMs || null,
           use_deriv_timing: jipOpts.useDerivTiming || false,
           s_point_mode:    jipOpts.sPointMode || 'inflection',
+          p_point_mode:    jipOpts.pPointMode || 'd2_trough',
           include_curves: false,
         };
 
@@ -1085,7 +1198,11 @@ const MC = (() => {
     html += '<div class="table-responsive" style="max-height:450px; overflow-y:auto;">' +
       '<table class="table table-sm table-bordered table-hover" style="font-size:0.78em;">' +
       '<thead class="thead-light"><tr>' +
-      headerRow.map(h => `<th class="text-nowrap">${h}</th>`).join('') +
+      headerRow.map((h, idx) => {
+        const fc = 2 + metaCols.length + fitCols.length;
+        const tip = idx >= fc ? (PARAM_TOOLTIPS[paramKeys[idx - fc]] || '') : '';
+        return `<th class="text-nowrap"${tip ? ` title="${tip}"` : ''}>${h}</th>`;
+      }).join('') +
       '</tr></thead><tbody>';
 
     for (const r of paramMatrix) {
@@ -1208,6 +1325,7 @@ const MC = (() => {
       f0_time_ms:      (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
       use_deriv_timing: _wantDerivTiming(),
       s_point_mode:    document.getElementById('s-point-mode')?.value || 'inflection',
+      p_point_mode:    document.getElementById('p-point-mode')?.value || 'd2_trough',
       include_curves: true,
     };
 
@@ -1553,6 +1671,8 @@ const MC = (() => {
   }
 
   // Read the user-editable from/to range (1-based, clamped)
+  const MAX_VISIBLE_CURVES = 100;
+
   function _getCurveRange() {
     const total = _curvesValidSlots.length;
     const fromEl = document.getElementById('mc-cv-from');
@@ -1561,6 +1681,8 @@ const MC = (() => {
     let to   = parseInt(toEl?.value, 10)   || Math.min(50, total);
     from = Math.max(1, Math.min(from, total));
     to   = Math.max(from, Math.min(to, total));
+    // Cap page size
+    if (to - from + 1 > MAX_VISIBLE_CURVES) to = from + MAX_VISIBLE_CURVES - 1;
     return { from, to, total };
   }
 
@@ -1614,6 +1736,9 @@ const MC = (() => {
     if (idxKeep[idxKeep.length - 1] !== fullLen - 1) idxKeep.push(fullLen - 1);
     const decTimeMs = idxKeep.map(i => timeMs[i]);
 
+    // Normalization mode from OJIP Curves dropdown
+    const aggNorm = document.getElementById('mc-agg-norm')?.value || 'raw';
+
     // Build datasets: one per curve in the range
     const datasets = [];
     for (let pi = 0; pi < nVisible; pi++) {
@@ -1627,7 +1752,8 @@ const MC = (() => {
       const color = `hsla(${240 - hue}, 70%, 48%, 0.45)`;
       const name = paramMatrix[slot]?.name || `#${slot + 1}`;
 
-      const data = idxKeep.map((i, di) => ({ x: decTimeMs[di], y: curveObj.values[i] }));
+      const normVals = _getNormValues(curveObj, slot, aggNorm);
+      const data = idxKeep.map((i, di) => ({ x: decTimeMs[di], y: normVals[i] }));
 
       datasets.push({
         label: name,
@@ -1643,29 +1769,63 @@ const MC = (() => {
       });
     }
 
-    // Optionally add median line (computed over ALL curves, not just visible)
-    const showMedian = document.getElementById('mc-show-median')?.checked;
-    if (showMedian && totalCurves > 1) {
-      const medianData = idxKeep.map(ti => {
-        const vals = [];
-        for (const s of _curvesValidSlots) {
-          const ci = _slotToIndex(s);
-          const co = mcDataset.curves.find(c => c.index === ci);
-          if (co) vals.push(co.values[ti]);
+    // ── OJIP markers (O, J, I, P) on each curve ──
+    const showOJIP = document.getElementById('mc-show-ojip')?.checked;
+    if (showOJIP) {
+      const markers = [
+        { key: 'F0', timeKey: null,              label: 'O',  color: '#2ca02c', style: 'circle'   },
+        { key: 'FJ', timeKey: 'FJ_time_user_ms', label: 'J',  color: '#ff7f0e', style: 'triangle' },
+        { key: 'FI', timeKey: 'FI_time_user_ms', label: 'I',  color: '#d62728', style: 'rectRot'  },
+        { key: 'FM', timeKey: 'FM_time_ms',       label: 'P',  color: '#7f2baf', style: 'rect'     },
+      ];
+      for (const m of markers) {
+        const pts = [];
+        for (let pi = 0; pi < nVisible; pi++) {
+          const slot = pageSlots[pi];
+          const pm = paramMatrix[slot];
+          if (!pm || pm.error) continue;
+          const rawY = pm[m.key];
+          if (rawY == null) continue;
+          let tMs;
+          if (m.timeKey && pm[m.timeKey] != null) {
+            tMs = pm[m.timeKey];
+          } else {
+            // F0: find the time of the data point closest to the F0 value
+            const curveIdx = _slotToIndex(slot);
+            const co = mcDataset.curves.find(c => c.index === curveIdx);
+            if (!co) continue;
+            let bestI = 0, bestD = Infinity;
+            for (let i = 0; i < co.values.length && i < timeMs.length; i++) {
+              const d = Math.abs(co.values[i] - rawY);
+              if (d < bestD) { bestD = d; bestI = i; }
+            }
+            tMs = timeMs[bestI];
+          }
+          // Apply normalization to the Y value
+          const f0 = pm.F0, fm = pm.FM;
+          let y = rawY;
+          if (aggNorm === 'shifted_F0' && f0 != null)      y = rawY - f0;
+          else if (aggNorm === 'shifted_FM' && fm != null)  y = rawY - fm;
+          else if (aggNorm === 'double_norm' && f0 != null && fm != null && fm !== f0)
+            y = (rawY - f0) / (fm - f0);
+          pts.push({ x: tMs, y });
         }
-        vals.sort((a, b) => a - b);
-        return { x: timeMs[ti], y: vals[Math.floor(vals.length / 2)] };
-      });
-      datasets.push({
-        label: 'Median (all curves)',
-        data: medianData,
-        showLine: true,
-        borderColor: '#000',
-        borderWidth: 2.5,
-        borderDash: [6, 3],
-        pointRadius: 0,
-        fill: false,
-      });
+        if (pts.length) {
+          datasets.push({
+            label: m.label,
+            data: pts,
+            showLine: false,
+            pointStyle: m.style,
+            pointRadius: 5,
+            pointBorderColor: m.color,
+            pointBackgroundColor: m.color + '66',
+            pointBorderWidth: 1.5,
+            borderColor: m.color,
+            backgroundColor: m.color + '66',
+            _isMarker: true,
+          });
+        }
+      }
     }
 
     destroyChart('mc-aggregate-chart');
@@ -1683,16 +1843,23 @@ const MC = (() => {
             title: { display: true, text: 'Time (ms)', font: { size: 12 } },
           },
           y: {
-            title: { display: true, text: 'Fluorescence (a.u.)', font: { size: 12 } },
+            title: { display: true, text: _normYLabel(aggNorm), font: { size: 12 } },
           },
         },
         plugins: {
           legend: { display: false },
           tooltip: {
-            filter: (item) => item.datasetIndex < nVisible,
             callbacks: {
               title: (items) => items.length ? items[0].dataset.label || '' : '',
-              label: (item) => `t = ${item.parsed.x.toFixed(3)} ms, F = ${item.parsed.y.toFixed(0)}`,
+              label: (item) => {
+                const ds = item.dataset;
+                if (ds._isMarker) {
+                  return `${ds.label}: t = ${item.parsed.x.toFixed(3)} ms, ${_normYLabel(aggNorm)} = ${item.parsed.y.toFixed(aggNorm === 'double_norm' ? 3 : 1)}`;
+                }
+                const yLbl = _normYLabel(aggNorm);
+                const prec = aggNorm === 'double_norm' ? 3 : 0;
+                return `t = ${item.parsed.x.toFixed(3)} ms, ${yLbl} = ${item.parsed.y.toFixed(prec)}`;
+              },
             },
           },
         },
@@ -1704,6 +1871,7 @@ const MC = (() => {
       },
       plugins: [_ojipWhiteBgPlugin],
     });
+    buildScrollLegend('mc-aggregate-chart');
   }
 
   function curvesPagePrev() {
@@ -2188,6 +2356,31 @@ const MC = (() => {
         `<td class="small">${c.plantId}</td>`;
       tbody.appendChild(tr);
     }
+
+    // ── Duplicate detection (client-side, same as FluorPen/HandyPEA path) ──
+    _dupMap = new Map();
+    _dupOrigNames = new Map();
+    const seen = new Map();
+    for (const c of dataset.curves) {
+      const key = JSON.stringify(c.values);
+      if (seen.has(key)) {
+        _dupMap.set(c.index, seen.get(key));
+      } else {
+        seen.set(key, c.index);
+      }
+    }
+    const dupCtrl = document.getElementById('mc-dup-control');
+    if (dupCtrl) {
+      if (_dupMap.size > 0) {
+        document.getElementById('mc-dup-count').textContent = _dupMap.size;
+        document.getElementById('mc-dup-mode').value = 'drop';
+        dupCtrl.style.display = '';
+        _applyDupDrop();
+      } else {
+        dupCtrl.style.display = 'none';
+      }
+    }
+
     _updateSelCount();
 
     $(modal).modal('show');
@@ -2342,6 +2535,40 @@ const MC = (() => {
   }
 
   /**
+   * Return normalized value array for a curve, using F0/FM from paramMatrix.
+   * @param {string} [norm] - normalization mode; defaults to mc-panel-norm dropdown value
+   */
+  function _getNormValues(curveObj, slot, norm) {
+    if (norm === undefined) norm = document.getElementById('mc-panel-norm')?.value || 'raw';
+    const raw = curveObj.values;
+    if (norm === 'raw') return raw;
+
+    const pm = paramMatrix?.find(r => r.slot === slot);
+    if (!pm) return raw;
+    const f0 = pm.F0, fm = pm.FM;
+    if (f0 == null || fm == null) return raw;
+
+    if (norm === 'shifted_F0') return raw.map(v => v - f0);
+    if (norm === 'shifted_FM') return raw.map(v => v - fm);
+    if (norm === 'double_norm') {
+      const fv = fm - f0;
+      if (fv === 0) return raw;
+      return raw.map(v => (v - f0) / fv);
+    }
+    return raw;
+  }
+
+  /** Y-axis label for a normalization mode.
+   * @param {string} [norm] - defaults to mc-panel-norm dropdown value */
+  function _normYLabel(norm) {
+    if (norm === undefined) norm = document.getElementById('mc-panel-norm')?.value || 'raw';
+    if (norm === 'shifted_F0') return 'F \u2212 F\u2080';
+    if (norm === 'shifted_FM') return 'F \u2212 F_M';
+    if (norm === 'double_norm') return '(F \u2212 F\u2080) / (F_M \u2212 F\u2080)';
+    return 'Fluorescence (a.u.)';
+  }
+
+  /**
    * Compute per-timepoint mean and sample SD for each color group
    * within a subset of curve slots.
    */
@@ -2362,13 +2589,18 @@ const MC = (() => {
       const mean = new Float64Array(nTime);
       const sd   = new Float64Array(nTime);
 
+      // Precompute normalized arrays per slot
+      const slotVals = [];
+      for (const s of gSlots) {
+        const idx = _slotToIndex(s);
+        const curveObj = mcDataset.curves.find(c => c.index === idx);
+        if (curveObj) slotVals.push(_getNormValues(curveObj, s));
+      }
+
       for (let t = 0; t < nTime; t++) {
         let sum = 0, sum2 = 0, count = 0;
-        for (const s of gSlots) {
-          const idx = _slotToIndex(s);
-          const curveObj = mcDataset.curves.find(c => c.index === idx);
-          if (!curveObj) continue;
-          const v = curveObj.values[t];
+        for (const vals of slotVals) {
+          const v = vals[t];
           if (v == null || !isFinite(v)) continue;
           sum += v; sum2 += v * v; count++;
         }
@@ -2432,12 +2664,13 @@ const MC = (() => {
           const idx = _slotToIndex(slot);
           const curveObj = mcDataset.curves.find(c => c.index === idx);
           if (!curveObj) continue;
+          const normVals = _getNormValues(curveObj, slot);
           datasets.push({
             label: (displayMode === 'individual' && si === 0) ? gv : '',
             showLine: true, pointRadius: 0,
             borderWidth: indivWidth, borderColor: indivColor,
             backgroundColor: 'transparent',
-            data: timeMs.map((t, j) => ({ x: t, y: curveObj.values[j] })),
+            data: timeMs.map((t, j) => ({ x: t, y: normVals[j] })),
             fill: false, _mcSlot: slot,
           });
         }
@@ -2495,7 +2728,7 @@ const MC = (() => {
           },
           y: Object.assign(
             {
-              title: { display: true, text: 'Fluorescence', font: { size: 10 } },
+              title: { display: true, text: _normYLabel(), font: { size: 10 } },
               ticks: { font: { size: 9 } },
               grid: { display: false },
             },
@@ -2516,8 +2749,10 @@ const MC = (() => {
             enabled: true, mode: 'nearest', intersect: false,
             callbacks: {
               title: items => items.length ? items[0].dataset.label || '' : '',
-              label: item =>
-                `t = ${item.parsed.x.toFixed(2)} ms, F = ${item.parsed.y.toFixed(1)}`,
+              label: item => {
+                const yLbl = _normYLabel();
+                return `t = ${item.parsed.x.toFixed(2)} ms, ${yLbl} = ${item.parsed.y.toFixed(3)}`;
+              },
             },
           },
         },
@@ -2546,13 +2781,19 @@ const MC = (() => {
     const nTime = timeMs.length;
     const mean = new Float64Array(nTime);
     const sd   = new Float64Array(nTime);
+    // Precompute normalized arrays per slot
+    const slotNorm = new Map();
+    for (const s of gSlots) {
+      const idx = _slotToIndex(s);
+      const curveObj = mcDataset.curves.find(c => c.index === idx);
+      if (curveObj) slotNorm.set(s, _getNormValues(curveObj, s));
+    }
     for (let t = 0; t < nTime; t++) {
       let sum = 0, sum2 = 0, count = 0;
       for (const s of gSlots) {
-        const idx = _slotToIndex(s);
-        const curveObj = mcDataset.curves.find(c => c.index === idx);
-        if (!curveObj) continue;
-        const v = curveObj.values[t];
+        const vals = slotNorm.get(s);
+        if (!vals) continue;
+        const v = vals[t];
         if (v == null || !isFinite(v)) continue;
         sum += v; sum2 += v * v; count++;
       }
@@ -2595,12 +2836,13 @@ const MC = (() => {
         const idx = _slotToIndex(slot);
         const curveObj = mcDataset.curves.find(c => c.index === idx);
         if (!curveObj) continue;
+        const normVals = _getNormValues(curveObj, slot);
         datasets.push({
           label: (displayMode === 'individual' && si === 0) ? label : '',
           showLine: true, pointRadius: 0,
           borderWidth: indivWidth, borderColor: indivColor,
           backgroundColor: 'transparent',
-          data: timeMs.map((t, j) => ({ x: t, y: curveObj.values[j] })),
+          data: timeMs.map((t, j) => ({ x: t, y: normVals[j] })),
           fill: false, _mcSlot: slot,
         });
       }
@@ -2611,17 +2853,21 @@ const MC = (() => {
     if (showTiming && paramMatrix) {
       // Compute group-mean timings from paramMatrix
       const timingKeys = [
-        { key: 'FJ_time_deriv_ms', style: 'triangle', tip: 'FJ' },
-        { key: 'FI_time_deriv_ms', style: 'rectRot',  tip: 'FI' },
-        { key: 'FP_time_deriv_ms', style: 'rect',     tip: 'FP' },
+        { key: '_fj_auto', style: 'triangle', tip: 'FJ' },
+        { key: '_fi_auto', style: 'rectRot',  tip: 'FI' },
+        { key: 'FP_time_user_ms', fallback: 'FP_time_deriv_ms', style: 'rect',     tip: 'FP' },
       ];
       const markerPts = [], markerR = [], markerSt = [], markerBg = [], markerBd = [];
-      for (const { key, style, tip } of timingKeys) {
+      for (const { key, fallback, style, tip } of timingKeys) {
         let tSum = 0, tCount = 0;
         for (const s of gSlots) {
           const r = paramMatrix[s];
-          if (!r || r.error || r[key] == null) continue;
-          tSum += r[key]; tCount++;
+          let v;
+          if (key === '_fj_auto') v = r && !r.error ? _fjAutoTime(r) : null;
+          else if (key === '_fi_auto') v = r && !r.error ? _fiAutoTime(r) : null;
+          else v = r && !r.error ? (r[key] ?? r[fallback]) : null;
+          if (v == null) continue;
+          tSum += v; tCount++;
         }
         if (tCount === 0) continue;
         const meanT = tSum / tCount;
@@ -2855,7 +3101,8 @@ const MC = (() => {
           const idx = _slotToIndex(slot);
           const curveObj = mcDataset.curves.find(c => c.index === idx);
           if (!curveObj) continue;
-          for (const v of curveObj.values) {
+          const normVals = _getNormValues(curveObj, slot);
+          for (const v of normVals) {
             if (v != null && isFinite(v)) {
               if (isNaN(yMinInput) && v < gMin) gMin = v;
               if (isNaN(yMaxInput) && v > gMax) gMax = v;
@@ -3133,7 +3380,7 @@ const MC = (() => {
     parse, isMultiCurve, showSelectionModal,
     parseExcel, showExcelSelectionModal, resolveExcelDataset,
     applyExcelFilters, clearExcelFilters,
-    selectAll, deselectAll, selectRange,
+    selectAll, deselectAll, selectRange, applyDupMode,
     getSelectedIndices, getNamingScheme,
     runParamsPass, cancelBatch,
     renderTimeSeries, renderAggregateCurves, renderGroupedPanels, renderComparison,
@@ -3161,7 +3408,10 @@ const PARAM_GROUPS = {
   fluxes: ['ABSRC', 'TR0RC', 'ET0RC', 'RE0RC', 'DI0RC'],
   areas:  ['Area_OJ', 'Area_JI', 'Area_IP', 'Area_OP', 'SM', 'N'],
   tech:   ['F0', 'FM', 'FK', 'FJ', 'FI', 'FV', 'OJ', 'JI', 'IP'],
-  timing: ['FJ_time_user_ms', 'FI_time_user_ms', 'FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FM_time_ms'],
+  timing: ['FJ_time_user_ms', 'FI_time_user_ms', 'FJ_time_d2zero_ms', 'FI_time_d2zero_ms',
+           'FJ_time_inflect_ms', 'FI_time_inflect_ms',
+           'FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FP_time_localmax_ms', 'FP_time_user_ms', 'FM_time_ms',
+           'FJ_d2_depth', 'FI_d2_depth', 'FP_d2_depth', 'FP_ref'],
   slopes: ['slope_OJ', 'slope_JI', 'slope_IP'],
   dip:    ['dip_IP_amplitude', 'dip_IP_time_ms', 'dip_IP_d1_min'],
   pqs:    ['FQ', 'FQ_time_ms', 'slope_PQ', 'PQ_amplitude', 'PQ_rel', 'FQ_ref',
@@ -3180,7 +3430,11 @@ const PARAM_LABELS = {
   SM:'Sm', N:'N (QA turnover)',
   F0:'F₀', FM:'FM', FK:'FK', FJ:'FJ', FI:'FI', FV:'FV', OJ:'Amplitude (O-J)', JI:'Amplitude (J-I)', IP:'Amplitude (I-P)',
   FJ_time_user_ms:'t(FJ) used ms', FI_time_user_ms:'t(FI) used ms',
-  FJ_time_deriv_ms:'t(FJ) detected ms', FI_time_deriv_ms:'t(FI) detected ms', FP_time_deriv_ms:'t(FP) detected ms', FM_time_ms:'t(FM) ms',
+  FJ_time_d2zero_ms:'t(FJ) D2 zero ms', FI_time_d2zero_ms:'t(FI) D2 zero ms',
+  FJ_time_inflect_ms:'t(FJ) inflection ms', FI_time_inflect_ms:'t(FI) inflection ms',
+  FJ_time_deriv_ms:'t(FJ) D2 trough ms', FI_time_deriv_ms:'t(FI) D2 trough ms',
+  FP_time_deriv_ms:'t(FP) D2 trough ms', FP_time_localmax_ms:'t(FP) local max ms', FP_time_user_ms:'t(FP) used ms', FM_time_ms:'t(FM) ms',
+  FJ_d2_depth:'D2 depth (FJ)', FI_d2_depth:'D2 depth (FI)', FP_d2_depth:'D2 depth (FP)', FP_ref:'P detection',
   deriv_timing_used:'Auto-detected used',
   slope_OJ:'Slope O-J', slope_JI:'Slope J-I', slope_IP:'Slope I-P',
   dip_IP_amplitude:'Dip I-P amplitude', dip_IP_time_ms:'Dip I-P time (ms)', dip_IP_d1_min:'Dip I-P D1 min',
@@ -3192,6 +3446,89 @@ const PARAM_LABELS = {
   gauss_center_1_ms:'G1 center ms', gauss_sigma_1:'G1 σ', gauss_amp_1:'G1 amplitude',
   gauss_center_2_ms:'G2 center ms', gauss_sigma_2:'G2 σ', gauss_amp_2:'G2 amplitude',
   gauss_center_3_ms:'G3 center ms', gauss_sigma_3:'G3 σ', gauss_amp_3:'G3 amplitude',
+};
+const PARAM_TOOLTIPS = {
+  FVFM: 'Maximum quantum yield of PSII photochemistry: (FM \u2212 F\u2080) / FM',
+  VJ: 'Relative variable fluorescence at J: (FJ \u2212 F\u2080) / (FM \u2212 F\u2080)',
+  VI: 'Relative variable fluorescence at I: (FI \u2212 F\u2080) / (FM \u2212 F\u2080)',
+  M0: 'Approximated initial slope of the O\u2013J fluorescence rise: 4 \u00D7 (FK \u2212 F50\u00B5s) / FV',
+  PSIE0: 'Probability that a trapped exciton moves an electron beyond QA: 1 \u2212 VJ',
+  PSIR0: 'Probability that a trapped exciton reduces PSI end acceptors: 1 \u2212 VI',
+  DELTAR0: 'Efficiency of electron transfer from QA\u207B to PSI acceptors: \u03C8R\u2080 / \u03C8E\u2080',
+  PHIE0: 'Quantum yield of electron transport beyond QA: Fv/Fm \u00D7 \u03C8E\u2080',
+  PHIR0: 'Quantum yield of electron transport to PSI acceptors: Fv/Fm \u00D7 \u03C8R\u2080',
+  ABSRC: 'Absorption per active reaction centre: TR\u2080/RC / (Fv/Fm)',
+  TR0RC: 'Trapping flux per active RC: M\u2080 / VJ',
+  ET0RC: 'Electron transport flux per RC beyond QA: TR\u2080/RC \u00D7 \u03C8E\u2080',
+  RE0RC: 'Electron flux per RC to PSI end acceptors: TR\u2080/RC \u00D7 \u03C8R\u2080',
+  DI0RC: 'Dissipation flux per RC: ABS/RC \u2212 TR\u2080/RC',
+  Area_OJ: 'Complementary area above the O\u2013J phase',
+  Area_JI: 'Complementary area above the J\u2013I phase',
+  Area_IP: 'Complementary area above the I\u2013P phase',
+  Area_OP: 'Total complementary area above the O\u2013P rise',
+  SM: 'Normalised total complementary area: Area(O\u2013P) / FV',
+  N: 'QA turnover number: Sm \u00D7 M\u2080 / VJ',
+  F0: 'Minimal fluorescence (all PSII RCs open)',
+  FM: 'Maximal fluorescence (all PSII RCs closed)',
+  FK: 'Fluorescence at the K step (~300 \u00B5s)',
+  FJ: 'Fluorescence at the J step (at user-specified FJ time)',
+  FI: 'Fluorescence at the I step (at user-specified FI time)',
+  FV: 'Variable fluorescence: FM \u2212 F\u2080',
+  OJ: 'Fluorescence amplitude of the O\u2013J phase: FJ \u2212 F\u2080',
+  JI: 'Fluorescence amplitude of the J\u2013I phase: FI \u2212 FJ',
+  IP: 'Fluorescence amplitude of the I\u2013P phase: FM \u2212 FI',
+  FJ_time_user_ms: 'FJ step time actually used for VJ and other calculations (ms)',
+  FI_time_user_ms: 'FI step time actually used for VI and other calculations (ms)',
+  FJ_time_d2zero_ms: 'FJ timing from D2 zero-crossing (neg\u2192pos transition = D1 local minimum)',
+  FI_time_d2zero_ms: 'FI timing from D2 zero-crossing (neg\u2192pos transition = D1 local minimum)',
+  FJ_time_inflect_ms: 'FJ timing from local polynomial inflection point (D2=0, D3>0)',
+  FI_time_inflect_ms: 'FI timing from local polynomial inflection point (D2=0, D3>0)',
+  FJ_time_deriv_ms: 'FJ timing from D2 trough (deepest deceleration in the O\u2013J window)',
+  FI_time_deriv_ms: 'FI timing from D2 trough (deepest deceleration in the J\u2013I window)',
+  FP_time_deriv_ms: 'FP timing from D2 trough (deceleration peak of the I\u2013P rise)',
+  FP_time_localmax_ms: 'Time of the fluorescence peak in the 100\u20131000 ms window',
+  FP_time_user_ms: 'FP timing used for downstream calculations (selected by P-point mode)',
+  FM_time_ms: 'Time of the global fluorescence maximum',
+  FP_ref: 'P-point detection method used',
+  FJ_d2_depth: 'D2 value at FJ trough; more negative = sharper step',
+  FI_d2_depth: 'D2 value at FI trough; more negative = sharper step',
+  FP_d2_depth: 'D2 value at FP trough; more negative = sharper deceleration',
+  deriv_timing_used: 'Whether auto-detected FJ/FI timing was used',
+  slope_OJ: 'Fluorescence rise rate in the O\u2013J phase',
+  slope_JI: 'Fluorescence rise rate in the J\u2013I phase',
+  slope_IP: 'Fluorescence rise rate in the I\u2013P phase',
+  dip_IP_amplitude: 'Depth of the I\u2013P dip below the FI\u2013FP straight line',
+  dip_IP_time_ms: 'Time of the I\u2013P dip (ms)',
+  dip_IP_d1_min: 'Minimum D1 value during the I\u2013P dip (negative = declining fluorescence)',
+  FQ: 'Fluorescence at the Q point (post-P transition)',
+  FQ_time_ms: 'Time of the Q point (ms)',
+  slope_PQ: 'Fluorescence decline rate P \u2192 Q',
+  PQ_amplitude: 'Fluorescence drop from P to Q',
+  PQ_rel: 'P\u2013Q drop relative to FV',
+  FQ_ref: 'Q-point detection method used',
+  F_earlyS: 'Fluorescence at the last measured time point (early S proxy)',
+  F_earlyS_time_ms: 'Time of the last measured point (ms)',
+  slope_P_earlyS: 'Fluorescence decline rate P \u2192 early S',
+  P_earlyS_amplitude: 'Fluorescence drop P \u2192 early S',
+  P_earlyS_rel: 'P\u2013early S drop relative to FV',
+  slope_Q_earlyS: 'Fluorescence change rate Q \u2192 early S',
+  Q_earlyS_amplitude: 'Fluorescence change Q \u2192 early S',
+  Q_earlyS_rel: 'Q\u2013early S change relative to FV',
+  A_OJ: 'Amplitude of the O\u2013J exponential component',
+  A_JI: 'Amplitude of the J\u2013I exponential component',
+  A_IP: 'Amplitude of the I\u2013P exponential component',
+  tau_OJ_ms: 'Time constant of the O\u2013J exponential (ms)',
+  tau_JI_ms: 'Time constant of the J\u2013I exponential (ms)',
+  tau_IP_ms: 'Time constant of the I\u2013P exponential (ms)',
+  gauss_center_1_ms: 'Centre of Gaussian component 1 (ms)',
+  gauss_sigma_1: 'Width (\u03C3) of Gaussian component 1',
+  gauss_amp_1: 'Amplitude of Gaussian component 1',
+  gauss_center_2_ms: 'Centre of Gaussian component 2 (ms)',
+  gauss_sigma_2: 'Width (\u03C3) of Gaussian component 2',
+  gauss_amp_2: 'Amplitude of Gaussian component 2',
+  gauss_center_3_ms: 'Centre of Gaussian component 3 (ms)',
+  gauss_sigma_3: 'Width (\u03C3) of Gaussian component 3',
+  gauss_amp_3: 'Amplitude of Gaussian component 3',
 };
 
 /** Return flat param-key list, excluding method-specific groups that don't apply. */
@@ -3595,8 +3932,12 @@ function calcJIP(kv) {
     Area_OJ: kv.Area_OJ, Area_JI: kv.Area_JI, Area_IP: kv.Area_IP, Area_OP: kv.Area_OP,
     SM, N,
     FJ_time_user_ms: kv.FJ_time_user_ms, FI_time_user_ms: kv.FI_time_user_ms,
+    FJ_time_inflect_ms: kv.FJ_time_inflect_ms, FI_time_inflect_ms: kv.FI_time_inflect_ms,
     FJ_time_deriv_ms: kv.FJ_time_deriv_ms, FI_time_deriv_ms: kv.FI_time_deriv_ms,
-    FP_time_deriv_ms: kv.FP_time_deriv_ms, FM_time_ms: kv.FM_time_ms,
+    FJ_time_d2zero_ms: kv.FJ_time_d2zero_ms, FI_time_d2zero_ms: kv.FI_time_d2zero_ms,
+    FP_time_deriv_ms: kv.FP_time_deriv_ms, FP_time_localmax_ms: kv.FP_time_localmax_ms,
+    FP_time_user_ms: kv.FP_time_user_ms, FM_time_ms: kv.FM_time_ms,
+    FJ_d2_depth: kv.FJ_d2_depth, FI_d2_depth: kv.FI_d2_depth, FP_d2_depth: kv.FP_d2_depth, FP_ref: kv.FP_ref,
     deriv_timing_used: kv.deriv_timing_used,
     // pass-through: slopes, dip, decomposition, gaussians
     slope_OJ: kv.slope_OJ, slope_JI: kv.slope_JI, slope_IP: kv.slope_IP,
@@ -3789,14 +4130,21 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('input[name="fjfi-timing"]').forEach(radio => {
     radio.addEventListener('change', () => {
       if (!ojipData || !ojipData.files) return;
-      const wantAuto = _wantDerivTiming();
+      const wantAuto = radio.value === 'auto';
+      // Sync dropdown
+      const dd = document.getElementById('fjfi-detect-mode');
+      if (dd) dd.value = wantAuto ? (dd.value === 'fixed' ? 'd2_zero' : dd.value) : 'fixed';
       for (const fname of ojipData.files) {
         const kv = ojipData.key_values[fname];
         if (!kv) continue;
-        if (wantAuto && kv.FJ_time_deriv_ms != null && kv.FI_time_deriv_ms != null) {
-          ojipData.key_values[fname] = recalcKeyValues(fname, kv.FJ_time_deriv_ms, kv.FI_time_deriv_ms);
+        const fjAuto = _fjAutoTime(kv);
+        const fiAuto = _fiAutoTime(kv);
+        if (wantAuto && fjAuto != null && fiAuto != null) {
+          ojipData.key_values[fname] = recalcKeyValues(fname, fjAuto, fiAuto);
         } else {
-          ojipData.key_values[fname] = recalcKeyValues(fname, 2.0, 30.0);
+          ojipData.key_values[fname] = recalcKeyValues(fname,
+            parseFloat(document.getElementById('FJ_time').value) || 2.0,
+            parseFloat(document.getElementById('FI_time').value) || 30.0);
         }
         paramData[fname] = calcJIP(ojipData.key_values[fname]);
       }
@@ -3806,12 +4154,58 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // FJ/FI detection dropdown (diagnostics tab) — immediately recalculates
+  // key_values when the selected detection method changes.
+  const fjfiDropdown = document.getElementById('fjfi-detect-mode');
+  if (fjfiDropdown) {
+    fjfiDropdown.addEventListener('change', () => {
+      const mode = fjfiDropdown.value;
+      const wantAuto = mode !== 'fixed';
+      // Sync radios
+      const fixedRadio = document.getElementById('fjfi-radio-fixed');
+      const autoRadio  = document.getElementById('fjfi-radio-auto');
+      const fixedLabel = document.getElementById('fjfi-radio-fixed-label');
+      const autoLabel  = document.getElementById('fjfi-radio-auto-label');
+      if (fixedRadio && autoRadio) {
+        fixedRadio.checked = !wantAuto;
+        autoRadio.checked  = wantAuto;
+      }
+      if (fixedLabel && autoLabel) {
+        fixedLabel.classList.toggle('active', !wantAuto);
+        autoLabel.classList.toggle('active',  wantAuto);
+      }
+      // Recalculate if data is loaded
+      if (ojipData && ojipData.files) {
+        for (const fname of ojipData.files) {
+          const kv = ojipData.key_values[fname];
+          if (!kv) continue;
+          const fjAuto = _fjAutoTime(kv);
+          const fiAuto = _fiAutoTime(kv);
+          if (wantAuto && fjAuto != null && fiAuto != null) {
+            ojipData.key_values[fname] = recalcKeyValues(fname, fjAuto, fiAuto);
+          } else {
+            ojipData.key_values[fname] = recalcKeyValues(fname,
+              parseFloat(document.getElementById('FJ_time').value) || 2.0,
+              parseFloat(document.getElementById('FI_time').value) || 30.0);
+          }
+          paramData[fname] = calcJIP(ojipData.key_values[fname]);
+        }
+      }
+      fjfiMode = wantAuto ? 'auto' : 'default';
+      _updateFJFIBtnLabels();
+      if (ojipData && ojipData.files) _refreshAfterTimingChange();
+    });
+  }
+
   // Sidebar FJ/FI timing radio — mirrors the diagnostics radio behaviour.
   // Before analysis: just updates fjfiMode for the next upload/batch.
   // After analysis: recalculates JIP params like the diagnostics radio.
   document.querySelectorAll('input[name="fjfi-timing-sidebar"]').forEach(radio => {
     radio.addEventListener('change', () => {
-      const wantAuto = _wantDerivTiming();
+      const wantAuto = radio.value === 'auto';
+      // Sync dropdown
+      const dd = document.getElementById('fjfi-detect-mode');
+      if (dd) dd.value = wantAuto ? (dd.value === 'fixed' ? 'd2_zero' : dd.value) : 'fixed';
       // Sync diagnostics radio
       const fixedRadio = document.getElementById('fjfi-radio-fixed');
       const autoRadio  = document.getElementById('fjfi-radio-auto');
@@ -3830,8 +4224,10 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const fname of ojipData.files) {
           const kv = ojipData.key_values[fname];
           if (!kv) continue;
-          if (wantAuto && kv.FJ_time_deriv_ms != null && kv.FI_time_deriv_ms != null) {
-            ojipData.key_values[fname] = recalcKeyValues(fname, kv.FJ_time_deriv_ms, kv.FI_time_deriv_ms);
+          const fjAuto = _fjAutoTime(kv);
+          const fiAuto = _fiAutoTime(kv);
+          if (wantAuto && fjAuto != null && fiAuto != null) {
+            ojipData.key_values[fname] = recalcKeyValues(fname, fjAuto, fiAuto);
           } else {
             ojipData.key_values[fname] = recalcKeyValues(fname,
               parseFloat(document.getElementById('FJ_time').value) || 2.0,
@@ -4142,6 +4538,63 @@ async function uploadAndAnalyze() {
     }
   }
 
+  // ── Handy PEA .HAN binary file detection ──
+  if (fluorometer === 'HandyPEA') {
+    const hanFiles = [...files].filter(f => f.name.toLowerCase().endsWith('.han'));
+    if (!hanFiles.length) {
+      const errDiv = document.getElementById('upload-error');
+      errDiv.innerHTML = '<strong>No .HAN file found.</strong> Please select a Handy PEA .HAN file.';
+      errDiv.style.display = '';
+      return;
+    }
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      for (const hf of hanFiles) fd.append('han_file', hf);
+      const resp = await fetch('/api/ojip_parse_han', { method: 'POST', body: fd });
+      const parsed = await resp.json();
+      if (parsed.status !== 'success') throw new Error(parsed.message || 'Parse failed');
+      if (!parsed.curves || !parsed.curves.length) throw new Error('No curves found in file.');
+      // Build mcDataset in the shape the MC module expects
+      mcDataset = {
+        fluorometer: 'HandyPEA',
+        filename: hanFiles.map(f => f.name).join(', '),
+        stem: hanFiles[0].name.replace(/\.[^.]+$/, ''),
+        timeUs: parsed.time_native,
+        curves: parsed.curves.map((c, i) => ({
+          index:     i,
+          name:      c.name,
+          curveName: c.name,
+          timestamp: c.meta.timestamp || '',
+          protocol:  `rec ${c.meta.rec_no}, ${c.meta.light} \u00B5mol`,
+          values:    c.values,
+          bckg:      null,
+          foFooter:  null,
+          meta:      Object.assign({}, c.meta, { duplicate_of: c.duplicate_of ?? null }),
+        })),
+        footerData: {},
+      };
+      mcIsActive = true;
+      setLoading(false);
+      // Show warnings if any
+      if (parsed.warnings && parsed.warnings.length) {
+        const errDiv = document.getElementById('upload-error');
+        errDiv.innerHTML = '<i class="fa fa-exclamation-triangle mr-1"></i>' +
+          parsed.warnings.map(w => w.replace(/</g, '&lt;')).join('<br>');
+        errDiv.className = 'alert alert-warning mt-2 mb-0 py-1 px-2 w-100';
+        errDiv.style.display = '';
+      }
+      MC.showSelectionModal(mcDataset);
+      return;
+    } catch(e) {
+      setLoading(false);
+      const errDiv = document.getElementById('upload-error');
+      errDiv.innerHTML = `<strong>Handy PEA parse error:</strong> ${e.message}`;
+      errDiv.style.display = '';
+      return;
+    }
+  }
+
   // ── Multi-curve detection: check .txt files for FluorPen multi-curve format ──
   for (const f of files) {
     if (f.name.toLowerCase().endsWith('.txt')) {
@@ -4179,6 +4632,9 @@ async function uploadAndAnalyze() {
   fd.append('f0_source',       document.getElementById('f0-source-sel')?.value || 'instrument');
   fd.append('knot_placement',  document.getElementById('knot-placement-sel')?.value || 'hybrid');
   fd.append('use_deriv_timing', _wantDerivTiming() ? 'true' : 'false');
+  fd.append('fjfi_detect_mode', document.getElementById('fjfi-detect-mode')?.value || 'd2_zero');
+  fd.append('s_point_mode', document.getElementById('s-point-mode')?.value || 'inflection');
+  fd.append('p_point_mode', document.getElementById('p-point-mode')?.value || 'd2_trough');
   const _f0Val = parseFloat(document.getElementById('f0-time-input')?.value);
   if (_f0Val > 0) fd.append('f0_time_ms', _f0Val.toString());
   if (document.getElementById('reduce_size').checked) fd.append('checkbox_reduce_file_size', 'checked');
@@ -4391,6 +4847,10 @@ async function mcStartAnalysis() {
     if (refFMCard)   refFMCard.style.display   = isOJIPImg ? '' : 'none';
     if (isOJIPImg) { MC.initRefFMCard(); MC.refFMUpdateUI(); }
 
+    // Show/hide OJIP Curves normalization dropdown (non-OJIPImaging only)
+    const aggNormEl = document.getElementById('mc-agg-norm');
+    if (aggNormEl) aggNormEl.style.display = isOJIPImg ? 'none' : '';
+
     // Render time-series overview
     MC.renderTimeSeries();
     MC.renderAggregateCurves();
@@ -4524,10 +4984,52 @@ function renderCurvesChart(norm) {
     });
   }
 
+  // FJ detected markers (hollow ▲) — shown only when detected ≠ used timing
+  const fjDetData = [], fjDetBg = [], fjDetBd = [];
+  files.forEach((fname, i) => {
+    const kv  = ojipData.key_values[fname];
+    const fjUsed = kv.FJ_time_user_ms;
+    const fjDet  = _fjAutoTime(kv);
+    if (fjDet != null && fjUsed != null && Math.abs(fjDet - fjUsed) > 0.01) {
+      fjDetData.push({ x: fjDet, y: interpAt(t, ojipData.curves[fname][norm], fjDet) });
+      fjDetBg.push('transparent'); fjDetBd.push(sampleColor(i, n));
+    }
+  });
+  if (fjDetData.length) {
+    datasets.push({
+      label: 'FJ det.', showLine: false, data: fjDetData,
+      pointRadius: 7, pointStyle: 'triangle',
+      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent',
+    });
+  }
+
+  // FI detected markers (hollow ◆) — shown only when detected ≠ used timing
+  const fiDetData = [], fiDetBg = [], fiDetBd = [];
+  files.forEach((fname, i) => {
+    const kv  = ojipData.key_values[fname];
+    const fiUsed = kv.FI_time_user_ms;
+    const fiDet  = _fiAutoTime(kv);
+    if (fiDet != null && fiUsed != null && Math.abs(fiDet - fiUsed) > 0.01) {
+      fiDetData.push({ x: fiDet, y: interpAt(t, ojipData.curves[fname][norm], fiDet) });
+      fiDetBg.push('transparent'); fiDetBd.push(sampleColor(i, n));
+    }
+  });
+  if (fiDetData.length) {
+    datasets.push({
+      label: 'FI det.', showLine: false, data: fiDetData,
+      pointRadius: 7, pointStyle: 'rectRot',
+      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent',
+    });
+  }
+
   // FP markers (■ squares) — only for files where FP timing is available
   const fpData = [], fpBg = [], fpBd = [];
   files.forEach((fname, i) => {
-    const fpT = ojipData.key_values[fname].FP_time_deriv_ms;
+    const fpT = ojipData.key_values[fname].FP_time_user_ms ?? ojipData.key_values[fname].FP_time_deriv_ms;
     if (fpT != null) {
       fpData.push({ x: fpT, y: interpAt(t, ojipData.curves[fname][norm], fpT) });
       fpBg.push(sampleColor(i, n)); fpBd.push(sampleColor(i, n));
@@ -4599,7 +5101,7 @@ function renderCurvesChart(norm) {
   opts.plugins.legend.display = false;
   makeChart('curves-chart', { type: 'scatter', data: { datasets }, options: opts });
   buildScrollLegend('curves-chart', ds => ds.label && ds.label !== '' &&
-    !['FJ','FI','FP','FQ','eS'].includes(ds.label));
+    !['FJ','FI','FP','FQ','eS','FJ det.','FI det.'].includes(ds.label));
 }
 
 // ── remove one file from all analysis data ────────────────────────────────
@@ -4650,9 +5152,9 @@ function buildFJTable() {
       <td><input type="number" class="form-control form-control-sm fi-edit" data-fname="${fname}"
            value="${kv.FI_time_user_ms.toFixed(2)}" step="0.1" min="1" max="500"
            style="width:80px"></td>
-      <td class="fj-auto">${fmt(kv.FJ_time_deriv_ms)}</td>
-      <td class="fi-auto">${fmt(kv.FI_time_deriv_ms)}</td>
-      <td class="fp-auto">${fmt(kv.FP_time_deriv_ms)}</td>
+      <td class="fj-auto">${fmt(_fjAutoTime(kv))}</td>
+      <td class="fi-auto">${fmt(_fiAutoTime(kv))}</td>
+      <td class="fp-auto">${fmt(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms)}</td>
       <td>${fmt(kv.F0)}</td>
       <td>${fmt(kv.FM)}</td>
       <td>${fmt(kv.FK)}</td>
@@ -4679,11 +5181,14 @@ function _onFJTableChange(e) {
   const norm = document.querySelector('#norm-btns .btn-primary')?.dataset?.norm || 'raw';
   renderCurvesChart(norm);
   // Update params only if that tab is currently visible
+  const tab = activeTabId();
   const activeGroup = document.querySelector('#param-group-btns .btn-primary')?.dataset?.pgroup || 'yields';
-  if (activeTabId() === 'tab-params') { renderParamsChart(activeGroup); renderParamsTable(activeGroup); }
+  if (tab === 'tab-params') { renderParamsChart(activeGroup); renderParamsTable(activeGroup); }
   else markTabsDirty('tab-params');
+  if (tab === 'tab-diag') renderDiagnostics();
+  else markTabsDirty('tab-diag');
   if (hasGroups()) {
-    if (activeTabId() === 'tab-groups') _renderAllOjipGroupCharts();
+    if (tab === 'tab-groups') _renderAllOjipGroupCharts();
     else markTabsDirty('tab-groups');
   }
 }
@@ -5027,9 +5532,12 @@ function renderDiagRecon() {
   const tLog  = ojipData.time_log_ms;
   const n     = files.length;
   const datasets = [];
+  const fjDetPts = [], fjDetBg = [], fjDetBd = [];
+  const fiDetPts = [], fiDetBg = [], fiDetBd = [];
   files.forEach((fname, i) => {
     const c  = sampleColor(i, n);
     const kv = ojipData.key_values[fname];
+    const reconArr = ojipData.curves[fname].reconstructed;
     const dnData = ojipData.curves[fname].double_norm
         .map((y, j) => ({ x: tRaw[j], y }))
         .filter(pt => pt.x >= tMin && pt.x <= tMax);
@@ -5038,7 +5546,7 @@ function renderDiagRecon() {
     // reconstructed curve (dashed)
     datasets.push({ label: '', showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, borderDash: [4, 3], backgroundColor: 'transparent',
-      data: ojipData.curves[fname].reconstructed
+      data: reconArr
         .map((y, j) => ({ x: tLog[j], y }))
         .filter(pt => pt.x >= tMin && pt.x <= tMax) });
     // FJ (▲), FI (◆) and FP (■) on the reconstructed curve — only if within visible range
@@ -5048,21 +5556,48 @@ function renderDiagRecon() {
       pts.push({ x: t, y: interpAt(tLog, arr, t) });
       radii.push(6); styles.push(style); bg.push(c); bd.push(c);
     };
-    addMk(kv.FJ_time_deriv_ms, ojipData.curves[fname].reconstructed, 'triangle');
-    addMk(kv.FI_time_deriv_ms, ojipData.curves[fname].reconstructed, 'rectRot');
-    if (kv.FP_time_deriv_ms != null)
-      addMk(kv.FP_time_deriv_ms, ojipData.curves[fname].reconstructed, 'rect');
+    addMk(kv.FJ_time_user_ms ?? _fjAutoTime(kv), reconArr, 'triangle');
+    addMk(kv.FI_time_user_ms ?? _fiAutoTime(kv), reconArr, 'rectRot');
+    if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null)
+      addMk(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms, reconArr, 'rect');
     if (kv.FQ_time_ms != null && kv.FQ_ref)
-      addMk(kv.FQ_time_ms, ojipData.curves[fname].reconstructed, 'circle');
+      addMk(kv.FQ_time_ms, reconArr, 'circle');
     if (kv.F_earlyS_time_ms != null)
-      addMk(kv.F_earlyS_time_ms, ojipData.curves[fname].reconstructed, 'star');
+      addMk(kv.F_earlyS_time_ms, reconArr, 'star');
     if (pts.length > 0) {
       datasets.push({ label: '', showLine: false, data: pts,
         pointRadius: radii, pointStyle: styles,
         pointBackgroundColor: bg, pointBorderColor: bd,
         borderColor: 'transparent', backgroundColor: 'transparent' });
     }
+    // hollow markers for detected FJ/FI when they differ from used timing
+    const fjU = kv.FJ_time_user_ms, fjD = _fjAutoTime(kv);
+    if (fjD != null && fjU != null && Math.abs(fjD - fjU) > 0.01
+        && fjD >= tMin && fjD <= tMax) {
+      fjDetPts.push({ x: fjD, y: interpAt(tLog, reconArr, fjD) });
+      fjDetBg.push('transparent'); fjDetBd.push(c);
+    }
+    const fiU = kv.FI_time_user_ms, fiD = _fiAutoTime(kv);
+    if (fiD != null && fiU != null && Math.abs(fiD - fiU) > 0.01
+        && fiD >= tMin && fiD <= tMax) {
+      fiDetPts.push({ x: fiD, y: interpAt(tLog, reconArr, fiD) });
+      fiDetBg.push('transparent'); fiDetBd.push(c);
+    }
   });
+  if (fjDetPts.length) {
+    datasets.push({ label: 'FJ det.', showLine: false, data: fjDetPts,
+      pointRadius: 7, pointStyle: 'triangle',
+      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
+  if (fiDetPts.length) {
+    datasets.push({ label: 'FI det.', showLine: false, data: fiDetPts,
+      pointRadius: 7, pointStyle: 'rectRot',
+      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
   const reconOpts = logScatterOpts('Time (ms)', 'Double normalised');
   reconOpts.plugins.legend.display = false;
   makeChart('diag-recon-chart', { type: 'scatter', data: { datasets }, options: reconOpts });
@@ -5092,6 +5627,8 @@ function renderDiagD2() {
   const t     = ojipData.time_log_ms;
   const n     = files.length;
   const datasets = [];
+  const fjDetPts = [], fjDetBg = [], fjDetBd = [];
+  const fiDetPts = [], fiDetBg = [], fiDetBd = [];
   files.forEach((fname, i) => {
     const kv = ojipData.key_values[fname];
     const c  = sampleColor(i, n);
@@ -5107,9 +5644,9 @@ function renderDiagD2() {
       pts2.push({ x: tv, y: interpAt(t, d2arr, tv) });
       r2.push(6); st2.push(style); bg2.push(c); bd2.push(c);
     };
-    addMk2(kv.FJ_time_deriv_ms, 'triangle');
-    addMk2(kv.FI_time_deriv_ms, 'rectRot');
-    if (kv.FP_time_deriv_ms != null) addMk2(kv.FP_time_deriv_ms, 'rect');
+    addMk2(kv.FJ_time_user_ms ?? _fjAutoTime(kv), 'triangle');
+    addMk2(kv.FI_time_user_ms ?? _fiAutoTime(kv), 'rectRot');
+    if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null) addMk2(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms, 'rect');
     if (kv.FQ_time_ms != null && kv.FQ_ref) addMk2(kv.FQ_time_ms, 'circle');
     if (kv.F_earlyS_time_ms != null) addMk2(kv.F_earlyS_time_ms, 'star');
     if (pts2.length > 0) {
@@ -5118,7 +5655,33 @@ function renderDiagD2() {
         pointBackgroundColor: bg2, pointBorderColor: bd2,
         borderColor: 'transparent', backgroundColor: 'transparent' });
     }
+    const fjU = kv.FJ_time_user_ms, fjD = _fjAutoTime(kv);
+    if (fjD != null && fjU != null && Math.abs(fjD - fjU) > 0.01
+        && fjD >= tMin && fjD <= tMax) {
+      fjDetPts.push({ x: fjD, y: interpAt(t, d2arr, fjD) });
+      fjDetBg.push('transparent'); fjDetBd.push(c);
+    }
+    const fiU = kv.FI_time_user_ms, fiD = _fiAutoTime(kv);
+    if (fiD != null && fiU != null && Math.abs(fiD - fiU) > 0.01
+        && fiD >= tMin && fiD <= tMax) {
+      fiDetPts.push({ x: fiD, y: interpAt(t, d2arr, fiD) });
+      fiDetBg.push('transparent'); fiDetBd.push(c);
+    }
   });
+  if (fjDetPts.length) {
+    datasets.push({ label: 'FJ det.', showLine: false, data: fjDetPts,
+      pointRadius: 7, pointStyle: 'triangle',
+      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
+  if (fiDetPts.length) {
+    datasets.push({ label: 'FI det.', showLine: false, data: fiDetPts,
+      pointRadius: 7, pointStyle: 'rectRot',
+      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
   const d2Opts = logScatterOpts('Time (ms)', '2nd derivative');
   d2Opts.plugins.legend.display = false;
   makeChart('diag-d2-chart', { type: 'scatter', data: { datasets }, options: d2Opts });
@@ -5131,6 +5694,8 @@ function renderDiagD3() {
   const t     = ojipData.time_log_ms;
   const n     = files.length;
   const datasets = [];
+  const fjDetPts = [], fjDetBg = [], fjDetBd = [];
+  const fiDetPts = [], fiDetBg = [], fiDetBd = [];
   files.forEach((fname, i) => {
     const kv = ojipData.key_values[fname];
     const c  = sampleColor(i, n);
@@ -5147,9 +5712,9 @@ function renderDiagD3() {
       pts3.push({ x: tv, y: interpAt(t, d3arr, tv) });
       r3.push(6); st3.push(style); bg3.push(c); bd3.push(c);
     };
-    addMk3(kv.FJ_time_deriv_ms, 'triangle');
-    addMk3(kv.FI_time_deriv_ms, 'rectRot');
-    if (kv.FP_time_deriv_ms != null) addMk3(kv.FP_time_deriv_ms, 'rect');
+    addMk3(kv.FJ_time_user_ms ?? _fjAutoTime(kv), 'triangle');
+    addMk3(kv.FI_time_user_ms ?? _fiAutoTime(kv), 'rectRot');
+    if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null) addMk3(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms, 'rect');
     if (kv.FQ_time_ms != null && kv.FQ_ref) addMk3(kv.FQ_time_ms, 'circle');
     if (kv.F_earlyS_time_ms != null) addMk3(kv.F_earlyS_time_ms, 'star');
     if (pts3.length > 0) {
@@ -5158,7 +5723,33 @@ function renderDiagD3() {
         pointBackgroundColor: bg3, pointBorderColor: bd3,
         borderColor: 'transparent', backgroundColor: 'transparent' });
     }
+    const fjU = kv.FJ_time_user_ms, fjD = _fjAutoTime(kv);
+    if (fjD != null && fjU != null && Math.abs(fjD - fjU) > 0.01
+        && fjD >= tMin && fjD <= tMax) {
+      fjDetPts.push({ x: fjD, y: interpAt(t, d3arr, fjD) });
+      fjDetBg.push('transparent'); fjDetBd.push(c);
+    }
+    const fiU = kv.FI_time_user_ms, fiD = _fiAutoTime(kv);
+    if (fiD != null && fiU != null && Math.abs(fiD - fiU) > 0.01
+        && fiD >= tMin && fiD <= tMax) {
+      fiDetPts.push({ x: fiD, y: interpAt(t, d3arr, fiD) });
+      fiDetBg.push('transparent'); fiDetBd.push(c);
+    }
   });
+  if (fjDetPts.length) {
+    datasets.push({ label: 'FJ det.', showLine: false, data: fjDetPts,
+      pointRadius: 7, pointStyle: 'triangle',
+      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
+  if (fiDetPts.length) {
+    datasets.push({ label: 'FI det.', showLine: false, data: fiDetPts,
+      pointRadius: 7, pointStyle: 'rectRot',
+      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
   const d3Opts = logScatterOpts('Time (ms)', '3rd derivative');
   d3Opts.plugins.legend.display = false;
   makeChart('diag-d3-chart', { type: 'scatter', data: { datasets }, options: d3Opts });
@@ -5171,6 +5762,8 @@ function renderDiagD1() {
   const t     = ojipData.time_log_ms;
   const n     = files.length;
   const datasets = [];
+  const fjDetPts = [], fjDetBg = [], fjDetBd = [];
+  const fiDetPts = [], fiDetBg = [], fiDetBd = [];
   files.forEach((fname, i) => {
     const kv = ojipData.key_values[fname];
     const c  = sampleColor(i, n);
@@ -5186,9 +5779,10 @@ function renderDiagD1() {
       pts.push({ x: tv, y: interpAt(t, d1arr, tv) });
       r.push(6); st.push(style); bg.push(c); bd.push(c);
     };
-    addMk(kv.FJ_time_deriv_ms, 'triangle');
-    addMk(kv.FI_time_deriv_ms, 'rectRot');
-    if (kv.FP_time_deriv_ms != null) addMk(kv.FP_time_deriv_ms, 'rect');
+    addMk(kv.FJ_time_user_ms ?? _fjAutoTime(kv), 'triangle');
+    addMk(kv.FI_time_user_ms ?? _fiAutoTime(kv), 'rectRot');
+    if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null)
+      addMk(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms, 'rect');
     if (kv.FQ_time_ms != null && kv.FQ_ref) addMk(kv.FQ_time_ms, 'circle');
     if (kv.F_earlyS_time_ms != null) addMk(kv.F_earlyS_time_ms, 'star');
     if (pts.length > 0) {
@@ -5197,7 +5791,33 @@ function renderDiagD1() {
         pointBackgroundColor: bg, pointBorderColor: bd,
         borderColor: 'transparent', backgroundColor: 'transparent' });
     }
+    const fjU = kv.FJ_time_user_ms, fjD = _fjAutoTime(kv);
+    if (fjD != null && fjU != null && Math.abs(fjD - fjU) > 0.01
+        && fjD >= tMin && fjD <= tMax) {
+      fjDetPts.push({ x: fjD, y: interpAt(t, d1arr, fjD) });
+      fjDetBg.push('transparent'); fjDetBd.push(c);
+    }
+    const fiU = kv.FI_time_user_ms, fiD = _fiAutoTime(kv);
+    if (fiD != null && fiU != null && Math.abs(fiD - fiU) > 0.01
+        && fiD >= tMin && fiD <= tMax) {
+      fiDetPts.push({ x: fiD, y: interpAt(t, d1arr, fiD) });
+      fiDetBg.push('transparent'); fiDetBd.push(c);
+    }
   });
+  if (fjDetPts.length) {
+    datasets.push({ label: 'FJ det.', showLine: false, data: fjDetPts,
+      pointRadius: 7, pointStyle: 'triangle',
+      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
+  if (fiDetPts.length) {
+    datasets.push({ label: 'FI det.', showLine: false, data: fiDetPts,
+      pointRadius: 7, pointStyle: 'rectRot',
+      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
   const d1Opts = logScatterOpts('Time (ms)', '1st derivative');
   d1Opts.plugins.legend.display = false;
   makeChart('diag-d1-chart', { type: 'scatter', data: { datasets }, options: d1Opts });
@@ -5354,8 +5974,8 @@ function toggleFJFI() {
     let applied = 0;
     for (const fname of ojipData.files) {
       const kv   = ojipData.key_values[fname];
-      const fjMs = kv.FJ_time_deriv_ms;
-      const fiMs = kv.FI_time_deriv_ms;
+      const fjMs = _fjAutoTime(kv);
+      const fiMs = _fiAutoTime(kv);
       if (fjMs != null && fiMs != null && fjMs < fiMs) {
         const newKv = recalcKeyValues(fname, fjMs, fiMs);
         ojipData.key_values[fname] = newKv;
@@ -5387,6 +6007,9 @@ function toggleFJFI() {
     fixedLabel.classList.toggle('active', fjfiMode === 'default');
     autoLabel.classList.toggle('active',  fjfiMode === 'auto');
   }
+  // Sync dropdown
+  const dd = document.getElementById('fjfi-detect-mode');
+  if (dd) dd.value = fjfiMode === 'auto' ? (dd.value === 'fixed' ? 'd2_zero' : dd.value) : 'fixed';
   _updateFJFIBtnLabels();
   _refreshAfterTimingChange();
 }
@@ -5440,6 +6063,8 @@ function _refreshAfterTimingChange() {
   const tab = activeTabId();
   if (tab === 'tab-params') { renderParamsChart(pgroup); renderParamsTable(pgroup); }
   else markTabsDirty('tab-params');
+  if (tab === 'tab-diag') renderDiagnostics();
+  else markTabsDirty('tab-diag');
   if (hasGroups()) {
     if (tab === 'tab-groups') _renderAllOjipGroupCharts();
     else markTabsDirty('tab-groups');
@@ -5588,6 +6213,7 @@ async function mcRefitBatch() {
     f0TimMs: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
     useDerivTiming: _wantDerivTiming(),
     sPointMode: document.getElementById('s-point-mode')?.value || 'inflection',
+    pPointMode: document.getElementById('p-point-mode')?.value || 'd2_trough',
   };
 
   // OJIP-Imaging Excel: re-apply the background/F0 mode chosen in the Diagnostics
@@ -5706,6 +6332,8 @@ async function refitSplines() {
         double_norm,
         raw_fm_f0,
         s_point_mode: document.getElementById('s-point-mode')?.value || 'inflection',
+        p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_trough',
+        fjfi_detect_mode: document.getElementById('fjfi-detect-mode')?.value || 'd2_zero',
       }),
     });
     const data = await resp.json();
@@ -5727,8 +6355,10 @@ async function refitSplines() {
     for (const fname of ojipData.files) {
       const kv = ojipData.key_values[fname];
       if (!kv) continue;  // guard: no key_values for this curve
-      if (wantAuto && kv.FJ_time_deriv_ms != null && kv.FI_time_deriv_ms != null) {
-        const updated = recalcKeyValues(fname, kv.FJ_time_deriv_ms, kv.FI_time_deriv_ms);
+      const fjAuto = _fjAutoTime(kv);
+      const fiAuto = _fiAutoTime(kv);
+      if (wantAuto && fjAuto != null && fiAuto != null) {
+        const updated = recalcKeyValues(fname, fjAuto, fiAuto);
         if (updated) ojipData.key_values[fname] = updated;
       } else {
         const fjMs = parseFloat(document.getElementById('FJ_time').value) || 2.0;
@@ -5749,8 +6379,10 @@ async function refitSplines() {
         const raw = ojipData.curves[fname].raw;
         const kv  = ojipData.key_values[fname];
         if (!kv) continue;  // guard: no key_values for this curve
-        if (kv.FJ_time_deriv_ms != null) kv.FJ = interpAt(times, raw, kv.FJ_time_deriv_ms);
-        if (kv.FI_time_deriv_ms != null) kv.FI = interpAt(times, raw, kv.FI_time_deriv_ms);
+        const fjT = _fjAutoTime(kv);
+        const fiT = _fiAutoTime(kv);
+        if (fjT != null) kv.FJ = interpAt(times, raw, fjT);
+        if (fiT != null) kv.FI = interpAt(times, raw, fiT);
         kv.FK  = interpAt(times, raw, 0.3);
         kv.F50 = interpAt(times, raw, 0.05);
       }
@@ -6150,6 +6782,19 @@ function generateOJIPMethodsText() {
         fiTime + '\u202fms, respectively.'
     );
 
+    // FJ/FI detection method
+    var fjfiDetect = document.getElementById('fjfi-detect-mode')?.value || 'd2_zero';
+    var FJFI_M_LABELS = {
+      d2_zero: 'The J and I inflection points were identified from the second derivative (D2) zero-crossings ' +
+        '(negative\u2192positive transitions) of the fitted spline, corresponding to local minima of the first derivative (D1).',
+      poly_inflect: 'The J and I inflection points were identified from local polynomial inflection points ' +
+        '(D2=0, D3>0) fitted within the O\u2013J and J\u2013I search windows.',
+      d2_trough: 'The J and I inflection points were identified from the D2 troughs (deepest second-derivative minima) ' +
+        'within the O\u2013J and J\u2013I search windows.',
+      fixed: 'Fixed J (' + fjTime + '\u202fms) and I (' + fiTime + '\u202fms) timings were used.',
+    };
+    if (FJFI_M_LABELS[fjfiDetect]) lines.push(FJFI_M_LABELS[fjfiDetect]);
+
     lines.push(
         'JIP-test parameters were calculated according to the methodology of Strasser et al. (2000) and ' +
         'Tsimilli-Michael (2020): maximum quantum yield of PSII photochemistry ' +
@@ -6177,6 +6822,10 @@ function generateOJIPMethodsText() {
             qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the first ' +
                 'local minimum (D1 zero-crossing) in the post-P decline of the spline reconstruction; when no minimum ' +
                 'was detected, the D2 trough (second-derivative local minimum) was used as a fallback.';
+        } else if (sMode === 'local_min') {
+            qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the absolute ' +
+                'fluorescence minimum in the post-P window of the spline reconstruction; when the minimum coincided ' +
+                'with the recording endpoint, the D2 trough (second-derivative local minimum) was used as a fallback.';
         } else {
             qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the D2 trough ' +
                 '(second-derivative local minimum) in the post-P decline of the spline reconstruction.';
@@ -6420,9 +7069,9 @@ function _drawLinearYAxis(ctx, yMin, yMax, toY) {
   }
 }
 
-function _drawMarker(ctx, px, py, shape, color, size) {
+function _drawMarker(ctx, px, py, shape, color, size, hollow) {
   const h = size / 2;
-  ctx.fillStyle = color; ctx.beginPath();
+  ctx.beginPath();
   if (shape === 'triangle')    { ctx.moveTo(px, py - h); ctx.lineTo(px - h, py + h); ctx.lineTo(px + h, py + h); ctx.closePath(); }
   else if (shape === 'diamond') { ctx.moveTo(px, py - h); ctx.lineTo(px + h, py); ctx.lineTo(px, py + h); ctx.lineTo(px - h, py); ctx.closePath(); }
   else if (shape === 'circle') { ctx.arc(px, py, h, 0, 2 * Math.PI); }
@@ -6437,7 +7086,11 @@ function _drawMarker(ctx, px, py, shape, color, size) {
     ctx.closePath();
   }
   else { ctx.rect(px - h, py - h, size, size); }
-  ctx.fill();
+  if (hollow) {
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+  } else {
+    ctx.fillStyle = color; ctx.fill();
+  }
 }
 
 function _drawLegend(ctx, markerEntries, overlayLabel, mainLabel, position) {
@@ -6467,7 +7120,7 @@ function _drawLegend(ctx, markerEntries, overlayLabel, mainLabel, position) {
       ctx.beginPath(); ctx.arc(ex + 7, ey, 2, 0, 2 * Math.PI); ctx.fill();
       ctx.globalAlpha = 1;
     } else if (e.type === 'marker') {
-      _drawMarker(ctx, ex + 7, ey, e.shape, e.color, 7);
+      _drawMarker(ctx, ex + 7, ey, e.shape, e.color, 7, e.hollow);
     }
     ctx.fillStyle = '#333'; ctx.fillText(e.label, ex + 18, ey + 3);
   }
@@ -6567,7 +7220,10 @@ function _renderOjipPlot(ctx, cfg) {
     const interpY = cfg.interpolateMarkers && cfg.overlay
       ? cfg.overlay.yData.filter((_, i) => cfg.overlay.timeMs[i] > 0) : yArr;
     for (const m of markers) {
-      const tv = cfg.kv[m.phase + '_time_deriv_ms'];
+      // Use user/fixed timing for FJ/FI, fall back to detected
+      const tvUser  = cfg.kv[m.phase + '_time_user_ms'];
+      const tvDeriv = cfg.kv[m.phase + '_time_deriv_ms'];
+      const tv = (m.phase === 'FP') ? tvDeriv : (tvUser ?? tvDeriv);
       if (tv == null || tv <= 0) continue;
       let fv;
       if (cfg.interpolateMarkers) {
@@ -6578,6 +7234,16 @@ function _renderOjipPlot(ctx, cfg) {
       if (fv == null || !isFinite(fv)) continue;
       _drawMarker(ctx, toX(tv), toY(fv), m.shape, m.color, 8);
       legendMarkers.push({ shape: m.shape, color: m.color, label: m.label });
+      // Hollow marker for detected timing when it differs from used (FJ/FI only)
+      if (m.phase !== 'FP' && tvDeriv != null && tvUser != null
+          && Math.abs(tvDeriv - tvUser) > 0.01 && tvDeriv > 0) {
+        const detFv = cfg.interpolateMarkers
+          ? _linearInterp(interpT, interpY, tvDeriv) : cfg.kv[m.phase];
+        if (detFv != null && isFinite(detFv)) {
+          _drawMarker(ctx, toX(tvDeriv), toY(detFv), m.shape, m.color, 9, true);
+          legendMarkers.push({ shape: m.shape, color: m.color, label: m.label + ' det.', hollow: true });
+        }
+      }
     }
     // Q marker (● circle, red) — only when Q was detected
     const fqT = cfg.kv.FQ_time_ms;
@@ -6736,6 +7402,8 @@ function _collectMethodInfo() {
     deriv_timing_count: paramMatrix
       ? paramMatrix.filter(r => r && !r.error && r.deriv_timing_used).length : 0,
     s_point_mode:     document.getElementById('s-point-mode')?.value || 'inflection',
+    p_point_mode:     document.getElementById('p-point-mode')?.value || 'd2_trough',
+    fjfi_detect_mode: document.getElementById('fjfi-detect-mode')?.value || 'd2_zero',
   };
 }
 
@@ -6760,17 +7428,26 @@ function _formatMethodInfoText(mi) {
     '\u2014 Curve fitting \u2014',
     'Fitting method:         ' + (METHOD_NAMES[fm] || fm),
   ];
-  lines.push(SPLINE_METHODS.has(fm)
-    ? 'FJ / FI detection:      D2 troughs (2nd derivative minima)'
-    : 'FJ / FI detection:      Method-specific (reconstruction via log-time spline)');
+  const FJFI_MODE_LABELS = {
+    d2_zero: 'D2 zero-crossing (D1 minimum)',
+    poly_inflect: 'Polynomial inflection (D2=0, D3>0)',
+    d2_trough: 'D2 trough (deepest D2 minimum)',
+    fixed: 'Fixed timing',
+  };
+  const fjfiDetMode = mi.fjfi_detect_mode || 'd2_zero';
+  if (SPLINE_METHODS.has(fm)) {
+    lines.push('FJ / FI detection:      ' + (FJFI_MODE_LABELS[fjfiDetMode] || fjfiDetMode));
+  } else {
+    lines.push('FJ / FI detection:      Method-specific (reconstruction via log-time spline)');
+  }
   lines.push(
     'Knot reduction (kr):    ' + (mi.knots_reduction || '\u2014'),
     'Knot placement:         ' + (mi.knot_placement || '\u2014'),
     'FJ search window:       ' + (mi.FJ_time_ms || '\u2014') + ' ms',
     'FI search window:       ' + (mi.FI_time_ms || '\u2014') + ' ms',
   );
-  if (mi.fjfi_mode === 'auto') {
-    lines.push('FJ/FI for JIP params:   Auto-detected (per-curve derivative times)');
+  if (fjfiDetMode !== 'fixed') {
+    lines.push('FJ/FI for JIP params:   Auto-detected (' + (FJFI_MODE_LABELS[fjfiDetMode] || fjfiDetMode) + ')');
     if (mi.total_curves > 0) {
       const fallback = mi.total_curves - mi.deriv_timing_count;
       lines.push('  Auto-detected:        ' + mi.deriv_timing_count + '/' + mi.total_curves + ' curves'
@@ -6803,7 +7480,16 @@ function _formatMethodInfoText(mi) {
   const Q_MODE_LABELS = {
     inflection: 'D2 trough (Q inflection)',
     auto: 'D1 minimum (Q minimum) \u2192 D2 fallback',
+    local_min: 'Local minimum (lowest F after P)',
   };
+  const P_MODE_LABELS = {
+    d2_trough: 'D2 trough (P deceleration)',
+    local_max: 'Local maximum (100\u20131000 ms)',
+    global_max: 'Global maximum (= FM)',
+  };
+  const pMode = mi.p_point_mode || 'd2_trough';
+  lines.push('', '\u2014 P point detection \u2014',
+    'P point method:         ' + (P_MODE_LABELS[pMode] || pMode));
   lines.push('', '\u2014 Q point / early S detection \u2014',
     'Q point detection:      ' + (Q_MODE_LABELS[sMode] || sMode),
     'Early S:                Last measured point (always computed)',
@@ -6903,10 +7589,18 @@ async function startBatchExport() {
         const pngs = _renderCurvePngs(offCtx, r.name || '#' + (slot + 1), {
           time_raw_ms: detail.time_raw_ms, time_log_ms: detail.time_log_ms,
           curves: detail.curves,
-          key_values: { FJ: detail.FJ, FI: detail.FI, FM: detail.FM,
+          key_values: { FJ: r.FJ ?? detail.FJ, FI: r.FI ?? detail.FI, FM: detail.FM,
             FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
             FI_time_deriv_ms: detail.FI_time_deriv_ms,
-            FP_time_deriv_ms: detail.FP_time_deriv_ms,
+            FJ_time_inflect_ms: detail.FJ_time_inflect_ms,
+            FI_time_inflect_ms: detail.FI_time_inflect_ms,
+            FJ_time_d2zero_ms: detail.FJ_time_d2zero_ms,
+            FI_time_d2zero_ms: detail.FI_time_d2zero_ms,
+            FJ_time_user_ms: r.FJ_time_user_ms,
+            FI_time_user_ms: r.FI_time_user_ms,
+            FP_time_deriv_ms: detail.FP_time_deriv_ms, FP_time_localmax_ms: detail.FP_time_localmax_ms,
+            FP_time_user_ms: detail.FP_time_user_ms, FP_ref: detail.FP_ref,
+            FJ_d2_depth: detail.FJ_d2_depth, FI_d2_depth: detail.FI_d2_depth, FP_d2_depth: detail.FP_d2_depth,
             FQ: detail.FQ, FQ_time_ms: detail.FQ_time_ms, FQ_ref: detail.FQ_ref,
             F_earlyS: detail.F_earlyS, F_earlyS_time_ms: detail.F_earlyS_time_ms,
             FM_time_ms: detail.FM_time_ms },
@@ -6946,6 +7640,8 @@ async function startBatchExport() {
           ..._buildOjDensifyPayload(),
           f0_time_ms: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
           s_point_mode: document.getElementById('s-point-mode')?.value || 'inflection',
+          p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_trough',
+          fjfi_detect_mode: document.getElementById('fjfi-detect-mode')?.value || 'd2_zero',
           include_curves: true,
         };
         const BATCH = 20, CONC = 2, MAX_RETRIES = 3;
@@ -6977,13 +7673,22 @@ async function startBatchExport() {
               for (const detail of res.results) {
                 if (detail.error || !detail.curves) continue;
                 const curveName = detail.name || '#' + (detail.slot + 1);
+                const pmr = paramMatrix[detail.slot];
                 const pngs = _renderCurvePngs(offCtx, curveName, {
                   time_raw_ms: detail.time_raw_ms, time_log_ms: detail.time_log_ms,
                   curves: detail.curves,
-                  key_values: { FJ: detail.FJ, FI: detail.FI, FM: detail.FM,
+                  key_values: { FJ: pmr?.FJ ?? detail.FJ, FI: pmr?.FI ?? detail.FI, FM: detail.FM,
                     FJ_time_deriv_ms: detail.FJ_time_deriv_ms,
                     FI_time_deriv_ms: detail.FI_time_deriv_ms,
-                    FP_time_deriv_ms: detail.FP_time_deriv_ms,
+                    FJ_time_inflect_ms: detail.FJ_time_inflect_ms,
+                    FI_time_inflect_ms: detail.FI_time_inflect_ms,
+                    FJ_time_d2zero_ms: detail.FJ_time_d2zero_ms,
+                    FI_time_d2zero_ms: detail.FI_time_d2zero_ms,
+                    FJ_time_user_ms: pmr?.FJ_time_user_ms,
+                    FI_time_user_ms: pmr?.FI_time_user_ms,
+                    FP_time_deriv_ms: detail.FP_time_deriv_ms, FP_time_localmax_ms: detail.FP_time_localmax_ms,
+                    FP_time_user_ms: detail.FP_time_user_ms, FP_ref: detail.FP_ref,
+                    FJ_d2_depth: detail.FJ_d2_depth, FI_d2_depth: detail.FI_d2_depth, FP_d2_depth: detail.FP_d2_depth,
                     FQ: detail.FQ, FQ_time_ms: detail.FQ_time_ms, FQ_ref: detail.FQ_ref,
                     F_earlyS: detail.F_earlyS, F_earlyS_time_ms: detail.F_earlyS_time_ms,
                     FM_time_ms: detail.FM_time_ms },
@@ -7066,3 +7771,4 @@ async function loadOjipExampleData(btn) {
         btn.disabled = false; btn.textContent = orig;
     }
 }
+

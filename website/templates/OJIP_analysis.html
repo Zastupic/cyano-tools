@@ -4,11 +4,11 @@
 
 {% block description %}Automated JIP-test analysis for chlorophyll a fluorescence transients. Calculate PI_Abs, ABS/RC, and performance indices from OJIP raw data (fluorometer compatible).{% endblock %}
 
-{% block keywords %}OJIP analysis, JIP-test, chlorophyll a fluorescence, plant stress detection, QA reduction, photosystem II efficiency, fluorescence transient, Kautsky effect, OJIP analyzer, JIP-test calculator, Fv/Fm calculator, PAM fluorometer, PI_abs, fluorescence induction kinetics, MULTI-COLOR-PAM, DUAL-PAM, AquaPen, FluorPen, FL 6000, batch OJIP processing, fluorescence curve normalization, ABS/RC calculator, TR0/RC, ET0/RC, performance indices{% endblock %}
+{% block keywords %}OJIP analysis, JIP-test, chlorophyll a fluorescence, plant stress detection, QA reduction, photosystem II efficiency, fluorescence transient, Kautsky effect, OJIP analyzer, JIP-test calculator, Fv/Fm calculator, PAM fluorometer, PI_abs, fluorescence induction kinetics, MULTI-COLOR-PAM, DUAL-PAM, AquaPen, FluorPen, FL 6000, Handy PEA, Hansatech, batch OJIP processing, fluorescence curve normalization, ABS/RC calculator, TR0/RC, ET0/RC, performance indices{% endblock %}
 
 {% block head %}
   <meta name="description" content="Free online OJIP analyzer for chlorophyll fluorescence transient analysis. Calculate Fv/Fm, PI_abs, JIP-test parameters from your PAM fluorometer data instantly.">
-  <meta name="keywords" content="OJIP analyzer, JIP-test, chlorophyll fluorescence, OJIP curve, Fv/Fm calculator, PAM fluorometer, PI_abs, fluorescence transient, Kautsky curve, photosynthesis analysis">
+  <meta name="keywords" content="OJIP analyzer, JIP-test, chlorophyll fluorescence, OJIP curve, Fv/Fm calculator, PAM fluorometer, PI_abs, fluorescence transient, Kautsky curve, photosynthesis analysis, Handy PEA, Hansatech">
 {% endblock %}
 
 {% block extra_schema %}
@@ -35,6 +35,8 @@
 
 {% block content %}
 <style>
+  /* ── parameter table tooltip hint ── */
+  #mc-param-table-wrap th[title] { cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; }
   /* ── OJIP main tabs → category-button style (matches statistics) ── */
   #ojipTabs { border-bottom: 2px solid #dee2e6; margin-bottom: 0; padding-bottom: 0; }
   #ojipTabs .nav-link {
@@ -316,6 +318,7 @@
         <option value="Aquapen">AquaPen / FluorPen (Photon Systems Instruments)</option>
         <option value="FL6000">Fluorometer FL 6000 (Photon Systems Instruments)</option>
         <option value="OJIPImaging">OJIP Imaging &mdash; multi-curve (Excel: custom format 1 or Long/Raw)</option>
+        <option value="HandyPEA">Handy PEA (Hansatech, .HAN)</option>
       </select>
     </div>
 
@@ -345,6 +348,10 @@
         <a href="https://fluorometers.psi.cz/products/fluorometer-fl-6000/" target="_blank" rel="noopener" class="gallery__item--5">
           <i style="font-size:80%">FL 6000 &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
           <img src="static/images/FL6000.JPG" alt="FL6000 PSI" class="gallery__item--5">
+        </a>
+        <a href="https://www.hansatech-instruments.com/handy-pea" target="_blank" rel="noopener" class="gallery__item--6">
+          <i style="font-size:80%">Handy PEA &nbsp;<i class="fa fa-external-link" style="font-size:0.75em;"></i></i>
+          <img src="static/images/HandyPea.jpg" alt="Handy PEA Hansatech" class="gallery__item--6">
         </a>
       </div>
     </div>
@@ -478,7 +485,7 @@
     </div>
 
     <!-- Step 4: Select files -->
-    <label><span class="badge badge-primary mr-1">3</span> Select files (up to 100; .csv for MULTI-COLOR-PAM, .txt for AquaPen/FluorPen/FL6000, .xlsx for OJIP Imaging)</label>
+    <label><span class="badge badge-primary mr-1">3</span> Select files (up to 100; .csv for MULTI-COLOR-PAM, .txt for AquaPen/FluorPen/FL6000, .xlsx for OJIP Imaging, .HAN for Handy PEA)</label>
     <div id="drop-zone" class="border rounded p-4 text-center mb-2"
          style="border-style:dashed !important; cursor:pointer; background:#f8f9fa; transition:background 0.2s;">
       <i class="fa fa-upload fa-2x text-muted mb-2"></i>
@@ -486,7 +493,7 @@
         <label for="ojip-files" style="cursor:pointer; color:#007bff; text-decoration:underline; margin:0;">click to browse</label>
       </p>
       <small class="text-muted" id="file-count-label">No files selected</small>
-      <input type="file" id="ojip-files" multiple accept=".csv,.CSV,.txt,.ASCII,.xlsx,.XLSX" style="display:none">
+      <input type="file" id="ojip-files" multiple accept=".csv,.CSV,.txt,.ASCII,.xlsx,.XLSX,.han,.HAN" style="display:none">
     </div>
     <div id="file-list" class="mb-3" style="max-height:120px; overflow-y:auto; font-size:0.85em;"></div>
 
@@ -622,7 +629,7 @@
           <button class="btn btn-outline-primary" data-norm="shifted_FM">Shifted to F<sub>M</sub></button>
           <button class="btn btn-outline-primary" data-norm="double_norm">Double normalized</button>
         </div>
-        <small class="text-muted ml-3">▲ F<sub>J</sub> &nbsp;◆ F<sub>I</sub> &nbsp;■ F<sub>P</sub> &nbsp;<span style="color:#d62728">●</span> Q &nbsp;<span style="color:#17becf">★</span> eS &nbsp;|&nbsp; click a curve to remove it</small>
+        <small class="text-muted ml-3">▲ F<sub>J</sub> &nbsp;◆ F<sub>I</sub> &nbsp;<span style="opacity:0.55">△ F<sub>J</sub> det.</span> &nbsp;<span style="opacity:0.55">◇ F<sub>I</sub> det.</span> &nbsp;■ F<sub>P</sub> &nbsp;<span style="color:#d62728">●</span> Q &nbsp;<span style="color:#17becf">★</span> eS &nbsp;|&nbsp; click a curve to remove it</small>
       </div>
       <div class="oj-chart-wrap" style="height:380px;">
         <div class="oj-chart-area"><canvas id="curves-chart"></canvas></div>
@@ -1537,6 +1544,59 @@
               <span id="f0-time-note" class="text-info ml-2" style="display:none; font-size:0.85em;">&#9432; Time axis will be rescaled &mdash; click Re-fit to apply</span>
             </div>
           </div>
+          <!-- FJ/FI detection mode -->
+          <div class="form-row align-items-center mb-2">
+            <div class="col-auto">
+              <label class="mb-0 mr-1">FJ/FI detection:</label>
+              <select id="fjfi-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="d2_zero">D2 zero-crossing (D1 minimum)</option>
+                <option value="poly_inflect">Polynomial inflection</option>
+                <option value="d2_trough">D2 trough</option>
+                <option value="fixed">Fixed timing</option>
+              </select>
+              <small class="text-muted ml-1">click Re-fit to apply</small>
+            </div>
+          </div>
+          <details class="mb-2" style="font-size:0.85em">
+            <summary class="text-muted" style="cursor:pointer">About FJ/FI detection methods</summary>
+            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>D2 zero-crossing</dt>
+                <dd class="mb-0">Default. Where the spline second derivative (D2) crosses from negative to positive &mdash; equivalent to a local minimum of D1 (the &ldquo;shoulder&rdquo; between phases). Most precise identification of the J and I inflection points. Physiologically, the J inflection (~2&thinsp;ms) marks the kinetic bottleneck at the exchange of a reduced PQ molecule for an oxidized one at the Q<sub>B</sub> site (Schansker et&nbsp;al. 2005), and the I inflection (~30&thinsp;ms) reflects the limitation in PQH<sub>2</sub> re-oxidation by the Cyt&nbsp;b<sub>6</sub>f complex. At both points, Q<sub>A</sub> and Q<sub>B</sub> are transiently reduced because electron transport is temporarily slowed &mdash; by electrons accumulating in the PQ pool (J) or downstream of it (I).</dd>
+                <dt>Polynomial inflection</dt>
+                <dd class="mb-0">Local polynomial fit within the O&ndash;J / J&ndash;I windows, solving D2=0 with D3&gt;0 (Akinyemi et&nbsp;al. 2023). Independent of the spline but sensitive to the polynomial degree. Identifies the same physiological transitions &mdash; the Q<sub>B</sub>-site exchange bottleneck (J) and the Cyt&nbsp;b<sub>6</sub>f re-oxidation limitation (I) &mdash; through a separate analytical approach, useful for cross-validation.</dd>
+                <dt>D2 trough</dt>
+                <dd class="mb-0">Deepest D2 minimum (most negative D2 value) in each search window. Marks the point of maximum deceleration, which precedes the true inflection. This timing corresponds to the peak rate at which the respective bottleneck &mdash; PQ exchange at Q<sub>B</sub> (J) or PQH<sub>2</sub> re-oxidation at Cyt&nbsp;b<sub>6</sub>f (I) &mdash; brakes the fluorescence rise.</dd>
+                <dt>Fixed timing</dt>
+                <dd class="mb-0">Uses the user-specified times from the FJ/FI input fields (default 2/30&thinsp;ms). Ignores curve shape. Conventional fixed values assume typical dark-adapted kinetics; appropriate for standardised comparisons across studies using the same protocol.</dd>
+              </dl>
+            </div>
+          </details>
+          <!-- P point detection mode -->
+          <div class="form-row align-items-center mb-2">
+            <div class="col-auto">
+              <label class="mb-0 mr-1">P point detection:</label>
+              <select id="p-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="d2_trough">D2 trough (P deceleration)</option>
+                <option value="local_max">Local maximum (100&ndash;1000&thinsp;ms)</option>
+                <option value="global_max">Global maximum (= FM)</option>
+              </select>
+              <small class="text-muted ml-1">click Re-fit to apply</small>
+            </div>
+          </div>
+          <details class="mb-2" style="font-size:0.85em">
+            <summary class="text-muted" style="cursor:pointer">About P point detection methods</summary>
+            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>D2 trough</dt>
+                <dd class="mb-0">Default. Finds the D2 local minimum in the I&ndash;P window &mdash; the point where the rise rate decelerates fastest. Precedes the actual peak by ~0.3&thinsp;decades in log-time.</dd>
+                <dt>Local maximum</dt>
+                <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within 100&ndash;1000&thinsp;ms. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
+                <dt>Global maximum</dt>
+                <dd class="mb-0">Uses the FM timing directly. Equivalent to max(F) over the entire transient.</dd>
+              </dl>
+            </div>
+          </details>
           <!-- Q point detection mode for post-peak transition parameters -->
           <div class="form-row align-items-center mb-2">
             <div class="col-auto">
@@ -1544,6 +1604,7 @@
               <select id="s-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="inflection">D2 trough (Q inflection)</option>
                 <option value="auto">D1 minimum (Q minimum) &rarr; D2 fallback</option>
+                <option value="local_min">Local minimum (lowest F after P)</option>
               </select>
               <small class="text-muted ml-1">Q point at ~1&ndash;2&thinsp;s (Fratamico et&nbsp;al. 2016); early S&nbsp;=&nbsp;last point &mdash; click Re-fit to apply</small>
             </div>
@@ -1558,6 +1619,8 @@
                 <dd class="mb-0">Finds the local minimum of the second derivative (D2) in the post-P decline &mdash; the &ldquo;elbow&rdquo; where the rate of decline transitions from accelerating to decelerating. Default method; robust even when the decline never fully reverses.</dd>
                 <dt>D1 minimum (Q minimum)</dt>
                 <dd class="mb-0">Finds the first zero-crossing of the first derivative (D1, negative&nbsp;&rarr;&nbsp;positive) &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 trough when no reversal is detected. Identifies a stronger, more definitive Q feature.</dd>
+                <dt>Local minimum (lowest F after P)</dt>
+                <dd class="mb-0">Finds the absolute lowest fluorescence value in the post-P reconstruction window. Falls back to D2&nbsp;trough when the minimum coincides with the recording endpoint (monotonic decline with no reversal).</dd>
               </dl>
               <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
               <p class="mb-0 mt-2" style="font-size:0.92em"><strong>Reference</strong></p>
@@ -2571,7 +2634,7 @@
         </div>
       </div>
 
-      <!-- Grouped OJIP Curve Panels (OJIPImaging only) -->
+      <!-- Grouped OJIP Curve Panels -->
       <div id="mc-grouped-panels-card" class="card mb-3" style="display:none;">
         <div class="card-header py-2 d-flex flex-wrap align-items-center"
              style="background:#e9ecef; font-size:0.88em; gap:8px;">
@@ -2615,6 +2678,17 @@
                 <option value="individual">Individual curves</option>
                 <option value="meansd" selected>Mean &pm; SD</option>
                 <option value="both">Both</option>
+              </select>
+            </div>
+            <div class="d-flex flex-column align-items-start">
+              <small class="font-weight-bold text-muted">Normalization</small>
+              <select id="mc-panel-norm" class="form-control form-control-sm"
+                      style="width:auto; min-width:130px;"
+                      onchange="MC.renderGroupedPanels()">
+                <option value="raw" selected>Raw</option>
+                <option value="shifted_F0">Shifted to F&#x2080;</option>
+                <option value="shifted_FM">Shifted to F_M</option>
+                <option value="double_norm">Double normalised</option>
               </select>
             </div>
             <div class="d-flex align-items-end" style="gap:4px;">
@@ -2661,17 +2735,26 @@
             <button class="btn btn-sm btn-outline-secondary" id="mc-page-next" onclick="MC.curvesPageNext()" title="Next page">
               <i class="fa fa-chevron-right"></i>
             </button>
-            <label class="mb-0 ml-2 small" style="cursor:pointer;">
-              <input type="checkbox" id="mc-show-median" checked onchange="MC.renderAggregateCurves()">
-              Median
+            <label class="mb-0 ml-2 small" style="cursor:pointer;" title="Show O, J, I, P markers on each curve">
+              <input type="checkbox" id="mc-show-ojip" checked onchange="MC.renderAggregateCurves()">
+              OJIP
             </label>
+            <select id="mc-agg-norm" class="form-control form-control-sm ml-2"
+                    style="width:auto; display:none;"
+                    onchange="MC.renderAggregateCurves()">
+              <option value="raw" selected>Raw</option>
+              <option value="shifted_F0">Shifted to F&#x2080;</option>
+              <option value="shifted_FM">Shifted to F_M</option>
+              <option value="double_norm">Double normalised</option>
+            </select>
           </div>
         </div>
         <div class="card-body p-2">
-          <div style="position:relative; height:360px;">
-            <canvas id="mc-aggregate-chart"></canvas>
+          <div class="oj-chart-wrap" style="height:360px;">
+            <div class="oj-chart-area"><canvas id="mc-aggregate-chart"></canvas></div>
+            <div class="oj-ext-legend" id="mc-aggregate-chart-legend"></div>
           </div>
-          <small class="text-muted d-block mt-1">Click any curve to view its full analysis. Curves colored by measurement order (blue &rarr; red).</small>
+          <small class="text-muted d-block mt-1">Click any curve to view its full analysis. Click a legend entry to toggle it.</small>
         </div>
       </div>
 
@@ -2838,6 +2921,17 @@ window._getOJIPCurvesForBundle = function () {
           File: <strong id="mc-filename"></strong><br>
           <span class="text-muted"><span id="mc-curve-count"></span> OJIP curves &mdash; <span id="mc-date-range"></span></span>
         </p>
+
+        <!-- Duplicate trace handling (shown when duplicates detected) -->
+        <div id="mc-dup-control" style="display:none;" class="alert alert-warning py-1 px-2 mb-2">
+          <i class="fa fa-clone mr-1"></i>
+          <span id="mc-dup-count">0</span> duplicate trace(s) detected.
+          <select id="mc-dup-mode" class="form-control form-control-sm d-inline-block ml-1"
+                  style="width:auto;" onchange="MC.applyDupMode()">
+            <option value="drop" selected>Drop duplicates (keep first)</option>
+            <option value="keep">Keep all (add _2, _3 suffix)</option>
+          </select>
+        </div>
 
         <!-- Excel import options (shown only for OJIPImaging; populated after upload) -->
         <div id="excel-options" class="mb-3" style="display:none;">
@@ -3426,6 +3520,7 @@ document.getElementById('interp-run-btn').addEventListener('click', function () 
     if (fluorometer.includes('MULTI-COLOR')) instrument = 'multicolor_pam';
     else if (fluorometer.toLowerCase().includes('aquapen')) instrument = 'aquapen';
     else if (fluorometer.includes('FL6000')) instrument = 'fl6000';
+    else if (fluorometer.includes('HandyPEA')) instrument = 'handypea';
 
     measurement = {
       instrument: instrument,
@@ -3553,6 +3648,7 @@ document.getElementById('interp-run-btn').addEventListener('click', function () 
   if (fluorometer.includes('MULTI-COLOR')) instrument = 'multicolor_pam';
   else if (fluorometer.toLowerCase().includes('aquapen') || fluorometer.toLowerCase().includes('fluorpen')) instrument = 'aquapen';
   else if (fluorometer.includes('FL6000')) instrument = 'fl6000';
+  else if (fluorometer.includes('HandyPEA')) instrument = 'handypea';
 
   measurement = {
     instrument: instrument,
@@ -3627,6 +3723,7 @@ document.getElementById('interp-run-all-btn').addEventListener('click', function
   if (fluorometer.includes('MULTI-COLOR')) instrument = 'multicolor_pam';
   else if (fluorometer.toLowerCase().includes('aquapen')) instrument = 'aquapen';
   else if (fluorometer.includes('FL6000')) instrument = 'fl6000';
+  else if (fluorometer.includes('HandyPEA')) instrument = 'handypea';
 
   // Build work items
   var workItems = [];
