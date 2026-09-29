@@ -607,7 +607,7 @@
     </li>
     <li class="nav-item" id="tab-timeseries-li" style="display:none">
       <a class="nav-link" id="tab-timeseries-link" data-toggle="tab" href="#tab-timeseries" role="tab">
-        <i class="fa fa-area-chart"></i> Time Series
+        <i class="fa fa-area-chart"></i> Multi-Curve Overview
       </a>
     </li>
   </ul>
@@ -2322,8 +2322,55 @@
 
     </div><!-- /tab-annot -->
 
-    <!-- ── Time-series tab (multi-curve only) ─────────────────────────── -->
+    <!-- ── Multi-Curve Overview tab ──────────────────────────────────── -->
     <div class="tab-pane fade" id="tab-timeseries" role="tabpanel">
+
+      <!-- Multi-curve overlay viewer -->
+      <div class="card mb-3">
+        <div class="card-header py-2 d-flex flex-wrap align-items-center" style="background:#e9ecef; font-size:0.88em; gap:8px;">
+          <span class="font-weight-bold"><i class="fa fa-area-chart mr-1 text-primary"></i>OJIP Curves</span>
+          <div class="ml-auto d-flex align-items-center flex-wrap" style="gap:6px;">
+            <label class="mb-0 small">Curves:</label>
+            <input type="number" id="mc-cv-from" class="form-control form-control-sm" style="width:65px;" min="1" value="1"
+                   onchange="MC.renderAggregateCurves()">
+            <span class="small">&ndash;</span>
+            <input type="number" id="mc-cv-to" class="form-control form-control-sm" style="width:65px;" min="1" value="50"
+                   onchange="MC.renderAggregateCurves()">
+            <span class="small text-muted" id="mc-cv-total">/ 0</span>
+            <button class="btn btn-sm btn-outline-secondary" id="mc-page-prev" onclick="MC.curvesPagePrev()" title="Previous page">
+              <i class="fa fa-chevron-left"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" id="mc-page-next" onclick="MC.curvesPageNext()" title="Next page">
+              <i class="fa fa-chevron-right"></i>
+            </button>
+            <label class="mb-0 ml-2 small" style="cursor:pointer;" title="Show O, J, I, P markers on each curve">
+              <input type="checkbox" id="mc-show-ojip" checked onchange="MC.renderAggregateCurves()">
+              OJIP
+            </label>
+            <select id="mc-agg-norm" class="form-control form-control-sm ml-2"
+                    style="width:auto; display:none;"
+                    onchange="MC.renderAggregateCurves()">
+              <option value="raw" selected>Raw</option>
+              <option value="shifted_F0">Shifted to F&#x2080;</option>
+              <option value="shifted_FM">Shifted to F_M</option>
+              <option value="double_norm">Double normalised</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body p-2">
+          <div class="oj-chart-wrap" style="height:360px;">
+            <div class="oj-chart-area"><canvas id="mc-aggregate-chart"></canvas></div>
+            <div class="oj-ext-legend" id="mc-aggregate-chart-legend"></div>
+          </div>
+          <small class="text-muted d-block mt-1">Click any curve to view its full analysis. Click a legend entry to toggle it.</small>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header py-2 font-weight-bold" style="background:#e9ecef; font-size:0.88em;">
+          <i class="fa fa-line-chart mr-1 text-primary"></i>Parameters
+        </div>
+        <div class="card-body p-2">
 
       <!-- Parameter picker and controls -->
       <div class="d-flex flex-wrap align-items-center mb-2" style="gap:8px;">
@@ -2474,6 +2521,9 @@
       </div>
 
       <small class="text-muted d-block mb-3">Click any point to view that curve's full analysis in the detail tabs.</small>
+
+        </div><!-- /card-body -->
+      </div><!-- /Parameters card -->
 
       <!-- Summary statistics table (mean ± SD per group per x-position) -->
       <div id="mc-summary-table-wrap" class="card mb-3" style="display:none;">
@@ -2714,47 +2764,6 @@
             Each panel shows OJIP transient curves grouped by the selected metadata fields.
             Mean &pm; SD uses sample standard deviation (n&minus;1).
           </small>
-        </div>
-      </div>
-
-      <!-- Multi-curve overlay viewer -->
-      <div class="card mb-3">
-        <div class="card-header py-2 d-flex flex-wrap align-items-center" style="background:#e9ecef; font-size:0.88em; gap:8px;">
-          <span class="font-weight-bold"><i class="fa fa-area-chart mr-1 text-primary"></i>OJIP Curves</span>
-          <div class="ml-auto d-flex align-items-center flex-wrap" style="gap:6px;">
-            <label class="mb-0 small">Curves:</label>
-            <input type="number" id="mc-cv-from" class="form-control form-control-sm" style="width:65px;" min="1" value="1"
-                   onchange="MC.renderAggregateCurves()">
-            <span class="small">&ndash;</span>
-            <input type="number" id="mc-cv-to" class="form-control form-control-sm" style="width:65px;" min="1" value="50"
-                   onchange="MC.renderAggregateCurves()">
-            <span class="small text-muted" id="mc-cv-total">/ 0</span>
-            <button class="btn btn-sm btn-outline-secondary" id="mc-page-prev" onclick="MC.curvesPagePrev()" title="Previous page">
-              <i class="fa fa-chevron-left"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" id="mc-page-next" onclick="MC.curvesPageNext()" title="Next page">
-              <i class="fa fa-chevron-right"></i>
-            </button>
-            <label class="mb-0 ml-2 small" style="cursor:pointer;" title="Show O, J, I, P markers on each curve">
-              <input type="checkbox" id="mc-show-ojip" checked onchange="MC.renderAggregateCurves()">
-              OJIP
-            </label>
-            <select id="mc-agg-norm" class="form-control form-control-sm ml-2"
-                    style="width:auto; display:none;"
-                    onchange="MC.renderAggregateCurves()">
-              <option value="raw" selected>Raw</option>
-              <option value="shifted_F0">Shifted to F&#x2080;</option>
-              <option value="shifted_FM">Shifted to F_M</option>
-              <option value="double_norm">Double normalised</option>
-            </select>
-          </div>
-        </div>
-        <div class="card-body p-2">
-          <div class="oj-chart-wrap" style="height:360px;">
-            <div class="oj-chart-area"><canvas id="mc-aggregate-chart"></canvas></div>
-            <div class="oj-ext-legend" id="mc-aggregate-chart-legend"></div>
-          </div>
-          <small class="text-muted d-block mt-1">Click any curve to view its full analysis. Click a legend entry to toggle it.</small>
         </div>
       </div>
 

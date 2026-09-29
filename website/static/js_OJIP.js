@@ -1784,11 +1784,29 @@ const MC = (() => {
           const slot = pageSlots[pi];
           const pm = paramMatrix[slot];
           if (!pm || pm.error) continue;
-          const rawY = pm[m.key];
+          let rawY = pm[m.key];
           if (rawY == null) continue;
           let tMs;
           if (m.timeKey && pm[m.timeKey] != null) {
             tMs = pm[m.timeKey];
+            // Interpolate the raw curve at this time so the marker sits on the trace
+            const curveIdx = _slotToIndex(slot);
+            const co = mcDataset.curves.find(c => c.index === curveIdx);
+            if (co && co.values.length === timeMs.length) {
+              // Linear interpolation at tMs
+              let lo = 0;
+              for (let i = 1; i < timeMs.length; i++) {
+                if (timeMs[i] >= tMs) { lo = i - 1; break; }
+                lo = i;
+              }
+              const hi = Math.min(lo + 1, timeMs.length - 1);
+              if (lo === hi || timeMs[hi] === timeMs[lo]) {
+                rawY = co.values[lo];
+              } else {
+                const frac = (tMs - timeMs[lo]) / (timeMs[hi] - timeMs[lo]);
+                rawY = co.values[lo] + frac * (co.values[hi] - co.values[lo]);
+              }
+            }
           } else {
             // F0: find the time of the data point closest to the F0 value
             const curveIdx = _slotToIndex(slot);
@@ -4508,6 +4526,13 @@ async function uploadAndAnalyze() {
   const files = document.getElementById('ojip-files').files;
   if (!files.length) return;
 
+  // Clear any previous error/warning message
+  const _errReset = document.getElementById('upload-error');
+  if (_errReset) {
+    _errReset.style.display = 'none';
+    _errReset.className = 'alert alert-danger mt-2';
+  }
+
   const fluorometer = document.getElementById('fluorometer').value;
 
   // ── OJIP Imaging Excel file detection ──
@@ -6412,7 +6437,7 @@ async function refitSplines() {
     recalcAllParams();
 
     if (mcIsActive && paramMatrix && _currentDetailSlot != null) {
-      // Batch mode: write back to paramMatrix for Time Series
+      // Batch mode: write back to paramMatrix for Multi-Curve Overview
       const fname = ojipData.files[0];
       const kv  = ojipData.key_values[fname];
       const jip = paramData[fname];

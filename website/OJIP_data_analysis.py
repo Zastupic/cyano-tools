@@ -2497,7 +2497,8 @@ def ojip_process():
 
         if ext not in allowed_ext:
             return jsonify({'status': 'error',
-                            'message': f'Wrong file type for {fname_full}. Expected: {allowed_ext}'}), 400
+                            'message': f'Wrong file type for {fname_full}. Expected: {allowed_ext}. '
+                                       f'Please select the appropriate fluorometer type.'}), 400
 
         if fluorometer == 'MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)':
             df = pd.read_csv(file.stream, sep=';', engine='python')
