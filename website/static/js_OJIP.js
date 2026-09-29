@@ -1723,11 +1723,32 @@ const MC = (() => {
     const pageSlots = _curvesValidSlots.slice(range.from - 1, range.to);
     const nVisible  = pageSlots.length;
 
-    // Time axis in ms (log scale)
-    const timeMs = Array.from(mcDataset.timeUs).map(t => t * 0.001);
+    // Time axis in ms (log scale).
+    // Excel OJIP Imaging: timeUs is already in ms (despite the field name).
+    // HandyPEA / CSV:     timeUs is in µs → multiply by 0.001 to get ms.
+    const timeMs = mcDataset.excelMeta
+      ? Array.from(mcDataset.timeUs)
+      : Array.from(mcDataset.timeUs).map(t => t * 0.001);
+
+    // For OJIP Imaging Excel data: trim to OJIP range — Excel files may
+    // include slow-kinetics data extending well beyond the OJIP transient.
+    let ojipMaxIdx = timeMs.length;
+    if (mcDataset.excelMeta && paramMatrix) {
+      let maxFMms = 0;
+      for (const pm of paramMatrix) {
+        if (pm && pm.FM_time_ms > maxFMms) maxFMms = pm.FM_time_ms;
+      }
+      if (maxFMms > 0) {
+        // Cap at 3× the latest FM time, at least 5000 ms (5 s).
+        const capMs = Math.max(maxFMms * 3, 5000);
+        for (let i = 0; i < timeMs.length; i++) {
+          if (timeMs[i] > capMs) { ojipMaxIdx = i; break; }
+        }
+      }
+    }
 
     // Decimate for performance: keep ~120 points per curve
-    const fullLen = timeMs.length;
+    const fullLen = ojipMaxIdx;
     const TARGET = 120;
     let step = 1;
     if (fullLen > TARGET) step = Math.max(1, Math.floor(fullLen / TARGET));
@@ -4872,9 +4893,9 @@ async function mcStartAnalysis() {
     if (refFMCard)   refFMCard.style.display   = isOJIPImg ? '' : 'none';
     if (isOJIPImg) { MC.initRefFMCard(); MC.refFMUpdateUI(); }
 
-    // Show/hide OJIP Curves normalization dropdown (non-OJIPImaging only)
+    // Show OJIP Curves normalization dropdown
     const aggNormEl = document.getElementById('mc-agg-norm');
-    if (aggNormEl) aggNormEl.style.display = isOJIPImg ? 'none' : '';
+    if (aggNormEl) aggNormEl.style.display = '';
 
     // Render time-series overview
     MC.renderTimeSeries();
@@ -6926,7 +6947,9 @@ function populateAnnotationFromOJIP() {
         }
         window._mcCurvesForBundle = {
             files: mcFiles.slice(),
-            time_raw_ms: Array.from(mcDataset.timeUs).map(function(t) { return t * 0.001; }),
+            time_raw_ms: mcDataset.excelMeta
+                ? Array.from(mcDataset.timeUs)
+                : Array.from(mcDataset.timeUs).map(function(t) { return t * 0.001; }),
             curves_raw: cachedCurves,
         };
 
