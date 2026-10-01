@@ -4154,7 +4154,7 @@ def _format_method_info(mi: dict) -> str:
     q_mode = mi.get('s_point_mode', 'inflection')
     _Q_MODE_LABELS = {
         'inflection': 'D2 trough (Q inflection)',
-        'auto':       'D1 minimum (Q minimum) → D2 fallback',
+        'auto':       'F minimum → D2 inflection',
         'local_min':  'Local minimum (lowest F after P)',
     }
     lines += [

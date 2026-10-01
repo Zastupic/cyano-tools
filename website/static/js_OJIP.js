@@ -7486,7 +7486,7 @@ function _formatMethodInfoText(mi) {
   const sMode = mi.s_point_mode || 'inflection';
   const Q_MODE_LABELS = {
     inflection: 'D2 trough (Q inflection)',
-    auto: 'D1 minimum (Q minimum) \u2192 D2 fallback',
+    auto: 'F minimum \u2192 D2 inflection',
     local_min: 'Local minimum (lowest F after P)',
   };
   const P_MODE_LABELS = {
