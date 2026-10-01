@@ -3449,10 +3449,8 @@ const PARAM_GROUPS = {
   fluxes: ['ABSRC', 'TR0RC', 'ET0RC', 'RE0RC', 'DI0RC'],
   areas:  ['Area_OJ', 'Area_JI', 'Area_IP', 'Area_OP', 'SM', 'N'],
   tech:   ['F0', 'FM', 'FK', 'FJ', 'FI', 'FV', 'OJ', 'JI', 'IP'],
-  timing: ['FJ_time_user_ms', 'FI_time_user_ms', 'FJ_time_d2zero_ms', 'FI_time_d2zero_ms',
-           'FJ_time_inflect_ms', 'FI_time_inflect_ms',
-           'FJ_time_deriv_ms', 'FI_time_deriv_ms', 'FP_time_deriv_ms', 'FP_time_localmax_ms', 'FP_time_user_ms', 'FM_time_ms',
-           'FJ_d2_depth', 'FI_d2_depth', 'FP_d2_depth', 'FP_ref'],
+  timing: ['FJ_time_user_ms', 'FJ_ref', 'FI_time_user_ms', 'FI_ref',
+           'FP_time_user_ms', 'FP_ref', 'FM_time_ms'],
   slopes: ['slope_OJ', 'slope_JI', 'slope_IP'],
   dip:    ['dip_IP_amplitude', 'dip_IP_time_ms', 'dip_IP_d1_min'],
   pqs:    ['FQ', 'FQ_time_ms', 'slope_PQ', 'PQ_amplitude', 'PQ_rel', 'FQ_ref',
@@ -3470,12 +3468,8 @@ const PARAM_LABELS = {
   Area_OJ:'Area O-J', Area_JI:'Area J-I', Area_IP:'Area I-P', Area_OP:'Area O-P',
   SM:'Sm', N:'N (QA turnover)',
   F0:'F₀', FM:'FM', FK:'FK', FJ:'FJ', FI:'FI', FV:'FV', OJ:'Amplitude (O-J)', JI:'Amplitude (J-I)', IP:'Amplitude (I-P)',
-  FJ_time_user_ms:'t(FJ) used ms', FI_time_user_ms:'t(FI) used ms',
-  FJ_time_d2zero_ms:'t(FJ) D2 zero ms', FI_time_d2zero_ms:'t(FI) D2 zero ms',
-  FJ_time_inflect_ms:'t(FJ) inflection ms', FI_time_inflect_ms:'t(FI) inflection ms',
-  FJ_time_deriv_ms:'t(FJ) D2 trough ms', FI_time_deriv_ms:'t(FI) D2 trough ms',
-  FP_time_deriv_ms:'t(FP) D2 trough ms', FP_time_localmax_ms:'t(FP) local max ms', FP_time_user_ms:'t(FP) used ms', FM_time_ms:'t(FM) ms',
-  FJ_d2_depth:'D2 depth (FJ)', FI_d2_depth:'D2 depth (FI)', FP_d2_depth:'D2 depth (FP)', FP_ref:'P detection',
+  FJ_time_user_ms:'t(FJ) ms', FJ_ref:'FJ detection', FI_time_user_ms:'t(FI) ms', FI_ref:'FI detection',
+  FP_time_user_ms:'t(FP) ms', FM_time_ms:'t(FM) ms', FP_ref:'P detection',
   deriv_timing_used:'Auto-detected used',
   slope_OJ:'Slope O-J', slope_JI:'Slope J-I', slope_IP:'Slope I-P',
   dip_IP_amplitude:'Dip I-P amplitude', dip_IP_time_ms:'Dip I-P time (ms)', dip_IP_d1_min:'Dip I-P D1 min',
@@ -3520,14 +3514,8 @@ const PARAM_TOOLTIPS = {
   IP: 'Fluorescence amplitude of the I\u2013P phase: FM \u2212 FI',
   FJ_time_user_ms: 'FJ step time actually used for VJ and other calculations (ms)',
   FI_time_user_ms: 'FI step time actually used for VI and other calculations (ms)',
-  FJ_time_d2zero_ms: 'FJ timing from D2 zero-crossing (neg\u2192pos transition = D1 local minimum)',
-  FI_time_d2zero_ms: 'FI timing from D2 zero-crossing (neg\u2192pos transition = D1 local minimum)',
-  FJ_time_inflect_ms: 'FJ timing from local polynomial inflection point (D2=0, D3>0)',
-  FI_time_inflect_ms: 'FI timing from local polynomial inflection point (D2=0, D3>0)',
-  FJ_time_deriv_ms: 'FJ timing from D2 trough (deepest deceleration in the O\u2013J window)',
-  FI_time_deriv_ms: 'FI timing from D2 trough (deepest deceleration in the J\u2013I window)',
-  FP_time_deriv_ms: 'FP timing from D2 trough (deceleration peak of the I\u2013P rise)',
-  FP_time_localmax_ms: 'Time of the fluorescence peak in the 100\u20131000 ms window',
+  FJ_ref: 'Detection method used for the J inflection point timing',
+  FI_ref: 'Detection method used for the I inflection point timing',
   FP_time_user_ms: 'FP timing used for downstream calculations (selected by P-point mode)',
   FM_time_ms: 'Time of the global fluorescence maximum',
   FP_ref: 'P-point detection method used',
@@ -6937,7 +6925,7 @@ function populateAnnotationFromOJIP() {
 
 const _BE_INDIV_LIMIT = 100; // warning threshold for large-batch export
 const _BE_CURVE_IDS = ['be-raw', 'be-shifted-f0', 'be-shifted-fm', 'be-double-norm'];
-const _BE_DIAG_IDS  = ['be-reconstructed', 'be-d2', 'be-d3', 'be-residuals'];
+const _BE_DIAG_IDS  = ['be-reconstructed', 'be-d1', 'be-d2', 'be-d3', 'be-residuals'];
 const _BE_ALL_IDS   = [..._BE_CURVE_IDS, ..._BE_DIAG_IDS];
 
 function showBatchExportModal() {
@@ -7215,9 +7203,11 @@ function _renderOjipPlot(ctx, cfg) {
       { phase: 'FI', shape: 'diamond',  color: '#31a354', label: 'I' },
       { phase: 'FP', shape: 'square',   color: '#756bb1', label: 'P' },
     ];
-    // For interpolation, pick the right curve: overlay curve (fitted) or main curve
-    const interpT = cfg.interpolateMarkers && cfg.overlay ? cfg.overlay.timeMs.filter(t => t > 0) : tArr;
-    const interpY = cfg.interpolateMarkers && cfg.overlay
+    // Always interpolate markers on the displayed curve so they sit on the
+    // actual line regardless of normalisation (raw / shifted_F0 / double_norm…).
+    // For reconstructed plots, prefer the overlay (fitted) curve.
+    const interpT = cfg.overlay ? cfg.overlay.timeMs.filter(t => t > 0) : tArr;
+    const interpY = cfg.overlay
       ? cfg.overlay.yData.filter((_, i) => cfg.overlay.timeMs[i] > 0) : yArr;
     for (const m of markers) {
       // Use user/fixed timing for FJ/FI, fall back to detected
@@ -7225,32 +7215,16 @@ function _renderOjipPlot(ctx, cfg) {
       const tvDeriv = cfg.kv[m.phase + '_time_deriv_ms'];
       const tv = (m.phase === 'FP') ? tvDeriv : (tvUser ?? tvDeriv);
       if (tv == null || tv <= 0) continue;
-      let fv;
-      if (cfg.interpolateMarkers) {
-        fv = _linearInterp(interpT, interpY, tv);
-      } else {
-        fv = m.phase === 'FP' ? cfg.kv.FM : cfg.kv[m.phase];
-      }
+      const fv = _linearInterp(interpT, interpY, tv);
       if (fv == null || !isFinite(fv)) continue;
       _drawMarker(ctx, toX(tv), toY(fv), m.shape, m.color, 8);
       legendMarkers.push({ shape: m.shape, color: m.color, label: m.label });
-      // Hollow marker for detected timing when it differs from used (FJ/FI only)
-      if (m.phase !== 'FP' && tvDeriv != null && tvUser != null
-          && Math.abs(tvDeriv - tvUser) > 0.01 && tvDeriv > 0) {
-        const detFv = cfg.interpolateMarkers
-          ? _linearInterp(interpT, interpY, tvDeriv) : cfg.kv[m.phase];
-        if (detFv != null && isFinite(detFv)) {
-          _drawMarker(ctx, toX(tvDeriv), toY(detFv), m.shape, m.color, 9, true);
-          legendMarkers.push({ shape: m.shape, color: m.color, label: m.label + ' det.', hollow: true });
-        }
-      }
     }
     // Q marker (● circle, red) — only when Q was detected
     const fqT = cfg.kv.FQ_time_ms;
     const fqRef = cfg.kv.FQ_ref;
     if (fqT != null && fqT > 0 && fqRef) {
-      const fqFv = cfg.interpolateMarkers
-        ? _linearInterp(interpT, interpY, fqT) : cfg.kv.FQ;
+      const fqFv = _linearInterp(interpT, interpY, fqT);
       if (fqFv != null && isFinite(fqFv)) {
         _drawMarker(ctx, toX(fqT), toY(fqFv), 'circle', '#d62728', 8);
         legendMarkers.push({ shape: 'circle', color: '#d62728', label: 'Q' });
@@ -7259,8 +7233,7 @@ function _renderOjipPlot(ctx, cfg) {
     // Early S marker (★ star, teal) — always shown
     const esT = cfg.kv.F_earlyS_time_ms;
     if (esT != null && esT > 0) {
-      const esFv = cfg.interpolateMarkers
-        ? _linearInterp(interpT, interpY, esT) : cfg.kv.F_earlyS;
+      const esFv = _linearInterp(interpT, interpY, esT);
       if (esFv != null && isFinite(esFv)) {
         _drawMarker(ctx, toX(esT), toY(esFv), 'star', '#17becf', 9);
         legendMarkers.push({ shape: 'star', color: '#17becf', label: 'eS' });
@@ -7325,6 +7298,18 @@ function _renderCurvePngs(ctx, name, detail, inclPlots) {
         overlay: { timeMs: timeLog, yData: recon, color: '#ff0000', lineWidth: 1.2, label: 'Fitted' },
       });
       results.push({ path: 'reconstructed/' + safe + '.png', b64 });
+    }
+  }
+
+  if (inclPlots.d1) {
+    const d1 = curves.d1;
+    if (d1 && timeLog.length) {
+      const b64 = _renderOjipPlot(ctx, {
+        timeMs: timeLog, yData: d1, title: name,
+        lineColor: '#008000', lineWidth: 1, yLabel: 'D1 (1st derivative)',
+        hlineZero: true, kv, interpolateMarkers: true,
+      });
+      results.push({ path: 'd1/' + safe + '.png', b64 });
     }
   }
 
@@ -7528,6 +7513,7 @@ async function startBatchExport() {
     shifted_FM:    !!document.getElementById('be-shifted-fm')?.checked,
     double_norm:   !!document.getElementById('be-double-norm')?.checked,
     reconstructed: !!document.getElementById('be-reconstructed')?.checked,
+    d1:            !!document.getElementById('be-d1')?.checked,
     d2:            !!document.getElementById('be-d2')?.checked,
     d3:            !!document.getElementById('be-d3')?.checked,
     residuals:     !!document.getElementById('be-residuals')?.checked,

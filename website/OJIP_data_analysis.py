@@ -2335,6 +2335,20 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         _fi_user = float(_fi_d2z) * ms if _fi_d2z is not None else _t_safe(FI_infl.get(fname), ms)
     _fi_user = _fi_user or fi_time_ms
 
+    # ── detection method label (for table display) ─────────────────────────
+    _METHOD_LABELS = {
+        'fixed': 'Fixed timing',
+        'd2_zero': 'D2 zero-crossing',
+        'poly_inflect': 'Polynomial inflection',
+        'd2_trough': 'D2 trough',
+    }
+    _fj_ref_label = _METHOD_LABELS.get(_fj_mode, _fj_mode)
+    if _fj_mode != 'fixed' and _fj_user == fj_time_ms:
+        _fj_ref_label += ' \u2192 fixed (fallback)'
+    _fi_ref_label = _METHOD_LABELS.get(_fi_mode, _fi_mode)
+    if _fi_mode != 'fixed' and _fi_user == fi_time_ms:
+        _fi_ref_label += ' \u2192 fixed (fallback)'
+
     # ── build result dict ─────────────────────────────────────────────────────
     result = {
         'F0':  _safe(F0[fname]),  'FM': _safe(FM[fname]),
@@ -2343,6 +2357,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'FV':  _safe(FV[fname]),
         'FJ_time_user_ms':    _fj_user,
         'FI_time_user_ms':    _fi_user,
+        'FJ_ref': _fj_ref_label,
+        'FI_ref': _fi_ref_label,
         'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
         'FI_time_deriv_ms':   _t_safe(FI_deriv.get(fname), ms),
         'FP_time_deriv_ms':   _t_safe(FP_deriv.get(fname), ms),
