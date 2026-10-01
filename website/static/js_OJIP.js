@@ -4101,8 +4101,8 @@ function _populateDensifyInputs(info) {
 // ── FJ/FI detection mode dropdown sync system ──────────────────────────────
 // All FJ / FI dropdowns across tabs stay in sync. The authoritative pair
 // (fj-detect-mode / fi-detect-mode) is read by helper functions and API calls.
-const _FJ_DD_IDS = ['fj-detect-mode', 'fj-mode-diag', 'fj-mode-curves', 'fj-mode-params', 'fj-mode-sidebar'];
-const _FI_DD_IDS = ['fi-detect-mode', 'fi-mode-diag', 'fi-mode-curves', 'fi-mode-params', 'fi-mode-sidebar'];
+const _FJ_DD_IDS = ['fj-detect-mode', 'fj-mode-curves', 'fj-mode-params', 'fj-mode-sidebar'];
+const _FI_DD_IDS = ['fi-detect-mode', 'fi-mode-curves', 'fi-mode-params', 'fi-mode-sidebar'];
 
 function _syncAllFjDropdowns(value) {
   for (const id of _FJ_DD_IDS) { const el = document.getElementById(id); if (el) el.value = value; }
@@ -4111,14 +4111,25 @@ function _syncAllFiDropdowns(value) {
   for (const id of _FI_DD_IDS) { const el = document.getElementById(id); if (el) el.value = value; }
 }
 
-/** Show/hide the diagnostics fixed-time inputs based on dropdown selection. */
+/** Enable/disable the diagnostics fixed-time inputs based on dropdown selection. */
 function _syncFixedTimeInputsVisibility() {
-  const fjWrap = document.getElementById('fj-fixed-time-diag-wrap');
-  const fiWrap = document.getElementById('fi-fixed-time-diag-wrap');
+  const fjInput = document.getElementById('fj-fixed-time-diag');
+  const fiInput = document.getElementById('fi-fixed-time-diag');
   const fjMode = document.getElementById('fj-detect-mode')?.value || 'fixed';
   const fiMode = document.getElementById('fi-detect-mode')?.value || 'fixed';
-  if (fjWrap) fjWrap.style.display = fjMode === 'fixed' ? '' : 'none';
-  if (fiWrap) fiWrap.style.display = fiMode === 'fixed' ? '' : 'none';
+  if (fjInput) {
+    fjInput.disabled = fjMode !== 'fixed';
+    fjInput.style.opacity = fjMode === 'fixed' ? '1' : '0.45';
+  }
+  if (fiInput) {
+    fiInput.disabled = fiMode !== 'fixed';
+    fiInput.style.opacity = fiMode === 'fixed' ? '1' : '0.45';
+  }
+  // Also dim the "ms" suffix
+  const fjWrap = document.getElementById('fj-fixed-time-diag-wrap');
+  const fiWrap = document.getElementById('fi-fixed-time-diag-wrap');
+  if (fjWrap) fjWrap.style.opacity = fjMode === 'fixed' ? '1' : '0.45';
+  if (fiWrap) fiWrap.style.opacity = fiMode === 'fixed' ? '1' : '0.45';
 }
 
 /** Sync diagnostics fixed-time inputs FROM sidebar inputs. */

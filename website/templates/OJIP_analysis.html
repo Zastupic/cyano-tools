@@ -1385,53 +1385,6 @@
             <div class="col-auto">
               <input type="range" id="kr-slider" min="1" max="50" value="10" style="width:160px">
             </div>
-            <div class="col-auto">
-              <label class="mb-0 mr-1">Skip first:</label>
-              <input type="number" id="trim-first-input" min="0" max="30" value="0"
-                     class="form-control form-control-sm d-inline-block" style="width:60px">
-            </div>
-            <div class="col-auto">
-              <label class="mb-0 mr-1">Skip last:</label>
-              <input type="number" id="trim-last-input" min="0" max="30" value="0"
-                     class="form-control form-control-sm d-inline-block" style="width:60px">
-            </div>
-            <div class="col-auto">
-              <button class="btn btn-warning btn-sm" id="refit-btn">Re-fit &amp; update params</button>
-            </div>
-            <div class="col-auto" id="refit-all-wrap" style="display:none">
-              <button class="btn btn-primary btn-sm" onclick="(mcDataset && mcIsActive) ? mcRefitBatch() : refitSplines()">Refit all curves</button>
-              <span id="mc-refit-status-diag" class="ml-2 text-muted" style="font-size:0.85em"></span>
-            </div>
-            <div class="col-auto">
-              <span id="refit-status" class="text-muted" style="font-size:0.85em;"></span>
-            </div>
-          </div>
-          <div class="d-flex align-items-center mb-2" id="fjfi-timing-wrap" style="display:none;gap:0.4rem">
-            <small class="text-muted font-weight-bold" style="font-size:0.82em">Selected F<sub>J</sub>/F<sub>I</sub> timing:</small>
-            <small class="text-muted" style="font-size:0.82em">F<sub>J</sub>:</small>
-            <select id="fj-mode-diag" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
-              <option value="d2_zero">D2 zero-crossing</option>
-              <option value="poly_inflect">Polynomial inflection</option>
-              <option value="d2_trough">D2 trough</option>
-              <option value="fixed" selected>Fixed timing</option>
-            </select>
-            <div class="input-group input-group-sm d-inline-flex" id="fj-fixed-time-diag-wrap" style="width:auto;font-size:0.82em">
-              <input type="number" id="fj-fixed-time-diag" class="form-control" value="2.0" min="0" max="50" step="0.1" style="width:70px;font-size:inherit">
-              <div class="input-group-append"><span class="input-group-text" style="font-size:inherit">ms</span></div>
-            </div>
-            <small class="text-muted" style="font-size:0.82em">F<sub>I</sub>:</small>
-            <select id="fi-mode-diag" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
-              <option value="d2_zero">D2 zero-crossing</option>
-              <option value="poly_inflect">Polynomial inflection</option>
-              <option value="d2_trough">D2 trough</option>
-              <option value="fixed" selected>Fixed timing</option>
-            </select>
-            <div class="input-group input-group-sm d-inline-flex" id="fi-fixed-time-diag-wrap" style="width:auto;font-size:0.82em">
-              <input type="number" id="fi-fixed-time-diag" class="form-control" value="30.0" min="10" max="500" step="0.1" style="width:70px;font-size:inherit">
-              <div class="input-group-append"><span class="input-group-text" style="font-size:inherit">ms</span></div>
-            </div>
-            <span id="fjfi-mode-badge-diag" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
-            <span id="fit-quality-badge" class="badge" style="font-size:0.8em;display:none"></span>
           </div>
           <!-- Fitting method help (collapsed by default) -->
           <details class="mb-4" style="font-size:0.85em">
@@ -1460,6 +1413,13 @@
                 <dd class="mb-0">Deconvolves D1 into 2&ndash;3 Gaussian peaks in log<sub>10</sub>(t) space. FJ/FI from valleys (local minima) between adjacent Gaussian centers. Intuitive spectral decomposition of the fluorescence rise.</dd>
               </dl>
               <p class="mb-1 text-muted">FP always uses D2 trough for spline and most detection methods. Piecewise-linear derives all three breakpoints directly from the fit.</p>
+              <p class="mb-1 mt-2"><strong>Spline parameters</strong></p>
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>k<sub>r</sub> (knot reduction)</dt>
+                <dd class="mb-0">Controls spline smoothness by setting the number of interior knots as <em>N</em>&thinsp;/&thinsp;k<sub>r</sub>, where <em>N</em> is the number of data points. Higher k<sub>r</sub>&nbsp;&rarr;&nbsp;fewer knots&nbsp;&rarr;&nbsp;smoother fit; lower k<sub>r</sub>&nbsp;&rarr;&nbsp;more knots&nbsp;&rarr;&nbsp;closer fit to raw data but noisier derivatives. Default:&nbsp;10. Only applies to Standard&nbsp;spline.</dd>
+                <dt>Knot placement</dt>
+                <dd class="mb-0"><strong>Hybrid</strong> (default): places knots at quantile-spaced positions in log-time, with extra knots added in the dense O&ndash;J region for better resolution of fast kinetics. <strong>Quantile</strong>: distributes knots so each span covers an equal number of data points. <strong>Uniform</strong>: evenly spaced knots in log-time. Hybrid is recommended for most OJIP data.</dd>
+              </dl>
               <p class="mb-0 mt-2" style="font-size:0.92em"><strong>References</strong></p>
               <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">
                 <li>Strasser RJ, Tsimilli-Michael M, Srivastava A (2004) Analysis of the chlorophyll <em>a</em> fluorescence transient. In: Papageorgiou GC, Govindjee (eds) <em>Chlorophyll a Fluorescence</em>, Springer, pp&nbsp;321&ndash;362. <a href="https://doi.org/10.1007/978-1-4020-3218-9_12" target="_blank" rel="noopener">doi:10.1007/978-1-4020-3218-9_12</a> &mdash; <em>D2 trough / JIP-test foundation</em></li>
@@ -1577,6 +1537,19 @@
               </ol>
             </div>
           </details>
+          <div class="form-row align-items-center mb-2">
+            <div class="col-auto">
+              <label class="mb-0 mr-1">Trim start:</label>
+              <input type="number" id="trim-first-input" min="0" max="30" value="0"
+                     class="form-control form-control-sm d-inline-block" style="width:60px">
+            </div>
+            <div class="col-auto">
+              <label class="mb-0 mr-1">Trim end:</label>
+              <input type="number" id="trim-last-input" min="0" max="30" value="0"
+                     class="form-control form-control-sm d-inline-block" style="width:60px">
+              <small class="text-muted ml-1">points excluded from spline fit</small>
+            </div>
+          </div>
           <!-- F0 timing override -->
           <div class="form-row align-items-center mb-4">
             <div class="col-auto">
@@ -1589,23 +1562,35 @@
               <span id="f0-time-note" class="text-info ml-2" style="display:none; font-size:0.85em;">&#9432; Time axis will be rescaled &mdash; click Re-fit to apply</span>
             </div>
           </div>
-          <!-- FJ / FI detection mode (separate dropdowns) -->
-          <div class="form-row align-items-center mb-2">
-            <div class="col-auto">
-              <label class="mb-0 mr-1">F<sub>J</sub> detection:</label>
+          <!-- FJ / FI detection mode (separate dropdowns) with fixed-time inputs -->
+          <div class="form-row align-items-center mb-1">
+            <div class="col-auto d-flex align-items-center" style="gap:0.4rem">
+              <label class="mb-0 mr-1 font-weight-bold">F<sub>J</sub> detection:</label>
               <select id="fj-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="d2_zero">D2 zero-crossing (D1 minimum)</option>
                 <option value="poly_inflect">Polynomial inflection</option>
                 <option value="d2_trough">D2 trough</option>
                 <option value="fixed">Fixed timing</option>
               </select>
-              <label class="mb-0 mr-1 ml-3">F<sub>I</sub> detection:</label>
+              <div class="input-group input-group-sm d-inline-flex" id="fj-fixed-time-diag-wrap" style="width:auto">
+                <input type="number" id="fj-fixed-time-diag" class="form-control" value="2.0" min="0" max="50" step="0.1" style="width:70px">
+                <div class="input-group-append"><span class="input-group-text">ms</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row align-items-center mb-2">
+            <div class="col-auto d-flex align-items-center" style="gap:0.4rem">
+              <label class="mb-0 mr-1 font-weight-bold">F<sub>I</sub> detection:</label>
               <select id="fi-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="d2_zero">D2 zero-crossing (D1 minimum)</option>
                 <option value="poly_inflect">Polynomial inflection</option>
                 <option value="d2_trough">D2 trough</option>
                 <option value="fixed">Fixed timing</option>
               </select>
+              <div class="input-group input-group-sm d-inline-flex" id="fi-fixed-time-diag-wrap" style="width:auto">
+                <input type="number" id="fi-fixed-time-diag" class="form-control" value="30.0" min="10" max="500" step="0.1" style="width:70px">
+                <div class="input-group-append"><span class="input-group-text">ms</span></div>
+              </div>
               <small class="text-muted ml-1">click Re-fit to apply</small>
             </div>
           </div>
@@ -1627,7 +1612,7 @@
           <!-- P point detection mode -->
           <div class="form-row align-items-center mb-2">
             <div class="col-auto">
-              <label class="mb-0 mr-1">P point detection:</label>
+              <label class="mb-0 mr-1 font-weight-bold">P point detection:</label>
               <select id="p-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="d2_trough">D2 trough (P deceleration)</option>
                 <option value="local_max">Local maximum (100&ndash;1000&thinsp;ms)</option>
@@ -1652,7 +1637,7 @@
           <!-- Q point detection mode for post-peak transition parameters -->
           <div class="form-row align-items-center mb-2">
             <div class="col-auto">
-              <label class="mb-0 mr-1">Q point detection:</label>
+              <label class="mb-0 mr-1 font-weight-bold">Q point detection:</label>
               <select id="s-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="inflection">D2 trough (Q inflection)</option>
                 <option value="auto">D1 minimum (Q minimum) &rarr; D2 fallback</option>
@@ -1681,6 +1666,24 @@
               </ol>
             </div>
           </details>
+          <!-- Re-fit buttons -->
+          <div class="form-row align-items-center mb-1">
+            <div class="col-auto">
+              <button class="btn btn-warning btn-sm" id="refit-btn">Re-fit &amp; update params</button>
+            </div>
+            <div class="col-auto" id="refit-all-wrap" style="display:none">
+              <button class="btn btn-primary btn-sm" onclick="(mcDataset && mcIsActive) ? mcRefitBatch() : refitSplines()">Refit all curves</button>
+              <span id="mc-refit-status-diag" class="ml-2 text-muted" style="font-size:0.85em"></span>
+            </div>
+            <div class="col-auto">
+              <span id="refit-status" class="text-muted" style="font-size:0.85em;"></span>
+            </div>
+          </div>
+          <!-- FJ/FI status badge (shown after data upload) -->
+          <div id="fjfi-timing-wrap" class="mb-3 d-flex align-items-center" style="display:none;gap:0.4rem;font-size:0.82em">
+            <span id="fjfi-mode-badge-diag" class="badge badge-info" style="font-size:inherit">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
+            <span id="fit-quality-badge" class="badge" style="font-size:inherit;display:none"></span>
+          </div>
           <!-- Background / F0 mirror (AquaPen/FluorPen batches) — synced to the
                upload-panel controls so you can change it and Refit all without
                scrolling back up. Shown only for AquaPen/FluorPen. -->
@@ -1730,7 +1733,7 @@
               <small class="text-muted">drops the dark/background point(s) so F<sub>0</sub> is the true O&ndash;level; then click <em>Refit all curves</em> &rarr;</small>
             </div>
           </div>
-          <small class="text-muted">Drag the slider to preview k<sub>r</sub> value, then click <em>Re-fit splines</em>. <em>Log-time spline</em> and <em>PCHIP</em> improve fits for OJIPImaging (60-point) data; k<sub>r</sub> is ignored for PCHIP. <em>Skip first / last</em>: exclude N raw points from both ends before fitting (useful when the tail of OJIPImaging curves fits poorly).</small>
+          <small class="text-muted">Drag the slider to preview k<sub>r</sub> value, then click <em>Re-fit splines</em>. <em>Log-time spline</em> and <em>PCHIP</em> improve fits for OJIPImaging (60-point) data; k<sub>r</sub> is ignored for PCHIP. <em>Trim start / end</em>: exclude N raw points from both ends before fitting (useful when the tail of OJIPImaging curves fits poorly).</small>
         </div>
       </div>
       <div class="d-flex align-items-center mb-2 flex-wrap" style="gap:0.5rem 1.2rem">
