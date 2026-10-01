@@ -1986,7 +1986,9 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       use_deriv_timing: bool = False,
                       s_point_mode: str = 'inflection',
                       p_point_mode: str = 'd2_trough',
-                      fjfi_detect_mode: str = 'd2_zero'):
+                      fjfi_detect_mode: str = 'd2_zero',
+                      fj_detect_mode: 'str | None' = None,
+                      fi_detect_mode: 'str | None' = None):
     """
     Full OJIP analysis pipeline for a single curve.
 
@@ -2169,16 +2171,29 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
             FK_idx = len(sf) - 1
 
     # ── optionally override FJ/FI with derivative-detected times ─────────────
+    # Respect per-point detect mode: only override a point if its mode is not
+    # 'fixed'.  The legacy boolean `use_deriv_timing` gates entry but the
+    # individual `fj_detect_mode` / `fi_detect_mode` have final say.
     _deriv_timing_used = False
+    _fj_mode = fj_detect_mode or fjfi_detect_mode
+    _fi_mode = fi_detect_mode or fjfi_detect_mode
+    _fj_orig_ms = fj_time_ms          # preserve caller's fixed value
+    _fi_orig_ms = fi_time_ms
     if use_deriv_timing:
         _fj_d = _t_safe(FJ_deriv.get(fname), ms)
         _fi_d = _t_safe(FI_deriv.get(fname), ms)
-        if _fj_d is not None and _fi_d is not None and _fj_d < _fi_d:
+        if _fj_mode != 'fixed' and _fj_d is not None:
             fj_time_ms = _fj_d
+        if _fi_mode != 'fixed' and _fi_d is not None:
             fi_time_ms = _fi_d
+        if fj_time_ms < fi_time_ms:
             FJ_time = fj_time_ms / ms
             FI_time = fi_time_ms / ms
             _deriv_timing_used = True
+        else:
+            # Fallback: auto-detected times invalid, restore originals
+            fj_time_ms = _fj_orig_ms
+            fi_time_ms = _fi_orig_ms
 
     FJ_idx = tidx(FJ_time)
     FI_idx = tidx(FI_time)
@@ -2296,20 +2311,28 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       _y_recon_at_raw[_q_start:_q_end],
                       _d2_vals, method=fit_method)
 
-    # ── FJ/FI user timing based on detection mode ─────────────────────────
-    if fjfi_detect_mode == 'poly_inflect':
+    # ── FJ/FI user timing based on detection mode (separate per point) ────
+    _fj_mode = fj_detect_mode or fjfi_detect_mode
+    _fi_mode = fi_detect_mode or fjfi_detect_mode
+
+    if _fj_mode == 'poly_inflect':
         _fj_user = _t_safe(FJ_infl.get(fname), ms)
-        _fi_user = _t_safe(FI_infl.get(fname), ms)
-    elif fjfi_detect_mode == 'd2_trough':
+    elif _fj_mode == 'd2_trough':
         _fj_user = _t_safe(FJ_deriv.get(fname), ms)
-        _fi_user = _t_safe(FI_deriv.get(fname), ms)
-    elif fjfi_detect_mode == 'fixed':
+    elif _fj_mode == 'fixed':
         _fj_user = fj_time_ms
-        _fi_user = fi_time_ms
     else:  # 'd2_zero' default
         _fj_user = float(_fj_d2z) * ms if _fj_d2z is not None else _t_safe(FJ_infl.get(fname), ms)
-        _fi_user = float(_fi_d2z) * ms if _fi_d2z is not None else _t_safe(FI_infl.get(fname), ms)
     _fj_user = _fj_user or fj_time_ms
+
+    if _fi_mode == 'poly_inflect':
+        _fi_user = _t_safe(FI_infl.get(fname), ms)
+    elif _fi_mode == 'd2_trough':
+        _fi_user = _t_safe(FI_deriv.get(fname), ms)
+    elif _fi_mode == 'fixed':
+        _fi_user = fi_time_ms
+    else:  # 'd2_zero' default
+        _fi_user = float(_fi_d2z) * ms if _fi_d2z is not None else _t_safe(FI_infl.get(fname), ms)
     _fi_user = _fi_user or fi_time_ms
 
     # ── build result dict ─────────────────────────────────────────────────────
@@ -2461,6 +2484,8 @@ def ojip_process():
     p_point_mode_proc = request.form.get('p_point_mode', 'd2_trough')
     s_point_mode_proc = request.form.get('s_point_mode', 'inflection')
     fjfi_detect_mode_proc = request.form.get('fjfi_detect_mode', 'd2_zero')
+    fj_detect_mode_proc = request.form.get('fj_detect_mode') or fjfi_detect_mode_proc
+    fi_detect_mode_proc = request.form.get('fi_detect_mode') or fjfi_detect_mode_proc
     FJ_time_ms = float(request.form.get('FJ_time', 2.0))
     FI_time_ms = float(request.form.get('FI_time', 30.0))
 
@@ -2898,20 +2923,25 @@ def ojip_process():
         _fi_d2z_p = _d2_zero_in_window(Infl_DF, fname, ranges['FI'][0], ranges['FI'][1],
                                         expect_native=FI_time_ms / ms)
 
-        # ── FJ/FI user timing based on detection mode ────────────────────
-        if fjfi_detect_mode_proc == 'poly_inflect':
+        # ── FJ/FI user timing based on detection mode (separate per point) ─
+        if fj_detect_mode_proc == 'poly_inflect':
             _fj_user_p = _t_safe(FJ_infl.get(fname), ms)
-            _fi_user_p = _t_safe(FI_infl.get(fname), ms)
-        elif fjfi_detect_mode_proc == 'd2_trough':
+        elif fj_detect_mode_proc == 'd2_trough':
             _fj_user_p = _t_safe(FJ_deriv.get(fname), ms)
-            _fi_user_p = _t_safe(FI_deriv.get(fname), ms)
-        elif fjfi_detect_mode_proc == 'fixed':
+        elif fj_detect_mode_proc == 'fixed':
             _fj_user_p = FJ_time_ms
-            _fi_user_p = FI_time_ms
         else:  # 'd2_zero'
             _fj_user_p = float(_fj_d2z_p) * ms if _fj_d2z_p is not None else _t_safe(FJ_infl.get(fname), ms)
-            _fi_user_p = float(_fi_d2z_p) * ms if _fi_d2z_p is not None else _t_safe(FI_infl.get(fname), ms)
         _fj_user_p = _fj_user_p or FJ_time_ms
+
+        if fi_detect_mode_proc == 'poly_inflect':
+            _fi_user_p = _t_safe(FI_infl.get(fname), ms)
+        elif fi_detect_mode_proc == 'd2_trough':
+            _fi_user_p = _t_safe(FI_deriv.get(fname), ms)
+        elif fi_detect_mode_proc == 'fixed':
+            _fi_user_p = FI_time_ms
+        else:  # 'd2_zero'
+            _fi_user_p = float(_fi_d2z_p) * ms if _fi_d2z_p is not None else _t_safe(FI_infl.get(fname), ms)
         _fi_user_p = _fi_user_p or FI_time_ms
 
         key_values[fname] = {
@@ -3016,6 +3046,8 @@ def ojip_refit():
     s_point_mode_refit = data.get('s_point_mode', 'inflection')
     p_point_mode_refit = data.get('p_point_mode', 'd2_trough')
     fjfi_detect_mode_refit = data.get('fjfi_detect_mode', 'd2_zero')
+    fj_detect_mode_refit = data.get('fj_detect_mode') or fjfi_detect_mode_refit
+    fi_detect_mode_refit = data.get('fi_detect_mode') or fjfi_detect_mode_refit
     raw_fm_f0 = data.get('raw_fm_f0', {})   # {file: {FM: ..., F0: ...}}
     time_raw_ms = data['time_raw_ms']
     double_norm_dict = data['double_norm']  # {file: [y values]}
@@ -3134,20 +3166,25 @@ def ojip_refit():
         _fi_d2z_r = _d2_zero_in_window(Infl_DF, fname, ranges['FI'][0], ranges['FI'][1],
                                         expect_native=FI_time_ms / ms)
 
-        # ── FJ/FI user timing based on detection mode ────────────────────
-        if fjfi_detect_mode_refit == 'poly_inflect':
+        # ── FJ/FI user timing based on detection mode (separate per point) ─
+        if fj_detect_mode_refit == 'poly_inflect':
             _fj_user_r = _t_safe(FJ_infl.get(fname), ms)
-            _fi_user_r = _t_safe(FI_infl.get(fname), ms)
-        elif fjfi_detect_mode_refit == 'd2_trough':
+        elif fj_detect_mode_refit == 'd2_trough':
             _fj_user_r = _t_safe(FJ_deriv.get(fname), ms)
-            _fi_user_r = _t_safe(FI_deriv.get(fname), ms)
-        elif fjfi_detect_mode_refit == 'fixed':
+        elif fj_detect_mode_refit == 'fixed':
             _fj_user_r = FJ_time_ms
-            _fi_user_r = FI_time_ms
         else:  # 'd2_zero'
             _fj_user_r = float(_fj_d2z_r) * ms if _fj_d2z_r is not None else _t_safe(FJ_infl.get(fname), ms)
-            _fi_user_r = float(_fi_d2z_r) * ms if _fi_d2z_r is not None else _t_safe(FI_infl.get(fname), ms)
         _fj_user_r = _fj_user_r or FJ_time_ms
+
+        if fi_detect_mode_refit == 'poly_inflect':
+            _fi_user_r = _t_safe(FI_infl.get(fname), ms)
+        elif fi_detect_mode_refit == 'd2_trough':
+            _fi_user_r = _t_safe(FI_deriv.get(fname), ms)
+        elif fi_detect_mode_refit == 'fixed':
+            _fi_user_r = FI_time_ms
+        else:  # 'd2_zero'
+            _fi_user_r = float(_fi_d2z_r) * ms if _fi_d2z_r is not None else _t_safe(FI_infl.get(fname), ms)
         _fi_user_r = _fi_user_r or FI_time_ms
 
         kt_entry = {
@@ -3529,6 +3566,8 @@ def ojip_process_batch():
     s_point_mode     = payload.get('s_point_mode', 'inflection')
     p_point_mode     = payload.get('p_point_mode', 'd2_trough')
     fjfi_detect_mode = payload.get('fjfi_detect_mode', 'd2_zero')
+    fj_detect_mode   = payload.get('fj_detect_mode') or fjfi_detect_mode
+    fi_detect_mode   = payload.get('fi_detect_mode') or fjfi_detect_mode
 
     if not time_native or not curves:
         return jsonify({'status': 'error',
@@ -3572,6 +3611,8 @@ def ojip_process_batch():
                 s_point_mode=s_point_mode,
                 p_point_mode=p_point_mode,
                 fjfi_detect_mode=fjfi_detect_mode,
+                fj_detect_mode=fj_detect_mode,
+                fi_detect_mode=fi_detect_mode,
             )
             r['slot'] = slot
             r['name'] = name
@@ -4016,7 +4057,8 @@ def _format_method_info(mi: dict) -> str:
         '— Curve fitting —',
         f'Fitting method:         {_METHOD_NAMES.get(fm, fm)}',
     ]
-    fjfi_mode = mi.get('fjfi_detect_mode', 'd2_zero')
+    _fj_mode = mi.get('fj_detect_mode', mi.get('fjfi_detect_mode', 'd2_zero'))
+    _fi_mode = mi.get('fi_detect_mode', mi.get('fjfi_detect_mode', 'd2_zero'))
     _FJFI_MODE_LABELS = {
         'd2_zero':       'D2 zero-crossing (D1 minimum)',
         'poly_inflect':  'Polynomial inflection (D2=0, D3>0)',
@@ -4024,8 +4066,14 @@ def _format_method_info(mi: dict) -> str:
         'fixed':         'Fixed timing',
     }
     if fm in _SPLINE_METHODS:
-        lines.append(
-            f'FJ / FI detection:      {_FJFI_MODE_LABELS.get(fjfi_mode, fjfi_mode)}')
+        if _fj_mode == _fi_mode:
+            lines.append(
+                f'FJ / FI detection:      {_FJFI_MODE_LABELS.get(_fj_mode, _fj_mode)}')
+        else:
+            lines.append(
+                f'FJ detection:           {_FJFI_MODE_LABELS.get(_fj_mode, _fj_mode)}')
+            lines.append(
+                f'FI detection:           {_FJFI_MODE_LABELS.get(_fi_mode, _fi_mode)}')
     else:
         lines.append(
             f'FJ / FI detection:      Method-specific '

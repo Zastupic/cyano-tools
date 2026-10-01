@@ -392,18 +392,24 @@
             </div>
             <div class="form-row align-items-center mt-2 mb-1">
               <div class="col-auto"><small class="text-muted mr-1">F<sub>J</sub>/F<sub>I</sub> for JIP params:</small></div>
-              <div class="col-auto">
-                <div class="btn-group btn-group-toggle btn-group-sm" data-toggle="buttons">
-                  <label class="btn btn-outline-info btn-sm active" id="fjfi-sidebar-fixed-label" style="font-size:0.78em;padding:2px 8px">
-                    <input type="radio" name="fjfi-timing-sidebar" id="fjfi-sidebar-fixed" value="fixed" checked> Fixed
-                  </label>
-                  <label class="btn btn-outline-warning btn-sm" id="fjfi-sidebar-auto-label" style="font-size:0.78em;padding:2px 8px">
-                    <input type="radio" name="fjfi-timing-sidebar" id="fjfi-sidebar-auto" value="auto"> Auto-detected
-                  </label>
-                </div>
+              <div class="col-auto d-flex align-items-center" style="gap:0.3rem">
+                <small class="text-muted">F<sub>J</sub>:</small>
+                <select id="fj-mode-sidebar" class="form-control form-control-sm" style="width:auto;font-size:0.82em">
+                  <option value="d2_zero">D2 zero-crossing</option>
+                  <option value="poly_inflect">Polynomial inflection</option>
+                  <option value="d2_trough">D2 trough</option>
+                  <option value="fixed" selected>Fixed timing</option>
+                </select>
+                <small class="text-muted">F<sub>I</sub>:</small>
+                <select id="fi-mode-sidebar" class="form-control form-control-sm" style="width:auto;font-size:0.82em">
+                  <option value="d2_zero">D2 zero-crossing</option>
+                  <option value="poly_inflect">Polynomial inflection</option>
+                  <option value="d2_trough">D2 trough</option>
+                  <option value="fixed" selected>Fixed timing</option>
+                </select>
               </div>
             </div>
-            <small class="text-muted">Used for JIP parameter calculation (V<sub>J</sub>, V<sub>I</sub>, &psi;E<sub>0</sub>, etc.). <b>Fixed</b> uses the times above; <b>Auto-detected</b> uses derivative-identified F<sub>J</sub>/F<sub>I</sub> inflection points from the spline fit. Toggle is also available on Curves, Parameters, and Diagnostics tabs.</small>
+            <small class="text-muted">Used for JIP parameter calculation (V<sub>J</sub>, V<sub>I</sub>, &psi;E<sub>0</sub>, etc.). <b>Fixed timing</b> uses the times above; other methods use derivative-identified F<sub>J</sub>/F<sub>I</sub> inflection points from the spline fit. Selectors are also available on Curves, Parameters, and Diagnostics tabs.</small>
           </div>
 
           <!-- kr / spline smoothing -->
@@ -636,12 +642,24 @@
         <div class="oj-ext-legend" id="curves-chart-legend"></div>
       </div>
 
-      <!-- Toggle FJ/FI between default (2/30 ms) and auto-detected -->
-      <div class="mt-2 mb-1 d-flex align-items-center">
-        <button class="btn btn-outline-warning btn-sm" id="reset-fj-fi-btn-curves">
-          Use auto-detected F<sub>J</sub>/F<sub>I</sub>
-        </button>
-        <span id="fjfi-mode-badge-curves" class="badge badge-info ml-2" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
+      <!-- FJ/FI detection method selectors (synced with Diagnostics / Parameters / Sidebar) -->
+      <div class="mt-2 mb-1 d-flex align-items-center flex-wrap" style="gap:0.3rem 0.5rem">
+        <small class="text-muted mr-1">F<sub>J</sub>/F<sub>I</sub> for JIP params:</small>
+        <label class="mb-0" style="font-size:0.82em">F<sub>J</sub>:</label>
+        <select id="fj-mode-curves" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
+          <option value="d2_zero">D2 zero-crossing</option>
+          <option value="poly_inflect">Polynomial inflection</option>
+          <option value="d2_trough">D2 trough</option>
+          <option value="fixed" selected>Fixed timing</option>
+        </select>
+        <label class="mb-0" style="font-size:0.82em">F<sub>I</sub>:</label>
+        <select id="fi-mode-curves" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
+          <option value="d2_zero">D2 zero-crossing</option>
+          <option value="poly_inflect">Polynomial inflection</option>
+          <option value="d2_trough">D2 trough</option>
+          <option value="fixed" selected>Fixed timing</option>
+        </select>
+        <span id="fjfi-mode-badge-curves" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
       </div>
 
       <!-- Editable FJ/FI table -->
@@ -679,7 +697,7 @@
         <p class="mb-1">Select a curve from the <strong>Time Series</strong> tab to view its JIP parameters here.</p>
         <small>Click any data point in the parameter chart or any row in the parameter table.</small>
       </div>
-      <div class="d-flex flex-wrap align-items-center mb-2">
+      <div class="d-flex flex-wrap align-items-center mb-1">
         <span class="mr-2 font-weight-bold">Parameter group:</span>
         <div class="ojip-seg-ctrl" id="param-group-btns">
           <button class="btn btn-primary"         data-pgroup="yields">Quantum yields</button>
@@ -691,11 +709,24 @@
           <button class="btn btn-outline-primary" data-pgroup="decomp" id="pgroup-decomp-btn" style="display:none">Decomposition</button>
           <button class="btn btn-outline-primary" data-pgroup="gauss"  id="pgroup-gauss-btn"  style="display:none">D1 Gaussians</button>
         </div>
-        <span id="fjfi-mode-badge-params" class="badge badge-info ml-auto mr-2" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
-        <button class="btn btn-outline-warning btn-sm mr-1" id="reset-fj-fi-btn">
-          Use auto-detected F<sub>J</sub>/F<sub>I</sub>
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" id="copy-params-btn">
+      </div>
+      <div class="d-flex align-items-center mb-2" style="gap:0.4rem">
+        <small class="text-muted" style="font-size:0.82em">F<sub>J</sub>:</small>
+        <select id="fj-mode-params" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
+          <option value="d2_zero">D2 zero-crossing</option>
+          <option value="poly_inflect">Polynomial inflection</option>
+          <option value="d2_trough">D2 trough</option>
+          <option value="fixed" selected>Fixed timing</option>
+        </select>
+        <small class="text-muted" style="font-size:0.82em">F<sub>I</sub>:</small>
+        <select id="fi-mode-params" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
+          <option value="d2_zero">D2 zero-crossing</option>
+          <option value="poly_inflect">Polynomial inflection</option>
+          <option value="d2_trough">D2 trough</option>
+          <option value="fixed" selected>Fixed timing</option>
+        </select>
+        <span id="fjfi-mode-badge-params" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
+        <button class="btn btn-outline-secondary btn-sm ml-auto" id="copy-params-btn">
           Copy table
         </button>
       </div>
@@ -1374,19 +1405,33 @@
             <div class="col-auto">
               <span id="refit-status" class="text-muted" style="font-size:0.85em;"></span>
             </div>
-            <div class="col-auto ml-auto align-items-center" id="fjfi-timing-wrap" style="display:none">
-              <small class="text-muted mr-1">F<sub>J</sub>/F<sub>I</sub> for JIP params:</small>
-              <div class="btn-group btn-group-toggle btn-group-sm" data-toggle="buttons">
-                <label class="btn btn-outline-info btn-sm active" id="fjfi-radio-fixed-label" style="font-size:0.78em;padding:2px 8px">
-                  <input type="radio" name="fjfi-timing" id="fjfi-radio-fixed" value="fixed" checked> Fixed
-                </label>
-                <label class="btn btn-outline-warning btn-sm" id="fjfi-radio-auto-label" style="font-size:0.78em;padding:2px 8px">
-                  <input type="radio" name="fjfi-timing" id="fjfi-radio-auto" value="auto"> Auto-detected
-                </label>
-              </div>
-              <span id="fjfi-mode-badge-diag" class="badge badge-info ml-2 mr-2" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
-              <span id="fit-quality-badge" class="badge" style="font-size:0.8em;display:none"></span>
+          </div>
+          <div class="d-flex align-items-center mb-2" id="fjfi-timing-wrap" style="display:none;gap:0.4rem">
+            <small class="text-muted font-weight-bold" style="font-size:0.82em">Selected F<sub>J</sub>/F<sub>I</sub> timing:</small>
+            <small class="text-muted" style="font-size:0.82em">F<sub>J</sub>:</small>
+            <select id="fj-mode-diag" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
+              <option value="d2_zero">D2 zero-crossing</option>
+              <option value="poly_inflect">Polynomial inflection</option>
+              <option value="d2_trough">D2 trough</option>
+              <option value="fixed" selected>Fixed timing</option>
+            </select>
+            <div class="input-group input-group-sm d-inline-flex" id="fj-fixed-time-diag-wrap" style="width:auto;font-size:0.82em">
+              <input type="number" id="fj-fixed-time-diag" class="form-control" value="2.0" min="0" max="50" step="0.1" style="width:70px;font-size:inherit">
+              <div class="input-group-append"><span class="input-group-text" style="font-size:inherit">ms</span></div>
             </div>
+            <small class="text-muted" style="font-size:0.82em">F<sub>I</sub>:</small>
+            <select id="fi-mode-diag" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
+              <option value="d2_zero">D2 zero-crossing</option>
+              <option value="poly_inflect">Polynomial inflection</option>
+              <option value="d2_trough">D2 trough</option>
+              <option value="fixed" selected>Fixed timing</option>
+            </select>
+            <div class="input-group input-group-sm d-inline-flex" id="fi-fixed-time-diag-wrap" style="width:auto;font-size:0.82em">
+              <input type="number" id="fi-fixed-time-diag" class="form-control" value="30.0" min="10" max="500" step="0.1" style="width:70px;font-size:inherit">
+              <div class="input-group-append"><span class="input-group-text" style="font-size:inherit">ms</span></div>
+            </div>
+            <span id="fjfi-mode-badge-diag" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
+            <span id="fit-quality-badge" class="badge" style="font-size:0.8em;display:none"></span>
           </div>
           <!-- Fitting method help (collapsed by default) -->
           <details class="mb-4" style="font-size:0.85em">
@@ -1544,11 +1589,18 @@
               <span id="f0-time-note" class="text-info ml-2" style="display:none; font-size:0.85em;">&#9432; Time axis will be rescaled &mdash; click Re-fit to apply</span>
             </div>
           </div>
-          <!-- FJ/FI detection mode -->
+          <!-- FJ / FI detection mode (separate dropdowns) -->
           <div class="form-row align-items-center mb-2">
             <div class="col-auto">
-              <label class="mb-0 mr-1">FJ/FI detection:</label>
-              <select id="fjfi-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
+              <label class="mb-0 mr-1">F<sub>J</sub> detection:</label>
+              <select id="fj-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="d2_zero">D2 zero-crossing (D1 minimum)</option>
+                <option value="poly_inflect">Polynomial inflection</option>
+                <option value="d2_trough">D2 trough</option>
+                <option value="fixed">Fixed timing</option>
+              </select>
+              <label class="mb-0 mr-1 ml-3">F<sub>I</sub> detection:</label>
+              <select id="fi-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="d2_zero">D2 zero-crossing (D1 minimum)</option>
                 <option value="poly_inflect">Polynomial inflection</option>
                 <option value="d2_trough">D2 trough</option>

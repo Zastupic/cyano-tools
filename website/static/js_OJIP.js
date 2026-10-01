@@ -11,31 +11,28 @@ let chartInst = {};     // {chartId: Chart instance}
 let dirtyTabs = new Set(); // tabs whose charts need rendering on first visit
 let fjfiMode  = 'default'; // 'default' (2/30 ms) or 'auto' (derivative-detected)
 
-/** Is the "Auto-detected" FJ/FI radio selected? Checks both input.checked
- *  and Bootstrap's active class (jQuery toggle doesn't always sync checked).
- *  Diagnostics radio is authoritative; sidebar is a fallback only. */
+/** Is any auto-detected FJ/FI mode active? True if either FJ or FI dropdown
+ *  is not 'fixed'. Diagnostics dropdowns are authoritative; radio/sidebar fallback. */
 function _wantDerivTiming() {
-  // FJ/FI detection dropdown (diagnostics tab) is authoritative
-  const dd = document.getElementById('fjfi-detect-mode');
-  if (dd) return dd.value !== 'fixed';
-  // Fallback: diagnostics radio
-  const diagAuto = document.getElementById('fjfi-radio-auto');
-  if (diagAuto) {
-    return diagAuto.checked ||
-      (document.getElementById('fjfi-radio-auto-label')?.classList.contains('active') ?? false);
-  }
-  // Fallback: sidebar radio (only if diagnostics elements missing)
-  const sidebarAuto = document.getElementById('fjfi-sidebar-auto');
-  if (sidebarAuto) {
-    return sidebarAuto.checked ||
-      (document.getElementById('fjfi-sidebar-auto-label')?.classList.contains('active') ?? false);
-  }
+  const fjdd = document.getElementById('fj-detect-mode');
+  const fidd = document.getElementById('fi-detect-mode');
+  if (fjdd && fidd) return fjdd.value !== 'fixed' || fidd.value !== 'fixed';
   return false;
+}
+/** Per-point auto: is FJ using auto-detection? */
+function _wantFjDerivTiming() {
+  const dd = document.getElementById('fj-detect-mode');
+  return dd ? dd.value !== 'fixed' : _wantDerivTiming();
+}
+/** Per-point auto: is FI using auto-detection? */
+function _wantFiDerivTiming() {
+  const dd = document.getElementById('fi-detect-mode');
+  return dd ? dd.value !== 'fixed' : _wantDerivTiming();
 }
 
 /** Mode-aware FJ auto-detected timing from key_values. */
 function _fjAutoTime(kv) {
-  const mode = document.getElementById('fjfi-detect-mode')?.value || 'd2_zero';
+  const mode = document.getElementById('fj-detect-mode')?.value || 'd2_zero';
   if (mode === 'd2_zero')      return kv.FJ_time_d2zero_ms ?? kv.FJ_time_inflect_ms ?? kv.FJ_time_deriv_ms;
   if (mode === 'poly_inflect') return kv.FJ_time_inflect_ms ?? kv.FJ_time_deriv_ms;
   if (mode === 'd2_trough')    return kv.FJ_time_deriv_ms;
@@ -43,7 +40,7 @@ function _fjAutoTime(kv) {
 }
 /** Mode-aware FI auto-detected timing from key_values. */
 function _fiAutoTime(kv) {
-  const mode = document.getElementById('fjfi-detect-mode')?.value || 'd2_zero';
+  const mode = document.getElementById('fi-detect-mode')?.value || 'd2_zero';
   if (mode === 'd2_zero')      return kv.FI_time_d2zero_ms ?? kv.FI_time_inflect_ms ?? kv.FI_time_deriv_ms;
   if (mode === 'poly_inflect') return kv.FI_time_inflect_ms ?? kv.FI_time_deriv_ms;
   if (mode === 'd2_trough')    return kv.FI_time_deriv_ms;
@@ -498,6 +495,8 @@ const MC = (() => {
           oj_model_params: jipOpts.ojModelParams || null,
           f0_time_ms:      jipOpts.f0TimMs || null,
           use_deriv_timing: jipOpts.useDerivTiming || false,
+          fj_detect_mode:  jipOpts.fjDetectMode || 'fixed',
+          fi_detect_mode:  jipOpts.fiDetectMode || 'fixed',
           s_point_mode:    jipOpts.sPointMode || 'inflection',
           p_point_mode:    jipOpts.pPointMode || 'd2_trough',
           include_curves: false,
@@ -1301,6 +1300,7 @@ const MC = (() => {
 
     // Fetch full curves for this one curve
     const _dc = mcDataset.curves.find(c => c.index === _slotToIndex(slot));
+    if (!_dc) { console.error('Detail: curve not found for slot', slot, 'index', _slotToIndex(slot)); return; }
     const body = {
       fluorometer: mcDataset.fluorometer,
       time_native: Array.from(mcDataset.timeUs),
@@ -1324,6 +1324,8 @@ const MC = (() => {
       ..._buildOjDensifyPayload(),
       f0_time_ms:      (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
       use_deriv_timing: _wantDerivTiming(),
+      fj_detect_mode:  document.getElementById('fj-detect-mode')?.value || 'fixed',
+      fi_detect_mode:  document.getElementById('fi-detect-mode')?.value || 'fixed',
       s_point_mode:    document.getElementById('s-point-mode')?.value || 'inflection',
       p_point_mode:    document.getElementById('p-point-mode')?.value || 'd2_trough',
       include_curves: true,
@@ -4108,6 +4110,60 @@ function _populateDensifyInputs(info) {
   // fixed constraint for every subsequent fit, defeating per-curve fitting.
 }
 
+// ── FJ/FI detection mode dropdown sync system ──────────────────────────────
+// All FJ / FI dropdowns across tabs stay in sync. The authoritative pair
+// (fj-detect-mode / fi-detect-mode) is read by helper functions and API calls.
+const _FJ_DD_IDS = ['fj-detect-mode', 'fj-mode-diag', 'fj-mode-curves', 'fj-mode-params', 'fj-mode-sidebar'];
+const _FI_DD_IDS = ['fi-detect-mode', 'fi-mode-diag', 'fi-mode-curves', 'fi-mode-params', 'fi-mode-sidebar'];
+
+function _syncAllFjDropdowns(value) {
+  for (const id of _FJ_DD_IDS) { const el = document.getElementById(id); if (el) el.value = value; }
+}
+function _syncAllFiDropdowns(value) {
+  for (const id of _FI_DD_IDS) { const el = document.getElementById(id); if (el) el.value = value; }
+}
+
+/** Show/hide the diagnostics fixed-time inputs based on dropdown selection. */
+function _syncFixedTimeInputsVisibility() {
+  const fjWrap = document.getElementById('fj-fixed-time-diag-wrap');
+  const fiWrap = document.getElementById('fi-fixed-time-diag-wrap');
+  const fjMode = document.getElementById('fj-detect-mode')?.value || 'fixed';
+  const fiMode = document.getElementById('fi-detect-mode')?.value || 'fixed';
+  if (fjWrap) fjWrap.style.display = fjMode === 'fixed' ? '' : 'none';
+  if (fiWrap) fiWrap.style.display = fiMode === 'fixed' ? '' : 'none';
+}
+
+/** Sync diagnostics fixed-time inputs FROM sidebar inputs. */
+function _syncDiagFixedTimeFromSidebar() {
+  const fjDiag = document.getElementById('fj-fixed-time-diag');
+  const fiDiag = document.getElementById('fi-fixed-time-diag');
+  const fjSide = document.getElementById('FJ_time');
+  const fiSide = document.getElementById('FI_time');
+  if (fjDiag && fjSide) fjDiag.value = fjSide.value;
+  if (fiDiag && fiSide) fiDiag.value = fiSide.value;
+}
+
+/** Recalculate FJ/FI timing + JIP params for all curves using per-point
+ *  auto/fixed logic, update fjfiMode, badges, and refresh all tabs. */
+function _recalcFjFiForAllCurves() {
+  if (!ojipData || !ojipData.files) return;
+  const fjFixed = parseFloat(document.getElementById('FJ_time').value) || 2.0;
+  const fiFixed = parseFloat(document.getElementById('FI_time').value) || 30.0;
+  for (const fname of ojipData.files) {
+    const kv = ojipData.key_values[fname];
+    if (!kv) continue;
+    const fjAuto = _wantFjDerivTiming() ? _fjAutoTime(kv) : null;
+    const fiAuto = _wantFiDerivTiming() ? _fiAutoTime(kv) : null;
+    const fjMs = fjAuto != null ? fjAuto : fjFixed;
+    const fiMs = fiAuto != null ? fiAuto : fiFixed;
+    ojipData.key_values[fname] = recalcKeyValues(fname, fjMs, fiMs);
+    paramData[fname] = calcJIP(ojipData.key_values[fname]);
+  }
+  fjfiMode = _wantDerivTiming() ? 'auto' : 'default';
+  _updateFjFiBadges();
+  _refreshAfterTimingChange();
+}
+
 // ── init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Restore saved fluorometer
@@ -4161,125 +4217,51 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('copy-params-btn').addEventListener('click', copyParamsTable);
 
   // Toggle FJ/FI between default (2/30 ms) and auto-detected timings
-  document.getElementById('reset-fj-fi-btn').addEventListener('click', toggleFJFI);
-  document.getElementById('reset-fj-fi-btn-curves').addEventListener('click', toggleFJFI);
-
-  // FJ/FI timing radio (diagnostics tab) — switching immediately recalculates
-  // key_values across all curves and refreshes Curves / Params / Groups tabs.
-  document.querySelectorAll('input[name="fjfi-timing"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (!ojipData || !ojipData.files) return;
-      const wantAuto = radio.value === 'auto';
-      // Sync dropdown
-      const dd = document.getElementById('fjfi-detect-mode');
-      if (dd) dd.value = wantAuto ? (dd.value === 'fixed' ? 'd2_zero' : dd.value) : 'fixed';
-      for (const fname of ojipData.files) {
-        const kv = ojipData.key_values[fname];
-        if (!kv) continue;
-        const fjAuto = _fjAutoTime(kv);
-        const fiAuto = _fiAutoTime(kv);
-        if (wantAuto && fjAuto != null && fiAuto != null) {
-          ojipData.key_values[fname] = recalcKeyValues(fname, fjAuto, fiAuto);
-        } else {
-          ojipData.key_values[fname] = recalcKeyValues(fname,
-            parseFloat(document.getElementById('FJ_time').value) || 2.0,
-            parseFloat(document.getElementById('FI_time').value) || 30.0);
-        }
-        paramData[fname] = calcJIP(ojipData.key_values[fname]);
-      }
-      fjfiMode = wantAuto ? 'auto' : 'default';
-      _updateFJFIBtnLabels();
-      _refreshAfterTimingChange();
+  // Wire change events: any FJ dropdown → sync all FJ dropdowns + recalc
+  _FJ_DD_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      _syncAllFjDropdowns(el.value);
+      _recalcFjFiForAllCurves();
+    });
+  });
+  _FI_DD_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      _syncAllFiDropdowns(el.value);
+      _recalcFjFiForAllCurves();
     });
   });
 
-  // FJ/FI detection dropdown (diagnostics tab) — immediately recalculates
-  // key_values when the selected detection method changes.
-  const fjfiDropdown = document.getElementById('fjfi-detect-mode');
-  if (fjfiDropdown) {
-    fjfiDropdown.addEventListener('change', () => {
-      const mode = fjfiDropdown.value;
-      const wantAuto = mode !== 'fixed';
-      // Sync radios
-      const fixedRadio = document.getElementById('fjfi-radio-fixed');
-      const autoRadio  = document.getElementById('fjfi-radio-auto');
-      const fixedLabel = document.getElementById('fjfi-radio-fixed-label');
-      const autoLabel  = document.getElementById('fjfi-radio-auto-label');
-      if (fixedRadio && autoRadio) {
-        fixedRadio.checked = !wantAuto;
-        autoRadio.checked  = wantAuto;
-      }
-      if (fixedLabel && autoLabel) {
-        fixedLabel.classList.toggle('active', !wantAuto);
-        autoLabel.classList.toggle('active',  wantAuto);
-      }
-      // Recalculate if data is loaded
-      if (ojipData && ojipData.files) {
-        for (const fname of ojipData.files) {
-          const kv = ojipData.key_values[fname];
-          if (!kv) continue;
-          const fjAuto = _fjAutoTime(kv);
-          const fiAuto = _fiAutoTime(kv);
-          if (wantAuto && fjAuto != null && fiAuto != null) {
-            ojipData.key_values[fname] = recalcKeyValues(fname, fjAuto, fiAuto);
-          } else {
-            ojipData.key_values[fname] = recalcKeyValues(fname,
-              parseFloat(document.getElementById('FJ_time').value) || 2.0,
-              parseFloat(document.getElementById('FI_time').value) || 30.0);
-          }
-          paramData[fname] = calcJIP(ojipData.key_values[fname]);
-        }
-      }
-      fjfiMode = wantAuto ? 'auto' : 'default';
-      _updateFJFIBtnLabels();
-      if (ojipData && ojipData.files) _refreshAfterTimingChange();
+  // Diagnostics fixed-time inputs: two-way sync with sidebar FJ_time / FI_time
+  const fjFixedDiag = document.getElementById('fj-fixed-time-diag');
+  const fiFixedDiag = document.getElementById('fi-fixed-time-diag');
+  const fjTimeSide  = document.getElementById('FJ_time');
+  const fiTimeSide  = document.getElementById('FI_time');
+  if (fjFixedDiag && fjTimeSide) {
+    fjFixedDiag.addEventListener('input', () => {
+      fjTimeSide.value = fjFixedDiag.value;
+      _recalcFjFiForAllCurves();
     });
   }
-
-  // Sidebar FJ/FI timing radio — mirrors the diagnostics radio behaviour.
-  // Before analysis: just updates fjfiMode for the next upload/batch.
-  // After analysis: recalculates JIP params like the diagnostics radio.
-  document.querySelectorAll('input[name="fjfi-timing-sidebar"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      const wantAuto = radio.value === 'auto';
-      // Sync dropdown
-      const dd = document.getElementById('fjfi-detect-mode');
-      if (dd) dd.value = wantAuto ? (dd.value === 'fixed' ? 'd2_zero' : dd.value) : 'fixed';
-      // Sync diagnostics radio
-      const fixedRadio = document.getElementById('fjfi-radio-fixed');
-      const autoRadio  = document.getElementById('fjfi-radio-auto');
-      const fixedLabel = document.getElementById('fjfi-radio-fixed-label');
-      const autoLabel  = document.getElementById('fjfi-radio-auto-label');
-      if (fixedRadio && autoRadio) {
-        fixedRadio.checked = !wantAuto;
-        autoRadio.checked  = wantAuto;
-      }
-      if (fixedLabel && autoLabel) {
-        fixedLabel.classList.toggle('active', !wantAuto);
-        autoLabel.classList.toggle('active',  wantAuto);
-      }
-      // If data is loaded, recalculate
-      if (ojipData && ojipData.files) {
-        for (const fname of ojipData.files) {
-          const kv = ojipData.key_values[fname];
-          if (!kv) continue;
-          const fjAuto = _fjAutoTime(kv);
-          const fiAuto = _fiAutoTime(kv);
-          if (wantAuto && fjAuto != null && fiAuto != null) {
-            ojipData.key_values[fname] = recalcKeyValues(fname, fjAuto, fiAuto);
-          } else {
-            ojipData.key_values[fname] = recalcKeyValues(fname,
-              parseFloat(document.getElementById('FJ_time').value) || 2.0,
-              parseFloat(document.getElementById('FI_time').value) || 30.0);
-          }
-          paramData[fname] = calcJIP(ojipData.key_values[fname]);
-        }
-      }
-      fjfiMode = wantAuto ? 'auto' : 'default';
-      _updateFJFIBtnLabels();
-      if (ojipData && ojipData.files) _refreshAfterTimingChange();
+  if (fiFixedDiag && fiTimeSide) {
+    fiFixedDiag.addEventListener('input', () => {
+      fiTimeSide.value = fiFixedDiag.value;
+      _recalcFjFiForAllCurves();
     });
-  });
+  }
+  if (fjTimeSide && fjFixedDiag) {
+    fjTimeSide.addEventListener('input', () => {
+      fjFixedDiag.value = fjTimeSide.value;
+    });
+  }
+  if (fiTimeSide && fiFixedDiag) {
+    fiTimeSide.addEventListener('input', () => {
+      fiFixedDiag.value = fiTimeSide.value;
+    });
+  }
+  _syncDiagFixedTimeFromSidebar();
+  _syncFixedTimeInputsVisibility();
 
   // Groups tab
   document.getElementById('select-all-check').addEventListener('change', e => {
@@ -4678,7 +4660,8 @@ async function uploadAndAnalyze() {
   fd.append('f0_source',       document.getElementById('f0-source-sel')?.value || 'instrument');
   fd.append('knot_placement',  document.getElementById('knot-placement-sel')?.value || 'hybrid');
   fd.append('use_deriv_timing', _wantDerivTiming() ? 'true' : 'false');
-  fd.append('fjfi_detect_mode', document.getElementById('fjfi-detect-mode')?.value || 'd2_zero');
+  fd.append('fj_detect_mode', document.getElementById('fj-detect-mode')?.value || 'd2_zero');
+  fd.append('fi_detect_mode', document.getElementById('fi-detect-mode')?.value || 'd2_zero');
   fd.append('s_point_mode', document.getElementById('s-point-mode')?.value || 'inflection');
   fd.append('p_point_mode', document.getElementById('p-point-mode')?.value || 'd2_trough');
   const _f0Val = parseFloat(document.getElementById('f0-time-input')?.value);
@@ -4747,7 +4730,10 @@ async function uploadAndAnalyze() {
     groups   = {};
     // Sync FJ/FI timing mode with the sidebar selection used for this upload
     fjfiMode = _wantDerivTiming() ? 'auto' : 'default';
-    _updateFJFIBtnLabels();
+    _syncAllFjDropdowns(document.getElementById('fj-detect-mode')?.value || 'fixed');
+    _syncAllFiDropdowns(document.getElementById('fi-detect-mode')?.value || 'fixed');
+    _syncDiagFixedTimeFromSidebar();
+    _updateFjFiBadges();
     // Sync annotation instrument select with the OJIP fluorometer selection so
     // the field is pre-filled when the user switches to the Annotation tab.
     if (data.fluorometer) {
@@ -4861,6 +4847,8 @@ async function mcStartAnalysis() {
     ojModelParams: null,
     f0TimMs:       null,
     useDerivTiming: _wantDerivTiming(),
+    fjDetectMode: document.getElementById('fj-detect-mode')?.value || 'fixed',
+    fiDetectMode: document.getElementById('fi-detect-mode')?.value || 'fixed',
   };
   _lastSelected = selected.slice();
   _lastJipOpts  = Object.assign({}, jipOpts);
@@ -4914,9 +4902,11 @@ async function mcStartAnalysis() {
     // Batch quality banners (fit + timing confidence)
     _updateBatchQualityAlerts(result);
 
-    // Sync badge with the radio selection used for this analysis
+    // Sync badge with the detection modes used for this analysis
     fjfiMode = jipOpts.useDerivTiming ? 'auto' : 'default';
-    _updateFJFIBtnLabels();
+    _syncAllFjDropdowns(document.getElementById('fj-detect-mode')?.value || 'fixed');
+    _syncAllFiDropdowns(document.getElementById('fi-detect-mode')?.value || 'fixed');
+    _updateFjFiBadges();
   }
 }
 
@@ -4937,7 +4927,9 @@ function renderResults() {
   // viewing a single-curve detail from batch mode (preserve the batch setting).
   if (!(mcDataset && mcIsActive)) {
     fjfiMode = 'default';
-    _updateFJFIBtnLabels();
+    _syncAllFjDropdowns('fixed');
+    _syncAllFiDropdowns('fixed');
+    _updateFjFiBadges();
   }
 
   renderCurvesChart('raw');
@@ -6013,67 +6005,27 @@ function _renderGaussianD1Fit() {
   buildScrollLegend('diag-method-fit-chart', ds => ds.label && ds.label.endsWith(' D1'));
 }
 
-// ── toggle FJ / FI between default (2/30 ms) and auto-detected ───────────
-function toggleFJFI() {
-  if (fjfiMode === 'default') {
-    // Apply auto-detected derivative timings
-    let applied = 0;
-    for (const fname of ojipData.files) {
-      const kv   = ojipData.key_values[fname];
-      const fjMs = _fjAutoTime(kv);
-      const fiMs = _fiAutoTime(kv);
-      if (fjMs != null && fiMs != null && fjMs < fiMs) {
-        const newKv = recalcKeyValues(fname, fjMs, fiMs);
-        ojipData.key_values[fname] = newKv;
-        paramData[fname] = calcJIP(newKv);
-        applied++;
-      }
-    }
-    if (!applied) return;
-    fjfiMode = 'auto';
+// ── Update FJ/FI mode badges across all tabs ─────────────────────────────
+function _updateFjFiBadges() {
+  const _MODE_SHORT = {d2_zero:'D2-zero', poly_inflect:'poly', d2_trough:'D2-trough', fixed:'fixed'};
+  const fjMode = document.getElementById('fj-detect-mode')?.value || 'd2_zero';
+  const fiMode = document.getElementById('fi-detect-mode')?.value || 'd2_zero';
+  const fjAuto = fjMode !== 'fixed', fiAuto = fiMode !== 'fixed';
+  const fjMs = parseFloat(document.getElementById('FJ_time')?.value) || 2.0;
+  const fiMs = parseFloat(document.getElementById('FI_time')?.value) || 30.0;
+  var badgeHtml, badgeClass;
+  if (!fjAuto && !fiAuto) {
+    badgeHtml = 'F<sub>J</sub>/F<sub>I</sub>: fixed ' + fjMs + '/' + fiMs + ' ms';
+    badgeClass = 'badge-info';
+  } else if (fjMode === fiMode) {
+    badgeHtml = 'F<sub>J</sub>/F<sub>I</sub>: ' + _MODE_SHORT[fjMode];
+    badgeClass = 'badge-warning';
   } else {
-    // Reset to 2/30 ms defaults
-    for (const fname of ojipData.files) {
-      const newKv = recalcKeyValues(fname, 2.0, 30.0);
-      ojipData.key_values[fname] = newKv;
-      paramData[fname] = calcJIP(newKv);
-    }
-    fjfiMode = 'default';
+    const fjTxt = fjAuto ? _MODE_SHORT[fjMode] : 'fixed ' + fjMs + ' ms';
+    const fiTxt = fiAuto ? _MODE_SHORT[fiMode] : 'fixed ' + fiMs + ' ms';
+    badgeHtml = 'F<sub>J</sub>: ' + fjTxt + ' / F<sub>I</sub>: ' + fiTxt;
+    badgeClass = 'badge-warning';
   }
-  // Sync the diagnostics radio buttons with the new mode
-  const fixedRadio = document.getElementById('fjfi-radio-fixed');
-  const autoRadio  = document.getElementById('fjfi-radio-auto');
-  const fixedLabel = document.getElementById('fjfi-radio-fixed-label');
-  const autoLabel  = document.getElementById('fjfi-radio-auto-label');
-  if (fixedRadio && autoRadio) {
-    fixedRadio.checked = fjfiMode === 'default';
-    autoRadio.checked  = fjfiMode === 'auto';
-  }
-  if (fixedLabel && autoLabel) {
-    fixedLabel.classList.toggle('active', fjfiMode === 'default');
-    autoLabel.classList.toggle('active',  fjfiMode === 'auto');
-  }
-  // Sync dropdown
-  const dd = document.getElementById('fjfi-detect-mode');
-  if (dd) dd.value = fjfiMode === 'auto' ? (dd.value === 'fixed' ? 'd2_zero' : dd.value) : 'fixed';
-  _updateFJFIBtnLabels();
-  _refreshAfterTimingChange();
-}
-
-function _updateFJFIBtnLabels() {
-  const html = fjfiMode === 'default'
-    ? 'Use auto-detected F<sub>J</sub>/F<sub>I</sub>'
-    : 'Reset F<sub>J</sub>/F<sub>I</sub> to 2/30 ms';
-  const btn1 = document.getElementById('reset-fj-fi-btn');
-  const btn2 = document.getElementById('reset-fj-fi-btn-curves');
-  if (btn1) btn1.innerHTML = html;
-  if (btn2) btn2.innerHTML = html;
-
-  // Update mode badges across all tabs
-  const badgeHtml = fjfiMode === 'default'
-    ? 'F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms'
-    : 'F<sub>J</sub>/F<sub>I</sub>: auto-detected';
-  const badgeClass = fjfiMode === 'default' ? 'badge-info' : 'badge-warning';
   const badges = {
     'fjfi-mode-badge-curves': 'badge ' + badgeClass + ' ml-2',
     'fjfi-mode-badge-params': 'badge ' + badgeClass + ' ml-auto mr-2',
@@ -6083,21 +6035,8 @@ function _updateFJFIBtnLabels() {
     const el = document.getElementById(id);
     if (el) { el.innerHTML = badgeHtml; el.className = cls; el.style.fontSize = '0.8em'; }
   }
-
-  // Sync sidebar radio with current fjfiMode
-  const isAuto = fjfiMode === 'auto';
-  const sbFixed = document.getElementById('fjfi-sidebar-fixed');
-  const sbAuto  = document.getElementById('fjfi-sidebar-auto');
-  const sbFixedLbl = document.getElementById('fjfi-sidebar-fixed-label');
-  const sbAutoLbl  = document.getElementById('fjfi-sidebar-auto-label');
-  if (sbFixed && sbAuto) {
-    sbFixed.checked = !isAuto;
-    sbAuto.checked  = isAuto;
-  }
-  if (sbFixedLbl && sbAutoLbl) {
-    sbFixedLbl.classList.toggle('active', !isAuto);
-    sbAutoLbl.classList.toggle('active',  isAuto);
-  }
+  // Show/hide fixed-time inputs on diagnostics tab
+  _syncFixedTimeInputsVisibility();
 }
 
 // ── apply polynomial-identified FJ / FI ───────────────────────────────────
@@ -6258,6 +6197,8 @@ async function mcRefitBatch() {
     })(),
     f0TimMs: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
     useDerivTiming: _wantDerivTiming(),
+    fjDetectMode: document.getElementById('fj-detect-mode')?.value || 'fixed',
+    fiDetectMode: document.getElementById('fi-detect-mode')?.value || 'fixed',
     sPointMode: document.getElementById('s-point-mode')?.value || 'inflection',
     pPointMode: document.getElementById('p-point-mode')?.value || 'd2_trough',
   };
@@ -6287,7 +6228,7 @@ async function mcRefitBatch() {
 
   // Sync badge with the radio selection used for this batch
   fjfiMode = jipOpts.useDerivTiming ? 'auto' : 'default';
-  _updateFJFIBtnLabels();
+  _updateFjFiBadges();
 
   // Re-apply reference FM if it was active before refit
   if (hadRefFM) MC.reapplyRefFM();
@@ -6379,7 +6320,8 @@ async function refitSplines() {
         raw_fm_f0,
         s_point_mode: document.getElementById('s-point-mode')?.value || 'inflection',
         p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_trough',
-        fjfi_detect_mode: document.getElementById('fjfi-detect-mode')?.value || 'd2_zero',
+        fj_detect_mode: document.getElementById('fj-detect-mode')?.value || 'd2_zero',
+        fi_detect_mode: document.getElementById('fi-detect-mode')?.value || 'd2_zero',
       }),
     });
     const data = await resp.json();
@@ -6396,25 +6338,21 @@ async function refitSplines() {
       }
     }
 
-    // Sync user-editable FJ/FI timing: respect the radio selection
-    const wantAuto = _wantDerivTiming();
+    // Sync user-editable FJ/FI timing: respect per-point radio/dropdown selection
+    const fjFixed = parseFloat(document.getElementById('FJ_time').value) || 2.0;
+    const fiFixed = parseFloat(document.getElementById('FI_time').value) || 30.0;
     for (const fname of ojipData.files) {
       const kv = ojipData.key_values[fname];
       if (!kv) continue;  // guard: no key_values for this curve
-      const fjAuto = _fjAutoTime(kv);
-      const fiAuto = _fiAutoTime(kv);
-      if (wantAuto && fjAuto != null && fiAuto != null) {
-        const updated = recalcKeyValues(fname, fjAuto, fiAuto);
-        if (updated) ojipData.key_values[fname] = updated;
-      } else {
-        const fjMs = parseFloat(document.getElementById('FJ_time').value) || 2.0;
-        const fiMs = parseFloat(document.getElementById('FI_time').value) || 30.0;
-        const updated = recalcKeyValues(fname, fjMs, fiMs);
-        if (updated) ojipData.key_values[fname] = updated;
-      }
+      const fjAuto = _wantFjDerivTiming() ? _fjAutoTime(kv) : null;
+      const fiAuto = _wantFiDerivTiming() ? _fiAutoTime(kv) : null;
+      const fjMs = fjAuto != null ? fjAuto : fjFixed;
+      const fiMs = fiAuto != null ? fiAuto : fiFixed;
+      const updated = recalcKeyValues(fname, fjMs, fiMs);
+      if (updated) ojipData.key_values[fname] = updated;
     }
-    fjfiMode = wantAuto ? 'auto' : 'default';
-    _updateFJFIBtnLabels();
+    fjfiMode = _wantDerivTiming() ? 'auto' : 'default';
+    _updateFjFiBadges();
 
     // When time axis was rescaled, re-read FJ/FI/FK/F50 values from raw data
     // at the new time coordinates returned by the refit
@@ -6828,9 +6766,10 @@ function generateOJIPMethodsText() {
         fiTime + '\u202fms, respectively.'
     );
 
-    // FJ/FI detection method
-    var fjfiDetect = document.getElementById('fjfi-detect-mode')?.value || 'd2_zero';
-    var FJFI_M_LABELS = {
+    // FJ/FI detection methods (may differ per point)
+    var fjDetect = document.getElementById('fj-detect-mode')?.value || 'd2_zero';
+    var fiDetect = document.getElementById('fi-detect-mode')?.value || 'd2_zero';
+    var _JOINT_LABELS = {
       d2_zero: 'The J and I inflection points were identified from the second derivative (D2) zero-crossings ' +
         '(negative\u2192positive transitions) of the fitted spline, corresponding to local minima of the first derivative (D1).',
       poly_inflect: 'The J and I inflection points were identified from local polynomial inflection points ' +
@@ -6839,7 +6778,20 @@ function generateOJIPMethodsText() {
         'within the O\u2013J and J\u2013I search windows.',
       fixed: 'Fixed J (' + fjTime + '\u202fms) and I (' + fiTime + '\u202fms) timings were used.',
     };
-    if (FJFI_M_LABELS[fjfiDetect]) lines.push(FJFI_M_LABELS[fjfiDetect]);
+    var _PER_POINT_LABELS = {
+      d2_zero: 'D2 zero-crossing (D1 minimum)',
+      poly_inflect: 'polynomial inflection (D2=0, D3>0)',
+      d2_trough: 'D2 trough (deepest D2 minimum)',
+      fixed: 'fixed timing',
+    };
+    if (fjDetect === fiDetect) {
+      if (_JOINT_LABELS[fjDetect]) lines.push(_JOINT_LABELS[fjDetect]);
+    } else {
+      lines.push('The J inflection point was identified using ' +
+        (_PER_POINT_LABELS[fjDetect] || fjDetect) + (fjDetect === 'fixed' ? ' (' + fjTime + '\u202fms)' : '') + '. ' +
+        'The I inflection point was identified using ' +
+        (_PER_POINT_LABELS[fiDetect] || fiDetect) + (fiDetect === 'fixed' ? ' (' + fiTime + '\u202fms)' : '') + '.');
+    }
 
     lines.push(
         'JIP-test parameters were calculated according to the methodology of Strasser et al. (2000) and ' +
@@ -7451,7 +7403,8 @@ function _collectMethodInfo() {
       ? paramMatrix.filter(r => r && !r.error && r.deriv_timing_used).length : 0,
     s_point_mode:     document.getElementById('s-point-mode')?.value || 'inflection',
     p_point_mode:     document.getElementById('p-point-mode')?.value || 'd2_trough',
-    fjfi_detect_mode: document.getElementById('fjfi-detect-mode')?.value || 'd2_zero',
+    fj_detect_mode:   document.getElementById('fj-detect-mode')?.value || 'd2_zero',
+    fi_detect_mode:   document.getElementById('fi-detect-mode')?.value || 'd2_zero',
   };
 }
 
@@ -7482,9 +7435,15 @@ function _formatMethodInfoText(mi) {
     d2_trough: 'D2 trough (deepest D2 minimum)',
     fixed: 'Fixed timing',
   };
-  const fjfiDetMode = mi.fjfi_detect_mode || 'd2_zero';
+  const fjDetMode = mi.fj_detect_mode || mi.fjfi_detect_mode || 'd2_zero';
+  const fiDetMode = mi.fi_detect_mode || mi.fjfi_detect_mode || 'd2_zero';
   if (SPLINE_METHODS.has(fm)) {
-    lines.push('FJ / FI detection:      ' + (FJFI_MODE_LABELS[fjfiDetMode] || fjfiDetMode));
+    if (fjDetMode === fiDetMode) {
+      lines.push('FJ / FI detection:      ' + (FJFI_MODE_LABELS[fjDetMode] || fjDetMode));
+    } else {
+      lines.push('FJ detection:           ' + (FJFI_MODE_LABELS[fjDetMode] || fjDetMode));
+      lines.push('FI detection:           ' + (FJFI_MODE_LABELS[fiDetMode] || fiDetMode));
+    }
   } else {
     lines.push('FJ / FI detection:      Method-specific (reconstruction via log-time spline)');
   }
@@ -7494,8 +7453,12 @@ function _formatMethodInfoText(mi) {
     'FJ search window:       ' + (mi.FJ_time_ms || '\u2014') + ' ms',
     'FI search window:       ' + (mi.FI_time_ms || '\u2014') + ' ms',
   );
-  if (fjfiDetMode !== 'fixed') {
-    lines.push('FJ/FI for JIP params:   Auto-detected (' + (FJFI_MODE_LABELS[fjfiDetMode] || fjfiDetMode) + ')');
+  const anyAuto = fjDetMode !== 'fixed' || fiDetMode !== 'fixed';
+  if (anyAuto) {
+    const modeDesc = fjDetMode === fiDetMode
+      ? (FJFI_MODE_LABELS[fjDetMode] || fjDetMode)
+      : 'FJ: ' + (FJFI_MODE_LABELS[fjDetMode] || fjDetMode) + ', FI: ' + (FJFI_MODE_LABELS[fiDetMode] || fiDetMode);
+    lines.push('FJ/FI for JIP params:   Auto-detected (' + modeDesc + ')');
     if (mi.total_curves > 0) {
       const fallback = mi.total_curves - mi.deriv_timing_count;
       lines.push('  Auto-detected:        ' + mi.deriv_timing_count + '/' + mi.total_curves + ' curves'
@@ -7689,7 +7652,8 @@ async function startBatchExport() {
           f0_time_ms: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
           s_point_mode: document.getElementById('s-point-mode')?.value || 'inflection',
           p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_trough',
-          fjfi_detect_mode: document.getElementById('fjfi-detect-mode')?.value || 'd2_zero',
+          fj_detect_mode: document.getElementById('fj-detect-mode')?.value || 'd2_zero',
+          fi_detect_mode: document.getElementById('fi-detect-mode')?.value || 'd2_zero',
           include_curves: true,
         };
         const BATCH = 20, CONC = 2, MAX_RETRIES = 3;
