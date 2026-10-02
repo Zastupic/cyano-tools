@@ -1378,9 +1378,21 @@ def _refine_knots_adaptive(x_data, y_data, knots_log, k, w=None,
     else:
         model = LSQUnivariateSpline(x_data, y_data, knots_log, k=k)
 
-    # --- residual analysis at original data points ---
-    resid = y_data - model(x_data)
-    y_span = float(np.ptp(y_data)) or 1.0
+    # --- residual analysis at real data points only ---
+    # When weights are provided (oj_densify), restrict the analysis to
+    # points with full weight (w >= 1.0).  Synthetic fill points have
+    # reduced weight and model-predicted values; including them would
+    # misread the O-J fill as systematic bias and cause overfitting.
+    if w is not None:
+        w_arr = np.asarray(w, dtype=float)
+        real_mask = w_arr >= 1.0
+        x_real = x_data[real_mask]
+        y_real = y_data[real_mask]
+    else:
+        x_real = x_data
+        y_real = y_data
+    resid = y_real - model(x_real)
+    y_span = float(np.ptp(y_real)) or 1.0
     threshold = bias_frac * y_span
 
     # Detect runs of consecutive same-sign residuals
@@ -1394,7 +1406,7 @@ def _refine_knots_adaptive(x_data, y_data, knots_log, k, w=None,
                 run_resid = resid[run_start:j]
                 mean_abs = float(np.mean(np.abs(run_resid)))
                 if mean_abs >= threshold:
-                    median_x = float(np.median(x_data[run_start:j]))
+                    median_x = float(np.median(x_real[run_start:j]))
                     candidates.append((mean_abs, median_x))
             if j < len(signs):
                 run_start = j
