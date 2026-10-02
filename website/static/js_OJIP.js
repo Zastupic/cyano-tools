@@ -35,7 +35,7 @@ function _fjAutoTime(kv) {
   const mode = document.getElementById('fj-detect-mode')?.value || 'd2_zero';
   if (mode === 'd2_zero')      return kv.FJ_time_d2zero_ms ?? kv.FJ_time_inflect_ms ?? kv.FJ_time_deriv_ms;
   if (mode === 'poly_inflect') return kv.FJ_time_inflect_ms ?? kv.FJ_time_deriv_ms;
-  if (mode === 'd2_trough')    return kv.FJ_time_deriv_ms;
+  if (mode === 'd2_min')    return kv.FJ_time_deriv_ms;
   return null;  // 'fixed' — caller uses input field value
 }
 /** Mode-aware FI auto-detected timing from key_values. */
@@ -43,7 +43,7 @@ function _fiAutoTime(kv) {
   const mode = document.getElementById('fi-detect-mode')?.value || 'd2_zero';
   if (mode === 'd2_zero')      return kv.FI_time_d2zero_ms ?? kv.FI_time_inflect_ms ?? kv.FI_time_deriv_ms;
   if (mode === 'poly_inflect') return kv.FI_time_inflect_ms ?? kv.FI_time_deriv_ms;
-  if (mode === 'd2_trough')    return kv.FI_time_deriv_ms;
+  if (mode === 'd2_min')    return kv.FI_time_deriv_ms;
   return null;
 }
 
@@ -497,8 +497,8 @@ const MC = (() => {
           use_deriv_timing: jipOpts.useDerivTiming || false,
           fj_detect_mode:  jipOpts.fjDetectMode || 'fixed',
           fi_detect_mode:  jipOpts.fiDetectMode || 'fixed',
-          s_point_mode:    jipOpts.sPointMode || 'inflection',
-          p_point_mode:    jipOpts.pPointMode || 'd2_trough',
+          s_point_mode:    jipOpts.sPointMode || 'd2_min',
+          p_point_mode:    jipOpts.pPointMode || 'd2_min',
           include_curves: false,
         };
 
@@ -1326,8 +1326,8 @@ const MC = (() => {
       use_deriv_timing: _wantDerivTiming(),
       fj_detect_mode:  document.getElementById('fj-detect-mode')?.value || 'fixed',
       fi_detect_mode:  document.getElementById('fi-detect-mode')?.value || 'fixed',
-      s_point_mode:    document.getElementById('s-point-mode')?.value || 'inflection',
-      p_point_mode:    document.getElementById('p-point-mode')?.value || 'd2_trough',
+      s_point_mode:    document.getElementById('s-point-mode')?.value || 'd2_min',
+      p_point_mode:    document.getElementById('p-point-mode')?.value || 'd2_min',
       include_curves: true,
     };
 
@@ -4661,8 +4661,8 @@ async function uploadAndAnalyze() {
   fd.append('use_deriv_timing', _wantDerivTiming() ? 'true' : 'false');
   fd.append('fj_detect_mode', document.getElementById('fj-detect-mode')?.value || 'd2_zero');
   fd.append('fi_detect_mode', document.getElementById('fi-detect-mode')?.value || 'd2_zero');
-  fd.append('s_point_mode', document.getElementById('s-point-mode')?.value || 'inflection');
-  fd.append('p_point_mode', document.getElementById('p-point-mode')?.value || 'd2_trough');
+  fd.append('s_point_mode', document.getElementById('s-point-mode')?.value || 'd2_min');
+  fd.append('p_point_mode', document.getElementById('p-point-mode')?.value || 'd2_min');
   const _f0Val = parseFloat(document.getElementById('f0-time-input')?.value);
   if (_f0Val > 0) fd.append('f0_time_ms', _f0Val.toString());
   if (document.getElementById('reduce_size').checked) fd.append('checkbox_reduce_file_size', 'checked');
@@ -6006,7 +6006,7 @@ function _renderGaussianD1Fit() {
 
 // ── Update FJ/FI mode badges across all tabs ─────────────────────────────
 function _updateFjFiBadges() {
-  const _MODE_SHORT = {d2_zero:'D2-zero', poly_inflect:'poly', d2_trough:'D2-trough', fixed:'fixed'};
+  const _MODE_SHORT = {d2_zero:'D2-zero', poly_inflect:'poly', d2_min:'D2-min', fixed:'fixed'};
   const fjMode = document.getElementById('fj-detect-mode')?.value || 'd2_zero';
   const fiMode = document.getElementById('fi-detect-mode')?.value || 'd2_zero';
   const fjAuto = fjMode !== 'fixed', fiAuto = fiMode !== 'fixed';
@@ -6198,8 +6198,8 @@ async function mcRefitBatch() {
     useDerivTiming: _wantDerivTiming(),
     fjDetectMode: document.getElementById('fj-detect-mode')?.value || 'fixed',
     fiDetectMode: document.getElementById('fi-detect-mode')?.value || 'fixed',
-    sPointMode: document.getElementById('s-point-mode')?.value || 'inflection',
-    pPointMode: document.getElementById('p-point-mode')?.value || 'd2_trough',
+    sPointMode: document.getElementById('s-point-mode')?.value || 'd2_min',
+    pPointMode: document.getElementById('p-point-mode')?.value || 'd2_min',
   };
 
   // OJIP-Imaging Excel: re-apply the background/F0 mode chosen in the Diagnostics
@@ -6317,8 +6317,8 @@ async function refitSplines() {
         time_raw_ms: ojipData.time_raw_ms,
         double_norm,
         raw_fm_f0,
-        s_point_mode: document.getElementById('s-point-mode')?.value || 'inflection',
-        p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_trough',
+        s_point_mode: document.getElementById('s-point-mode')?.value || 'd2_min',
+        p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_min',
         fj_detect_mode: document.getElementById('fj-detect-mode')?.value || 'd2_zero',
         fi_detect_mode: document.getElementById('fi-detect-mode')?.value || 'd2_zero',
       }),
@@ -6773,14 +6773,14 @@ function generateOJIPMethodsText() {
         '(negative\u2192positive transitions) of the fitted spline, corresponding to local minima of the first derivative (D1).',
       poly_inflect: 'The J and I inflection points were identified from local polynomial inflection points ' +
         '(D2=0, D3>0) fitted within the O\u2013J and J\u2013I search windows.',
-      d2_trough: 'The J and I inflection points were identified from the D2 troughs (deepest second-derivative minima) ' +
+      d2_min: 'The J and I inflection points were identified from the D2 minima (deepest second-derivative dips) ' +
         'within the O\u2013J and J\u2013I search windows.',
       fixed: 'Fixed J (' + fjTime + '\u202fms) and I (' + fiTime + '\u202fms) timings were used.',
     };
     var _PER_POINT_LABELS = {
       d2_zero: 'D2 zero-crossing (D1 minimum)',
       poly_inflect: 'polynomial inflection (D2=0, D3>0)',
-      d2_trough: 'D2 trough (deepest D2 minimum)',
+      d2_min: 'D2 minimum (deepest D2 dip)',
       fixed: 'fixed timing',
     };
     if (fjDetect === fiDetect) {
@@ -6813,19 +6813,22 @@ function generateOJIPMethodsText() {
         }
     }
     if (hasPQS) {
-        var sMode = document.getElementById('s-point-mode')?.value || 'inflection';
+        var sMode = document.getElementById('s-point-mode')?.value || 'd2_min';
         var qDesc;
         if (sMode === 'auto') {
             qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the first ' +
                 'local minimum (D1 zero-crossing) in the post-P decline of the spline reconstruction; when no minimum ' +
-                'was detected, the D2 trough (second-derivative local minimum) was used as a fallback.';
+                'was detected, the D2 minimum (deepest second-derivative dip) was used as a fallback.';
         } else if (sMode === 'local_min') {
             qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the absolute ' +
                 'fluorescence minimum in the post-P window of the spline reconstruction; when the minimum coincided ' +
-                'with the recording endpoint, the D2 trough (second-derivative local minimum) was used as a fallback.';
+                'with the recording endpoint, the D2 minimum (deepest second-derivative dip) was used as a fallback.';
+        } else if (sMode === 'd2_zero') {
+            qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the D2 zero-crossing ' +
+                '(neg \u2192 pos, true inflection) after the deepest D2 minimum in the post-P decline of the spline reconstruction.';
         } else {
-            qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the D2 trough ' +
-                '(second-derivative local minimum) in the post-P decline of the spline reconstruction.';
+            qDesc = 'The Q point (Fratamico et al. 2016, Photosynth Res 128:271\u2013285) was identified as the D2 minimum ' +
+                '(deepest second-derivative dip) in the post-P decline of the spline reconstruction.';
         }
         lines.push(qDesc + ' The early S level was taken as the last measured data point (proxy for the classical ' +
             'semi-steady-state S, which typically occurs at 15\u201360\u202fs). Both the P\u2013Q and P\u2013early\u202fS transitions ' +
@@ -7397,8 +7400,8 @@ function _collectMethodInfo() {
     fjfi_mode:        fjfiMode,  // 'default' or 'auto'
     deriv_timing_count: paramMatrix
       ? paramMatrix.filter(r => r && !r.error && r.deriv_timing_used).length : 0,
-    s_point_mode:     document.getElementById('s-point-mode')?.value || 'inflection',
-    p_point_mode:     document.getElementById('p-point-mode')?.value || 'd2_trough',
+    s_point_mode:     document.getElementById('s-point-mode')?.value || 'd2_min',
+    p_point_mode:     document.getElementById('p-point-mode')?.value || 'd2_min',
     fj_detect_mode:   document.getElementById('fj-detect-mode')?.value || 'd2_zero',
     fi_detect_mode:   document.getElementById('fi-detect-mode')?.value || 'd2_zero',
   };
@@ -7428,7 +7431,7 @@ function _formatMethodInfoText(mi) {
   const FJFI_MODE_LABELS = {
     d2_zero: 'D2 zero-crossing (D1 minimum)',
     poly_inflect: 'Polynomial inflection (D2=0, D3>0)',
-    d2_trough: 'D2 trough (deepest D2 minimum)',
+    d2_min: 'D2 minimum (deepest D2 dip)',
     fixed: 'Fixed timing',
   };
   const fjDetMode = mi.fj_detect_mode || mi.fjfi_detect_mode || 'd2_zero';
@@ -7483,18 +7486,19 @@ function _formatMethodInfoText(mi) {
     lines.push('Enabled:                no');
   }
   // Q point / early S detection mode
-  const sMode = mi.s_point_mode || 'inflection';
+  const sMode = mi.s_point_mode || 'd2_min';
   const Q_MODE_LABELS = {
-    inflection: 'D2 trough (Q inflection)',
-    auto: 'F minimum \u2192 D2 inflection',
+    d2_min:    'D2 minimum (Q elbow)',
+    d2_zero:   'D2 zero-crossing (Q inflection)',
+    auto:      'F minimum \u2192 D2 minimum',
     local_min: 'Local minimum (lowest F after P)',
   };
   const P_MODE_LABELS = {
-    d2_trough: 'D2 trough (P deceleration)',
+    d2_min: 'D2 minimum (P deceleration)',
     local_max: 'Local maximum (100\u20131000 ms)',
     global_max: 'Global maximum (= FM)',
   };
-  const pMode = mi.p_point_mode || 'd2_trough';
+  const pMode = mi.p_point_mode || 'd2_min';
   lines.push('', '\u2014 P point detection \u2014',
     'P point method:         ' + (P_MODE_LABELS[pMode] || pMode));
   lines.push('', '\u2014 Q point / early S detection \u2014',
@@ -7647,8 +7651,8 @@ async function startBatchExport() {
           knot_placement:  document.getElementById('knot-placement-sel')?.value || 'hybrid',
           ..._buildOjDensifyPayload(),
           f0_time_ms: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
-          s_point_mode: document.getElementById('s-point-mode')?.value || 'inflection',
-          p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_trough',
+          s_point_mode: document.getElementById('s-point-mode')?.value || 'd2_min',
+          p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_min',
           fj_detect_mode: document.getElementById('fj-detect-mode')?.value || 'd2_zero',
           fi_detect_mode: document.getElementById('fi-detect-mode')?.value || 'd2_zero',
           include_curves: true,

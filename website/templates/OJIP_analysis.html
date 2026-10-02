@@ -397,14 +397,14 @@
                 <select id="fj-mode-sidebar" class="form-control form-control-sm" style="width:auto;font-size:0.82em">
                   <option value="d2_zero">D2 zero-crossing</option>
                   <option value="poly_inflect">Polynomial inflection</option>
-                  <option value="d2_trough">D2 trough</option>
+                  <option value="d2_min">D2 minimum</option>
                   <option value="fixed" selected>Fixed timing</option>
                 </select>
                 <small class="text-muted">F<sub>I</sub>:</small>
                 <select id="fi-mode-sidebar" class="form-control form-control-sm" style="width:auto;font-size:0.82em">
                   <option value="d2_zero">D2 zero-crossing</option>
                   <option value="poly_inflect">Polynomial inflection</option>
-                  <option value="d2_trough">D2 trough</option>
+                  <option value="d2_min">D2 minimum</option>
                   <option value="fixed" selected>Fixed timing</option>
                 </select>
               </div>
@@ -649,14 +649,14 @@
         <select id="fj-mode-curves" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
           <option value="d2_zero">D2 zero-crossing</option>
           <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_trough">D2 trough</option>
+          <option value="d2_min">D2 minimum</option>
           <option value="fixed" selected>Fixed timing</option>
         </select>
         <label class="mb-0" style="font-size:0.82em">F<sub>I</sub>:</label>
         <select id="fi-mode-curves" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
           <option value="d2_zero">D2 zero-crossing</option>
           <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_trough">D2 trough</option>
+          <option value="d2_min">D2 minimum</option>
           <option value="fixed" selected>Fixed timing</option>
         </select>
         <span id="fjfi-mode-badge-curves" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
@@ -715,14 +715,14 @@
         <select id="fj-mode-params" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
           <option value="d2_zero">D2 zero-crossing</option>
           <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_trough">D2 trough</option>
+          <option value="d2_min">D2 minimum</option>
           <option value="fixed" selected>Fixed timing</option>
         </select>
         <small class="text-muted" style="font-size:0.82em">F<sub>I</sub>:</small>
         <select id="fi-mode-params" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
           <option value="d2_zero">D2 zero-crossing</option>
           <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_trough">D2 trough</option>
+          <option value="d2_min">D2 minimum</option>
           <option value="fixed" selected>Fixed timing</option>
         </select>
         <span id="fjfi-mode-badge-params" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
@@ -1357,7 +1357,7 @@
             <div class="col-auto">
               <label class="mb-0 mr-1">Method:</label>
               <select id="fit-method-sel" class="form-control form-control-sm d-inline-block" style="width:auto">
-                <optgroup label="Spline method (FJ/FI via D2 troughs)">
+                <optgroup label="Spline method (FJ/FI via D2 minimums)">
                   <option value="spline">Standard spline</option>
                   <option value="logspline" selected>Log-time spline</option>
                   <option value="pchip">PCHIP (no params)</option>
@@ -1390,21 +1390,21 @@
           <details class="mb-4" style="font-size:0.85em">
             <summary class="text-muted" style="cursor:pointer">About fitting methods</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
-              <p class="mb-1"><strong>Spline methods</strong> reconstruct the full transient with a spline and compute D2/D3 derivatives. FJ/FI are detected from D2 troughs:</p>
+              <p class="mb-1"><strong>Spline methods</strong> reconstruct the full transient with a spline and compute D2/D3 derivatives. FJ/FI are detected from D2 minimums:</p>
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
                 <dt>Standard spline</dt>
-                <dd class="mb-0">Linear LSQ spline (k<sub>r</sub>&nbsp;adjustable). FJ/FI from D2 troughs.</dd>
+                <dd class="mb-0">Linear LSQ spline (k<sub>r</sub>&nbsp;adjustable). FJ/FI from D2 minimums.</dd>
                 <dt>Log-time spline</dt>
-                <dd class="mb-0">Quintic spline in log-time (smooth D2/D3). FJ/FI from D2 troughs.</dd>
+                <dd class="mb-0">Quintic spline in log-time (smooth D2/D3). FJ/FI from D2 minimums.</dd>
                 <dt>PCHIP</dt>
-                <dd class="mb-0">Monotone piecewise cubic (no tunable params). FJ/FI from D2 troughs.</dd>
+                <dd class="mb-0">Monotone piecewise cubic (no tunable params). FJ/FI from D2 minimums.</dd>
               </dl>
               <p class="mb-1"><strong>Detection methods</strong> use log-time spline for reconstruction (D2/D3/residuals) but detect FJ/FI with a separate algorithm:</p>
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
                 <dt>Polynomial (Akinyemi)</dt>
                 <dd class="mb-0">FJ/FI from a <strong>9th-degree polynomial</strong> fitted in narrow windows (0.5&ndash;5&nbsp;ms for J, 9&ndash;100&nbsp;ms for I). Spline-independent &rarr; more reproducible. Ref:&nbsp;Akinyemi&nbsp;et&nbsp;al.&nbsp;2023, <em>Photosynth.&nbsp;Res.</em></dd>
                 <dt>D1 local minima</dt>
-                <dd class="mb-0">FJ/FI from local minima of the 1st derivative D1&nbsp;=&nbsp;dV/d(log&nbsp;t), i.e. plateaus where the fluorescence rise rate is slowest. Mirrors the D2 trough approach but in D1 space. FP uses D2 trough fallback.</dd>
+                <dd class="mb-0">FJ/FI from local minima of the 1st derivative D1&nbsp;=&nbsp;dV/d(log&nbsp;t), i.e. plateaus where the fluorescence rise rate is slowest. Mirrors the D2 minimum approach but in D1 space. FP uses D2 minimum fallback.</dd>
                 <dt>3-Exp decomposition</dt>
                 <dd class="mb-0">Fits V(t)&nbsp;=&nbsp;&Sigma;&nbsp;A<sub>i</sub>(1&minus;e<sup>&minus;t/&tau;<sub>i</sub></sup>) with 3 exponential components (O-J, J-I, I-P). FJ/FI from rate crossovers between adjacent components. Ref:&nbsp;Boisvert&nbsp;et&nbsp;al.&nbsp;2006, <em>FEBS&nbsp;J.</em></dd>
                 <dt>Piecewise-linear</dt>
@@ -1412,7 +1412,7 @@
                 <dt>Gaussian D1</dt>
                 <dd class="mb-0">Deconvolves D1 into 2&ndash;3 Gaussian peaks in log<sub>10</sub>(t) space. FJ/FI from valleys (local minima) between adjacent Gaussian centers. Intuitive spectral decomposition of the fluorescence rise.</dd>
               </dl>
-              <p class="mb-1 text-muted">FP always uses D2 trough for spline and most detection methods. Piecewise-linear derives all three breakpoints directly from the fit.</p>
+              <p class="mb-1 text-muted">FP always uses D2 minimum for spline and most detection methods. Piecewise-linear derives all three breakpoints directly from the fit.</p>
               <p class="mb-1 mt-2"><strong>Spline parameters</strong></p>
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
                 <dt>k<sub>r</sub> (knot reduction)</dt>
@@ -1422,7 +1422,7 @@
               </dl>
               <p class="mb-0 mt-2" style="font-size:0.92em"><strong>References</strong></p>
               <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">
-                <li>Strasser RJ, Tsimilli-Michael M, Srivastava A (2004) Analysis of the chlorophyll <em>a</em> fluorescence transient. In: Papageorgiou GC, Govindjee (eds) <em>Chlorophyll a Fluorescence</em>, Springer, pp&nbsp;321&ndash;362. <a href="https://doi.org/10.1007/978-1-4020-3218-9_12" target="_blank" rel="noopener">doi:10.1007/978-1-4020-3218-9_12</a> &mdash; <em>D2 trough / JIP-test foundation</em></li>
+                <li>Strasser RJ, Tsimilli-Michael M, Srivastava A (2004) Analysis of the chlorophyll <em>a</em> fluorescence transient. In: Papageorgiou GC, Govindjee (eds) <em>Chlorophyll a Fluorescence</em>, Springer, pp&nbsp;321&ndash;362. <a href="https://doi.org/10.1007/978-1-4020-3218-9_12" target="_blank" rel="noopener">doi:10.1007/978-1-4020-3218-9_12</a> &mdash; <em>D2 minimum / JIP-test foundation</em></li>
                 <li>Stirbet A, Govindjee (2011) On the relation between the Kautsky effect and Photosystem&nbsp;II. <em>J&nbsp;Photochem Photobiol&nbsp;B</em> 104:236&ndash;257. <a href="https://doi.org/10.1016/j.jphotobiol.2010.12.010" target="_blank" rel="noopener">doi:10.1016/j.jphotobiol.2010.12.010</a> &mdash; <em>D1/D2 derivative approach review</em></li>
                 <li>Akinyemi OO <em>et&nbsp;al.</em> (2023) Derivative-based time-adjusted analysis of the OJIP fluorescence transient of silver birch. <em>Photosynth&nbsp;Res</em> 157:133&ndash;146. <a href="https://doi.org/10.1007/s11120-023-01033-x" target="_blank" rel="noopener">doi:10.1007/s11120-023-01033-x</a> &mdash; <em>Polynomial inflection method</em></li>
                 <li>Boisvert S, Joly D, Carpentier R (2006) Quantitative analysis of the experimental O-J-I-P chlorophyll fluorescence induction kinetics. <em>FEBS&nbsp;J</em> 273:4770&ndash;4777. <a href="https://doi.org/10.1111/j.1742-4658.2006.05475.x" target="_blank" rel="noopener">doi:10.1111/j.1742-4658.2006.05475.x</a> &mdash; <em>3-exponential decomposition</em></li>
@@ -1569,7 +1569,7 @@
               <select id="fj-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="d2_zero">D2 zero-crossing (D1 minimum)</option>
                 <option value="poly_inflect">Polynomial inflection</option>
-                <option value="d2_trough">D2 trough</option>
+                <option value="d2_min">D2 minimum</option>
                 <option value="fixed">Fixed timing</option>
               </select>
               <div class="input-group input-group-sm d-inline-flex" id="fj-fixed-time-diag-wrap" style="width:auto">
@@ -1584,7 +1584,7 @@
               <select id="fi-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="d2_zero">D2 zero-crossing (D1 minimum)</option>
                 <option value="poly_inflect">Polynomial inflection</option>
-                <option value="d2_trough">D2 trough</option>
+                <option value="d2_min">D2 minimum</option>
                 <option value="fixed">Fixed timing</option>
               </select>
               <div class="input-group input-group-sm d-inline-flex" id="fi-fixed-time-diag-wrap" style="width:auto">
@@ -1602,7 +1602,7 @@
                 <dd class="mb-0">Default. Where the spline second derivative (D2) crosses from negative to positive &mdash; equivalent to a local minimum of D1 (the &ldquo;shoulder&rdquo; between phases). Most precise identification of the J and I inflection points. Physiologically, the J inflection (~2&thinsp;ms) marks the kinetic bottleneck at the exchange of a reduced PQ molecule for an oxidized one at the Q<sub>B</sub> site (Schansker et&nbsp;al. 2005), and the I inflection (~30&thinsp;ms) reflects the limitation in PQH<sub>2</sub> re-oxidation by the Cyt&nbsp;b<sub>6</sub>f complex. At both points, Q<sub>A</sub> and Q<sub>B</sub> are transiently reduced because electron transport is temporarily slowed &mdash; by electrons accumulating in the PQ pool (J) or downstream of it (I).</dd>
                 <dt>Polynomial inflection</dt>
                 <dd class="mb-0">Local polynomial fit within the O&ndash;J / J&ndash;I windows, solving D2=0 with D3&gt;0 (Akinyemi et&nbsp;al. 2023). Independent of the spline but sensitive to the polynomial degree. Identifies the same physiological transitions &mdash; the Q<sub>B</sub>-site exchange bottleneck (J) and the Cyt&nbsp;b<sub>6</sub>f re-oxidation limitation (I) &mdash; through a separate analytical approach, useful for cross-validation.</dd>
-                <dt>D2 trough</dt>
+                <dt>D2 minimum</dt>
                 <dd class="mb-0">Deepest D2 minimum (most negative D2 value) in each search window. Marks the point of maximum deceleration, which precedes the true inflection. This timing corresponds to the peak rate at which the respective bottleneck &mdash; PQ exchange at Q<sub>B</sub> (J) or PQH<sub>2</sub> re-oxidation at Cyt&nbsp;b<sub>6</sub>f (I) &mdash; brakes the fluorescence rise.</dd>
                 <dt>Fixed timing</dt>
                 <dd class="mb-0">Uses the user-specified times from the FJ/FI input fields (default 2/30&thinsp;ms). Ignores curve shape. Conventional fixed values assume typical dark-adapted kinetics; appropriate for standardised comparisons across studies using the same protocol.</dd>
@@ -1614,7 +1614,7 @@
             <div class="col-auto">
               <label class="mb-0 mr-1 font-weight-bold">P point detection:</label>
               <select id="p-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
-                <option value="d2_trough">D2 trough (P deceleration)</option>
+                <option value="d2_min">D2 minimum (P deceleration)</option>
                 <option value="local_max">Local maximum (100&ndash;1000&thinsp;ms)</option>
                 <option value="global_max">Global maximum (= FM)</option>
               </select>
@@ -1625,7 +1625,7 @@
             <summary class="text-muted" style="cursor:pointer">About P point detection methods</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
-                <dt>D2 trough</dt>
+                <dt>D2 minimum</dt>
                 <dd class="mb-0">Default. Finds the D2 local minimum in the I&ndash;P window &mdash; the point where the rise rate decelerates fastest. Precedes the actual peak by ~0.3&thinsp;decades in log-time.</dd>
                 <dt>Local maximum</dt>
                 <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within 100&ndash;1000&thinsp;ms. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
@@ -1639,8 +1639,9 @@
             <div class="col-auto">
               <label class="mb-0 mr-1 font-weight-bold">Q point detection:</label>
               <select id="s-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
-                <option value="inflection">D2 trough (Q inflection)</option>
-                <option value="auto">F minimum &rarr; D2 inflection</option>
+                <option value="d2_min">D2 minimum (Q elbow)</option>
+                <option value="d2_zero">D2 zero-crossing (Q inflection)</option>
+                <option value="auto">F minimum &rarr; D2 minimum</option>
                 <option value="local_min">Local minimum (lowest F after P)</option>
               </select>
               <small class="text-muted ml-1">Q point at ~1&ndash;2&thinsp;s (Fratamico et&nbsp;al. 2016); early S&nbsp;=&nbsp;last point &mdash; click Re-fit to apply</small>
@@ -1652,12 +1653,14 @@
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
               <p class="mb-1">After the P peak (F<sub>M</sub>), fluorescence declines. The <strong>Q point</strong> (~1&ndash;2&thinsp;s) marks the transition between fast photochemical quenching and slower non-photochemical quenching build-up. It is distinct from the classical S level (~15&ndash;60&thinsp;s).</p>
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
-                <dt>D2 trough (Q inflection)</dt>
-                <dd class="mb-0">Finds the local minimum of the second derivative (D2) in the post-P decline &mdash; the &ldquo;elbow&rdquo; where the rate of decline transitions from accelerating to decelerating. Default method; robust even when the decline never fully reverses.</dd>
-                <dt>D1 minimum (Q minimum)</dt>
-                <dd class="mb-0">Finds the first zero-crossing of the first derivative (D1, negative&nbsp;&rarr;&nbsp;positive) &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 trough when no reversal is detected. Identifies a stronger, more definitive Q feature.</dd>
+                <dt>D2 minimum (Q elbow)</dt>
+                <dd class="mb-0">Finds the deepest local minimum of the second derivative (D2) in the post-P decline &mdash; the &ldquo;elbow&rdquo; where the decline curvature is most pronounced. Default method; robust even when the decline never fully reverses.</dd>
+                <dt>D2 zero-crossing (Q inflection)</dt>
+                <dd class="mb-0">Finds the first D2 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) after the deepest D2 minimum &mdash; the true inflection point where the decline transitions from concave to convex. Consistent with how &ldquo;inflection&rdquo; is defined for F<sub>J</sub>/F<sub>I</sub> (D2&nbsp;=&nbsp;0). Falls back to D2&nbsp;minimum when no zero-crossing is found.</dd>
+                <dt>F minimum &rarr; D2 minimum</dt>
+                <dd class="mb-0">Tries D1 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) first &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 minimum when no reversal is detected.</dd>
                 <dt>Local minimum (lowest F after P)</dt>
-                <dd class="mb-0">Finds the absolute lowest fluorescence value in the post-P reconstruction window. Falls back to D2&nbsp;trough when the minimum coincides with the recording endpoint (monotonic decline with no reversal).</dd>
+                <dd class="mb-0">Finds the absolute lowest fluorescence value in the post-P reconstruction window. Falls back to D2&nbsp;minimum when the minimum coincides with the recording endpoint (monotonic decline with no reversal).</dd>
               </dl>
               <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
               <p class="mb-0 mt-2" style="font-size:0.92em"><strong>Reference</strong></p>

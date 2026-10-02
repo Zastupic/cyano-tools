@@ -633,11 +633,11 @@ def _select_d1_min_pos(d1_values, t_values, expect=None, after=None,
 
     D1 = dV/d(log t).  Local minima of D1 correspond to plateaus where the
     fluorescence rise rate is slowest — i.e. the J and I steps.  This is
-    complementary to the D2 trough approach: D2 troughs mark inflection
+    complementary to the D2 minimum approach: D2 minimums mark inflection
     points (curvature reversal), while D1 minima mark rate minima (plateaus).
 
     Uses the same prominence + log-time proximity scoring as
-    ``_select_trough_pos()``.
+    ``_select_d2_min_pos()``.
 
     Returns ``(pos, confidence)``: *pos* is the positional index into the
     segment (−1 if unusable); *confidence* ∈ [0, 1].
@@ -701,11 +701,11 @@ def _select_d1_min_pos(d1_values, t_values, expect=None, after=None,
         return int(cand[j]), float(cprom[j] / cand_max)
 
 
-def _select_trough_pos(d2_values, t_values, expect=None, after=None,
+def _select_d2_min_pos(d2_values, t_values, expect=None, after=None,
                        prom_frac: float = 0.15):
-    """Choose one D2 local minimum (trough) within a search window, per-curve.
+    """Choose one D2 local minimum (dip) within a search window, per-curve.
 
-    A phase timing (FJ/FI/FP) marks a genuine deceleration trough — D2 declines
+    A phase timing (FJ/FI/FP) marks a genuine deceleration dip — D2 declines
     and then rises again. The plain argmin of the window instead returns whatever
     is lowest, which on non-standard transients is often a value on a monotonic
     slope at the window edge, bleeding in from the neighbouring phase (e.g. a fast
@@ -832,7 +832,7 @@ def _d2_zero_in_window(Infl_DF, fname, lo_native, hi_native, expect_native=None)
 def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
                  fj_expect=None, fi_expect=None,
                  poly_oj=None, poly_oi=None, ms_factor=1.0,
-                 method='d2_trough',
+                 method='d2_min',
                  D1_DF=None,
                  three_exp_results=None,
                  piecewise_results=None,
@@ -842,7 +842,7 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
 
     ``method`` selects the detection algorithm:
 
-    - ``'d2_trough'`` — prominence-ranked D2 local minima (default; used by
+    - ``'d2_min'`` — prominence-ranked D2 local minima (default; used by
       spline/logspline/pchip).
     - ``'polynomial'`` — polynomial inflection points (Akinyemi et al. 2023).
     - ``'d1_minima'`` — D1 local minima (plateaus in dV/d(log t)).
@@ -850,7 +850,7 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
     - ``'piecewise'`` — pre-computed piecewise-linear breakpoints.
     - ``'gaussian_d1'`` — pre-computed Gaussian D1 deconvolution valleys.
 
-    All methods fall back to D2 trough for FP (and for FJ/FI when the
+    All methods fall back to D2 minimum for FP (and for FJ/FI when the
     primary method fails).
 
     Returns eight objects: six pd.Series (FJ/FI/FP_deriv and _infl),
@@ -929,12 +929,12 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
         conf = max(0.0, min(1.0, float(r2)))
         return float(bp[idx]) / ms, conf
 
-    # ── D2 trough fallback ───────────────────────────────────────────────
-    def _d2_trough_fallback(fname, key, prev_t, d2_col):
+    # ── D2 minimum fallback ───────────────────────────────────────────────
+    def _d2_min_fallback(fname, key, prev_t, d2_col):
         lo, hi = windows[key]
         d2_seg = d2_col.loc[lo:hi]
         t_seg  = t.loc[lo:hi]
-        pos, cf = _select_trough_pos(d2_seg.values, t_seg.values,
+        pos, cf = _select_d2_min_pos(d2_seg.values, t_seg.values,
                                      expect=expect_map[key], after=prev_t)
         if pos < 0:
             raise ValueError(
@@ -979,12 +979,12 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
             elif method == 'gaussian_d1' and key != 'FP':
                 tv, cf = _read_precomputed(gaussian_d1_results, fname, key, ms_factor)
 
-            # ── Ordering check + D2 trough fallback ──────────────────────
+            # ── Ordering check + D2 minimum fallback ──────────────────────
             if tv is not None and prev_t is not None and tv <= prev_t:
                 tv = None  # ordering violated → fall back
 
             if tv is None:
-                tv, cf = _d2_trough_fallback(fname, key, prev_t, d2_col)
+                tv, cf = _d2_min_fallback(fname, key, prev_t, d2_col)
 
             results[key].append(tv)
             confs[key].append(cf)
@@ -1018,7 +1018,7 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
     d2_depths = {k: pd.Series(depths[k], index=file_names) for k in ('FJ', 'FI', 'FP')}
 
     def nearest_inflect(deriv_ser):
-        """First D2 upward zero-crossing after the D2 trough (fallback for FP)."""
+        """First D2 upward zero-crossing after the D2 minimum (fallback for FP)."""
         result = {}
         for col, trough_t in deriv_ser.items():
             cands = Infl_DF[col][Infl_DF[col] > trough_t]
@@ -1329,6 +1329,113 @@ def _oj_densify(x_log, y, fj_hi_log,
     return x_aug[order], y_aug[order], w_aug[order], fit_info
 
 
+def _refine_knots_adaptive(x_data, y_data, knots_log, k, w=None,
+                           min_run=4, bias_frac=0.005,
+                           max_extra=4, min_sep=0.15):
+    """Two-pass adaptive knot refinement for LSQ splines.
+
+    Fits an initial spline, then detects regions where the fit
+    systematically misses the data (runs of consecutive same-sign
+    residuals exceeding a bias threshold).  Additional knots are
+    inserted at the centres of the worst bias regions and the spline
+    is refit.
+
+    Parameters
+    ----------
+    x_data, y_data : array-like
+        Data coordinates (log10-time and double-normalised fluorescence).
+    knots_log : array-like
+        Initial interior knots in log10 space.
+    k : int
+        Spline degree (5 for quintic).
+    w : array-like or None
+        Optional weights (e.g. from oj_densify).
+    min_run : int
+        Minimum consecutive same-sign residuals to qualify as a bias run.
+    bias_frac : float
+        Minimum mean |residual| of a run as a fraction of the y-span.
+    max_extra : int
+        Maximum number of additional knots to insert.
+    min_sep : float
+        Minimum separation (decades) between a new knot and any
+        existing knot or the data boundaries.
+
+    Returns
+    -------
+    model : LSQUnivariateSpline
+        The (possibly refined) spline.
+    knots_used : ndarray
+        Interior knots actually used.
+    refined : bool
+        True if refinement was applied.
+    """
+    knots_log = np.asarray(knots_log, dtype=float)
+    x_data = np.asarray(x_data, dtype=float)
+    y_data = np.asarray(y_data, dtype=float)
+
+    if w is not None:
+        model = LSQUnivariateSpline(x_data, y_data, knots_log, k=k, w=w)
+    else:
+        model = LSQUnivariateSpline(x_data, y_data, knots_log, k=k)
+
+    # --- residual analysis at original data points ---
+    resid = y_data - model(x_data)
+    y_span = float(np.ptp(y_data)) or 1.0
+    threshold = bias_frac * y_span
+
+    # Detect runs of consecutive same-sign residuals
+    signs = np.sign(resid)
+    candidates = []  # (mean_abs_resid, median_x)
+    run_start = 0
+    for j in range(1, len(signs) + 1):
+        if j == len(signs) or signs[j] != signs[run_start]:
+            run_len = j - run_start
+            if run_len >= min_run:
+                run_resid = resid[run_start:j]
+                mean_abs = float(np.mean(np.abs(run_resid)))
+                if mean_abs >= threshold:
+                    median_x = float(np.median(x_data[run_start:j]))
+                    candidates.append((mean_abs, median_x))
+            if j < len(signs):
+                run_start = j
+
+    if not candidates:
+        return model, knots_log, False
+
+    # Sort by severity (worst bias first), take up to max_extra
+    candidates.sort(key=lambda c: c[0], reverse=True)
+
+    lo = float(x_data[0])
+    hi = float(x_data[-1])
+    all_knots = sorted(knots_log.tolist())
+    new_knots = []
+
+    for _, cx in candidates:
+        if len(new_knots) >= max_extra:
+            break
+        # Boundary check
+        if cx - lo < min_sep or hi - cx < min_sep:
+            continue
+        # Separation check against existing + already-added knots
+        combined = all_knots + new_knots
+        if any(abs(cx - ek) < min_sep for ek in combined):
+            continue
+        # Schoenberg-Whitney: total interior knots < n_data - k
+        if len(knots_log) + len(new_knots) + 1 >= len(x_data) - k:
+            break
+        new_knots.append(cx)
+
+    if not new_knots:
+        return model, knots_log, False
+
+    augmented = np.sort(np.concatenate([knots_log, np.array(new_knots)]))
+    if w is not None:
+        model_ref = LSQUnivariateSpline(x_data, y_data, augmented, k=k, w=w)
+    else:
+        model_ref = LSQUnivariateSpline(x_data, y_data, augmented, k=k)
+    return model_ref, augmented, True
+
+
 def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
                      n_interior_knots: int = 10,
                      trim_first: int = 0, trim_last: int = 0,
@@ -1468,11 +1575,12 @@ def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
             x_aug, y_aug, w_aug, fit_info = _oj_densify(
                 x_log, y, fj_hi_log,
                 model=oj_model, model_params=oj_model_params)
-            model = LSQUnivariateSpline(x_aug, y_aug, knots_log, k=k, w=w_aug)
+            model, _, _ = _refine_knots_adaptive(
+                x_aug, y_aug, knots_log, k, w=w_aug)
             if fit_info is not None:
                 densify_info[fname] = fit_info
         else:
-            model = LSQUnivariateSpline(x_log, y, knots_log, k=k)
+            model, _, _ = _refine_knots_adaptive(x_log, y, knots_log, k)
 
         recon  = model(x_eval)
         # Analytic derivatives of the spline in log10(t) space.
@@ -1769,16 +1877,20 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
     smoothed by the knot density ``kr``) for Q-point timing detection.
     Output values are converted back to **raw fluorescence units**.
 
-    Q detection (two tiers):
+    Q detection modes:
 
-    1. **D1 zero-crossing** (neg → pos): a true local minimum in the
-       post-P decline — the reconstruction reverses and begins rising.
-       ``FQ_ref = 'Q minimum'``.
-    2. **D2 trough** (D2 local minimum / D3 zero-crossing): the
-       characteristic "elbow" of the post-P decline.
-       ``FQ_ref = 'Q inflection'``.
+    1. **D2 minimum** (``d2_min``): deepest D2 local minimum in
+       the post-P decline — the "elbow" where decline curvature is
+       most pronounced.  ``FQ_ref = 'D2 minimum'``.
+    2. **D2 zero-crossing** (``d2_zero``): first D2 neg→pos crossing
+       after the deepest D2 minimum — the true inflection point
+       (consistent with FJ/FI definition).  ``FQ_ref = 'D2 zero-crossing'``.
+    3. **Auto** (``auto``): tries D1 zero-crossing (true minimum of F)
+       first, falls back to D2 minimum.  ``FQ_ref = 'Q minimum'``.
+    4. **Local minimum** (``local_min``): lowest F value in post-P
+       window, falls back to D2 minimum.  ``FQ_ref = 'Q local min'``.
 
-    When neither is found, ``FQ_ref = None`` and FQ / FQ_time_ms
+    When none is found, ``FQ_ref = None`` and FQ / FQ_time_ms
     are ``None``.  Early-S parameters are always computed.
 
     The search starts after FP time (not FM time) to correctly skip the
@@ -1802,9 +1914,10 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
         Minimum data span (ms) after the search start required to
         attempt detection.
     s_point_mode : str
-        ``'auto'`` (default): try D1 zero-crossing (minimum), then D2
-        trough as fallback.
-        ``'inflection'``: skip D1, use D2 trough directly.
+        ``'d2_min'`` (default): deepest D2 local minimum in post-P.
+        ``'d2_zero'``: D2 zero-crossing after deepest D2 minimum.
+        ``'auto'``: try D1 zero-crossing (minimum), then D2 minimum.
+        ``'local_min'``: lowest F value after P, then D2 minimum.
     d2_vals : array-like or None
         Second-derivative values from the spline (D2_DF column), same
         length as *recon_vals*.
@@ -1841,14 +1954,16 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
 
     y_post = y[post_mask]
 
-    # Treat legacy 'end' mode as 'auto' (backward compat)
+    # Treat legacy values (backward compat)
     if s_point_mode == 'end':
         s_point_mode = 'auto'
+    if s_point_mode == 'inflection':
+        s_point_mode = 'd2_min'
 
     # ── Tier 0: Direct fluorescence local minimum ─────────────────────
     # Finds the argmin of the reconstructed curve in the post-P window.
     # Rejected when the minimum is at the very last sample (= early-S);
-    # falls through to D2 trough below.
+    # falls through to D2 minimum below.
     fq_dn = None           # Q point value in double-norm
     fq_time_ms = None
     fq_ref_label = None    # None = Q not detected
@@ -1858,13 +1973,13 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
             fq_dn = float(y_post[q_min_idx])
             fq_time_ms = float(t_post[q_min_idx])
             fq_ref_label = 'Q local min'
-        # else: fall through to D2 trough below
+        # else: fall through to D2 minimum below
 
     # ── Tier 1: Q point via D1 zero-crossing (neg → pos) ──────────────
     # A true local minimum: the decline reverses and fluorescence rises.
-    # Attempted in 'auto' mode only (skipped for 'inflection').
+    # Attempted in 'auto' mode only.
     dy = np.diff(y_post)
-    if s_point_mode == 'auto':
+    if fq_dn is None and s_point_mode == 'auto':
         neg_then_pos = np.where((dy[:-1] < 0) & (dy[1:] >= 0))[0]
         if len(neg_then_pos) > 0:
             q_idx = neg_then_pos[0] + 1
@@ -1872,52 +1987,58 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
             fq_time_ms = float(t_post[q_idx])
             fq_ref_label = 'Q minimum'
 
-    # ── Tier 1b: D2 trough (inflection of the decline) ────────────────
-    # Finds the D2 local minimum (trough) in the post-peak decline.
-    # This is where D3 crosses zero (neg → pos), marking the "elbow"
-    # between the fast initial post-P decline and the slower approach
-    # to steady state.
-    #
-    # Algorithm: skip past the first D2 neg→pos crossing (which is
-    # just the transition out of the FP peak curvature), then find the
-    # D2 trough in the remaining region.
-    #
-    # Attempted in 'auto' (as fallback when no minimum), 'inflection'
-    # (as primary method), and 'local_min' (as fallback when min is at endpoint).
-    if fq_dn is None and s_point_mode in ('auto', 'inflection', 'local_min') and len(y_post) >= 3:
-        _found_inflection = False
+    # ── Helper: find deepest D2 local minimum in post-P region ────────
+    # Used by both d2_min and d2_zero modes.  Finds ALL D2 local minima
+    # (where D2 transitions from decreasing to increasing) and selects
+    # the deepest (most negative D2 value).  Unlike the previous
+    # algorithm, this does NOT skip past a D2 zero-crossing first,
+    # which caused the primary D2 dip (often 200-500 ms after P) to be
+    # missed when it occurred before the first zero-crossing.
+    _d2_min_idx = None      # index into y_post / t_post of deepest D2 dip
+    if fq_dn is None and s_point_mode in ('auto', 'd2_min', 'd2_zero',
+                                           'local_min') and len(y_post) >= 3:
         if d2_vals is not None:
             d2_arr = np.asarray(d2_vals, dtype=float)
             d2_post = d2_arr[post_mask]
-            # Step 1: find the first D2 neg→pos crossing (end of peak region)
-            first_pos_crossings = np.where(
-                (d2_post[:-1] < 0) & (d2_post[1:] >= 0))[0]
-            if len(first_pos_crossings) > 0:
-                after_peak = first_pos_crossings[0] + 1
-                # Step 2: after that crossing, find the D2 local minimum
-                # (where D2 changes from decreasing to increasing)
-                d2_tail = d2_post[after_peak:]
-                if len(d2_tail) >= 3:
-                    dd2 = np.diff(d2_tail)
-                    trough_locs = np.where(
-                        (dd2[:-1] <= 0) & (dd2[1:] > 0))[0]
-                    if len(trough_locs) > 0:
-                        q_idx_local = trough_locs[0] + 1
-                        q_idx_d2 = after_peak + q_idx_local
-                        fq_dn = float(y_post[q_idx_d2])
-                        fq_time_ms = float(t_post[q_idx_d2])
-                        fq_ref_label = 'Q inflection'
-                        _found_inflection = True
-        # Fallback: second differences of reconstruction (no spline D2)
-        if not _found_inflection:
-            d2y = np.diff(dy)  # second differences ≈ D2
-            neg_then_pos_d2 = np.where(
-                (d2y[:-1] < 0) & (d2y[1:] >= 0))[0]
-            if len(neg_then_pos_d2) > 0:
-                q_idx_d2 = neg_then_pos_d2[0] + 1
-                fq_dn = float(y_post[q_idx_d2])
-                fq_time_ms = float(t_post[q_idx_d2])
-                fq_ref_label = 'Q inflection'
+            dd2 = np.diff(d2_post)
+            min_locs = np.where((dd2[:-1] <= 0) & (dd2[1:] > 0))[0] + 1
+            if len(min_locs) > 0:
+                # Select the deepest (most negative D2) among all local minima
+                _d2_min_idx = int(min_locs[np.argmin(d2_post[min_locs])])
+        if _d2_min_idx is None:
+            # Fallback: second differences of reconstruction (no spline D2)
+            d2y = np.diff(dy)
+            dd2y = np.diff(d2y)
+            min_locs_fb = np.where((dd2y[:-1] <= 0) & (dd2y[1:] > 0))[0] + 1
+            if len(min_locs_fb) > 0:
+                _d2_min_idx = int(min_locs_fb[np.argmin(d2y[min_locs_fb])])
+
+    # ── Tier 2: D2 zero-crossing (true inflection = D1 minimum) ──────
+    # Finds the first D2 neg→pos crossing AFTER the deepest D2 local
+    # minimum.  This is the true inflection point of the decline where
+    # D1 reaches a local minimum (decline decelerates most).  Consistent
+    # with how "inflection" is defined for FJ/FI detection (D2 = 0).
+    if fq_dn is None and s_point_mode == 'd2_zero' and _d2_min_idx is not None:
+        if d2_vals is not None:
+            d2_post_arr = np.asarray(d2_vals, dtype=float)[post_mask]
+            # Find D2 neg→pos crossings after the deepest D2 minimum
+            d2_after = d2_post_arr[_d2_min_idx:]
+            zc = np.where((d2_after[:-1] < 0) & (d2_after[1:] >= 0))[0]
+            if len(zc) > 0:
+                q_idx = _d2_min_idx + zc[0] + 1
+                fq_dn = float(y_post[q_idx])
+                fq_time_ms = float(t_post[q_idx])
+                fq_ref_label = 'D2 zero-crossing'
+        # If no D2 zero-crossing found, fall through to D2 minimum below
+
+    # ── Tier 3: D2 minimum (deepest D2 local minimum) ────────────────
+    # The "elbow" of the post-P decline: where the decline curvature is
+    # most pronounced.  Primary method for 'd2_min', fallback for
+    # 'auto', 'local_min', and 'd2_zero'.
+    if fq_dn is None and _d2_min_idx is not None:
+        fq_dn = float(y_post[_d2_min_idx])
+        fq_time_ms = float(t_post[_d2_min_idx])
+        fq_ref_label = 'D2 minimum'
 
     # ── Convert double-norm → raw ─────────────────────────────────────
     fv_raw = fm_raw - f0_raw
@@ -1984,8 +2105,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       oj_model_params: 'dict | None' = None,
                       f0_time_ms: 'float | None' = None,
                       use_deriv_timing: bool = False,
-                      s_point_mode: str = 'inflection',
-                      p_point_mode: str = 'd2_trough',
+                      s_point_mode: str = 'd2_min',
+                      p_point_mode: str = 'd2_min',
                       fjfi_detect_mode: str = 'd2_zero',
                       fj_detect_mode: 'str | None' = None,
                       fi_detect_mode: 'str | None' = None):
@@ -2108,7 +2229,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
 
     # ── find FJ / FI / FP ────────────────────────────────────────────────────
     _use_poly = (fit_method == 'polynomial')
-    _fjfi_method = fit_method if fit_method in _DETECTION_METHODS else 'd2_trough'
+    _fjfi_method = fit_method if fit_method in _DETECTION_METHODS else 'd2_min'
     FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf, method_extras, d2_depths = \
         _find_fjfifp(D2_DF, D3_DF, x_col, ranges, data_cols, Infl_DF,
                      fj_expect=FJ_time, fi_expect=FI_time,
@@ -2232,7 +2353,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     elif p_point_mode == 'global_max':
         _fm_idx_fp = int(np.argmax(Raw_recon_DF[fname].values))
         _fp_t = float(log_time.iloc[_fm_idx_fp]) * ms
-    else:  # 'd2_trough' (default)
+    else:  # 'd2_min' (default)
         _fp_t = _t_safe(FP_deriv.get(fname), ms)
     _f0_t = float(sf[x_col].iloc[int(F50us_idx)]) * ms  # F0 time in ms
     _f0_v = _fscalar(F0[fname])
@@ -2317,7 +2438,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
 
     if _fj_mode == 'poly_inflect':
         _fj_user = _t_safe(FJ_infl.get(fname), ms)
-    elif _fj_mode == 'd2_trough':
+    elif _fj_mode == 'd2_min':
         _fj_user = _t_safe(FJ_deriv.get(fname), ms)
     elif _fj_mode == 'fixed':
         _fj_user = fj_time_ms
@@ -2327,7 +2448,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
 
     if _fi_mode == 'poly_inflect':
         _fi_user = _t_safe(FI_infl.get(fname), ms)
-    elif _fi_mode == 'd2_trough':
+    elif _fi_mode == 'd2_min':
         _fi_user = _t_safe(FI_deriv.get(fname), ms)
     elif _fi_mode == 'fixed':
         _fi_user = fi_time_ms
@@ -2340,7 +2461,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'fixed': 'Fixed timing',
         'd2_zero': 'D2 zero-crossing',
         'poly_inflect': 'Polynomial inflection',
-        'd2_trough': 'D2 trough',
+        'd2_min': 'D2 minimum',
     }
     _fj_ref_label = _METHOD_LABELS.get(_fj_mode, _fj_mode)
     if _fj_mode != 'fixed' and _fj_user == fj_time_ms:
@@ -2375,7 +2496,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'FP_d2_depth': _safe(d2_depths['FP'].get(fname)),
         'FP_time_localmax_ms': fp_localmax.get(fname),
         'FP_time_user_ms': _fp_t,
-        'FP_ref': {'d2_trough': 'D2 trough', 'local_max': 'Local max',
+        'FP_ref': {'d2_min': 'D2 minimum', 'local_max': 'Local max',
                    'global_max': 'Global max (FM)'}.get(p_point_mode, p_point_mode),
         'FM_time_ms':  _safe(FM_timings.get(fname)),
         'Area_OJ': _safe(AREAOJ[fname]),  'Area_JI': _safe(AREAJI[fname]),
@@ -2497,8 +2618,8 @@ def ojip_process():
     f0_time_ms_proc = float(_f0_raw_proc) if _f0_raw_proc not in (None, '') else None
     reduce_size = request.form.get('checkbox_reduce_file_size') == 'checked'
     use_deriv_timing_proc = request.form.get('use_deriv_timing', '') == 'true'
-    p_point_mode_proc = request.form.get('p_point_mode', 'd2_trough')
-    s_point_mode_proc = request.form.get('s_point_mode', 'inflection')
+    p_point_mode_proc = request.form.get('p_point_mode', 'd2_min')
+    s_point_mode_proc = request.form.get('s_point_mode', 'd2_min')
     fjfi_detect_mode_proc = request.form.get('fjfi_detect_mode', 'd2_zero')
     fj_detect_mode_proc = request.form.get('fj_detect_mode') or fjfi_detect_mode_proc
     fi_detect_mode_proc = request.form.get('fi_detect_mode') or fjfi_detect_mode_proc
@@ -2697,7 +2818,7 @@ def ojip_process():
 
     # ── find FJ/FI/FP ────────────────────────────────────────────────────────
     _use_poly_proc = (fit_method_proc == 'polynomial')
-    _fjfi_method_proc = fit_method_proc if fit_method_proc in _DETECTION_METHODS else 'd2_trough'
+    _fjfi_method_proc = fit_method_proc if fit_method_proc in _DETECTION_METHODS else 'd2_min'
     try:
         FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf, method_extras_proc, d2_depths_proc = _find_fjfifp(
             D2_DF, D3_DF, x_col, ranges, data_cols, Infl_DF,
@@ -2942,7 +3063,7 @@ def ojip_process():
         # ── FJ/FI user timing based on detection mode (separate per point) ─
         if fj_detect_mode_proc == 'poly_inflect':
             _fj_user_p = _t_safe(FJ_infl.get(fname), ms)
-        elif fj_detect_mode_proc == 'd2_trough':
+        elif fj_detect_mode_proc == 'd2_min':
             _fj_user_p = _t_safe(FJ_deriv.get(fname), ms)
         elif fj_detect_mode_proc == 'fixed':
             _fj_user_p = FJ_time_ms
@@ -2952,7 +3073,7 @@ def ojip_process():
 
         if fi_detect_mode_proc == 'poly_inflect':
             _fi_user_p = _t_safe(FI_infl.get(fname), ms)
-        elif fi_detect_mode_proc == 'd2_trough':
+        elif fi_detect_mode_proc == 'd2_min':
             _fi_user_p = _t_safe(FI_deriv.get(fname), ms)
         elif fi_detect_mode_proc == 'fixed':
             _fi_user_p = FI_time_ms
@@ -2983,7 +3104,7 @@ def ojip_process():
             'FP_d2_depth': _safe(d2_depths_proc['FP'].get(fname)),
             'FP_time_localmax_ms': fp_localmax_proc.get(fname),
             'FP_time_user_ms': _fp_t_p,
-            'FP_ref': {'d2_trough': 'D2 trough', 'local_max': 'Local max',
+            'FP_ref': {'d2_min': 'D2 minimum', 'local_max': 'Local max',
                        'global_max': 'Global max (FM)'}.get(p_point_mode_proc, p_point_mode_proc),
             'deriv_timing_used': _deriv_timing_used_proc,
             'FM_time_ms':  _safe(FM_timings_series.get(fname)),
@@ -3059,8 +3180,8 @@ def ojip_refit():
             oj_model_params_refit = {'tau_ms': float(_tau_raw)}
     FJ_time_ms = float(data.get('fj_time_ms', 2.0))
     FI_time_ms = float(data.get('fi_time_ms', 30.0))
-    s_point_mode_refit = data.get('s_point_mode', 'inflection')
-    p_point_mode_refit = data.get('p_point_mode', 'd2_trough')
+    s_point_mode_refit = data.get('s_point_mode', 'd2_min')
+    p_point_mode_refit = data.get('p_point_mode', 'd2_min')
     fjfi_detect_mode_refit = data.get('fjfi_detect_mode', 'd2_zero')
     fj_detect_mode_refit = data.get('fj_detect_mode') or fjfi_detect_mode_refit
     fi_detect_mode_refit = data.get('fi_detect_mode') or fjfi_detect_mode_refit
@@ -3106,7 +3227,7 @@ def ojip_refit():
     gauss_d1_res_r  = _fit_d1_gaussians(D1_DF, x_col, ms)      if fit_method_refit == 'gaussian_d1' else None
 
     _use_poly_refit = (fit_method_refit == 'polynomial')
-    _fjfi_method_refit = fit_method_refit if fit_method_refit in _DETECTION_METHODS else 'd2_trough'
+    _fjfi_method_refit = fit_method_refit if fit_method_refit in _DETECTION_METHODS else 'd2_min'
     try:
         FJ_deriv, FI_deriv, FP_deriv, FJ_infl, FI_infl, FP_infl, fjifp_conf, method_extras_r, d2_depths_r = _find_fjfifp(
             D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
@@ -3185,7 +3306,7 @@ def ojip_refit():
         # ── FJ/FI user timing based on detection mode (separate per point) ─
         if fj_detect_mode_refit == 'poly_inflect':
             _fj_user_r = _t_safe(FJ_infl.get(fname), ms)
-        elif fj_detect_mode_refit == 'd2_trough':
+        elif fj_detect_mode_refit == 'd2_min':
             _fj_user_r = _t_safe(FJ_deriv.get(fname), ms)
         elif fj_detect_mode_refit == 'fixed':
             _fj_user_r = FJ_time_ms
@@ -3195,7 +3316,7 @@ def ojip_refit():
 
         if fi_detect_mode_refit == 'poly_inflect':
             _fi_user_r = _t_safe(FI_infl.get(fname), ms)
-        elif fi_detect_mode_refit == 'd2_trough':
+        elif fi_detect_mode_refit == 'd2_min':
             _fi_user_r = _t_safe(FI_deriv.get(fname), ms)
         elif fi_detect_mode_refit == 'fixed':
             _fi_user_r = FI_time_ms
@@ -3222,7 +3343,7 @@ def ojip_refit():
             'FP_d2_depth': _safe(d2_depths_r['FP'].get(fname)),
             'FP_time_localmax_ms': fp_localmax_r.get(fname),
             'FP_time_user_ms': _fp_t_r,
-            'FP_ref': {'d2_trough': 'D2 trough', 'local_max': 'Local max',
+            'FP_ref': {'d2_min': 'D2 minimum', 'local_max': 'Local max',
                        'global_max': 'Global max (FM)'}.get(p_point_mode_refit, p_point_mode_refit),
             'poly_infl_ms':    poly_oj[fname]['poly_infl_ms'],
             'poly_fi_infl_ms': poly_oi[fname]['poly_infl_ms'],
@@ -3579,8 +3700,8 @@ def ojip_process_batch():
     f0_raw          = payload.get('f0_time_ms', None)
     f0_time_ms      = float(f0_raw) if f0_raw is not None and f0_raw != '' else None
     use_deriv_timing = bool(payload.get('use_deriv_timing', False))
-    s_point_mode     = payload.get('s_point_mode', 'inflection')
-    p_point_mode     = payload.get('p_point_mode', 'd2_trough')
+    s_point_mode     = payload.get('s_point_mode', 'd2_min')
+    p_point_mode     = payload.get('p_point_mode', 'd2_min')
     fjfi_detect_mode = payload.get('fjfi_detect_mode', 'd2_zero')
     fj_detect_mode   = payload.get('fj_detect_mode') or fjfi_detect_mode
     fi_detect_mode   = payload.get('fi_detect_mode') or fjfi_detect_mode
@@ -4078,7 +4199,7 @@ def _format_method_info(mi: dict) -> str:
     _FJFI_MODE_LABELS = {
         'd2_zero':       'D2 zero-crossing (D1 minimum)',
         'poly_inflect':  'Polynomial inflection (D2=0, D3>0)',
-        'd2_trough':     'D2 trough (deepest D2 minimum)',
+        'd2_min':        'D2 minimum (deepest D2 dip)',
         'fixed':         'Fixed timing',
     }
     if fm in _SPLINE_METHODS:
@@ -4138,9 +4259,9 @@ def _format_method_info(mi: dict) -> str:
         lines.append(f'Enabled:                no')
 
     # P point detection mode
-    p_mode = mi.get('p_point_mode', 'd2_trough')
+    p_mode = mi.get('p_point_mode', 'd2_min')
     _P_MODE_LABELS = {
-        'd2_trough': 'D2 trough (P deceleration)',
+        'd2_min': 'D2 minimum (P deceleration)',
         'local_max': 'Local maximum (100–1000 ms)',
         'global_max': 'Global maximum (= FM)',
     }
@@ -4151,10 +4272,11 @@ def _format_method_info(mi: dict) -> str:
     ]
 
     # Q point detection mode
-    q_mode = mi.get('s_point_mode', 'inflection')
+    q_mode = mi.get('s_point_mode', 'd2_min')
     _Q_MODE_LABELS = {
-        'inflection': 'D2 trough (Q inflection)',
-        'auto':       'F minimum → D2 inflection',
+        'd2_min':     'D2 minimum (Q elbow)',
+        'd2_zero':    'D2 zero-crossing (Q inflection)',
+        'auto':       'F minimum → D2 minimum',
         'local_min':  'Local minimum (lowest F after P)',
     }
     lines += [
