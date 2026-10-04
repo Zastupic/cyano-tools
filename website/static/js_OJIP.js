@@ -50,7 +50,6 @@ function _fiAutoTime(kv) {
 // ── multi-curve state (M2-M6) ───────────────────────────────────────────
 var mcDataset      = null;   // parsed multi-curve file (see MC.parse)
 var paramMatrix    = null;   // [{slot,name,...params}, ...] from batch pass
-var mcTimeMs       = null;   // shared time axis in ms (from mcDataset)
 var mcDetailCache  = {};     // LRU: {name: {curves, time_raw_ms, time_log_ms, ...}}
 const MC_DETAIL_MAX = 10;    // max cached detail curves
 var mcAbort        = null;   // AbortController for cancel
@@ -497,6 +496,8 @@ const MC = (() => {
           use_deriv_timing: jipOpts.useDerivTiming || false,
           fj_detect_mode:  jipOpts.fjDetectMode || 'fixed',
           fi_detect_mode:  jipOpts.fiDetectMode || 'fixed',
+          fj_fallback_ms:  jipOpts.fjFallbackMs || 2.0,
+          fi_fallback_ms:  jipOpts.fiFallbackMs || 30.0,
           s_point_mode:    jipOpts.sPointMode || 'd2_min',
           p_point_mode:    jipOpts.pPointMode || 'd2_min',
           include_curves: false,
@@ -1216,6 +1217,8 @@ const MC = (() => {
       let badge = '';
       if (fitPoor)  badge += `<span class="mr-1" title="lower-quality fit (R² ${r.fit_r2 != null ? r.fit_r2.toFixed(3) : 'n/a'})" style="color:#b06a62;">&#9650;</span>`;
       if (confPoor) badge += `<span class="mr-1" title="lower timing confidence (min ${_confMin(r).toFixed(2)})" style="color:#b8923f;">&#9679;</span>`;
+      const _hasFb = !r.error && (r.FJ_detect_status === 'fallback' || r.FI_detect_status === 'fallback');
+      if (_hasFb) badge += `<span class="mr-1" title="fallback timing used (${r.FJ_detect_status === 'fallback' ? 'FJ' : ''}${r.FJ_detect_status === 'fallback' && r.FI_detect_status === 'fallback' ? '+' : ''}${r.FI_detect_status === 'fallback' ? 'FI' : ''})" style="color:#6c757d;">&#9724;</span>`;
       html += `<td class="text-nowrap">${badge}${r.name}</td>`;
       if (isExcel) {
         const meta = _slotMeta(r.slot);
@@ -1326,6 +1329,8 @@ const MC = (() => {
       use_deriv_timing: _wantDerivTiming(),
       fj_detect_mode:  document.getElementById('fj-detect-mode')?.value || 'fixed',
       fi_detect_mode:  document.getElementById('fi-detect-mode')?.value || 'fixed',
+      fj_fallback_ms:  parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
+      fi_fallback_ms:  parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
       s_point_mode:    document.getElementById('s-point-mode')?.value || 'd2_min',
       p_point_mode:    document.getElementById('p-point-mode')?.value || 'd2_min',
       include_curves: true,
@@ -1347,6 +1352,19 @@ const MC = (() => {
       const keys = Object.keys(mcDetailCache);
       if (keys.length >= MC_DETAIL_MAX) delete mcDetailCache[keys[0]];
       mcDetailCache[slot] = detail;
+
+      // Sync paramMatrix so the overview scatter plot matches the detail view.
+      // The detail fetch may use updated settings (FJ mode, kr, densify, etc.)
+      // that differ from the original batch pass, so propagate scalar params back.
+      const _skipKeys = new Set(['curves', 'time_raw_ms', 'time_log_ms', 'densify_info']);
+      const updated = { ...paramMatrix[slot] };
+      for (const k of Object.keys(detail)) {
+        if (!_skipKeys.has(k)) updated[k] = detail[k];
+      }
+      paramMatrix[slot] = updated;
+      // Refresh overview if visible, otherwise mark dirty
+      if (activeTabId() === 'tab-timeseries') renderTimeSeries();
+      else markTabsDirty('tab-timeseries');
 
       // Update densify status if info returned
       const densifySt = document.getElementById('oj-densify-status');
@@ -1792,14 +1810,16 @@ const MC = (() => {
       });
     }
 
-    // ── OJIP markers (O, J, I, P) on each curve ──
+    // ── OJIP markers (O, J, I, P, Q, eS) on each curve ──
     const showOJIP = document.getElementById('mc-show-ojip')?.checked;
     if (showOJIP) {
       const markers = [
-        { key: 'F0', timeKey: null,              label: 'O',  color: '#2ca02c', style: 'circle'   },
-        { key: 'FJ', timeKey: 'FJ_time_user_ms', label: 'J',  color: '#ff7f0e', style: 'triangle' },
-        { key: 'FI', timeKey: 'FI_time_user_ms', label: 'I',  color: '#d62728', style: 'rectRot'  },
-        { key: 'FM', timeKey: 'FM_time_ms',       label: 'P',  color: '#7f2baf', style: 'rect'     },
+        { key: 'F0',      timeKey: null,                label: 'O',  color: '#2ca02c', style: 'circle'   },
+        { key: 'FJ',      timeKey: 'FJ_time_user_ms',   label: 'J',  color: '#ff7f0e', style: 'triangle' },
+        { key: 'FI',      timeKey: 'FI_time_user_ms',   label: 'I',  color: '#d62728', style: 'rectRot'  },
+        { key: 'FM',      timeKey: 'FP_time_user_ms',   label: 'P',  color: '#7f2baf', style: 'rect'     },
+        { key: 'FQ',      timeKey: 'FQ_time_ms',        label: 'Q',  color: '#d62728', style: 'circle',  guard: 'FQ_ref' },
+        { key: 'F_earlyS', timeKey: 'F_earlyS_time_ms', label: 'eS', color: '#17becf', style: 'star'    },
       ];
       for (const m of markers) {
         const pts = [];
@@ -1809,6 +1829,7 @@ const MC = (() => {
           if (!pm || pm.error) continue;
           let rawY = pm[m.key];
           if (rawY == null) continue;
+          if (m.guard && !pm[m.guard]) continue;
           let tMs;
           if (m.timeKey && pm[m.timeKey] != null) {
             tMs = pm[m.timeKey];
@@ -3469,7 +3490,7 @@ const PARAM_LABELS = {
   SM:'Sm', N:'N (QA turnover)',
   F0:'F₀', FM:'FM', FK:'FK', FJ:'FJ', FI:'FI', FV:'FV', OJ:'Amplitude (O-J)', JI:'Amplitude (J-I)', IP:'Amplitude (I-P)',
   FJ_time_user_ms:'t(FJ) ms', FJ_ref:'FJ detection', FI_time_user_ms:'t(FI) ms', FI_ref:'FI detection',
-  FP_time_user_ms:'t(FP) ms', FM_time_ms:'t(FM) ms', FP_ref:'P detection',
+  FP_time_user_ms:'t(FP) recon. ms', FM_time_ms:'t(FM) raw ms', FP_ref:'P detection',
   deriv_timing_used:'Auto-detected used',
   slope_OJ:'Slope O-J', slope_JI:'Slope J-I', slope_IP:'Slope I-P',
   dip_IP_amplitude:'Dip I-P amplitude', dip_IP_time_ms:'Dip I-P time (ms)', dip_IP_d1_min:'Dip I-P D1 min',
@@ -3516,8 +3537,8 @@ const PARAM_TOOLTIPS = {
   FI_time_user_ms: 'FI step time actually used for VI and other calculations (ms)',
   FJ_ref: 'Detection method used for the J inflection point timing',
   FI_ref: 'Detection method used for the I inflection point timing',
-  FP_time_user_ms: 'FP timing used for downstream calculations (selected by P-point mode)',
-  FM_time_ms: 'Time of the global fluorescence maximum',
+  FP_time_user_ms: 'FP timing from the reconstructed (spline-fitted) curve, using the selected P-point detection method',
+  FM_time_ms: 'Time of the global fluorescence maximum from the raw measured data points',
   FP_ref: 'P-point detection method used',
   FJ_d2_depth: 'D2 value at FJ trough; more negative = sharper step',
   FI_d2_depth: 'D2 value at FI trough; more negative = sharper step',
@@ -4111,25 +4132,27 @@ function _syncAllFiDropdowns(value) {
   for (const id of _FI_DD_IDS) { const el = document.getElementById(id); if (el) el.value = value; }
 }
 
-/** Enable/disable the diagnostics fixed-time inputs based on dropdown selection. */
+/** Enable/disable the diagnostics fixed-time and fallback inputs based on dropdown selection.
+ *  Fixed-time inputs: enabled when mode == 'fixed'.
+ *  Fallback inputs: enabled when mode != 'fixed' (timing used when auto-detection fails). */
 function _syncFixedTimeInputsVisibility() {
-  const fjInput = document.getElementById('fj-fixed-time-diag');
-  const fiInput = document.getElementById('fi-fixed-time-diag');
   const fjMode = document.getElementById('fj-detect-mode')?.value || 'fixed';
   const fiMode = document.getElementById('fi-detect-mode')?.value || 'fixed';
-  if (fjInput) {
-    fjInput.disabled = fjMode !== 'fixed';
-    fjInput.style.opacity = fjMode === 'fixed' ? '1' : '0.45';
+  // Fixed-time inputs: enabled when mode == 'fixed'
+  for (const [mode, prefix] of [[fjMode, 'fj'], [fiMode, 'fi']]) {
+    const inp  = document.getElementById(prefix + '-fixed-time-diag');
+    const wrap = document.getElementById(prefix + '-fixed-time-diag-wrap');
+    const isFixed = mode === 'fixed';
+    if (inp)  { inp.disabled = !isFixed;  inp.style.opacity  = isFixed ? '1' : '0.45'; }
+    if (wrap) { wrap.style.opacity = isFixed ? '1' : '0.45'; }
+    // Fallback inputs: enabled when mode != 'fixed' (inverse)
+    const fbLabel = document.getElementById(prefix + '-fallback-label');
+    const fbWrap  = document.getElementById(prefix + '-fallback-wrap');
+    const fbInp   = document.getElementById(prefix + '-fallback-time');
+    if (fbLabel) fbLabel.style.opacity = isFixed ? '0.35' : '1';
+    if (fbWrap)  fbWrap.style.opacity  = isFixed ? '0.35' : '1';
+    if (fbInp)   { fbInp.disabled = isFixed; fbInp.style.opacity = isFixed ? '0.35' : '1'; }
   }
-  if (fiInput) {
-    fiInput.disabled = fiMode !== 'fixed';
-    fiInput.style.opacity = fiMode === 'fixed' ? '1' : '0.45';
-  }
-  // Also dim the "ms" suffix
-  const fjWrap = document.getElementById('fj-fixed-time-diag-wrap');
-  const fiWrap = document.getElementById('fi-fixed-time-diag-wrap');
-  if (fjWrap) fjWrap.style.opacity = fjMode === 'fixed' ? '1' : '0.45';
-  if (fiWrap) fiWrap.style.opacity = fiMode === 'fixed' ? '1' : '0.45';
 }
 
 /** Sync diagnostics fixed-time inputs FROM sidebar inputs. */
@@ -4661,6 +4684,8 @@ async function uploadAndAnalyze() {
   fd.append('use_deriv_timing', _wantDerivTiming() ? 'true' : 'false');
   fd.append('fj_detect_mode', document.getElementById('fj-detect-mode')?.value || 'd2_zero');
   fd.append('fi_detect_mode', document.getElementById('fi-detect-mode')?.value || 'd2_zero');
+  fd.append('fj_fallback_ms', document.getElementById('fj-fallback-time')?.value || '2.0');
+  fd.append('fi_fallback_ms', document.getElementById('fi-fallback-time')?.value || '30.0');
   fd.append('s_point_mode', document.getElementById('s-point-mode')?.value || 'd2_min');
   fd.append('p_point_mode', document.getElementById('p-point-mode')?.value || 'd2_min');
   const _f0Val = parseFloat(document.getElementById('f0-time-input')?.value);
@@ -5022,12 +5047,14 @@ function renderCurvesChart(norm) {
   }
 
   // FJ detected markers (hollow ▲) — shown only when detected ≠ used timing
+  // Suppressed when detect_status is 'fallback' (auto-detection was rejected)
   const fjDetData = [], fjDetBg = [], fjDetBd = [];
   files.forEach((fname, i) => {
     const kv  = ojipData.key_values[fname];
     const fjUsed = kv.FJ_time_user_ms;
     const fjDet  = _fjAutoTime(kv);
-    if (fjDet != null && fjUsed != null && Math.abs(fjDet - fjUsed) > 0.01) {
+    if (fjDet != null && fjUsed != null && Math.abs(fjDet - fjUsed) > 0.01
+        && kv.FJ_detect_status !== 'fallback') {
       fjDetData.push({ x: fjDet, y: interpAt(t, ojipData.curves[fname][norm], fjDet) });
       fjDetBg.push('transparent'); fjDetBd.push(sampleColor(i, n));
     }
@@ -5043,12 +5070,14 @@ function renderCurvesChart(norm) {
   }
 
   // FI detected markers (hollow ◆) — shown only when detected ≠ used timing
+  // Suppressed when detect_status is 'fallback' (auto-detection was rejected)
   const fiDetData = [], fiDetBg = [], fiDetBd = [];
   files.forEach((fname, i) => {
     const kv  = ojipData.key_values[fname];
     const fiUsed = kv.FI_time_user_ms;
     const fiDet  = _fiAutoTime(kv);
-    if (fiDet != null && fiUsed != null && Math.abs(fiDet - fiUsed) > 0.01) {
+    if (fiDet != null && fiUsed != null && Math.abs(fiDet - fiUsed) > 0.01
+        && kv.FI_detect_status !== 'fallback') {
       fiDetData.push({ x: fiDet, y: interpAt(t, ojipData.curves[fname][norm], fiDet) });
       fiDetBg.push('transparent'); fiDetBd.push(sampleColor(i, n));
     }
@@ -5214,6 +5243,13 @@ function _onFJTableChange(e) {
   ojipData.key_values[fname] = newKv;
   paramData[fname] = calcJIP(newKv);
   tr.querySelector('.fvfm-cell').textContent = fmt(paramData[fname].FVFM);
+  // Update FJ/FI auto-detection and FP display cells
+  const fjAutoCell = tr.querySelector('.fj-auto');
+  const fiAutoCell = tr.querySelector('.fi-auto');
+  const fpAutoCell = tr.querySelector('.fp-auto');
+  if (fjAutoCell) fjAutoCell.textContent = fmt(_fjAutoTime(newKv));
+  if (fiAutoCell) fiAutoCell.textContent = fmt(_fiAutoTime(newKv));
+  if (fpAutoCell) fpAutoCell.textContent = fmt(newKv.FP_time_user_ms ?? newKv.FP_time_deriv_ms);
   // Always update curves (FJ/FI marker positions changed)
   const norm = document.querySelector('#norm-btns .btn-primary')?.dataset?.norm || 'raw';
   renderCurvesChart(norm);
@@ -5526,6 +5562,37 @@ function _syncBgF0Controls() {
   }
 }
 
+/**
+ * Append legend-only datasets for OJIP detection markers (FJ, FI, FP, FQ, Fes).
+ * These are empty datasets that appear only in the scroll legend to identify
+ * the per-curve marker symbols.
+ */
+function _appendDiagMarkerLegend(datasets) {
+  if (!ojipData || !ojipData.files) return;
+  let hasFJ = false, hasFI = false, hasFP = false, hasFQ = false, hasFes = false;
+  for (const fname of ojipData.files) {
+    const kv = ojipData.key_values[fname];
+    if (!kv) continue;
+    if ((kv.FJ_time_user_ms ?? _fjAutoTime(kv)) != null) hasFJ = true;
+    if ((kv.FI_time_user_ms ?? _fiAutoTime(kv)) != null) hasFI = true;
+    if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null) hasFP = true;
+    if (kv.FQ_time_ms != null && kv.FQ_ref) hasFQ = true;
+    if (kv.F_earlyS_time_ms != null) hasFes = true;
+  }
+  const entries = [];
+  if (hasFJ)  entries.push({ label: '\u25B2 FJ',  color: '#ff7f0e' });
+  if (hasFI)  entries.push({ label: '\u25C6 FI',  color: '#d62728' });
+  if (hasFP)  entries.push({ label: '\u25A0 FP',  color: '#7f2baf' });
+  if (hasFQ)  entries.push({ label: '\u25CF FQ',  color: '#17becf' });
+  if (hasFes) entries.push({ label: '\u2605 Fes', color: '#2ca02c' });
+  for (const e of entries) {
+    datasets.push({
+      label: e.label, showLine: false, data: [],
+      pointRadius: 0, borderColor: e.color, backgroundColor: e.color,
+    });
+  }
+}
+
 function renderDiagnostics() {
   renderDiagRecon(); renderDiagD1(); renderDiagD2(); renderDiagD3();
   renderDiagResid(); renderMethodFit();
@@ -5562,6 +5629,65 @@ function renderDiagnostics() {
   }
 }
 
+// ── Shared helpers for diagnostic derivative / reconstruction plots ──────
+// Per-curve: add solid phase markers (FJ/FI/FP/FQ/eS) and hollow detection
+// markers where auto-detected timing differs from the used timing.
+function _addDiagPhaseMarkers(kv, dataArr, timeArr, tMin, tMax, color,
+    datasets, fjDetPts, fjDetBg, fjDetBd, fiDetPts, fiDetBg, fiDetBd) {
+  const pts = [], r = [], st = [], bg = [], bd = [];
+  const addMk = (tv, style) => {
+    if (tv == null || tv < tMin || tv > tMax) return;
+    pts.push({ x: tv, y: interpAt(timeArr, dataArr, tv) });
+    r.push(6); st.push(style); bg.push(color); bd.push(color);
+  };
+  addMk(kv.FJ_time_user_ms ?? _fjAutoTime(kv), 'triangle');
+  addMk(kv.FI_time_user_ms ?? _fiAutoTime(kv), 'rectRot');
+  if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null)
+    addMk(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms, 'rect');
+  if (kv.FQ_time_ms != null && kv.FQ_ref) addMk(kv.FQ_time_ms, 'circle');
+  if (kv.F_earlyS_time_ms != null) addMk(kv.F_earlyS_time_ms, 'star');
+  if (pts.length > 0) {
+    datasets.push({ label: '', showLine: false, data: pts,
+      pointRadius: r, pointStyle: st,
+      pointBackgroundColor: bg, pointBorderColor: bd,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
+  // Hollow markers for detected FJ/FI when they differ from used timing
+  // (suppressed when detect_status is 'fallback' = rejected auto-detection)
+  const fjU = kv.FJ_time_user_ms, fjD = _fjAutoTime(kv);
+  if (fjD != null && fjU != null && Math.abs(fjD - fjU) > 0.01
+      && fjD >= tMin && fjD <= tMax
+      && kv.FJ_detect_status !== 'fallback') {
+    fjDetPts.push({ x: fjD, y: interpAt(timeArr, dataArr, fjD) });
+    fjDetBg.push('transparent'); fjDetBd.push(color);
+  }
+  const fiU = kv.FI_time_user_ms, fiD = _fiAutoTime(kv);
+  if (fiD != null && fiU != null && Math.abs(fiD - fiU) > 0.01
+      && fiD >= tMin && fiD <= tMax
+      && kv.FI_detect_status !== 'fallback') {
+    fiDetPts.push({ x: fiD, y: interpAt(timeArr, dataArr, fiD) });
+    fiDetBg.push('transparent'); fiDetBd.push(color);
+  }
+}
+
+// Append hollow-marker datasets for FJ/FI detection overlay after the per-curve loop.
+function _pushDetectionMarkerDatasets(datasets, fjDetPts, fjDetBg, fjDetBd, fiDetPts, fiDetBg, fiDetBd) {
+  if (fjDetPts.length) {
+    datasets.push({ label: 'FJ det.', showLine: false, data: fjDetPts,
+      pointRadius: 7, pointStyle: 'triangle',
+      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
+  if (fiDetPts.length) {
+    datasets.push({ label: 'FI det.', showLine: false, data: fiDetPts,
+      pointRadius: 7, pointStyle: 'rectRot',
+      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
+      pointBorderWidth: 2,
+      borderColor: 'transparent', backgroundColor: 'transparent' });
+  }
+}
+
 function renderDiagRecon() {
   const { tMin, tMax } = _diagPlotTrimRange();
   const files = ojipData.files;
@@ -5580,61 +5706,16 @@ function renderDiagRecon() {
         .filter(pt => pt.x >= tMin && pt.x <= tMax);
     datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, backgroundColor: 'transparent', data: dnData });
-    // reconstructed curve (dashed)
     datasets.push({ label: '', showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, borderDash: [4, 3], backgroundColor: 'transparent',
       data: reconArr
         .map((y, j) => ({ x: tLog[j], y }))
         .filter(pt => pt.x >= tMin && pt.x <= tMax) });
-    // FJ (▲), FI (◆) and FP (■) on the reconstructed curve — only if within visible range
-    const pts = [], radii = [], styles = [], bg = [], bd = [];
-    const addMk = (t, arr, style) => {
-      if (t == null || t < tMin || t > tMax) return;
-      pts.push({ x: t, y: interpAt(tLog, arr, t) });
-      radii.push(6); styles.push(style); bg.push(c); bd.push(c);
-    };
-    addMk(kv.FJ_time_user_ms ?? _fjAutoTime(kv), reconArr, 'triangle');
-    addMk(kv.FI_time_user_ms ?? _fiAutoTime(kv), reconArr, 'rectRot');
-    if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null)
-      addMk(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms, reconArr, 'rect');
-    if (kv.FQ_time_ms != null && kv.FQ_ref)
-      addMk(kv.FQ_time_ms, reconArr, 'circle');
-    if (kv.F_earlyS_time_ms != null)
-      addMk(kv.F_earlyS_time_ms, reconArr, 'star');
-    if (pts.length > 0) {
-      datasets.push({ label: '', showLine: false, data: pts,
-        pointRadius: radii, pointStyle: styles,
-        pointBackgroundColor: bg, pointBorderColor: bd,
-        borderColor: 'transparent', backgroundColor: 'transparent' });
-    }
-    // hollow markers for detected FJ/FI when they differ from used timing
-    const fjU = kv.FJ_time_user_ms, fjD = _fjAutoTime(kv);
-    if (fjD != null && fjU != null && Math.abs(fjD - fjU) > 0.01
-        && fjD >= tMin && fjD <= tMax) {
-      fjDetPts.push({ x: fjD, y: interpAt(tLog, reconArr, fjD) });
-      fjDetBg.push('transparent'); fjDetBd.push(c);
-    }
-    const fiU = kv.FI_time_user_ms, fiD = _fiAutoTime(kv);
-    if (fiD != null && fiU != null && Math.abs(fiD - fiU) > 0.01
-        && fiD >= tMin && fiD <= tMax) {
-      fiDetPts.push({ x: fiD, y: interpAt(tLog, reconArr, fiD) });
-      fiDetBg.push('transparent'); fiDetBd.push(c);
-    }
+    _addDiagPhaseMarkers(kv, reconArr, tLog, tMin, tMax, c, datasets,
+      fjDetPts, fjDetBg, fjDetBd, fiDetPts, fiDetBg, fiDetBd);
   });
-  if (fjDetPts.length) {
-    datasets.push({ label: 'FJ det.', showLine: false, data: fjDetPts,
-      pointRadius: 7, pointStyle: 'triangle',
-      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
-      pointBorderWidth: 2,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
-  }
-  if (fiDetPts.length) {
-    datasets.push({ label: 'FI det.', showLine: false, data: fiDetPts,
-      pointRadius: 7, pointStyle: 'rectRot',
-      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
-      pointBorderWidth: 2,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
-  }
+  _pushDetectionMarkerDatasets(datasets, fjDetPts, fjDetBg, fjDetBd, fiDetPts, fiDetBg, fiDetBd);
+  _appendDiagMarkerLegend(datasets);
   const reconOpts = logScatterOpts('Time (ms)', 'Double normalised');
   reconOpts.plugins.legend.display = false;
   makeChart('diag-recon-chart', { type: 'scatter', data: { datasets }, options: reconOpts });
@@ -5658,7 +5739,9 @@ function renderDiagResid() {
   buildScrollLegend('diag-resid-chart');
 }
 
-function renderDiagD2() {
+// Unified derivative plot: renders D1, D2, or D3 with phase markers.
+// derivKey: 'd1' | 'd2' | 'd3'; chartId: canvas element id; yLabel: axis label.
+function _renderDiagDerivPlot(derivKey, chartId, yLabel) {
   const { tMin, tMax } = _diagPlotTrimRange();
   const files = ojipData.files;
   const t     = ojipData.time_log_ms;
@@ -5669,197 +5752,27 @@ function renderDiagD2() {
   files.forEach((fname, i) => {
     const kv = ojipData.key_values[fname];
     const c  = sampleColor(i, n);
-    const d2raw = ojipData.curves[fname].d2;
-    const d2arr = ojipData.curves[fname].d2_smooth || d2raw;
+    const rawArr = ojipData.curves[fname][derivKey];
+    if (!rawArr) return;
+    const dataArr = ojipData.curves[fname][derivKey + '_smooth'] || rawArr;
     datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
       borderColor: c, backgroundColor: 'transparent',
-      data: d2arr.map((y, j) => ({ x: t[j], y }))
+      data: dataArr.map((y, j) => ({ x: t[j], y }))
         .filter(pt => pt.x >= tMin && pt.x <= tMax) });
-    const pts2 = [], r2 = [], st2 = [], bg2 = [], bd2 = [];
-    const addMk2 = (tv, style) => {
-      if (tv == null || tv < tMin || tv > tMax) return;
-      pts2.push({ x: tv, y: interpAt(t, d2arr, tv) });
-      r2.push(6); st2.push(style); bg2.push(c); bd2.push(c);
-    };
-    addMk2(kv.FJ_time_user_ms ?? _fjAutoTime(kv), 'triangle');
-    addMk2(kv.FI_time_user_ms ?? _fiAutoTime(kv), 'rectRot');
-    if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null) addMk2(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms, 'rect');
-    if (kv.FQ_time_ms != null && kv.FQ_ref) addMk2(kv.FQ_time_ms, 'circle');
-    if (kv.F_earlyS_time_ms != null) addMk2(kv.F_earlyS_time_ms, 'star');
-    if (pts2.length > 0) {
-      datasets.push({ label: '', showLine: false, data: pts2,
-        pointRadius: r2, pointStyle: st2,
-        pointBackgroundColor: bg2, pointBorderColor: bd2,
-        borderColor: 'transparent', backgroundColor: 'transparent' });
-    }
-    const fjU = kv.FJ_time_user_ms, fjD = _fjAutoTime(kv);
-    if (fjD != null && fjU != null && Math.abs(fjD - fjU) > 0.01
-        && fjD >= tMin && fjD <= tMax) {
-      fjDetPts.push({ x: fjD, y: interpAt(t, d2arr, fjD) });
-      fjDetBg.push('transparent'); fjDetBd.push(c);
-    }
-    const fiU = kv.FI_time_user_ms, fiD = _fiAutoTime(kv);
-    if (fiD != null && fiU != null && Math.abs(fiD - fiU) > 0.01
-        && fiD >= tMin && fiD <= tMax) {
-      fiDetPts.push({ x: fiD, y: interpAt(t, d2arr, fiD) });
-      fiDetBg.push('transparent'); fiDetBd.push(c);
-    }
+    _addDiagPhaseMarkers(kv, dataArr, t, tMin, tMax, c, datasets,
+      fjDetPts, fjDetBg, fjDetBd, fiDetPts, fiDetBg, fiDetBd);
   });
-  if (fjDetPts.length) {
-    datasets.push({ label: 'FJ det.', showLine: false, data: fjDetPts,
-      pointRadius: 7, pointStyle: 'triangle',
-      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
-      pointBorderWidth: 2,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
-  }
-  if (fiDetPts.length) {
-    datasets.push({ label: 'FI det.', showLine: false, data: fiDetPts,
-      pointRadius: 7, pointStyle: 'rectRot',
-      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
-      pointBorderWidth: 2,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
-  }
-  const d2Opts = logScatterOpts('Time (ms)', '2nd derivative');
-  d2Opts.plugins.legend.display = false;
-  makeChart('diag-d2-chart', { type: 'scatter', data: { datasets }, options: d2Opts });
-  buildScrollLegend('diag-d2-chart');
+  _pushDetectionMarkerDatasets(datasets, fjDetPts, fjDetBg, fjDetBd, fiDetPts, fiDetBg, fiDetBd);
+  _appendDiagMarkerLegend(datasets);
+  const opts = logScatterOpts('Time (ms)', yLabel);
+  opts.plugins.legend.display = false;
+  makeChart(chartId, { type: 'scatter', data: { datasets }, options: opts });
+  buildScrollLegend(chartId);
 }
 
-function renderDiagD3() {
-  const { tMin, tMax } = _diagPlotTrimRange();
-  const files = ojipData.files;
-  const t     = ojipData.time_log_ms;
-  const n     = files.length;
-  const datasets = [];
-  const fjDetPts = [], fjDetBg = [], fjDetBd = [];
-  const fiDetPts = [], fiDetBg = [], fiDetBd = [];
-  files.forEach((fname, i) => {
-    const kv = ojipData.key_values[fname];
-    const c  = sampleColor(i, n);
-    const d3raw = ojipData.curves[fname].d3;
-    if (!d3raw) return;
-    const d3arr = ojipData.curves[fname].d3_smooth || d3raw;
-    datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
-      borderColor: c, backgroundColor: 'transparent',
-      data: d3arr.map((y, j) => ({ x: t[j], y }))
-        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
-    const pts3 = [], r3 = [], st3 = [], bg3 = [], bd3 = [];
-    const addMk3 = (tv, style) => {
-      if (tv == null || tv < tMin || tv > tMax) return;
-      pts3.push({ x: tv, y: interpAt(t, d3arr, tv) });
-      r3.push(6); st3.push(style); bg3.push(c); bd3.push(c);
-    };
-    addMk3(kv.FJ_time_user_ms ?? _fjAutoTime(kv), 'triangle');
-    addMk3(kv.FI_time_user_ms ?? _fiAutoTime(kv), 'rectRot');
-    if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null) addMk3(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms, 'rect');
-    if (kv.FQ_time_ms != null && kv.FQ_ref) addMk3(kv.FQ_time_ms, 'circle');
-    if (kv.F_earlyS_time_ms != null) addMk3(kv.F_earlyS_time_ms, 'star');
-    if (pts3.length > 0) {
-      datasets.push({ label: '', showLine: false, data: pts3,
-        pointRadius: r3, pointStyle: st3,
-        pointBackgroundColor: bg3, pointBorderColor: bd3,
-        borderColor: 'transparent', backgroundColor: 'transparent' });
-    }
-    const fjU = kv.FJ_time_user_ms, fjD = _fjAutoTime(kv);
-    if (fjD != null && fjU != null && Math.abs(fjD - fjU) > 0.01
-        && fjD >= tMin && fjD <= tMax) {
-      fjDetPts.push({ x: fjD, y: interpAt(t, d3arr, fjD) });
-      fjDetBg.push('transparent'); fjDetBd.push(c);
-    }
-    const fiU = kv.FI_time_user_ms, fiD = _fiAutoTime(kv);
-    if (fiD != null && fiU != null && Math.abs(fiD - fiU) > 0.01
-        && fiD >= tMin && fiD <= tMax) {
-      fiDetPts.push({ x: fiD, y: interpAt(t, d3arr, fiD) });
-      fiDetBg.push('transparent'); fiDetBd.push(c);
-    }
-  });
-  if (fjDetPts.length) {
-    datasets.push({ label: 'FJ det.', showLine: false, data: fjDetPts,
-      pointRadius: 7, pointStyle: 'triangle',
-      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
-      pointBorderWidth: 2,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
-  }
-  if (fiDetPts.length) {
-    datasets.push({ label: 'FI det.', showLine: false, data: fiDetPts,
-      pointRadius: 7, pointStyle: 'rectRot',
-      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
-      pointBorderWidth: 2,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
-  }
-  const d3Opts = logScatterOpts('Time (ms)', '3rd derivative');
-  d3Opts.plugins.legend.display = false;
-  makeChart('diag-d3-chart', { type: 'scatter', data: { datasets }, options: d3Opts });
-  buildScrollLegend('diag-d3-chart');
-}
-
-function renderDiagD1() {
-  const { tMin, tMax } = _diagPlotTrimRange();
-  const files = ojipData.files;
-  const t     = ojipData.time_log_ms;
-  const n     = files.length;
-  const datasets = [];
-  const fjDetPts = [], fjDetBg = [], fjDetBd = [];
-  const fiDetPts = [], fiDetBg = [], fiDetBd = [];
-  files.forEach((fname, i) => {
-    const kv = ojipData.key_values[fname];
-    const c  = sampleColor(i, n);
-    const d1arr = ojipData.curves[fname].d1;
-    if (!d1arr) return;
-    datasets.push({ label: fname, showLine: true, pointRadius: 0, borderWidth: 1.2,
-      borderColor: c, backgroundColor: 'transparent',
-      data: d1arr.map((y, j) => ({ x: t[j], y }))
-        .filter(pt => pt.x >= tMin && pt.x <= tMax) });
-    const pts = [], r = [], st = [], bg = [], bd = [];
-    const addMk = (tv, style) => {
-      if (tv == null || tv < tMin || tv > tMax) return;
-      pts.push({ x: tv, y: interpAt(t, d1arr, tv) });
-      r.push(6); st.push(style); bg.push(c); bd.push(c);
-    };
-    addMk(kv.FJ_time_user_ms ?? _fjAutoTime(kv), 'triangle');
-    addMk(kv.FI_time_user_ms ?? _fiAutoTime(kv), 'rectRot');
-    if ((kv.FP_time_user_ms ?? kv.FP_time_deriv_ms) != null)
-      addMk(kv.FP_time_user_ms ?? kv.FP_time_deriv_ms, 'rect');
-    if (kv.FQ_time_ms != null && kv.FQ_ref) addMk(kv.FQ_time_ms, 'circle');
-    if (kv.F_earlyS_time_ms != null) addMk(kv.F_earlyS_time_ms, 'star');
-    if (pts.length > 0) {
-      datasets.push({ label: '', showLine: false, data: pts,
-        pointRadius: r, pointStyle: st,
-        pointBackgroundColor: bg, pointBorderColor: bd,
-        borderColor: 'transparent', backgroundColor: 'transparent' });
-    }
-    const fjU = kv.FJ_time_user_ms, fjD = _fjAutoTime(kv);
-    if (fjD != null && fjU != null && Math.abs(fjD - fjU) > 0.01
-        && fjD >= tMin && fjD <= tMax) {
-      fjDetPts.push({ x: fjD, y: interpAt(t, d1arr, fjD) });
-      fjDetBg.push('transparent'); fjDetBd.push(c);
-    }
-    const fiU = kv.FI_time_user_ms, fiD = _fiAutoTime(kv);
-    if (fiD != null && fiU != null && Math.abs(fiD - fiU) > 0.01
-        && fiD >= tMin && fiD <= tMax) {
-      fiDetPts.push({ x: fiD, y: interpAt(t, d1arr, fiD) });
-      fiDetBg.push('transparent'); fiDetBd.push(c);
-    }
-  });
-  if (fjDetPts.length) {
-    datasets.push({ label: 'FJ det.', showLine: false, data: fjDetPts,
-      pointRadius: 7, pointStyle: 'triangle',
-      pointBackgroundColor: fjDetBg, pointBorderColor: fjDetBd,
-      pointBorderWidth: 2,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
-  }
-  if (fiDetPts.length) {
-    datasets.push({ label: 'FI det.', showLine: false, data: fiDetPts,
-      pointRadius: 7, pointStyle: 'rectRot',
-      pointBackgroundColor: fiDetBg, pointBorderColor: fiDetBd,
-      pointBorderWidth: 2,
-      borderColor: 'transparent', backgroundColor: 'transparent' });
-  }
-  const d1Opts = logScatterOpts('Time (ms)', '1st derivative');
-  d1Opts.plugins.legend.display = false;
-  makeChart('diag-d1-chart', { type: 'scatter', data: { datasets }, options: d1Opts });
-  buildScrollLegend('diag-d1-chart');
-}
+function renderDiagD2() { _renderDiagDerivPlot('d2', 'diag-d2-chart', '2nd derivative'); }
+function renderDiagD3() { _renderDiagDerivPlot('d3', 'diag-d3-chart', '3rd derivative'); }
+function renderDiagD1() { _renderDiagDerivPlot('d1', 'diag-d1-chart', '1st derivative'); }
 
 function renderMethodFit() {
   const method = document.getElementById('fit-method-sel')?.value || 'logspline';
@@ -6237,6 +6150,10 @@ async function mcRefitBatch() {
   MC.renderAggregateCurves();
   if (mcDataset.fluorometer === 'OJIPImaging') MC.renderGroupedPanels();
 
+  // Mark diagnostics + other tabs as dirty so they re-render when visited
+  markTabsDirty('tab-diag', 'tab-params', 'tab-curves');
+  if (hasGroups()) markTabsDirty('tab-groups');
+
   const methodLabel = fitMethod === 'polynomial' ? 'Polynomial (Akinyemi)'
                     : fitMethod === 'logspline'  ? 'Log-time spline'
                     : fitMethod === 'pchip'      ? 'PCHIP'
@@ -6321,6 +6238,8 @@ async function refitSplines() {
         p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_min',
         fj_detect_mode: document.getElementById('fj-detect-mode')?.value || 'd2_zero',
         fi_detect_mode: document.getElementById('fi-detect-mode')?.value || 'd2_zero',
+        fj_fallback_ms: parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
+        fi_fallback_ms: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
       }),
     });
     const data = await resp.json();
@@ -6337,16 +6256,23 @@ async function refitSplines() {
       }
     }
 
-    // Sync user-editable FJ/FI timing: respect per-point radio/dropdown selection
+    // Sync user-editable FJ/FI timing: respect per-point radio/dropdown selection.
+    // When the server signals 'fallback', honour its FJ/FI_time_user_ms instead
+    // of overriding with the raw auto-detected time (which may be a spurious
+    // zero-crossing that failed the proximity check).
     const fjFixed = parseFloat(document.getElementById('FJ_time').value) || 2.0;
     const fiFixed = parseFloat(document.getElementById('FI_time').value) || 30.0;
     for (const fname of ojipData.files) {
       const kv = ojipData.key_values[fname];
       if (!kv) continue;  // guard: no key_values for this curve
-      const fjAuto = _wantFjDerivTiming() ? _fjAutoTime(kv) : null;
-      const fiAuto = _wantFiDerivTiming() ? _fiAutoTime(kv) : null;
-      const fjMs = fjAuto != null ? fjAuto : fjFixed;
-      const fiMs = fiAuto != null ? fiAuto : fiFixed;
+      const fjFB = kv.FJ_detect_status === 'fallback';
+      const fiFB = kv.FI_detect_status === 'fallback';
+      const fjAuto = (!fjFB && _wantFjDerivTiming()) ? _fjAutoTime(kv) : null;
+      const fiAuto = (!fiFB && _wantFiDerivTiming()) ? _fiAutoTime(kv) : null;
+      const fjMs = fjFB ? kv.FJ_time_user_ms
+                 : fjAuto != null ? fjAuto : fjFixed;
+      const fiMs = fiFB ? kv.FI_time_user_ms
+                 : fiAuto != null ? fiAuto : fiFixed;
       const updated = recalcKeyValues(fname, fjMs, fiMs);
       if (updated) ojipData.key_values[fname] = updated;
     }
@@ -7655,6 +7581,8 @@ async function startBatchExport() {
           p_point_mode: document.getElementById('p-point-mode')?.value || 'd2_min',
           fj_detect_mode: document.getElementById('fj-detect-mode')?.value || 'd2_zero',
           fi_detect_mode: document.getElementById('fi-detect-mode')?.value || 'd2_zero',
+          fj_fallback_ms: parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
+          fi_fallback_ms: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
           include_curves: true,
         };
         const BATCH = 20, CONC = 2, MAX_RETRIES = 3;

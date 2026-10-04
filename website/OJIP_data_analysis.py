@@ -13,6 +13,9 @@ from scipy.signal import find_peaks
 from . import UPLOAD_FOLDER, csrf
 from werkzeug.utils import secure_filename
 from .ojip_interpretation import interpret_ojip, generate_narrative, summarise_findings, compare_ojip_params
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 OJIP_data_analysis = Blueprint('OJIP_data_analysis', __name__)
 
@@ -827,6 +830,39 @@ def _d2_zero_in_window(Infl_DF, fname, lo_native, hi_native, expect_native=None)
     else:
         best = cands[0]
     return float(best)
+
+
+def _d3_crosses_zero_in_window(D3_DF, fname, log_time_vals, lo_native, hi_native):
+    """Check if D3 changes sign within [lo, hi], indicating a genuine D2 extremum.
+
+    If D3 stays one-signed throughout the window, D2 is monotonic there and
+    any reported "minimum" is just an argmin artefact, not a real inflection.
+    """
+    col = D3_DF.get(fname)
+    if col is None:
+        return False
+    mask = (log_time_vals >= lo_native) & (log_time_vals <= hi_native)
+    d3w = col.values[mask]
+    if len(d3w) < 2:
+        return False
+    return bool(np.any(np.diff(np.sign(d3w)) != 0))
+
+
+# Maximum log₁₀-distance from fallback timing to accept a D2 zero-crossing as
+# genuine.  At ±0.3 decades a 2 ms fallback accepts crossings in 1.0–4.0 ms;
+# a 30 ms fallback accepts 15–60 ms.
+_D2Z_MAX_LOG_DIST = 0.3
+
+
+def _d2z_near_expected(d2z_native, expected_ms, ms_factor):
+    """Return True if the D2 zero-crossing is within ±_D2Z_MAX_LOG_DIST decades
+    of *expected_ms*.  Returns False when *d2z_native* is None (no crossing)."""
+    if d2z_native is None:
+        return False
+    d2z_ms = float(d2z_native) * ms_factor
+    if d2z_ms <= 0 or expected_ms <= 0:
+        return False
+    return abs(np.log10(d2z_ms) - np.log10(expected_ms)) <= _D2Z_MAX_LOG_DIST
 
 
 def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
@@ -1870,6 +1906,122 @@ def _t_safe(v, ms_factor):
         return None
 
 
+def _resolve_fp_timing(p_point_mode, fp_localmax_val, fp_deriv_native,
+                       recon_vals, log_time, ms, ranges, Infl_DF, fname):
+    """Resolve FP timing with cascading fallback.
+
+    Returns (fp_t_ms, fp_ref_mode_str).
+    """
+    fp_t = None
+    ref_mode = p_point_mode
+    if p_point_mode == 'local_max':
+        fp_t = fp_localmax_val
+        if fp_t is None:
+            fp_t = _t_safe(fp_deriv_native, ms)
+            if fp_t is not None:
+                ref_mode = 'local_max\u2192d2_min'
+        if fp_t is None:
+            _idx = int(np.argmax(recon_vals))
+            fp_t = float(log_time.iloc[_idx]) * ms
+            ref_mode = 'local_max\u2192global_max'
+    elif p_point_mode == 'd2_zero':
+        _d2z = _d2_zero_in_window(Infl_DF, fname, ranges['FP'][0], ranges['FP'][1])
+        if _d2z is not None:
+            fp_t = float(_d2z) * ms
+        if fp_t is None:
+            fp_t = fp_localmax_val
+            if fp_t is not None:
+                ref_mode = 'd2_zero\u2192local_max'
+        if fp_t is None:
+            _idx = int(np.argmax(recon_vals))
+            fp_t = float(log_time.iloc[_idx]) * ms
+            ref_mode = 'd2_zero\u2192global_max'
+    elif p_point_mode == 'global_max':
+        _idx = int(np.argmax(recon_vals))
+        fp_t = float(log_time.iloc[_idx]) * ms
+    else:  # 'd2_min' (default)
+        fp_t = _t_safe(fp_deriv_native, ms)
+        if fp_t is None:
+            fp_t = fp_localmax_val
+            if fp_t is not None:
+                ref_mode = 'd2_min\u2192local_max'
+        if fp_t is None:
+            _idx = int(np.argmax(recon_vals))
+            fp_t = float(log_time.iloc[_idx]) * ms
+            ref_mode = 'd2_min\u2192global_max'
+    return fp_t, ref_mode
+
+
+def _resolve_user_timing(mode, d2z_native, deriv_native, infl_native,
+                         fixed_ms, ms):
+    """Select user-facing FJ or FI timing based on detection mode.
+
+    Returns timing_ms (always non-None: falls back to *fixed_ms*).
+    """
+    if mode == 'poly_inflect':
+        t = _t_safe(infl_native, ms)
+    elif mode == 'd2_min':
+        t = _t_safe(deriv_native, ms)
+    elif mode == 'fixed':
+        t = fixed_ms
+    else:  # 'd2_zero' default
+        t = float(d2z_native) * ms if d2z_native is not None else _t_safe(infl_native, ms)
+    return t or fixed_ms
+
+
+def _validate_timing_signal(mode, user_ms, d2z_native, fallback_ms, ms,
+                            D3_DF, fname, log_time_native, range_lo, range_hi):
+    """Validate FJ/FI signal; apply fallback if unreliable.
+
+    Returns (validated_ms, detect_status).
+    """
+    if mode == 'fixed':
+        return user_ms, 'fixed'
+    status = 'detected'
+    if mode in ('d2_zero', 'poly_inflect') and not _d2z_near_expected(
+            d2z_native, fallback_ms, ms):
+        return fallback_ms, 'fallback'
+    if mode == 'd2_min' and not _d3_crosses_zero_in_window(
+            D3_DF, fname, log_time_native, range_lo, range_hi):
+        return fallback_ms, 'fallback'
+    return user_ms, status
+
+
+def _compute_phase_slope(f_end, f_start, t_end, t_start):
+    """Compute fluorescence rise slope (r.u./ms) for one phase."""
+    dt = t_end - t_start
+    if dt <= 0 or not np.isfinite(dt):
+        return np.nan
+    return (f_end - f_start) / dt
+
+
+def _detect_fi_fp_dip(d1_vals, recon_vals, lt_ms, fi_t_ms, fp_t_ms):
+    """Detect FI-FP dip from D1 minimum between FI and FP.
+
+    Returns (present, time_ms, amplitude, d1_min_val).
+    """
+    ip_mask = (lt_ms >= fi_t_ms) & (lt_ms <= fp_t_ms)
+    if not np.any(ip_mask):
+        return False, None, None, None
+    d1_ip = d1_vals[ip_mask]
+    t_ip  = lt_ms[ip_mask]
+    r_ip  = recon_vals[ip_mask]
+    d1_min_idx = np.argmin(d1_ip)
+    d1_min_val = float(d1_ip[d1_min_idx])
+    if d1_min_val >= 0:
+        return False, None, None, None
+    dip_time = float(t_ip[d1_min_idx])
+    fi_recon = float(np.interp(fi_t_ms, lt_ms, recon_vals))
+    fp_recon = float(np.interp(fp_t_ms, lt_ms, recon_vals))
+    dt_total = fp_t_ms - fi_t_ms
+    dip_amp = None
+    if dt_total > 0:
+        frac = (dip_time - fi_t_ms) / dt_total
+        line_val = fi_recon + frac * (fp_recon - fi_recon)
+        dip_amp = line_val - float(r_ip[d1_min_idx])
+    return True, dip_time, dip_amp, d1_min_val
+
+
 def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
                           fp_time_ms, fm_time_ms, fm_raw, f0_raw,
                           min_post_p_ms=200.0, s_point_mode='inflection',
@@ -2121,7 +2273,9 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       p_point_mode: str = 'd2_min',
                       fjfi_detect_mode: str = 'd2_zero',
                       fj_detect_mode: 'str | None' = None,
-                      fi_detect_mode: 'str | None' = None):
+                      fi_detect_mode: 'str | None' = None,
+                      fj_fallback_ms: float = 2.0,
+                      fi_fallback_ms: float = 30.0):
     """
     Full OJIP analysis pipeline for a single curve.
 
@@ -2315,10 +2469,28 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     if use_deriv_timing:
         _fj_d = _t_safe(FJ_deriv.get(fname), ms)
         _fi_d = _t_safe(FI_deriv.get(fname), ms)
+        # Signal-based validation: does the fundamental signal condition hold?
+        _lt_native = log_time.values.astype(float)
+        _fj_sig_ok = (
+            _fj_mode == 'fixed'
+            or (_fj_mode == 'd2_min'
+                and _d3_crosses_zero_in_window(D3_DF, fname, _lt_native,
+                                               ranges['FJ'][0], ranges['FJ'][1]))
+            or (_fj_mode in ('d2_zero', 'poly_inflect')
+                and _d2z_near_expected(_fj_d2z, fj_fallback_ms, ms))
+        )
+        _fi_sig_ok = (
+            _fi_mode == 'fixed'
+            or (_fi_mode == 'd2_min'
+                and _d3_crosses_zero_in_window(D3_DF, fname, _lt_native,
+                                               ranges['FI'][0], ranges['FI'][1]))
+            or (_fi_mode in ('d2_zero', 'poly_inflect')
+                and _d2z_near_expected(_fi_d2z, fi_fallback_ms, ms))
+        )
         if _fj_mode != 'fixed' and _fj_d is not None:
-            fj_time_ms = _fj_d
+            fj_time_ms = _fj_d if _fj_sig_ok else fj_fallback_ms
         if _fi_mode != 'fixed' and _fi_d is not None:
-            fi_time_ms = _fi_d
+            fi_time_ms = _fi_d if _fi_sig_ok else fi_fallback_ms
         if fj_time_ms < fi_time_ms:
             FJ_time = fj_time_ms / ms
             FI_time = fi_time_ms / ms
@@ -2357,67 +2529,30 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     DI0RC   = ABSRC - TR0RC
 
     # ── phase slopes (fluorescence rise rate between O-J, J-I, I-P) ──────────
-    # Use derived (detected) timings for phase boundaries; fall back to user times.
     _fj_t = _t_safe(FJ_deriv.get(fname), ms) or fj_time_ms
     _fi_t = _t_safe(FI_deriv.get(fname), ms) or fi_time_ms
-    if p_point_mode == 'local_max':
-        _fp_t = fp_localmax.get(fname)
-    elif p_point_mode == 'global_max':
-        _fm_idx_fp = int(np.argmax(Raw_recon_DF[fname].values))
-        _fp_t = float(log_time.iloc[_fm_idx_fp]) * ms
-    else:  # 'd2_min' (default)
-        _fp_t = _t_safe(FP_deriv.get(fname), ms)
-    _f0_t = float(sf[x_col].iloc[int(F50us_idx)]) * ms  # F0 time in ms
+    _fp_t, _fp_ref_mode = _resolve_fp_timing(
+        p_point_mode, fp_localmax.get(fname), FP_deriv.get(fname),
+        Raw_recon_DF[fname].values, log_time, ms, ranges, Infl_DF, fname)
+    _f0_t = float(sf[x_col].iloc[int(F50us_idx)]) * ms
     _f0_v = _fscalar(F0[fname])
     _fj_v = _fscalar(FJ[fname])
     _fi_v = _fscalar(FI[fname])
     _fm_v = _fscalar(FM[fname])
 
-    def _slope(f_end, f_start, t_end, t_start):
-        dt = t_end - t_start
-        if dt <= 0 or not np.isfinite(dt):
-            return np.nan
-        return (f_end - f_start) / dt
-
-    slope_OJ = pd.Series([_slope(_fj_v, _f0_v, _fj_t, _f0_t)], index=[fname], name=fname)
-    slope_JI = pd.Series([_slope(_fi_v, _fj_v, _fi_t, _fj_t)], index=[fname], name=fname)
-    slope_IP = pd.Series([_slope(_fm_v, _fi_v, _fp_t if _fp_t else _fi_t + 100,
-                                  _fi_t)], index=[fname], name=fname)
+    slope_OJ = pd.Series([_compute_phase_slope(_fj_v, _f0_v, _fj_t, _f0_t)], index=[fname], name=fname)
+    slope_JI = pd.Series([_compute_phase_slope(_fi_v, _fj_v, _fi_t, _fj_t)], index=[fname], name=fname)
+    slope_IP = pd.Series([_compute_phase_slope(_fm_v, _fi_v, _fp_t if _fp_t else _fi_t + 100,
+                                               _fi_t)], index=[fname], name=fname)
 
     # ── FI-FP dip detection ────────────────────────────────────────────────────
-    # Look for a local D1 minimum (fluorescence decrease) between FI and FP.
-    _lt_ms = log_time.values.astype(float) * ms  # log-time grid in ms
-    _d1_vals = np.array(D1_DF[fname].values, dtype=float)
-    _recon_vals = np.array(Raw_recon_DF[fname].values, dtype=float)
-    _fi_t_actual = _fi_t if _fi_t else fi_time_ms
-    _fp_t_actual = _fp_t if _fp_t else float(_lt_ms[-1])
-
-    dip_IP_present = False
-    dip_IP_time_ms_val = None
-    dip_IP_amplitude_val = None
-    dip_IP_d1_min_val = None
-
-    _ip_mask = (_lt_ms >= _fi_t_actual) & (_lt_ms <= _fp_t_actual)
-    if np.any(_ip_mask):
-        _d1_ip = _d1_vals[_ip_mask]
-        _t_ip  = _lt_ms[_ip_mask]
-        _r_ip  = _recon_vals[_ip_mask]
-        _d1_min_idx = np.argmin(_d1_ip)
-        _d1_min_val = float(_d1_ip[_d1_min_idx])
-
-        if _d1_min_val < 0:
-            dip_IP_present = True
-            dip_IP_time_ms_val = float(_t_ip[_d1_min_idx])
-            dip_IP_d1_min_val = _d1_min_val
-            # Amplitude: depth below the straight line FI → FP at the dip time
-            _fi_recon = float(np.interp(_fi_t_actual, _lt_ms, _recon_vals))
-            _fp_recon = float(np.interp(_fp_t_actual, _lt_ms, _recon_vals))
-            _dt_total = _fp_t_actual - _fi_t_actual
-            if _dt_total > 0:
-                _frac = (dip_IP_time_ms_val - _fi_t_actual) / _dt_total
-                _line_val = _fi_recon + _frac * (_fp_recon - _fi_recon)
-                _curve_val = float(_r_ip[_d1_min_idx])
-                dip_IP_amplitude_val = _line_val - _curve_val  # positive = dip below line
+    _lt_ms = log_time.values.astype(float) * ms
+    dip_IP_present, dip_IP_time_ms_val, dip_IP_amplitude_val, dip_IP_d1_min_val = \
+        _detect_fi_fp_dip(
+            np.array(D1_DF[fname].values, dtype=float),
+            np.array(Raw_recon_DF[fname].values, dtype=float),
+            _lt_ms, _fi_t if _fi_t else fi_time_ms,
+            _fp_t if _fp_t else float(_lt_ms[-1]))
 
     # ── areas + FM timing ─────────────────────────────────────────────────────
     AREAOJ, AREAJI, AREAIP, AREAOP, FM_timings = _calc_areas_fm_timing(
@@ -2447,39 +2582,36 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     # ── FJ/FI user timing based on detection mode (separate per point) ────
     _fj_mode = fj_detect_mode or fjfi_detect_mode
     _fi_mode = fi_detect_mode or fjfi_detect_mode
+    _lt_native_fb = log_time.values.astype(float)
 
-    if _fj_mode == 'poly_inflect':
-        _fj_user = _t_safe(FJ_infl.get(fname), ms)
-    elif _fj_mode == 'd2_min':
-        _fj_user = _t_safe(FJ_deriv.get(fname), ms)
-    elif _fj_mode == 'fixed':
-        _fj_user = fj_time_ms
-    else:  # 'd2_zero' default
-        _fj_user = float(_fj_d2z) * ms if _fj_d2z is not None else _t_safe(FJ_infl.get(fname), ms)
-    _fj_user = _fj_user or fj_time_ms
+    _fj_user = _resolve_user_timing(
+        _fj_mode, _fj_d2z, FJ_deriv.get(fname), FJ_infl.get(fname), fj_time_ms, ms)
+    _fi_user = _resolve_user_timing(
+        _fi_mode, _fi_d2z, FI_deriv.get(fname), FI_infl.get(fname), fi_time_ms, ms)
 
-    if _fi_mode == 'poly_inflect':
-        _fi_user = _t_safe(FI_infl.get(fname), ms)
-    elif _fi_mode == 'd2_min':
-        _fi_user = _t_safe(FI_deriv.get(fname), ms)
-    elif _fi_mode == 'fixed':
-        _fi_user = fi_time_ms
-    else:  # 'd2_zero' default
-        _fi_user = float(_fi_d2z) * ms if _fi_d2z is not None else _t_safe(FI_infl.get(fname), ms)
-    _fi_user = _fi_user or fi_time_ms
+    _fj_user, _fj_detect_status = _validate_timing_signal(
+        _fj_mode, _fj_user, _fj_d2z, fj_fallback_ms, ms,
+        D3_DF, fname, _lt_native_fb, ranges['FJ'][0], ranges['FJ'][1])
+    _fi_user, _fi_detect_status = _validate_timing_signal(
+        _fi_mode, _fi_user, _fi_d2z, fi_fallback_ms, ms,
+        D3_DF, fname, _lt_native_fb, ranges['FI'][0], ranges['FI'][1])
 
     # ── detection method label (for table display) ─────────────────────────
     _METHOD_LABELS = {
         'fixed': 'Fixed timing',
         'd2_zero': 'D2 zero-crossing',
         'poly_inflect': 'Polynomial inflection',
-        'd2_min': 'D2 minimum',
+        'd2_min': 'D3 zero-crossing (D2 minimum)',
     }
     _fj_ref_label = _METHOD_LABELS.get(_fj_mode, _fj_mode)
-    if _fj_mode != 'fixed' and _fj_user == fj_time_ms:
+    if _fj_detect_status == 'fallback':
+        _fj_ref_label += ' \u2192 fallback ({:.1f} ms)'.format(fj_fallback_ms)
+    elif _fj_mode != 'fixed' and _fj_user == fj_time_ms:
         _fj_ref_label += ' \u2192 fixed (fallback)'
     _fi_ref_label = _METHOD_LABELS.get(_fi_mode, _fi_mode)
-    if _fi_mode != 'fixed' and _fi_user == fi_time_ms:
+    if _fi_detect_status == 'fallback':
+        _fi_ref_label += ' \u2192 fallback ({:.1f} ms)'.format(fi_fallback_ms)
+    elif _fi_mode != 'fixed' and _fi_user == fi_time_ms:
         _fi_ref_label += ' \u2192 fixed (fallback)'
 
     # ── build result dict ─────────────────────────────────────────────────────
@@ -2492,6 +2624,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'FI_time_user_ms':    _fi_user,
         'FJ_ref': _fj_ref_label,
         'FI_ref': _fi_ref_label,
+        'FJ_detect_status':   _fj_detect_status,
+        'FI_detect_status':   _fi_detect_status,
         'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
         'FI_time_deriv_ms':   _t_safe(FI_deriv.get(fname), ms),
         'FP_time_deriv_ms':   _t_safe(FP_deriv.get(fname), ms),
@@ -2509,7 +2643,15 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'FP_time_localmax_ms': fp_localmax.get(fname),
         'FP_time_user_ms': _fp_t,
         'FP_ref': {'d2_min': 'D2 minimum', 'local_max': 'Local max',
-                   'global_max': 'Global max (FM)'}.get(p_point_mode, p_point_mode),
+                   'd2_zero': 'D2 zero-crossing',
+                   'global_max': 'Global max (FM)',
+                   'local_max→d2_min': 'Local max \u2192 D2 min (fallback)',
+                   'local_max→global_max': 'Local max \u2192 FM (fallback)',
+                   'd2_min→local_max': 'D2 min \u2192 Local max (fallback)',
+                   'd2_min→global_max': 'D2 min \u2192 FM (fallback)',
+                   'd2_zero→local_max': 'D2 zero \u2192 Local max (fallback)',
+                   'd2_zero→global_max': 'D2 zero \u2192 FM (fallback)',
+                   }.get(_fp_ref_mode, _fp_ref_mode),
         'FM_time_ms':  _safe(FM_timings.get(fname)),
         'Area_OJ': _safe(AREAOJ[fname]),  'Area_JI': _safe(AREAJI[fname]),
         'Area_IP': _safe(AREAIP[fname]),  'Area_OP': _safe(AREAOP[fname]),
@@ -2635,6 +2777,8 @@ def ojip_process():
     fjfi_detect_mode_proc = request.form.get('fjfi_detect_mode', 'd2_zero')
     fj_detect_mode_proc = request.form.get('fj_detect_mode') or fjfi_detect_mode_proc
     fi_detect_mode_proc = request.form.get('fi_detect_mode') or fjfi_detect_mode_proc
+    fj_fallback_ms_proc = float(request.form.get('fj_fallback_ms', 2.0))
+    fi_fallback_ms_proc = float(request.form.get('fi_fallback_ms', 30.0))
     FJ_time_ms = float(request.form.get('FJ_time', 2.0))
     FI_time_ms = float(request.form.get('FI_time', 30.0))
 
@@ -3016,50 +3160,25 @@ def ojip_process():
         # ── per-file slopes ───────────────────────────────────────────────
         _fj_t_p = _t_safe(FJ_deriv.get(fname), ms) or FJ_time_ms
         _fi_t_p = _t_safe(FI_deriv.get(fname), ms) or FI_time_ms
-        if p_point_mode_proc == 'local_max':
-            _fp_t_p = fp_localmax_proc.get(fname)
-        elif p_point_mode_proc == 'global_max':
-            _fm_idx_fp_p = int(np.argmax(Raw_recon_DF[fname].values))
-            _fp_t_p = float(log_time.iloc[_fm_idx_fp_p]) * ms
-        else:
-            _fp_t_p = _t_safe(FP_deriv.get(fname), ms)
+        _fp_t_p, _fp_ref_mode_p = _resolve_fp_timing(
+            p_point_mode_proc, fp_localmax_proc.get(fname), FP_deriv.get(fname),
+            Raw_recon_DF[fname].values, log_time, ms, ranges, Infl_DF, fname)
         _f0_t_p = float(Summary_file[x_col].iloc[int(F50us_idx)]) * ms
         _f0_v_p = float(F0[fname]); _fj_v_p = float(FJ[fname])  # type: ignore[arg-type]
         _fi_v_p = float(FI[fname]); _fm_v_p = float(FM[fname])  # type: ignore[arg-type]
-        def _slope_p(fe, fs, te, ts):
-            dt = te - ts
-            return (fe - fs) / dt if dt > 0 and np.isfinite(dt) else np.nan
-        _sl_oj = _slope_p(_fj_v_p, _f0_v_p, _fj_t_p, _f0_t_p)
-        _sl_ji = _slope_p(_fi_v_p, _fj_v_p, _fi_t_p, _fj_t_p)
-        _sl_ip = _slope_p(_fm_v_p, _fi_v_p,
-                          _fp_t_p if _fp_t_p else _fi_t_p + 100, _fi_t_p)
+        _sl_oj = _compute_phase_slope(_fj_v_p, _f0_v_p, _fj_t_p, _f0_t_p)
+        _sl_ji = _compute_phase_slope(_fi_v_p, _fj_v_p, _fi_t_p, _fj_t_p)
+        _sl_ip = _compute_phase_slope(_fm_v_p, _fi_v_p,
+                                      _fp_t_p if _fp_t_p else _fi_t_p + 100, _fi_t_p)
 
         # ── per-file dip detection (FI-FP) ────────────────────────────────
-        _d1_p = np.array(D1_DF.iloc[:, i].values, dtype=float)
         _recon_p = np.array(Raw_recon_DF.iloc[:, i].values, dtype=float)
-        _fi_t_act = _fi_t_p if _fi_t_p else FI_time_ms
-        _fp_t_act = _fp_t_p if _fp_t_p else float(_lt_ms_multi[-1])
-        _dip_present = False; _dip_time = None; _dip_amp = None; _dip_d1 = None
-        _ip_mask_p = (_lt_ms_multi >= _fi_t_act) & (_lt_ms_multi <= _fp_t_act)
-        if np.any(_ip_mask_p):
-            _d1_ip_p = _d1_p[_ip_mask_p]
-            _t_ip_p = _lt_ms_multi[_ip_mask_p]
-            _r_ip_p = _recon_p[_ip_mask_p]
-            _d1_mi = np.argmin(_d1_ip_p)
-            _d1_mv = float(_d1_ip_p[_d1_mi])
-            if _d1_mv < 0:
-                _dip_present = True
-                _dip_time = float(_t_ip_p[_d1_mi])
-                _dip_d1 = _d1_mv
-                _fi_r = float(np.interp(_fi_t_act, _lt_ms_multi, _recon_p))
-                _fp_r = float(np.interp(_fp_t_act, _lt_ms_multi, _recon_p))
-                _dt_t = _fp_t_act - _fi_t_act
-                if _dt_t > 0:
-                    _frac_p = (_dip_time - _fi_t_act) / _dt_t
-                    _dip_amp = (_fi_r + _frac_p * (_fp_r - _fi_r)) - float(_r_ip_p[_d1_mi])
+        _dip_present, _dip_time, _dip_amp, _dip_d1 = _detect_fi_fp_dip(
+            np.array(D1_DF.iloc[:, i].values, dtype=float), _recon_p,
+            _lt_ms_multi, _fi_t_p if _fi_t_p else FI_time_ms,
+            _fp_t_p if _fp_t_p else float(_lt_ms_multi[-1]))
 
         # ── per-file Q point / early-S detection ───────────────────────────
-        # Pass raw FM/F0 so output values are in raw fluorescence units
         _pq_p = _detect_pq_transition(
             _recon_p, log_time.values, ms,
             _fp_t_p, _safe(FM_timings_series.get(fname)), _fm_v_p, _f0_v_p,
@@ -3072,26 +3191,20 @@ def ojip_process():
         _fi_d2z_p = _d2_zero_in_window(Infl_DF, fname, ranges['FI'][0], ranges['FI'][1],
                                         expect_native=FI_time_ms / ms)
 
-        # ── FJ/FI user timing based on detection mode (separate per point) ─
-        if fj_detect_mode_proc == 'poly_inflect':
-            _fj_user_p = _t_safe(FJ_infl.get(fname), ms)
-        elif fj_detect_mode_proc == 'd2_min':
-            _fj_user_p = _t_safe(FJ_deriv.get(fname), ms)
-        elif fj_detect_mode_proc == 'fixed':
-            _fj_user_p = FJ_time_ms
-        else:  # 'd2_zero'
-            _fj_user_p = float(_fj_d2z_p) * ms if _fj_d2z_p is not None else _t_safe(FJ_infl.get(fname), ms)
-        _fj_user_p = _fj_user_p or FJ_time_ms
-
-        if fi_detect_mode_proc == 'poly_inflect':
-            _fi_user_p = _t_safe(FI_infl.get(fname), ms)
-        elif fi_detect_mode_proc == 'd2_min':
-            _fi_user_p = _t_safe(FI_deriv.get(fname), ms)
-        elif fi_detect_mode_proc == 'fixed':
-            _fi_user_p = FI_time_ms
-        else:  # 'd2_zero'
-            _fi_user_p = float(_fi_d2z_p) * ms if _fi_d2z_p is not None else _t_safe(FI_infl.get(fname), ms)
-        _fi_user_p = _fi_user_p or FI_time_ms
+        # ── FJ/FI user timing + signal-based fallback ─────────────────────
+        _lt_native_p = log_time.values.astype(float)
+        _fj_user_p = _resolve_user_timing(
+            fj_detect_mode_proc, _fj_d2z_p, FJ_deriv.get(fname),
+            FJ_infl.get(fname), FJ_time_ms, ms)
+        _fi_user_p = _resolve_user_timing(
+            fi_detect_mode_proc, _fi_d2z_p, FI_deriv.get(fname),
+            FI_infl.get(fname), FI_time_ms, ms)
+        _fj_user_p, _fj_ds_p = _validate_timing_signal(
+            fj_detect_mode_proc, _fj_user_p, _fj_d2z_p, fj_fallback_ms_proc, ms,
+            D3_DF, fname, _lt_native_p, ranges['FJ'][0], ranges['FJ'][1])
+        _fi_user_p, _fi_ds_p = _validate_timing_signal(
+            fi_detect_mode_proc, _fi_user_p, _fi_d2z_p, fi_fallback_ms_proc, ms,
+            D3_DF, fname, _lt_native_p, ranges['FI'][0], ranges['FI'][1])
 
         key_values[fname] = {
             'F0':  _safe(F0[fname]),  'FM': _safe(FM[fname]),
@@ -3100,6 +3213,8 @@ def ojip_process():
             'FV':  _safe(FV[fname]),
             'FJ_time_user_ms':    _fj_user_p,
             'FI_time_user_ms':    _fi_user_p,
+            'FJ_detect_status':   _fj_ds_p,
+            'FI_detect_status':   _fi_ds_p,
             'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
             'FI_time_deriv_ms':   _t_safe(FI_deriv.get(fname), ms),
             'FP_time_deriv_ms':   _t_safe(FP_deriv.get(fname), ms),
@@ -3117,7 +3232,15 @@ def ojip_process():
             'FP_time_localmax_ms': fp_localmax_proc.get(fname),
             'FP_time_user_ms': _fp_t_p,
             'FP_ref': {'d2_min': 'D2 minimum', 'local_max': 'Local max',
-                       'global_max': 'Global max (FM)'}.get(p_point_mode_proc, p_point_mode_proc),
+                       'd2_zero': 'D2 zero-crossing',
+                       'global_max': 'Global max (FM)',
+                       'local_max→d2_min': 'Local max \u2192 D2 min (fallback)',
+                       'local_max→global_max': 'Local max \u2192 FM (fallback)',
+                       'd2_min→local_max': 'D2 min \u2192 Local max (fallback)',
+                       'd2_min→global_max': 'D2 min \u2192 FM (fallback)',
+                       'd2_zero→local_max': 'D2 zero \u2192 Local max (fallback)',
+                       'd2_zero→global_max': 'D2 zero \u2192 FM (fallback)',
+                       }.get(_fp_ref_mode_p, _fp_ref_mode_p),
             'deriv_timing_used': _deriv_timing_used_proc,
             'FM_time_ms':  _safe(FM_timings_series.get(fname)),
             'Area_OJ': _safe(AREAOJ[fname]), 'Area_JI': _safe(AREAJI[fname]),
@@ -3197,6 +3320,8 @@ def ojip_refit():
     fjfi_detect_mode_refit = data.get('fjfi_detect_mode', 'd2_zero')
     fj_detect_mode_refit = data.get('fj_detect_mode') or fjfi_detect_mode_refit
     fi_detect_mode_refit = data.get('fi_detect_mode') or fjfi_detect_mode_refit
+    fj_fallback_ms_refit = float(data.get('fj_fallback_ms', 2.0))
+    fi_fallback_ms_refit = float(data.get('fi_fallback_ms', 30.0))
     raw_fm_f0 = data.get('raw_fm_f0', {})   # {file: {FM: ..., F0: ...}}
     time_raw_ms = data['time_raw_ms']
     double_norm_dict = data['double_norm']  # {file: [y values]}
@@ -3299,15 +3424,11 @@ def ojip_refit():
         fq_r = _fit_quality(_y_raw_dn_r[_qr_start:_qr_end],
                             _y_recon_at_raw_r[_qr_start:_qr_end],
                             _d2_vals_r, method=fit_method_refit)
-        # ── P-point mode dispatch (must precede kt_entry dict) ────────────
+        # ── P-point mode dispatch with cascading fallback ──────────────────
         _recon_r = np.array(Raw_recon_DF.iloc[:, i].values, dtype=float)
-        if p_point_mode_refit == 'local_max':
-            _fp_t_r = fp_localmax_r.get(fname)
-        elif p_point_mode_refit == 'global_max':
-            _fm_idx_fp_r = int(np.argmax(_recon_r))
-            _fp_t_r = float(log_time.iloc[_fm_idx_fp_r]) * ms
-        else:
-            _fp_t_r = _t_safe(FP_deriv.get(fname), ms)
+        _fp_t_r, _fp_ref_mode_r = _resolve_fp_timing(
+            p_point_mode_refit, fp_localmax_r.get(fname), FP_deriv.get(fname),
+            _recon_r, log_time, ms, ranges, Infl_DF, fname)
 
         # ── D2 zero-crossing times for FJ / FI ──────────────────────────
         _fj_d2z_r = _d2_zero_in_window(Infl_DF, fname, ranges['FJ'][0], ranges['FJ'][1],
@@ -3315,30 +3436,26 @@ def ojip_refit():
         _fi_d2z_r = _d2_zero_in_window(Infl_DF, fname, ranges['FI'][0], ranges['FI'][1],
                                         expect_native=FI_time_ms / ms)
 
-        # ── FJ/FI user timing based on detection mode (separate per point) ─
-        if fj_detect_mode_refit == 'poly_inflect':
-            _fj_user_r = _t_safe(FJ_infl.get(fname), ms)
-        elif fj_detect_mode_refit == 'd2_min':
-            _fj_user_r = _t_safe(FJ_deriv.get(fname), ms)
-        elif fj_detect_mode_refit == 'fixed':
-            _fj_user_r = FJ_time_ms
-        else:  # 'd2_zero'
-            _fj_user_r = float(_fj_d2z_r) * ms if _fj_d2z_r is not None else _t_safe(FJ_infl.get(fname), ms)
-        _fj_user_r = _fj_user_r or FJ_time_ms
-
-        if fi_detect_mode_refit == 'poly_inflect':
-            _fi_user_r = _t_safe(FI_infl.get(fname), ms)
-        elif fi_detect_mode_refit == 'd2_min':
-            _fi_user_r = _t_safe(FI_deriv.get(fname), ms)
-        elif fi_detect_mode_refit == 'fixed':
-            _fi_user_r = FI_time_ms
-        else:  # 'd2_zero'
-            _fi_user_r = float(_fi_d2z_r) * ms if _fi_d2z_r is not None else _t_safe(FI_infl.get(fname), ms)
-        _fi_user_r = _fi_user_r or FI_time_ms
+        # ── FJ/FI user timing + signal-based fallback ─────────────────────
+        _lt_native_r = log_time.values.astype(float)
+        _fj_user_r = _resolve_user_timing(
+            fj_detect_mode_refit, _fj_d2z_r, FJ_deriv.get(fname),
+            FJ_infl.get(fname), FJ_time_ms, ms)
+        _fi_user_r = _resolve_user_timing(
+            fi_detect_mode_refit, _fi_d2z_r, FI_deriv.get(fname),
+            FI_infl.get(fname), FI_time_ms, ms)
+        _fj_user_r, _fj_ds_r = _validate_timing_signal(
+            fj_detect_mode_refit, _fj_user_r, _fj_d2z_r, fj_fallback_ms_refit, ms,
+            D3_DF, fname, _lt_native_r, ranges['FJ'][0], ranges['FJ'][1])
+        _fi_user_r, _fi_ds_r = _validate_timing_signal(
+            fi_detect_mode_refit, _fi_user_r, _fi_d2z_r, fi_fallback_ms_refit, ms,
+            D3_DF, fname, _lt_native_r, ranges['FI'][0], ranges['FI'][1])
 
         kt_entry = {
             'FJ_time_user_ms':    _fj_user_r,
             'FI_time_user_ms':    _fi_user_r,
+            'FJ_detect_status':   _fj_ds_r,
+            'FI_detect_status':   _fi_ds_r,
             'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
             'FI_time_deriv_ms':   _t_safe(FI_deriv.get(fname), ms),
             'FP_time_deriv_ms':   _t_safe(FP_deriv.get(fname), ms),
@@ -3356,7 +3473,15 @@ def ojip_refit():
             'FP_time_localmax_ms': fp_localmax_r.get(fname),
             'FP_time_user_ms': _fp_t_r,
             'FP_ref': {'d2_min': 'D2 minimum', 'local_max': 'Local max',
-                       'global_max': 'Global max (FM)'}.get(p_point_mode_refit, p_point_mode_refit),
+                       'd2_zero': 'D2 zero-crossing',
+                       'global_max': 'Global max (FM)',
+                       'local_max→d2_min': 'Local max \u2192 D2 min (fallback)',
+                       'local_max→global_max': 'Local max \u2192 FM (fallback)',
+                       'd2_min→local_max': 'D2 min \u2192 Local max (fallback)',
+                       'd2_min→global_max': 'D2 min \u2192 FM (fallback)',
+                       'd2_zero→local_max': 'D2 zero \u2192 Local max (fallback)',
+                       'd2_zero→global_max': 'D2 zero \u2192 FM (fallback)',
+                       }.get(_fp_ref_mode_r, _fp_ref_mode_r),
             'poly_infl_ms':    poly_oj[fname]['poly_infl_ms'],
             'poly_fi_infl_ms': poly_oi[fname]['poly_infl_ms'],
             **fq_r,
@@ -3717,6 +3842,8 @@ def ojip_process_batch():
     fjfi_detect_mode = payload.get('fjfi_detect_mode', 'd2_zero')
     fj_detect_mode   = payload.get('fj_detect_mode') or fjfi_detect_mode
     fi_detect_mode   = payload.get('fi_detect_mode') or fjfi_detect_mode
+    fj_fallback_ms   = float(payload.get('fj_fallback_ms', 2.0))
+    fi_fallback_ms   = float(payload.get('fi_fallback_ms', 30.0))
 
     if not time_native or not curves:
         return jsonify({'status': 'error',
@@ -3762,6 +3889,8 @@ def ojip_process_batch():
                 fjfi_detect_mode=fjfi_detect_mode,
                 fj_detect_mode=fj_detect_mode,
                 fi_detect_mode=fi_detect_mode,
+                fj_fallback_ms=fj_fallback_ms,
+                fi_fallback_ms=fi_fallback_ms,
             )
             r['slot'] = slot
             r['name'] = name
@@ -3883,10 +4012,6 @@ def ojip_export_batch():
 
     Returns a ZIP file as a binary download.
     """
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
     payload = request.get_json(force=True)
     params_header = payload.get('params_header', [])
     params_rows   = payload.get('params_rows', [])
@@ -3959,152 +4084,6 @@ def ojip_export_batch():
                         'message': 'An internal error occurred during export.'}), 500
 
 
-# ─── Incremental (chunked) batch export ────────────────────────────────────
-# DEPRECATED (2026-08): Client-side Canvas 2D rendering + JSZip now handles
-# all plot generation and ZIP assembly in the browser.  These three endpoints
-# are retained for rollback only — the JS no longer calls them.
-#
-# Original purpose: for large datasets (>100 curves) the monolithic
-# ojip_export_batch can timeout or hit payload limits.  These three endpoints
-# let the client build the ZIP incrementally:
-#   1. _start  → create a temp ZIP with params + summary charts
-#   2. _add    → render a batch of ~50 curves and append PNGs to the ZIP
-#   3. _finish → return the completed ZIP and clean up
-
-
-@OJIP_data_analysis.route('/api/ojip_export_start', methods=['POST'])
-@csrf.exempt
-def ojip_export_start():
-    """Create a temp ZIP and write params XLSX + summary chart PNGs."""
-    import matplotlib
-    matplotlib.use('Agg')
-
-    payload = request.get_json(force=True)
-    params_header = payload.get('params_header', [])
-    params_rows   = payload.get('params_rows', [])
-    charts        = payload.get('charts', {})
-    stem          = payload.get('stem', 'ojip_batch')
-    method_info   = payload.get('method_info', {})
-
-    export_id = uuid.uuid4().hex[:12]
-    zip_path  = os.path.join(UPLOAD_FOLDER, f'_export_{export_id}.zip')
-
-    try:
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-            # Params XLSX
-            xlsx_buf = io.BytesIO()
-            wb = Workbook()
-            ws = cast(Worksheet, wb.active)
-            ws.title = 'Parameters'
-            if params_header:
-                ws.append(params_header)
-            for row in params_rows:
-                ws.append(row)
-            wb.save(xlsx_buf)
-            xlsx_buf.seek(0)
-            zf.writestr('params_summary.xlsx', xlsx_buf.getvalue())
-
-            # Method info text file
-            if method_info:
-                zf.writestr('method_info.txt',
-                            _format_method_info(method_info))
-
-            # Summary chart PNGs
-            for cid, data_url in charts.items():
-                if not data_url or ',' not in data_url:
-                    continue
-                b64 = data_url.split(',', 1)[1]
-                try:
-                    img_bytes = base64.b64decode(b64)
-                except Exception:
-                    continue
-                if cid.startswith('param-'):
-                    fname = f'parameters/{cid[6:]}.png'
-                elif cid.startswith('mc-panel-'):
-                    fname = f'panels/{cid[9:]}.png'
-                elif cid == 'mc-compare-chart':
-                    fname = 'compare.png'
-                elif cid == 'mc-aggregate-chart':
-                    fname = 'aggregate_curves.png'
-                else:
-                    fname = f'{cid}.png'
-                zf.writestr(f'summary_plots/{fname}', img_bytes)
-
-        # Log what was written for diagnostics
-        with zipfile.ZipFile(zip_path, 'r') as zr:
-            entries = zr.namelist()
-        print(f'[export_start] id={export_id}, '
-              f'params_rows={len(params_rows)}, '
-              f'charts={len(charts)}, '
-              f'method_info={"yes" if method_info else "no"}, '
-              f'zip_entries={entries}')
-        return jsonify({'status': 'success', 'export_id': export_id,
-                        'stem': stem})
-    except Exception:
-        import traceback; traceback.print_exc()
-        if os.path.exists(zip_path):
-            os.remove(zip_path)
-        return jsonify({'status': 'error',
-                        'message': 'Failed to start export.'}), 500
-
-
-@OJIP_data_analysis.route('/api/ojip_export_add', methods=['POST'])
-@csrf.exempt
-def ojip_export_add():
-    """Render PNGs for a batch of curves and append them to the temp ZIP."""
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
-    payload   = request.get_json(force=True)
-    export_id = payload.get('export_id', '')
-    inc       = payload.get('include_plots', {})
-    curve_data = payload.get('curve_data', {})
-
-    zip_path = os.path.join(UPLOAD_FOLDER, f'_export_{export_id}.zip')
-    if not os.path.isfile(zip_path):
-        return jsonify({'status': 'error',
-                        'message': 'Unknown export_id.'}), 404
-
-    try:
-        added = 0
-        with zipfile.ZipFile(zip_path, 'a', zipfile.ZIP_DEFLATED) as zf:
-            added = _render_per_curve(zf, curve_data, inc)
-
-        return jsonify({'status': 'success', 'added': added})
-    except Exception:
-        import traceback; traceback.print_exc()
-        return jsonify({'status': 'error',
-                        'message': 'Failed to add curves to export.'}), 500
-
-
-@OJIP_data_analysis.route('/api/ojip_export_finish/<export_id>', methods=['GET'])
-def ojip_export_finish(export_id):
-    """Return the completed ZIP and delete the temp file."""
-    # Sanitise export_id (hex only)
-    if not export_id or not all(c in '0123456789abcdef' for c in export_id):
-        return jsonify({'status': 'error', 'message': 'Invalid export_id.'}), 400
-
-    zip_path = os.path.join(UPLOAD_FOLDER, f'_export_{export_id}.zip')
-    if not os.path.isfile(zip_path):
-        return jsonify({'status': 'error', 'message': 'Export not found.'}), 404
-
-    try:
-        # Read into memory so we can delete the temp file
-        with open(zip_path, 'rb') as f:
-            data = f.read()
-        os.remove(zip_path)
-
-        buf = io.BytesIO(data)
-        stem = request.args.get('stem', 'ojip_batch')
-        dl_name = stem.replace(' ', '_') + '_export.zip'
-        return send_file(buf, mimetype='application/zip',
-                         as_attachment=True, download_name=dl_name)
-    except Exception:
-        import traceback; traceback.print_exc()
-        return jsonify({'status': 'error',
-                        'message': 'Failed to finalise export.'}), 500
 
 
 # ─── helpers for batch ZIP export ──────────────────────────────────────────
@@ -4182,130 +4161,6 @@ def _render_per_curve(zf, curve_data, inc):
     return added
 
 
-def _format_method_info(mi: dict) -> str:
-    """Format the method_info dict into a human-readable text summary."""
-    _METHOD_NAMES = {
-        'logspline':   'Log-time spline (quintic, analytic D2/D3)',
-        'spline':      'Standard LSQ spline (linear, numeric D2)',
-        'pchip':       'PCHIP (monotone piecewise cubic)',
-        'polynomial':  'Polynomial inflection (Akinyemi et al. 2023)',
-        'd1_minima':   'D1 local minima',
-        'three_exp':   '3-Exponential decomposition (Boisvert et al. 2006)',
-        'piecewise':   'Piecewise-linear breakpoints',
-        'gaussian_d1': 'Gaussian D1 deconvolution',
-    }
-    _SPLINE_METHODS = {'logspline', 'spline', 'pchip'}
-    fm = mi.get('fit_method', 'logspline')
-    lines = [
-        'OJIP Batch Export — Analysis Method Summary',
-        '=' * 46,
-        '',
-        f'Instrument:             {mi.get("fluorometer", "—")}',
-        f'Total curves:           {mi.get("total_curves", "—")}',
-        '',
-        '— Curve fitting —',
-        f'Fitting method:         {_METHOD_NAMES.get(fm, fm)}',
-    ]
-    _fj_mode = mi.get('fj_detect_mode', mi.get('fjfi_detect_mode', 'd2_zero'))
-    _fi_mode = mi.get('fi_detect_mode', mi.get('fjfi_detect_mode', 'd2_zero'))
-    _FJFI_MODE_LABELS = {
-        'd2_zero':       'D2 zero-crossing (D1 minimum)',
-        'poly_inflect':  'Polynomial inflection (D2=0, D3>0)',
-        'd2_min':        'D2 minimum (deepest D2 dip)',
-        'fixed':         'Fixed timing',
-    }
-    if fm in _SPLINE_METHODS:
-        if _fj_mode == _fi_mode:
-            lines.append(
-                f'FJ / FI detection:      {_FJFI_MODE_LABELS.get(_fj_mode, _fj_mode)}')
-        else:
-            lines.append(
-                f'FJ detection:           {_FJFI_MODE_LABELS.get(_fj_mode, _fj_mode)}')
-            lines.append(
-                f'FI detection:           {_FJFI_MODE_LABELS.get(_fi_mode, _fi_mode)}')
-    else:
-        lines.append(
-            f'FJ / FI detection:      Method-specific '
-            f'(reconstruction via log-time spline)')
-    lines += [
-        f'Knot reduction (kr):    {mi.get("knots_reduction", "—")}',
-        f'Knot placement:         {mi.get("knot_placement", "—")}',
-        f'FJ search window:       {mi.get("FJ_time_ms", "—")} ms',
-        f'FI search window:       {mi.get("FI_time_ms", "—")} ms',
-    ]
-    tf = mi.get('trim_first', 0)
-    tl = mi.get('trim_last', 0)
-    if tf or tl:
-        lines.append(f'Trim:                   first {tf}, last {tl} points')
-    f0t = mi.get('f0_time_ms')
-    if f0t:
-        lines.append(f'F0 timing override:     {f0t} ms')
-    lines += [
-        '',
-        '— Background / F0 —',
-        f'Background mode:        {mi.get("background_mode", "—")}',
-        f'Background points (n):  {mi.get("background_n", "—")}',
-        f'F0 source:              {mi.get("f0_source", "—")}',
-    ]
-
-    # O-J densify
-    lines += ['', '— O-J densification —']
-    if mi.get('oj_densify'):
-        model = mi.get('oj_model', 'exponential')
-        lines.append(f'Enabled:                yes')
-        lines.append(f'Model:                  {model}')
-        mp = mi.get('oj_model_params') or {}
-        if model == 'exponential':
-            tau = mp.get('tau_ms', 'auto')
-            lines.append(f'  tau:                  {tau} ms')
-        elif model == 'biexponential':
-            lines.append(f'  tau1:                 {mp.get("tau1_ms", "auto")} ms')
-            lines.append(f'  tau2:                 {mp.get("tau2_ms", "auto")} ms')
-        elif model == 'connectivity':
-            lines.append(f'  p (connectivity):     {mp.get("p", "auto")}')
-            lines.append(f'  k_L:                  {mp.get("k_L", "auto")} ms-1')
-            lines.append(f'  k_ox:                 {mp.get("k_ox", 0)} ms-1')
-        elif model == 'linear':
-            lines.append(f'  (no tuneable params)')
-    else:
-        lines.append(f'Enabled:                no')
-
-    # P point detection mode
-    p_mode = mi.get('p_point_mode', 'd2_min')
-    _P_MODE_LABELS = {
-        'd2_min': 'D2 minimum (P deceleration)',
-        'local_max': 'Local maximum (100–1000 ms)',
-        'global_max': 'Global maximum (= FM)',
-    }
-    lines += [
-        '',
-        '— P point detection —',
-        f'P point detection:      {_P_MODE_LABELS.get(p_mode, p_mode)}',
-    ]
-
-    # Q point detection mode
-    q_mode = mi.get('s_point_mode', 'd2_min')
-    _Q_MODE_LABELS = {
-        'd2_min':     'D2 minimum (Q elbow)',
-        'd2_zero':    'D2 zero-crossing (Q inflection)',
-        'auto':       'F minimum → D2 minimum',
-        'local_min':  'Local minimum (lowest F after P)',
-    }
-    lines += [
-        '',
-        '— Q point / early S detection —',
-        f'Q point detection:      {_Q_MODE_LABELS.get(q_mode, q_mode)}',
-        'Early S:                Last measured point (always computed)',
-        'Ref: Fratamico et al. (2016) Photosynth Res 128:271-285',
-    ]
-
-    lines += [
-        '',
-        '— Generated by cyano.tools OJIP analysis —',
-        'https://www.cyano.tools',
-        '',
-    ]
-    return '\n'.join(lines)
 
 
 def _safe_zip_name(name: str) -> str:
@@ -4317,9 +4172,6 @@ def _safe_zip_name(name: str) -> str:
 
 def _make_curve_png(time_ms, y_data, title, norm_label, kv=None):
     """Render one OJIP curve plot as a PNG byte string (log x-axis)."""
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
 
     t = np.asarray(time_ms, dtype=float)
     y = np.asarray(y_data, dtype=float)
@@ -4349,9 +4201,6 @@ def _make_curve_png(time_ms, y_data, title, norm_label, kv=None):
 def _make_diag_png(time_log, recon, title, label,
                    time_raw=None, raw_data=None, kv=None):
     """Render a reconstructed-vs-raw diagnostic plot with FJ/FI/FP markers."""
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(5, 3))
     tl = np.asarray(time_log, dtype=float)
@@ -4384,9 +4233,6 @@ def _make_diag_png(time_log, recon, title, label,
 
 def _make_deriv_png(time_arr, y_data, title, label, kv=None):
     """Render a derivative or residual plot with FJ/FI/FP markers."""
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(5, 3))
     t = np.asarray(time_arr, dtype=float)

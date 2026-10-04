@@ -397,14 +397,14 @@
                 <select id="fj-mode-sidebar" class="form-control form-control-sm" style="width:auto;font-size:0.82em">
                   <option value="d2_zero">D2 zero-crossing</option>
                   <option value="poly_inflect">Polynomial inflection</option>
-                  <option value="d2_min">D2 minimum</option>
+                  <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
                   <option value="fixed" selected>Fixed timing</option>
                 </select>
                 <small class="text-muted">F<sub>I</sub>:</small>
                 <select id="fi-mode-sidebar" class="form-control form-control-sm" style="width:auto;font-size:0.82em">
                   <option value="d2_zero">D2 zero-crossing</option>
                   <option value="poly_inflect">Polynomial inflection</option>
-                  <option value="d2_min">D2 minimum</option>
+                  <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
                   <option value="fixed" selected>Fixed timing</option>
                 </select>
               </div>
@@ -649,14 +649,14 @@
         <select id="fj-mode-curves" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
           <option value="d2_zero">D2 zero-crossing</option>
           <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_min">D2 minimum</option>
+          <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
           <option value="fixed" selected>Fixed timing</option>
         </select>
         <label class="mb-0" style="font-size:0.82em">F<sub>I</sub>:</label>
         <select id="fi-mode-curves" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
           <option value="d2_zero">D2 zero-crossing</option>
           <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_min">D2 minimum</option>
+          <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
           <option value="fixed" selected>Fixed timing</option>
         </select>
         <span id="fjfi-mode-badge-curves" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
@@ -715,14 +715,14 @@
         <select id="fj-mode-params" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
           <option value="d2_zero">D2 zero-crossing</option>
           <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_min">D2 minimum</option>
+          <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
           <option value="fixed" selected>Fixed timing</option>
         </select>
         <small class="text-muted" style="font-size:0.82em">F<sub>I</sub>:</small>
         <select id="fi-mode-params" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
           <option value="d2_zero">D2 zero-crossing</option>
           <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_min">D2 minimum</option>
+          <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
           <option value="fixed" selected>Fixed timing</option>
         </select>
         <span id="fjfi-mode-badge-params" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: fixed 2/30 ms</span>
@@ -1562,51 +1562,82 @@
               <span id="f0-time-note" class="text-info ml-2" style="display:none; font-size:0.85em;">&#9432; Time axis will be rescaled &mdash; click Re-fit to apply</span>
             </div>
           </div>
-          <!-- FJ / FI detection mode (separate dropdowns) with fixed-time inputs -->
+          <!-- FJ / FI detection mode (separate dropdowns) with fixed-time + fallback inputs -->
           <div class="form-row align-items-center mb-1">
-            <div class="col-auto d-flex align-items-center" style="gap:0.4rem">
+            <div class="col-auto d-flex align-items-center flex-wrap" style="gap:0.4rem">
               <label class="mb-0 mr-1 font-weight-bold">F<sub>J</sub> detection:</label>
               <select id="fj-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="d2_zero">D2 zero-crossing (D1 minimum)</option>
                 <option value="poly_inflect">Polynomial inflection</option>
-                <option value="d2_min">D2 minimum</option>
+                <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
                 <option value="fixed">Fixed timing</option>
               </select>
               <div class="input-group input-group-sm d-inline-flex" id="fj-fixed-time-diag-wrap" style="width:auto">
                 <input type="number" id="fj-fixed-time-diag" class="form-control" value="2.0" min="0" max="50" step="0.1" style="width:70px">
                 <div class="input-group-append"><span class="input-group-text">ms</span></div>
               </div>
+              <span class="text-muted ml-1" id="fj-fallback-label" style="font-size:0.85em">fallback:</span>
+              <div class="input-group input-group-sm d-inline-flex" id="fj-fallback-wrap" style="width:auto">
+                <input type="number" id="fj-fallback-time" class="form-control" value="2.0" min="0.1" max="50" step="0.1" style="width:70px" title="Timing used when the selected detection method cannot find a valid inflection in the search window">
+                <div class="input-group-append"><span class="input-group-text">ms</span></div>
+              </div>
             </div>
           </div>
           <div class="form-row align-items-center mb-2">
-            <div class="col-auto d-flex align-items-center" style="gap:0.4rem">
+            <div class="col-auto d-flex align-items-center flex-wrap" style="gap:0.4rem">
               <label class="mb-0 mr-1 font-weight-bold">F<sub>I</sub> detection:</label>
               <select id="fi-detect-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="d2_zero">D2 zero-crossing (D1 minimum)</option>
                 <option value="poly_inflect">Polynomial inflection</option>
-                <option value="d2_min">D2 minimum</option>
+                <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
                 <option value="fixed">Fixed timing</option>
               </select>
               <div class="input-group input-group-sm d-inline-flex" id="fi-fixed-time-diag-wrap" style="width:auto">
                 <input type="number" id="fi-fixed-time-diag" class="form-control" value="30.0" min="10" max="500" step="0.1" style="width:70px">
                 <div class="input-group-append"><span class="input-group-text">ms</span></div>
               </div>
+              <span class="text-muted ml-1" id="fi-fallback-label" style="font-size:0.85em">fallback:</span>
+              <div class="input-group input-group-sm d-inline-flex" id="fi-fallback-wrap" style="width:auto">
+                <input type="number" id="fi-fallback-time" class="form-control" value="30.0" min="0.1" max="500" step="0.1" style="width:70px" title="Timing used when the selected detection method cannot find a valid inflection in the search window">
+                <div class="input-group-append"><span class="input-group-text">ms</span></div>
+              </div>
               <small class="text-muted ml-1">click Re-fit to apply</small>
             </div>
           </div>
           <details class="mb-2" style="font-size:0.85em">
-            <summary class="text-muted" style="cursor:pointer">About FJ/FI detection methods</summary>
+            <summary class="text-muted" style="cursor:pointer">About FJ/FI/FP detection methods &amp; fallback</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
+              <p class="mb-1"><strong>Search windows.</strong>
+                F<sub>J</sub> is searched in <strong>0.1&ndash;10&thinsp;ms</strong>,
+                F<sub>I</sub> in <strong>10&ndash;100&thinsp;ms</strong>,
+                F<sub>P</sub> in <strong>100&ndash;1000&thinsp;ms</strong>
+                (Multi-Color-PAM / Dual-PAM; other fluorometers use equivalent ranges in their native time units).
+              </p>
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
                 <dt>D2 zero-crossing</dt>
-                <dd class="mb-0">Default. Where the spline second derivative (D2) crosses from negative to positive &mdash; equivalent to a local minimum of D1 (the &ldquo;shoulder&rdquo; between phases). Most precise identification of the J and I inflection points. Physiologically, the J inflection (~2&thinsp;ms) marks the kinetic bottleneck at the exchange of a reduced PQ molecule for an oxidized one at the Q<sub>B</sub> site (Schansker et&nbsp;al. 2005), and the I inflection (~30&thinsp;ms) reflects the limitation in PQH<sub>2</sub> re-oxidation by the Cyt&nbsp;b<sub>6</sub>f complex. At both points, Q<sub>A</sub> and Q<sub>B</sub> are transiently reduced because electron transport is temporarily slowed &mdash; by electrons accumulating in the PQ pool (J) or downstream of it (I).</dd>
+                <dd class="mb-0">Default. Where the spline second derivative (D2) crosses from negative to positive &mdash; equivalent to a local minimum of D1 (the &ldquo;shoulder&rdquo; between phases). Most precise identification of the J and I inflection points. Physiologically, the J inflection (~2&thinsp;ms) marks the kinetic bottleneck at the exchange of a reduced PQ molecule for an oxidized one at the Q<sub>B</sub> site (Schansker et&nbsp;al. 2005), and the I inflection (~30&thinsp;ms) reflects the limitation in PQH<sub>2</sub> re-oxidation by the Cyt&nbsp;b<sub>6</sub>f complex.
+                  <br><strong>Fallback:</strong> triggered when D2 does not cross zero within &plusmn;0.5 log-decades of the fallback timing (for the default 2&thinsp;ms this means the crossing must lie between 0.63&ndash;6.3&thinsp;ms; for 30&thinsp;ms it must lie between 9.5&ndash;95&thinsp;ms). If D2 stays below zero throughout this window or the only crossing is at the far edge of the search range (a different phase leaking in), the user-configurable canonical timing is used instead.</dd>
                 <dt>Polynomial inflection</dt>
-                <dd class="mb-0">Local polynomial fit within the O&ndash;J / J&ndash;I windows, solving D2=0 with D3&gt;0 (Akinyemi et&nbsp;al. 2023). Independent of the spline but sensitive to the polynomial degree. Identifies the same physiological transitions &mdash; the Q<sub>B</sub>-site exchange bottleneck (J) and the Cyt&nbsp;b<sub>6</sub>f re-oxidation limitation (I) &mdash; through a separate analytical approach, useful for cross-validation.</dd>
-                <dt>D2 minimum</dt>
-                <dd class="mb-0">Deepest D2 minimum (most negative D2 value) in each search window. Marks the point of maximum deceleration, which precedes the true inflection. This timing corresponds to the peak rate at which the respective bottleneck &mdash; PQ exchange at Q<sub>B</sub> (J) or PQH<sub>2</sub> re-oxidation at Cyt&nbsp;b<sub>6</sub>f (I) &mdash; brakes the fluorescence rise.</dd>
+                <dd class="mb-0">Local polynomial fit within the O&ndash;J / J&ndash;I windows, solving D2=0 with D3&gt;0 (Akinyemi et&nbsp;al. 2023). Independent of the spline but sensitive to the polynomial degree.
+                  <br><strong>Fallback:</strong> same criterion as D2 zero-crossing &mdash; both methods require D2 to cross zero near the expected timing.</dd>
+                <dt>D3 zero-crossing (D2 minimum)</dt>
+                <dd class="mb-0">Deepest D2 minimum (most negative D2 value) in each search window, identified where the third derivative (D3) crosses zero. Marks the point of maximum deceleration, which precedes the true inflection.
+                  <br><strong>Fallback:</strong> triggered when D3 does not change sign anywhere in the search window (F<sub>J</sub>: 0.1&ndash;10&thinsp;ms; F<sub>I</sub>: 10&ndash;100&thinsp;ms). This means D2 is monotonic &mdash; no genuine local minimum exists, and the reported position is just a meaningless argmin.</dd>
                 <dt>Fixed timing</dt>
-                <dd class="mb-0">Uses the user-specified times from the FJ/FI input fields (default 2/30&thinsp;ms). Ignores curve shape. Conventional fixed values assume typical dark-adapted kinetics; appropriate for standardised comparisons across studies using the same protocol.</dd>
+                <dd class="mb-0">Uses the user-specified times from the FJ/FI input fields (default 2/30&thinsp;ms). Ignores curve shape. No fallback (the timing is always defined).</dd>
               </dl>
+              <p class="mb-1"><strong>F<sub>P</sub> (P point) fallback.</strong>
+                When the selected P-point method fails (no local maximum in 100&ndash;1000&thinsp;ms, or no D2 minimum), a cascading fallback chain is used automatically:
+                Local max &rarr; D2 minimum &rarr; Global max (F<sub>M</sub>) &mdash; or the reverse (D2 min &rarr; Local max &rarr; F<sub>M</sub>),
+                depending on the primary selection. The global maximum (F<sub>M</sub>) is always defined and serves as the ultimate fallback.
+                The parameter table shows the method actually used (e.g. &ldquo;Local max &rarr; D2 min (fallback)&rdquo;).
+              </p>
+              <p class="mb-0"><strong>F<sub>Q</sub> (Q point) &mdash; no fallback.</strong>
+                The Q point (fluorescence minimum after P, marking the onset of the S rise) may genuinely not exist &mdash;
+                for example in short recordings that end before the post-P decline, or in curves with a monotonic decline
+                after F<sub>M</sub>. When the selected Q detection method finds no valid Q point, no value is reported.
+                This is intentional: reporting a Q point where none exists would produce misleading kinetic parameters.
+              </p>
             </div>
           </details>
           <!-- P point detection mode -->
@@ -1614,8 +1645,9 @@
             <div class="col-auto">
               <label class="mb-0 mr-1 font-weight-bold">P point detection:</label>
               <select id="p-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
-                <option value="d2_min">D2 minimum (P deceleration)</option>
                 <option value="local_max">Local maximum (100&ndash;1000&thinsp;ms)</option>
+                <option value="d2_min">D2 minimum (P deceleration)</option>
+                <option value="d2_zero">D2 zero-crossing (inflection)</option>
                 <option value="global_max">Global maximum (= FM)</option>
               </select>
               <small class="text-muted ml-1">click Re-fit to apply</small>
@@ -1627,6 +1659,8 @@
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
                 <dt>D2 minimum</dt>
                 <dd class="mb-0">Default. Finds the D2 local minimum in the I&ndash;P window &mdash; the point where the rise rate decelerates fastest. Precedes the actual peak by ~0.3&thinsp;decades in log-time.</dd>
+                <dt>D2 zero-crossing</dt>
+                <dd class="mb-0">Finds the D2 neg&rarr;pos zero-crossing (inflection point) in the FP window. This is where the curve transitions from concave-down to concave-up near the peak. Falls back to Local maximum when no D2 zero-crossing exists in the search window.</dd>
                 <dt>Local maximum</dt>
                 <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within 100&ndash;1000&thinsp;ms. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
                 <dt>Global maximum</dt>
@@ -2401,9 +2435,9 @@
             <button class="btn btn-sm btn-outline-secondary" id="mc-page-next" onclick="MC.curvesPageNext()" title="Next page">
               <i class="fa fa-chevron-right"></i>
             </button>
-            <label class="mb-0 ml-2 small" style="cursor:pointer;" title="Show O, J, I, P markers on each curve">
+            <label class="mb-0 ml-2 small" style="cursor:pointer;" title="Show O, J, I, P, Q, eS markers on each curve">
               <input type="checkbox" id="mc-show-ojip" checked onchange="MC.renderAggregateCurves()">
-              OJIP
+              OJIP + Q, eS
             </label>
             <select id="mc-agg-norm" class="form-control form-control-sm ml-2"
                     style="width:auto; display:none;"
@@ -2470,9 +2504,9 @@
             <option value="FV">FV</option>
           </optgroup>
           <optgroup label="Timing">
-            <option value="FJ_time_deriv_ms">t(FJ) ms</option>
-            <option value="FI_time_deriv_ms">t(FI) ms</option>
-            <option value="FP_time_deriv_ms">t(FP) ms</option>
+            <option value="FJ_time_user_ms">t(FJ) ms</option>
+            <option value="FI_time_user_ms">t(FI) ms</option>
+            <option value="FP_time_user_ms">t(FP) ms</option>
             <option value="FM_time_ms">t(FM) ms</option>
           </optgroup>
           <optgroup label="Phase Slopes">
@@ -3504,7 +3538,7 @@ function _buildGroupAvgParams(slots, field, value) {
               'FQ','FQ_time_ms','slope_PQ','PQ_amplitude','PQ_rel',
               'F_earlyS','F_earlyS_time_ms','slope_P_earlyS','P_earlyS_amplitude','P_earlyS_rel',
               'slope_Q_earlyS','Q_earlyS_amplitude','Q_earlyS_rel',
-              'FJ_time_user_ms','FI_time_user_ms','FM_time_ms',
+              'FJ_time_user_ms','FI_time_user_ms','FP_time_user_ms','FM_time_ms',
               'FJ_time_deriv_ms','FI_time_deriv_ms','FP_time_deriv_ms'];
   var avg = {};
   keys.forEach(function(k) {
