@@ -498,6 +498,8 @@ const MC = (() => {
           fi_detect_mode:  jipOpts.fiDetectMode || 'fixed',
           fj_fallback_ms:  jipOpts.fjFallbackMs || 2.0,
           fi_fallback_ms:  jipOpts.fiFallbackMs || 30.0,
+          fj_logdec:       jipOpts.fjLogdec || 0.3,
+          fi_logdec:       jipOpts.fiLogdec || 0.3,
           s_point_mode:    jipOpts.sPointMode || 'd2_min',
           p_point_mode:    jipOpts.pPointMode || 'd2_min',
           include_curves: false,
@@ -1331,6 +1333,8 @@ const MC = (() => {
       fi_detect_mode:  document.getElementById('fi-detect-mode')?.value || 'fixed',
       fj_fallback_ms:  parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
       fi_fallback_ms:  parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
+      fj_logdec:       parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
+      fi_logdec:       parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
       s_point_mode:    document.getElementById('s-point-mode')?.value || 'd2_min',
       p_point_mode:    document.getElementById('p-point-mode')?.value || 'd2_min',
       include_curves: true,
@@ -3987,7 +3991,8 @@ function calcJIP(kv) {
     FJ_time_d2zero_ms: kv.FJ_time_d2zero_ms, FI_time_d2zero_ms: kv.FI_time_d2zero_ms,
     FP_time_deriv_ms: kv.FP_time_deriv_ms, FP_time_localmax_ms: kv.FP_time_localmax_ms,
     FP_time_user_ms: kv.FP_time_user_ms, FM_time_ms: kv.FM_time_ms,
-    FJ_d2_depth: kv.FJ_d2_depth, FI_d2_depth: kv.FI_d2_depth, FP_d2_depth: kv.FP_d2_depth, FP_ref: kv.FP_ref,
+    FJ_d2_depth: kv.FJ_d2_depth, FI_d2_depth: kv.FI_d2_depth, FP_d2_depth: kv.FP_d2_depth,
+    FJ_ref: kv.FJ_ref, FI_ref: kv.FI_ref, FP_ref: kv.FP_ref,
     deriv_timing_used: kv.deriv_timing_used,
     // pass-through: slopes, dip, decomposition, gaussians
     slope_OJ: kv.slope_OJ, slope_JI: kv.slope_JI, slope_IP: kv.slope_IP,
@@ -4138,20 +4143,62 @@ function _syncAllFiDropdowns(value) {
 function _syncFixedTimeInputsVisibility() {
   const fjMode = document.getElementById('fj-detect-mode')?.value || 'fixed';
   const fiMode = document.getElementById('fi-detect-mode')?.value || 'fixed';
-  // Fixed-time inputs: enabled when mode == 'fixed'
   for (const [mode, prefix] of [[fjMode, 'fj'], [fiMode, 'fi']]) {
-    const inp  = document.getElementById(prefix + '-fixed-time-diag');
-    const wrap = document.getElementById(prefix + '-fixed-time-diag-wrap');
     const isFixed = mode === 'fixed';
-    if (inp)  { inp.disabled = !isFixed;  inp.style.opacity  = isFixed ? '1' : '0.45'; }
-    if (wrap) { wrap.style.opacity = isFixed ? '1' : '0.45'; }
-    // Fallback inputs: enabled when mode != 'fixed' (inverse)
-    const fbLabel = document.getElementById(prefix + '-fallback-label');
-    const fbWrap  = document.getElementById(prefix + '-fallback-wrap');
-    const fbInp   = document.getElementById(prefix + '-fallback-time');
-    if (fbLabel) fbLabel.style.opacity = isFixed ? '0.35' : '1';
-    if (fbWrap)  fbWrap.style.opacity  = isFixed ? '0.35' : '1';
-    if (fbInp)   { fbInp.disabled = isFixed; fbInp.style.opacity = isFixed ? '0.35' : '1'; }
+    // Apply to both diagnostics and sidebar locations
+    for (const loc of ['diag', 'sidebar']) {
+      // Fixed-time input: enabled when mode == 'fixed'
+      const ftId = loc === 'sidebar'
+        ? (prefix === 'fj' ? 'FJ_time' : 'FI_time')
+        : prefix + '-fixed-time-' + loc;
+      const inp  = document.getElementById(ftId);
+      const wrap = document.getElementById(prefix + '-fixed-time-' + loc + '-wrap');
+      if (inp)  { inp.disabled = !isFixed;  inp.style.opacity  = isFixed ? '1' : '0.45'; }
+      if (wrap) { wrap.style.opacity = isFixed ? '1' : '0.45'; }
+      // Fallback inputs: enabled when mode != 'fixed'
+      const fbSuffix = loc === 'sidebar' ? '-' + loc : '';
+      const fbLabelId = prefix + '-fallback' + (loc === 'sidebar' ? '-sidebar-label' : '-label');
+      const fbWrapId  = prefix + '-fallback' + (loc === 'sidebar' ? '-sidebar-wrap' : '-wrap');
+      const fbInpId   = prefix + '-fallback' + (loc === 'sidebar' ? '-sidebar' : '-time');
+      const fbLabel = document.getElementById(fbLabelId);
+      const fbWrap  = document.getElementById(fbWrapId);
+      const fbInp   = document.getElementById(fbInpId);
+      if (fbLabel) fbLabel.style.opacity = isFixed ? '0.35' : '1';
+      if (fbWrap)  fbWrap.style.opacity  = isFixed ? '0.35' : '1';
+      if (fbInp)   { fbInp.disabled = isFixed; fbInp.style.opacity = isFixed ? '0.35' : '1'; }
+      // Log-decade window inputs: same visibility as fallback
+      const ldLabel = document.getElementById(prefix + '-logdec' + (loc === 'sidebar' ? '-sidebar-label' : '-label'));
+      const ldWrap  = document.getElementById(prefix + '-logdec' + (loc === 'sidebar' ? '-sidebar-wrap' : '-wrap'));
+      const ldInp   = document.getElementById(prefix + '-logdec' + (loc === 'sidebar' ? '-sidebar' : ''));
+      const ivDisp  = document.getElementById(prefix + '-interval' + (loc === 'sidebar' ? '-sidebar' : '-display'));
+      if (ldLabel) ldLabel.style.opacity = isFixed ? '0.35' : '1';
+      if (ldWrap)  ldWrap.style.opacity  = isFixed ? '0.35' : '1';
+      if (ldInp)   { ldInp.disabled = isFixed; ldInp.style.opacity = isFixed ? '0.35' : '1'; }
+      if (ivDisp)  ivDisp.style.opacity  = isFixed ? '0.35' : '1';
+    }
+  }
+  updateFallbackIntervals();
+}
+
+/** Update the live interval display next to FJ/FI fallback inputs (diagnostics + sidebar). */
+function updateFallbackIntervals() {
+  for (const prefix of ['fj', 'fi']) {
+    // Update both diagnostics and sidebar interval displays
+    for (const [fbId, ldId, dispId] of [
+      [prefix + '-fallback-time',    prefix + '-logdec',         prefix + '-interval-display'],
+      [prefix + '-fallback-sidebar', prefix + '-logdec-sidebar', prefix + '-interval-sidebar'],
+    ]) {
+      const fb  = parseFloat(document.getElementById(fbId)?.value);
+      const ld  = parseFloat(document.getElementById(ldId)?.value);
+      const el  = document.getElementById(dispId);
+      if (!el || !isFinite(fb) || !isFinite(ld) || fb <= 0 || ld <= 0) {
+        if (el) el.textContent = '';
+        continue;
+      }
+      const lo = fb / Math.pow(10, ld);
+      const hi = fb * Math.pow(10, ld);
+      el.textContent = '[' + lo.toFixed(1) + ' \u2013 ' + hi.toFixed(1) + ' ms]';
+    }
   }
 }
 
@@ -4283,6 +4330,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   _syncDiagFixedTimeFromSidebar();
+
+  // Two-way sync: sidebar ↔ diagnostics for logdec and fallback inputs
+  for (const [sideId, diagId] of [
+    ['fj-logdec-sidebar',   'fj-logdec'],
+    ['fi-logdec-sidebar',   'fi-logdec'],
+    ['fj-fallback-sidebar', 'fj-fallback-time'],
+    ['fi-fallback-sidebar', 'fi-fallback-time'],
+  ]) {
+    const sideEl = document.getElementById(sideId);
+    const diagEl = document.getElementById(diagId);
+    if (sideEl && diagEl) {
+      sideEl.addEventListener('input', () => { diagEl.value = sideEl.value; updateFallbackIntervals(); });
+      diagEl.addEventListener('input', () => { sideEl.value = diagEl.value; updateFallbackIntervals(); });
+    }
+  }
+
+  // Two-way sync: sidebar ↔ diagnostics for P-point and Q-point mode dropdowns
+  for (const [sideId, diagId] of [
+    ['p-point-mode-sidebar', 'p-point-mode'],
+    ['s-point-mode-sidebar', 's-point-mode'],
+  ]) {
+    const sideEl = document.getElementById(sideId);
+    const diagEl = document.getElementById(diagId);
+    if (sideEl && diagEl) {
+      sideEl.addEventListener('change', () => { diagEl.value = sideEl.value; });
+      diagEl.addEventListener('change', () => { sideEl.value = diagEl.value; });
+    }
+  }
+
+  // Initial sync: copy diagnostics logdec/fallback values to sidebar
+  for (const [diagId, sideId] of [
+    ['fj-logdec',        'fj-logdec-sidebar'],
+    ['fi-logdec',        'fi-logdec-sidebar'],
+    ['fj-fallback-time', 'fj-fallback-sidebar'],
+    ['fi-fallback-time', 'fi-fallback-sidebar'],
+    ['p-point-mode',     'p-point-mode-sidebar'],
+    ['s-point-mode',     's-point-mode-sidebar'],
+  ]) {
+    const d = document.getElementById(diagId);
+    const s = document.getElementById(sideId);
+    if (d && s) s.value = d.value;
+  }
+
   _syncFixedTimeInputsVisibility();
 
   // Groups tab
@@ -4686,6 +4776,8 @@ async function uploadAndAnalyze() {
   fd.append('fi_detect_mode', document.getElementById('fi-detect-mode')?.value || 'd2_zero');
   fd.append('fj_fallback_ms', document.getElementById('fj-fallback-time')?.value || '2.0');
   fd.append('fi_fallback_ms', document.getElementById('fi-fallback-time')?.value || '30.0');
+  fd.append('fj_logdec', document.getElementById('fj-logdec')?.value || '0.3');
+  fd.append('fi_logdec', document.getElementById('fi-logdec')?.value || '0.3');
   fd.append('s_point_mode', document.getElementById('s-point-mode')?.value || 'd2_min');
   fd.append('p_point_mode', document.getElementById('p-point-mode')?.value || 'd2_min');
   const _f0Val = parseFloat(document.getElementById('f0-time-input')?.value);
@@ -4873,6 +4965,10 @@ async function mcStartAnalysis() {
     useDerivTiming: _wantDerivTiming(),
     fjDetectMode: document.getElementById('fj-detect-mode')?.value || 'fixed',
     fiDetectMode: document.getElementById('fi-detect-mode')?.value || 'fixed',
+    fjFallbackMs: parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
+    fiFallbackMs: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
+    fjLogdec:     parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
+    fiLogdec:     parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
   };
   _lastSelected = selected.slice();
   _lastJipOpts  = Object.assign({}, jipOpts);
@@ -6111,6 +6207,10 @@ async function mcRefitBatch() {
     useDerivTiming: _wantDerivTiming(),
     fjDetectMode: document.getElementById('fj-detect-mode')?.value || 'fixed',
     fiDetectMode: document.getElementById('fi-detect-mode')?.value || 'fixed',
+    fjFallbackMs: parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
+    fiFallbackMs: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
+    fjLogdec:     parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
+    fiLogdec:     parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
     sPointMode: document.getElementById('s-point-mode')?.value || 'd2_min',
     pPointMode: document.getElementById('p-point-mode')?.value || 'd2_min',
   };
@@ -6240,6 +6340,8 @@ async function refitSplines() {
         fi_detect_mode: document.getElementById('fi-detect-mode')?.value || 'd2_zero',
         fj_fallback_ms: parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
         fi_fallback_ms: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
+        fj_logdec: parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
+        fi_logdec: parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
       }),
     });
     const data = await resp.json();
@@ -7330,6 +7432,10 @@ function _collectMethodInfo() {
     p_point_mode:     document.getElementById('p-point-mode')?.value || 'd2_min',
     fj_detect_mode:   document.getElementById('fj-detect-mode')?.value || 'd2_zero',
     fi_detect_mode:   document.getElementById('fi-detect-mode')?.value || 'd2_zero',
+    fj_fallback_ms:   parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
+    fi_fallback_ms:   parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
+    fj_logdec:        parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
+    fi_logdec:        parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
   };
 }
 
@@ -7375,9 +7481,23 @@ function _formatMethodInfoText(mi) {
   lines.push(
     'Knot reduction (kr):    ' + (mi.knots_reduction || '\u2014'),
     'Knot placement:         ' + (mi.knot_placement || '\u2014'),
-    'FJ search window:       ' + (mi.FJ_time_ms || '\u2014') + ' ms',
-    'FI search window:       ' + (mi.FI_time_ms || '\u2014') + ' ms',
+    'FJ timing:              ' + (mi.FJ_time_ms || 2) + ' ms',
+    'FI timing:              ' + (mi.FI_time_ms || 30) + ' ms',
   );
+  const fjFb = mi.fj_fallback_ms || mi.FJ_time_ms || 2;
+  const fiFb = mi.fi_fallback_ms || mi.FI_time_ms || 30;
+  const fjLd = mi.fj_logdec || 0.3;
+  const fiLd = mi.fi_logdec || 0.3;
+  if (fjDetMode !== 'fixed') {
+    const lo = (fjFb / Math.pow(10, fjLd)).toFixed(1);
+    const hi = (fjFb * Math.pow(10, fjLd)).toFixed(1);
+    lines.push('FJ fallback:            ' + fjFb + ' ms  (search: \u00B1' + fjLd + ' log-dec \u2192 ' + lo + ' \u2013 ' + hi + ' ms)');
+  }
+  if (fiDetMode !== 'fixed') {
+    const lo = (fiFb / Math.pow(10, fiLd)).toFixed(1);
+    const hi = (fiFb * Math.pow(10, fiLd)).toFixed(1);
+    lines.push('FI fallback:            ' + fiFb + ' ms  (search: \u00B1' + fiLd + ' log-dec \u2192 ' + lo + ' \u2013 ' + hi + ' ms)');
+  }
   const anyAuto = fjDetMode !== 'fixed' || fiDetMode !== 'fixed';
   if (anyAuto) {
     const modeDesc = fjDetMode === fiDetMode
@@ -7387,10 +7507,10 @@ function _formatMethodInfoText(mi) {
     if (mi.total_curves > 0) {
       const fallback = mi.total_curves - mi.deriv_timing_count;
       lines.push('  Auto-detected:        ' + mi.deriv_timing_count + '/' + mi.total_curves + ' curves'
-        + (fallback > 0 ? ' (' + fallback + ' fell back to fixed ' + (mi.FJ_time_ms||2) + '/' + (mi.FI_time_ms||30) + ' ms)' : ''));
+        + (fallback > 0 ? ' (' + fallback + ' fell back to fixed ' + fjFb + '/' + fiFb + ' ms)' : ''));
     }
   } else {
-    lines.push('FJ/FI for JIP params:   Fixed (' + (mi.FJ_time_ms||2) + ' / ' + (mi.FI_time_ms||30) + ' ms)');
+    lines.push('FJ/FI for JIP params:   Fixed (' + fjFb + ' / ' + fiFb + ' ms)');
   }
   if (mi.trim_first || mi.trim_last)
     lines.push('Trim:                   first ' + (mi.trim_first||0) + ', last ' + (mi.trim_last||0) + ' points');
@@ -7483,6 +7603,13 @@ async function startBatchExport() {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
     XLSX.utils.book_append_sheet(wb, ws, 'Parameters');
+    const mi = _collectMethodInfo();
+    if (mi && Object.keys(mi).length > 0) {
+      const methodLines = _formatMethodInfoText(mi).split('\n').map(line => [line]);
+      const msWs = XLSX.utils.aoa_to_sheet(methodLines);
+      msWs['!cols'] = [{ wch: 72 }];
+      XLSX.utils.book_append_sheet(wb, msWs, 'Method');
+    }
     zip.file('params_summary.xlsx', XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
 
     _setProgress(4, 'Capturing summary plots...');
@@ -7500,7 +7627,6 @@ async function startBatchExport() {
     }
 
     _setProgress(6, 'Writing method info...');
-    const mi = _collectMethodInfo();
     if (mi && Object.keys(mi).length > 0) {
       zip.file('method_info.txt', _formatMethodInfoText(mi));
     }
@@ -7583,6 +7709,8 @@ async function startBatchExport() {
           fi_detect_mode: document.getElementById('fi-detect-mode')?.value || 'd2_zero',
           fj_fallback_ms: parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
           fi_fallback_ms: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
+          fj_logdec: parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
+          fi_logdec: parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
           include_curves: true,
         };
         const BATCH = 20, CONC = 2, MAX_RETRIES = 3;

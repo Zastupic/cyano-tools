@@ -848,21 +848,22 @@ def _d3_crosses_zero_in_window(D3_DF, fname, log_time_vals, lo_native, hi_native
     return bool(np.any(np.diff(np.sign(d3w)) != 0))
 
 
-# Maximum log₁₀-distance from fallback timing to accept a D2 zero-crossing as
-# genuine.  At ±0.3 decades a 2 ms fallback accepts crossings in 1.0–4.0 ms;
+# Default log₁₀ half-width of the acceptance window around the fallback timing.
+# At ±0.3 decades a 2 ms fallback accepts crossings in 1.0–4.0 ms;
 # a 30 ms fallback accepts 15–60 ms.
-_D2Z_MAX_LOG_DIST = 0.3
+_D2Z_MAX_LOG_DIST_DEFAULT = 0.3
 
 
-def _d2z_near_expected(d2z_native, expected_ms, ms_factor):
-    """Return True if the D2 zero-crossing is within ±_D2Z_MAX_LOG_DIST decades
+def _d2z_near_expected(d2z_native, expected_ms, ms_factor,
+                       max_log_dist=_D2Z_MAX_LOG_DIST_DEFAULT):
+    """Return True if the D2 zero-crossing is within ±*max_log_dist* decades
     of *expected_ms*.  Returns False when *d2z_native* is None (no crossing)."""
     if d2z_native is None:
         return False
     d2z_ms = float(d2z_native) * ms_factor
     if d2z_ms <= 0 or expected_ms <= 0:
         return False
-    return abs(np.log10(d2z_ms) - np.log10(expected_ms)) <= _D2Z_MAX_LOG_DIST
+    return abs(np.log10(d2z_ms) - np.log10(expected_ms)) <= max_log_dist
 
 
 def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
@@ -1970,7 +1971,8 @@ def _resolve_user_timing(mode, d2z_native, deriv_native, infl_native,
 
 
 def _validate_timing_signal(mode, user_ms, d2z_native, fallback_ms, ms,
-                            D3_DF, fname, log_time_native, range_lo, range_hi):
+                            D3_DF, fname, log_time_native, range_lo, range_hi,
+                            max_log_dist=_D2Z_MAX_LOG_DIST_DEFAULT):
     """Validate FJ/FI signal; apply fallback if unreliable.
 
     Returns (validated_ms, detect_status).
@@ -1979,7 +1981,7 @@ def _validate_timing_signal(mode, user_ms, d2z_native, fallback_ms, ms,
         return user_ms, 'fixed'
     status = 'detected'
     if mode in ('d2_zero', 'poly_inflect') and not _d2z_near_expected(
-            d2z_native, fallback_ms, ms):
+            d2z_native, fallback_ms, ms, max_log_dist=max_log_dist):
         return fallback_ms, 'fallback'
     if mode == 'd2_min' and not _d3_crosses_zero_in_window(
             D3_DF, fname, log_time_native, range_lo, range_hi):
@@ -2293,7 +2295,9 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       fj_detect_mode: 'str | None' = None,
                       fi_detect_mode: 'str | None' = None,
                       fj_fallback_ms: float = 2.0,
-                      fi_fallback_ms: float = 30.0):
+                      fi_fallback_ms: float = 30.0,
+                      fj_logdec: float = _D2Z_MAX_LOG_DIST_DEFAULT,
+                      fi_logdec: float = _D2Z_MAX_LOG_DIST_DEFAULT):
     """
     Full OJIP analysis pipeline for a single curve.
 
@@ -2495,7 +2499,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                 and _d3_crosses_zero_in_window(D3_DF, fname, _lt_native,
                                                ranges['FJ'][0], ranges['FJ'][1]))
             or (_fj_mode in ('d2_zero', 'poly_inflect')
-                and _d2z_near_expected(_fj_d2z, fj_fallback_ms, ms))
+                and _d2z_near_expected(_fj_d2z, fj_fallback_ms, ms,
+                                       max_log_dist=fj_logdec))
         )
         _fi_sig_ok = (
             _fi_mode == 'fixed'
@@ -2503,7 +2508,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                 and _d3_crosses_zero_in_window(D3_DF, fname, _lt_native,
                                                ranges['FI'][0], ranges['FI'][1]))
             or (_fi_mode in ('d2_zero', 'poly_inflect')
-                and _d2z_near_expected(_fi_d2z, fi_fallback_ms, ms))
+                and _d2z_near_expected(_fi_d2z, fi_fallback_ms, ms,
+                                       max_log_dist=fi_logdec))
         )
         if _fj_mode != 'fixed' and _fj_d is not None:
             fj_time_ms = _fj_d if _fj_sig_ok else fj_fallback_ms
@@ -2609,10 +2615,12 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
 
     _fj_user, _fj_detect_status = _validate_timing_signal(
         _fj_mode, _fj_user, _fj_d2z, fj_fallback_ms, ms,
-        D3_DF, fname, _lt_native_fb, ranges['FJ'][0], ranges['FJ'][1])
+        D3_DF, fname, _lt_native_fb, ranges['FJ'][0], ranges['FJ'][1],
+        max_log_dist=fj_logdec)
     _fi_user, _fi_detect_status = _validate_timing_signal(
         _fi_mode, _fi_user, _fi_d2z, fi_fallback_ms, ms,
-        D3_DF, fname, _lt_native_fb, ranges['FI'][0], ranges['FI'][1])
+        D3_DF, fname, _lt_native_fb, ranges['FI'][0], ranges['FI'][1],
+        max_log_dist=fi_logdec)
 
     # ── detection method label (for table display) ─────────────────────────
     _fj_ref_label = _build_ref_label(_fj_mode, _fj_detect_status, _fj_user, fj_fallback_ms)
@@ -2783,6 +2791,8 @@ def ojip_process():
     fi_detect_mode_proc = request.form.get('fi_detect_mode') or fjfi_detect_mode_proc
     fj_fallback_ms_proc = float(request.form.get('fj_fallback_ms', 2.0))
     fi_fallback_ms_proc = float(request.form.get('fi_fallback_ms', 30.0))
+    fj_logdec_proc = float(request.form.get('fj_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
+    fi_logdec_proc = float(request.form.get('fi_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
     FJ_time_ms = float(request.form.get('FJ_time', 2.0))
     FI_time_ms = float(request.form.get('FI_time', 30.0))
 
@@ -3205,10 +3215,12 @@ def ojip_process():
             FI_infl.get(fname), FI_time_ms, ms)
         _fj_user_p, _fj_ds_p = _validate_timing_signal(
             fj_detect_mode_proc, _fj_user_p, _fj_d2z_p, fj_fallback_ms_proc, ms,
-            D3_DF, fname, _lt_native_p, ranges['FJ'][0], ranges['FJ'][1])
+            D3_DF, fname, _lt_native_p, ranges['FJ'][0], ranges['FJ'][1],
+            max_log_dist=fj_logdec_proc)
         _fi_user_p, _fi_ds_p = _validate_timing_signal(
             fi_detect_mode_proc, _fi_user_p, _fi_d2z_p, fi_fallback_ms_proc, ms,
-            D3_DF, fname, _lt_native_p, ranges['FI'][0], ranges['FI'][1])
+            D3_DF, fname, _lt_native_p, ranges['FI'][0], ranges['FI'][1],
+            max_log_dist=fi_logdec_proc)
 
         key_values[fname] = {
             'F0':  _safe(F0[fname]),  'FM': _safe(FM[fname]),
@@ -3328,6 +3340,8 @@ def ojip_refit():
     fi_detect_mode_refit = data.get('fi_detect_mode') or fjfi_detect_mode_refit
     fj_fallback_ms_refit = float(data.get('fj_fallback_ms', 2.0))
     fi_fallback_ms_refit = float(data.get('fi_fallback_ms', 30.0))
+    fj_logdec_refit = float(data.get('fj_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
+    fi_logdec_refit = float(data.get('fi_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
     raw_fm_f0 = data.get('raw_fm_f0', {})   # {file: {FM: ..., F0: ...}}
     time_raw_ms = data['time_raw_ms']
     double_norm_dict = data['double_norm']  # {file: [y values]}
@@ -3452,10 +3466,12 @@ def ojip_refit():
             FI_infl.get(fname), FI_time_ms, ms)
         _fj_user_r, _fj_ds_r = _validate_timing_signal(
             fj_detect_mode_refit, _fj_user_r, _fj_d2z_r, fj_fallback_ms_refit, ms,
-            D3_DF, fname, _lt_native_r, ranges['FJ'][0], ranges['FJ'][1])
+            D3_DF, fname, _lt_native_r, ranges['FJ'][0], ranges['FJ'][1],
+            max_log_dist=fj_logdec_refit)
         _fi_user_r, _fi_ds_r = _validate_timing_signal(
             fi_detect_mode_refit, _fi_user_r, _fi_d2z_r, fi_fallback_ms_refit, ms,
-            D3_DF, fname, _lt_native_r, ranges['FI'][0], ranges['FI'][1])
+            D3_DF, fname, _lt_native_r, ranges['FI'][0], ranges['FI'][1],
+            max_log_dist=fi_logdec_refit)
 
         kt_entry = {
             'FJ_time_user_ms':    _fj_user_r,
@@ -3852,6 +3868,8 @@ def ojip_process_batch():
     fi_detect_mode   = payload.get('fi_detect_mode') or fjfi_detect_mode
     fj_fallback_ms   = float(payload.get('fj_fallback_ms', 2.0))
     fi_fallback_ms   = float(payload.get('fi_fallback_ms', 30.0))
+    fj_logdec        = float(payload.get('fj_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
+    fi_logdec        = float(payload.get('fi_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
 
     if not time_native or not curves:
         return jsonify({'status': 'error',
@@ -3899,6 +3917,8 @@ def ojip_process_batch():
                 fi_detect_mode=fi_detect_mode,
                 fj_fallback_ms=fj_fallback_ms,
                 fi_fallback_ms=fi_fallback_ms,
+                fj_logdec=fj_logdec,
+                fi_logdec=fi_logdec,
             )
             r['slot'] = slot
             r['name'] = name
