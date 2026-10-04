@@ -1987,6 +1987,24 @@ def _validate_timing_signal(mode, user_ms, d2z_native, fallback_ms, ms,
     return user_ms, status
 
 
+_FJFI_METHOD_LABELS = {
+    'fixed': 'Fixed timing',
+    'd2_zero': 'D2 zero-crossing',
+    'poly_inflect': 'Polynomial inflection',
+    'd2_min': 'D3 zero-crossing (D2 minimum)',
+}
+
+
+def _build_ref_label(mode, detect_status, user_ms, fallback_ms):
+    """Build a human-readable detection-method label for FJ_ref / FI_ref."""
+    label = _FJFI_METHOD_LABELS.get(mode, mode)
+    if detect_status == 'fallback':
+        label += ' \u2192 fallback ({:.1f} ms)'.format(fallback_ms)
+    elif mode != 'fixed' and user_ms == fallback_ms:
+        label += ' \u2192 fixed (fallback)'
+    return label
+
+
 def _compute_phase_slope(f_end, f_start, t_end, t_start):
     """Compute fluorescence rise slope (r.u./ms) for one phase."""
     dt = t_end - t_start
@@ -2597,22 +2615,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         D3_DF, fname, _lt_native_fb, ranges['FI'][0], ranges['FI'][1])
 
     # ── detection method label (for table display) ─────────────────────────
-    _METHOD_LABELS = {
-        'fixed': 'Fixed timing',
-        'd2_zero': 'D2 zero-crossing',
-        'poly_inflect': 'Polynomial inflection',
-        'd2_min': 'D3 zero-crossing (D2 minimum)',
-    }
-    _fj_ref_label = _METHOD_LABELS.get(_fj_mode, _fj_mode)
-    if _fj_detect_status == 'fallback':
-        _fj_ref_label += ' \u2192 fallback ({:.1f} ms)'.format(fj_fallback_ms)
-    elif _fj_mode != 'fixed' and _fj_user == fj_time_ms:
-        _fj_ref_label += ' \u2192 fixed (fallback)'
-    _fi_ref_label = _METHOD_LABELS.get(_fi_mode, _fi_mode)
-    if _fi_detect_status == 'fallback':
-        _fi_ref_label += ' \u2192 fallback ({:.1f} ms)'.format(fi_fallback_ms)
-    elif _fi_mode != 'fixed' and _fi_user == fi_time_ms:
-        _fi_ref_label += ' \u2192 fixed (fallback)'
+    _fj_ref_label = _build_ref_label(_fj_mode, _fj_detect_status, _fj_user, fj_fallback_ms)
+    _fi_ref_label = _build_ref_label(_fi_mode, _fi_detect_status, _fi_user, fi_fallback_ms)
 
     # ── build result dict ─────────────────────────────────────────────────────
     result = {
@@ -3213,6 +3217,8 @@ def ojip_process():
             'FV':  _safe(FV[fname]),
             'FJ_time_user_ms':    _fj_user_p,
             'FI_time_user_ms':    _fi_user_p,
+            'FJ_ref': _build_ref_label(fj_detect_mode_proc, _fj_ds_p, _fj_user_p, fj_fallback_ms_proc),
+            'FI_ref': _build_ref_label(fi_detect_mode_proc, _fi_ds_p, _fi_user_p, fi_fallback_ms_proc),
             'FJ_detect_status':   _fj_ds_p,
             'FI_detect_status':   _fi_ds_p,
             'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
@@ -3454,6 +3460,8 @@ def ojip_refit():
         kt_entry = {
             'FJ_time_user_ms':    _fj_user_r,
             'FI_time_user_ms':    _fi_user_r,
+            'FJ_ref': _build_ref_label(fj_detect_mode_refit, _fj_ds_r, _fj_user_r, fj_fallback_ms_refit),
+            'FI_ref': _build_ref_label(fi_detect_mode_refit, _fi_ds_r, _fi_user_r, fi_fallback_ms_refit),
             'FJ_detect_status':   _fj_ds_r,
             'FI_detect_status':   _fi_ds_r,
             'FJ_time_deriv_ms':   _t_safe(FJ_deriv.get(fname), ms),
