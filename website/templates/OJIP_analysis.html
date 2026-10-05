@@ -428,7 +428,7 @@
                 </div>
               </div>
             </div>
-            <small class="text-muted">click Re-fit to apply &mdash; selectors are also available on Curves, Parameters, and Diagnostics tabs</small>
+            <small class="text-muted">selectors are also available on Curves, Parameters, and Diagnostics tabs</small>
           </div>
           <details class="mb-3" style="font-size:0.85em">
             <summary class="text-muted" style="cursor:pointer">About FJ/FI detection methods &amp; fallback</summary>
@@ -458,12 +458,22 @@
             <div class="d-flex align-items-center flex-wrap" style="gap:0.4rem">
               <label class="mb-0 mr-1 font-weight-bold">P point detection:</label>
               <select id="p-point-mode-sidebar" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
-                <option value="local_max">Local maximum (100&ndash;1000&thinsp;ms)</option>
+                <option value="local_max">Local maximum</option>
                 <option value="d2_min">D2 minimum (P deceleration)</option>
                 <option value="d2_zero">D2 zero-crossing (inflection)</option>
                 <option value="global_max">Global maximum (= FM)</option>
               </select>
-              <small class="text-muted">click Re-fit to apply</small>
+              <span class="text-muted ml-1" style="font-size:0.85em">in</span>
+              <div class="input-group input-group-sm d-inline-flex" style="width:auto">
+                <input type="number" id="fp-logdec-sidebar" class="form-control" value="0.5" min="0.05" max="1.5" step="0.05" style="width:70px" title="Half-width of the search window in log₁₀-decades around the expected timing">
+                <div class="input-group-append"><span class="input-group-text">log-dec</span></div>
+              </div>
+              <span class="text-muted" id="fp-interval-sidebar" style="font-size:0.85em"></span>
+              <span class="text-muted ml-1" style="font-size:0.85em">center:</span>
+              <div class="input-group input-group-sm d-inline-flex" style="width:auto">
+                <input type="number" id="fp-expected-sidebar" class="form-control" value="316" min="50" max="2000" step="10" style="width:80px" title="Expected FP timing — center of the search window in log-time">
+                <div class="input-group-append"><span class="input-group-text">ms</span></div>
+              </div>
             </div>
           </div>
           <details class="mb-3" style="font-size:0.85em">
@@ -475,14 +485,16 @@
                 <dt>D2 zero-crossing</dt>
                 <dd class="mb-0">Finds the D2 neg&rarr;pos zero-crossing (inflection point) in the FP window. This is where the curve transitions from concave-down to concave-up near the peak. Falls back to Local maximum when no D2 zero-crossing exists in the search window.</dd>
                 <dt>Local maximum</dt>
-                <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within 100&ndash;1000&thinsp;ms. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
+                <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within the user-configurable FP search window. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
                 <dt>Global maximum</dt>
                 <dd class="mb-0">Uses the FM timing directly. Equivalent to max(F) over the entire transient.</dd>
                 <dt>Fallback chain</dt>
-                <dd class="mb-0">When the selected P-point method fails (no local maximum in 100&ndash;1000&thinsp;ms, or no D2 minimum), a cascading fallback chain is used automatically:
+                <dd class="mb-0">When the selected P-point method fails (no local maximum in the FP window, or no D2 minimum), a cascading fallback chain is used automatically:
                   Local max &rarr; D2 minimum &rarr; Global max (F<sub>M</sub>) &mdash; or the reverse (D2 min &rarr; Local max &rarr; F<sub>M</sub>),
                   depending on the primary selection. The global maximum (F<sub>M</sub>) is always defined and serves as the ultimate fallback.
                   The parameter table shows the method actually used (e.g. &ldquo;Local max &rarr; D2 min (fallback)&rdquo;).</dd>
+                <dt>Search window</dt>
+                <dd class="mb-0">The FP search window is configurable via the <em>center</em> and <em>log-dec</em> controls above. The window spans from center&thinsp;/&thinsp;10<sup>logdec</sup> to center&thinsp;&times;&thinsp;10<sup>logdec</sup> ms (default: 316&thinsp;ms &plusmn;&thinsp;0.5 log-decades&thinsp;=&thinsp;100&ndash;1000&thinsp;ms). It applies to D2&nbsp;zero-crossing, Local maximum, D2&nbsp;minimum, and all fallback searches for FP.</dd>
               </dl>
             </div>
           </details>
@@ -496,7 +508,18 @@
                 <option value="auto">F minimum &rarr; D2 minimum</option>
                 <option value="local_min">Local minimum (lowest F after P)</option>
               </select>
-              <small class="text-muted ml-1">Q point at ~1&ndash;2&thinsp;s (Fratamico et&nbsp;al. 2016); early S&nbsp;=&nbsp;last point &mdash; click Re-fit to apply</small>
+              <span class="text-muted ml-1" style="font-size:0.85em">in</span>
+              <div class="input-group input-group-sm d-inline-flex" style="width:auto">
+                <input type="number" id="fq-logdec-sidebar" class="form-control" value="0.3" min="0.05" max="1.5" step="0.05" style="width:70px" title="Half-width of the Q search window in log₁₀-decades around the expected timing">
+                <div class="input-group-append"><span class="input-group-text">log-dec</span></div>
+              </div>
+              <span class="text-muted" id="fq-interval-sidebar" style="font-size:0.85em"></span>
+              <span class="text-muted ml-1" style="font-size:0.85em">center:</span>
+              <div class="input-group input-group-sm d-inline-flex" style="width:auto">
+                <input type="number" id="fq-expected-sidebar" class="form-control" value="1500" min="200" max="10000" step="100" style="width:80px" title="Expected FQ timing — center of the search window in log-time">
+                <div class="input-group-append"><span class="input-group-text">ms</span></div>
+              </div>
+              <small class="text-muted ml-1">early S&nbsp;=&nbsp;last point</small>
             </div>
           </div>
           <details class="mb-3" style="font-size:0.85em">
@@ -518,6 +541,7 @@
                   after F<sub>M</sub>. When the selected Q detection method finds no valid Q point, no value is reported.
                   This is intentional: reporting a Q point where none exists would produce misleading kinetic parameters.</dd>
               </dl>
+              <p class="mb-1"><strong>Search window.</strong> Q candidates are restricted to a configurable time window centered (in log-time) on the expected timing (default 1500&thinsp;ms &plusmn;&thinsp;0.3 log-decades&thinsp;=&thinsp;750&ndash;3000&thinsp;ms). This prevents the D2 feature of the P peak from being misidentified as Q.</p>
               <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
               <p class="mb-0 mt-2" style="font-size:0.92em"><strong>Reference</strong></p>
               <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">
@@ -1756,14 +1780,25 @@
           </details>
           <!-- P point detection mode -->
           <div class="form-row align-items-center mb-2">
-            <div class="col-auto">
+            <div class="col-auto d-flex align-items-center flex-wrap" style="gap:0.4rem">
               <label class="mb-0 mr-1 font-weight-bold">P point detection:</label>
               <select id="p-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
-                <option value="local_max">Local maximum (100&ndash;1000&thinsp;ms)</option>
+                <option value="local_max">Local maximum</option>
                 <option value="d2_min">D2 minimum (P deceleration)</option>
                 <option value="d2_zero">D2 zero-crossing (inflection)</option>
                 <option value="global_max">Global maximum (= FM)</option>
               </select>
+              <span class="text-muted ml-1" style="font-size:0.85em">in</span>
+              <div class="input-group input-group-sm d-inline-flex" style="width:auto">
+                <input type="number" id="fp-logdec" class="form-control" value="0.5" min="0.05" max="1.5" step="0.05" style="width:70px" title="Half-width of the search window in log₁₀-decades around the expected timing" oninput="updateFallbackIntervals()">
+                <div class="input-group-append"><span class="input-group-text">log-dec</span></div>
+              </div>
+              <span class="text-muted" id="fp-interval-display" style="font-size:0.85em"></span>
+              <span class="text-muted ml-1" style="font-size:0.85em">center:</span>
+              <div class="input-group input-group-sm d-inline-flex" style="width:auto">
+                <input type="number" id="fp-expected" class="form-control" value="316" min="50" max="2000" step="10" style="width:80px" title="Expected FP timing — center of the search window in log-time" oninput="updateFallbackIntervals()">
+                <div class="input-group-append"><span class="input-group-text">ms</span></div>
+              </div>
               <small class="text-muted ml-1">click Re-fit to apply</small>
             </div>
           </div>
@@ -1776,20 +1811,22 @@
                 <dt>D2 zero-crossing</dt>
                 <dd class="mb-0">Finds the D2 neg&rarr;pos zero-crossing (inflection point) in the FP window. This is where the curve transitions from concave-down to concave-up near the peak. Falls back to Local maximum when no D2 zero-crossing exists in the search window.</dd>
                 <dt>Local maximum</dt>
-                <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within 100&ndash;1000&thinsp;ms. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
+                <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within the user-configurable FP search window. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
                 <dt>Global maximum</dt>
                 <dd class="mb-0">Uses the FM timing directly. Equivalent to max(F) over the entire transient.</dd>
                 <dt>Fallback chain</dt>
-                <dd class="mb-0">When the selected P-point method fails (no local maximum in 100&ndash;1000&thinsp;ms, or no D2 minimum), a cascading fallback chain is used automatically:
+                <dd class="mb-0">When the selected P-point method fails (no local maximum in the FP window, or no D2 minimum), a cascading fallback chain is used automatically:
                   Local max &rarr; D2 minimum &rarr; Global max (F<sub>M</sub>) &mdash; or the reverse (D2 min &rarr; Local max &rarr; F<sub>M</sub>),
                   depending on the primary selection. The global maximum (F<sub>M</sub>) is always defined and serves as the ultimate fallback.
                   The parameter table shows the method actually used (e.g. &ldquo;Local max &rarr; D2 min (fallback)&rdquo;).</dd>
+                <dt>Search window</dt>
+                <dd class="mb-0">The FP search window is configurable via the <em>center</em> and <em>log-dec</em> controls above. The window spans from center&thinsp;/&thinsp;10<sup>logdec</sup> to center&thinsp;&times;&thinsp;10<sup>logdec</sup> ms (default: 316&thinsp;ms &plusmn;&thinsp;0.5 log-decades&thinsp;=&thinsp;100&ndash;1000&thinsp;ms). It applies to D2&nbsp;zero-crossing, Local maximum, D2&nbsp;minimum, and all fallback searches for FP.</dd>
               </dl>
             </div>
           </details>
           <!-- Q point detection mode for post-peak transition parameters -->
           <div class="form-row align-items-center mb-2">
-            <div class="col-auto">
+            <div class="col-auto d-flex align-items-center flex-wrap" style="gap:0.4rem">
               <label class="mb-0 mr-1 font-weight-bold">Q point detection:</label>
               <select id="s-point-mode" class="form-control form-control-sm d-inline-block" style="width:auto">
                 <option value="d2_min">D2 minimum (Q elbow)</option>
@@ -1797,7 +1834,18 @@
                 <option value="auto">F minimum &rarr; D2 minimum</option>
                 <option value="local_min">Local minimum (lowest F after P)</option>
               </select>
-              <small class="text-muted ml-1">Q point at ~1&ndash;2&thinsp;s (Fratamico et&nbsp;al. 2016); early S&nbsp;=&nbsp;last point &mdash; click Re-fit to apply</small>
+              <span class="text-muted ml-1" style="font-size:0.85em">in</span>
+              <div class="input-group input-group-sm d-inline-flex" style="width:auto">
+                <input type="number" id="fq-logdec" class="form-control" value="0.3" min="0.05" max="1.5" step="0.05" style="width:70px" title="Half-width of the Q search window in log₁₀-decades around the expected timing" oninput="updateFallbackIntervals()">
+                <div class="input-group-append"><span class="input-group-text">log-dec</span></div>
+              </div>
+              <span class="text-muted" id="fq-interval-display" style="font-size:0.85em"></span>
+              <span class="text-muted ml-1" style="font-size:0.85em">center:</span>
+              <div class="input-group input-group-sm d-inline-flex" style="width:auto">
+                <input type="number" id="fq-expected" class="form-control" value="1500" min="200" max="10000" step="100" style="width:80px" title="Expected FQ timing — center of the search window in log-time" oninput="updateFallbackIntervals()">
+                <div class="input-group-append"><span class="input-group-text">ms</span></div>
+              </div>
+              <small class="text-muted ml-1">early S&nbsp;=&nbsp;last point &mdash; click Re-fit to apply</small>
             </div>
           </div>
           <!-- Q point detection help (collapsed by default) -->
@@ -1820,6 +1868,7 @@
                   after F<sub>M</sub>. When the selected Q detection method finds no valid Q point, no value is reported.
                   This is intentional: reporting a Q point where none exists would produce misleading kinetic parameters.</dd>
               </dl>
+              <p class="mb-1"><strong>Search window.</strong> Q candidates are restricted to a configurable time window centered (in log-time) on the expected timing (default 1500&thinsp;ms &plusmn;&thinsp;0.3 log-decades&thinsp;=&thinsp;750&ndash;3000&thinsp;ms). This prevents the D2 feature of the P peak from being misidentified as Q.</p>
               <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
               <p class="mb-0 mt-2" style="font-size:0.92em"><strong>Reference</strong></p>
               <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">

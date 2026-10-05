@@ -500,6 +500,10 @@ const MC = (() => {
           fi_fallback_ms:  jipOpts.fiFallbackMs || 30.0,
           fj_logdec:       jipOpts.fjLogdec || 0.3,
           fi_logdec:       jipOpts.fiLogdec || 0.3,
+          fp_expected_ms:  jipOpts.fpExpectedMs || 316.0,
+          fp_logdec:       jipOpts.fpLogdec || 0.5,
+          fq_expected_ms:  jipOpts.fqExpectedMs || 1500.0,
+          fq_logdec:       jipOpts.fqLogdec || 0.3,
           s_point_mode:    jipOpts.sPointMode || 'd2_min',
           p_point_mode:    jipOpts.pPointMode || 'd2_min',
           include_curves: false,
@@ -1335,6 +1339,10 @@ const MC = (() => {
       fi_fallback_ms:  parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
       fj_logdec:       parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
       fi_logdec:       parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
+      fp_expected_ms:  parseFloat(document.getElementById('fp-expected')?.value) || 316.0,
+      fp_logdec:       parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
+      fq_expected_ms:  parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
+      fq_logdec:       parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
       s_point_mode:    document.getElementById('s-point-mode')?.value || 'd2_min',
       p_point_mode:    document.getElementById('p-point-mode')?.value || 'd2_min',
       include_curves: true,
@@ -4182,8 +4190,8 @@ function _syncFixedTimeInputsVisibility() {
 
 /** Update the live interval display next to FJ/FI fallback inputs (diagnostics + sidebar). */
 function updateFallbackIntervals() {
+  // FJ / FI: center = fallback timing
   for (const prefix of ['fj', 'fi']) {
-    // Update both diagnostics and sidebar interval displays
     for (const [fbId, ldId, dispId] of [
       [prefix + '-fallback-time',    prefix + '-logdec',         prefix + '-interval-display'],
       [prefix + '-fallback-sidebar', prefix + '-logdec-sidebar', prefix + '-interval-sidebar'],
@@ -4197,6 +4205,24 @@ function updateFallbackIntervals() {
       }
       const lo = fb / Math.pow(10, ld);
       const hi = fb * Math.pow(10, ld);
+      el.textContent = '[' + lo.toFixed(1) + ' \u2013 ' + hi.toFixed(1) + ' ms]';
+    }
+  }
+  // FP / FQ: center = expected timing
+  for (const prefix of ['fp', 'fq']) {
+    for (const [expId, ldId, dispId] of [
+      [prefix + '-expected',         prefix + '-logdec',         prefix + '-interval-display'],
+      [prefix + '-expected-sidebar', prefix + '-logdec-sidebar', prefix + '-interval-sidebar'],
+    ]) {
+      const exp = parseFloat(document.getElementById(expId)?.value);
+      const ld  = parseFloat(document.getElementById(ldId)?.value);
+      const el  = document.getElementById(dispId);
+      if (!el || !isFinite(exp) || !isFinite(ld) || exp <= 0 || ld <= 0) {
+        if (el) el.textContent = '';
+        continue;
+      }
+      const lo = exp / Math.pow(10, ld);
+      const hi = exp * Math.pow(10, ld);
       el.textContent = '[' + lo.toFixed(1) + ' \u2013 ' + hi.toFixed(1) + ' ms]';
     }
   }
@@ -4337,6 +4363,10 @@ document.addEventListener('DOMContentLoaded', () => {
     ['fi-logdec-sidebar',   'fi-logdec'],
     ['fj-fallback-sidebar', 'fj-fallback-time'],
     ['fi-fallback-sidebar', 'fi-fallback-time'],
+    ['fp-logdec-sidebar',   'fp-logdec'],
+    ['fp-expected-sidebar',  'fp-expected'],
+    ['fq-logdec-sidebar',   'fq-logdec'],
+    ['fq-expected-sidebar',  'fq-expected'],
   ]) {
     const sideEl = document.getElementById(sideId);
     const diagEl = document.getElementById(diagId);
@@ -4359,12 +4389,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Initial sync: copy diagnostics logdec/fallback values to sidebar
+  // Initial sync: copy diagnostics logdec/fallback/expected values to sidebar
   for (const [diagId, sideId] of [
     ['fj-logdec',        'fj-logdec-sidebar'],
     ['fi-logdec',        'fi-logdec-sidebar'],
     ['fj-fallback-time', 'fj-fallback-sidebar'],
     ['fi-fallback-time', 'fi-fallback-sidebar'],
+    ['fp-logdec',        'fp-logdec-sidebar'],
+    ['fp-expected',      'fp-expected-sidebar'],
+    ['fq-logdec',        'fq-logdec-sidebar'],
+    ['fq-expected',      'fq-expected-sidebar'],
     ['p-point-mode',     'p-point-mode-sidebar'],
     ['s-point-mode',     's-point-mode-sidebar'],
   ]) {
@@ -4778,6 +4812,10 @@ async function uploadAndAnalyze() {
   fd.append('fi_fallback_ms', document.getElementById('fi-fallback-time')?.value || '30.0');
   fd.append('fj_logdec', document.getElementById('fj-logdec')?.value || '0.3');
   fd.append('fi_logdec', document.getElementById('fi-logdec')?.value || '0.3');
+  fd.append('fp_expected_ms', document.getElementById('fp-expected')?.value || '316.0');
+  fd.append('fp_logdec', document.getElementById('fp-logdec')?.value || '0.5');
+  fd.append('fq_expected_ms', document.getElementById('fq-expected')?.value || '1500.0');
+  fd.append('fq_logdec', document.getElementById('fq-logdec')?.value || '0.3');
   fd.append('s_point_mode', document.getElementById('s-point-mode')?.value || 'd2_min');
   fd.append('p_point_mode', document.getElementById('p-point-mode')?.value || 'd2_min');
   const _f0Val = parseFloat(document.getElementById('f0-time-input')?.value);
@@ -4969,6 +5007,10 @@ async function mcStartAnalysis() {
     fiFallbackMs: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
     fjLogdec:     parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
     fiLogdec:     parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
+    fpExpectedMs: parseFloat(document.getElementById('fp-expected')?.value) || 316.0,
+    fpLogdec:     parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
+    fqExpectedMs: parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
+    fqLogdec:     parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
   };
   _lastSelected = selected.slice();
   _lastJipOpts  = Object.assign({}, jipOpts);
@@ -6211,6 +6253,10 @@ async function mcRefitBatch() {
     fiFallbackMs: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
     fjLogdec:     parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
     fiLogdec:     parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
+    fpExpectedMs: parseFloat(document.getElementById('fp-expected')?.value) || 316.0,
+    fpLogdec:     parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
+    fqExpectedMs: parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
+    fqLogdec:     parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
     sPointMode: document.getElementById('s-point-mode')?.value || 'd2_min',
     pPointMode: document.getElementById('p-point-mode')?.value || 'd2_min',
   };
@@ -6342,6 +6388,10 @@ async function refitSplines() {
         fi_fallback_ms: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
         fj_logdec: parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
         fi_logdec: parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
+        fp_expected_ms: parseFloat(document.getElementById('fp-expected')?.value) || 316.0,
+        fp_logdec: parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
+        fq_expected_ms: parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
+        fq_logdec: parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
       }),
     });
     const data = await resp.json();
@@ -7315,17 +7365,17 @@ function _renderCurvePngs(ctx, name, detail, inclPlots) {
   const kv = detail.key_values || null;
 
   const curveTypes = [
-    ['raw', 'Raw'], ['shifted_F0', 'Shifted F\u2080'],
-    ['shifted_FM', 'Shifted F\u2098'], ['double_norm', 'Double normalised'],
+    ['raw', 'Raw', 'Raw'], ['shifted_F0', 'Shifted F\u2080', 'ShiftF0'],
+    ['shifted_FM', 'Shifted F\u2098', 'ShiftFM'], ['double_norm', 'Double normalised', 'DblNorm'],
   ];
-  for (const [normKey, label] of curveTypes) {
+  for (const [normKey, label, suffix] of curveTypes) {
     if (!inclPlots[normKey] || !curves[normKey] || !timeRaw.length) continue;
     const b64 = _renderOjipPlot(ctx, {
       timeMs: timeRaw, yData: curves[normKey],
       title: name + ' \u2014 ' + label, lineColor: '#0000ff', lineWidth: 1,
       yLabel: 'Fluorescence', kv, interpolateMarkers: false,
     });
-    results.push({ path: normKey + '/' + safe + '.png', b64 });
+    results.push({ path: normKey + '/' + safe + '_' + suffix + '.png', b64 });
   }
 
   if (inclPlots.reconstructed) {
@@ -7339,7 +7389,7 @@ function _renderCurvePngs(ctx, name, detail, inclPlots) {
         legendPosition: 'bottom-right',
         overlay: { timeMs: timeLog, yData: recon, color: '#ff0000', lineWidth: 1.2, label: 'Fitted' },
       });
-      results.push({ path: 'reconstructed/' + safe + '.png', b64 });
+      results.push({ path: 'reconstructed/' + safe + '_Recon.png', b64 });
     }
   }
 
@@ -7351,7 +7401,7 @@ function _renderCurvePngs(ctx, name, detail, inclPlots) {
         lineColor: '#008000', lineWidth: 1, yLabel: 'D1 (1st derivative)',
         hlineZero: true, kv, interpolateMarkers: true,
       });
-      results.push({ path: 'd1/' + safe + '.png', b64 });
+      results.push({ path: 'd1/' + safe + '_D1.png', b64 });
     }
   }
 
@@ -7363,7 +7413,7 @@ function _renderCurvePngs(ctx, name, detail, inclPlots) {
         lineColor: '#008000', lineWidth: 1, yLabel: 'D2 (2nd derivative)',
         hlineZero: true, kv, interpolateMarkers: true,
       });
-      results.push({ path: 'd2/' + safe + '.png', b64 });
+      results.push({ path: 'd2/' + safe + '_D2.png', b64 });
     }
   }
 
@@ -7375,7 +7425,7 @@ function _renderCurvePngs(ctx, name, detail, inclPlots) {
         lineColor: '#008000', lineWidth: 1, yLabel: 'D3 (3rd derivative)',
         hlineZero: true, kv, interpolateMarkers: true,
       });
-      results.push({ path: 'd3/' + safe + '.png', b64 });
+      results.push({ path: 'd3/' + safe + '_D3.png', b64 });
     }
   }
 
@@ -7387,7 +7437,7 @@ function _renderCurvePngs(ctx, name, detail, inclPlots) {
         lineColor: '#008000', lineWidth: 1, yLabel: 'Residuals',
         hlineZero: true, kv, interpolateMarkers: true,
       });
-      results.push({ path: 'residuals/' + safe + '.png', b64 });
+      results.push({ path: 'residuals/' + safe + '_Residuals.png', b64 });
     }
   }
 
@@ -7436,6 +7486,10 @@ function _collectMethodInfo() {
     fi_fallback_ms:   parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
     fj_logdec:        parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
     fi_logdec:        parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
+    fp_expected_ms:   parseFloat(document.getElementById('fp-expected')?.value) || 316.0,
+    fp_logdec:        parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
+    fq_expected_ms:   parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
+    fq_logdec:        parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
   };
 }
 
@@ -7711,6 +7765,10 @@ async function startBatchExport() {
           fi_fallback_ms: parseFloat(document.getElementById('fi-fallback-time')?.value) || 30.0,
           fj_logdec: parseFloat(document.getElementById('fj-logdec')?.value) || 0.3,
           fi_logdec: parseFloat(document.getElementById('fi-logdec')?.value) || 0.3,
+          fp_expected_ms: parseFloat(document.getElementById('fp-expected')?.value) || 316.0,
+          fp_logdec: parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
+          fq_expected_ms: parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
+          fq_logdec: parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
           include_curves: true,
         };
         const BATCH = 20, CONC = 2, MAX_RETRIES = 3;

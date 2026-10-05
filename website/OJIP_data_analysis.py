@@ -2045,7 +2045,8 @@ def _detect_fi_fp_dip(d1_vals, recon_vals, lt_ms, fi_t_ms, fp_t_ms):
 def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
                           fp_time_ms, fm_time_ms, fm_raw, f0_raw,
                           min_post_p_ms=200.0, s_point_mode='inflection',
-                          d2_vals=None):
+                          d2_vals=None,
+                          fq_expected_ms=1500.0, fq_logdec=0.3):
     """Detect the Q point and compute early-S parameters after the P peak.
 
     The **Q point** (Fratamico et al. 2016, *Photosynth Res* 128:271-285)
@@ -2144,19 +2145,28 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
     if s_point_mode == 'inflection':
         s_point_mode = 'd2_min'
 
+    # ── Q search window ───────────────────────────────────────────────
+    # Restrict Q candidates to ± fq_logdec decades around fq_expected_ms.
+    # This prevents the D2 feature of the P peak (which bleeds past
+    # search_start on the dense reconstruction grid) from being
+    # misidentified as Q.
+    fq_lo_ms = fq_expected_ms / (10 ** fq_logdec)
+    fq_hi_ms = fq_expected_ms * (10 ** fq_logdec)
+
     # ── Tier 0: Direct fluorescence local minimum ─────────────────────
-    # Finds the argmin of the reconstructed curve in the post-P window.
-    # Rejected when the minimum is at the very last sample (= early-S);
-    # falls through to D2 minimum below.
+    # Finds the argmin of the reconstructed curve in the post-P window
+    # within the Q search window.
     fq_dn = None           # Q point value in double-norm
     fq_time_ms = None
     fq_ref_label = None    # None = Q not detected
     if s_point_mode == 'local_min':
-        q_min_idx = int(np.argmin(y_post))
-        if q_min_idx < len(y_post) - 1:  # not at endpoint
-            fq_dn = float(y_post[q_min_idx])
-            fq_time_ms = float(t_post[q_min_idx])
-            fq_ref_label = 'Q local min'
+        q_valid = np.where((t_post >= fq_lo_ms) & (t_post <= fq_hi_ms))[0]
+        if len(q_valid) > 0:
+            q_min_local = int(q_valid[np.argmin(y_post[q_valid])])
+            if q_min_local < len(y_post) - 1:  # not at endpoint
+                fq_dn = float(y_post[q_min_local])
+                fq_time_ms = float(t_post[q_min_local])
+                fq_ref_label = 'Q local min'
         # else: fall through to D2 minimum below
 
     # ── Tier 1: Q point via D1 zero-crossing (neg → pos) ──────────────
@@ -2166,18 +2176,21 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
     if fq_dn is None and s_point_mode == 'auto':
         neg_then_pos = np.where((dy[:-1] < 0) & (dy[1:] >= 0))[0]
         if len(neg_then_pos) > 0:
-            q_idx = neg_then_pos[0] + 1
-            fq_dn = float(y_post[q_idx])
-            fq_time_ms = float(t_post[q_idx])
-            fq_ref_label = 'Q minimum'
+            # Filter to crossings within the Q window
+            q_cand = neg_then_pos[
+                (t_post[neg_then_pos + 1] >= fq_lo_ms) &
+                (t_post[neg_then_pos + 1] <= fq_hi_ms)
+            ]
+            if len(q_cand) > 0:
+                q_idx = q_cand[0] + 1
+                fq_dn = float(y_post[q_idx])
+                fq_time_ms = float(t_post[q_idx])
+                fq_ref_label = 'Q minimum'
 
     # ── Helper: find deepest D2 local minimum in post-P region ────────
     # Used by both d2_min and d2_zero modes.  Finds ALL D2 local minima
     # (where D2 transitions from decreasing to increasing) and selects
-    # the deepest (most negative D2 value).  Unlike the previous
-    # algorithm, this does NOT skip past a D2 zero-crossing first,
-    # which caused the primary D2 dip (often 200-500 ms after P) to be
-    # missed when it occurred before the first zero-crossing.
+    # the deepest (most negative D2 value) within the Q search window.
     _d2_min_idx = None      # index into y_post / t_post of deepest D2 dip
     if fq_dn is None and s_point_mode in ('auto', 'd2_min', 'd2_zero',
                                            'local_min') and len(y_post) >= 3:
@@ -2187,6 +2200,10 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
             dd2 = np.diff(d2_post)
             min_locs = np.where((dd2[:-1] <= 0) & (dd2[1:] > 0))[0] + 1
             if len(min_locs) > 0:
+                # Filter to candidates within Q window
+                in_win = (t_post[min_locs] >= fq_lo_ms) & (t_post[min_locs] <= fq_hi_ms)
+                min_locs = min_locs[in_win]
+            if len(min_locs) > 0:
                 # Select the deepest (most negative D2) among all local minima
                 _d2_min_idx = int(min_locs[np.argmin(d2_post[min_locs])])
         if _d2_min_idx is None:
@@ -2194,6 +2211,9 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
             d2y = np.diff(dy)
             dd2y = np.diff(d2y)
             min_locs_fb = np.where((dd2y[:-1] <= 0) & (dd2y[1:] > 0))[0] + 1
+            if len(min_locs_fb) > 0:
+                in_win_fb = (t_post[min_locs_fb] >= fq_lo_ms) & (t_post[min_locs_fb] <= fq_hi_ms)
+                min_locs_fb = min_locs_fb[in_win_fb]
             if len(min_locs_fb) > 0:
                 _d2_min_idx = int(min_locs_fb[np.argmin(d2y[min_locs_fb])])
 
@@ -2297,7 +2317,11 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                       fj_fallback_ms: float = 2.0,
                       fi_fallback_ms: float = 30.0,
                       fj_logdec: float = _D2Z_MAX_LOG_DIST_DEFAULT,
-                      fi_logdec: float = _D2Z_MAX_LOG_DIST_DEFAULT):
+                      fi_logdec: float = _D2Z_MAX_LOG_DIST_DEFAULT,
+                      fp_expected_ms: float = 316.0,
+                      fp_logdec: float = 0.5,
+                      fq_expected_ms: float = 1500.0,
+                      fq_logdec: float = 0.3):
     """
     Full OJIP analysis pipeline for a single curve.
 
@@ -2336,6 +2360,10 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     ms    = _ms_factor(fluorometer)
     x_col = _axis_cfg(fluorometer)[0]
     ranges = _axis_cfg(fluorometer)[5]
+    # Override FP range with user-configurable window
+    _fp_lo_ms = fp_expected_ms / (10 ** fp_logdec)
+    _fp_hi_ms = fp_expected_ms * (10 ** fp_logdec)
+    ranges['FP'] = (_fp_lo_ms / ms, _fp_hi_ms / ms)
 
     # Build 2-column DataFrame — identical structure to Summary_file with 1 col
     sf = pd.DataFrame({
@@ -2436,12 +2464,12 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     _fi_d2z = _d2_zero_in_window(Infl_DF, fname, ranges['FI'][0], ranges['FI'][1],
                                   expect_native=fi_time_ms / ms)
 
-    # ── FP local maximum in 100-1000 ms window ─────────────────────────────
+    # ── FP local maximum in user-configurable window ────────────────────────
     fp_localmax = {}
     _lt_ms_fp = log_time.values.astype(float) * ms
     for _col_fp in data_cols:
         _recon_fp = Raw_recon_DF[_col_fp].values.astype(float)
-        _mask_fp = (_lt_ms_fp >= 100.0) & (_lt_ms_fp <= 1000.0)
+        _mask_fp = (_lt_ms_fp >= _fp_lo_ms) & (_lt_ms_fp <= _fp_hi_ms)
         if np.any(_mask_fp):
             _idx_fp = int(np.argmax(_recon_fp[_mask_fp]))
             fp_localmax[_col_fp] = float(_lt_ms_fp[_mask_fp][_idx_fp])
@@ -2591,7 +2619,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         Raw_recon_DF[fname].values, log_time.values, ms,
         _fp_t, _safe(FM_timings.get(fname)), _fm_v, _f0_v,
         s_point_mode=s_point_mode,
-        d2_vals=D2_DF[fname].values)
+        d2_vals=D2_DF[fname].values,
+        fq_expected_ms=fq_expected_ms, fq_logdec=fq_logdec)
 
     # ── fit quality (evaluated on fitted / non-trimmed region only) ───────────
     _y_raw_dn      = np.array(dn_df[fname].values, dtype=float)
@@ -2793,6 +2822,10 @@ def ojip_process():
     fi_fallback_ms_proc = float(request.form.get('fi_fallback_ms', 30.0))
     fj_logdec_proc = float(request.form.get('fj_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
     fi_logdec_proc = float(request.form.get('fi_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
+    fp_expected_ms_proc = float(request.form.get('fp_expected_ms', 316.0))
+    fp_logdec_proc = float(request.form.get('fp_logdec', 0.5))
+    fq_expected_ms_proc = float(request.form.get('fq_expected_ms', 1500.0))
+    fq_logdec_proc = float(request.form.get('fq_logdec', 0.3))
     FJ_time_ms = float(request.form.get('FJ_time', 2.0))
     FI_time_ms = float(request.form.get('FI_time', 30.0))
 
@@ -2808,6 +2841,11 @@ def ojip_process():
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
 
     ms = _ms_factor(fluorometer)
+    # Override FP range with user-configurable window
+    _fp_lo_ms_proc = fp_expected_ms_proc / (10 ** fp_logdec_proc)
+    _fp_hi_ms_proc = fp_expected_ms_proc * (10 ** fp_logdec_proc)
+    ranges['FP'] = (_fp_lo_ms_proc / ms, _fp_hi_ms_proc / ms)
+
     FJ_time = FJ_time_ms / ms   # native units
     FI_time = FI_time_ms / ms
 
@@ -3005,12 +3043,12 @@ def ojip_process():
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
 
-    # ── FP local maximum in 100-1000 ms window ─────────────────────────────
+    # ── FP local maximum in user-configurable window ────────────────────────
     fp_localmax_proc = {}
     _lt_ms_fp_proc = log_time.values.astype(float) * ms
     for _col_fp in data_cols:
         _recon_fp = Raw_recon_DF[_col_fp].values.astype(float)
-        _mask_fp = (_lt_ms_fp_proc >= 100.0) & (_lt_ms_fp_proc <= 1000.0)
+        _mask_fp = (_lt_ms_fp_proc >= _fp_lo_ms_proc) & (_lt_ms_fp_proc <= _fp_hi_ms_proc)
         if np.any(_mask_fp):
             _idx_fp = int(np.argmax(_recon_fp[_mask_fp]))
             fp_localmax_proc[_col_fp] = float(_lt_ms_fp_proc[_mask_fp][_idx_fp])
@@ -3197,7 +3235,8 @@ def ojip_process():
             _recon_p, log_time.values, ms,
             _fp_t_p, _safe(FM_timings_series.get(fname)), _fm_v_p, _f0_v_p,
             s_point_mode=s_point_mode_proc,
-            d2_vals=D2_DF.iloc[:, i].values)
+            d2_vals=D2_DF.iloc[:, i].values,
+            fq_expected_ms=fq_expected_ms_proc, fq_logdec=fq_logdec_proc)
 
         # ── D2 zero-crossing times for FJ / FI ──────────────────────────
         _fj_d2z_p = _d2_zero_in_window(Infl_DF, fname, ranges['FJ'][0], ranges['FJ'][1],
@@ -3342,6 +3381,10 @@ def ojip_refit():
     fi_fallback_ms_refit = float(data.get('fi_fallback_ms', 30.0))
     fj_logdec_refit = float(data.get('fj_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
     fi_logdec_refit = float(data.get('fi_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
+    fp_expected_ms_refit = float(data.get('fp_expected_ms', 316.0))
+    fp_logdec_refit = float(data.get('fp_logdec', 0.5))
+    fq_expected_ms_refit = float(data.get('fq_expected_ms', 1500.0))
+    fq_logdec_refit = float(data.get('fq_logdec', 0.3))
     raw_fm_f0 = data.get('raw_fm_f0', {})   # {file: {FM: ..., F0: ...}}
     time_raw_ms = data['time_raw_ms']
     double_norm_dict = data['double_norm']  # {file: [y values]}
@@ -3354,6 +3397,11 @@ def ojip_refit():
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
 
     ms = _ms_factor(fluorometer)
+    # Override FP range with user-configurable window
+    _fp_lo_ms_refit = fp_expected_ms_refit / (10 ** fp_logdec_refit)
+    _fp_hi_ms_refit = fp_expected_ms_refit * (10 ** fp_logdec_refit)
+    ranges['FP'] = (_fp_lo_ms_refit / ms, _fp_hi_ms_refit / ms)
+
     time_native = [t / ms for t in time_raw_ms]
 
     # Reconstruct double_norm DataFrame in native time units
@@ -3422,12 +3470,12 @@ def ojip_refit():
             curve_entry['method_fit'] = method_extras_r[fname]
         updated_curves[fname] = curve_entry
 
-    # ── FP local maximum in 100-1000 ms window ─────────────────────────────
+    # ── FP local maximum in user-configurable window ────────────────────────
     fp_localmax_r = {}
     _lt_ms_fp_r = log_time.values.astype(float) * ms
     for _col_fp in file_names:
         _recon_fp = Raw_recon_DF[_col_fp].values.astype(float)
-        _mask_fp = (_lt_ms_fp_r >= 100.0) & (_lt_ms_fp_r <= 1000.0)
+        _mask_fp = (_lt_ms_fp_r >= _fp_lo_ms_refit) & (_lt_ms_fp_r <= _fp_hi_ms_refit)
         if np.any(_mask_fp):
             _idx_fp = int(np.argmax(_recon_fp[_mask_fp]))
             fp_localmax_r[_col_fp] = float(_lt_ms_fp_r[_mask_fp][_idx_fp])
@@ -3532,7 +3580,8 @@ def ojip_refit():
             _recon_r, log_time.values, ms,
             _fp_t_r, _fm_t_r, _fm_v_r, _f0_v_r,
             s_point_mode=s_point_mode_refit,
-            d2_vals=D2_DF.iloc[:, i].values)
+            d2_vals=D2_DF.iloc[:, i].values,
+            fq_expected_ms=fq_expected_ms_refit, fq_logdec=fq_logdec_refit)
         kt_entry['FQ'] = _pq_r['FQ']
         kt_entry['FQ_time_ms'] = _pq_r['FQ_time_ms']
         kt_entry['slope_PQ'] = _pq_r['slope_PQ']
@@ -3870,6 +3919,10 @@ def ojip_process_batch():
     fi_fallback_ms   = float(payload.get('fi_fallback_ms', 30.0))
     fj_logdec        = float(payload.get('fj_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
     fi_logdec        = float(payload.get('fi_logdec', _D2Z_MAX_LOG_DIST_DEFAULT))
+    fp_expected_ms   = float(payload.get('fp_expected_ms', 316.0))
+    fp_logdec        = float(payload.get('fp_logdec', 0.5))
+    fq_expected_ms   = float(payload.get('fq_expected_ms', 1500.0))
+    fq_logdec        = float(payload.get('fq_logdec', 0.3))
 
     if not time_native or not curves:
         return jsonify({'status': 'error',
@@ -3919,6 +3972,10 @@ def ojip_process_batch():
                 fi_fallback_ms=fi_fallback_ms,
                 fj_logdec=fj_logdec,
                 fi_logdec=fi_logdec,
+                fp_expected_ms=fp_expected_ms,
+                fp_logdec=fp_logdec,
+                fq_expected_ms=fq_expected_ms,
+                fq_logdec=fq_logdec,
             )
             r['slot'] = slot
             r['name'] = name
@@ -4127,10 +4184,10 @@ def _render_per_curve(zf, curve_data, inc):
     """
     added = 0
     curve_types = [
-        ('raw',         'Raw'),
-        ('shifted_F0',  'Shifted F0'),
-        ('shifted_FM',  'Shifted FM'),
-        ('double_norm', 'Double normalised'),
+        ('raw',         'Raw',              'Raw'),
+        ('shifted_F0',  'Shifted F0',       'ShiftF0'),
+        ('shifted_FM',  'Shifted FM',       'ShiftFM'),
+        ('double_norm', 'Double normalised', 'DblNorm'),
     ]
 
     for name, cd in curve_data.items():
@@ -4140,14 +4197,14 @@ def _render_per_curve(zf, curve_data, inc):
         curves_d = cd.get('curves', {})
         kv       = cd.get('key_values', {})
 
-        # Curve plots  →  raw/<name>.png  etc.
-        for norm_key, label in curve_types:
+        # Curve plots  →  raw/<name>_Raw.png  etc.
+        for norm_key, label, suffix in curve_types:
             if not inc.get(norm_key):
                 continue
             y_data = curves_d.get(norm_key)
             if y_data and time_raw:
                 png = _make_curve_png(time_raw, y_data, name, label, kv)
-                zf.writestr(f'{norm_key}/{safe}.png', png)
+                zf.writestr(f'{norm_key}/{safe}_{suffix}.png', png)
                 added += 1
 
         # Reconstructed  →  reconstructed/<name>.png
@@ -4157,7 +4214,7 @@ def _render_per_curve(zf, curve_data, inc):
             if recon and time_log:
                 png = _make_diag_png(time_log, recon, name,
                                      'Reconstructed', time_raw, dnorm, kv)
-                zf.writestr(f'reconstructed/{safe}.png', png)
+                zf.writestr(f'reconstructed/{safe}_Recon.png', png)
                 added += 1
 
         # D2  →  d2/<name>.png
@@ -4166,7 +4223,7 @@ def _render_per_curve(zf, curve_data, inc):
             if d2 and time_log:
                 png = _make_deriv_png(time_log, d2, name,
                                      'D2 (2nd derivative)', kv)
-                zf.writestr(f'd2/{safe}.png', png)
+                zf.writestr(f'd2/{safe}_D2.png', png)
                 added += 1
 
         # D3  →  d3/<name>.png
@@ -4175,7 +4232,7 @@ def _render_per_curve(zf, curve_data, inc):
             if d3 and time_log:
                 png = _make_deriv_png(time_log, d3, name,
                                      'D3 (3rd derivative)', kv)
-                zf.writestr(f'd3/{safe}.png', png)
+                zf.writestr(f'd3/{safe}_D3.png', png)
                 added += 1
 
         # Residuals  →  residuals/<name>.png
@@ -4183,7 +4240,7 @@ def _render_per_curve(zf, curve_data, inc):
             resid = curves_d.get('residuals')
             if resid and time_raw:
                 png = _make_deriv_png(time_raw, resid, name, 'Residuals', kv)
-                zf.writestr(f'residuals/{safe}.png', png)
+                zf.writestr(f'residuals/{safe}_Residuals.png', png)
                 added += 1
 
     return added
