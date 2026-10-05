@@ -431,12 +431,11 @@
             <small class="text-muted">click Re-fit to apply &mdash; selectors are also available on Curves, Parameters, and Diagnostics tabs</small>
           </div>
           <details class="mb-3" style="font-size:0.85em">
-            <summary class="text-muted" style="cursor:pointer">About FJ/FI/FP detection methods &amp; fallback</summary>
+            <summary class="text-muted" style="cursor:pointer">About FJ/FI detection methods &amp; fallback</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
               <p class="mb-1"><strong>Search windows.</strong>
                 F<sub>J</sub> is searched in <strong>0.1&ndash;10&thinsp;ms</strong>,
-                F<sub>I</sub> in <strong>10&ndash;100&thinsp;ms</strong>,
-                F<sub>P</sub> in <strong>100&ndash;1000&thinsp;ms</strong>
+                F<sub>I</sub> in <strong>10&ndash;100&thinsp;ms</strong>
                 (Multi-Color-PAM / Dual-PAM; other fluorometers use equivalent ranges in their native time units).
               </p>
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
@@ -452,18 +451,6 @@
                 <dt>Fixed timing</dt>
                 <dd class="mb-0">Uses the user-specified times from the FJ/FI input fields (default 2/30&thinsp;ms). Ignores curve shape. No fallback (the timing is always defined).</dd>
               </dl>
-              <p class="mb-1"><strong>F<sub>P</sub> (P point) fallback.</strong>
-                When the selected P-point method fails (no local maximum in 100&ndash;1000&thinsp;ms, or no D2 minimum), a cascading fallback chain is used automatically:
-                Local max &rarr; D2 minimum &rarr; Global max (F<sub>M</sub>) &mdash; or the reverse (D2 min &rarr; Local max &rarr; F<sub>M</sub>),
-                depending on the primary selection. The global maximum (F<sub>M</sub>) is always defined and serves as the ultimate fallback.
-                The parameter table shows the method actually used (e.g. &ldquo;Local max &rarr; D2 min (fallback)&rdquo;).
-              </p>
-              <p class="mb-0"><strong>F<sub>Q</sub> (Q point) &mdash; no fallback.</strong>
-                The Q point (fluorescence minimum after P, marking the onset of the S rise) may genuinely not exist &mdash;
-                for example in short recordings that end before the post-P decline, or in curves with a monotonic decline
-                after F<sub>M</sub>. When the selected Q detection method finds no valid Q point, no value is reported.
-                This is intentional: reporting a Q point where none exists would produce misleading kinetic parameters.
-              </p>
             </div>
           </details>
           <!-- P point detection -->
@@ -480,7 +467,7 @@
             </div>
           </div>
           <details class="mb-3" style="font-size:0.85em">
-            <summary class="text-muted" style="cursor:pointer">About P point detection methods</summary>
+            <summary class="text-muted" style="cursor:pointer">About P point detection methods &amp; fallback</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
                 <dt>D2 minimum</dt>
@@ -491,6 +478,11 @@
                 <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within 100&ndash;1000&thinsp;ms. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
                 <dt>Global maximum</dt>
                 <dd class="mb-0">Uses the FM timing directly. Equivalent to max(F) over the entire transient.</dd>
+                <dt>Fallback chain</dt>
+                <dd class="mb-0">When the selected P-point method fails (no local maximum in 100&ndash;1000&thinsp;ms, or no D2 minimum), a cascading fallback chain is used automatically:
+                  Local max &rarr; D2 minimum &rarr; Global max (F<sub>M</sub>) &mdash; or the reverse (D2 min &rarr; Local max &rarr; F<sub>M</sub>),
+                  depending on the primary selection. The global maximum (F<sub>M</sub>) is always defined and serves as the ultimate fallback.
+                  The parameter table shows the method actually used (e.g. &ldquo;Local max &rarr; D2 min (fallback)&rdquo;).</dd>
               </dl>
             </div>
           </details>
@@ -520,6 +512,11 @@
                 <dd class="mb-0">Tries D1 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) first &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 minimum when no reversal is detected.</dd>
                 <dt>Local minimum (lowest F after P)</dt>
                 <dd class="mb-0">Finds the absolute lowest fluorescence value in the post-P reconstruction window. Falls back to D2&nbsp;minimum when the minimum coincides with the recording endpoint (monotonic decline with no reversal).</dd>
+                <dt>No fallback</dt>
+                <dd class="mb-0">The Q point (fluorescence minimum after P, marking the onset of the S rise) may genuinely not exist &mdash;
+                  for example in short recordings that end before the post-P decline, or in curves with a monotonic decline
+                  after F<sub>M</sub>. When the selected Q detection method finds no valid Q point, no value is reported.
+                  This is intentional: reporting a Q point where none exists would produce misleading kinetic parameters.</dd>
               </dl>
               <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
               <p class="mb-0 mt-2" style="font-size:0.92em"><strong>Reference</strong></p>
@@ -1735,12 +1732,11 @@
             </div>
           </div>
           <details class="mb-2" style="font-size:0.85em">
-            <summary class="text-muted" style="cursor:pointer">About FJ/FI/FP detection methods &amp; fallback</summary>
+            <summary class="text-muted" style="cursor:pointer">About FJ/FI detection methods &amp; fallback</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
               <p class="mb-1"><strong>Search windows.</strong>
                 F<sub>J</sub> is searched in <strong>0.1&ndash;10&thinsp;ms</strong>,
-                F<sub>I</sub> in <strong>10&ndash;100&thinsp;ms</strong>,
-                F<sub>P</sub> in <strong>100&ndash;1000&thinsp;ms</strong>
+                F<sub>I</sub> in <strong>10&ndash;100&thinsp;ms</strong>
                 (Multi-Color-PAM / Dual-PAM; other fluorometers use equivalent ranges in their native time units).
               </p>
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
@@ -1756,18 +1752,6 @@
                 <dt>Fixed timing</dt>
                 <dd class="mb-0">Uses the user-specified times from the FJ/FI input fields (default 2/30&thinsp;ms). Ignores curve shape. No fallback (the timing is always defined).</dd>
               </dl>
-              <p class="mb-1"><strong>F<sub>P</sub> (P point) fallback.</strong>
-                When the selected P-point method fails (no local maximum in 100&ndash;1000&thinsp;ms, or no D2 minimum), a cascading fallback chain is used automatically:
-                Local max &rarr; D2 minimum &rarr; Global max (F<sub>M</sub>) &mdash; or the reverse (D2 min &rarr; Local max &rarr; F<sub>M</sub>),
-                depending on the primary selection. The global maximum (F<sub>M</sub>) is always defined and serves as the ultimate fallback.
-                The parameter table shows the method actually used (e.g. &ldquo;Local max &rarr; D2 min (fallback)&rdquo;).
-              </p>
-              <p class="mb-0"><strong>F<sub>Q</sub> (Q point) &mdash; no fallback.</strong>
-                The Q point (fluorescence minimum after P, marking the onset of the S rise) may genuinely not exist &mdash;
-                for example in short recordings that end before the post-P decline, or in curves with a monotonic decline
-                after F<sub>M</sub>. When the selected Q detection method finds no valid Q point, no value is reported.
-                This is intentional: reporting a Q point where none exists would produce misleading kinetic parameters.
-              </p>
             </div>
           </details>
           <!-- P point detection mode -->
@@ -1784,7 +1768,7 @@
             </div>
           </div>
           <details class="mb-2" style="font-size:0.85em">
-            <summary class="text-muted" style="cursor:pointer">About P point detection methods</summary>
+            <summary class="text-muted" style="cursor:pointer">About P point detection methods &amp; fallback</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
               <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
                 <dt>D2 minimum</dt>
@@ -1795,6 +1779,11 @@
                 <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within 100&ndash;1000&thinsp;ms. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
                 <dt>Global maximum</dt>
                 <dd class="mb-0">Uses the FM timing directly. Equivalent to max(F) over the entire transient.</dd>
+                <dt>Fallback chain</dt>
+                <dd class="mb-0">When the selected P-point method fails (no local maximum in 100&ndash;1000&thinsp;ms, or no D2 minimum), a cascading fallback chain is used automatically:
+                  Local max &rarr; D2 minimum &rarr; Global max (F<sub>M</sub>) &mdash; or the reverse (D2 min &rarr; Local max &rarr; F<sub>M</sub>),
+                  depending on the primary selection. The global maximum (F<sub>M</sub>) is always defined and serves as the ultimate fallback.
+                  The parameter table shows the method actually used (e.g. &ldquo;Local max &rarr; D2 min (fallback)&rdquo;).</dd>
               </dl>
             </div>
           </details>
@@ -1825,6 +1814,11 @@
                 <dd class="mb-0">Tries D1 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) first &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 minimum when no reversal is detected.</dd>
                 <dt>Local minimum (lowest F after P)</dt>
                 <dd class="mb-0">Finds the absolute lowest fluorescence value in the post-P reconstruction window. Falls back to D2&nbsp;minimum when the minimum coincides with the recording endpoint (monotonic decline with no reversal).</dd>
+                <dt>No fallback</dt>
+                <dd class="mb-0">The Q point (fluorescence minimum after P, marking the onset of the S rise) may genuinely not exist &mdash;
+                  for example in short recordings that end before the post-P decline, or in curves with a monotonic decline
+                  after F<sub>M</sub>. When the selected Q detection method finds no valid Q point, no value is reported.
+                  This is intentional: reporting a Q point where none exists would produce misleading kinetic parameters.</dd>
               </dl>
               <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
               <p class="mb-0 mt-2" style="font-size:0.92em"><strong>Reference</strong></p>
