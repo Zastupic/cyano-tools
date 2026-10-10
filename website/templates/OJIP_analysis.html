@@ -535,11 +535,18 @@
                 <dd class="mb-0">Tries D1 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) first &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 minimum when no reversal is detected.</dd>
                 <dt>Local minimum (lowest F after P)</dt>
                 <dd class="mb-0">Finds the absolute lowest fluorescence value in the post-P reconstruction window. Falls back to D2&nbsp;minimum when the minimum coincides with the recording endpoint (monotonic decline with no reversal).</dd>
-                <dt>No fallback</dt>
-                <dd class="mb-0">The Q point (fluorescence minimum after P, marking the onset of the S rise) may genuinely not exist &mdash;
-                  for example in short recordings that end before the post-P decline, or in curves with a monotonic decline
-                  after F<sub>M</sub>. When the selected Q detection method finds no valid Q point, no value is reported.
-                  This is intentional: reporting a Q point where none exists would produce misleading kinetic parameters.</dd>
+                <dt>Monotonic fallback</dt>
+                <dd class="mb-0">When D2 has no interior local minimum in the Q search window (the spline smooths the post-P tail
+                  enough that D2 is monotonically decreasing), the detector falls back to the <strong>most negative D2 value</strong>
+                  in the window &mdash; the elbow of the decline. This is labelled
+                  <code>D2 minimum (monotonic &rarr; argmin)</code> so it can be distinguished from a confident detection.
+                  The same fallback is used by F<sub>J</sub>/F<sub>I</sub>/F<sub>P</sub> detection.</dd>
+                <dt>Q not detected</dt>
+                <dd class="mb-0">Q remains undetected when insufficient post-P data exists (&lt;&thinsp;200&thinsp;ms after F<sub>P</sub>),
+                  no post-P data is available, or no P reference timing exists.
+                  When Q is not detected, <code>FQ_ref</code> shows the specific reason
+                  (e.g. <code>Q not detected (insufficient post-P span)</code>)
+                  and all Q-derived parameters (slope&nbsp;P-Q, P-Q&nbsp;amplitude, etc.) are blank.</dd>
               </dl>
               <p class="mb-1"><strong>Search window.</strong> Q candidates are restricted to a configurable time window centered (in log-time) on the expected timing (default 1500&thinsp;ms &plusmn;&thinsp;0.3 log-decades&thinsp;=&thinsp;750&ndash;3000&thinsp;ms). This prevents the D2 feature of the P peak from being misidentified as Q.</p>
               <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
@@ -547,6 +554,34 @@
               <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">
                 <li>Fratamico A, Tocquin P, Franck F (2016) The chlorophyll <em>a</em> fluorescence induction curve in the green microalga <em>Haematococcus pluvialis</em>: identification of the Q point. <em>Photosynth&nbsp;Res</em> 128:271&ndash;285. <a href="https://doi.org/10.1007/s11120-016-0241-2" target="_blank" rel="noopener">doi:10.1007/s11120-016-0241-2</a></li>
               </ol>
+            </div>
+          </details>
+          <!-- F value interpolation mode (synced with Diagnostics tab #value-readout) -->
+          <div class="form-group mb-2">
+            <div class="d-flex align-items-center flex-wrap" style="gap:0.4rem">
+              <label class="mb-0 mr-1 font-weight-bold" for="value-readout-sidebar">F value interpolation:</label>
+              <select id="value-readout-sidebar" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="interp" selected>Measured curve &mdash; interpolated at t</option>
+                <option value="nearest">Measured curve &mdash; nearest sample</option>
+                <option value="reconstructed">Reconstructed (spline) curve</option>
+              </select>
+              <small class="text-muted ml-1">applies to F<sub>50</sub>, F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub>, F<sub>P</sub>, F<sub>M</sub>, F<sub>Q</sub></small>
+            </div>
+          </div>
+          <details class="mb-3" style="font-size:0.85em">
+            <summary class="text-muted" style="cursor:pointer">About F value interpolation modes</summary>
+            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
+              <p class="mb-1">Once the timing of each key point (F<sub>50</sub>, F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub>, F<sub>P</sub>, F<sub>M</sub>, F<sub>Q</sub>) is resolved, the fluorescence value at that time can be read in three ways:</p>
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>Interpolated (default)</dt>
+                <dd class="mb-0">Linear interpolation between the two bracketing measured samples. Uses real data with no grid quantisation. Recommended for all instruments, especially sparse grids (OJIP Imaging, AquaPen).</dd>
+                <dt>Nearest sample</dt>
+                <dd class="mb-0">Closest measured sample to the detected time. On fine grids (MC-PAM, Dual-PAM) nearly identical to interpolation; on sparse grids it introduces a bias towards lower V<sub>J</sub>/V<sub>I</sub>.</dd>
+                <dt>Reconstructed (spline)</dt>
+                <dd class="mb-0">Reads from the fitted spline. Exact at the detected time but reports a <em>model</em> value rather than a measured one.</dd>
+              </dl>
+              <p class="mb-1 text-muted">F<sub>0</sub> is not affected (anchor at a defined sample index). F<sub>M</sub> and F<sub>P</sub> are read at their detected timings; on fine grids interp/nearest give the same as the raw max, on sparse grids reconstructed mode may give a slightly different peak estimate. F<sub>Q</sub> is read at the detected Q-point timing.</p>
+              <p class="mb-0 text-muted">On fine grids all three modes give near-identical results.</p>
             </div>
           </details>
 
@@ -1776,6 +1811,30 @@
                 <dt>Fixed timing</dt>
                 <dd class="mb-0">Uses the user-specified times from the FJ/FI input fields (default 2/30&thinsp;ms). Ignores curve shape. No fallback (the timing is always defined).</dd>
               </dl>
+              <p class="mb-1"><strong>Reading the F values at t.</strong>
+                The detection method above fixes <em>when</em> the J and I steps occur; the
+                <em>Read F values at t</em> selector controls how F<sub>J</sub> and F<sub>I</sub>
+                (and F<sub>50</sub>, F<sub>K</sub>) are then read off the curve at that time.
+                F<sub>0</sub> and F<sub>M</sub> are unaffected &mdash; F<sub>0</sub> is an anchor at a
+                defined index and F<sub>M</sub> is a measured maximum.
+              </p>
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>Interpolated at t</dt>
+                <dd class="mb-0">Default. Linear interpolation between the two measured samples
+                  bracketing t. A purely measured quantity, taken at exactly the detected time.
+                  Recommended for most data.</dd>
+                <dt>Nearest sample</dt>
+                <dd class="mb-0">The measured sample closest in time to t. Also purely measured, but
+                  quantised to the sampling grid: on sparse instruments (OJIP&nbsp;Imaging, ~60 points
+                  per transient) the nearest sample can sit well away from t, which biases
+                  V<sub>J</sub> and V<sub>I</sub>.</dd>
+                <dt>Reconstructed (spline)</dt>
+                <dd class="mb-0">The spline reconstruction evaluated at t, back-transformed to raw
+                  fluorescence units. Noise-averaged and perfectly self-consistent with the timing,
+                  which was itself derived from that spline's derivatives &mdash; but it is a model
+                  value, so a poor fit gives a poor reading. Check the fit-quality flag before
+                  relying on this mode.</dd>
+              </dl>
             </div>
           </details>
           <!-- P point detection mode -->
@@ -1862,11 +1921,18 @@
                 <dd class="mb-0">Tries D1 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) first &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 minimum when no reversal is detected.</dd>
                 <dt>Local minimum (lowest F after P)</dt>
                 <dd class="mb-0">Finds the absolute lowest fluorescence value in the post-P reconstruction window. Falls back to D2&nbsp;minimum when the minimum coincides with the recording endpoint (monotonic decline with no reversal).</dd>
-                <dt>No fallback</dt>
-                <dd class="mb-0">The Q point (fluorescence minimum after P, marking the onset of the S rise) may genuinely not exist &mdash;
-                  for example in short recordings that end before the post-P decline, or in curves with a monotonic decline
-                  after F<sub>M</sub>. When the selected Q detection method finds no valid Q point, no value is reported.
-                  This is intentional: reporting a Q point where none exists would produce misleading kinetic parameters.</dd>
+                <dt>Monotonic fallback</dt>
+                <dd class="mb-0">When D2 has no interior local minimum in the Q search window (the spline smooths the post-P tail
+                  enough that D2 is monotonically decreasing), the detector falls back to the <strong>most negative D2 value</strong>
+                  in the window &mdash; the elbow of the decline. This is labelled
+                  <code>D2 minimum (monotonic &rarr; argmin)</code> so it can be distinguished from a confident detection.
+                  The same fallback is used by F<sub>J</sub>/F<sub>I</sub>/F<sub>P</sub> detection.</dd>
+                <dt>Q not detected</dt>
+                <dd class="mb-0">Q remains undetected when insufficient post-P data exists (&lt;&thinsp;200&thinsp;ms after F<sub>P</sub>),
+                  no post-P data is available, or no P reference timing exists.
+                  When Q is not detected, <code>FQ_ref</code> shows the specific reason
+                  (e.g. <code>Q not detected (insufficient post-P span)</code>)
+                  and all Q-derived parameters (slope&nbsp;P-Q, P-Q&nbsp;amplitude, etc.) are blank.</dd>
               </dl>
               <p class="mb-1"><strong>Search window.</strong> Q candidates are restricted to a configurable time window centered (in log-time) on the expected timing (default 1500&thinsp;ms &plusmn;&thinsp;0.3 log-decades&thinsp;=&thinsp;750&ndash;3000&thinsp;ms). This prevents the D2 feature of the P peak from being misidentified as Q.</p>
               <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
@@ -1876,6 +1942,49 @@
               </ol>
             </div>
           </details>
+          <!-- F value interpolation mode — how F50/FK/FJ/FI are read at their detected timings -->
+          <div class="form-row align-items-center mb-1">
+            <div class="col-auto d-flex align-items-center flex-wrap" style="gap:0.4rem">
+              <label class="mb-0 mr-1 font-weight-bold" for="value-readout">F value interpolation:</label>
+              <select id="value-readout" class="form-control form-control-sm d-inline-block" style="width:auto">
+                <option value="interp" selected>Measured curve &mdash; interpolated at t</option>
+                <option value="nearest">Measured curve &mdash; nearest sample</option>
+                <option value="reconstructed">Reconstructed (spline) curve</option>
+              </select>
+              <small class="text-muted ml-1">applies to F<sub>50</sub>, F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub>, F<sub>P</sub>, F<sub>M</sub>, F<sub>Q</sub> &mdash; click Re-fit to apply</small>
+            </div>
+          </div>
+          <details class="mb-4" style="font-size:0.85em">
+            <summary class="text-muted" style="cursor:pointer">About F value interpolation modes</summary>
+            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
+              <p class="mb-1">Once the timing of each key point (F<sub>50</sub>, F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub>, F<sub>P</sub>, F<sub>M</sub>, F<sub>Q</sub>) is resolved, the fluorescence value at that time can be read in three ways:</p>
+              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
+                <dt>Interpolated (default)</dt>
+                <dd class="mb-0">Linear interpolation between the two bracketing measured samples. Uses real data with no grid quantisation. Recommended for all instruments, especially sparse grids (OJIP Imaging, AquaPen) where the nearest sample may be several percent off.</dd>
+                <dt>Nearest sample</dt>
+                <dd class="mb-0">Closest measured sample to the detected time. Reproduces the old (pre-fix) value-reading behaviour. On fine grids (MC-PAM, Dual-PAM with 0.01&thinsp;ms steps) this is nearly identical to interpolation; on sparse grids it introduces a bias towards lower V<sub>J</sub>/V<sub>I</sub> because the nearest sample typically precedes the true inflection.</dd>
+                <dt>Reconstructed (spline)</dt>
+                <dd class="mb-0">Reads the fluorescence from the fitted spline, back-transformed as F&nbsp;=&nbsp;F<sub>0</sub>&nbsp;+&nbsp;V&thinsp;&middot;&thinsp;F<sub>V</sub>. Exact at the detected time (no discretisation), but reports a <em>model</em> value rather than a measured one. Useful for consistency checks or when the spline fit is trusted.</dd>
+              </dl>
+              <p class="mb-1">F<sub>0</sub> is not affected (anchor at a defined sample index). F<sub>M</sub> and F<sub>P</sub> are read at their detected timings; on fine grids interp/nearest give the same as the raw max, on sparse grids reconstructed mode may give a slightly different peak estimate. F<sub>Q</sub> is read at the detected Q-point timing.</p>
+              <p class="mb-0 text-muted">On fine grids (&le;&thinsp;0.01&thinsp;ms steps) all three modes give near-identical results. The choice matters most on sparse or irregularly-spaced grids.</p>
+            </div>
+          </details>
+          <!-- Allow missing landmarks -->
+          <div class="form-row align-items-center mb-1">
+            <div class="col-auto d-flex align-items-center">
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="allow-missing">
+                <label class="custom-control-label" for="allow-missing">
+                  Allow missing landmarks
+                </label>
+              </div>
+              <small class="text-muted ml-2">
+                when checked, undetected F<sub>J</sub>/F<sub>I</sub>/F<sub>P</sub>
+                are left empty instead of falling back to fixed timings
+              </small>
+            </div>
+          </div>
           <!-- Re-fit buttons -->
           <div class="form-row align-items-center mb-1">
             <div class="col-auto">

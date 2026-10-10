@@ -8,7 +8,7 @@ Deployed on PythonAnywhere at https://www.cyano.tools. Built at DoAB, CzechGlobe
 ## Run / test
 - **Dev server:** `python main.py` (reads `.env` via python-dotenv; `debug=True`, auto-reloads).
   Requires `SECRET_KEY` env var or startup raises. `FLASK_DEBUG` not needed — main.py sets debug.
-- **Tests:** `pytest tests/` (currently only `test_ojip_interpretation.py`).
+- **Tests:** `pytest tests/` (`test_ojip_interpretation.py` + `test_ojip_timing.py`).
 - Stack: Flask 2.3+ / SQLAlchemy 2 / numpy / scipy / pandas / matplotlib / opencv-headless / cobra.
   Full pin list in `requirements.txt`.
 
@@ -58,6 +58,16 @@ A small ⬇ fallback download link sits next to it.
 - **Multi-instrument tools** (OJIP, Slow Kin, MIMS) offer per-instrument buttons that also
   auto-set the fluorometer/model dropdown before triggering analysis.
 - **Reference implementation:** PBR Analysis (`js_pbr_analysis.js`, `pbr_analysis.html`).
+
+## Single source of truth
+Never compute the same quantity in two independent code paths. When a value
+(FM, FJ, areas, JIP parameters) needs to be computed, it must flow from ONE
+function. The FJ/FI timing bug (Oct 2026) was caused by two code paths
+computing FJ independently and diverging. Extract shared logic into named
+functions; call them everywhere. Key examples:
+- `_compute_jip_params()` — all 18 JIP-test parameters (VJ, VI, M0, Fv/Fm, etc.)
+- `_validate_timing_signal()` — FJ/FI timing validation + fallback
+- `_resolve_fp_timing()` — FP cascade detection
 
 ## Per-tool notes (loaded on demand — read only when working that tool)
 Most tools are small/self-evident; read `website/<tool>.py` directly. Docs exist only where

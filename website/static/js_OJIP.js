@@ -494,6 +494,8 @@ const MC = (() => {
           oj_model_params: jipOpts.ojModelParams || null,
           f0_time_ms:      jipOpts.f0TimMs || null,
           use_deriv_timing: jipOpts.useDerivTiming || false,
+          value_readout:   jipOpts.valueReadout || 'interp',
+          allow_missing:   jipOpts.allowMissing || false,
           fj_detect_mode:  jipOpts.fjDetectMode || 'fixed',
           fi_detect_mode:  jipOpts.fiDetectMode || 'fixed',
           fj_fallback_ms:  jipOpts.fjFallbackMs || 2.0,
@@ -1333,6 +1335,8 @@ const MC = (() => {
       ..._buildOjDensifyPayload(),
       f0_time_ms:      (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
       use_deriv_timing: _wantDerivTiming(),
+      value_readout:   _valueReadout(),
+      allow_missing:   _allowMissing(),
       fj_detect_mode:  document.getElementById('fj-detect-mode')?.value || 'fixed',
       fi_detect_mode:  document.getElementById('fi-detect-mode')?.value || 'fixed',
       fj_fallback_ms:  parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
@@ -3530,10 +3534,10 @@ const PARAM_TOOLTIPS = {
   ET0RC: 'Electron transport flux per RC beyond QA: TR\u2080/RC \u00D7 \u03C8E\u2080',
   RE0RC: 'Electron flux per RC to PSI end acceptors: TR\u2080/RC \u00D7 \u03C8R\u2080',
   DI0RC: 'Dissipation flux per RC: ABS/RC \u2212 TR\u2080/RC',
-  Area_OJ: 'Complementary area above the O\u2013J phase',
-  Area_JI: 'Complementary area above the J\u2013I phase',
-  Area_IP: 'Complementary area above the I\u2013P phase',
-  Area_OP: 'Total complementary area above the O\u2013P rise',
+  Area_OJ: 'Complementary area between the O\u2013J phase and the FM ceiling',
+  Area_JI: 'Complementary area between the J\u2013I phase and the FM ceiling',
+  Area_IP: 'Complementary area between the I\u2013P phase and the FM ceiling',
+  Area_OP: 'Total complementary area between the O\u2013P rise and the FM ceiling',
   SM: 'Normalised total complementary area: Area(O\u2013P) / FV',
   N: 'QA turnover number: Sm \u00D7 M\u2080 / VJ',
   F0: 'Minimal fluorescence (all PSII RCs open)',
@@ -3967,25 +3971,30 @@ function barOpts(yLabel) {
 }
 
 // ── JIP parameter calculation ──────────────────────────────────────────────
+function _safeDiv(a, b) {
+  return (b !== 0 && isFinite(b)) ? a / b : null;
+}
+
 function calcJIP(kv) {
   const F0 = kv.F0, FM = kv.FM, FK = kv.FK, F50 = kv.F50, FJ = kv.FJ, FI = kv.FI;
+  if (F0 == null || FM == null || FJ == null || FI == null) return kv;
   const FV      = FM - F0;
-  const FVFM    = FV / FM;
-  const M0      = 4 * (FK - F50) / FV;
-  const VJ      = (FJ - F0) / FV;
-  const VI      = (FI - F0) / FV;
-  const PSIE0   = 1 - VJ;
-  const PSIR0   = 1 - VI;
-  const DELTAR0 = PSIR0 / PSIE0;
-  const PHIE0   = FVFM * PSIE0;
-  const PHIR0   = FVFM * PSIR0;
-  const TR0RC   = M0 / VJ;
-  const ABSRC   = TR0RC / FVFM;
-  const ET0RC   = TR0RC * PSIE0;
-  const RE0RC   = TR0RC * PSIR0;
-  const DI0RC   = ABSRC - TR0RC;
-  const SM      = kv.Area_OP / FV;
-  const N       = SM * M0 / VJ;
+  const FVFM    = _safeDiv(FV, FM);
+  const M0      = _safeDiv(4 * (FK - F50), FV);
+  const VJ      = _safeDiv(FJ - F0, FV);
+  const VI      = _safeDiv(FI - F0, FV);
+  const PSIE0   = VJ != null ? 1 - VJ : null;
+  const PSIR0   = VI != null ? 1 - VI : null;
+  const DELTAR0 = _safeDiv(PSIR0, PSIE0);
+  const PHIE0   = (FVFM != null && PSIE0 != null) ? FVFM * PSIE0 : null;
+  const PHIR0   = (FVFM != null && PSIR0 != null) ? FVFM * PSIR0 : null;
+  const TR0RC   = _safeDiv(M0, VJ);
+  const ABSRC   = _safeDiv(TR0RC, FVFM);
+  const ET0RC   = (TR0RC != null && PSIE0 != null) ? TR0RC * PSIE0 : null;
+  const RE0RC   = (TR0RC != null && PSIR0 != null) ? TR0RC * PSIR0 : null;
+  const DI0RC   = (ABSRC != null && TR0RC != null) ? ABSRC - TR0RC : null;
+  const SM      = _safeDiv(kv.Area_OP, FV);
+  const N       = (SM != null && M0 != null && VJ != null) ? _safeDiv(SM * M0, VJ) : null;
   return {
     F0, FM, FK, FJ, FI, FV,
     OJ: FJ - F0, JI: FI - FJ, IP: FM - FI,
@@ -3997,11 +4006,12 @@ function calcJIP(kv) {
     FJ_time_inflect_ms: kv.FJ_time_inflect_ms, FI_time_inflect_ms: kv.FI_time_inflect_ms,
     FJ_time_deriv_ms: kv.FJ_time_deriv_ms, FI_time_deriv_ms: kv.FI_time_deriv_ms,
     FJ_time_d2zero_ms: kv.FJ_time_d2zero_ms, FI_time_d2zero_ms: kv.FI_time_d2zero_ms,
-    FP_time_deriv_ms: kv.FP_time_deriv_ms, FP_time_localmax_ms: kv.FP_time_localmax_ms,
+    FP: kv.FP, FP_time_deriv_ms: kv.FP_time_deriv_ms, FP_time_localmax_ms: kv.FP_time_localmax_ms,
     FP_time_user_ms: kv.FP_time_user_ms, FM_time_ms: kv.FM_time_ms,
     FJ_d2_depth: kv.FJ_d2_depth, FI_d2_depth: kv.FI_d2_depth, FP_d2_depth: kv.FP_d2_depth,
     FJ_ref: kv.FJ_ref, FI_ref: kv.FI_ref, FP_ref: kv.FP_ref,
     deriv_timing_used: kv.deriv_timing_used,
+    value_readout: kv.value_readout,
     // pass-through: slopes, dip, decomposition, gaussians
     slope_OJ: kv.slope_OJ, slope_JI: kv.slope_JI, slope_IP: kv.slope_IP,
     dip_IP_amplitude: kv.dip_IP_amplitude, dip_IP_time_ms: kv.dip_IP_time_ms, dip_IP_d1_min: kv.dip_IP_d1_min,
@@ -4034,6 +4044,18 @@ function trapz(x, y, a, b) {
   return s;
 }
 
+/** Current "F value interpolation" mode — mirrors `value_readout` server-side. */
+function _valueReadout() {
+  const v = document.getElementById('value-readout')?.value;
+  return (v === 'nearest' || v === 'reconstructed') ? v : 'interp';
+}
+
+/** Whether "Allow missing landmarks" checkbox is checked. */
+function _allowMissing() {
+  const el = document.getElementById('allow-missing');
+  return el ? el.checked : false;
+}
+
 // Re-calculate key_values for a sample when FJ/FI times change (browser-side)
 function recalcKeyValues(fname, fjMs, fiMs) {
   const kv0 = ojipData.key_values[fname];
@@ -4041,27 +4063,76 @@ function recalcKeyValues(fname, fjMs, fiMs) {
   const t   = ojipData.time_raw_ms;
   const raw = ojipData.curves[fname].raw;
 
-  const FJ_new = interpAt(t, raw, fjMs);
-  const FI_new = interpAt(t, raw, fiMs);
-
   // Find index closest to FJ, FI, FM times
   const idxOf = (tMs) => { let bi = 0, bd = Infinity; for (let i = 0; i < t.length; i++) { const d = Math.abs(t[i] - tMs); if (d < bd) { bd = d; bi = i; } } return bi; };
+
+  // Read a fluorescence value at tMs — must match _read_value_at() in
+  // OJIP_data_analysis.py, or the browser table and the exported .xlsx disagree.
+  const vr = mode || _valueReadout();
+  const recon = ojipData.curves[fname]?.reconstructed;
+  const tLog  = ojipData.time_log_ms;
+  const readAt = (tMs) => {
+    if (vr === 'nearest') return raw[idxOf(tMs)];
+    if (vr === 'reconstructed' && recon && tLog && kv0.F0 != null && kv0.FM != null) {
+      // Spline is fitted to V = (F - F0)/FV, and FV === FMFORNORM, so this is exact.
+      return kv0.F0 + interpAt(tLog, recon, tMs) * (kv0.FM - kv0.F0);
+    }
+    return interpAt(t, raw, tMs);
+  };
+
+  const FJ_new = readAt(fjMs);
+  const FI_new = readAt(fiMs);
+  // FM: re-read at FM_time (no-op for interp/nearest on dense grids where
+  // FM_time is a sample time; reconstructed may differ slightly)
+  const FM_new = (kv0.FM_time_ms != null) ? readAt(kv0.FM_time_ms) : kv0.FM;
+  // FP: value at the detected P-step timing
+  const FP_new = (kv0.FP_time_user_ms != null) ? readAt(kv0.FP_time_user_ms) : kv0.FP;
+  // FQ: value at Q-point timing
+  const FQ_new = (kv0.FQ_time_ms != null) ? readAt(kv0.FQ_time_ms) : kv0.FQ;
+
   const fjIdx = idxOf(fjMs);
   const fiIdx = idxOf(fiMs);
   const fmIdx = idxOf(kv0.FM_time_ms ?? t[t.length - 1]);
-  const fmRaw = raw[fmIdx] ?? kv0.FM;
+  const fmRaw = FM_new ?? kv0.FM;
+  // areaAbove(a, b) is end-EXCLUSIVE, so the I-P and O-P integrations must run
+  // to fmIdx + 1 to include the FM row itself — matching _calc_areas_fm_timing()
+  // in OJIP_data_analysis.py, which integrates y.iloc[:Fm_idx + 1].
+  const fmEnd = Math.min(fmIdx + 1, t.length);
 
   const areaBelow = (a, b) => trapz(t, raw, a, b);
   const areaAbove = (a, b) => (t[b - 1] - t[a]) * fmRaw - areaBelow(a, b);
 
+  // Recompute FQ-derived slopes with readout-adjusted FM and FQ
+  const _fmRef = kv0.FM_time_ms ?? kv0.FP_time_user_ms;
+  let PQ_amp = kv0.PQ_amplitude, slope_PQ = kv0.slope_PQ, PQ_rel = kv0.PQ_rel;
+  if (FQ_new != null && FM_new != null && _fmRef != null && kv0.FQ_time_ms != null) {
+    const dt = kv0.FQ_time_ms - _fmRef;
+    PQ_amp = FQ_new - FM_new;
+    slope_PQ = dt > 0 ? PQ_amp / dt : null;
+    const fv = FM_new - kv0.F0;
+    PQ_rel = (fv && fv !== 0) ? PQ_amp / fv : null;
+  }
+  // Recompute slope_IP with readout-adjusted FM and FI
+  let slope_IP = kv0.slope_IP;
+  if (FM_new != null && FI_new != null && kv0.FP_time_user_ms != null) {
+    const dt_ip = (kv0.FP_time_user_ms ?? kv0.FM_time_ms) - fiMs;
+    slope_IP = dt_ip > 0 ? (FM_new - FI_new) / dt_ip : null;
+  }
+
   return {
+    // FK / F50 are deliberately left untouched: they sit at fixed times, do not
+    // depend on the FJ/FI timings this function recomputes, and the server
+    // already applied the readout mode plus its same-index guard (which widens
+    // the F50↔FK interval on coarse grids so M₀ cannot collapse to zero).
     ...kv0,
-    FJ: FJ_new, FI: FI_new,
+    FJ: FJ_new, FI: FI_new, FM: FM_new, FP: FP_new, FQ: FQ_new,
     FJ_time_user_ms: fjMs, FI_time_user_ms: fiMs,
+    value_readout: vr,
+    slope_IP, slope_PQ, PQ_amplitude: PQ_amp, PQ_rel,
     Area_OJ: areaAbove(0, fjIdx),
     Area_JI: areaAbove(fjIdx, fiIdx),
-    Area_IP: areaAbove(fiIdx, fmIdx),
-    Area_OP: areaAbove(0, fmIdx),
+    Area_IP: areaAbove(fiIdx, fmEnd),
+    Area_OP: areaAbove(0, fmEnd),
   };
 }
 
@@ -4376,10 +4447,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Two-way sync: sidebar ↔ diagnostics for P-point and Q-point mode dropdowns
+  // Two-way sync: sidebar ↔ diagnostics for P-point, Q-point, and value-readout dropdowns
   for (const [sideId, diagId] of [
     ['p-point-mode-sidebar', 'p-point-mode'],
     ['s-point-mode-sidebar', 's-point-mode'],
+    ['value-readout-sidebar', 'value-readout'],
   ]) {
     const sideEl = document.getElementById(sideId);
     const diagEl = document.getElementById(diagId);
@@ -4401,6 +4473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ['fq-expected',      'fq-expected-sidebar'],
     ['p-point-mode',     'p-point-mode-sidebar'],
     ['s-point-mode',     's-point-mode-sidebar'],
+    ['value-readout',    'value-readout-sidebar'],
   ]) {
     const d = document.getElementById(diagId);
     const s = document.getElementById(sideId);
@@ -4806,6 +4879,8 @@ async function uploadAndAnalyze() {
   fd.append('f0_source',       document.getElementById('f0-source-sel')?.value || 'instrument');
   fd.append('knot_placement',  document.getElementById('knot-placement-sel')?.value || 'hybrid');
   fd.append('use_deriv_timing', _wantDerivTiming() ? 'true' : 'false');
+  fd.append('value_readout', _valueReadout());
+  if (_allowMissing()) fd.append('allow_missing', 'checked');
   fd.append('fj_detect_mode', document.getElementById('fj-detect-mode')?.value || 'd2_zero');
   fd.append('fi_detect_mode', document.getElementById('fi-detect-mode')?.value || 'd2_zero');
   fd.append('fj_fallback_ms', document.getElementById('fj-fallback-time')?.value || '2.0');
@@ -5001,6 +5076,8 @@ async function mcStartAnalysis() {
     ojModelParams: null,
     f0TimMs:       null,
     useDerivTiming: _wantDerivTiming(),
+    valueReadout: _valueReadout(),
+    allowMissing: _allowMissing(),
     fjDetectMode: document.getElementById('fj-detect-mode')?.value || 'fixed',
     fiDetectMode: document.getElementById('fi-detect-mode')?.value || 'fixed',
     fjFallbackMs: parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
@@ -6247,6 +6324,8 @@ async function mcRefitBatch() {
     })(),
     f0TimMs: (() => { const v = parseFloat(document.getElementById('f0-time-input')?.value); return (v > 0) ? v : null; })(),
     useDerivTiming: _wantDerivTiming(),
+    valueReadout: _valueReadout(),
+    allowMissing: _allowMissing(),
     fjDetectMode: document.getElementById('fj-detect-mode')?.value || 'fixed',
     fiDetectMode: document.getElementById('fi-detect-mode')?.value || 'fixed',
     fjFallbackMs: parseFloat(document.getElementById('fj-fallback-time')?.value) || 2.0,
@@ -6362,7 +6441,9 @@ async function refitSplines() {
     for (const fname of ojipData.files) {
       double_norm[fname] = ojipData.curves[fname].double_norm;
       const kv = ojipData.key_values[fname] || {};
-      raw_fm_f0[fname] = { FM: kv.FM, F0: kv.F0 };
+      // FM_time_ms travels with FM so the refit keeps the upload's measured
+      // maximum instead of re-deriving one from the reconstruction.
+      raw_fm_f0[fname] = { FM: kv.FM, F0: kv.F0, FM_time_ms: kv.FM_time_ms };
     }
     const resp = await fetch('/api/ojip_refit', {
       method: 'POST',
@@ -6392,6 +6473,8 @@ async function refitSplines() {
         fp_logdec: parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
         fq_expected_ms: parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
         fq_logdec: parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
+        value_readout: _valueReadout(),
+        allow_missing: _allowMissing(),
       }),
     });
     const data = await resp.json();
@@ -6440,12 +6523,47 @@ async function refitSplines() {
         const raw = ojipData.curves[fname].raw;
         const kv  = ojipData.key_values[fname];
         if (!kv) continue;  // guard: no key_values for this curve
-        const fjT = _fjAutoTime(kv);
-        const fiT = _fiAutoTime(kv);
-        if (fjT != null) kv.FJ = interpAt(times, raw, fjT);
-        if (fiT != null) kv.FI = interpAt(times, raw, fiT);
-        kv.FK  = interpAt(times, raw, 0.3);
-        kv.F50 = interpAt(times, raw, 0.05);
+        // Honour the selected readout mode here too — otherwise rescaling the
+        // time axis silently reverts FJ/FI/FK/F50 to linear interpolation.
+        const vr = _valueReadout();
+        const recon = ojipData.curves[fname]?.reconstructed;
+        const tLog  = ojipData.time_log_ms;
+        // Circularity guard: capture original FM before any mutations so the
+        // reconstructed back-transform (F0 + V * FV) always uses raw FM.
+        const fm_raw_orig = kv.FM;
+        const readAt = (tMs) => {
+          if (vr === 'nearest') {
+            let bi = 0, bd = Infinity;
+            for (let i = 0; i < times.length; i++) { const d = Math.abs(times[i] - tMs); if (d < bd) { bd = d; bi = i; } }
+            return raw[bi];
+          }
+          if (vr === 'reconstructed' && recon && tLog && kv.F0 != null && fm_raw_orig != null) {
+            return kv.F0 + interpAt(tLog, recon, tMs) * (fm_raw_orig - kv.F0);
+          }
+          return interpAt(times, raw, tMs);
+        };
+        const fjT = kv.FJ_time_user_ms ?? _fjAutoTime(kv);
+        const fiT = kv.FI_time_user_ms ?? _fiAutoTime(kv);
+        if (fjT != null) kv.FJ = readAt(fjT);
+        if (fiT != null) kv.FI = readAt(fiT);
+        // On a coarse grid 'nearest' can land F50 and FK on the same sample,
+        // which would zero M0 (and with it TR0/RC, ABS/RC, N). Interpolate
+        // those two instead when that happens — the server's F50/FK index
+        // guard exists for the same reason.
+        const fk = readAt(0.3), f50 = readAt(0.05);
+        if (fk === f50) {
+          kv.FK  = interpAt(times, raw, 0.3);
+          kv.F50 = interpAt(times, raw, 0.05);
+        } else {
+          kv.FK = fk; kv.F50 = f50;
+        }
+        // FP, FQ: re-read with readout mode at their detected timings.
+        // FM is deliberately NOT re-read — it is a maximum, not a
+        // value-at-a-time, so reading it anywhere else can only be wrong
+        // ('reconstructed' can even overshoot the measured maximum), and it
+        // normalises FV / Fv/Fm / VJ / VI / PI_abs / Sm.
+        if (kv.FP_time_user_ms != null) kv.FP = readAt(kv.FP_time_user_ms);
+        if (kv.FQ_time_ms != null) kv.FQ = readAt(kv.FQ_time_ms);
       }
     }
 
@@ -7069,19 +7187,6 @@ function _safeZipName(name) {
   return s || 'unnamed';
 }
 
-function _linearInterp(xArr, yArr, xTarget) {
-  if (!xArr.length || !yArr.length) return NaN;
-  if (xTarget <= xArr[0]) return yArr[0];
-  if (xTarget >= xArr[xArr.length - 1]) return yArr[yArr.length - 1];
-  let lo = 0, hi = xArr.length - 1;
-  while (hi - lo > 1) {
-    const mid = (lo + hi) >> 1;
-    if (xArr[mid] <= xTarget) lo = mid; else hi = mid;
-  }
-  const frac = (xTarget - xArr[lo]) / (xArr[hi] - xArr[lo]);
-  return yArr[lo] + frac * (yArr[hi] - yArr[lo]);
-}
-
 function _niceLinearTicks(min, max, targetCount) {
   const range = max - min;
   if (range <= 0) return [min];
@@ -7307,7 +7412,7 @@ function _renderOjipPlot(ctx, cfg) {
       const tvDeriv = cfg.kv[m.phase + '_time_deriv_ms'];
       const tv = (m.phase === 'FP') ? tvDeriv : (tvUser ?? tvDeriv);
       if (tv == null || tv <= 0) continue;
-      const fv = _linearInterp(interpT, interpY, tv);
+      const fv = interpAt(interpT, interpY, tv);
       if (fv == null || !isFinite(fv)) continue;
       _drawMarker(ctx, toX(tv), toY(fv), m.shape, m.color, 8);
       legendMarkers.push({ shape: m.shape, color: m.color, label: m.label });
@@ -7316,7 +7421,7 @@ function _renderOjipPlot(ctx, cfg) {
     const fqT = cfg.kv.FQ_time_ms;
     const fqRef = cfg.kv.FQ_ref;
     if (fqT != null && fqT > 0 && fqRef) {
-      const fqFv = _linearInterp(interpT, interpY, fqT);
+      const fqFv = interpAt(interpT, interpY, fqT);
       if (fqFv != null && isFinite(fqFv)) {
         _drawMarker(ctx, toX(fqT), toY(fqFv), 'circle', '#d62728', 8);
         legendMarkers.push({ shape: 'circle', color: '#d62728', label: 'Q' });
@@ -7325,7 +7430,7 @@ function _renderOjipPlot(ctx, cfg) {
     // Early S marker (★ star, teal) — always shown
     const esT = cfg.kv.F_earlyS_time_ms;
     if (esT != null && esT > 0) {
-      const esFv = _linearInterp(interpT, interpY, esT);
+      const esFv = interpAt(interpT, interpY, esT);
       if (esFv != null && isFinite(esFv)) {
         _drawMarker(ctx, toX(esT), toY(esFv), 'star', '#17becf', 9);
         legendMarkers.push({ shape: 'star', color: '#17becf', label: 'eS' });
@@ -7490,6 +7595,8 @@ function _collectMethodInfo() {
     fp_logdec:        parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
     fq_expected_ms:   parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
     fq_logdec:        parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
+    value_readout:    _valueReadout(),
+    allow_missing:    _allowMissing(),
   };
 }
 
@@ -7538,6 +7645,14 @@ function _formatMethodInfoText(mi) {
     'FJ timing:              ' + (mi.FJ_time_ms || 2) + ' ms',
     'FI timing:              ' + (mi.FI_time_ms || 30) + ' ms',
   );
+  const VALUE_READOUT_LABELS = {
+    interp:        'Measured curve — interpolated at t',
+    nearest:       'Measured curve — nearest sample',
+    reconstructed: 'Reconstructed (spline) curve',
+  };
+  const vr = mi.value_readout || 'interp';
+  lines.push('F value interpolation:       ' + (VALUE_READOUT_LABELS[vr] || vr)
+    + '  (F50, FK, FJ, FI)');
   const fjFb = mi.fj_fallback_ms || mi.FJ_time_ms || 2;
   const fiFb = mi.fi_fallback_ms || mi.FI_time_ms || 30;
   const fjLd = mi.fj_logdec || 0.3;
@@ -7769,6 +7884,11 @@ async function startBatchExport() {
           fp_logdec: parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
           fq_expected_ms: parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
           fq_logdec: parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
+          // Mirror the params pass: without these the exported per-curve plots
+          // would be rendered from differently-resolved FJ/FI than the table.
+          use_deriv_timing: _wantDerivTiming(),
+          value_readout: _valueReadout(),
+          allow_missing: _allowMissing(),
           include_curves: true,
         };
         const BATCH = 20, CONC = 2, MAX_RETRIES = 3;
