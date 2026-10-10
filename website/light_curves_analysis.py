@@ -193,6 +193,8 @@ def lc_process():
     ETRALL  = QYALL.mul(pd.Series(PAR), axis=0)              # rETR = QY * PAR
 
     # ── fit Platt curves ──────────────────────────────────────────────────────
+    BETA_ZERO_THRESHOLD = 1e-6   # below this, β is indistinguishable from zero
+
     def model_platt(x, ETRmPot, alpha, beta):
         return ETRmPot * (1 - np.exp(-(alpha * x / ETRmPot))) * np.exp(-(beta * x / ETRmPot))
 
@@ -251,7 +253,7 @@ def lc_process():
         etrmPot_init = etr_max_factor * etr_max_obs_fit
 
         try:
-            popt, _ = curve_fit(
+            popt, pcov = curve_fit(
                 model_platt, par_for_fit, etr_for_fit,
                 p0=np.array([etrmPot_init, 0.05, 0.05]),
                 bounds=((0, 0, 0), (etrmPot_init, 25, 25)),
@@ -265,14 +267,36 @@ def lc_process():
         ETRmPot_fit, alpha, beta = popt   # all ≥ 0 by curve_fit bounds
         fit_etr = model_platt(par_arr, *popt)  # always over full PAR range
 
-        # ETRmax from alpha/beta formula (Platt 1980; α, β ≥ 0)
-        if (alpha + beta) > 0 and alpha > 0 and beta > 0:
+        # Standard errors from covariance matrix (handle inf/NaN)
+        if pcov is not None and np.isfinite(pcov).all():
+            se = np.sqrt(np.diag(pcov))
+            etr_mpot_se, alpha_se, beta_se = se
+        else:
+            etr_mpot_se = alpha_se = beta_se = float('nan')
+
+        # ETRmax, Ik, Ib from Platt 1980 (α, β ≥ 0 by curve_fit bounds)
+        no_photoinhibition = bool(beta < BETA_ZERO_THRESHOLD)
+        if no_photoinhibition:
+            # β→0 limit: ETRmax = ETRmPot (Ralph & Gademann 2005, Eq. 6)
+            etr_max_from_ab = ETRmPot_fit
+            Ik = ETRmPot_fit / alpha if alpha > 0 else float('nan')
+            Ib = float('nan')
+        elif alpha > 0 and beta > 0:
             etr_max_from_ab = ETRmPot_fit * (alpha / (alpha + beta)) * (beta / (alpha + beta)) ** (beta / alpha)
+            Ik = etr_max_from_ab / alpha
+            Ib = ETRmPot_fit / beta   # Platt et al. 1980: Ib = Ps / β
         else:
             etr_max_from_ab = float('nan')
+            Ik = float('nan')
+            Ib = float('nan')
 
-        Ik = etr_max_from_ab / alpha if (alpha != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
-        Ib = etr_max_from_ab / beta  if (beta  != 0 and not np.isnan(etr_max_from_ab)) else float('nan')
+        # Warning flags
+        beta_warning = bool(
+            not no_photoinhibition
+            and not np.isnan(beta_se) and beta > 0
+            and beta_se / beta > 0.5
+        )
+        etr_mpot_at_bound = bool(abs(ETRmPot_fit - etrmPot_init) < 1e-6 * etrmPot_init)
 
         # etr_max_measured always from original data (may be negative)
         etr_max_obs_orig = float(np.max(etr_measured))
@@ -285,6 +309,12 @@ def lc_process():
             'etr_mpot':           _safe(ETRmPot_fit),
             'ik':                 _safe(Ik),
             'ib':                 _safe(Ib),
+            'alpha_se':           _safe(alpha_se),
+            'beta_se':            _safe(beta_se),
+            'etr_mpot_se':        _safe(etr_mpot_se),
+            'beta_warning':       beta_warning,
+            'etr_mpot_at_bound':  etr_mpot_at_bound,
+            'no_photoinhibition': no_photoinhibition,
             'has_negative_qy':    has_negative_qy,
             'negative_qy_count':  negative_qy_count,
         }
@@ -357,19 +387,28 @@ def lc_export():
         # ── Parameters sheet ──────────────────────────────────────────────────
         ws_params = wb.worksheets[0]
         ws_params.title = 'Parameters'
-        param_keys    = ['alpha', 'beta', 'etr_max_measured', 'etr_max_from_ab',
-                         'etr_mpot', 'ik', 'ib']
+        param_keys    = ['alpha', 'alpha_se', 'beta', 'beta_se',
+                         'etr_max_measured', 'etr_max_from_ab',
+                         'etr_mpot', 'etr_mpot_se', 'ik', 'ib']
         param_labels  = {
-            'alpha': 'Alpha', 'beta': 'Beta',
+            'alpha': 'Alpha', 'alpha_se': 'Alpha SE',
+            'beta': 'Beta', 'beta_se': 'Beta SE',
             'etr_max_measured': 'ETRmax (measured)',
             'etr_max_from_ab':  'ETRmax (alpha/beta)',
-            'etr_mpot':         'ETRmPot',
+            'etr_mpot':         'ETRmPot', 'etr_mpot_se': 'ETRmPot SE',
             'ik':               'Ik', 'ib': 'Ib',
         }
         ws_params.append(['Sample'] + [param_labels.get(k, k) for k in param_keys])
         for fname in files:
             p = params.get(fname, {})
-            ws_params.append([fname] + [p.get(k) for k in param_keys])
+            row = [fname]
+            for k in param_keys:
+                v = p.get(k)
+                if k == 'ib' and v is None:
+                    row.append('n.d.')
+                else:
+                    row.append(v)
+            ws_params.append(row)
 
         # ── Step-data sheets ──────────────────────────────────────────────────
         metric_sheets = [

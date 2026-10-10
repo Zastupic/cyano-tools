@@ -125,7 +125,7 @@
     <a href="https://elischolar.library.yale.edu/journal_of_marine_research/1525" target="_blank" rel="noopener">Platt et al. (1980)</a>:
   </p>
   <p>
-    $$\begin{multline}\shoveleft rETR = rETR_{mPot} (1 - e^\frac{\alpha \cdot PAR}{rETR_{mPot}}) e^{-\frac{\beta \cdot PAR}{rETR_{mPot}}}\end{multline}$$
+    $$\begin{multline}\shoveleft rETR = rETR_{mPot} (1 - e^{-\frac{\alpha \cdot PAR}{rETR_{mPot}}}) e^{-\frac{\beta \cdot PAR}{rETR_{mPot}}}\end{multline}$$
   </p>
 
   <div class="accordion" id="lcInfoAccordion">
@@ -167,7 +167,7 @@
             <tr><td>ETR<sub>mPot</sub></td><td></td><td>µmol<sub>e⁻</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Potential maximum ETR without photoinhibition</td></tr>
             <tr><td>ETR<sub>max</sub></td><td>ETR [α / (α+β)] [β / (α+β)]<sup>(β/α)</sup></td><td>µmol<sub>e⁻</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Maximum electron transport rate</td></tr>
             <tr><td>I<sub>k</sub></td><td>ETR<sub>max</sub> / α</td><td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Irradiance required to saturate ETR<sub>max</sub></td></tr>
-            <tr><td>I<sub>b</sub></td><td>ETR<sub>max</sub> / β</td><td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Photoinhibition irradiance index</td></tr>
+            <tr><td>I<sub>b</sub></td><td>ETR<sub>mPot</sub> / β</td><td>µmol<sub>photons</sub> m<sup>-2</sup> s<sup>-1</sup></td><td>Photoinhibition index: PAR at which photoinhibition reduces ETR<sub>mPot</sub> by the factor 1/e (Platt et al., 1980)</td></tr>
           </table>
           <p style="font-size:75%; line-height:1.3; margin-top:0.5em;">
             References:
@@ -295,7 +295,7 @@
                   (&alpha;&thinsp;/&thinsp;(&alpha;+&beta;)) &times;
                   (&beta;&thinsp;/&thinsp;(&alpha;+&beta;))<sup>&beta;/&alpha;</sup></li>
                 <li>I<sub>k</sub> = ETR<sub>max</sub> / &alpha; &mdash; saturation irradiance</li>
-                <li>I<sub>b</sub> = ETR<sub>max</sub> / &beta; &mdash; photoinhibition irradiance</li>
+                <li>I<sub>b</sub> = ETR<sub>mPot</sub> / &beta; &mdash; photoinhibition index (Platt et al., 1980)</li>
               </ul>
               See the <em>Parameter reference table</em> above for full details and units.
             </li>
@@ -376,6 +376,47 @@
             Kirilovsky (2007) Photosynthesis Research 93, 7&ndash;16 &middot;
             Zavřel et al. (2026) Photosynthesis Research 164, 6 &middot;
             Tamary et al. (2012) Biochimica et Biophysica Acta 1817, 1457&ndash;1465
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes on β interpretation -->
+    <div class="card">
+      <div class="card-header py-2" id="headingBetaNotes">
+        <h6 class="mb-0">
+          <button class="btn btn-link collapsed p-0 text-left font-weight-bold" style="color:#0a3c58;"
+                  data-toggle="collapse" data-target="#collapseBetaNotes"
+                  aria-expanded="false" aria-controls="collapseBetaNotes">
+            <i class="fa fa-info-circle mr-2"></i>Notes on &beta;, ETR<sub>mPot</sub> and I<sub>b</sub> interpretation
+          </button>
+        </h6>
+      </div>
+      <div id="collapseBetaNotes" class="collapse" aria-labelledby="headingBetaNotes" data-parent="#lcInfoAccordion">
+        <div class="card-body" style="font-size:0.92em;">
+
+          <p class="mb-2"><strong>&beta; is not the observed high-light slope.</strong>
+            The photoinhibition term exp(&minus;&beta;&thinsp;&middot;&thinsp;PAR&thinsp;/&thinsp;ETR<sub>mPot</sub>)
+            multiplies the <em>entire</em> curve, and both &alpha; and &beta; are scaled by ETR<sub>mPot</sub>.
+            The observed decline in rETR at high PAR can therefore be much gentler than &beta; alone
+            would suggest, and <strong>&beta;&thinsp;&gt;&thinsp;&alpha;</strong> is normal for strongly
+            photoinhibited curves.
+          </p>
+
+          <p class="mb-2"><strong>Correlation between &beta; and ETR<sub>mPot</sub>.</strong>
+            &beta; and ETR<sub>mPot</sub> are strongly correlated when few light steps lie in the
+            declining part of the curve. &alpha;, ETR<sub>max</sub> and I<sub>k</sub> are robust;
+            treat &beta;, ETR<sub>mPot</sub> and I<sub>b</sub> as indicative unless their standard
+            errors (reported in the Parameters table) are small.
+          </p>
+
+          <p class="mb-0"><strong>Units.</strong>
+            &alpha; and &beta; have units of <em>electrons&thinsp;photon<sup>&minus;1</sup></em>
+            (equivalently: rETR per &micro;mol&thinsp;photons&thinsp;m<sup>&minus;2</sup>&thinsp;s<sup>&minus;1</sup>).
+            Because rETR&thinsp;=&thinsp;Q<sub>y</sub>&thinsp;&times;&thinsp;PAR is a relative rate, &alpha; equals
+            the initial effective quantum yield and is dimensionless in a strict sense.
+            The &ldquo;e<sup>&minus;</sup>&thinsp;photons<sup>&minus;1</sup>&rdquo; label is the standard
+            convention used by Walz instruments and the wider PAM literature.
           </p>
         </div>
       </div>

@@ -25,7 +25,14 @@ const PARAM_LABELS = {
   etr_mpot:          'ETRmPot',
   ik:                'Ik',
   ib:                'Ib',
+  alpha_se:          'SE(α)',
+  beta_se:           'SE(β)',
+  etr_mpot_se:       'SE(ETRmPot)',
 };
+// Keys shown in the parameters table (includes SE columns)
+const PARAM_TABLE_KEYS = ['alpha', 'alpha_se', 'beta', 'beta_se',
+                          'etr_max_measured', 'etr_max_from_ab',
+                          'etr_mpot', 'etr_mpot_se', 'ik', 'ib'];
 // Split into groups to avoid scale mismatch on bar charts:
 // alpha/beta are dimensionless (~0–1); rates/irradiances are µmol m⁻² s⁻¹ (~10–2000).
 const LC_PARAM_GROUPS = {
@@ -1027,16 +1034,29 @@ function renderParamsChart(pgroup) {
 }
 
 // ── parameters table ──────────────────────────────────────────────────────
+function _fmtCell(k, v, p) {
+  // Format a single parameter cell, handling special cases
+  if (k === 'ib' && (v === null || v === undefined || isNaN(v))) return 'n.d.';
+  return fmt(v);
+}
+
 function renderParamsTable() {
   const files = lcData.files;
   const tbl   = document.getElementById('params-table');
   if (!tbl) return;
 
-  let html = `<thead class="thead-light"><tr><th>Sample</th>${PARAM_KEYS.map(k => `<th>${PARAM_LABELS[k] || k}</th>`).join('')}</tr></thead>`;
+  let html = `<thead class="thead-light"><tr><th>Sample</th>${PARAM_TABLE_KEYS.map(k => `<th>${PARAM_LABELS[k] || k}</th>`).join('')}<th></th></tr></thead>`;
   html += '<tbody>';
   for (const fname of files) {
     const p = lcData.params[fname] || {};
-    html += `<tr><td>${fname}</td>${PARAM_KEYS.map(k => `<td>${fmt(p[k])}</td>`).join('')}</tr>`;
+    const warnings = [];
+    if (p.beta_warning) warnings.push('SE(β) > 50% — β poorly constrained');
+    if (p.etr_mpot_at_bound) warnings.push('ETRmPot at upper bound');
+    if (p.no_photoinhibition) warnings.push('No photoinhibition detected (β ≈ 0)');
+    const warnHtml = warnings.length
+      ? `<span title="${warnings.join('\n')}" style="cursor:help; color:#e67e22;">⚠</span>`
+      : '';
+    html += `<tr><td>${fname}</td>${PARAM_TABLE_KEYS.map(k => `<td>${_fmtCell(k, p[k], p)}</td>`).join('')}<td>${warnHtml}</td></tr>`;
   }
   html += '</tbody>';
   tbl.innerHTML = html;
@@ -1500,7 +1520,7 @@ async function downloadXlsxWithCharts() {
       .filter(f => groups[f])
       .map(fname => {
         const row = { sample: fname, group: groups[fname] };
-        for (const k of PARAM_KEYS) {
+        for (const k of PARAM_TABLE_KEYS) {
           const v = lcData.params[fname]?.[k];
           row[k] = (v != null && isFinite(v)) ? v : null;
         }
@@ -1509,7 +1529,7 @@ async function downloadXlsxWithCharts() {
     group_export = {
       stats:        grp_stats,
       samples,
-      param_order:  PARAM_KEYS,
+      param_order:  PARAM_TABLE_KEYS,
       param_labels: PARAM_LABELS,
     };
   }
@@ -1652,7 +1672,7 @@ function generateLCMethodsText() {
         'photoinhibition coefficient \u03b2, maximum potential rate ETRmPot, maximum rate ' +
         'ETRmax\u202f=\u202fETRmPot\u202f\u00d7\u202f(\u03b1\u202f/\u202f(\u03b1\u202f+\u202f\u03b2))\u202f\u00d7\u202f' +
         '(\u03b2\u202f/\u202f(\u03b1\u202f+\u202f\u03b2))^(\u03b2/\u03b1), saturation irradiance ' +
-        'Ik\u202f=\u202fETRmax\u202f/\u202f\u03b1, and photoinhibition irradiance Ib\u202f=\u202fETRmax\u202f/\u202f\u03b2 ' +
+        'Ik\u202f=\u202fETRmax\u202f/\u202f\u03b1, and photoinhibition index Ib\u202f=\u202fETRmPot\u202f/\u202f\u03b2 ' +
         '(Ralph\u202f&\u202fGademann, 2005).' +
         (negModeVal === 'clip_zero'
             ? ' Negative rETR values (from Fm\u2032\u202f<\u202fFt) were clipped to zero prior to fitting.'
