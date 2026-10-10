@@ -428,31 +428,13 @@
                 </div>
               </div>
             </div>
-            <small class="text-muted">selectors are also available on Curves, Parameters, and Diagnostics tabs</small>
+            <small class="text-muted">selectors are also available on the Diagnostics tab</small>
           </div>
-          <details class="mb-3" style="font-size:0.85em">
-            <summary class="text-muted" style="cursor:pointer">About FJ/FI detection methods &amp; fallback</summary>
-            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
-              <p class="mb-1"><strong>Search windows.</strong>
-                F<sub>J</sub> is searched in <strong>0.1&ndash;10&thinsp;ms</strong>,
-                F<sub>I</sub> in <strong>10&ndash;100&thinsp;ms</strong>
-                (Multi-Color-PAM / Dual-PAM; other fluorometers use equivalent ranges in their native time units).
-              </p>
-              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
-                <dt>D2 zero-crossing</dt>
-                <dd class="mb-0">Default. Where the spline second derivative (D2) crosses from negative to positive &mdash; equivalent to a local minimum of D1 (the &ldquo;shoulder&rdquo; between phases). Most precise identification of the J and I inflection points. Physiologically, the J inflection (~2&thinsp;ms) marks the kinetic bottleneck at the exchange of a reduced PQ molecule for an oxidized one at the Q<sub>B</sub> site (Schansker et&nbsp;al. 2005), and the I inflection (~30&thinsp;ms) reflects the limitation in PQH<sub>2</sub> re-oxidation by the Cyt&nbsp;b<sub>6</sub>f complex.
-                  <br><strong>Fallback:</strong> triggered when D2 does not cross zero within the user-configurable &plusmn; log-decade window around the fallback timing (default &plusmn;0.3 log-decades; for the default 2&thinsp;ms this means the crossing must lie between 1.0&ndash;4.0&thinsp;ms; for 30&thinsp;ms it must lie between 15&ndash;60&thinsp;ms). If D2 stays below zero throughout this window or the only crossing is at the far edge of the search range (a different phase leaking in), the user-configurable canonical timing is used instead.</dd>
-                <dt>Polynomial inflection</dt>
-                <dd class="mb-0">Local polynomial fit within the O&ndash;J / J&ndash;I windows, solving D2=0 with D3&gt;0 (Akinyemi et&nbsp;al. 2023). Independent of the spline but sensitive to the polynomial degree.
-                  <br><strong>Fallback:</strong> same criterion as D2 zero-crossing &mdash; both methods require D2 to cross zero near the expected timing.</dd>
-                <dt>D3 zero-crossing (D2 minimum)</dt>
-                <dd class="mb-0">Deepest D2 minimum (most negative D2 value) in each search window, identified where the third derivative (D3) crosses zero. Marks the point of maximum deceleration, which precedes the true inflection.
-                  <br><strong>Fallback:</strong> triggered when D3 does not change sign anywhere in the search window (F<sub>J</sub>: 0.1&ndash;10&thinsp;ms; F<sub>I</sub>: 10&ndash;100&thinsp;ms). This means D2 is monotonic &mdash; no genuine local minimum exists, and the reported position is just a meaningless argmin.</dd>
-                <dt>Fixed timing</dt>
-                <dd class="mb-0">Uses the user-specified times from the FJ/FI input fields (default 2/30&thinsp;ms). Ignores curve shape. No fallback (the timing is always defined).</dd>
-              </dl>
-            </div>
-          </details>
+          <small class="text-muted" style="font-size:0.85em">
+            D2 zero-crossing (default), polynomial inflection, D2 minimum, or fixed timing.
+            Falls back to canonical timing when detection fails.
+            <a href="#" onclick="$('[href=&quot;#tab-diag&quot;]').tab('show');return false">Details in Diagnostics tab</a>
+          </small>
           <!-- P point detection -->
           <div class="form-group mb-2">
             <div class="d-flex align-items-center flex-wrap" style="gap:0.4rem">
@@ -476,28 +458,10 @@
               </div>
             </div>
           </div>
-          <details class="mb-3" style="font-size:0.85em">
-            <summary class="text-muted" style="cursor:pointer">About P point detection methods &amp; fallback</summary>
-            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
-              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
-                <dt>D2 minimum</dt>
-                <dd class="mb-0">Default. Finds the D2 local minimum in the I&ndash;P window &mdash; the point where the rise rate decelerates fastest. Precedes the actual peak by ~0.3&thinsp;decades in log-time.</dd>
-                <dt>D2 zero-crossing</dt>
-                <dd class="mb-0">Finds the D2 neg&rarr;pos zero-crossing (inflection point) in the FP window. This is where the curve transitions from concave-down to concave-up near the peak. Falls back to Local maximum when no D2 zero-crossing exists in the search window.</dd>
-                <dt>Local maximum</dt>
-                <dd class="mb-0">Finds the highest fluorescence value on the reconstructed curve within the user-configurable FP search window. Useful when FP&nbsp;&ne;&nbsp;FM (sub-saturating light, slow kinetics where S or M&nbsp;&gt;&nbsp;P).</dd>
-                <dt>Global maximum</dt>
-                <dd class="mb-0">Uses the FM timing directly. Equivalent to max(F) over the entire transient.</dd>
-                <dt>Fallback chain</dt>
-                <dd class="mb-0">When the selected P-point method fails (no local maximum in the FP window, or no D2 minimum), a cascading fallback chain is used automatically:
-                  Local max &rarr; D2 minimum &rarr; Global max (F<sub>M</sub>) &mdash; or the reverse (D2 min &rarr; Local max &rarr; F<sub>M</sub>),
-                  depending on the primary selection. The global maximum (F<sub>M</sub>) is always defined and serves as the ultimate fallback.
-                  The parameter table shows the method actually used (e.g. &ldquo;Local max &rarr; D2 min (fallback)&rdquo;).</dd>
-                <dt>Search window</dt>
-                <dd class="mb-0">The FP search window is configurable via the <em>center</em> and <em>log-dec</em> controls above. The window spans from center&thinsp;/&thinsp;10<sup>logdec</sup> to center&thinsp;&times;&thinsp;10<sup>logdec</sup> ms (default: 316&thinsp;ms &plusmn;&thinsp;0.5 log-decades&thinsp;=&thinsp;100&ndash;1000&thinsp;ms). It applies to D2&nbsp;zero-crossing, Local maximum, D2&nbsp;minimum, and all fallback searches for FP.</dd>
-              </dl>
-            </div>
-          </details>
+          <small class="text-muted" style="font-size:0.85em">
+            Cascading fallback: Local max &rarr; D2 min &rarr; Global max.
+            <a href="#" onclick="$('[href=&quot;#tab-diag&quot;]').tab('show');return false">Details in Diagnostics tab</a>
+          </small>
           <!-- Q point detection -->
           <div class="form-group mb-2">
             <div class="d-flex align-items-center flex-wrap" style="gap:0.4rem">
@@ -522,40 +486,10 @@
               <small class="text-muted ml-1">early S&nbsp;=&nbsp;last point</small>
             </div>
           </div>
-          <details class="mb-3" style="font-size:0.85em">
-            <summary class="text-muted" style="cursor:pointer">About Q point detection methods</summary>
-            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
-              <p class="mb-1">After the P peak (F<sub>M</sub>), fluorescence declines. The <strong>Q point</strong> (~1&ndash;2&thinsp;s) marks the transition between fast photochemical quenching and slower non-photochemical quenching build-up. It is distinct from the classical S level (~15&ndash;60&thinsp;s).</p>
-              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
-                <dt>D2 minimum (Q elbow)</dt>
-                <dd class="mb-0">Finds the deepest local minimum of the second derivative (D2) in the post-P decline &mdash; the &ldquo;elbow&rdquo; where the decline curvature is most pronounced. Default method; robust even when the decline never fully reverses.</dd>
-                <dt>D2 zero-crossing (Q inflection)</dt>
-                <dd class="mb-0">Finds the first D2 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) after the deepest D2 minimum &mdash; the true inflection point where the decline transitions from concave to convex. Consistent with how &ldquo;inflection&rdquo; is defined for F<sub>J</sub>/F<sub>I</sub> (D2&nbsp;=&nbsp;0). Falls back to D2&nbsp;minimum when no zero-crossing is found.</dd>
-                <dt>F minimum &rarr; D2 minimum</dt>
-                <dd class="mb-0">Tries D1 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) first &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 minimum when no reversal is detected.</dd>
-                <dt>Local minimum (lowest F after P)</dt>
-                <dd class="mb-0">Finds the absolute lowest fluorescence value in the post-P reconstruction window. Falls back to D2&nbsp;minimum when the minimum coincides with the recording endpoint (monotonic decline with no reversal).</dd>
-                <dt>Monotonic fallback</dt>
-                <dd class="mb-0">When D2 has no interior local minimum in the Q search window (the spline smooths the post-P tail
-                  enough that D2 is monotonically decreasing), the detector falls back to the <strong>most negative D2 value</strong>
-                  in the window &mdash; the elbow of the decline. This is labelled
-                  <code>D2 minimum (monotonic &rarr; argmin)</code> so it can be distinguished from a confident detection.
-                  The same fallback is used by F<sub>J</sub>/F<sub>I</sub>/F<sub>P</sub> detection.</dd>
-                <dt>Q not detected</dt>
-                <dd class="mb-0">Q remains undetected when insufficient post-P data exists (&lt;&thinsp;200&thinsp;ms after F<sub>P</sub>),
-                  no post-P data is available, or no P reference timing exists.
-                  When Q is not detected, <code>FQ_ref</code> shows the specific reason
-                  (e.g. <code>Q not detected (insufficient post-P span)</code>)
-                  and all Q-derived parameters (slope&nbsp;P-Q, P-Q&nbsp;amplitude, etc.) are blank.</dd>
-              </dl>
-              <p class="mb-1"><strong>Search window.</strong> Q candidates are restricted to a configurable time window centered (in log-time) on the expected timing (default 1500&thinsp;ms &plusmn;&thinsp;0.3 log-decades&thinsp;=&thinsp;750&ndash;3000&thinsp;ms). This prevents the D2 feature of the P peak from being misidentified as Q.</p>
-              <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
-              <p class="mb-0 mt-2" style="font-size:0.92em"><strong>Reference</strong></p>
-              <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">
-                <li>Fratamico A, Tocquin P, Franck F (2016) The chlorophyll <em>a</em> fluorescence induction curve in the green microalga <em>Haematococcus pluvialis</em>: identification of the Q point. <em>Photosynth&nbsp;Res</em> 128:271&ndash;285. <a href="https://doi.org/10.1007/s11120-016-0241-2" target="_blank" rel="noopener">doi:10.1007/s11120-016-0241-2</a></li>
-              </ol>
-            </div>
-          </details>
+          <small class="text-muted" style="font-size:0.85em">
+            Q point (~1&ndash;2&thinsp;s): post-P transition (Fratamico et&nbsp;al. 2016). Early S = last measured point.
+            <a href="#" onclick="$('[href=&quot;#tab-diag&quot;]').tab('show');return false">Details in Diagnostics tab</a>
+          </small>
           <!-- F value interpolation mode (synced with Diagnostics tab #value-readout) -->
           <div class="form-group mb-2">
             <div class="d-flex align-items-center flex-wrap" style="gap:0.4rem">
@@ -568,22 +502,10 @@
               <small class="text-muted ml-1">applies to F<sub>50</sub>, F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub>, F<sub>P</sub>, F<sub>M</sub>, F<sub>Q</sub></small>
             </div>
           </div>
-          <details class="mb-3" style="font-size:0.85em">
-            <summary class="text-muted" style="cursor:pointer">About F value interpolation modes</summary>
-            <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
-              <p class="mb-1">Once the timing of each key point (F<sub>50</sub>, F<sub>K</sub>, F<sub>J</sub>, F<sub>I</sub>, F<sub>P</sub>, F<sub>M</sub>, F<sub>Q</sub>) is resolved, the fluorescence value at that time can be read in three ways:</p>
-              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
-                <dt>Interpolated (default)</dt>
-                <dd class="mb-0">Linear interpolation between the two bracketing measured samples. Uses real data with no grid quantisation. Recommended for all instruments, especially sparse grids (OJIP Imaging, AquaPen).</dd>
-                <dt>Nearest sample</dt>
-                <dd class="mb-0">Closest measured sample to the detected time. On fine grids (MC-PAM, Dual-PAM) nearly identical to interpolation; on sparse grids it introduces a bias towards lower V<sub>J</sub>/V<sub>I</sub>.</dd>
-                <dt>Reconstructed (spline)</dt>
-                <dd class="mb-0">Reads from the fitted spline. Exact at the detected time but reports a <em>model</em> value rather than a measured one.</dd>
-              </dl>
-              <p class="mb-1 text-muted">F<sub>0</sub> is not affected (anchor at a defined sample index). F<sub>M</sub> and F<sub>P</sub> are read at their detected timings; on fine grids interp/nearest give the same as the raw max, on sparse grids reconstructed mode may give a slightly different peak estimate. F<sub>Q</sub> is read at the detected Q-point timing.</p>
-              <p class="mb-0 text-muted">On fine grids all three modes give near-identical results.</p>
-            </div>
-          </details>
+          <small class="text-muted" style="font-size:0.85em">
+            Interpolated (default), nearest sample, or spline value. Choice matters on sparse grids.
+            <a href="#" onclick="$('[href=&quot;#tab-diag&quot;]').tab('show');return false">Details in Diagnostics tab</a>
+          </small>
 
           <!-- kr / spline smoothing -->
           <div class="form-group mb-3">
@@ -815,26 +737,6 @@
         <div class="oj-ext-legend" id="curves-chart-legend"></div>
       </div>
 
-      <!-- FJ/FI detection method selectors (synced with Diagnostics / Parameters / Sidebar) -->
-      <div class="mt-2 mb-1 d-flex align-items-center flex-wrap" style="gap:0.3rem 0.5rem">
-        <small class="text-muted mr-1">F<sub>J</sub>/F<sub>I</sub> for JIP params:</small>
-        <label class="mb-0" style="font-size:0.82em">F<sub>J</sub>:</label>
-        <select id="fj-mode-curves" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
-          <option value="d2_zero" selected>D2 zero-crossing</option>
-          <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
-          <option value="fixed">Fixed timing</option>
-        </select>
-        <label class="mb-0" style="font-size:0.82em">F<sub>I</sub>:</label>
-        <select id="fi-mode-curves" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
-          <option value="d2_zero" selected>D2 zero-crossing</option>
-          <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
-          <option value="fixed">Fixed timing</option>
-        </select>
-        <span id="fjfi-mode-badge-curves" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: D2-zero</span>
-      </div>
-
       <!-- Editable FJ/FI table -->
       <div class="mt-2">
         <div class="d-flex align-items-center mb-1">
@@ -884,21 +786,6 @@
         </div>
       </div>
       <div class="d-flex align-items-center mb-2" style="gap:0.4rem">
-        <small class="text-muted" style="font-size:0.82em">F<sub>J</sub>:</small>
-        <select id="fj-mode-params" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
-          <option value="d2_zero" selected>D2 zero-crossing</option>
-          <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
-          <option value="fixed">Fixed timing</option>
-        </select>
-        <small class="text-muted" style="font-size:0.82em">F<sub>I</sub>:</small>
-        <select id="fi-mode-params" class="form-control form-control-sm d-inline-block" style="width:auto;font-size:0.82em">
-          <option value="d2_zero" selected>D2 zero-crossing</option>
-          <option value="poly_inflect">Polynomial inflection</option>
-          <option value="d2_min">D3 zero-crossing (D2 minimum)</option>
-          <option value="fixed">Fixed timing</option>
-        </select>
-        <span id="fjfi-mode-badge-params" class="badge badge-info" style="font-size:0.8em">F<sub>J</sub>/F<sub>I</sub>: D2-zero</span>
         <button class="btn btn-outline-secondary btn-sm ml-auto" id="copy-params-btn">
           Copy table
         </button>
@@ -1811,30 +1698,6 @@
                 <dt>Fixed timing</dt>
                 <dd class="mb-0">Uses the user-specified times from the FJ/FI input fields (default 2/30&thinsp;ms). Ignores curve shape. No fallback (the timing is always defined).</dd>
               </dl>
-              <p class="mb-1"><strong>Reading the F values at t.</strong>
-                The detection method above fixes <em>when</em> the J and I steps occur; the
-                <em>Read F values at t</em> selector controls how F<sub>J</sub> and F<sub>I</sub>
-                (and F<sub>50</sub>, F<sub>K</sub>) are then read off the curve at that time.
-                F<sub>0</sub> and F<sub>M</sub> are unaffected &mdash; F<sub>0</sub> is an anchor at a
-                defined index and F<sub>M</sub> is a measured maximum.
-              </p>
-              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
-                <dt>Interpolated at t</dt>
-                <dd class="mb-0">Default. Linear interpolation between the two measured samples
-                  bracketing t. A purely measured quantity, taken at exactly the detected time.
-                  Recommended for most data.</dd>
-                <dt>Nearest sample</dt>
-                <dd class="mb-0">The measured sample closest in time to t. Also purely measured, but
-                  quantised to the sampling grid: on sparse instruments (OJIP&nbsp;Imaging, ~60 points
-                  per transient) the nearest sample can sit well away from t, which biases
-                  V<sub>J</sub> and V<sub>I</sub>.</dd>
-                <dt>Reconstructed (spline)</dt>
-                <dd class="mb-0">The spline reconstruction evaluated at t, back-transformed to raw
-                  fluorescence units. Noise-averaged and perfectly self-consistent with the timing,
-                  which was itself derived from that spline's derivatives &mdash; but it is a model
-                  value, so a poor fit gives a poor reading. Check the fit-quality flag before
-                  relying on this mode.</dd>
-              </dl>
             </div>
           </details>
           <!-- P point detection mode -->
@@ -1911,35 +1774,17 @@
           <details class="mb-4" style="font-size:0.85em">
             <summary class="text-muted" style="cursor:pointer">About Q point detection methods</summary>
             <div class="mt-1 pl-2 border-left" style="border-color:#dee2e6!important">
-              <p class="mb-1">After the P peak (F<sub>M</sub>), fluorescence declines. The <strong>Q point</strong> (~1&ndash;2&thinsp;s) marks the transition between fast photochemical quenching and slower non-photochemical quenching build-up. It is distinct from the classical S level (~15&ndash;60&thinsp;s).</p>
-              <dl class="mb-1" style="display:grid;grid-template-columns:auto 1fr;gap:0 .5rem">
-                <dt>D2 minimum (Q elbow)</dt>
-                <dd class="mb-0">Finds the deepest local minimum of the second derivative (D2) in the post-P decline &mdash; the &ldquo;elbow&rdquo; where the decline curvature is most pronounced. Default method; robust even when the decline never fully reverses.</dd>
-                <dt>D2 zero-crossing (Q inflection)</dt>
-                <dd class="mb-0">Finds the first D2 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) after the deepest D2 minimum &mdash; the true inflection point where the decline transitions from concave to convex. Consistent with how &ldquo;inflection&rdquo; is defined for F<sub>J</sub>/F<sub>I</sub> (D2&nbsp;=&nbsp;0). Falls back to D2&nbsp;minimum when no zero-crossing is found.</dd>
-                <dt>F minimum &rarr; D2 minimum</dt>
-                <dd class="mb-0">Tries D1 zero-crossing (negative&nbsp;&rarr;&nbsp;positive) first &mdash; a true local minimum where fluorescence stops declining and starts rising. Falls back to D2 minimum when no reversal is detected.</dd>
-                <dt>Local minimum (lowest F after P)</dt>
-                <dd class="mb-0">Finds the absolute lowest fluorescence value in the post-P reconstruction window. Falls back to D2&nbsp;minimum when the minimum coincides with the recording endpoint (monotonic decline with no reversal).</dd>
-                <dt>Monotonic fallback</dt>
-                <dd class="mb-0">When D2 has no interior local minimum in the Q search window (the spline smooths the post-P tail
-                  enough that D2 is monotonically decreasing), the detector falls back to the <strong>most negative D2 value</strong>
-                  in the window &mdash; the elbow of the decline. This is labelled
-                  <code>D2 minimum (monotonic &rarr; argmin)</code> so it can be distinguished from a confident detection.
-                  The same fallback is used by F<sub>J</sub>/F<sub>I</sub>/F<sub>P</sub> detection.</dd>
-                <dt>Q not detected</dt>
-                <dd class="mb-0">Q remains undetected when insufficient post-P data exists (&lt;&thinsp;200&thinsp;ms after F<sub>P</sub>),
-                  no post-P data is available, or no P reference timing exists.
-                  When Q is not detected, <code>FQ_ref</code> shows the specific reason
-                  (e.g. <code>Q not detected (insufficient post-P span)</code>)
-                  and all Q-derived parameters (slope&nbsp;P-Q, P-Q&nbsp;amplitude, etc.) are blank.</dd>
-              </dl>
-              <p class="mb-1"><strong>Search window.</strong> Q candidates are restricted to a configurable time window centered (in log-time) on the expected timing (default 1500&thinsp;ms &plusmn;&thinsp;0.3 log-decades&thinsp;=&thinsp;750&ndash;3000&thinsp;ms). This prevents the D2 feature of the P peak from being misidentified as Q.</p>
-              <p class="mb-1 text-muted">The <strong>early S</strong> level is always the last measured data point, serving as a proxy for the classical semi-steady-state S. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s).</p>
-              <p class="mb-0 mt-2" style="font-size:0.92em"><strong>Reference</strong></p>
-              <ol class="mb-0 pl-3" style="font-size:0.88em; line-height:1.45">
-                <li>Fratamico A, Tocquin P, Franck F (2016) The chlorophyll <em>a</em> fluorescence induction curve in the green microalga <em>Haematococcus pluvialis</em>: identification of the Q point. <em>Photosynth&nbsp;Res</em> 128:271&ndash;285. <a href="https://doi.org/10.1007/s11120-016-0241-2" target="_blank" rel="noopener">doi:10.1007/s11120-016-0241-2</a></li>
-              </ol>
+              <p class="mb-1">The <strong>Q point</strong> (~1&ndash;2&thinsp;s) marks the transition from fast photochemical quenching to slower NPQ build-up in the post-P decline (Fratamico et&nbsp;al. 2016, <em>Photosynth&nbsp;Res</em> 128:271). Not the classical S level (~15&ndash;60&thinsp;s).</p>
+              <table class="table table-sm table-bordered mb-1" style="font-size:0.92em">
+                <thead class="thead-light"><tr><th style="width:35%">Method</th><th>What it finds</th><th style="width:18%">Fallback</th></tr></thead>
+                <tbody>
+                  <tr><td>D2 minimum (default)</td><td>Deepest D2 local minimum &mdash; the decline &ldquo;elbow&rdquo;</td><td>D2 argmin</td></tr>
+                  <tr><td>D2 zero-crossing</td><td>D2 neg&rarr;pos crossing &mdash; true inflection point</td><td>D2 minimum</td></tr>
+                  <tr><td>F min &rarr; D2 min</td><td>D1 zero-crossing (true local min) first</td><td>D2 minimum</td></tr>
+                  <tr><td>Local minimum</td><td>Absolute lowest F in post-P window</td><td>D2 minimum</td></tr>
+                </tbody>
+              </table>
+              <p class="mb-1 text-muted">Search window: configurable center &plusmn; log-decades (default 750&ndash;3000&thinsp;ms). Early S = last measured point. Q may not be detected in short recordings (&lt;&thinsp;2&thinsp;s); <code>FQ_ref</code> shows the reason.</p>
             </div>
           </details>
           <!-- F value interpolation mode — how F50/FK/FJ/FI are read at their detected timings -->
@@ -1993,6 +1838,9 @@
             <div class="col-auto" id="refit-all-wrap" style="display:none">
               <button class="btn btn-primary btn-sm" onclick="(mcDataset && mcIsActive) ? mcRefitBatch() : refitSplines()">Refit all curves</button>
               <span id="mc-refit-status-diag" class="ml-2 text-muted" style="font-size:0.85em"></span>
+            </div>
+            <div class="col-auto">
+              <button class="btn btn-outline-secondary btn-sm" id="reset-defaults-btn" title="Reset all Diagnostics controls to their default values">Reset to defaults</button>
             </div>
             <div class="col-auto">
               <span id="refit-status" class="text-muted" style="font-size:0.85em;"></span>

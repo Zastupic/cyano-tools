@@ -4206,8 +4206,8 @@ function _populateDensifyInputs(info) {
 // ── FJ/FI detection mode dropdown sync system ──────────────────────────────
 // All FJ / FI dropdowns across tabs stay in sync. The authoritative pair
 // (fj-detect-mode / fi-detect-mode) is read by helper functions and API calls.
-const _FJ_DD_IDS = ['fj-detect-mode', 'fj-mode-curves', 'fj-mode-params', 'fj-mode-sidebar'];
-const _FI_DD_IDS = ['fi-detect-mode', 'fi-mode-curves', 'fi-mode-params', 'fi-mode-sidebar'];
+const _FJ_DD_IDS = ['fj-detect-mode', 'fj-mode-sidebar'];
+const _FI_DD_IDS = ['fi-detect-mode', 'fi-mode-sidebar'];
 
 function _syncAllFjDropdowns(value) {
   for (const id of _FJ_DD_IDS) { const el = document.getElementById(id); if (el) el.value = value; }
@@ -4330,6 +4330,54 @@ function _recalcFjFiForAllCurves() {
   _refreshAfterTimingChange();
 }
 
+/** Reset all Diagnostics-tab controls to their default values. */
+function _resetDiagDefaults() {
+  const _set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const _chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+  // Fitting method
+  _set('fit-method-sel', 'logspline');
+  // FJ/FI detection
+  _set('fj-detect-mode', 'd2_zero'); _set('fi-detect-mode', 'd2_zero');
+  _syncAllFjDropdowns('d2_zero'); _syncAllFiDropdowns('d2_zero');
+  // Fixed timings & fallbacks
+  _set('fj-fixed-time-diag', '2.0'); _set('fi-fixed-time-diag', '30.0');
+  _set('fj-fallback-time', '2.0'); _set('fi-fallback-time', '30.0');
+  _set('fj-logdec', '0.3'); _set('fi-logdec', '0.3');
+  // P point
+  _set('p-point-mode', 'local_max');
+  _set('fp-logdec', '0.5'); _set('fp-expected', '316');
+  // Q point
+  _set('s-point-mode', 'd2_min');
+  _set('fq-logdec', '0.3'); _set('fq-expected', '1500');
+  // F value interpolation
+  _set('value-readout', 'interp');
+  // Allow missing
+  _chk('allow-missing', false);
+  // kr / spline smoothing
+  _set('kr-slider', '10');
+  // Knot placement
+  _set('knot-placement-diag', 'hybrid');
+  // O-J densify
+  _chk('oj-densify-chk', false);
+  // Background/F0 mirror
+  _set('mc-bg-mode-sel', 'auto');
+  _set('mc-bg-n-input', '1');
+  _set('mc-f0-source-sel', 'instrument');
+  // F0 time override
+  _set('f0-time-input', '');
+  // Update visual state
+  if (typeof _syncFixedTimeInputsVisibility === 'function') _syncFixedTimeInputsVisibility();
+  if (typeof _updateFjFiBadges === 'function') _updateFjFiBadges();
+  if (typeof updateFallbackIntervals === 'function') updateFallbackIntervals();
+}
+
+/** Show Background / F₀ controls only for AquaPen / FluorPen. */
+function _toggleBgF0Visibility(fluorometer) {
+  const show = /aquapen/i.test(fluorometer);
+  const el = document.getElementById('bg-f0-group');
+  if (el) el.style.display = show ? '' : 'none';
+}
+
 // ── init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Restore saved fluorometer
@@ -4338,10 +4386,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (saved && [...sel.options].some(o => o.value === saved)) sel.value = saved;
   sel.addEventListener('change', () => {
     localStorage.setItem('ojip_fluorometer', sel.value);
+    _toggleBgF0Visibility(sel.value);
   });
-  // Excel import options (normalization / background / naming) now live inside
-  // the post-upload selection modal, not the upload panel — so there is nothing
-  // to show/hide here on fluorometer change.
+  _toggleBgF0Visibility(sel.value);  // set initial state
+  // Reset to defaults button
+  const resetBtn = document.getElementById('reset-defaults-btn');
+  if (resetBtn) resetBtn.addEventListener('click', _resetDiagDefaults);
   ExcelNaming.init();
 
   // Prevent browser from opening dropped files anywhere on the page
@@ -6154,8 +6204,6 @@ function _updateFjFiBadges() {
     badgeClass = 'badge-warning';
   }
   const badges = {
-    'fjfi-mode-badge-curves': 'badge ' + badgeClass + ' ml-2',
-    'fjfi-mode-badge-params': 'badge ' + badgeClass + ' ml-auto mr-2',
     'fjfi-mode-badge-diag':   'badge ' + badgeClass + ' mr-2',
   };
   for (const [id, cls] of Object.entries(badges)) {
