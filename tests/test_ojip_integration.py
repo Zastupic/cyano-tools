@@ -570,3 +570,129 @@ class TestJIPComputation:
         assert 0.0 < jip["VJ"] < 1.0
         assert 0.0 < jip["VI"] < 1.0
         assert jip["VJ"] < jip["VI"], "VJ should be < VI"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Detection mode and fallback/logdec parameter passthrough
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestDetectionParams:
+    """Verify the backend respects fj_detect_mode, fj_logdec, fj_fallback_ms."""
+
+    def test_detect_mode_appears_in_fj_ref(self, client):
+        """FJ_ref label should reflect the detection mode used."""
+        for mode, expected_substr in [
+            ("d2_zero", "D2"),
+            ("poly_inflect", "Poly"),
+            ("d2_min", "D2 min"),
+            ("fixed", "fixed"),
+        ]:
+            resp = _upload(
+                client,
+                "MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)",
+                ["mcpam_example_1.CSV"],
+                extra_fields={"fj_detect_mode": mode, "fi_detect_mode": mode},
+            )
+            j = resp.get_json()
+            _, kv = _first_kv(j)
+            assert expected_substr.lower() in kv["FJ_ref"].lower(), (
+                f"mode={mode}: FJ_ref={kv['FJ_ref']!r} should contain {expected_substr!r}"
+            )
+
+    def test_custom_fallback_ms_used(self, client):
+        """With fixed mode, changing FJ_time should change the detected FJ timing."""
+        results = {}
+        for fj_ms in [1.0, 2.0, 5.0]:
+            resp = _upload(
+                client,
+                "MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)",
+                ["mcpam_example_1.CSV"],
+                extra_fields={
+                    "fj_detect_mode": "fixed",
+                    "FJ_time": str(fj_ms),
+                },
+            )
+            _, kv = _first_kv(resp.get_json())
+            results[fj_ms] = kv["FJ_time_user_ms"]
+
+        # Different fixed timings should yield different FJ_time_user_ms
+        assert results[1.0] != results[5.0], (
+            f"Fixed FJ should differ: 1.0ms→{results[1.0]}, 5.0ms→{results[5.0]}"
+        )
+
+    def test_logdec_affects_fallback_window(self, client):
+        """Wider logdec should allow detection further from the fallback center."""
+        # A narrow logdec might reject a detection that a wider one accepts,
+        # potentially changing FJ_ref from "D2 zero" to "fallback" or vice versa.
+        results = {}
+        for logdec in [0.1, 0.5, 1.0]:
+            resp = _upload(
+                client,
+                "MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)",
+                ["mcpam_example_1.CSV"],
+                extra_fields={
+                    "fj_detect_mode": "d2_zero",
+                    "fj_logdec": str(logdec),
+                    "fj_fallback_ms": "2.0",
+                },
+            )
+            _, kv = _first_kv(resp.get_json())
+            results[logdec] = {
+                "FJ_time": kv["FJ_time_user_ms"],
+                "FJ_ref": kv["FJ_ref"],
+            }
+
+        # All should have valid FJ (not None/NaN)
+        for ld, r in results.items():
+            assert r["FJ_time"] is not None, f"logdec={ld}: FJ_time should not be None"
+
+    def test_custom_fallback_ms_in_refit(self, client):
+        """Refit endpoint should respect fj_fallback_ms and fj_logdec."""
+        # First upload to get initial data
+        resp = _upload(
+            client,
+            "MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)",
+            ["mcpam_example_1.CSV"],
+        )
+        j = resp.get_json()
+        fname = next(iter(j["key_values"]))
+        dn = j["curves"][fname]["double_norm"]
+        time_ms = j["time_raw_ms"]
+
+        # Refit with custom fallback
+        refit_resp = client.post("/api/ojip_refit", json={
+            "fluorometer": "MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)",
+            "kr": 10,
+            "double_norm": {fname: dn},
+            "raw_fm_f0": {fname: {"FM": j["key_values"][fname]["FM"],
+                                    "F0": j["key_values"][fname]["F0"],
+                                    "FM_time_ms": j["key_values"][fname].get("FM_time_ms")}},
+            "time_raw_ms": time_ms,
+            "fj_detect_mode": "d2_zero",
+            "fi_detect_mode": "d2_zero",
+            "fj_fallback_ms": 3.0,
+            "fi_fallback_ms": 25.0,
+            "fj_logdec": 0.4,
+            "fi_logdec": 0.4,
+        })
+        assert refit_resp.status_code == 200
+        rj = refit_resp.get_json()
+        kt = rj["key_timings"][fname]
+        # Detection should succeed — FJ_ref should mention D2 or fallback
+        assert kt["FJ_ref"] is not None
+        assert kt["FJ_time_user_ms"] is not None
+
+    def test_fi_detect_mode_independent(self, client):
+        """FJ and FI detection modes can be set independently."""
+        resp = _upload(
+            client,
+            "MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)",
+            ["mcpam_example_1.CSV"],
+            extra_fields={
+                "fj_detect_mode": "fixed",
+                "fi_detect_mode": "d2_zero",
+            },
+        )
+        _, kv = _first_kv(resp.get_json())
+        assert "fixed" in kv["FJ_ref"].lower()
+        assert "d2" in kv["FI_ref"].lower() or "fallback" in kv["FI_ref"].lower()

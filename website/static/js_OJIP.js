@@ -4339,18 +4339,23 @@ function _resetDiagDefaults() {
   // FJ/FI detection
   _set('fj-detect-mode', 'd2_zero'); _set('fi-detect-mode', 'd2_zero');
   _syncAllFjDropdowns('d2_zero'); _syncAllFiDropdowns('d2_zero');
-  // Fixed timings & fallbacks
+  // Fixed timings & fallbacks (diagnostics + sidebar)
   _set('fj-fixed-time-diag', '2.0'); _set('fi-fixed-time-diag', '30.0');
+  _set('FJ_time', '2.0'); _set('FI_time', '30.0');
   _set('fj-fallback-time', '2.0'); _set('fi-fallback-time', '30.0');
+  _set('fj-fallback-sidebar', '2.0'); _set('fi-fallback-sidebar', '30.0');
   _set('fj-logdec', '0.3'); _set('fi-logdec', '0.3');
-  // P point
-  _set('p-point-mode', 'local_max');
+  _set('fj-logdec-sidebar', '0.3'); _set('fi-logdec-sidebar', '0.3');
+  // P point (diagnostics + sidebar)
+  _set('p-point-mode', 'local_max'); _set('p-point-mode-sidebar', 'local_max');
   _set('fp-logdec', '0.5'); _set('fp-expected', '316');
-  // Q point
-  _set('s-point-mode', 'd2_min');
+  _set('fp-logdec-sidebar', '0.5'); _set('fp-expected-sidebar', '316');
+  // Q point (diagnostics + sidebar)
+  _set('s-point-mode', 'd2_min'); _set('s-point-mode-sidebar', 'd2_min');
   _set('fq-logdec', '0.3'); _set('fq-expected', '1500');
-  // F value interpolation
-  _set('value-readout', 'interp');
+  _set('fq-logdec-sidebar', '0.3'); _set('fq-expected-sidebar', '1500');
+  // F value interpolation (diagnostics + sidebar)
+  _set('value-readout', 'interp'); _set('value-readout-sidebar', 'interp');
   // Allow missing
   _chk('allow-missing', false);
   // kr / spline smoothing
@@ -5212,12 +5217,11 @@ function renderResults() {
   link.onclick = e => { e.preventDefault(); downloadXlsxWithCharts(); };
   link.style.display = (mcDataset && mcIsActive) ? 'none' : '';
 
-  // Reset FJ/FI toggle to default state for fresh data — but NOT when
-  // viewing a single-curve detail from batch mode (preserve the batch setting).
+  // Update FJ/FI badge — the detection mode was already synced in the
+  // upload success handler (fjfiMode + dropdown sync).  Do NOT reset the
+  // dropdowns to 'fixed' here: that would override the user's detection mode
+  // selection and disable the logdec/fallback controls.
   if (!(mcDataset && mcIsActive)) {
-    fjfiMode = 'default';
-    _syncAllFjDropdowns('fixed');
-    _syncAllFiDropdowns('fixed');
     _updateFjFiBadges();
   }
 
