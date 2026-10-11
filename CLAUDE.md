@@ -8,7 +8,7 @@ Deployed on PythonAnywhere at https://www.cyano.tools. Built at DoAB, CzechGlobe
 ## Run / test
 - **Dev server:** `python main.py` (reads `.env` via python-dotenv; `debug=True`, auto-reloads).
   Requires `SECRET_KEY` env var or startup raises. `FLASK_DEBUG` not needed — main.py sets debug.
-- **Tests:** `pytest tests/` (`test_ojip_interpretation.py` + `test_ojip_timing.py`).
+- **Tests:** `pytest tests/` (`test_ojip_interpretation.py`, `test_ojip_timing.py`, `test_ojip_integration.py`).
 - Stack: Flask 2.3+ / SQLAlchemy 2 / numpy / scipy / pandas / matplotlib / opencv-headless / cobra.
   Full pin list in `requirements.txt`.
 
