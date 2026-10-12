@@ -1505,6 +1505,33 @@ def _balance_knot_density(x_log, knots_log, lo, hi,
     return knots_sorted
 
 
+def _extend_boundary(x, y, n_ext=2, w=None):
+    """Add virtual points at both boundaries via linear extrapolation.
+
+    Pushes the spline boundary knots beyond the real data range so that
+    derivatives evaluated within the original range are interior values,
+    free from boundary knot instability (quintic k=5 multiplicity-6).
+    """
+    dx_lo = x[1] - x[0]
+    slope_lo = (y[1] - y[0]) / dx_lo if dx_lo != 0 else 0.0
+    x_lo = x[0] - np.arange(n_ext, 0, -1) * dx_lo
+    y_lo = y[0] - slope_lo * np.arange(n_ext, 0, -1) * dx_lo
+
+    dx_hi = x[-1] - x[-2]
+    slope_hi = (y[-1] - y[-2]) / dx_hi if dx_hi != 0 else 0.0
+    x_hi = x[-1] + np.arange(1, n_ext + 1) * dx_hi
+    y_hi = y[-1] + slope_hi * np.arange(1, n_ext + 1) * dx_hi
+
+    x_ext = np.concatenate([x_lo, x, x_hi])
+    y_ext = np.concatenate([y_lo, y, y_hi])
+
+    if w is not None:
+        w_ext = np.concatenate([np.ones(n_ext), w, np.ones(n_ext)])
+        return x_ext, y_ext, w_ext
+
+    return x_ext, y_ext
+
+
 def _refine_knots_adaptive(x_data, y_data, knots_log, k, w=None,
                            min_run=4, bias_frac=0.005,
                            max_extra=4, min_sep=0.15):
@@ -1749,8 +1776,8 @@ def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
     # while covering almost the full fitted range — including the O-J region
     # needed for FJ detection on sparse TOMI-3 data.
     n_eval = max(600, n_fit)
-    eps_lo = (float(x_log[1]) - float(x_log[0])) * 0.01
-    eps_hi = (float(x_log[-1]) - float(x_log[-2])) * 0.01
+    eps_lo = (float(x_log[1]) - float(x_log[0])) * 0.05
+    eps_hi = (float(x_log[-1]) - float(x_log[-2])) * 0.05
     log_time = pd.Series(
         np.geomspace(10**(lo + eps_lo), 10**(hi - eps_hi), num=n_eval),
         name=cols[0])
@@ -1768,12 +1795,14 @@ def _fit_splines_log(double_norm_df: pd.DataFrame, x_col: str,
             x_aug, y_aug, w_aug, fit_info = _oj_densify(
                 x_log, y, fj_hi_log,
                 model=oj_model, model_params=oj_model_params)
+            x_aug, y_aug, w_aug = _extend_boundary(x_aug, y_aug, n_ext=2, w=w_aug)
             model, _, _ = _refine_knots_adaptive(
                 x_aug, y_aug, knots_log, k, w=w_aug)
             if fit_info is not None:
                 densify_info[fname] = fit_info
         else:
-            model, _, _ = _refine_knots_adaptive(x_log, y, knots_log, k)
+            x_ext, y_ext = _extend_boundary(x_log, y, n_ext=2)
+            model, _, _ = _refine_knots_adaptive(x_ext, y_ext, knots_log, k)
 
         recon  = model(x_eval)
         # Analytic derivatives of the spline in log10(t) space.
@@ -1950,7 +1979,7 @@ def _safe(v):
     """Convert to float, returning None for NaN/None."""
     try:
         f = float(v)
-        return None if np.isnan(f) else round(f, 8)
+        return None if np.isnan(f) else round(f, 12)
     except Exception:
         return None
 

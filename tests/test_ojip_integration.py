@@ -791,7 +791,6 @@ class TestReconstructionQuality:
                 f"{fname} refit: reconstruction undershoots to {min_val:.3f}"
             )
 
-    @pytest.mark.xfail(reason="Known: refit D2 boundary spikes (~-1500), fix pending")
     def test_refit_d2_bounded(self, client):
         """Refit: D2 should not have extreme spikes at boundary."""
         curves = self._get_refit_curves(client)
@@ -804,7 +803,6 @@ class TestReconstructionQuality:
                 f"{fname} refit: D2 extreme {extremes:.0f} — overfitting"
             )
 
-    @pytest.mark.xfail(reason="Known: refit D3 boundary spikes (~30 000), fix pending")
     def test_refit_d3_bounded(self, client):
         """Refit: D3 should not have extreme spikes at boundary."""
         curves = self._get_refit_curves(client)
