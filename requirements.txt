@@ -74,3 +74,7 @@ toolz>=0.12.0
 ply==3.11
 munkres==1.1.4
 python-dotenv>=1.0.0
+
+# %% Testing %%
+pytest>=7.0.0
+pytest-playwright>=0.5.0
