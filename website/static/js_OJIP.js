@@ -4068,7 +4068,7 @@ function recalcKeyValues(fname, fjMs, fiMs) {
 
   // Read a fluorescence value at tMs — must match _read_value_at() in
   // OJIP_data_analysis.py, or the browser table and the exported .xlsx disagree.
-  const vr = mode || _valueReadout();
+  const vr = _valueReadout();
   const recon = ojipData.curves[fname]?.reconstructed;
   const tLog  = ojipData.time_log_ms;
   const readAt = (tMs) => {
