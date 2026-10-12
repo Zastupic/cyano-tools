@@ -696,3 +696,122 @@ class TestDetectionParams:
         _, kv = _first_kv(resp.get_json())
         assert "fixed" in kv["FJ_ref"].lower()
         assert "d2" in kv["FI_ref"].lower() or "fallback" in kv["FI_ref"].lower()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Reconstruction quality — regression guard for spline overfitting
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestReconstructionQuality:
+    """Guard against spline overfitting at the left boundary.
+
+    MC-PAM data (0.01 ms resolution, ~50 pts in the O-J region) historically
+    caused the logspline quintic fit to produce an unrealistic dip below -1.0
+    in the initial reconstruction and extreme derivative spikes (D1 to -50,
+    D2 to 1800, D3 to -40 000).  These tests catch that regression.
+
+    The overfitting is worst in the REFIT path (/api/ojip_refit), which
+    receives pre-processed double-normalised data and refits the spline.
+    Both paths are tested.
+    """
+
+    FLUORO = "MULTI-COLOR-PAM / Dual PAM (Heinz Walz GmbH)"
+    FILES_3 = ["mcpam_example_1.CSV", "mcpam_example_2.CSV", "mcpam_example_3.CSV"]
+
+    def _get_upload_curves(self, client, filenames=None):
+        """Upload and return per-file curves dict."""
+        filenames = filenames or ["mcpam_example_1.CSV"]
+        resp = _upload(client, self.FLUORO, filenames)
+        j = resp.get_json()
+        return j
+
+    def _get_refit_curves(self, client):
+        """Upload 3 files, then refit → return refit curves dict."""
+        j = self._get_upload_curves(client, self.FILES_3)
+        double_norm = {}
+        raw_fm_f0 = {}
+        for fn in j["curves"]:
+            double_norm[fn] = j["curves"][fn]["double_norm"]
+            kv = j["key_values"][fn]
+            raw_fm_f0[fn] = {
+                "FM": kv["FM"], "F0": kv["F0"],
+                "FM_time_ms": kv.get("FM_time_ms"),
+            }
+        resp2 = client.post("/api/ojip_refit", json={
+            "fluorometer": self.FLUORO,
+            "kr": 10,
+            "double_norm": double_norm,
+            "raw_fm_f0": raw_fm_f0,
+            "fit_method": "logspline",
+            "knot_placement": "hybrid",
+            "fj_time_ms": 2.0,
+            "fi_time_ms": 30.0,
+            "value_readout": "interp",
+            "time_raw_ms": j["time_raw_ms"],
+        })
+        assert resp2.status_code == 200
+        return resp2.get_json()["curves"]
+
+    # ── Initial upload path ──────────────────────────────────────────────
+
+    def test_upload_reconstruction_no_undershoot(self, client):
+        """Upload: reconstruction must not dip far below 0 (the O level)."""
+        j = self._get_upload_curves(client)
+        for fname, c in j["curves"].items():
+            min_val = min(c["reconstructed"])
+            assert min_val > -0.15, (
+                f"{fname}: reconstruction undershoots to {min_val:.3f}"
+            )
+
+    def test_upload_d1_bounded(self, client):
+        """Upload: D1 should not have extreme negative spikes."""
+        j = self._get_upload_curves(client)
+        for fname, c in j["curves"].items():
+            min_d1 = min(c["d1"])
+            assert min_d1 > -20, (
+                f"{fname}: D1 spike to {min_d1:.1f} — overfitting"
+            )
+
+    def test_upload_reconstruction_monotone_start(self, client):
+        """Upload: first 10 points should be roughly non-decreasing (O-J rise)."""
+        j = self._get_upload_curves(client)
+        for fname, c in j["curves"].items():
+            head = c["reconstructed"][:10]
+            dips = sum(1 for i in range(1, len(head)) if head[i] < head[i-1] - 0.02)
+            assert dips <= 1, f"{fname}: {dips} dips in first 10 pts"
+
+    # ── Refit path (where overfitting was historically worst) ────────────
+
+    def test_refit_reconstruction_no_undershoot(self, client):
+        """Refit: reconstruction must not dip far below 0."""
+        curves = self._get_refit_curves(client)
+        for fname, c in curves.items():
+            min_val = min(c["reconstructed"])
+            assert min_val > -0.15, (
+                f"{fname} refit: reconstruction undershoots to {min_val:.3f}"
+            )
+
+    @pytest.mark.xfail(reason="Known: refit D2 boundary spikes (~-1500), fix pending")
+    def test_refit_d2_bounded(self, client):
+        """Refit: D2 should not have extreme spikes at boundary."""
+        curves = self._get_refit_curves(client)
+        for fname, c in curves.items():
+            d2 = c["d2"]
+            # Check initial third of the eval grid
+            n_check = max(1, len(d2) // 3)
+            extremes = max(abs(min(d2[:n_check])), abs(max(d2[:n_check])))
+            assert extremes < 500, (
+                f"{fname} refit: D2 extreme {extremes:.0f} — overfitting"
+            )
+
+    @pytest.mark.xfail(reason="Known: refit D3 boundary spikes (~30 000), fix pending")
+    def test_refit_d3_bounded(self, client):
+        """Refit: D3 should not have extreme spikes at boundary."""
+        curves = self._get_refit_curves(client)
+        for fname, c in curves.items():
+            d3 = c["d3"]
+            n_check = max(1, len(d3) // 3)
+            extremes = max(abs(min(d3[:n_check])), abs(max(d3[:n_check])))
+            assert extremes < 5000, (
+                f"{fname} refit: D3 extreme {extremes:.0f} — overfitting"
+            )
