@@ -4312,6 +4312,10 @@ function _syncDiagFixedTimeFromSidebar() {
 /** Recalculate FJ/FI timing + JIP params for all curves using per-point
  *  auto/fixed logic, update fjfiMode, badges, and refresh all tabs. */
 function _recalcFjFiForAllCurves() {
+  // Always update control visibility (fixed-time vs logdec/fallback) even
+  // when no data is loaded — the user may change the dropdown before upload.
+  _syncFixedTimeInputsVisibility();
+  _updateFjFiBadges();
   if (!ojipData || !ojipData.files) return;
   const fjFixed = parseFloat(document.getElementById('FJ_time').value) || 2.0;
   const fiFixed = parseFloat(document.getElementById('FI_time').value) || 30.0;
