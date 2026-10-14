@@ -78,3 +78,17 @@ there's non-obvious domain logic worth not re-deriving:
 _(Grow this list reactively: when a session on some tool would clearly have gone faster with
 notes, write `.claude/docs/<tool>.md` at the end of it. Likely future candidates: statistics.py,
 fluorescence_annotation.py, metabolic_model.py, the MIMS pair.)_
+
+## Testing principles
+- **Docs alongside tests:** When writing tool-specific integration tests beyond basic smoke
+  tests, first write (or update) `.claude/docs/<tool>.md` documenting the domain logic, valid
+  output ranges, and edge cases. Tests without domain understanding are shallow; docs without
+  tests are unverified. The two reinforce each other.
+- **Test tiers:** (1) Smoke tests — upload fixture → status 200 + basic response shape.
+  (2) Golden dataset regression — compare outputs against verified reference values with
+  `np.testing.assert_allclose(atol=1e-6)`. (3) Domain assertions — values within physically
+  meaningful ranges (e.g. 0 ≤ Fv/Fm ≤ 0.85, NPQ ≥ 0). (4) Infrastructure — CSRF, headers,
+  `safe_cache_key()`, rate limiting.
+- **Fixture files** live in `tests/fixtures/` (real instrument data). Example files for the
+  "Try with example data" buttons are in `website/static/files/examples/<tool>/` and can
+  double as test fixtures when no dedicated fixture exists.
