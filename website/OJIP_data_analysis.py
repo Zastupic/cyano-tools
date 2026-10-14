@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file, current_app
 import os
 import base64
 import io
@@ -4381,6 +4381,11 @@ def ojip_process_batch():
                         'message': f'Unknown fluorometer: {fluorometer}'}), 400
 
     time_arr = np.asarray(time_native, dtype=float)
+    current_app.logger.info(
+        'ojip_process_batch: fluorometer=%s, n_time=%d, n_curves=%d, '
+        'detect=%s, readout=%s, fit=%s',
+        fluorometer, len(time_arr), len(curves),
+        fj_detect_mode, value_readout, fit_method)
     results  = []
     for c in curves:
         slot = c.get('slot', 0)
@@ -4427,6 +4432,10 @@ def ojip_process_batch():
             r['name'] = name
             results.append(r)
         except Exception as exc:
+            import traceback
+            current_app.logger.error(
+                'ojip_process_batch: curve %s (slot %d) failed:\n%s',
+                name, slot, traceback.format_exc())
             results.append({'slot': slot, 'name': name,
                             'error': str(exc)})
 
