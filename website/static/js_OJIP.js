@@ -7830,6 +7830,27 @@ async function startBatchExport() {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
     XLSX.utils.book_append_sheet(wb, ws, 'Parameters');
+
+    // ── OJIP_raw sheet: time (ms) + raw fluorescence per curve ──
+    if (mcDataset && mcDataset.timeUs) {
+      const timeMs = mcDataset.excelMeta
+        ? Array.from(mcDataset.timeUs)
+        : Array.from(mcDataset.timeUs).map(t => t * 0.001);
+      const rawHeader = ['time_ms'];
+      const rawCols = [];           // each entry = array of values for one curve
+      for (const r of validRows) {
+        const dc = mcDataset.curves.find(c => c.index === MC.slotToIndex(r.slot));
+        if (!dc) continue;
+        rawHeader.push(r.name || `#${r.slot + 1}`);
+        rawCols.push(dc.values);
+      }
+      const rawRows = timeMs.map((t, i) => [
+        t, ...rawCols.map(col => col[i] != null ? col[i] : '')
+      ]);
+      const rawWs = XLSX.utils.aoa_to_sheet([rawHeader, ...rawRows]);
+      XLSX.utils.book_append_sheet(wb, rawWs, 'OJIP_raw');
+    }
+
     const mi = _collectMethodInfo();
     if (mi && Object.keys(mi).length > 0) {
       const methodLines = _formatMethodInfoText(mi).split('\n').map(line => [line]);
