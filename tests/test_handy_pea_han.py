@@ -20,9 +20,6 @@ from website.handy_pea_han import (
     parse_han,
     handy_pea_timebase_us,
     HanParseError,
-    MAGIC,
-    HEADER_SIZE,
-    RECORD_SIZE,
 )
 
 EXAMPLES_DIR = os.path.join(

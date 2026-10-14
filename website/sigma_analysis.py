@@ -7,7 +7,6 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.drawing.image import Image as XLImage
 from . import UPLOAD_FOLDER
-from werkzeug.utils import secure_filename
 
 sigma_bp = Blueprint('sigma_analysis', __name__)
 

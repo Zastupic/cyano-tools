@@ -36,7 +36,6 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key")
 from website.OJIP_data_analysis import (  # noqa: E402
     _VALUE_READOUTS,
     _compute_jip_params,
-    _detect_pq_transition,
     _read_value_at,
     analyze_one_curve,
 )

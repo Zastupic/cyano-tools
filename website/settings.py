@@ -1,6 +1,5 @@
-from flask import Blueprint, render_template, request, flash, redirect
-from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, limiter
-from flask_login import current_user, login_required
+from flask import Blueprint, render_template
+from . import limiter
 from .shared import db
 from .models import PageView
 from sqlalchemy import func, and_, or_

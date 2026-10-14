@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches # Required for Ellipse
 import matplotlib.transforms as transforms # Required for Ellipse rotation
-import seaborn as sns
 import io
 import base64
 import traceback
@@ -22,7 +21,7 @@ from pyopls import OPLS as PYOPLS
 from scipy import stats
 from statsmodels.formula.api import ols
 import statsmodels.api as sm
-from statsmodels.stats.multicomp import pairwise_tukeyhsd, MultiComparison
+from statsmodels.stats.multicomp import MultiComparison
 from statsmodels.stats.multitest import multipletests
 from itertools import combinations
 from typing import Any

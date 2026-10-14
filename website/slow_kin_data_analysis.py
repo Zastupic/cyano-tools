@@ -1,5 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, send_file, redirect, url_for
-import os, io, time, base64
+import os
+import io
+import time
+import base64
 import pandas as pd
 import numpy as np
 try:
@@ -8,7 +11,6 @@ try:
 except ImportError:
     _SCIPY_OK = False
 from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image as XLImage
 from . import UPLOAD_FOLDER
 from werkzeug.utils import secure_filename

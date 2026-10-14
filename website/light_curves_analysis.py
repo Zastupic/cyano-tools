@@ -1,5 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
-import os, base64, io, time
+import os
+import base64
+import io
+import time
 import numpy as np
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image

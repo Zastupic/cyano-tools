@@ -1,5 +1,9 @@
 from flask import Blueprint, render_template, request, jsonify, send_file, current_app, redirect, url_for
-import os, uuid, zipfile, math, io
+import os
+import uuid
+import zipfile
+import math
+import io
 
 try:
     from lxml import etree as ET  # type: ignore[import-untyped]

@@ -1,13 +1,18 @@
-from flask import Blueprint, render_template, request, flash, session, redirect, json, jsonify
+from flask import Blueprint, render_template, request, flash, session, json, jsonify
 from PIL import Image as im
-import os, cv2, base64, io, math, time, uuid, openpyxl
+import os
+import cv2
+import base64
+import io
+import math
+import time
+import uuid
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage.measure import profile_line 
 from werkzeug.utils import secure_filename
 from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER, limiter
-from flask_login import current_user
 
 pixel_profiles_round_cells = Blueprint('pixel_profiles_round_cells', __name__)
 

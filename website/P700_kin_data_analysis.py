@@ -1,5 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect
-from . import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
+from flask import Blueprint, render_template
 #from flask_login import current_user
 
 P700_kin_data_analysis = Blueprint('P700_kin_data_analysis', __name__)

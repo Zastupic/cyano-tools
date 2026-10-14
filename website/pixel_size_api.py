@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
-import io, os
+import io
+import os
 from . import safe_cache_key
 
 pixel_size_api = Blueprint('pixel_size_api', __name__)

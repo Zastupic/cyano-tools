@@ -223,10 +223,10 @@ def main():
         # Download PNG
         png_path = os.path.join(OUT_DIR, f'{pid}.png')
         if os.path.isfile(png_path):
-            print(f'  PNG exists, skipping')
+            print('  PNG exists, skipping')
         else:
             try:
-                print(f'  Fetching image...')
+                print('  Fetching image...')
                 data = fetch_bytes(f'https://rest.kegg.jp/get/{pid}/image')
                 with open(png_path, 'wb') as f:
                     f.write(data)
@@ -240,11 +240,11 @@ def main():
         # Download and parse conf
         conf_path = os.path.join(OUT_DIR, f'{pid}_conf.json')
         if os.path.isfile(conf_path):
-            print(f'  Conf exists, skipping')
+            print('  Conf exists, skipping')
             manifest[pid] = pname
         else:
             try:
-                print(f'  Fetching conf...')
+                print('  Fetching conf...')
                 conf_text = fetch_bytes(
                     f'https://rest.kegg.jp/get/{pid}/conf'
                 ).decode('utf-8')

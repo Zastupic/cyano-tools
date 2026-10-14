@@ -1,6 +1,5 @@
 import os
 import json
-import math
 import re
 import threading
 import urllib.request
@@ -938,7 +937,6 @@ def light_sweep():
 @metabolic_bp.route('/api/metabolic/energetics', methods=['POST'])
 def energetics():
     import traceback
-    from collections import defaultdict
     data        = request.json or {}
     constrained = bool(data.get('constrained', False))
     target_rxn  = data.get('target_rxn', '').strip()

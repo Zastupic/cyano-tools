@@ -3,7 +3,6 @@ import json
 import os
 import re
 import struct
-import pandas as pd
 import numpy as np
 from werkzeug.utils import secure_filename
 

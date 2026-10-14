@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, Response, current_app
-from flask_login import login_required, current_user
+from flask_login import current_user
 from .github_updates import get_updated_tools, get_new_tools
 from . import csrf, limiter
 import subprocess

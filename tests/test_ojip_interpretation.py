@@ -19,12 +19,10 @@ Tests cover the nine scenarios specified in the task:
 
 import os
 import sys
-import math
 
 # Make the website package importable from tests/
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import pytest
 from website.ojip_interpretation import (
     interpret_ojip,
     generate_narrative,

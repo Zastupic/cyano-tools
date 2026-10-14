@@ -1,5 +1,12 @@
 from flask import Blueprint, render_template, request, flash, jsonify
-import math, os, cv2, base64, io, uuid, glob, time
+import math
+import os
+import cv2
+import base64
+import io
+import uuid
+import glob
+import time
 import numpy as np
 from PIL import Image as im
 from werkzeug.utils import secure_filename
