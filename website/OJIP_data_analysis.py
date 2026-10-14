@@ -23,6 +23,10 @@ import matplotlib.pyplot as plt
 OJIP_data_analysis = Blueprint('OJIP_data_analysis', __name__)
 
 
+# np.trapezoid was added in NumPy 2.0, replacing the deprecated np.trapz.
+# PythonAnywhere still runs NumPy < 2.0, so fall back to np.trapz.
+_trapz = getattr(np, 'trapezoid', None) or np.trapz
+
 # ─── helpers ────────────────────────────────────────────────────────────────
 
 def _imin(s: 'pd.Series') -> int:
@@ -1213,16 +1217,16 @@ def _calc_areas_fm_timing(Summary_file, data_cols, FJ_idx, FI_idx, ms_factor,
         FM_raw = y.iloc[:Fm_end].max()
 
         if FJ_i is not None and FI_i is not None:
-            aoj.append(max(x.iloc[:FJ_i]) * FM_raw - np.trapezoid(y.iloc[:FJ_i], x.iloc[:FJ_i]))
+            aoj.append(max(x.iloc[:FJ_i]) * FM_raw - _trapz(y.iloc[:FJ_i], x.iloc[:FJ_i]))
             aji.append((max(x.iloc[FJ_i:FI_i]) - min(x.iloc[FJ_i:FI_i])) * FM_raw
-                       - np.trapezoid(y.iloc[FJ_i:FI_i], x.iloc[FJ_i:FI_i]))
+                       - _trapz(y.iloc[FJ_i:FI_i], x.iloc[FJ_i:FI_i]))
             aip.append((max(x.iloc[FI_i:Fm_end]) - min(x.iloc[FI_i:Fm_end])) * FM_raw
-                       - np.trapezoid(y.iloc[FI_i:Fm_end], x.iloc[FI_i:Fm_end]))
+                       - _trapz(y.iloc[FI_i:Fm_end], x.iloc[FI_i:Fm_end]))
         else:
             aoj.append(float('nan'))
             aji.append(float('nan'))
             aip.append(float('nan'))
-        aop.append(max(x.iloc[:Fm_end]) * FM_raw - np.trapezoid(y.iloc[:Fm_end], x.iloc[:Fm_end]))
+        aop.append(max(x.iloc[:Fm_end]) * FM_raw - _trapz(y.iloc[:Fm_end], x.iloc[:Fm_end]))
 
     return (pd.Series(aoj, index=data_cols), pd.Series(aji, index=data_cols),
             pd.Series(aip, index=data_cols), pd.Series(aop, index=data_cols),
