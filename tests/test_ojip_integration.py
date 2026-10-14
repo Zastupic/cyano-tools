@@ -244,8 +244,9 @@ class TestFL6000:
 class TestHandyPEA:
     FLUORO = "HandyPEA"
 
-    def test_han_parse_endpoint(self, client):
-        """POST .HAN to /api/ojip_parse_han → parsed curves."""
+    @staticmethod
+    def _parse_han(client):
+        """Parse the HandyPEA fixture and return the JSON response."""
         raw = _read_fixture("handypea_example.HAN")
         resp = client.post(
             "/api/ojip_parse_han",
@@ -253,24 +254,13 @@ class TestHandyPEA:
             content_type="multipart/form-data",
         )
         assert resp.status_code == 200
-        j = resp.get_json()
-        assert j["status"] == "success"
-        assert "time_native" in j
-        assert len(j["curves"]) > 0
-        t = j["time_native"]
-        assert t[0] >= 10, "HandyPEA starts at ~10 us"
-
-    def test_batch_from_parsed_han(self, client):
-        """Parse HAN → feed curves to /api/ojip_process_batch → JIP params."""
-        raw = _read_fixture("handypea_example.HAN")
-        parse_resp = client.post(
-            "/api/ojip_parse_han",
-            data={"han_file": (io.BytesIO(raw), "handypea_example.HAN")},
-            content_type="multipart/form-data",
-        )
-        parsed = parse_resp.get_json()
+        parsed = resp.get_json()
         assert parsed["status"] == "success"
+        return parsed
 
+    @staticmethod
+    def _batch(client, parsed, **overrides):
+        """Send parsed HAN curves to the batch endpoint with optional overrides."""
         payload = {
             "fluorometer": "HandyPEA",
             "time_native": parsed["time_native"],
@@ -283,17 +273,90 @@ class TestHandyPEA:
             "knot_placement": "hybrid",
             "value_readout": "interp",
         }
+        payload.update(overrides)
         resp = client.post("/api/ojip_process_batch", json=payload)
         assert resp.status_code == 200
         j = resp.get_json()
         assert j["status"] == "success"
-        results = j["results"]
+        return j["results"]
+
+    def test_han_parse_endpoint(self, client):
+        """POST .HAN to /api/ojip_parse_han → parsed curves."""
+        parsed = self._parse_han(client)
+        assert "time_native" in parsed
+        assert len(parsed["curves"]) > 0
+        t = parsed["time_native"]
+        assert t[0] >= 10, "HandyPEA starts at ~10 us"
+
+    def test_batch_from_parsed_han(self, client):
+        """Parse HAN → feed curves to /api/ojip_process_batch → JIP params."""
+        parsed = self._parse_han(client)
+        results = self._batch(client, parsed)
         ok = [r for r in results if "error" not in r]
         assert len(ok) > 0, "all curves errored"
         r = ok[0]
-        # Batch endpoint returns computed FVFM
         assert r["FVFM"] > 0.1
         assert r["FM"] > r["F0"]
+
+    def test_all_curves_succeed(self, client):
+        """Every curve in the HAN file must analyze successfully — not just one."""
+        parsed = self._parse_han(client)
+        results = self._batch(client, parsed)
+        errors = [r for r in results if "error" in r]
+        assert len(errors) == 0, (
+            f"{len(errors)}/{len(results)} curves failed: "
+            + "; ".join(f"{r['name']}: {r['error']}" for r in errors[:3])
+        )
+
+    def test_domain_plausibility(self, client):
+        """All HandyPEA curves must produce biologically plausible JIP params."""
+        parsed = self._parse_han(client)
+        results = self._batch(client, parsed)
+        for r in results:
+            if "error" in r:
+                continue
+            assert 0.0 < r["FVFM"] < 0.95, f"{r['name']}: Fv/Fm={r['FVFM']}"
+            assert 0.0 < r["VJ"] < 1.0, f"{r['name']}: VJ={r['VJ']}"
+            assert 0.0 < r["VI"] < 1.0, f"{r['name']}: VI={r['VI']}"
+            assert r["VJ"] < r["VI"], f"{r['name']}: VJ={r['VJ']} >= VI={r['VI']}"
+            assert r["FJ_time_user_ms"] is not None
+            assert r["FI_time_user_ms"] is not None
+
+    @pytest.mark.parametrize("detect_mode", [
+        "d2_zero", "poly_inflect", "d2_min", "fixed",
+    ])
+    def test_detect_modes_all_curves_succeed(self, client, detect_mode):
+        """Every detection mode must produce results for all HandyPEA curves."""
+        parsed = self._parse_han(client)
+        results = self._batch(client, parsed,
+                              fj_detect_mode=detect_mode,
+                              fi_detect_mode=detect_mode)
+        errors = [r for r in results if "error" in r]
+        assert len(errors) == 0, (
+            f"mode={detect_mode}: {len(errors)}/{len(results)} failed: "
+            + "; ".join(f"{r['name']}: {r['error']}" for r in errors[:3])
+        )
+
+    @pytest.mark.parametrize("readout", ["interp", "nearest", "reconstructed"])
+    def test_readout_modes(self, client, readout):
+        """All value_readout modes must succeed for HandyPEA data."""
+        parsed = self._parse_han(client)
+        results = self._batch(client, parsed, value_readout=readout)
+        errors = [r for r in results if "error" in r]
+        assert len(errors) == 0, (
+            f"readout={readout}: {len(errors)}/{len(results)} failed"
+        )
+
+    def test_batch_with_include_curves(self, client):
+        """Batch with include_curves=True must return curve data."""
+        parsed = self._parse_han(client)
+        results = self._batch(client, parsed, include_curves=True)
+        ok = [r for r in results if "error" not in r]
+        assert len(ok) > 0
+        r = ok[0]
+        assert "curves" in r, "include_curves=True should return curve data"
+        assert "time_raw_ms" in r
+        assert "time_log_ms" in r
 
 
 # ═══════════════════════════════════════════════════════════════════════════

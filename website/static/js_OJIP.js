@@ -5147,6 +5147,8 @@ async function mcStartAnalysis() {
     fpLogdec:     parseFloat(document.getElementById('fp-logdec')?.value) || 0.5,
     fqExpectedMs: parseFloat(document.getElementById('fq-expected')?.value) || 1500.0,
     fqLogdec:     parseFloat(document.getElementById('fq-logdec')?.value) || 0.3,
+    sPointMode:   document.getElementById('s-point-mode')?.value || 'd2_min',
+    pPointMode:   document.getElementById('p-point-mode')?.value || 'd2_min',
   };
   _lastSelected = selected.slice();
   _lastJipOpts  = Object.assign({}, jipOpts);
