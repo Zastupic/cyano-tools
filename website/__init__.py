@@ -1,5 +1,4 @@
-from flask import Flask, request, redirect, g, jsonify
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, request, redirect, g
 from flask_login import LoginManager
 from flask_uploads import IMAGES, UploadSet, configure_uploads
 from flask_wtf.csrf import CSRFProtect
@@ -12,7 +11,11 @@ from os import path
 import hashlib
 from datetime import datetime
 from urllib.parse import urlparse
-import os, glob, time, threading, re
+import os
+import glob
+import time
+import threading
+import re
 import sqlalchemy
 # Flask-Limiter: install with  pip install Flask-Limiter
 from flask_limiter import Limiter

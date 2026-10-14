@@ -3,4 +3,4 @@ repos:
     rev: v0.7.0
     hooks:
       - id: ruff
-        args: [--select, "E,F,W", --ignore, "E501,E741", --fix]
+        args: [--fix]

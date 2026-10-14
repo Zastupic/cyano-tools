@@ -25,7 +25,7 @@ jobs:
           pip install pytest ruff
 
       - name: Lint with Ruff
-        run: ruff check website/ tests/ --select E,F,W --ignore E501
+        run: ruff check website/ tests/
 
       - name: Run unit + integration tests
         env:

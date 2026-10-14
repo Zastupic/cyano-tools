@@ -8,7 +8,13 @@ line-length = 120
 select = ["E", "F", "W"]
 ignore = [
     "E501",   # line too long (scientific code often has long expressions)
+    "E701",   # multiple statements on one line (colon) — common in compact conditionals
+    "E702",   # multiple statements on one line (semicolon) — common in openpyxl styling
+    "E711",   # comparison to None — SQLAlchemy uses `col != None` for IS NOT NULL
+    "E712",   # comparison to True/False — `== False` pattern in legacy code
+    "E731",   # lambda assignment — common in test parametrization
     "E741",   # ambiguous variable name (l, O, I are common in science)
+    "F841",   # unused variable — many are workbook.add_worksheet() side effects
     "W291",   # trailing whitespace
     "W292",   # no newline at end of file
     "W293",   # whitespace before ':'
@@ -16,6 +22,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["E402"]  # module-level imports not at top (sys.path manipulation)
+"website/fluorescence_annotation.py" = ["E402"]  # late import of HTMLParser (intentional)
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
