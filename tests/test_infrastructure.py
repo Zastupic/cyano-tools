@@ -19,8 +19,7 @@ from website import create_app
 
 @pytest.fixture(scope="module")
 def app():
-    application = create_app()
-    application.config["TESTING"] = True
+    application = create_app(testing=True)
     return application
 
 

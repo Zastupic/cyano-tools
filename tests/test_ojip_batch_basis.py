@@ -90,8 +90,7 @@ def multi():
 
 @pytest.fixture(scope="module")
 def client():
-    app = create_app()
-    app.config["TESTING"] = True
+    app = create_app(testing=True)
     app.config["WTF_CSRF_ENABLED"] = False
     return app.test_client()
 

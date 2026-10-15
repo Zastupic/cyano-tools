@@ -122,8 +122,10 @@ def _start_upload_cleanup(folder, max_age_minutes=30, interval_hours=1):
     t.start()
 
 
-def create_app():
+def create_app(*, testing=False):
     app = Flask(__name__)
+    if testing:
+        app.config["TESTING"] = True
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
     app.config['UPLOADED_IMAGES_DEST'] = UPLOAD_FOLDER # if UploadSet ("invoices", INVOICES) --> app.config[UPLOADED_INVOICES_DEST]
@@ -148,6 +150,8 @@ def create_app():
     app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 
     db.init_app(app)
+    if app.config.get("TESTING"):
+        app.config["RATELIMIT_ENABLED"] = False
     limiter.init_app(app)
     csrf.init_app(app)
     if Compress:
