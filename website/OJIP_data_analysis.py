@@ -4346,7 +4346,7 @@ def ojip_interpret():
 
 @OJIP_data_analysis.route('/api/ojip_process_batch', methods=['POST'])
 @csrf.exempt
-@limiter.limit("2000 per minute")
+@limiter.limit("10 per second; 600 per minute")
 def ojip_process_batch():
     """
     Batch-process multiple OJIP curves (params-only or full detail).

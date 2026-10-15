@@ -28,7 +28,7 @@ ALLOWED_EXTENSIONS = set(['.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.gi
 images = UploadSet('images', IMAGES)
 
 # ── Rate limiter (module-level so blueprints can import and decorate with it) ─
-limiter = Limiter(key_func=get_remote_address, default_limits=["200 per minute", "2000 per hour"])
+limiter = Limiter(key_func=get_remote_address, default_limits=["5 per second", "200 per minute", "2000 per hour"])
 
 # ── CSRF protection (module-level so blueprints can import csrf.exempt) ───────
 csrf = CSRFProtect()
