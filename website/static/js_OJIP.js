@@ -520,6 +520,11 @@ const MC = (() => {
               body: JSON.stringify(body),
               signal: mcAbort.signal,
             });
+            if (!resp.ok) {
+              const body = await resp.text().catch(() => '');
+              const snippet = body.slice(0, 200).replace(/\s+/g, ' ').trim();
+              throw new Error(`HTTP ${resp.status}: ${resp.statusText}${snippet ? ' — ' + snippet : ''}`);
+            }
             res = await resp.json();
             break;
           } catch(e) {
@@ -533,7 +538,11 @@ const MC = (() => {
               _showProgress(done, allCurves.length);
               return;
             }
-            await new Promise(r => setTimeout(r, 1000 + Math.random() * 1000));
+            // Wait longer on rate-limit (429) responses
+            const isRateLimit = e.message && e.message.includes('429');
+            const delay = isRateLimit ? 5000 + Math.random() * 3000
+                                      : 1000 + Math.random() * 1000;
+            await new Promise(r => setTimeout(r, delay));
           }
         }
 
