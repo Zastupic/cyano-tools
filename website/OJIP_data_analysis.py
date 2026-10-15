@@ -13,7 +13,7 @@ from scipy.interpolate import UnivariateSpline, LSQUnivariateSpline, PchipInterp
 from scipy.ndimage import gaussian_filter1d
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
-from . import UPLOAD_FOLDER, csrf
+from . import UPLOAD_FOLDER, csrf, limiter
 from werkzeug.utils import secure_filename
 from .ojip_interpretation import interpret_ojip, generate_narrative, summarise_findings, compare_ojip_params
 import matplotlib
@@ -4346,6 +4346,7 @@ def ojip_interpret():
 
 @OJIP_data_analysis.route('/api/ojip_process_batch', methods=['POST'])
 @csrf.exempt
+@limiter.limit("2000 per minute")
 def ojip_process_batch():
     """
     Batch-process multiple OJIP curves (params-only or full detail).
