@@ -1781,14 +1781,40 @@ const MC = (() => {
       }
     }
 
-    // Decimate for performance: keep ~120 points per curve
+    // Decimate for performance: keep ~TARGET points per curve.
+    // Use log-spaced selection so the visually-spread early O-J rise
+    // (0.02–0.05 ms on a log axis) is not decimated away.
     const fullLen = ojipMaxIdx;
     const TARGET = 120;
-    let step = 1;
-    if (fullLen > TARGET) step = Math.max(1, Math.floor(fullLen / TARGET));
     const idxKeep = [];
-    for (let i = 0; i < fullLen; i += step) idxKeep.push(i);
-    if (idxKeep[idxKeep.length - 1] !== fullLen - 1) idxKeep.push(fullLen - 1);
+    if (fullLen <= TARGET) {
+      for (let i = 0; i < fullLen; i++) idxKeep.push(i);
+    } else {
+      // Log-spaced indices: spread TARGET picks evenly in log(time) space
+      const tFirst = timeMs[0] > 0 ? timeMs[0] : timeMs.find(t => t > 0) || 1e-3;
+      const tLast  = timeMs[fullLen - 1] || tFirst;
+      const logMin = Math.log10(tFirst);
+      const logMax = Math.log10(tLast);
+      const kept = new Set();
+      for (let k = 0; k < TARGET; k++) {
+        const logT = logMin + (logMax - logMin) * k / (TARGET - 1);
+        const tTarget = Math.pow(10, logT);
+        // Binary-search the closest index
+        let lo = 0, hi = fullLen - 1;
+        while (lo < hi) {
+          const mid = (lo + hi) >> 1;
+          if (timeMs[mid] < tTarget) lo = mid + 1; else hi = mid;
+        }
+        // Pick the nearer of lo and lo-1
+        if (lo > 0 && Math.abs(timeMs[lo - 1] - tTarget) < Math.abs(timeMs[lo] - tTarget))
+          lo = lo - 1;
+        kept.add(lo);
+      }
+      kept.add(0);             // always include first
+      kept.add(fullLen - 1);   // always include last
+      const sorted = Array.from(kept).sort((a, b) => a - b);
+      for (const i of sorted) idxKeep.push(i);
+    }
     const decTimeMs = idxKeep.map(i => timeMs[i]);
 
     // Normalization mode from OJIP Curves dropdown
@@ -1828,7 +1854,7 @@ const MC = (() => {
     const showOJIP = document.getElementById('mc-show-ojip')?.checked;
     if (showOJIP) {
       const markers = [
-        { key: 'F0',      timeKey: null,                label: 'O',  color: '#2ca02c', style: 'circle'   },
+        { key: 'F0',      timeKey: 'F0_time_ms',        label: 'O',  color: '#2ca02c', style: 'circle'   },
         { key: 'FJ',      timeKey: 'FJ_time_user_ms',   label: 'J',  color: '#ff7f0e', style: 'triangle' },
         { key: 'FI',      timeKey: 'FI_time_user_ms',   label: 'I',  color: '#d62728', style: 'rectRot'  },
         { key: 'FM',      timeKey: 'FP_time_user_ms',   label: 'P',  color: '#7f2baf', style: 'rect'     },
@@ -1859,8 +1885,11 @@ const MC = (() => {
                 lo = i;
               }
               const hi = Math.min(lo + 1, timeMs.length - 1);
-              if (bv[lo] == null || bv[hi] == null) {
-                // inside the dropped background region — keep pm[m.key]
+              if (bv[lo] == null && bv[hi] != null) {
+                // lo is in the dropped bg region but hi is valid — snap to hi
+                rawY = bv[hi];
+              } else if (bv[lo] == null || bv[hi] == null) {
+                // fully inside the dropped background region — keep pm[m.key]
               } else if (lo === hi || timeMs[hi] === timeMs[lo]) {
                 rawY = bv[lo];
               } else {
@@ -2003,43 +2032,84 @@ const MC = (() => {
   }
 
   // ── M8: XLSX export (client-side via SheetJS) ───────────────────────
-  function downloadParamsXLSX() {
+  async function downloadParamsXLSX() {
     if (!paramMatrix || typeof XLSX === 'undefined') return;
-    const paramKeys = _activeParamKeys();
-    const refActive = _refFM.active;
-    const header = ['Index', 'Name', 'Timestamp', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
-    if (refActive) header.push('FM (own)');
-    const rows = [header];
-    for (const r of paramMatrix) {
-      if (!r) continue;
-      const ts = mcDataset?.curves.find(c => c.index === _slotToIndex(r.slot))?.timestamp || '';
-      if (r.error) {
-        rows.push([r.slot + 1, r.name, ts, 'ERROR: ' + r.error]);
-      } else {
-        const vals = paramKeys.map(k => r[k] ?? '');
-        if (refActive) vals.push(r._FM_own ?? '');
-        rows.push([r.slot + 1, r.name, ts, ...vals]);
+
+    // Show spinner on the button while building the workbook
+    const btn = document.getElementById('mc-xlsx-btn');
+    let origHTML, origClass;
+    if (btn) {
+      origHTML = btn.innerHTML;
+      origClass = btn.className;
+      btn.disabled = true;
+      btn.className = origClass.replace('btn-outline-secondary', 'btn-secondary');
+      btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i>Generating\u2026';
+    }
+    // Double-yield: rAF schedules after next paint, setTimeout runs after that
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 20)));
+
+    try {
+      const paramKeys = _activeParamKeys();
+      const refActive = _refFM.active;
+      const header = ['Index', 'Name', 'Timestamp', ...paramKeys.map(k => PARAM_LABELS[k] || k)];
+      if (refActive) header.push('FM (own)');
+      const rows = [header];
+      for (const r of paramMatrix) {
+        if (!r) continue;
+        const ts = mcDataset?.curves.find(c => c.index === _slotToIndex(r.slot))?.timestamp || '';
+        if (r.error) {
+          rows.push([r.slot + 1, r.name, ts, 'ERROR: ' + r.error]);
+        } else {
+          const vals = paramKeys.map(k => r[k] ?? '');
+          if (refActive) vals.push(r._FM_own ?? '');
+          rows.push([r.slot + 1, r.name, ts, ...vals]);
+        }
+      }
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, 'JIP Parameters');
+
+      // Curve data sheets (same as params_summary.xlsx in the batch ZIP)
+      const validRows = paramMatrix.filter(r => r && !r.error);
+      if (mcDataset && mcDataset.timeUs && validRows.length) {
+        const allSheets = { raw: true, shifted_F0: true, shifted_FM: true,
+                            double_norm: true, uncorrected: true };
+        for (const { name, aoa } of buildCurveSheets(validRows, allSheets)) {
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), name);
+        }
+      }
+
+      // Add instrument metadata sheet if available
+      if (mcDataset?.instrumentMeta) {
+        const meta = mcDataset.instrumentMeta;
+        const metaRows = [['Property', 'Value']];
+        for (const [k, v] of Object.entries(meta)) {
+          if (v != null) metaRows.push([k, v]);
+        }
+        metaRows.push(['Filename', mcDataset.filename]);
+        metaRows.push(['Curves analyzed', validRows.length]);
+        metaRows.push(['Total curves', mcDataset.curves.length]);
+        const ms = XLSX.utils.aoa_to_sheet(metaRows);
+        XLSX.utils.book_append_sheet(wb, ms, 'Metadata');
+      }
+
+      // Method sheet
+      const mi = _collectMethodInfo();
+      if (mi && Object.keys(mi).length > 0) {
+        const methodLines = _formatMethodInfoText(mi).split('\n').map(line => [line]);
+        const msWs = XLSX.utils.aoa_to_sheet(methodLines);
+        msWs['!cols'] = [{ wch: 72 }];
+        XLSX.utils.book_append_sheet(wb, msWs, 'Method');
+      }
+
+      XLSX.writeFile(wb, `${mcDataset?.stem || 'ojip'}_params.xlsx`);
+    } finally {
+      if (btn) {
+        btn.innerHTML = origHTML;
+        btn.className = origClass;
+        btn.disabled = false;
       }
     }
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb, ws, 'JIP Parameters');
-
-    // Add instrument metadata sheet if available
-    if (mcDataset?.instrumentMeta) {
-      const meta = mcDataset.instrumentMeta;
-      const metaRows = [['Property', 'Value']];
-      for (const [k, v] of Object.entries(meta)) {
-        if (v != null) metaRows.push([k, v]);
-      }
-      metaRows.push(['Filename', mcDataset.filename]);
-      metaRows.push(['Curves analyzed', paramMatrix.filter(r => r && !r.error).length]);
-      metaRows.push(['Total curves', mcDataset.curves.length]);
-      const ms = XLSX.utils.aoa_to_sheet(metaRows);
-      XLSX.utils.book_append_sheet(wb, ms, 'Metadata');
-    }
-
-    XLSX.writeFile(wb, `${mcDataset?.stem || 'ojip'}_params.xlsx`);
   }
 
   // ── M2-Excel: Client-side OJIP Imaging Excel parser ─────────────────

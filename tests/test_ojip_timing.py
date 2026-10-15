@@ -506,3 +506,78 @@ def test_compute_jip_params_normal_values():
     assert result['OJ'] == pytest.approx(150.0)
     assert result['JI'] == pytest.approx(150.0)
     assert result['IP'] == pytest.approx(100.0)
+
+
+# ── F0 timing tests ────────────────────────────────────────────────────────
+
+def _parse_aquapen_fixture():
+    """Return (time_us, values_curve1, bckg, fo_footer) from the multi-OJIP fixture."""
+    fixture = os.path.join(os.path.dirname(__file__),
+                           'fixtures', 'aquapen_example_multi_OJIP.txt')
+    lines = open(fixture).readlines()
+    data_lines = [l.strip().split('\t') for l in lines
+                  if l.strip() and l.strip().split('\t')[0].isdigit()]
+    time_us = [float(row[0]) for row in data_lines]
+    values = [float(row[1]) for row in data_lines]
+    # Footer: Bckg and Fo for curve 1
+    footer = {}
+    for l in lines:
+        parts = l.strip().split('\t')
+        if parts[0] in ('Bckg', 'Fo'):
+            footer[parts[0]] = float(parts[1])
+    return time_us, values, footer['Bckg'], footer['Fo']
+
+
+def test_f0_time_ms_aquapen_at_40us():
+    """F0_time_ms for AquaPen must be at 40 µs — the time where the instrument
+    firmware actually computes Fo (= Raw(40 µs) − Bckg).  The manual says
+    "50 µs" but verified data shows Fo matches the 41 µs data point
+    (nearest sample to 40 µs in the [11, 21, 31, 41, …] grid)."""
+    time_us, values, bckg, fo_footer = _parse_aquapen_fixture()
+    r = analyze_one_curve(
+        time_us, values, 'curve1', 'Aquapen',
+        fj_time_ms=2.0, fi_time_ms=30.0, kr=10,
+        background_mode='auto', background_n=1,
+        bckg=bckg, fo_footer=fo_footer,
+        f0_source='instrument',
+    )
+    assert 'F0_time_ms' in r
+    # AquaPen Fo = Raw(40 µs) − Bckg; nearest data point is 41 µs = 0.041 ms
+    assert r['F0_time_ms'] == pytest.approx(0.041, abs=0.005)
+    # F0 value should be the instrument's Fo
+    assert r['F0'] == pytest.approx(fo_footer, rel=1e-6)
+
+
+def test_f0_time_ms_handypea():
+    """HandyPEA has no background correction. F0 is at 20 µs (Strasser convention)."""
+    fixture = os.path.join(os.path.dirname(__file__), 'fixtures', 'handypea_example.HAN')
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    from website.handy_pea_han import parse_han
+    parsed = parse_han(open(fixture, 'rb').read())
+    time_us = parsed['time_us']
+    values = parsed['records'][0]['values']
+    r = analyze_one_curve(
+        time_us, values, 'hp_curve', 'HandyPEA',
+        fj_time_ms=2.0, fi_time_ms=30.0, kr=10,
+    )
+    assert 'F0_time_ms' in r
+    # HandyPEA F0 is at the point closest to 20 µs
+    assert r['F0_time_ms'] == pytest.approx(0.020, abs=1e-3)
+
+
+def test_f0_time_ms_not_at_first_point_or_50us():
+    """Regression guard: AquaPen F0_time_ms must be at 41 µs (the instrument's
+    actual Fo reference), NOT at 21 µs (first post-bg point) or 51 µs (the
+    rounded "50 µs" from the manual)."""
+    time_us, values, bckg, fo_footer = _parse_aquapen_fixture()
+    r = analyze_one_curve(
+        time_us, values, 'curve1', 'Aquapen',
+        fj_time_ms=2.0, fi_time_ms=30.0, kr=10,
+        background_mode='auto', background_n=1,
+        bckg=bckg, fo_footer=fo_footer,
+        f0_source='instrument',
+    )
+    assert r['F0_time_ms'] != pytest.approx(0.021, abs=0.005), \
+        "F0_time_ms must not be the first data point (0.021 ms)"
+    assert r['F0_time_ms'] != pytest.approx(0.051, abs=0.005), \
+        "F0_time_ms must not be at 51 µs (manual's rounded '50 µs')"

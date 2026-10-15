@@ -2707,6 +2707,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     if f0_time_ms is not None:
         f0_native_target = f0_time_ms / ms
         sf.loc[F0_index, x_col] = f0_native_target
+    # _f0_time_native is set after F50us_idx is computed (see below)
+    _f0_time_user_override = f0_time_ms is not None
     FM = sf[data_cols].max()
 
     shifted_zero_df = pd.concat([
@@ -2798,6 +2800,23 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         F200ms_idx = tidx(200);    F300ms_idx = tidx(300)
     else:
         raise ValueError(f'Unknown fluorometer: {fluorometer}')
+
+    # ── F0 reference time for the O marker ──────────────────────────────────
+    # Must match the time at which the F0 VALUE is defined so the O marker,
+    # the normalisation zero, and the reported F0 all refer to the same point.
+    #   HandyPEA  → 20 µs (Strasser convention, = F0_index)
+    #   AquaPen   → 40 µs (instrument firmware; manual rounds to "50 µs"
+    #                but Fo = Raw(40 µs) − Bckg, verified from data files)
+    #   Others    → F50us_idx (~50 µs, Strasser convention)
+    # A user-supplied f0_time_ms override always takes priority.
+    if _f0_time_user_override:
+        _f0_time_native = float(sf[x_col].iloc[F0_index])   # reflects line 2709 override
+    elif fluorometer == 'HandyPEA':
+        _f0_time_native = float(sf[x_col].iloc[F0_index])   # 20 µs
+    elif fluorometer == 'Aquapen':
+        _f0_time_native = float(sf[x_col].iloc[tidx(40)])   # 40 µs → 41 µs data point
+    else:
+        _f0_time_native = float(sf[x_col].iloc[int(F50us_idx)])  # ~50 µs
 
     # Guard: if F50us and FK resolve to the same index (time axis lacks
     # sub-ms resolution, common for imaging-PAM), widen the interval so M₀
@@ -3018,6 +3037,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                    'd2_zero→local_max': 'D2 zero \u2192 Local max (fallback)',
                    'd2_zero→global_max': 'D2 zero \u2192 FM (fallback)',
                    }.get(_fp_ref_mode, _fp_ref_mode),
+        'F0_time_ms':  _safe(_f0_time_native * ms),
         'FM_time_ms':  _safe(FM_timings.get(fname)),
         'Area_OJ': _safe(AREAOJ[fname]),  'Area_JI': _safe(AREAJI[fname]),
         'Area_IP': _safe(AREAIP[fname]),  'Area_OP': _safe(AREAOP[fname]),
