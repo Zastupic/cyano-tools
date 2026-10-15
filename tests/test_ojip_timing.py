@@ -37,6 +37,7 @@ from website.OJIP_data_analysis import (  # noqa: E402
     _VALUE_READOUTS,
     _compute_jip_params,
     _read_value_at,
+    _trapz,
     analyze_one_curve,
 )
 
@@ -186,7 +187,7 @@ def test_area_ceiling_is_the_real_fm():
     y = np.asarray(values, dtype=float)
     fm_idx = int(np.argmin(np.abs(t - r["FM_time_ms"])))
     end = fm_idx + 1
-    expected = float(np.max(t[:end]) * np.max(y[:end]) - np.trapezoid(y[:end], t[:end]))
+    expected = float(np.max(t[:end]) * np.max(y[:end]) - _trapz(y[:end], t[:end]))
     assert r["Area_OP"] == pytest.approx(expected, rel=1e-6)
 
 

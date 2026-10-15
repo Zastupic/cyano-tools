@@ -148,6 +148,33 @@ def _bg_correct(sf, x_col, data_cols, mode='auto', n=1, bckg_map=None):
     return sf_out, bg_applied
 
 
+def _basis_correction(values_in, values_out):
+    """Describe how the analysis basis differs from the uploaded transient.
+
+    Returns ``(drop, offset)`` such that
+    ``values_out == values_in[drop:] - offset`` — i.e. the number of leading
+    points removed and the constant background subtracted by ``_bg_correct``.
+    Derived from the actual arrays (not from the mode string), so it cannot
+    drift from what ``_bg_correct`` really did.
+
+    The batch params pass reports these two scalars per curve so the browser
+    can rebuild the exact transient the parameters were computed on (for the
+    multi-curve plots and the curve sheets of the batch export) without
+    shipping every transient back. Exporting the *uncorrected* upload next to
+    background-subtracted FJ/FI/FM made every AquaPen value look off by the
+    11 µs ``Bckg`` reading.
+    """
+    v_in = np.asarray(values_in, dtype=float)
+    v_out = np.asarray(values_out, dtype=float)
+    drop = max(0, len(v_in) - len(v_out))
+    if len(v_out) == 0:
+        return drop, 0.0
+    diff = v_in[drop:drop + len(v_out)] - v_out
+    diff = diff[np.isfinite(diff)]
+    offset = float(np.median(diff)) if diff.size else 0.0
+    return int(drop), (0.0 if abs(offset) < 1e-12 else offset)
+
+
 def _fit_start_index(dn: pd.DataFrame, trim_first: int = 0) -> int:
     """First row index to include when fitting.
 
@@ -2652,6 +2679,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         bckg_map = {fname: bckg} if bckg is not None else None
         sf, bg_applied = _bg_correct(sf, x_col, data_cols,
                                      background_mode, background_n, bckg_map)
+    basis_drop, basis_offset = _basis_correction(values, sf[fname].values)
 
     # ── normalise (mirrors ojip_process lines 419-440) ────────────────────────
     # Always auto-detect F0 first (value at the instrument's reference point).
@@ -3026,6 +3054,10 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         'Q_earlyS_rel': _pq['Q_earlyS_rel'],
         'deriv_timing_used': _deriv_timing_used,
         'value_readout': _vr,
+        # How the analysis basis differs from the uploaded values — see
+        # _basis_correction(). JS rebuilds plotted/exported curves from these.
+        'basis_drop': basis_drop,
+        'basis_offset': _safe(basis_offset),
         **fq,
     }
 

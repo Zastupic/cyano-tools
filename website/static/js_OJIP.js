@@ -1762,9 +1762,7 @@ const MC = (() => {
     // Time axis in ms (log scale).
     // Excel OJIP Imaging: timeUs is already in ms (despite the field name).
     // HandyPEA / CSV:     timeUs is in µs → multiply by 0.001 to get ms.
-    const timeMs = mcDataset.excelMeta
-      ? Array.from(mcDataset.timeUs)
-      : Array.from(mcDataset.timeUs).map(t => t * 0.001);
+    const timeMs = _datasetTimeMs();
 
     // For OJIP Imaging Excel data: trim to OJIP range — Excel files may
     // include slow-kinetics data extending well beyond the OJIP transient.
@@ -1852,7 +1850,8 @@ const MC = (() => {
             // Interpolate the raw curve at this time so the marker sits on the trace
             const curveIdx = _slotToIndex(slot);
             const co = mcDataset.curves.find(c => c.index === curveIdx);
-            if (co && co.values.length === timeMs.length) {
+            const bv = co ? _basisValues(co, pm) : null;
+            if (bv && bv.length === timeMs.length) {
               // Linear interpolation at tMs
               let lo = 0;
               for (let i = 1; i < timeMs.length; i++) {
@@ -1860,11 +1859,13 @@ const MC = (() => {
                 lo = i;
               }
               const hi = Math.min(lo + 1, timeMs.length - 1);
-              if (lo === hi || timeMs[hi] === timeMs[lo]) {
-                rawY = co.values[lo];
+              if (bv[lo] == null || bv[hi] == null) {
+                // inside the dropped background region — keep pm[m.key]
+              } else if (lo === hi || timeMs[hi] === timeMs[lo]) {
+                rawY = bv[lo];
               } else {
                 const frac = (tMs - timeMs[lo]) / (timeMs[hi] - timeMs[lo]);
-                rawY = co.values[lo] + frac * (co.values[hi] - co.values[lo]);
+                rawY = bv[lo] + frac * (bv[hi] - bv[lo]);
               }
             }
           } else {
@@ -1872,9 +1873,11 @@ const MC = (() => {
             const curveIdx = _slotToIndex(slot);
             const co = mcDataset.curves.find(c => c.index === curveIdx);
             if (!co) continue;
+            const bv = _basisValues(co, pm);
             let bestI = 0, bestD = Infinity;
-            for (let i = 0; i < co.values.length && i < timeMs.length; i++) {
-              const d = Math.abs(co.values[i] - rawY);
+            for (let i = 0; i < bv.length && i < timeMs.length; i++) {
+              if (bv[i] == null) continue;
+              const d = Math.abs(bv[i] - rawY);
               if (d < bestD) { bestD = d; bestI = i; }
             }
             tMs = timeMs[bestI];
@@ -2618,22 +2621,99 @@ const MC = (() => {
    */
   function _getNormValues(curveObj, slot, norm) {
     if (norm === undefined) norm = document.getElementById('mc-panel-norm')?.value || 'raw';
-    const raw = curveObj.values;
+    const pm = paramMatrix?.find(r => r.slot === slot);
+    const raw = _basisValues(curveObj, pm);
     if (norm === 'raw') return raw;
 
-    const pm = paramMatrix?.find(r => r.slot === slot);
     if (!pm) return raw;
     const f0 = pm.F0, fm = pm.FM;
     if (f0 == null || fm == null) return raw;
 
-    if (norm === 'shifted_F0') return raw.map(v => v - f0);
-    if (norm === 'shifted_FM') return raw.map(v => v - fm);
+    if (norm === 'shifted_F0') return raw.map(v => v == null ? null : v - f0);
+    if (norm === 'shifted_FM') return raw.map(v => v == null ? null : v - fm);
     if (norm === 'double_norm') {
       const fv = fm - f0;
       if (fv === 0) return raw;
-      return raw.map(v => (v - f0) / fv);
+      return raw.map(v => v == null ? null : (v - f0) / fv);
     }
     return raw;
+  }
+
+  /**
+   * The transient the parameters were actually computed on, index-aligned
+   * with mcDataset.timeUs. The backend reports per curve how it differs from
+   * the upload (`basis_drop` leading points removed, `basis_offset`
+   * subtracted — AquaPen/FluorPen background, see _basis_correction() in
+   * OJIP_data_analysis.py); dropped points come back as null.
+   * Never plot/export curveObj.values next to F0/FJ/FI/FM: for AquaPen they
+   * still contain the 11 µs Bckg reading, so every value is offset by it.
+   */
+  function _basisValues(curveObj, pm) {
+    const drop = (pm && pm.basis_drop) || 0;
+    const off  = (pm && pm.basis_offset) || 0;
+    const out = new Array(curveObj.values.length);
+    for (let i = 0; i < out.length; i++) {
+      const v = curveObj.values[i];
+      out[i] = (i < drop || v == null) ? null : v - off;
+    }
+    return out;
+  }
+
+  /** Shared time axis in ms (OJIPImaging timeUs already holds ms). */
+  function _datasetTimeMs() {
+    return mcDataset.excelMeta
+      ? Array.from(mcDataset.timeUs)
+      : Array.from(mcDataset.timeUs).map(t => t * 0.001);
+  }
+
+  const CURVE_SHEETS = [
+    // [norm key, sheet name] — sheet names match the single-file export
+    ['raw',         'OJIP_raw'],
+    ['shifted_F0',  'OJIP_to_zero'],
+    ['shifted_FM',  'OJIP_to_max'],
+    ['double_norm', 'OJIP_norm'],
+  ];
+
+  /**
+   * Build curve-data sheets (array-of-arrays) for the given paramMatrix rows.
+   * @param {Array}  rows   valid paramMatrix rows (one column each)
+   * @param {Object} which  {raw, shifted_F0, shifted_FM, double_norm, uncorrected}
+   * @returns {Array<{name: string, aoa: Array[]}>}
+   *
+   * Every sheet is on the analysis basis (_basisValues), so interpolating
+   * OJIP_raw at t(FJ) reproduces FJ exactly. `uncorrected` adds the values
+   * as uploaded — only emitted when some curve was actually corrected.
+   * Time rows where every curve is null (dropped background points) are omitted.
+   */
+  function buildCurveSheets(rows, which) {
+    const timeMs = _datasetTimeMs();
+    const cols = [];
+    for (const r of rows) {
+      const co = mcDataset.curves.find(c => c.index === _slotToIndex(r.slot));
+      if (co) cols.push({ r, co, name: r.name || `#${r.slot + 1}` });
+    }
+    const header = ['time_ms', ...cols.map(c => c.name)];
+    const toAoa = (series) => {
+      const aoa = [header];
+      for (let i = 0; i < timeMs.length; i++) {
+        const row = series.map(s => (s[i] != null && isFinite(s[i])) ? s[i] : '');
+        if (row.every(v => v === '')) continue;
+        aoa.push([timeMs[i], ...row]);
+      }
+      return aoa;
+    };
+    const sheets = [];
+    for (const [norm, sheetName] of CURVE_SHEETS) {
+      if (!which[norm]) continue;
+      sheets.push({ name: sheetName,
+                    aoa: toAoa(cols.map(c => _getNormValues(c.co, c.r.slot, norm))) });
+    }
+    const corrected = cols.some(c => (c.r.basis_drop || 0) > 0 || (c.r.basis_offset || 0) !== 0);
+    if (which.uncorrected && corrected) {
+      sheets.push({ name: 'OJIP_uncorrected',
+                    aoa: toAoa(cols.map(c => Array.from(c.co.values))) });
+    }
+    return sheets;
   }
 
   /** Y-axis label for a normalization mode.
@@ -3468,7 +3548,7 @@ const MC = (() => {
     toggleSummaryTable, copySummaryTable, setFlaggedFilter: _setFlaggedFilter,
     onFlagThresholdChange: _onFlagThresholdChange,
     _updateSelCount, slotToIndex: _slotToIndex, slotMeta: _slotMeta,
-    captureAllSummaryCharts,
+    captureAllSummaryCharts, buildCurveSheets,
     // Reference FM
     refFMUpdateUI: _refFMUpdateUI,
     refFMUpdateGroupValues: _refFMUpdateGroupValues,
@@ -7785,6 +7865,18 @@ function _formatMethodInfoText(mi) {
 
 // ── Batch export — client-side rendering + JSZip ──────────────────────
 
+/** Which curve-data sheets go into params_summary.xlsx (batch export modal). */
+function _batchExportCurveSheetChoice() {
+  const on = (id, dflt) => { const el = document.getElementById(id); return el ? el.checked : dflt; };
+  return {
+    raw:         on('be-sheet-raw', true),
+    shifted_F0:  on('be-sheet-shifted-f0', true),
+    shifted_FM:  on('be-sheet-shifted-fm', true),
+    double_norm: on('be-sheet-double-norm', true),
+    uncorrected: on('be-sheet-uncorrected', true),
+  };
+}
+
 async function startBatchExport() {
   const btn = document.getElementById('be-start-btn');
   const progress = document.getElementById('be-progress');
@@ -7831,24 +7923,12 @@ async function startBatchExport() {
     const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
     XLSX.utils.book_append_sheet(wb, ws, 'Parameters');
 
-    // ── OJIP_raw sheet: time (ms) + raw fluorescence per curve ──
+    // ── Curve sheets: time (ms) + one column per curve, per normalisation ──
     if (mcDataset && mcDataset.timeUs) {
-      const timeMs = mcDataset.excelMeta
-        ? Array.from(mcDataset.timeUs)
-        : Array.from(mcDataset.timeUs).map(t => t * 0.001);
-      const rawHeader = ['time_ms'];
-      const rawCols = [];           // each entry = array of values for one curve
-      for (const r of validRows) {
-        const dc = mcDataset.curves.find(c => c.index === MC.slotToIndex(r.slot));
-        if (!dc) continue;
-        rawHeader.push(r.name || `#${r.slot + 1}`);
-        rawCols.push(dc.values);
+      _setProgress(3, 'Writing curve data sheets...');
+      for (const { name, aoa } of MC.buildCurveSheets(validRows, _batchExportCurveSheetChoice())) {
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), name);
       }
-      const rawRows = timeMs.map((t, i) => [
-        t, ...rawCols.map(col => col[i] != null ? col[i] : '')
-      ]);
-      const rawWs = XLSX.utils.aoa_to_sheet([rawHeader, ...rawRows]);
-      XLSX.utils.book_append_sheet(wb, rawWs, 'OJIP_raw');
     }
 
     const mi = _collectMethodInfo();

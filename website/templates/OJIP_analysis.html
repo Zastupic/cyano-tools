@@ -3041,6 +3041,16 @@
           <div class="d-block mb-1"><i class="fa fa-check text-success mr-1"></i>Grouped panels (one per group value)</div>
           <div class="d-block mb-1"><i class="fa fa-check text-success mr-1"></i>Aggregate curves chart</div>
         </div>
+        <p class="mb-1 font-weight-bold">Curve data sheets in the parameter table (.xlsx):</p>
+        <small class="text-muted d-block mb-1">One column per curve, time (ms) in column A &mdash; on the same
+          (background-corrected) basis as F<sub>0</sub>/F<sub>J</sub>/F<sub>I</sub>/F<sub>M</sub>.</small>
+        <div class="mb-2 ml-2" style="font-size:0.93em;">
+          <label class="d-block mb-1"><input type="checkbox" id="be-sheet-raw" checked> Raw (<code>OJIP_raw</code>)</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-sheet-shifted-f0" checked> Shifted to F<sub>0</sub>, F&minus;F<sub>0</sub> (<code>OJIP_to_zero</code>)</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-sheet-shifted-fm" checked> Shifted to F<sub>M</sub>, F&minus;F<sub>M</sub> (<code>OJIP_to_max</code>)</label>
+          <label class="d-block mb-1"><input type="checkbox" id="be-sheet-double-norm" checked> Double-normalised, (F&minus;F<sub>0</sub>)/(F<sub>M</sub>&minus;F<sub>0</sub>) (<code>OJIP_norm</code>)</label>
+          <label class="d-block mb-1" title="Only written when a background was subtracted / points dropped (AquaPen/FluorPen)"><input type="checkbox" id="be-sheet-uncorrected" checked> As uploaded, before background correction (<code>OJIP_uncorrected</code>)</label>
+        </div>
         <p class="mb-2 font-weight-bold">Optional &mdash; individual curve plots:</p>
         <div class="mb-2 ml-2" style="font-size:0.93em;">
           <label class="d-block mb-1"><input type="checkbox" id="be-raw"> Raw</label>
