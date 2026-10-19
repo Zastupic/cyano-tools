@@ -3,7 +3,7 @@ import os
 import base64
 import io
 import zipfile
-from typing import cast
+from typing import cast, overload, Optional, Union
 import pandas as pd
 import numpy as np
 from openpyxl.drawing.image import Image
@@ -1539,6 +1539,10 @@ def _balance_knot_density(x_log, knots_log, lo, hi,
     return knots_sorted
 
 
+@overload
+def _extend_boundary(x, y, n_ext: int = ..., w: None = ...) -> tuple[np.ndarray, np.ndarray]: ...
+@overload
+def _extend_boundary(x, y, n_ext: int = ..., *, w: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
 def _extend_boundary(x, y, n_ext=2, w=None):
     """Add virtual points at both boundaries via linear extrapolation.
 
@@ -2263,11 +2267,11 @@ _FJFI_METHOD_LABELS = {
 }
 
 
-def _build_ref_label(mode, detect_status, user_ms, fallback_ms):
+def _build_ref_label(mode: str, detect_status: str, user_ms, fallback_ms) -> str:
     """Build a human-readable detection-method label for FJ_ref / FI_ref."""
     if detect_status == 'missing':
         return _FJFI_METHOD_LABELS.get(mode, mode) + ' \u2192 not detected'
-    label = _FJFI_METHOD_LABELS.get(mode, mode)
+    label: str = _FJFI_METHOD_LABELS.get(mode, mode)
     if detect_status == 'fallback':
         label += ' \u2192 fallback ({:.1f} ms)'.format(fallback_ms)
     elif mode != 'fixed' and user_ms == fallback_ms:
@@ -2387,7 +2391,7 @@ def _detect_pq_transition(recon_vals, log_time_native, ms_factor,
     dict — Q point and early-S parameters in raw fluorescence units.
     PQ_rel / P_earlyS_rel are normalised to FV (FM − F0).
     """
-    null_result = {
+    null_result: dict[str, Optional[Union[float, str]]] = {
         'FQ': None, 'FQ_time_ms': None,
         'slope_PQ': None, 'PQ_amplitude': None, 'PQ_rel': None,
         'FQ_ref': None,
