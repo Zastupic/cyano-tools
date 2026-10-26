@@ -643,12 +643,17 @@
       <span class="text-muted ml-2" style="opacity:0.8;">Independent axes, shown separately in the Time-series table &amp; plot. Lower a cutoff until only genuinely-bad curves flag.</span>
     </div>
 
+    <!-- Batch HTTP error banner (yellow, prominent — shown when curves fail to load) -->
+    <div id="mc-error-alert" class="alert alert-warning py-1 px-2 mt-1 mb-0 d-flex align-items-center" style="display:none; font-size:0.92em;">
+      <span id="mc-error-text" class="mr-2"></span>
+      <button class="btn btn-sm btn-outline-warning py-0" id="mc-retry-btn"
+              onclick="mcRetryFailed()">Retry failed curves</button>
+      <span id="mc-retry-status" class="ml-2 text-muted" style="font-size:0.9em;"></span>
+    </div>
+
     <!-- Fit-quality summary line (muted, not an alert box) -->
     <div id="mc-fit-quality-alert" class="text-muted mt-1" style="display:none">
       <span id="mc-fit-quality-text"></span>
-      <button class="btn btn-sm btn-outline-secondary ml-2 py-0" id="mc-refit-batch-btn"
-              onclick="mcRefitBatch()">Refit all with selected method</button>
-      <span id="mc-refit-batch-status" class="ml-2 text-muted" style="font-size:0.95em;"></span>
     </div>
 
     <!-- Timing-confidence summary line -->

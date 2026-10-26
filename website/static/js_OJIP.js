@@ -512,7 +512,8 @@ const MC = (() => {
         };
 
         let res;
-        for (let attempt = 0; attempt < 2; attempt++) {
+        const MAX_RETRIES = 4;
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
           try {
             const resp = await fetch('/api/ojip_process_batch', {
               method: 'POST',
@@ -529,19 +530,18 @@ const MC = (() => {
             break;
           } catch(e) {
             if (mcAbort.signal.aborted) return;
-            if (attempt === 1) {
-              // Mark entire batch as errored
+            if (attempt === MAX_RETRIES - 1) {
+              // Mark entire batch as errored — worker continues to next batch
+              console.error(`[runParamsPass] batch ${batchIdx} FAILED after ${MAX_RETRIES} attempts. Slots: ${batch.map(c=>c.slot).join(',')}. Error:`, e.message);
               for (const c of batch) {
-                paramMatrix[c.slot] = { slot: c.slot, name: c.name, error: e.message };
+                paramMatrix[c.slot] = { slot: c.slot, name: c.name, error: e.message, error_type: 'http' };
               }
-              done += batch.length;
-              _showProgress(done, allCurves.length);
-              return;
+              break;
             }
-            // Wait longer on rate-limit (429) responses
+            // Exponential backoff; much longer on rate-limit (429) responses
             const isRateLimit = e.message && e.message.includes('429');
-            const delay = isRateLimit ? 5000 + Math.random() * 3000
-                                      : 1000 + Math.random() * 1000;
+            const base = isRateLimit ? 8000 : 2000;
+            const delay = base * (attempt + 1) + Math.random() * 2000;
             await new Promise(r => setTimeout(r, delay));
           }
         }
@@ -552,6 +552,8 @@ const MC = (() => {
         done += batch.length;
         _showProgress(done, allCurves.length);
         _appendTimeSeriesPoints(res?.results || []);
+        // Throttle between batches — 500ms keeps 3 workers under 5 req/sec
+        await new Promise(r => setTimeout(r, 500));
       }
     }
 
@@ -3618,7 +3620,7 @@ const MC = (() => {
     parseExcel, showExcelSelectionModal, resolveExcelDataset,
     applyExcelFilters, clearExcelFilters,
     selectAll, deselectAll, selectRange, applyDupMode,
-    getSelectedIndices, getNamingScheme,
+    getSelectedIndices, getNamingScheme, getCurveName,
     runParamsPass, cancelBatch,
     renderTimeSeries, renderAggregateCurves, renderGroupedPanels, renderComparison,
     curvesPagePrev, curvesPageNext,
@@ -5354,8 +5356,8 @@ async function mcStartAnalysis() {
     const errors = result.filter(r => r && r.error).length;
     const ok = result.filter(r => r && !r.error).length;
     document.getElementById('results-summary').textContent =
-      `Multi-curve analysis complete — ${ok} curves analyzed` +
-      (errors ? `, ${errors} errors` : '') +
+      `Multi-curve analysis complete — ${ok} curve${ok !== 1 ? 's' : ''} analyzed` +
+      (errors ? `, ${errors} error${errors !== 1 ? 's' : ''}` : '') +
       ` — ${mcDataset.filename}`;
 
     // Batch quality banners (fit + timing confidence)
@@ -6426,25 +6428,86 @@ function _updateFitQualityBadge() {
   }
 }
 
-// Percentile of a numeric array (nearest-rank).
-function _pctl(arr, p) {
-  if (!arr.length) return null;
-  const s = [...arr].sort((a, b) => a - b);
-  return s[Math.min(s.length - 1, Math.max(0, Math.round(p * (s.length - 1))))];
-}
-
 // ── batch quality banners (OJIPImaging overview) ──────────────────────────
 // One responsive banner per flag axis. Both read the same tunable cutoffs the
 // Time-series table/plot use, so the three surfaces always agree.
 function _updateBatchQualityAlerts(result) {
   const panel = document.getElementById('mc-flag-panel');
-  const valid = (result || []).filter(r => r && !r.error);
+  const all   = (result || paramMatrix || []);
+  const valid = all.filter(r => r && !r.error);
   // The panel (cutoff inputs) stays visible whenever there are batch results,
   // even at zero flags, so the user can always adjust the thresholds.
   if (panel) panel.style.display = valid.length ? '' : 'none';
 
+  _updateErrorBanner(all);
   _updateFitBanner(valid);
   _updateConfBanner(valid);
+}
+
+function _updateErrorBanner(all) {
+  const alert  = document.getElementById('mc-error-alert');
+  const text   = document.getElementById('mc-error-text');
+  const btn    = document.getElementById('mc-retry-btn');
+  const status = document.getElementById('mc-retry-status');
+  if (!alert || !text) return;
+
+  const total  = (all || []).length;
+  const errors = (all || []).filter(r => r && r.error);
+
+  // Swap alert variant: remove any alert-* colour, apply the new one
+  const _setAlertVariant = (variant) => {
+    alert.className = alert.className.replace(/alert-(warning|success|light|info)/g, '').trim()
+                      + ' alert-' + variant;
+  };
+
+  if (errors.length === 0) {
+    // Success: green confirmation, hide the retry button
+    text.innerHTML = `&#10003; All ${total} curves loaded &amp; analyzed.`;
+    if (btn)    btn.style.display = 'none';
+    if (status) status.textContent = '';
+    _setAlertVariant('success');
+    alert.style.display = '';
+    return;
+  }
+
+  // Split errors by type: HTTP (retryable) vs analysis (server processed but failed)
+  const httpErrors     = errors.filter(r => r.error_type === 'http');
+  const analysisErrors = errors.filter(r => r.error_type !== 'http');
+
+  const parts = [];
+  if (httpErrors.length > 0) {
+    const n = httpErrors.length;
+    parts.push(`${n} failed to load (network error — retryable)`);
+  }
+  if (analysisErrors.length > 0) {
+    const n = analysisErrors.length;
+    const msgs = [...new Set(analysisErrors.map(r => (r.error || '').replace(/\.+$/, '')))];
+    const detail = msgs.length === 1
+      ? `: ${msgs[0]}`
+      : ` (${msgs.length} distinct errors)`;
+    parts.push(`${n} could not be analyzed${detail}`);
+  }
+  // When all errors are one type, avoid repeating the count
+  const prefix = `${errors.length} / ${total} curve${errors.length > 1 ? 's' : ''}`;
+  if (parts.length === 1 && errors.length === (httpErrors.length || analysisErrors.length)) {
+    // Single type: "1 / 901 curves — could not be analyzed: ..."
+    const desc = parts[0].replace(/^\d+ /, '');
+    text.innerHTML = `${prefix} ${desc}.`;
+  } else {
+    text.innerHTML = `${prefix} — ${parts.join('; ')}.`;
+  }
+
+  // Show retry button only when there are retryable (HTTP) errors
+  if (btn) {
+    if (httpErrors.length > 0) {
+      btn.style.display = ''; btn.disabled = false;
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+  if (status) status.textContent = '';
+  _setAlertVariant('warning');
+  alert.style.display = '';
 }
 
 function _updateFitBanner(valid) {
@@ -6461,28 +6524,13 @@ function _updateFitBanner(valid) {
 
   if (poor === 0) { alert.style.display = 'none'; return; }
 
-  const method = _lastJipOpts.fitMethod || 'logspline';
-  const methodLabel = method === 'logspline' ? 'Log-time spline'
-                    : method === 'pchip'     ? 'PCHIP'
-                    : 'Standard spline';
-  const suggParts = [];
-  if (method === 'spline') { suggParts.push('Log-time spline'); suggParts.push('PCHIP'); }
-  else if (method === 'logspline') { suggParts.push('PCHIP'); }
-  const sugg = suggParts.length ? ` Consider trying ${suggParts.join(' or ')}.` : '';
+  const isBatch = valid.length > 1;
+  const guidance = isBatch
+    ? ' Click a flagged curve in the Time-series plot to open the Diagnostics tab, where you can change the fitting method and refit.'
+    : ' Open the Diagnostics tab to inspect the fit and try a different fitting method.';
 
-  const r2s    = valid.map(r => r.fit_r2).filter(v => v != null);
-  const nrmses = valid.map(r => r.fit_nrmse).filter(v => v != null);
-  const parts = [];
-  if (r2s.length)    parts.push(`R² median ${_pctl(r2s, 0.5).toFixed(4)}, p10 ${_pctl(r2s, 0.1).toFixed(4)} (poor &lt; ${r2Thresh})`);
-  if (nrmses.length) parts.push(`nRMSE median ${(_pctl(nrmses, 0.5) * 100).toFixed(2)}%, p90 ${(_pctl(nrmses, 0.9) * 100).toFixed(2)}%`);
-  const distLine = parts.length
-    ? `<br><span style="font-size:0.85em; opacity:0.85;">Batch distribution: ${parts.join('; ')}. Per-curve values are in the Time-series table.</span>`
-    : '';
-
-  text.innerHTML = `<span style="color:#b06a62;">&#9650;&nbsp;fit</span> — ${poor} / ${valid.length} curves have lower-quality ${methodLabel} fit.${sugg}${distLine}`;
+  text.innerHTML = `<span style="color:#b06a62;">&#9650;&nbsp;fit</span> — ${poor} / ${valid.length} curve${poor > 1 ? 's have' : ' has'} a lower-quality spline fit (R² below threshold).${guidance}`;
   alert.style.display = '';
-  const st = document.getElementById('mc-refit-batch-status');
-  if (st) st.textContent = '';
 }
 
 function _updateConfBanner(valid) {
@@ -6498,21 +6546,20 @@ function _updateConfBanner(valid) {
 
   if (low === 0) { alert.style.display = 'none'; return; }
 
-  const distLine = mins.length
-    ? `<br><span style="font-size:0.85em; opacity:0.85;">Batch distribution: min FJ/FI/FP confidence median ${_pctl(mins, 0.5).toFixed(3)}, p10 ${_pctl(mins, 0.1).toFixed(3)} (low &lt; ${confThresh}). Low confidence flags an ambiguous J/I/P pick to review — not necessarily a wrong one. Per-curve values are in the Time-series table.</span>`
-    : '';
+  const isBatch = valid.length > 1;
+  const guidance = isBatch
+    ? ' This flags an ambiguous J-, I-, or P-step pick to review — not necessarily a wrong one. Click a flagged curve in the Time-series plot to inspect its timing.'
+    : ' This flags an ambiguous J-, I-, or P-step pick to review — not necessarily a wrong one. Inspect the curve in the Diagnostics tab.';
 
-  text.innerHTML = `<span style="color:#b8923f;">&#9679;&nbsp;conf</span> — ${low} / ${valid.length} curves have lower timing confidence.${distLine}`;
+  text.innerHTML = `<span style="color:#b8923f;">&#9679;&nbsp;conf</span> — ${low} / ${valid.length} curve${low > 1 ? 's have' : ' has'} lower J/I/P detection confidence (below threshold).${guidance}`;
   alert.style.display = '';
 }
 
 // ── batch refit for OJIPImaging (full re-analysis with new fit method) ────
 async function mcRefitBatch() {
-  const btn    = document.getElementById('mc-refit-batch-btn');
-  const status = document.getElementById('mc-refit-batch-status');
+  const btn    = document.querySelector('#refit-all-wrap button');
   const statusDiag = document.getElementById('mc-refit-status-diag');
   const _setStatus = (msg) => {
-    if (status) status.textContent = msg;
     if (statusDiag) statusDiag.textContent = msg;
   };
   if (!mcDataset || !_lastSelected.length) return;
@@ -6567,13 +6614,13 @@ async function mcRefitBatch() {
       document.getElementById('mc-excel-bg-mode')?.value);
   }
 
-  btn.disabled = true;
+  if (btn) btn.disabled = true;
   _setStatus(`Refitting ${_lastSelected.length} curves with ${fitMethod}…`);
 
   const result = await MC.runParamsPass(mcDataset, _lastSelected, jipOpts);
   if (!result) {
     _setStatus('Refit cancelled.');
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
     return;
   }
 
@@ -6612,7 +6659,176 @@ async function mcRefitBatch() {
     }
   }
   _setStatus(statusMsg);
-  btn.disabled = false;
+  if (btn) btn.disabled = false;
+}
+
+// ── Retry failed curves ──────────────────────────────────────────────────
+async function mcRetryFailed() {
+  if (!mcDataset || !paramMatrix) return;
+  const btn    = document.getElementById('mc-retry-btn');
+  const status = document.getElementById('mc-retry-status');
+  const _setStatus = (msg) => { if (status) status.textContent = msg; };
+
+  if (btn) btn.disabled = true;
+
+  const jipOpts = _lastJipOpts || {};
+  const MAX_ROUNDS = 5;    // outer rounds — each round processes all remaining failures
+  let totalRecovered = 0;
+
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    // Collect retryable (HTTP-level) failed slots
+    const failedSlots = [];
+    for (let i = 0; i < paramMatrix.length; i++) {
+      if (paramMatrix[i] && paramMatrix[i].error && paramMatrix[i].error_type === 'http') {
+        failedSlots.push(i);
+      }
+    }
+    if (failedSlots.length === 0) break;
+
+    // Cooldown: 15s first round, 30s on subsequent rounds (rate limit is per-minute)
+    const cooldown = round === 0 ? 15000 : 30000;
+    for (let t = Math.round(cooldown / 1000); t > 0; t--) {
+      _setStatus(`${failedSlots.length} curves remaining — waiting ${t}s for rate limit to clear (round ${round + 1}/${MAX_ROUNDS})…`);
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    // Build curve entries
+    let allCurves;
+    try {
+      const scheme = MC.getNamingScheme();
+      allCurves = failedSlots.map(slot => {
+        const idx = MC.slotToIndex(slot);
+        const c   = mcDataset.curves.find(x => x.index === idx);
+        if (!c) throw new Error(`Curve not found for slot ${slot} (index ${idx})`);
+        return {
+          slot: slot,
+          name: MC.getCurveName(c, mcDataset, scheme),
+          values: Array.from(c.values),
+          bckg: (c.bckg != null ? c.bckg : null),
+          fo_footer: (c.foFooter != null ? c.foFooter : null),
+        };
+      });
+    } catch(e) {
+      console.error('mcRetryFailed: failed to build curve entries', e);
+      _setStatus(`Error preparing retry: ${e.message}`);
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    // Send one curve at a time with generous spacing
+    let roundRecovered = 0;
+    for (let i = 0; i < allCurves.length; i++) {
+      const curve = allCurves[i];
+      _setStatus(`Round ${round + 1}: retrying curve ${i + 1}/${allCurves.length}…`);
+
+      const body = {
+        fluorometer: mcDataset.fluorometer,
+        time_native: Array.from(mcDataset.timeUs),
+        curves: [curve],
+        FJ_time: jipOpts.FJ_time || 2.0,
+        FI_time: jipOpts.FI_time || 30.0,
+        knots_reduction_factor: jipOpts.kr || 10,
+        fit_method:        jipOpts.fitMethod || 'logspline',
+        trim_first:        jipOpts.trimFirst || 0,
+        trim_last:         jipOpts.trimLast  || 0,
+        background_mode:   jipOpts.bgMode || 'auto',
+        background_n:      jipOpts.bgN || 1,
+        f0_source:         jipOpts.f0Source || 'instrument',
+        knot_placement:    jipOpts.knotPlacement || 'hybrid',
+        oj_densify:        jipOpts.ojDensify || false,
+        oj_model:          jipOpts.ojModel || 'exponential',
+        oj_model_params:   jipOpts.ojModelParams || null,
+        f0_time_ms:        jipOpts.f0TimMs || null,
+        use_deriv_timing:  jipOpts.useDerivTiming || false,
+        value_readout:     jipOpts.valueReadout || 'interp',
+        allow_missing:     true,
+        fj_detect_mode:    jipOpts.fjDetectMode || 'fixed',
+        fi_detect_mode:    jipOpts.fiDetectMode || 'fixed',
+        fj_fallback_ms:    jipOpts.fjFallbackMs || 2.0,
+        fi_fallback_ms:    jipOpts.fiFallbackMs || 30.0,
+        fj_logdec:         jipOpts.fjLogdec || 0.3,
+        fi_logdec:         jipOpts.fiLogdec || 0.3,
+        fp_expected_ms:    jipOpts.fpExpectedMs || 316.0,
+        fp_logdec:         jipOpts.fpLogdec || 0.5,
+        fq_expected_ms:    jipOpts.fqExpectedMs || 1500.0,
+        fq_logdec:         jipOpts.fqLogdec || 0.3,
+        s_point_mode:      jipOpts.sPointMode || 'd2_min',
+        p_point_mode:      jipOpts.pPointMode || 'd2_min',
+        include_curves: false,
+      };
+
+      // Per-curve retry: up to 3 attempts with escalating delays
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          console.log(`[mcRetry] round=${round+1} curve=${i+1}/${allCurves.length} slot=${curve.slot} name="${curve.name}" attempt=${attempt+1}/3 — sending…`);
+          const t0 = performance.now();
+          const resp = await fetch('/api/ojip_process_batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          const elapsed = Math.round(performance.now() - t0);
+          console.log(`[mcRetry] response: status=${resp.status} ok=${resp.ok} elapsed=${elapsed}ms`);
+          if (!resp.ok) {
+            const txt = await resp.text().catch(() => '');
+            console.log(`[mcRetry] error body (300 chars):`, txt.slice(0, 300));
+            throw new Error(`HTTP ${resp.status}: ${resp.statusText} ${txt.slice(0, 200)}`);
+          }
+          const res = await resp.json();
+          console.log(`[mcRetry] success — ${res?.results?.length} results:`,
+            res?.results?.map(r => ({ slot: r.slot, error: r.error || null, FVFM: r.FVFM })));
+          if (res && res.results) {
+            for (const r of res.results) {
+              if (!r.error) {
+                paramMatrix[r.slot] = r;
+                roundRecovered++;
+              } else {
+                // Server-side analysis error — not retryable
+                paramMatrix[r.slot] = r;
+              }
+            }
+          }
+          break; // success — exit attempt loop
+        } catch(e) {
+          console.warn(`[mcRetry] attempt ${attempt+1} FAILED slot=${curve.slot}:`, e.message);
+          if (attempt < 2) {
+            const delay = (attempt + 1) * 10000; // 10s, 20s
+            _setStatus(`Rate-limited on curve ${i + 1} — waiting ${delay / 1000}s (attempt ${attempt + 2}/3)…`);
+            await new Promise(r => setTimeout(r, delay));
+          }
+          // final attempt fails → curve stays as HTTP error for next round
+        }
+      }
+
+      // 1s between individual curve requests
+      if (i < allCurves.length - 1) {
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+
+    totalRecovered += roundRecovered;
+    _setStatus(`Round ${round + 1} done: ${roundRecovered} recovered this round, ${totalRecovered} total.`);
+
+    // Refresh UI after each round so user sees partial progress
+    _updateBatchQualityAlerts(paramMatrix);
+    MC.renderTimeSeries();
+    markTabsDirty('tab-diag', 'tab-params', 'tab-curves');
+    if (hasGroups()) markTabsDirty('tab-groups');
+
+    // Check if all resolved
+    const stillFailed = paramMatrix.filter(r => r && r.error && r.error_type === 'http').length;
+    if (stillFailed === 0) break;
+  }
+
+  // Final status
+  const httpRemaining     = paramMatrix.filter(r => r && r.error && r.error_type === 'http').length;
+  const analysisRemaining = paramMatrix.filter(r => r && r.error && r.error_type !== 'http').length;
+  const parts = [];
+  if (totalRecovered > 0) parts.push(`${totalRecovered} recovered`);
+  if (httpRemaining > 0) parts.push(`${httpRemaining} still failed after ${MAX_ROUNDS} rounds`);
+  if (analysisRemaining > 0) parts.push(`${analysisRemaining} could not be analyzed`);
+  _setStatus(parts.length ? parts.join(', ') + '.' : 'All curves recovered.');
+  if (btn) btn.disabled = false;
 }
 
 // ── F0 override warning/note ──────────────────────────────────────────────

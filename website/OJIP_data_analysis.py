@@ -16,6 +16,7 @@ from scipy.signal import find_peaks
 from . import UPLOAD_FOLDER, csrf, limiter
 from werkzeug.utils import secure_filename
 from .ojip_interpretation import interpret_ojip, generate_narrative, summarise_findings, compare_ojip_params
+import math as _math
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -28,6 +29,21 @@ OJIP_data_analysis = Blueprint('OJIP_data_analysis', __name__)
 _trapz = getattr(np, 'trapezoid', None) or np.trapz
 
 # ─── helpers ────────────────────────────────────────────────────────────────
+
+def _sanitise_json(obj):
+    """Recursively replace float NaN / Infinity with None for JSON safety.
+
+    Python's ``json.dumps`` emits bare ``NaN`` / ``Infinity`` tokens which are
+    invalid JSON and crash ``JSON.parse`` in the browser.
+    """
+    if isinstance(obj, dict):
+        return {k: _sanitise_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitise_json(v) for v in obj]
+    if isinstance(obj, float) and (_math.isnan(obj) or _math.isinf(obj)):
+        return None
+    return obj
+
 
 def _imin(s: 'pd.Series') -> int:
     """``s.idxmin()`` as int — our DataFrames always have integer index."""
@@ -938,7 +954,8 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
                  D1_DF=None,
                  three_exp_results=None,
                  piecewise_results=None,
-                 gaussian_d1_results=None):
+                 gaussian_d1_results=None,
+                 allow_missing=False):
     """
     Identify FJ/FI/FP timings using one of several detection strategies.
 
@@ -1039,6 +1056,8 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
         pos, cf = _select_d2_min_pos(d2_seg.values, t_seg.values,
                                      expect=expect_map[key], after=prev_t)
         if pos < 0:
+            if allow_missing:
+                return float('nan'), 0.0
             raise ValueError(
                 'Could not identify phase timing — check data integrity.')
         return float(t_seg.iloc[pos]), cf
@@ -1093,11 +1112,14 @@ def _find_fjfifp(D2_DF, D3_DF, x_col, ranges, file_names, Infl_DF,
             prev_t = tv
 
             # D2 depth at the resolved trough time
-            lo_w, hi_w = windows[key]
-            d2_seg_w = d2_col.loc[lo_w:hi_w]
-            t_seg_w  = t.loc[lo_w:hi_w]
-            _nearest = int(np.argmin(np.abs(t_seg_w.values - tv)))
-            depths[key].append(float(d2_seg_w.iloc[_nearest]))
+            if np.isnan(tv):
+                depths[key].append(float('nan'))
+            else:
+                lo_w, hi_w = windows[key]
+                d2_seg_w = d2_col.loc[lo_w:hi_w]
+                t_seg_w  = t.loc[lo_w:hi_w]
+                _nearest = int(np.argmin(np.abs(t_seg_w.values - tv)))
+                depths[key].append(float(d2_seg_w.iloc[_nearest]))
 
         # Store method-specific visualisation data per curve
         if method == 'three_exp' and three_exp_results:
@@ -2762,7 +2784,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
                      D1_DF=D1_DF,
                      three_exp_results=three_exp_res,
                      piecewise_results=piecewise_res,
-                     gaussian_d1_results=gauss_d1_res)
+                     gaussian_d1_results=gauss_d1_res,
+                     allow_missing=allow_missing)
 
     # ── D2 zero-crossing times for FJ / FI ──────────────────────────────────
     _fj_d2z = _d2_zero_in_window(Infl_DF, fname, ranges['FJ'][0], ranges['FJ'][1],
@@ -3391,7 +3414,8 @@ def ojip_process():
             D1_DF=D1_DF,
             three_exp_results=three_exp_res_proc,
             piecewise_results=piecewise_res_proc,
-            gaussian_d1_results=gauss_d1_res_proc)
+            gaussian_d1_results=gauss_d1_res_proc,
+            allow_missing=allow_missing_proc)
     except ValueError:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
@@ -3752,7 +3776,7 @@ def ojip_process():
                 key_values[fname][f'gauss_sigma_{g+1}']     = _me_proc['sigmas'][g]     if g < len(_me_proc.get('sigmas', []))     else None
                 key_values[fname][f'gauss_amp_{g+1}']       = _me_proc['amplitudes'][g] if g < len(_me_proc.get('amplitudes', [])) else None
 
-    return jsonify({
+    return jsonify(_sanitise_json({
         'status':      'success',
         'fluorometer': fluorometer,
         'kr':          kr,
@@ -3764,7 +3788,7 @@ def ojip_process():
         'time_log_ms': time_log_ms,
         'curves':      curves,
         'key_values':  key_values,
-    })
+    }))
 
 
 @OJIP_data_analysis.route('/api/ojip_refit', methods=['POST'])
@@ -3872,7 +3896,8 @@ def ojip_refit():
             D1_DF=D1_DF,
             three_exp_results=three_exp_res_r,
             piecewise_results=piecewise_res_r,
-            gaussian_d1_results=gauss_d1_res_r)
+            gaussian_d1_results=gauss_d1_res_r,
+            allow_missing=allow_missing_refit)
     except ValueError:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 400
@@ -4102,7 +4127,7 @@ def ojip_refit():
     }
     if densify_info:
         resp['densify_info'] = densify_info
-    return jsonify(resp)
+    return jsonify(_sanitise_json(resp))
 
 
 @OJIP_data_analysis.route('/api/ojip_add_charts', methods=['POST'])
@@ -4332,7 +4357,7 @@ def ojip_interpret():
         if narrative is None:
             narrative = summarise_findings(comparison_findings)
 
-        return jsonify({
+        return jsonify(_sanitise_json({
             'status':               'success',
             'findings':             comparison_findings,   # backward-compat: comparison context embedded
             'sample_findings':      sample_findings,
@@ -4342,7 +4367,7 @@ def ojip_interpret():
             'narrative':            narrative,
             'has_reference':        reference is not None,
             'comparison_paragraph': comparison_paragraph,
-        })
+        }))
     except Exception:
         import traceback; traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'An internal server error occurred.'}), 500
@@ -4454,45 +4479,65 @@ def ojip_process_batch():
         vals = c.get('values', [])
         bckg = c.get('bckg', None)
         fo_footer = c.get('fo_footer', None)
+        _common_kw = dict(
+            include_curves=include,
+            fit_method=fit_method,
+            trim_first=trim_first,
+            trim_last=trim_last,
+            background_mode=background_mode,
+            background_n=background_n,
+            f0_source=f0_source,
+            bckg=bckg,
+            fo_footer=fo_footer,
+            knot_placement=knot_placement,
+            oj_densify=oj_densify,
+            oj_model=oj_model,
+            oj_model_params=oj_model_params,
+            f0_time_ms=f0_time_ms,
+            use_deriv_timing=use_deriv_timing,
+            s_point_mode=s_point_mode,
+            p_point_mode=p_point_mode,
+            fjfi_detect_mode=fjfi_detect_mode,
+            fj_detect_mode=fj_detect_mode,
+            fi_detect_mode=fi_detect_mode,
+            fj_fallback_ms=fj_fallback_ms,
+            fi_fallback_ms=fi_fallback_ms,
+            fj_logdec=fj_logdec,
+            fi_logdec=fi_logdec,
+            fp_expected_ms=fp_expected_ms,
+            fp_logdec=fp_logdec,
+            fq_expected_ms=fq_expected_ms,
+            fq_logdec=fq_logdec,
+            value_readout=value_readout,
+        )
         try:
             r = analyze_one_curve(
                 time_arr, vals, name, fluorometer,
                 fj_time_ms, fi_time_ms, kr,
-                include_curves=include,
-                fit_method=fit_method,
-                trim_first=trim_first,
-                trim_last=trim_last,
-                background_mode=background_mode,
-                background_n=background_n,
-                f0_source=f0_source,
-                bckg=bckg,
-                fo_footer=fo_footer,
-                knot_placement=knot_placement,
-                oj_densify=oj_densify,
-                oj_model=oj_model,
-                oj_model_params=oj_model_params,
-                f0_time_ms=f0_time_ms,
-                use_deriv_timing=use_deriv_timing,
-                s_point_mode=s_point_mode,
-                p_point_mode=p_point_mode,
-                fjfi_detect_mode=fjfi_detect_mode,
-                fj_detect_mode=fj_detect_mode,
-                fi_detect_mode=fi_detect_mode,
-                fj_fallback_ms=fj_fallback_ms,
-                fi_fallback_ms=fi_fallback_ms,
-                fj_logdec=fj_logdec,
-                fi_logdec=fi_logdec,
-                fp_expected_ms=fp_expected_ms,
-                fp_logdec=fp_logdec,
-                fq_expected_ms=fq_expected_ms,
-                fq_logdec=fq_logdec,
-                value_readout=value_readout,
                 allow_missing=allow_missing,
+                **_common_kw,
             )
             r['slot'] = slot
             r['name'] = name
             results.append(r)
         except Exception as exc:
+            if not allow_missing:
+                # Retry once with allow_missing=True so timing failures
+                # produce NaN instead of killing the curve entirely.
+                try:
+                    r = analyze_one_curve(
+                        time_arr, vals, name, fluorometer,
+                        fj_time_ms, fi_time_ms, kr,
+                        allow_missing=True,
+                        **_common_kw,
+                    )
+                    r['slot'] = slot
+                    r['name'] = name
+                    r['allow_missing_recovered'] = True
+                    results.append(r)
+                    continue
+                except Exception:
+                    pass   # fall through to original error
             import traceback
             current_app.logger.error(
                 'ojip_process_batch: curve %s (slot %d) failed:\n%s',
@@ -4500,7 +4545,7 @@ def ojip_process_batch():
             results.append({'slot': slot, 'name': name,
                             'error': str(exc)})
 
-    return jsonify({'status': 'success', 'results': results})
+    return jsonify({'status': 'success', 'results': _sanitise_json(results)})
 
 
 # ─── Handy PEA .HAN parser endpoint ──────────────────────────────────────

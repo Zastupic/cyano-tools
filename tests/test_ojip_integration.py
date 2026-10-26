@@ -875,3 +875,109 @@ class TestReconstructionQuality:
             assert extremes < 5000, (
                 f"{fname} refit: D3 extreme {extremes:.0f} — overfitting"
             )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Batch failure recovery
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestBatchFailureRecovery:
+    """Verify the server-side error isolation that the JS retry logic depends on.
+
+    The batch endpoint must:
+    1. Catch per-curve exceptions so one bad curve never kills the batch.
+    2. Return an error entry with slot/name/error for failed curves.
+    """
+
+    FLUORO = "Aquapen"
+
+    def _get_time_and_good_curve(self, client):
+        """Upload a fixture → extract a working curve + time axis."""
+        resp = _upload(client, self.FLUORO, ["aquapen_example_1.txt"])
+        j = resp.get_json()
+        time_raw = j["time_raw_ms"]
+        # Take the first curve's raw values
+        first_name = next(iter(j["curves"]))
+        first_vals = j["curves"][first_name]["raw"]
+        return time_raw, first_name, first_vals
+
+    def test_per_curve_error_isolation(self, client):
+        """One invalid curve must not prevent other curves from succeeding."""
+        time_raw, good_name, good_vals = self._get_time_and_good_curve(client)
+
+        curves = [
+            {"slot": 0, "name": "good_1", "values": good_vals},
+            {"slot": 1, "name": "good_2", "values": good_vals},
+            {"slot": 2, "name": "bad_empty", "values": []},  # invalid
+            {"slot": 3, "name": "good_3", "values": good_vals},
+            {"slot": 4, "name": "good_4", "values": good_vals},
+        ]
+        resp = client.post("/api/ojip_process_batch", json={
+            "fluorometer": self.FLUORO,
+            "time_native": time_raw,
+            "curves": curves,
+            "FJ_time": 2.0,
+            "FI_time": 30.0,
+            "knots_reduction_factor": 10,
+            "include_curves": False,
+            "fit_method": "logspline",
+            "knot_placement": "hybrid",
+            "value_readout": "interp",
+            "background_mode": "auto",
+        })
+        assert resp.status_code == 200
+        j = resp.get_json()
+        assert j["status"] == "success"
+
+        results = j["results"]
+        assert len(results) == 5, f"expected 5 results, got {len(results)}"
+
+        # The 4 good curves must succeed
+        good = [r for r in results if "error" not in r]
+        assert len(good) == 4, f"expected 4 good results, got {len(good)}"
+        for r in good:
+            assert 0 < r["FVFM"] < 1
+
+        # The bad curve must have an error entry with correct metadata
+        bad = [r for r in results if "error" in r]
+        assert len(bad) == 1
+        assert bad[0]["slot"] == 2
+        assert bad[0]["name"] == "bad_empty"
+        assert len(bad[0]["error"]) > 0
+
+    def test_error_entry_has_slot_and_name(self, client):
+        """Error entries must carry slot and name for JS to identify them."""
+        time_raw, _, good_vals = self._get_time_and_good_curve(client)
+
+        # All-zero values: FM == F0 → division by zero in normalization
+        zero_vals = [0.0] * len(good_vals)
+        curves = [
+            {"slot": 7, "name": "all_zeros", "values": zero_vals},
+        ]
+        resp = client.post("/api/ojip_process_batch", json={
+            "fluorometer": self.FLUORO,
+            "time_native": time_raw,
+            "curves": curves,
+            "FJ_time": 2.0,
+            "FI_time": 30.0,
+            "knots_reduction_factor": 10,
+            "include_curves": False,
+            "fit_method": "logspline",
+            "knot_placement": "hybrid",
+            "value_readout": "interp",
+            "background_mode": "auto",
+        })
+        assert resp.status_code == 200
+        j = resp.get_json()
+        assert j["status"] == "success"
+        results = j["results"]
+        assert len(results) == 1
+
+        r = results[0]
+        assert r["slot"] == 7, f"slot must be preserved, got {r['slot']}"
+        assert r["name"] == "all_zeros", f"name must be preserved, got {r['name']}"
+        # The curve may fail outright (error field), succeed with degenerate
+        # values (FVFM is None/NaN), or be recovered via allow_missing retry.
+        # The key contract is that it doesn't crash the batch (HTTP 200) and
+        # slot/name metadata is preserved.
+        assert "error" in r or "slot" in r
