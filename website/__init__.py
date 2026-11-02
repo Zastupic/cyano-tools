@@ -17,6 +17,11 @@ import time
 import threading
 import re
 import sqlalchemy
+try:
+    from geoip2fast import GeoIP2Fast
+    _geoip = GeoIP2Fast()
+except Exception:
+    _geoip = None
 # Flask-Limiter: install with  pip install Flask-Limiter
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -282,6 +287,14 @@ def create_app(*, testing=False):
             ip_hash = hashlib.sha256((ip + salt).encode()).hexdigest()[:16]
             ref = (request.referrer or '')[:500]
             host = request.host.split(':')[0]
+            country_code = None
+            if _geoip and ip:
+                try:
+                    result = _geoip.lookup(ip)
+                    if result and result.country_code and result.country_code != '--':
+                        country_code = result.country_code
+                except Exception:
+                    pass
             pv = PageView(
                 timestamp  = datetime.utcnow(),  # type: ignore
                 path       = request.path[:200],  # type: ignore
@@ -290,6 +303,7 @@ def create_app(*, testing=False):
                 user_agent = ua_raw[:300],         # type: ignore
                 is_bot     = is_bot,              # type: ignore
                 source     = _parse_source(ref, host),  # type: ignore
+                country_code = country_code,      # type: ignore
             )
             db.session.add(pv)
             db.session.commit()
@@ -424,6 +438,7 @@ def create_app(*, testing=False):
             'is_bot':      'BOOLEAN DEFAULT 0',
             'js_verified': 'BOOLEAN DEFAULT 0',
             'source':      'VARCHAR(50)',
+            'country_code': 'VARCHAR(2)',
         }
         for col, typedef in migrations.items():
             if col not in existing:

@@ -26,3 +26,4 @@ class PageView(db.Model):
     is_bot      = db.Column(db.Boolean, default=False, index=True)
     js_verified = db.Column(db.Boolean, default=False)  # True when client-side beacon fires
     source      = db.Column(db.String(50))   # normalised traffic source (google, direct, …)
+    country_code = db.Column(db.String(2))   # ISO 3166-1 alpha-2 from GeoIP lookup

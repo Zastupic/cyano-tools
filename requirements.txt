@@ -64,6 +64,9 @@ pyOpenSSL>=23.2.0
 cffi>=1.15.0
 pycparser>=2.21
 
+# %% Analytics %%
+geoip2fast>=1.2.0
+
 # %% Misc %%
 packaging>=23.0
 contourpy>=1.1.0
