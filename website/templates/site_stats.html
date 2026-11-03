@@ -47,6 +47,7 @@
             </div>
         </div>
     </div>
+    <p class="text-muted mb-4" style="font-size:0.75rem;">Page view counts exclude known bots (user-agent filter) but may include stealth bots. See Visitor Engagement below for real vs bot breakdown.</p>
 
     {# ── Visitor engagement (tabbed) ─────────────────────────────────── #}
     <h5 class="mt-4 mb-3">Visitor Engagement</h5>
@@ -191,6 +192,8 @@
         </div>
     </div>
 
+    <p class="text-muted mb-3" style="font-size:0.75rem;">Known bots excluded (user-agent filter). Stealth bots may still be included.</p>
+
     {# ── Traffic sources + Geography (side by side) ─────────────────── #}
     <div class="row mb-4">
         {# Traffic sources #}
@@ -269,6 +272,8 @@
             </div>
         </div>
     </div>
+
+    <p class="text-muted mb-3" style="font-size:0.75rem;">Known bots excluded (user-agent filter). Stealth bots may still be included.</p>
 
     {# ── GeoIP database info ─────────────────────────────────────────── #}
     {% if geoip_info %}
