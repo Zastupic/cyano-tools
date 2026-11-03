@@ -130,9 +130,9 @@ def _engagement_stats(human_filter, since):
     sub = db.session.query(
         PageView.ip_hash,
         func.count(func.distinct(PageView.path)).label('pages'),
-        (func.julianday(func.max(PageView.timestamp))
-         - func.julianday(func.min(PageView.timestamp))
-        ).op('*')(86400).label('session_secs'),
+        ((func.julianday(func.max(PageView.timestamp))
+          - func.julianday(func.min(PageView.timestamp))
+         ) * 86400).label('session_secs'),
         func.max(PageView.js_verified).label('any_js'),
     ).filter(
         human_filter,
