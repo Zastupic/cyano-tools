@@ -202,12 +202,13 @@ def _engagement_stats(human_filter, since):
 
     if real_rows:
         real_pages = [r.pages for r in real_rows]
-        avg_pages = round(sum(real_pages) / real_count, 1)
 
         # Split real visitors: single-page (duration unmeasurable) vs multi-page
         multi = [r for r in real_rows if r.pages >= 2]
         single_real = real_count - len(multi)
+        multi_pages = [r.pages for r in multi]
         multi_secs = [float(r.session_secs or 0) for r in multi]
+        avg_pages = round(sum(multi_pages) / len(multi), 1) if multi else 0
         avg_secs = int(sum(multi_secs) / len(multi)) if multi else 0
 
         pages_hist = {
