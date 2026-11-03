@@ -174,21 +174,24 @@
                         </div>
                     </div>
                     {# ── Histograms: real visitors only ─── #}
-                    <h6 class="text-muted mb-2" style="font-size:0.85rem;">Real visitor distributions ({{ e.real }} visitor-days, {{ e.real_pct }}% of total)</h6>
+                    <h6 class="text-muted mb-2" style="font-size:0.85rem;">
+                        Real visitors: {{ e.real }} total ({{ e.single_real }} single-page, {{ e.multi_real }} multi-page)
+                    </h6>
                     <div class="row mb-2">
                         <div class="col-md-6 mb-3">
-                            <h6 class="text-center text-muted" style="font-size:0.85rem;">Pages per visitor</h6>
+                            <h6 class="text-center text-muted" style="font-size:0.85rem;">Pages per visitor (all real)</h6>
                             <canvas id="pagesHist-{{ key }}" height="180"></canvas>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <h6 class="text-center text-muted" style="font-size:0.85rem;">Session duration</h6>
+                            <h6 class="text-center text-muted" style="font-size:0.85rem;">Session duration ({{ e.multi_real }} multi-page only)</h6>
                             <canvas id="durHist-{{ key }}" height="180"></canvas>
                         </div>
                     </div>
                     <p class="text-muted mt-0 mb-0" style="font-size:0.75rem;">
-                        <b>Likely real</b> = session &gt; 1s OR JS-verified (real browser confirmed).
-                        <b>Likely bot</b> = session &le; 1s and no JS verification.
-                        Session duration = sum of inter-page gaps &le; 5 min. "Visitor-days" = distinct daily IP hashes.
+                        <b>Likely real</b> = session &gt; 1s OR JS-verified.
+                        <b>Likely bot</b> = session &le; 1s, no JS verification.
+                        Duration histogram excludes single-page visitors (time-on-page unmeasurable server-side).
+                        Session = sum of inter-page gaps &le; 5 min.
                     </p>
                 </div>
                 {% endfor %}

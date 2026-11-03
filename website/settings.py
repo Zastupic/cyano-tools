@@ -202,21 +202,29 @@ def _engagement_stats(human_filter, since):
 
     if real_rows:
         real_pages = [r.pages for r in real_rows]
-        real_secs = [float(r.session_secs or 0) for r in real_rows]
         avg_pages = round(sum(real_pages) / real_count, 1)
-        avg_secs = int(sum(real_secs) / real_count)
+
+        # Split real visitors: single-page (duration unmeasurable) vs multi-page
+        multi = [r for r in real_rows if r.pages >= 2]
+        single_real = real_count - len(multi)
+        multi_secs = [float(r.session_secs or 0) for r in multi]
+        avg_secs = int(sum(multi_secs) / len(multi)) if multi else 0
+
         pages_hist = {
             'labels': [b[0] for b in p_bins],
             'counts': [sum(1 for p in real_pages if b[1] <= p <= b[2])
                        for b in p_bins],
         }
+        # Duration histogram: multi-page visitors only (single-page = always 0s)
         duration_hist = {
             'labels': [b[0] for b in d_bins],
-            'counts': [sum(1 for s in real_secs if b[1] <= s <= b[2])
+            'counts': [sum(1 for s in multi_secs if b[1] <= s <= b[2])
                        for b in d_bins],
         }
     else:
         avg_pages, avg_secs = 0, 0
+        single_real = 0
+        multi = []
         pages_hist, duration_hist = empty_hist, empty_hist
 
     return {
@@ -224,6 +232,8 @@ def _engagement_stats(human_filter, since):
         'real': real_count,
         'bot': bot_count,
         'real_pct': round(100 * real_count / total, 1) if total else 0,
+        'single_real': single_real,
+        'multi_real': len(multi),
         'avg_pages': avg_pages,
         'avg_session_secs': avg_secs,
         'avg_session_fmt': _fmt_duration(avg_secs),
