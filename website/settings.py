@@ -125,20 +125,44 @@ def _engagement_stats(human_filter, since):
     meaningful within a single UTC day.  For multi-day windows we still
     GROUP BY ip_hash, but the same real person on different days appears
     as different hashes — so these are "visitor-days", not unique people.
+
+    Session duration uses LAG() to sum only inter-page gaps ≤ 5 min.
+    Longer gaps indicate the user left and came back (separate session).
+    5 min suits this app's typical workflow: open tool → upload → analyze
+    → download (real browsing gaps are under 2-3 min).
     """
-    # Subquery: per ip_hash aggregates
-    sub = db.session.query(
+    max_gap = 300  # seconds — gaps longer than this start a new session
+
+    # CTE: attach previous timestamp via LAG window function
+    base = db.session.query(
         PageView.ip_hash,
-        func.count(func.distinct(PageView.path)).label('pages'),
-        ((func.julianday(func.max(PageView.timestamp))
-          - func.julianday(func.min(PageView.timestamp))
-         ) * 86400).label('session_secs'),
-        func.max(PageView.js_verified).label('any_js'),
+        PageView.path,
+        PageView.js_verified,
+        PageView.timestamp,
+        func.lag(PageView.timestamp).over(
+            partition_by=PageView.ip_hash,
+            order_by=PageView.timestamp,
+        ).label('prev_ts'),
     ).filter(
         human_filter,
         PageView.timestamp >= since,
         PageView.ip_hash != None,  # noqa: E711
-    ).group_by(PageView.ip_hash).subquery()
+    ).cte('base')
+
+    # Gap in seconds between consecutive page views (NULL for first view)
+    gap_secs = (func.julianday(base.c.timestamp)
+                - func.julianday(base.c.prev_ts)) * 86400
+
+    # Per-visitor aggregates: pages, active session time, JS flag
+    sub = db.session.query(
+        base.c.ip_hash,
+        func.count(func.distinct(base.c.path)).label('pages'),
+        func.coalesce(
+            func.sum(case((gap_secs <= max_gap, gap_secs), else_=0)),
+            0,
+        ).label('session_secs'),
+        func.max(base.c.js_verified).label('any_js'),
+    ).group_by(base.c.ip_hash).subquery()
 
     # Main query: aggregate distribution
     row = db.session.query(
