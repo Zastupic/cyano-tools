@@ -51,7 +51,7 @@ def _get_geoip_info():
             'source': info,
             'date': db_date.strftime('%Y-%m-%d'),
             'age_days': age_days,
-            'stale': age_days > 90,
+            'stale': age_days > 180,
         }
     except Exception:
         return None
