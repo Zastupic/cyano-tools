@@ -3,7 +3,9 @@ E2E tests for OJIP upload flow — file upload, results rendering,
 example data loading, and tab navigation.
 """
 
+import pytest
 
+pytestmark = pytest.mark.ojip
 
 from conftest import upload_and_analyze
 

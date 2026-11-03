@@ -18,6 +18,8 @@ import numpy as np
 import openpyxl
 import pytest
 
+pytestmark = pytest.mark.ojip
+
 from conftest import FIXTURES
 
 ALL_SHEETS = {"raw": True, "shifted_F0": True, "shifted_FM": True,

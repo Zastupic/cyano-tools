@@ -8,7 +8,9 @@ Deployed on PythonAnywhere at https://www.cyano.tools. Built at DoAB, CzechGlobe
 ## Run / test
 - **Dev server:** `python main.py` (reads `.env` via python-dotenv; `debug=True`, auto-reloads).
   Requires `SECRET_KEY` env var or startup raises. `FLASK_DEBUG` not needed — main.py sets debug.
-- **Tests:** `pytest tests/` (`test_ojip_interpretation.py`, `test_ojip_timing.py`, `test_ojip_integration.py`).
+- **Tests:** `pytest tests/` (full suite). **Scoped:** `pytest -m ojip tests/` (one tool),
+  `pytest -m "smoke or infrastructure" tests/` (quick gate for non-tool edits).
+  See `.claude/rules/testing.md` for the scope mapping — run only relevant tests per change.
 - Stack: Flask 2.3+ / SQLAlchemy 2 / numpy / scipy / pandas / matplotlib / opencv-headless / cobra.
   Full pin list in `requirements.txt`.
 
@@ -40,6 +42,8 @@ Tools are otherwise decoupled — work on one without touching the others.
   Data is processed in-session; only anonymised `PageView` rows (salted-hashed IP) are stored.
 - **Never** add an external host to any page without updating the CSP in `set_security_headers()`.
 - **Never** send raw transients/images to an external LLM — only named scalar params (see ojip.md).
+- **Never** add a pip/npm dependency without asking the developer first.
+- **Never** modify or disable an existing test to make it pass.
 
 ## "Try with example data" pattern
 Every analysis tool has a **"▶ Try with example data"** button that loads example files
@@ -68,6 +72,11 @@ functions; call them everywhere. Key examples:
 - `_compute_jip_params()` — all 18 JIP-test parameters (VJ, VI, M0, Fv/Fm, etc.)
 - `_validate_timing_signal()` — FJ/FI timing validation + fallback
 - `_resolve_fp_timing()` — FP cascade detection
+
+## Task playbooks
+- **Bug fix:** reproduce with a failing test first, then fix.
+- **Refactoring:** pin current outputs with a golden test first, then refactor.
+- **New feature:** write smoke test alongside implementation.
 
 ## Per-tool notes (loaded on demand — read only when working that tool)
 Most tools are small/self-evident; read `website/<tool>.py` directly. Docs exist only where

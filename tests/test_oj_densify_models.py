@@ -2,6 +2,8 @@
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.ojip
+
 from website.OJIP_data_analysis import (
     _fit_oj_exponential,
     _fit_oj_biexponential,

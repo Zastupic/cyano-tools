@@ -30,3 +30,16 @@ addopts = "-q --tb=short"
 filterwarnings = [
     "ignore::DeprecationWarning:flask_limiter",
 ]
+markers = [
+    "smoke: quick upload-and-status-200 tests for all tools",
+    "infrastructure: CSRF, CSP headers, rate limiting, path traversal",
+    "ojip: OJIP / JIP-test analysis (all tiers)",
+    "eem: EEM / fluorescence spectra analysis",
+    "slowkin: slow kinetics / NPQ analysis",
+    "lightcurves: rapid light curves analysis",
+    "mims: MIMS gas exchange analysis",
+    "statistics: multivariate statistics tool",
+    "cellcount: cell counting tools (round + filament)",
+    "sigma: sigma spectral analysis",
+    "pbr: photobioreactor analysis",
+]

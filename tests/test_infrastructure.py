@@ -11,6 +11,8 @@ import sys
 
 import pytest
 
+pytestmark = pytest.mark.infrastructure
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("SECRET_KEY", "test-secret-key-infra")
 

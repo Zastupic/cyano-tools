@@ -8,6 +8,9 @@ These tests catch the class of bugs where JS DOM state gets out of sync
 
 import re
 
+import pytest
+
+pytestmark = pytest.mark.ojip
 
 from conftest import expand_advanced_params, upload_and_analyze
 

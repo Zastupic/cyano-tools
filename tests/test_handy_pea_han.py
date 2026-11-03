@@ -16,6 +16,9 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
+
+pytestmark = pytest.mark.ojip
+
 from website.handy_pea_han import (
     parse_han,
     handy_pea_timebase_us,

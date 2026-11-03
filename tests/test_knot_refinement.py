@@ -1,5 +1,8 @@
 """Tests for the adaptive knot refinement in _fit_splines_log."""
 import numpy as np
+import pytest
+
+pytestmark = pytest.mark.ojip
 
 from website.OJIP_data_analysis import _refine_knots_adaptive
 

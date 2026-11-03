@@ -20,6 +20,10 @@ Tests cover the nine scenarios specified in the task:
 import os
 import sys
 
+import pytest
+
+pytestmark = pytest.mark.ojip
+
 # Make the website package importable from tests/
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 

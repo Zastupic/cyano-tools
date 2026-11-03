@@ -18,6 +18,8 @@ import sys
 
 import pytest
 
+pytestmark = pytest.mark.ojip
+
 # ---------------------------------------------------------------------------
 # Make the website package importable from tests/
 # ---------------------------------------------------------------------------
