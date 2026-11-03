@@ -195,6 +195,7 @@ class TestPageRendering:
         "/pixel_profiles_filament",
         "/PBR",
         "/P700_kin_data_analysis",
+        "/site_stats",
     ])
     def test_page_loads(self, client, path):
         resp = client.get(path)

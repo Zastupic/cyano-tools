@@ -38,6 +38,25 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["5 per second", "
 # ── CSRF protection (module-level so blueprints can import csrf.exempt) ───────
 csrf = CSRFProtect()
 
+def _get_geoip_info():
+    """Return dict with geoip database metadata, or None if unavailable."""
+    if not _geoip:
+        return None
+    try:
+        info = _geoip.source_info  # e.g. 'MAXMIND:GeoLite2-Country-IPv4-en-20240618'
+        date_str = info.rsplit('-', 1)[-1]  # '20240618'
+        db_date = datetime.strptime(date_str, '%Y%m%d')
+        age_days = (datetime.utcnow() - db_date).days
+        return {
+            'source': info,
+            'date': db_date.strftime('%Y-%m-%d'),
+            'age_days': age_days,
+            'stale': age_days > 90,
+        }
+    except Exception:
+        return None
+
+
 # ── Cache-key validator — prevents path-traversal via cached_image_key ────────
 _SAFE_KEY_RE = re.compile(
     r'^[a-zA-Z0-9_-]{1,220}\.(png|jpg|jpeg|tif|tiff|bmp|gif)$',
@@ -283,6 +302,11 @@ def create_app(*, testing=False):
         is_bot = any(b in ua for b in BOT_PATTERNS)
         try:
             ip   = request.remote_addr or ''
+            # Debug: log X-Forwarded-For chain (never stored in DB)
+            if app.debug:
+                xff = request.headers.get('X-Forwarded-For', '')
+                if xff:
+                    app.logger.debug('XFF chain: %s -> remote_addr: %s', xff, ip)
             salt = datetime.utcnow().strftime('%Y-%m-%d')
             ip_hash = hashlib.sha256((ip + salt).encode()).hexdigest()[:16]
             ref = (request.referrer or '')[:500]

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template
 from . import limiter
 from .shared import db
 from .models import PageView
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, case
 from datetime import datetime, timedelta
 
 settings = Blueprint('settings', __name__)
@@ -103,6 +103,73 @@ def _top_grouped(column, base_filter, since, limit=15):
      .limit(limit).all()
 
 
+def _fmt_duration(seconds):
+    """Format seconds as 'Xm Ys' or 'Xh Ym' for display."""
+    seconds = int(seconds)
+    if seconds < 60:
+        return f"{seconds}s"
+    if seconds < 3600:
+        return f"{seconds // 60}m {seconds % 60}s"
+    h = seconds // 3600
+    m = (seconds % 3600) // 60
+    return f"{h}h {m}m"
+
+
+def _engagement_stats(human_filter, since):
+    """Compute engagement metrics for visitors since *since*.
+
+    Returns dict with keys: total_visitors, avg_pages, avg_session_secs,
+    avg_session_fmt, engaged_count, engaged_pct, dist_1, dist_2_3, dist_4plus.
+
+    Because ip_hash uses a daily salt, session correlation is only
+    meaningful within a single UTC day.  For multi-day windows we still
+    GROUP BY ip_hash, but the same real person on different days appears
+    as different hashes — so these are "visitor-days", not unique people.
+    """
+    # Subquery: per ip_hash aggregates
+    sub = db.session.query(
+        PageView.ip_hash,
+        func.count(func.distinct(PageView.path)).label('pages'),
+        (func.julianday(func.max(PageView.timestamp))
+         - func.julianday(func.min(PageView.timestamp))
+        ).op('*')(86400).label('session_secs'),
+        func.max(PageView.js_verified).label('any_js'),
+    ).filter(
+        human_filter,
+        PageView.timestamp >= since,
+        PageView.ip_hash != None,  # noqa: E711
+    ).group_by(PageView.ip_hash).subquery()
+
+    # Main query: aggregate distribution
+    row = db.session.query(
+        func.count().label('total'),
+        func.coalesce(func.avg(sub.c.pages), 0).label('avg_pages'),
+        func.coalesce(func.avg(sub.c.session_secs), 0).label('avg_session'),
+        func.sum(case((sub.c.pages == 1, 1), else_=0)).label('dist_1'),
+        func.sum(case((sub.c.pages.between(2, 3), 1), else_=0)).label('dist_2_3'),
+        func.sum(case((sub.c.pages >= 4, 1), else_=0)).label('dist_4plus'),
+        func.sum(case(
+            (or_(sub.c.pages >= 2, sub.c.any_js == 1), 1),
+            else_=0
+        )).label('engaged'),
+    ).select_from(sub).one()
+
+    total = row.total or 0
+    engaged = row.engaged or 0
+    avg_secs = int(row.avg_session or 0)
+    return {
+        'total_visitors': total,
+        'avg_pages': round(float(row.avg_pages or 0), 1),
+        'avg_session_secs': avg_secs,
+        'avg_session_fmt': _fmt_duration(avg_secs),
+        'engaged_count': engaged,
+        'engaged_pct': round(100 * engaged / total, 1) if total else 0,
+        'dist_1': row.dist_1 or 0,
+        'dist_2_3': row.dist_2_3 or 0,
+        'dist_4plus': row.dist_4plus or 0,
+    }
+
+
 @settings.route('/site_stats')
 @limiter.limit("30 per minute")
 def site_stats():
@@ -181,6 +248,11 @@ def site_stats():
         raw = _top_grouped(PageView.user_agent, ua_filter, since, limit=15)
         top_bots[w] = [{'ua': r.user_agent[:120], 'count': r.count} for r in raw]
 
+    # ── Engagement metrics (all windows) ─────────────────────────────────
+    engagement = {}
+    for w, since in windows.items():
+        engagement[w] = _engagement_stats(human_filter, since)
+
     # ── Time-series charts (unchanged) ────────────────────────────────────
 
     # --- Last hour by minute (dense, zero-filled) ---
@@ -258,6 +330,10 @@ def site_stats():
         day_idx = (sqlite_dow - 1) % 7
         heatmap[day_idx][int(r.hour)] = r.count
 
+    # ── GeoIP database info ──────────────────────────────────────────────
+    from . import _get_geoip_info
+    geoip_info = _get_geoip_info()
+
     return render_template('site_stats.html',
         today_count  = today_count,
         week_count   = week_count,
@@ -280,4 +356,6 @@ def site_stats():
         bot_counts   = bot_counts,
         top_bots     = top_bots,
         heatmap      = heatmap,
+        engagement   = engagement,
+        geoip_info   = geoip_info,
     )
