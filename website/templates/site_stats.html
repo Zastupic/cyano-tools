@@ -310,10 +310,7 @@
 
     {# ── GeoIP database info ─────────────────────────────────────────── #}
     {% if geoip_info %}
-    <div class="alert {{ 'alert-warning' if geoip_info.stale else 'alert-info' }} mb-4" style="font-size:0.85rem;">
-        <b>GeoIP database:</b> {{ geoip_info.date }}
-        ({{ geoip_info.age_days }} days old{% if geoip_info.stale %} — <span class="text-danger">outdated, run <code>GeoIP2Fast().update_all()</code> to refresh</span>{% endif %})
-    </div>
+    <p class="text-muted mb-4" style="font-size:0.8rem;">GeoIP database: {{ geoip_info.date }} ({{ geoip_info.age_days }} days old)</p>
     {% endif %}
 
     {# ── JS-verified indicator ──────────────────────────────────────── #}
