@@ -169,53 +169,64 @@ def _engagement_stats(human_filter, since):
         sub.c.pages, sub.c.session_secs, sub.c.any_js,
     ).all()
 
+    empty_hist = {'labels': [], 'counts': []}
+    empty = {
+        'total': 0, 'real': 0, 'bot': 0, 'real_pct': 0,
+        'avg_pages': 0, 'avg_session_secs': 0, 'avg_session_fmt': '0s',
+        'pages_hist': empty_hist, 'duration_hist': empty_hist,
+    }
     if not rows:
-        empty_hist = {'labels': [], 'counts': []}
-        return {
-            'total_visitors': 0, 'avg_pages': 0,
-            'avg_session_secs': 0, 'avg_session_fmt': '0s',
-            'engaged_count': 0, 'engaged_pct': 0,
-            'dist_1': 0, 'dist_2_3': 0, 'dist_4plus': 0,
-            'pages_hist': empty_hist, 'duration_hist': empty_hist,
-        }
+        return empty
+
+    # Split: "likely real" = session > 1s OR JS-verified browser
+    #         "likely bot"  = session ≤ 1s AND no JS verification
+    real_rows = [r for r in rows
+                 if (r.session_secs or 0) > 1 or r.any_js]
+    bot_rows = [r for r in rows
+                if (r.session_secs or 0) <= 1 and not r.any_js]
 
     total = len(rows)
-    pages_list = [r.pages for r in rows]
-    secs_list = [float(r.session_secs or 0) for r in rows]
-    engaged = sum(1 for r in rows if r.pages >= 2 or r.any_js)
-    avg_secs = int(sum(secs_list) / total)
+    real_count = len(real_rows)
+    bot_count = len(bot_rows)
 
-    # Pages histogram: 1, 2, 3, 4, 5, 6-10, 11+
+    # Histograms computed from real visitors only
     p_bins = [
         ('1', 1, 1), ('2', 2, 2), ('3', 3, 3), ('4', 4, 4), ('5', 5, 5),
         ('6-10', 6, 10), ('11+', 11, 999999),
     ]
-    pages_hist = {
-        'labels': [b[0] for b in p_bins],
-        'counts': [sum(1 for p in pages_list if b[1] <= p <= b[2]) for b in p_bins],
-    }
-
-    # Duration histogram: 0s, 1-10s, 10-30s, 30s-1m, 1-2m, 2-5m, 5m+
     d_bins = [
         ('0s', 0, 0), ('1-10s', 1, 10), ('10-30s', 11, 30),
         ('30s-1m', 31, 60), ('1-2m', 61, 120), ('2-5m', 121, 300),
         ('5m+', 301, 999999),
     ]
-    duration_hist = {
-        'labels': [b[0] for b in d_bins],
-        'counts': [sum(1 for s in secs_list if b[1] <= s <= b[2]) for b in d_bins],
-    }
+
+    if real_rows:
+        real_pages = [r.pages for r in real_rows]
+        real_secs = [float(r.session_secs or 0) for r in real_rows]
+        avg_pages = round(sum(real_pages) / real_count, 1)
+        avg_secs = int(sum(real_secs) / real_count)
+        pages_hist = {
+            'labels': [b[0] for b in p_bins],
+            'counts': [sum(1 for p in real_pages if b[1] <= p <= b[2])
+                       for b in p_bins],
+        }
+        duration_hist = {
+            'labels': [b[0] for b in d_bins],
+            'counts': [sum(1 for s in real_secs if b[1] <= s <= b[2])
+                       for b in d_bins],
+        }
+    else:
+        avg_pages, avg_secs = 0, 0
+        pages_hist, duration_hist = empty_hist, empty_hist
 
     return {
-        'total_visitors': total,
-        'avg_pages': round(sum(pages_list) / total, 1),
+        'total': total,
+        'real': real_count,
+        'bot': bot_count,
+        'real_pct': round(100 * real_count / total, 1) if total else 0,
+        'avg_pages': avg_pages,
         'avg_session_secs': avg_secs,
         'avg_session_fmt': _fmt_duration(avg_secs),
-        'engaged_count': engaged,
-        'engaged_pct': round(100 * engaged / total, 1) if total else 0,
-        'dist_1': sum(1 for p in pages_list if p == 1),
-        'dist_2_3': sum(1 for p in pages_list if 2 <= p <= 3),
-        'dist_4plus': sum(1 for p in pages_list if p >= 4),
         'pages_hist': pages_hist,
         'duration_hist': duration_hist,
     }
