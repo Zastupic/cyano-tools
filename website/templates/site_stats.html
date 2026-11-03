@@ -10,382 +10,452 @@
 
 {% block content %}
 <div class="mt-3 mb-5">
-    <h3>Site Statistics</h3>
+    <h2>Site Statistics</h2>
 
-    {# ── Time-window charts (2x2) ──────────────────────────────────── #}
-    <div class="row mb-4">
-        <div class="col-md-6 mb-3">
-            <div class="card h-100">
-                <div class="card-header py-1" style="font-size:0.85rem;"><b>Last hour</b></div>
-                <div class="card-body p-2">
-                    <canvas id="hourChart" height="120"></canvas>
+    {# ══════════════════════════════════════════════════════════════════════
+       § 1  KPI SUMMARY ROW — headline numbers at a glance
+       ══════════════════════════════════════════════════════════════════════ #}
+    <section class="row mb-4">
+        <div class="col-6 col-md-3 mb-2">
+            <div class="card text-center h-100">
+                <div class="card-body py-2">
+                    <div class="ss-kpi-value">{{ today_count }}</div>
+                    <div class="ss-kpi-label">Page views today</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mb-3">
-            <div class="card h-100">
-                <div class="card-header py-1" style="font-size:0.85rem;"><b>Last 24 hours</b></div>
-                <div class="card-body p-2">
-                    <canvas id="dayChart" height="120"></canvas>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="card text-center h-100">
+                <div class="card-body py-2">
+                    <div class="ss-kpi-value">{{ unique_today }}</div>
+                    <div class="ss-kpi-label">Unique visitors today</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mb-3">
-            <div class="card h-100">
-                <div class="card-header py-1" style="font-size:0.85rem;"><b>Last 30 days</b></div>
-                <div class="card-body p-2">
-                    <canvas id="monthChart" height="120"></canvas>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="card text-center h-100">
+                <div class="card-body py-2">
+                    <div class="ss-kpi-value ss-color-real">{{ engagement.today.real }}</div>
+                    <div class="ss-kpi-label">Real visitors today</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mb-3">
-            <div class="card h-100">
-                <div class="card-header py-1" style="font-size:0.85rem;"><b>Last year</b></div>
-                <div class="card-body p-2">
-                    <canvas id="yearChart" height="120"></canvas>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="card text-center h-100">
+                <div class="card-body py-2">
+                    <div class="ss-kpi-value ss-color-info">{{ engagement.today.avg_session_fmt }}</div>
+                    <div class="ss-kpi-label">Avg session (multi-page)</div>
                 </div>
             </div>
         </div>
-    </div>
-    <p class="text-muted mb-4" style="font-size:0.75rem;">Page view counts exclude known bots (user-agent filter) but may include stealth bots. See Visitor Engagement below for real vs bot breakdown.</p>
+    </section>
 
-    {# ── Visitor engagement (tabbed) ─────────────────────────────────── #}
-    <h5 class="mt-4 mb-3">Visitor Engagement</h5>
-    <div class="card mb-4">
-        <div class="card-body p-0">
-            <ul class="nav nav-tabs px-3 pt-2" role="tablist">
-                <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#eng-today">Today</a></li>
-                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#eng-7d">7 days</a></li>
-                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#eng-30d">30 days</a></li>
-                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#eng-year">Year</a></li>
-            </ul>
-            <div class="tab-content p-3">
-                {% for key in ['today', '7d', '30d', 'year'] %}
-                {% set e = engagement[key] %}
-                <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="eng-{{ key }}">
-                    {# ── Summary cards: real vs bot split ─── #}
-                    <div class="row mb-3">
-                        <div class="col-6 col-md-3 mb-2">
-                            <div class="card text-center h-100 border-success">
-                                <div class="card-body py-2">
-                                    <div style="font-size:1.5rem; font-weight:700; color:#28a745;">{{ e.real }}</div>
-                                    <div class="text-muted" style="font-size:0.8rem;">Likely real visitors</div>
+    {# ══════════════════════════════════════════════════════════════════════
+       § 2  TREND CHARTS — page views over four time windows
+       ══════════════════════════════════════════════════════════════════════ #}
+    <section>
+        <h3 class="ss-section-title">Page View Trends</h3>
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header ss-chart-header"><b>Last hour</b></div>
+                    <div class="card-body p-2">
+                        <canvas id="hourChart" height="120"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header ss-chart-header"><b>Last 24 hours</b></div>
+                    <div class="card-body p-2">
+                        <canvas id="dayChart" height="120"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header ss-chart-header"><b>Last 30 days</b></div>
+                    <div class="card-body p-2">
+                        <canvas id="monthChart" height="120"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header ss-chart-header"><b>Last year</b></div>
+                    <div class="card-body p-2">
+                        <canvas id="yearChart" height="120"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ══════════════════════════════════════════════════════════════════════
+       § 3  VISITOR ENGAGEMENT — real vs bot split, histograms
+       ══════════════════════════════════════════════════════════════════════ #}
+    <section>
+        <h3 class="ss-section-title">Visitor Engagement</h3>
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <ul class="nav nav-tabs px-3 pt-2" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#eng-today">Today</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#eng-7d">7 days</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#eng-30d">30 days</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#eng-year">Year</a></li>
+                </ul>
+                <div class="tab-content p-3">
+                    {% for key in ['today', '7d', '30d', 'year'] %}
+                    {% set e = engagement[key] %}
+                    <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="eng-{{ key }}">
+                        {# ── Summary cards ─── #}
+                        <div class="row mb-3">
+                            <div class="col-6 col-md-3 mb-2">
+                                <div class="card text-center h-100 border-success">
+                                    <div class="card-body py-2">
+                                        <div class="ss-stat-value ss-color-real">{{ e.real }}</div>
+                                        <div class="ss-stat-label">Likely real visitors</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3 mb-2">
+                                <div class="card text-center h-100 border-secondary">
+                                    <div class="card-body py-2">
+                                        <div class="ss-stat-value ss-color-bot">{{ e.bot }}</div>
+                                        <div class="ss-stat-label">Likely bots</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3 mb-2">
+                                <div class="card text-center h-100">
+                                    <div class="card-body py-2">
+                                        <div class="ss-stat-value ss-color-info">{{ e.avg_pages }}</div>
+                                        <div class="ss-stat-label">Avg pages (multi-page)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3 mb-2">
+                                <div class="card text-center h-100">
+                                    <div class="card-body py-2">
+                                        <div class="ss-stat-value ss-color-info">{{ e.avg_session_fmt }}</div>
+                                        <div class="ss-stat-label">Avg session (multi-page)</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <div class="card text-center h-100 border-secondary">
-                                <div class="card-body py-2">
-                                    <div style="font-size:1.5rem; font-weight:700; color:#6c757d;">{{ e.bot }}</div>
-                                    <div class="text-muted" style="font-size:0.8rem;">Likely bots</div>
-                                </div>
+                        {# ── Histograms ─── #}
+                        <p class="ss-note mb-2">
+                            Real visitors: {{ e.real }} total ({{ e.single_real }} single-page, {{ e.multi_real }} multi-page)
+                        </p>
+                        <div class="row mb-2">
+                            <div class="col-md-6 mb-3">
+                                <h4 class="ss-hist-title">Pages per visitor (all real)</h4>
+                                <canvas id="pagesHist-{{ key }}" height="180"></canvas>
                             </div>
-                        </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <div class="card text-center h-100">
-                                <div class="card-body py-2">
-                                    <div style="font-size:1.5rem; font-weight:700; color:#007bff;">{{ e.avg_pages }}</div>
-                                    <div class="text-muted" style="font-size:0.8rem;">Avg pages (multi-page)</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <div class="card text-center h-100">
-                                <div class="card-body py-2">
-                                    <div style="font-size:1.5rem; font-weight:700; color:#17a2b8;">{{ e.avg_session_fmt }}</div>
-                                    <div class="text-muted" style="font-size:0.8rem;">Avg session (multi-page)</div>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <h4 class="ss-hist-title">Session duration ({{ e.multi_real }} multi-page only)</h4>
+                                <canvas id="durHist-{{ key }}" height="180"></canvas>
                             </div>
                         </div>
                     </div>
-                    {# ── Histograms: real visitors only ─── #}
-                    <h6 class="text-muted mb-2" style="font-size:0.85rem;">
-                        Real visitors: {{ e.real }} total ({{ e.single_real }} single-page, {{ e.multi_real }} multi-page)
-                    </h6>
-                    <div class="row mb-2">
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-center text-muted" style="font-size:0.85rem;">Pages per visitor (all real)</h6>
-                            <canvas id="pagesHist-{{ key }}" height="180"></canvas>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-center text-muted" style="font-size:0.85rem;">Session duration ({{ e.multi_real }} multi-page only)</h6>
-                            <canvas id="durHist-{{ key }}" height="180"></canvas>
-                        </div>
-                    </div>
-                    <p class="text-muted mt-0 mb-0" style="font-size:0.75rem;">
-                        <b>Likely real</b> = session &gt; 1s OR JS-verified.
-                        <b>Likely bot</b> = session &le; 1s, no JS verification.
-                        Duration histogram excludes single-page visitors (time-on-page unmeasurable server-side).
-                        Session = sum of inter-page gaps &le; 5 min.
-                    </p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    {# ── Peak traffic heatmap ───────────────────────────────────────── #}
-    <div class="card mb-4">
-        <div class="card-header"><b>Peak traffic — last 30 days</b> <span class="text-muted" style="font-size:0.8rem;">(hour of day × day of week, UTC)</span></div>
-        <div class="card-body p-2" style="overflow-x:auto;">
-            <table class="table table-sm mb-0 text-center" style="font-size:0.75rem;" id="heatmapTable">
-                <thead>
-                    <tr>
-                        <th style="width:60px;"></th>
-                        {% for h in range(24) %}
-                        <th style="padding:2px 3px;">{{ '%02d' % h }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% set day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
-                    {% for d in range(7) %}
-                    <tr>
-                        <td style="font-weight:600; text-align:left;">{{ day_names[d] }}</td>
-                        {% for h in range(24) %}
-                        <td class="hm-cell" data-val="{{ heatmap[d][h] }}"
-                            style="padding:2px 3px; cursor:default;"
-                            title="{{ day_names[d] }} {{ '%02d' % h }}:00 — {{ heatmap[d][h] }} views">
-                            {{ heatmap[d][h] if heatmap[d][h] else '' }}
-                        </td>
-                        {% endfor %}
-                    </tr>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {# ── Top pages (tabbed) ─────────────────────────────────────────── #}
-    <div class="card mb-4">
-        <div class="card-header"><b>Top pages</b></div>
-        <div class="card-body p-0">
-            <ul class="nav nav-tabs px-3 pt-2" role="tablist">
-                <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#pages-today">Today</a></li>
-                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pages-7d">7 days</a></li>
-                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pages-30d">30 days</a></li>
-                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pages-year">Year</a></li>
-            </ul>
-            <div class="tab-content">
-                {% for key in ['today', '7d', '30d', 'year'] %}
-                <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="pages-{{ key }}">
-                    {% if top_pages[key] %}
-                    <table class="table table-sm table-striped mb-0">
-                        <thead class="thead-light">
-                            <tr><th>Page</th><th style="width:100px; text-align:right;">Views</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for page in top_pages[key] %}
-                            <tr>
-                                <td><a href="{{ page.path }}">{{ page.name }}</a></td>
-                                <td style="text-align:right;">{{ page.count }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p class="text-muted p-3 mb-0">No data yet.</p>
-                    {% endif %}
                 </div>
-                {% endfor %}
             </div>
         </div>
-    </div>
+    </section>
 
-    <p class="text-muted mb-3" style="font-size:0.75rem;">Known bots excluded (user-agent filter). Stealth bots may still be included.</p>
+    {# ══════════════════════════════════════════════════════════════════════
+       § 4  TOP PAGES
+       ══════════════════════════════════════════════════════════════════════ #}
+    <section>
+        <h3 class="ss-section-title">Top Pages</h3>
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <ul class="nav nav-tabs px-3 pt-2" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#pages-today">Today</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pages-7d">7 days</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pages-30d">30 days</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#pages-year">Year</a></li>
+                </ul>
+                <div class="tab-content">
+                    {% for key in ['today', '7d', '30d', 'year'] %}
+                    <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="pages-{{ key }}">
+                        {% if top_pages[key] %}
+                        <table class="table table-sm table-striped mb-0">
+                            <thead class="thead-light">
+                                <tr><th>Page</th><th class="text-right" style="width:100px;">Views</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for page in top_pages[key] %}
+                                <tr>
+                                    <td><a href="{{ page.path }}">{{ page.name }}</a></td>
+                                    <td class="text-right">{{ page.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p class="text-muted p-3 mb-0">No data yet.</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
 
-    {# ── Traffic sources + Geography (side by side) ─────────────────── #}
-    <div class="row mb-4">
-        {# Traffic sources #}
-        <div class="col-md-6 mb-3">
-            <div class="card h-100">
-                <div class="card-header"><b>Traffic sources</b></div>
-                <div class="card-body p-0">
-                    <ul class="nav nav-tabs px-3 pt-2" role="tablist">
-                        <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#src-today">Today</a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#src-7d">7d</a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#src-30d">30d</a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#src-year">Year</a></li>
-                    </ul>
-                    <div class="tab-content">
-                        {% for key in ['today', '7d', '30d', 'year'] %}
-                        <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="src-{{ key }}">
-                            {% if top_sources[key] %}
-                            <table class="table table-sm table-striped mb-0">
-                                <thead class="thead-light">
-                                    <tr><th>Source</th><th style="width:80px; text-align:right;">Views</th></tr>
-                                </thead>
-                                <tbody>
-                                    {% for s in top_sources[key] %}
-                                    <tr>
-                                        <td>{{ s.source }}</td>
-                                        <td style="text-align:right;">{{ s.count }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            {% else %}
-                            <p class="text-muted p-3 mb-0">No data yet.</p>
-                            {% endif %}
+    {# ══════════════════════════════════════════════════════════════════════
+       § 5  TRAFFIC SOURCES + GEOGRAPHY (side by side)
+       ══════════════════════════════════════════════════════════════════════ #}
+    <section>
+        <h3 class="ss-section-title">Traffic Origins</h3>
+        <div class="row mb-4">
+            {# Traffic sources #}
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header"><b>Traffic sources</b></div>
+                    <div class="card-body p-0">
+                        <ul class="nav nav-tabs px-3 pt-2" role="tablist">
+                            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#src-today">Today</a></li>
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#src-7d">7d</a></li>
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#src-30d">30d</a></li>
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#src-year">Year</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            {% for key in ['today', '7d', '30d', 'year'] %}
+                            <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="src-{{ key }}">
+                                {% if top_sources[key] %}
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="thead-light">
+                                        <tr><th>Source</th><th class="text-right" style="width:80px;">Views</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in top_sources[key] %}
+                                        <tr>
+                                            <td>{{ s.source }}</td>
+                                            <td class="text-right">{{ s.count }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted p-3 mb-0">No data yet.</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Geography #}
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header"><b>Visitor geography</b></div>
+                    <div class="card-body p-0">
+                        <ul class="nav nav-tabs px-3 pt-2" role="tablist">
+                            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#geo-today">Today</a></li>
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#geo-7d">7d</a></li>
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#geo-30d">30d</a></li>
+                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#geo-year">Year</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            {% for key in ['today', '7d', '30d', 'year'] %}
+                            <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="geo-{{ key }}">
+                                {% if top_countries[key] %}
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="thead-light">
+                                        <tr><th>Country</th><th class="text-right" style="width:80px;">Views</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for c in top_countries[key] %}
+                                        <tr>
+                                            <td>{{ c.name }} <span class="ss-note">({{ c.code }})</span></td>
+                                            <td class="text-right">{{ c.count }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted p-3 mb-0">No data yet.</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if geoip_info %}
+        <p class="ss-note mb-4">GeoIP database: {{ geoip_info.date }} ({{ geoip_info.age_days }} days old)</p>
+        {% endif %}
+    </section>
+
+    {# ══════════════════════════════════════════════════════════════════════
+       § 6  PEAK TRAFFIC HEATMAP
+       ══════════════════════════════════════════════════════════════════════ #}
+    <section>
+        <h3 class="ss-section-title">Peak Traffic</h3>
+        <div class="card mb-4">
+            <div class="card-header"><b>Last 30 days</b> <span class="ss-note">(hour of day &times; day of week, UTC)</span></div>
+            <div class="card-body p-2" style="overflow-x:auto;">
+                <table class="table table-sm mb-0 text-center ss-heatmap" id="heatmapTable">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;"></th>
+                            {% for h in range(24) %}
+                            <th>{{ '%02d' % h }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
+                        {% for d in range(7) %}
+                        <tr>
+                            <td style="font-weight:600; text-align:left;">{{ day_names[d] }}</td>
+                            {% for h in range(24) %}
+                            <td class="hm-cell" data-val="{{ heatmap[d][h] }}"
+                                title="{{ day_names[d] }} {{ '%02d' % h }}:00 — {{ heatmap[d][h] }} views"
+                                aria-label="{{ day_names[d] }} {{ '%02d' % h }}:00 UTC, {{ heatmap[d][h] }} page views">
+                                {{ heatmap[d][h] if heatmap[d][h] else '' }}
+                            </td>
+                            {% endfor %}
+                        </tr>
                         {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    {# ══════════════════════════════════════════════════════════════════════
+       § 7  TRAFFIC QUALITY — JS-verified, bot summary, top bot UAs
+       ══════════════════════════════════════════════════════════════════════ #}
+    <section>
+        <h3 class="ss-section-title">Traffic Quality</h3>
+
+        {# JS-verified indicator #}
+        <div class="card mb-3">
+            <div class="card-body py-2 px-3">
+                <b>JS-verified views (last 30 days):</b> {{ js_verified_pct }}%
+                <span class="ss-note ml-2">
+                    — views confirmed by client-side JavaScript execution (bots without JS engines will not pass this check)
+                </span>
+            </div>
+        </div>
+
+        {# Bot summary cards #}
+        <div class="row mb-4">
+            <div class="col-4 col-md-2 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-2">
+                        <div class="ss-stat-value ss-color-danger">{{ bot_total }}</div>
+                        <div class="ss-stat-label">Total bot hits</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 col-md-2 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-2">
+                        <div class="ss-stat-value ss-color-danger">{{ bot_counts.today }}</div>
+                        <div class="ss-stat-label">Bots today</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 col-md-2 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-2">
+                        <div class="ss-stat-value ss-color-danger">{{ bot_counts['7d'] }}</div>
+                        <div class="ss-stat-label">Bots 7 days</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 col-md-2 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-2">
+                        <div class="ss-stat-value ss-color-danger">{{ bot_counts['30d'] }}</div>
+                        <div class="ss-stat-label">Bots 30 days</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 col-md-2 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-2">
+                        <div class="ss-stat-value ss-color-danger">{{ bot_counts.year }}</div>
+                        <div class="ss-stat-label">Bots last year</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {# Geography #}
-        <div class="col-md-6 mb-3">
-            <div class="card h-100">
-                <div class="card-header"><b>Visitor geography</b></div>
-                <div class="card-body p-0">
-                    <ul class="nav nav-tabs px-3 pt-2" role="tablist">
-                        <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#geo-today">Today</a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#geo-7d">7d</a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#geo-30d">30d</a></li>
-                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#geo-year">Year</a></li>
-                    </ul>
-                    <div class="tab-content">
-                        {% for key in ['today', '7d', '30d', 'year'] %}
-                        <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="geo-{{ key }}">
-                            {% if top_countries[key] %}
-                            <table class="table table-sm table-striped mb-0">
-                                <thead class="thead-light">
-                                    <tr><th>Country</th><th style="width:80px; text-align:right;">Views</th></tr>
-                                </thead>
-                                <tbody>
-                                    {% for c in top_countries[key] %}
-                                    <tr>
-                                        <td>{{ c.name }} <span class="text-muted" style="font-size:0.75rem;">({{ c.code }})</span></td>
-                                        <td style="text-align:right;">{{ c.count }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            {% else %}
-                            <p class="text-muted p-3 mb-0">No data yet.</p>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
+        {# Top bot User-Agents (tabbed) #}
+        <div class="card mb-4">
+            <div class="card-header"><b>Top bot User-Agents</b></div>
+            <div class="card-body p-0">
+                <ul class="nav nav-tabs px-3 pt-2" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#bots-today">Today</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#bots-7d">7 days</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#bots-30d">30 days</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#bots-year">Year</a></li>
+                </ul>
+                <div class="tab-content">
+                    {% for key in ['today', '7d', '30d', 'year'] %}
+                    <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="bots-{{ key }}">
+                        {% if top_bots[key] %}
+                        <table class="table table-sm table-striped mb-0">
+                            <thead class="thead-light">
+                                <tr><th>User-Agent</th><th class="text-right" style="width:80px;">Hits</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for b in top_bots[key] %}
+                                <tr>
+                                    <td class="ss-ua-cell">{{ b.ua }}</td>
+                                    <td class="text-right">{{ b.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p class="text-muted p-3 mb-0">No data yet.</p>
+                        {% endif %}
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <p class="text-muted mb-3" style="font-size:0.75rem;">Known bots excluded (user-agent filter). Stealth bots may still be included.</p>
-
-    {# ── GeoIP database info ─────────────────────────────────────────── #}
-    {% if geoip_info %}
-    <p class="text-muted mb-4" style="font-size:0.8rem;">GeoIP database: {{ geoip_info.date }} ({{ geoip_info.age_days }} days old)</p>
-    {% endif %}
-
-    {# ── JS-verified indicator ──────────────────────────────────────── #}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body py-2 px-3" style="font-size:0.9rem;">
-                    <b>JS-verified views (last 30 days):</b> {{ js_verified_pct }}%
-                    <span class="text-muted ms-2" style="font-size:0.8rem;">
-                        — views confirmed by client-side JavaScript execution (bots without JS engines will not pass this check)
-                    </span>
-                </div>
-            </div>
+    {# ══════════════════════════════════════════════════════════════════════
+       § 8  METHODOLOGY — consolidated notes (one place)
+       ══════════════════════════════════════════════════════════════════════ #}
+    <section>
+        <h3 class="ss-section-title">Methodology</h3>
+        <div class="ss-note">
+            <p class="mb-1">
+                <b>Page views</b> count only GET requests. Known bots (user-agent filter) are excluded, but stealth bots may still appear in counts.
+            </p>
+            <p class="mb-1">
+                <b>Unique visitors</b> are counted as distinct hashed IPs per day (SHA-256 with a daily salt — raw IPs are never stored).
+                The same person on different devices or networks is counted separately.
+            </p>
+            <p class="mb-1">
+                <b>Likely real</b> = session &gt; 1 s OR JS-verified.
+                <b>Likely bot</b> = session &le; 1 s, no JS verification.
+                Duration histograms exclude single-page visitors (time-on-page is unmeasurable server-side).
+                Session = sum of inter-page gaps &le; 5 min.
+            </p>
+            <p class="mb-1">
+                <b>JS-verified</b> percentage indicates views where client-side JavaScript executed — a strong signal of a real browser.
+            </p>
+            <p class="mb-0">
+                <b>Country data</b> is resolved at request time via GeoIP lookup; only the 2-letter country code is stored.
+            </p>
         </div>
-    </div>
-
-    {# ── Bot traffic ────────────────────────────────────────────────── #}
-    <h5 class="mt-4 mb-3">Bot Traffic</h5>
-    <div class="row mb-4">
-        <div class="col-4 col-md-2 mb-3">
-            <div class="card text-center h-100">
-                <div class="card-body py-2">
-                    <div style="font-size:1.5rem; font-weight:700; color:#dc3545;">{{ bot_total }}</div>
-                    <div class="text-muted" style="font-size:0.8rem;">Total bot hits</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-4 col-md-2 mb-3">
-            <div class="card text-center h-100">
-                <div class="card-body py-2">
-                    <div style="font-size:1.5rem; font-weight:700; color:#dc3545;">{{ bot_counts.today }}</div>
-                    <div class="text-muted" style="font-size:0.8rem;">Bots today</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-4 col-md-2 mb-3">
-            <div class="card text-center h-100">
-                <div class="card-body py-2">
-                    <div style="font-size:1.5rem; font-weight:700; color:#dc3545;">{{ bot_counts['7d'] }}</div>
-                    <div class="text-muted" style="font-size:0.8rem;">Bots last 7 days</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-4 col-md-2 mb-3">
-            <div class="card text-center h-100">
-                <div class="card-body py-2">
-                    <div style="font-size:1.5rem; font-weight:700; color:#dc3545;">{{ bot_counts['30d'] }}</div>
-                    <div class="text-muted" style="font-size:0.8rem;">Bots last 30 days</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-4 col-md-2 mb-3">
-            <div class="card text-center h-100">
-                <div class="card-body py-2">
-                    <div style="font-size:1.5rem; font-weight:700; color:#dc3545;">{{ bot_counts.year }}</div>
-                    <div class="text-muted" style="font-size:0.8rem;">Bots last year</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {# Bot User-Agents (tabbed) #}
-    <div class="card mb-4">
-        <div class="card-header"><b>Top bot User-Agents</b></div>
-        <div class="card-body p-0">
-            <ul class="nav nav-tabs px-3 pt-2" role="tablist">
-                <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#bots-today">Today</a></li>
-                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#bots-7d">7 days</a></li>
-                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#bots-30d">30 days</a></li>
-                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#bots-year">Year</a></li>
-            </ul>
-            <div class="tab-content">
-                {% for key in ['today', '7d', '30d', 'year'] %}
-                <div class="tab-pane fade {{ 'show active' if key == 'today' else '' }}" id="bots-{{ key }}">
-                    {% if top_bots[key] %}
-                    <table class="table table-sm table-striped mb-0">
-                        <thead class="thead-light">
-                            <tr><th>User-Agent</th><th style="width:80px; text-align:right;">Hits</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for b in top_bots[key] %}
-                            <tr>
-                                <td style="font-size:0.8rem; word-break:break-all;">{{ b.ua }}</td>
-                                <td style="text-align:right;">{{ b.count }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p class="text-muted p-3 mb-0">No data yet.</p>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <p class="text-muted" style="font-size:0.8rem;">
-        "Unique IPs today" counts distinct hashed IPs for the current day (SHA-256 with a daily salt — raw IPs are never stored).
-        The same person on different devices or networks is counted separately.
-        Bot traffic (known crawlers, scrapers, and scanners) is tracked separately. Only GET requests are counted.
-        JS-verified percentage indicates views where client-side JavaScript executed — a strong signal of a real browser.
-        Country data is resolved at request time via GeoIP lookup; only the 2-letter country code is stored.
-    </p>
+    </section>
 </div>
 
 <script>
-/* ── Line charts ─────────────────────────────────────────────────────── */
+/* ── Chart helpers ───────────────────────────────────────────────────────── */
 function makeChart(id, labels, data) {
     return new Chart(document.getElementById(id), {
         type: 'line',
@@ -394,8 +464,8 @@ function makeChart(id, labels, data) {
             datasets: [{
                 label: 'Page views',
                 data: data,
-                borderColor: 'rgba(23, 162, 184, 1)',
-                backgroundColor: 'rgba(23, 162, 184, 0.12)',
+                borderColor: 'rgba(0, 184, 148, 1)',
+                backgroundColor: 'rgba(0, 184, 148, 0.12)',
                 fill: true,
                 tension: 0.2,
                 pointRadius: 3,
@@ -414,12 +484,6 @@ function makeChart(id, labels, data) {
     });
 }
 
-makeChart('hourChart',  {{ hour_labels  | tojson }}, {{ hour_counts  | tojson }});
-makeChart('dayChart',   {{ day24_labels | tojson }}, {{ day24_counts | tojson }});
-makeChart('monthChart', {{ d30_labels   | tojson }}, {{ d30_counts   | tojson }});
-makeChart('yearChart',  {{ yr_labels    | tojson }}, {{ yr_counts    | tojson }});
-
-/* ── Engagement histograms ─────────────────────────────────────────── */
 function makeBarChart(id, labels, data, color) {
     var el = document.getElementById(id);
     if (!el) return;
@@ -429,8 +493,8 @@ function makeBarChart(id, labels, data, color) {
             labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: color || 'rgba(23, 162, 184, 0.7)',
-                borderColor: color ? color.replace('0.7', '1') : 'rgba(23, 162, 184, 1)',
+                backgroundColor: color || 'rgba(0, 184, 148, 0.7)',
+                borderColor: color ? color.replace('0.7', '1') : 'rgba(0, 184, 148, 1)',
                 borderWidth: 1,
             }]
         },
@@ -444,13 +508,43 @@ function makeBarChart(id, labels, data, color) {
         }
     });
 }
+
+/* ── Line charts (always visible — render immediately) ──────────────────── */
+makeChart('hourChart',  {{ hour_labels  | tojson }}, {{ hour_counts  | tojson }});
+makeChart('dayChart',   {{ day24_labels | tojson }}, {{ day24_counts | tojson }});
+makeChart('monthChart', {{ d30_labels   | tojson }}, {{ d30_counts   | tojson }});
+makeChart('yearChart',  {{ yr_labels    | tojson }}, {{ yr_counts    | tojson }});
+
+/* ── Engagement histograms — lazy-init on tab activation ────────────────── */
+var engHistData = {
 {% for key in ['today', '7d', '30d', 'year'] %}
 {% set e = engagement[key] %}
-makeBarChart('pagesHist-{{ key }}', {{ e.pages_hist.labels | tojson }}, {{ e.pages_hist.counts | tojson }}, 'rgba(40, 167, 69, 0.7)');
-makeBarChart('durHist-{{ key }}',   {{ e.duration_hist.labels | tojson }}, {{ e.duration_hist.counts | tojson }}, 'rgba(0, 123, 255, 0.7)');
+    '{{ key }}': {
+        pages:    { labels: {{ e.pages_hist.labels | tojson }},    counts: {{ e.pages_hist.counts | tojson }} },
+        duration: { labels: {{ e.duration_hist.labels | tojson }}, counts: {{ e.duration_hist.counts | tojson }} }
+    }{{ ',' if not loop.last else '' }}
 {% endfor %}
+};
+var engHistInit = {};
 
-/* ── Heatmap colouring ───────────────────────────────────────────────── */
+function initEngHist(key) {
+    if (engHistInit[key]) return;
+    engHistInit[key] = true;
+    var d = engHistData[key];
+    makeBarChart('pagesHist-' + key, d.pages.labels, d.pages.counts, 'rgba(0, 184, 148, 0.7)');
+    makeBarChart('durHist-'   + key, d.duration.labels, d.duration.counts, 'rgba(21, 69, 92, 0.7)');
+}
+
+/* Init the default visible tab immediately */
+initEngHist('today');
+
+/* Init others on first tab activation */
+$('a[data-toggle="tab"][href^="#eng-"]').on('shown.bs.tab', function(e) {
+    var key = $(e.target).attr('href').replace('#eng-', '');
+    initEngHist(key);
+});
+
+/* ── Heatmap colouring ──────────────────────────────────────────────────── */
 (function() {
     var cells = document.querySelectorAll('.hm-cell');
     var max = 0;
@@ -462,10 +556,10 @@ makeBarChart('durHist-{{ key }}',   {{ e.duration_hist.labels | tojson }}, {{ e.
     cells.forEach(function(c) {
         var v = parseInt(c.dataset.val, 10) || 0;
         var intensity = v / max;
-        // Gradient: white (0) → light teal → dark teal
-        var r = Math.round(255 - intensity * (255 - 23));
-        var g = Math.round(255 - intensity * (255 - 162));
-        var b = Math.round(255 - intensity * (255 - 184));
+        /* Gradient: white (0) → brand teal (#00b894) */
+        var r = Math.round(255 - intensity * (255 - 0));
+        var g = Math.round(255 - intensity * (255 - 184));
+        var b = Math.round(255 - intensity * (255 - 148));
         c.style.backgroundColor = 'rgb(' + r + ',' + g + ',' + b + ')';
         if (intensity > 0.6) c.style.color = '#fff';
     });

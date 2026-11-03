@@ -1374,3 +1374,80 @@ footer {
     border-left: 3px solid var(--color-brand);
     color: var(--color-text);
 }
+
+/* ==========================================================================
+   SITE STATISTICS PAGE  — utility classes for the analytics dashboard
+   ========================================================================== */
+
+/* ── KPI summary row ────────────────────────────────────────────────────── */
+.ss-kpi-value {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    line-height: 1.2;
+}
+.ss-kpi-label {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+/* ── Section headings inside the stats page ─────────────────────────────── */
+.ss-section-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-top: var(--space-8);
+    margin-bottom: var(--space-4);
+}
+
+/* ── Stat cards (engagement summary, bot counters) ──────────────────────── */
+.ss-stat-value {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    line-height: 1.2;
+}
+.ss-stat-label {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* ── Colour semantics for stat values ───────────────────────────────────── */
+.ss-color-real    { color: var(--color-brand); }
+.ss-color-bot     { color: var(--color-text-muted); }
+.ss-color-info    { color: var(--color-accent); }
+.ss-color-danger  { color: #dc3545; }
+
+/* ── Chart card headers ─────────────────────────────────────────────────── */
+.ss-chart-header {
+    font-size: var(--text-sm);
+    padding: var(--space-1) var(--space-3);
+}
+
+/* ── Histogram sub-heading ──────────────────────────────────────────────── */
+.ss-hist-title {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+/* ── Methodology / footnote text ────────────────────────────────────────── */
+.ss-note {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+/* ── Heatmap table ──────────────────────────────────────────────────────── */
+.ss-heatmap {
+    font-size: var(--text-xs);
+}
+.ss-heatmap th,
+.ss-heatmap .hm-cell {
+    padding: 2px 3px;
+}
+.ss-heatmap .hm-cell {
+    cursor: default;
+}
+
+/* ── Bot UA table text ──────────────────────────────────────────────────── */
+.ss-ua-cell {
+    font-size: var(--text-sm);
+    word-break: break-all;
+}
