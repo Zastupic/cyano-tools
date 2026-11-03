@@ -172,36 +172,20 @@
                             </div>
                         </div>
                     </div>
-                    <table class="table table-sm table-striped mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>Pages viewed</th>
-                                <th style="width:100px; text-align:right;">Visitors</th>
-                                <th style="width:80px; text-align:right;">%</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1 page (bounce)</td>
-                                <td style="text-align:right;">{{ e.dist_1 }}</td>
-                                <td style="text-align:right;">{{ '%0.1f' % (100 * e.dist_1 / e.total_visitors) if e.total_visitors else '0.0' }}%</td>
-                            </tr>
-                            <tr>
-                                <td>2 - 3 pages</td>
-                                <td style="text-align:right;">{{ e.dist_2_3 }}</td>
-                                <td style="text-align:right;">{{ '%0.1f' % (100 * e.dist_2_3 / e.total_visitors) if e.total_visitors else '0.0' }}%</td>
-                            </tr>
-                            <tr>
-                                <td>4+ pages</td>
-                                <td style="text-align:right;">{{ e.dist_4plus }}</td>
-                                <td style="text-align:right;">{{ '%0.1f' % (100 * e.dist_4plus / e.total_visitors) if e.total_visitors else '0.0' }}%</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p class="text-muted mt-2 mb-0" style="font-size:0.75rem;">
-                        "Visitor-days" = distinct daily IP hashes. The same person on different days is counted separately (daily-salted hashing).
-                        "Engaged" = visited 2+ pages OR JS-verified (real browser confirmed).
-                        Session duration is estimated from time between first and last page view; single-page visits show 0s.
+                    <div class="row mb-2">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-center text-muted" style="font-size:0.85rem;">Pages per visitor</h6>
+                            <canvas id="pagesHist-{{ key }}" height="180"></canvas>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-center text-muted" style="font-size:0.85rem;">Session duration</h6>
+                            <canvas id="durHist-{{ key }}" height="180"></canvas>
+                        </div>
+                    </div>
+                    <p class="text-muted mt-0 mb-0" style="font-size:0.75rem;">
+                        "Visitor-days" = distinct daily IP hashes (daily-salted hashing).
+                        "Engaged" = visited 2+ pages OR JS-verified.
+                        Session duration = sum of inter-page gaps ≤ 5 min; longer gaps start a new session.
                     </p>
                 </div>
                 {% endfor %}
@@ -470,6 +454,37 @@ makeChart('hourChart',  {{ hour_labels  | tojson }}, {{ hour_counts  | tojson }}
 makeChart('dayChart',   {{ day24_labels | tojson }}, {{ day24_counts | tojson }});
 makeChart('monthChart', {{ d30_labels   | tojson }}, {{ d30_counts   | tojson }});
 makeChart('yearChart',  {{ yr_labels    | tojson }}, {{ yr_counts    | tojson }});
+
+/* ── Engagement histograms ─────────────────────────────────────────── */
+function makeBarChart(id, labels, data, color) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    return new Chart(el, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: color || 'rgba(23, 162, 184, 0.7)',
+                borderColor: color ? color.replace('0.7', '1') : 'rgba(23, 162, 184, 1)',
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { font: { size: 11 } } },
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
+}
+{% for key in ['today', '7d', '30d', 'year'] %}
+{% set e = engagement[key] %}
+makeBarChart('pagesHist-{{ key }}', {{ e.pages_hist.labels | tojson }}, {{ e.pages_hist.counts | tojson }}, 'rgba(40, 167, 69, 0.7)');
+makeBarChart('durHist-{{ key }}',   {{ e.duration_hist.labels | tojson }}, {{ e.duration_hist.counts | tojson }}, 'rgba(0, 123, 255, 0.7)');
+{% endfor %}
 
 /* ── Heatmap colouring ───────────────────────────────────────────────── */
 (function() {

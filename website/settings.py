@@ -164,33 +164,60 @@ def _engagement_stats(human_filter, since):
         func.max(base.c.js_verified).label('any_js'),
     ).group_by(base.c.ip_hash).subquery()
 
-    # Main query: aggregate distribution
-    row = db.session.query(
-        func.count().label('total'),
-        func.coalesce(func.avg(sub.c.pages), 0).label('avg_pages'),
-        func.coalesce(func.avg(sub.c.session_secs), 0).label('avg_session'),
-        func.sum(case((sub.c.pages == 1, 1), else_=0)).label('dist_1'),
-        func.sum(case((sub.c.pages.between(2, 3), 1), else_=0)).label('dist_2_3'),
-        func.sum(case((sub.c.pages >= 4, 1), else_=0)).label('dist_4plus'),
-        func.sum(case(
-            (or_(sub.c.pages >= 2, sub.c.any_js == 1), 1),
-            else_=0
-        )).label('engaged'),
-    ).select_from(sub).one()
+    # Fetch all per-visitor rows and compute stats + histograms in Python
+    rows = db.session.query(
+        sub.c.pages, sub.c.session_secs, sub.c.any_js,
+    ).all()
 
-    total = row.total or 0
-    engaged = row.engaged or 0
-    avg_secs = int(row.avg_session or 0)
+    if not rows:
+        empty_hist = {'labels': [], 'counts': []}
+        return {
+            'total_visitors': 0, 'avg_pages': 0,
+            'avg_session_secs': 0, 'avg_session_fmt': '0s',
+            'engaged_count': 0, 'engaged_pct': 0,
+            'dist_1': 0, 'dist_2_3': 0, 'dist_4plus': 0,
+            'pages_hist': empty_hist, 'duration_hist': empty_hist,
+        }
+
+    total = len(rows)
+    pages_list = [r.pages for r in rows]
+    secs_list = [float(r.session_secs or 0) for r in rows]
+    engaged = sum(1 for r in rows if r.pages >= 2 or r.any_js)
+    avg_secs = int(sum(secs_list) / total)
+
+    # Pages histogram: 1, 2, 3, 4, 5, 6-10, 11+
+    p_bins = [
+        ('1', 1, 1), ('2', 2, 2), ('3', 3, 3), ('4', 4, 4), ('5', 5, 5),
+        ('6-10', 6, 10), ('11+', 11, 999999),
+    ]
+    pages_hist = {
+        'labels': [b[0] for b in p_bins],
+        'counts': [sum(1 for p in pages_list if b[1] <= p <= b[2]) for b in p_bins],
+    }
+
+    # Duration histogram: 0s, 1-10s, 10-30s, 30s-1m, 1-2m, 2-5m, 5m+
+    d_bins = [
+        ('0s', 0, 0), ('1-10s', 1, 10), ('10-30s', 11, 30),
+        ('30s-1m', 31, 60), ('1-2m', 61, 120), ('2-5m', 121, 300),
+        ('5m+', 301, 999999),
+    ]
+    duration_hist = {
+        'labels': [b[0] for b in d_bins],
+        'counts': [sum(1 for s in secs_list if b[1] <= s <= b[2]) for b in d_bins],
+    }
+
     return {
         'total_visitors': total,
-        'avg_pages': round(float(row.avg_pages or 0), 1),
+        'avg_pages': round(sum(pages_list) / total, 1),
         'avg_session_secs': avg_secs,
         'avg_session_fmt': _fmt_duration(avg_secs),
         'engaged_count': engaged,
         'engaged_pct': round(100 * engaged / total, 1) if total else 0,
-        'dist_1': row.dist_1 or 0,
-        'dist_2_3': row.dist_2_3 or 0,
-        'dist_4plus': row.dist_4plus or 0,
+        'dist_1': sum(1 for p in pages_list if p == 1),
+        'dist_2_3': sum(1 for p in pages_list if 2 <= p <= 3),
+        'dist_4plus': sum(1 for p in pages_list if p >= 4),
+        'pages_hist': pages_hist,
+        'duration_hist': duration_hist,
     }
 
 
