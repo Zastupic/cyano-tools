@@ -166,7 +166,7 @@ def _engagement_stats(human_filter, since):
 
     # Fetch all per-visitor rows and compute stats + histograms in Python
     rows = db.session.query(
-        sub.c.pages, sub.c.session_secs, sub.c.any_js,
+        sub.c.ip_hash, sub.c.pages, sub.c.session_secs, sub.c.any_js,
     ).all()
 
     empty_hist = {'labels': [], 'counts': []}
@@ -174,6 +174,7 @@ def _engagement_stats(human_filter, since):
         'total': 0, 'real': 0, 'bot': 0, 'real_pct': 0,
         'avg_pages': 0, 'avg_session_secs': 0, 'avg_session_fmt': '0s',
         'pages_hist': empty_hist, 'duration_hist': empty_hist,
+        'real_hashes': set(),
     }
     if not rows:
         return empty
@@ -184,6 +185,7 @@ def _engagement_stats(human_filter, since):
                  if (r.session_secs or 0) > 1 or r.any_js]
     bot_rows = [r for r in rows
                 if (r.session_secs or 0) <= 1 and not r.any_js]
+    real_hashes = {r.ip_hash for r in real_rows}
 
     total = len(rows)
     real_count = len(real_rows)
@@ -240,6 +242,7 @@ def _engagement_stats(human_filter, since):
         'avg_session_fmt': _fmt_duration(avg_secs),
         'pages_hist': pages_hist,
         'duration_hist': duration_hist,
+        'real_hashes': real_hashes,
     }
 
 
@@ -325,6 +328,22 @@ def site_stats():
     engagement = {}
     for w, since in windows.items():
         engagement[w] = _engagement_stats(human_filter, since)
+
+    # ── Top pages by real visitors (reuses real_hashes from engagement) ──
+    top_pages_real = {}
+    for w, since in windows.items():
+        hashes = engagement[w].get('real_hashes', set())
+        if hashes:
+            rf = and_(human_filter,
+                      PageView.path.in_(list(PAGE_NAMES.keys())),
+                      PageView.ip_hash.in_(hashes))
+            raw = _top_grouped(PageView.path, rf, since)
+            top_pages_real[w] = [
+                {'path': r.path, 'name': PAGE_NAMES.get(r.path, r.path), 'count': r.count}
+                for r in raw
+            ]
+        else:
+            top_pages_real[w] = []
 
     # ── Time-series charts (unchanged) ────────────────────────────────────
 
@@ -414,7 +433,8 @@ def site_stats():
         year_count   = year_count,
         unique_today = unique_today,
         js_verified_pct = js_verified_pct,
-        top_pages    = top_pages,
+        top_pages      = top_pages,
+        top_pages_real = top_pages_real,
         top_sources  = top_sources,
         top_countries = top_countries,
         hour_labels  = hour_labels,
