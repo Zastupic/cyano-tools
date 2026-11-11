@@ -106,10 +106,16 @@
         if (pvId) {
             var fd = new FormData();
             fd.append('pv', pvId);
+            fd.append('wd', navigator.webdriver ? 'true' : 'false');
             navigator.sendBeacon('/beacon', fd);
         }
     })();
     </script>
+    <!-- Sub-resource tracking pixel — confirms page render -->
+    {% if g.get("page_view_id") %}
+    <img src="/px?id={{ g.get('page_view_id') }}" alt="" width="1" height="1"
+         style="position:absolute;left:-9999px;" loading="eager" />
+    {% endif %}
     <!-- Custom JS -->
     <script src="{{url_for('static', filename='js_index.js')}}"></script>
     <!-- Base Structured Data (JSON-LD) -->
@@ -299,7 +305,10 @@
                 </div>
             </div>
         </footer>
-    </div>  
+        <!-- Bot trap — CSS-hidden link; any fetch = bot -->
+        <a href="/ct/verify" tabindex="-1" aria-hidden="true"
+           style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">Verify your account</a>
+    </div>
 
 <!-- ── Cookie notice banner ───────────────────────────────────────────────── -->
 <div id="cookie-consent-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#1a1a2e; color:#d1d1d1; padding:12px 20px; box-shadow:0 -2px 10px rgba(0,0,0,0.4);">

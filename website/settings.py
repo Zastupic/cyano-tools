@@ -138,6 +138,7 @@ def _engagement_stats(human_filter, since):
         PageView.ip_hash,
         PageView.path,
         PageView.js_verified,
+        PageView.px_verified,
         PageView.timestamp,
         func.lag(PageView.timestamp).over(
             partition_by=PageView.ip_hash,
@@ -153,7 +154,7 @@ def _engagement_stats(human_filter, since):
     gap_secs = (func.julianday(base.c.timestamp)
                 - func.julianday(base.c.prev_ts)) * 86400
 
-    # Per-visitor aggregates: pages, active session time, JS flag
+    # Per-visitor aggregates: pages, active session time, JS/pixel flags
     sub = db.session.query(
         base.c.ip_hash,
         func.count(func.distinct(base.c.path)).label('pages'),
@@ -162,11 +163,12 @@ def _engagement_stats(human_filter, since):
             0,
         ).label('session_secs'),
         func.max(base.c.js_verified).label('any_js'),
+        func.max(base.c.px_verified).label('any_px'),
     ).group_by(base.c.ip_hash).subquery()
 
     # Fetch all per-visitor rows and compute stats + histograms in Python
     rows = db.session.query(
-        sub.c.ip_hash, sub.c.pages, sub.c.session_secs, sub.c.any_js,
+        sub.c.ip_hash, sub.c.pages, sub.c.session_secs, sub.c.any_js, sub.c.any_px,
     ).all()
 
     empty_hist = {'labels': [], 'counts': []}
@@ -179,12 +181,12 @@ def _engagement_stats(human_filter, since):
     if not rows:
         return empty
 
-    # Split: "likely real" = session > 1s OR JS-verified browser
-    #         "likely bot"  = session ≤ 1s AND no JS verification
+    # Split: "likely real" = session > 1s OR JS-verified OR pixel-verified
+    #         "likely bot"  = session ≤ 1s AND no JS AND no pixel verification
     real_rows = [r for r in rows
-                 if (r.session_secs or 0) > 1 or r.any_js]
+                 if (r.session_secs or 0) > 1 or r.any_js or r.any_px]
     bot_rows = [r for r in rows
-                if (r.session_secs or 0) <= 1 and not r.any_js]
+                if (r.session_secs or 0) <= 1 and not r.any_js and not r.any_px]
     real_hashes = {r.ip_hash for r in real_rows}
 
     total = len(rows)
@@ -426,6 +428,17 @@ def site_stats():
     from . import _get_geoip_info
     geoip_info = _get_geoip_info()
 
+    # ── Stealth bot detection stats (last 30 days) ──────────────────────
+    from .models import BotHash
+    honeypot_count = BotHash.query.filter(
+        BotHash.date >= since_30d.strftime('%Y-%m-%d'),
+        BotHash.reason == 'honeypot',
+    ).count()
+    webdriver_count = BotHash.query.filter(
+        BotHash.date >= since_30d.strftime('%Y-%m-%d'),
+        BotHash.reason == 'webdriver',
+    ).count()
+
     return render_template('site_stats.html',
         today_count  = today_count,
         week_count   = week_count,
@@ -451,4 +464,6 @@ def site_stats():
         heatmap      = heatmap,
         engagement   = engagement,
         geoip_info   = geoip_info,
+        honeypot_count  = honeypot_count,
+        webdriver_count = webdriver_count,
     )

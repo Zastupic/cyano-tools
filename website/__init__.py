@@ -187,7 +187,7 @@ def create_app(*, testing=False):
     from .cell_count_filament import cell_count_filament
     from .pixel_profiles_round_cells import pixel_profiles_round_cells
     from .pixel_profiles_filament import pixel_profiles_filament
-    from .models import User, PageView
+    from .models import User, PageView, BotHash
 
     ALLOWED_HOSTS = frozenset([
         'www.cyano.tools',
@@ -252,6 +252,36 @@ def create_app(*, testing=False):
         'uptimerobot', 'pingdom', 'site24x7', 'statuscake',
     )
 
+    # ── Honeypot bot-hash denylist (daily scope) ───────────────────────────
+    _honeypot_hashes = set()
+    _honeypot_date = [None]     # list-of-one so nested functions can mutate
+
+    def _today_str():
+        return datetime.utcnow().strftime('%Y-%m-%d')
+
+    def _load_honeypot_hashes():
+        """Warm in-memory set from DB for today's salt window."""
+        today = _today_str()
+        if _honeypot_date[0] != today:
+            _honeypot_hashes.clear()
+            rows = BotHash.query.filter_by(date=today).all()
+            for r in rows:
+                _honeypot_hashes.add(r.ip_hash)
+            _honeypot_date[0] = today
+
+    def _flag_bot_hash(ip_hash, reason='honeypot'):
+        """Add ip_hash to denylist (DB + memory). Idempotent."""
+        today = _today_str()
+        _honeypot_hashes.add(ip_hash)
+        _honeypot_date[0] = today
+        try:
+            existing = BotHash.query.filter_by(ip_hash=ip_hash, date=today).first()
+            if not existing:
+                db.session.add(BotHash(ip_hash=ip_hash, date=today, reason=reason))
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     # ── Referrer → source normalisation ───────────────────────────────────
     def _parse_source(referrer, current_host):
         """Return a short traffic-source label from a referrer URL."""
@@ -309,6 +339,10 @@ def create_app(*, testing=False):
                     app.logger.debug('XFF chain: %s -> remote_addr: %s', xff, ip)
             salt = datetime.utcnow().strftime('%Y-%m-%d')
             ip_hash = hashlib.sha256((ip + salt).encode()).hexdigest()[:16]
+            # Check honeypot denylist (in-memory, O(1))
+            _load_honeypot_hashes()
+            if ip_hash in _honeypot_hashes:
+                is_bot = True
             ref = (request.referrer or '')[:500]
             host = request.host.split(':')[0]
             country_code = None
@@ -343,20 +377,77 @@ def create_app(*, testing=False):
     def js_beacon():
         """Called by client-side JS after page load to confirm real browser."""
         pv_id = request.form.get('pv')
+        wd_flag = request.form.get('wd')
         if not pv_id:
             body = request.get_json(silent=True) or {}
             pv_id = body.get('pv')
+            wd_flag = body.get('wd')
         if not pv_id:
             return '', 204
         try:
             pv_id = int(pv_id)
             pv = db.session.get(PageView, pv_id)
-            if pv and not pv.js_verified:
-                pv.js_verified = True
+            if pv:
+                if not pv.js_verified:
+                    pv.js_verified = True
+                # navigator.webdriver detected — headless browser
+                if wd_flag == 'true':
+                    pv.is_bot = True
+                    if pv.ip_hash:
+                        _flag_bot_hash(pv.ip_hash, reason='webdriver')
                 db.session.commit()
         except Exception:
             db.session.rollback()
         return '', 204
+
+    # ── Honeypot trap ────────────────────────────────────────────────────
+    @app.route('/ct/verify')
+    @limiter.limit("10 per minute")
+    def honeypot_trap():
+        """Hidden link that no human can see. Any request = bot."""
+        try:
+            ip = request.remote_addr or ''
+            salt = datetime.utcnow().strftime('%Y-%m-%d')
+            ip_hash = hashlib.sha256((ip + salt).encode()).hexdigest()[:16]
+            _flag_bot_hash(ip_hash, reason='honeypot')
+            # Retroactively mark today's PageViews from this hash as bot
+            today_start = datetime.utcnow().replace(
+                hour=0, minute=0, second=0, microsecond=0)
+            PageView.query.filter(
+                PageView.ip_hash == ip_hash,
+                PageView.timestamp >= today_start,
+            ).update({PageView.is_bot: True})
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return '', 204
+
+    # ── Tracking pixel ───────────────────────────────────────────────────
+    _PIXEL_GIF = (
+        b'GIF89a\x01\x00\x01\x00\x80\x00\x00'
+        b'\xff\xff\xff\x00\x00\x00'
+        b'!\xf9\x04\x00\x00\x00\x00\x00'
+        b',\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+    )
+
+    @app.route('/px')
+    @limiter.limit("120 per minute")
+    def tracking_pixel():
+        """Sub-resource pixel — confirms the browser rendered the page."""
+        pv_id = request.args.get('id')
+        if pv_id:
+            try:
+                pv_id = int(pv_id)
+                pv = db.session.get(PageView, pv_id)
+                if pv and not pv.px_verified:
+                    pv.px_verified = True
+                    db.session.commit()
+            except Exception:
+                db.session.rollback()
+        resp = app.make_response(_PIXEL_GIF)
+        resp.headers['Content-Type'] = 'image/gif'
+        resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        return resp
 
     @app.after_request
     def set_security_headers(response):
@@ -458,11 +549,12 @@ def create_app(*, testing=False):
         insp = sqlalchemy.inspect(db.engine)
         existing = {c['name'] for c in insp.get_columns('page_view')}
         migrations = {
-            'user_agent':  'VARCHAR(300)',
-            'is_bot':      'BOOLEAN DEFAULT 0',
-            'js_verified': 'BOOLEAN DEFAULT 0',
-            'source':      'VARCHAR(50)',
+            'user_agent':   'VARCHAR(300)',
+            'is_bot':       'BOOLEAN DEFAULT 0',
+            'js_verified':  'BOOLEAN DEFAULT 0',
+            'source':       'VARCHAR(50)',
             'country_code': 'VARCHAR(2)',
+            'px_verified':  'BOOLEAN DEFAULT 0',
         }
         for col, typedef in migrations.items():
             if col not in existing:

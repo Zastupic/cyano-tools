@@ -388,6 +388,18 @@
             </div>
         </div>
 
+        {# Stealth bot detection stats #}
+        <div class="card mb-3">
+            <div class="card-body py-2 px-3">
+                <b>Stealth bot detection (last 30 days):</b>
+                Honeypot traps: {{ honeypot_count }} &middot;
+                WebDriver detected: {{ webdriver_count }}
+                <span class="ss-note ml-2">
+                    — bots caught via hidden link trap and navigator.webdriver check
+                </span>
+            </div>
+        </div>
+
         {# Bot summary cards #}
         <div class="row mb-4">
             <div class="col-4 col-md-2 mb-3">
@@ -483,13 +495,19 @@
                 The same person on different devices or networks is counted separately.
             </p>
             <p class="mb-1">
-                <b>Likely real</b> = session &gt; 1 s OR JS-verified.
-                <b>Likely bot</b> = session &le; 1 s, no JS verification.
+                <b>Likely real</b> = session &gt; 1 s OR JS-verified OR pixel-verified.
+                <b>Likely bot</b> = session &le; 1 s, no JS verification, no pixel verification.
                 Duration histograms exclude single-page visitors (time-on-page is unmeasurable server-side).
                 Session = sum of inter-page gaps &le; 5 min.
             </p>
             <p class="mb-1">
                 <b>JS-verified</b> percentage indicates views where client-side JavaScript executed — a strong signal of a real browser.
+            </p>
+            <p class="mb-1">
+                <b>Stealth detection:</b> A hidden link catches bots that crawl all links regardless of visibility.
+                The <code>navigator.webdriver</code> API detects automated browser tools (Selenium, Puppeteer).
+                A tracking pixel confirms the browser rendered the page and loaded sub-resources.
+                These signals supplement the UA-based filter and JS beacon.
             </p>
             <p class="mb-0">
                 <b>Country data</b> is resolved at request time via GeoIP lookup; only the 2-letter country code is stored.
