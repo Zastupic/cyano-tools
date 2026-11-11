@@ -7,9 +7,10 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  # ── Fast gate: lint + smoke/infra tests (~30s) ── runs on every push & PR
+  gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +28,32 @@ jobs:
       - name: Lint with Ruff
         run: ruff check website/ tests/
 
-      - name: Run unit + integration tests
+      - name: Run smoke + infrastructure tests
+        env:
+          SECRET_KEY: ci-test-key
+        run: pytest -m "smoke or infrastructure" tests/ -q --tb=short
+
+  # ── Full suite: all unit + integration tests ── runs only on PRs
+  full:
+    if: github.event_name == 'pull_request'
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest ruff
+
+      - name: Run full test suite
         env:
           SECRET_KEY: ci-test-key
         run: pytest tests/ -q --ignore=tests/e2e --tb=short
