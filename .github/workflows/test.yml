@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+# Auto-cancel older runs on the same branch when a new push arrives
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ── Fast gate: lint + smoke/infra tests (~30s) ── runs on every push & PR
   gate:
