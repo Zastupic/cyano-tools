@@ -4222,7 +4222,12 @@ def ojip_add_charts():
                     for g in grp_names:
                         s = grp_stats.get(g, {}).get('params', {}).get(p)
                         if s:
-                            stat_row += [round(s['mean'], 6), round(s['sd'], 6), s.get('n')]
+                            m, sd = s['mean'], s['sd']
+                            stat_row += [
+                                round(m, 6) if isinstance(m, (int, float)) else m,
+                                round(sd, 6) if isinstance(sd, (int, float)) else sd,
+                                s.get('n'),
+                            ]
                         else:
                             stat_row += [None, None, None]
                     ws_st.append(stat_row)
@@ -4234,7 +4239,12 @@ def ojip_add_charts():
                     sample_row = [sr.get('sample'), sr.get('group')]
                     for p in param_order:
                         v = sr.get(p)
-                        sample_row.append(round(v, 6) if v is not None else None)
+                        if v is None:
+                            sample_row.append(None)
+                        elif isinstance(v, (int, float)):
+                            sample_row.append(round(v, 6))
+                        else:
+                            sample_row.append(v)
                     ws_sp.append(sample_row)
 
         # ── 4. Raw curve data sheets ───────────────────────────────────────────

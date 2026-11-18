@@ -611,6 +611,55 @@ class TestExport:
         assert "json" in ct or "spreadsheet" in ct or "octet" in ct, \
             f"unexpected content-type: {ct}"
 
+    def test_xlsx_export_with_group_string_params(self, client):
+        """Group export with string-valued params (FJ_ref etc.) must not 500.
+
+        Regression test: round() was called on string values like 'D2 min',
+        causing TypeError and a 500 response.
+        """
+        payload = {
+            'file_stem': 'test_ojip',
+            'charts': [],
+            'params_table': {
+                'header': ['Sample', 'Fv/Fm', 'FJ detection'],
+                'rows': [
+                    ['curve_A.csv', 0.78, 'D2 min'],
+                    ['curve_B.csv', 0.81, 'fixed 2.0 ms'],
+                ],
+            },
+            'group_export': {
+                'stats': {
+                    'WT': {
+                        'files': ['curve_A.csv'],
+                        'params': {
+                            'FVFM': {'mean': 0.78, 'sd': 0.0, 'n': 1},
+                            # FJ_ref is string — not included in stats (JS skips it)
+                        },
+                    },
+                    'Mut': {
+                        'files': ['curve_B.csv'],
+                        'params': {
+                            'FVFM': {'mean': 0.81, 'sd': 0.0, 'n': 1},
+                        },
+                    },
+                },
+                'samples': [
+                    {'sample': 'curve_A.csv', 'group': 'WT',
+                     'FVFM': 0.78, 'FJ_ref': 'D2 min'},
+                    {'sample': 'curve_B.csv', 'group': 'Mut',
+                     'FVFM': 0.81, 'FJ_ref': 'fixed 2.0 ms'},
+                ],
+                'param_order': ['FVFM', 'FJ_ref'],
+                'param_labels': {'FVFM': 'Fv/Fm', 'FJ_ref': 'FJ detection'},
+            },
+            'curve_data': None,
+            'methods_text': '',
+        }
+        resp = client.post("/api/ojip_add_charts", json=payload)
+        assert resp.status_code == 200
+        result = resp.get_json()
+        assert result['status'] == 'success'
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  JIP params computation (server-side via _compute_jip_params)
