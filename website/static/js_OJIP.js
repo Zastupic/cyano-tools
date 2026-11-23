@@ -5148,7 +5148,7 @@ async function uploadAndAnalyze() {
     const csvFiles = [...files].filter(f => f.name.toLowerCase().endsWith('.csv'));
     if (csvFiles.length) {
       try {
-        const head = await csvFiles[0].slice(0, 512).text();
+        const head = await csvFiles[0].slice(0, 1024).text();
         const firstLine = head.split(/\r?\n/)[0].trim();
         const parts = firstLine.split(',');
         // PlantECG signature: ≥50 comma-separated tokens, first ≈ 0.01, all numeric
