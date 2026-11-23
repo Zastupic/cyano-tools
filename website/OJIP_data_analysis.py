@@ -87,7 +87,7 @@ def _ms_factor(fluorometer):
         return 0.001        # µs → ms
     if fluorometer == 'FL6000':
         return 1000.0       # s  → ms
-    return 1.0              # MULTI-COLOR-PAM and OJIPImaging already in ms
+    return 1.0              # MULTI-COLOR-PAM, OJIPImaging, PlantECG already in ms
 
 
 def _axis_cfg(fluorometer: str) -> tuple[str, str, str, float, set[str], dict[str, tuple[float, float]]]:
@@ -107,6 +107,9 @@ def _axis_cfg(fluorometer: str) -> tuple[str, str, str, float, set[str], dict[st
     if fluorometer == 'OJIPImaging':
         return ('time_ms', 'Time (ms)', 'Fluorescence (norm.)', 1e-2, {'.xlsx'},
                 dict(FJ=(0.1, 10), FI=(9, 100), FP=(100, 1000)))
+    if fluorometer == 'PlantECG':
+        return ('time_ms', 'Time (ms)', 'Fluorescence intensity (a.u.)', 1e-2, {'.csv', '.CSV'},
+                dict(FJ=(0.1, 10), FI=(10, 100), FP=(100, 1000)))
     raise ValueError(f'Unknown fluorometer: {fluorometer}')
 
 
@@ -2821,7 +2824,7 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
         F50us_idx  = tidx(5e-5);   FK_idx     = tidx(3e-4)
         F50ms_idx  = tidx(0.05);   F100ms_idx = tidx(0.1)
         F200ms_idx = tidx(0.2);    F300ms_idx = tidx(0.3)
-    elif fluorometer == 'OJIPImaging':
+    elif fluorometer in ('OJIPImaging', 'PlantECG'):
         F50us_idx  = tidx(0.05);   FK_idx     = tidx(0.3)
         F50ms_idx  = tidx(50);     F100ms_idx = tidx(100)
         F200ms_idx = tidx(200);    F300ms_idx = tidx(300)
@@ -2838,8 +2841,8 @@ def analyze_one_curve(time_native, values, fname, fluorometer, fj_time_ms, fi_ti
     # A user-supplied f0_time_ms override always takes priority.
     if _f0_time_user_override:
         _f0_time_native = float(sf[x_col].iloc[F0_index])   # reflects line 2709 override
-    elif fluorometer == 'HandyPEA':
-        _f0_time_native = float(sf[x_col].iloc[F0_index])   # 20 µs
+    elif fluorometer in ('HandyPEA', 'PlantECG'):
+        _f0_time_native = float(sf[x_col].iloc[F0_index])   # 20 µs / 10 µs (first point)
     elif fluorometer == 'Aquapen':
         _f0_time_native = float(sf[x_col].iloc[tidx(40)])   # 40 µs → 41 µs data point
     else:
@@ -3447,7 +3450,7 @@ def ojip_process():
         F50us_idx  = tidx(5e-5);  FK_idx     = tidx(3e-4)
         F50ms_idx  = tidx(0.05);  F100ms_idx = tidx(0.1)
         F200ms_idx = tidx(0.2);   F300ms_idx = tidx(0.3)
-    elif fluorometer == 'OJIPImaging':
+    elif fluorometer in ('OJIPImaging', 'PlantECG'):
         F50us_idx  = tidx(0.05);  FK_idx     = tidx(0.3)
         F50ms_idx  = tidx(50);    F100ms_idx = tidx(100)
         F200ms_idx = tidx(200);   F300ms_idx = tidx(300)
@@ -4638,6 +4641,127 @@ def ojip_parse_han():
     return jsonify({
         'status':      'success',
         'fluorometer': 'HandyPEA',
+        'time_native': common_time,
+        'curves':      all_curves,
+        'warnings':    all_warnings,
+    })
+
+
+# ─── PlantECG CSV parser endpoint ────────────────────────────────────────
+@OJIP_data_analysis.route('/api/ojip_parse_plantecg', methods=['POST'])
+@csrf.exempt
+def ojip_parse_plantecg():
+    """Parse one or more PlantECG .csv files and return JSON curves.
+
+    PlantECG exports headerless CSV files where:
+      - Row 1: 118 comma-separated time values in milliseconds
+      - Rows 2+: 118 fluorescence values + 4 trailing metadata fields
+        (battery voltage, temp1, temp2, instrument-reported Fo)
+
+    Returns JSON::
+
+        {
+          "status":      "success",
+          "fluorometer": "PlantECG",
+          "time_native": [0.01, 0.02, ...],     // ms
+          "curves": [
+            {"slot": 0, "name": "...", "values": [...],
+             "meta": {"voltage": ..., "temp1": ..., "temp2": ..., "inst_fo": ...}},
+            ...
+          ],
+          "warnings": [...]
+        }
+    """
+    files = request.files.getlist('plantecg_file')
+    if not files:
+        return jsonify({'status': 'error',
+                        'message': 'No PlantECG CSV file uploaded.'}), 400
+
+    all_curves = []
+    all_warnings = []
+    common_time = None
+    slot = 0
+    N_META = 4  # trailing metadata columns per curve row
+
+    for f in files:
+        fname_full = f.filename or 'unknown.csv'
+        stem = os.path.splitext(fname_full)[0]
+        try:
+            raw = f.read().decode('utf-8', errors='replace')
+        except Exception as exc:
+            return jsonify({'status': 'error',
+                            'message': f'{fname_full}: could not read file — {exc}'}), 400
+
+        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+        if len(lines) < 2:
+            return jsonify({'status': 'error',
+                            'message': f'{fname_full}: file must have at least 2 rows '
+                                       f'(time axis + one curve).'}), 400
+
+        # Row 1 → time axis
+        try:
+            time_vals = [float(v) for v in lines[0].split(',') if v.strip()]
+        except ValueError:
+            return jsonify({'status': 'error',
+                            'message': f'{fname_full}: first row must be comma-separated '
+                                       f'time values in ms.'}), 400
+
+        n_time = len(time_vals)
+        if n_time < 10:
+            return jsonify({'status': 'error',
+                            'message': f'{fname_full}: time axis has only {n_time} points '
+                                       f'(expected ~118).'}), 400
+
+        if common_time is None:
+            common_time = time_vals
+
+        # Rows 2+ → curves
+        for row_idx, line in enumerate(lines[1:], start=1):
+            parts = line.split(',')
+            # Accept rows with n_time values (no metadata) or n_time + N_META
+            if len(parts) < n_time:
+                all_warnings.append(
+                    f'{fname_full} row {row_idx + 1}: expected {n_time} values, '
+                    f'got {len(parts)} — skipped.')
+                continue
+
+            try:
+                fluor_vals = [float(v) for v in parts[:n_time]]
+            except ValueError:
+                all_warnings.append(
+                    f'{fname_full} row {row_idx + 1}: non-numeric fluorescence '
+                    f'values — skipped.')
+                continue
+
+            # Extract metadata if present
+            meta = {}
+            if len(parts) >= n_time + N_META:
+                try:
+                    meta['voltage'] = float(parts[n_time])
+                    meta['temp1']   = float(parts[n_time + 1])
+                    meta['temp2']   = float(parts[n_time + 2])
+                    meta['inst_fo'] = float(parts[n_time + 3])
+                except (ValueError, IndexError):
+                    pass  # metadata is optional; keep going
+
+            curve_num = row_idx  # 1-indexed curve number within the file
+            name = f'{stem} #{curve_num}'
+
+            all_curves.append({
+                'slot':   slot,
+                'name':   name,
+                'values': fluor_vals,
+                'meta':   meta,
+            })
+            slot += 1
+
+    if not all_curves:
+        return jsonify({'status': 'error',
+                        'message': 'No valid curves found in the uploaded file(s).'}), 400
+
+    return jsonify({
+        'status':      'success',
+        'fluorometer': 'PlantECG',
         'time_native': common_time,
         'curves':      all_curves,
         'warnings':    all_warnings,

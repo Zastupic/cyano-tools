@@ -1771,8 +1771,8 @@ const MC = (() => {
     const nVisible  = pageSlots.length;
 
     // Time axis in ms (log scale).
-    // Excel OJIP Imaging: timeUs is already in ms (despite the field name).
-    // HandyPEA / CSV:     timeUs is in µs → multiply by 0.001 to get ms.
+    // Excel OJIP Imaging & PlantECG: timeUs already in ms (despite field name).
+    // HandyPEA / AquaPen CSV:        timeUs is in µs → ×0.001 to get ms.
     const timeMs = _datasetTimeMs();
 
     // For OJIP Imaging Excel data: trim to OJIP range — Excel files may
@@ -2740,11 +2740,11 @@ const MC = (() => {
     return out;
   }
 
-  /** Shared time axis in ms (OJIPImaging timeUs already holds ms). */
+  /** Shared time axis in ms (OJIPImaging & PlantECG timeUs already holds ms). */
   function _datasetTimeMs() {
-    return mcDataset.excelMeta
-      ? Array.from(mcDataset.timeUs)
-      : Array.from(mcDataset.timeUs).map(t => t * 0.001);
+    if (mcDataset.excelMeta || mcDataset.fluorometer === 'PlantECG')
+      return Array.from(mcDataset.timeUs);
+    return Array.from(mcDataset.timeUs).map(t => t * 0.001);
   }
 
   const CURVE_SHEETS = [
@@ -5057,6 +5057,61 @@ async function uploadAndAnalyze() {
       setLoading(false);
       const errDiv = document.getElementById('upload-error');
       errDiv.innerHTML = `<strong>Handy PEA parse error:</strong> ${e.message}`;
+      errDiv.style.display = '';
+      return;
+    }
+  }
+
+  // ── PlantECG CSV multi-curve file detection ──
+  if (fluorometer === 'PlantECG') {
+    const csvFiles = [...files].filter(f => f.name.toLowerCase().endsWith('.csv'));
+    if (!csvFiles.length) {
+      const errDiv = document.getElementById('upload-error');
+      errDiv.innerHTML = '<strong>No .csv file found.</strong> Please select a PlantECG CSV file.';
+      errDiv.style.display = '';
+      return;
+    }
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      for (const cf of csvFiles) fd.append('plantecg_file', cf);
+      const resp = await fetch('/api/ojip_parse_plantecg', { method: 'POST', body: fd });
+      const parsed = await resp.json();
+      if (parsed.status !== 'success') throw new Error(parsed.message || 'Parse failed');
+      if (!parsed.curves || !parsed.curves.length) throw new Error('No curves found in file.');
+      mcDataset = {
+        fluorometer: 'PlantECG',
+        filename: csvFiles.map(f => f.name).join(', '),
+        stem: csvFiles[0].name.replace(/\.[^.]+$/, ''),
+        timeUs: parsed.time_native,
+        curves: parsed.curves.map((c, i) => ({
+          index:     i,
+          name:      c.name,
+          curveName: c.name,
+          timestamp: '',
+          protocol:  c.meta.voltage != null ? `${c.meta.voltage}V, ${c.meta.temp1}\u00B0C` : '',
+          values:    c.values,
+          bckg:      null,
+          foFooter:  null,
+          meta:      c.meta,
+        })),
+        footerData: {},
+      };
+      mcIsActive = true;
+      setLoading(false);
+      if (parsed.warnings && parsed.warnings.length) {
+        const errDiv = document.getElementById('upload-error');
+        errDiv.innerHTML = '<i class="fa fa-exclamation-triangle mr-1"></i>' +
+          parsed.warnings.map(w => w.replace(/</g, '&lt;')).join('<br>');
+        errDiv.className = 'alert alert-warning mt-2 mb-0 py-1 px-2 w-100';
+        errDiv.style.display = '';
+      }
+      MC.showSelectionModal(mcDataset);
+      return;
+    } catch(e) {
+      setLoading(false);
+      const errDiv = document.getElementById('upload-error');
+      errDiv.innerHTML = `<strong>PlantECG parse error:</strong> ${e.message}`;
       errDiv.style.display = '';
       return;
     }
@@ -7530,7 +7585,7 @@ function populateAnnotationFromOJIP() {
         }
         window._mcCurvesForBundle = {
             files: mcFiles.slice(),
-            time_raw_ms: mcDataset.excelMeta
+            time_raw_ms: (mcDataset.excelMeta || mcDataset.fluorometer === 'PlantECG')
                 ? Array.from(mcDataset.timeUs)
                 : Array.from(mcDataset.timeUs).map(function(t) { return t * 0.001; }),
             curves_raw: cachedCurves,

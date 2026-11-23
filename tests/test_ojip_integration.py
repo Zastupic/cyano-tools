@@ -1032,3 +1032,101 @@ class TestBatchFailureRecovery:
         # The key contract is that it doesn't crash the batch (HTTP 200) and
         # slot/name metadata is preserved.
         assert "error" in r or "slot" in r
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PlantECG (.CSV)
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestPlantECG:
+    FLUORO = "PlantECG"
+
+    @staticmethod
+    def _parse(client):
+        """Parse the PlantECG fixture and return the JSON response."""
+        raw = _read_fixture("plantecg_example.csv")
+        resp = client.post(
+            "/api/ojip_parse_plantecg",
+            data={"plantecg_file": (io.BytesIO(raw), "plantecg_example.csv")},
+            content_type="multipart/form-data",
+        )
+        assert resp.status_code == 200
+        parsed = resp.get_json()
+        assert parsed["status"] == "success"
+        return parsed
+
+    @staticmethod
+    def _batch(client, parsed, **overrides):
+        """Send parsed PlantECG curves to the batch endpoint."""
+        payload = {
+            "fluorometer": "PlantECG",
+            "time_native": parsed["time_native"],
+            "curves": parsed["curves"],
+            "FJ_time": 2.0,
+            "FI_time": 30.0,
+            "knots_reduction_factor": 10,
+            "include_curves": False,
+            "fit_method": "logspline",
+            "knot_placement": "hybrid",
+            "value_readout": "interp",
+        }
+        payload.update(overrides)
+        resp = client.post("/api/ojip_process_batch", json=payload)
+        assert resp.status_code == 200
+        j = resp.get_json()
+        assert j["status"] == "success"
+        return j["results"]
+
+    def test_parse_endpoint(self, client):
+        """POST .csv to /api/ojip_parse_plantecg → parsed curves."""
+        parsed = self._parse(client)
+        assert "time_native" in parsed
+        assert len(parsed["curves"]) > 0
+        t = parsed["time_native"]
+        assert abs(t[0] - 0.01) < 1e-6, "PlantECG starts at 0.01 ms"
+        assert abs(t[-1] - 1000.0) < 1e-6, "PlantECG ends at 1000 ms"
+
+    def test_curve_count(self, client):
+        """Fixture has 3 curves (rows 2-4 in the CSV)."""
+        parsed = self._parse(client)
+        assert len(parsed["curves"]) == 3
+
+    def test_metadata_extracted(self, client):
+        """Each curve should have voltage/temperature metadata."""
+        parsed = self._parse(client)
+        for c in parsed["curves"]:
+            m = c["meta"]
+            assert "voltage" in m, "metadata must include voltage"
+            assert "temp1" in m, "metadata must include temp1"
+            assert 4.0 < m["voltage"] < 15.0, f"voltage {m['voltage']} out of range"
+            assert 15.0 < m["temp1"] < 50.0, f"temp1 {m['temp1']} out of range"
+
+    def test_batch_from_parsed(self, client):
+        """Parse PlantECG → feed curves to /api/ojip_process_batch → JIP params."""
+        parsed = self._parse(client)
+        results = self._batch(client, parsed)
+        ok = [r for r in results if "error" not in r]
+        assert len(ok) > 0, "all curves errored"
+        r = ok[0]
+        assert r["FVFM"] > 0.1
+        assert r["FM"] > r["F0"]
+
+    def test_domain_plausibility(self, client):
+        """All PlantECG curves must produce biologically plausible JIP params."""
+        parsed = self._parse(client)
+        results = self._batch(client, parsed)
+        for r in results:
+            if "error" in r:
+                continue
+            assert 0.0 < r["FVFM"] < 0.95, f"{r['name']}: Fv/Fm={r['FVFM']}"
+            assert 0.0 < r["VJ"] < 1.0, f"{r['name']}: VJ={r['VJ']}"
+            assert 0.0 < r["VI"] < 1.0, f"{r['name']}: VI={r['VI']}"
+
+    def test_no_file_returns_400(self, client):
+        """POST with no file should fail gracefully."""
+        resp = client.post(
+            "/api/ojip_parse_plantecg",
+            data={},
+            content_type="multipart/form-data",
+        )
+        assert resp.status_code == 400
