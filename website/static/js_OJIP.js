@@ -5140,6 +5140,33 @@ async function uploadAndAnalyze() {
     }
   }
 
+  // ── PlantECG mis-selection guard ──
+  // If the user uploads comma-separated headerless CSVs but has selected a
+  // fluorometer other than PlantECG, peek at the first line.  PlantECG files
+  // start with a row of comma-separated decimal time values (e.g. "0.01,0.02,…").
+  if (fluorometer !== 'PlantECG') {
+    const csvFiles = [...files].filter(f => f.name.toLowerCase().endsWith('.csv'));
+    if (csvFiles.length) {
+      try {
+        const head = await csvFiles[0].slice(0, 512).text();
+        const firstLine = head.split(/\r?\n/)[0].trim();
+        const parts = firstLine.split(',');
+        // PlantECG signature: ≥50 comma-separated tokens, first ≈ 0.01, all numeric
+        if (parts.length >= 50
+            && parts.every(p => p.trim() !== '' && !isNaN(p))
+            && Math.abs(parseFloat(parts[0]) - 0.01) < 0.005) {
+          const errDiv = document.getElementById('upload-error');
+          errDiv.innerHTML =
+            '<strong>Wrong fluorometer selected.</strong> This CSV file looks like a ' +
+            '<em>PlantECG</em> export (headerless, comma-separated time axis starting at 0.01 ms).<br>' +
+            'Please select <strong>PlantECG (plantecg.pl, .CSV)</strong> from the fluorometer dropdown and try again.';
+          errDiv.style.display = '';
+          return;
+        }
+      } catch(_) { /* ignore peek errors, let the server handle it */ }
+    }
+  }
+
   const fd = new FormData();
   for (const f of files) fd.append('OJIP_files', f);
   fd.append('fluorometer', document.getElementById('fluorometer').value);
