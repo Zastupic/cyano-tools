@@ -57,6 +57,8 @@ var mcIsActive     = false;  // true when a multi-curve dataset is loaded
 var _lastSelected  = [];     // curve indices from last mcStartAnalysis (for batch refit)
 var _lastJipOpts   = {};     // jipOpts from last mcStartAnalysis (for batch refit)
 var _currentDetailSlot = null; // paramMatrix slot shown in Diagnostics (for param writeback)
+var mcCurvesData   = null;   // {name: {curves, time_raw_ms, time_log_ms}} from curves pass
+var mcCurvesLoaded = false;  // true after curves pass assembles full ojipData
 
 // White background plugin for Chart.js (avoids transparent canvas)
 const _ojipWhiteBgPlugin = {
@@ -1314,6 +1316,12 @@ const MC = (() => {
     const r = paramMatrix[slot];
     if (!r || r.error) return;
 
+    // If all curves are already loaded into analysis tabs, just navigate there
+    if (mcCurvesLoaded && ojipData && ojipData.files.length > 1) {
+      $('[href="#tab-curves"]').tab('show');
+      return;
+    }
+
     // Check LRU cache (keyed by both slot and name for different consumers)
     if (mcDetailCache[slot]) {
       _showDetailInTabs(r.name, mcDetailCache[slot], slot);
@@ -1475,8 +1483,10 @@ const MC = (() => {
     const infoBar = document.getElementById('mc-detail-info');
     if (infoBar) infoBar.style.display = 'none';
 
-    // Restore placeholders in detail tabs
-    mcShowPlaceholders(true);
+    // Restore placeholders only if full curves are NOT loaded
+    if (!mcCurvesLoaded) {
+      mcShowPlaceholders(true);
+    }
 
     // Switch to time-series tab
     $('[href="#tab-timeseries"]').tab('show');
@@ -3614,6 +3624,183 @@ const MC = (() => {
     return result;
   }
 
+  // ── M3b: Curves pass — fetch full curve data for all selected curves ──
+  async function runCurvesPass(dataset, selectedIndices, jipOpts) {
+    const BATCH = 30;
+    const CONC  = 3;
+    const scheme = getNamingScheme();
+
+    const allCurves = selectedIndices.map((idx, slot) => {
+      const c = dataset.curves.find(x => x.index === idx);
+      return {
+        slot: slot,
+        name: getCurveName(c, dataset, scheme),
+        values: Array.from(c.values),
+        bckg: (c.bckg != null ? c.bckg : null),
+        fo_footer: (c.foFooter != null ? c.foFooter : null),
+      };
+    });
+
+    const batches = [];
+    for (let i = 0; i < allCurves.length; i += BATCH)
+      batches.push(allCurves.slice(i, i + BATCH));
+
+    mcCurvesData = {};
+    mcAbort = new AbortController();
+    let done = 0;
+    _showProgress(0, allCurves.length);
+
+    let cursor = 0;
+    async function worker() {
+      while (cursor < batches.length) {
+        if (mcAbort.signal.aborted) return;
+        const batchIdx = cursor++;
+        const batch = batches[batchIdx];
+        const body = {
+          fluorometer: dataset.fluorometer,
+          time_native: Array.from(dataset.timeUs),
+          curves: batch,
+          FJ_time: jipOpts.FJ_time,
+          FI_time: jipOpts.FI_time,
+          knots_reduction_factor: jipOpts.kr,
+          fit_method:        jipOpts.fitMethod || 'logspline',
+          trim_first:        jipOpts.trimFirst || 0,
+          trim_last:         jipOpts.trimLast  || 0,
+          background_mode:   jipOpts.bgMode || 'auto',
+          background_n:      jipOpts.bgN || 1,
+          f0_source:         jipOpts.f0Source || 'instrument',
+          knot_placement:    jipOpts.knotPlacement || 'hybrid',
+          oj_densify:        jipOpts.ojDensify || false,
+          oj_model:          jipOpts.ojModel || 'exponential',
+          oj_model_params:   jipOpts.ojModelParams || null,
+          f0_time_ms:        jipOpts.f0TimMs || null,
+          use_deriv_timing:  jipOpts.useDerivTiming || false,
+          value_readout:     jipOpts.valueReadout || 'interp',
+          allow_missing:     jipOpts.allowMissing || false,
+          fj_detect_mode:    jipOpts.fjDetectMode || 'fixed',
+          fi_detect_mode:    jipOpts.fiDetectMode || 'fixed',
+          fj_fallback_ms:    jipOpts.fjFallbackMs || 2.0,
+          fi_fallback_ms:    jipOpts.fiFallbackMs || 30.0,
+          fj_logdec:         jipOpts.fjLogdec || 0.3,
+          fi_logdec:         jipOpts.fiLogdec || 0.3,
+          fp_expected_ms:    jipOpts.fpExpectedMs || 316.0,
+          fp_logdec:         jipOpts.fpLogdec || 0.5,
+          fq_expected_ms:    jipOpts.fqExpectedMs || 1500.0,
+          fq_logdec:         jipOpts.fqLogdec || 0.3,
+          s_point_mode:      jipOpts.sPointMode || 'd2_min',
+          p_point_mode:      jipOpts.pPointMode || 'd2_min',
+          include_curves:    true,
+        };
+
+        let res;
+        const MAX_RETRIES = 4;
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+          try {
+            const resp = await fetch('/api/ojip_process_batch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+              signal: mcAbort.signal,
+            });
+            if (!resp.ok) {
+              const txt = await resp.text().catch(() => '');
+              throw new Error(`HTTP ${resp.status}: ${resp.statusText} — ${txt.slice(0, 200)}`);
+            }
+            res = await resp.json();
+            break;
+          } catch(e) {
+            if (mcAbort.signal.aborted) return;
+            if (attempt === MAX_RETRIES - 1) {
+              console.error(`[runCurvesPass] batch ${batchIdx} FAILED:`, e.message);
+              break;
+            }
+            const isRateLimit = e.message && e.message.includes('429');
+            const base = isRateLimit ? 8000 : 2000;
+            await new Promise(r => setTimeout(r, base * (attempt + 1) + Math.random() * 2000));
+          }
+        }
+
+        if (res && res.results) {
+          for (const r of res.results) {
+            if (r.error) continue;
+            mcCurvesData[r.name] = {
+              curves: r.curves,
+              time_raw_ms: r.time_raw_ms,
+              time_log_ms: r.time_log_ms,
+            };
+            // Sync scalar params back to paramMatrix
+            const pm = paramMatrix[r.slot];
+            if (pm) {
+              for (const k of Object.keys(r)) {
+                if (k === 'curves' || k === 'time_raw_ms' || k === 'time_log_ms' || k === 'densify_info') continue;
+                if (Array.isArray(r[k])) continue;
+                pm[k] = r[k];
+              }
+            }
+          }
+        }
+        done += batch.length;
+        _showProgress(done, allCurves.length);
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+
+    await Promise.all(Array.from({ length: CONC }, () => worker()));
+    if (mcAbort.signal.aborted) { mcCurvesData = null; return null; }
+    _hideProgress();
+    return mcCurvesData;
+  }
+
+  // ── M3c: Assemble ojipData from batch curve results ───────────────────
+  function assembleOjipData(jipOpts) {
+    if (!mcCurvesData || !paramMatrix) return null;
+
+    const files = [];
+    const curves = {};
+    const key_values = {};
+    let time_raw_ms = null;
+    let time_log_ms = null;
+    let refLen = null;
+
+    for (const r of paramMatrix) {
+      if (!r || r.error) continue;
+      const cd = mcCurvesData[r.name];
+      if (!cd || !cd.curves) continue;
+
+      // Validate array lengths match the first valid curve
+      const rawArr = cd.curves.raw;
+      if (!rawArr) continue;
+      if (refLen === null) {
+        refLen = rawArr.length;
+        time_raw_ms = cd.time_raw_ms;
+        time_log_ms = cd.time_log_ms;
+      } else if (rawArr.length !== refLen) {
+        console.warn(`[assembleOjipData] Skipping "${r.name}": array length ${rawArr.length} != expected ${refLen}`);
+        continue;
+      }
+
+      files.push(r.name);
+      curves[r.name] = cd.curves;
+      key_values[r.name] = _extractKeyValues(r);
+    }
+
+    if (!files.length || !time_raw_ms) return null;
+
+    return {
+      status: 'success',
+      fluorometer: mcDataset.fluorometer,
+      kr:          jipOpts.kr || 10,
+      fj_time_ms:  jipOpts.FJ_time || 2.0,
+      fi_time_ms:  jipOpts.FI_time || 30.0,
+      files:       files,
+      file_stem:   mcDataset.stem || 'ojip',
+      time_raw_ms: time_raw_ms,
+      time_log_ms: time_log_ms,
+      curves:      curves,
+      key_values:  key_values,
+    };
+  }
+
   // ── Public API ───────────────────────────────────────────────────────
   return {
     parse, isMultiCurve, showSelectionModal,
@@ -3621,7 +3808,7 @@ const MC = (() => {
     applyExcelFilters, clearExcelFilters,
     selectAll, deselectAll, selectRange, applyDupMode,
     getSelectedIndices, getNamingScheme, getCurveName,
-    runParamsPass, cancelBatch,
+    runParamsPass, runCurvesPass, assembleOjipData, cancelBatch,
     renderTimeSeries, renderAggregateCurves, renderGroupedPanels, renderComparison,
     curvesPagePrev, curvesPageNext,
     fetchAndShowDetail, backToOverview,
@@ -5314,6 +5501,73 @@ function mcShowPlaceholders(show) {
   });
 }
 
+// ── multi-curve: load all curves into standard analysis tabs ──────────────
+async function mcLoadAllCurves() {
+  if (!mcDataset || !paramMatrix) return;
+
+  const validCount = paramMatrix.filter(r => r && !r.error).length;
+
+  // Warn for large datasets
+  if (validCount > 200) {
+    if (!confirm(
+      `You are about to load full curve data for ${validCount} curves.\n` +
+      `This may use significant browser memory.\n\nContinue?`
+    )) return;
+  }
+
+  const btn = document.getElementById('mc-load-curves-btn');
+  const spinner = document.getElementById('mc-load-curves-spinner');
+  if (btn) { btn.disabled = true; }
+  if (spinner) spinner.style.display = '';
+
+  try {
+    const result = await MC.runCurvesPass(mcDataset, _lastSelected, _lastJipOpts);
+    if (!result) {
+      if (btn) { btn.disabled = false; }
+      if (spinner) spinner.style.display = 'none';
+      return;
+    }
+
+    const assembled = MC.assembleOjipData(_lastJipOpts);
+    if (!assembled || !assembled.files.length) {
+      alert('No curves could be loaded. Check the console for details.');
+      if (btn) { btn.disabled = false; }
+      if (spinner) spinner.style.display = 'none';
+      return;
+    }
+
+    // Set global ojipData — identical structure to single-file upload
+    ojipData = assembled;
+    ojipData._time_raw_ms_orig = assembled.time_raw_ms.slice();
+    groups = {};
+
+    // Build paramData from key_values (same as single-file flow)
+    recalcAllParams();
+
+    mcCurvesLoaded = true;
+
+    // Unhide tab content, render all tabs
+    mcShowPlaceholders(false);
+    renderResults();
+
+    // Update button to show loaded state
+    if (btn) {
+      btn.innerHTML = '<i class="fa fa-check mr-1"></i> All curves loaded (' + assembled.files.length + ')';
+      btn.className = 'btn btn-success';
+    }
+    if (spinner) spinner.style.display = 'none';
+
+    // Switch to Curves tab
+    $('[href="#tab-curves"]').tab('show');
+
+  } catch(e) {
+    console.error('[mcLoadAllCurves] Error:', e);
+    alert('Error loading curves: ' + e.message);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-line-chart mr-1"></i> Load All Curves into Analysis Tabs'; }
+    if (spinner) spinner.style.display = 'none';
+  }
+}
+
 // ── multi-curve: start batch analysis from selection modal ────────────────
 async function mcStartAnalysis() {
   const selected = MC.getSelectedIndices();
@@ -5450,6 +5704,19 @@ async function mcStartAnalysis() {
     _syncAllFjDropdowns(document.getElementById('fj-detect-mode')?.value || 'fixed');
     _syncAllFiDropdowns(document.getElementById('fi-detect-mode')?.value || 'fixed');
     _updateFjFiBadges();
+
+    // Show "Load All Curves" button and reset curves-loaded state
+    mcCurvesLoaded = false;
+    mcCurvesData = null;
+    const loadWrap = document.getElementById('mc-load-curves-wrap');
+    const loadBtn  = document.getElementById('mc-load-curves-btn');
+    if (loadWrap) loadWrap.style.display = '';
+    if (loadBtn) {
+      loadBtn.disabled = false;
+      loadBtn.className = 'btn btn-primary';
+      loadBtn.innerHTML = '<i class="fa fa-line-chart mr-1"></i> Load All Curves into Analysis Tabs' +
+        ' <span id="mc-load-curves-spinner" class="spinner-border spinner-border-sm ml-1" style="display:none" role="status"></span>';
+    }
   }
 }
 
